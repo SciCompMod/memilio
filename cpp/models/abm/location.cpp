@@ -109,8 +109,9 @@ void Location::interact(Person::RandomNumberGenerator& rng, Person& person, Time
                         const Parameters& global_params) const
 {
     // TODO: we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
-    auto age_receiver          = person.get_age();
-    ScalarType mask_protection = person.get_mask_protective_factor(global_params);
+    auto age_receiver                  = person.get_age();
+    ScalarType mask_protection         = person.get_mask_protective_factor(global_params);
+    ScalarType mobility_damping_factor = global_params.get<MobilityRestrictionParameter>();
     assert(person.get_cells().size() && "Person is in multiple cells. Interact logic is incorrect at the moment.");
     for (auto cell_index :
          person.get_cells()) { // TODO: the logic here is incorrect in case a person is in multiple cells
@@ -118,7 +119,8 @@ void Location::interact(Person::RandomNumberGenerator& rng, Person& person, Time
         for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
             VirusVariant virus = static_cast<VirusVariant>(v);
             ScalarType local_indiv_expected_trans_v =
-                (transmission_contacts_per_day(cell_index, virus, age_receiver, global_params.get_num_groups()) +
+                (mobility_damping_factor *
+                     transmission_contacts_per_day(cell_index, virus, age_receiver, global_params.get_num_groups()) +
                  transmission_air_per_day(cell_index, virus, global_params)) *
                 (1 - mask_protection) * (1 - person.get_protection_factor(t, virus, global_params));
 
