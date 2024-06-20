@@ -349,7 +349,7 @@ struct InfectionRateFromViralShed {
 };
 
 /**
- * @brief Determines the infection rate by viral shed. Used as a linear factor.
+ * @brief Determines the MobilityRestrictionParameter.
 */
 struct MobilityRestrictionParameter {
     using Type = ScalarType;
