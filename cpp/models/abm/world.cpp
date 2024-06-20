@@ -291,14 +291,16 @@ void World::update_location_testing_schemes(TimePoint t)
     }
 
     if (std::find(m_update_ts_scheduler.begin(), m_update_ts_scheduler.end(), t) != m_update_ts_scheduler.end()) {
+        std::cout << "Updating testing schemes at time " << t.days() << std::endl;
 #pragma omp parallel for
         for (auto i = size_t(0); i < m_locations.size(); ++i) {
             auto& location = m_locations[i];
             auto loc_id    = location->get_index();
             auto& schemes  = m_testing_strategy.get_testing_schemes();
 
-            auto iter_schemes = std::find_if(schemes.begin(), schemes.end(), [loc_id](auto& p) {
-                return p.first.index == loc_id;
+            auto iter_schemes = std::find_if(schemes.begin(), schemes.end(), [loc_id, &location](auto& p) {
+                return p.first.index == loc_id ||
+                       (p.first.index == INVALID_LOCATION_INDEX && p.first.type == location->get_type());
             });
             if (iter_schemes != schemes.end()) {
                 m_testing_schemes_per_location[i].clear();

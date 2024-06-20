@@ -41,7 +41,6 @@ void Simulation::evolve_world(TimePoint tmax)
     m_world.evolve(m_t, dt);
     m_prev_t = m_t;
     m_t += m_dt;
-    std::cout << "Simulation::evolve_world: " << m_t.days() << std::endl;
 }
 
 } // namespace abm
