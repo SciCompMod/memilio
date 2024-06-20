@@ -292,21 +292,10 @@ public:
         return m_rng;
     }
 
-    /**
-     * @brief Add a TestingScheme to the set of schemes that are checked for testing at all Locations that have 
-     * the LocationType.
-     * @param[in] loc_type LocationId key for TestingScheme to be added.
-     * @param[in] scheme TestingScheme to be added.
-     */
-    void add_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
+    void update_location_testing_schemes(TimePoint t);
 
-    /**
-     * @brief Remove a TestingScheme from the set of schemes that are checked for testing at all Locations that have 
-     * the LocationType.
-     * @param[in] loc_type LocationId key for TestingScheme to be added.
-     * @param[in] scheme TestingScheme to be added.
-     */
-    void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
+    bool entry_allowed_testing_schemes(Person::RandomNumberGenerator& rng, Person& person, unsigned id,
+                                       const mio::abm::TimePoint t);
 
 private:
     /**
@@ -327,6 +316,9 @@ private:
     std::bitset<size_t(LocationType::Count)>
         m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
+    std::vector<std::vector<mio::abm::TestingScheme>>
+        m_testing_schemes_per_location; ///< List of TestingScheme%s that are checked for testing.
+    std::vector<mio::abm::TimePoint> m_update_ts_scheduler; ///< List of TimePoint%s when to update the TestingScheme.
     TripList m_trip_list; ///< List of all Trip%s the Person%s do.
     bool m_use_migration_rules; ///< Whether migration rules are considered.
     std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan,

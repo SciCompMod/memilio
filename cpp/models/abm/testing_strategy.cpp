@@ -19,7 +19,6 @@
 */
 
 #include "abm/testing_strategy.h"
-#include "memilio/utils/random_number_generator.h"
 
 namespace mio
 {
@@ -46,19 +45,9 @@ void TestingCriteria::add_age_group(const AgeGroup age_group)
     m_ages.set(static_cast<size_t>(age_group), true);
 }
 
-void TestingCriteria::remove_age_group(const AgeGroup age_group)
-{
-    m_ages.set(static_cast<size_t>(age_group), false);
-}
-
 void TestingCriteria::add_infection_state(const InfectionState infection_state)
 {
     m_infection_states.set(static_cast<size_t>(infection_state), true);
-}
-
-void TestingCriteria::remove_infection_state(const InfectionState infection_state)
-{
-    m_infection_states.set(static_cast<size_t>(infection_state), false);
 }
 
 bool TestingCriteria::evaluate(const Person& p, TimePoint t) const
@@ -91,14 +80,9 @@ bool TestingScheme::operator==(const TestingScheme& other) const
     //To be adjusted and also TestType should be static.
 }
 
-bool TestingScheme::is_active() const
+bool TestingScheme::is_active(const TimePoint t) const
 {
-    return m_is_active;
-}
-
-void TestingScheme::update_activity_status(TimePoint t)
-{
-    m_is_active = (m_start_date <= t && t <= m_end_date);
+    return (m_start_date <= t && t <= m_end_date);
 }
 
 bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const
@@ -137,62 +121,6 @@ void TestingStrategy::add_testing_scheme(const LocationId& loc_id, const Testing
             schemes.push_back(scheme);
         }
     }
-}
-
-void TestingStrategy::remove_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme)
-{
-    auto iter_schemes =
-        std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [loc_id](auto& p) {
-            return p.first == loc_id;
-        });
-    if (iter_schemes != m_location_to_schemes_map.end()) {
-        //remove the scheme from the list
-        auto& schemes_vector = iter_schemes->second;
-        auto last            = std::remove(schemes_vector.begin(), schemes_vector.end(), scheme);
-        schemes_vector.erase(last, schemes_vector.end());
-        //delete the list of schemes for this location if no schemes left
-        if (schemes_vector.empty()) {
-            m_location_to_schemes_map.erase(iter_schemes);
-        }
-    }
-}
-
-void TestingStrategy::update_activity_status(TimePoint t)
-{
-    for (auto& [_, testing_schemes] : m_location_to_schemes_map) {
-        for (auto& scheme : testing_schemes) {
-            scheme.update_activity_status(t);
-        }
-    }
-}
-
-bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& person, const Location& location,
-                                   TimePoint t)
-{
-    // A Person is always allowed to go home and this is never called if a person is not discharged from a hospital or ICU.
-    // if (location.get_type() == mio::abm::LocationType::Home) {
-    //     return true;
-    // }
-
-    //lookup schemes for this specific location as well as the location type
-    //lookup in std::vector instead of std::map should be much faster unless for large numbers of schemes
-    for (auto loc_key : {LocationId{location.get_index(), location.get_type()},
-                         LocationId{INVALID_LOCATION_INDEX, location.get_type()}}) {
-        auto iter_schemes =
-            std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [loc_key](auto& p) {
-                return p.first == loc_key;
-            });
-        if (iter_schemes != m_location_to_schemes_map.end()) {
-            //apply all testing schemes that are found
-            auto& schemes = iter_schemes->second;
-            if (!std::all_of(schemes.begin(), schemes.end(), [&rng, &person, t](TestingScheme& ts) {
-                    return !ts.is_active() || ts.run_scheme(rng, person, t);
-                })) {
-                return false;
-            }
-        }
-    }
-    return true;
 }
 
 } // namespace abm

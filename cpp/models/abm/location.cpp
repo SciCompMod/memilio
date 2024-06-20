@@ -44,28 +44,27 @@ Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
 
 void Location::add_damping(TimePoint t_begin, double p)
 {
-    temp_npi_damping.emplace_back(t_begin, p);
+    m_npi_damping.emplace_back(t_begin, p);
 }
 
-bool Location::entry_allowed(Person::RandomNumberGenerator& rng, const mio::abm::TimePoint t) const
+bool Location::entry_allowed_dampings(Person::RandomNumberGenerator& rng, const mio::abm::TimePoint t)
 {
-    if (temp_npi_damping.empty()) {
+    if (m_npi_damping.empty()) {
         return true;
     }
     else {
         // We want to go through the npi vector and get the last entry that is smaller than t
-        auto it = std::upper_bound(temp_npi_damping.begin(), temp_npi_damping.end(), t,
+        auto it = std::upper_bound(m_npi_damping.begin(), m_npi_damping.end(), t,
                                    [](TimePoint tp, const std::pair<TimePoint, double>& p) {
                                        return tp < p.first;
                                    });
-        //we need the one entry before the upper bound
-        if (it == temp_npi_damping.begin()) {
+        //get a random number between 0 and 1 without m_rng
+        if (it == m_npi_damping.begin()) {
             return true;
         }
         else {
-            --it;
+            it--;
         }
-        //get a random number between 0 and 1 without m_rng
         ScalarType random_number = UniformDistribution<double>::get_instance()(rng, 0.0, 1.0);
         return random_number < it->second;
     }

@@ -21,9 +21,7 @@
 #define EPI_ABM_TESTING_SCHEME_H
 
 #include "abm/config.h"
-#include "abm/parameters.h"
 #include "abm/person.h"
-#include "abm/location.h"
 #include "abm/time.h"
 #include "memilio/utils/random_number_generator.h"
 #include <bitset>
@@ -66,23 +64,10 @@ public:
     void add_age_group(const AgeGroup age_group);
 
     /**
-     * @brief Remove an AgeGroup from the set of AgeGroup%s that are either allowed or required to be tested.
-     * @param[in] age_group AgeGroup to be removed.
-     */
-    void remove_age_group(const AgeGroup age_group);
-
-    /**
      * @brief Add an #InfectionState to the set of #InfectionState%s that are either allowed or required to be tested.
      * @param[in] infection_state #InfectionState to be added.
      */
     void add_infection_state(const InfectionState infection_state);
-
-    /**
-     * @brief Remove an #InfectionState from the set of #InfectionState%s that are either allowed or required to be
-     * tested.
-     * @param[in] infection_state #InfectionState to be removed.
-     */
-    void remove_infection_state(const InfectionState infection_state);
 
     /**
      * @brief Check if a Person and a Location meet all the required properties to get tested.
@@ -126,13 +111,7 @@ public:
      * @brief Get the activity status of the scheme.
      * @return Whether the TestingScheme is currently active.
      */
-    bool is_active() const;
-
-    /**
-     * @brief Checks if the scheme is active at a given time and updates activity status.
-     * @param[in] t TimePoint to be updated at.
-     */
-    void update_activity_status(TimePoint t);
+    bool is_active(const TimePoint t) const;
 
     /**
      * @brief Runs the TestingScheme and potentially tests a Person.
@@ -143,6 +122,15 @@ public:
      */
     bool run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
+    mio::abm::TimePoint get_start_date() const
+    {
+        return m_start_date;
+    }
+    mio::abm::TimePoint get_end_date() const
+    {
+        return m_end_date;
+    }
+
 private:
     TestingCriteria m_testing_criteria; ///< TestingCriteria of the scheme.
     TimeSpan m_minimal_time_since_last_test; ///< Shortest period of time between two tests.
@@ -150,7 +138,6 @@ private:
     TimePoint m_end_date; ///< Ending date of the scheme.
     TestParameters m_test_parameters; ///< Parameters of the test.
     ScalarType m_probability; ///< Probability of performing the test.
-    bool m_is_active = false; ///< Whether the scheme is currently active.
 };
 
 /**
@@ -164,14 +151,15 @@ public:
      * @param[in] testing_schemes Vector of TestingSchemes that are checked for testing.
      */
     TestingStrategy() = default;
-    explicit TestingStrategy(const std::unordered_map<LocationId, std::vector<TestingScheme>>& location_to_schemes_map);
+    explicit TestingStrategy(
+        const std::unordered_map<LocationId, std::vector<mio::abm::TestingScheme>>& location_to_schemes_map);
 
     /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
      * @param[in] loc_id LocationId key for TestingScheme to be added.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme);
+    void add_testing_scheme(const LocationId& loc_id, const mio::abm::TestingScheme& scheme);
 
     /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain LocationType.
@@ -180,49 +168,22 @@ public:
      * @param[in] loc_type LocationId key for TestingScheme to be added.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme)
+    void add_testing_scheme(const LocationType& loc_type, const mio::abm::TestingScheme& scheme)
     {
         add_testing_scheme(LocationId{INVALID_LOCATION_INDEX, loc_type}, scheme);
     }
 
     /**
-     * @brief Remove a TestingScheme from the set of schemes that are checked for testing at a certain Location.
-     * @param[in] loc_id LocationId key for TestingScheme to be remove.
-     * @param[in] scheme TestingScheme to be removed.
+     * @brief Get the TestingSchemes that are checked for testing at a certain Location.
+     * @return Vector of TestingScheme%s that are checked for testing at the Location.
      */
-    void remove_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme);
-
-    /**
-     * @brief Remove a TestingScheme from the set of schemes that are checked for testing at a certain Location.
-     * A TestingScheme applies to all Location of the same type is store in 
-     * LocationId{INVALID_LOCATION_INDEX, location_type} of m_location_to_schemes_map.
-     * @param[in] loc_type LocationType key for TestingScheme to be remove.
-     * @param[in] scheme TestingScheme to be removed.
-     */
-    void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme)
+    const std::vector<std::pair<LocationId, std::vector<mio::abm::TestingScheme>>>& get_testing_schemes() const
     {
-        remove_testing_scheme(LocationId{INVALID_LOCATION_INDEX, loc_type}, scheme);
+        return m_location_to_schemes_map;
     }
 
-    /**
-     * @brief Checks if the given TimePoint is within the interval of start and end date of each TestingScheme and then
-     * changes the activity status for each TestingScheme accordingly.
-     * @param t TimePoint to check the activity status of each TestingScheme.
-     */
-    void update_activity_status(const TimePoint t);
-
-    /**
-     * @brief Runs the TestingStrategy and potentially tests a Person.
-     * @param[inout] rng Person::RandomNumberGenerator for the Person being tested.
-     * @param[in] person Person to check.
-     * @param[in] location Location to check.
-     * @param[in] t TimePoint when to run the strategy.
-     * @return If the Person is allowed to enter the Location.
-     */
-    bool run_strategy(Person::RandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
-
 private:
-    std::vector<std::pair<LocationId, std::vector<TestingScheme>>>
+    std::vector<std::pair<LocationId, std::vector<mio::abm::TestingScheme>>>
         m_location_to_schemes_map; ///< Set of schemes that are checked for testing.
 };
 

@@ -220,7 +220,8 @@ def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs, real_bs):
 
 if __name__ == "__main__":
     # path = "/Users/david/Documents/HZI/memilio/data/results_last_run"
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
+    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/1/results_last_run"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_last_run"
 
     if (len(sys.argv) > 1):

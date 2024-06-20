@@ -26,12 +26,13 @@
 #include "abm/location_type.h"
 #include "abm/infection_state.h"
 #include "abm/vaccine.h"
+#include "abm/time.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/memory.h"
-#include "abm/time.h"
+#include "memilio/utils/random_number_generator.h"
 #include <array>
 #include <random>
 #include <mutex>
@@ -267,7 +268,7 @@ public:
      */
     void add_damping(TimePoint t, double p);
 
-    bool entry_allowed(Person::RandomNumberGenerator& rng, const mio::abm::TimePoint t) const;
+    bool entry_allowed_dampings(Person::RandomNumberGenerator& rng, const mio::abm::TimePoint t);
 
     /**
      * @brief Set the required type of mask for entering this Location.
@@ -426,13 +427,12 @@ private:
     bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
     transmission risk.*/
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
+    std::vector<std::pair<mio::abm::TimePoint, double>> m_npi_damping; ///< Temporary storage for NPI dampings.
     std::vector<observer_ptr<Person>> m_persons{}; ///< A vector of all Person%s at the Location.
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
-    std::vector<std::pair<mio::abm::TimePoint, double>>
-        temp_npi_damping; ///< Temporary storage for NPI dampings. //TODO: delete these and implement better
 };
 
 } // namespace abm

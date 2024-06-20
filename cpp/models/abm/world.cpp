@@ -85,15 +85,13 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto target_type       = rule(personal_rng, *person, t, dt, parameters);
             auto& target_location  = find_location(target_type, *person);
             auto& current_location = person->get_location();
-            if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
-                if (target_location != current_location &&
-                    target_location.get_number_persons() < target_location.get_capacity().persons) {
-                    bool wears_mask = person->apply_mask_intervention(personal_rng, target_location);
-                    if (wears_mask) {
-                        person->migrate_to(target_location);
-                    }
-                    return true;
+            if (target_location != current_location &&
+                target_location.get_number_persons() < target_location.get_capacity().persons) {
+                bool wears_mask = person->apply_mask_intervention(personal_rng, target_location);
+                if (wears_mask) {
+                    person->migrate_to(target_location);
                 }
+                return true;
             }
             return false;
         };
@@ -136,13 +134,12 @@ void World::migration(TimePoint t, TimeSpan dt)
                 current_location.get_type() != LocationType::Cemetery) {
                 if (!person->is_in_quarantine(t, parameters)) {
                     auto& target_location = get_individualized_location(trip.migration_destination);
-                    if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
-                        if (target_location != current_location &&
-                            target_location.get_number_persons() < target_location.get_capacity().persons &&
-                            target_location.entry_allowed(personal_rng, t)) {
-                            person->apply_mask_intervention(personal_rng, target_location);
-                            person->migrate_to(target_location);
-                        }
+                    if (target_location != current_location &&
+                        target_location.entry_allowed_dampings(personal_rng, t) &&
+                        entry_allowed_testing_schemes(personal_rng, *person, target_location.get_index(), t) &&
+                        target_location.get_number_persons() < target_location.get_capacity().persons) {
+                        person->apply_mask_intervention(personal_rng, target_location);
+                        person->migrate_to(target_location);
                     }
                 }
             }
@@ -157,7 +154,7 @@ void World::migration(TimePoint t, TimeSpan dt)
 
 void World::begin_step(TimePoint t, TimeSpan dt)
 {
-    m_testing_strategy.update_activity_status(t);
+    update_location_testing_schemes(t);
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];
@@ -252,5 +249,67 @@ const TestingStrategy& World::get_testing_strategy() const
     return m_testing_strategy;
 }
 
+bool World::entry_allowed_testing_schemes(Person::RandomNumberGenerator& rng, Person& person, unsigned id,
+                                          const mio::abm::TimePoint t)
+{
+    if (m_testing_schemes_per_location.at(id).empty()) {
+        return true;
+    }
+    else {
+        for (auto&& scheme : m_testing_schemes_per_location.at(id)) {
+            if (scheme.run_scheme(rng, person, t)) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+void World::update_location_testing_schemes(TimePoint t)
+{
+    if (m_testing_schemes_per_location.empty()) {
+        for (auto i = size_t(0); i < m_locations.size(); ++i) {
+            m_testing_schemes_per_location.push_back({});
+        }
+        for (auto&& schemes : m_testing_strategy.get_testing_schemes()) {
+            for (auto&& scheme : schemes.second) {
+                auto start_date = scheme.get_start_date();
+                auto end_date   = scheme.get_end_date();
+                if (std::find_if(m_update_ts_scheduler.begin(), m_update_ts_scheduler.end(), [start_date](auto& p) {
+                        return p == start_date;
+                    }) == m_update_ts_scheduler.end()) {
+                    m_update_ts_scheduler.push_back(start_date);
+                }
+                if (std::find_if(m_update_ts_scheduler.begin(), m_update_ts_scheduler.end(), [end_date](auto& p) {
+                        return p == end_date;
+                    }) == m_update_ts_scheduler.end()) {
+                    m_update_ts_scheduler.push_back(end_date);
+                }
+            }
+        }
+        std::sort(m_update_ts_scheduler.begin(), m_update_ts_scheduler.end());
+    }
+
+    if (std::find(m_update_ts_scheduler.begin(), m_update_ts_scheduler.end(), t) != m_update_ts_scheduler.end()) {
+#pragma omp parallel for
+        for (auto i = size_t(0); i < m_locations.size(); ++i) {
+            auto& location = m_locations[i];
+            auto loc_id    = location->get_index();
+            auto& schemes  = m_testing_strategy.get_testing_schemes();
+
+            auto iter_schemes = std::find_if(schemes.begin(), schemes.end(), [loc_id](auto& p) {
+                return p.first.index == loc_id;
+            });
+            if (iter_schemes != schemes.end()) {
+                m_testing_schemes_per_location[i].clear();
+                for (auto&& scheme : iter_schemes->second) {
+                    if (scheme.is_active(t)) {
+                        m_testing_schemes_per_location[i].push_back(scheme);
+                    }
+                }
+            }
+        }
+    }
+}
 } // namespace abm
 } // namespace mio
