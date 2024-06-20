@@ -23,103 +23,75 @@ from matplotlib.dates import DateFormatter
 from scipy.ndimage import gaussian_filter1d
 
 
-def main(path, n_runs):
-    # get first_file in folder
-    # first_file = os.listdir(path)[0]
-    # file_path = os.path.join(path, first_file)
-    # read in txt file
-    # df = pd.read_csv(file_path, delim_whitespace=True)
-    # convert to numpy array
-    # df_np = df.to_numpy()
-    # get the number of rows and columns
-    # num_rows = df_np.shape[0]
-    # num_cols = df_np.shape[1]
-    # get the number of compartments
-    # num_compartments = num_cols - 1
-    # get the number of time steps
-    # num_time_steps = num_rows-1
-    # get the compartment names
-    # compartment_names = df.columns[1:]
-    # get the time steps
-    # time_steps = df_np[:, 0]
-
-    # get number of files in folder
-    # num_files = len([entry for entry in os.listdir(path)])
-    # read in each txt file and convert to numpy array
-    # df_np_3d = np.empty((num_rows, num_cols, n_runs))
-    # print(os.listdir(path))
-    for file in os.listdir(path):
-        file_path = os.path.join(path, file)
-        # read in txt file
-
-        if file.startswith("infection_per_location_type.txt"):
-            df = pd.read_csv(file_path, sep='\s+')
-            plot_infection_per_location_type(df)
-        if file.startswith("infection_per_age_group.txt"):
-            df = pd.read_csv(file_path,sep='\s+')
-            # plot_infection_per_age_group(df)
-        # if file.startswith("run_"):
-            # convert to numpy array
-        #    df_np = df.to_numpy()
-            # attach to array
-        #    df_np_3d[:, :, i] = df_np
-        #    plot_mean_and_std(df_np_3d)
-
-
-def plot_infection_per_location_type(df):
-    # Calculate moving average for all location types
-    df['Home'] = gaussian_filter1d(df.Home.rolling(24*3, min_periods=1).sum(), sigma=15)
-    df['School'] = gaussian_filter1d(df.School.rolling(24*3, min_periods=1).sum(), sigma=15)
-    df['Work'] =  gaussian_filter1d(df.Work.rolling(24*3, min_periods=1).sum(), sigma=15)
-    df['SocialEvent'] =  gaussian_filter1d(df.SocialEvent.rolling(24*3, min_periods=1).sum(), sigma=15)
-    df['BasicsShop'] =  gaussian_filter1d(df.BasicsShop.rolling(24*3, min_periods=1).sum(), sigma=15)
-
-    df.plot(x='Time', y=['Home', 'School','Work',  'SocialEvent', 'BasicsShop'], figsize=(10, 6), title='Infections stratified according to location type')
-   
-   # x axis should be titled Time in days
-    plt.xlabel('Time (days)')
-    plt.ylabel('New infections')
-    
-
-
-
-    # Subplots of individual location types
-    # fig, axs = plt.subplots(5, 2, constrained_layout=True)
-    # df.plot(x='Time', y='MA_Home', color='tab:blue', ax=axs[0, 0])
-    # df.plot(x='Time', y='MA_Work', color='tab:green', ax=axs[0, 1])
-    # df.plot(x='Time', y='MA_School', color='tab:red', ax=axs[1, 0])
-    # df.plot(x='Time', y='MA_SocialEvent', color='tab:orange', ax=axs[1, 1])
-    # df.plot(x='Time', y='MA_BasicsShop', color='tab:purple', ax=axs[2, 0])
-    # df.plot(x='Time', y='MA_Hospital', color='tab:brown', ax=axs[2, 1])
-    # df.plot(x='Time', y='MA_ICU', color='tab:pink', ax=axs[3, 0])
-    # df.plot(x='Time', y='MA_Car', color='tab:gray', ax=axs[3, 1])
-    # df.plot(x='Time', y='MA_PublicTransport', color='tab:olive', ax=axs[4, 0])
-    # df.plot(x='Time', y='MA_Cemetery', color='tab:cyan', ax=axs[4, 1])
-
-    plt.show()
-
-
-def plot_infection_per_age_group(df):
-    df.plot(x='Time', y=['0_to_4', '5_to_14', '15_to_34',
-            '35_to_59', '60_to_79', '80_plus'], figsize=(10, 6))
-
-    plt.show()
-
-
-def plot_results(path):
-    # median / 50-percentile
+def plot_infections_loc_types_avarage(path):
+    # 50-percentile
     f_p50 = h5py.File(
-        path+"/infection_state_per_age_group/p50/Results.h5", 'r')
-
-    # Get the HDF5 group; key needs to be a group name from above
-    # only one graph node saved
+        path+"/infection_per_location_type/p50/Results.h5", 'r')
     p50_bs = f_p50['0']
-
-    # This assumes group[some_key_inside_the_group] is a dataset,
-    # and returns a np.array:
-    time = p50_bs['Time'][()]
     total_50 = p50_bs['Total'][()]
 
+    # 25-percentile
+    f_p25 = h5py.File(
+        path+"/infection_per_location_type/p25/Results.h5", 'r')
+    p25_bs = f_p25['0']
+    total_25 = p25_bs['Total'][()]
+
+    # 75-percentile
+    f_p75 = h5py.File(
+        path + "/infection_per_location_type/p75/Results.h5", 'r')
+    p75_bs = f_p75['0']
+    total_75 = p75_bs['Total'][()]
+
+    time = p50_bs['Time'][()]
+
+    plot_infection_per_location_type_mean(
+        time, total_50, total_25, total_75)
+    
+def plot_infection_per_location_type_mean(x, y50, y25, y75):
+
+    plt.figure('Infection_states_location_types')
+    plt.title('Infection states per location types avaraged over all runs')
+
+    color_plot = matplotlib.colormaps.get_cmap('Set1').colors
+
+    states_plot = [0,1,2,3,4]
+    legend_plot = ['Home', 'School', 'Work', 'SocialEvent', 'BasicsShop', 'Hospital', 'ICU']
+
+    for i in states_plot:
+        #rolling average
+        plt.plot(x, gaussian_filter1d(pd.DataFrame(y50[:, i]).rolling(24*3, min_periods=1).sum(), sigma=15), color=color_plot[i])
+
+    plt.legend(legend_plot)
+
+    for i in states_plot:
+        y50_smoothed= gaussian_filter1d(pd.DataFrame(y50[:, i]).rolling(24*3, min_periods=1).sum(), sigma=15).flatten()
+        y25_smoothed= gaussian_filter1d(pd.DataFrame(y25[:, i]).rolling(24*3, min_periods=1).sum(), sigma=15).flatten()
+        y75_smoothed= gaussian_filter1d(pd.DataFrame(y75[:, i]).rolling(24*3, min_periods=1).sum(), sigma=15).flatten()
+        plt.fill_between(x, y50_smoothed,  y25_smoothed ,
+                         alpha=0.5, color=color_plot[i])
+        plt.fill_between(x, y50_smoothed,  y75_smoothed,
+                         alpha=0.5, color=color_plot[i])
+        
+    #currently the x axis has the values of the time steps, we need to convert them to dates and set the x axis to dates
+    start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
+    xx = [start_date + pd.Timedelta(days=int(i)) for i in x]
+    xx = [xx[i].strftime('%Y-%m-%d') for i in range(len(xx))]
+    #but just take every 10th date to make it more readable
+    plt.gca().set_xticks(x[::150])
+    plt.gca().set_xticklabels(xx[::150])
+    plt.gcf().autofmt_xdate()
+
+
+    plt.xlabel('Time')
+    plt.ylabel('Number of individuals')
+    plt.show()
+
+def plot_infectoin_states_results(path):
+    # 50-percentile
+    f_p50 = h5py.File(
+        path+"/infection_state_per_age_group/p50/Results.h5", 'r')
+    p50_bs = f_p50['0']
+    total_50 = p50_bs['Total'][()]
     # 25-percentile
     f_p25 = h5py.File(
         path+"/infection_state_per_age_group/p25/Results.h5", 'r')
@@ -131,6 +103,8 @@ def plot_results(path):
     p75_bs = f_p75['0']
     total_75 = p75_bs['Total'][()]
 
+    time = p50_bs['Time'][()]
+
     # real world
     f_real = h5py.File(
         path + "/Results_rki.h5", 'r')
@@ -141,12 +115,6 @@ def plot_results(path):
     plot_infection_states_individual(
         time, p50_bs, p25_bs, p75_bs, real_bs)
     plot_infection_states(time, total_50, total_25, total_75, total_real)
-
-    # After you are done
-    f_p50.close()
-    f_p25.close()
-    f_p75.close()
-    f_real.close()
 
 def plot_infection_states(x, y50, y25, y75, y_real=None):
     plt.figure('Infection_states')
@@ -192,7 +160,6 @@ def plot_infection_states(x, y50, y25, y75, y_real=None):
     plt.xlabel('Time')
     plt.ylabel('Number of individuals')
     plt.show()
-
 
 def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs, real_bs):
 
@@ -249,60 +216,23 @@ def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs, real_bs):
     plt.show()
 
 
-def plot_infections_per_age_group(path):
-    f = h5py.File(
-        path+"/infection_per_age_group/p50/Results.h5", 'r')
-
-    # Get the HDF5 group; key needs to be a group name from above
-    group = f['0']
-
-    # This assumes group[some_key_inside_the_group] is a dataset,
-    # and returns a np.array:
-    time = group['Time'][()]
-
-    plt.figure('Age_Group')
-    for g in ['Group' + str(n) for n in range(1, 7)]:
-        gr = group[g][()]
-        plt.plot(time, gr)
-
-    plt.legend(['0-4', '5-14', '15-34', '35-59', '60-79', '80+'])
-
-    # After you are done
-    f.close()
-
-
-def plot_mean_and_std(Y):
-
-    x_plot = Y[:, 0, 0]
-    compartments = Y[:, 1:, 1:]
-    # average value
-    compartments_avg = np.mean(compartments, axis=2)
-    # plot average
-    for i in range(compartments_avg.shape[1]):
-        plt.plot(x_plot, compartments_avg[:, i])
-
-    # plt.plot(x_plot,compartments_avg)
-    # legend
-    plt.legend(['S', 'E', 'I_NS', 'I_Sy', 'I_Sev', 'I_Crit', 'R', 'D'])
-    plt.show()
-    # standard deviation
-    # compartments_std = np.std(compartments,axis=2)
-    # plt.plot(x_plot,compartments_avg + compartments_std)
-    # plt.plot(x_plot,compartments_avg - compartments_std)
-    # plt.show()
 
 
 if __name__ == "__main__":
-    # path to results
-    # path = "/Users/david/Documents/HZI/memilio/data/results"
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results/cluster/results"
+    # path = "/Users/david/Documents/HZI/memilio/data/results_last_run"
     path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
-    # path = r"C:\Users\korf_sa\Documents\rep\data\results"
-    # path = r"C:\Users\korf_sa\Documents\rep\data\results_cluster\results"
+    # path = r"C:\Users\korf_sa\Documents\rep\data\results_last_run"
+
     if (len(sys.argv) > 1):
         n_runs = sys.argv[1]
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    plot_results(path)
-    main(path, n_runs)
+    plot_infectoin_states_results(path)
+    plot_infections_loc_types_avarage(path)
+
+    for file in os.listdir(path):
+        file_path = os.path.join(path, file)
+        if file.startswith("infection_per_location_type.txt"):
+                df = pd.read_csv(file_path, sep='\s+')
+                plot_infection_per_location_type(df)
