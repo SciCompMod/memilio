@@ -25,6 +25,8 @@
 #include "ide_secir/parameters.h"
 #include "ide_secir/infection_state.h"
 #include "memilio/config.h"
+#include "memilio/epidemiology/age_group.h"
+#include "memilio/utils/parameter_set.h"
 #include "memilio/utils/time_series.h"
 
 #include "vector"
@@ -48,13 +50,15 @@ public:
     *   simulation. 
     *   The time history must reach a certain point in the past so that the simulation can be performed.
     *   A warning is displayed if the condition is violated.
-    * @param[in] N_init The population of the considered region.
-    * @param[in] deaths The total number of deaths at time t0.
-    * @param[in] total_confirmed_cases Total confirmed cases at time t0 can be set if it should be used for initialization.
+    * @param[in] N_init A vector, containg the populations of the considered region, for every AgeGroup.
+    * @param[in] deaths A vector, containg the total number of deaths at time t0, for every AgeGroup.
+    * @param[in] total_confirmed_cases A vector, containg the otal confirmed cases at time t0 can be set if it should be used for initialization, for every AgeGroup..
     * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */
-    Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths, ScalarType total_confirmed_cases = 0,
-          const ParameterSet& Parameterset_init = ParameterSet());
+    Model(CustomIndexArray<TimeSeries<ScalarType>, AgeGroup>&& init, std::vector<ScalarType> N_init,
+          std::vector<ScalarType> deaths, int num_agegroups,
+          std::vector<ScalarType> total_confirmed_cases = std::vector<ScalarType>(num_agegroups, 0.),
+          const ParameterSet& Parameterset_init         = ParameterSet(AgeGroup(num_agegroups)));
 
     // ---- Functionality to calculate the sizes of the compartments for time t0. ----
     /**
@@ -136,7 +140,7 @@ public:
      * @param[in] current_time_index The time index the flow should be computed for.
      */
     void compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt,
-                      Eigen::Index current_time_index);
+                      Eigen::Index current_time_index, AgeGroup agegroup);
 
     /**
      * @brief Computes size of a flow for the current last time value in m_transitions.
@@ -150,7 +154,7 @@ public:
      *      the value of this incoming flow.
      * @param[in] dt Time step to compute flow for.
      */
-    void compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt);
+    void compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt, AgeGroup i);
 
     /**
      * @brief Sets all required flows for the current last timestep in m_transitions.
@@ -190,44 +194,50 @@ public:
     */
     bool check_constraints(ScalarType dt) const
     {
-        if (!((int)m_transitions.get_num_elements() == (int)InfectionTransition::Count)) {
-            log_error("A variable given for model construction is not valid. Number of elements in transition vector "
-                      "does not match the required number.");
-            return true;
-        }
-
-        for (int i = 0; i < (int)InfectionState::Count; i++) {
-            if (m_populations[0][i] < 0) {
-                log_error("Initialization failed. Initial values for populations are less than zero.");
+        for (auto k = AgeGroup(0); k < AgeGroup(m_num_agegroups); ++k) //TODO
+        {
+            if (!((int)m_transitions[k].get_num_elements() == (int)InfectionTransition::Count)) {
+                log_error(
+                    "A variable given for model construction is not valid. Number of elements in transition vector "
+                    "does not match the required number.");
                 return true;
             }
-        }
 
-        // It may be possible to run the simulation with fewer time points, but this number ensures that it is possible.
-        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(get_global_support_max(dt) / dt)) {
-            log_error(
-                "Initialization failed. Not enough time points for transitions given before start of simulation.");
-            return true;
-        }
-
-        for (int i = 0; i < m_transitions.get_num_time_points(); i++) {
-            for (int j = 0; j < (int)InfectionTransition::Count; j++) {
-                if (m_transitions[i][j] < 0) {
-                    log_error("Initialization failed. One or more initial value for transitions is less than zero.");
+            for (int i = 0; i < (int)InfectionState::Count; i++) {
+                if (m_populations[k][0][i] < 0) {
+                    log_error("Initialization failed. Initial values for populations are less than zero.");
                     return true;
                 }
             }
-        }
-        if (m_transitions.get_last_time() != m_populations.get_last_time()) {
-            log_error("Last time point of TimeSeries for transitions does not match last time point of TimeSeries for "
-                      "compartments. Both of these time points have to agree for a sensible simulation.");
-            return true;
-        }
 
-        if (m_populations.get_num_time_points() != 1) {
-            log_error("The TimeSeries for the compartments contains more than one time point. It is unclear how to "
-                      "initialize.");
-            return true;
+            // It may be possible to run the simulation with fewer time points, but this number ensures that it is possible.
+            if (m_transitions[k].get_num_time_points() < (Eigen::Index)std::ceil(get_global_support_max(dt) / dt)) {
+                log_error("Initialization failed. Not enough time points for transitions given before start of "
+                          "simulation.");
+                return true;
+            }
+
+            for (int i = 0; i < m_transitions[k].get_num_time_points(); i++) {
+                for (int j = 0; j < (int)InfectionTransition::Count; j++) {
+                    if (m_transitions[k][i][j] < 0) {
+                        log_error(
+                            "Initialization failed. One or more initial value for transitions is less than zero.");
+                        return true;
+                    }
+                }
+            }
+            if (m_transitions[k].get_last_time() != m_populations[k].get_last_time()) {
+                log_error("Last time point of TimeSeries for transitions does not match last time point of "
+                          "TimeSeries for "
+                          "compartments. Both of these time points have to agree for a sensible simulation.");
+                return true;
+            }
+
+            if (m_populations[k].get_num_time_points() != 1) {
+                log_error("The TimeSeries for the compartments contains more than one time point. It is unclear how to "
+                          "initialize.");
+                return true;
+            }
         }
 
         return parameters.check_constraints();
@@ -272,20 +282,22 @@ public:
     *
     * @return Index representing the initialization method.
     */
-    int get_initialization_method_compartments()
+    int get_initialization_method_compartments(AgeGroup agegroup)
     {
-        return m_initialization_method;
+        return m_initialization_method[static_cast<Eigen::Index>((size_t)agegroup)];
     }
 
     // ---- Public parameters. ----
-    ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
+    ParameterSet parameters{AgeGroup(m_num_agegroups)}; ///< ParameterSet of Model Parameters.
     // Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the
     // initialization part.
-    TimeSeries<ScalarType>
-        m_transitions; ///< TimeSeries containing points of time and the corresponding number of transitions.
-    TimeSeries<ScalarType> m_populations; ///< TimeSeries containing points of time and the corresponding number of
-        // people in defined #InfectionState%s.
-    ScalarType m_total_confirmed_cases{0}; ///< Total number of confirmed cases at time t0.
+    CustomIndexArray<TimeSeries<ScalarType>, AgeGroup>
+        m_transitions; ///< CustomIndesArray that contains a TimeSeries containing points of time and the corresponding number of transitions for every AgeGroup.
+    CustomIndexArray<TimeSeries<ScalarType>, AgeGroup>
+        m_populations; ///< CustomIndesArray that contains a TimeSeries containing points of time and the corresponding number of
+    // people in defined #InfectionState%s for every AgeGroup.
+    std::vector<ScalarType> m_total_confirmed_cases{
+        0}; ///< Vector that contains the total number of confirmed cases at time t0 for every AgeGroup.
 
 private:
     /**
@@ -297,14 +309,17 @@ private:
      */
     void update_compartment_from_flow(InfectionState infectionState,
                                       std::vector<InfectionTransition> const& IncomingFlows,
-                                      std::vector<InfectionTransition> const& OutgoingFlows);
+                                      std::vector<InfectionTransition> const& OutgoingFlows, AgeGroup agegroup);
 
     // ---- Private parameters. ----
-    ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
-    ScalarType m_N{0}; ///< Total population size of the considered region.
+    std::vector<ScalarType> m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
+    std::vector<ScalarType> m_N{
+        0}; ///< Vector containing the total population size of the considered region for every AgeGroup.
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
-    int m_initialization_method{0}; ///< Gives the index of the method used for the initialization of the model.
-        //See also get_initialization_method_compartments() for the number code.
+    std::vector<int> m_initialization_method{
+        0}; ///< Gives a vector containing the indices of the method used for the initialization of the model for every Agegroup.
+    //See also get_initialization_method_compartments() for the number code.
+    int m_num_agegroups; //Gives the number of Age Groups.
 };
 
 } // namespace isecir
