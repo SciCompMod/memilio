@@ -192,7 +192,7 @@ public:
         this->get_dt_max() = dt_max;
     }
 
-    // Allow setting different RK tablea schemes
+    // Allow setting different RK tableau schemes
     void set_tableaus(const Tableau& tab, const TableauFinal& final_tab)
     {
         m_tab       = tab;

@@ -59,7 +59,8 @@ public:
      *
      * The behaviour of this method changes when the integration scheme has adaptive step sizing. 
      * These changes are noted in the parentheses (...) below.
-     * Adaptive integrators must have bounds dt_min and dt_max for dt.
+     * Adaptive integrators use the bounds dt_min and dt_max for dt, accessible through the IntegratorCore member
+     * functions get_dt_min() and get_dt_max(), respectively. Fixed step integrators ignore these values.
      * The adaptive step sizing is considered to be successful, if a step of at least size dt_min sufficed tolerances.
      * Tolerances are defined in each implementation, usually using a criterion with absolute and relative tolerances.
      * Even if the step sizing failed, the integrator will make a step of at least size dt_min.
@@ -149,7 +150,6 @@ public:
         // hint at std functions for ADL
         using std::fabs;
         using std::max;
-        using std::min;
         const FP t0 = results.get_last_time();
         assert(tmax > t0);
         assert(dt > 0);
@@ -162,8 +162,8 @@ public:
         bool step_okay = true;
 
         FP dt_copy; // used to check whether step sizing is adaptive
-        FP dt_restore  = 0.0; // used to restore dt if dt was decreased to reach tmax
-        FP dt_min_copy = m_core->get_dt_min();
+        FP dt_restore  = 0.0; // used to restore dt, if dt was decreased to reach tmax
+        FP dt_min_copy = m_core->get_dt_min(); // used to restore dt_min, if it was decreased to reach tmax
         FP t           = t0;
 
         for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t) / (tmax - t0)) > 1e-10; ++i) {

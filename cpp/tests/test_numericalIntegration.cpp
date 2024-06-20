@@ -20,7 +20,9 @@
 #include "actions.h"
 #include "memilio/math/euler.h"
 #include "memilio/math/adapt_rk.h"
+#include "memilio/math/integrator.h"
 #include "memilio/math/stepper_wrapper.h"
+#include "memilio/utils/logging.h"
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
