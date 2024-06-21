@@ -517,7 +517,7 @@ def plot_and_save(fig, path, filename):
     plt.close(fig)
 
 
-def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p50", flows=True, plot_type='kmin'):
+def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p50", flows=True, plot_type='kmin', title='Peak Value'):
     if len(modes) > 1:
         print("Only one mode is allowed for the grid peak plot.")
         return
@@ -526,6 +526,8 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
 
     kmin_dirs = get_kmin_dirs(path_results)
     all_kmins = sorted(set(float(d.split("_")[1]) for d in kmin_dirs))
+
+    num_days = 0
 
     for kmin in all_kmins:
         fig, axes = plt.subplots(
@@ -539,6 +541,9 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
             path = os.path.join(path_results, run,
                                 modes[0], "flows" if flows else "")
             df = read_data(path, target_indx, percentile, flows)
+
+            if num_days == 0:
+                num_days = df.shape[0]
 
             if plot_type == 'kmin':
                 peaks = np.bincount(df.idxmax().values, minlength=df.shape[0])
@@ -557,34 +562,47 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
                 df_long = pd.DataFrame(
                     [{'Day': day, 'Peak Value': val} for day, vals in peak_values.items() for val in vals])
                 all_peaks.extend(peak_values.values())
+                # ensure that all days are in the dataframe
+                all_days = pd.DataFrame({'Day': range(num_days)})
+                df_long = pd.merge(all_days, df_long, on='Day', how='left')
                 ax = axes[0, len(all_peaks) // len(df) - 1]
-                # TODO: Set y label only for first plot
-                if len(all_peaks) == 1:
-                    sns.boxplot(x='Day', y='Peak Value', data=df_long, ax=ax)
-                    ax.set_ylabel('Peak Value per 100,000 Individuals')
-                else:
-                    sns.boxplot(x='Day', y='Peak Value', data=df_long, ax=ax)
+                sns.boxplot(x='Day', y='Peak Value', data=df_long, ax=ax)
+                ax.set_ylabel(title + ' per 100,000k')
 
-            ax.set_title(f'kmin: {kmin}, kmax: {run.split("_")[3]}')
-            ax.set_xlabel('Day')
+            kmax = float(run.split("_")[3])
+            ax.set_title(f'kmin: {kmin}\nkmax: {kmax:.1f}', fontsize=12)
 
         global_min = min(min(peaks) for peaks in all_peaks if peaks)
         global_max = max(max(peaks) for peaks in all_peaks if peaks) + 10
         for ax in axes.flat:
             ax.set_ylim(global_min, global_max)
+            ax.set_xticks(range(0, num_days, 100))
+            ax.set_xlabel('')
+            if ax != axes[0, 0]:
+                ax.set_yticklabels([])
+                ax.set_ylabel('')
+            if ax == axes[0, len(axes[0]) // 2]:
+                ax.set_xlabel('Days', fontsize=16)
 
         plot_and_save(fig, os.path.join(path_plots, "peaks"),
                       f'peaks_grid_{plot_type}_kmin_{kmin}.png')
 
         for ax in axes.flat:
             ax.set_yscale('symlog')
+            ax.set_xticks(range(0, num_days, 100))
+            ax.set_xlabel('')
+            if ax != axes[0, 0]:
+                ax.set_yticklabels([])
+                ax.set_ylabel('')
+            if ax == axes[0, len(axes[0]) // 2]:
+                ax.set_xlabel('Days', fontsize=16)
         plot_and_save(fig, os.path.join(path_plots, "peaks"),
                       f'peaks_grid_{plot_type}_kmin_{kmin}_log.png')
 
 
 if __name__ == '__main__':
     path_cwd = os.getcwd()
-    path_results = os.path.join(path_cwd, "results", "save")
+    path_results = os.path.join(path_cwd, "results")
     path_plots = os.path.join(path_cwd, "plots")
     path_icu_data = os.path.join(
         path_cwd, "data/pydata/Germany/germany_divi_ma7.json")
@@ -598,8 +616,8 @@ if __name__ == '__main__':
 
     # plot_r0_county_level(path_results, path_plots, modes)
     # plot_contacts(path_results, path_plots, modes)
-    plot_risk(os.path.join(path_cwd, "results"),
-              path_plots, plot_percentiles=False)
+    # plot_risk(path_results,
+    #           path_plots, plot_percentiles=False)
     # plot_compartments(path_results, path_plots, modes,
     #                   icu_compartment, ["ICU Occupancy"], "ICU Occupancy")
     # plot_compartments(path_results, path_plots, modes,
@@ -613,9 +631,7 @@ if __name__ == '__main__':
     # plot_peaks(path_results, path_plots, modes, flow_se)
 
     # plot_peaks_single(path_results, path_plots, ["FeedbackDamping"], flow_se)
-    # plot_peaks_kmin(path_results, path_plots, [
-    #                 "FeedbackDamping"], icu_compartment, flows=False)
-    # plot_peak_values(path_results, path_plots, [
+    # plot_peak_values(os.path.join(path_cwd, "results", "save"), path_plots, [
     #                  "FeedbackDamping"], flow_se, plot_type='kmin')
-    # plot_peak_values(path_results, path_plots, [
-    #                  "FeedbackDamping"], flow_se, plot_type='val')
+    plot_peak_values(os.path.join(path_cwd, "results", "save"), path_plots, [
+                     "FeedbackDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False)
