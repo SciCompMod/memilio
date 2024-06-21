@@ -134,7 +134,7 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
                                       timeInfectedCriticalMax);
 
     //probabilities
-    double fact                                        = 0.75;
+    double fact                                        = 1.;
     const double transmissionProbabilityOnContactMin[] = {fact * 0.02, fact * 0.05, fact * 0.05,
                                                           fact * 0.05, fact * 0.08, fact * 0.15};
     const double transmissionProbabilityOnContactMax[] = {fact * 0.04, fact * 0.07, fact * 0.07,
@@ -174,10 +174,10 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
                                       deathsPerCriticalMax);
 
     //sasonality
-    const double seasonality_min = 0.1;
-    const double seasonality_max = 0.3;
+    // const double seasonality_min = 0.1;
+    // const double seasonality_max = 0.3;
 
-    assign_uniform_distribution(params.get<mio::osecir::Seasonality>(), seasonality_min, seasonality_max);
+    // assign_uniform_distribution(params.get<mio::osecir::Seasonality>(), seasonality_min, seasonality_max);
 
     return mio::success();
 }
@@ -187,15 +187,15 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_feedback_parameters(mio::osecir::Parameters& params)
+mio::IOResult<void> set_feedback_parameters(mio::osecir::Parameters& params, ScalarType min, ScalarType max)
 {
     params.get<mio::osecir::ICUCapacity>()            = 9;
     params.get<mio::osecir::CutOffGamma>()            = 45;
     params.get<mio::osecir::EpsilonContacts>()        = 0.1;
     params.get<mio::osecir::BlendingFactorLocal>()    = 1. / 3.;
     params.get<mio::osecir::BlendingFactorRegional>() = 1. / 3.;
-    params.get<mio::osecir::ContactReductionMin>()    = {0.2, 0.2, 0.2, 0.2};
-    params.get<mio::osecir::ContactReductionMax>()    = {0.6, 0.6, 0.6, 0.6};
+    params.get<mio::osecir::ContactReductionMin>()    = {min, min, min, min};
+    params.get<mio::osecir::ContactReductionMax>()    = {max, max, max, max};
 
     auto& icu_occupancy     = params.get<mio::osecir::ICUOccupancyLocal>();
     Eigen::VectorXd icu_day = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 0.0);
@@ -270,7 +270,7 @@ mio::IOResult<void> set_npis(mio::osecir::Parameters& params, const std::string&
         auto& contacts         = params.get<mio::osecir::ContactPatterns>();
         auto& contact_dampings = contacts.get_dampings();
 
-        const ScalarType reduc_fac_location = 0.2110414236;
+        const ScalarType reduc_fac_location = 0.2014902095;
 
         const size_t locations       = static_cast<size_t>(ContactLocation::Count);
         const auto group_weights_all = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 1.0);
@@ -321,7 +321,7 @@ std::vector<int> node_ids_global;
  * @returns created graph or any io errors that happen during reading of the files.
  */
 mio::IOResult<mio::Graph<mio::osecir::Model, mio::MigrationParameters>>
-get_graph(mio::Date start_date, const fs::path& data_dir, const std::string& mode)
+get_graph(mio::Date start_date, const fs::path& data_dir, const std::string& mode, ScalarType kmin, ScalarType kmax)
 {
 
     // global parameters
@@ -331,7 +331,7 @@ get_graph(mio::Date start_date, const fs::path& data_dir, const std::string& mod
     ;
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
     if (std::strcmp(mode.c_str(), "FeedbackDamping") == 0) {
-        BOOST_OUTCOME_TRY(set_feedback_parameters(params));
+        BOOST_OUTCOME_TRY(set_feedback_parameters(params, kmin, kmax));
     }
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
     BOOST_OUTCOME_TRY(set_npis(params, mode));
@@ -579,7 +579,44 @@ mio::IOResult<void> set_infected_state(mio::Graph<mio::osecir::Model, mio::Migra
             // set all values to icu
             for (auto t_indx = 0; t_indx < icu_occupancy.get_num_time_points(); t_indx++) {
                 for (size_t age = 0; age < num_groups; age++) {
-                    icu_occupancy.get_value(t_indx)(age) = icu / num_groups;
+                    icu_occupancy.get_value(t_indx)(age) = initially_icu_per_100k / num_groups;
+                }
+            }
+        }
+    }
+    return mio::success();
+}
+
+mio::IOResult<void> set_infected_county(mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
+                                        const int county_id, const double initially_infected_per_100k,
+                                        const double initially_icu_per_100k)
+{
+    for (auto& node : params_graph.nodes()) {
+        if (node.id == county_id) {
+            auto& populations                  = node.property.populations;
+            auto total_population              = populations.get_total();
+            const auto infected                = initially_infected_per_100k / 100000.0 * total_population;
+            const auto icu                     = initially_icu_per_100k / 100000.0 * total_population;
+            const auto num_groups              = size_t(node.property.parameters.get_num_groups());
+            const size_t infected_compartments = 4;
+            for (size_t age = 0; age < num_groups; age++) {
+                populations[{mio::AgeGroup(age), mio::osecir::InfectionState::Exposed}] =
+                    infected / (infected_compartments * num_groups);
+                populations[{mio::AgeGroup(age), mio::osecir::InfectionState::InfectedNoSymptoms}] =
+                    infected / (infected_compartments * num_groups);
+                populations[{mio::AgeGroup(age), mio::osecir::InfectionState::InfectedSymptoms}] =
+                    infected / (infected_compartments * num_groups);
+                populations[{mio::AgeGroup(age), mio::osecir::InfectionState::InfectedSevere}] =
+                    infected / (infected_compartments * num_groups);
+                populations[{mio::AgeGroup(age), mio::osecir::InfectionState::InfectedCritical}] = icu / num_groups;
+            }
+
+            // set history icu data
+            auto& icu_occupancy = node.property.parameters.get<mio::osecir::ICUOccupancyLocal>();
+            // set all values to icu
+            for (auto t_indx = 0; t_indx < icu_occupancy.get_num_time_points(); t_indx++) {
+                for (size_t age = 0; age < num_groups; age++) {
+                    icu_occupancy.get_value(t_indx)(age) = initially_icu_per_100k / num_groups;
                 }
             }
         }
@@ -603,54 +640,70 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 {
     const auto start_date = mio::Date(2020, 12, 1);
 
-    const auto num_days_sim = 150.0;
-    const auto num_runs     = 100;
+    const auto num_days_sim = 100.0;
+    const auto num_runs     = 300;
 
     // auto const modes = {"ClassicDamping", "FeedbackDamping"};
 
     auto const modes = {"FeedbackDamping"};
 
-    const double initially_infected_per_100k = 100;
+    const double initially_infected_per_100k = 500;
     const double initially_icu_per_100k      = 2.0;
 
     const size_t state_id_infected = 3;
 
+    auto min_values = std::vector<ScalarType>{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
+    auto max_values = std::vector<ScalarType>{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    // const size_t county_id_infected = 3241;
+
     //create or load graph
     for (auto mode : modes) {
-        mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
+        for (size_t min_indx = 0; min_indx < min_values.size(); min_indx++) {
+            for (size_t max_indx = min_indx; max_indx < max_values.size(); max_indx++) {
+                auto& kmin = min_values[min_indx];
+                auto& kmax = max_values[max_indx];
 
-        auto result_dir_mode = result_dir / mode;
-        // create directory for results
-        if (mio::mpi::is_root()) {
-            boost::filesystem::create_directories(result_dir_mode);
-        }
+                mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
+                auto result_dir_mode = result_dir / ("kmin_" + std::to_string(kmin) + "_kmax_" + std::to_string(kmax)) /
+                                       boost::filesystem::path(mode);
+                // create directory for results
+                if (mio::mpi::is_root()) {
+                    boost::filesystem::create_directories(result_dir_mode);
+                }
 
-        BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, data_dir, mode));
-        params_graph = created;
+                BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, data_dir, mode, kmin, kmax));
+                params_graph = created;
 
-        // set initial infected state
-        BOOST_OUTCOME_TRY(
-            set_infected_state(params_graph, state_id_infected, initially_infected_per_100k, initially_icu_per_100k));
+                // set initial infected state
+                BOOST_OUTCOME_TRY(set_infected_state(params_graph, state_id_infected, initially_infected_per_100k,
+                                                     initially_icu_per_100k));
 
-        std::vector<int> county_ids(params_graph.nodes().size());
-        std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
-            return n.id;
-        });
+                // set initial infected county
+                // BOOST_OUTCOME_TRY(
+                //     set_infected_county(params_graph, county_id_infected, initially_infected_per_100k, initially_icu_per_100k));
 
-        //run parameter study
-        if (std::strcmp(mode, "ClassicDamping") == 0) {
-            auto parameter_study_sim =
-                mio::ParameterStudy<mio::osecir::Simulation<mio::FlowSimulation<mio::osecir::Model>>>{
-                    params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
-            BOOST_OUTCOME_TRY(
-                run_parameter_study(parameter_study_sim, county_ids, result_dir_mode, num_days_sim, mode));
-        }
-        else {
-            auto parameter_study_feedback_sim =
-                mio::ParameterStudy<mio::osecir::FeedbackSimulation<mio::FlowSimulation<mio::osecir::Model>>>{
-                    params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
-            BOOST_OUTCOME_TRY(
-                run_parameter_study(parameter_study_feedback_sim, county_ids, result_dir_mode, num_days_sim, mode));
+                std::vector<int> county_ids(params_graph.nodes().size());
+                std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(),
+                               [](auto& n) {
+                                   return n.id;
+                               });
+
+                //run parameter study
+                if (std::strcmp(mode, "ClassicDamping") == 0) {
+                    auto parameter_study_sim =
+                        mio::ParameterStudy<mio::osecir::Simulation<mio::FlowSimulation<mio::osecir::Model>>>{
+                            params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+                    BOOST_OUTCOME_TRY(
+                        run_parameter_study(parameter_study_sim, county_ids, result_dir_mode, num_days_sim, mode));
+                }
+                else {
+                    auto parameter_study_feedback_sim =
+                        mio::ParameterStudy<mio::osecir::FeedbackSimulation<mio::FlowSimulation<mio::osecir::Model>>>{
+                            params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+                    BOOST_OUTCOME_TRY(run_parameter_study(parameter_study_feedback_sim, county_ids, result_dir_mode,
+                                                          num_days_sim, mode));
+                }
+            }
         }
     }
     return mio::success();

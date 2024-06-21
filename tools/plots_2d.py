@@ -28,7 +28,7 @@ fontsize = 28
 legendsize = 15
 ticks = 15
 # colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-colors = sns.color_palette("colorblind", 16)
+colors = sns.color_palette("tab20")
 
 
 def read_total_results_h5(path, comp, group_key='Total'):
@@ -83,7 +83,7 @@ def read_county_results_h5(path, comp, group_key='Total'):
     return df
 
 
-def plot(ys, labels, path_plots, title="", log_scale=False, ylabel="Number Individuals"):
+def plot(ys, labels, path_plots, title="", log_scale=False, ylabel="Number Individuals", plot_percentiles=True):
     num_data = len(ys)
 
     # Set days for x-axis
@@ -124,17 +124,18 @@ def plot(ys, labels, path_plots, title="", log_scale=False, ylabel="Number Indiv
         y = ys[indx_data]
         ax = axes[indx_data % len(axes)]
         if isinstance(y, dict):
-            ax.plot(days, y["p25"], linewidth=lineWidth,
-                    linestyle='--', color=colors[indx_data % len(colors)])
-            ax.plot(days, y["p75"], linewidth=lineWidth,
-                    linestyle='--', color=colors[indx_data % len(colors)])
             ax.plot(days, y["p50"], label=labels[indx_data], linewidth=lineWidth,
-                    linestyle='-', color=colors[indx_data % len(colors)])
-            ax.fill_between(
-                days, y["p25"], y["p75"], color=colors[indx_data % len(colors)], alpha=opacity)
+                    linestyle='-', color=colors[indx_data])
+            if plot_percentiles:
+                ax.plot(days, y["p25"], linewidth=lineWidth,
+                        linestyle='--', color=colors[indx_data])
+                ax.plot(days, y["p75"], linewidth=lineWidth,
+                        linestyle='--', color=colors[indx_data])
+                ax.fill_between(
+                    days, y["p25"], y["p75"], color=colors[indx_data], alpha=opacity)
         else:
             ax.plot(days, y, label=labels[indx_data], linewidth=lineWidth,
-                    linestyle='-', color=colors[indx_data % len(colors)])
+                    linestyle='-', color=colors[indx_data])
 
     for ax in axes:
         ax.legend(fontsize=legendsize, loc='center left',
@@ -165,9 +166,8 @@ def get_results(path_results, indx_comp, group_key='Total', results="total", per
     return y
 
 
-def plot_risk(path_results, path_plots, log_scale=False):
-    if not os.path.exists(path_plots):
-        os.makedirs(path_plots)
+def plot_risk(path_results, path_plots, log_scale=False, plot_percentiles=False):
+    create_folder_if_not_exists(path_plots)
     num_counties = 400
     path_risk_results = os.path.join(path_results, "FeedbackDamping", "risk")
     # total risk
@@ -195,12 +195,11 @@ def plot_risk(path_results, path_plots, log_scale=False):
                     len(counties_per_state[state+1])
     labels = geoger.get_state_names()
     plot(plot_data, labels, path_plots, title="State_Risk",
-         log_scale=log_scale, ylabel="Perceived Risk")
+         log_scale=log_scale, ylabel="Perceived Risk", plot_percentiles=plot_percentiles)
 
 
 def plot_compartments(path_results, path_plots, modes, compartments, labels, title, log_scale=False):
-    if not os.path.exists(path_plots):
-        os.makedirs(path_plots)
+    create_folder_if_not_exists(path_plots)
     plot_data = []
     labels_modes = []
     for mode in modes:
@@ -215,8 +214,7 @@ def plot_compartments(path_results, path_plots, modes, compartments, labels, tit
 
 
 def plot_flows(path_results, path_plots, modes, flow_indx, labels, title, log_scale=False):
-    if not os.path.exists(path_plots):
-        os.makedirs(path_plots)
+    create_folder_if_not_exists(path_plots)
     plot_data = []
     labels_modes = []
     for mode in modes:
@@ -233,19 +231,7 @@ def plot_flows(path_results, path_plots, modes, flow_indx, labels, title, log_sc
 
 
 def plot_r0(path_results, path_plots, modes, percentile="p50"):
-    file_format = 'h5'
-    try:
-        population = pd.read_json(
-            'data/pydata/Germany/county_current_population.json')
-    # pandas>1.5 raise FileNotFoundError instead of ValueError
-    except (ValueError, FileNotFoundError):
-        print(
-            "Population data was not found. Download it from the internet.")
-        population = gpd.get_population_data(
-            read_data=False, file_format=file_format,
-            out_folder='data/pydata/Germany/', no_raw=True,
-            split_gender=False, merge_eisenach=True)
-
+    population = get_pop()
     total_pop = population['Population'].sum()
 
     r0_nums = []
@@ -287,7 +273,7 @@ def plot_r0_county_level(path_results, path_plots, modes, percentile="p50"):
     for i, mode in enumerate(modes):
         df = df_modes[i]
         # every second day
-        # df = df.iloc[::2]
+        df = df.iloc[::10]
         df = df.T
         plt.subplot(1, len(modes), i + 1)
         sns.boxplot(data=df, orient="v")
@@ -303,7 +289,7 @@ def plot_r0_county_level(path_results, path_plots, modes, percentile="p50"):
 
     for i in range(len(modes)):  # Setzen der gleichen Skala für alle Plots
         plt.subplot(1, len(modes), i + 1)
-        plt.ylim(y_min, y_max)
+        plt.ylim(0.4, 1.7)
 
     plt.savefig(os.path.join(path_plots, 'box_plots.png'))
 
@@ -334,18 +320,7 @@ def plot_r0_county_level(path_results, path_plots, modes, percentile="p50"):
 
 
 def plot_contacts(path_results, path_plots, modes, percentile="p50"):
-    file_format = 'h5'
-    try:
-        population = pd.read_json(
-            'data/pydata/Germany/county_current_population.json')
-    # pandas>1.5 raise FileNotFoundError instead of ValueError
-    except (ValueError, FileNotFoundError):
-        print(
-            "Population data was not found. Download it from the internet.")
-        population = gpd.get_population_data(
-            read_data=False, file_format=file_format,
-            out_folder='data/pydata/Germany/', no_raw=True,
-            split_gender=False, merge_eisenach=True)
+    population = get_pop()
     total_pop = population['Population'].sum()
     # adjust age groups
     old_ages = [age.split()[0] for age in population.columns[2:]]
@@ -422,8 +397,7 @@ def plot_contacts(path_results, path_plots, modes, percentile="p50"):
 
 
 def plot_icu_comp(path_results, path_plots, modes, path_icu_data, log_scale=False):
-    if not os.path.exists(path_plots):
-        os.makedirs(path_plots)
+    create_folder_if_not_exists(path_plots)
     icu_comp = [7]
     label = "ICU Occupancy"
     labels = []
@@ -466,9 +440,8 @@ def plot_icu_comp(path_results, path_plots, modes, path_icu_data, log_scale=Fals
     return 0
 
 
-def plot_peaks(path_results, path_plots, modes, target_indx, percentile="p50", flows=True):
-    if not os.path.exists(path_plots):
-        os.makedirs(path_plots)
+def plot_peaks(path_results, path_plots, modes, target_indx, percentile="p50", flows=True, title="Peaks for each County"):
+    create_folder_if_not_exists(path_plots)
     peaks_modes = []
 
     for mode in modes:
@@ -491,12 +464,127 @@ def plot_peaks(path_results, path_plots, modes, target_indx, percentile="p50", f
             peaks_modes.append(np.bincount(peaks, minlength=df_data.shape[0]))
 
     plot(peaks_modes, modes, path_plots,
-         title="Peaks for each County", ylabel="Day of Peak")
+         title=title, ylabel="Number of Peaks")
+
+
+def plot_peaks_single(path_results, path_plots, target_indx, percentile="p50", flows=True):
+    # list all dirs beginning with kmin
+    path_plots_peaks = os.path.join(path_plots, "peaks")
+    kmin_dirs = [d for d in os.listdir(path_results) if os.path.isdir(
+        os.path.join(path_results, d)) and d.startswith("kmin")]
+    for runs in kmin_dirs:
+        path_results_kmin = os.path.join(path_results, runs)
+        plot_peaks(path_results_kmin, path_plots_peaks, modes, target_indx,
+                   percentile, flows, title=f"Peaks_{runs}")
+
+
+def get_pop(file_format='h5'):
+    try:
+        population = pd.read_json(
+            'data/pydata/Germany/county_current_population.json')
+    # pandas>1.5 raise FileNotFoundError instead of ValueError
+    except (ValueError, FileNotFoundError):
+        print(
+            "Population data was not found. Download it from the internet.")
+        population = gpd.get_population_data(
+            read_data=False, file_format=file_format,
+            out_folder='data/pydata/Germany/', no_raw=True,
+            split_gender=False, merge_eisenach=True)
+
+    return population
+
+
+def create_folder_if_not_exists(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
+def get_kmin_dirs(path_results):
+    return [d for d in os.listdir(path_results) if os.path.isdir(os.path.join(path_results, d)) and d.startswith("kmin")]
+
+
+def read_data(path, target_indx, percentile, flows):
+    df = read_county_results_h5(os.path.join(
+        path, percentile, "Results.h5"), target_indx[0], group_key='Total')
+    if flows:
+        df = df.diff().iloc[1:].reset_index(drop=True)
+    return df
+
+
+def plot_and_save(fig, path, filename):
+    plt.tight_layout()
+    fig.savefig(os.path.join(path, filename))
+    plt.close(fig)
+
+
+def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p50", flows=True, plot_type='kmin'):
+    if len(modes) > 1:
+        print("Only one mode is allowed for the grid peak plot.")
+        return
+
+    create_folder_if_not_exists(os.path.join(path_plots, "peaks"))
+
+    kmin_dirs = get_kmin_dirs(path_results)
+    all_kmins = sorted(set(float(d.split("_")[1]) for d in kmin_dirs))
+
+    for kmin in all_kmins:
+        fig, axes = plt.subplots(
+            1, round(10 - kmin * 10), figsize=(15, 3), squeeze=False)
+        all_peaks = []
+
+        for run in kmin_dirs:
+            if kmin != float(run.split("_")[1]):
+                continue
+
+            path = os.path.join(path_results, run,
+                                modes[0], "flows" if flows else "")
+            df = read_data(path, target_indx, percentile, flows)
+
+            if plot_type == 'kmin':
+                peaks = np.bincount(df.idxmax().values, minlength=df.shape[0])
+                all_peaks.append(peaks)
+                ax = axes[0, len(all_peaks) - 1]
+                ax.plot(peaks)
+                if len(all_peaks) == 1:
+                    ax.set_ylabel('Number of Peaks')
+            else:
+                peak_indices = df.idxmax().values
+                peak_max = df.max().values / \
+                    get_pop()['Population'].values * 100_000
+                peak_values = {i: [] for i in range(df.shape[0])}
+                for idx, val in zip(peak_indices, peak_max):
+                    peak_values[idx].append(val)
+                df_long = pd.DataFrame(
+                    [{'Day': day, 'Peak Value': val} for day, vals in peak_values.items() for val in vals])
+                all_peaks.extend(peak_values.values())
+                ax = axes[0, len(all_peaks) // len(df) - 1]
+                # TODO: Set y label only for first plot
+                if len(all_peaks) == 1:
+                    sns.boxplot(x='Day', y='Peak Value', data=df_long, ax=ax)
+                    ax.set_ylabel('Peak Value per 100,000 Individuals')
+                else:
+                    sns.boxplot(x='Day', y='Peak Value', data=df_long, ax=ax)
+
+            ax.set_title(f'kmin: {kmin}, kmax: {run.split("_")[3]}')
+            ax.set_xlabel('Day')
+
+        global_min = min(min(peaks) for peaks in all_peaks if peaks)
+        global_max = max(max(peaks) for peaks in all_peaks if peaks) + 10
+        for ax in axes.flat:
+            ax.set_ylim(global_min, global_max)
+
+        plot_and_save(fig, os.path.join(path_plots, "peaks"),
+                      f'peaks_grid_{plot_type}_kmin_{kmin}.png')
+
+        for ax in axes.flat:
+            ax.set_yscale('symlog')
+        plot_and_save(fig, os.path.join(path_plots, "peaks"),
+                      f'peaks_grid_{plot_type}_kmin_{kmin}_log.png')
 
 
 if __name__ == '__main__':
     path_cwd = os.getcwd()
-    path_results = os.path.join(path_cwd, "results")
+    path_results = os.path.join(path_cwd, "results", "save")
     path_plots = os.path.join(path_cwd, "plots")
     path_icu_data = os.path.join(
         path_cwd, "data/pydata/Germany/germany_divi_ma7.json")
@@ -508,17 +596,26 @@ if __name__ == '__main__':
     dead_compartment = [[9]]
     flow_se = [[0]]
 
-    plot_contacts(path_results, path_plots, modes)
-    plot_risk(path_results, path_plots)
-    plot_compartments(path_results, path_plots, modes,
-                      icu_compartment, ["ICU Occupancy"], "ICU Occupancy")
-    plot_compartments(path_results, path_plots, modes,
-                      infected_compartment, [""], "Total Infected")
-    plot_compartments(path_results, path_plots, modes,
-                      dead_compartment, [""], "Total Deaths")
-    plot_flows(path_results, path_plots, modes,
-               flow_se, [""], "Daily Infections")
-    plot_icu_comp(path_results, path_plots, modes, path_icu_data)
-    plot_r0(path_results, path_plots, modes)
-    plot_peaks(path_results, path_plots, modes, flow_se)
-    plot_r0_county_level(path_results, path_plots, modes)
+    # plot_r0_county_level(path_results, path_plots, modes)
+    # plot_contacts(path_results, path_plots, modes)
+    plot_risk(os.path.join(path_cwd, "results"),
+              path_plots, plot_percentiles=False)
+    # plot_compartments(path_results, path_plots, modes,
+    #                   icu_compartment, ["ICU Occupancy"], "ICU Occupancy")
+    # plot_compartments(path_results, path_plots, modes,
+    #                   infected_compartment, [""], "Total Infected")
+    # plot_compartments(path_results, path_plots, modes,
+    #                   dead_compartment, [""], "Total Deaths")
+    # plot_flows(path_results, path_plots, modes,
+    #            flow_se, [""], "Daily Infections")
+    # plot_icu_comp(path_results, path_plots, modes, path_icu_data)
+    # plot_r0(path_results, path_plots, modes)
+    # plot_peaks(path_results, path_plots, modes, flow_se)
+
+    # plot_peaks_single(path_results, path_plots, ["FeedbackDamping"], flow_se)
+    # plot_peaks_kmin(path_results, path_plots, [
+    #                 "FeedbackDamping"], icu_compartment, flows=False)
+    # plot_peak_values(path_results, path_plots, [
+    #                  "FeedbackDamping"], flow_se, plot_type='kmin')
+    # plot_peak_values(path_results, path_plots, [
+    #                  "FeedbackDamping"], flow_se, plot_type='val')
