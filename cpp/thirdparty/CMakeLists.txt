@@ -13,17 +13,6 @@ if(MEMILIO_ENABLE_PROFILING)
     if(NOT UNIX)
         message(FATAL_ERROR "Profiling with gperftools currently only supported on unix systems.")
     endif()
-    
-    find_library(MEMILIO_GPERFTOOLS_LIB
-        NAMES profiler
-        DOC "Path of gperftools profiler library.")
-
-    if(NOT MEMILIO_GPERFTOOLS_LIB)
-        message(FATAL_ERROR "Could not find gperftools profiler library. \
-            Make sure the location of the library is in the CMake search path, \
-            set MEMILIO_GPERFTOOLS_LIB manually to the correct path, \
-            or disable MEMILIO_ENABLE_PROFILING.")
-    endif()
 
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GPERFTOOLS REQUIRED libprofiler)
