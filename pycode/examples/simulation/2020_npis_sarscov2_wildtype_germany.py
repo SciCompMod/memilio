@@ -1,13 +1,32 @@
+#############################################################################
+# Copyright (C) 2020-2024 MEmilio
+#
+# Authors: Henrik Zunker
+#
+# Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#############################################################################
 import numpy as np
 import datetime
 import os
 import memilio.simulation as mio
-import memilio.simulation.secir as secir
+import memilio.simulation.osecir as osecir
 import memilio.plot.createGIF as mp
 
 from enum import Enum
-from memilio.simulation.secir import (Model, Simulation,
-                                      interpolate_simulation_result)
+from memilio.simulation.osecir import (Model, Simulation,
+                                       interpolate_simulation_result)
 
 
 class Location(Enum):
@@ -404,7 +423,7 @@ class Simulation:
         self.set_contact_matrices(model)
         self.set_npis(model.parameters, end_date)
 
-        graph = secir.ModelGraph()
+        graph = osecir.ModelGraph()
 
         scaling_factor_infected = [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
         scaling_factor_icu = 1.0
@@ -414,7 +433,7 @@ class Simulation:
             self.data_dir, "pydata", "Germany",
             "county_current_population.json")
 
-        mio.secir.set_nodes(
+        mio.osecir.set_nodes(
             model.parameters,
             mio.Date(self.start_date.year,
                      self.start_date.month, self.start_date.day),
@@ -423,7 +442,7 @@ class Simulation:
             path_population_data, True, graph, scaling_factor_infected,
             scaling_factor_icu, tnt_capacity_factor, 0, False)
 
-        mio.secir.set_edges(
+        mio.osecir.set_edges(
             self.data_dir, graph, len(Location))
 
         return graph
@@ -438,9 +457,9 @@ class Simulation:
             path_graph = os.path.join(self.results_dir, "graph")
             if not os.path.exists(path_graph):
                 os.makedirs(path_graph)
-            secir.write_graph(graph, path_graph)
+            osecir.write_graph(graph, path_graph)
 
-        study = secir.ParameterStudy(
+        study = osecir.ParameterStudy(
             graph, 0., num_days_sim, 0.5, num_runs)
         ensemble = study.run()
 
@@ -458,7 +477,7 @@ class Simulation:
         save_percentiles = True
         save_single_runs = False
 
-        secir.save_results(
+        osecir.save_results(
             ensemble_results, ensemble_params, node_ids, self.results_dir,
             save_single_runs, save_percentiles)
         if create_gif:
@@ -474,6 +493,6 @@ if __name__ == "__main__":
     sim = Simulation(
         data_dir=os.path.join(file_path, "../../../data"),
         start_date=datetime.date(year=2020, month=12, day=12),
-        results_dir=os.path.join(file_path, "../../../results_secir"))
+        results_dir=os.path.join(file_path, "../../../results_osecir"))
     num_days_sim = 50
     sim.run(num_days_sim, num_runs=2)

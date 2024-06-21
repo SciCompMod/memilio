@@ -13,8 +13,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # add in C++ library
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
-add_custom_target(DUMMY ALL)
-add_dependencies(DUMMY boost-bootstrap)
 FIND_LIBRARY(LIBCLANG_PATH
     clang HINTS ${CMAKE_CXX_COMPILER}/../../
 )
