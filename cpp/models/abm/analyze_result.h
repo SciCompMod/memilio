@@ -183,15 +183,6 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             });
         }
         param_percentil(node, [](auto&& model) -> auto& {
-            return model.parameters.template get<MaskProtection>()[MaskType::Community];
-        });
-        param_percentil(node, [](auto&& model) -> auto& {
-            return model.parameters.template get<MaskProtection>()[MaskType::FFP2];
-        });
-        param_percentil(node, [](auto&& model) -> auto& {
-            return model.parameters.template get<MaskProtection>()[MaskType::Surgical];
-        });
-        param_percentil(node, [](auto&& model) -> auto& {
             static auto result = model.parameters.template get<LockdownDate>().days();
             return result;
         });
