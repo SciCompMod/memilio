@@ -1,4 +1,39 @@
-# Performance measuring with Score-P
+# Profiling
+
+This document explains how to create performance profiles, i.e., measurements of where in the code time is spent, usually aggregated by function. There is a variety of open-source or proprietary tools available. Generally, there are three types of profilers:
+- instrumenting: modify the compiled code to include code for measurement. Advantage: exact function call counts and times, no approximations. Disadvantage: instrumentation adds runtime overhead that can distort the result or disable compiler optimizations (e.g. functions aren't inlined), so short functions usually must be excluded.
+- sampling: checking the CPU stack register in regular intervals to see which code is currently being executed. Advantage: usually low measurement runtime overhead. Disadvantage: stochastic results, imprecise especially for short functions, longer runtimes improve averages.
+- emulating: running the program in a virtual environment. Advantage: exact and able to measure even small functions. Disadvantage: program can run significantly longer, no real world timing results but instruction cycle counts are generally directly translatable.
+
+These tools have been tried for memilio and are described below:
+- gperftools: sampling profiler that gives reliable results with little setup
+- Score-P: large suite that supports both sampling and instrumenting. Special support for parallel code (OpenMP and MPI), including tracing to find load imbalances in the parallelization. 
+- Valgrind: suite that includes the Callgrind emulating profiler; description NYI; see [here](https://valgrind.org/info/tools.html)
+
+How to use these tools, the general optimization loop:
+1. Run a benchmark to get a baseline runtime and identify the need for performance optimization, e.g., a change introduced a performance regression.
+2. Create a profile to see where time is lost; maybe compare with a profile before your changes.
+3. Optimize the code.
+4. Test the functionality.
+5. Confirm the optimization with a benchmark and profile.
+6. Repeat if necessary.
+
+## gperftools
+
+gperftools (formerly google performance tools) is a suite of performance tools. Here the focus is on the [profiler](https://gperftools.github.io/gperftools/cpuprofile.html). It's a small sampling profiler that is quick to setup and use on most systems. It's integrated into our build system for even greater convenience.
+
+Basic steps:
+1. Install gperftools. It's available in many package managers (apt packages `google-perftools` and `libgoogle-perftools-dev`, spack or homebrew package `gperftools`). E.g., on the DLR-SC hpda cluster (insert the compiler version you are using): `module load spack-user; spack install gperftools%gcc@13.1.0; module load gperftools`.
+2. configure memilio with cmake variable `MEMILIO_ENABLE_PROFILING=ON`.
+3. compile memilio.
+4. run the program with environment variable `CPUPROFILE=profile.out` set.
+5. generate a human-readable annotated call graph: `pprof-symbolize --pdf <exe> profile.out > profile.pdf`. Check the documentation for other output formats.
+
+This generates a profile of the whole program. For each function, the graph contains the number of times the function was sampled and how much time is spent in the function as a percentage of the total runtime. Both sample count and percentage are displayed as exclusive numbers (i.e. the function without child functions) and inclusive numbers (the function including its child functions). 
+
+Probably not all parts of the program are interesting to profile. It's possible to filter the profile, e.g., to look at specific functions, using the `--focus` flag of `pprof-symbolize` or by starting the profiling manually using the `MEMILIO_PROFILER_START(<filename>)` and `MEMILIO_PROFILER_STOP` macros in `memilio/utils/profiler.h`. E.g., when profiling the `abm_simulation` program, it may be a good idea to exclude pre- and postprocessing by starting profiling right before the call to `Simulation::advance`.
+
+## Score-P
 
 Score-P is a tool that can be used to measure the perfomance of parallel code and supports profiling and tracing. For information on how to get it, please have a look at the [Score-P quickstart](https://scorepci.pages.jsc.fz-juelich.de/scorep-pipelines/docs/scorep-6.0/html/quickstart.html). It can be installed with the spack manager (and probably many other package managers) or loaded as a module on hpc systems.
 For the visualization of the performance data you need Cube (information on installation, see [here](https://apps.fz-juelich.de/scalasca/releases/cube/4.3/docs/CubeInstall.pdf)). It can load both Score-P profiles and Scalasca traces and you can find details about the loading and usage below or in the [User Guide](https://www.vi-hps.org/cms/upload/packages/cube/CubeGuide.pdf).
@@ -18,7 +53,7 @@ The [filter file](./scorep-filter-abm) is designed to include only the interesti
 
 To avoid the build errors about "include style" and "gcc extension" set ```-DMEMILIO_ENABLE_WARNINGS_AS_ERRORS=OFF``` during cmake configuration.
 
-## Profile measurements
+### Profile measurements
 
 To run the basic analysis with profiling:
 ```
@@ -109,7 +144,7 @@ However, there are some functions that still appear in the profile that do not a
       SCOREP         41      1   57.83    89.3    57830258.74  abm_simulation
          COM         24      1    0.00     0.0         532.58  void?mio::abm::Simulation::advance(mio::abm::TimePoint,?History&?...)??with?History?=?{mio::History<mio::abm::TimeSeriesWriter,?mio::abm::LogInfectionState>}?
 
-## Tracing
+### Tracing
 
 For deeper analysis, use Scalasca for tracing:
 
