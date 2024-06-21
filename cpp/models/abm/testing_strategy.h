@@ -26,6 +26,7 @@
 #include "memilio/utils/random_number_generator.h"
 #include <bitset>
 #include <unordered_set>
+#include "memilio/utils/pointer_dereferencing_iterator.h"
 
 namespace mio
 {
@@ -181,10 +182,19 @@ public:
     {
         return m_location_to_schemes_map;
     }
+    using ConstLocationIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::const_iterator>;
+    void update_location_testing_schemes(TimePoint t,
+                                         mio::Range<std::pair<ConstLocationIterator, ConstLocationIterator>> locations);
+
+    bool entry_allowed_testing_schemes(Person::RandomNumberGenerator& rng, Person& person, unsigned id,
+                                       const mio::abm::TimePoint t);
 
 private:
     std::vector<std::pair<LocationId, std::vector<mio::abm::TestingScheme>>>
         m_location_to_schemes_map; ///< Set of schemes that are checked for testing.
+    std::vector<std::vector<mio::abm::TestingScheme>>
+        m_testing_schemes_per_location; ///< List of TestingScheme%s that are checked for testing.
+    std::vector<mio::abm::TimePoint> m_update_ts_scheduler; ///< List of TimePoint%s when to update the TestingScheme.
 };
 
 } // namespace abm

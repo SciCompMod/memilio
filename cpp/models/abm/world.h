@@ -292,11 +292,6 @@ public:
         return m_rng;
     }
 
-    void update_location_testing_schemes(TimePoint t);
-
-    bool entry_allowed_testing_schemes(Person::RandomNumberGenerator& rng, Person& person, unsigned id,
-                                       const mio::abm::TimePoint t);
-
 private:
     /**
      * @brief Person%s interact at their Location and may become infected.
@@ -316,9 +311,6 @@ private:
     std::bitset<size_t(LocationType::Count)>
         m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
-    std::vector<std::vector<mio::abm::TestingScheme>>
-        m_testing_schemes_per_location; ///< List of TestingScheme%s that are checked for testing.
-    std::vector<mio::abm::TimePoint> m_update_ts_scheduler; ///< List of TimePoint%s when to update the TestingScheme.
     TripList m_trip_list; ///< List of all Trip%s the Person%s do.
     bool m_use_migration_rules; ///< Whether migration rules are considered.
     std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan,

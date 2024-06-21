@@ -19,6 +19,7 @@
 */
 
 #include "abm/testing_strategy.h"
+#include "abm/location.h"
 
 namespace mio
 {
@@ -119,6 +120,71 @@ void TestingStrategy::add_testing_scheme(const LocationId& loc_id, const Testing
         auto& schemes = iter_schemes->second;
         if (std::find(schemes.begin(), schemes.end(), scheme) == schemes.end()) {
             schemes.push_back(scheme);
+        }
+    }
+}
+
+bool TestingStrategy::entry_allowed_testing_schemes(Person::RandomNumberGenerator& rng, Person& person, unsigned id,
+                                                    const mio::abm::TimePoint t)
+{
+    if (m_testing_schemes_per_location.at(id).empty()) {
+        return true;
+    }
+
+    for (auto&& scheme : m_testing_schemes_per_location.at(id)) {
+        if (scheme.run_scheme(rng, person, t)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void TestingStrategy::update_location_testing_schemes(
+    TimePoint t, mio::Range<std::pair<ConstLocationIterator, ConstLocationIterator>> locations)
+{
+    if (m_testing_schemes_per_location.empty()) {
+        for (auto i = size_t(0); i < locations.size(); ++i) {
+            m_testing_schemes_per_location.push_back({});
+        }
+        for (auto&& schemes : m_location_to_schemes_map) {
+            for (auto&& scheme : schemes.second) {
+                auto start_date = scheme.get_start_date();
+                auto end_date   = scheme.get_end_date();
+                if (std::find_if(m_update_ts_scheduler.begin(), m_update_ts_scheduler.end(), [start_date](auto& p) {
+                        return p == start_date;
+                    }) == m_update_ts_scheduler.end()) {
+                    m_update_ts_scheduler.push_back(start_date);
+                }
+                if (std::find_if(m_update_ts_scheduler.begin(), m_update_ts_scheduler.end(), [end_date](auto& p) {
+                        return p == end_date;
+                    }) == m_update_ts_scheduler.end()) {
+                    m_update_ts_scheduler.push_back(end_date);
+                }
+            }
+        }
+        std::sort(m_update_ts_scheduler.begin(), m_update_ts_scheduler.end());
+    }
+
+    if (std::find(m_update_ts_scheduler.begin(), m_update_ts_scheduler.end(), t) != m_update_ts_scheduler.end()) {
+        std::cout << "Updating testing schemes at time " << t.days() << std::endl;
+#pragma omp parallel for
+        for (auto i = size_t(0); i < locations.size(); ++i) {
+            auto& location = locations[i];
+            auto loc_id    = location.get_index();
+            auto& schemes  = m_location_to_schemes_map;
+
+            auto iter_schemes = std::find_if(schemes.begin(), schemes.end(), [loc_id, &location](auto& p) {
+                return p.first.index == loc_id ||
+                       (p.first.index == INVALID_LOCATION_INDEX && p.first.type == location.get_type());
+            });
+            if (iter_schemes != schemes.end()) {
+                m_testing_schemes_per_location[i].clear();
+                for (auto&& scheme : iter_schemes->second) {
+                    if (scheme.is_active(t)) {
+                        m_testing_schemes_per_location[i].push_back(scheme);
+                    }
+                }
+            }
         }
     }
 }
