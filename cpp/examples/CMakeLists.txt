@@ -34,11 +34,10 @@ add_executable(sde_sirs_example sde_sirs.cpp)
 target_link_libraries(sde_sirs_example PRIVATE memilio sde_sirs)
 target_compile_options(sde_sirs_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-<<<<<<< HEAD
-add_executable(sde_seir2v_example sde_seir2v.cpp)
-target_link_libraries(sde_seir2v_example PRIVATE memilio sde_seir2v)
-target_compile_options(sde_seir2v_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-=======
+add_executable(sde_seirvv_example sde_seirvv.cpp)
+target_link_libraries(sde_seirvv_example PRIVATE memilio sde_seirvv)
+target_compile_options(sde_seirvv_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_seair_example ode_seair.cpp)
 target_link_libraries(ode_seair_example PRIVATE memilio ode_seair AD::AD)
 target_compile_options(ode_seair_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -56,7 +55,6 @@ target_compile_options(ad_square_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARN
 add_executable(ad_odeint_example ad_odeint_example.cpp)
 target_link_libraries(ad_odeint_example PRIVATE memilio AD::AD Boost::boost)
 target_compile_options(ad_odeint_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
->>>>>>> main
 
 add_executable(ode_sir_ageres_example ode_sir_ageres.cpp)
 target_link_libraries(ode_sir_ageres_example PRIVATE memilio ode_sir)
