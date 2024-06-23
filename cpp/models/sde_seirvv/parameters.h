@@ -46,7 +46,7 @@ struct TransmissionProbabilityOnContactV1 {
     }
     static std::string name()
     {
-        return "TransmissionProbabilityOnContact";
+        return "TransmissionProbabilityOnContactV1";
     }
 };
 
@@ -62,7 +62,7 @@ struct TransmissionProbabilityOnContactV2 {
     }
     static std::string name()
     {
-        return "TransmissionProbabilityOnContact";
+        return "TransmissionProbabilityOnContactV2";
     }
 };
 
@@ -77,7 +77,7 @@ struct TimeExposedV1 {
     }
     static std::string name()
     {
-        return "TimeInfected";
+        return "TimeExposedV1";
     }
 };
 
@@ -92,7 +92,7 @@ struct TimeExposedV2 {
     }
     static std::string name()
     {
-        return "TimeInfected";
+        return "TimeExposedV2";
     }
 };
 
@@ -107,7 +107,7 @@ struct TimeInfectedV1 {
     }
     static std::string name()
     {
-        return "TimeInfected";
+        return "TimeInfectedV1";
     }
 };
 
@@ -122,7 +122,7 @@ struct TimeInfectedV2 {
     }
     static std::string name()
     {
-        return "TimeInfected";
+        return "TimeInfectedV2";
     }
 };
 
