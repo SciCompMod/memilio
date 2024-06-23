@@ -17,14 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <fstream>
-#include <vector>
-#include <iostream>
-
 #include "memilio/utils/logging.h"
+#include "memilio/utils/random_number_generator.h"
 #include "sde_seir2v/model.h"
 #include "sde_seir2v/simulation.h"
-#include "memilio/utils/random_number_generator.h"
 
 int main()
 {
@@ -48,7 +44,7 @@ int main()
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::ExposedV1)}]  = 0;
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::ExposedV2)}]  = 0;
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::InfectedV1)}]  = 100;
-    model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::InfectedV2)}]  = 0.01;
+    model.populations[{mio::sseir2v::InfectionState::InfectedV2}]  = 0.01;
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::RecoveredV1)}] = 0;
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::RecoveredV2)}] = 0;
     model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::ExposedV1V2)}]  = 0;
@@ -79,18 +75,10 @@ int main()
 
     model.check_constraints();
 
-    auto ssirs = mio::sseir2v::simulate(t0, 23, dt, model);
-    model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::Susceptible)}] = ssirs.get_value(static_cast<size_t>(ssirs.get_num_time_points()) - 1)[0];
-    model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::ExposedV1)}] = ssirs.get_value(static_cast<size_t>(ssirs.get_num_time_points()) - 1)[1];
-    model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::InfectedV1)}]  = ssirs.get_value(static_cast<size_t>(ssirs.get_num_time_points()) - 1)[2];
-    model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::RecoveredV1)}] = ssirs.get_value(static_cast<size_t>(ssirs.get_num_time_points()) - 1)[3];    
-    model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::ExposedV2)}]  = ssirs.get_value(static_cast<size_t>(ssirs.get_num_time_points()) - 1)[4];
-    model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::InfectedV2)}]  = 10;
-    model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::RecoveredV2)}] = ssirs.get_value(static_cast<size_t>(ssirs.get_num_time_points()) - 1)[6];
-    model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::ExposedV1V2)}]  = ssirs.get_value(static_cast<size_t>(ssirs.get_num_time_points()) - 1)[7];
-    model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::InfectedV1V2)}]  = ssirs.get_value(static_cast<size_t>(ssirs.get_num_time_points()) - 1)[8];
-    model.populations[{mio::Index<mio::sseir2v::InfectionState>(mio::sseir2v::InfectionState::RecoveredV1V2)}] = ssirs.get_value(static_cast<size_t>(ssirs.get_num_time_points()) - 1)[9];
-    auto ssirs2 = mio::sseir2v::simulate(tmid, tmax, dt, model);
+    auto ssirs                                                    = mio::sseir2v::simulate(t0, 23, dt, model);
+    model.populations.array()                                     = ssirs.get_last_value().cast<mio::UncertainValue>();
+    model.populations[{mio::sseir2v::InfectionState::InfectedV2}] = 10;
+    auto ssirs2                                                   = mio::sseir2v::simulate(tmid, tmax, dt, model);
 
     ssirs.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
 }
