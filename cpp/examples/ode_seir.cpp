@@ -22,6 +22,7 @@
 #include "ode_seir/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
+#include "memilio/utils/time_series.h"
 
 #include "memilio/utils/time_series.h"
 
@@ -29,15 +30,15 @@ int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
-    double t0   = 0;
-    double tmax = 50.;
-    double dt   = 1.0;
+    ScalarType t0   = 0;
+    ScalarType tmax = 50.;
+    ScalarType dt   = 1.0;
 
     mio::log_info("Simulating ODE SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::oseir::Model model(1);
+    mio::oseir::Model<ScalarType> model(1);
 
-    double total_population                                                      = 10000;
+    ScalarType total_population                                                  = 10000;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]  = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}] = 100;
@@ -46,25 +47,18 @@ int main()
         model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}] -
         model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}];
 
-    model.parameters.set<mio::oseir::TimeExposed>(5.2);
-    model.parameters.set<mio::oseir::TimeInfected>(6);
-    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.1);
+    model.parameters.set<mio::oseir::TimeExposed<ScalarType>>(5.2);
+    model.parameters.set<mio::oseir::TimeInfected<ScalarType>>(6);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.1);
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns<ScalarType>>();
     contact_matrix[0].get_baseline().setConstant(2.7);
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
-    
 
     model.check_constraints();
 
-    mio::TimeSeries<double> seir = simulate(t0, tmax, dt, model);
+    auto seir = simulate(t0, tmax, dt, model);
 
-    bool print_to_terminal = true;
-
-    if (print_to_terminal) {
-        seir.print_table({"S", "E", "I", "R"});
-
-        Eigen::VectorXd res_j = seir.get_last_value();
-        printf("\nnumber total: %f\n", res_j[0] + res_j[1] + res_j[2] + res_j[3]);
-    }
+    seir.print_table({"S", "E", "I", "R"});
+    std::cout << "\nnumber total: " << seir.get_last_value().sum() << "\n";
 }

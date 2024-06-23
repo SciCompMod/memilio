@@ -31,17 +31,17 @@ int main()
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osir::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
-        model.parameters.get<mio::osir::TimeInfected>()[i]                     = 2.0;
-        model.parameters.get<mio::osir::TransmissionProbabilityOnContact>()[i] = 0.3;
+        model.parameters.get<mio::osir::TimeInfected<double>>()[i]                     = 2.0;
+        model.parameters.get<mio::osir::TransmissionProbabilityOnContact<double>>()[i] = 0.3;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osir::ContactPatterns<double>>();
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
     contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7), mio::SimulationTime(30.));
 
     model.apply_constraints();
 
-    mio::TimeSeries<double> sir = simulate(t0, tmax, dt, model);
+    auto sir = simulate(t0, tmax, dt, model);
 
     std::vector<std::string> vars = {"S", "I", "R"};
     printf("Number of time points :%d\n", static_cast<int>(sir.get_num_time_points()));
@@ -56,6 +56,6 @@ int main()
             dummy += sir.get_last_value()[k + (size_t)mio::osir::InfectionState::Count * (int)i];
         }
 
-        printf("\t %s_otal: %.0f\n", vars[k].c_str(), dummy);
+        printf("\t %s_Total: %.0f\n", vars[k].c_str(), dummy);
     }
 }

@@ -114,9 +114,8 @@ public:
                 .sum();
 
         // S'
-        ScalarType season_val =
-            1 + parameters.get<Seasonality>() *
-                    sin(3.141592653589793 * (std::fmod((parameters.get<StartDay>() + t), 365.0) / 182.5 + 0.5));
+        ScalarType season_val = 1 + parameters.get<Seasonality>() *
+                                        sin(3.141592653589793 * ((parameters.get<StartDay>() + t) / 182.5 + 0.5));
         dydt[0] = -y[0] / (m_N0 - y[LctState::template get_first_index<InfectionState::Dead>()]) * season_val *
                   parameters.get<TransmissionProbabilityOnContact>() *
                   parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(t)(0, 0) *

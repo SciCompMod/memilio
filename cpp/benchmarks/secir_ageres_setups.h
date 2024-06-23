@@ -35,7 +35,7 @@ namespace detail
 /**
          * @brief Helper function to create a secir model with consistent setup for use in benchmarking.
          */
-mio::osecir::Model make_model(int num)
+mio::osecir::Model<ScalarType> make_model(int num)
 {
 
     double cont_freq = 10; // see Polymod study
@@ -49,16 +49,16 @@ mio::osecir::Model make_model(int num)
 
     auto& params = model.parameters;
 
-    params.set<mio::osecir::ICUCapacity>(std::numeric_limits<double>::max());
+    params.set<mio::osecir::ICUCapacity<ScalarType>>(std::numeric_limits<double>::max());
     params.set<mio::osecir::StartDay>(0);
-    params.set<mio::osecir::Seasonality>(0);
+    params.set<mio::osecir::Seasonality<ScalarType>>(0);
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        params.get<mio::osecir::TimeExposed>()[i]            = 3.2;
-        params.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.;
-        params.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 6.;
-        params.get<mio::osecir::TimeInfectedSevere>()[i]     = 12;
-        params.get<mio::osecir::TimeInfectedCritical>()[i]   = 8;
+        params.get<mio::osecir::TimeExposed<ScalarType>>()[i]            = 3.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[i] = 2.;
+        params.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()[i]   = 6.;
+        params.get<mio::osecir::TimeInfectedSevere<ScalarType>>()[i]     = 12;
+        params.get<mio::osecir::TimeInfectedCritical<ScalarType>>()[i]   = 8;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * nb_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * nb_car_t0;
@@ -70,16 +70,16 @@ mio::osecir::Model make_model(int num)
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
-        params.get<mio::osecir::TransmissionProbabilityOnContact>()[i] = 0.05;
-        params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
-        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
-        params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
-        params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = 0.2;
-        params.get<mio::osecir::CriticalPerSevere>()[i]                = 0.25;
-        params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
+        params.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()[i] = 0.05;
+        params.get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()[i]   = 0.67;
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i]   = 0.09;
+        params.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[i]   = 0.25;
+        params.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[i]        = 0.2;
+        params.get<mio::osecir::CriticalPerSevere<ScalarType>>()[i]                = 0.25;
+        params.get<mio::osecir::DeathsPerCritical<ScalarType>>()[i]                = 0.3;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<ScalarType>>();
     contact_matrix[0] =
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
     contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
@@ -96,13 +96,13 @@ namespace model
 /**
          * @brief Secir model with consistent setup for use in benchmarking.
          */
-mio::osecir::Model SecirAgeres(size_t num_agegroups)
+mio::osecir::Model<ScalarType> SecirAgeres(size_t num_agegroups)
 {
-    mio::osecir::Model model = mio::benchmark::detail::make_model(num_agegroups);
+    mio::osecir::Model<ScalarType> model = mio::benchmark::detail::make_model(num_agegroups);
 
     auto nb_groups   = model.parameters.get_num_groups();
     double cont_freq = 10, fact = 1.0 / (double)(size_t)nb_groups;
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
     contact_matrix[0] =
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
 
@@ -114,13 +114,13 @@ mio::osecir::Model SecirAgeres(size_t num_agegroups)
 /**
          * @brief Secir model with consistent setup for use in benchmarking with added dampings.
          */
-mio::osecir::Model SecirAgeresDampings(size_t num_agegroups)
+mio::osecir::Model<ScalarType> SecirAgeresDampings(size_t num_agegroups)
 {
-    mio::osecir::Model model = mio::benchmark::detail::make_model(num_agegroups);
+    mio::osecir::Model<ScalarType> model = mio::benchmark::detail::make_model(num_agegroups);
 
     auto nb_groups   = model.parameters.get_num_groups();
     double cont_freq = 10, fact = 1.0 / (double)(size_t)nb_groups;
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
     contact_matrix[0] =
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
 
@@ -141,13 +141,13 @@ mio::osecir::Model SecirAgeresDampings(size_t num_agegroups)
          * @brief Secir model with consistent setup for use in benchmarking with added dampings.
          * Dampings are set up to challenge the integrator, not to be realistic.
          */
-mio::osecir::Model SecirAgeresAbsurdDampings(size_t num_agegroups)
+mio::osecir::Model<ScalarType> SecirAgeresAbsurdDampings(size_t num_agegroups)
 {
-    mio::osecir::Model model = mio::benchmark::detail::make_model(num_agegroups);
+    mio::osecir::Model<ScalarType> model = mio::benchmark::detail::make_model(num_agegroups);
 
     auto nb_groups   = model.parameters.get_num_groups();
     double cont_freq = 10, fact = 1.0 / (double)(size_t)nb_groups;
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
     contact_matrix[0] =
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
 
