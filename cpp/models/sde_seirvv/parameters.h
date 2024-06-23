@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef MIO_SDE_SEIR2V_PARAMETERS_H
-#define MIO_SDE_SEIR2V_PARAMETERS_H
+#ifndef MIO_SDE_SEIRVV_PARAMETERS_H
+#define MIO_SDE_SEIRVV_PARAMETERS_H
 
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/contact_matrix.h"
@@ -27,16 +27,16 @@
 
 namespace mio
 {
-namespace sseir2v
+namespace sseirvv
 {
 
 /***************************************
- * Define Parameters of the SIRS model *
+ * Define Parameters of the SSEIRVV model *
  ***************************************/
 
 /**
- * @brief probability of getting infected from a contact 
- * with variant 1
+ * @brief Probability of getting infected from a contact 
+ * with variant 1.
  */
 struct TransmissionProbabilityOnContactV1 {
     using Type = UncertainValue;
@@ -51,8 +51,8 @@ struct TransmissionProbabilityOnContactV1 {
 };
 
 /**
- * @brief probability of getting infected from a contact 
- * with variant 2
+ * @brief Probability of getting infected from a contact 
+ * with variant 2.
  */
 struct TransmissionProbabilityOnContactV2 {
     using Type = UncertainValue;
@@ -67,7 +67,7 @@ struct TransmissionProbabilityOnContactV2 {
 };
 
 /**
- * @brief the latent time of variant 1 in day unit
+ * @brief The latent time of variant 1 in day unit.
  */
 struct TimeExposedV1 {
     using Type = UncertainValue;
@@ -82,7 +82,7 @@ struct TimeExposedV1 {
 };
 
 /**
- * @brief the latent time of variant 2 in day unit
+ * @brief The latent time of variant 2 in day unit.
  */
 struct TimeExposedV2 {
     using Type = UncertainValue;
@@ -97,7 +97,7 @@ struct TimeExposedV2 {
 };
 
 /**
- * @brief the infectious time of variant 1 in day unit
+ * @brief The infectious time of variant 1 in day unit.
  */
 struct TimeInfectedV1 {
     using Type = UncertainValue;
@@ -112,7 +112,7 @@ struct TimeInfectedV1 {
 };
 
 /**
- * @brief the infectious time of variant 2 in day unit
+ * @brief The infectious time of variant 2 in day unit.
  */
 struct TimeInfectedV2 {
     using Type = UncertainValue;
@@ -129,7 +129,7 @@ struct TimeInfectedV2 {
 
 
 /**
- * @brief the contact patterns within the society are modelled using a ContactMatrix
+ * @brief The contact patterns within the society are modelled using a ContactMatrix.
  */
 struct ContactPatterns {
     using Type = ContactMatrix;
@@ -147,7 +147,7 @@ using ParametersBase = ParameterSet<TransmissionProbabilityOnContactV1, Transmis
     TimeExposedV1, TimeExposedV2, TimeInfectedV1, TimeInfectedV2, ContactPatterns>;
 
 /**
- * @brief Parameters of SIR model.
+ * @brief Parameters of stochastic SEIRVV model.
  */
 class Parameters : public ParametersBase
 {
@@ -297,7 +297,7 @@ public:
     }
 };
 
-} // namespace ssirs
+} // namespace sseirvv
 } // namespace mio
 
-#endif // MIO_SDE_SIRS_PARAMETERS_H
+#endif // MIO_SDE_SEIRVV_PARAMETERS_H
