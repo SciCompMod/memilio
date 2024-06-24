@@ -215,13 +215,6 @@ public:
         return m_save_indices;
     }
 
-    const auto& get_save_indices()
-    {
-        return m_save_indices;
-    }
-
-    /** @} */
-
     /**
      * Get/Set dynamic NPIs that are implemented when relative infections exceed thresholds.
      * This feature is optional. The simulation model needs to overload the get_infected_relative function.
