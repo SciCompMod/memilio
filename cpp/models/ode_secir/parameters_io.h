@@ -149,20 +149,46 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
 * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
 */
 template <class Model>
-IOResult<void> export_input_data_county_timeseries(std::vector<Model> models, const std::string& dir,
-                                                   std::vector<int> const& region, Date date,
-                                                   const std::vector<double>& scaling_factor_inf,
-                                                   double scaling_factor_icu, int num_days)
+IOResult<void>
+export_input_data_county_timeseries(std::vector<Model> models, const std::string& dir, std::vector<int> const& region,
+                                    Date date, const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                                    int num_days, const std::string& divi_data_path,
+                                    const std::string& confirmed_cases_path, const std::string& population_data_path)
 {
     const size_t num_age_groups = scaling_factor_inf.size();
     std::vector<TimeSeries<double>> rki_data(
         region.size(), TimeSeries<double>::zero(num_days, (size_t)InfectionState::Count * num_age_groups));
 
+    BOOST_OUTCOME_TRY(auto&& num_population, details::read_population_data(population_data_path, region));
+
     for (size_t t = 0; t < static_cast<size_t>(num_days); ++t) {
         auto offset_day = offset_date_by_days(date, t);
-        BOOST_OUTCOME_TRY(
-            read_input_data_county(models, offset_day, region, scaling_factor_inf, scaling_factor_icu, dir, 0, false));
 
+        if (offset_day > Date(2020, 4, 23)) {
+            BOOST_OUTCOME_TRY(details::set_divi_data(models, divi_data_path, region, offset_day, scaling_factor_icu));
+        }
+        else {
+            log_warning("No DIVI data available for this date");
+            // TODO: print specific date
+        }
+
+        BOOST_OUTCOME_TRY(
+            details::set_confirmed_cases_data(models, confirmed_cases_path, region, offset_day, scaling_factor_inf));
+        BOOST_OUTCOME_TRY(details::set_population_data(models, population_data_path, region, false));
+
+        for (size_t r = 0; r < region.size(); r++) {
+            if (std::accumulate(num_population[r].begin(), num_population[r].end(), 0.0) > 0) {
+                auto num_groups = models[r].parameters.get_num_groups();
+                for (auto i = AgeGroup(0); i < num_groups; i++) {
+                    models[r].populations.template set_difference_from_group_total<AgeGroup>(
+                        {i, InfectionState::Susceptible}, num_population[r][size_t(i)]);
+                }
+            }
+            else {
+                log_warning("No population data available for region " + std::to_string(r) +
+                            ". Population data has not been set.");
+            }
+        }
         for (size_t r = 0; r < region.size(); r++) {
             rki_data[r][t] = models[r].get_initial_values();
         }
@@ -276,8 +302,11 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
         // (This only represents the vectorization of the previous function over all simulation days...)
         log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
                     "For simulation runs over the same time period, deactivate it.");
-        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, dir, county, date, scaling_factor_inf,
-                                                              scaling_factor_icu, num_days));
+        BOOST_OUTCOME_TRY(
+            export_input_data_county_timeseries(model, dir, county, date, scaling_factor_inf, scaling_factor_icu,
+                                                num_days, path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
+                                                path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"),
+                                                path_join(dir, "pydata/Germany", "county_current_population.json")));
     }
     return success();
 }
