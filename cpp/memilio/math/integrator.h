@@ -150,6 +150,7 @@ public:
         // hint at std functions for ADL
         using std::fabs;
         using std::max;
+        using std::min;
         const FP t0 = results.get_last_time();
         assert(tmax > t0);
         assert(dt > 0);
@@ -162,9 +163,9 @@ public:
         bool step_okay = true;
 
         FP dt_copy; // used to check whether step sizing is adaptive
-        FP dt_restore  = 0.0; // used to restore dt, if dt was decreased to reach tmax
-        FP dt_min_copy = m_core->get_dt_min(); // used to restore dt_min, if it was decreased to reach tmax
-        FP t           = t0;
+        FP dt_restore     = 0.0; // used to restore dt, if dt was decreased to reach tmax
+        FP dt_min_restore = m_core->get_dt_min(); // used to restore dt_min, if it was decreased to reach tmax
+        FP t              = t0;
 
         for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t) / (tmax - t0)) > 1e-10; ++i) {
             //we don't make timesteps too small as the error estimator of an adaptive integrator
@@ -174,14 +175,13 @@ public:
             if (dt > tmax - t) {
                 dt_restore = dt;
                 dt         = tmax - t;
+                // if necessary, also reduce minimal step size such that we do not step past tmax
+                m_core->get_dt_min() = min(tmax - t, m_core->get_dt_min());
+                // if dt_min was reduced, the following step will be the last due to dt == dt_min (see step method)
+                // dt_min must be restored after this loop
             }
-            dt_copy = dt;
 
-            if (tmax - t < dt_min_copy) {
-                // reduce minimal step size low enough such that we do not step past tmax
-                m_core->get_dt_min() = dt; // == tmax - t
-                // the following step will be the last. dt_min must be reset after this loop.
-            }
+            dt_copy = dt;
 
             results.add_time_point();
             step_okay &= m_core->step(f, results[i], t, dt, results[i + 1]);
@@ -190,7 +190,7 @@ public:
             // if dt has been changed (even slighly) by step, register the current m_core as adaptive
             m_is_adaptive |= !floating_point_equal(dt, dt_copy);
         }
-        m_core->get_dt_min() = dt_min_copy; // reset dt_min
+        m_core->get_dt_min() = dt_min_restore; // restore dt_min
         // if dt was decreased to reach tmax in the last time iteration,
         // we restore it as it is now probably smaller than required for tolerances
         dt = max(dt, dt_restore);
