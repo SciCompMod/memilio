@@ -51,11 +51,6 @@ class TestOseirGeneration(unittest.TestCase):
         cmake_cmd, stdout=subprocess.PIPE, cwd=build_dir.name)
     cmake_cmd_result.check_returncode()
 
-    cmake_cmd = ["cmake", "--build", ".", "--target", "boost-bootstrap"]
-    cmake_cmd_result = subprocess.run(
-        cmake_cmd, stdout=subprocess.PIPE, cwd=build_dir.name)
-    cmake_cmd_result.check_returncode()
-
     @patch('memilio.generation.scanner.utility.try_get_compilation_database_path')
     def setUp(self, try_get_compilation_database_path_mock):
         try_get_compilation_database_path_mock.return_value = self.build_dir.name

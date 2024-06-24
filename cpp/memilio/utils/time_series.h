@@ -22,14 +22,11 @@
 
 #include "memilio/io/io.h"
 #include "memilio/math/eigen.h"
-#include "memilio/math/eigen_util.h"
 #include "memilio/utils/stl_util.h"
-#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/math/floating_point.h"
 
 #include <iterator>
 #include <vector>
-#include <map>
 #include <ostream>
 
 namespace mio

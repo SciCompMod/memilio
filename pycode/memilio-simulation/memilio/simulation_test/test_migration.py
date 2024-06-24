@@ -22,7 +22,7 @@ import unittest
 import numpy as np
 
 import memilio.simulation as mio
-import memilio.simulation.secir as secir
+import memilio.simulation.osecir as osecir
 
 
 class Test_Migration(unittest.TestCase):
@@ -37,9 +37,9 @@ class Test_Migration(unittest.TestCase):
                         == 0.5 * np.ones(10)).all())
 
     def test_params_graph(self):
-        graph = secir.ModelGraph()
-        graph.add_node(0, secir.Model(1))
-        graph.add_node(1, secir.Model(1))
+        graph = osecir.ModelGraph()
+        graph.add_node(0, osecir.Model(1))
+        graph.add_node(1, osecir.Model(1))
         graph.add_edge(0, 1, np.ones(10))
         self.assertEqual(graph.num_nodes, 2)
         self.assertEqual(graph.num_edges, 1)
@@ -47,9 +47,9 @@ class Test_Migration(unittest.TestCase):
         self.assertEqual(graph.get_num_out_edges(1), 0)
 
     def test_sim_graph(self):
-        graph = secir.MigrationGraph()
-        graph.add_node(0, secir.Model(1), 0, 0.1)
-        graph.add_node(1, secir.Model(1), 0)
+        graph = osecir.MigrationGraph()
+        graph.add_node(0, osecir.Model(1), 0, 0.1)
+        graph.add_node(1, osecir.Model(1), 0)
         graph.add_edge(0, 1, np.ones(10))
         self.assertEqual(graph.num_nodes, 2)
         self.assertEqual(graph.num_edges, 1)
@@ -57,12 +57,12 @@ class Test_Migration(unittest.TestCase):
         self.assertEqual(graph.get_num_out_edges(1), 0)
 
     def test_migration_sim(self):
-        graph = secir.MigrationGraph()
-        graph.add_node(0, secir.Model(1), 0, 0.1)
-        graph.add_node(1, secir.Model(1), 0)
+        graph = osecir.MigrationGraph()
+        graph.add_node(0, osecir.Model(1), 0, 0.1)
+        graph.add_node(1, osecir.Model(1), 0)
         graph.add_edge(0, 1, np.ones(10))
 
-        sim = secir.MigrationSimulation(graph, t0=0.0)
+        sim = osecir.MigrationSimulation(graph, t0=0.0)
         sim.advance(2)
 
         # integration does adaptive time steps so exact count is unknown
