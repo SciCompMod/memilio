@@ -85,7 +85,7 @@ TEST(TestInitializer, compareWithPrevious)
         init.add_time_point(init.get_last_time() + dt, vec_init);
     }
 
-    // Calculate initial vector and compare with previous reult.
+    // Calculate initial vector and compare with previous result.
     mio::lsecir::Initializer<Model> initializer(std::move(init), model);
     initializer.set_tol_for_support_max(1e-6);
     initializer.compute_initialization_vector(total_population, deaths, total_confirmed_cases);

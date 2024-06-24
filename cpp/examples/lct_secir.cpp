@@ -135,7 +135,7 @@ int main()
             (initial_populations[(int)LctState::InfectionState::Dead].size() !=
              (size_t)LctState::get_num_subcompartments<LctState::InfectionState::Dead>())) {
             mio::log_error(
-                "The length of at least one vector in initial_populations does not match the related number of "
+                "The length of at least one vector in initial_populations does not match the corresponding number of "
                 "subcompartments.");
             return 1;
         }

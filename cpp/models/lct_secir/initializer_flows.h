@@ -133,10 +133,10 @@ public:
             }
         }
 
-        // Update initial value vector of the mpdel.
+        // Update initial value vector of the model.
         m_model.set_initial_values(init);
 
-        // Check if constraints were fulfilled.
+        // Check if constraints are fulfilled.
         return check_constraints();
     }
 
@@ -152,7 +152,7 @@ public:
 
 private:
     /**
-     * @brief Checks constraints of the Initializer inclusive check for the model.
+     * @brief Checks constraints of the Initializer including checks for the model.
      * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
      */
     bool check_constraints() const
@@ -179,14 +179,14 @@ private:
             return true;
         }
 
-        // Check if model is valid and the calculated initial value vector was valid.
+        // Check if model is valid and the calculated initial value vector is valid.
         return m_model.check_constraints();
     }
 
     /**
      * @brief Computes a vector with the number of people in each subcompartment for one InfectionState.
      *
-     * With this function, partial result of compute_initialization_vector are achieved.
+     * This function is used in compute_initialization_vector.
      *
      * @param[in] idx_incoming_flow Index of the flow which is relevant for the calculation, so the flow to the InfectionState.
      * @param[in] transition_rate Specifies the transition rate of the InfectionState. Is equal to 1 / (expected Time in the InfectionState).
@@ -210,7 +210,7 @@ private:
         ScalarType sum{0};
         Eigen::Index num_time_points = m_flows.get_num_time_points();
 
-        // Calculate number of people in each subcomaprtment.
+        // Calculate number of people in each subcompartment.
         for (int j = 0; j < num_infectionstates; j++) {
             // For subcompartment number j+1, shape parameter j+1 is needed.
             erlang.set_distribution_parameter(j + 1);
@@ -223,7 +223,7 @@ private:
                 // Initialization failed. Not enough time points for the transitions are given.
                 // Store the number of necessary time points in the vector and throw one error at the compute_initialization_vector() function,
                 // so that the error is not displayed several times.
-                subcompartments[j] = -(double)calc_time_index;
+                subcompartments[j] = -(ScalarType)calc_time_index;
             }
             else {
 
