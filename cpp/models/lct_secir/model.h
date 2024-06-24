@@ -48,6 +48,7 @@ namespace lsecir
 template <int NumExposed, int NumInfectedNoSymptoms, int NumInfectedSymptoms, int NumInfectedSevere,
           int NumInfectedCritical>
 class Model : public CompartmentalModel<
+                  ScalarType,
                   LctInfectionState<InfectionState, 1, NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms,
                                     NumInfectedSevere, NumInfectedCritical, 1, 1>,
                   Populations<LctInfectionState<InfectionState, 1, NumExposed, NumInfectedNoSymptoms,
@@ -59,7 +60,7 @@ public:
     using LctState =
         LctInfectionState<InfectionState, 1, NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms, NumInfectedSevere,
                           NumInfectedCritical, 1, 1>; ///< This class specifies the number of subcompartments.
-    using Base = CompartmentalModel<LctState, mio::Populations<LctState>, Parameters>;
+    using Base = CompartmentalModel<ScalarType, LctState, mio::Populations<LctState>, Parameters>;
 
     /**
      * @brief Constructor to create an LCT SECIR Model.
@@ -68,12 +69,12 @@ public:
      * @param[in, out] parameters_init Specifies Parameters necessary for the Model. 
      */
     Model()
-        : Base(Populations({}), Parameters())
+        : Base(std::move(Populations({})), Parameters())
     {
     }
 
     /**
-     * @brief Evaulates the right-hand-side f of the LCT dydt = f(y, t).
+     * @brief Eulates the right-hand-side f of the LCT dydt = f(y, t).
      *
      * The LCT-SECIR model is defined through ordinary differential equations of the form dydt = f(y, t). 
      * y is a vector containing number of individuals for each (sub-) compartment.
