@@ -26,14 +26,14 @@ import numpy as np
 import pandas as pd
 
 from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix, AgeGroup
-from memilio.simulation.secir import Index_InfectionState
-from memilio.simulation.secir import InfectionState as State
-from memilio.simulation.secir import Model, Simulation, simulate
+from memilio.simulation.osecir import Index_InfectionState
+from memilio.simulation.osecir import InfectionState as State
+from memilio.simulation.osecir import Model, Simulation, simulate
 
 
-def run_secir_simulation(show_plot=True):
+def run_ode_secir_ageres_simulation(show_plot=True):
     """
-    Runs the c++ secir model using multiple age groups
+    Runs the c++ ODE SECIHURD model using multiple age groups
     and plots the results
     """
 
@@ -129,12 +129,12 @@ def run_secir_simulation(show_plot=True):
         ax.plot(t, data[:, 5], label='#InfectedCritical')
         ax.plot(t, data[:, 6], label='#Recovered')
         ax.plot(t, data[:, 7], label='#Died')
-        ax.set_title("SECIR model simulation")
+        ax.set_title("ODE SECIR model simulation")
         ax.set_xticks(tick_range)
         ax.set_xticklabels(datelist[tick_range], rotation=45)
         ax.legend()
         fig.tight_layout
-        fig.savefig('Secir_simple.pdf')
+        fig.savefig('osecir_simple.pdf')
 
         plt.show()
         plt.close()
@@ -145,9 +145,9 @@ def run_secir_simulation(show_plot=True):
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'secir_ageres',
-        description='Example demonstrating the setup and simulation of the SECIR model with multiple age groups.')
+        'ode_secir_ageres',
+        description='Example demonstrating the setup and simulation of the ODE SECIHURD model with multiple age groups.')
     arg_parser.add_argument('-p', '--show_plot',
                             action='store_const', const=True, default=False)
     args = arg_parser.parse_args()
-    run_secir_simulation(**args.__dict__)
+    run_ode_secir_ageres_simulation(**args.__dict__)

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Daniel Abele, Maximilian Betz
 #
@@ -19,7 +19,7 @@
 #############################################################################
 
 """
-Python bindings for MEmilio osecirvvs model.
+Python bindings for MEmilio ODE SECIRVVS model.
 """
 
 from memilio._simulation_osecirvvs import *

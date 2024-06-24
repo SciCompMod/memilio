@@ -24,9 +24,9 @@ import numpy as np
 import pandas as pd
 
 from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix, AgeGroup
-from memilio.simulation.secir import Index_InfectionState
-from memilio.simulation.secir import InfectionState as State
-from memilio.simulation.secir import Model, Simulation, simulate
+from memilio.simulation.osecir import Index_InfectionState
+from memilio.simulation.osecir import InfectionState as State
+from memilio.simulation.osecir import Model, Simulation, simulate
 
 
 class Test_osecir_integration(unittest.TestCase):

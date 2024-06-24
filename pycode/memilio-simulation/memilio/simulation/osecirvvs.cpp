@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
 * Authors: Daniel Abele, Maximilian Betz
 *
@@ -18,9 +18,8 @@
 * limitations under the License.
 */
 
-#include "pybind_util.h"
-
 //Includes from pymio
+#include "pybind_util.h"
 #include "utils/parameter_set.h"
 #include "compartments/simulation.h"
 #include "compartments/compartmentalmodel.h"
@@ -40,6 +39,7 @@
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/parameter_studies.h"
 
+#include "pybind11/pybind11.h"
 #include "pybind11/stl_bind.h"
 #include <vector>
 
@@ -147,6 +147,8 @@ enum class ContactLocation
     Count,
 };
 
+using MigrationGraph = mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>;
+
 } // namespace
 
 namespace pymio
@@ -166,8 +168,7 @@ std::string pretty_name<mio::osecirvvs::InfectionState>()
 
 } // namespace pymio
 
-PYBIND11_MAKE_OPAQUE(
-    std::vector<mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>>);
+PYBIND11_MAKE_OPAQUE(std::vector<MigrationGraph>);
 
 PYBIND11_MODULE(_simulation_osecirvvs, m)
 {
@@ -255,13 +256,13 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         .def("check_constraints", &mio::osecirvvs::Parameters<double>::check_constraints)
         .def("apply_constraints", &mio::osecirvvs::Parameters<double>::apply_constraints);
 
-    using SecirvvsPopulations = mio::Populations<double, mio::AgeGroup, mio::osecirvvs::InfectionState>;
-    pymio::bind_Population(m, "Population", mio::Tag<mio::osecirvvs::Model<double>::Populations>{});
+    using Populations = mio::Populations<double, mio::AgeGroup, mio::osecirvvs::InfectionState>;
+    pymio::bind_Population(m, "Populations", mio::Tag<mio::osecirvvs::Model<double>::Populations>{});
 
-    pymio::bind_CompartmentalModel<mio::osecirvvs::InfectionState, SecirvvsPopulations,
+    pymio::bind_CompartmentalModel<mio::osecirvvs::InfectionState, Populations,
                                    mio::osecirvvs::Parameters<double>, pymio::EnablePickling::Never>(m, "ModelBase");
     pymio::bind_class<mio::osecirvvs::Model<double>, pymio::EnablePickling::Required,
-                      mio::CompartmentalModel<double, mio::osecirvvs::InfectionState, SecirvvsPopulations,
+                      mio::CompartmentalModel<double, mio::osecirvvs::InfectionState, Populations,
                                               mio::osecirvvs::Parameters<double>>>(m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
@@ -272,31 +273,26 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         [](double t0, double tmax, double dt, const mio::osecirvvs::Model<double>& model) {
             return mio::osecirvvs::simulate(t0, tmax, dt, model);
         },
-        "Simulates a Model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+        "Simulates an ODE SECIRVVS model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
     m.def(
         "simulate_flows",
         [](double t0, double tmax, double dt, const mio::osecirvvs::Model<double>& model) {
             return mio::osecirvvs::simulate_flows(t0, tmax, dt, model);
         },
-        "Simulates a osecirvvs model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
+        "Simulates an ODE SECIRVVS model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
         py::arg("model"));
 
     pymio::bind_ModelNode<mio::osecirvvs::Model<double>>(m, "ModelNode");
     pymio::bind_SimulationNode<mio::osecirvvs::Simulation<>>(m, "SimulationNode");
     pymio::bind_ModelGraph<mio::osecirvvs::Model<double>>(m, "ModelGraph");
     pymio::bind_MigrationGraph<mio::osecirvvs::Simulation<>>(m, "MigrationGraph");
-    pymio::bind_GraphSimulation<
-        mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>>(
-        m, "MigrationSimulation");
+    pymio::bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
 
     //normally, std::vector is bound to any python iterable, but this doesn't work for move-only elements
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
     //interpolate_ensemble_results
-    py::bind_vector<
-        std::vector<mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>>>(
-
-        m, "EnsembleGraphResults");
+    py::bind_vector<std::vector<MigrationGraph>>(m, "EnsembleGraphResults");
     bind_ParameterStudy<mio::osecirvvs::Simulation<>>(m, "ParameterStudy");
 
     m.def(
@@ -306,7 +302,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         },
         py::arg("model"));
 
-    // These functions are in general not secir dependent, only with the current config
+    // These functions are in general not secirvvs dependent, only with the current config
     m.def(
         "set_nodes",
         [](const mio::osecirvvs::Parameters<double>& params, mio::Date start_date, mio::Date end_date,
@@ -372,16 +368,9 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
 #endif // MEMILIO_HAS_JSONCPP
 
     m.def("interpolate_simulation_result",
-          py::overload_cast<
-              const mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>&>(
+          py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<mio::osecirvvs::Simulation<>>));
 
-              &mio::interpolate_simulation_result<mio::osecirvvs::Simulation<>>));
-
-    m.def("interpolate_ensemble_results",
-
-          &mio::interpolate_ensemble_results<
-
-              mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>>);
+    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MigrationGraph>);
 
     m.attr("__version__") = "dev";
 }
