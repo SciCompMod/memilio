@@ -167,7 +167,7 @@ TEST(TestInitializer, testConstraints)
     status = initializer_init_wrong_step.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
     EXPECT_TRUE(status);
 
-    // Check with too short time period of initial data.
+    // Check with too short time period of initial data (returns true at the Exposed compartment).
     mio::TimeSeries<ScalarType> init_short(infectionTransition_count);
     init_short.add_time_point(-1., vec_init);
     while (init_short.get_last_time() < 0) {
@@ -178,7 +178,80 @@ TEST(TestInitializer, testConstraints)
     status = initializer_init_short.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
     EXPECT_TRUE(status);
 
-    // Check with correct flows.
+    // Check with negative result for InfectedNoSymptoms.
+    mio::TimeSeries<ScalarType> init_negative_InfectedNoSymptoms(infectionTransition_count);
+    vec_init[(int)mio::lsecir::InfectionTransition::ExposedToInfectedNoSymptoms] = -30;
+    init_negative_InfectedNoSymptoms.add_time_point(-50., vec_init);
+    while (init_negative_InfectedNoSymptoms.get_last_time() < 0) {
+        init_negative_InfectedNoSymptoms.add_time_point(init_negative_InfectedNoSymptoms.get_last_time() + dt,
+                                                        vec_init);
+    }
+
+    mio::lsecir::Initializer<Model> initializer_negative_InfectedNoSymptoms(std::move(init_negative_InfectedNoSymptoms),
+                                                                            model);
+    status = initializer_negative_InfectedNoSymptoms.compute_initialization_vector(total_population, deaths,
+                                                                                   total_confirmed_cases);
+    EXPECT_TRUE(status);
+
+    // Check with negative result for InfectedSymptoms.
+    mio::TimeSeries<ScalarType> init_negative_InfectedSymptoms(infectionTransition_count);
+    vec_init[(int)mio::lsecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 1.;
+    vec_init[(int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = -30;
+    init_negative_InfectedSymptoms.add_time_point(-50., vec_init);
+    while (init_negative_InfectedSymptoms.get_last_time() < 0) {
+        init_negative_InfectedSymptoms.add_time_point(init_negative_InfectedSymptoms.get_last_time() + dt, vec_init);
+    }
+
+    mio::lsecir::Initializer<Model> initializer_negative_InfectedSymptoms(std::move(init_negative_InfectedSymptoms),
+                                                                          model);
+    status = initializer_negative_InfectedSymptoms.compute_initialization_vector(total_population, deaths,
+                                                                                 total_confirmed_cases);
+    EXPECT_TRUE(status);
+
+    // Check with negative result for InfectedSevere.
+    mio::TimeSeries<ScalarType> init_negative_InfectedSevere(infectionTransition_count);
+    vec_init[(int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 1;
+    vec_init[(int)mio::lsecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = -30;
+    init_negative_InfectedSevere.add_time_point(-50., vec_init);
+    while (init_negative_InfectedSevere.get_last_time() < 0) {
+        init_negative_InfectedSevere.add_time_point(init_negative_InfectedSevere.get_last_time() + dt, vec_init);
+    }
+
+    mio::lsecir::Initializer<Model> initializer_negative_InfectedSevere(std::move(init_negative_InfectedSevere), model);
+    status = initializer_negative_InfectedSevere.compute_initialization_vector(total_population, deaths,
+                                                                               total_confirmed_cases);
+    EXPECT_TRUE(status);
+
+    // Check with negative result for InfectedCritical.
+    mio::TimeSeries<ScalarType> init_negative_InfectedCritical(infectionTransition_count);
+    vec_init[(int)mio::lsecir::InfectionTransition::InfectedSymptomsToInfectedSevere] = 1;
+    vec_init[(int)mio::lsecir::InfectionTransition::InfectedSevereToInfectedCritical] = -50;
+    init_negative_InfectedCritical.add_time_point(-50., vec_init);
+    while (init_negative_InfectedCritical.get_last_time() < 0) {
+        init_negative_InfectedCritical.add_time_point(init_negative_InfectedCritical.get_last_time() + dt, vec_init);
+    }
+
+    mio::lsecir::Initializer<Model> initializer_negative_InfectedCritical(std::move(init_negative_InfectedCritical),
+                                                                          model);
+    status = initializer_negative_InfectedCritical.compute_initialization_vector(total_population, deaths,
+                                                                                 total_confirmed_cases);
+    EXPECT_TRUE(status);
+
+    // Check with negative result for deaths.
+    mio::TimeSeries<ScalarType> init_negative_deaths(infectionTransition_count);
+    vec_init[(int)mio::lsecir::InfectionTransition::InfectedSevereToInfectedCritical] = 1;
+    deaths                                                                            = -100;
+    init_negative_deaths.add_time_point(-50., vec_init);
+    while (init_negative_deaths.get_last_time() < 0) {
+        init_negative_deaths.add_time_point(init_negative_deaths.get_last_time() + dt, vec_init);
+    }
+
+    mio::lsecir::Initializer<Model> initializer_negative_deaths(std::move(init_negative_deaths), model);
+    status = initializer_negative_deaths.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
+    EXPECT_TRUE(status);
+
+    // Check with correct initialization values.
+    deaths = 9710;
     mio::TimeSeries<ScalarType> init_right(infectionTransition_count);
     init_right.add_time_point(-50, vec_init);
     while (init_right.get_last_time() < 0) {

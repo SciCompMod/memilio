@@ -38,6 +38,13 @@ namespace lsecir
 
 /**
  * @brief Class that can be used to compute an initialization vector out of flows for a LCT Model.
+ * 
+ *  The initialization method is based on the fact that the LCT model is a special case of an IDE model with special 
+ *  choices of stay time distributions (so-called Erlang distributions). Accordingly, the method for calculating 
+ *  initial values for the compartments from given flows/transitions is taken from the IDE-SECIR model.
+ *  We cannot use the functionality of the IDE model directly, as we have to calculate a division into sub-compartments
+ *  and not only the sizes of the compartments.
+*   See also the IDE-SECIR model for the general method and for a better understanding of flows/transitions.
  *
  * @tparam Model is expected to be an LCT-SECIR model defined in models/lct_secir/model.h.
  */
@@ -51,7 +58,10 @@ public:
      * @brief Constructs a new Initializer object.
      *
      * @param[in] flows Initalizing TimeSeries with flows fitting to these defined in InfectionTransition. 
-     *      Timesteps should be equidistant.
+     *      Timesteps should be equidistant and the values should be non-negative. 
+     *      The time history has to be long enough so that it is possible to calculate the initial vector. 
+     *      The length of the required time history depends on the Erlang densities used to compute the initial vector.
+     *      An error is thrown if this condition is violated.
      * @param[in, out] model The LCT-SECIR model for which the initialization should be performed.
      */
     Initializer(TimeSeries<ScalarType>&& flows, Model& model)
@@ -82,30 +92,75 @@ public:
                      LctState::template get_num_subcompartments<InfectionState::Exposed>()) =
             compute_compartment<InfectionState::Exposed>(Eigen::Index(InfectionTransition::SusceptibleToExposed),
                                                          1 / m_model.parameters.template get<TimeExposed>());
+
+        if ((init.segment(LctState::template get_first_index<InfectionState::Exposed>(),
+                          LctState::template get_num_subcompartments<InfectionState::Exposed>())
+                 .array() < 0)
+                .any()) {
+            // Something went wrong while calculating the initial values for the subcompartments.
+            // See the compute_compartment() function for details.
+            return true;
+        }
         //C
         init.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
                      LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>()) =
             compute_compartment<InfectionState::InfectedNoSymptoms>(
                 Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms),
                 1 / m_model.parameters.template get<TimeInfectedNoSymptoms>());
+
+        if ((init.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
+                          LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>())
+                 .array() < 0)
+                .any()) {
+            // Something went wrong while calculating the initial values for the subcompartments.
+            // See the compute_compartment() function for details.
+            return true;
+        }
         //I
         init.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
                      LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>()) =
             compute_compartment<InfectionState::InfectedSymptoms>(
                 Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms),
                 1 / m_model.parameters.template get<TimeInfectedSymptoms>());
+
+        if ((init.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
+                          LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>())
+                 .array() < 0)
+                .any()) {
+            // Something went wrong while calculating the initial values for the subcompartments.
+            // See the compute_compartment() function for details.
+            return true;
+        }
         //H
         init.segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
                      LctState::template get_num_subcompartments<InfectionState::InfectedSevere>()) =
             compute_compartment<InfectionState::InfectedSevere>(
                 Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere),
                 1 / m_model.parameters.template get<TimeInfectedSevere>());
+
+        if ((init.segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
+                          LctState::template get_num_subcompartments<InfectionState::InfectedSevere>())
+                 .array() < 0)
+                .any()) {
+            // Something went wrong while calculating the initial values for the subcompartments.
+            // See the compute_compartment() function for details.
+            return true;
+        }
         //U
         init.segment(LctState::template get_first_index<InfectionState::InfectedCritical>(),
                      LctState::template get_num_subcompartments<InfectionState::InfectedCritical>()) =
             compute_compartment<InfectionState::InfectedCritical>(
                 Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical),
                 1 / m_model.parameters.template get<TimeInfectedCritical>());
+
+        if ((init.segment(LctState::template get_first_index<InfectionState::InfectedCritical>(),
+                          LctState::template get_num_subcompartments<InfectionState::InfectedCritical>())
+                 .array() < 0)
+                .any()) {
+            // Something went wrong while calculating the initial values for the subcompartments.
+            // See the compute_compartment() function for details.
+            return true;
+        }
         //R
         // Number of recovered is equal to the cumulative number of confirmed cases minus the number of people who are infected at the moment.
         init[LctState::Count - 2] =
@@ -123,12 +178,10 @@ public:
         //D
         init[LctState::Count - 1] = deaths;
 
-        for (int i = 0; i < LctState::Count; i++) {
+        for (int i : {0, LctState::Count - 2, LctState::Count - 1}) {
             if (init[i] < 0) {
-                log_error("Initialization failed. Not enough time points for the transitions are given. More than {} "
-                          "are needed but "
-                          "just {} are given.",
-                          -init[i], m_flows.get_num_time_points());
+                log_error("Initialization failed. Values of total_confirmed_cases, deaths and total_population do not "
+                          "match the specified values for the transitions, leading to at least one negative result.");
                 return true;
             }
         }
@@ -197,11 +250,11 @@ private:
     template <InfectionState State>
     Eigen::VectorXd compute_compartment(Eigen::Index idx_incoming_flow, ScalarType transition_rate) const
     {
-        int num_infectionstates = LctState::template get_num_subcompartments<State>();
-        Eigen::VectorXd subcompartments(num_infectionstates);
+        int num_subcompartments = LctState::template get_num_subcompartments<State>();
+        Eigen::VectorXd subcompartments(num_subcompartments);
         // Initialize relevant density for the InfectionState.
         // For the first subcompartment a shape parameter of one is needed.
-        ErlangDensity erlang(1, 1. / (num_infectionstates * transition_rate));
+        ErlangDensity erlang(1, 1. / (num_subcompartments * transition_rate));
 
         // Initialize other relevant parameters.
         ScalarType calc_time{0};
@@ -211,7 +264,7 @@ private:
         Eigen::Index num_time_points = m_flows.get_num_time_points();
 
         // Calculate number of people in each subcompartment.
-        for (int j = 0; j < num_infectionstates; j++) {
+        for (int j = 0; j < num_subcompartments; j++) {
             // For subcompartment number j+1, shape parameter j+1 is needed.
             erlang.set_distribution_parameter(j + 1);
 
@@ -220,10 +273,11 @@ private:
             calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt) - 1;
 
             if (num_time_points < calc_time_index) {
-                // Initialization failed. Not enough time points for the transitions are given.
-                // Store the number of necessary time points in the vector and throw one error at the compute_initialization_vector() function,
-                // so that the error is not displayed several times.
-                subcompartments[j] = -(ScalarType)calc_time_index;
+                log_error("Initialization failed. Not enough time points for the transitions are given. More than {} "
+                          "are needed but just {} are given.",
+                          calc_time_index, num_time_points);
+                subcompartments[j] = -1.;
+                return subcompartments;
             }
             else {
 
@@ -232,7 +286,14 @@ private:
                     state_age = (num_time_points - i) * m_dt;
                     sum += erlang.eval(state_age) * m_flows[i][idx_incoming_flow];
                 }
-                subcompartments[j] = 1 / (num_infectionstates * transition_rate) * sum;
+                subcompartments[j] = 1 / (num_subcompartments * transition_rate) * sum;
+                if (subcompartments[j] < 0) {
+                    log_error(
+                        "Initialization failed. Result for at least one subcompartment is less than zero. Please check "
+                        "the input values.");
+                    subcompartments[j] = -1.;
+                    return subcompartments;
+                }
             }
             sum = 0;
         }

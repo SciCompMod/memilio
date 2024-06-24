@@ -71,11 +71,15 @@ int main()
 
     if (use_initializer_flows) {
         // Example how to use the class Initializer for the definition of an initial vector for the LCT model.
+
+        ScalarType dt                    = 0.001;
+        ScalarType total_population      = 1000000;
+        ScalarType deaths                = 10;
+        ScalarType total_confirmed_cases = 16000;
+
         // Create TimeSeries with num_transitions elements.
         int num_transitions = (int)mio::lsecir::InfectionTransition::Count;
         mio::TimeSeries<ScalarType> flows(num_transitions);
-
-        ScalarType dt = 0.1;
 
         mio::TimeSeries<ScalarType>::Vector vec_flows(num_transitions);
         vec_flows[(int)mio::lsecir::InfectionTransition::SusceptibleToExposed]                 = 2.0;
@@ -88,17 +92,18 @@ int main()
         vec_flows[(int)mio::lsecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
         vec_flows[(int)mio::lsecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
         vec_flows[(int)mio::lsecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
+        vec_flows                                                                              = vec_flows * dt;
         // Add initial time point to time series.
         flows.add_time_point(-110, vec_flows);
         // Add further time points until time 0.
-        while (flows.get_last_time() < -1e-10) {
+        while (flows.get_last_time() < -dt / 2) {
             flows.add_time_point(flows.get_last_time() + dt, vec_flows);
         }
 
         // Set initialization vector for the LCT model.
         mio::lsecir::Initializer<Model> initializer(std::move(flows), model);
         initializer.set_tol_for_support_max(1e-6);
-        auto status = initializer.compute_initialization_vector(1000000, 10, 16000);
+        auto status = initializer.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
         if (status) {
             return 1;
         }
