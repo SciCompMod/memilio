@@ -21,16 +21,16 @@ import argparse
 
 import numpy as np
 
-from memilio.simulation import Damping
-from memilio.simulation.osir import Index_InfectionState
-from memilio.simulation.osir import InfectionState as State
-from memilio.simulation.osir import (Model, interpolate_simulation_result,
-                                     simulate)
+from memilio.simulation import AgeGroup, Damping
+from memilio.simulation.oseir import Index_InfectionState
+from memilio.simulation.oseir import InfectionState as State
+from memilio.simulation.oseir import (Model, interpolate_simulation_result,
+                                      simulate)
 
 
-def run_osir_simulation():
+def run_ode_seir_simulation():
     """
-    Runs the c++ osir model
+    Runs the c++ ODE SEIR model
     """
 
     # Define population of age groups
@@ -40,24 +40,29 @@ def run_osir_simulation():
     dt = 0.1
 
     # Initialize Parameters
-    model = Model()
+    num_groups = 1
+    model = Model(num_groups)
+    A0 = AgeGroup(0)
 
     # Compartment transition duration
-    model.parameters.TimeInfected.value = 6.
+    model.parameters.TimeExposed[A0] = 5.2
+    model.parameters.TimeInfected[A0] = 6.
 
     # Compartment transition propabilities
-    model.parameters.TransmissionProbabilityOnContact.value = 1.
+    model.parameters.TransmissionProbabilityOnContact[A0] = 1.
 
     # Initial number of people in each compartment
-    model.populations[Index_InfectionState(State.Infected)] = 50
-    model.populations[Index_InfectionState(State.Recovered)] = 10
+    model.populations[A0, State.Exposed] = 100
+    model.populations[A0, State.Infected] = 50
+    model.populations[A0, State.Recovered] = 10
     model.populations.set_difference_from_total(
-        (Index_InfectionState(State.Susceptible)), populations[0])
+        (A0, State.Susceptible), populations[0])
 
-    # model.parameters.ContactPatterns = ContactMatrix(np.r_[0.5])
-    model.parameters.ContactPatterns.baseline = np.ones((1, 1))
-    model.parameters.ContactPatterns.minimum = np.zeros((1, 1))
-    model.parameters.ContactPatterns.add_damping(
+    model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
+        (num_groups, num_groups))
+    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.zeros(
+        (num_groups, num_groups))
+    model.parameters.ContactPatterns.cont_freq_mat.add_damping(
         Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
 
     # Check logical constraints to parameters
@@ -73,7 +78,7 @@ def run_osir_simulation():
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'osir_simple',
-        description='Simple example demonstrating the setup and simulation of the Osir model.')
+        'ode_seir_simple',
+        description='Simple example demonstrating the setup and simulation of the ODE SEIR model.')
     args = arg_parser.parse_args()
-    run_osir_simulation()
+    run_ode_seir_simulation()

@@ -19,13 +19,13 @@ int main()
 
     // For example purposes we "log" the numbers 0-9. As we multiply it by 2 in the logger, the History stores 0,2,4,... .
     for (int i = 0; i < 10; ++i) {
-        history.log(i); 
+        history.log(i);
     }
 
-    // If we want to to access the logged data we can use the get_log() function. 
-    // As the History object stores a std::vector<Logger::Type> in a std::tuple for 
+    // If we want to to access the logged data we can use the get_log() function.
+    // As the History object stores a std::vector<Logger::Type> in a std::tuple for
     // each logger, we have to use std::get<0>(history.get_log()) to access the data of the first (and only) logger which contains the records of MyLogger.
-    std::vector<int> logData = std::get<0>(history.get_log()); 
+    std::vector<int> logData = std::get<0>(history.get_log());
 
     // Finally we can print the logged data.
     std::cout << "Logged data from MyLogger:" << std::endl;

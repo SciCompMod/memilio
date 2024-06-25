@@ -6,6 +6,7 @@ set(MEMILIO_BOOST_VERSION "1.84.0")
 set(MEMILIO_MINIMAL_BOOST_VERSION "1.76.0")
 set(MEMILIO_JSONCPP_VERSION "1.9.5")
 set(MEMILIO_RANDOM123_VERSION "v1.14.0")
+set(MEMILIO_IPOPT_VERSION "3.14.12")
 
 # ## SPDLOG
 set(SPDLOG_INSTALL ON)
@@ -51,42 +52,35 @@ else()
     find_package(Eigen3 ${MEMILIO_EIGEN_VERSION} REQUIRED NO_MODULE)
 endif()
 
+# ## IPOPT (numerial optimization)
+if(MEMILIO_ENABLE_IPOPT)
+    message(STATUS "Downloading Ipopt library")
+
+    include(FetchContent)
+    FetchContent_Declare(Ipopt
+        GIT_REPOSITORY https://git.rwth-aachen.de/avt-svt/public/thirdparty/IpoptCmake.git
+        GIT_TAG ${MEMILIO_IPOPT_VERSION})
+
+    FetchContent_MakeAvailable(Ipopt)
+endif()
+
 # ## BOOST
 if(MEMILIO_USE_BUNDLED_BOOST)
-    message(STATUS "Downloading Boost library. This may take some time.")
+    message(STATUS "Downloading Boost library")
+
+    string(REPLACE "." "_" MEMILIO_BOOST_VERSION_UNDERSC "${MEMILIO_BOOST_VERSION}")
 
     include(FetchContent)
     FetchContent_Declare(boost
-    GIT_REPOSITORY https://github.com/boostorg/boost.git
-    GIT_TAG boost-${MEMILIO_BOOST_VERSION})
+        #don't use the URL from github, that download isn't complete and requires more setup (subrepositories, bootstrapping)
+        URL https://archives.boost.io/release/${MEMILIO_BOOST_VERSION}/source/boost_${MEMILIO_BOOST_VERSION_UNDERSC}.tar.gz
+    )
     FetchContent_GetProperties(boost)
 
     if(NOT boost_POPULATED)
         FetchContent_Populate(boost)
     endif()
-    
-    add_custom_target(boost-bootstrap ALL 
-            DEPENDS "${boost_SOURCE_DIR}/boost"
-            )
 
-    if(MSVC)
-        add_custom_command(
-            OUTPUT "${boost_SOURCE_DIR}/boost"
-            COMMAND "bootstrap.bat"
-            COMMAND "b2.exe" headers
-            WORKING_DIRECTORY ${boost_SOURCE_DIR}
-            VERBATIM
-            )
-    else()
-        add_custom_command(
-            OUTPUT "${boost_SOURCE_DIR}/boost"
-            COMMAND ./bootstrap.sh
-            COMMAND ./b2 headers 
-            WORKING_DIRECTORY ${boost_SOURCE_DIR}
-            VERBATIM
-            )
-    endif()
-    
     add_library(boost INTERFACE)
     add_dependencies(boost boost-bootstrap)
     add_library(Boost::boost ALIAS boost)

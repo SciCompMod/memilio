@@ -23,13 +23,13 @@ import argparse
 import numpy as np
 
 import memilio.simulation as mio
-import memilio.simulation.secir as secir
+import memilio.simulation.osecir as osecir
 
 
-def parameter_study():
+def run_ode_secir_parameter_study():
     # setup basic parameters
     num_groups = 6
-    model = secir.Model(num_groups)
+    model = osecir.Model(num_groups)
 
     for i in range(num_groups):
         group = mio.AgeGroup(i)
@@ -40,19 +40,19 @@ def parameter_study():
         model.parameters.TimeInfectedSevere[group] = 12
         model.parameters.TimeInfectedCritical[group] = 8
 
-        model.populations[group, secir.InfectionState.Exposed] = 100
-        model.populations[group, secir.InfectionState.InfectedNoSymptoms] = 50
+        model.populations[group, osecir.InfectionState.Exposed] = 100
+        model.populations[group, osecir.InfectionState.InfectedNoSymptoms] = 50
         model.populations[group,
-                          secir.InfectionState.InfectedNoSymptomsConfirmed] = 0
-        model.populations[group, secir.InfectionState.InfectedSymptoms] = 50
+                          osecir.InfectionState.InfectedNoSymptomsConfirmed] = 0
+        model.populations[group, osecir.InfectionState.InfectedSymptoms] = 50
         model.populations[group,
-                          secir.InfectionState.InfectedSymptomsConfirmed] = 0
-        model.populations[group, secir.InfectionState.InfectedSevere] = 20
-        model.populations[group, secir.InfectionState.InfectedCritical] = 10
-        model.populations[group, secir.InfectionState.Recovered] = 10
-        model.populations[group, secir.InfectionState.Dead] = 0
+                          osecir.InfectionState.InfectedSymptomsConfirmed] = 0
+        model.populations[group, osecir.InfectionState.InfectedSevere] = 20
+        model.populations[group, osecir.InfectionState.InfectedCritical] = 10
+        model.populations[group, osecir.InfectionState.Recovered] = 10
+        model.populations[group, osecir.InfectionState.Dead] = 0
         model.populations.set_difference_from_group_total_AgeGroup(
-            (group, secir.InfectionState.Susceptible), 10000)
+            (group, osecir.InfectionState.Susceptible), 10000)
 
         model.parameters.TransmissionProbabilityOnContact[group].set_distribution(
             mio.ParameterDistributionUniform(0.1, 0.2))
@@ -95,19 +95,24 @@ def parameter_study():
 
     model.apply_constraints()
 
-    graph = secir.ModelGraph()
+    graph = osecir.ModelGraph()
     graph.add_node(0, model)
     graph.add_node(1, model)
-    graph.add_edge(0, 1, 0.01 * np.ones(model.populations.numel()*num_groups))
-    graph.add_edge(1, 0, 0.01 * np.ones(model.populations.numel()*num_groups))
+    mobility_coefficients = 0.01 * np.ones(model.populations.numel())
+    for i in range(num_groups):
+        flat_index = model.populations.get_flat_index(
+            osecir.MultiIndex_PopulationsArray(mio.AgeGroup(i), osecir.InfectionState.Dead))
+        mobility_coefficients[flat_index] = 0
+    graph.add_edge(0, 1, mobility_coefficients)
+    graph.add_edge(1, 0, mobility_coefficients)
 
-    study = secir.ParameterStudy(graph, t0=0, tmax=10, dt=0.5, num_runs=3)
+    study = osecir.ParameterStudy(graph, t0=0, tmax=10, dt=0.5, num_runs=3)
     study.run(handle_result)
 
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'parameter_studies',
-        description='Example demonstrating ensemble runs of a SECIR model.')
+        'ode_secir_parameter_study',
+        description='Example demonstrating ensemble runs of a ODE SECIHURD model.')
     args = arg_parser.parse_args()
-    parameter_study()
+    run_ode_secir_parameter_study()

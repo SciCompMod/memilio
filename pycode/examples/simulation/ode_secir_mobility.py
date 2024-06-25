@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2024 MEmilio
 #
-# Authors:
+# Authors: Maximilian Betz
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -23,17 +23,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import memilio.simulation as mio
-import memilio.simulation.secir as secir
+import memilio.simulation.osecir as osecir
 
 
-def run_mobility_example(plot_results=True):
+def run_ode_secir_mobility_simulation(plot_results=True):
     mio.set_log_level(mio.LogLevel.Warning)
 
     t0 = 0
     tmax = 50
 
     # setup basic parameters
-    model = secir.Model(1)
+    model = osecir.Model(1)
 
     model.parameters.TimeExposed[mio.AgeGroup(0)] = 3.2
     model.parameters.TimeInfectedNoSymptoms[mio.AgeGroup(0)] = 2.
@@ -54,60 +54,60 @@ def run_mobility_example(plot_results=True):
     model.parameters.DeathsPerCritical[mio.AgeGroup(0)] = 0.3
 
     # two regions with different populations and with some mobility between them
-    graph = secir.MigrationGraph()
-    model.populations[mio.AgeGroup(0), secir.InfectionState.Exposed] = 100
+    graph = osecir.MigrationGraph()
+    model.populations[mio.AgeGroup(0), osecir.InfectionState.Exposed] = 100
     model.populations[mio.AgeGroup(
-        0), secir.InfectionState.InfectedNoSymptoms] = 50
+        0), osecir.InfectionState.InfectedNoSymptoms] = 50
     model.populations[mio.AgeGroup(
-        0), secir.InfectionState.InfectedSymptoms] = 50
+        0), osecir.InfectionState.InfectedSymptoms] = 50
     model.populations[mio.AgeGroup(
-        0), secir.InfectionState.InfectedSevere] = 20
+        0), osecir.InfectionState.InfectedSevere] = 20
     model.populations[mio.AgeGroup(
-        0), secir.InfectionState.InfectedCritical] = 10
-    model.populations[mio.AgeGroup(0), secir.InfectionState.Recovered] = 10
-    model.populations[mio.AgeGroup(0), secir.InfectionState.Dead] = 0
+        0), osecir.InfectionState.InfectedCritical] = 10
+    model.populations[mio.AgeGroup(0), osecir.InfectionState.Recovered] = 10
+    model.populations[mio.AgeGroup(0), osecir.InfectionState.Dead] = 0
     model.populations.set_difference_from_group_total_AgeGroup((
         mio.AgeGroup(0),
-        secir.InfectionState.Susceptible),
+        osecir.InfectionState.Susceptible),
         10000)
     model.apply_constraints()
     graph.add_node(id=0, model=model, t0=t0)  # copies the model into the graph
-    model.populations[mio.AgeGroup(0), secir.InfectionState.Exposed] = 0
+    model.populations[mio.AgeGroup(0), osecir.InfectionState.Exposed] = 0
     model.populations[mio.AgeGroup(
-        0), secir.InfectionState.InfectedNoSymptoms] = 0
+        0), osecir.InfectionState.InfectedNoSymptoms] = 0
     model.populations[mio.AgeGroup(
-        0), secir.InfectionState.InfectedNoSymptomsConfirmed] = 0
+        0), osecir.InfectionState.InfectedNoSymptomsConfirmed] = 0
     model.populations[mio.AgeGroup(
-        0), secir.InfectionState.InfectedSymptoms] = 0
+        0), osecir.InfectionState.InfectedSymptoms] = 0
     model.populations[mio.AgeGroup(
-        0), secir.InfectionState.InfectedSymptomsConfirmed] = 0
+        0), osecir.InfectionState.InfectedSymptomsConfirmed] = 0
     model.populations[mio.AgeGroup(
-        0), secir.InfectionState.InfectedSevere] = 0
+        0), osecir.InfectionState.InfectedSevere] = 0
     model.populations[mio.AgeGroup(
-        0), secir.InfectionState.InfectedCritical] = 0
-    model.populations[mio.AgeGroup(0), secir.InfectionState.Recovered] = 0
-    model.populations[mio.AgeGroup(0), secir.InfectionState.Dead] = 0
+        0), osecir.InfectionState.InfectedCritical] = 0
+    model.populations[mio.AgeGroup(0), osecir.InfectionState.Recovered] = 0
+    model.populations[mio.AgeGroup(0), osecir.InfectionState.Dead] = 0
     model.populations.set_difference_from_group_total_AgeGroup((
         mio.AgeGroup(0),
-        secir.InfectionState.Susceptible),
+        osecir.InfectionState.Susceptible),
         2000)
     model.apply_constraints()
     graph.add_node(id=1, model=model, t0=t0)
     mobility_coefficients = 0.1 * np.ones(model.populations.numel())
+    mobility_coefficients[osecir.InfectionState.Dead] = 0
     mobility_params = mio.MigrationParameters(mobility_coefficients)
     # one coefficient per (age group x compartment)
     graph.add_edge(0, 1, mobility_params)
-    # directed graph -> add both directions so coefficients can be different
     graph.add_edge(1, 0, mobility_params)
 
     # run simulation
-    sim = secir.MigrationSimulation(graph, t0, dt=0.5)
+    sim = osecir.MigrationSimulation(graph, t0, dt=0.5)
     sim.advance(tmax)
 
     # process results
-    region0_result = secir.interpolate_simulation_result(
+    region0_result = osecir.interpolate_simulation_result(
         sim.graph.get_node(0).property.result)
-    region1_result = secir.interpolate_simulation_result(
+    region1_result = osecir.interpolate_simulation_result(
         sim.graph.get_node(1).property.result)
 
     if (plot_results):
@@ -135,12 +135,12 @@ def run_mobility_example(plot_results=True):
             ax.plot(t, result_region[10, :], label=f'{region_label} - #Dead')
 
         ax.set_title(
-            "SECIR simulation results for both regions (entire population)")
+            "ODE SECIR simulation results for both regions (entire population)")
         ax.set_xticks(tick_range)
         ax.legend(loc='upper right', bbox_to_anchor=(1, 0.6))
         plt.yscale('log')
         fig.tight_layout
-        fig.savefig('Mobility_Secir_by_compartments.pdf')
+        fig.savefig('osecir_mobility_by_compartments.pdf')
 
         fig, ax = plt.subplots(5, 2, figsize=(12, 15))
         compartments = [
@@ -161,12 +161,12 @@ def run_mobility_example(plot_results=True):
 
         plt.subplots_adjust(hspace=0.5, bottom=0.1, top=0.9)
         fig.suptitle('Simulation results for each region in each compartment')
-        fig.savefig('Region_results_compartments.pdf')
+        fig.savefig('osecir_region_results_compartments.pdf')
 
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'migration',
-        description='Example demonstrating the setup and simulation of a geographically resolved SECIR model with travel.')
+        'ode_secir_mobility',
+        description='Example demonstrating the setup and simulation of a geographically resolved ODE SECIHURD model with mobility.')
     args = arg_parser.parse_args()
-    run_mobility_example()
+    run_ode_secir_mobility_simulation()

@@ -39,9 +39,9 @@ namespace ssir
 using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Infected>,
                        Flow<InfectionState::Infected, InfectionState::Recovered>>;
 
-class Model : public FlowModel<InfectionState, Populations<InfectionState>, Parameters, Flows>
+class Model : public FlowModel<ScalarType, InfectionState, Populations<ScalarType, InfectionState>, Parameters, Flows>
 {
-    using Base = FlowModel<InfectionState, mio::Populations<InfectionState>, Parameters, Flows>;
+    using Base = FlowModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>, Parameters, Flows>;
 
 public:
     Model()
@@ -49,15 +49,16 @@ public:
     {
     }
 
-    void get_flows(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                   Eigen::Ref<Eigen::VectorXd> flows) const
+    void get_flows(Eigen::Ref<const Vector<>> pop,
+                   Eigen::Ref<const Vector<>> y, ScalarType t,
+                   Eigen::Ref<Vector<>> flows) const
     {
-        auto& params     = this->parameters;
-        double coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                           params.get<TransmissionProbabilityOnContact>() / populations.get_total();
+        auto& params         = this->parameters;
+        ScalarType coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
+                               params.get<TransmissionProbabilityOnContact>() / populations.get_total();
 
-        double si = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
-        double ir = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
+        ScalarType si = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
+        ScalarType ir = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
 
         // Assuming that no person can change its InfectionState twice in a single time step,
         // take the minimum of the calculated flow and the source compartment, to ensure that

@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+//Includes from pymio
 #include "memilio/config.h"
 #include "pybind_util.h"
 #include "compartments/simulation.h"
@@ -31,17 +32,21 @@
 #include "mobility/metapopulation_mobility_instant.h"
 #include "io/mobility_io.h"
 #include "io/result_io.h"
+
+//Includes from MEmilio
 #include "ode_secir/model.h"
 #include "ode_secir/analyze_result.h"
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/parameters_io.h"
 #include "memilio/compartments/parameter_studies.h"
+#include "memilio/data/analyze_result.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/io/epi_data.h"
-#include "Eigen/Core"
-#include "pybind11/stl_bind.h"
 
+#include "pybind11/pybind11.h"
+#include "pybind11/stl_bind.h"
+#include "Eigen/Core"
 #include <vector>
 
 namespace py = pybind11;
@@ -52,7 +57,7 @@ namespace
 //select only the first node of the graph of each run, used for parameterstudy with single nodes
 template <class Sim>
 std::vector<Sim>
-filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::MigrationEdge>>&& graph_results)
+filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::MigrationEdge<double>>>&& graph_results)
 {
     std::vector<Sim> results;
     results.reserve(graph_results.size());
@@ -68,11 +73,11 @@ filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::Migra
 template <class Simulation>
 void bind_ParameterStudy(py::module_& m, std::string const& name)
 {
-    py::class_<mio::ParameterStudy<Simulation>>(m, name.c_str())
+    pymio::bind_class<mio::ParameterStudy<Simulation>, pymio::EnablePickling::Never>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("num_runs"))
-        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters>&, double, double, double,
-                      size_t>(),
+        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters<double>>&, double, double,
+                      double, size_t>(),
              py::arg("model_graph"), py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
         .def_property("num_runs", &mio::ParameterStudy<Simulation>::get_num_runs,
                       &mio::ParameterStudy<Simulation>::set_num_runs)
@@ -82,16 +87,16 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
                                py::return_value_policy::reference_internal)
         .def_property_readonly("model", py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model, py::const_),
                                py::return_value_policy::reference_internal)
-        .def_property_readonly("secir_model_graph",
+        .def_property_readonly("model_graph",
                                py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph),
                                py::return_value_policy::reference_internal)
-        .def_property_readonly("secir_model_graph",
+        .def_property_readonly("model_graph",
                                py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph, py::const_),
                                py::return_value_policy::reference_internal)
         .def(
             "run",
             [](mio::ParameterStudy<Simulation>& self,
-               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)>
+               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge<double>>, size_t)>
                    handle_result) {
                 self.run(
                     [](auto&& g) {
@@ -142,8 +147,7 @@ enum class ContactLocation
     Count,
 };
 
-using Simulation     = mio::osecir::Simulation<>;
-using MigrationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
+using MigrationGraph = mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge<double>>;
 
 } // namespace
 
@@ -152,12 +156,13 @@ PYBIND11_MAKE_OPAQUE(std::vector<MigrationGraph>);
 namespace pymio
 {
 
-//specialization of pretty_name for secir types
+//specialization of pretty_name
 template <>
 std::string pretty_name<mio::osecir::InfectionState>()
 {
     return "InfectionState";
 }
+
 template <>
 std::string pretty_name<mio::AgeGroup>()
 {
@@ -166,7 +171,7 @@ std::string pretty_name<mio::AgeGroup>()
 
 } // namespace pymio
 
-PYBIND11_MODULE(_simulation_secir, m)
+PYBIND11_MODULE(_simulation_osecir, m)
 {
     // https://github.com/pybind/pybind11/issues/1153
     m.def("interpolate_simulation_result",
@@ -196,44 +201,44 @@ PYBIND11_MODULE(_simulation_secir, m)
         .value("Recovered", mio::osecir::InfectionState::Recovered)
         .value("Dead", mio::osecir::InfectionState::Dead);
 
-    pymio::bind_ParameterSet<mio::osecir::ParametersBase>(m, "ParametersBase");
+    pymio::bind_ParameterSet<mio::osecir::ParametersBase<double>, pymio::EnablePickling::Required>(m, "ParametersBase");
 
-    py::class_<mio::osecir::Parameters, mio::osecir::ParametersBase>(m, "Parameters")
+    pymio::bind_class<mio::osecir::Parameters<double>, pymio::EnablePickling::Required,
+                      mio::osecir::ParametersBase<double>>(m, "Parameters")
         .def(py::init<mio::AgeGroup>())
-        .def("check_constraints", &mio::osecir::Parameters::check_constraints)
-        .def("apply_constraints", &mio::osecir::Parameters::apply_constraints);
+        .def("check_constraints", &mio::osecir::Parameters<double>::check_constraints)
+        .def("apply_constraints", &mio::osecir::Parameters<double>::apply_constraints);
 
-    using SecirPopulations = mio::Populations<mio::AgeGroup, mio::osecir::InfectionState>;
-    pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::osecir::Model::Populations>{});
-
-    pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>(m,
-                                                                                                           "ModelBase");
-    py::class_<mio::osecir::Model,
-               mio::CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>>(m,
-                                                                                                                "Model")
+    using Populations = mio::Populations<double, mio::AgeGroup, mio::osecir::InfectionState>;
+    pymio::bind_Population(m, "Populations", mio::Tag<mio::osecir::Model<double>::Populations>{});
+    pymio::bind_CompartmentalModel<mio::osecir::InfectionState, Populations, mio::osecir::Parameters<double>,
+                                   pymio::EnablePickling::Never>(m, "ModelBase");
+    pymio::bind_class<mio::osecir::Model<double>, pymio::EnablePickling::Required,
+                      mio::CompartmentalModel<double, mio::osecir::InfectionState, Populations,
+                                              mio::osecir::Parameters<double>>>(m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
     pymio::bind_Simulation<mio::osecir::Simulation<>>(m, "Simulation");
 
     m.def(
         "simulate",
-        [](double t0, double tmax, double dt, const mio::osecir::Model& model) {
+        [](double t0, double tmax, double dt, const mio::osecir::Model<double>& model) {
             return mio::osecir::simulate(t0, tmax, dt, model);
         },
-        "Simulates a Secir Model1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+        "Simulates an ODE SECIHURD model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
     m.def(
         "simulate_flows",
-        [](double t0, double tmax, double dt, const mio::osecir::Model& model) {
-            return mio::osecir::simulate_flows(t0, tmax, dt, model);
+        [](double t0, double tmax, double dt, const mio::osecir::Model<double>& model) {
+            return mio::osecir::simulate_flows<double>(t0, tmax, dt, model);
         },
-        "Simulates a Secir model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
+        "Simulates an ODE SECIHURD model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
         py::arg("model"));
 
-    pymio::bind_ModelNode<mio::osecir::Model>(m, "ModelNode");
+    pymio::bind_ModelNode<mio::osecir::Model<double>>(m, "ModelNode");
     pymio::bind_SimulationNode<mio::osecir::Simulation<>>(m, "SimulationNode");
-    pymio::bind_ModelGraph<mio::osecir::Model>(m, "ModelGraph");
-    pymio::bind_MigrationGraph<Simulation>(m, "MigrationGraph");
+    pymio::bind_ModelGraph<mio::osecir::Model<double>>(m, "ModelGraph");
+    pymio::bind_MigrationGraph<mio::osecir::Simulation<>>(m, "MigrationGraph");
     pymio::bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
 
     //normally, std::vector is bound to any python iterable, but this doesn't work for move-only elements
@@ -242,30 +247,30 @@ PYBIND11_MODULE(_simulation_secir, m)
     py::bind_vector<std::vector<MigrationGraph>>(m, "EnsembleGraphResults");
     bind_ParameterStudy<mio::osecir::Simulation<>>(m, "ParameterStudy");
 
-    m.def("set_params_distributions_normal", &mio::osecir::set_params_distributions_normal, py::arg("model"),
+    m.def("set_params_distributions_normal", &mio::osecir::set_params_distributions_normal<double>, py::arg("model"),
           py::arg("t0"), py::arg("tmax"), py::arg("dev_rel"));
 
     m.def(
         "draw_sample",
-        [](mio::osecir::Model& model) {
+        [](mio::osecir::Model<double>& model) {
             return mio::osecir::draw_sample(model);
         },
         py::arg("model"));
 
-    // These functions are in general not secir dependent, only with the current config
+    // These functions are in general not model dependent, only with the current config
     m.def(
         "set_nodes",
-        [](const mio::osecir::Parameters& params, mio::Date start_date, mio::Date end_date, const std::string& data_dir,
-           const std::string& population_data_path, bool is_node_for_county,
-           mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
+        [](const mio::osecir::Parameters<double>& params, mio::Date start_date, mio::Date end_date,
+           const std::string& data_dir, const std::string& population_data_path, bool is_node_for_county,
+           mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>& params_graph,
            const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
            int num_days = 0, bool export_time_series = false) {
-            auto result = mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns,
-                                         mio::osecir::Model, mio::MigrationParameters, mio::osecir::Parameters,
-                                         decltype(mio::osecir::read_input_data_county<mio::osecir::Model>),
-                                         decltype(mio::get_node_ids)>(
+            auto result = mio::set_nodes<
+                mio::osecir::TestAndTraceCapacity<double>, mio::osecir::ContactPatterns<double>,
+                mio::osecir::Model<double>, mio::MigrationParameters<double>, mio::osecir::Parameters<double>,
+                decltype(mio::osecir::read_input_data_county<mio::osecir::Model<double>>), decltype(mio::get_node_ids)>(
                 params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
-                mio::osecir::read_input_data_county<mio::osecir::Model>, mio::get_node_ids, scaling_factor_inf,
+                mio::osecir::read_input_data_county<mio::osecir::Model<double>>, mio::get_node_ids, scaling_factor_inf,
                 scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series);
             return pymio::check_and_throw(result);
         },
@@ -279,14 +284,15 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     m.def(
         "set_edges",
-        [](const std::string& data_dir, mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
+        [](const std::string& data_dir,
+           mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>& params_graph,
            size_t contact_locations_size) {
             auto migrating_comp = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
                                    mio::osecir::InfectionState::InfectedNoSymptoms,
                                    mio::osecir::InfectionState::InfectedSymptoms,
                                    mio::osecir::InfectionState::Recovered};
             auto weights        = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
-            auto result         = mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters,
+            auto result = mio::set_edges<ContactLocation, mio::osecir::Model<double>, mio::MigrationParameters<double>,
                                          mio::MigrationCoefficientGroup, mio::osecir::InfectionState,
                                          decltype(mio::read_mobility_plain)>(
                 data_dir, params_graph, migrating_comp, contact_locations_size, mio::read_mobility_plain, weights);
@@ -295,17 +301,17 @@ PYBIND11_MODULE(_simulation_secir, m)
         py::return_value_policy::move);
 
 #ifdef MEMILIO_HAS_HDF5
-    pymio::bind_save_results<mio::osecir::Model>(m);
+    pymio::bind_save_results<mio::osecir::Model<double>>(m);
 #endif // MEMILIO_HAS_HDF5
 
 #ifdef MEMILIO_HAS_JSONCPP
-    pymio::bind_write_graph<mio::osecir::Model>(m);
+    pymio::bind_write_graph<mio::osecir::Model<double>>(m);
     m.def(
         "read_input_data_county",
-        [](std::vector<mio::osecir::Model>& model, mio::Date date, const std::vector<int>& county,
+        [](std::vector<mio::osecir::Model<double>>& model, mio::Date date, const std::vector<int>& county,
            const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, const std::string& dir,
            int num_days = 0, bool export_time_series = false) {
-            auto result = mio::osecir::read_input_data_county<mio::osecir::Model>(
+            auto result = mio::osecir::read_input_data_county<mio::osecir::Model<double>>(
                 model, date, county, scaling_factor_inf, scaling_factor_icu, dir, num_days, export_time_series);
             return pymio::check_and_throw(result);
         },
@@ -313,7 +319,7 @@ PYBIND11_MODULE(_simulation_secir, m)
 #endif // MEMILIO_HAS_JSONCPP
 
     m.def("interpolate_simulation_result",
-          py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<Simulation>));
+          py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<mio::osecir::Simulation<>>));
 
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MigrationGraph>);
 
