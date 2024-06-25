@@ -28,49 +28,97 @@ from spektral.transforms.normalize_adj import NormalizeAdj
 from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale_laplacian, normalized_adjacency
 
 # load and prepare data
-path = os.path.dirname(os.path.realpath(__file__))
+#path = os.path.dirname(os.path.realpath(__file__))#
 
-path_data = os.path.join(
-    os.path.dirname(
-        os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    'data_GNN_400pop_one_var_damp_100days_1k_w')
+#path_data = os.path.join(
+#    os.path.dirname(
+#        os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+#    'data_GNN_400pop_4var_damp_100days_1k_w')
 
 
-file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
-#file = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/data_GNN_400pop_3var_damp_100days_1k/GNN_400pop_3damp.pickle', 'rb')
+#file = open(os.path.join(path_data, 'GNN_400pop_damp_w.pickle'), 'rb')
+file = open('/localdata1/schm_a45/dampings/data_GNN_100days_400pop_5damp_2024_new/GNN_400pop_damp_w.pickle', 'rb')
 
 data_secir = pickle.load(file)
 
 
-len_dataset = data_secir['inputs'][0].shape[0]
-numer_of_nodes = np.asarray(data_secir['inputs']).shape[0]
-shape_input_flat = np.asarray(
-    data_secir['inputs']).shape[2]*np.asarray(data_secir['inputs']).shape[3]
-shape_labels_flat = np.asarray(
-    data_secir['labels']).shape[2]*np.asarray(data_secir['labels']).shape[3]
 
+
+#len_dataset = data_secir['inputs'][0].shape[0]
+#numer_of_nodes = np.asarray(data_secir['inputs']).shape[0]
+#shape_input_flat = np.asarray(
+#    data_secir['inputs']).shape[2]*np.asarray(data_secir['inputs']).shape[3]
+#shape_labels_flat = np.asarray(
+#    data_secir['labels']).shape[2]*np.asarray(data_secir['labels']).shape[3]
+
+
+#new_inputs = np.asarray(
+#    data_secir['inputs']).reshape(
+#    len_dataset, numer_of_nodes, shape_input_flat)
+#new_labels = np.asarray(data_secir['labels']).reshape(
+#    len_dataset, numer_of_nodes, shape_labels_flat)
+
+len_dataset = 1000
+
+numer_of_nodes = 400
+shape_input_flat = np.asarray(
+    data_secir['inputs'][1]).shape[1]*np.asarray(data_secir['inputs'][1]).shape[2]
+shape_labels_flat = np.asarray(
+    data_secir['labels'][1]).shape[1]*np.asarray(data_secir['labels'][1]).shape[2]
+
+
+### forgot to scale data in data generation 
+transformer = FunctionTransformer(np.log1p, validate=True)
+# inputs = np.asarray(
+#     data['inputs']).transpose(
+            #     2, 0, 1)
+inputs = np.asarray(
+data_secir['inputs'][1]).transpose(2,0,1,3).reshape(48,-1)
+scaled_inputs = transformer.transform(inputs)
+scaled_inputs = scaled_inputs.transpose().reshape(len_dataset, 400,5, 48)
+
+labels = np.asarray(
+            data_secir['labels'][1]).transpose(2,0,1,3).reshape(48,-1)
+scaled_labels = transformer.transform(labels)
+scaled_labels = scaled_labels.transpose().reshape(len_dataset, 400,100, 48)
 
 new_inputs = np.asarray(
-    data_secir['inputs']).reshape(
+    scaled_inputs).reshape(
     len_dataset, numer_of_nodes, shape_input_flat)
-new_labels = np.asarray(data_secir['labels']).reshape(
-    len_dataset, numer_of_nodes, shape_labels_flat)
+new_labels = np.asarray(scaled_labels).reshape(
+    len_dataset, numer_of_nodes, 100*48)
+
+
+
+
 
 n_days = int(new_labels.shape[2]/48)
 
-damping_factors = data_secir['damping_coeff'] # one for every run
-damping_days = data_secir['damping_day'] # one for every rum 
-contact_matrices = data_secir['damped_matrix']
+damping_factors = data_secir['damping_coeff'][0] # one for every run
+damping_days = data_secir['damping_day'][0]# one for every rum 
+contact_matrices = data_secir['damped_matrix'][0]
 
 n_runs = new_inputs.shape[0]
 n_pop = new_inputs.shape[1]
-#n_dampings = np.asarray(data_secir['damping_day']).shape[2]
-n_dampings = 1
+n_dampings = np.asarray(data_secir['damping_day']).shape[2]
+#n_dampings = 1
 
+# inputs_with_damp = np.dstack((new_inputs,(np.asarray(damping_factors).reshape([n_runs,n_pop,n_dampings])),
+#                                (np.asarray(damping_days).reshape([n_runs,n_pop,n_dampings])),
+#                                (np.asarray(contact_matrices).reshape([n_runs,n_pop,36*n_dampings]))))
 
-inputs_with_damp = np.dstack((new_inputs,(np.asarray(damping_factors).reshape([n_runs,n_pop,n_dampings])),
-                               (np.asarray(damping_days).reshape([n_runs,n_pop,n_dampings])),
-                               (np.asarray(contact_matrices).reshape([n_runs,n_pop,36*n_dampings]))))
+inputs_with_damp = np.dstack((new_inputs,np.repeat(np.asarray(damping_factors)[:, np.newaxis, :], 400, axis=1),
+                               (np.repeat(np.asarray(damping_days)[:, np.newaxis, :], 400, axis=1)),
+                               (np.repeat(np.asarray(contact_matrices)[:, np.newaxis, :], 400, axis=1).reshape([n_runs,n_pop,36*n_dampings]))))
+
+### for one damp: 
+#damping_factors_reshaped =  np.tile(np.asarray(damping_factors)[:, np.newaxis], (1, 400))
+#damping_days_reshaped = np.tile(np.asarray(damping_days)[:, np.newaxis], (1, 400))
+#contact_matrices_reshaped = np.repeat(np.asarray(contact_matrices)[:, np.newaxis, :, :], 400, axis=1).reshape([n_runs,n_pop,-1])
+#inputs_with_damp = np.concatenate((new_inputs,
+#                                   np.expand_dims(damping_factors_reshaped,axis = 2),
+#                                   np.expand_dims(damping_days_reshaped, axis = 2),
+#                                   contact_matrices_reshaped), axis = 2  )
 
 
 ######## open commuter data #########
@@ -85,15 +133,14 @@ sub_matrix = commuter_data.iloc[:numer_of_nodes, 0:numer_of_nodes]
 
 adjacency_matrix = np.asarray(sub_matrix)
 
-#adjacency_matrix[adjacency_matrix > 0] = 1
+adjacency_matrix[adjacency_matrix > 0] = 1
 node_features = inputs_with_damp
 
 node_labels = new_labels
 
-
 layer = 'ARMAConv'
-number_of_layers = 3
-number_of_channels = 128
+number_of_layers = 4
+number_of_channels = 512
 
 parameters = [layer, number_of_layers, number_of_channels]
 
@@ -184,14 +231,15 @@ def train_and_evaluate_model(
 
                 return output
 
-    elif number_of_layer == 3:
+    elif number_of_layer == 4:
         class Net(Model):
             def __init__(self):
                 super().__init__()
 
-                self.conv1 = layer(channels,  activation='elu')
-                self.conv2 = layer(channels,  activation='elu')
-                self.conv3 = layer(channels, activation='elu')
+                self.conv1 = layer(channels, order = 3, activation='relu')
+                self.conv2 = layer(channels,  order = 3,activation='relu')
+                self.conv3 = layer(channels, order = 3,activation='relu')
+                self.conv4 = layer(channels, order = 3,activation='relu')
                 self.dense = Dense(data.n_labels, activation="linear")
 
             def call(self, inputs):
@@ -200,7 +248,8 @@ def train_and_evaluate_model(
 
                 x = self.conv1([x, a])
                 x = self.conv2([x, a])
-                x = self.conv2([x, a])
+                x = self.conv3([x, a])
+                x = self.conv4([x,a])
 
                 output = self.dense(x)
 
@@ -372,7 +421,7 @@ def train_and_evaluate_model(
     elapsed = time.perf_counter() - start
 
     # save best weights as pickle 
-    with open("best_weights_ARMAConv_100days_1damp_w.pickle", 'wb') as f:
+    with open("best_weights_ARMAConv_100days_5damp_graphdata_new.pickle", 'wb') as f:
              pickle.dump(best_weights, f) 
 
 
@@ -419,31 +468,31 @@ def train_and_evaluate_model(
     # save df 
 
 
-    #df.loc[len(df.index)] = [layer_name, number_of_layer, channels, 
-    #                         np.mean(train_losses),
-    #                         np.mean(val_losses),
-    #                         np.mean(test_scores),
-    #                         (elapsed / 60),
-    #                         [losses_history_all],
-    #                         [val_losses_history_all]]
+    df.loc[len(df.index)] = [layer_name, number_of_layer, channels, 
+                             np.mean(train_losses),
+                             np.mean(val_losses),
+                             np.mean(test_scores),
+                             (elapsed / 60),
+                             [losses_history_all],
+                             [val_losses_history_all]]
     #print(df)
     # [np.asarray(losses_history_all).mean(axis=0)],
     # [np.asarray(val_losses_history_all).mean(axis=0)]]
 
-    # path = os.path.dirname(os.path.realpath(__file__))
-    # file_path = os.path.join(
-    #    os.path.dirname(
-    #        os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    #    'dataframe_gridsearch_2024')
-    # if not os.path.isdir(file_path):
-    #    os.mkdir(file_path)
-    # file_path = file_path+filename
-    # df.to_csv(file_path)
+    path = os.path.dirname(os.path.realpath(__file__))
+    file_path = os.path.join(
+       os.path.dirname(
+           os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+       'model_evaluation_graphdata')
+    if not os.path.isdir(file_path):
+       os.mkdir(file_path)
+    file_path = file_path+filename
+    df.to_csv(file_path)
 
 
 start_hyper = time.perf_counter()
 epochs = 1500
-filename = '/egal'
+filename = '/GNN_ARMA_100days_5damp_graphdata_new'
 save_name = 'egal'
 #for param in parameters:
 train_and_evaluate_model(epochs, 0.001, parameters, save_name, filename)
