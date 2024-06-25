@@ -19,6 +19,7 @@
 */
 #include "matchers.h"
 #include "load_test_data.h"
+#include "temp_file_register.h"
 #include "ode_secir/model.h"
 #include "memilio/math/adapt_rk.h"
 #include "ode_secir/parameter_space.h"
@@ -713,7 +714,7 @@ TEST(TestOdeSecir, testModelConstraints)
     }
 }
 
-TEST(Secir, testAndTraceCapacity)
+TEST(TestOdeSecir, testAndTraceCapacity)
 {
     double cont_freq = 10;
 
@@ -763,7 +764,7 @@ TEST(Secir, testAndTraceCapacity)
               dydt_default[(size_t)mio::osecir::InfectionState::Exposed]);
 }
 
-TEST(Secir, getInfectionsRelative)
+TEST(TestOdeSecir, getInfectionsRelative)
 {
     size_t num_groups = 3;
     mio::osecir::Model model((int)num_groups);
@@ -782,7 +783,7 @@ TEST(Secir, getInfectionsRelative)
               (100. + 50. + 25.) / (10'000 + 20'000 + 40'000));
 }
 
-TEST(Secir, get_reproduction_number)
+TEST(TestOdeSecir, get_reproduction_number)
 {
     const size_t num_groups = 3;
     mio::osecir::Model model((int)num_groups);
@@ -949,7 +950,7 @@ TEST(Secir, get_reproduction_number)
     EXPECT_TRUE(mio::osecir::get_reproduction_number((size_t)0, sim));
 }
 
-TEST(Secir, get_migration_factors)
+TEST(TestOdeSecir, get_migration_factors)
 {
     auto beta                                                                              = 0.25;
     auto max_beta                                                                          = 0.5;
@@ -983,7 +984,7 @@ TEST(Secir, get_migration_factors)
     }
 }
 
-TEST(Secir, test_commuters)
+TEST(TestOdeSecir, test_commuters)
 {
     auto model                                      = mio::osecir::Model(2);
     auto migration_factor                           = 0.1;
@@ -1013,7 +1014,7 @@ TEST(Secir, test_commuters)
                 1e-5);
 }
 
-TEST(Secir, check_constraints_parameters)
+TEST(TestOdeSecir, check_constraints_parameters)
 {
     auto model = mio::osecir::Model(1);
     ASSERT_EQ(model.parameters.check_constraints(), 0);
@@ -1076,7 +1077,7 @@ TEST(Secir, check_constraints_parameters)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-TEST(Secir, apply_constraints_parameters)
+TEST(TestOdeSecir, apply_constraints_parameters)
 {
     auto model             = mio::osecir::Model(1);
     auto indx_agegroup     = mio::AgeGroup(0);
@@ -1145,7 +1146,7 @@ TEST(Secir, apply_constraints_parameters)
 
 #if defined(MEMILIO_HAS_JSONCPP)
 
-TEST(Secir, read_population_data_one_age_group)
+TEST(TestOdeSecir, read_population_data_one_age_group)
 {
     std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
     const std::vector<int> region{1001};
@@ -1159,5 +1160,188 @@ TEST(Secir, read_population_data_one_age_group)
     EXPECT_EQ(result_multiple_age_groups[0].size(), 6);
     EXPECT_EQ(result_multiple_age_groups[0][0], 3433.0);
 }
+
+#if defined(MEMILIO_HAS_HDF5)
+TEST(TestOdeSecir, read_data)
+{
+    constexpr auto num_age_groups = 6; //reading data requires RKI data age groups
+
+    mio::osecir::Model model(num_age_groups);
+
+    model.parameters.set<mio::osecir::StartDay>(60);
+    model.parameters.set<mio::osecir::Seasonality>(0.2);
+
+    for (auto i = mio::AgeGroup(0); i < (mio::AgeGroup)num_age_groups; i++) {
+        model.parameters.get<mio::osecir::TimeExposed>()[i]            = 3.2;
+        model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.0;
+        model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 5.8;
+        model.parameters.get<mio::osecir::TimeInfectedSevere>()[i]     = 9.5;
+        model.parameters.get<mio::osecir::TimeInfectedCritical>()[i]   = 7.1;
+
+        model.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[i]  = 0.05;
+        model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]    = 0.7;
+        model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]    = 0.09;
+        model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]    = 0.25;
+        model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()[i] = 0.45;
+        model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[i]         = 0.2;
+        model.parameters.get<mio::osecir::CriticalPerSevere>()[i]                 = 0.25;
+        model.parameters.get<mio::osecir::DeathsPerCritical>()[i]                 = 0.3;
+    }
+
+    model.apply_constraints();
+
+    auto model1 = std::vector<mio::osecir::Model>{model};
+    auto model2 = std::vector<mio::osecir::Model>{model};
+    auto model3 = std::vector<mio::osecir::Model>{model};
+
+    auto read_result1 = mio::osecir::read_input_data_county(
+        model1, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 10);
+
+    auto read_result2 = mio::osecir::read_input_data(
+        model2, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 10);
+
+    auto read_result_district =
+        mio::osecir::read_input_data(model3, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0),
+                                     1.0, mio::path_join(TEST_DATA_DIR, "pydata/District"), 10);
+
+    ASSERT_THAT(read_result1, IsSuccess());
+    ASSERT_THAT(read_result2, IsSuccess());
+    ASSERT_THAT(read_result_district, IsSuccess());
+
+    // values were generated by the tested function; can only check stability of the implementation, not correctness
+    auto expected_values =
+        (Eigen::ArrayXd(num_age_groups * Eigen::Index(mio::osecir::InfectionState::Count)) << 10280, 2.82575, 1.25589,
+         0, 5.85714, 0, 1.42857, 1.33333, 28.2857, 0, 19091.3, 6.59341, 4.23862, 0, 11, 0, 2.54286, 1.33333, 88, 0,
+         73821.7, 41.9152, 21.6641, 0, 54.5714, 0, 22, 1.33333, 523.857, 0, 82533.6, 39.5604, 21.0361, 0, 51.4286, 0,
+         15.1714, 1.33333, 468.571, 0, 43733.1, 8.32025, 5.18053, 0, 11.4286, 0, 4.22857, 1.33333, 158.571, 8, 15642.7,
+         10.5181, 3.2967, 0, 3.28571, 0, 0.657143, 1.33333, 49.8571, 7.57143)
+            .finished();
+
+    ASSERT_THAT(print_wrap(model1[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(model2[0].populations.array().cast<double>()), 1e-5, 1e-5));
+
+    ASSERT_THAT(print_wrap(model1[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(model3[0].populations.array().cast<double>()), 1e-5, 1e-5));
+
+    ASSERT_THAT(print_wrap(model1[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
+    ASSERT_THAT(print_wrap(model2[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
+    ASSERT_THAT(print_wrap(model3[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
+}
+
+TEST(TestOdeSecir, export_time_series_init)
+{
+    TempFileRegister temp_file_register;
+    auto tmp_results_dir = temp_file_register.get_unique_path();
+    ASSERT_THAT(mio::create_directory(tmp_results_dir), IsSuccess());
+
+    constexpr auto num_age_groups = 6; //reading data requires RKI data age groups
+
+    mio::osecir::Model model(num_age_groups);
+
+    model.parameters.set<mio::osecir::StartDay>(60);
+    model.parameters.set<mio::osecir::Seasonality>(0.2);
+
+    for (auto i = mio::AgeGroup(0); i < (mio::AgeGroup)num_age_groups; i++) {
+        model.parameters.get<mio::osecir::TimeExposed>()[i]            = 3.2;
+        model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.0;
+        model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 5.8;
+        model.parameters.get<mio::osecir::TimeInfectedSevere>()[i]     = 9.5;
+        model.parameters.get<mio::osecir::TimeInfectedCritical>()[i]   = 7.1;
+
+        model.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[i]  = 0.05;
+        model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]    = 0.7;
+        model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]    = 0.09;
+        model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]    = 0.25;
+        model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()[i] = 0.45;
+        model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[i]         = 0.2;
+        model.parameters.get<mio::osecir::CriticalPerSevere>()[i]                 = 0.25;
+        model.parameters.get<mio::osecir::DeathsPerCritical>()[i]                 = 0.3;
+    }
+
+    model.apply_constraints();
+
+    // Test exporting time series
+    ASSERT_THAT(mio::osecir::export_input_data_county_timeseries(
+                    std::vector<mio::osecir::Model>{model}, tmp_results_dir, {1002}, {2020, 12, 01},
+                    std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 2,
+                    mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
+                    mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
+                    mio::path_join(TEST_DATA_DIR, "county_current_population.json")),
+                IsSuccess());
+
+    auto data_extrapolated = mio::read_result(mio::path_join(tmp_results_dir, "Results_rki.h5"));
+    ASSERT_THAT(data_extrapolated, IsSuccess());
+
+    // Values were generated by the tested function export_input_data_county_timeseries;
+    // can only check stability of the implementation, not correctness
+    auto expected_results =
+        mio::read_result(mio::path_join(TEST_DATA_DIR, "export_time_series_initialization_osecir.h5")).value();
+
+    ASSERT_THAT(print_wrap(data_extrapolated.value()[0].get_groups().matrix()),
+                MatrixNear(print_wrap(expected_results[0].get_groups().matrix()), 1e-5, 1e-5));
+}
+
+// // Model initialization should return same start values as export time series on that day
+TEST(TestOdeSecir, model_initialization)
+{
+    constexpr auto num_age_groups = 6; //reading data requires RKI data age groups
+
+    mio::osecir::Model model(num_age_groups);
+
+    model.parameters.set<mio::osecir::StartDay>(60);
+    model.parameters.set<mio::osecir::Seasonality>(0.2);
+
+    for (auto i = mio::AgeGroup(0); i < (mio::AgeGroup)num_age_groups; i++) {
+        model.parameters.get<mio::osecir::TimeExposed>()[i]            = 3.2;
+        model.parameters.get<mio::osecir::TimeInfectedNoSymptoms>()[i] = 2.0;
+        model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i]   = 5.8;
+        model.parameters.get<mio::osecir::TimeInfectedSevere>()[i]     = 9.5;
+        model.parameters.get<mio::osecir::TimeInfectedCritical>()[i]   = 7.1;
+
+        model.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[i]  = 0.05;
+        model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]    = 0.7;
+        model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]    = 0.09;
+        model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]    = 0.25;
+        model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()[i] = 0.45;
+        model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[i]         = 0.2;
+        model.parameters.get<mio::osecir::CriticalPerSevere>()[i]                 = 0.25;
+        model.parameters.get<mio::osecir::DeathsPerCritical>()[i]                 = 0.3;
+    }
+
+    model.apply_constraints();
+    // Vector assignment necessary as read_input_data_county changes model
+    auto model_vector = std::vector<mio::osecir::Model>{model};
+
+    ASSERT_THAT(mio::osecir::read_input_data_county(model_vector, {2020, 12, 01}, {1002},
+                                                    std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                    TEST_DATA_DIR, 2, false),
+                IsSuccess());
+
+    // Values from data/export_time_series_init_osecir.h5, for reading in comparison
+    // operator for return of mio::read_result and model population needed.
+    auto expected_values =
+        (Eigen::ArrayXd(num_age_groups * Eigen::Index(mio::osecir::InfectionState::Count)) << 3.46722e+06, 176.06,
+         3.42799, 0.00017139, 0.00059842, 1.52355, 9.52168e-05, 0.000803518, 0, 0, 0, 7.28479, 0.000193296, 0.000551002,
+         0, 0, 0, 0.0342843, 3.1805e-08, 5.37183e-07, 0.029746, 1.51045e-07, 1.04806e-06, 1340.35, 0, 0, 0, 7.74734e+06,
+         220.4, 7.99917, 0.000224064, 0.000882024, 5.14232, 0.000180051, 0.00171304, 0, 0, 0, 12.1419, 0.000203391,
+         0.000653659, 0, 0, 0, 0.0439275, 1.87568e-08, 3.5717e-07, 0.0297464, 8.46241e-08, 6.62006e-07, 1891.15, 0, 0,
+         0, 1.92155e+07, 176.538, 47.6768, 0.00043128, 0.00187022, 24.642, 0.000278636, 0.00292033, 0, 0, 0, 65.1411,
+         0.000325876, 0.0011537, 0, 0, 0, 1.24042, 1.74173e-07, 3.65358e-06, 0.0753588, 6.9234e-08, 5.96637e-07,
+         1671.81, 0, 0, 0, 3.00317e+07, 184.888, 44.9988, 0.000272769, 0.00137466, 23.9279, 0.000181305, 0.00220837, 0,
+         0, 0, 59.4274, 0.000205796, 0.000846734, 0, 0, 0, 3.76905, 3.67799e-07, 8.9664e-06, 0.48785, 3.00341e-07,
+         3.00797e-06, 2022.51, 0, 0, 0, 1.65123e+07, 177.579, 9.4638, 0.000100211, 0.00055573, 5.89255, 7.79946e-05,
+         0.00104538, 0, 0, 0, 13.5709, 7.98864e-05, 0.000361685, 0, 0, 0, 3.13496, 5.30384e-07, 1.4228e-05, 2.61772,
+         2.81518e-06, 3.1025e-05, 2136.56, 0, 0, 0, 6.17983e+06, 216.328, 11.9625, 0.000412312, 0.00197908, 3.74944,
+         0.00016154, 0.00187405, 0, 0, 0, 3.71387, 7.47535e-05, 0.000292941, 0, 0, 0, 0.707117, 4.15435e-07,
+         9.64602e-06, 4.75937, 1.66604e-05, 0.000158922, 2253.59, 0, 0, 0)
+            .finished();
+
+    ASSERT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
+}
+#endif
 
 #endif
