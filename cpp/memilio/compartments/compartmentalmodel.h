@@ -99,7 +99,7 @@ public:
                                  Eigen::Ref<Vector<FP>> /*dydt*/) const {};
 
     /**
-     * @brief eval_right_hand_side evaulates the right-hand-side f of the ODE dydt = f(y, t)
+     * @brief eval_right_hand_side evaluates the right-hand-side f of the ODE dydt = f(y, t)
      *
      * The heart of the compartmental model is a first order ODE dydt = f(y,t), where y is a flat
      * representation of all the compartmental populations at time t. This function evaluates the

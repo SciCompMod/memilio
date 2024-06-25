@@ -38,24 +38,24 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKI)
     ScalarType total_population = 1000.0;
     auto start_date             = mio::Date(2020, 6, 1);
 
-    // Define parameters used for simulation and initialization.
-    mio::lsecir::Parameters parameters;
-    parameters.get<mio::lsecir::TimeExposed>()            = 2.3;
-    parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 3.3;
-    parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 2.4;
-    parameters.get<mio::lsecir::TimeInfectedSevere>()     = 1.8;
-    parameters.get<mio::lsecir::TimeInfectedCritical>()   = 3.0;
-
-    parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.2;
-    parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.1;
-    parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.3;
-    parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.2;
-
     // Use rounded stay times for the number of subcompartments except for InfectedCritical.
     // Template parameters must be compile-time constants, which is why the values are not calculated with parameters.
     using Model    = mio::lsecir::Model<2, 3, 2, 2, 1>;
     using LctState = Model::LctState;
-    Model model(Eigen::VectorXd::Zero(LctState::Count), std::move(parameters));
+    Model model;
+
+    // Define parameters used for simulation and initialization.
+    mio::lsecir::Parameters parameters;
+    model.parameters.get<mio::lsecir::TimeExposed>()            = 2.3;
+    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 3.3;
+    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 2.4;
+    model.parameters.get<mio::lsecir::TimeInfectedSevere>()     = 1.8;
+    model.parameters.get<mio::lsecir::TimeInfectedCritical>()   = 3.0;
+
+    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.2;
+    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.1;
+    model.parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.3;
+    model.parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.2;
 
     // Calculate initial value vector for subcompartments with RKI data.
     auto read_result = mio::lsecir::set_initial_data_from_confirmed_cases<Model>(
@@ -76,25 +76,20 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKI)
 TEST(TestLCTParametersIo, ReadPopulationDataRKIFailure)
 {
     ScalarType total_population = 1000.0;
-
+    using Model                 = mio::lsecir::Model<2, 3, 2, 2, 1>;
+    Model model;
     // Define parameters used for simulation and initialization.
     mio::lsecir::Parameters parameters;
-    parameters.get<mio::lsecir::TimeExposed>()            = 2.3;
-    parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 3.3;
-    parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 2.4;
-    parameters.get<mio::lsecir::TimeInfectedSevere>()     = 1.8;
-    parameters.get<mio::lsecir::TimeInfectedCritical>()   = 3.0;
+    model.parameters.get<mio::lsecir::TimeExposed>()            = 2.3;
+    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 3.3;
+    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 2.4;
+    model.parameters.get<mio::lsecir::TimeInfectedSevere>()     = 1.8;
+    model.parameters.get<mio::lsecir::TimeInfectedCritical>()   = 3.0;
 
-    parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.2;
-    parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.08;
-    parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.15;
-    parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.22;
-
-    /// Use rounded stay times for the number of subcompartments except for InfectedCritical.
-    // Template parameters must be compile-time constants, which is why the values are not calculated with parameters.
-    using Model    = mio::lsecir::Model<2, 3, 2, 2, 1>;
-    using LctState = Model::LctState;
-    Model model(Eigen::VectorXd::Zero(LctState::Count), std::move(parameters));
+    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.2;
+    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.08;
+    model.parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.15;
+    model.parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.22;
 
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);

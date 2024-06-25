@@ -33,7 +33,7 @@ namespace mio
  *      The number of given template arguments must be equal to the entry Count from InfectionState.
  */
 template <class InfectionStates, int... Ns>
-class LctInfectionState : public Index<int>
+class LctInfectionState
 {
 public:
     using InfectionState = InfectionStates;

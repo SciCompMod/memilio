@@ -343,7 +343,9 @@ IOResult<void> set_initial_data_from_confirmed_cases(Model& model, const std::st
     }
 
     // Set computed initial value vector.
-    model.set_initial_values(std::move(init));
+    for (size_t i = 0; i < (size_t)LctState::Count; i++) {
+        model.populations[mio::Index<LctState>(i)] = init[i];
+    }
 
     return mio::success();
 }

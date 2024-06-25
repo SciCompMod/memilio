@@ -20,12 +20,14 @@
 
 #include "lct_secir/model.h"
 #include "lct_secir/infection_state.h"
-#include "lct_secir/simulation.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/logging.h"
+#include "memilio/epidemiology/lct_infection_state.h"
+#include "memilio/compartments/simulation.h"
+#include "memilio/data/analyze_result.h"
 
 #include <vector>
 
@@ -33,17 +35,18 @@ int main()
 {
     // Simple example to demonstrate how to run a simulation using an LCT SECIR model.
     // Parameters, initial values and the number of subcompartments are not meant to represent a realistic scenario.
-
     using Model    = mio::lsecir::Model<2, 3, 1, 1, 5>;
     using LctState = Model::LctState;
+
     Model model;
 
-    // ScalarType tmax = 20;
+    ScalarType tmax = 20;
 
-    // Define the initial value vector init with the distribution of the population into subcompartments.
-    // This method of defining the vector using a vector of vectors is a bit of overhead, but should remind you how
-    // the entries of the initial value vector relate to the defined template parameters of the model or the number of subcompartments.
-    // It is also possible to define the initial value vector directly.
+    // Define the initial values with the distribution of the population into subcompartments.
+    // This method of defining the initial values using a vector of vectors is a bit of overhead, but should remind you
+    // how the entries of the initial value vector relate to the defined template parameters of the model or the number
+    // of subcompartments.
+    // It is also possible to define the initial values directly.
     std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
                                                                 {50},  {10, 10, 5, 3, 2}, {20},         {10}};
 
@@ -73,33 +76,39 @@ int main()
         return 1;
     }
 
-    // Transfer the initial values in initial_populations to the vector init.
-    /*model.populations[Index(LctState::get_first_index<LctState::InfectionState::Susceptible>())] =
+    // Transfer the initial values in initial_populations to the model.
+    model
+        .populations[mio::Index<LctState>((size_t)LctState::get_first_index<LctState::InfectionState::Susceptible>())] =
         initial_populations[(int)LctState::InfectionState::Susceptible][0];
     for (int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::Exposed>(); i++) {
-        model.populations[LctState::get_first_index<LctState::InfectionState::Exposed>() + i] =
+        model.populations[mio::Index<LctState>(
+            (size_t)(LctState::get_first_index<LctState::InfectionState::Exposed>() + i))] =
             initial_populations[(int)LctState::InfectionState::Exposed][i];
     }
     for (int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>(); i++) {
-        model.populations[LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>() + i] =
+        model.populations[mio::Index<LctState>(
+            (size_t)(LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>() + i))] =
             initial_populations[(int)LctState::InfectionState::InfectedNoSymptoms][i];
     }
     for (int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>(); i++) {
-        model.populations[LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>() + i] =
+        model.populations[mio::Index<LctState>(
+            (size_t)(LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>() + i))] =
             initial_populations[(int)LctState::InfectionState::InfectedSymptoms][i];
     }
     for (int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>(); i++) {
-        model.populations[LctState::get_first_index<LctState::InfectionState::InfectedSevere>() + i] =
+        model.populations[mio::Index<LctState>(
+            (size_t)(LctState::get_first_index<LctState::InfectionState::InfectedSevere>() + i))] =
             initial_populations[(int)LctState::InfectionState::InfectedSevere][i];
     }
     for (int i = 0; i < LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>(); i++) {
-        model.populations[LctState::get_first_index<LctState::InfectionState::InfectedCritical>() + i] =
+        model.populations[mio::Index<LctState>(
+            (size_t)(LctState::get_first_index<LctState::InfectionState::InfectedCritical>() + i))] =
             initial_populations[(int)LctState::InfectionState::InfectedCritical][i];
     }
-    model.populations[LctState::get_first_index<LctState::InfectionState::Recovered>()] =
+    model.populations[mio::Index<LctState>((size_t)LctState::get_first_index<LctState::InfectionState::Recovered>())] =
         initial_populations[(int)LctState::InfectionState::Recovered][0];
-    model.populations[LctState::get_first_index<LctState::InfectionState::Dead>()] =
-        initial_populations[(int)LctState::InfectionState::Dead][0];*/
+    model.populations[mio::Index<LctState>((size_t)LctState::get_first_index<LctState::InfectionState::Dead>())] =
+        initial_populations[(int)LctState::InfectionState::Dead][0];
 
     // Set Parameters.
     model.parameters.get<mio::lsecir::TimeExposed>()            = 3.2;
@@ -124,8 +133,8 @@ int main()
     model.parameters.set<mio::lsecir::DeathsPerCritical>(0.3);
 
     // Perform a simulation.
-    /*mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(0, tmax, 0.5, model);
-    // Calculate the distribution in the InfectionState%s without subcompartments of the result and print it.
-    mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_populations(result);
-    population_no_subcompartments.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);*/
+    mio::TimeSeries<ScalarType> result                        = mio::simulate<ScalarType, Model>(0, tmax, 0.5, model);
+    mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
+    auto interpolated_results = mio::interpolate_simulation_result(population_no_subcompartments);
+    population_no_subcompartments.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
 }
