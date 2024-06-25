@@ -355,9 +355,8 @@ public:
      */
     void feedback_contacts(double t, Eigen::Ref<Eigen::MatrixXd> icu_regional, Eigen::Ref<Eigen::MatrixXd> icu_national)
     {
-        auto& params                            = m_model_ptr->parameters;
-        const size_t locations                  = params.template get<ContactReductionMax>().size();
-        constexpr ScalarType threshold_softplus = 0.5;
+        auto& params           = m_model_ptr->parameters;
+        const size_t locations = params.template get<ContactReductionMax>().size();
         double perceived_risk_contacts =
             calc_risk_perceived(params.template get<alphaGammaContacts>(), params.template get<betaGammaContacts>(),
                                 icu_regional, icu_national);
@@ -372,14 +371,12 @@ public:
 
         for (size_t loc = 0; loc < locations; ++loc) {
             ScalarType reduc_fac_location = params.template get<ContactReductionMin>()[loc];
-            if (perceived_risk_contacts > threshold_softplus) {
-                reduc_fac_location =
-                    (params.template get<ContactReductionMax>()[loc] -
-                     params.template get<ContactReductionMin>()[loc]) *
-                        params.template get<EpsilonContacts>() *
-                        std::log(std::exp(perceived_risk_contacts / params.template get<EpsilonContacts>()) + 1.0) +
-                    params.template get<ContactReductionMin>()[loc];
-            }
+
+            reduc_fac_location =
+                (params.template get<ContactReductionMax>()[loc] - params.template get<ContactReductionMin>()[loc]) *
+                    params.template get<EpsilonContacts>() *
+                    std::log(std::exp(perceived_risk_contacts / params.template get<EpsilonContacts>()) + 1.0) +
+                params.template get<ContactReductionMin>()[loc];
 
             reduc_fac_location = std::min(reduc_fac_location, params.template get<ContactReductionMax>()[loc]);
 
