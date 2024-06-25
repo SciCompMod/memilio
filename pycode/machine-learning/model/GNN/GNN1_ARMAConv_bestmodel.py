@@ -50,24 +50,30 @@ from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale
 
 
 #file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
-
-file = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/data_GNN_nodamp_400pop_1k_60days_w/data_secir_age_groups.pickle', 'rb')
+# für teamserver
+file = open('/localdata1/schm_a45/code/memilio/data/GNN_data/data_GNN_nodamp_400pop_30days_2024_oldrange/data_secir_age_groups.pickle', 'rb')
 data_secir = pickle.load(file)
 
+# für henrik 
+#file = open('/localdata1/schm_a45/GNN_data/days/data_GNN_nodamp_400pop_60days_2024/data_secir_age_groups.pickle', 'rb')
+#data_secir = pickle.load(file)
 
-len_dataset = data_secir['inputs'][0].shape[0]
-numer_of_nodes = np.asarray(data_secir['inputs']).shape[0]
+
+#len_dataset = data_secir['inputs'][0].shape[0]
+len_dataset = 1000
+#numer_of_nodes = np.asarray(data_secir['inputs']).shape[0]
+numer_of_nodes = 400
 shape_input_flat = np.asarray(
-    data_secir['inputs']).shape[2]*np.asarray(data_secir['inputs']).shape[3]
+    data_secir['inputs'][0]).shape[2]*np.asarray(data_secir['inputs'][0]).shape[3]
 shape_labels_flat = np.asarray(
-    data_secir['labels']).shape[2]*np.asarray(data_secir['labels']).shape[3]
+    data_secir['labels'][0]).shape[2]*np.asarray(data_secir['labels'][0]).shape[3]
 
 
 new_inputs = np.asarray(
-    data_secir['inputs']).reshape(
-    len_dataset, numer_of_nodes, shape_input_flat)
-new_labels = np.asarray(data_secir['labels']).reshape(
-    len_dataset, numer_of_nodes, shape_labels_flat)
+    data_secir['inputs'][0]).reshape(
+    len_dataset, numer_of_nodes, 5*48)
+new_labels = np.asarray(data_secir['labels'][0]).reshape(
+    len_dataset, numer_of_nodes, 30*48)
 
 n_days = int(new_labels.shape[2]/48)
 
@@ -83,16 +89,19 @@ sub_matrix = commuter_data.iloc[:numer_of_nodes, 0:numer_of_nodes]
 
 adjacency_matrix = np.asarray(sub_matrix)
 
-#adjacency_matrix[adjacency_matrix > 0] = 1
+adjacency_matrix[adjacency_matrix > 0] = 1
 node_features = new_inputs
 
 node_labels = new_labels
 
 
-layer = 'ARMAConv'
-number_of_layers = 3
-number_of_channels = 128
+##ayer = 'ARMAConv'
+#umber_of_layers = 4
+#number_of_channels = 512
 
+layer = 'GCNConv'
+number_of_layers = 2
+number_of_channels = 62
 parameters = [layer, number_of_layers, number_of_channels]
 #parameters.append([layer, number_of_layers, number_of_channels])
 #parameters.append(['GCNConv', 2, 512]) # best GCN architecture
@@ -155,7 +164,7 @@ def train_and_evaluate_model(
         class Net(Model):
             def __init__(self):
                 super().__init__()
-                self.conv1 = layer(channels, activation='elu')
+                self.conv1 = layer(channels, order = 2,  activation='elu')
                 self.dense = Dense(data.n_labels, activation="linear")
 
             def call(self, inputs):
@@ -172,8 +181,8 @@ def train_and_evaluate_model(
         class Net(Model):
             def __init__(self):
                 super().__init__()
-                self.conv1 = layer(channels, activation='elu')
-                self.conv2 = layer(channels, activation='elu')
+                self.conv1 = layer(channels, order = 2, activation='elu')
+                self.conv2 = layer(channels, order = 2, activation='elu')
                 self.dense = Dense(data.n_labels, activation="linear")
 
             def call(self, inputs):
@@ -187,14 +196,16 @@ def train_and_evaluate_model(
 
                 return output
 
-    elif number_of_layer == 3:
+    elif number_of_layer == 4:
         class Net(Model):
             def __init__(self):
                 super().__init__()
 
-                self.conv1 = layer(channels, activation='elu')
-                self.conv2 = layer(channels, activation='elu')
-                self.conv3 = layer(channels, activation='elu')
+                self.conv1 = layer(channels, order = 3, activation='relu')
+                self.conv2 = layer(channels,  order = 3, activation='relu')
+                self.conv3 = layer(channels, order = 3, activation='relu')
+                self.conv4 = layer(channels, order = 3, activation='relu')
+                #self.conv5 = layer(channels, activation='relu')
                 self.dense = Dense(data.n_labels, activation="linear")
 
             def call(self, inputs):
@@ -203,7 +214,9 @@ def train_and_evaluate_model(
 
                 x = self.conv1([x, a])
                 x = self.conv2([x, a])
-                x = self.conv2([x, a])
+                x = self.conv3([x, a])
+                x = self.conv4([x, a])
+                #x = self.conv5([x, a])
 
                 output = self.dense(x)
 
@@ -375,7 +388,7 @@ def train_and_evaluate_model(
     elapsed = time.perf_counter() - start
 
     # save best weights as pickle 
-    with open("best_weights_ARMAConv_60days_nodamp_w_test.pickle", 'wb') as f:
+    with open("best_weights_ARMAConv_120days_nodamp_graphdata.pickle", 'wb') as f:
              pickle.dump(best_weights, f) 
 
 
@@ -422,32 +435,32 @@ def train_and_evaluate_model(
     # save df 
 
 
-    #df.loc[len(df.index)] = [layer_name, number_of_layer, channels, 
-    #                         np.mean(train_losses),
-    #                         np.mean(val_losses),
-    #                         np.mean(test_scores),
-    #                         (elapsed / 60),
-    #                         [losses_history_all],
-    #                         [val_losses_history_all]]
+    df.loc[len(df.index)] = [layer_name, number_of_layer, channels, 
+                             np.mean(train_losses),
+                             np.mean(val_losses),
+                             np.mean(test_scores),
+                             (elapsed / 60),
+                             [losses_history_all],
+                             [val_losses_history_all]]
     #print(df)
     # [np.asarray(losses_history_all).mean(axis=0)],
     # [np.asarray(val_losses_history_all).mean(axis=0)]]
 
-    # path = os.path.dirname(os.path.realpath(__file__))
-    # file_path = os.path.join(
-    #    os.path.dirname(
-    #        os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    #    'dataframe_gridsearch_2024')
-    # if not os.path.isdir(file_path):
-    #    os.mkdir(file_path)
-    # file_path = file_path+filename
-    # df.to_csv(file_path)
+    path = os.path.dirname(os.path.realpath(__file__))
+    file_path = os.path.join(
+        os.path.dirname(
+            os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+        'model_evaluations_graphdata')
+    if not os.path.isdir(file_path):
+       os.mkdir(file_path)
+    file_path = file_path+filename
+    df.to_csv(file_path)
 
 
 start_hyper = time.perf_counter()
-epochs = 5
-filename = '/GNNtype1_ARMA_60days_w_test.csv'
-save_name = 'ARMAConv_60days_saved_model_w_test'
+epochs = 1500
+filename = '/GNNtype1_ARMA_120days_nodamp_graphdata.csv'
+save_name = 'egal'
 #for param in parameters:
 train_and_evaluate_model(epochs, 0.001, parameters, save_name, filename)
 
