@@ -46,7 +46,7 @@ int main()
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    mio::osecir::Model model(6);
+    mio::osecir::Model<double> model(6);
     auto nb_groups = model.parameters.get_num_groups();
     double fact    = 1.0 / (double)(size_t)nb_groups;
 
@@ -75,21 +75,21 @@ int main()
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
-        params.get<mio::osecir::TransmissionProbabilityOnContact>()[i]  = 0.05;
-        params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]    = 0.7;
-        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]    = 0.09;
-        params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]    = 0.25;
-        params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()[i] = 0.45;
-        params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]         = 0.2;
-        params.get<mio::osecir::CriticalPerSevere>()[i]                 = 0.45;
-        params.get<mio::osecir::DeathsPerCritical>()[i]                 = 0.3;
+        params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[i]  = 0.05;
+        params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[i]    = 0.7;
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[i]    = 0.09;
+        params.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[i]    = 0.25;
+        params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()[i] = 0.45;
+        params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i]         = 0.2;
+        params.get<mio::osecir::CriticalPerSevere<double>>()[i]                 = 0.45;
+        params.get<mio::osecir::DeathsPerCritical<double>>()[i]                 = 0.3;
     }
 
     model.apply_constraints();
 
     // tests
-    const auto num_age_groups = 6;
-    const auto TEST_DATA_DIR  = "/localdata1/code_2024/memilio/data/";
+    const auto num_age_groups       = 6;
+    const std::string TEST_DATA_DIR = "/localdata1/code_2024/memilio/data/";
     // mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
     //                 mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
     //                 mio::path_join(TEST_DATA_DIR, "county_current_population.json"),
@@ -97,7 +97,7 @@ int main()
     const auto CASES_DIR      = TEST_DATA_DIR + "pydata/Germany/cases_all_county_age_ma7.json";
     const auto POPULATION_DIR = TEST_DATA_DIR + "pydata/Germany/county_current_population.json";
     // const auto results_dir                  = "/localdata1/code_2024/memilio/test";
-    std::vector<mio::osecir::Model> models1 = {model};
+    std::vector<mio::osecir::Model<double>> models1 = {model};
     // auto status_export                      = mio::osecir::export_input_data_county_timeseries(
     //     models1, TEST_DATA_DIR, {1001}, {2020, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 1);
 
@@ -110,7 +110,7 @@ int main()
             // Call the function
             auto status_export = export_input_data_county_timeseries(models1, TEST_DATA_DIR, {1001}, {2020, 12, 01},
                                                                      std::vector<double>(size_t(num_age_groups), 1.0),
-                                                                     1.0, days, 1, ICU_DIR, CASES_DIR, POPULATION_DIR);
+                                                                     1.0, days, ICU_DIR, CASES_DIR, POPULATION_DIR);
 
             auto end                           = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> diff = end - start;
