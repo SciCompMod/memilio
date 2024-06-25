@@ -1,0 +1,7 @@
+# SDE-based SEIR-type model with two variants
+
+This module models and simulates the epidemic using an SDE-based SEIR-type model approach with two variants. After a recovered infection from the first variant (considered the wild type) you can still get infected with the second variant. Infection with the second variant immunizes you against the first variant. Unlike the agent based model that uses particular agents, this model simulates the spread of a communicable disease in a population with subpopulations being in different compartments. The compartments are as follows: `Susceptible`,  `ExposedV1`, `ExposedV2`, `ExposedV1V2`,  `InfectedV1`, `InfectedV2`, `InfectedV1V2`, `RecoveredV1`, `RecoveredV2` and `RecoveredV1V2`. The compartments are addended by the relevant variants. The addendum `V1` means that the individual is infected with the first variant, the addendum `V2`means that the individual is infected with the second variant with no prior infections and the addendum `V1V2` means that the individual is infected with the second variant after a successful recovery from the first variant. Only individuals in the infected compartments are infectious. 
+
+## Simulation
+
+The simulation runs in discrete time steps using an euler-maruyama integration scheme. The Simulation class handles the parameters and the numerical integrator. It also stores the result. 
