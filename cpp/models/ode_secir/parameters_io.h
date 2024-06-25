@@ -295,8 +295,8 @@ export_input_data_county_timeseries(std::vector<Model> models, const std::string
 
         BOOST_OUTCOME_TRY(
             details::set_confirmed_cases_data(models, confirmed_cases_path, region, offset_day, scaling_factor_inf));
-        BOOST_OUTCOME_TRY(details::set_population_data(models, population_data_path, region, false));
 
+        // set population data
         for (size_t r = 0; r < region.size(); r++) {
             if (std::accumulate(num_population[r].begin(), num_population[r].end(), 0.0) > 0) {
                 auto num_groups = models[r].parameters.get_num_groups();
