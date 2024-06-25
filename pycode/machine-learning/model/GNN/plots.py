@@ -3,9 +3,11 @@ import os
 import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt 
+from matplotlib.colors import ListedColormap
 import pickle
 import json 
 import tensorflow as tf 
+import ast
 from spektral.layers import ARMAConv
 from keras.models import Model
 from keras.layers import Dense
@@ -22,6 +24,7 @@ from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale
 
 
 # def get_population(path="data\pydata\Germany\county_population_dim401.json"):
+
 def get_population(path="/home/schm_a45/Documents/Code/memilio/memilio/data/pydata/Germany/county_population.json"):
 
     with open(path) as f:
@@ -51,21 +54,24 @@ def get_population(path="/home/schm_a45/Documents/Code/memilio/memilio/data/pyda
 
 def lineplot_number_of_days():
 
-        filenames =[ "GNNtype1_ARMA_30days_w_mittel.csv", "GNNtype1_ARMA_60days_w.csv", "GNNtype1_ARMA_90days_w.csv", "GNNtype1_ARMA_120days_w.csv"]
-        days = [30,60,90,120]
+        #ilenames =[ "GNNtype1_ARMA_30days_w_mittel.csv", "GNNtype1_ARMA_60days_w.csv", "GNNtype1_ARMA_90days_w.csv", "GNNtype1_ARMA_120days_w.csv"]
+        filenames = ['ARMA_4_512_nodamp_30days_graphdata_withCV_newrange.csv', 'ARMA_4_512_nodamp_60days_graphdata_withCV_newrange.csv', 
+                     'ARMA_4_512_nodamp_90days_graphdata_withCV_newrange.csv']
+        #days = [30,60,90,120]
+        days = [30,60,90]
         MAPE = []
         
         for file in filenames: 
                 
                 path = os.path.dirname(os.path.realpath(__file__))
                 path_data = os.path.join(os.path.dirname(os.path.realpath(
-                        os.path.dirname(os.path.realpath(path)))), 'dataframes_w')
+                        os.path.dirname(os.path.realpath(path)))), 'model_evaluations_graphdata')
                 
                 filename = os.path.join(path_data, file)
 
                 df = pd.read_csv(filename)
 
-                MAPE.append(df['kfold_test'][0])
+                MAPE.append(np.mean(df['kfold_test']))
      
                 
         plt.figure().clf()
@@ -353,11 +359,11 @@ def boxplot_inputs():
           
                 d_df = pd.DataFrame(data = d)
                 d_df = pd.melt(d_df.transpose(),var_name="Day") 
-                d_df['type'] = 'basline'  
+                d_df['type'] = 'dataset 1'  
 
                 dw1_df = pd.DataFrame(data = dw1)
                 dw1_df = pd.melt(dw1_df.transpose(), var_name="Day") 
-                dw1_df['type'] = 'adjusted'  
+                dw1_df['type'] = 'dataset 2'  
         
                 # dw2_df = pd.DataFrame(data = dw2)
                 # dw2_df = pd.melt(dw2_df.transpose(), var_name="Day") 
@@ -381,8 +387,8 @@ def boxplot_inputs():
 def plot_mutliple_damp_w():
     
     layer_name='ARMAConv'
-    number_of_layers = 3
-    number_of_channels = 128
+    number_of_layers = 4
+    number_of_channels = 512
     layer = ARMAConv
 
     ######## open commuter data #########
@@ -400,9 +406,10 @@ def plot_mutliple_damp_w():
                 def __init__(self):
                     super().__init__()
 
-                    self.conv1 = layer(number_of_channels, activation='elu')
-                    self.conv2 = layer(number_of_channels, activation='elu')
-                    self.conv3 = layer(number_of_channels, activation='elu')
+                    self.conv1 = layer(number_of_channels,order = 3,  activation='relu')
+                    self.conv2 = layer(number_of_channels, order = 3, activation='relu')
+                    self.conv3 = layer(number_of_channels, order = 3,  activation='relu')
+                    self.conv4 = layer(number_of_channels, order = 3,  activation='relu')
                     self.dense = Dense(data.n_labels, activation="linear")
 
                 def call(self, inputs):
@@ -411,7 +418,8 @@ def plot_mutliple_damp_w():
 
                     x = self.conv1([x, a])
                     x = self.conv2([x, a])
-                    x = self.conv2([x, a])
+                    x = self.conv3([x, a])
+                    x = self.conv4([x,a])
 
                     output = self.dense(x)
 
@@ -423,20 +431,21 @@ def plot_mutliple_damp_w():
     
     #dampings = [1,2,3,4]
 
-    path_inputs ='/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_inputs'
-    path_labels = '/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_labels'
-    path_weights = '/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_model_weights'
+    path_inputs ='/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_inputs_graphdata'
+    path_labels = '/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_labels_graphdata'
+    path_weights = '/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_model_weights_graphdata'
 
 
-    filenames_i = ['inputs_100days_1damp_w.pickle', 'inputs_100days_2damp_w.pickle', 'inputs_100days_3damp_w.pickle', 'inputs_100days_4damp_w.pickle', 
-                   'inputs_100days_5damp_w.pickle']
+    filenames_i = ['inputs_100days_1damp_graphdata.pickle', 'inputs_100days_2damp_graphdata.pickle', 'inputs_100days_3damp_graphdata.pickle', 
+                   'inputs_100days_4damp_graphdata.pickle', 'inputs_100days_5damp_graphdata.pickle']
     
 
-    filenames_l = ['labels_100days_1_damp_w.pickle', 'labels_100days_2_damp_w.pickle', 'labels_100days_3_damp_w.pickle', 'labels_100days_4_damp_w.pickle', 
-                   'labels_100days_5_damp_w.pickle']
+    filenames_l = ['labels_100days_1damp_graphdata.pickle', 'labels_100days_2damp_graphdata.pickle', 'labels_100days_3damp_graphdata.pickle', 
+                   'labels_100days_4damp_graphdata.pickle', 'labels_100days_5damp_graphdata.pickle']
     
-    saved_weights = ['best_weights_ARMAConv_100days_1damp_w.pickle', 'best_weights_ARMAConv_100days_2damp_w.pickle', 'best_weights_ARMAConv_100days_3damp_w.pickle',
-                     'best_weights_ARMAConv_100days_4damp_w.pickle', 'best_weights_ARMAConv_100days_5damp_w.pickle']
+    saved_weights = ['best_weights_ARMAConv_100days_1damp_graphdata.pickle', 'best_weights_ARMAConv_100days_2damp_graphdata.pickle', 
+                     'best_weights_ARMAConv_100days_3damp_graphdata.pickle','best_weights_ARMAConv_100days_4damp_graphdata.pickle', 
+                     'best_weights_ARMAConv_100days_5damp_graphdata.pickle']
         
     for name_i, name_l, weights, d in zip(filenames_i, filenames_l, saved_weights, dampings):
     # load the saved input and label file 
@@ -499,7 +508,7 @@ def plot_mutliple_damp_w():
     ax.margins(y=0.1)
 
     plt.show()
-    plt.savefig("damping_ARMAConv_w.png")
+    plt.savefig("damping_ARMAConv_graphdata_noCV.png")
 
 
 def plot_mutliple_damp():
@@ -509,30 +518,31 @@ def plot_mutliple_damp():
     #     os.path.dirname(
     #         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
     #     'dataframes_dampingexperiments')
-    path_data = '/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/dataframes_w'
+    path_data = '/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model_evaluation_graphdata'
 
-    filenames = ['GNNt_ARMA_100days_1damp_w.csv', 'GNNt_ARMA_100days_2damp_w.csv', 'GNNt_ARMA_100days_3damp_w.csv', 
-                 'GNNt_ARMA_100days_4damp_w.csv',
-                 'GNNt_ARMA_100days_5damp_w.csv']
+    filenames = ['GNNt_ARMA_100days_1damp_graphdata_withCV.csv', 'GNNt_ARMA_100days_2damp_graphdata_withCV.csv', 
+                 'GNNt_ARMA_100days_3damp_graphdata_withCV.csv',
+                 'GNNt_ARMA_100days_4damp_graphdata_withCV.csv',
+                 'GNNt_ARMA_100days_5damp_graphdata_withCV.csv']
     
     df_plot = pd.DataFrame(columns = ['dampings', 'test_MAPE'])
     dampings =[1,2,3,4,5]
-    #dampings = [1,2,3,5]
+    #dampings = [1,2,3]
     for damp, filename in zip(dampings, filenames):
 
         file = open(os.path.join(path_data, filename),'rb')
         data_secir = pd.read_csv(file)
         df_plot.loc[len(df_plot)] = [damp, data_secir['kfold_test'][0]]
-        df_plot['dampings']= df_plot['dampings'].astype('int')
+    df_plot['dampings']= df_plot['dampings'].astype('int')
 
     plt.figure().clf() 
     fig, ax = plt.subplots()
     rects = ax.bar(df_plot['dampings'].round(0), df_plot['test_MAPE'].round(4))
 
-    ax.set_ylabel('Test MAPE')
+    ax.set_ylabel('MAPE')
     ax.set_xlabel('Number of dampings')
     ax.set_xticks(dampings)
-    ax.set_title('Test MAPE for different number of dampings')
+    #ax.set_title('Mean cros MAPE for different number of dampings')
 
     #large_bars = [p if p > 2 else '' for p in df_bar['kfold_test'].round(4)]
     small_bars = [p if p <= 10 else '' for p in df_plot['test_MAPE'].round(4)]
@@ -544,4 +554,367 @@ def plot_mutliple_damp():
     ax.margins(y=0.1)
 
     plt.show()
-    plt.savefig("damping_ARMAConv_w_CV.png")
+    plt.savefig("damping_ARMAConv_graphdata_withCV.png")
+
+
+def ARMA_dampings_scatter():
+
+
+    path_data = '/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model_evaluation_graphdata'
+
+    filenames = [
+        'GNNt_ARMA_100days_1damp_graphdata_withCV.csv',
+        'GNNt_ARMA_100days_2damp_graphdata_withCV.csv', 
+        'GNNt_ARMA_100days_3damp_graphdata_withCV.csv',
+        'GNNt_ARMA_100days_4damp_graphdata_withCV.csv',
+        'GNNt_ARMA_100days_5damp_graphdata_withCV.csv'
+    ]
+
+    df_plot = pd.DataFrame(columns=['dampings', 'test_MAPE'])
+    dampings = [1, 2, 3, 4, 5]
+
+    for damp, filename in zip(dampings, filenames):
+        file = open(os.path.join(path_data, filename), 'rb')
+        data_secir = pd.read_csv(file)
+        df_plot.loc[len(df_plot)] = [damp, data_secir['all_test_scores'].values]
+        df_plot['dampings'] = df_plot['dampings'].astype('int')
+
+    # Convert string representations of arrays to actual arrays
+    df_plot['test_MAPE'] = df_plot['test_MAPE'].apply(lambda x: np.array(ast.literal_eval(x[0])))
+
+    # Explode the dataframe based on the 'all_test_scores' column
+    df_expanded = df_plot.explode('test_MAPE')
+    df_expanded.reset_index(drop=True, inplace=True)
+
+    # Define positions
+    array = ['1st split', '2nd split', '3rd split', '4th split', '5th split']
+    df_expanded['position'] = np.tile(array, len(df_plot))
+
+    # Define your own custom colors
+    custom_colors = ['red', 'blue', 'green', 'orange', 'purple']
+
+    # Create a ListedColormap using the custom colors
+    custom_cmap = ListedColormap(custom_colors)
+
+    # Plot the scatter plot with color coding based on 'position'
+    plt.figure(figsize=(6, 5))  # Adjust figure size as needed
+    for i, position in enumerate(array):
+        plt.scatter(df_expanded[df_expanded['position'] == position]['dampings'], df_expanded[df_expanded['position'] == position]['test_MAPE'], c=custom_colors[i], label=position, cmap=custom_cmap)
+
+    plt.legend()
+    plt.ylabel('MAPE')
+    plt.xlabel('Number of Dampings')
+    plt.xticks(ticks=dampings, labels=dampings)  # Set the x-ticks and labels explicitly
+    plt.tight_layout()  # Adjust layout to prevent label overlap
+    plt.savefig("ARMAConv_CV_testscores_damp.png")
+
+
+
+def MAPE_MAE_ARMA():
+        
+    layer_name='ARMAConv'
+    number_of_layers = 4
+    number_of_channels = 512
+    layer = ARMAConv
+
+    ######## open commuter data #########
+    numer_of_nodes = 400 
+    path = os.path.dirname(os.path.realpath(__file__))
+    path_data = os.path.join(path,
+                            'data')
+    commuter_file = open(os.path.join(
+        path_data, 'commuter_migration_scaled.txt'), 'rb')
+    commuter_data = pd.read_csv(commuter_file, sep=" ", header=None)
+    sub_matrix = commuter_data.iloc[:numer_of_nodes, 0:numer_of_nodes]
+    adjacency_matrix = np.asarray(sub_matrix)
+
+    class Net(Model):
+                def __init__(self):
+                    super().__init__()
+
+                    self.conv1 = layer(number_of_channels,order = 3,  activation='relu')
+                    self.conv2 = layer(number_of_channels, order = 3, activation='relu')
+                    self.conv3 = layer(number_of_channels, order = 3,  activation='relu')
+                    self.conv4 = layer(number_of_channels, order = 3,  activation='relu')
+                    self.dense = Dense(data.n_labels, activation="linear")
+
+                def call(self, inputs):
+                    x, a = inputs
+                    a = np.asarray(a)
+
+                    x = self.conv1([x, a])
+                    x = self.conv2([x, a])
+                    x = self.conv3([x, a])
+                    x = self.conv4([x,a])
+
+                    output = self.dense(x)
+
+                    return output
+
+    
+    df_plot = pd.DataFrame(columns = ['days', 'test_MAPE', 'test_MAE'])
+
+    path_inputs ='/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_inputs_graphdata'
+    path_labels = '/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_labels_graphdata'
+    path_weights = '/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_model_weights_graphdata'
+
+
+    filenames_i = ['inputs_30days_graphdata.pickle', 'inputs_60days_graphdata.pickle', 'inputs_90days_graphdata.pickle']             
+
+    filenames_l = ['labels_30days_graphdata.pickle', 'labels_60days_graphdata.pickle', 'labels_90days_graphdata.pickle']
+           
+    saved_weights = ['best_weights_ARMAConv_30days_nodamp_graphdata.pickle', 'best_weights_ARMAConv_60days_nodamp_graphdata.pickle', 
+                     'best_weights_ARMAConv_90days_nodamp_graphdata.pickle']
+    
+    days = [30,60,90]
+        
+    for name_i, name_l, weights, d in zip(filenames_i, filenames_l, saved_weights, days):
+    # load the saved input and label file 
+        file_i = open(os.path.join(path_inputs, name_i), 'rb')
+        test_inputs  = pickle.load(file_i)
+
+        file_l = open(os.path.join(path_labels, name_l), 'rb')
+        test_labels  = pickle.load(file_l)
+
+        node_features = test_inputs[0]
+        class MyDataset(spektral.data.dataset.Dataset):
+                def read(self):              
+
+                    self.a = rescale_laplacian(
+                        normalized_laplacian(adjacency_matrix))
+
+                    return [spektral.data.Graph(x=x, y=y) for x, y in zip(node_features, test_labels)]
+
+                    super().__init__(**kwargs)
+
+        data = MyDataset(transforms=NormalizeAdj())
+        batch_size = node_features.shape[0]
+
+        model = Net()
+        model(test_inputs, training=False)
+        #model.load_weights('/home/schm_a45/Documents/code3/memilio/pycode/machine-learning/ARMAConv_1damp_saved_model_test')
+
+        with open(os.path.join(path_weights, weights), "rb") as fp:
+            b = pickle.load(fp)
+        best_weights = b
+        model.set_weights(best_weights)
+        
+        pred = model(test_inputs, training=False)
+
+        pred_reversed = np.expm1(pred)
+        labels_reversed = np.expm1(test_labels)
+
+        mae =  np.mean((abs(labels_reversed - pred_reversed)), axis = 0).transpose()
+        mape = 100*np.mean(abs((test_labels - pred)/test_labels), axis = 0).transpose()
+        df_plot.loc[len(df_plot)] = [d, mape.mean(), mae.mean()]
+       
+
+
+
+    plt.figure().clf()
+    fig, ax1 = plt.subplots(figsize =(8,4))
+
+    color = 'tab:red'
+    ax1.plot(days, df_plot['test_MAPE'], label ='mape', color = color, marker = 'o' )
+    ax1.set_xticks(days)
+    ax1.set_xlabel('Number of days')
+    ax1.set_ylabel('MAPE', color = color)
+    ax1.tick_params(axis='y', labelcolor=color)
+    #ax1.set_title('MAPE for number of days to be predicted')
+        
+    ax2 = ax1.twinx()
+    color = 'tab:blue'
+    ax2.set_ylabel('MAE', color = color)
+    ax2.plot(days, df_plot['test_MAE'], color = color, label = 'groups', marker = 'x')
+    ax2.tick_params(axis='y', labelcolor=color)
+    fig.legend(loc= 'lower left', fontsize = 9)
+    fig.tight_layout()
+        
+    plt.savefig("ARMA_days_MAE_MAPE.png")
+
+
+
+def plot_MAE_MAPE_compartment_ARMA():
+    layer_name='ARMAConv'
+    number_of_layers = 4
+    number_of_channels = 512
+    layer = ARMAConv
+
+    ######## open commuter data #########
+    numer_of_nodes = 400 
+    path = os.path.dirname(os.path.realpath(__file__))
+    path_data = os.path.join(path,
+                            'data')
+    commuter_file = open(os.path.join(
+        path_data, 'commuter_migration_scaled.txt'), 'rb')
+    commuter_data = pd.read_csv(commuter_file, sep=" ", header=None)
+    sub_matrix = commuter_data.iloc[:numer_of_nodes, 0:numer_of_nodes]
+    adjacency_matrix = np.asarray(sub_matrix)
+
+    class Net(Model):
+                def __init__(self):
+                    super().__init__()
+
+                    self.conv1 = layer(number_of_channels,order = 3,  activation='relu')
+                    self.conv2 = layer(number_of_channels, order = 3, activation='relu')
+                    self.conv3 = layer(number_of_channels, order = 3,  activation='relu')
+                    self.conv4 = layer(number_of_channels, order = 3,  activation='relu')
+                    self.dense = Dense(data.n_labels, activation="linear")
+
+                def call(self, inputs):
+                    x, a = inputs
+                    a = np.asarray(a)
+
+                    x = self.conv1([x, a])
+                    x = self.conv2([x, a])
+                    x = self.conv3([x, a])
+                    x = self.conv4([x,a])
+
+                    output = self.dense(x)
+
+                    return output
+
+    
+    df_plot = pd.DataFrame(columns = ['days', 'test_MAPE', 'test_MAE'])
+
+    path_inputs ='/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_inputs_graphdata'
+    path_labels = '/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_labels_graphdata'
+    path_weights = '/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model/GNN/saved_model_weights_graphdata'
+
+
+    filenames_i = ['inputs_30days_graphdata.pickle', 'inputs_60days_graphdata.pickle', 'inputs_90days_graphdata.pickle']             
+
+    filenames_l = ['labels_30days_graphdata.pickle', 'labels_60days_graphdata.pickle', 'labels_90days_graphdata.pickle']
+           
+    saved_weights = ['best_weights_ARMAConv_30days_nodamp_graphdata.pickle', 'best_weights_ARMAConv_60days_nodamp_graphdata.pickle', 
+                     'best_weights_ARMAConv_90days_nodamp_graphdata.pickle']
+    
+    days = [30,60,90]
+        
+    plotnames = ['30_GNN_MAE_and_MAPE_graphdata.png','60_GNN_MAE_and_MAPE_graphdata.png', '90_GNN_MAE_and_MAPE_graphdata.png' ]
+    for name_i, name_l, weights, d ,plotname in zip(filenames_i, filenames_l, saved_weights, days, plotnames):
+    # load the saved input and label file 
+        file_i = open(os.path.join(path_inputs, name_i), 'rb')
+        test_inputs  = pickle.load(file_i)
+
+        file_l = open(os.path.join(path_labels, name_l), 'rb')
+        test_labels  = pickle.load(file_l)
+
+        node_features = test_inputs[0]
+        class MyDataset(spektral.data.dataset.Dataset):
+                def read(self):              
+
+                    self.a = rescale_laplacian(
+                        normalized_laplacian(adjacency_matrix))
+
+                    return [spektral.data.Graph(x=x, y=y) for x, y in zip(node_features, test_labels)]
+
+                    super().__init__(**kwargs)
+
+        data = MyDataset(transforms=NormalizeAdj())
+        batch_size = node_features.shape[0]
+
+        model = Net()
+        model(test_inputs, training=False)
+        #model.load_weights('/home/schm_a45/Documents/code3/memilio/pycode/machine-learning/ARMAConv_1damp_saved_model_test')
+
+        with open(os.path.join(path_weights, weights), "rb") as fp:
+            b = pickle.load(fp)
+        best_weights = b
+        model.set_weights(best_weights)
+        
+        pred = model(test_inputs, training=False)
+
+        pred_reversed = np.expm1(pred)
+        labels_reversed = np.expm1(test_labels)
+
+        mae =  np.mean((abs(labels_reversed - pred_reversed)), axis = 0).transpose()
+        mape = 100*np.mean(abs((test_labels - pred)/test_labels), axis = 0).transpose()
+        df_plot.loc[len(df_plot)] = [d, mape.mean(), mae.mean()]
+       
+
+                
+        fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6), (ax7, ax8)) = plt.subplots(nrows=4, ncols=2, sharey=False, figsize=(10,13))
+        
+        #fig, axes = plt.subplots(nrows=2, ncols=4, sharey=False)
+        axes = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8]
+        infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
+        for ax, c, ms, ma in zip(axes, infectionstates, mae, mape):
+                
+                color = 'tab:blue'
+                ax.plot(ms, label ='MAE', color = color)
+                ax.set_xlabel('Number of days')
+                ax.set_ylabel('MAE', color = color)
+                ax.tick_params(axis='y', labelcolor=color)
+                ax.set_title(c, fontsize = 10)
+
+                ax2 = ax.twinx()
+                color = 'tab:green'
+                ax2.set_ylabel('MAPE', color = color)
+                ax2.plot(ma, color = color, label = 'MAPE' , linestyle = '--')
+                ax2.tick_params(axis='y', labelcolor=color)
+                fig.tight_layout()
+
+
+                #ax.plot(ms, label ='MSE')
+                #ax.plot(ma, label='MAPE', linestyle = '--')#
+
+                #ax.set_title(c, fontsize = 10)
+                
+                #ax.legend(loc='upper right', ncols=3)
+        
+        ax7.set_xlabel('Days')
+        ax8.set_xlabel('Days')
+            
+        plt.savefig(plotname)
+
+     
+
+
+def ARMA_days_scatter():
+
+
+    path_data = '/home/schm_a45/Documents/Code/memilio/memilio/pycode/machine-learning/model_evaluations_graphdata'
+
+    filenames = [
+        'ARMA_4_512_nodamp_30days_graphdata_withCV_newrange.csv',
+        'ARMA_4_512_nodamp_60days_graphdata_withCV_newrange.csv', 
+         'ARMA_4_512_nodamp_90days_graphdata_withCV_newrange.csv']
+
+    df_plot = pd.DataFrame(columns=['days', 'test_MAPE'])
+    days = [30,60,90]
+
+    for damp, filename in zip(days, filenames):
+        file = open(os.path.join(path_data, filename), 'rb')
+        data_secir = pd.read_csv(file)
+        df_plot.loc[len(df_plot)] = [damp, data_secir['all_test_scores'].values]
+        df_plot['days'] = df_plot['days'].astype('int')
+
+    # Convert string representations of arrays to actual arrays
+    df_plot['test_MAPE'] = df_plot['test_MAPE'].apply(lambda x: np.array(ast.literal_eval(x[0])))
+
+    # Explode the dataframe based on the 'all_test_scores' column
+    df_expanded = df_plot.explode('test_MAPE')
+    df_expanded.reset_index(drop=True, inplace=True)
+
+    # Define positions
+    array = ['1st split', '2nd split', '3rd split', '4th split', '5th split']
+    df_expanded['position'] = np.tile(array, len(df_plot))
+
+    # Define your own custom colors
+    custom_colors = ['red', 'blue', 'green', 'orange', 'purple']
+
+    # Create a ListedColormap using the custom colors
+    custom_cmap = ListedColormap(custom_colors)
+
+    # Plot the scatter plot with color coding based on 'position'
+    plt.figure(figsize=(6, 5))  # Adjust figure size as needed
+    for i, position in enumerate(array):
+        plt.scatter(df_expanded[df_expanded['position'] == position]['days'], df_expanded[df_expanded['position'] == position]['test_MAPE'], c=custom_colors[i], label=position, cmap=custom_cmap)
+
+    plt.legend()
+    plt.ylabel('MAPE')
+    plt.xlabel('Number of Days')
+    plt.xticks(ticks=days, labels=days)  # Set the x-ticks and labels explicitly
+    plt.tight_layout()  # Adjust layout to prevent label overlap
+    plt.savefig("ARMAConv_CV_testscores_days.png")
