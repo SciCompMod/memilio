@@ -17,17 +17,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_SDE_SEIR2V_SIMULATION_H
-#define MIO_SDE_SEIR2V_SIMULATION_H
+#ifndef MIO_SDE_SEIRVV_SIMULATION_H
+#define MIO_SDE_SEIRVV_SIMULATION_H
 
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/math/euler.h"
-#include "sde_seir2v/model.h"
+#include "sde_seirvv/model.h"
 
 namespace mio
 {
-namespace sseir2v
+namespace sseirvv
 {
 
 /// @brief A specialized Simulation for mio::ssirs::Model.
@@ -147,7 +147,7 @@ inline std::vector<TimeSeries<ScalarType>> simulate_flows(double t0, double tmax
     return {sim.get_result(), sim.get_flows()};
 }
 
-} // namespace sseir2v
+} // namespace sseirvv
 } // namespace mio
 
-#endif // MIO_SDE_SEIR2V_SIMULATION_H
+#endif // MIO_SDE_SEIRVV_SIMULATION_H

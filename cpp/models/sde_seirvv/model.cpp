@@ -18,12 +18,12 @@
 * limitations under the License.
 */
 
-#include "sde_seir2v/model.h"
+#include "sde_seirvv/model.h"
 
 namespace mio
 {
-namespace sseir2v
+namespace sseirvv
 {
 
-} // namespace ssirs
+} // namespace sseirvv
 } // namespace mio

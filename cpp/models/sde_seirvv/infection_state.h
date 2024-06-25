@@ -18,12 +18,12 @@
 * limitations under the License.
 */
 
-#ifndef MIO_SDE_SEIR2V_INFECTIONSTATE_H
-#define MIO_SDE_SEIR2V_INFECTIONSTATE_H
+#ifndef MIO_SDE_SEIRVV_INFECTIONSTATE_H
+#define MIO_SDE_SEIRVV_INFECTIONSTATE_H
 
 namespace mio
 {
-namespace sseir2v
+namespace sseirvv
 {
 
 /**
@@ -45,7 +45,7 @@ enum class InfectionState
     Count
 };
 
-} // namespace sseir2v
+} // namespace sseirvv
 } // namespace mio
 
-#endif // MIO_SDE_SIRS_INFECTIONSTATE_H
+#endif // MIO_SDE_SEIRVV_INFECTIONSTATE_H

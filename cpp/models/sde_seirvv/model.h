@@ -18,18 +18,18 @@
 * limitations under the License.
 */
 
-#ifndef MIO_SDE_SEIR2V_MODEL_H
-#define MIO_SDE_SEIR2V_MODEL_H
+#ifndef MIO_SDE_SEIRVV_MODEL_H
+#define MIO_SDE_SEIRVV_MODEL_H
 
 #include "memilio/compartments/flow_model.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/utils/random_number_generator.h"
-#include "sde_seir2v/infection_state.h"
-#include "sde_seir2v/parameters.h"
+#include "sde_seirvv/infection_state.h"
+#include "sde_seirvv/parameters.h"
 
 namespace mio
 {
-namespace sseir2v
+namespace sseirvv
 {
 
 /********************
@@ -66,6 +66,9 @@ public:
         double coeffStoIV2 = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
                            params.get<TransmissionProbabilityOnContactV2>() / populations.get_total();
 
+        /// Normal distributed values for the stochastic part of the flows, variables are encoded 
+        /// in the following way: x_y is the stochastic part for the flow from x to y. Variant 
+        /// specific compartments also get an addendum v1 or v2 denoting the relevant variant
         double s_ev1 = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
         double s_ev2 = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
         double ev1_iv1 = mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(rng, 0.0, 1.0);
@@ -139,7 +142,7 @@ public:
 private:
 };
 
-} // namespace sseir2v
+} // namespace sseirvv
 } // namespace mio
 
-#endif // MIO_SDE_SEIR2V_MODEL_H
+#endif // MIO_SDE_SEIRVV_MODEL_H
