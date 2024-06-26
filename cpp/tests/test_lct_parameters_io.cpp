@@ -64,7 +64,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKI)
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
     // Result of a previous simulation.
-    Eigen::VectorXd compare(Eigen::Index(LctState::Count));
+    Eigen::VectorXd compare((Eigen::Index)LctState::Count);
     compare << 863.05, 14.30625, 8.53125, 30.1125, 36.1875, 3.8125, 9.88, 3.52, 0.09, 0.25, 0.6888, 27.8712, 1.7;
 
     for (size_t i = 0; i < LctState::Count; i++) {
