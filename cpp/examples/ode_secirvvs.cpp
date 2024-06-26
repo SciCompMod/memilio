@@ -66,7 +66,7 @@ int main()
 
     model.parameters.get<mio::osecirvvs::ICUCapacity<double>>()          = 100;
     model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<double>>() = 0.0143;
-    const size_t daily_vaccinations = 10;
+    const size_t daily_vaccinations                                      = 10;
     model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().resize(mio::SimulationDay((size_t)tmax + 1));
     model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().resize(mio::SimulationDay((size_t)tmax + 1));
     for (size_t i = 0; i < tmax + 1; ++i) {
@@ -78,6 +78,8 @@ int main()
             .get<mio::osecirvvs::DailyFullVaccination<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
             num_vaccinations;
     }
+    model.parameters.get<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>() = 7;
+
     auto& contacts       = model.parameters.get<mio::osecirvvs::ContactPatterns<double>>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
