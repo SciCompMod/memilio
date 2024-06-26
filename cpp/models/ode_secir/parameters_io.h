@@ -307,35 +307,37 @@ export_input_data_county_timeseries(std::vector<Model> models, const std::string
                                     int num_days, const std::string& divi_data_path,
                                     const std::string& confirmed_cases_path, const std::string& population_data_path)
 {
-    const size_t num_age_groups = scaling_factor_inf.size();
-    std::vector<TimeSeries<double>> rki_data(
-        region.size(), TimeSeries<double>::zero(num_days, (size_t)InfectionState::Count * num_age_groups));
+    const auto num_age_groups = (size_t)models[0].parameters.get_num_groups();
+    assert(scaling_factor_inf.size() == num_age_groups);
+    assert(num_age_groups == ConfirmedCasesDataEntry::age_group_names.size());
+    assert(models.size() == region.size());
+    std::vector<TimeSeries<double>> extrapolated_data(
+        region.size(), TimeSeries<double>::zero(num_days + 1, (size_t)InfectionState::Count * num_age_groups));
 
     BOOST_OUTCOME_TRY(auto&& num_population, details::read_population_data(population_data_path, region));
     BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(confirmed_cases_path));
 
-    for (int t = 0; t < num_days; ++t) {
+    for (int t = 0; t <= num_days; ++t) {
         auto offset_day = offset_date_by_days(date, t);
 
         if (offset_day > Date(2020, 4, 23)) {
             BOOST_OUTCOME_TRY(details::set_divi_data(models, divi_data_path, region, offset_day, scaling_factor_icu));
         }
         else {
-            log_warning("No DIVI data available for date " + std::to_string(offset_day.year) + "-" +
-                        std::to_string(offset_day.month) + "-" + std::to_string(offset_day.day));
+            log_warning("No DIVI data available for date: {}-{}-{}", offset_day.day, offset_day.month, offset_day.year);
         }
 
         BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(models, confirmed_cases_path, case_data, region, offset_day,
                                                             scaling_factor_inf));
         BOOST_OUTCOME_TRY(details::set_population_data(models, num_population, region));
         for (size_t r = 0; r < region.size(); r++) {
-            rki_data[r][t] = models[r].get_initial_values();
+            extrapolated_data[r][t] = models[r].get_initial_values();
         }
     }
     auto num_groups = (int)(size_t)models[0].parameters.get_num_groups();
-    BOOST_OUTCOME_TRY(save_result(rki_data, region, num_groups, path_join(dir, "Results_rki.h5")));
+    BOOST_OUTCOME_TRY(save_result(extrapolated_data, region, num_groups, path_join(dir, "Results_rki.h5")));
 
-    auto rki_data_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{rki_data});
+    auto rki_data_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_data});
     BOOST_OUTCOME_TRY(save_result({rki_data_sum[0][0]}, {0}, num_groups, path_join(dir, "Results_rki_sum.h5")));
 
     return success();
