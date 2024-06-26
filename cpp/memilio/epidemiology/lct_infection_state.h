@@ -20,7 +20,6 @@
 #ifndef MIO_EPI_LCT_INFECTION_STATE_H
 #define MIO_EPI_LCT_INFECTION_STATE_H
 
-#include "memilio/utils/index.h"
 #include <array>
 
 namespace mio

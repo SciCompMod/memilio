@@ -150,8 +150,8 @@ IOResult<void> set_initial_data_from_confirmed_cases(Model& model, const std::st
                 ScalarType timeExposed_i =
                     timeExposed / (ScalarType)LctState::template get_num_subcompartments<InfectionState::Exposed>();
                 // Index of the last subcompartment of Exposed.
-                int idxExposed_last = LctState::template get_first_index<InfectionState::Exposed>() +
-                                      LctState::template get_num_subcompartments<InfectionState::Exposed>() - 1;
+                int idxExposed_last = (int)LctState::template get_first_index<InfectionState::Exposed>() +
+                                      (int)LctState::template get_num_subcompartments<InfectionState::Exposed>() - 1;
                 for (int i = 0; i < (int)LctState::template get_num_subcompartments<InfectionState::Exposed>(); i++) {
                     if (offset == std::floor(timeInfectedNoSymptoms + i * timeExposed_i)) {
                         init[idxExposed_last - i] -= (1 - (timeInfectedNoSymptoms + i * timeExposed_i -
