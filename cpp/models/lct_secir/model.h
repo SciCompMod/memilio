@@ -220,13 +220,13 @@ public:
     {
         if (!(LctState::Count == result.get_num_elements())) {
             log_error("Result does not match infectionState of the Model.");
-            TimeSeries<ScalarType> compartments(Eigen::Index(InfectionState::Count));
+            TimeSeries<ScalarType> compartments((Eigen::Index)InfectionState::Count);
             Eigen::VectorXd wrong_size = Eigen::VectorXd::Constant(Eigen::Index(InfectionState::Count), -1);
             compartments.add_time_point(-1, wrong_size);
             return compartments;
         }
-        TimeSeries<ScalarType> compartments(Eigen::Index(InfectionState::Count));
-        Eigen::VectorXd dummy(Eigen::Index(InfectionState::Count));
+        TimeSeries<ScalarType> compartments((Eigen::Index)InfectionState::Count);
+        Eigen::VectorXd dummy((Eigen::Index)InfectionState::Count);
         for (Eigen::Index i = 0; i < result.get_num_time_points(); ++i) {
             // Use segment of vector of the result with subcompartments of InfectionState with index j and sum up values of subcompartments.
             dummy[Eigen::Index(InfectionState::Susceptible)] = result[i][0];
