@@ -108,9 +108,9 @@ int main()
             auto start = std::chrono::high_resolution_clock::now();
 
             // Call the function
-            auto status_export = export_input_data_county_timeseries(models1, TEST_DATA_DIR, {1001}, {2020, 12, 01},
-                                                                     std::vector<double>(size_t(num_age_groups), 1.0),
-                                                                     1.0, days, ICU_DIR, CASES_DIR, POPULATION_DIR);
+            auto status_export = mio::osecir::export_input_data_county_timeseries(
+                models1, TEST_DATA_DIR, {1001}, {2020, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                days, ICU_DIR, CASES_DIR, POPULATION_DIR);
 
             auto end                           = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> diff = end - start;
