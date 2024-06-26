@@ -896,11 +896,12 @@ IOResult<void> export_input_data_county_timeseries(
             }
         }
     }
-    BOOST_OUTCOME_TRY(save_result(extrapolated_data, counties, num_groups, path_join(dir, "Results_rki.h5")));
+    BOOST_OUTCOME_TRY(
+        save_result(extrapolated_data, counties, static_cast<int>(num_groups), path_join(dir, "Results_rki.h5")));
 
     auto extrapolated_rki_data_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_data});
-    BOOST_OUTCOME_TRY(
-        save_result({extrapolated_rki_data_sum[0][0]}, {0}, num_groups, path_join(dir, "Results_rki_sum.h5")));
+    BOOST_OUTCOME_TRY(save_result({extrapolated_rki_data_sum[0][0]}, {0}, static_cast<int>(num_groups),
+                                  path_join(dir, "Results_rki_sum.h5")));
 
     return success();
 }
