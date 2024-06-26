@@ -70,20 +70,19 @@ IOResult<void> read_confirmed_cases_data(
     const std::vector<double>& scaling_factor_inf);
 
 /**
-     * @brief sets populations data from json file with multiple age groups into a Model with one age group
-     * @tparam FP floating point data type, e.g., double
-     * @param[in, out] model vector of objects in which the data is set
-     * @param[in] path Path to confirmed cases file
-     * @param[in] region vector of keys of the region of interest
-     * @param[in] year Specifies year at which the data is read
-     * @param[in] month Specifies month at which the data is read
-     * @param[in] day Specifies day at which the data is read
-     * @param[in] scaling_factor_inf factors by which to scale the confirmed cases of rki data
-     */
+ * @brief sets populations data from already read data with multiple age groups into a Model with one age group
+ * @tparam FP floating point data type, e.g., double
+ * @param[in, out] model vector of objects in which the data is set
+ * @param[in] path Path to confirmed cases file
+ * @param[in] case_data List of confirmed cases data entries
+ * @param[in] region vector of keys of the region of interest
+ * @param[in] date Date at which the data is read
+ * @param[in] scaling_factor_inf factors by which to scale the confirmed cases of rki data
+ */
 template <typename FP = double>
 IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std::string& path,
-                                        std::vector<int> const& region, Date date,
-                                        const std::vector<double>& scaling_factor_inf)
+                                        std::vector<ConfirmedCasesDataEntry>& case_data, const std::vector<int>& region,
+                                        Date date, const std::vector<double>& scaling_factor_inf)
 {
     const size_t num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
     assert(scaling_factor_inf.size() == num_age_groups);
@@ -98,8 +97,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
     std::vector<std::vector<double>> mu_I_H{model.size()};
     std::vector<std::vector<double>> mu_H_U{model.size()};
     std::vector<std::vector<double>> mu_U_D{model.size()};
-
-    BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(path));
 
     for (size_t node = 0; node < model.size(); ++node) {
         for (size_t group = 0; group < num_age_groups; group++) {
@@ -158,6 +155,26 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
                         std::to_string(region[node]) + ". Population data has not been set.");
         }
     }
+    return success();
+}
+
+/**
+ * @brief Sets the infected population for a given model based on confirmed cases data.
+ *
+ * @tparam FP floating point data type, e.g., double
+ * @param model Vector of models for which the confirmed cases data will be set.
+ * @param path Path to the confirmed cases data file.
+ * @param region Vector of keys of the region of interest
+ * @param date Date at which the data is read
+ * @param scaling_factor_inf Factors by which to scale the confirmed cases of rki data
+ */
+template <typename FP = double>
+IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std::string& path,
+                                        std::vector<int> const& region, Date date,
+                                        const std::vector<double>& scaling_factor_inf)
+{
+    BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(path));
+    BOOST_OUTCOME_TRY(set_confirmed_cases_data(model, path, case_data, region, date, scaling_factor_inf));
     return success();
 }
 
@@ -224,19 +241,17 @@ IOResult<std::vector<std::vector<double>>>
 read_population_data(const std::string& path, const std::vector<int>& vregion, bool accumulate_age_groups = false);
 
 /**
-     * @brief sets population data from census data
-     * @tparam FP floating point data type, e.g., double
-     * @param[in, out] model vector of objects in which the data is set
-     * @param[in] path Path to RKI file
-     * @param[in] vregion vector of keys of the regions of interest
-     * @param[in] accumulate_age_groups specifies whether population data sould be accumulated to one age group
-     */
+* @brief sets population data from census data which has been read into num_population
+* @tparam FP floating point data type, e.g., double
+* @param[in, out] model vector of objects in which the data is set
+* @param[in] num_population vector of population data
+* @param[in] vregion vector of keys of the regions of interest
+*/
 template <typename FP = double>
-IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::string& path,
-                                   const std::vector<int>& vregion, bool accumulate_age_groups = false)
+IOResult<void> set_population_data(std::vector<Model<FP>>& model,
+                                   const std::vector<std::vector<double>>& num_population,
+                                   const std::vector<int>& vregion)
 {
-    BOOST_OUTCOME_TRY(auto&& num_population, read_population_data(path, vregion, accumulate_age_groups));
-
     for (size_t region = 0; region < vregion.size(); region++) {
         if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
             auto num_groups = model[region].parameters.get_num_groups();
@@ -246,11 +261,27 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::str
             }
         }
         else {
-            log_warning("No population data available for region " + std::to_string(region) +
-                        ". Population data has not been set.");
+            return failure(StatusCode::OutOfRange, "No population data available for region " + std::to_string(region) +
+                                                       ". Population data has not been set.");
         }
     }
+    return success();
+}
 
+/**
+* @brief sets population data from census data into a Model
+* @tparam FP floating point data type, e.g., double
+* @param[in, out] model vector of objects in which the data is set
+* @param[in] path Path to RKI file containing population data
+* @param[in] vregion vector of keys of the regions of interest
+* @param[in] accumulate_age_groups specifies whether population data sould be accumulated to one age group
+*/
+template <typename FP = double>
+IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::string& path,
+                                   const std::vector<int>& vregion, bool accumulate_age_groups = false)
+{
+    BOOST_OUTCOME_TRY(const auto&& num_population, read_population_data(path, vregion, accumulate_age_groups));
+    BOOST_OUTCOME_TRY(set_population_data(model, num_population, vregion));
     return success();
 }
 
@@ -281,6 +312,7 @@ export_input_data_county_timeseries(std::vector<Model> models, const std::string
         region.size(), TimeSeries<double>::zero(num_days, (size_t)InfectionState::Count * num_age_groups));
 
     BOOST_OUTCOME_TRY(auto&& num_population, details::read_population_data(population_data_path, region));
+    BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(confirmed_cases_path));
 
     for (size_t t = 0; t < static_cast<size_t>(num_days); ++t) {
         auto offset_day = offset_date_by_days(date, t);
@@ -293,23 +325,9 @@ export_input_data_county_timeseries(std::vector<Model> models, const std::string
             // TODO: print specific date
         }
 
-        BOOST_OUTCOME_TRY(
-            details::set_confirmed_cases_data(models, confirmed_cases_path, region, offset_day, scaling_factor_inf));
-
-        // set population data
-        for (size_t r = 0; r < region.size(); r++) {
-            if (std::accumulate(num_population[r].begin(), num_population[r].end(), 0.0) > 0) {
-                auto num_groups = models[r].parameters.get_num_groups();
-                for (auto i = AgeGroup(0); i < num_groups; i++) {
-                    models[r].populations.template set_difference_from_group_total<AgeGroup>(
-                        {i, InfectionState::Susceptible}, num_population[r][size_t(i)]);
-                }
-            }
-            else {
-                log_warning("No population data available for region " + std::to_string(r) +
-                            ". Population data has not been set.");
-            }
-        }
+        BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(models, confirmed_cases_path, case_data, region, offset_day,
+                                                            scaling_factor_inf));
+        BOOST_OUTCOME_TRY(details::set_population_data(models, num_population, region));
         for (size_t r = 0; r < region.size(); r++) {
             rki_data[r][t] = models[r].get_initial_values();
         }
