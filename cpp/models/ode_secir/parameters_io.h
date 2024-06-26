@@ -314,15 +314,15 @@ export_input_data_county_timeseries(std::vector<Model> models, const std::string
     BOOST_OUTCOME_TRY(auto&& num_population, details::read_population_data(population_data_path, region));
     BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(confirmed_cases_path));
 
-    for (size_t t = 0; t < static_cast<size_t>(num_days); ++t) {
+    for (int t = 0; t < num_days; ++t) {
         auto offset_day = offset_date_by_days(date, t);
 
         if (offset_day > Date(2020, 4, 23)) {
             BOOST_OUTCOME_TRY(details::set_divi_data(models, divi_data_path, region, offset_day, scaling_factor_icu));
         }
         else {
-            log_warning("No DIVI data available for this date");
-            // TODO: print specific date
+            log_warning("No DIVI data available for date " + std::to_string(offset_day.year) + "-" +
+                        std::to_string(offset_day.month) + "-" + std::to_string(offset_day.day));
         }
 
         BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(models, confirmed_cases_path, case_data, region, offset_day,
