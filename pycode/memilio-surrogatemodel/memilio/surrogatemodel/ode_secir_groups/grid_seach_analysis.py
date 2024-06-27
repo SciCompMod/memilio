@@ -206,6 +206,8 @@ def lineplot(df):
     ax.plot(x,df_1.mean().values.round(2).tolist(), label='MLP') 
     ax.plot(x,df_2.mean().values.round(2).tolist(), label='CNN') 
     ax.plot(x,df_3.mean().values.round(2).tolist(), label='LSTM') 
+        # Set x-axis to logarithmic scale
+    ax.set_xscale('log')
 
 
     ax.set_xticks(x, labels=x, fontsize = 12)
