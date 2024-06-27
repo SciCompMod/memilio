@@ -46,7 +46,7 @@ struct StartingProbabilitiesExposed {
      * @brief Default parameters can be used to get Erlang distributed stay time in Exposed compartment.
      * @param[in] NumExposed Number of subcompartments of the Exposed compartment.
      */
-    static Type get_default(int NumExposed)
+    static Type get_default(size_t NumExposed)
     {
         Eigen::VectorXd def = Eigen::VectorXd::Zero(NumExposed);
         def[0]              = 1.;
@@ -68,10 +68,10 @@ struct TransitionMatrixExposedToInfectedNoSymptoms {
      * @param[in] NumExposed Number of subcompartments of the Exposed compartment.
      * @param[in] TimeExposed Average time spent in Exposed compartment in day unit.
      */
-    static Type get_default(int NumExposed, ScalarType TimeExposed = 2.)
+    static Type get_default(size_t NumExposed, ScalarType TimeExposed = 2.)
     {
-        Eigen::MatrixXd def = Eigen::VectorXd::Constant(NumExposed, -NumExposed / TimeExposed).asDiagonal();
-        def.diagonal(1).setConstant(NumExposed / TimeExposed);
+        Eigen::MatrixXd def = Eigen::VectorXd::Constant(NumExposed, -(ScalarType)NumExposed / TimeExposed).asDiagonal();
+        def.diagonal(1).setConstant((ScalarType)NumExposed / TimeExposed);
         return def;
     }
     static std::string name()
@@ -89,7 +89,7 @@ struct StartingProbabilitiesInfectedNoSymptoms {
      * @brief Default parameters can be used to get Erlang distributed stay time in InfectedNoSymptoms compartment.
      * @param[in] num_InfectedNoSymptoms Number of subcompartments of the InfectedNoSymptoms compartment.
      */
-    static Type get_default(int num_InfectedNoSymptoms)
+    static Type get_default(size_t num_InfectedNoSymptoms)
     {
         Eigen::VectorXd def = Eigen::VectorXd::Zero(num_InfectedNoSymptoms);
         def[0]              = 1.;
@@ -113,10 +113,10 @@ struct TransitionMatrixInfectedNoSymptomsToInfectedSymptoms {
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time spent in InfectedNoSymptoms before developing symptoms in day unit.
      */
-    static Type get_default(int dimension, ScalarType time = 1.)
+    static Type get_default(size_t dimension, ScalarType time = 1.)
     {
-        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -dimension / time).asDiagonal();
-        def.diagonal(1).setConstant(dimension / time);
+        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
     static std::string name()
@@ -137,10 +137,10 @@ struct TransitionMatrixInfectedNoSymptomsToRecovered {
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time spent in InfectedNoSymptoms before recovery in day unit.
      */
-    static Type get_default(int dimension, ScalarType time = 1.)
+    static Type get_default(size_t dimension, ScalarType time = 1.)
     {
-        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -dimension / time).asDiagonal();
-        def.diagonal(1).setConstant(dimension / time);
+        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
     static std::string name()
@@ -158,7 +158,7 @@ struct StartingProbabilitiesInfectedSymptoms {
      * @brief Default parameters can be used to get Erlang distributed stay time in InfectedSymptoms compartment.
      * @param[in] num_InfectedSymptoms Number of subcompartments of the Infectedymptoms compartment.
      */
-    static Type get_default(int num_InfectedSymptoms)
+    static Type get_default(size_t num_InfectedSymptoms)
     {
         Eigen::VectorXd def = Eigen::VectorXd::Zero(num_InfectedSymptoms);
         def[0]              = 1.;
@@ -182,10 +182,10 @@ struct TransitionMatrixInfectedSymptomsToInfectedSevere {
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time spent in InfectedSymptoms before going to hospital in day unit.
      */
-    static Type get_default(int dimension, ScalarType time = 1.5)
+    static Type get_default(size_t dimension, ScalarType time = 1.5)
     {
-        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -dimension / time).asDiagonal();
-        def.diagonal(1).setConstant(dimension / time);
+        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
     static std::string name()
@@ -206,10 +206,10 @@ struct TransitionMatrixInfectedSymptomsToRecovered {
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time spent in InfectedSymptoms before recovery in day unit.
      */
-    static Type get_default(int dimension, ScalarType time = 1.5)
+    static Type get_default(size_t dimension, ScalarType time = 1.5)
     {
-        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -dimension / time).asDiagonal();
-        def.diagonal(1).setConstant(dimension / time);
+        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
     static std::string name()
@@ -226,7 +226,7 @@ struct StartingProbabilitiesInfectedSevere {
     /**
      * @param[in] num_InfectedSevere Number of subcompartments of the InfectedSevere compartment.
      */
-    static Type get_default(int num_InfectedSevere)
+    static Type get_default(size_t num_InfectedSevere)
     {
         Eigen::VectorXd def = Eigen::VectorXd::Zero(num_InfectedSevere);
         def[0]              = 1.;
@@ -250,10 +250,10 @@ struct TransitionMatrixInfectedSevereToInfectedCritical {
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time spent in InfectedSevere before treated by ICU in day unit.
      */
-    static Type get_default(int dimension, ScalarType time = 1.)
+    static Type get_default(size_t dimension, ScalarType time = 1.)
     {
-        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -dimension / time).asDiagonal();
-        def.diagonal(1).setConstant(dimension / time);
+        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
     static std::string name()
@@ -274,10 +274,10 @@ struct TransitionMatrixInfectedSevereToRecovered {
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time spent in InfectedSevere before recovery in day unit.
      */
-    static Type get_default(int dimension, ScalarType time = 1.)
+    static Type get_default(size_t dimension, ScalarType time = 1.)
     {
-        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -dimension / time).asDiagonal();
-        def.diagonal(1).setConstant(dimension / time);
+        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
     static std::string name()
@@ -294,7 +294,7 @@ struct StartingProbabilitiesInfectedCritical {
     /**
      * @param[in] num_InfectedCritical Number of subcompartments of the InfectedCritical compartment.
      */
-    static Type get_default(int num_InfectedCritical)
+    static Type get_default(size_t num_InfectedCritical)
     {
         Eigen::VectorXd def = Eigen::VectorXd::Zero(num_InfectedCritical);
         def[0]              = 1.;
@@ -318,10 +318,10 @@ struct TransitionMatrixInfectedCriticalToDead {
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time treated by ICU before dead in day unit.
      */
-    static Type get_default(int dimension, ScalarType time = 1.)
+    static Type get_default(size_t dimension, ScalarType time = 1.)
     {
-        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -dimension / time).asDiagonal();
-        def.diagonal(1).setConstant(dimension / time);
+        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
     static std::string name()
@@ -342,10 +342,10 @@ struct TransitionMatrixInfectedCriticalToRecovered {
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time treated by ICU before recovery in day unit.
      */
-    static Type get_default(int dimension, ScalarType time = 1.)
+    static Type get_default(size_t dimension, ScalarType time = 1.)
     {
-        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -dimension / time).asDiagonal();
-        def.diagonal(1).setConstant(dimension / time);
+        Eigen::MatrixXd def = Eigen::VectorXd::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
     static std::string name()

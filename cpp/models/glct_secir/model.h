@@ -179,7 +179,7 @@ public:
                       LctState::template get_num_subcompartments<InfectionState::Exposed>()) *
             params.template get<StartingProbabilitiesInfectedNoSymptoms>();
         // Flow from InfectedNoSymptoms To InfectedSymptoms.
-        ScalarType dimensionInfectedNoSymptomsToInfectedSymptoms =
+        size_t dimensionInfectedNoSymptomsToInfectedSymptoms =
             params.template get<TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>().rows();
         dydt.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
                      dimensionInfectedNoSymptomsToInfectedSymptoms) +=
@@ -187,7 +187,7 @@ public:
             y.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
                       dimensionInfectedNoSymptomsToInfectedSymptoms);
         // Flow from InfectedNoSymptoms To Recovered.
-        ScalarType dimensionInfectedNoSymptomsToRecovered =
+        size_t dimensionInfectedNoSymptomsToRecovered =
             params.template get<TransitionMatrixInfectedNoSymptomsToRecovered>().rows();
         dydt.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() +
                          dimensionInfectedNoSymptomsToInfectedSymptoms,
@@ -216,7 +216,7 @@ public:
             y.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
                       dimensionInfectedNoSymptomsToInfectedSymptoms);
         // Flow from InfectedSymptoms To InfectedSevere.
-        ScalarType dimensionInfectedSymptomsToInfectedSevere =
+        size_t dimensionInfectedSymptomsToInfectedSevere =
             params.template get<TransitionMatrixInfectedSymptomsToInfectedSevere>().rows();
         dydt.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
                      dimensionInfectedSymptomsToInfectedSevere) +=
@@ -224,7 +224,7 @@ public:
             y.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
                       dimensionInfectedSymptomsToInfectedSevere);
         // Flow from InfectedSymptoms To Recovered.
-        ScalarType dimensionInfectedSymptomsToRecovered =
+        size_t dimensionInfectedSymptomsToRecovered =
             params.template get<TransitionMatrixInfectedSymptomsToRecovered>().rows();
         dydt.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>() +
                          dimensionInfectedSymptomsToInfectedSevere,
@@ -253,7 +253,7 @@ public:
             y.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
                       dimensionInfectedSymptomsToInfectedSevere);
         // Flow from InfectedSevere To InfectedCritical.
-        ScalarType dimensionInfectedSevereToInfectedCritical =
+        size_t dimensionInfectedSevereToInfectedCritical =
             params.template get<TransitionMatrixInfectedSevereToInfectedCritical>().rows();
         dydt.segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
                      dimensionInfectedSevereToInfectedCritical) +=
@@ -261,7 +261,7 @@ public:
             y.segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
                       dimensionInfectedSevereToInfectedCritical);
         // Flow from InfectedSevere To Recovered.
-        ScalarType dimensionInfectedSevereToRecovered =
+        size_t dimensionInfectedSevereToRecovered =
             params.template get<TransitionMatrixInfectedSevereToRecovered>().rows();
         dydt.segment(LctState::template get_first_index<InfectionState::InfectedSevere>() +
                          dimensionInfectedSevereToInfectedCritical,
@@ -290,15 +290,14 @@ public:
             y.segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
                       dimensionInfectedSevereToInfectedCritical);
         // Flow from InfectedCritical To Dead.
-        ScalarType dimensionInfectedCriticalToDead =
-            params.template get<TransitionMatrixInfectedCriticalToDead>().rows();
+        size_t dimensionInfectedCriticalToDead = params.template get<TransitionMatrixInfectedCriticalToDead>().rows();
         dydt.segment(LctState::template get_first_index<InfectionState::InfectedCritical>(),
                      dimensionInfectedCriticalToDead) +=
             params.template get<TransitionMatrixInfectedCriticalToDead>().transpose() *
             y.segment(LctState::template get_first_index<InfectionState::InfectedCritical>(),
                       dimensionInfectedCriticalToDead);
         // Flow from InfectedCritical To Recovered.
-        ScalarType dimensionInfectedCriticalToRecovered =
+        size_t dimensionInfectedCriticalToRecovered =
             params.template get<TransitionMatrixInfectedCriticalToRecovered>().rows();
         dydt.segment(LctState::template get_first_index<InfectionState::InfectedCritical>() +
                          dimensionInfectedCriticalToDead,
