@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import pandas as pd 
 import seaborn as sns
 #load data 
+
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
@@ -54,7 +55,7 @@ def lineplots_pred_label(pred_reversed, labels_reversed):
                 compartment_array.append(compartment) 
         index=[str(compartment).split('.')[1]
                for compartment in compartment_array]
-        infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Receovered', 'Dead']
+        infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
         fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6), (ax7, ax8)) = plt.subplots(nrows=4, ncols=2, sharey=False, figsize=(10,13), constrained_layout = True)
         
         #fig, axes = plt.subplots(nrows=2, ncols=4, sharey=False)
@@ -479,7 +480,7 @@ def compartment_error_simple():
         
         #fig, axes = plt.subplots(nrows=2, ncols=4, sharey=False)
         axes = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8]
-        infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Receovered', 'Dead']
+        infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
         for ax, c, ms, ma in zip(axes, infectionstates, mae, mape):
                 
                 color = 'tab:blue'
@@ -551,7 +552,7 @@ def compartment_error_groups():
 
 
 
-        infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Receovered', 'Dead']
+        infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
         # calcuate average of all age gorups 
         #average_labels_reversed = []
         #for sample in labels_reversed = 
@@ -617,7 +618,7 @@ def plot_30days_differentmodels():
         path_models = os.path.join(os.path.dirname(os.path.realpath(
                 #os.path.dirname(os.path.realpath(path)))), 'saved_models')
                 os.path.dirname(os.path.realpath(path)))))
-        
+        path_models = '/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio'
         modelnames_simple = ['saved_models_secir_simple_30days_w','saved_models_secir_simple_60days_w', 
                              'saved_models_secir_simple_90days_w', 'saved_models_secir_simple_120days_w',
                              'saved_models_secir_simple_150days_w']
@@ -629,11 +630,11 @@ def plot_30days_differentmodels():
         days = ['30days','60days','90days','120days','150days']
 
 
-        compartment_array = []
-        for compartment in InfectionState.values():
-                        compartment_array.append(compartment) 
-        index=[str(compartment).split('.')[1]
-        for compartment in compartment_array]
+        # compartment_array = []
+        # for compartment in InfectionState.values():
+        #                 compartment_array.append(compartment) 
+        # index=[str(compartment).split('.')[1]
+        # for compartment in compartment_array]
        
 
         fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6), (ax7, ax8)) = plt.subplots(nrows=4, ncols=2, sharey=False, figsize=(10,13))
@@ -658,7 +659,7 @@ def plot_30days_differentmodels():
 
                 pred_reversed = np.expm1(pred)
                 labels_reversed = np.expm1(test_labels)
-                infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Receovered', 'Dead']
+                infectionstates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
                 mape = 100*np.mean(abs((test_labels - pred)/test_labels), axis = 0).transpose()
                 for ax, c, ma in zip(axes, infectionstates, mape):
                         
