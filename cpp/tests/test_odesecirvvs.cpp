@@ -795,6 +795,41 @@ TEST(TestOdeSECIRVVS, model_initialization)
                 MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
 }
 
+TEST(TestOdeSECIRVVS, model_initialization_old_date)
+{
+    constexpr auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
+    auto model                    = make_model(num_age_groups);
+    // Vector assignment necessary as read_input_data_county changes model
+    auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
+
+    ASSERT_THAT(mio::osecirvvs::read_input_data_county(model_vector, {100, 12, 01}, {0},
+                                                       std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                       TEST_DATA_DIR, 2, false),
+                IsSuccess());
+
+    // if we enter an old date, the model only should be initialized with the population data.
+    // read population data
+    std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
+    const std::vector<int> region{1002};
+    auto result_one_age_group = mio::osecirvvs::details::read_population_data(path, region).value();
+
+    // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
+    auto expected_values =
+        (Eigen::ArrayXd(num_age_groups * Eigen::Index(mio::osecirvvs::InfectionState::Count)) << 3468740.0, 0.0, 0.0,
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0,
+         0.0, 0.0, 7749470.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 19217500.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 30034000.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 16514700.0,
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0,
+         0.0, 0.0, 0.0, 0.0, 6182330.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+            .finished();
+
+    ASSERT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
+}
+
 TEST(TestOdeSECIRVVS, run_simulation)
 {
     auto num_age_groups = 3;
