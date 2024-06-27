@@ -1192,6 +1192,18 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::InfectiousnessNewVariant<double>>()[indx_agegroup], 1);
 
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacity<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<double>>(), 0);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(), 0);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskSymptoms<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TestAndTraceCapacityMaxRiskSymptoms<double>>(), 0);
+
     mio::set_log_level(mio::LogLevel::warn);
 }
 
