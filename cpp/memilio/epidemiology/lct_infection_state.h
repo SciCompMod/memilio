@@ -80,7 +80,7 @@ public:
     }
 
     /**
-     * @brief Cumulates a simulation timeseries with subcompartments to produce a timeseries that divides the population only into the infection states defined in InfectionState.
+     * @brief Cumulates a timeseries with subcompartments to produce a timeseries that divides the population only into the infection states defined in InfectionState.
      *
      * If the model is used for simulation, we will get a timeseries in form of a TimeSeries with infection states divided in subcompartments.
      * The function calculates a TimeSeries without subcompartmens from another TimeSeries with subcompartments. 

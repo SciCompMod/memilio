@@ -478,7 +478,8 @@ public:
     }
 
     /**
-     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not.
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error
+     *      if constraints are not satisfied.
      * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
      */
     bool check_constraints() const

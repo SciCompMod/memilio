@@ -143,11 +143,18 @@ public:
         }
     }
 
-    void check_constraints() const
+    /**
+     * @brief Checks that the model satisfies any constraints (e.g. parameter or population constraints), and 
+     *  logs an error if constraints are not satisfied.
+     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
+     */
+    bool check_constraints() const
     {
-        populations.check_constraints();
         if constexpr (has_check_constraints_member_function<ParameterSet>::value) {
-            parameters.check_constraints();
+            return (parameters.check_constraints() || populations.check_constraints());
+        }
+        else {
+            return populations.check_constraints();
         }
     }
 

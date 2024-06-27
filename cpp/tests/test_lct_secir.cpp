@@ -355,7 +355,7 @@ TEST_F(ModelTestLCTSecir, testCalculatePopWrongSize)
     wrong_num_elements.add_time_point(-10, vec_wrong_size);
     wrong_num_elements.add_time_point(-9, vec_wrong_size);
     // Call the calculate_compartments function with the TimeSeries with a wrong number of elements.
-    mio::TimeSeries<ScalarType> population = model->calculate_compartments(wrong_num_elements);
+    mio::TimeSeries<ScalarType> population = LctState::calculate_compartments(wrong_num_elements);
     // A TimeSeries of the right size with values -1 is expected.
     EXPECT_EQ(1, population.get_num_time_points());
     for (int i = 0; i < population.get_num_elements(); i++) {
@@ -386,7 +386,7 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
     }
 
     // Compare InfectionState compartments.
-    mio::TimeSeries<ScalarType> population = model->calculate_compartments(result);
+    mio::TimeSeries<ScalarType> population = LctState::calculate_compartments(result);
     auto compare_population                = load_test_data_csv<ScalarType>("lct-secir-compartments-compare.csv");
 
     ASSERT_EQ(compare_population.size(), static_cast<size_t>(population.get_num_time_points()));

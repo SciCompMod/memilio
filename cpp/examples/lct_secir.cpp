@@ -129,7 +129,7 @@ int main()
     // Perform a simulation.
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, 0.5, model);
     // Calculate the distribution in the InfectionState%s without subcompartments of the result and print it.
-    mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
+    mio::TimeSeries<ScalarType> population_no_subcompartments = LctState::calculate_compartments(result);
     auto interpolated_results = mio::interpolate_simulation_result(population_no_subcompartments, 0.1);
     population_no_subcompartments.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
 }

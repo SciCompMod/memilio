@@ -72,40 +72,52 @@ public:
     }
 
     /**
-     * @brief Checks constraints of the model inclusive check for model parameters.
+     * @brief Checks that the model satisfies any constraints (e.g. parameter or population constraints), and 
+     *  logs an error if constraints are not satisfied.
+     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
      */
-    void check_constraints() const
+    bool check_constraints() const
     {
         auto params = this->parameters;
-        this->populations.check_constraints();
+
         // --- Check that the dimensions are consistent. ---
-        if (LctState::template get_num_subcompartments<InfectionState::Exposed>() !=
+        if ((Eigen::Index)LctState::template get_num_subcompartments<InfectionState::Exposed>() !=
             params.template get<StartingProbabilitiesExposed>().rows()) {
-            log_error("Dimension of the parameters does not match the number of subcompartments for the Exposed "
+            log_error("Constraint check: Dimension of the parameters does not match the number of subcompartments for "
+                      "the Exposed "
                       "compartment.");
+            return true;
         }
-        if (!(LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>() ==
-              params.template get<StartingProbabilitiesInfectedNoSymptoms>().rows())) {
-            log_error("Dimension of the parameters does not match the number of subcompartments for the "
-                      "InfectedNoSymptoms compartment.");
+        if ((Eigen::Index)LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>() !=
+            params.template get<StartingProbabilitiesInfectedNoSymptoms>().rows()) {
+            log_error(
+                "Constraint check: Dimension of the parameters does not match the number of subcompartments for the "
+                "InfectedNoSymptoms compartment.");
+            return true;
         }
-        if (!(LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>() ==
-              params.template get<StartingProbabilitiesInfectedSymptoms>().rows())) {
-            log_error("Dimension of the parameters does not match the number of subcompartments for the "
-                      "InfectedSymptoms compartment.");
+        if ((Eigen::Index)LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>() !=
+            params.template get<StartingProbabilitiesInfectedSymptoms>().rows()) {
+            log_error(
+                "Constraint check: Dimension of the parameters does not match the number of subcompartments for the "
+                "InfectedSymptoms compartment.");
+            return true;
         }
-        if (!(LctState::template get_num_subcompartments<InfectionState::InfectedSevere>() ==
-              params.template get<StartingProbabilitiesInfectedSevere>().rows())) {
-            log_error("Dimension of the parameters does not match the number of subcompartments for the InfectedSevere "
+        if ((Eigen::Index)LctState::template get_num_subcompartments<InfectionState::InfectedSevere>() !=
+            params.template get<StartingProbabilitiesInfectedSevere>().rows()) {
+            log_error("Constraint check: Dimension of the parameters does not match the number of subcompartments for "
+                      "the InfectedSevere "
                       "compartment.");
+            return true;
         }
-        if (!(LctState::template get_num_subcompartments<InfectionState::InfectedCritical>() ==
-              params.template get<StartingProbabilitiesInfectedCritical>().rows())) {
-            log_error("Dimension of the parameters does not match the number of subcompartments for the "
-                      "InfectedCritical compartment.");
+        if ((Eigen::Index)LctState::template get_num_subcompartments<InfectionState::InfectedCritical>() !=
+            params.template get<StartingProbabilitiesInfectedCritical>().rows()) {
+            log_error(
+                "Constraint check: Dimension of the parameters does not match the number of subcompartments for the "
+                "InfectedCritical compartment.");
+            return true;
         }
 
-        params.check_constraints();
+        return (params.check_constraints() || this->populations.check_constraints());
     }
 
     /**

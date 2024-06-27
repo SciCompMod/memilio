@@ -205,68 +205,6 @@ public:
         dydt[LctState::template get_first_index<InfectionState::Dead>()] =
             params.template get<DeathsPerCritical>() * dummy;
     }
-
-    /**
-     * @brief Cumulates a simulation result with subcompartments to produce a result that divides the population only
-     *   into the infection states defined in InfectionState.
-     *
-     * If the model is used for simulation, we will get a result in form of a TimeSeries with infection states divided 
-     * in subcompartments.
-     * The function calculates a TimeSeries without subcompartmens from another TimeSeries with subcompartments. 
-     * This is done by summing up the numbers in the subcompartments.
-     * @param[in] result result of a simulation with the model.
-     * @return result of the simulation divided in the Base infection states. 
-     *  Returns TimeSeries with values -1 if calculation is not possible.
-     */
-    TimeSeries<ScalarType> calculate_compartments(const TimeSeries<ScalarType>& result) const
-    {
-        if (!(LctState::Count == result.get_num_elements())) {
-            log_error("Result does not match infectionState of the Model.");
-            TimeSeries<ScalarType> compartments((Eigen::Index)InfectionState::Count);
-            Eigen::VectorXd wrong_size = Eigen::VectorXd::Constant(Eigen::Index(InfectionState::Count), -1);
-            compartments.add_time_point(-1, wrong_size);
-            return compartments;
-        }
-        TimeSeries<ScalarType> compartments((Eigen::Index)InfectionState::Count);
-        Eigen::VectorXd dummy((Eigen::Index)InfectionState::Count);
-        for (Eigen::Index i = 0; i < result.get_num_time_points(); ++i) {
-            // Use segment of vector of the result with subcompartments of InfectionState with index j and sum up values of subcompartments.
-            dummy[Eigen::Index(InfectionState::Susceptible)] = result[i][0];
-            dummy[Eigen::Index(InfectionState::Exposed)] =
-                result[i]
-                    .segment(LctState::template get_first_index<InfectionState::Exposed>(),
-                             LctState::template get_num_subcompartments<InfectionState::Exposed>())
-                    .sum();
-            dummy[Eigen::Index(InfectionState::InfectedNoSymptoms)] =
-                result[i]
-                    .segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
-                             LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>())
-                    .sum();
-            dummy[Eigen::Index(InfectionState::InfectedSymptoms)] =
-                result[i]
-                    .segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
-                             LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>())
-                    .sum();
-            dummy[Eigen::Index(InfectionState::InfectedSevere)] =
-                result[i]
-                    .segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
-                             LctState::template get_num_subcompartments<InfectionState::InfectedSevere>())
-                    .sum();
-            dummy[Eigen::Index(InfectionState::InfectedCritical)] =
-                result[i]
-                    .segment(LctState::template get_first_index<InfectionState::InfectedCritical>(),
-                             LctState::template get_num_subcompartments<InfectionState::InfectedCritical>())
-                    .sum();
-            dummy[Eigen::Index(InfectionState::Recovered)] =
-                result[i][LctState::template get_first_index<InfectionState::Recovered>()];
-            dummy[Eigen::Index(InfectionState::Dead)] =
-                result[i][LctState::template get_first_index<InfectionState::Dead>()];
-
-            compartments.add_time_point(result.get_time(i), dummy);
-        }
-
-        return compartments;
-    }
 };
 
 } // namespace lsecir
