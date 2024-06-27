@@ -14,8 +14,8 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
     
-filename = "data_secir_groups_30days_nodamp.pickle"
-filename_df = "dataframe_a4"
+filename = "data_secir_groups_30days_nodamp_w.pickle"
+filename_df = "dataframe_30days_w"
 
 label_width = 30 
 early_stop = 100
@@ -24,9 +24,9 @@ early_stop = 100
 # neurons_in_hidden_layer = [32, 62, 128, 512, 1024]
 # models = ["Dense", "CNN", "LSTM"]
 
-hidden_layers = [3]
-neurons_in_hidden_layer = [1024]
-models = ["CNN-LSTM"]
+hidden_layers = [0]
+neurons_in_hidden_layer = [512]
+models = ["LSTM"]
 
 
 label_width = 30
@@ -43,8 +43,8 @@ for layer in hidden_layers:
 df_results  = pd.DataFrame(
     columns=['model', 'number_of_hidden_layers', 'number_of_neurons',
              'mean_test_MAPE', 'kfold_train',
-             'kfold_val', 'kfold_test', 'training_time',
-             'train_losses', 'val_losses'])     
+             'kfold_val', 'kfold_test', 'training_time'])
+             #'train_losses', 'val_losses'])     
 
 
 
@@ -229,9 +229,9 @@ def train_and_evaluate_model(param, max_epochs):
     df_results.loc[len(df_results.index)] = [modelname, layer, neuron_number,  df.mean()[0] , np.mean(train_losses),
                              np.mean(val_losses),
                              np.mean(test_scores),
-                             (elapsed / 60),
-                             [losses_history_all],
-                             [val_losses_history_all]]
+                             (elapsed / 60)]
+                             #[losses_history_all],
+                             #[val_losses_history_all]]
     
     path = os.path.dirname(os.path.realpath(__file__))
     file_path = os.path.join(
