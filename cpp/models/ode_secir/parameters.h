@@ -460,6 +460,20 @@ public:
             corrected = true;
         }
 
+        if (this->template get<TestAndTraceCapacity<FP>>() < 0.0) {
+            log_warning("Constraint check: Parameter TestAndTraceCapacity changed from {:0.4f} to {:d}",
+                        this->template get<TestAndTraceCapacity<FP>>(), 0);
+            this->template get<TestAndTraceCapacity<FP>>() = 0;
+            corrected                                      = true;
+        }
+
+        if (this->template get<TestAndTraceCapacityMaxRisk<FP>>() < 0.0) {
+            log_warning("Constraint check: Parameter TestAndTraceCapacityMaxRisk changed from {:0.4f} to {:d}",
+                        this->template get<TestAndTraceCapacityMaxRisk<FP>>(), 0);
+            this->template get<TestAndTraceCapacityMaxRisk<FP>>() = 0;
+            corrected                                             = true;
+        }
+
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
                 log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please "
@@ -579,6 +593,16 @@ public:
 
         if (this->template get<ICUCapacity<FP>>() < 0.0) {
             log_error("Constraint check: Parameter ICUCapacity smaller {:d}", 0);
+            return true;
+        }
+
+        if (this->template get<TestAndTraceCapacity<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter TestAndTraceCapacity smaller {:d}", 0);
+            return true;
+        }
+
+        if (this->template get<TestAndTraceCapacityMaxRisk<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter TestAndTraceCapacityMaxRisk smaller {:d}", 0);
             return true;
         }
 

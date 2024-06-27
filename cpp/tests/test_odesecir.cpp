@@ -1159,6 +1159,14 @@ TEST(Secir, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecir::DeathsPerCritical<double>>()[indx_agegroup], 0);
     mio::set_log_level(mio::LogLevel::warn);
+
+    model.parameters.set<mio::osecir::TestAndTraceCapacity<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecir::TestAndTraceCapacity<double>>(), 0);
+
+    model.parameters.set<mio::osecir::TestAndTraceCapacityMaxRisk<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecir::TestAndTraceCapacityMaxRisk<double>>(), 0);
 }
 
 #if defined(MEMILIO_HAS_JSONCPP)
