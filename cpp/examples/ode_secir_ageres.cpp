@@ -18,13 +18,9 @@
 * limitations under the License.
 */
 #include "ode_secir/model.h"
-#include "ode_secir/parameters_io.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
 #include "memilio/compartments/simulation.h"
-#include <chrono>
-#include <vector>
-#include <numeric>
 
 int main()
 {
@@ -37,6 +33,8 @@ int main()
 
     mio::log_info("Simulating SECIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
+    double cont_freq = 10; // see Polymod study
+
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
@@ -46,7 +44,7 @@ int main()
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    mio::osecir::Model<double> model(6);
+    mio::osecir::Model<double> model(3);
     auto nb_groups = model.parameters.get_num_groups();
     double fact    = 1.0 / (double)(size_t)nb_groups;
 
@@ -81,55 +79,37 @@ int main()
         params.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[i]    = 0.25;
         params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()[i] = 0.45;
         params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i]         = 0.2;
-        params.get<mio::osecir::CriticalPerSevere<double>>()[i]                 = 0.45;
+        params.get<mio::osecir::CriticalPerSevere<double>>()[i]                 = 0.25;
         params.get<mio::osecir::DeathsPerCritical<double>>()[i]                 = 0.3;
     }
 
     model.apply_constraints();
 
-    // tests
-    const auto num_age_groups       = 6;
-    const std::string TEST_DATA_DIR = "/localdata1/code_2024/memilio/data/";
-    // mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
-    //                 mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
-    //                 mio::path_join(TEST_DATA_DIR, "county_current_population.json"),
-    const auto ICU_DIR        = TEST_DATA_DIR + "pydata/Germany/county_divi_ma7.json";
-    const auto CASES_DIR      = TEST_DATA_DIR + "pydata/Germany/cases_all_county_age_ma7.json";
-    const auto POPULATION_DIR = TEST_DATA_DIR + "pydata/Germany/county_current_population.json";
-    // const auto results_dir                  = "/localdata1/code_2024/memilio/test";
-    std::vector<mio::osecir::Model<double>> models1 = {model};
-    // auto status_export                      = mio::osecir::export_input_data_county_timeseries(
-    //     models1, TEST_DATA_DIR, {1001}, {2020, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 1);
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix[0] =
+        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
+                               mio::SimulationTime(30.));
 
-    auto vec_days = std::vector<int>{1, 5, 10, 20};
-    for (auto days : vec_days) {
-        auto times = std::vector<double>();
-        for (int i = 0; i < 20; ++i) {
-            auto start = std::chrono::high_resolution_clock::now();
+    mio::TimeSeries<double> secir = mio::simulate<double, mio::osecir::Model<double>>(t0, tmax, dt, model);
+    bool print_to_terminal        = true;
 
-            // Call the function
-            auto status_export = mio::osecir::export_input_data_county_timeseries(
-                models1, TEST_DATA_DIR, {1001}, {2020, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                days, ICU_DIR, CASES_DIR, POPULATION_DIR);
+    if (print_to_terminal) {
 
-            auto end                           = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double> diff = end - start;
+        std::vector<std::string> vars = {"S", "E", "C", "C_confirmed", "I", "I_confirmed", "H", "U", "R", "D"};
+        printf("Number of time points :%d\n", static_cast<int>(secir.get_num_time_points()));
+        printf("People in\n");
 
-            times.push_back(diff.count());
-            mio::unused(status_export);
+        for (size_t k = 0; k < (size_t)mio::osecir::InfectionState::Count; k++) {
+            double dummy = 0;
+
+            for (size_t i = 0; i < (size_t)params.get_num_groups(); i++) {
+                printf("\t %s[%d]: %.0f", vars[k].c_str(), (int)i,
+                       secir.get_last_value()[k + (size_t)mio::osecir::InfectionState::Count * (int)i]);
+                dummy += secir.get_last_value()[k + (size_t)mio::osecir::InfectionState::Count * (int)i];
+            }
+
+            printf("\t %s_otal: %.0f\n", vars[k].c_str(), dummy);
         }
-        double average_time = std::accumulate(times.begin(), times.end(), 0.0) / times.size();
-        std::cout << "Average time to run function: " << average_time << "s for days = " << days << "\n";
     }
-
-    // std::vector<mio::osecir::Model> models2 = {model};
-    // auto read_result1                       = mio::osecir::read_input_data_county(models2, {2020, 12, 01}, {1001},
-    //                                                         std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-    //                                                         TEST_DATA_DIR, 1, false);
-
-    // mio::TimeSeries<double> secir = simulate(0.0, 1.0, 1.0, models2[0]);
-
-    // std::cout << secir.get_value(0) << std::endl;
-
-    // mio::unused(read_result1);
 }
