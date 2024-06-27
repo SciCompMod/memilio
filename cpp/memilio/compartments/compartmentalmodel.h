@@ -88,18 +88,18 @@ public:
     {
     }
 
-    CompartmentalModel(const CompartmentalModel&)            = default;
-    CompartmentalModel(CompartmentalModel&&)                 = default;
+    CompartmentalModel(const CompartmentalModel&) = default;
+    CompartmentalModel(CompartmentalModel&&)      = default;
     CompartmentalModel& operator=(const CompartmentalModel&) = default;
-    CompartmentalModel& operator=(CompartmentalModel&&)      = default;
-    virtual ~CompartmentalModel()                            = default;
+    CompartmentalModel& operator=(CompartmentalModel&&) = default;
+    virtual ~CompartmentalModel()                       = default;
 
     //REMARK: Not pure virtual for easier java/python bindings
     virtual void get_derivatives(Eigen::Ref<const Vector<FP>>, Eigen::Ref<const Vector<FP>> /*y*/, FP /*t*/,
                                  Eigen::Ref<Vector<FP>> /*dydt*/) const {};
 
     /**
-     * @brief eval_right_hand_side evaulates the right-hand-side f of the ODE dydt = f(y, t)
+     * @brief eval_right_hand_side evaluates the right-hand-side f of the ODE dydt = f(y, t)
      *
      * The heart of the compartmental model is a first order ODE dydt = f(y,t), where y is a flat
      * representation of all the compartmental populations at time t. This function evaluates the

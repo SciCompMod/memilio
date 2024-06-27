@@ -2,7 +2,6 @@ add_library(glct_secir
     infection_state.h
     model.h
     model.cpp
-    simulation.h    
     parameters.h
 )
 target_link_libraries(glct_secir PUBLIC memilio)

@@ -20,11 +20,11 @@
 
 #include "glct_secir/model.h"
 #include "glct_secir/infection_state.h"
-#include "glct_secir/simulation.h"
 #include "glct_secir/parameters.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
+#include "memilio/compartments/simulation.h"
 #include "memilio/math/eigen.h"
 
 #include <gtest/gtest.h>
@@ -34,103 +34,73 @@ TEST(TestGLCTSecir, testEvalRightHandSide)
 {
     // Define model.
     // Chose more than one subcompartment for all compartments except S, R, D so that the function is correct for all selections.
-    using Model    = mio::glsecir::Model<2, 6, 4, 4, 4>;
-    using LctState = Model::LctState;
+    using Model          = mio::glsecir::Model<2, 6, 4, 4, 4>;
+    using LctState       = Model::LctState;
+    using InfectionState = LctState::InfectionState;
 
-    // Define initial population distribution in infection states, one entry per subcompartment.
-    Eigen::VectorXd init(LctState::Count);
-    init[LctState::get_first_index<LctState::InfectionState::Susceptible>()] = 750;
-    init[LctState::get_first_index<LctState::InfectionState::Exposed>()]     = 30;
-    init[LctState::get_first_index<LctState::InfectionState::Exposed>() + 1] = 20;
-
-    init[LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>()]     = 20 * 0.91;
-    init[LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>() + 1] = 10 * 0.91;
-    init[LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>() + 2] = 10 * 0.91;
-    init[LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>() + 3] = 20 * 0.09;
-    init[LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>() + 4] = 10 * 0.09;
-    init[LctState::get_first_index<LctState::InfectionState::InfectedNoSymptoms>() + 5] = 10 * 0.09;
-
-    init[LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>()]     = 30 * 0.2;
-    init[LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>() + 1] = 20 * 0.2;
-    init[LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>() + 2] = 30 * 0.8;
-    init[LctState::get_first_index<LctState::InfectionState::InfectedSymptoms>() + 3] = 20 * 0.8;
-
-    init[LctState::get_first_index<LctState::InfectionState::InfectedSevere>()]     = 40 * 0.25;
-    init[LctState::get_first_index<LctState::InfectionState::InfectedSevere>() + 1] = 10 * 0.25;
-    init[LctState::get_first_index<LctState::InfectionState::InfectedSevere>() + 2] = 40 * 0.75;
-    init[LctState::get_first_index<LctState::InfectionState::InfectedSevere>() + 3] = 10 * 0.75;
-
-    init[LctState::get_first_index<LctState::InfectionState::InfectedCritical>()]     = 10 * 0.3;
-    init[LctState::get_first_index<LctState::InfectionState::InfectedCritical>() + 1] = 20 * 0.3;
-    init[LctState::get_first_index<LctState::InfectionState::InfectedCritical>() + 2] = 10 * 0.7;
-    init[LctState::get_first_index<LctState::InfectionState::InfectedCritical>() + 3] = 20 * 0.7;
-
-    init[LctState::get_first_index<LctState::InfectionState::Recovered>()] = 20;
-    init[LctState::get_first_index<LctState::InfectionState::Dead>()]      = 10;
-
-    Model model(std::move(init));
+    Model model;
 
     // Set parameters.
     // Exposed.
     model.parameters.get<mio::glsecir::StartingProbabilitiesExposed>() =
         mio::glsecir::StartingProbabilitiesExposed().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::Exposed>());
+            LctState::get_num_subcompartments<InfectionState::Exposed>());
     model.parameters.get<mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms>() =
         mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::Exposed>(), 3.2);
+            LctState::get_num_subcompartments<InfectionState::Exposed>(), 3.2);
     // InfectedNoSymptoms.
     Eigen::VectorXd StartingProbabilitiesInfectedNoSymptoms =
-        Eigen::VectorXd::Zero(LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>());
+        Eigen::VectorXd::Zero((Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>());
     StartingProbabilitiesInfectedNoSymptoms[0] = 1 - 0.09;
     StartingProbabilitiesInfectedNoSymptoms
-        [LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>() / 2.] = 0.09;
+        [(Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.] = 0.09;
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedNoSymptoms>() =
         StartingProbabilitiesInfectedNoSymptoms;
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>() =
         mio::glsecir::TransitionMatrixInfectedNoSymptomsToInfectedSymptoms().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>() / 2., 2.);
+            LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2., 2.);
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptomsToRecovered>() =
         mio::glsecir::TransitionMatrixInfectedNoSymptomsToRecovered().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedNoSymptoms>() / 2., 2.);
+            LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2., 2.);
     // InfectedSymptoms.
     Eigen::VectorXd StartingProbabilitiesInfectedSymptoms =
-        Eigen::VectorXd::Zero(LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>());
+        Eigen::VectorXd::Zero((Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>());
     StartingProbabilitiesInfectedSymptoms[0] = 0.2;
     StartingProbabilitiesInfectedSymptoms
-        [LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>() / 2.] = 1 - 0.2;
+        [(Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.] = 1 - 0.2;
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSymptoms>() = StartingProbabilitiesInfectedSymptoms;
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedSymptomsToInfectedSevere>() =
         mio::glsecir::TransitionMatrixInfectedSymptomsToInfectedSevere().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>() / 2., 5.8);
+            LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2., 5.8);
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered>() =
         mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedSymptoms>() / 2., 5.8);
+            LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2., 5.8);
     // InfectedSevere.
     Eigen::VectorXd StartingProbabilitiesInfectedSevere =
-        Eigen::VectorXd::Zero(LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>());
-    StartingProbabilitiesInfectedSevere[0]                                    = 0.25;
-    StartingProbabilitiesInfectedSevere[LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>() /
-                                        2.]                                   = 1 - 0.25;
+        Eigen::VectorXd::Zero((Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSevere>());
+    StartingProbabilitiesInfectedSevere[0] = 0.25;
+    StartingProbabilitiesInfectedSevere
+        [(Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.] = 1 - 0.25;
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere>() = StartingProbabilitiesInfectedSevere;
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical>() =
         mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>() / 2., 9.5);
+            LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2., 9.5);
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToRecovered>() =
         mio::glsecir::TransitionMatrixInfectedSevereToRecovered().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedSevere>() / 2., 9.5);
+            LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2., 9.5);
     // InfectedCritical.
     Eigen::VectorXd StartingProbabilitiesInfectedCritical =
-        Eigen::VectorXd::Zero(LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>());
+        Eigen::VectorXd::Zero((Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedCritical>());
     StartingProbabilitiesInfectedCritical[0] = 0.3;
     StartingProbabilitiesInfectedCritical
-        [LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>() / 2.] = 1 - 0.3;
+        [(Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.] = 1 - 0.3;
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedCritical>() = StartingProbabilitiesInfectedCritical;
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedCriticalToDead>() =
         mio::glsecir::TransitionMatrixInfectedCriticalToDead().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>() / 2., 7.1);
+            LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2., 7.1);
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedCriticalToRecovered>() =
         mio::glsecir::TransitionMatrixInfectedCriticalToRecovered().get_default(
-            LctState::get_num_subcompartments<LctState::InfectionState::InfectedCritical>() / 2., 7.1);
+            LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2., 7.1);
 
     model.parameters.get<mio::glsecir::TransmissionProbabilityOnContact>() = 0.05;
 
@@ -142,17 +112,58 @@ TEST(TestGLCTSecir, testEvalRightHandSide)
     model.parameters.get<mio::glsecir::Seasonality>()                    = 0.;
     model.parameters.get<mio::glsecir::StartDay>()                       = 0;
 
-    // Compare the result of eval_right_hand_side() with a hand calculated result.
-    int num_subcompartments = LctState::Count;
-    Eigen::VectorXd dydt(num_subcompartments);
-    model.eval_right_hand_side(model.get_initial_values(), 0, dydt);
+    // Define initial population distribution in infection states, one entry per subcompartment.
+    std::vector<std::vector<ScalarType>> initial_populations = {
+        {750},
+        {30, 20},
+        {20 * StartingProbabilitiesInfectedNoSymptoms[0], 10 * StartingProbabilitiesInfectedNoSymptoms[0],
+         10 * StartingProbabilitiesInfectedNoSymptoms[0], 20 * (1 - StartingProbabilitiesInfectedNoSymptoms[0]),
+         10 * (1 - StartingProbabilitiesInfectedNoSymptoms[0]), 10 * (1 - StartingProbabilitiesInfectedNoSymptoms[0])},
+        {30 * StartingProbabilitiesInfectedSymptoms[0], 20 * StartingProbabilitiesInfectedSymptoms[0],
+         30 * (1 - StartingProbabilitiesInfectedSymptoms[0]), 20 * (1 - StartingProbabilitiesInfectedSymptoms[0])},
+        {40 * StartingProbabilitiesInfectedSevere[0], 10 * StartingProbabilitiesInfectedSevere[0],
+         40 * (1 - StartingProbabilitiesInfectedSevere[0]), 10 * (1 - StartingProbabilitiesInfectedSevere[0])},
+        {10 * StartingProbabilitiesInfectedCritical[0], 20 * StartingProbabilitiesInfectedCritical[0],
+         10 * (1 - StartingProbabilitiesInfectedCritical[0]), 20 * (1 - StartingProbabilitiesInfectedCritical[0])},
+        {20},
+        {10}};
+    Eigen::VectorXd pop(LctState::Count);
+    pop[LctState::get_first_index<InfectionState::Susceptible>()] =
+        initial_populations[(size_t)InfectionState::Susceptible][0];
+    for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::Exposed>(); i++) {
+        pop[LctState::get_first_index<InfectionState::Exposed>() + i] =
+            initial_populations[(size_t)InfectionState::Exposed][i];
+    }
+    for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>(); i++) {
+        pop[LctState::get_first_index<InfectionState::InfectedNoSymptoms>() + i] =
+            initial_populations[(size_t)InfectionState::InfectedNoSymptoms][i];
+    }
+    for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>(); i++) {
+        pop[LctState::get_first_index<InfectionState::InfectedSymptoms>() + i] =
+            initial_populations[(size_t)InfectionState::InfectedSymptoms][i];
+    }
+    for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedSevere>(); i++) {
+        pop[LctState::get_first_index<InfectionState::InfectedSevere>() + i] =
+            initial_populations[(size_t)InfectionState::InfectedSevere][i];
+    }
+    for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedCritical>(); i++) {
+        pop[LctState::get_first_index<InfectionState::InfectedCritical>() + i] =
+            initial_populations[(size_t)InfectionState::InfectedCritical][i];
+    }
+    pop[LctState::get_first_index<InfectionState::Recovered>()] =
+        initial_populations[(size_t)InfectionState::Recovered][0];
+    pop[LctState::get_first_index<InfectionState::Dead>()] = initial_populations[(size_t)InfectionState::Dead][0];
 
-    Eigen::VectorXd compare(num_subcompartments);
+    // Compare the result of get_derivatives() with a hand calculated result.
+    Eigen::VectorXd dydt(LctState::Count);
+    model.get_derivatives(pop, pop, 0, dydt);
+
+    Eigen::VectorXd compare(LctState::Count);
     compare << -15.3409, -3.4091, 6.25, -17.5 * 0.91, 15 * 0.91, 0 * 0.91, -17.5 * 0.09, 15 * 0.09, 0 * 0.09,
         3.3052 * 0.2, 3.4483 * 0.2, 3.3052 * 0.8, 3.4483 * 0.8, -7.0417 * 0.25, 6.3158 * 0.25, -7.0417 * 0.75,
         6.3158 * 0.75, -2.2906 * 0.3, -2.8169 * 0.3, -2.2906 * 0.7, -2.8169 * 0.7, 12.3899, 1.6901;
 
-    for (int i = 0; i < num_subcompartments; i++) {
+    for (size_t i = 0; i < LctState::Count; i++) {
         ASSERT_NEAR(compare[i], dydt[i], 1e-3) << "Condition failed at index: " << i;
     }
 }
