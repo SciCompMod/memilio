@@ -348,14 +348,29 @@ struct TestAndTraceCapacity {
     }
 };
 
+/**
+ * @brief Multiplier for the test and trace capacity to determine when it is considered overloaded.
+ */
 template <typename FP = double>
-using ParametersBase =
-    ParameterSet<StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, ContactPatterns<FP>,
-                 DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>, TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>,
-                 TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
-                 RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>,
-                 RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>,
-                 SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>>;
+struct TestAndTraceCapacityMaxRisk {
+    using Type = UncertainValue<FP>;
+    static Type get_default(AgeGroup)
+    {
+        return Type(5.0);
+    }
+    static std::string name()
+    {
+        return "TestAndTraceCapacityMaxRisk";
+    }
+};
+
+template <typename FP = double>
+using ParametersBase = ParameterSet<
+    StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, TestAndTraceCapacityMaxRisk<FP>,
+    ContactPatterns<FP>, DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>, TimeInfectedNoSymptoms<FP>,
+    TimeInfectedSymptoms<FP>, TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
+    RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
+    MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
