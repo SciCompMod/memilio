@@ -105,7 +105,7 @@ def lstm_multi_input_multi_output(label_width, num_age_groups=6):
     @param label_width Number of time steps in the output.
     """
     model = tf.keras.Sequential([
-        tf.keras.layers.LSTM(32, return_sequences=False),
+        tf.keras.layers.LSTM(512, return_sequences=False),
         tf.keras.layers.Dense(label_width * 8 * num_age_groups,
                               kernel_initializer=tf.initializers.zeros()),
         tf.keras.layers.Reshape([label_width, 8 * num_age_groups])])
@@ -136,3 +136,35 @@ def cnn_lstm_hybrid(input_dim, output_dim):
 
     model.add(tf.keras.layers.Dense(output_dim, activation='linear'))  # 1440
     return model
+
+
+
+    def cnn_multi_input_multi_output(label_width, num_age_groups=6):
+            """! CNN Network which uses multiple time steps as input and returns the 8 compartments for
+            each age groups for multiple time step in the future.
+
+            Input and output have shape [number of expert model simulations, time points in simulation,
+            number of individuals in infection states].
+
+            @param label_width Number of time steps in the output.
+            @param num_age_groups Number of age groups in population.
+
+            """
+
+            model = tf.keras.Sequential([
+                tf.keras.layers.Conv1D(filters=64, kernel_size=3, activation='relu'),
+                tf.keras.layers.Conv1D(filters=64, kernel_size=3, activation='relu'),
+                tf.keras.layers.Dropout(0.5),
+                tf.keras.layers.MaxPooling1D(pool_size=2),
+                tf.keras.layers.Flatten(),
+                #tf.keras.layers.GaussianNoise(0.35),
+                tf.keras.layers.BatchNormalization(),
+                tf.keras.layers.Dense(1024, activation='relu'),
+                tf.keras.layers.BatchNormalization(),
+                tf.keras.layers.Dense(1024, activation='relu'),
+                # tf.keras.layers.Dense(512, activation='relu'),
+                tf.keras.layers.Dense(
+                    label_width * num_age_groups * 8, activation='linear'),
+                tf.keras.layers.Reshape([label_width, 8 * num_age_groups])
+            ])
+            return model
