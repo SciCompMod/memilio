@@ -233,30 +233,38 @@ public:
      *            function can and will not set compartments to meaningful values in a sense of a particular scenario,
      *            it only sets negative values to zero.
      *
-     * @return Returns true if one ore more constraint were corrected, false otherwise.  
+     * @return Returns true if one (or more) constraint(s) were corrected, otherwise false. 
      */
-    void apply_constraints()
+    bool apply_constraints()
     {
+        bool corrected = false;
         for (int i = 0; i < this->array().size(); i++) {
             if (this->array()[i] < 0) {
                 log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, this->array()[i],
                             0);
                 this->array()[i] = 0;
+                corrected        = true;
             }
         }
+        return corrected;
     }
 
     /**
-     * @brief checks whether the population Parameters satisfy their corresponding constraints
+     * @brief Checks whether all compartments have non-negative values and 
+     *  logs an error if constraint is not satisfied.
+     *
+     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
      */
-    void check_constraints() const
+    bool check_constraints() const
     {
         for (int i = 0; i < this->array().size(); i++) {
             FP value = this->array()[i];
             if (value < 0.) {
                 log_error("Constraint check: Compartment size {} is {} and smaller {}", i, value, 0);
+                return true;
             }
         }
+        return false;
     }
 
     /**

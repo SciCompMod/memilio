@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/epidemiology/populations.h"
+#include "memilio/utils/logging.h"
 #include <gtest/gtest.h>
 #include <array>
 
@@ -223,4 +224,30 @@ TEST(TestPopulations, set_difference_from_group_total)
             }
         }
     }
+}
+
+TEST(TestPopulations, populations_constraints)
+{
+    // Verify that the functions check_constraints() and apply_constraints() work as expected.
+    mio::Populations<double, InfectionState, AgeGroup> pop(
+        {mio::Index<InfectionState>(InfectionState::Count), mio::Index<AgeGroup>(7)});
+
+    pop.set_group_total<AgeGroup>(mio::Index<AgeGroup>(5), 10);
+    EXPECT_FALSE(pop.check_constraints());
+    EXPECT_FALSE(pop.apply_constraints());
+    EXPECT_NEAR(10, pop.get_total(), 1e-12);
+
+    // Deactivate temporarily log output for next tests.
+    mio::set_log_level(mio::LogLevel::off);
+
+    // Check with negative value for two entries.
+    pop[{mio::Index<InfectionState>(InfectionState::E), mio::Index<AgeGroup>(5)}] = -100;
+    pop[{mio::Index<InfectionState>(InfectionState::H), mio::Index<AgeGroup>(3)}] = -10;
+    EXPECT_TRUE(pop.check_constraints());
+    EXPECT_TRUE(pop.apply_constraints());
+    EXPECT_NEAR(0., (pop[{mio::Index<InfectionState>(InfectionState::E), mio::Index<AgeGroup>(5)}]), 1e-12);
+    EXPECT_NEAR(0., (pop[{mio::Index<InfectionState>(InfectionState::H), mio::Index<AgeGroup>(3)}]), 1e-12);
+
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
 }
