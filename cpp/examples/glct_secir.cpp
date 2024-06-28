@@ -43,10 +43,11 @@ int main()
 
     ScalarType tmax = 10;
 
-    // Define the initial value vector init with the distribution of the population into subcompartments.
-    // This method of defining the vector using a vector of vectors is a bit of overhead, but should remind you how
-    // the entries of the initial value vector relate to the defined template parameters of the model or the number of subcompartments.
-    // It is also possible to define the initial value vector directly.
+    // Define the initial values with the distribution of the population into subcompartments.
+    // This method of defining the initial values using a vector of vectors is a bit of overhead, but should remind you
+    // how the entries of the initial value vector relate to the defined template parameters of the model or the number
+    // of subcompartments.
+    // It is also possible to define the initial values directly.
     std::vector<std::vector<ScalarType>> initial_populations = {
         {750},
         {30, 20},

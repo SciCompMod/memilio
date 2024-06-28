@@ -23,6 +23,7 @@
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
+#include "memilio/math/eigen.h"
 
 #include <array>
 
@@ -80,54 +81,56 @@ public:
     }
 
     /**
-     * @brief Cumulates a timeseries with subcompartments to produce a timeseries that divides the population only into the infection states defined in InfectionState.
+     * @brief Cumulates a TimeSeries with subcompartments according to the LctInfectionState to produce a TimeSeries 
+     *  that divides the population only into the infection states defined in InfectionStates.
      *
-     * If the model is used for simulation, we will get a timeseries in form of a TimeSeries with infection states divided in subcompartments.
-     * The function calculates a TimeSeries without subcompartmens from another TimeSeries with subcompartments. 
-     * This is done by summing up the numbers in the subcompartments.
-     * @param[in] timeseries timeseries of a simulation with the model.
-     * @return timeseries of the simulation divided in the Base infection states. 
+     * This is done by summing up the values in the subcompartments.
+     * @param[in] timeseries TimeSeries with subcompartments according to the LctInfectionState.
+     * @return TimeSeries with accumulated values for the InfectionStates.
      *  Returns TimeSeries with values -1 if calculation is not possible.
      */
     static TimeSeries<ScalarType> calculate_compartments(const TimeSeries<ScalarType>& timeseries)
     {
-        TimeSeries<ScalarType> compartments((int)InfectionState::Count);
+        TimeSeries<ScalarType> compartments((Eigen::Index)InfectionState::Count);
         if (!(Count == timeseries.get_num_elements())) {
             log_error("The given TimeSeries does not match the LctInfectionState.");
-            Eigen::VectorXd error_output = Eigen::VectorXd::Constant((int)InfectionState::Count, -1);
+            // Return a TimeSeries with values -1.
+            Eigen::VectorXd error_output = Eigen::VectorXd::Constant((Eigen::Index)InfectionState::Count, -1);
             compartments.add_time_point(-1, error_output);
             return compartments;
         }
-        Eigen::VectorXd dummy((int)InfectionState::Count);
+        Eigen::VectorXd dummy((Eigen::Index)InfectionState::Count);
         for (Eigen::Index i = 0; i < timeseries.get_num_time_points(); ++i) {
-            // Use segment of vector of the timeseries with subcompartments of InfectionState with index j and sum up values of subcompartments.
-            dummy[(int)InfectionState::Susceptible] = timeseries[i][0];
-            dummy[(int)InfectionState::Exposed]     = timeseries[i]
-                                                      .segment(get_first_index<InfectionState::Exposed>(),
-                                                               get_num_subcompartments<InfectionState::Exposed>())
-                                                      .sum();
-            dummy[(int)InfectionState::InfectedNoSymptoms] =
+            // For each InfectionState, sum the values of the subcompartments.
+            dummy[(Eigen::Index)InfectionState::Susceptible] = timeseries[i][0];
+            dummy[(Eigen::Index)InfectionState::Exposed] =
+                timeseries[i]
+                    .segment(get_first_index<InfectionState::Exposed>(),
+                             get_num_subcompartments<InfectionState::Exposed>())
+                    .sum();
+            dummy[(Eigen::Index)InfectionState::InfectedNoSymptoms] =
                 timeseries[i]
                     .segment(get_first_index<InfectionState::InfectedNoSymptoms>(),
                              get_num_subcompartments<InfectionState::InfectedNoSymptoms>())
                     .sum();
-            dummy[(int)InfectionState::InfectedSymptoms] =
+            dummy[(Eigen::Index)InfectionState::InfectedSymptoms] =
                 timeseries[i]
                     .segment(get_first_index<InfectionState::InfectedSymptoms>(),
                              get_num_subcompartments<InfectionState::InfectedSymptoms>())
                     .sum();
-            dummy[(int)InfectionState::InfectedSevere] =
+            dummy[(Eigen::Index)InfectionState::InfectedSevere] =
                 timeseries[i]
                     .segment(get_first_index<InfectionState::InfectedSevere>(),
                              get_num_subcompartments<InfectionState::InfectedSevere>())
                     .sum();
-            dummy[(int)InfectionState::InfectedCritical] =
+            dummy[(Eigen::Index)InfectionState::InfectedCritical] =
                 timeseries[i]
                     .segment(get_first_index<InfectionState::InfectedCritical>(),
                              get_num_subcompartments<InfectionState::InfectedCritical>())
                     .sum();
-            dummy[(int)InfectionState::Recovered] = timeseries[i][get_first_index<InfectionState::Recovered>()];
-            dummy[(int)InfectionState::Dead]      = timeseries[i][get_first_index<InfectionState::Dead>()];
+            dummy[(Eigen::Index)InfectionState::Recovered] =
+                timeseries[i][get_first_index<InfectionState::Recovered>()];
+            dummy[(Eigen::Index)InfectionState::Dead] = timeseries[i][get_first_index<InfectionState::Dead>()];
 
             compartments.add_time_point(timeseries.get_time(i), dummy);
         }

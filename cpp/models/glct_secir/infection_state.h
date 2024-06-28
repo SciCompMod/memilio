@@ -26,10 +26,7 @@ namespace mio
 namespace glsecir
 {
 
-/**
- * @brief The InfectionState enum describes the basic
- * categories for the infection state of persons.
- */
+/// @brief The InfectionState enum describes the basic categories for the infection state of persons.
 enum class InfectionState
 {
     Susceptible        = 0,

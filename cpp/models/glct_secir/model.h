@@ -23,12 +23,12 @@
 
 #include "glct_secir/parameters.h"
 #include "glct_secir/infection_state.h"
+#include "memilio/epidemiology/lct_infection_state.h"
+#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/epidemiology/populations.h"
 #include "memilio/config.h"
 #include "memilio/utils/logging.h"
 #include "memilio/math/eigen.h"
-#include "memilio/compartments/compartmentalmodel.h"
-#include "memilio/epidemiology/populations.h"
-#include "memilio/epidemiology/lct_infection_state.h"
 
 namespace mio
 {
@@ -74,6 +74,7 @@ public:
     /**
      * @brief Checks that the model satisfies any constraints (e.g. parameter or population constraints), and 
      *  logs an error if constraints are not satisfied.
+     *
      * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
      */
     bool check_constraints() const

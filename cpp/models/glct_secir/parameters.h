@@ -37,18 +37,16 @@ namespace glsecir
 * Define Parameters of the GLCT-SECIHURD model *
 ***********************************************/
 
-/**
- * @brief Vector with the probability to start in any of the subcompartments of the Exposed compartment.
- */
+/// @brief Vector with the probability to start in any of the subcompartments of the Exposed compartment.
 struct StartingProbabilitiesExposed {
     using Type = Eigen::VectorXd;
     /** 
-     * @brief Default parameters can be used to get Erlang distributed stay time in Exposed compartment.
-     * @param[in] NumExposed Number of subcompartments of the Exposed compartment.
+     * @brief Default parameters can be used to get an Erlang distributed stay time in the Exposed compartment.
+     * @param[in] numExposed Number of subcompartments of the Exposed compartment.
      */
-    static Type get_default(size_t NumExposed)
+    static Type get_default(size_t numExposed)
     {
-        Eigen::VectorXd def = Eigen::VectorXd::Zero(NumExposed);
+        Eigen::VectorXd def = Eigen::VectorXd::Zero(numExposed);
         def[0]              = 1.;
         return def;
     }
@@ -58,20 +56,18 @@ struct StartingProbabilitiesExposed {
     }
 };
 
-/**
- * @brief Transition Matrix of the Exposed compartment.
- */
+/// @brief Transition Matrix of the Exposed compartment.
 struct TransitionMatrixExposedToInfectedNoSymptoms {
     using Type = Eigen::MatrixXd;
     /**
-     * @brief Default parameters can be used to get Erlang distributed stay time in Exposed compartment.
-     * @param[in] NumExposed Number of subcompartments of the Exposed compartment.
-     * @param[in] TimeExposed Average time spent in Exposed compartment in day unit.
+     * @brief Default parameters can be used to get an Erlang distributed stay time in the Exposed compartment.
+     * @param[in] numExposed Number of subcompartments of the Exposed compartment.
+     * @param[in] timeExposed Average time spent in Exposed compartment in day unit.
      */
-    static Type get_default(size_t NumExposed, ScalarType TimeExposed = 2.)
+    static Type get_default(size_t numExposed, ScalarType timeExposed = 2.)
     {
-        Eigen::MatrixXd def = Eigen::VectorXd::Constant(NumExposed, -(ScalarType)NumExposed / TimeExposed).asDiagonal();
-        def.diagonal(1).setConstant((ScalarType)NumExposed / TimeExposed);
+        Eigen::MatrixXd def = Eigen::VectorXd::Constant(numExposed, -(ScalarType)numExposed / timeExposed).asDiagonal();
+        def.diagonal(1).setConstant((ScalarType)numExposed / timeExposed);
         return def;
     }
     static std::string name()
@@ -80,18 +76,16 @@ struct TransitionMatrixExposedToInfectedNoSymptoms {
     }
 };
 
-/**
- * @brief Vector with the probability to start in any of the subcompartments of the InfectedNoSymptoms compartment.
- */
+/// @brief Vector with the probability to start in any of the subcompartments of the InfectedNoSymptoms compartment.
 struct StartingProbabilitiesInfectedNoSymptoms {
     using Type = Eigen::VectorXd;
     /**
-     * @brief Default parameters can be used to get Erlang distributed stay time in InfectedNoSymptoms compartment.
-     * @param[in] num_InfectedNoSymptoms Number of subcompartments of the InfectedNoSymptoms compartment.
+     * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedNoSymptoms compartment.
+     * @param[in] numInfectedNoSymptoms Number of subcompartments of the InfectedNoSymptoms compartment.
      */
-    static Type get_default(size_t num_InfectedNoSymptoms)
+    static Type get_default(size_t numInfectedNoSymptoms)
     {
-        Eigen::VectorXd def = Eigen::VectorXd::Zero(num_InfectedNoSymptoms);
+        Eigen::VectorXd def = Eigen::VectorXd::Zero(numInfectedNoSymptoms);
         def[0]              = 1.;
         return def;
     }
@@ -108,7 +102,7 @@ struct StartingProbabilitiesInfectedNoSymptoms {
 struct TransitionMatrixInfectedNoSymptomsToInfectedSymptoms {
     using Type = Eigen::MatrixXd;
     /**
-     * @brief Default parameters can be used to get Erlang distributed stay time in InfectedNoSymptoms compartment
+     * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedNoSymptoms compartment
      *   before developing symptoms.
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time spent in InfectedNoSymptoms before developing symptoms in day unit.
@@ -132,7 +126,7 @@ struct TransitionMatrixInfectedNoSymptomsToInfectedSymptoms {
 struct TransitionMatrixInfectedNoSymptomsToRecovered {
     using Type = Eigen::MatrixXd;
     /**
-     * @brief Default parameters can be used to get Erlang distributed stay time in InfectedNoSymptoms compartment
+     * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedNoSymptoms compartment
      *   before recovery.
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time spent in InfectedNoSymptoms before recovery in day unit.
@@ -149,18 +143,16 @@ struct TransitionMatrixInfectedNoSymptomsToRecovered {
     }
 };
 
-/**
- * @brief Vector with the probability to start in any of the subcompartments of the InfectedSymptoms compartment.
- */
+/// @brief Vector with the probability to start in any of the subcompartments of the InfectedSymptoms compartment.
 struct StartingProbabilitiesInfectedSymptoms {
     using Type = Eigen::VectorXd;
     /**
-     * @brief Default parameters can be used to get Erlang distributed stay time in InfectedSymptoms compartment.
-     * @param[in] num_InfectedSymptoms Number of subcompartments of the Infectedymptoms compartment.
+     * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedSymptoms compartment.
+     * @param[in] numInfectedSymptoms Number of subcompartments of the InfectedSymptoms compartment.
      */
-    static Type get_default(size_t num_InfectedSymptoms)
+    static Type get_default(size_t numInfectedSymptoms)
     {
-        Eigen::VectorXd def = Eigen::VectorXd::Zero(num_InfectedSymptoms);
+        Eigen::VectorXd def = Eigen::VectorXd::Zero(numInfectedSymptoms);
         def[0]              = 1.;
         return def;
     }
@@ -177,7 +169,7 @@ struct StartingProbabilitiesInfectedSymptoms {
 struct TransitionMatrixInfectedSymptomsToInfectedSevere {
     using Type = Eigen::MatrixXd;
     /**
-     * @brief Default parameters can be used to get Erlang distributed stay time in InfectedSymptoms compartment
+     * @brief Default parameters can be used to get an Erlang distributed stay time in the InfectedSymptoms compartment
      *   before going to hospital.
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time spent in InfectedSymptoms before going to hospital in day unit.
@@ -201,7 +193,7 @@ struct TransitionMatrixInfectedSymptomsToInfectedSevere {
 struct TransitionMatrixInfectedSymptomsToRecovered {
     using Type = Eigen::MatrixXd;
     /**
-     * @brief Default parameters can be used to get Erlang distributed stay time in InfectedSymptoms compartment
+     * @brief Default parameters can be used to get an Erlang distributed stay time in the InfectedSymptoms compartment
      *   before recovery.
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time spent in InfectedSymptoms before recovery in day unit.
@@ -218,17 +210,16 @@ struct TransitionMatrixInfectedSymptomsToRecovered {
     }
 };
 
-/**
- * @brief Vector with the probability to start in any of the subcompartments of the InfectedSevere compartment.
- */
+/// @brief Vector with the probability to start in any of the subcompartments of the InfectedSevere compartment.
 struct StartingProbabilitiesInfectedSevere {
     using Type = Eigen::VectorXd;
     /**
-     * @param[in] num_InfectedSevere Number of subcompartments of the InfectedSevere compartment.
+     * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedSevere compartment.
+     * @param[in] numInfectedSevere Number of subcompartments of the InfectedSevere compartment.
      */
-    static Type get_default(size_t num_InfectedSevere)
+    static Type get_default(size_t numInfectedSevere)
     {
-        Eigen::VectorXd def = Eigen::VectorXd::Zero(num_InfectedSevere);
+        Eigen::VectorXd def = Eigen::VectorXd::Zero(numInfectedSevere);
         def[0]              = 1.;
         return def;
     }
@@ -245,7 +236,7 @@ struct StartingProbabilitiesInfectedSevere {
 struct TransitionMatrixInfectedSevereToInfectedCritical {
     using Type = Eigen::MatrixXd;
     /**
-     * @brief Default parameters can be used to get Erlang distributed stay time in InfectedSevere compartment
+     * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedSevere compartment
      *   before treated by ICU.
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time spent in InfectedSevere before treated by ICU in day unit.
@@ -269,7 +260,7 @@ struct TransitionMatrixInfectedSevereToInfectedCritical {
 struct TransitionMatrixInfectedSevereToRecovered {
     using Type = Eigen::MatrixXd;
     /**
-     * @brief Default parameters can be used to get Erlang distributed stay time in InfectedSevere compartment
+     * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedSevere compartment
      *   before recovery.
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time spent in InfectedSevere before recovery in day unit.
@@ -286,17 +277,16 @@ struct TransitionMatrixInfectedSevereToRecovered {
     }
 };
 
-/**
- * @brief Vector with the probability to start in any of the subcompartments of the InfectedCritical compartment.
- */
+/// @brief Vector with the probability to start in any of the subcompartments of the InfectedCritical compartment.
 struct StartingProbabilitiesInfectedCritical {
     using Type = Eigen::VectorXd;
     /**
-     * @param[in] num_InfectedCritical Number of subcompartments of the InfectedCritical compartment.
+     * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedCritical compartment.
+     * @param[in] numInfectedCritical Number of subcompartments of the InfectedCritical compartment.
      */
-    static Type get_default(size_t num_InfectedCritical)
+    static Type get_default(size_t numInfectedCritical)
     {
-        Eigen::VectorXd def = Eigen::VectorXd::Zero(num_InfectedCritical);
+        Eigen::VectorXd def = Eigen::VectorXd::Zero(numInfectedCritical);
         def[0]              = 1.;
         return def;
     }
@@ -313,7 +303,7 @@ struct StartingProbabilitiesInfectedCritical {
 struct TransitionMatrixInfectedCriticalToDead {
     using Type = Eigen::MatrixXd;
     /**
-     * @brief Default parameters can be used to get Erlang distributed stay time in InfectedCritical compartment
+     * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedCritical compartment
      *   before death.
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time treated by ICU before dead in day unit.
@@ -337,7 +327,7 @@ struct TransitionMatrixInfectedCriticalToDead {
 struct TransitionMatrixInfectedCriticalToRecovered {
     using Type = Eigen::MatrixXd;
     /**
-     * @brief Default parameters can be used to get Erlang distributed stay time in InfectedCritical compartment
+     * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedCritical compartment
      *   before recovery.
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
      * @param[in] time Average time treated by ICU before recovery in day unit.
@@ -354,9 +344,7 @@ struct TransitionMatrixInfectedCriticalToRecovered {
     }
 };
 
-/**
- * @brief Probability of getting infected from a contact.
- */
+/// @brief Probability of getting infected from a contact.
 struct TransmissionProbabilityOnContact {
     using Type = ScalarType;
     static Type get_default()
@@ -369,9 +357,7 @@ struct TransmissionProbabilityOnContact {
     }
 };
 
-/**
- * @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
- */
+/// @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
 struct ContactPatterns {
     using Type = UncertainContactMatrix<ScalarType>;
 
@@ -387,9 +373,7 @@ struct ContactPatterns {
     }
 };
 
-/**
- * @brief The relative InfectedNoSymptoms infectability.
- */
+/// @brief The relative InfectedNoSymptoms infectability.
 struct RelativeTransmissionNoSymptoms {
     using Type = ScalarType;
     static Type get_default()
@@ -402,9 +386,7 @@ struct RelativeTransmissionNoSymptoms {
     }
 };
 
-/**
- * @brief The risk of infection from symptomatic cases in the GLCT-SECIR model.
- */
+/// @brief The risk of infection from symptomatic cases in the GLCT-SECIR model.
 struct RiskOfInfectionFromSymptomatic {
     using Type = ScalarType;
     static Type get_default()
@@ -419,9 +401,9 @@ struct RiskOfInfectionFromSymptomatic {
 
 /**
  * @brief The start day in the GLCT-SECIR model.
- * The start day defines in which season the simulation is started.
- * If the start day is 180 and simulation takes place from t0=0 to
- * tmax=100 the days 180 to 280 of the year are simulated.
+ *  The start day defines in which season the simulation is started.
+ *  If the start day is 180 and simulation takes place from t0=0 to
+ *  tmax=100 the days 180 to 280 of the year are simulated.
  */
 struct StartDay {
     using Type = ScalarType;
@@ -437,8 +419,8 @@ struct StartDay {
 
 /**
  * @brief The seasonality in the GLCT-SECIR model.
- * The seasonality is given as (1+k*sin()) where the sine
- * curve is below one in summer and above one in winter.
+ *  The seasonality is given as (1+k*sin()) where the sine
+ *  curve is below one in summer and above one in winter.
  */
 struct Seasonality {
     using Type = ScalarType;
@@ -463,15 +445,11 @@ using ParametersBase =
                  TransmissionProbabilityOnContact, ContactPatterns, RelativeTransmissionNoSymptoms,
                  RiskOfInfectionFromSymptomatic, StartDay, Seasonality>;
 
-/**
- * @brief Parameters of an GLCT-SECIR model.
- */
+/// @brief Parameters of an GLCT-SECIR model.
 class Parameters : public ParametersBase
 {
 public:
-    /**
-     * @brief Default constructor.
-     */
+    /// @brief Default constructor.
     Parameters()
         : ParametersBase()
     {
@@ -480,6 +458,7 @@ public:
     /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error
      *      if constraints are not satisfied.
+     *
      * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
      */
     bool check_constraints() const
@@ -570,55 +549,29 @@ public:
             return true;
         }
 
-        // --- Check other restrictions. ---
-        if (!floating_point_equal(1., this->get<StartingProbabilitiesExposed>().sum())) {
-            log_warning("Constraint check: The vector StartingProbabilitiesExposed should add up to one.");
-            return true;
-        }
-        if (!floating_point_equal(1., this->get<StartingProbabilitiesInfectedNoSymptoms>().sum())) {
-            log_warning("Constraint check: The vector StartingProbabilitiesInfectedNoSymptoms should add up to one.");
-            return true;
-        }
-        if (!floating_point_equal(1., this->get<StartingProbabilitiesInfectedSymptoms>().sum())) {
-            log_warning("Constraint check: The vector StartingProbabilitiesInfectedSymptoms should add up to one.");
-            return true;
-        }
-        if (!floating_point_equal(1., this->get<StartingProbabilitiesInfectedSevere>().sum())) {
-            log_warning("Constraint check: The vector StartingProbabilitiesInfectedSevere should add up to one.");
-            return true;
-        }
-        if (!floating_point_equal(1., this->get<StartingProbabilitiesInfectedCritical>().sum())) {
-            log_warning("Constraint check: The vector StartingProbabilitiesInfectedCritical should add up to one.");
-            return true;
-        }
-
-        if ((this->get<StartingProbabilitiesExposed>().array() < -1e-10).any()) {
+        // --- Check constraints of the starting probability vectors. ---
+        if ((!floating_point_equal(1., this->get<StartingProbabilitiesExposed>().sum())) ||
+            (!floating_point_equal(1., this->get<StartingProbabilitiesInfectedNoSymptoms>().sum())) ||
+            (!floating_point_equal(1., this->get<StartingProbabilitiesInfectedSymptoms>().sum())) ||
+            (!floating_point_equal(1., this->get<StartingProbabilitiesInfectedSevere>().sum())) ||
+            (!floating_point_equal(1., this->get<StartingProbabilitiesInfectedCritical>().sum()))) {
             log_warning(
-                "Constraint check: The vector StartingProbabilitiesExposed should just have non-negative entries.");
-            return true;
-        }
-        if ((this->get<StartingProbabilitiesInfectedNoSymptoms>().array() < -1e-10).any()) {
-            log_warning("Constraint check: The vector StartingProbabilitiesInfectedNoSymptoms should just have "
-                        "non-negative entries.");
-            return true;
-        }
-        if ((this->get<StartingProbabilitiesInfectedSymptoms>().array() < -1e-10).any()) {
-            log_warning("Constraint check: The vector StartingProbabilitiesInfectedSymptoms should just have "
-                        "non-negative entries.");
-            return true;
-        }
-        if ((this->get<StartingProbabilitiesInfectedSevere>().array() < -1e-10).any()) {
-            log_warning("Constraint check: The vector StartingProbabilitiesInfectedSevere should just have "
-                        "non-negative entries.");
-            return true;
-        }
-        if ((this->get<StartingProbabilitiesInfectedCritical>().array() < -1e-10).any()) {
-            log_warning("Constraint check: The vector StartingProbabilitiesInfectedCritical should just have "
-                        "non-negative entries.");
+                "Constraint check: At least one of the vectors for the starting probabilities does not sum to one.");
             return true;
         }
 
-        // --- Check that we have no flows back from one compartment to the last (only in between of the subcompartments). ---
+        if ((this->get<StartingProbabilitiesExposed>().array() < -1e-10).any() ||
+            (this->get<StartingProbabilitiesInfectedNoSymptoms>().array() < -1e-10).any() ||
+            (this->get<StartingProbabilitiesInfectedSymptoms>().array() < -1e-10).any() ||
+            (this->get<StartingProbabilitiesInfectedSevere>().array() < -1e-10).any() ||
+            (this->get<StartingProbabilitiesInfectedCritical>().array() < -1e-10).any()) {
+            log_warning("Constraint check: At least one of the vectors for the starting probabilities has at least one "
+                        "negative entry.");
+            return true;
+        }
+
+        // --- Check that we have no flows back from one compartment to the previous one
+        // (only in between of the subcompartments). ---
         if (((this->get<TransitionMatrixExposedToInfectedNoSymptoms>() *
               Eigen::VectorXd::Ones(this->get<TransitionMatrixExposedToInfectedNoSymptoms>().rows()))
                  .array() > 1e-10)
