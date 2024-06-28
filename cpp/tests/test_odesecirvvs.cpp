@@ -1075,6 +1075,21 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant<double>>(-4);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
+    model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant<double>>(1);
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacity<double>>(-1);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacity<double>>(1);
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(-1);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(1);
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskSymptoms<double>>(-1);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskSymptoms<double>>(1);
+    ASSERT_EQ(model.parameters.check_constraints(), 0);
+
     mio::set_log_level(mio::LogLevel::warn);
 }
 

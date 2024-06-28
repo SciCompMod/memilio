@@ -1090,6 +1090,17 @@ TEST(Secir, check_constraints_parameters)
     model.parameters.set<mio::osecir::CriticalPerSevere<double>>(0.5);
     model.parameters.set<mio::osecir::DeathsPerCritical<double>>(1.1);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::DeathsPerCritical<double>>(0.5);
+    model.parameters.set<mio::osecir::TestAndTraceCapacity<double>>(-1);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::TestAndTraceCapacity<double>>(1);
+    model.parameters.set<mio::osecir::TestAndTraceCapacityMaxRisk<double>>(-1);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::TestAndTraceCapacityMaxRisk<double>>(1);
+    ASSERT_EQ(model.parameters.check_constraints(), 0);
     mio::set_log_level(mio::LogLevel::warn);
 }
 
