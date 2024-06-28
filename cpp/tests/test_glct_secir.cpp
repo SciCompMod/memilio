@@ -478,9 +478,11 @@ TEST_F(ModelTestGLCTSecir, testConstraintsParameters)
     model->parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere>()[1] = 1.5;
     constraint_check = model->parameters.check_constraints();
     EXPECT_TRUE(constraint_check);
+    model->parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere>()[0] = 1.1;
     model->parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere>()[1] = -0.1;
     constraint_check = model->parameters.check_constraints();
     EXPECT_TRUE(constraint_check);
+    model->parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere>()[0] = 1.;
     model->parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere>()[1] = 0.;
 
     // --- Check with invalid tranisition matrices. ---
