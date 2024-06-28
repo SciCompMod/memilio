@@ -21,6 +21,7 @@
 #define ODESECIR_PARAMETERS_IO_H
 
 #include "memilio/config.h"
+#include <cassert>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -252,17 +253,13 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model,
                                    const std::vector<std::vector<double>>& num_population,
                                    const std::vector<int>& vregion)
 {
+    assert(num_population.size() == vregion.size());
+    assert(model.size() == vregion.size());
     for (size_t region = 0; region < vregion.size(); region++) {
-        if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
-            auto num_groups = model[region].parameters.get_num_groups();
-            for (auto i = AgeGroup(0); i < num_groups; i++) {
-                model[region].populations.template set_difference_from_group_total<AgeGroup>(
-                    {i, InfectionState::Susceptible}, num_population[region][size_t(i)]);
-            }
-        }
-        else {
-            return failure(StatusCode::OutOfRange, "No population data available for region " + std::to_string(region) +
-                                                       ". Population data has not been set.");
+        auto num_groups = model[region].parameters.get_num_groups();
+        for (auto i = AgeGroup(0); i < num_groups; i++) {
+            model[region].populations.template set_difference_from_group_total<AgeGroup>(
+                {i, InfectionState::Susceptible}, num_population[region][size_t(i)]);
         }
     }
     return success();

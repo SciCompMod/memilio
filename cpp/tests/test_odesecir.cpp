@@ -1285,6 +1285,42 @@ TEST(TestOdeSecir, export_time_series_init)
                 MatrixNear(print_wrap(expected_results[0].get_groups().matrix()), 1e-5, 1e-5));
 }
 
+TEST(TestOdeSecir, export_time_series_init_old_date)
+{
+    TempFileRegister temp_file_register;
+    auto tmp_results_dir = temp_file_register.get_unique_path();
+    ASSERT_THAT(mio::create_directory(tmp_results_dir), IsSuccess());
+
+    constexpr auto num_age_groups = 6; //reading data requires RKI data age groups
+    mio::osecir::Model<double> model(make_model(num_age_groups));
+
+    // Test exporting time series
+    std::vector<mio::osecir::Model<double>> models{model};
+    ASSERT_THAT(mio::osecir::export_input_data_county_timeseries(
+                    models, tmp_results_dir, {1002}, {1000, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0),
+                    1.0, 0, mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
+                    mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
+                    mio::path_join(TEST_DATA_DIR, "county_current_population.json")),
+                IsSuccess());
+
+    auto data_extrapolated = mio::read_result(mio::path_join(tmp_results_dir, "Results_rki.h5"));
+    ASSERT_THAT(data_extrapolated, IsSuccess());
+    auto results_extrapolated = data_extrapolated.value()[0].get_groups().get_value(0);
+
+    // if we enter an old date, the model only should be initialized with the population data.
+    // read population data
+    std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
+    const std::vector<int> region{1002};
+    auto population_data = mio::osecir::details::read_population_data(path, region, false).value();
+
+    // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
+    for (auto i = 0; i < num_age_groups; i++) {
+        EXPECT_EQ(results_extrapolated(i * Eigen::Index(mio::osecir::InfectionState::Count)), population_data[0][i]);
+    }
+    // sum of all compartments should be equal to the population
+    EXPECT_EQ(results_extrapolated.sum(), std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0));
+}
+
 // // Model initialization should return same start values as export time series on that day
 TEST(TestOdeSecir, model_initialization)
 {
@@ -1323,22 +1359,21 @@ TEST(TestOdeSecir, model_initialization_old_date)
 
     ASSERT_THAT(mio::osecir::read_input_data_county(model_vector, {1000, 12, 01}, {1002},
                                                     std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                    TEST_DATA_DIR, 2, false),
+                                                    TEST_DATA_DIR, 0, false),
                 IsSuccess());
 
     // if we enter an old date, the model only should be initialized with the population data.
     // read population data
     std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
     const std::vector<int> region{1002};
-    auto result_one_age_group = mio::osecir::details::read_population_data(path, region, false).value();
+    auto population_data = mio::osecir::details::read_population_data(path, region, false).value();
 
     // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
     auto expected_values =
-        (Eigen::ArrayXd(num_age_groups * Eigen::Index(mio::osecir::InfectionState::Count))
-             << result_one_age_group[0][0],
-         0, 0, 0, 0, 0, 0, 0, 0, 0, result_one_age_group[0][1], 0, 0, 0, 0, 0, 0, 0, 0, 0, result_one_age_group[0][2],
-         0, 0, 0, 0, 0, 0, 0, 0, 0, result_one_age_group[0][3], 0, 0, 0, 0, 0, 0, 0, 0, 0, result_one_age_group[0][4],
-         0, 0, 0, 0, 0, 0, 0, 0, 0, result_one_age_group[0][5], 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        (Eigen::ArrayXd(num_age_groups * Eigen::Index(mio::osecir::InfectionState::Count)) << population_data[0][0], 0,
+         0, 0, 0, 0, 0, 0, 0, 0, population_data[0][1], 0, 0, 0, 0, 0, 0, 0, 0, 0, population_data[0][2], 0, 0, 0, 0, 0,
+         0, 0, 0, 0, population_data[0][3], 0, 0, 0, 0, 0, 0, 0, 0, 0, population_data[0][4], 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         population_data[0][5], 0, 0, 0, 0, 0, 0, 0, 0, 0)
             .finished();
 
     ASSERT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
