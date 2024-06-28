@@ -92,9 +92,9 @@ class Test_osecirvvs_integration(unittest.TestCase):
 
         model.parameters.ICUCapacity.value = 10000
         model.parameters.TestAndTraceCapacity.value = 10000
-        model.parameters.DailyFirstVaccination.resize_SimulationDay(
+        model.parameters.DailyPartialVaccination.resize_SimulationDay(
             SimulationDay(1000))
-        model.parameters.DailyFirstVaccination[:, :] = 0
+        model.parameters.DailyPartialVaccination[:, :] = 0
         model.parameters.DailyFullVaccination.resize_SimulationDay(
             SimulationDay(1000))
         model.parameters.DailyFullVaccination[:, :] = 0

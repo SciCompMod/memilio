@@ -99,13 +99,13 @@ def run_ode_secirvvs_simulation(show_plot=True):
 
     model.parameters.ICUCapacity.value = 100
     model.parameters.TestAndTraceCapacity.value = 0.0143
-    model.parameters.DailyFirstVaccination.resize_SimulationDay(
+    model.parameters.DailyPartialVaccination.resize_SimulationDay(
         SimulationDay(tmax + 1))
     model.parameters.DailyFullVaccination.resize_SimulationDay(
         SimulationDay(tmax + 1))
     daily_vaccinations = 10
     for i, num_vaccinations in enumerate(range(0, daily_vaccinations * (tmax + 1), daily_vaccinations)):
-        model.parameters.DailyFirstVaccination[AgeGroup(
+        model.parameters.DailyPartialVaccination[AgeGroup(
             0), SimulationDay(i)] = num_vaccinations
         model.parameters.DailyFullVaccination[AgeGroup(
             0), SimulationDay(i)] = num_vaccinations
