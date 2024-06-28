@@ -8,7 +8,7 @@ This document explains how to create performance profiles, i.e., measurements of
 These tools have been tried for memilio and are described below:
 - gperftools: sampling profiler that gives reliable results with little setup
 - Score-P: large suite that supports both sampling and instrumenting. Special support for parallel code (OpenMP and MPI), including tracing to find load imbalances in the parallelization. 
-- Valgrind: suite that includes the Callgrind emulating profiler; description NYI; see [here](https://valgrind.org/info/tools.html)
+- Valgrind: suite that includes the Callgrind emulating profiler; detailed descripton will be added soon, until then see the [official documentation](https://valgrind.org/info/tools.html).
 
 How to use these tools, the general optimization loop:
 1. Run a benchmark to get a baseline runtime and identify the need for performance optimization, e.g., a change introduced a performance regression.
@@ -23,8 +23,8 @@ How to use these tools, the general optimization loop:
 gperftools (formerly google performance tools) is a suite of performance tools. Here the focus is on the [profiler](https://gperftools.github.io/gperftools/cpuprofile.html). It's a small sampling profiler that is quick to setup and use on most systems. It's integrated into our build system for even greater convenience.
 
 Basic steps:
-1. Install gperftools. It's available in many package managers (apt packages `google-perftools` and `libgoogle-perftools-dev`, spack or homebrew package `gperftools`). E.g., on the DLR-SC hpda cluster (insert the compiler version you are using): `module load spack-user; spack install gperftools%gcc@13.1.0; module load gperftools`.
-2. configure memilio with cmake variable `MEMILIO_ENABLE_PROFILING=ON`.
+1. Install gperftools. It's available in many package managers (apt packages `google-perftools` and `libgoogle-perftools-dev`, spack or homebrew package `gperftools`). E.g., on the DLR-SC hpda cluster (insert the compiler version you are using): `module load spack-user; module load PrgEnv/gcc13-openmpi; spack install gperftools%gcc@13.3.0; module load gperftools`.
+2. configure memilio with cmake variable `MEMILIO_ENABLE_PROFILING=ON`. Note that compiling with profiling enabled does not incur any runtime overhead unless profling is also enabled at runtime (see step 4), so developers can just enable it always for convenience.
 3. compile memilio.
 4. run the program with environment variable `CPUPROFILE=profile.out` set.
 5. generate a human-readable annotated call graph: `pprof-symbolize --pdf <exe> profile.out > profile.pdf`. Check the documentation for other output formats.
