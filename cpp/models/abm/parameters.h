@@ -315,7 +315,39 @@ struct HighViralLoadProtectionFactor {
 struct TestParameters {
      UncertainValue<> sensitivity;
      UncertainValue<> specificity;
+
+     /**
+     * serialize this. 
+     * @see mio::serialize
+     */
+     template <class IOContext>
+     void serialize(IOContext& io) const
+     {
+         auto obj = io.create_object("TestParameters");
+         obj.add_element("Sensitivity", sensitivity);
+         obj.add_element("Specificity", specificity);
+     }
+
+     /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+     template <class IOContext>
+     static IOResult<TestParameters> deserialize(IOContext& io)
+     {
+         auto obj  = io.expect_object("TestParameters");
+         auto sens = obj.expect_element("Sensitivity", mio::Tag<UncertainValue<>>{});
+         auto spec = obj.expect_element("Specificity", mio::Tag<UncertainValue<>>{});
+         return apply(
+             io,
+             [](auto&& sens_, auto&& spec_) {
+                 return TestParameters{sens_, spec_};
+             },
+             sens, spec);
+     }
 };
+
+//using TestParameters = std::pair<UncertainValue<>, UncertainValue<>>; // for automated serialize and deserialize
 
 /**
  * @brief Store a map from the TestTypes to their TestParameters.
