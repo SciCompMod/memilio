@@ -62,6 +62,11 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("PublicTransport", mio::abm::LocationType::PublicTransport)
         .value("TransportWithoutContact", mio::abm::LocationType::TransportWithoutContact);
 
+    pymio::iterable_enum<mio::abm::TestType>(m, "TestType")
+        .value("Generic", mio::abm::TestType::Generic)
+        .value("Antigen", mio::abm::TestType::Antigen)
+        .value("PCR", mio::abm::TestType::PCR);
+
     pymio::bind_class<mio::abm::TestParameters, pymio::EnablePickling::Never>(m, "TestParameters")
         .def(py::init<double, double>())
         .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
@@ -140,15 +145,6 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_class<mio::abm::TestingCriteria, pymio::EnablePickling::Never>(m, "TestingCriteria")
         .def(py::init<const std::vector<mio::AgeGroup>&, const std::vector<mio::abm::InfectionState>&>(),
              py::arg("age_groups"), py::arg("infection_states"));
-             
-    pymio::bind_class<mio::abm::GenericTest, pymio::EnablePickling::Never>(m, "GenericTest").def(py::init<>());
-    pymio::bind_class<mio::abm::AntigenTest, pymio::EnablePickling::Never, mio::abm::GenericTest>(m, "AntigenTest").def(py::init<>());
-    pymio::bind_class<mio::abm::PCRTest, pymio::EnablePickling::Never, mio::abm::GenericTest>(m, "PCRTest").def(py::init<>());
-
-    pymio::iterable_enum<mio::abm::TestType>(m, "TestType")
-        .value("Generic", mio::abm::TestType::Generic)
-        .value("Antigen", mio::abm::TestType::Antigen)
-        .value("PCR", mio::abm::TestType::PCR);
 
     pymio::bind_class<mio::abm::TestingScheme, pymio::EnablePickling::Never>(m, "TestingScheme")
         .def(py::init<const mio::abm::TestingCriteria&, mio::abm::TimeSpan, mio::abm::TimePoint, mio::abm::TimePoint,

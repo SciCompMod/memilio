@@ -317,33 +317,6 @@ struct TestParameters {
      UncertainValue<> specificity;
 };
 
-struct GenericTest {
-    using Type = TestParameters;
-    static Type get_default()
-    {
-        return Type{0.9, 0.99};
-    }
-    static std::string name()
-    {
-        return "GenericTest";
-    }
-};
-
-/**
- * @brief Reliability of an AntigenTest.
- */
-struct AntigenTest : public GenericTest {
-    using Type = TestParameters;
-    static Type get_default()
-    {
-        return Type{0.8, 0.88};
-    }
-    static std::string name()
-    {
-        return "AntigenTest";
-    }
-};
-
 /**
  * @brief Store a map from the TestTypes to their TestParameters.
  */

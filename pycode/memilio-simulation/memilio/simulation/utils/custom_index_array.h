@@ -222,7 +222,7 @@ void bind_CustomIndexArray(pybind11::module_& m, std::string const& name)
         .def("__setitem__", &assign_scalar<C, Type, Tags...>);
 
     //scalar assignment with conversion from double
-    if (std::is_convertible<Type, double>::value) {
+    if constexpr (std::is_convertible<double, Type>::value) {
         c.def("__setitem__", &assign_scalar<C, double, Tags...>);
     }
     //TODO: __setitem__ with list or numpy array, e.g. array[AgeGroup(0):AgeGroup(3)] = [1, 2, 3]
