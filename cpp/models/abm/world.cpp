@@ -80,8 +80,8 @@ void World::interaction(TimePoint t, TimeSpan dt)
 {
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
-    for (uint32_t i = 0; i < num_persons; ++i) {
-        interact(i, t, dt);
+    for (uint32_t person_id = 0; person_id < num_persons; ++person_id) {
+        interact(person_id, t, dt);
     }
 }
 
@@ -89,21 +89,21 @@ void World::migration(TimePoint t, TimeSpan dt)
 {
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
-    for (uint32_t i = 0; i < num_persons; ++i) {
-        Person& person    = m_persons[i];
+    for (uint32_t person_id = 0; person_id < num_persons; ++person_id) {
+        Person& person    = m_persons[person_id];
         auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
 
         auto try_migration_rule = [&](auto rule) -> bool {
             //run migration rule and check if migration can actually happen
             auto target_type                  = rule(personal_rng, person, t, dt, parameters);
-            const Location& target_location   = get_location(find_location(target_type, i));
+            const Location& target_location   = get_location(find_location(target_type, person_id));
             const LocationId current_location = person.get_location();
             if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
                 if (target_location.get_id() != current_location &&
                     get_number_persons(target_location.get_id()) < target_location.get_capacity().persons) {
                     bool wears_mask = person.apply_mask_intervention(personal_rng, target_location);
                     if (wears_mask) {
-                        migrate(i, target_location.get_id());
+                        migrate(person_id, target_location.get_id());
                     }
                     return true;
                 }
