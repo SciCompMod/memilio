@@ -225,7 +225,7 @@ def preprocess_case_data(raw_df: pd.DataFrame,
             'Altersgruppe']] = dd.GerEng['unbekannt']
 
         # change names of columns
-        df = df.rename(dd.GerEng, axis=1)
+        df.rename(dd.GerEng, axis=1, inplace=True)
 
         # Add column 'Date' with Date
         # = reporting date if rep_date is set
@@ -524,6 +524,7 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
 
     @return None
     """
+
     raw_df = fetch_case_data(
         read_data=read_data,
         out_folder=out_folder,
