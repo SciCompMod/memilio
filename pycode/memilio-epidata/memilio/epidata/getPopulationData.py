@@ -464,12 +464,13 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
         df_pop_raw=raw_df,
         merge_eisenach=merge_eisenach
     )
-    write_population_data(
+    df_pop_export = write_population_data(
         df_pop=preprocess_df,
         file_format=file_format,
         out_folder=out_folder,
         merge_eisenach=True
     )
+    return df_pop_export
 
 
 def main():
