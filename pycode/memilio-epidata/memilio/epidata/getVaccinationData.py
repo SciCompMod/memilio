@@ -472,30 +472,31 @@ def extrapolate_age_groups_vaccinations(
 # population Missing ratio values for the two different age groups are also estimated
 
 def fetch_vaccination_data(
+        conf_obj,
+        filename: str,
+        directory: str,
         read_data: str = dd.defaultDict['read_data'],
         out_folder: str = dd.defaultDict['out_folder'],
-        **kwargs
 ) -> pd.DataFrame:
     """ Downloads or reads the vaccination data and writes the RKIVaccFull dataset
 
+    @param directory: str
+        Path to the output directory
+    @param filename: str
+        Name of the full dataset filename
+    @param conf_obj
+        configuration object
     @param read_data bool True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
     @param out_folder str. Folder where data is written to. Default defined in defaultDict.
-    @param ***kwargs
 
     @return pd.DataFrame fetched vaccination data
     """
-    conf = gd.Conf(out_folder, **kwargs)
-    out_folder = conf.path_to_use
-    no_raw = conf.no_raw
-
-    directory = os.path.join(out_folder, 'Germany/')
-    gd.check_dir(directory)
-
-    filename = "RKIVaccFull"
+    out_folder = conf_obj.path_to_use
+    no_raw = conf_obj.no_raw
 
     df_data = download_vaccination_data(
-        read_data, filename, directory, conf.interactive)
-    if conf.checks:
+        read_data, filename, directory, conf_obj.interactive)
+    if conf_obj.checks:
         sanity_checks(df_data)
 
     if not no_raw:
@@ -505,6 +506,8 @@ def fetch_vaccination_data(
 
 def process_vaccination_data(
         df_data: pd.DataFrame,
+        conf_obj,
+        directory: str,
         file_format: str = dd.defaultDict['file_format'],
         out_folder: str = dd.defaultDict['out_folder'],
         start_date: date = dd.defaultDict['start_date'],
@@ -512,14 +515,16 @@ def process_vaccination_data(
         moving_average: int = dd.defaultDict['moving_average'],
         sanitize_data: int = dd.defaultDict['sanitize_data']
 ) -> dict:
-    # -> tuple[Any, DataFrame | Any, Any, list[Any], DataFrame, bool, DataFrame, list[str], list[list[Any]],
-    # Any, Any, DataFrame]:
     """! Processes downloaded raw data
     While working with the data
     - the column names are changed to English depending on defaultDict
     - The column "Date" provides information on the date of each data point given in the corresponding columns.
 
     @param df_data pd.DataFrame a Dataframe containing processed vaccination data
+    @param directory: str
+        Path to the output directory
+    @param conf_obj
+        configuration object
     @param file_format str. File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder str. Folder where data is written to. Default defined in defaultDict.
     @param start_date Date of first date in dataframe. Default defined in defaultDict.
@@ -542,11 +547,8 @@ def process_vaccination_data(
 
     @return tuple and DataFrame
     """
-    conf = gd.Conf(out_folder)
-    out_folder = conf.path_to_use
-    no_raw = conf.no_raw
-    directory = os.path.join(out_folder, 'Germany/')
-    gd.check_dir(directory)
+    out_folder = conf_obj.path_to_use
+    no_raw = conf_obj.no_raw
 
     with progress_indicator.Spinner(message='Preparing DataFrame'):
         df_data.rename(dd.GerEng, axis=1, inplace=True)
@@ -880,6 +882,8 @@ def process_vaccination_data(
 
 
 def write_vaccination_data(dict_data: dict,
+                           conf_obj,
+                           directory: str,
                            file_format: str = dd.defaultDict['file_format'],
                            out_folder: str = dd.defaultDict['out_folder'],
                            impute_dates: bool = True,
@@ -913,6 +917,10 @@ def write_vaccination_data(dict_data: dict,
         - all_ages_to_age_new_share
         - population_new_ages
 
+    @param directory: str
+        Path to the output directory
+    @param conf_obj
+        configuration object
     @param file_format: str. File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder: str. Folder where data is written to. Default defined in defaultDict.
     @param impute_dates: bool. True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
@@ -945,19 +953,13 @@ def write_vaccination_data(dict_data: dict,
     all_ages_to_age_new_share = dict_data["all_ages_to_age_new_share"]
     population_new_ages = dict_data["population_new_ages"]
 
-    conf = gd.Conf(out_folder)
-    out_folder = conf.path_to_use
-
-    directory = os.path.join(out_folder, 'Germany/')
-    gd.check_dir(directory)
-
     # data for all dates is automatically added
     if not impute_dates:
         gd.default_print(
             'Warning', 'Setting impute_dates = True as data for all dates is automatically added.')
         impute_dates = True
 
-    if conf.plot:
+    if conf_obj.plot:
         # have a look extrapolated vaccination ratios (TODO: create plotting for production)
         # aggregate total number of vaccinations per county and age group
         latest_date = df_data_agevacc_county_cs[dd.EngEng["date"]][len(
@@ -977,7 +979,7 @@ def write_vaccination_data(dict_data: dict,
         {column: "sum" for column in vacc_column_names}).reset_index()
 
     # make plot of absolute numbers original age resolution
-    if conf.plot:
+    if conf_obj.plot:
         # extract (dummy) date column to plt
         date_vals = df_data_agevacc_county_cs.loc[
             (df_data_agevacc_county_cs[dd.EngEng['ageRKI']] ==
@@ -1045,7 +1047,7 @@ def write_vaccination_data(dict_data: dict,
         {column: "sum" for column in vacc_column_names}).reset_index()
 
     # make plot of relative numbers of original and extrapolated age resolution
-    if conf.plot:
+    if conf_obj.plot:
         # merge Eisenach...
         population_new_ages = geoger.merge_df_counties_all(
             population_new_ages, sorting=[dd.EngEng["idCounty"]],
@@ -1243,13 +1245,26 @@ def get_vaccination_data(
 
     @return None
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    no_raw = conf.no_raw
+
+    directory = os.path.join(out_folder, 'Germany/')
+    gd.check_dir(directory)
+
+    filename = "RKIVaccFull"
     raw_df = fetch_vaccination_data(
+        conf_obj=conf,
+        filename=filename,
+        directory=directory,
         read_data=read_data,
         out_folder=out_folder,
         **kwargs
     )
-    process_df = process_vaccination_data(
+    process_dict_df = process_vaccination_data(
         df_data=raw_df,
+        conf_obj=conf,
+        directory=directory,
         start_date=start_date,
         end_date=end_date,
         file_format=file_format,
@@ -1257,7 +1272,9 @@ def get_vaccination_data(
         moving_average=moving_average,
         sanitize_data=sanitize_data
     )
-    silver_datasets = write_vaccination_data(dict_data=process_df,
+    silver_datasets = write_vaccination_data(dict_data=process_dict_df,
+                                             conf_obj=conf,
+                                             directory=directory,
                                              file_format=file_format,
                                              impute_dates=impute_dates,
                                              moving_average=moving_average,
