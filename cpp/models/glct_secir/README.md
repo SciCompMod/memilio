@@ -24,7 +24,7 @@ are used to simulate the spread of the disease.
 It is possible to include phase-type distributed stay times for the five compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical.
 
 ## Model equations
-Below is an overview of the model variables. For a simpler description let $\mathcal{Z}=\{E,I_{NS},I_{Sy},I_{Sev},I_{Cr}\}$ be the set of the compartments that can be diveded in subcompartments.
+Below is an overview of the model variables and the model equations are stated. For a simpler description let $\mathcal{Z}=\{{E,I_{NS},I_{Sy},I_{Sev},I_{Cr}}\}$ be the set of the compartments that can be diveded in subcompartments.
 
 | Mathematical variable                   | C++ variable name | Description |
 |---------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
@@ -32,13 +32,14 @@ Below is an overview of the model variables. For a simpler description let $\mat
 | $\rho$                      |  `TransmissionProbabilityOnContact`               | Transmission risk for people located in the susceptible compartments. |
 | $\xi_{I_{NS}}$               |  `RelativeTransmissionNoSymptoms`               | Proportion of nonsymptomatically infected people who are not isolated. |
 | $\xi_{I_{Sy}}$               | `RiskOfInfectionFromSymptomatic`                | Proportion of infected people with symptomps who are not isolated. |
-| $n_{*}$                         |  `Num(...)`  | Number of subcompartments of compartment $*\in\mathcal{Z}$. (...) refers to the C++-name of $*$ as stated above.|
-| $\boldsymbol{\alpha_{*}}$                    |  `StartingProbabilities(...)`               | Vector of size $n_{*}$ with the initial probability of starting in any of the subcompartments of compartment $*\in\mathcal{Z}$. The entries should sum to $1$. |
-| $\mathbf{A_{*}^{z}}$                    |  `TransitionMatrix(...*)To(...z)`               | Matrix describing the transitions in between of the subcompartments of $*\in\mathcal{Z}$ that describes the transition the the compartment $z$. |
+| $n_{z}$                         |  `Num(...)`  | Number of subcompartments of compartment $z\in\mathcal{Z}$. (...) refers to the C++-name of $z$ as stated above.|
+| $\boldsymbol{\alpha_{z}}$                    |  `StartingProbabilities(...)`               | Vector of size $n_{z}$ with the initial probability of starting in any of the subcompartments of compartment $z\in\mathcal{Z}$. The entries should sum to $1$. |
+| $\mathbf{A_{z}^{*}}$                    |  `TransitionMatrix(...z)To(...*)`               | Matrix describing the transitions in between of the subcompartments of $z\in\mathcal{Z}$ that describes the transition to the compartment $*$. |
 
 ![equations](https://github.com/SciCompMod/memilio/assets/70579874/e1da5e1d-e719-4c16-9f14-45374be7c353)
 
 
+Note that the notation $\mathbf{z}(t)$ for $z\in\mathcal{Z}$ stands for a vector. If several transitions are possible from a compartment, the vector is split in order to be able to select the stay times until the transitions in each case phase-type distributed. 
 For example, the order $\mathbf{I_{\text{NS}}}(t)=[\mathbf{I_{\text{NS}}^{\text{Sy}}}(t),\mathbf{I_{\text{NS}}^{\text{R}}}(t)]^{T}$ is used. Similar holds true for the other compartments $\mathcal{Z}$. 
 
 It is essential that the matrices and vectors are of the correct dimensions and satisfy some other conditions that are checked before a simulation.
