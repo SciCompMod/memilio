@@ -81,10 +81,13 @@ def check_for_completeness(df: pd.DataFrame,
         return True
 
 
-def fetch_case_data(read_data: bool = dd.defaultDict['read_data'],
-                    out_folder: str = dd.defaultDict['out_folder'],
-                    **kwargs
-                    ) -> pd.DataFrame:
+def fetch_case_data(
+    directory: str,
+    filename: str,
+    conf_obj,
+    read_data: bool = dd.defaultDict['read_data'],
+    out_folder: str = dd.defaultDict['out_folder'],
+) -> pd.DataFrame:
     """! Downloads the case data
 
     The data is read either from the internet or from a json file (CaseDataFull.json), stored in an earlier run.
@@ -94,19 +97,19 @@ def fetch_case_data(read_data: bool = dd.defaultDict['read_data'],
     The file is read in or stored at the folder "out_folder"/Germany/.
     To store and change the data we use pandas.
 
+    @param directory: str
+        Path to the output directory
+    @param filename: str
+        Name of the full dataset filename
+    @param conf_obj
+        configuration object
     @param read_data bool. Defines if data is read from file or downloaded. Default defined in defaultDict.
     @param out_folder str. Folder where data is written to. Default defined in defaultDict.
 
     @return df pd.Dataframe. Dataframe containing the downloaded case data
     """
     logger = logging.getLogger(__name__)
-    conf = gd.Conf(out_folder, **kwargs)
-    out_folder = conf.path_to_use
-    run_checks = conf.checks
-
-    directory = os.path.join(out_folder, 'Germany/')
-    gd.check_dir(directory)
-    filename = "CaseDataFull"
+    run_checks = conf_obj.checks
 
     complete = False
     path = os.path.join(directory + filename + ".json")
@@ -115,7 +118,7 @@ def fetch_case_data(read_data: bool = dd.defaultDict['read_data'],
         url = "https://media.githubusercontent.com/media/robert-koch-institut/" + \
               "SARS-CoV-2-Infektionen_in_Deutschland/main/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
         df = gd.get_file(path, url, read_data, param_dict={},
-                         interactive=conf.interactive)
+                         interactive=conf_obj.interactive)
         complete = check_for_completeness(df, run_checks, merge_eisenach=True)
     except Exception as ex:
         logger.exception(
@@ -137,7 +140,7 @@ def fetch_case_data(read_data: bool = dd.defaultDict['read_data'],
             # utf_8_sig can identify those bytes as one sign and display it
             # correctly
             df = gd.get_file(path, url, False, param_dict={
-                "encoding": 'utf_8_sig'}, interactive=conf.interactive)
+                "encoding": 'utf_8_sig'}, interactive=conf_obj.interactive)
             complete = check_for_completeness(
                 df, run_checks, merge_eisenach=True)
         except:
@@ -151,7 +154,7 @@ def fetch_case_data(read_data: bool = dd.defaultDict['read_data'],
                 url = "https://npgeo-de.maps.arcgis.com/sharing/rest/content/" + \
                       "items/f10774f1c63e40168479a1feb6c7ca74/data"
                 df = gd.get_file(path, url, False, param_dict={
-                    "encoding": 'utf_8_sig'}, interactive=conf.interactive)
+                    "encoding": 'utf_8_sig'}, interactive=conf_obj.interactive)
                 df.rename(columns={'FID': "OBJECTID"}, inplace=True)
                 complete = check_for_completeness(
                     df, run_checks, merge_eisenach=True)
@@ -169,10 +172,12 @@ def fetch_case_data(read_data: bool = dd.defaultDict['read_data'],
 
 
 def preprocess_case_data(raw_df: pd.DataFrame,
+                         directory: str,
+                         filename: str,
+                         conf_obj,
                          out_folder: str = dd.defaultDict['out_folder'],
                          split_berlin: bool = dd.defaultDict['split_berlin'],
                          rep_date: bool = dd.defaultDict['rep_date'],
-                         **kwargs,
                          ) -> pd.DataFrame:
     """! Preprocessing of the case data
 
@@ -188,8 +193,14 @@ def preprocess_case_data(raw_df: pd.DataFrame,
     - For Berlin all districts can be merged into one [Default]. Otherwise, Berlin is divided into multiple districts and
         different file names are used.
 
-    @param out_folder str. Folder where data is written to. Default defined in defaultDict.
     @param raw_df pd.Dataframe. Contains the downloaded or read raw case data
+    @param directory: str
+        Path to the output directory
+    @param filename: str
+        Name of the full dataset filename
+    @param conf_obj
+        configuration object
+    @param out_folder str. Folder where data is written to. Default defined in defaultDict.
     @param split_berlin bool. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
     @param rep_date bool Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
 
@@ -198,12 +209,8 @@ def preprocess_case_data(raw_df: pd.DataFrame,
     logger = logging.getLogger(__name__)
     logger.info("Pre-processing the Case data.")
 
-    conf = gd.Conf(out_folder, **kwargs)
-    out_folder = conf.path_to_use
-    no_raw = conf.no_raw
-    directory = os.path.join(out_folder, 'Germany/')
-    gd.check_dir(directory)
-    filename = "CaseDataFull"
+    out_folder = conf_obj.path_to_use
+    no_raw = conf_obj.no_raw
 
     with progress_indicator.Spinner(message='Preparing DataFrame'):
         df = raw_df.convert_dtypes()
@@ -278,6 +285,8 @@ def preprocess_case_data(raw_df: pd.DataFrame,
 
 
 def write_case_data(df: pd.DataFrame,
+                    directory: str,
+                    conf_obj,
                     file_format: str = dd.defaultDict['file_format'],
                     out_folder: str = dd.defaultDict['out_folder'],
                     start_date: date = dd.defaultDict['start_date'],
@@ -288,7 +297,6 @@ def write_case_data(df: pd.DataFrame,
                     rep_date: bool = dd.defaultDict['rep_date'],
                     files: str or list = 'All',
                     to_dataset: bool = dd.defaultDict['to_dataset'],
-                    **kwargs,
                     ) -> None or dict:
     """! Writing the different case data file.
     Following data is generated and written to the mentioned filename
@@ -308,6 +316,10 @@ def write_case_data(df: pd.DataFrame,
 
     @param df: pd.DataFrame
         Processed dataframe
+    @param directory: str
+        Path to the output directory
+    @param conf_obj
+        configuration object
     @param file_format: str
         File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder: str
@@ -327,11 +339,7 @@ def write_case_data(df: pd.DataFrame,
 
     @return None
     """
-    conf = gd.Conf(out_folder, **kwargs)
-    out_folder = conf.path_to_use
-
-    directory = os.path.join(out_folder, 'Germany/')
-    gd.check_dir(directory)
+    out_folder = conf_obj.path_to_use
 
     logger = logging.getLogger(__name__)
     logger.info("Writing the Case data.")
@@ -369,12 +377,14 @@ def write_case_data(df: pd.DataFrame,
         'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum"}, [IdBundesland],
                            {dd.EngEng["idState"]: geoger.get_state_ids()}, ['Confirmed']],
         'all_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                      [IdBundesland], {dd.EngEng["idState"]: geoger.get_state_ids()},
+                      [IdBundesland], {dd.EngEng["idState"]
+                          : geoger.get_state_ids()},
                       ['Confirmed', 'Deaths', 'Recovered']],
         'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum"}, [IdLandkreis],
                             {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()}, ['Confirmed']],
         'all_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                       [IdLandkreis], {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()},
+                       [IdLandkreis], {dd.EngEng["idCounty"]
+                           : df[dd.EngEng["idCounty"]].unique()},
                        ['Confirmed', 'Deaths', 'Recovered']],
         'all_gender': [[dateToUse, Geschlecht], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
                        [Geschlecht], {dd.EngEng["gender"]: list(
@@ -393,7 +403,8 @@ def write_case_data(df: pd.DataFrame,
                               ), dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
                               ['Confirmed', 'Deaths', 'Recovered']],
         'all_age': [[dateToUse, Altersgruppe], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                    [Altersgruppe], {dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
+                    [Altersgruppe], {dd.EngEng["ageRKI"]
+                        : df[dd.EngEng["ageRKI"]].unique()},
                     ['Confirmed', 'Deaths', 'Recovered']],
         'all_state_age': [[dateToUse, IdBundesland, Altersgruppe],
                           {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}, [
@@ -525,19 +536,34 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
     @return None
     """
 
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    run_checks = conf.checks
+
+    directory = os.path.join(out_folder, 'Germany/')
+    gd.check_dir(directory)
+    filename = "CaseDataFull"
+
+    complete = False
     raw_df = fetch_case_data(
         read_data=read_data,
         out_folder=out_folder,
-        **kwargs,
+        directory=directory,
+        filename=filename,
+        conf_obj=conf,
     )
     preprocess_df = preprocess_case_data(
         out_folder=out_folder,
         raw_df=raw_df,
         split_berlin=split_berlin,
         rep_date=rep_date,
-        **kwargs
+        conf_obj=conf,
+        filename=filename,
+        directory=directory,
     )
     datasets = write_case_data(
+        conf_obj=conf,
+        directory=directory,
         df=preprocess_df,
         file_format=file_format,
         start_date=start_date,
@@ -549,7 +575,6 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
         rep_date=rep_date,
         files=files,
         to_dataset=to_dataset,
-        **kwargs,
     )
 
 
