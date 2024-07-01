@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef MIO_ABM_PERSONAL_RNG_H_
-#define MIO_ABM_PERSONAL_RNG_H_
+#ifndef MIO_ABM_PERSONAL_RNG_H
+#define MIO_ABM_PERSONAL_RNG_H
 
 #include "memilio/utils/random_number_generator.h"
 #include "abm/person_id.h"
@@ -97,4 +97,4 @@ private:
 } // namespace abm
 } // namespace mio
 
-#endif // MIO_ABM_PERSONAL_RNG_H_
+#endif // MIO_ABM_PERSONAL_RNG_H

@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef MIO_ABM_PERSON_ID_H_
-#define MIO_ABM_PERSON_ID_H_
+#ifndef MIO_ABM_PERSON_ID_H
+#define MIO_ABM_PERSON_ID_H
 
 #include "memilio/utils/type_safe.h"
 #include <limits>
@@ -48,4 +48,4 @@ struct PersonId : mio::TypeSafe<uint32_t, PersonId>, public OperatorComparison<P
 } // namespace abm
 } // namespace mio
 
-#endif // MIO_ABM_PERSON_ID_H_
+#endif // MIO_ABM_PERSON_ID_H
