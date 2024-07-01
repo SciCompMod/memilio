@@ -120,22 +120,6 @@ struct TestAndTraceCapacity {
 };
 
 /**
- * @brief Multiplier for the test and trace capacity to determine when it is considered overloaded from symptomatic cases.
- */
-template <typename FP = double>
-struct TestAndTraceCapacityMaxRiskSymptoms {
-    using Type = UncertainValue<FP>;
-    static Type get_default(AgeGroup)
-    {
-        return Type(15.0);
-    }
-    static std::string name()
-    {
-        return "TestAndTraceCapacityMaxRiskSymptoms";
-    }
-};
-
-/**
  * @brief Multiplier for the test and trace capacity to determine when it is considered overloaded from cases without symptoms.
  */
 template <typename FP = double>
@@ -148,6 +132,22 @@ struct TestAndTraceCapacityMaxRiskNoSymptoms {
     static std::string name()
     {
         return "TestAndTraceCapacityMaxRiskNoSymptoms";
+    }
+};
+
+/**
+ * @brief Multiplier for the test and trace capacity to determine when it is considered overloaded by symptomatic cases.
+ */
+template <typename FP = double>
+struct TestAndTraceCapacityMaxRiskSymptoms {
+    using Type = UncertainValue<FP>;
+    static Type get_default(AgeGroup)
+    {
+        return Type(15.0);
+    }
+    static std::string name()
+    {
+        return "TestAndTraceCapacityMaxRiskSymptoms";
     }
 };
 
@@ -841,7 +841,7 @@ public:
             }
 
             if (this->template get<DaysUntilEffectivePartialImmunity<FP>>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter DeathsPerCritical changed from {} to {}",
+                log_warning("Constraint check: Parameter DaysUntilEffectivePartialImmunity changed from {} to {}",
                             this->template get<DaysUntilEffectivePartialImmunity<FP>>()[i], 0);
                 this->template get<DaysUntilEffectivePartialImmunity<FP>>()[i] = 0;
                 corrected                                                      = true;
