@@ -99,20 +99,20 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIFailure)
     auto read_result1 = mio::lsecir::set_initial_data_from_confirmed_cases<Model>(
         model, mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date, total_population, 1.);
 
-    ASSERT_THAT(print_wrap(read_result1), IsFailure(mio::StatusCode::OutOfRange));
+    EXPECT_THAT(print_wrap(read_result1), IsFailure(mio::StatusCode::OutOfRange));
 
     // Case where not all needed dates are provided.
     start_date        = mio::Date(2020, 6, 6);
     auto read_result2 = mio::lsecir::set_initial_data_from_confirmed_cases<Model>(
         model, mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date, total_population, 1.);
 
-    ASSERT_THAT(print_wrap(read_result2), IsFailure(mio::StatusCode::OutOfRange));
+    EXPECT_THAT(print_wrap(read_result2), IsFailure(mio::StatusCode::OutOfRange));
 
     // Case with empty RKI data file.
     auto read_result3 = mio::lsecir::set_initial_data_from_confirmed_cases<Model>(
         model, mio::path_join(TEST_DATA_DIR, "test_empty_file.json"), start_date, total_population, 1.);
 
-    ASSERT_THAT(print_wrap(read_result3), IsFailure(mio::StatusCode::InvalidFileFormat));
+    EXPECT_THAT(print_wrap(read_result3), IsFailure(mio::StatusCode::InvalidFileFormat));
 
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
