@@ -416,7 +416,7 @@ def write_case_data(df: pd.DataFrame,
                 raise gd.DataError('Error: File ' + file +
                                    ' cannot be written.')
             # split berlin is only relevant for county level
-            if ('county' in file) and (split_berlin):
+            if ('county' in file) and (split_berlin is True):
                 split_berlin_local = True
             else:
                 # dont append _split_berlin to filename on germany/state level
