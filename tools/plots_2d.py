@@ -14,6 +14,7 @@ import matplotlib.colors as mcolors
 from matplotlib.colors import SymLogNorm, LinearSegmentedColormap
 from tqdm.auto import tqdm
 from datetime import datetime, timedelta
+import matplotlib.gridspec as gridspec
 import h5py
 
 import seaborn as sns
@@ -27,8 +28,8 @@ lineWidth = 2
 fontsize = 28
 legendsize = 15
 ticks = 15
-# colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-colors = sns.color_palette("tab20")
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+colors_state_risk = sns.color_palette("tab20")
 
 
 def read_total_results_h5(path, comp, group_key='Total'):
@@ -97,8 +98,10 @@ def plot(ys, labels, path_plots, title="", log_scale=False, ylabel="Number Indiv
                            end=end_date_datetime, freq='MS')
 
     # Creating subplots based on the number of data series
+    colors_plot = colors
     if num_data > 8:
         fig, axes = plt.subplots(1, 2, figsize=(20, 10))
+        colors_plot = colors_state_risk
     else:
         fig, ax = plt.subplots(1, 1, figsize=(10, 10))
         axes = [ax]
@@ -125,17 +128,17 @@ def plot(ys, labels, path_plots, title="", log_scale=False, ylabel="Number Indiv
         ax = axes[indx_data % len(axes)]
         if isinstance(y, dict):
             ax.plot(days, y["p50"], label=labels[indx_data], linewidth=lineWidth,
-                    linestyle='-', color=colors[indx_data])
+                    linestyle='-', color=colors_plot[indx_data])
             if plot_percentiles:
                 ax.plot(days, y["p25"], linewidth=lineWidth,
-                        linestyle='--', color=colors[indx_data])
+                        linestyle='--', color=colors_plot[indx_data])
                 ax.plot(days, y["p75"], linewidth=lineWidth,
-                        linestyle='--', color=colors[indx_data])
+                        linestyle='--', color=colors_plot[indx_data])
                 ax.fill_between(
-                    days, y["p25"], y["p75"], color=colors[indx_data], alpha=opacity)
+                    days, y["p25"], y["p75"], color=colors_plot[indx_data], alpha=opacity)
         else:
             ax.plot(days, y, label=labels[indx_data], linewidth=lineWidth,
-                    linestyle='-', color=colors[indx_data])
+                    linestyle='-', color=colors_plot[indx_data])
 
     for ax in axes:
         ax.legend(fontsize=legendsize, loc='center left',
@@ -213,7 +216,7 @@ def plot_compartments(path_results, path_plots, modes, compartments, labels, tit
     return 0
 
 
-def plot_flows(path_results, path_plots, modes, flow_indx, labels, title, log_scale=False):
+def plot_flows(path_results, path_plots, modes, flow_indx, labels, title, log_scale=False, plot_percentiles=True):
     create_folder_if_not_exists(path_plots)
     plot_data = []
     labels_modes = []
@@ -226,7 +229,7 @@ def plot_flows(path_results, path_plots, modes, flow_indx, labels, title, log_sc
             data = {key: np.diff(data[key]) for key in data.keys()}
             plot_data.append(data)
     plot(plot_data, labels_modes, path_plots, title=title,
-         log_scale=log_scale, ylabel="Number Individuals")
+         log_scale=log_scale, ylabel="Number Individuals", plot_percentiles=plot_percentiles)
     return 0
 
 
@@ -289,7 +292,7 @@ def plot_r0_county_level(path_results, path_plots, modes, percentile="p50"):
 
     for i in range(len(modes)):  # Setzen der gleichen Skala für alle Plots
         plt.subplot(1, len(modes), i + 1)
-        plt.ylim(0.4, 1.7)
+        plt.ylim(y_min - 0.5, y_max + 0.5)
 
     plt.savefig(os.path.join(path_plots, 'plot_r0_box_plots.png'))
 
@@ -314,7 +317,7 @@ def plot_r0_county_level(path_results, path_plots, modes, percentile="p50"):
 
     for i in range(len(modes)):  # Setzen der gleichen Skala für alle Plots
         plt.subplot(1, len(modes), i + 1)
-        plt.ylim(y_min, y_max)
+        plt.ylim(y_min - 0.5, y_max + 0.5)
 
     plt.savefig(os.path.join(path_plots, 'violin_plots.png'))
 
@@ -396,7 +399,7 @@ def plot_contacts(path_results, path_plots, modes, percentile="p50"):
          title="Contacts", ylabel="Number of Contacts")
 
 
-def plot_icu_comp(path_results, path_plots, modes, path_icu_data, log_scale=False, icu_capacity_val=9):
+def plot_icu_comp(path_results, path_plots, modes, path_icu_data, log_scale=False, icu_capacity_val=9, plot_percentiles=True):
     create_folder_if_not_exists(path_plots)
     icu_comp = [7]
     label = "ICU Occupancy"
@@ -435,7 +438,7 @@ def plot_icu_comp(path_results, path_plots, modes, path_icu_data, log_scale=Fals
     labels.append("ICU Divi Data")
 
     plot(plot_data, labels, path_plots, title=title,
-         log_scale=log_scale, ylabel="ICU Occupancy per 100_000")
+         log_scale=log_scale, ylabel="ICU Occupancy per 100_000", plot_percentiles=plot_percentiles)
     return 0
 
 
@@ -498,8 +501,12 @@ def create_folder_if_not_exists(path):
         os.makedirs(path)
 
 
-def get_kmin_dirs(path_results):
-    return [d for d in os.listdir(path_results) if os.path.isdir(os.path.join(path_results, d)) and d.startswith("kmin")]
+def get_dirs_starting_with_x(x, path_results):
+    def get_kmax_value(dir_name):
+        return float(dir_name.split('_')[3])
+    dirs = [d for d in os.listdir(path_results) if os.path.isdir(
+        os.path.join(path_results, d)) and d.startswith(x)]
+    return sorted(dirs, key=get_kmax_value)
 
 
 def read_data(path, target_indx, percentile, flows):
@@ -516,30 +523,40 @@ def plot_and_save(fig, path, filename):
     plt.close(fig)
 
 
-def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p50", flows=True, plot_type='kmin', title='Peak Value', vertical=False):
+def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p50", flows=True, plot_type='kmin', title='Peak Value', vertical=False, dir_value='kmin'):
     if len(modes) > 1:
         print("Only one mode is allowed for the grid peak plot.")
         return
 
-    create_folder_if_not_exists(os.path.join(path_plots, "peaks"))
+    plot_dir = os.path.join(path_plots, "peaks", title)
+    create_folder_if_not_exists(plot_dir)
 
-    kmin_dirs = get_kmin_dirs(path_results)
-    all_kmins = sorted(set(float(d.split("_")[1]) for d in kmin_dirs))
+    kmin_dirs = get_dirs_starting_with_x(dir_value, path_results)
+    all_kmins = 0
+    if dir_value == 'kmin':
+        all_kmins = sorted(set(float(d.split("_")[1]) for d in kmin_dirs))
+    else:
+        all_kmins = sorted(set(float(d.split("_")[-1]) for d in kmin_dirs))
 
     num_days = 0
 
-    for kmin in all_kmins:
+    for index, kmin in enumerate(all_kmins):
+        if dir_value == 'fixed':
+            if kmin > all_kmins[0]:
+                continue
+
         fig, axes = plt.subplots(
-            1, round(10 - kmin * 10), figsize=(15, 3), squeeze=False)
+            1, round(10 - index), figsize=(15, 3), squeeze=False)
 
         if vertical:
             fig, axes = plt.subplots(
-                round(10 - kmin * 10), 1, figsize=(10, 20), squeeze=False)
+                round(10 - index), 1, figsize=(10, 20), squeeze=False)
         all_peaks = []
 
         for run in kmin_dirs:
-            if kmin != float(run.split("_")[1]):
-                continue
+            if dir_value == 'kmin':
+                if kmin != float(run.split("_")[1]):
+                    continue
 
             path = os.path.join(path_results, run,
                                 modes[0], "flows" if flows else "")
@@ -579,6 +596,10 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
                 ax.set_ylabel(title + ' per 100,000k')
 
             kmax = float(run.split("_")[3])
+
+            if dir_value == 'fixed':
+                kmax = kmin
+
             if not vertical:
                 ax.set_title(f'kmin: {kmin}\nkmax: {kmax:.1f}', fontsize=12)
             else:
@@ -613,12 +634,12 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
                 if ax == axes[len(axes) // 2, 0]:
                     ax.set_ylabel(title + ' per 100,000k')
 
-        plot_and_save(fig, os.path.join(path_plots, "peaks"),
-                      f'peaks_grid_{plot_type}_kmin_{kmin}.png')
+        plot_and_save(fig, plot_dir,
+                      f'peaks_grid_{plot_type}_{dir_value}_{kmin}.png')
 
         for ax in axes.flat:
             ax.set_yscale('symlog')
-            ax.set_ylim(global_min, global_max)
+            ax.set_ylim(0, 400)
             ax.set_xticks(range(0, num_days, 100))
             if not vertical:
                 ax.set_xlabel('')
@@ -634,13 +655,14 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
                     ax.set_xlabel('Days', fontsize=16)
                 if ax == axes[len(axes) // 2, 0]:
                     ax.set_ylabel(title + ' per 100,000k')
-        plot_and_save(fig, os.path.join(path_plots, "peaks"),
-                      f'peaks_grid_{plot_type}_kmin_{kmin}_log.png')
+        plot_and_save(fig, plot_dir,
+                      f'peaks_grid_{plot_type}_{dir_value}_{kmin}_log.png')
 
 
 if __name__ == '__main__':
     path_cwd = os.getcwd()
-    path_results = os.path.join(path_cwd, "results")
+    path_results = os.path.join(
+        path_cwd, "results")
     path_plots = os.path.join(path_cwd, "plots")
     path_icu_data = os.path.join(
         path_cwd, "data/pydata/Germany/germany_divi_ma7.json")
@@ -652,8 +674,8 @@ if __name__ == '__main__':
     dead_compartment = [[9]]
     flow_se = [[0]]
 
-    plot_r0_county_level(path_results, path_plots, modes)
-    # # plot_contacts(path_results, path_plots, modes)
+    # plot_r0_county_level(path_results, path_plots, modes)
+    # plot_contacts(path_results, path_plots, modes)
     # plot_risk(path_results,
     #           path_plots, plot_percentiles=False)
     # plot_compartments(path_results, path_plots, modes,
@@ -663,13 +685,27 @@ if __name__ == '__main__':
     # plot_compartments(path_results, path_plots, modes,
     #                   dead_compartment, [""], "Total Deaths")
     # plot_flows(path_results, path_plots, modes,
-    #            flow_se, [""], "Daily Infections")
-    plot_icu_comp(path_results, path_plots, modes, path_icu_data)
+    #            flow_se, [""], "Daily Infections", plot_percentiles=False)
+    # plot_icu_comp(path_results, path_plots, modes,
+    #               path_icu_data, plot_percentiles=False)
     # plot_r0(path_results, path_plots, modes)
     # plot_peaks(path_results, path_plots, modes, flow_se)
 
     # plot_peaks_single(path_results, path_plots, ["FeedbackDamping"], flow_se)
-    # plot_peak_values(os.path.join(path_cwd, "results", "save"), path_plots, [
-    #                  "FeedbackDamping"], flow_se, plot_type='kmin')
-    # plot_peak_values(os.path.join(path_cwd, "results", "save"), path_plots, [
-    #                  "FeedbackDamping"], flow_se, plot_type='kmin', title='Daily Infections', flows=True, vertical=True)
+
+    # peak plots for daily infections
+    # plot_peak_values(path_results, path_plots, [
+    #                  "FeedbackDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True)
+    # plot_peak_values(path_results, path_plots, [
+    #                  "FeedbackDamping"], flow_se, plot_type='val', title='Daily Infections', flows=True, vertical=True)
+
+    # # # peak plots for ICU occupancy
+    # plot_peak_values(path_results, path_plots, [
+    #                  "FeedbackDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True)
+    # plot_peak_values(path_results, path_plots, [
+    #     "FeedbackDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True)
+
+    plot_peak_values(path_results, path_plots, [
+                     "ClassicDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True, dir_value='fixed')
+    plot_peak_values(path_results, path_plots, [
+        "ClassicDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True, dir_value='fixed')

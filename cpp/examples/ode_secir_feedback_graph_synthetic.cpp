@@ -264,13 +264,12 @@ void set_state_ids(mio::Graph<mio::osecir::Model, mio::MigrationParameters>& gra
  * @param params Object that the NPIs will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_npis(mio::osecir::Parameters& params, const std::string& mode)
+mio::IOResult<void> set_npis(mio::osecir::Parameters& params, const std::string& mode,
+                             const ScalarType reduc_fac_location)
 {
     if (std::strcmp(mode.c_str(), "ClassicDamping") == 0) {
         auto& contacts         = params.get<mio::osecir::ContactPatterns>();
         auto& contact_dampings = contacts.get_dampings();
-
-        const ScalarType reduc_fac_location = 0.2014902095;
 
         const size_t locations       = static_cast<size_t>(ContactLocation::Count);
         const auto group_weights_all = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 1.0);
@@ -334,7 +333,7 @@ get_graph(mio::Date start_date, const fs::path& data_dir, const std::string& mod
         BOOST_OUTCOME_TRY(set_feedback_parameters(params, kmin, kmax));
     }
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
-    BOOST_OUTCOME_TRY(set_npis(params, mode));
+    BOOST_OUTCOME_TRY(set_npis(params, mode, kmin));
 
     auto population_data_path =
         mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json");
@@ -640,19 +639,20 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 {
     const auto start_date = mio::Date(2020, 12, 1);
 
-    const auto num_days_sim = 100.0;
-    const auto num_runs     = 300;
+    const auto num_days_sim = 200.0;
+    const auto num_runs     = 100;
 
     // auto const modes = {"ClassicDamping", "FeedbackDamping"};
 
-    auto const modes = {"FeedbackDamping"};
+    auto const modes = {"ClassicDamping"};
 
     const double initially_infected_per_100k = 500;
     const double initially_icu_per_100k      = 2.0;
 
     const size_t state_id_infected = 3;
 
-    auto min_values = std::vector<ScalarType>{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
+    auto min_values = std::vector<ScalarType>{1.0}; //0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
+
     auto max_values = std::vector<ScalarType>{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
     // const size_t county_id_infected = 3241;
 
@@ -660,12 +660,18 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
     for (auto mode : modes) {
         for (size_t min_indx = 0; min_indx < min_values.size(); min_indx++) {
             for (size_t max_indx = min_indx; max_indx < max_values.size(); max_indx++) {
+                if (std::strcmp(mode, "ClassicDamping") == 0 && min_values[min_indx] != max_values[max_indx]) {
+                    continue;
+                }
                 auto& kmin = min_values[min_indx];
                 auto& kmax = max_values[max_indx];
 
                 mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
                 auto result_dir_mode = result_dir / ("kmin_" + std::to_string(kmin) + "_kmax_" + std::to_string(kmax)) /
                                        boost::filesystem::path(mode);
+                if (std::strcmp(mode, "ClassicDamping") == 0) {
+                    result_dir_mode = result_dir / ("fixed_damping_kmin_" + std::to_string(kmin)) / "ClassicDamping";
+                }
                 // create directory for results
                 if (mio::mpi::is_root()) {
                     boost::filesystem::create_directories(result_dir_mode);
