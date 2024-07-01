@@ -27,16 +27,11 @@
 TEST(TestLocation, copyLocation)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
-    // auto person   = make_test_person(location, age_group_5_to_14, mio::abm::InfectionState::InfectedSymptoms);
-    // EXPECT_EQ(location.get_number_persons(), 0);
-    // location.add_person(person);
-    // EXPECT_EQ(location.get_number_persons(), 1);
 
     auto copied_location = location;
     ASSERT_EQ(copied_location.get_type(), mio::abm::LocationType::School);
     ASSERT_EQ(copied_location.get_index(), location.get_index());
     ASSERT_EQ(copied_location.get_cells().size(), location.get_cells().size());
-    // EXPECT_EQ(copied_location.get_number_persons(), 0);
 }
 
 TEST(TestLocation, initCell)
