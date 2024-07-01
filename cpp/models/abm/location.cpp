@@ -36,8 +36,7 @@ Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
     , m_capacity_adapted_transmission_risk(false)
     , m_parameters(num_agegroups)
     , m_cells(num_cells, num_agegroups)
-    , m_required_mask(MaskType::Community)
-    , m_is_mask_required(false)
+    , m_required_mask(MaskType::None)
 {
     assert(num_cells > 0 && "Number of cells has to be larger than 0.");
 }

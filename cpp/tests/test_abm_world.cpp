@@ -561,7 +561,6 @@ TEST(TestWorld, copyWorld)
 
     auto& school1 = world.get_individualized_location(school_id1);
     school1.set_required_mask(mio::abm::MaskType::Surgical);
-    school1.set_mask_requirement(true);
     auto& school2 = world.get_individualized_location(school_id2);
     school2.set_required_mask(mio::abm::MaskType::FFP2);
     auto& work = world.get_individualized_location(work_id);
@@ -751,7 +750,7 @@ TEST(TestWorld, migrateWithAppliedNPIs)
         .WillOnce(testing::Return(0.8)) // draw random school hour
         .WillRepeatedly(testing::Return(1.0));
 
-    auto& p_complied =
+    auto& p_compliant =
         add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
     auto& p_no_mask =
         add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
@@ -760,8 +759,8 @@ TEST(TestWorld, migrateWithAppliedNPIs)
     auto& p_no_isolation =
         add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
 
-    p_complied.set_assigned_location(work_id);
-    p_complied.set_assigned_location(home_id);
+    p_compliant.set_assigned_location(work_id);
+    p_compliant.set_assigned_location(home_id);
     p_no_mask.set_assigned_location(work_id);
     p_no_mask.set_assigned_location(home_id);
     p_no_test.set_assigned_location(work_id);
@@ -787,7 +786,6 @@ TEST(TestWorld, migrateWithAppliedNPIs)
         mock_exponential_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.));
 
-    work.set_mask_requirement(true);
     work.set_required_mask(mio::abm::MaskType::FFP2);
     p_no_mask.set_compliance(mio::abm::InterventionType::Mask, 0.4);
     p_no_test.set_compliance(mio::abm::InterventionType::Testing, 0.4);
@@ -796,8 +794,8 @@ TEST(TestWorld, migrateWithAppliedNPIs)
     world.evolve(t, dt);
 
     // The complied person is allowed to be in location
-    EXPECT_EQ(p_complied.get_location(), work);
-    EXPECT_EQ(p_complied.get_mask().get_type(), mio::abm::MaskType::FFP2);
+    EXPECT_EQ(p_compliant.get_location(), work);
+    EXPECT_EQ(p_compliant.get_mask().get_type(), mio::abm::MaskType::FFP2);
 
     // The person, who does not wear mask, is not allowed to be in location
     EXPECT_EQ(p_no_mask.get_mask().get_type(), mio::abm::MaskType::None);
@@ -811,7 +809,7 @@ TEST(TestWorld, migrateWithAppliedNPIs)
 
     // Using trip list
     mio::abm::TripList& trip_list = world.get_trip_list();
-    mio::abm::Trip trip1(p_complied.get_person_id(), t, work_id, home_id);
+    mio::abm::Trip trip1(p_compliant.get_person_id(), t, work_id, home_id);
     mio::abm::Trip trip2(p_no_mask.get_person_id(), t, work_id, home_id);
     mio::abm::Trip trip3(p_no_test.get_person_id(), t, work_id, home_id);
     mio::abm::Trip trip4(p_no_isolation.get_person_id(), t, work_id, home_id);
@@ -819,13 +817,13 @@ TEST(TestWorld, migrateWithAppliedNPIs)
     trip_list.add_trip(trip2);
     trip_list.add_trip(trip3);
     trip_list.add_trip(trip4);
-    p_complied.migrate_to(home);
+    p_compliant.migrate_to(home); // reset person location
     world.use_migration_rules(false);
     world.evolve(t, dt);
 
-    // The complied person is allowed to be in location
-    EXPECT_EQ(p_complied.get_location(), work);
-    EXPECT_EQ(p_complied.get_mask().get_type(), mio::abm::MaskType::FFP2);
+    // The compliant person is allowed to be in location
+    EXPECT_EQ(p_compliant.get_location(), work);
+    EXPECT_EQ(p_compliant.get_mask().get_type(), mio::abm::MaskType::FFP2);
 
     // The person, who does not wear mask, is not allowed to be in location
     EXPECT_EQ(p_no_mask.get_mask().get_type(), mio::abm::MaskType::None);

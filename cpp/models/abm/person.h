@@ -1,4 +1,3 @@
-
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
@@ -389,7 +388,7 @@ public:
      * @brief For every #InterventionType a Person has a compliance value between 0 and 1.
      * 0 means that the Person never complies to the Intervention.
      * 1 means that the Person always complies to the Intervention.
-     * @param[in] intervention_type The intervention type. 
+     * @param[in] intervention_type The #InterventionType.
      * @param[in] value The compliance value.
      */
     void set_compliance(InterventionType intervention_type, ScalarType value)
@@ -398,9 +397,9 @@ public:
     }
 
     /**
-     * @brief Get the compliance of the Person for an intervention.
-     * @param[in] intervention_type The intervention type. 
-     * @return The probability that the Person complies to an intervention.
+     * @brief Get the compliance of the Person for an Intervention.
+     * @param[in] intervention_type The #InterventionType.
+     * @return The probability that the Person complies to an Intervention.
      */
     ScalarType get_compliance(InterventionType intervention_type) const
     {
@@ -408,16 +407,16 @@ public:
     }
 
     /**
-     * @brief Checks whether the Person is following an intervention.
+     * @brief Checks whether the Person complies an Intervention.
      * @param[inout] rng RandomNumberGenerator of the Person.
-     * @param[in] intervention The InterventionType.
-     * @return Checks whether the Person following an intervention.
+     * @param[in] intervention The #InterventionType.
+     * @return Checks whether the Person complies an Intervention.
      */
-    bool is_compliant(RandomNumberGenerator& rng, InterventionType intervention);
+    bool is_compliant(RandomNumberGenerator& rng, InterventionType intervention) const;
 
     /**
      * @brief Change the mask to new type.
-     * @param[in] type The required mask type.
+     * @param[in] type The required #MaskType.
      * @param[in] t The TimePoint of mask change.
      */
     void set_mask(MaskType type, TimePoint t);

@@ -290,20 +290,10 @@ TEST(TestLocation, setCapacity)
 TEST(TestLocation, setRequiredMask)
 {
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
-    EXPECT_EQ(location.get_required_mask(), mio::abm::MaskType::Community);
+    EXPECT_EQ(location.get_required_mask(), mio::abm::MaskType::None);
 
     location.set_required_mask(mio::abm::MaskType::FFP2);
     EXPECT_EQ(location.get_required_mask(), mio::abm::MaskType::FFP2);
-}
-
-TEST(TestLocation, setIsMaskRequired)
-{
-    mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
-    location.set_mask_requirement(false);
-    EXPECT_FALSE(location.is_mask_required());
-
-    location.set_mask_requirement(true);
-    EXPECT_TRUE(location.is_mask_required());
 }
 
 TEST(TestLocation, getGeographicalLocation)

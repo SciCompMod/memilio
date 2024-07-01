@@ -127,7 +127,6 @@ public:
         , m_persons(other.m_persons)
         , m_cells(other.m_cells)
         , m_required_mask(other.m_required_mask)
-        , m_is_mask_required(other.m_is_mask_required)
         , m_geographical_location(other.m_geographical_location)
     {
     }
@@ -320,16 +319,7 @@ public:
      */
     bool is_mask_required() const
     {
-        return m_is_mask_required;
-    }
-
-    /**
-     * @brief Activate or deactivate mask wearing requirement at this Location.
-     * @param[in] new_status Status of mask wearing requirement.
-     */
-    void set_mask_requirement(bool new_status)
-    {
-        m_is_mask_required = new_status;
+        return m_required_mask != MaskType::None;
     }
 
     /**
@@ -403,7 +393,6 @@ private:
     std::vector<observer_ptr<Person>> m_persons{}; ///< A vector of all Person%s at the Location.
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
-    bool m_is_mask_required; ///< If true requires e.g. Mask%s to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
 };
 

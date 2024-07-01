@@ -39,7 +39,7 @@ Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age
     , m_age(age)
     , m_time_at_location(0)
     , m_time_of_last_test(TimePoint(-(std::numeric_limits<int>::max() / 2)))
-    , m_mask(Mask(MaskType::Community, TimePoint(0)))
+    , m_mask(Mask(MaskType::None, TimePoint(-(std::numeric_limits<int>::max() / 2))))
     , m_compliance((uint32_t)InterventionType::Count, 1.)
     , m_person_id(person_id)
     , m_cells{0}
@@ -186,7 +186,7 @@ bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParam
     if (is_infected(t)) {
         // true positive
         if (random < params.sensitivity) {
-            // If the Person comply to isolation, start the quarantine.
+            // If the Person complies to isolation, start the quarantine.
             if (is_compliant(rng, InterventionType::Isolation)) {
                 m_quarantine_start = t;
             }
@@ -205,7 +205,7 @@ bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParam
         }
         // false positive
         else {
-            // If the Person comply to isolation, start the quarantine.
+            // If the Person complies to isolation, start the quarantine.
             if (is_compliant(rng, InterventionType::Isolation)) {
                 m_quarantine_start = t;
             }
@@ -231,15 +231,10 @@ const std::vector<uint32_t>& Person::get_cells() const
 
 ScalarType Person::get_mask_protective_factor(const Parameters& params) const
 {
-    if (m_mask.get_type() == MaskType::None) {
-        return 0.;
-    }
-    else {
-        return params.get<MaskProtection>()[m_mask.get_type()];
-    }
+    return params.get<MaskProtection>()[m_mask.get_type()];
 }
 
-bool Person::is_compliant(RandomNumberGenerator& rng, InterventionType intervention)
+bool Person::is_compliant(RandomNumberGenerator& rng, InterventionType intervention) const
 {
     ScalarType compliance_check = UniformDistribution<double>::get_instance()(rng);
     return compliance_check <= get_compliance(intervention);

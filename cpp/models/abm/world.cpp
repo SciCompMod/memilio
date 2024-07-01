@@ -86,19 +86,12 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto target_type       = rule(personal_rng, *person, t, dt, parameters);
             auto& target_location  = find_location(target_type, *person);
             auto& current_location = person->get_location();
+
             // Cover both cases of voluntary and enforeced mask wearing at targeted location
-            if (person->is_compliant(personal_rng, InterventionType::Mask)) {
-                // If the current MaskProtection level is lower than required, the Person changes mask
-                if (parameters.get<MaskProtection>()[person->get_mask().get_type()] <
-                    parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
-                    person->set_mask(target_location.get_required_mask(), t);
-                }
-            }
-            else {
-                person->set_mask(MaskType::None, t);
-            }
+            bool is_person_complied_to_mask_intervention = person->is_compliant(personal_rng, InterventionType::Mask);
+
             // Check if the Person wears mask if required at targeted location
-            if ((target_location.is_mask_required() && person->get_mask().get_type() != MaskType::None) ||
+            if ((target_location.is_mask_required() && is_person_complied_to_mask_intervention) ||
                 !target_location.is_mask_required()) {
                 // Check if the capacity of targeted Location is not reached
                 if (target_location != current_location &&
@@ -106,6 +99,16 @@ void World::migration(TimePoint t, TimeSpan dt)
                     // Perform TestingStrategy if required
                     if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                         person->migrate_to(target_location);
+                        if (is_person_complied_to_mask_intervention) {
+                            // If the current MaskProtection level is lower than required, the Person changes mask
+                            if (parameters.get<MaskProtection>()[person->get_mask().get_type()] <
+                                parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
+                                person->set_mask(target_location.get_required_mask(), t);
+                            }
+                        }
+                        else {
+                            person->set_mask(MaskType::None, t);
+                        }
                         return true;
                     }
                 }
@@ -148,23 +151,27 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
             if (!person->is_in_quarantine(t, parameters) && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
+
                 // Cover both cases of voluntary and enforeced mask wearing at targeted location
-                if (person->is_compliant(personal_rng, InterventionType::Mask)) {
-                    // If the current MaskProtection level is lower than required, the Person changes mask
-                    if (parameters.get<MaskProtection>()[person->get_mask().get_type()] <
-                        parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
-                        person->set_mask(target_location.get_required_mask(), t);
-                    }
-                }
-                else {
-                    person->set_mask(MaskType::None, t);
-                }
+                bool is_person_complied_to_mask_intervention =
+                    person->is_compliant(personal_rng, InterventionType::Mask);
+
                 // Check if the Person wears mask if required at targeted location
-                if ((target_location.is_mask_required() && person->get_mask().get_type() != MaskType::None) ||
+                if ((target_location.is_mask_required() && is_person_complied_to_mask_intervention) ||
                     !target_location.is_mask_required()) {
                     // Perform TestingStrategy if required
                     if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                         person->migrate_to(target_location, trip.trip_mode);
+                        if (is_person_complied_to_mask_intervention) {
+                            // If the current MaskProtection level is lower than required, the Person changes mask
+                            if (parameters.get<MaskProtection>()[person->get_mask().get_type()] <
+                                parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
+                                person->set_mask(target_location.get_required_mask(), t);
+                            }
+                        }
+                        else {
+                            person->set_mask(MaskType::None, t);
+                        }
                     }
                 }
             }

@@ -223,47 +223,6 @@ TEST(TestPerson, interact)
     EXPECT_EQ(person.get_time_at_location(), dt);
 }
 
-TEST(TestPerson, applyMaskIntervention)
-{
-    auto rng = mio::RandomNumberGenerator();
-    auto t   = mio::abm::TimePoint(0);
-
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location target(mio::abm::LocationType::Work, 0, num_age_groups);
-    auto person     = make_test_person(home);
-    auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
-
-    target.set_mask_requirement(false);
-    person.set_compliance(mio::abm::InterventionType::Mask, 0.);
-    if (person.is_compliant(rng_person, mio::abm::InterventionType::Mask)) {
-        person.set_mask(mio::abm::MaskType::Community, t);
-    }
-    else {
-        person.set_mask(mio::abm::MaskType::None, t);
-    }
-    EXPECT_EQ(person.get_mask().get_type(), mio::abm::MaskType::None);
-
-    person.set_compliance(mio::abm::InterventionType::Mask, 1);
-    if (person.is_compliant(rng_person, mio::abm::InterventionType::Mask)) {
-        person.set_mask(mio::abm::MaskType::Community, t);
-    }
-    else {
-        person.set_mask(mio::abm::MaskType::None, t);
-    }
-    EXPECT_NE(person.get_mask().get_type(), mio::abm::MaskType::None);
-
-    target.set_mask_requirement(true);
-    target.set_required_mask(mio::abm::MaskType::Surgical);
-    person.set_compliance(mio::abm::InterventionType::Mask, 1);
-    if (person.is_compliant(rng_person, mio::abm::InterventionType::Mask)) {
-        person.set_mask(target.get_required_mask(), t);
-    }
-    else {
-        person.set_mask(mio::abm::MaskType::None, t);
-    }
-    EXPECT_EQ(person.get_mask().get_type(), mio::abm::MaskType::Surgical);
-}
-
 TEST(TestPerson, setWearMask)
 {
     auto t = mio::abm::TimePoint(0);

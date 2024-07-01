@@ -137,13 +137,14 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(6)) //testing criteria don't apply to third person
-        .WillOnce(testing::Return(0.7)) // Person complies to testing
-        .WillOnce(testing::Return(0.7)) // Person is tested positive
-        .WillOnce(testing::Return(0.7)) // Test is positive
-        .WillOnce(testing::Return(0.7)) // Person complies to isolation
-        .WillOnce(testing::Return(0.7)) // Person complies to testing
-        .WillOnce(testing::Return(0.5)); // Person is tested negative
+        .Times(testing::AtLeast((6)))
+        .WillOnce(testing::Return(0.7)) // Person 1 complies to testing
+        .WillOnce(testing::Return(0.7)) // Person 1 is tested
+        .WillOnce(testing::Return(0.7)) // Test of Person 1 is positive
+        .WillOnce(testing::Return(0.7)) // Person 1 complies to isolation
+        .WillOnce(testing::Return(0.7)) // Person 2 complies to testing
+        .WillOnce(testing::Return(0.5)) // Person 2 is tested negative
+        .WillOnce(testing::Return(0.7)); // Person 1 complies to testing
 
     mio::abm::TestingStrategy test_strategy =
         mio::abm::TestingStrategy(std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>());
@@ -153,5 +154,5 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
               false); // Person tests and tests positive
     EXPECT_EQ(test_strategy.run_strategy(rng_person2, person2, loc_work, start_date),
               true); // Person tests and tests negative
-    EXPECT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date), true); // Person doesn't test
+    EXPECT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date), true); // Person 1 complies to test but the time is too short between tests.
 }
