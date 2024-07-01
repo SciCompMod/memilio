@@ -519,7 +519,9 @@ private:
     static void inclusive_exclusive_sum_rec(Iter b, Iter e, Matrix& sum)
     {
         if (b != e) {
-            sum = (sum + std::get<Matrix>(*b) - (sum.array() * std::get<Matrix>(*b).array()).matrix()).eval();
+            auto& mat_b   = std::get<Matrix>(*b);
+            auto mat_prod = (sum.array() * mat_b.array()).matrix();
+            sum           = sum + mat_b - mat_prod;
             inclusive_exclusive_sum_rec(++b, e, sum);
         }
     }
