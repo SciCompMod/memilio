@@ -45,7 +45,6 @@
 #include "ode_secirvvs/analyze_result.h"
 
 #include "gtest/gtest.h"
-#include "gmock/gmock.h"
 #include <algorithm>
 #include <iterator>
 #include <limits>
