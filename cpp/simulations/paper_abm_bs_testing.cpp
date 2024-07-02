@@ -1456,7 +1456,7 @@ int main(int argc, char** argv)
     else if (argc == 3) {
         num_runs   = atoi(argv[1]);
         result_dir = argv[2];
-        printf("Running with number of runs = %.\n", (int)num_runs);
+        printf("Running with number of runs = %d\n", (int)num_runs);
         printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
     else {
@@ -1478,8 +1478,8 @@ int main(int argc, char** argv)
         copy_precomputed_results(precomputed_dir, result_dir);
     }
     else {
-        std::cout << result.error().formatted_message();
-        return result.error().code().value();
+        std::cout << created.error().formatted_message();
+        return created.error().code().value();
     }
 
     timer       = TIME_NOW;
