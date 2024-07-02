@@ -21,10 +21,9 @@
 #include "abm/location_type.h"
 #include "abm/mask_type.h"
 #include "abm/parameters.h"
-#include "abm/world.h"
+#include "abm/infection.h"
 #include "abm/location.h"
 #include "memilio/utils/random_number_generator.h"
-#include "abm/time.h"
 #include <vector>
 
 namespace mio
@@ -32,8 +31,8 @@ namespace mio
 namespace abm
 {
 
-Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age, uint32_t person_id)
-    : m_location(&location)
+Person::Person(mio::RandomNumberGenerator& rng, LocationId location, AgeGroup age, PersonId person_id)
+    : m_location(location)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_age(age)
@@ -52,32 +51,17 @@ Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age
     m_random_goto_school_hour = UniformDistribution<double>::get_instance()(rng);
 }
 
-Person Person::copy_person(Location& location)
+Person::Person(const Person& other, PersonId id)
+    : Person(other)
 {
-    Person copied_person     = Person(*this);
-    copied_person.m_location = &location;
-    location.add_person(*this);
-    return copied_person;
+    m_person_id = id;
 }
 
-void Person::interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const Parameters& params)
+Person Person::copy_person(LocationId location)
 {
-    if (get_infection_state(t) == InfectionState::Susceptible) { // Susceptible
-        m_location->interact(rng, *this, t, dt, params);
-    }
-    m_time_at_location += dt;
-}
-
-void Person::migrate_to(Location& loc_new, mio::abm::TransportMode transport_mode, const std::vector<uint32_t>& cells)
-{
-    if (*m_location != loc_new) {
-        m_location->remove_person(*this);
-        m_location = &loc_new;
-        m_cells    = cells;
-        loc_new.add_person(*this, cells);
-        m_time_at_location    = TimeSpan(0);
-        m_last_transport_mode = transport_mode;
-    }
+    Person copy = *this;
+    copy.set_location(location);
+    return copy;
 }
 
 bool Person::is_infected(TimePoint t) const
@@ -108,14 +92,15 @@ void Person::add_new_infection(Infection&& inf)
     m_infections.push_back(std::move(inf));
 }
 
-Location& Person::get_location()
+LocationId Person::get_location() const
 {
-    return *m_location;
+    return m_location;
 }
 
-const Location& Person::get_location() const
+void Person::set_location(LocationId id)
 {
-    return *m_location;
+    m_location         = id;
+    m_time_at_location = TimeSpan(0);
 }
 
 const Infection& Person::get_infection() const
@@ -128,18 +113,13 @@ Infection& Person::get_infection()
     return m_infections.back();
 }
 
-void Person::set_assigned_location(Location& location)
+void Person::set_assigned_location(LocationId location)
 {
     /* TODO: This is not safe if the location is not the same as added in the world, e.g. the index is wrong. We need to check this.
     * For now only use it like this:  auto home_id   = world.add_location(mio::abm::LocationType::Home);
     *                                 person.set_assigned_location(home);
     */
     m_assigned_locations[(uint32_t)location.get_type()] = location.get_index();
-}
-
-void Person::set_assigned_location(LocationId id)
-{
-    m_assigned_locations[(uint32_t)id.type] = id.index;
 }
 
 uint32_t Person::get_assigned_location_index(LocationType type) const
@@ -180,7 +160,7 @@ void Person::remove_quarantine()
     m_quarantine_start = TimePoint(-(std::numeric_limits<int>::max() / 2));
 }
 
-bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParameters& params)
+bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const TestParameters& params)
 {
     ScalarType random   = UniformDistribution<double>::get_instance()(rng);
     m_time_of_last_test = t;
@@ -209,7 +189,7 @@ bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParam
     }
 }
 
-uint32_t Person::get_person_id()
+PersonId Person::get_person_id() const
 {
     return m_person_id;
 }
@@ -234,7 +214,7 @@ ScalarType Person::get_mask_protective_factor(const Parameters& params) const
     }
 }
 
-bool Person::apply_mask_intervention(RandomNumberGenerator& rng, const Location& target)
+bool Person::apply_mask_intervention(PersonalRandomNumberGenerator& rng, const Location& target)
 {
     if (target.get_npi_active() == false) {
         m_wears_mask = false;

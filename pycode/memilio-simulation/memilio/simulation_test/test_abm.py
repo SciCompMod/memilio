@@ -70,10 +70,11 @@ class TestAbm(unittest.TestCase):
         home_id = world.add_location(abm.LocationType.Home)
         social_event_id = world.add_location(abm.LocationType.SocialEvent)
 
-        p1 = world.add_person(
-            home_id, mio.AgeGroup(2))
-        p2 = world.add_person(
-            social_event_id, mio.AgeGroup(5))
+        p1_id = world.add_person(home_id, mio.AgeGroup(2))
+        p2_id = world.add_person(social_event_id, mio.AgeGroup(5))
+
+        p1 = world.get_person(p1_id)
+        p2 = world.get_person(p2_id)
 
         # check persons
         self.assertEqual(len(world.persons), 2)
@@ -93,10 +94,10 @@ class TestAbm(unittest.TestCase):
         home_id = abm.LocationId(0, abm.LocationType.Home)
         social_event_id = abm.LocationId(0, abm.LocationType.SocialEvent)
         work_id = abm.LocationId(0, abm.LocationType.Work)
-        p1 = world.add_person(
-            home_id, mio.AgeGroup(0))
-        p2 = world.add_person(
-            home_id, mio.AgeGroup(2))
+        p1_id = world.add_person(home_id, mio.AgeGroup(0))
+        p2_id = world.add_person(home_id, mio.AgeGroup(2))
+        p1 = world.get_person(p1_id)
+        p2 = world.get_person(p2_id)
         for type in abm.LocationType.values():
             p1.set_assigned_location(abm.LocationId(0, type))
             p2.set_assigned_location(abm.LocationId(0, type))

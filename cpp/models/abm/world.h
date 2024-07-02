@@ -17,25 +17,25 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_WORLD_H
-#define EPI_ABM_WORLD_H
+#ifndef MIO_ABM_WORLD_H
+#define MIO_ABM_WORLD_H
 
-#include "abm/config.h"
+#include "abm/model_functions.h"
 #include "abm/location_type.h"
+#include "abm/movement_data.h"
 #include "abm/parameters.h"
 #include "abm/location.h"
 #include "abm/person.h"
-#include "abm/lockdown_rules.h"
+#include "abm/time.h"
 #include "abm/trip_list.h"
+#include "abm/random_events.h"
 #include "abm/testing_strategy.h"
-#include "memilio/utils/pointer_dereferencing_iterator.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 
 #include <bitset>
-#include <initializer_list>
 #include <vector>
-#include <memory>
 
 namespace mio
 {
@@ -49,10 +49,10 @@ namespace abm
 class World
 {
 public:
-    using LocationIterator      = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::iterator>;
-    using ConstLocationIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::const_iterator>;
-    using PersonIterator        = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::iterator>;
-    using ConstPersonIterator   = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::const_iterator>;
+    using LocationIterator      = std::vector<Location>::iterator;
+    using ConstLocationIterator = std::vector<Location>::const_iterator;
+    using PersonIterator        = std::vector<Person>::iterator;
+    using ConstPersonIterator   = std::vector<Person>::const_iterator;
 
     /**
      * @brief Create a World.
@@ -68,38 +68,40 @@ public:
     }
 
     /**
-     * @brief Create a copied World.
-     * @param[in] other The World that needs to be copied. 
+     * @brief Create a World.
+     * @param[in] params Initial simulation parameters.
      */
-    World(const World& other)
-        : parameters(other.parameters)
-        , m_persons()
-        , m_locations()
-        , m_trip_list(other.m_trip_list)
+    World(const Parameters& params)
+        : parameters(params.get_num_groups())
+        , m_trip_list()
+        , m_use_migration_rules(true)
         , m_cemetery_id(add_location(LocationType::Cemetery))
     {
-        for (auto& origin_loc : other.get_locations()) {
-            if (origin_loc.get_type() != LocationType::Cemetery) {
-                // Copy a location
-                m_locations.emplace_back(
-                    std::make_unique<Location>(origin_loc.copy_location_without_persons(parameters.get_num_groups())));
-            }
-            for (auto& person : other.get_persons()) {
-                // If a person is in this location, copy this person and add it to this location.
-                if (person.get_location() == origin_loc) {
-                    LocationId origin_id = {origin_loc.get_index(), origin_loc.get_type()};
-                    m_persons.push_back(
-                        std::make_unique<Person>(person.copy_person(get_individualized_location(origin_id))));
-                }
-            }
-        }
-        use_migration_rules(other.m_use_migration_rules);
+        parameters = params;
     }
 
-    //type is move-only for stable references of persons/locations
-    World(World&& other)            = default;
-    World& operator=(World&& other) = default;
-    World& operator=(const World&)  = delete;
+    World(const World& other)
+        : parameters(other.parameters)
+        , m_local_population_cache()
+        , m_air_exposure_rates_cache()
+        , m_contact_exposure_rates_cache()
+        , m_is_local_population_cache_valid(false)
+        , m_are_exposure_caches_valid(false)
+        , m_exposure_caches_need_rebuild(true)
+        , m_persons(other.m_persons)
+        , m_locations(other.m_locations)
+        , m_has_locations(other.m_has_locations)
+        , m_testing_strategy(other.m_testing_strategy)
+        , m_trip_list(other.m_trip_list)
+        , m_use_migration_rules(other.m_use_migration_rules)
+        , m_migration_rules(other.m_migration_rules)
+        , m_cemetery_id(other.m_cemetery_id)
+        , m_rng(other.m_rng)
+    {
+    }
+    World& operator=(const World&) = default;
+    World(World&&)                 = default;
+    World& operator=(World&&)      = default;
 
     /**
      * serialize this. 
@@ -176,28 +178,28 @@ public:
      * @param[in] age AgeGroup of the person.
      * @return Reference to the newly created Person.
      */
-    Person& add_person(const LocationId id, AgeGroup age);
+    PersonId add_person(const LocationId id, AgeGroup age);
+
+    // adds a copy of person to the world
+    PersonId add_person(Person&& person);
 
     /**
      * @brief Get a range of all Location%s in the World.
      * @return A range of all Location%s.
+     * @{
      */
     Range<std::pair<ConstLocationIterator, ConstLocationIterator>> get_locations() const;
+    Range<std::pair<LocationIterator, LocationIterator>> get_locations();
+    /** @} */
 
     /**
      * @brief Get a range of all Person%s in the World.
      * @return A range of all Person%s.
+     * @{
      */
     Range<std::pair<ConstPersonIterator, ConstPersonIterator>> get_persons() const;
-
-    /**
-     * @brief Get an individualized Location.
-     * @param[in] id LocationId of the Location.
-     * @return Reference to the Location.
-     */
-    const Location& get_individualized_location(LocationId id) const;
-
-    Location& get_individualized_location(LocationId id);
+    Range<std::pair<PersonIterator, PersonIterator>> get_persons();
+    /** @} */
 
     /**
      * @brief Find an assigned Location of a Person.
@@ -205,9 +207,7 @@ public:
      * @param[in] person The Person.
      * @return Reference to the assigned Location.
      */
-    const Location& find_location(LocationType type, const Person& person) const;
-
-    Location& find_location(LocationType type, const Person& person);
+    LocationId find_location(LocationType type, const PersonId person) const;
 
     /** 
      * @brief Get the number of Persons in one #InfectionState at all Location%s.
@@ -303,6 +303,133 @@ public:
      */
     void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
 
+    /**
+     * @brief Get a reference to a Person from this World.
+     * @param[in] id A person's PersonId.
+     * @return A reference to the Person.
+     * @{
+     */
+    Person& get_person(PersonId id)
+    {
+        assert(id.get() < m_persons.size());
+        return m_persons[id.get()];
+    }
+
+    const Person& get_person(PersonId id) const
+    {
+        assert(id.get() < m_persons.size());
+        return m_persons[id.get()];
+    }
+    /** @} */
+
+    /**
+     * @brief Get the number of Person%s of a particular #InfectionState for all Cell%s.
+     * @param[in] location A LocationId from the world.
+     * @param[in] t TimePoint of querry.
+     * @param[in] state #InfectionState of interest.
+     * @return Amount of Person%s of the #InfectionState in all Cell%s of the Location.
+     */
+    size_t get_subpopulation(LocationId location, TimePoint t, InfectionState state) const
+    {
+        return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
+            return p.get_location() == location && p.get_infection_state(t) == state;
+        });
+    }
+
+    /**
+     * @brief Get the total number of Person%s at the Location.
+     * @param[in] location A LocationId from the world.
+     * @return Number of Person%s in the location.
+     */
+    size_t get_number_persons(LocationId location) const
+    {
+        if (!m_is_local_population_cache_valid) {
+            build_compute_local_population_cache();
+        }
+        return m_local_population_cache[location.index];
+    }
+
+    // move a person to another location. this requires that location is part of this world.
+    /**
+     * @brief Let a person move to another location.
+     * @param[in] person PersonId of a person from this world.
+     * @param[in] destination LocationId of the location in this world, which the person should move to.
+     * @param[in] mode The transport mode the person uses to move.
+     * @param[in] cells The cells within the destination the person should be in.
+     */
+    inline void migrate(PersonId person, LocationId destination, TransportMode mode = TransportMode::Unknown,
+                        const std::vector<uint32_t>& cells = {0})
+    {
+        LocationId origin    = get_location(person).get_id();
+        const bool has_moved = mio::abm::migrate(get_person(person), get_location(destination), mode, cells);
+        // if the person has moved, invalidate exposure caches but keep population caches valid
+        if (has_moved) {
+            m_are_exposure_caches_valid = false;
+            if (m_is_local_population_cache_valid) {
+                --m_local_population_cache[origin.index];
+                ++m_local_population_cache[destination.index];
+            }
+        }
+    }
+
+    /**
+     * @brief Let a person interact with the population at its current location.
+     * @param[in] person PersonId of a person from this world.
+     * @param[in] t Time step of the simulation.
+     * @param[in] dt Step size of the simulation.
+     */
+    inline void interact(PersonId person, TimePoint t, TimeSpan dt)
+    {
+        if (!m_are_exposure_caches_valid) {
+            // checking caches is only needed for external calls
+            // during simulation (i.e. in evolve()), the caches are computed in begin_step
+            compute_exposure_caches(t, dt);
+            m_are_exposure_caches_valid = true;
+        }
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, get_person(person));
+        mio::abm::interact(personal_rng, get_person(person), get_location(person),
+                           m_air_exposure_rates_cache[get_location(person).get_index()],
+                           m_contact_exposure_rates_cache[get_location(person).get_index()], t, dt, parameters);
+    }
+
+    /**
+     * @brief Get a reference to a location in this World.
+     * @param[in] id LocationId of the Location.
+     * @return Reference to the Location.
+     * @{
+     */
+    const Location& get_location(LocationId id) const
+    {
+        assert(id.index != INVALID_LOCATION_INDEX);
+        assert(id.index < m_locations.size());
+        return m_locations[id.index];
+    }
+
+    Location& get_location(LocationId id)
+    {
+        assert(id.index != INVALID_LOCATION_INDEX);
+        assert(id.index < m_locations.size());
+        return m_locations[id.index];
+    }
+    /** @} */
+
+    /**
+     * @brief Get a reference to the location of a person.
+     * @param[in] id PersonId of a person.
+     * @return Reference to the Location.
+     * @{
+     */
+    inline Location& get_location(PersonId id)
+    {
+        return get_location(get_person(id).get_location());
+    }
+
+    inline const Location& get_location(PersonId id) const
+    {
+        return get_location(get_person(id).get_location());
+    }
+    /** @} */
+
 private:
     /**
      * @brief Person%s interact at their Location and may become infected.
@@ -317,14 +444,37 @@ private:
      */
     void migration(TimePoint t, TimeSpan dt);
 
-    std::vector<std::unique_ptr<Person>> m_persons; ///< Vector with pointers to every Person.
-    std::vector<std::unique_ptr<Location>> m_locations; ///< Vector with pointers to every Location.
+    /// @brief Shape the cache and store how many Person%s are at any Location. Use from single thread!
+    void build_compute_local_population_cache() const;
+
+    /// @brief Shape the air and contact exposure cache according to the current Location%s.
+    void build_exposure_caches();
+
+    /** 
+     * @brief Store all air/contact exposures for the current simulation step.
+     * @param[in] t Current TimePoint of the simulation.
+     * @param[in] dt The duration of the simulation step.
+     */
+    void compute_exposure_caches(TimePoint t, TimeSpan dt);
+
+    mutable Eigen::Matrix<std::atomic_int_fast32_t, Eigen::Dynamic, 1>
+        m_local_population_cache; ///< Current number of Persons in a given location.
+    Eigen::Matrix<AirExposureRates, Eigen::Dynamic, 1>
+        m_air_exposure_rates_cache; ///< Cache for local exposure through droplets in #transmissions/day.
+    Eigen::Matrix<ContactExposureRates, Eigen::Dynamic, 1>
+        m_contact_exposure_rates_cache; ///< Cache for local exposure through contacts in #transmissions/day.
+    bool m_is_local_population_cache_valid = false;
+    bool m_are_exposure_caches_valid       = false;
+    bool m_exposure_caches_need_rebuild    = true;
+
+    std::vector<Person> m_persons; ///< Vector of every Person.
+    std::vector<Location> m_locations; ///< Vector of every Location.
     std::bitset<size_t(LocationType::Count)>
         m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
     TripList m_trip_list; ///< List of all Trip%s the Person%s do.
     bool m_use_migration_rules; ///< Whether migration rules are considered.
-    std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
+    std::vector<std::pair<LocationType (*)(PersonalRandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
                                            const Parameters&),
                           std::vector<LocationType>>>
         m_migration_rules; ///< Rules that govern the migration between Location%s.

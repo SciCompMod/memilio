@@ -18,10 +18,7 @@
 * limitations under the License.
 */
 #include "abm/trip_list.h"
-#include "abm/location.h"
 #include "abm/random_events.h"
-
-#include <numeric>
 
 namespace mio
 {

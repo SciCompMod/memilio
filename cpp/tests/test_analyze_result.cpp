@@ -18,8 +18,11 @@
 * limitations under the License.
 */
 #include "abm/analyze_result.h"
-#include "memilio/compartments/simulation.h"
+#include "abm/world.h"
 #include "matchers.h"
+#include "memilio/compartments/simulation.h"
+#include "memilio/data/analyze_result.h"
+#include "ode_secir/analyze_result.h"
 #include "ode_secir/model.h"
 
 #include "gtest/gtest.h"
