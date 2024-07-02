@@ -87,7 +87,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& target_location  = find_location(target_type, *person);
             auto& current_location = person->get_location();
 
-            // Cover both cases of voluntary and enforeced mask wearing at targeted location
+            // Only the scenario in which the target location requires a mask is considered
             bool is_person_complied_to_mask_intervention = person->is_compliant(personal_rng, InterventionType::Mask);
 
             // Check if the Person wears mask if required at targeted location
@@ -151,8 +151,8 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
             if (!person->is_in_quarantine(t, parameters) && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
-
-                // Cover both cases of voluntary and enforeced mask wearing at targeted location
+                
+                // Only the scenario in which the target location requires a mask is considered
                 bool is_person_complied_to_mask_intervention =
                     person->is_compliant(personal_rng, InterventionType::Mask);
 
