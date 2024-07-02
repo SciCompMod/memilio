@@ -472,7 +472,6 @@ def fetch_vaccination_data(
         filename: str,
         directory: str,
         read_data: str = dd.defaultDict['read_data'],
-        out_folder: str = dd.defaultDict['out_folder'],
 ) -> pd.DataFrame:
     """ Downloads or reads the vaccination data and writes the RKIVaccFull dataset
 
@@ -483,7 +482,6 @@ def fetch_vaccination_data(
     @param conf_obj
         configuration object
     @param read_data bool True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
-    @param out_folder str. Folder where data is written to. Default defined in defaultDict.
 
     @return pd.DataFrame fetched vaccination data
     """
@@ -505,7 +503,6 @@ def process_vaccination_data(
         conf_obj,
         directory: str,
         file_format: str = dd.defaultDict['file_format'],
-        out_folder: str = dd.defaultDict['out_folder'],
         start_date: date = dd.defaultDict['start_date'],
         end_date: date = dd.defaultDict['end_date'],
         moving_average: int = dd.defaultDict['moving_average'],
@@ -522,7 +519,6 @@ def process_vaccination_data(
     @param conf_obj
         configuration object
     @param file_format str. File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder str. Folder where data is written to. Default defined in defaultDict.
     @param start_date Date of first date in dataframe. Default defined in defaultDict.
     @param end_date Date of last date in dataframe. Default defined in defaultDict.
     @param moving_average int. Integers >=0. Applies an 'moving_average'-days moving average on all time series
@@ -881,7 +877,6 @@ def write_vaccination_data(dict_data: dict,
                            conf_obj,
                            directory: str,
                            file_format: str = dd.defaultDict['file_format'],
-                           out_folder: str = dd.defaultDict['out_folder'],
                            impute_dates: bool = True,
                            moving_average: int = dd.defaultDict['moving_average'],
                            to_dataset: bool = dd.defaultDict['to_dataset']
@@ -918,7 +913,6 @@ def write_vaccination_data(dict_data: dict,
     @param conf_obj
         configuration object
     @param file_format: str. File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder: str. Folder where data is written to. Default defined in defaultDict.
     @param impute_dates: bool. True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
     @param moving_average: int. Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict.
         sanitize_data: Value in {0,1,2,3}; Default: 1. For many counties, vaccination data is not correctly attributed to home locations of
@@ -1243,7 +1237,6 @@ def get_vaccination_data(
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
-    no_raw = conf.no_raw
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
@@ -1254,8 +1247,6 @@ def get_vaccination_data(
         filename=filename,
         directory=directory,
         read_data=read_data,
-        out_folder=out_folder,
-        **kwargs
     )
     process_dict_df = process_vaccination_data(
         df_data=raw_df,
@@ -1264,7 +1255,6 @@ def get_vaccination_data(
         start_date=start_date,
         end_date=end_date,
         file_format=file_format,
-        out_folder=out_folder,
         moving_average=moving_average,
         sanitize_data=sanitize_data
     )
@@ -1274,7 +1264,6 @@ def get_vaccination_data(
                                              file_format=file_format,
                                              impute_dates=impute_dates,
                                              moving_average=moving_average,
-                                             out_folder=out_folder,
                                              to_dataset=to_dataset
                                              )
 
