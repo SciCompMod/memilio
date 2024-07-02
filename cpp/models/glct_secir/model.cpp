@@ -18,32 +18,12 @@
 * limitations under the License.
 */
 
-#ifndef LCT_SECIR_INFECTIONSTATE_H
-#define LCT_SECIR_INFECTIONSTATE_H
+#include "glct_secir/model.h"
 
 namespace mio
 {
-namespace lsecir
+namespace glsecir
 {
 
-/**
- * @brief The InfectionState enum describes the basic
- * categories for the infection state of persons.
- */
-enum class InfectionState
-{
-    Susceptible        = 0,
-    Exposed            = 1,
-    InfectedNoSymptoms = 2,
-    InfectedSymptoms   = 3,
-    InfectedSevere     = 4,
-    InfectedCritical   = 5,
-    Recovered          = 6,
-    Dead               = 7,
-    Count              = 8
-};
-
-} // namespace lsecir
+} // namespace glsecir
 } // namespace mio
-
-#endif // LCT_SECIR_INFECTIONSTATE_H
