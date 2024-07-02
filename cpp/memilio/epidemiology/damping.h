@@ -519,7 +519,9 @@ private:
     static void inclusive_exclusive_sum_rec(Iter b, Iter e, Matrix& sum)
     {
         if (b != e) {
-            sum = sum + std::get<Matrix>(*b) - (sum.array() * std::get<Matrix>(*b).array()).matrix();
+            auto& mat_b   = std::get<Matrix>(*b);
+            auto mat_prod = (sum.array() * mat_b.array()).matrix();
+            sum           = sum + mat_b - mat_prod;
             inclusive_exclusive_sum_rec(++b, e, sum);
         }
     }
@@ -527,8 +529,7 @@ private:
     static Matrix inclusive_exclusive_sum(const std::vector<Tuple>& v)
     {
         assert(!v.empty());
-        auto& m  = std::get<Matrix>(v.front());
-        auto sum = m.eval();
+        Matrix sum = std::get<Matrix>(v.front());
         inclusive_exclusive_sum_rec(v.begin() + 1, v.end(), sum);
         return sum;
     }
