@@ -31,6 +31,7 @@ extrapolated in this script.
 # Imports
 import os
 from datetime import date
+from typing import Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -458,7 +459,7 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
                   rep_date: bool = dd.defaultDict['rep_date'],
                   files: str or list = 'All',
                   **kwargs
-                  ) -> None:
+                  ) -> Dict:
     """! Wrapper function that downloads the case data and provides different kind of structured data into json files.
 
     The data is read either from the internet or from a json file (CaseDataFull.json), stored in an earlier run.
@@ -547,6 +548,8 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
         files=files,
         conf_obj=conf
     )
+    if conf.to_dataset:
+        return datasets
 
 
 def main():

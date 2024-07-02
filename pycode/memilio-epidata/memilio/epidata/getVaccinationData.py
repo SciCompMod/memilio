@@ -1259,6 +1259,8 @@ def get_vaccination_data(
                                              impute_dates=impute_dates,
                                              moving_average=moving_average,
                                              )
+    if conf.to_dataset:
+        return silver_datasets
 
 
 def main():
