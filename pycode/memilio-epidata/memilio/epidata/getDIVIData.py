@@ -37,7 +37,7 @@ data explanation:
 
 import os
 from datetime import date
-from typing import Tuple
+from typing import Tuple, Dict
 
 import pandas as pd
 
@@ -174,7 +174,7 @@ def write_divi_data(df: pd.DataFrame,
                     file_format: str = dd.defaultDict['file_format'],
                     impute_dates: bool = dd.defaultDict['impute_dates'],
                     moving_average: int = dd.defaultDict['moving_average'],
-                    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+                    ) -> Dict:
     """! Write the divi data into json files
 
     Three kinds of structuring of the data are done.
@@ -191,9 +191,8 @@ def write_divi_data(df: pd.DataFrame,
     @param impute_dates bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
     @param moving_average int Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict.
 
-    @return None
+    @return data_dict Dict Dictionary containing datasets at county, state and national level
     """
-
     # write data for counties to file
     df_counties = df[[dd.EngEng["idCounty"],
                       dd.EngEng["county"],
@@ -232,7 +231,12 @@ def write_divi_data(df: pd.DataFrame,
         filename = gd.append_filename(filename, impute_dates, moving_average)
         gd.write_dataframe(df_ger, directory, filename, file_format)
 
-    return df_counties, df_states, df_ger
+    data_dict = {
+        "counties": df_counties,
+        "states": df_states,
+        "Germany": df_ger
+    }
+    return data_dict
 
 
 def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
@@ -296,7 +300,7 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
         impute_dates=impute_dates,
         moving_average=moving_average,
     )
-    df_counties, df_states, df_ger = write_divi_data(
+    data_dict = write_divi_data(
         df=preprocess_df,
         directory=directory,
         file_format=file_format,
@@ -304,6 +308,10 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
         moving_average=moving_average,
         conf_obj=conf,
     )
+    df_counties = data_dict['counties']
+    df_states = data_dict['states']
+    df_ger = data_dict['Germany']
+
     return df_raw, df_counties, df_states, df_ger
 
 
