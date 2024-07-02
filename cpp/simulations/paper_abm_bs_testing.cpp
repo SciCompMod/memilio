@@ -1443,23 +1443,20 @@ int main(int argc, char** argv)
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
     std::string result_dir      = input_dir + "/results_" + currentDateTime();
-    auto created                = create_result_folders(result_dir);
-    if (created) {
-        copy_precomputed_results(precomputed_dir, result_dir);
-    }
+
     size_t num_runs;
     bool save_single_runs = true;
 
     if (argc == 2) {
         num_runs = atoi(argv[1]);
-        printf("Number of run is %s.\n", argv[1]);
-        printf("Saving results to the current directory.\n");
+        printf("Running with number of runs = %d.\n", (int)num_runs);
+        printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
 
     else if (argc == 3) {
         num_runs   = atoi(argv[1]);
         result_dir = argv[2];
-        printf("Number of run is %s.\n", argv[1]);
+        printf("Running with number of runs = %.\n", (int)num_runs);
         printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
     else {
@@ -1473,15 +1470,24 @@ int main(int argc, char** argv)
 
         num_runs = 1;
         printf("Running with number of runs = %d.\n", (int)num_runs);
+        printf("Saving results to \"%s\".\n", result_dir.c_str());
+    }
+
+    auto created = create_result_folders(result_dir);
+    if (created) {
+        copy_precomputed_results(precomputed_dir, result_dir);
+    }
+    else {
+        std::cout << result.error().formatted_message();
+        return result.error().code().value();
     }
 
     timer       = TIME_NOW;
     auto result = run(input_dir, result_dir, num_runs, save_single_runs);
+
     // copy results into a fixed name folder to have easier access
-    if (created) {
-        std::string last_run_dir = input_dir + "/results_last_run";
-        auto copied              = copy_result_folder(result_dir, last_run_dir);
-    }
+    std::string last_run_dir = input_dir + "/results_last_run";
+    auto copied              = copy_result_folder(result_dir, last_run_dir);
 
     mio::mpi::finalize();
     return 0;
