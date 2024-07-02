@@ -47,11 +47,13 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
 
-def fetch_divi_data(read_data: bool = dd.defaultDict['read_data'],
-                    out_folder: str = dd.defaultDict['out_folder'],
-                    file_format: str = dd.defaultDict['file_format'],
-                    **kwargs
-                    ) -> pd.DataFrame:
+def fetch_divi_data(
+        directory: str,
+        filename: str,
+        conf_obj,
+        read_data: bool = dd.defaultDict['read_data'],
+        file_format: str = dd.defaultDict['file_format'],
+) -> pd.DataFrame:
     """! Downloads or reads the DIVI ICU data and writes them in different files.
 
     Available data starts from 2020-04-24.
@@ -61,34 +63,31 @@ def fetch_divi_data(read_data: bool = dd.defaultDict['read_data'],
     and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
     The downloaded dataframe is written to the file "FullData_DIVI".
 
+    @param directory str
+        Path to the output directory
+    @param conf_obj
+        configuration object
+    @param filename str
+        File format which is used for writing the data. Default defined in defaultDict.
     @param read_data bool. True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
     @param file_format str. File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder str. Folder where data is written to. Default defined in defaultDict.
-    @param start_date date. The first date in dataframe. Default defined in defaultDict.
-    @param ***kwargs
 
     @return Tuple[df_raw, start_date] Tuple. Contains the fetched data as well as the adjusted starting date
     """
-    conf = gd.Conf(out_folder, **kwargs)
-    out_folder = conf.path_to_use
-    no_raw = conf.no_raw
+    no_raw = conf_obj.no_raw
 
-    directory = os.path.join(out_folder, 'Germany/')
-    gd.check_dir(directory)
-
-    filename = "FullData_DIVI"
     url = "https://raw.githubusercontent.com/robert-koch-institut/" \
           "Intensivkapazitaeten_und_COVID-19-Intensivbettenbelegung_in_Deutschland/" \
           "main/Intensivregister_Landkreise_Kapazitaeten.csv"
     path = os.path.join(directory + filename + ".json")
     df_raw = gd.get_file(path, url, read_data, param_dict={},
-                         interactive=conf.interactive)
+                         interactive=conf_obj.interactive)
     if not df_raw.empty:
         if not no_raw:
             gd.write_dataframe(df_raw, directory, filename, file_format)
     else:
         raise gd.DataError("Something went wrong, dataframe is empty.")
-    if conf.checks is True:
+    if conf_obj.checks is True:
         divi_data_sanity_checks(df_raw)
     else:
         gd.default_print(
@@ -97,18 +96,18 @@ def fetch_divi_data(read_data: bool = dd.defaultDict['read_data'],
 
 
 def preprocess_divi_data(df_raw: pd.DataFrame,
-                         out_folder: str = dd.defaultDict['out_folder'],
+                         conf_obj,
                          start_date: date = date(2020, 4, 24),
                          end_date: date = dd.defaultDict['end_date'],
                          impute_dates: bool = dd.defaultDict['impute_dates'],
                          moving_average: int = dd.defaultDict['moving_average'],
-                         **kwargs
                          ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """! Processing of the downloaded data
         * the columns are renamed to English and the state and county names are added.
 
     @param df_raw pd.DataFrame
-    @param out_folder str  Folder where data is written to. Default defined in defaultDict.
+    @param conf_obj
+        configuration object
     @param start_date date  The first date in dataframe. Default defined in defaultDict.
     @param end_date date The last date in dataframe. Default defined in defaultDict.
     @param impute_dates bool  Defines if values for dates without new information are imputed. Default defined in defaultDict.
@@ -127,9 +126,7 @@ def preprocess_divi_data(df_raw: pd.DataFrame,
             ". Changed it to 2020-04-24.")
         start_date = date(2020, 4, 24)
 
-    conf = gd.Conf(out_folder, **kwargs)
-
-    if conf.checks is True:
+    if conf_obj.checks is True:
         divi_data_sanity_checks(df_raw)
     else:
         gd.default_print(
@@ -172,8 +169,8 @@ def preprocess_divi_data(df_raw: pd.DataFrame,
 
 
 def write_divi_data(df: pd.DataFrame,
+                    directory: str,
                     file_format: str = dd.defaultDict['file_format'],
-                    out_folder: str = dd.defaultDict['out_folder'],
                     impute_dates: bool = dd.defaultDict['impute_dates'],
                     moving_average: int = dd.defaultDict['moving_average'],
                     to_dataset: bool = dd.defaultDict['to_dataset']
@@ -186,8 +183,9 @@ def write_divi_data(df: pd.DataFrame,
     for counties, states and whole Germany, respectively.
 
     @param df pd.DataFrame. Dataframe containing processed divi data
+    @param directory str
+        Path to the output directory
     @param file_format str. File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder str. Folder where data is written to. Default defined in defaultDict.
     @param impute_dates bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
     @param moving_average int Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict.
     @param to_dataset bool True or False. Whether to return the dataframe as an object instead of json file.
@@ -197,7 +195,6 @@ def write_divi_data(df: pd.DataFrame,
     @return None
     """
 
-    directory = os.path.join(out_folder, 'Germany/')
     # write data for counties to file
     df_counties = df[[dd.EngEng["idCounty"],
                       dd.EngEng["county"],
@@ -277,27 +274,34 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
         If False - write dataframes into files
         Default defined in defaultDict.
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+
+    directory = os.path.join(out_folder, 'Germany/')
+    gd.check_dir(directory)
+
+    filename = "FullData_DIVI"
+
     downloaded_data_df = fetch_divi_data(
+        directory=directory,
+        conf_obj=conf,
+        filename=filename,
         read_data=read_data,
-        out_folder=out_folder,
         file_format=file_format,
-        start_date=start_date,
-        **kwargs
     )
 
     preprocess_df, df_raw = preprocess_divi_data(
+        conf_obj=conf,
         df_raw=downloaded_data_df,
-        out_folder=out_folder,
         start_date=start_date,
         end_date=end_date,
         impute_dates=impute_dates,
         moving_average=moving_average,
-        **kwargs
     )
     df_counties, df_states, df_ger = write_divi_data(
         df=preprocess_df,
+        directory=directory,
         file_format=file_format,
-        out_folder=out_folder,
         impute_dates=impute_dates,
         moving_average=moving_average,
         to_dataset=to_dataset
