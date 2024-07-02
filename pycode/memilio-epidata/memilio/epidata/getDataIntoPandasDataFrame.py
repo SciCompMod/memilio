@@ -111,6 +111,7 @@ class Conf:
             self.interactive = True if kwargs['interactive'] == 'True' else False
             self.plot = True if kwargs['make_plot'] == 'True' else False
             self.no_raw = True if kwargs['no_raw'] == 'True' else False
+            self.to_dataset = True if kwargs['to_dataset'] == 'True' else False
         else:
             # default values:
             Conf.show_progr = kwargs['show_progress'] if 'show_progress' in kwargs.keys(
@@ -126,6 +127,8 @@ class Conf:
             self.no_raw = kwargs['no_raw'] if 'no_raw' in kwargs.keys(
             ) else dd.defaultDict['no_raw']
             self.path_to_use = out_folder
+            self.to_dataset = kwargs['to_dataset'] if 'to_dataset' in kwargs.keys(
+            ) else False
 
         # suppress Future & DepricationWarnings
         if VerbosityLevel[Conf.v_level].value <= 2:
