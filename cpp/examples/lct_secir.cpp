@@ -43,7 +43,7 @@ int main()
 
     Model model;
 
-    ScalarType tmax = 10;
+    ScalarType tmax = 20;
 
     // Define the initial values with the distribution of the population into subcompartments.
     // This method of defining the initial values using a vector of vectors is not necessary, but should remind you

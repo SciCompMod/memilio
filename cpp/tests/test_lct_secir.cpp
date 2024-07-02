@@ -251,9 +251,8 @@ TEST(TestLCTSecir, testEvalRightHandSide)
 class ModelTestLCTSecir : public testing::Test
 {
 public:
-    using Model          = mio::lsecir::Model<2, 3, 1, 1, 5>;
-    using LctState       = Model::LctState;
-    using InfectionState = LctState::InfectionState;
+    using Model    = mio::lsecir::Model<2, 3, 1, 1, 5>;
+    using LctState = Model::LctState;
 
 protected:
     virtual void SetUp()

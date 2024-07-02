@@ -129,32 +129,14 @@ TEST(TestGLCTSecir, testEvalRightHandSide)
          10 * (1 - StartingProbabilitiesInfectedCritical[0]), 20 * (1 - StartingProbabilitiesInfectedCritical[0])},
         {20},
         {10}};
+    std::vector<ScalarType> flat_initial_populations;
+    for (auto&& vec : initial_populations) {
+        flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
+    }
     Eigen::VectorXd pop(LctState::Count);
-    pop[LctState::get_first_index<InfectionState::Susceptible>()] =
-        initial_populations[(size_t)InfectionState::Susceptible][0];
-    for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::Exposed>(); i++) {
-        pop[LctState::get_first_index<InfectionState::Exposed>() + i] =
-            initial_populations[(size_t)InfectionState::Exposed][i];
+    for (size_t i = 0; i < LctState::Count; i++) {
+        pop[i] = flat_initial_populations[i];
     }
-    for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>(); i++) {
-        pop[LctState::get_first_index<InfectionState::InfectedNoSymptoms>() + i] =
-            initial_populations[(size_t)InfectionState::InfectedNoSymptoms][i];
-    }
-    for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>(); i++) {
-        pop[LctState::get_first_index<InfectionState::InfectedSymptoms>() + i] =
-            initial_populations[(size_t)InfectionState::InfectedSymptoms][i];
-    }
-    for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedSevere>(); i++) {
-        pop[LctState::get_first_index<InfectionState::InfectedSevere>() + i] =
-            initial_populations[(size_t)InfectionState::InfectedSevere][i];
-    }
-    for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedCritical>(); i++) {
-        pop[LctState::get_first_index<InfectionState::InfectedCritical>() + i] =
-            initial_populations[(size_t)InfectionState::InfectedCritical][i];
-    }
-    pop[LctState::get_first_index<InfectionState::Recovered>()] =
-        initial_populations[(size_t)InfectionState::Recovered][0];
-    pop[LctState::get_first_index<InfectionState::Dead>()] = initial_populations[(size_t)InfectionState::Dead][0];
 
     // Compare the result of get_derivatives() with a hand calculated result.
     Eigen::VectorXd dydt(LctState::Count);
@@ -166,7 +148,7 @@ TEST(TestGLCTSecir, testEvalRightHandSide)
         6.3158 * 0.75, -2.2906 * 0.3, -2.8169 * 0.3, -2.2906 * 0.7, -2.8169 * 0.7, 12.3899, 1.6901;
 
     for (size_t i = 0; i < LctState::Count; i++) {
-        ASSERT_NEAR(compare[i], dydt[i], 1e-3) << "Condition failed at index: " << i;
+        EXPECT_NEAR(compare[i], dydt[i], 1e-3) << "Condition failed at index: " << i;
     }
 }
 
@@ -276,35 +258,13 @@ protected:
             {20},
             {10}};
         // Transfer the initial values in initial_populations to the model->
-        model->populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::Susceptible>())] =
-            initial_populations[(size_t)InfectionState::Susceptible][0];
-        for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::Exposed>(); i++) {
-            model->populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::Exposed>() + i)] =
-                initial_populations[(size_t)InfectionState::Exposed][i];
+        std::vector<ScalarType> flat_initial_populations;
+        for (auto&& vec : initial_populations) {
+            flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
         }
-        for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>(); i++) {
-            model->populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::InfectedNoSymptoms>() +
-                                                    i)] =
-                initial_populations[(size_t)InfectionState::InfectedNoSymptoms][i];
+        for (size_t i = 0; i < LctState::Count; i++) {
+            model->populations[mio::Index<LctState>(i)] = flat_initial_populations[i];
         }
-        for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>(); i++) {
-            model
-                ->populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::InfectedSymptoms>() + i)] =
-                initial_populations[(size_t)InfectionState::InfectedSymptoms][i];
-        }
-        for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedSevere>(); i++) {
-            model->populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::InfectedSevere>() + i)] =
-                initial_populations[(size_t)InfectionState::InfectedSevere][i];
-        }
-        for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedCritical>(); i++) {
-            model
-                ->populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::InfectedCritical>() + i)] =
-                initial_populations[(size_t)InfectionState::InfectedCritical][i];
-        }
-        model->populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::Recovered>())] =
-            initial_populations[(size_t)InfectionState::Recovered][0];
-        model->populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::Dead>())] =
-            initial_populations[(size_t)InfectionState::Dead][0];
     }
 
     virtual void TearDown()
@@ -334,9 +294,9 @@ TEST_F(ModelTestGLCTSecir, compareWithPreviousRun)
     for (size_t i = 0; i < compare_population.size(); i++) {
         ASSERT_EQ(compare_population[i].size(), static_cast<size_t>(population.get_num_elements()) + 1)
             << "at row " << i;
-        ASSERT_NEAR(population.get_time(i), compare_population[i][0], 1e-3) << "at row " << i;
+        EXPECT_NEAR(population.get_time(i), compare_population[i][0], 1e-3) << "at row " << i;
         for (size_t j = 1; j < compare_population[i].size(); j++) {
-            ASSERT_NEAR(population.get_value(i)[j - 1], compare_population[i][j], 1e-3) << " at row " << i;
+            EXPECT_NEAR(population.get_value(i)[j - 1], compare_population[i][j], 1e-3) << " at row " << i;
         }
     }
 }

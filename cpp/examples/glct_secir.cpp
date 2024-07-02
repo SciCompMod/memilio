@@ -34,9 +34,11 @@ int main()
 {
     // Simple example to demonstrate how to run a simulation using an GLCT SECIR model.
     // Parameters, initial values and the number of subcompartments are not meant to represent a realistic scenario.
-
-    using Model          = mio::glsecir::Model<2, 6, 2, 2, 10>;
-    using LctState       = Model::LctState;
+    constexpr size_t NumExposed = 2, NumInfectedNoSymptoms = 6, NumInfectedSymptoms = 2, NumInfectedSevere = 2,
+                     NumInfectedCritical = 10;
+    using Model    = mio::glsecir::Model<NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms, NumInfectedSevere,
+                                      NumInfectedCritical>;
+    using LctState = Model::LctState;
     using InfectionState = LctState::InfectionState;
 
     Model model;
@@ -44,10 +46,9 @@ int main()
     ScalarType tmax = 10;
 
     // Define the initial values with the distribution of the population into subcompartments.
-    // This method of defining the initial values using a vector of vectors is a bit of overhead, but should remind you
+    // This method of defining the initial values using a vector of vectors is not necessary, but should remind you
     // how the entries of the initial value vector relate to the defined template parameters of the model or the number
-    // of subcompartments.
-    // It is also possible to define the initial values directly.
+    // of subcompartments. It is also possible to define the initial values directly.
     std::vector<std::vector<ScalarType>> initial_populations = {
         {750},
         {30, 20},
@@ -65,16 +66,11 @@ int main()
     }
     if ((initial_populations[(size_t)InfectionState::Susceptible].size() !=
          LctState::get_num_subcompartments<InfectionState::Susceptible>()) ||
-        (initial_populations[(size_t)InfectionState::Exposed].size() !=
-         LctState::get_num_subcompartments<InfectionState::Exposed>()) ||
-        (initial_populations[(size_t)InfectionState::InfectedNoSymptoms].size() !=
-         LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>()) ||
-        (initial_populations[(size_t)InfectionState::InfectedSymptoms].size() !=
-         LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>()) ||
-        (initial_populations[(size_t)InfectionState::InfectedSevere].size() !=
-         LctState::get_num_subcompartments<InfectionState::InfectedSevere>()) ||
-        (initial_populations[(size_t)InfectionState::InfectedCritical].size() !=
-         LctState::get_num_subcompartments<InfectionState::InfectedCritical>()) ||
+        (initial_populations[(size_t)InfectionState::Exposed].size() != NumExposed) ||
+        (initial_populations[(size_t)InfectionState::InfectedNoSymptoms].size() != NumInfectedNoSymptoms) ||
+        (initial_populations[(size_t)InfectionState::InfectedSymptoms].size() != NumInfectedSymptoms) ||
+        (initial_populations[(size_t)InfectionState::InfectedSevere].size() != NumInfectedSevere) ||
+        (initial_populations[(size_t)InfectionState::InfectedCritical].size() != NumInfectedCritical) ||
         (initial_populations[(size_t)InfectionState::Recovered].size() !=
          LctState::get_num_subcompartments<InfectionState::Recovered>()) ||
         (initial_populations[(size_t)InfectionState::Dead].size() !=
@@ -85,32 +81,13 @@ int main()
     }
 
     // Transfer the initial values in initial_populations to the model.
-    model.populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::Susceptible>())] =
-        initial_populations[(size_t)InfectionState::Susceptible][0];
-    for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::Exposed>(); i++) {
-        model.populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::Exposed>() + i)] =
-            initial_populations[(size_t)InfectionState::Exposed][i];
+    std::vector<ScalarType> flat_initial_populations;
+    for (auto&& vec : initial_populations) {
+        flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
     }
-    for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>(); i++) {
-        model.populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::InfectedNoSymptoms>() + i)] =
-            initial_populations[(size_t)InfectionState::InfectedNoSymptoms][i];
+    for (size_t i = 0; i < LctState::Count; i++) {
+        model.populations[mio::Index<LctState>(i)] = flat_initial_populations[i];
     }
-    for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>(); i++) {
-        model.populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::InfectedSymptoms>() + i)] =
-            initial_populations[(size_t)InfectionState::InfectedSymptoms][i];
-    }
-    for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedSevere>(); i++) {
-        model.populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::InfectedSevere>() + i)] =
-            initial_populations[(size_t)InfectionState::InfectedSevere][i];
-    }
-    for (size_t i = 0; i < LctState::get_num_subcompartments<InfectionState::InfectedCritical>(); i++) {
-        model.populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::InfectedCritical>() + i)] =
-            initial_populations[(size_t)InfectionState::InfectedCritical][i];
-    }
-    model.populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::Recovered>())] =
-        initial_populations[(size_t)InfectionState::Recovered][0];
-    model.populations[mio::Index<LctState>(LctState::get_first_index<InfectionState::Dead>())] =
-        initial_populations[(size_t)InfectionState::Dead][0];
 
     // Set Parameters.
     // Exposed.
@@ -186,7 +163,8 @@ int main()
 
     // Perform a simulation.
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, 0.5, model);
-    // Calculate the distribution in the InfectionState%s without subcompartments of the result and print it.
+    // The simulation result is divided by subcompartments as in the LCT model.
+    // We call the function calculate_comparttments to get a result according to the InfectionStates.
     mio::TimeSeries<ScalarType> population_no_subcompartments = LctState::calculate_compartments(result);
     auto interpolated_result = mio::interpolate_simulation_result(population_no_subcompartments, 0.1);
     interpolated_result.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
