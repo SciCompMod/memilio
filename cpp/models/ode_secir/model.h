@@ -116,7 +116,8 @@ public:
                 //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
                 auto riskFromInfectedSymptomatic =
                     smoother_cosine(test_and_trace_required, params.template get<TestAndTraceCapacity<FP>>(),
-                                    params.template get<TestAndTraceCapacity<FP>>() * 5,
+                                    params.template get<TestAndTraceCapacity<FP>>() *
+                                        params.template get<TestAndTraceCapacityMaxRisk<FP>>(),
                                     params.template get<RiskOfInfectionFromSymptomatic<FP>>()[j],
                                     params.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[j]);
 
@@ -454,15 +455,16 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
         }
         divN[(size_t)k] = 1 / temp;
 
-        riskFromInfectedSymptomatic[(size_t)k] =
-            smoother_cosine(test_and_trace_required, params.template get<TestAndTraceCapacity<FP>>(),
-                            (params.template get<TestAndTraceCapacity<FP>>()) * 5,
-                            params.template get<RiskOfInfectionFromSymptomatic<FP>>()[k],
-                            params.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[k]);
+        riskFromInfectedSymptomatic[(size_t)k] = smoother_cosine(
+            test_and_trace_required, params.template get<TestAndTraceCapacity<FP>>(),
+            (params.template get<TestAndTraceCapacity<FP>>()) * params.template get<TestAndTraceCapacityMaxRisk<FP>>(),
+            params.template get<RiskOfInfectionFromSymptomatic<FP>>()[k],
+            params.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[k]);
 
         for (mio::AgeGroup l = 0; l < (mio::AgeGroup)num_groups; l++) {
             if (test_and_trace_required < params.template get<TestAndTraceCapacity<FP>>() ||
-                test_and_trace_required > 5 * params.template get<TestAndTraceCapacity<FP>>()) {
+                test_and_trace_required > params.template get<TestAndTraceCapacityMaxRisk<FP>>() *
+                                              params.template get<TestAndTraceCapacity<FP>>()) {
                 riskFromInfectedSymptomatic_derivatives((size_t)k, (size_t)l) = 0;
             }
             else {
@@ -661,9 +663,11 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::R
     auto test_and_trace_required =
         ((1 - p_asymp) / params.template get<TimeInfectedNoSymptoms<FP>>().array().template cast<FP>() * y_INS.array())
             .sum();
-    auto test_and_trace_capacity     = double(params.template get<TestAndTraceCapacity<FP>>());
-    auto riskFromInfectedSymptomatic = smoother_cosine(test_and_trace_required, test_and_trace_capacity,
-                                                       test_and_trace_capacity * 5, p_inf.matrix(), p_inf_max.matrix());
+    auto test_and_trace_capacity          = double(params.template get<TestAndTraceCapacity<FP>>());
+    auto test_and_trace_capacity_max_risk = double(params.template get<TestAndTraceCapacityMaxRisk<FP>>());
+    auto riskFromInfectedSymptomatic =
+        smoother_cosine(test_and_trace_required, test_and_trace_capacity,
+                        test_and_trace_capacity * test_and_trace_capacity_max_risk, p_inf.matrix(), p_inf_max.matrix());
 
     //set factor for infected
     auto factors = Eigen::VectorXd::Ones(y.rows()).eval();
