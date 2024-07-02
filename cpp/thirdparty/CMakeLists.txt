@@ -8,6 +8,18 @@ set(MEMILIO_JSONCPP_VERSION "1.9.5")
 set(MEMILIO_RANDOM123_VERSION "v1.14.0")
 set(MEMILIO_IPOPT_VERSION "3.14.12")
 
+# Gperftools for profiling; must be first, so that libraries are included in the profile
+if(MEMILIO_ENABLE_PROFILING)
+    if(NOT UNIX)
+        message(FATAL_ERROR "Profiling with gperftools currently only supported on unix systems.")
+    endif()
+
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(GPERFTOOLS REQUIRED libprofiler)
+    link_libraries(${GPERFTOOLS_LINK_LIBRARIES}) # link globally so all libs are included
+    include_directories(${GPERFTOOLS_INCLUDE_DIRS})
+endif()
+
 # ## SPDLOG
 set(SPDLOG_INSTALL ON)
 

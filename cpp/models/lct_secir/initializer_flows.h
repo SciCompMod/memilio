@@ -24,7 +24,6 @@
 #include "memilio/config.h"
 #include "lct_secir/model.h"
 #include "lct_secir/infection_state.h"
-#include "memilio/epidemiology/lct_infection_state.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/math/floating_point.h"
@@ -52,7 +51,8 @@ template <typename Model>
 class Initializer
 {
 public:
-    using LctState = typename Model::LctState;
+    using LctState       = typename Model::LctState;
+    using InfectionState = typename LctState::InfectionState;
 
     /**
      * @brief Constructs a new Initializer object.
@@ -87,10 +87,10 @@ public:
 
         Eigen::VectorXd init(LctState::Count);
 
-        //E
+        // Exposed.
         init.segment(LctState::template get_first_index<InfectionState::Exposed>(),
                      LctState::template get_num_subcompartments<InfectionState::Exposed>()) =
-            compute_compartment<InfectionState::Exposed>(Eigen::Index(InfectionTransition::SusceptibleToExposed),
+            compute_compartment<InfectionState::Exposed>((Eigen::Index)InfectionTransition::SusceptibleToExposed,
                                                          1 / m_model.parameters.template get<TimeExposed>());
 
         if ((init.segment(LctState::template get_first_index<InfectionState::Exposed>(),
@@ -101,11 +101,11 @@ public:
             // See the compute_compartment() function for details.
             return true;
         }
-        //C
+        // InfectedNoSymptoms.
         init.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
                      LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>()) =
             compute_compartment<InfectionState::InfectedNoSymptoms>(
-                Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms),
+                (Eigen::Index)InfectionTransition::ExposedToInfectedNoSymptoms,
                 1 / m_model.parameters.template get<TimeInfectedNoSymptoms>());
 
         if ((init.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
@@ -116,11 +116,11 @@ public:
             // See the compute_compartment() function for details.
             return true;
         }
-        //I
+        // InfectedSymptoms.
         init.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
                      LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>()) =
             compute_compartment<InfectionState::InfectedSymptoms>(
-                Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms),
+                (Eigen::Index)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms,
                 1 / m_model.parameters.template get<TimeInfectedSymptoms>());
 
         if ((init.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
@@ -131,11 +131,11 @@ public:
             // See the compute_compartment() function for details.
             return true;
         }
-        //H
+        // InfectedSevere.
         init.segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
                      LctState::template get_num_subcompartments<InfectionState::InfectedSevere>()) =
             compute_compartment<InfectionState::InfectedSevere>(
-                Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere),
+                (Eigen::Index)InfectionTransition::InfectedSymptomsToInfectedSevere,
                 1 / m_model.parameters.template get<TimeInfectedSevere>());
 
         if ((init.segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
@@ -146,11 +146,11 @@ public:
             // See the compute_compartment() function for details.
             return true;
         }
-        //U
+        // InfectedCritical.
         init.segment(LctState::template get_first_index<InfectionState::InfectedCritical>(),
                      LctState::template get_num_subcompartments<InfectionState::InfectedCritical>()) =
             compute_compartment<InfectionState::InfectedCritical>(
-                Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical),
+                (Eigen::Index)InfectionTransition::InfectedSevereToInfectedCritical,
                 1 / m_model.parameters.template get<TimeInfectedCritical>());
 
         if ((init.segment(LctState::template get_first_index<InfectionState::InfectedCritical>(),
@@ -161,7 +161,7 @@ public:
             // See the compute_compartment() function for details.
             return true;
         }
-        //R
+        // Recovered.
         // Number of recovered is equal to the cumulative number of confirmed cases minus the number of people who are infected at the moment.
         init[LctState::Count - 2] =
             total_confirmed_cases -
@@ -172,13 +172,13 @@ public:
                 .sum() -
             deaths;
 
-        //S
+        // Susceptibles.
         init[0] = total_population - init.segment(1, LctState::Count - 2).sum() - deaths;
 
-        //D
+        // Dead.
         init[LctState::Count - 1] = deaths;
 
-        for (int i : {0, LctState::Count - 2, LctState::Count - 1}) {
+        for (size_t i : {(size_t)0, LctState::Count - 2, LctState::Count - 1}) {
             if (init[i] < 0) {
                 log_error("Initialization failed. Values of total_confirmed_cases, deaths and total_population do not "
                           "match the specified values for the transitions, leading to at least one negative result.");
@@ -187,7 +187,9 @@ public:
         }
 
         // Update initial value vector of the model.
-        m_model.set_initial_values(init);
+        for (size_t i = 0; i < LctState::Count; i++) {
+            m_model.populations[mio::Index<LctState>(i)] = init[i];
+        }
 
         // Check if constraints are fulfilled.
         return check_constraints();
@@ -210,7 +212,7 @@ private:
      */
     bool check_constraints() const
     {
-        if (!(Eigen::Index(InfectionTransition::Count) == m_flows.get_num_elements())) {
+        if (!((Eigen::Index)InfectionTransition::Count == m_flows.get_num_elements())) {
             log_error("Initial condition size does not match subcompartments.");
             return true;
         }
@@ -233,7 +235,8 @@ private:
         }
 
         // Check if model is valid and the calculated initial value vector is valid.
-        return m_model.check_constraints();
+        m_model.check_constraints();
+        return false;
     }
 
     /**
@@ -250,7 +253,7 @@ private:
     template <InfectionState State>
     Eigen::VectorXd compute_compartment(Eigen::Index idx_incoming_flow, ScalarType transition_rate) const
     {
-        int num_subcompartments = LctState::template get_num_subcompartments<State>();
+        size_t num_subcompartments = LctState::template get_num_subcompartments<State>();
         Eigen::VectorXd subcompartments(num_subcompartments);
         // Initialize relevant density for the InfectionState.
         // For the first subcompartment a shape parameter of one is needed.
@@ -264,7 +267,7 @@ private:
         Eigen::Index num_time_points = m_flows.get_num_time_points();
 
         // Calculate number of people in each subcompartment.
-        for (int j = 0; j < num_subcompartments; j++) {
+        for (size_t j = 0; j < num_subcompartments; j++) {
             // For subcompartment number j+1, shape parameter j+1 is needed.
             erlang.set_distribution_parameter(j + 1);
 
@@ -280,13 +283,12 @@ private:
                 return subcompartments;
             }
             else {
-
                 // Approximate integral with non-standard scheme.
                 for (Eigen::Index i = num_time_points - calc_time_index; i < num_time_points; i++) {
                     state_age = (num_time_points - i) * m_dt;
                     sum += erlang.eval(state_age) * m_flows[i][idx_incoming_flow];
                 }
-                subcompartments[j] = 1 / (num_subcompartments * transition_rate) * sum;
+                subcompartments[j] = 1. / (num_subcompartments * transition_rate) * sum;
                 if (subcompartments[j] < 0) {
                     log_error(
                         "Initialization failed. Result for at least one subcompartment is less than zero. Please check "

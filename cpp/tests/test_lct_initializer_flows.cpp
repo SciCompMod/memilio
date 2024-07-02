@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+#include "lct_secir/model.h"
 #include "lct_secir/infection_state.h"
 #include "lct_secir/initializer_flows.h"
 #include "memilio/config.h"
@@ -43,7 +44,7 @@ TEST(TestInitializer, compareWithPrevious)
         86.02738, 80.26791, 189.53449, 167.57963, 329757.36512, 9710;
 
     // Initialize a model.
-    Model model(std::move(Eigen::VectorXd::Zero(LctState::Count)));
+    Model model;
 
     // Define parameters.
     model.parameters.get<mio::lsecir::TimeExposed>()                      = 3.1;
@@ -90,7 +91,7 @@ TEST(TestInitializer, compareWithPrevious)
     initializer.set_tol_for_support_max(1e-6);
     initializer.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
 
-    for (int i = 0; i < LctState::Count; i++) {
+    for (size_t i = 0; i < LctState::Count; i++) {
         EXPECT_NEAR(model.get_initial_values()[i], compare[i], 1e-4) << "at subcompartment number " << i;
     }
 }
@@ -107,11 +108,10 @@ TEST(TestInitializer, testConstraints)
     ScalarType total_population      = 83155031.0;
 
     using Model                   = mio::lsecir::Model<2, 3, 2, 3, 2>;
-    using LctState                = Model::LctState;
     int infectionTransition_count = (int)mio::lsecir::InfectionTransition::Count;
 
     // Initialize a model.
-    Model model(std::move(Eigen::VectorXd::Zero(LctState::Count)));
+    Model model;
 
     // Check wrong size of initial flows.
     mio::TimeSeries<ScalarType> init_wrong_size(infectionTransition_count - 1);
