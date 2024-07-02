@@ -35,7 +35,6 @@ from datetime import date
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import logging
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
@@ -108,7 +107,6 @@ def fetch_case_data(
 
     @return df pd.Dataframe. Dataframe containing the downloaded case data
     """
-    logger = logging.getLogger(__name__)
     run_checks = conf_obj.checks
 
     complete = False
@@ -121,8 +119,8 @@ def fetch_case_data(
                          interactive=conf_obj.interactive)
         complete = check_for_completeness(df, run_checks, merge_eisenach=True)
     except Exception as ex:
-        logger.exception(
-            f"The data could not be downloaded. The following exception was thrown:\n{ex}")
+        gd.default_print(verbosity_level="Warning",
+                         message=f"The data could not be downloaded. The following exception was thrown:\n{ex}")
         pass
     if complete:
         if not read_data:
@@ -206,9 +204,6 @@ def preprocess_case_data(raw_df: pd.DataFrame,
 
     @return df pd.Dataframe
     """
-    logger = logging.getLogger(__name__)
-    logger.info("Pre-processing the Case data.")
-
     out_folder = conf_obj.path_to_use
     no_raw = conf_obj.no_raw
 
@@ -340,9 +335,6 @@ def write_case_data(df: pd.DataFrame,
     @return None
     """
     out_folder = conf_obj.path_to_use
-
-    logger = logging.getLogger(__name__)
-    logger.info("Writing the Case data.")
 
     if (files == 'All') or (files == ['All']):
         files = ['infected', 'deaths', 'all_germany', 'infected_state',
@@ -580,8 +572,6 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
 
 def main():
     """! Main program entry."""
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
     arg_dict = gd.cli("cases")
     get_case_data(**arg_dict)
 
