@@ -43,6 +43,25 @@ enum class InfectionState
     Count              = 8
 };
 
+/**
+ * @brief The InfectionTransition enum describes the possible
+ * transitions of the infectious state of persons.
+ */
+enum class InfectionTransition
+{
+    SusceptibleToExposed                 = 0,
+    ExposedToInfectedNoSymptoms          = 1,
+    InfectedNoSymptomsToInfectedSymptoms = 2,
+    InfectedNoSymptomsToRecovered        = 3,
+    InfectedSymptomsToInfectedSevere     = 4,
+    InfectedSymptomsToRecovered          = 5,
+    InfectedSevereToInfectedCritical     = 6,
+    InfectedSevereToRecovered            = 7,
+    InfectedCriticalToDead               = 8,
+    InfectedCriticalToRecovered          = 9,
+    Count                                = 10
+};
+
 } // namespace lsecir
 } // namespace mio
 

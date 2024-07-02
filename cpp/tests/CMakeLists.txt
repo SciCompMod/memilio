@@ -70,6 +70,7 @@ set(TESTSOURCES
     temp_file_register.h
     sanitizers.cpp
     test_lct_secir.cpp
+    test_lct_initializer_flows.cpp
     test_ad.cpp
 )
 
