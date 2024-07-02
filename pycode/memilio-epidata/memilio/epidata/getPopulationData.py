@@ -290,8 +290,6 @@ def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
                           **kwargs
                           ) -> pd.DataFrame:
     """! Downloads or reads the population data.
-    Available data starts from 2020-04-24.
-    If the given start_date is earlier, it is changed to this date and a warning is printed.
     If it does not already exist, the folder Germany is generated in the given out_folder.
     If read_data == True and the file "FullData_population.json" exists, the data is read form this file
     and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
