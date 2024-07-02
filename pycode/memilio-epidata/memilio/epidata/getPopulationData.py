@@ -330,12 +330,12 @@ def preprocess_population_data(df_pop_raw: pd.DataFrame,
     """! Processing of the downloaded data
         * the columns are renamed to English and the state and county names are added.
 
-    @param df_pop_raw: pd.DataFrame. A Dataframe containing input population data
-    @param merge_eisenach: [Default: True] or False. Defines whether the
+    @param df_pop_raw pd.DataFrame. A Dataframe containing input population data
+    @param merge_eisenach [Default: True] or False. Defines whether the
      counties 'Wartburgkreis' and 'Eisenach' are listed separately or
      combined as one entity 'Wartburgkreis'.
 
-    @return df: pd.DataFrame. Processed population data
+    @return df pd.DataFrame. Processed population data
     """
     column_names = list(df_pop_raw.columns)
     # rename columns
@@ -392,10 +392,10 @@ def write_population_data(df_pop: pd.DataFrame,
     stored in the files "county_population".json", "state_population.json" and "germany_population.json"
     for counties, states and whole Germany, respectively.
 
-    @param df_pop: pd.DataFrame. A Dataframe containing processed population data
-    @param file_format: str. File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder: str. Folder where data is written to. Default defined in defaultDict.
-    @param merge_eisenach: [Default: True] or False. Defines whether the
+    @param df_pop pd.DataFrame. A Dataframe containing processed population data
+    @param file_format str. File format which is used for writing the data. Default defined in defaultDict.
+    @param out_folder str. Folder where data is written to. Default defined in defaultDict.
+    @param merge_eisenach [Default: True] or False. Defines whether the
         counties 'Wartburgkreis' and 'Eisenach' are listed separately or
         combined as one entity 'Wartburgkreis'.
 
@@ -442,11 +442,11 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
         Default defined in defaultDict.
     @param out_folder Path to folder where data is written in folder
         out_folder/Germany. Default defined in defaultDict.
-    @param merge_eisenach: [Default: True] or False. Defines whether the
+    @param merge_eisenach [Default: True] or False. Defines whether the
         counties 'Wartburgkreis' and 'Eisenach' are listed separately or
         combined as one entity 'Wartburgkreis'.
-    @param username: Username to sign in at regionalstatistik.de. 
-    @param password: Password to sign in at regionalstatistik.de.
+    @param username str. Username to sign in at regionalstatistik.de.
+    @param password str. Password to sign in at regionalstatistik.de.
     @return DataFrame with adjusted population data for all ages to current level.
     """
     raw_df = fetch_population_data(

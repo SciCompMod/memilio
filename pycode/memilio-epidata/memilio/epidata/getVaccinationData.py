@@ -80,7 +80,7 @@ def compute_vaccination_ratios(
     @param vacc_column Column name of vaccinations_table to be considered.
     @param region_column Column of regions in vaccinations table, e.g., ID_County or ID_State.
     @param population Table of population data for the given regions and considered age groups.
-    @param merge_2022: [Default: False] Defines whether population data has to be merged to counties as of 2022.
+    @param merge_2022 [Default: False] Defines whether population data has to be merged to counties as of 2022.
     @return All vaccination ratios per region and age group.
     """
     # create new data frame and reshape it

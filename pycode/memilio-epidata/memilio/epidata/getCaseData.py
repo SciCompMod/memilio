@@ -59,9 +59,9 @@ def check_for_completeness(df: pd.DataFrame,
     Note: There is no check if data for every day and every county is available (which can happen).
 
     @param df pd.Dataframe. Dataframe to check
-    @param merge_berlin: bool True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
-    @param merge_eisenach: bool True or False. Defines if Eisenbach districts are kept separated or get merged. Default defined in defaultDict.
-    @param run_checks: bool
+    @param merge_berlin bool True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
+    @param merge_eisenach bool True or False. Defines if Eisenbach districts are kept separated or get merged. Default defined in defaultDict.
+    @param run_checks bool
 
     @return Boolean to say if data is complete or not
     """
@@ -95,9 +95,9 @@ def fetch_case_data(
     The file is read in or stored at the folder "out_folder"/Germany/.
     To store and change the data we use pandas.
 
-    @param directory: str
+    @param directory str
         Path to the output directory
-    @param filename: str
+    @param filename str
         Name of the full dataset filename
     @param conf_obj
         configuration object
@@ -189,9 +189,9 @@ def preprocess_case_data(raw_df: pd.DataFrame,
         different file names are used.
 
     @param raw_df pd.Dataframe. Contains the downloaded or read raw case data
-    @param directory: str
+    @param directory str
         Path to the output directory
-    @param filename: str
+    @param filename str
         Name of the full dataset filename
     @param conf_obj
         configuration object
@@ -302,20 +302,20 @@ def write_case_data(df: pd.DataFrame,
         - Infected, deaths and recovered split for state and age are stored in "cases_all_state_age"
         - Infected, deaths and recovered split for county and age are stored in "cases_all_county_age(_split_berlin)"
 
-    @param df: pd.DataFrame
+    @param df pd.DataFrame
         Processed dataframe
-    @param directory: str
+    @param directory str
         Path to the output directory
-    @param file_format: str
+    @param file_format str
         File format which is used for writing the data. Default defined in defaultDict.
-    @param start_date: date
+    @param start_date date
         Date of first date in dataframe. Default 2020-01-01.
-    @param end_date: date. Date of last date in dataframe. Default defined in defaultDict.
-    @param impute_dates: bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    @param moving_average: int Integers >=0. Applies an 'moving_average'-days moving average on all time series smooth out effects of irregular reporting. Default defined in defaultDict.
-    @param split_berlin: bool True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
-    @param rep_date: bool True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
-    @param files: list. List of strings or 'All' or 'Plot'. Defines which files should be provided (and plotted). Default 'All'.
+    @param end_date date. Date of last date in dataframe. Default defined in defaultDict.
+    @param impute_dates bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param moving_average int Integers >=0. Applies an 'moving_average'-days moving average on all time series smooth out effects of irregular reporting. Default defined in defaultDict.
+    @param split_berlin bool True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
+    @param rep_date bool True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
+    @param files list. List of strings or 'All' or 'Plot'. Defines which files should be provided (and plotted). Default 'All'.
     @param to_dataset bool True or False. Whether to return the dataframe as an object instead of json file.
         If True - returns objects with dataframes
         If False - write dataframes into files
