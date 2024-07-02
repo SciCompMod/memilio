@@ -135,19 +135,38 @@ public:
         return populations.get_compartments();
     }
 
-    void apply_constraints()
+    /**
+     * @brief Checks whether the model satisfies all constraints and applies the constraints, if not.
+     *
+     * Attention: This function should be used with care. It is necessary for some test problems to run through quickly,
+     *            but in a manual execution of an example, check_constraints() may be preferred. 
+     *            Note that the apply_constraints() function can and will not set model parameters and 
+     *            compartments to meaningful values.
+     *
+     * @return Returns true if one (or more) constraint(s) were corrected, otherwise false. 
+     */
+    bool apply_constraints()
     {
-        populations.apply_constraints();
+        bool corrected = populations.apply_constraints();
         if constexpr (has_apply_constraints_member_function<ParameterSet>::value) {
-            parameters.apply_constraints();
+            corrected = (corrected || parameters.apply_constraints());
         }
+        return corrected;
     }
 
-    void check_constraints() const
+    /**
+     * @brief Checks that the model satisfies any constraints (e.g. parameter or population constraints), and 
+     *  logs an error if constraints are not satisfied.
+     *
+     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
+     */
+    bool check_constraints() const
     {
-        populations.check_constraints();
         if constexpr (has_check_constraints_member_function<ParameterSet>::value) {
-            parameters.check_constraints();
+            return (parameters.check_constraints() || populations.check_constraints());
+        }
+        else {
+            return populations.check_constraints();
         }
     }
 
