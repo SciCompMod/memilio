@@ -428,4 +428,4 @@ bd_new = bd_new.drop(columns= ['start_zone', 'end_zone', 'loc_id_start', 'start_
 # sort for better search performance
 bd_new = bd_new.sort_values(by=['puid', 'start_time'])
 # Write data back to disk
-bd_new.to_csv('braunschweig_result_ffa8_modified2.csv', index=False)
+bd_new.to_csv('/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/braunschweig_result_ffa8_modified2.csv', index=False)

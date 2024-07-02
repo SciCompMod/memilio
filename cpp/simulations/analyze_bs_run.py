@@ -128,10 +128,11 @@ def plot_infection_states(x, y50, y25, y75, y_real=None):
     for i in states_plot:
         plt.plot(x, y50[:, i], color=color_plot[i])
 
-        #plot real data
+        #plot real data for comparison, symptomatic and infected daily
     if y_real is not None:
         x_real = np.linspace(0, y_real.shape[0]-1, y_real.shape[0])
-        plt.plot(x_real, y_real[:,4], '.', color='tab:red')
+        plt.plot(x_real, y_real[:,4], '.', color='tab:purple')
+        plt.plot(x_real, y_real[:,1], '.', color='tab:blue')
 
     plt.legend(legend_plot)
 
@@ -160,6 +161,44 @@ def plot_infection_states(x, y50, y25, y75, y_real=None):
     plt.xlabel('Time')
     plt.ylabel('Number of individuals')
     plt.show()
+
+    # we will have a seperate plot the cumulative infected individuals, cumulative symptomatic individuals and cumulative dead individual
+
+    cum_dead = y50[:, 7] #dead are already cumulative
+    #for the simulation we just need the 90 days and just take the first one for each day (every 24th value)
+    cum_dead_inter_day = cum_dead[::24]
+    
+    cum_dead_real = y_real[:,9] #dead are already cumulative
+    # we also calculate the MSR
+    # we need to extra
+    mse_dead=((cum_dead_real - cum_dead_inter_day[0:90])**2).mean()
+
+
+
+    plt.figure('dead individuals and the MSE')
+    plt.plot(x, cum_dead,color='tab:red')
+    plt.plot(x_real, cum_dead_real,'.',color='tab:red')
+    # we want a text in the plot with the MSE value
+    plt.text(0.25, 0.8, 'MSE: '+str( float("{:.2f}".format(mse_dead))), horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes, color='pink', fontsize=15)
+    plt.title('Dead individuals: Simulation vs Real')
+    plt.xlabel('Time')
+    plt.ylabel('Number of individuals')
+    plt.show()
+
+
+       
+        
+
+
+
+
+
+
+
+
+
+    
+
 
 def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs, real_bs):
 
@@ -220,8 +259,8 @@ def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs, real_bs):
 
 if __name__ == "__main__":
     # path = "/Users/david/Documents/HZI/memilio/data/results_last_run"
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/1/results_last_run"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
+    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/1/results_last_run"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_last_run"
 
     if (len(sys.argv) > 1):
@@ -230,4 +269,4 @@ if __name__ == "__main__":
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
     plot_infectoin_states_results(path)
-    plot_infections_loc_types_avarage(path)
+    # plot_infections_loc_types_avarage(path)
