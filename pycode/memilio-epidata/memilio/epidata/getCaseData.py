@@ -85,7 +85,6 @@ def fetch_case_data(
     filename: str,
     conf_obj,
     read_data: bool = dd.defaultDict['read_data'],
-    out_folder: str = dd.defaultDict['out_folder'],
 ) -> pd.DataFrame:
     """! Downloads the case data
 
@@ -103,7 +102,6 @@ def fetch_case_data(
     @param conf_obj
         configuration object
     @param read_data bool. Defines if data is read from file or downloaded. Default defined in defaultDict.
-    @param out_folder str. Folder where data is written to. Default defined in defaultDict.
 
     @return df pd.Dataframe. Dataframe containing the downloaded case data
     """
@@ -173,7 +171,6 @@ def preprocess_case_data(raw_df: pd.DataFrame,
                          directory: str,
                          filename: str,
                          conf_obj,
-                         out_folder: str = dd.defaultDict['out_folder'],
                          split_berlin: bool = dd.defaultDict['split_berlin'],
                          rep_date: bool = dd.defaultDict['rep_date'],
                          ) -> pd.DataFrame:
@@ -198,13 +195,11 @@ def preprocess_case_data(raw_df: pd.DataFrame,
         Name of the full dataset filename
     @param conf_obj
         configuration object
-    @param out_folder str. Folder where data is written to. Default defined in defaultDict.
     @param split_berlin bool. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
     @param rep_date bool Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
 
     @return df pd.Dataframe
     """
-    out_folder = conf_obj.path_to_use
     no_raw = conf_obj.no_raw
 
     with progress_indicator.Spinner(message='Preparing DataFrame'):
@@ -281,9 +276,7 @@ def preprocess_case_data(raw_df: pd.DataFrame,
 
 def write_case_data(df: pd.DataFrame,
                     directory: str,
-                    conf_obj,
                     file_format: str = dd.defaultDict['file_format'],
-                    out_folder: str = dd.defaultDict['out_folder'],
                     start_date: date = dd.defaultDict['start_date'],
                     end_date: date = dd.defaultDict['end_date'],
                     impute_dates: bool = dd.defaultDict['impute_dates'],
@@ -313,12 +306,8 @@ def write_case_data(df: pd.DataFrame,
         Processed dataframe
     @param directory: str
         Path to the output directory
-    @param conf_obj
-        configuration object
     @param file_format: str
         File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder: str
-        Folder where data is written to. Default defined in defaultDict.
     @param start_date: date
         Date of first date in dataframe. Default 2020-01-01.
     @param end_date: date. Date of last date in dataframe. Default defined in defaultDict.
@@ -334,7 +323,6 @@ def write_case_data(df: pd.DataFrame,
 
     @return None
     """
-    out_folder = conf_obj.path_to_use
 
     if (files == 'All') or (files == ['All']):
         files = ['infected', 'deaths', 'all_germany', 'infected_state',
@@ -530,22 +518,18 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
 
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
-    run_checks = conf.checks
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
     filename = "CaseDataFull"
 
-    complete = False
     raw_df = fetch_case_data(
         read_data=read_data,
-        out_folder=out_folder,
         directory=directory,
         filename=filename,
         conf_obj=conf,
     )
     preprocess_df = preprocess_case_data(
-        out_folder=out_folder,
         raw_df=raw_df,
         split_berlin=split_berlin,
         rep_date=rep_date,
@@ -554,14 +538,12 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
         directory=directory,
     )
     datasets = write_case_data(
-        conf_obj=conf,
         directory=directory,
         df=preprocess_df,
         file_format=file_format,
         start_date=start_date,
         end_date=end_date,
         impute_dates=impute_dates,
-        out_folder=out_folder,
         moving_average=moving_average,
         split_berlin=split_berlin,
         rep_date=rep_date,
