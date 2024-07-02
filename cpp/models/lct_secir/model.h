@@ -76,10 +76,10 @@ public:
      * The LCT-SECIR model is defined through ordinary differential equations of the form dydt = f(y, t). 
      * y is a vector containing number of individuals for each (sub-) compartment.
      * This function evaluates the right-hand-side f of the ODE and can be used in an ODE solver.
-     * @param pop the current state of the population in the geographic unit we are considering
-     * @param y the current state of the model (or a subpopulation) as a flat array
-     * @param t the current time
-     * @param dydt a reference to the calculated output
+     * @param[in] pop the current state of the population in the geographic unit we are considering
+     * @param[in] y the current state of the model (or a subpopulation) as a flat array
+     * @param[in] t the current time
+     * @param[out] dydt a reference to the calculated output
      */
     void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, ScalarType t,
                          Eigen::Ref<Eigen::VectorXd> dydt) const override
@@ -91,7 +91,7 @@ public:
 
         ScalarType infectedNoSymptoms = 0;
         ScalarType infectedSymptoms   = 0;
-        ScalarType dummy              = 0;
+        ScalarType flow               = 0;
 
         // Calculate sum of all subcompartments for InfectedNoSymptoms.
         infectedNoSymptoms =
@@ -113,27 +113,24 @@ public:
 
         // Exposed.
         dydt[1] = -dydt[0];
-        for (Eigen::Index i = 0;
-             i < Eigen::Index(LctState::template get_num_subcompartments<InfectionState::Exposed>()); i++) {
+        for (size_t i = 0; i < LctState::template get_num_subcompartments<InfectionState::Exposed>(); i++) {
             // Dummy stores the value of the flow from dydt[1 + i] to dydt[2 + i].
             // 1+i is always the index of a (sub-)compartment of E and 2+i can also be the index of the first (sub-)compartment of C.
-            dummy = (ScalarType)LctState::template get_num_subcompartments<InfectionState::Exposed>() *
-                    (1 / params.template get<TimeExposed>()) * y[1 + i];
+            flow = (ScalarType)LctState::template get_num_subcompartments<InfectionState::Exposed>() *
+                   (1 / params.template get<TimeExposed>()) * y[1 + i];
             // Subtract flow from dydt[1 + i] and add to dydt[2 + i].
-            dydt[1 + i] = dydt[1 + i] - dummy;
-            dydt[2 + i] = dummy;
+            dydt[1 + i] = dydt[1 + i] - flow;
+            dydt[2 + i] = flow;
         }
 
         // InfectedNoSymptoms.
-
-        for (Eigen::Index i = 0;
-             i < Eigen::Index(LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>()); i++) {
-            dummy = (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>() *
-                    (1 / params.template get<TimeInfectedNoSymptoms>()) *
-                    y[LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() + i];
+        for (size_t i = 0; i < LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>(); i++) {
+            flow = (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>() *
+                   (1 / params.template get<TimeInfectedNoSymptoms>()) *
+                   y[LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() + i];
             dydt[LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() + i] =
-                dydt[LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() + i] - dummy;
-            dydt[LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() + i + 1] = dummy;
+                dydt[LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() + i] - flow;
+            dydt[LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() + i + 1] = flow;
         }
 
         // InfectedSymptoms.
@@ -145,14 +142,13 @@ public:
             dydt[LctState::template get_first_index<InfectionState::InfectedSymptoms>()] *
             (1 - params.template get<RecoveredPerInfectedNoSymptoms>());
 
-        for (Eigen::Index i = 0;
-             i < Eigen::Index(LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>()); i++) {
-            dummy = (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>() *
-                    (1 / params.template get<TimeInfectedSymptoms>()) *
-                    y[LctState::template get_first_index<InfectionState::InfectedSymptoms>() + i];
+        for (size_t i = 0; i < LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>(); i++) {
+            flow = (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>() *
+                   (1 / params.template get<TimeInfectedSymptoms>()) *
+                   y[LctState::template get_first_index<InfectionState::InfectedSymptoms>() + i];
             dydt[LctState::template get_first_index<InfectionState::InfectedSymptoms>() + i] =
-                dydt[LctState::template get_first_index<InfectionState::InfectedSymptoms>() + i] - dummy;
-            dydt[LctState::template get_first_index<InfectionState::InfectedSymptoms>() + i + 1] = dummy;
+                dydt[LctState::template get_first_index<InfectionState::InfectedSymptoms>() + i] - flow;
+            dydt[LctState::template get_first_index<InfectionState::InfectedSymptoms>() + i + 1] = flow;
         }
 
         // InfectedSevere.
@@ -163,14 +159,13 @@ public:
         dydt[LctState::template get_first_index<InfectionState::InfectedSevere>()] =
             dydt[LctState::template get_first_index<InfectionState::InfectedSevere>()] *
             params.template get<SeverePerInfectedSymptoms>();
-        for (Eigen::Index i = 0;
-             i < Eigen::Index(LctState::template get_num_subcompartments<InfectionState::InfectedSevere>()); i++) {
-            dummy = (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedSevere>() *
-                    (1 / params.template get<TimeInfectedSevere>()) *
-                    y[LctState::template get_first_index<InfectionState::InfectedSevere>() + i];
+        for (size_t i = 0; i < LctState::template get_num_subcompartments<InfectionState::InfectedSevere>(); i++) {
+            flow = (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedSevere>() *
+                   (1 / params.template get<TimeInfectedSevere>()) *
+                   y[LctState::template get_first_index<InfectionState::InfectedSevere>() + i];
             dydt[LctState::template get_first_index<InfectionState::InfectedSevere>() + i] =
-                dydt[LctState::template get_first_index<InfectionState::InfectedSevere>() + i] - dummy;
-            dydt[LctState::template get_first_index<InfectionState::InfectedSevere>() + i + 1] = dummy;
+                dydt[LctState::template get_first_index<InfectionState::InfectedSevere>() + i] - flow;
+            dydt[LctState::template get_first_index<InfectionState::InfectedSevere>() + i + 1] = flow;
         }
 
         // InfectedCritical.
@@ -181,29 +176,28 @@ public:
         dydt[LctState::template get_first_index<InfectionState::InfectedCritical>()] =
             dydt[LctState::template get_first_index<InfectionState::InfectedCritical>()] *
             params.template get<CriticalPerSevere>();
-        for (Eigen::Index i = 0;
-             i < Eigen::Index(LctState::template get_num_subcompartments<InfectionState::InfectedCritical>() - 1);
+        for (size_t i = 0; i < LctState::template get_num_subcompartments<InfectionState::InfectedCritical>() - 1;
              i++) {
-            dummy = (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedCritical>() *
-                    (1 / params.template get<TimeInfectedCritical>()) *
-                    y[LctState::template get_first_index<InfectionState::InfectedCritical>() + i];
+            flow = (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedCritical>() *
+                   (1 / params.template get<TimeInfectedCritical>()) *
+                   y[LctState::template get_first_index<InfectionState::InfectedCritical>() + i];
             dydt[LctState::template get_first_index<InfectionState::InfectedCritical>() + i] =
-                dydt[LctState::template get_first_index<InfectionState::InfectedCritical>() + i] - dummy;
-            dydt[LctState::template get_first_index<InfectionState::InfectedCritical>() + i + 1] = dummy;
+                dydt[LctState::template get_first_index<InfectionState::InfectedCritical>() + i] - flow;
+            dydt[LctState::template get_first_index<InfectionState::InfectedCritical>() + i + 1] = flow;
         }
 
         // Last flow from InfectedCritical has to be divided between Recovered and Dead.
         // Must be calculated separately in order not to overwrite the already calculated values ​​for Recovered.
-        dummy = (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedCritical>() *
-                (1 / params.template get<TimeInfectedCritical>()) *
-                y[LctState::template get_first_index<InfectionState::Recovered>() - 1];
+        flow = (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedCritical>() *
+               (1 / params.template get<TimeInfectedCritical>()) *
+               y[LctState::template get_first_index<InfectionState::Recovered>() - 1];
         dydt[LctState::template get_first_index<InfectionState::Recovered>() - 1] =
-            dydt[LctState::template get_first_index<InfectionState::Recovered>() - 1] - dummy;
+            dydt[LctState::template get_first_index<InfectionState::Recovered>() - 1] - flow;
         dydt[LctState::template get_first_index<InfectionState::Recovered>()] =
             dydt[LctState::template get_first_index<InfectionState::Recovered>()] +
-            (1 - params.template get<DeathsPerCritical>()) * dummy;
+            (1 - params.template get<DeathsPerCritical>()) * flow;
         dydt[LctState::template get_first_index<InfectionState::Dead>()] =
-            params.template get<DeathsPerCritical>() * dummy;
+            params.template get<DeathsPerCritical>() * flow;
     }
 };
 
