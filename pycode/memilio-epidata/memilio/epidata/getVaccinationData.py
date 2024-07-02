@@ -879,7 +879,6 @@ def write_vaccination_data(dict_data: dict,
                            file_format: str = dd.defaultDict['file_format'],
                            impute_dates: bool = True,
                            moving_average: int = dd.defaultDict['moving_average'],
-                           to_dataset: bool = dd.defaultDict['to_dataset']
                            ) -> None or Tuple:
     """! Writes the vaccination data
     The data is exported in three different ways:
@@ -924,13 +923,9 @@ def write_vaccination_data(dict_data: dict,
         federal state and remaining vaccinations will be distributed to closely connected neighboring regions using commuter mobility networks.
         The sanitizing threshold will be defined by the age group-specific average on the corresponding vaccination ratios on county and federal
         state level.
-    @param to_dataset bool True or False. Whether to return the dataframe as an object instead of json file.
-        If True - returns objects with dataframes
-        If False - write dataframes into files
-        Default defined in defaultDict.
-
     @return: none
     """
+
     df_data_agevacc_county_cs = dict_data["df_data_agevacc_county_cs"]
     vacc_column_names = dict_data["vacc_column_names"]
     unique_age_groups_old = dict_data["unique_age_groups_old"]
@@ -1123,7 +1118,7 @@ def write_vaccination_data(dict_data: dict,
             ylabel='Number',
             fig_name="Germany_FullVacination_AgeExtr_Absolute")
 
-    if not to_dataset:
+    if not conf_obj.to_dataset:
         # store data for all counties
         filename = 'vacc_county_agevacc'
         filename = gd.append_filename(filename, impute_dates, moving_average)
@@ -1179,7 +1174,6 @@ def get_vaccination_data(
         end_date: date = dd.defaultDict['end_date'],
         moving_average: int = dd.defaultDict['moving_average'],
         sanitize_data: int = dd.defaultDict['sanitize_data'],
-        to_dataset: bool = dd.defaultDict['to_dataset'],
         impute_dates: bool = True,
         **kwargs
 ):
@@ -1264,7 +1258,6 @@ def get_vaccination_data(
                                              file_format=file_format,
                                              impute_dates=impute_dates,
                                              moving_average=moving_average,
-                                             to_dataset=to_dataset
                                              )
 
 

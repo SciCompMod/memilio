@@ -276,6 +276,7 @@ def preprocess_case_data(raw_df: pd.DataFrame,
 
 def write_case_data(df: pd.DataFrame,
                     directory: str,
+                    conf_obj,
                     file_format: str = dd.defaultDict['file_format'],
                     start_date: date = dd.defaultDict['start_date'],
                     end_date: date = dd.defaultDict['end_date'],
@@ -284,7 +285,6 @@ def write_case_data(df: pd.DataFrame,
                     split_berlin: bool = dd.defaultDict['split_berlin'],
                     rep_date: bool = dd.defaultDict['rep_date'],
                     files: str or list = 'All',
-                    to_dataset: bool = dd.defaultDict['to_dataset'],
                     ) -> None or dict:
     """! Writing the different case data file.
     Following data is generated and written to the mentioned filename
@@ -306,6 +306,8 @@ def write_case_data(df: pd.DataFrame,
         Processed dataframe
     @param directory str
         Path to the output directory
+    @param conf_obj
+        configuration object
     @param file_format str
         File format which is used for writing the data. Default defined in defaultDict.
     @param start_date date
@@ -316,10 +318,6 @@ def write_case_data(df: pd.DataFrame,
     @param split_berlin bool True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
     @param rep_date bool True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
     @param files list. List of strings or 'All' or 'Plot'. Defines which files should be provided (and plotted). Default 'All'.
-    @param to_dataset bool True or False. Whether to return the dataframe as an object instead of json file.
-        If True - returns objects with dataframes
-        If False - write dataframes into files
-        Default defined in defaultDict.
 
     @return None
     """
@@ -439,13 +437,13 @@ def write_case_data(df: pd.DataFrame,
 
             df_local_cs = mdfs.extract_subframe_based_on_dates(
                 df_local_cs, start_date, end_date)
-            if not to_dataset:
+            if not conf_obj.to_dataset:
                 gd.write_dataframe(df_local_cs, directory,
                                    filename, file_format)
             else:
                 dict_of_datasets.update({file: df_local_cs})
 
-    if to_dataset:
+    if conf_obj.to_dataset:
         return dict_of_datasets
 
 
@@ -459,7 +457,6 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
                   split_berlin: bool = dd.defaultDict['split_berlin'],
                   rep_date: bool = dd.defaultDict['rep_date'],
                   files: str or list = 'All',
-                  to_dataset: bool = dd.defaultDict['to_dataset'],
                   **kwargs
                   ) -> None:
     """! Wrapper function that downloads the case data and provides different kind of structured data into json files.
@@ -548,7 +545,7 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
         split_berlin=split_berlin,
         rep_date=rep_date,
         files=files,
-        to_dataset=to_dataset,
+        conf_obj=conf
     )
 
 

@@ -170,10 +170,10 @@ def preprocess_divi_data(df_raw: pd.DataFrame,
 
 def write_divi_data(df: pd.DataFrame,
                     directory: str,
+                    conf_obj,
                     file_format: str = dd.defaultDict['file_format'],
                     impute_dates: bool = dd.defaultDict['impute_dates'],
                     moving_average: int = dd.defaultDict['moving_average'],
-                    to_dataset: bool = dd.defaultDict['to_dataset']
                     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """! Write the divi data into json files
 
@@ -185,13 +185,12 @@ def write_divi_data(df: pd.DataFrame,
     @param df pd.DataFrame. Dataframe containing processed divi data
     @param directory str
         Path to the output directory
+    @param conf_obj
+        configuration object
     @param file_format str. File format which is used for writing the data. Default defined in defaultDict.
     @param impute_dates bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
     @param moving_average int Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict.
-    @param to_dataset bool True or False. Whether to return the dataframe as an object instead of json file.
-        If True - returns objects with dataframes
-        If False - write dataframes into files
-        Default defined in defaultDict.
+
     @return None
     """
 
@@ -220,7 +219,7 @@ def write_divi_data(df: pd.DataFrame,
     df_ger.reset_index(inplace=True)
     df_ger.sort_index(axis=1, inplace=True)
 
-    if not to_dataset:
+    if not conf_obj.to_dataset:
         filename = "county_divi"
         filename = gd.append_filename(filename, impute_dates, moving_average)
         gd.write_dataframe(df_counties, directory, filename, file_format)
@@ -243,7 +242,6 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
                   end_date: date = dd.defaultDict['end_date'],
                   impute_dates: bool = dd.defaultDict['impute_dates'],
                   moving_average: int = dd.defaultDict['moving_average'],
-                  to_dataset: bool = dd.defaultDict['to_dataset'],
                   **kwargs
                   ):
     """! Downloads or reads the DIVI ICU data and writes them in different files.
@@ -304,7 +302,7 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
         file_format=file_format,
         impute_dates=impute_dates,
         moving_average=moving_average,
-        to_dataset=to_dataset
+        conf_obj=conf,
     )
     return df_raw, df_counties, df_states, df_ger
 
