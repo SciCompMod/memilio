@@ -127,7 +127,6 @@ public:
         , m_persons(other.m_persons)
         , m_cells(other.m_cells)
         , m_required_mask(other.m_required_mask)
-        , m_npi_active(other.m_npi_active)
         , m_geographical_location(other.m_geographical_location)
     {
     }
@@ -315,22 +314,12 @@ public:
     }
 
     /**
-     * @brief Get the information whether NPIs are active at this Location.
-     * If true requires e.g. Mask%s when entering a Location.
-     * @return True if NPIs are active at this Location.
+     * @brief Get the information whether masks are required to enter this Location.
+     * @return True if masks are required to enter this Location.
      */
-    bool get_npi_active() const
+    bool is_mask_required() const
     {
-        return m_npi_active;
-    }
-
-    /**
-     * @brief Activate or deactivate NPIs at this Location.
-     * @param[in] new_status Status of NPIs.
-     */
-    void set_npi_active(bool new_status)
-    {
-        m_npi_active = new_status;
+        return m_required_mask != MaskType::None;
     }
 
     /**
@@ -404,7 +393,6 @@ private:
     std::vector<observer_ptr<Person>> m_persons{}; ///< A vector of all Person%s at the Location.
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
-    bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
 };
 

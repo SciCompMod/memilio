@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Carlotta Gerstein, Martin J. Kuehn
+* Authors: Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef EPI_ABM_MASK_TYPE_H
-#define EPI_ABM_MASK_TYPE_H
+#ifndef MIO_ABM_INTERVENTION_TYPE_H
+#define MIO_ABM_INTERVENTION_TYPE_H
 
 #include <cstdint>
 
@@ -29,14 +29,13 @@ namespace abm
 {
 
 /**
- * @brief Type of a Mask.
+ * @brief Type of an Intervention.
  */
-enum class MaskType : std::uint32_t
+enum class InterventionType : std::uint32_t
 {
-    None = 0,
-    Community,
-    Surgical,
-    FFP2,
+    Mask = 0,
+    Testing,
+    Isolation,
 
     Count
 };
