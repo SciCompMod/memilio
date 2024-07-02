@@ -69,12 +69,13 @@ bool TestingCriteria::evaluate(const Person& p, TimePoint t) const
 }
 
 TestingScheme::TestingScheme(const TestingCriteria& testing_criteria, TimeSpan minimal_time_since_last_test,
-                             TimePoint start_date, TimePoint end_date, const GenericTest& test_type, double probability)
+                             TimePoint start_date, TimePoint end_date, TestParameters test_parameters,
+                             double probability)
     : m_testing_criteria(testing_criteria)
     , m_minimal_time_since_last_test(minimal_time_since_last_test)
     , m_start_date(start_date)
     , m_end_date(end_date)
-    , m_test_type(test_type)
+    , m_test_parameters(test_parameters)
     , m_probability(probability)
 {
 }
@@ -84,8 +85,8 @@ bool TestingScheme::operator==(const TestingScheme& other) const
     return this->m_testing_criteria == other.m_testing_criteria &&
            this->m_minimal_time_since_last_test == other.m_minimal_time_since_last_test &&
            this->m_start_date == other.m_start_date && this->m_end_date == other.m_end_date &&
-           this->m_test_type.get_default().sensitivity == other.m_test_type.get_default().sensitivity &&
-           this->m_test_type.get_default().specificity == other.m_test_type.get_default().specificity &&
+           this->m_test_parameters.sensitivity == other.m_test_parameters.sensitivity &&
+           this->m_test_parameters.specificity == other.m_test_parameters.specificity &&
            this->m_probability == other.m_probability;
     //To be adjusted and also TestType should be static.
 }
@@ -106,7 +107,7 @@ bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& perso
         if (m_testing_criteria.evaluate(person, t)) {
             double random = UniformDistribution<double>::get_instance()(rng);
             if (random < m_probability) {
-                return !person.get_tested(rng, t, m_test_type.get_default());
+                return !person.get_tested(rng, t, m_test_parameters);
             }
         }
     }

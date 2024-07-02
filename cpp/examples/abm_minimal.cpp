@@ -41,6 +41,7 @@ int main()
     world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    world.parameters.get<mio::abm::AgeGroupGotoSchool>() = false;
     world.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
     world.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
@@ -107,10 +108,11 @@ int main()
     auto probability           = 0.5;
     auto start_date            = mio::abm::TimePoint(0);
     auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(10);
-    auto test_type             = mio::abm::AntigenTest();
+    auto test_type             = mio::abm::TestType::Antigen;
+    auto test_parameters       = world.parameters.get<mio::abm::TestData>()[test_type];
     auto testing_criteria_work = mio::abm::TestingCriteria();
-    auto testing_scheme_work =
-        mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
+    auto testing_scheme_work   = mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date,
+                                                         test_parameters, probability);
     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.
