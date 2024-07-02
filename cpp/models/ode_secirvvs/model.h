@@ -817,8 +817,7 @@ template <typename FP = double, class Base = mio::Simulation<Model<FP>, FP>>
 auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Vector<FP>>& y)
 
 {
-    const auto TestAndTraceCapacitySymptomaticMigration = 5.0;
-    auto& params                                        = sim.get_model().parameters;
+    auto& params = sim.get_model().parameters;
     //parameters as arrays
     auto& p_asymp   = params.template get<RecoveredPerInfectedNoSymptoms<FP>>().array().template cast<FP>();
     auto& p_inf     = params.template get<RiskOfInfectionFromSymptomatic<FP>>().array().template cast<FP>();
@@ -838,7 +837,8 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::R
             .sum();
     auto riskFromInfectedSymptomatic =
         smoother_cosine(test_and_trace_required, double(params.template get<TestAndTraceCapacity<FP>>()),
-                        params.template get<TestAndTraceCapacity<FP>>() * TestAndTraceCapacitySymptomaticMigration,
+                        params.template get<TestAndTraceCapacity<FP>>() *
+                            params.template get<TestAndTraceCapacityMaxRiskSymptoms<FP>>(),
                         p_inf.matrix(), p_inf_max.matrix());
 
     //set factor for infected
