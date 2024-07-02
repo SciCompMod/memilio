@@ -19,14 +19,11 @@
 #############################################################################
 import itertools
 import os
-from datetime import datetime
-from datetime import date
-from typing import Tuple, Any, List
+from datetime import datetime, date
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
-from numpy import ndarray, dtype
-from pandas import DataFrame, Series
 
 from memilio.epidata import progress_indicator
 from memilio.epidata import customPlot
@@ -36,7 +33,6 @@ from memilio.epidata import getCommuterMobility as gcm
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getPopulationData as gpd
 from memilio.epidata import modifyDataframeSeries as mdfs
-from memilio.epidata.getDataIntoPandasDataFrame import Conf
 
 # activate CoW for more predictable behaviour of pandas DataFrames
 pd.options.mode.copy_on_write = True
