@@ -498,9 +498,9 @@ def cli(what):
         )
     if '--to_dataset' in sys.argv:
         parser.add_argument(
-            '--to_dataset', type=bool,
-            help=f"To return saved dataframes as objects. Default is {dd.defaultDict['to_dataset']}.",
-            default=dd.defaultDict['to_dataset']
+            '--to_dataset',
+            help=f"To return saved dataframes as objects.",
+            action='store_true'
         )
 
     args = vars(parser.parse_args())
