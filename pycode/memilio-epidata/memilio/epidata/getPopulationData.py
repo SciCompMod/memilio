@@ -119,7 +119,6 @@ def manage_credentials(interactive):
 
 
 def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_format: str, merge_eisenach: bool):
-    # df_pop: pd.DataFrame, directory: str, file_format: str, merge_eisenach: str):
     """! Writes population dataframe into directory with new column names and age groups
 
     @param df_pop Population data DataFrame to be exported
