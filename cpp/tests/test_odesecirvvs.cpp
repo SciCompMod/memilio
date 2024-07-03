@@ -888,7 +888,7 @@ public:
                 (const));
 };
 
-// MockExtrapolation* mock_export_function = nullptr;
+std::shared_ptr<MockExtrapolation> mock_export_function = nullptr;
 
 // mio::IOResult<void> export_input_data_county_timeseries(const std::vector<mio::osecirvvs::Model<double>>& model,
 //                                                         const std::string& dir, const std::vector<int>& county,
@@ -913,12 +913,12 @@ public:
 // protected:
 //     void SetUp() override
 //     {
-//         mio::osecirvvs::mock_export_function = &m_mock_export_function;
+//         mio::osecirvvs::mock_export_function = std::make_shared<mio::osecirvvs::MockExtrapolation>();
 //     }
 
 //     void TearDown() override
 //     {
-//         mio::osecirvvs::mock_export_function = nullptr;
+//         mio::osecirvvs::mock_export_function.reset();
 //     }
 
 //     mio::osecirvvs::MockExtrapolation m_mock_export_function;
