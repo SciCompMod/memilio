@@ -48,10 +48,11 @@ enum class MockContactLocation
     Count,
 };
 
-mio::IOResult<std::vector<int>> mock_node_function(const std::string& path, int node_id)
+mio::IOResult<std::vector<int>> mock_node_function(const std::string& path, int node_id, bool rki_age_groups)
 {
     mio::unused(path);
     mio::unused(node_id);
+    mio::unused(rki_age_groups);
     std::vector<int> id = {1001, 1002};
     return mio::success(id);
 }
@@ -159,60 +160,64 @@ TEST(TestGraph, graph_without_edges)
 TEST(TestGraph, set_nodes_secir)
 {
 
-    mio::osecir::Parameters params(1);
-    mio::Graph<mio::osecir::Model, mio::MovementParameters> params_graph;
-    const auto& read_function_nodes = mock_read_function<mio::osecir::Model>;
+    mio::osecir::Parameters<double> params(1);
+    mio::Graph<mio::osecir::Model<double>, mio::MovementParameters<double>> params_graph;
+    const auto& read_function_nodes = mock_read_function<mio::osecir::Model<double>>;
     const auto& node_id_function    = mock_node_function;
 
     const fs::path& dir = " ";
 
-    auto result = mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, mio::osecir::Model,
-                                 mio::MovementParameters, mio::osecir::Parameters, decltype(read_function_nodes),
-                                 decltype(node_id_function)>(
-        params, mio::Date(2020, 5, 10), mio::Date(2020, 5, 11), dir, " ", 0, params_graph, read_function_nodes,
-        node_id_function, std::vector<double>(size_t(1), 1.0), 1.0, 0.01);
+    auto result =
+        mio::set_nodes<mio::osecir::TestAndTraceCapacity<double>, mio::osecir::ContactPatterns<double>,
+                       mio::osecir::Model<double>, mio::MovementParameters<double>, mio::osecir::Parameters<double>,
+                       decltype(read_function_nodes), decltype(node_id_function)>(
+            params, mio::Date(2020, 5, 10), mio::Date(2020, 5, 11), dir, " ", 0, params_graph, read_function_nodes,
+            node_id_function, std::vector<double>(size_t(1), 1.0), 1.0, 0.01);
 
     EXPECT_EQ(params_graph.nodes().size(), 2);
     EXPECT_EQ(params_graph.nodes()[0].id, 1001);
     EXPECT_EQ(params_graph.nodes()[1].id, 1002);
-    auto model_type_true1 = std::is_same<decltype(params_graph.nodes()[0].property), mio::osecir::Model>::value;
+    auto model_type_true1 = std::is_same<decltype(params_graph.nodes()[0].property), mio::osecir::Model<double>>::value;
     EXPECT_TRUE(model_type_true1);
-    auto model_type_true2 = std::is_same<decltype(params_graph.nodes()[1].property), mio::osecir::Model>::value;
+    auto model_type_true2 = std::is_same<decltype(params_graph.nodes()[1].property), mio::osecir::Model<double>>::value;
     EXPECT_TRUE(model_type_true2);
 }
 
 TEST(TestGraph, set_nodes_secirvvs)
 {
 
-    mio::osecirvvs::Parameters params(1);
-    mio::Graph<mio::osecirvvs::Model, mio::MovementParameters> params_graph;
-    const auto& read_function_nodes = mock_read_function<mio::osecirvvs::Model>;
+    mio::osecirvvs::Parameters<double> params(1);
+    mio::Graph<mio::osecirvvs::Model<double>, mio::MovementParameters<double>> params_graph;
+    const auto& read_function_nodes = mock_read_function<mio::osecirvvs::Model<double>>;
     const auto& node_id_function    = mock_node_function;
 
     const fs::path& dir = " ";
 
-    auto result = mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity, mio::osecirvvs::ContactPatterns,
-                                 mio::osecirvvs::Model, mio::MovementParameters, mio::osecirvvs::Parameters,
-                                 decltype(read_function_nodes), decltype(node_id_function)>(
-        params, mio::Date(2020, 5, 10), mio::Date(2020, 5, 11), dir, " ", 0, params_graph, read_function_nodes,
-        node_id_function, std::vector<double>(size_t(1), 1.0), 1.0, 0.01);
+    auto result =
+        mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
+                       mio::osecirvvs::Model<double>, mio::MovementParameters<double>,
+                       mio::osecirvvs::Parameters<double>, decltype(read_function_nodes), decltype(node_id_function)>(
+            params, mio::Date(2020, 5, 10), mio::Date(2020, 5, 11), dir, " ", 0, params_graph, read_function_nodes,
+            node_id_function, std::vector<double>(size_t(1), 1.0), 1.0, 0.01);
 
     EXPECT_EQ(params_graph.nodes().size(), 2);
     EXPECT_EQ(params_graph.nodes()[0].id, 1001);
     EXPECT_EQ(params_graph.nodes()[1].id, 1002);
-    auto model_type_true1 = std::is_same<decltype(params_graph.nodes()[0].property), mio::osecirvvs::Model>::value;
+    auto model_type_true1 =
+        std::is_same<decltype(params_graph.nodes()[0].property), mio::osecirvvs::Model<double>>::value;
     EXPECT_TRUE(model_type_true1);
-    auto model_type_true2 = std::is_same<decltype(params_graph.nodes()[1].property), mio::osecirvvs::Model>::value;
+    auto model_type_true2 =
+        std::is_same<decltype(params_graph.nodes()[1].property), mio::osecirvvs::Model<double>>::value;
     EXPECT_TRUE(model_type_true2);
 }
 
 TEST(TestGraph, set_edges)
 {
-    mio::osecir::Model model(6);
+    mio::osecir::Model<double> model(6);
     model.populations[{mio::AgeGroup(3), mio::osecir::InfectionState::Exposed}] = 1;
-    mio::Graph<mio::osecir::Model, mio::MovementParameters> params_graph;
+    mio::Graph<mio::osecir::Model<double>, mio::MovementParameters<double>> params_graph;
     const fs::path& dir         = " ";
-    auto migrating_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
+    auto moving_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
                                    mio::osecir::InfectionState::InfectedNoSymptoms,
                                    mio::osecir::InfectionState::InfectedSymptoms,
                                    mio::osecir::InfectionState::Recovered};
@@ -223,9 +228,9 @@ TEST(TestGraph, set_edges)
     const auto& read_function_edges = mock_read_mobility;
 
     auto result =
-        mio::set_edges<MockContactLocation, mio::osecir::Model, mio::MovementParameters,
+        mio::set_edges<MockContactLocation, mio::osecir::Model<double>, mio::MovementParameters<double>,
                        mio::MovementCoefficientGroup, mio::osecir::InfectionState, decltype(read_function_edges)>(
-            dir, params_graph, migrating_compartments, size_t(2), read_function_edges,
+            dir, params_graph, moving_compartments, size_t(2), read_function_edges,
             std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.});
 
     auto e_work = (Eigen::ArrayXd(6 * Eigen::Index(mio::osecir::InfectionState::Count)) << 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -292,10 +297,10 @@ namespace
 
 struct MoveOnly {
     MoveOnly();
-    MoveOnly(const MoveOnly&)            = delete;
+    MoveOnly(const MoveOnly&) = delete;
     MoveOnly& operator=(const MoveOnly&) = delete;
     MoveOnly(MoveOnly&&)                 = default;
-    MoveOnly& operator=(MoveOnly&&)      = default;
+    MoveOnly& operator=(MoveOnly&&) = default;
 };
 using MoveOnlyGraph = mio::Graph<MoveOnly, MoveOnly>;
 

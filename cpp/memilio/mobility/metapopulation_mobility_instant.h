@@ -117,7 +117,9 @@ using MovementCoefficientGroup = DampingMatrixExpressionGroup<MovementCoefficien
 
 /**
  * parameters that influence movement.
+ * @tparam FP the underlying floating point type, e.g., double
  */
+template <typename FP = ScalarType>
 class MovementParameters
 {
 public:
@@ -155,7 +157,7 @@ public:
 
     /**
      * Get/Setthe movement coefficients.
-     * The coefficients represent the (time-dependent) percentage of people migrating 
+     * The coefficients represent the (time-dependent) percentage of people moving 
      * from one node to another by age and infection compartment. 
      * @{
      */
@@ -187,18 +189,18 @@ public:
     /**
      * @return dynamic NPIs for relative infections.
      */
-    const DynamicNPIs& get_dynamic_npis_infected() const
+    const DynamicNPIs<FP>& get_dynamic_npis_infected() const
     {
         return m_dynamic_npis;
     }
-    DynamicNPIs& get_dynamic_npis_infected()
+    DynamicNPIs<FP>& get_dynamic_npis_infected()
     {
         return m_dynamic_npis;
     }
     /**
      * @param v dynamic NPIs for relative infections.
      */
-    void set_dynamic_npis_infected(const DynamicNPIs& v)
+    void set_dynamic_npis_infected(const DynamicNPIs<FP>& v)
     {
         m_dynamic_npis = v;
     }
@@ -225,7 +227,7 @@ public:
     {
         auto obj = io.expect_object("MovementParameters");
         auto c   = obj.expect_element("Coefficients", Tag<MovementCoefficientGroup>{});
-        auto d   = obj.expect_element("DynamicNPIs", Tag<DynamicNPIs>{});
+        auto d   = obj.expect_element("DynamicNPIs", Tag<DynamicNPIs<FP>>{});
         return apply(
             io,
             [](auto&& c_, auto&& d_) {
@@ -238,43 +240,44 @@ public:
 
 private:
     MovementCoefficientGroup m_coefficients; //one per group and compartment
-    DynamicNPIs m_dynamic_npis;
+    DynamicNPIs<FP> m_dynamic_npis;
 };
 
 /** 
  * represents the movement between two nodes.
  */
+template <typename FP = double>
 class MovementEdge
 {
 public:
     /**
      * create edge with coefficients.
-     * @param coeffs % of people in each group and compartment that migrate in each time step.
+     * @param coeffs % of people in each group and compartment that move in each time step.
      */
-    MovementEdge(const MovementParameters& params)
+    MovementEdge(const MovementParameters<FP>& params)
         : m_parameters(params)
-        , m_migrated(params.get_coefficients().get_shape().rows())
+        , m_moved(params.get_coefficients().get_shape().rows())
         , m_return_times(0)
-        , m_return_migrated(false)
+        , m_return_moved(false)
     {
     }
 
     /**
      * create edge with coefficients.
-     * @param coeffs % of people in each group and compartment that migrate in each time step.
+     * @param coeffs % of people in each group and compartment that move in each time step.
      */
     MovementEdge(const Eigen::VectorXd& coeffs)
         : m_parameters(coeffs)
-        , m_migrated(coeffs.rows())
+        , m_moved(coeffs.rows())
         , m_return_times(0)
-        , m_return_migrated(false)
+        , m_return_moved(false)
     {
     }
 
     /**
      * get the movement parameters.
      */
-    const MovementParameters& get_parameters() const
+    const MovementParameters<FP>& get_parameters() const
     {
         return m_parameters;
     }
@@ -282,43 +285,43 @@ public:
     /**
      * compute movement from node_from to node_to.
      * movement is based on coefficients.
-     * migrants are added to the current state of node_to, subtracted from node_from.
-     * on return, migrants (adjusted for infections) are subtracted from node_to, added to node_from.
+     * moved persons are added to the current state of node_to, subtracted from node_from.
+     * on return, moved persons (adjusted for infections) are subtracted from node_to, added to node_from.
      * @param t current time
      * @param dt last time step (fixed to 0.5 for movement model)
-     * @param node_from node that people migrated from, return to
-     * @param node_to node that people migrated to, return from
+     * @param node_from node that people moved from, return to
+     * @param node_to node that people moved to, return from
      */
     template <class Sim>
-    void apply_movement(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
+    void apply_movement(FP t, FP dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
 
 private:
-    MovementParameters m_parameters;
-    TimeSeries<double> m_migrated;
+    MovementParameters<FP> m_parameters;
+    TimeSeries<double> m_moved;
     TimeSeries<double> m_return_times;
-    bool m_return_migrated;
+    bool m_return_moved;
     double m_t_last_dynamic_npi_check               = -std::numeric_limits<double>::infinity();
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
 };
 
 /**
- * adjust number of migrated people when they return according to the model.
+ * adjust number of moved people when they return according to the model.
  * E.g. during the time in the other node, some people who left as susceptible will return exposed.
  * Implemented for general compartmentmodel simulations, overload for your custom model if necessary
  * so that it can be found with argument-dependent lookup, i.e. in the same namespace as the model.
- * @param[inout] migrated number of people that migrated as input, number of people that return as output
- * @param params parameters of model in the node that the people migrated to.
- * @param total total population in the node that the people migrated to.
+ * @param[inout] moved number of people that moved as input, number of people that return as output
+ * @param params parameters of model in the node that the people moved to.
+ * @param total total population in the node that the people moved to.
  * @param t time of movement
  * @param dt time between movement and return
  */
-template <class Sim, class = std::enable_if_t<is_compartment_model_simulation<Sim>::value>>
-void calculate_movement_returns(Eigen::Ref<TimeSeries<double>::Vector> migrated, const Sim& sim,
-                                 Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt)
+template <typename FP, class Sim, class = std::enable_if_t<is_compartment_model_simulation<FP, Sim>::value>>
+void calculate_movement_returns(Eigen::Ref<typename TimeSeries<FP>::Vector> moved, const Sim& sim,
+                                 Eigen::Ref<const typename TimeSeries<FP>::Vector> total, FP t, FP dt)
 {
-    auto y0 = migrated.eval();
-    auto y1 = migrated;
-    EulerIntegratorCore().step(
+    auto y0 = moved.eval();
+    auto y1 = moved;
+    EulerIntegratorCore<FP>().step(
         [&](auto&& y, auto&& t_, auto&& dydt) {
             sim.get_model().get_derivatives(total, y, t_, dydt);
         },
@@ -393,27 +396,28 @@ using test_commuters_expr_t = decltype(test_commuters(
     std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
 
 /**
- * Test persons when migrating from their source node.
+ * Test persons when moving from their source node.
  * May transfer persons between compartments, e.g., if an infection was detected.
  * This feature is optional, default implementation does nothing.
  * In order to support this feature for your model, implement a test_commuters overload 
  * that can be found with argument-dependent lookup.
  * @param node a node of a movement graph.
- * @param migrated mutable reference to vector of persons per compartment that migrate.
+ * @param moved mutable reference to vector of persons per compartment that move.
  * @param t the current simulation time.
  */
 template <class Sim, std::enable_if_t<!is_expression_valid<test_commuters_expr_t, Sim>::value, void*> = nullptr>
-void test_commuters(SimulationNode<Sim>& /*node*/, Eigen::Ref<Eigen::VectorXd> /*migrated*/, double /*time*/)
+void test_commuters(SimulationNode<Sim>& /*node*/, Eigen::Ref<Eigen::VectorXd> /*moved*/, double /*time*/)
 {
 }
 template <class Sim, std::enable_if_t<is_expression_valid<test_commuters_expr_t, Sim>::value, void*> = nullptr>
-void test_commuters(SimulationNode<Sim>& node, Eigen::Ref<Eigen::VectorXd> migrated, double time)
+void test_commuters(SimulationNode<Sim>& node, Eigen::Ref<Eigen::VectorXd> moved, double time)
 {
-    return test_commuters(node.get_simulation(), migrated, time);
+    return test_commuters(node.get_simulation(), moved, time);
 }
 
+template <typename FP>
 template <class Sim>
-void MovementEdge::apply_movement(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
+void MovementEdge<FP>::apply_movement(FP t, FP dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
 {
     //check dynamic npis
     if (m_t_last_dynamic_npi_check == -std::numeric_limits<double>::infinity()) {
@@ -441,14 +445,15 @@ void MovementEdge::apply_movement(double t, double dt, SimulationNode<Sim>& node
     //returns
     for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
         if (m_return_times.get_time(i) <= t) {
-            auto v0 = find_value_reverse(node_to.get_result(), m_migrated.get_time(i), 1e-10, 1e-10);
+            auto v0 = find_value_reverse(node_to.get_result(), m_moved.get_time(i), 1e-10, 1e-10);
             assert(v0 != node_to.get_result().rend() && "unexpected error.");
-            calculate_movement_returns(m_migrated[i], node_to.get_simulation(), *v0, m_migrated.get_time(i), dt);
+            calculate_movement_returns<FP, Sim>(m_moved[i], node_to.get_simulation(), *v0, m_moved.get_time(i),
+                                                 dt);
 
             //the lower-order return calculation may in rare cases produce negative compartments,
             //especially at the beginning of the simulation.
             //fix by subtracting the supernumerous returns from the biggest compartment of the age group.
-            Eigen::VectorXd remaining_after_return = (node_to.get_result().get_last_value() - m_migrated[i]).eval();
+            Eigen::VectorXd remaining_after_return = (node_to.get_result().get_last_value() - m_moved[i]).eval();
             for (Eigen::Index j = 0; j < node_to.get_result().get_last_value().size(); ++j) {
                 if (remaining_after_return(j) < 0) {
                     auto num_comparts = (Eigen::Index)Sim::Model::Compartments::Count;
@@ -461,31 +466,31 @@ void MovementEdge::apply_movement(double t, double dt, SimulationNode<Sim>& node
                     slice(remaining_after_return, {group * num_comparts, num_comparts}).maxCoeff(&max_index);
                     log_info("Transferring to compartment {}", max_index);
                     max_index += group * num_comparts;
-                    m_migrated[i](max_index) -= remaining_after_return(j);
-                    m_migrated[i](j) += remaining_after_return(j);
+                    m_moved[i](max_index) -= remaining_after_return(j);
+                    m_moved[i](j) += remaining_after_return(j);
                 }
             }
-            node_from.get_result().get_last_value() += m_migrated[i];
-            node_to.get_result().get_last_value() -= m_migrated[i];
-            m_migrated.remove_time_point(i);
+            node_from.get_result().get_last_value() += m_moved[i];
+            node_to.get_result().get_last_value() -= m_moved[i];
+            m_moved.remove_time_point(i);
             m_return_times.remove_time_point(i);
         }
     }
 
-    if (!m_return_migrated && (m_parameters.get_coefficients().get_matrix_at(t).array() > 0.0).any()) {
+    if (!m_return_moved && (m_parameters.get_coefficients().get_matrix_at(t).array() > 0.0).any()) {
         //normal daily movement
-        m_migrated.add_time_point(
+        m_moved.add_time_point(
             t, (node_from.get_last_state().array() * m_parameters.get_coefficients().get_matrix_at(t).array() *
                 get_movement_factors(node_from, t, node_from.get_last_state()).array())
                    .matrix());
         m_return_times.add_time_point(t + dt);
 
-        test_commuters(node_from, m_migrated.get_last_value(), t);
+        test_commuters(node_from, m_moved.get_last_value(), t);
 
-        node_to.get_result().get_last_value() += m_migrated.get_last_value();
-        node_from.get_result().get_last_value() -= m_migrated.get_last_value();
+        node_to.get_result().get_last_value() += m_moved.get_last_value();
+        node_from.get_result().get_last_value() -= m_moved.get_last_value();
     }
-    m_return_migrated = !m_return_migrated;
+    m_return_moved = !m_return_moved;
 }
 
 /**
@@ -502,8 +507,8 @@ void evolve_model(double t, double dt, SimulationNode<Sim>& node)
  * edge functor for movement simulation.
  * @see MovementEdge::apply_movement
  */
-template <class Sim>
-void apply_movement(double t, double dt, MovementEdge& movementEdge, SimulationNode<Sim>& node_from,
+template <typename FP, class Sim>
+void apply_movement(FP t, FP dt, MovementEdge<FP>& movementEdge, SimulationNode<Sim>& node_from,
                      SimulationNode<Sim>& node_to)
 {
     movementEdge.apply_movement(t, dt, node_from, node_to);
@@ -512,25 +517,29 @@ void apply_movement(double t, double dt, MovementEdge& movementEdge, SimulationN
 /**
  * create a movement simulation.
  * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
- * moves from one node to the other. In the next timestep, the migrated population return to their "home" node. 
+ * moves from one node to the other. In the next timestep, the moved population return to their "home" node. 
  * Returns are adjusted based on the development in the target node. 
  * @param t0 start time of the simulation
  * @param dt time step between movements
  * @param graph set up for movement simulation
  * @{
  */
-template <class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MovementEdge>>
-make_movement_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MovementEdge>& graph)
+template <typename FP, class Sim>
+GraphSimulation<Graph<SimulationNode<Sim>, MovementEdge<FP>>>
+make_movement_sim(FP t0, FP dt, const Graph<SimulationNode<Sim>, MovementEdge<FP>>& graph)
 {
-    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>, &apply_movement<Sim>);
+    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>,
+                          static_cast<void (*)(FP, FP, MovementEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
+                              &apply_movement<FP, Sim>));
 }
 
-template <class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MovementEdge>>
-make_movement_sim(double t0, double dt, Graph<SimulationNode<Sim>, MovementEdge>&& graph)
+template <typename FP, class Sim>
+GraphSimulation<Graph<SimulationNode<Sim>, MovementEdge<FP>>>
+make_movement_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MovementEdge<FP>>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_movement<Sim>);
+    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>,
+                          static_cast<void (*)(FP, FP, MovementEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
+                              &apply_movement<FP, Sim>));
 }
 
 /** @} */

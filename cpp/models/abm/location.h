@@ -91,7 +91,7 @@ struct Cell {
 }; // namespace mio
 
 /**
- * @brief All Location%s in the simulated World where Person%s gather.
+ * @brief All Location%s in the simulated Model where Person%s gather.
  */
 class Location
 {
@@ -185,7 +185,7 @@ public:
      * @brief Compute the transmission factor for a aerosol transmission of the virus in a Cell.
      * @param[in] cell_index Cell index of the Cell.
      * @param[in] virus VirusVariant of interest.
-     * @param[in] global_params The Parameters set of the World. 
+     * @param[in] global_params The Parameters of the Model. 
      * @return Amount of average Infection%s with the virus per day.
     */
     ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus, const Parameters& global_params) const;
@@ -195,7 +195,7 @@ public:
      * @param[in, out] rng Person::RandomNumberGenerator for this Person.
      * @param[in, out] person The Person that interacts with the population.
      * @param[in] dt Length of the current Simulation time step.
-     * @param[in] params Parameters of the Model.
+     * @param[in] params The Parameters of the Model.
      */
     void interact(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
                   const Parameters& params) const;

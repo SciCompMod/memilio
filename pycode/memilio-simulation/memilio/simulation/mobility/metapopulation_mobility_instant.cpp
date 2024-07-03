@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "mobility/metapopulation_mobility_instant.h"
+#include "pybind_util.h"
 
 #include "pybind11/eigen.h"
 
@@ -28,12 +29,12 @@ namespace pymio
 
 void bind_movement_parameters(py::module_& m, std::string const& name)
 {
-    py::class_<mio::MovementParameters>(m, name.c_str())
+    bind_class<mio::MovementParameters<double>, EnablePickling::IfAvailable>(m, name.c_str())
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
         .def(py::init<const mio::MovementCoefficientGroup&>(), py::arg("coeffs"))
         .def_property(
-            "coefficients", py::overload_cast<>(&mio::MovementParameters::get_coefficients),
-            [](mio::MovementParameters& self, const mio::MovementCoefficientGroup& v) {
+            "coefficients", py::overload_cast<>(&mio::MovementParameters<double>::get_coefficients),
+            [](mio::MovementParameters<double>& self, const mio::MovementCoefficientGroup& v) {
                 self.get_coefficients() = v;
             },
             py::return_value_policy::reference_internal);
@@ -41,18 +42,18 @@ void bind_movement_parameters(py::module_& m, std::string const& name)
 
 void bind_movement_parameter_edge(py::module_& m, std::string const& name)
 {
-    py::class_<mio::Edge<mio::MovementParameters>>(m, name.c_str())
+    bind_class<mio::Edge<mio::MovementParameters<double>>, EnablePickling::IfAvailable>(m, name.c_str())
         .def_property_readonly("start_node_idx",
-                               [](const mio::Edge<mio::MovementParameters>& self) {
+                               [](const mio::Edge<mio::MovementParameters<double>>& self) {
                                    return self.start_node_idx;
                                })
         .def_property_readonly("end_node_idx",
-                               [](const mio::Edge<mio::MovementParameters>& self) {
+                               [](const mio::Edge<mio::MovementParameters<double>>& self) {
                                    return self.end_node_idx;
                                })
         .def_property_readonly(
             "property",
-            [](const mio::Edge<mio::MovementEdge>& self) -> auto& {
+            [](const mio::Edge<mio::MovementEdge<double>>& self) -> auto& {
                 return self.property;
             },
             py::return_value_policy::reference_internal);
@@ -60,12 +61,12 @@ void bind_movement_parameter_edge(py::module_& m, std::string const& name)
 
 void bind_movement(py::module_& m, std::string const& name)
 {
-    py::class_<mio::MovementEdge>(m, name.c_str())
+    bind_class<mio::MovementEdge<double>, EnablePickling::IfAvailable>(m, name.c_str())
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
-        .def(py::init<const mio::MovementParameters&>(), py::arg("params"))
+        .def(py::init<const mio::MovementParameters<double>&>(), py::arg("params"))
         .def_property_readonly(
             "parameters",
-            [](const mio::MovementEdge& self) -> auto& {
+            [](const mio::MovementEdge<double>& self) -> auto& {
                 return self.get_parameters();
             },
             py::return_value_policy::reference_internal);
@@ -73,18 +74,18 @@ void bind_movement(py::module_& m, std::string const& name)
 
 void bind_movement_edge(py::module_& m, std::string const& name)
 {
-    py::class_<mio::Edge<mio::MovementEdge>>(m, name.c_str())
+    bind_class<mio::Edge<mio::MovementEdge<double>>, EnablePickling::IfAvailable>(m, name.c_str())
         .def_property_readonly("start_node_idx",
-                               [](const mio::Edge<mio::MovementEdge>& self) {
+                               [](const mio::Edge<mio::MovementEdge<double>>& self) {
                                    return self.start_node_idx;
                                })
         .def_property_readonly("end_node_idx",
-                               [](const mio::Edge<mio::MovementEdge>& self) {
+                               [](const mio::Edge<mio::MovementEdge<double>>& self) {
                                    return self.end_node_idx;
                                })
         .def_property_readonly(
             "property",
-            [](const mio::Edge<mio::MovementEdge>& self) -> auto& {
+            [](const mio::Edge<mio::MovementEdge<double>>& self) -> auto& {
                 return self.property;
             },
             py::return_value_policy::reference_internal);

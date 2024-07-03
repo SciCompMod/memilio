@@ -58,12 +58,64 @@ public:
         return apply(
             io,
             [](auto&& str_) -> IOResult<StringDate> {
-                BOOST_OUTCOME_TRY(date, parse_date(str_));
+                BOOST_OUTCOME_TRY(auto&& date, parse_date(str_));
                 return success(date);
             },
             str);
     }
 };
+
+/**
+ * Represents the entries of a confirmed cases data file, e.g., from RKI.
+ * Number of confirmed, recovered and deceased in Germany on a specific date.
+ * ConfirmedCasesNoAgeEntry is a simplified version of ConfirmedCasesDataEntry without agegroups.
+ */
+class ConfirmedCasesNoAgeEntry
+{
+public:
+    double num_confirmed;
+    double num_recovered;
+    double num_deaths;
+    Date date;
+
+    template <class IOContext>
+    static IOResult<ConfirmedCasesNoAgeEntry> deserialize(IOContext& io)
+    {
+        auto obj           = io.expect_object("ConfirmedCasesNoAgeEntry");
+        auto num_confirmed = obj.expect_element("Confirmed", Tag<double>{});
+        auto num_recovered = obj.expect_element("Recovered", Tag<double>{});
+        auto num_deaths    = obj.expect_element("Deaths", Tag<double>{});
+        auto date          = obj.expect_element("Date", Tag<StringDate>{});
+        return apply(
+            io,
+            [](auto&& nc, auto&& nr, auto&& nd, auto&& d) {
+                return ConfirmedCasesNoAgeEntry{nc, nr, nd, d};
+            },
+            num_confirmed, num_recovered, num_deaths, date);
+    }
+};
+
+/**
+ * Deserialize a list of ConfirmedCasesNoAgeEntry from json.
+ * @param jsvalue json value, must be an array of objects, objects must match ConfirmedCasesNoAgeEntry.
+ *  Accordingly, there should be one entry per date with the values for Confirmed, Recovered and Deaths. In addition, no age groups should be specified.
+ * @return List of ConfirmedCasesNoAgeEntry.
+ */
+inline IOResult<std::vector<ConfirmedCasesNoAgeEntry>> deserialize_confirmed_cases_noage(const Json::Value& jsvalue)
+{
+    return deserialize_json(jsvalue, Tag<std::vector<ConfirmedCasesNoAgeEntry>>{});
+}
+
+/**
+ * Read list of ConfirmedCasesNoAgeEntry from a json file.
+ * @param filename name of the json file. File content must be an array of objects, objects must match ConfirmedCasesNoAgeEntry.
+ *  Accordingly, there should be one entry per date with the values for Confirmed, Recovered and Deaths. In addition, no age groups should be specified.
+ * @return List of ConfirmedCasesNoAgeEntry.
+ */
+inline IOResult<std::vector<ConfirmedCasesNoAgeEntry>> read_confirmed_cases_noage(const std::string& filename)
+{
+    return read_json(filename, Tag<std::vector<ConfirmedCasesNoAgeEntry>>{});
+}
 
 /**
  * Represents the entries of a confirmed cases data file, e.g., from RKI.
@@ -74,7 +126,7 @@ public:
 class ConfirmedCasesDataEntry
 {
 public:
-    static const std::array<const char*, 6> age_group_names;
+    static std::vector<const char*> age_group_names;
 
     double num_confirmed;
     double num_recovered;
@@ -125,7 +177,7 @@ public:
  */
 inline IOResult<std::vector<ConfirmedCasesDataEntry>> deserialize_confirmed_cases_data(const Json::Value& jsvalue)
 {
-    BOOST_OUTCOME_TRY(cases_data, deserialize_json(jsvalue, Tag<std::vector<ConfirmedCasesDataEntry>>{}));
+    BOOST_OUTCOME_TRY(auto&& cases_data, deserialize_json(jsvalue, Tag<std::vector<ConfirmedCasesDataEntry>>{}));
     //filter entries with unknown age group
     auto it = std::remove_if(cases_data.begin(), cases_data.end(), [](auto&& rki_entry) {
         return rki_entry.age_group >= AgeGroup(ConfirmedCasesDataEntry::age_group_names.size());
@@ -141,7 +193,7 @@ inline IOResult<std::vector<ConfirmedCasesDataEntry>> deserialize_confirmed_case
  */
 inline IOResult<std::vector<ConfirmedCasesDataEntry>> read_confirmed_cases_data(const std::string& filename)
 {
-    BOOST_OUTCOME_TRY(jsvalue, read_json(filename));
+    BOOST_OUTCOME_TRY(auto&& jsvalue, read_json(filename));
     return deserialize_confirmed_cases_data(jsvalue);
 }
 
@@ -207,7 +259,7 @@ IOResult<std::vector<T>> unpack_all(const std::vector<IOResult<T>>& v)
     std::vector<T> w;
     w.reserve(v.size());
     for (auto&& r : v) {
-        BOOST_OUTCOME_TRY(t, r);
+        BOOST_OUTCOME_TRY(auto&& t, r);
         w.push_back(t);
     }
     return success(w);
@@ -223,7 +275,7 @@ IOResult<std::vector<T>> unpack_all(const std::vector<IOResult<T>>& v)
 class PopulationDataEntry
 {
 public:
-    static const std::array<const char*, 11> age_group_names;
+    static std::vector<const char*> age_group_names;
 
     CustomIndexArray<double, AgeGroup> population;
     boost::optional<regions::StateId> state_id;
@@ -260,8 +312,8 @@ inline void get_rki_age_interpolation_coefficients(const std::vector<double>& ag
                                                    std::vector<bool>& carry_over)
 {
     std::array<double, 6> param_ranges = {5., 10., 20., 25., 20., 20.};
-    static_assert(param_ranges.size() == ConfirmedCasesDataEntry::age_group_names.size(),
-                  "Number of RKI age groups does not match number of age ranges.");
+    assert(param_ranges.size() == ConfirmedCasesDataEntry::age_group_names.size() &&
+           "Number of RKI age groups does not match number of age ranges.");
 
     //counter for parameter age groups
     size_t counter = 0;
@@ -342,12 +394,19 @@ interpolate_to_rki_age_groups(const std::vector<PopulationDataEntry>& population
  * Deserialize population data from a JSON value.
  * Age groups are interpolated to RKI age groups.
  * @param jsvalue JSON value that contains the population data.
+ * @param rki_age_groups Specifies whether population data should be interpolated to rki age groups.
  * @return list of population data.
  */
-inline IOResult<std::vector<PopulationDataEntry>> deserialize_population_data(const Json::Value& jsvalue)
+inline IOResult<std::vector<PopulationDataEntry>> deserialize_population_data(const Json::Value& jsvalue,
+                                                                              bool rki_age_groups = true)
 {
-    BOOST_OUTCOME_TRY(population_data, deserialize_json(jsvalue, Tag<std::vector<PopulationDataEntry>>{}));
-    return success(details::interpolate_to_rki_age_groups(population_data));
+    BOOST_OUTCOME_TRY(auto&& population_data, deserialize_json(jsvalue, Tag<std::vector<PopulationDataEntry>>{}));
+    if (rki_age_groups) {
+        return success(details::interpolate_to_rki_age_groups(population_data));
+    }
+    else {
+        return success(population_data);
+    }
 }
 
 /**
@@ -356,11 +415,30 @@ inline IOResult<std::vector<PopulationDataEntry>> deserialize_population_data(co
  * @param filename JSON file that contains the population data.
  * @return list of population data.
  */
-inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std::string& filename)
+inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std::string& filename,
+                                                                       bool rki_age_group = true)
 {
-    BOOST_OUTCOME_TRY(jsvalue, read_json(filename));
-    return deserialize_population_data(jsvalue);
+    BOOST_OUTCOME_TRY(auto&& jsvalue, read_json(filename));
+    return deserialize_population_data(jsvalue, rki_age_group);
 }
+
+/**
+ * @brief Sets the age groups' names for the ConfirmedCasesDataEntry%s.
+ * @param[in] names age group names
+*/
+IOResult<void> set_confirmed_cases_age_group_names(std::vector<const char*> names);
+
+/**
+ * @brief Sets the age groups' names for the PopulationDataEntry%s.
+ * @param[in] names age group names
+*/
+IOResult<void> set_population_data_age_group_names(std::vector<const char*> names);
+
+/**
+ * @brief Sets the age groups' names for the VaccinationDataEntry%s.
+ * @param[in] names age group names
+*/
+IOResult<void> set_vaccination_data_age_group_names(std::vector<const char*> names);
 
 /**
  * @brief returns a vector with the ids of all nodes.
@@ -368,7 +446,7 @@ inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std
  * @param[in] is_node_for_county boolean specifying whether the nodes should be counties or districts
  * @return list of node ids.
  */
-IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_node_for_county);
+IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_node_for_county, bool rki_age_groups = true);
 
 /**
  * Represents an entry in a vaccination data file.
@@ -376,7 +454,7 @@ IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_node_fo
 class VaccinationDataEntry
 {
 public:
-    static const std::array<const char*, 6> age_group_names;
+    static std::vector<const char*> age_group_names;
 
     double num_vaccinations_completed;
     Date date;
@@ -429,7 +507,7 @@ inline IOResult<std::vector<VaccinationDataEntry>> deserialize_vaccination_data(
  */
 inline IOResult<std::vector<VaccinationDataEntry>> read_vaccination_data(const std::string& filename)
 {
-    BOOST_OUTCOME_TRY(jsvalue, read_json(filename));
+    BOOST_OUTCOME_TRY(auto&& jsvalue, read_json(filename));
     return deserialize_vaccination_data(jsvalue);
 }
 

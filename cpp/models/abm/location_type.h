@@ -44,7 +44,7 @@ enum class LocationType : std::uint32_t
     Car,
     PublicTransport,
     TransportWithoutContact, // all ways of travel with no contact to other people, e.g. biking or walking
-    Cemetery, // Location for all the dead persons. It is created once for the World.
+    Cemetery, // Location for all the dead persons. It is created once for the Model.
 
     Count //last!
 };
@@ -53,7 +53,7 @@ static constexpr uint32_t INVALID_LOCATION_INDEX = std::numeric_limits<uint32_t>
 
 /**
  * LocationId identifies a Location uniquely. It consists of the LocationType of the Location and an Index.
- * The index corresponds to the index into the structure m_locations from world, where all Locations are saved.
+ * The index corresponds to the index into the structure m_locations from model, where all Locations are saved.
  */
 struct LocationId {
     uint32_t index;

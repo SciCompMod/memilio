@@ -94,6 +94,36 @@ TEST(TestEpiDataIo, read_rki_error_age)
     ASSERT_THAT(print_wrap(result), IsFailure(mio::StatusCode::InvalidValue));
 }
 
+TEST(TestEpiDataIo, read_confirmed_cases_noage)
+{
+    Json::Value js(Json::arrayValue);
+    js[0]["Date"]      = "2021-12-01";
+    js[0]["Confirmed"] = 1;
+    js[0]["Deaths"]    = 2;
+    js[0]["Recovered"] = 3;
+
+    js[1]["Date"]      = "2021-12-02";
+    js[1]["Confirmed"] = 4;
+    js[1]["Deaths"]    = 5;
+    js[1]["Recovered"] = 6;
+
+    auto result = mio::deserialize_confirmed_cases_noage(js);
+    ASSERT_THAT(print_wrap(result), IsSuccess());
+
+    auto rki_data_noage = result.value();
+    ASSERT_EQ(rki_data_noage.size(), 2);
+
+    ASSERT_EQ(rki_data_noage[0].date, mio::Date(2021, 12, 1));
+    ASSERT_EQ(rki_data_noage[0].num_confirmed, 1);
+    ASSERT_EQ(rki_data_noage[0].num_deaths, 2);
+    ASSERT_EQ(rki_data_noage[0].num_recovered, 3);
+
+    ASSERT_EQ(rki_data_noage[1].date, mio::Date(2021, 12, 2));
+    ASSERT_EQ(rki_data_noage[1].num_confirmed, 4);
+    ASSERT_EQ(rki_data_noage[1].num_deaths, 5);
+    ASSERT_EQ(rki_data_noage[1].num_recovered, 6);
+}
+
 TEST(TestEpiDataIo, read_divi)
 {
     Json::Value js(Json::arrayValue);
@@ -222,7 +252,7 @@ TEST(TestEpiDataIo, read_county_ids)
         16077};
 
     std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
-    auto read_ids    = mio::get_node_ids(path, true);
+    auto read_ids    = mio::get_node_ids(path, true, true);
     ASSERT_THAT(print_wrap(read_ids), IsSuccess());
 
     EXPECT_THAT(read_ids.value(), testing::ElementsAreArray(true_ids));
@@ -235,8 +265,8 @@ TEST(TestEpiDataIo, get_node_ids)
     std::vector<int> true_ids_county = {1001};
 
     std::string path       = mio::path_join(TEST_DATA_DIR, "test_current_population.json");
-    auto read_ids_district = mio::get_node_ids(path, false);
-    auto read_ids_county   = mio::get_node_ids(path, true);
+    auto read_ids_district = mio::get_node_ids(path, false, true);
+    auto read_ids_county   = mio::get_node_ids(path, true, true);
     ASSERT_THAT(print_wrap(read_ids_district), IsSuccess());
     ASSERT_THAT(print_wrap(read_ids_county), IsSuccess());
 
@@ -301,6 +331,34 @@ TEST(TestEpiDataIo, read_confirmed_cases_data)
     ASSERT_EQ(case_data[2].state_id, boost::none);
 }
 
+TEST(TestEpiDataIo, read_confirmed_cases_noage_data)
+{
+    auto rki_data_noage =
+        mio::read_confirmed_cases_noage(mio::path_join(TEST_DATA_DIR, "cases_all_germany.json")).value();
+
+    ASSERT_EQ(rki_data_noage.size(), 15);
+
+    ASSERT_EQ(rki_data_noage[0].date, mio::Date(2020, 05, 24));
+    ASSERT_EQ(rki_data_noage[0].num_confirmed, 1.2);
+    ASSERT_EQ(rki_data_noage[0].num_deaths, 0.5);
+    ASSERT_EQ(rki_data_noage[0].num_recovered, 0);
+
+    ASSERT_EQ(rki_data_noage[8].date, mio::Date(2020, 06, 01));
+    ASSERT_EQ(rki_data_noage[8].num_confirmed, 44);
+    ASSERT_EQ(rki_data_noage[8].num_deaths, 8);
+    ASSERT_EQ(rki_data_noage[8].num_recovered, 3);
+
+    ASSERT_EQ(rki_data_noage[9].date, mio::Date(2020, 06, 02));
+    ASSERT_EQ(rki_data_noage[9].num_confirmed, 44.5);
+    ASSERT_EQ(rki_data_noage[9].num_deaths, 8.999);
+    ASSERT_EQ(rki_data_noage[9].num_recovered, 6);
+
+    ASSERT_EQ(rki_data_noage[14].date, mio::Date(2020, 06, 07));
+    ASSERT_EQ(rki_data_noage[14].num_confirmed, 120.6);
+    ASSERT_EQ(rki_data_noage[14].num_deaths, 30);
+    ASSERT_EQ(rki_data_noage[14].num_recovered, 6);
+}
+
 TEST(TestEpiDataIO, read_vaccination_data)
 {
     auto vacc_data = mio::read_vaccination_data(mio::path_join(TEST_DATA_DIR, "test_all_ageinf_vacc.json")).value();
@@ -326,11 +384,11 @@ TEST(TestEpiData, set_vaccination_data)
     auto num_days       = 10;
 
     std::vector<int> county_ids = {1001};
-    mio::osecirvvs::Model model(num_age_groups);
-    model.parameters.set<mio::osecirvvs::VaccinationGap>(3);
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity>(1);
-    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(2);
-    std::vector<mio::osecirvvs::Model> model_vector{model};
+    mio::osecirvvs::Model<double> model(num_age_groups);
+    model.parameters.set<mio::osecirvvs::VaccinationGap<double>>(3);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity<double>>(1);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity<double>>(2);
+    std::vector<mio::osecirvvs::Model<double>> model_vector{model};
 
     auto f = mio::osecirvvs::details::set_vaccination_data(model_vector,
                                                            mio::path_join(TEST_DATA_DIR, "vaccination_test.json"),
@@ -342,10 +400,12 @@ TEST(TestEpiData, set_vaccination_data)
     auto expected_values_FV =
         (Eigen::ArrayXd(num_age_groups * (num_days + 1)) << 2, 4, 5, 5, 7, 8, 9, 9, 10, 12, 14).finished();
 
-    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFullVaccination>().array()),
-                MatrixNear(print_wrap(expected_values_FV), 1e-8, 1e-8));
-    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFirstVaccination>().array()),
-                MatrixNear(print_wrap(expected_values_PV), 1e-8, 1e-8));
+    ASSERT_THAT(
+        print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFullVaccination<double>>().array()),
+        MatrixNear(print_wrap(expected_values_FV), 1e-8, 1e-8));
+    ASSERT_THAT(
+        print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFirstVaccination<double>>().array()),
+        MatrixNear(print_wrap(expected_values_PV), 1e-8, 1e-8));
 }
 
 TEST(TestEpiData, vaccination_data)

@@ -79,7 +79,7 @@ public:
 
     /**
      * Get/Set the movement coefficients.
-     * The coefficients represent the rates for migrating 
+     * The coefficients represent the rates for moving
      * from one node to another by age and infection compartment. 
      * @{
      */
@@ -183,9 +183,9 @@ public:
 
     /**
      * compute movement from node_from to node_to for a given event
-     * @param[in] event index specifying which compartment and age group migrates
-     * @param node_from node that people migrated from
-     * @param node_to node that people migrated to
+     * @param[in] event index specifying which compartment and age group move
+     * @param node_from node that people moved from
+     * @param node_to node that people moved to
      */
     template <class Sim>
     void apply_movement(size_t event, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
@@ -216,7 +216,7 @@ void apply_movement(StochasticEdge& movementEdge, size_t event, SimulationNode<S
 /**
  * create a movement simulation.
  * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
- * moves from one node to the other. In the next timestep, the migrated population return to their "home" node. 
+ * moves from one node to the other. In the next timestep, the moved population return to their "home" node. 
  * Returns are adjusted based on the development in the target node. 
  * @param t0 start time of the simulation
  * @param dt time step between movements
@@ -227,7 +227,10 @@ template <class Sim>
 GraphSimulationStochastic<Graph<SimulationNode<Sim>, MovementEdgeStochastic>>
 make_movement_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MovementEdgeStochastic>& graph)
 {
-    return make_graph_sim_stochastic(t0, dt, graph, &evolve_model<Sim>, &apply_movement<Sim, MovementEdgeStochastic>);
+    return make_graph_sim_stochastic(
+        t0, dt, graph, &evolve_model<Sim>,
+        static_cast<void (*)(MovementEdgeStochastic&, size_t, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
+            &apply_movement<Sim, MovementEdgeStochastic>));
 }
 
 template <class Sim>
@@ -235,7 +238,8 @@ GraphSimulationStochastic<Graph<SimulationNode<Sim>, MovementEdgeStochastic>>
 make_movement_sim(double t0, double dt, Graph<SimulationNode<Sim>, MovementEdgeStochastic>&& graph)
 {
     return make_graph_sim_stochastic(t0, dt, std::move(graph), &evolve_model<Sim>,
-                                     &apply_movement<Sim, MovementEdgeStochastic>);
+        static_cast<void (*)(MovementEdgeStochastic&, size_t, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
+            &apply_movement<Sim, MovementEdgeStochastic>));
 }
 
 /** @} */

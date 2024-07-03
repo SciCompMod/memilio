@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+//Includes from pymio
 #include "pybind_util.h"
 #include "epidemiology/damping.h"
 #include "epidemiology/contact_matrix.h"
@@ -33,10 +34,16 @@
 #include "utils/index.h"
 #include "utils/custom_index_array.h"
 
+//Includes from MEmilio
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/date.h"
 #include "memilio/geography/regions.h"
 #include "memilio/epidemiology/contact_matrix.h"
+#include "memilio/epidemiology/simulation_day.h"
+#include "memilio/io/mobility_io.h"
+#include "memilio/io/epi_data.h"
+
+#include "pybind11/pybind11.h"
 
 namespace py = pybind11;
 
@@ -49,19 +56,31 @@ std::string pretty_name<mio::AgeGroup>()
     return "AgeGroup";
 }
 
+template <>
+std::string pretty_name<mio::SimulationDay>()
+{
+    return "SimulationDay";
+}
+
 } // namespace pymio
 
 PYBIND11_MODULE(_simulation, m)
 {
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
-    py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
+    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>(m, "AgeGroupArray");
+    pymio::bind_class<mio::AgeGroup, pymio::EnablePickling::Required, mio::Index<mio::AgeGroup>>(m, "AgeGroup")
+        .def(py::init<size_t>());
+
+    pymio::bind_CustomIndexArray<double, mio::AgeGroup, mio::SimulationDay>(m, "AgeGroupSimulationDayArray");
+    pymio::bind_class<mio::SimulationDay, pymio::EnablePickling::Never, mio::Index<mio::SimulationDay>>(m,
+                                                                                                        "SimulationDay")
+        .def(py::init<size_t>());
 
     pymio::bind_date(m, "Date");
 
-    auto damping_class = py::class_<mio::SquareDamping>(m, "Damping");
+    auto damping_class = pymio::bind_class<mio::SquareDamping, pymio::EnablePickling::Required>(m, "Damping");
     pymio::bind_damping_members(damping_class);
 
-    auto dampings_class = py::class_<mio::SquareDampings>(m, "Dampings");
+    auto dampings_class = pymio::bind_class<mio::SquareDampings, pymio::EnablePickling::Required>(m, "Dampings");
     pymio::bind_dampings_members(dampings_class);
 
     pymio::bind_time_series(m, "TimeSeries");
@@ -72,11 +91,13 @@ PYBIND11_MODULE(_simulation, m)
 
     pymio::bind_uncertain_value(m, "UncertainValue");
 
-    auto contact_matrix_class = py::class_<mio::ContactMatrix>(m, "ContactMatrix");
+    auto contact_matrix_class =
+        pymio::bind_class<mio::ContactMatrix, pymio::EnablePickling::Required>(m, "ContactMatrix");
     pymio::bind_damping_expression_members(contact_matrix_class);
     contact_matrix_class.def_property_readonly("num_groups", &mio::ContactMatrix::get_num_groups);
 
-    auto contact_matrix_group_class = py::class_<mio::ContactMatrixGroup>(m, "ContactMatrixGroup");
+    auto contact_matrix_group_class =
+        pymio::bind_class<mio::ContactMatrixGroup, pymio::EnablePickling::Required>(m, "ContactMatrixGroup");
     pymio::bind_damping_expression_group_members(contact_matrix_group_class);
     contact_matrix_group_class.def_property_readonly("num_groups", &mio::ContactMatrixGroup::get_num_groups);
 
@@ -84,16 +105,21 @@ PYBIND11_MODULE(_simulation, m)
 
     pymio::bind_uncertain_contact_matrix(m, "UncertainContactMatrix");
 
-    auto movement_damping_class = py::class_<mio::VectorDamping>(m, "MovementDamping");
+    auto movement_damping_class =
+        pymio::bind_class<mio::VectorDamping, pymio::EnablePickling::Required>(m, "MovementDamping");
     pymio::bind_damping_members(movement_damping_class);
 
-    auto movement_dampings_class = py::class_<mio::VectorDampings>(m, "MovementDampings");
+    auto movement_dampings_class =
+        pymio::bind_class<mio::VectorDampings, pymio::EnablePickling::Required>(m, "MovementDampings");
     pymio::bind_dampings_members(movement_dampings_class);
 
-    auto movement_coeffs_class = py::class_<mio::MovementCoefficients>(m, "MovementCoefficients");
+    auto movement_coeffs_class =
+        pymio::bind_class<mio::MovementCoefficients, pymio::EnablePickling::Required>(m, "MovementCoefficients");
     pymio::bind_damping_expression_members(movement_coeffs_class);
 
-    auto movement_coeff_group_class = py::class_<mio::MovementCoefficientGroup>(m, "MovementCoefficientGroup");
+    auto movement_coeff_group_class =
+        pymio::bind_class<mio::MovementCoefficientGroup, pymio::EnablePickling::Required>(m,
+                                                                                           "MovementCoefficientGroup");
     pymio::bind_damping_expression_group_members(movement_coeff_group_class);
 
     pymio::bind_dynamicNPI_members(m, "DynamicNPIs");
@@ -117,6 +143,24 @@ PYBIND11_MODULE(_simulation, m)
         },
         py::arg("state_id"), py::arg("start_date") = mio::Date(std::numeric_limits<int>::min(), 1, 1),
         py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1));
+
+    m.def(
+        "read_mobility_plain",
+        [](const std::string& filename) {
+            auto result = mio::read_mobility_plain(filename);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+
+#ifdef MEMILIO_HAS_JSONCPP
+    m.def(
+        "get_node_ids",
+        [](const std::string& path, bool is_node_for_county) {
+            auto result = mio::get_node_ids(path, is_node_for_county);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+#endif // MEMILIO_HAS_JSONCPP
 
     pymio::bind_logging(m, "LogLevel");
 

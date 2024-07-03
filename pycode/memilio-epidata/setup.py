@@ -67,7 +67,6 @@ setup(
             'getdividata = memilio.epidata.getDIVIData:main',
             'getsimdata = memilio.epidata.getSimulationData:main',
             'cleandata = memilio.epidata.cleanData:main',
-            'getcasesestimation = memilio.epidata.getCaseDatawithEstimations:main',
             'getcommutermobility = memilio.epidata.getCommuterMobility:main',
             'getvaccinationdata = memilio.epidata.getVaccinationData:main',
             'gethospitalizationdata = memilio.epidata.getHospitalizationData:main'
@@ -77,9 +76,10 @@ setup(
     long_description='',
     test_suite='memilio.epidata_test',
     install_requires=[
-        # smaller pandas versions contain a bug that sometimes prevents reading
-        # some excel files (e.g. population or twitter data)
+        # pandas 2.0 is minimum for CoW
         'pandas>=2.0.0',
+        # FutureWarning of pandas that pyarrow will be required in a future release
+        'pyarrow',
         'matplotlib',
         'tables',
         # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
@@ -91,12 +91,16 @@ setup(
         'pyxlsb',
         'wget',
         'twill==3.1',
+        'PyQt6',
+        'python-calamine',
         pymagic
     ],
     extras_require={
         'dev': [
-            # first support of python 3.11
-            'pyfakefs>=4.6',
+            # first support of python 3.11 4.6
+            # 5.3.4 has conflicts with openpyxl
+            # 5.3.3 broken
+            'pyfakefs>=4.6,<5.3.3',
             # coverage 7.0.0 can't find .whl files and breaks CI
             'coverage>=7.0.1',
             # pylint 2.16 creates problem with wrapt package version

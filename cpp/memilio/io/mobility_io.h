@@ -20,15 +20,9 @@
 #ifndef READ_TWITTER_H
 #define READ_TWITTER_H
 
-#include "memilio/config.h"
-#include "memilio/math/eigen.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
 
 namespace mio
 {
@@ -72,14 +66,14 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename);
  * @param directory directory where files should be stored
  * @param ioflags flags that set the behavior of serialization; see mio::IOFlags
  */
-template <class Model>
-IOResult<void> write_graph(const Graph<Model, MovementParameters>& graph, const std::string& directory,
+template <typename FP, class Model>
+IOResult<void> write_graph(const Graph<Model, MovementParameters<FP>>& graph, const std::string& directory,
                            int ioflags = IOF_None)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
 
     std::string abs_path;
-    BOOST_OUTCOME_TRY(created, create_directory(directory, abs_path));
+    BOOST_OUTCOME_TRY(auto&& created, create_directory(directory, abs_path));
 
     if (created) {
         log_info("Results are stored in {:s}/results.", mio::get_current_dir_name());
@@ -96,8 +90,8 @@ IOResult<void> write_graph(const Graph<Model, MovementParameters>& graph, const 
     //one file for the model (parameters and population)
     for (auto inode = size_t(0); inode < graph.nodes().size(); ++inode) {
         //node
-        auto& node = graph.nodes()[inode];
-        BOOST_OUTCOME_TRY(js_node_model, serialize_json(node.property, ioflags));
+        const auto node = graph.nodes()[inode];
+        BOOST_OUTCOME_TRY(auto&& js_node_model, serialize_json(node.property, ioflags));
         Json::Value js_node(Json::objectValue);
         js_node["NodeId"]  = node.id;
         js_node["Model"]   = js_node_model;
@@ -109,7 +103,7 @@ IOResult<void> write_graph(const Graph<Model, MovementParameters>& graph, const 
         if (out_edges.size()) {
             Json::Value js_edges(Json::arrayValue);
             for (auto& e : graph.out_edges(inode)) {
-                BOOST_OUTCOME_TRY(js_edge_params, serialize_json(e.property, ioflags));
+                BOOST_OUTCOME_TRY(auto&& js_edge_params, serialize_json(e.property, ioflags));
                 Json::Value js_edge{Json::objectValue};
                 js_edge["StartNodeIndex"] = Json::UInt64(e.start_node_idx);
                 js_edge["EndNodeIndex"]   = Json::UInt64(e.end_node_idx);
@@ -132,8 +126,9 @@ IOResult<void> write_graph(const Graph<Model, MovementParameters>& graph, const 
  * @param ioflags flags that set the behavior of serialization; see mio::IOFlags
  * @param read_edges boolean value that decides whether the edges of the graph should also be read in.
  */
-template <class Model>
-IOResult<Graph<Model, MovementParameters>> read_graph(const std::string& directory, int ioflags = IOF_None, bool read_edges = true)
+template <typename FP, class Model>
+IOResult<Graph<Model, MovementParameters<FP>>> read_graph(const std::string& directory, int ioflags = IOF_None,
+                                                           bool read_edges = true)
 {
     std::string abs_path;
     if (!file_exists(directory, abs_path)) {
@@ -141,7 +136,7 @@ IOResult<Graph<Model, MovementParameters>> read_graph(const std::string& directo
         return failure(StatusCode::FileNotFound, directory);
     }
 
-    auto graph = Graph<Model, MovementParameters>{};
+    auto graph = Graph<Model, MovementParameters<FP>>{};
 
     //read nodes, as many as files are available
     for (auto inode = 0;; ++inode) {
@@ -149,22 +144,22 @@ IOResult<Graph<Model, MovementParameters>> read_graph(const std::string& directo
         if (!file_exists(node_filename, node_filename)) {
             break;
         }
-        BOOST_OUTCOME_TRY(js_node, read_json(node_filename));
+        BOOST_OUTCOME_TRY(auto&& js_node, read_json(node_filename));
         if (!js_node["NodeId"].isInt()) {
             log_error("NodeId field must be an integer.");
             return failure(StatusCode::InvalidType, node_filename + ", NodeId must be an integer.");
         }
         auto node_id = js_node["NodeId"].asInt();
-        BOOST_OUTCOME_TRY(model, deserialize_json(js_node["Model"], Tag<Model>{}, ioflags));
+        BOOST_OUTCOME_TRY(auto&& model, deserialize_json(js_node["Model"], Tag<Model>{}, ioflags));
         graph.add_node(node_id, model);
     }
 
     //read edges; nodes must already be available for that)
-    if(read_edges){
+    if (read_edges) {
         for (auto inode = size_t(0); inode < graph.nodes().size(); ++inode) {
             //list of edges
             auto edge_filename = path_join(abs_path, "GraphEdges_node" + std::to_string(inode) + ".json");
-            BOOST_OUTCOME_TRY(js_edges, read_json(edge_filename));
+            BOOST_OUTCOME_TRY(auto&& js_edges, read_json(edge_filename));
 
             for (auto& e : js_edges) {
                 auto start_node_idx  = inode;
@@ -177,9 +172,10 @@ IOResult<Graph<Model, MovementParameters>> read_graph(const std::string& directo
                 if (end_node_idx >= graph.nodes().size()) {
                     log_error("EndNodeIndex not in range of number of graph nodes.");
                     return failure(StatusCode::OutOfRange,
-                                edge_filename + ", EndNodeIndex not in range of number of graph nodes.");
+                                   edge_filename + ", EndNodeIndex not in range of number of graph nodes.");
                 }
-                BOOST_OUTCOME_TRY(parameters, deserialize_json(e["Parameters"], Tag<MovementParameters>{}, ioflags));
+                BOOST_OUTCOME_TRY(auto&& parameters,
+                                  deserialize_json(e["Parameters"], Tag<MovementParameters<FP>>{}, ioflags));
                 graph.add_edge(start_node_idx, end_node_idx, parameters);
             }
         }

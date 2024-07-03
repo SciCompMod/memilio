@@ -22,7 +22,7 @@
 #include "abm_helpers.h"
 #include <gtest/gtest.h>
 
-TEST(TestHouseholds, test_add_household_to_world)
+TEST(TestHouseholds, test_add_household_to_model)
 {
     auto member1 = mio::abm::HouseholdMember(num_age_groups);
     member1.set_age_weight(age_group_0_to_4, 1);
@@ -34,10 +34,10 @@ TEST(TestHouseholds, test_add_household_to_world)
     household.add_members(member1, 2);
     household.add_members(member2, 2);
 
-    auto world = mio::abm::World(num_age_groups);
+    auto model = mio::abm::Model(num_age_groups);
 
-    add_household_to_world(world, household);
-    auto persons = world.get_persons();
+    add_household_to_model(model, household);
+    auto persons = model.get_persons();
 
     // Test size
     EXPECT_EQ(persons.size(), 4);
@@ -53,7 +53,7 @@ TEST(TestHouseholds, test_add_household_to_world)
     EXPECT_EQ(persons[2].get_location().get_index(), persons[3].get_location().get_index());
 }
 
-TEST(TestHouseholds, test_add_household_group_to_world)
+TEST(TestHouseholds, test_add_household_group_to_model)
 {
 
     auto member1 = mio::abm::HouseholdMember(num_age_groups);
@@ -74,10 +74,10 @@ TEST(TestHouseholds, test_add_household_group_to_world)
     household2.add_members(member2, 2);
     household_group.add_households(household2, 10);
 
-    auto world = mio::abm::World(num_age_groups);
+    auto model = mio::abm::Model(num_age_groups);
 
-    add_household_group_to_world(world, household_group);
-    auto persons = world.get_persons();
+    add_household_group_to_model(model, household_group);
+    auto persons = model.get_persons();
 
     // Test size
     EXPECT_EQ(persons.size(), 100);

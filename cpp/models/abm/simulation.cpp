@@ -27,17 +27,17 @@ namespace mio
 namespace abm
 {
 
-Simulation::Simulation(TimePoint t, World&& world)
-    : m_world(std::move(world))
+Simulation::Simulation(TimePoint t, Model&& model)
+    : m_model(std::move(model))
     , m_t(t)
     , m_dt(hours(1))
 {
 }
 
-void Simulation::evolve_world(TimePoint tmax)
+void Simulation::evolve_model(TimePoint tmax)
 {
     auto dt = std::min(m_dt, tmax - m_t);
-    m_world.evolve(m_t, dt);
+    m_model.evolve(m_t, dt);
     m_t += m_dt;
 }
 

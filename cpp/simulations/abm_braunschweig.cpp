@@ -48,9 +48,9 @@ const auto age_group_80_plus  = mio::AgeGroup(5);
  * @param min minimum of distribution.
  * @param max minimum of distribution.
  */
-void assign_uniform_distribution(mio::UncertainValue& p, ScalarType min, ScalarType max)
+void assign_uniform_distribution(mio::UncertainValue<>& p, ScalarType min, ScalarType max)
 {
-    p = mio::UncertainValue(0.5 * (max + min));
+    p = mio::UncertainValue<>(0.5 * (max + min));
     p.set_distribution(mio::ParameterDistributionUniform(min, max));
 }
 
@@ -77,17 +77,17 @@ mio::abm::InfectionState determine_infection_state(mio::abm::Person::RandomNumbe
 /**
  * Assign an infection state to each person.
  */
-void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, double exposed_prob,
+void assign_infection_state(mio::abm::Model& model, mio::abm::TimePoint t, double exposed_prob,
                             double infected_no_symptoms_prob, double infected_symptoms_prob, double recovered_prob)
 {
-    auto persons = world.get_persons();
+    auto persons = model.get_persons();
     for (auto& person : persons) {
-        auto rng             = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        auto rng             = mio::abm::Person::RandomNumberGenerator(model.get_rng(), person);
         auto infection_state = determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob,
                                                          infected_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible)
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         world.parameters, t, infection_state));
+                                                         model.parameters, t, infection_state));
     }
 }
 int stringToMinutes(const std::string& input)
@@ -185,7 +185,7 @@ mio::AgeGroup determine_age_group(uint32_t age)
     }
 }
 
-void create_world_from_data(mio::abm::World& world, const std::string& filename, const mio::abm::TimePoint t0,
+void create_model_from_data(mio::abm::Model& model, const std::string& filename, const mio::abm::TimePoint t0,
                             int max_number_persons)
 {
     // Open File
@@ -221,16 +221,16 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
     std::map<uint32_t, std::pair<uint32_t, int>> locations_before;
     std::map<uint32_t, std::pair<uint32_t, int>> locations_after;
 
-    // For the world we need: Hospitals, ICUs (for both we just create one for now), Homes for each unique householdID, One Person for each person_id with respective age and home_id.
+    // For the model we need: Hospitals, ICUs (for both we just create one for now), Homes for each unique householdID, One Person for each person_id with respective age and home_id.
 
     // We assume that no person goes to an hospital, altough e.g. "Sonstiges" could be a hospital
-    auto hospital = world.add_location(mio::abm::LocationType::Hospital);
-    world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    world.get_individualized_location(hospital).set_capacity(std::numeric_limits<uint32_t>::max(),
+    auto hospital = model.add_location(mio::abm::LocationType::Hospital);
+    model.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    model.get_individualized_location(hospital).set_capacity(std::numeric_limits<uint32_t>::max(),
                                                              std::numeric_limits<uint32_t>::max());
-    auto icu = world.add_location(mio::abm::LocationType::ICU);
-    world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    world.get_individualized_location(icu).set_capacity(std::numeric_limits<uint32_t>::max(),
+    auto icu = model.add_location(mio::abm::LocationType::ICU);
+    model.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    model.get_individualized_location(icu).set_capacity(std::numeric_limits<uint32_t>::max(),
                                                         std::numeric_limits<uint32_t>::max());
 
     // First we determine the persons number and their starting locations
@@ -286,7 +286,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
     fin.seekg(0);
     std::getline(fin, line); // Skip header row
 
-    // Add all locations to the world
+    // Add all locations to the model
     while (std::getline(fin, line)) {
         row.clear();
 
@@ -306,11 +306,11 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         mio::abm::LocationId home;
         auto it_home = locations.find(home_id);
         if (it_home == locations.end()) {
-            home = world.add_location(mio::abm::LocationType::Home, 1);
+            home = model.add_location(mio::abm::LocationType::Home, 1);
             locations.insert({home_id, home});
             mio::abm::GeographicalLocation location_long_lat_home = {(double)row[index["lon_start"]] / 1e+5,
                                                                      (double)row[index["lat_start"]] / 1e+5};
-            world.get_individualized_location(home).set_geographical_location(location_long_lat_home);
+            model.get_individualized_location(home).set_geographical_location(location_long_lat_home);
         }
         else {
             home = it_home->second;
@@ -320,11 +320,11 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         auto it_location = locations.find(
             target_location_id); // Check if location already exists also for home which have the same id (home_id = target_location_id)
         if (it_location == locations.end()) {
-            location = world.add_location(
+            location = model.add_location(
                 get_location_type(activity_end),
                 1); // Assume one place has one activity, this may be untrue but not important for now(?)
             locations.insert({target_location_id, location});
-            world.get_individualized_location(location).set_geographical_location(location_long_lat);
+            model.get_individualized_location(location).set_geographical_location(location_long_lat);
         }
     }
     fin.clear();
@@ -364,7 +364,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             }
             auto first_location_id = it_first_location_id->second.first;
             auto first_location    = locations.find(first_location_id)->second;
-            auto& person           = world.add_person(first_location, determine_age_group(age));
+            auto& person           = model.add_person(first_location, determine_age_group(age));
             auto home              = locations.find(home_id)->second;
             person.set_assigned_location(home);
             person.set_assigned_location(hospital);
@@ -380,15 +380,20 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             start_location = {it_person->second.get_assigned_location_index(mio::abm::LocationType::Home),
                               mio::abm::LocationType::Home};
         }
-        world.get_trip_list().add_trip(mio::abm::Trip(
+        model.get_trip_list().add_trip(mio::abm::Trip(
             it_person->second.get_person_id(), mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location,
             start_location, mio::abm::TransportMode(transport_mode), mio::abm::ActivityType(acticity_end)));
     }
-    world.get_trip_list().use_weekday_trips_on_weekend();
+    model.get_trip_list().use_weekday_trips_on_weekend();
 }
 
 void set_parameters(mio::abm::Parameters params)
 {
+    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    params.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
+    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
+    params.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
+
     params.set<mio::abm::IncubationPeriod>({{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, 4.});
 
     // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
@@ -883,27 +888,27 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
     ScalarType exposed_prob = 0.005, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,
                recovered_prob = 0.0;
 
-    //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
-    auto world = mio::abm::World(num_age_groups);
+    //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the model
+    auto model = mio::abm::Model(num_age_groups);
 
-    set_parameters(world.parameters);
+    set_parameters(model.parameters);
 
-    // Create the world object from statistical data.
-    create_world_from_data(world, input_file, t0, max_num_persons);
-    world.use_movement_rules(false);
+    // Create the model object from statistical data.
+    create_model_from_data(model, input_file, t0, max_num_persons);
+    model.use_movement_rules(false);
 
     // Assign an infection state to each person.
-    assign_infection_state(world, t0, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
+    assign_infection_state(model, t0, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
 
     auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
 
     // During the lockdown, 25% of people work from home and schools are closed for 90% of students.
     // Social events are very rare.
-    mio::abm::set_home_office(t_lockdown, 0.25, world.parameters);
-    mio::abm::set_school_closure(t_lockdown, 0.9, world.parameters);
-    mio::abm::close_social_events(t_lockdown, 0.9, world.parameters);
+    mio::abm::set_home_office(t_lockdown, 0.25, model.parameters);
+    mio::abm::set_school_closure(t_lockdown, 0.9, model.parameters);
+    mio::abm::close_social_events(t_lockdown, 0.9, model.parameters);
 
-    auto sim = mio::abm::Simulation(t0, std::move(world));
+    auto sim = mio::abm::Simulation(t0, std::move(model));
     return sim;
 }
 
@@ -1008,12 +1013,12 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
         mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
             Eigen::Index(mio::abm::InfectionState::Count)};
         mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMovement> historyPersonInfDelta;
-        // Collect the id of location in world.
+        // Collect the id of location in model.
         std::vector<int> loc_ids;
-        for (auto& location : sim.get_world().get_locations()) {
+        for (auto& location : sim.get_model().get_locations()) {
             loc_ids.push_back(location.get_index());
         }
-        // Advance the world to tmax
+        // Advance the model to tmax
         sim.advance(tmax, historyPersonInf, historyTimeSeries, historyPersonInfDelta);
         // TODO: update result of the simulation to be a vector of location result.
         auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyTimeSeries.get_log())};
@@ -1022,7 +1027,7 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
         // Option to save the current run result to file
         if (save_result_result && save_single_runs) {
             auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
-            BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string()));
+            save_result_result  = save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string());
         }
         write_log_to_file_person_and_location_data(historyPersonInf);
         write_log_to_file_trip_data(historyPersonInfDelta);

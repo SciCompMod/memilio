@@ -328,7 +328,7 @@ TEST(TestJsonSerializer, uniform_distribution)
 
 TEST(TestJsonSerializer, serialize_uv)
 {
-    mio::UncertainValue uv(2.0);
+    mio::UncertainValue<double> uv(2.0);
     Json::Value expected_value;
     expected_value["Value"] = 2.0;
     auto js                 = mio::serialize_json(uv);
@@ -350,7 +350,7 @@ TEST(TestJsonSerializer, deserialize_uv)
     Json::Value json_uv;
     json_uv["Value"] = 2.0;
     {
-        auto r = mio::deserialize_json(json_uv, mio::Tag<mio::UncertainValue>{});
+        auto r = mio::deserialize_json(json_uv, mio::Tag<mio::UncertainValue<double>>{});
         EXPECT_TRUE(r);
         EXPECT_EQ(double(r.value()), 2.0);
         EXPECT_EQ(r.value().get_distribution(), nullptr);
@@ -363,7 +363,7 @@ TEST(TestJsonSerializer, deserialize_uv)
     json_uv["Distribution"]["StandardDev"]       = 0.1;
     json_uv["Distribution"]["PredefinedSamples"] = Json::Value(Json::arrayValue);
     {
-        auto r = mio::deserialize_json(json_uv, mio::Tag<mio::UncertainValue>{});
+        auto r = mio::deserialize_json(json_uv, mio::Tag<mio::UncertainValue<double>>{});
         EXPECT_TRUE(r);
         EXPECT_EQ(double(r.value()), 2.0);
         EXPECT_NE(r.value().get_distribution(), nullptr);
@@ -506,10 +506,10 @@ TEST(TestJsonSerializer, abmPerson)
 
 TEST(TestJsonSerializer, abmTrip)
 {
-    auto world   = mio::abm::World(num_age_groups);
-    auto home_id = world.add_location(mio::abm::LocationType::Home);
-    auto work_id = world.add_location(mio::abm::LocationType::Work);
-    auto& home   = world.get_individualized_location(home_id);
+    auto model   = mio::abm::Model(num_age_groups);
+    auto home_id = model.add_location(mio::abm::LocationType::Home);
+    auto work_id = model.add_location(mio::abm::LocationType::Work);
+    auto& home   = model.get_individualized_location(home_id);
     auto person  = make_test_person(home);
     mio::abm::Trip trip(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), work_id, home_id);
     auto js = mio::serialize_json(trip, true);
@@ -527,17 +527,17 @@ TEST(TestJsonSerializer, abmTrip)
     EXPECT_EQ(r.value(), trip);
 }
 
-TEST(TestJsonSerializer, abmWorld)
+TEST(TestJsonSerializer, abmModel)
 {
-    auto world   = mio::abm::World(num_age_groups);
-    auto home_id = world.add_location(mio::abm::LocationType::Home);
-    auto work_id = world.add_location(mio::abm::LocationType::Work);
-    auto person  = world.add_person(home_id, age_group_15_to_34);
+    auto model   = mio::abm::Model(num_age_groups);
+    auto home_id = model.add_location(mio::abm::LocationType::Home);
+    auto work_id = model.add_location(mio::abm::LocationType::Work);
+    auto person  = model.add_person(home_id, age_group_15_to_34);
     mio::abm::Trip trip1(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), work_id, home_id);
     mio::abm::Trip trip2(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(11), work_id, home_id);
-    world.get_trip_list().add_trip(trip1, false);
-    world.get_trip_list().add_trip(trip2, true);
-    auto js = mio::serialize_json(world);
+    model.get_trip_list().add_trip(trip1, false);
+    model.get_trip_list().add_trip(trip2, true);
+    auto js = mio::serialize_json(model);
     Json::Value expected_json;
     expected_json["num_agegroups"]                   = Json::UInt(num_age_groups);
     expected_json["trips"][0]["person_id"]           = Json::UInt(person.get_person_id());
@@ -565,7 +565,7 @@ TEST(TestJsonSerializer, abmWorld)
     expected_json["use_movement_rules"]             = Json::Value(true);
     ASSERT_EQ(js.value(), expected_json);
 
-    // auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::World>());
+    // auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Model>());
     // ASSERT_THAT(print_wrap(r), IsSuccess());
-    // EXPECT_EQ(r.value(), world);
+    // EXPECT_EQ(r.value(), model);
 }

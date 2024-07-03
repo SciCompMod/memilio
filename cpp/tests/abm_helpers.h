@@ -95,7 +95,7 @@ struct ScopedMockDistribution {
 };
 
 /**
- * @brief Create a Person without a World object. Intended for simple use in tests.
+ * @brief Create a Person without a Model object. Intended for simple use in tests.
 */
 mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup age = age_group_15_to_34,
                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
@@ -103,9 +103,9 @@ mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup ag
                                   mio::abm::Parameters params              = mio::abm::Parameters(num_age_groups));
 
 /**
- * @brief Add a Person to the World. Intended for simple use in tests.
+ * @brief Add a Person to the Model. Intended for simple use in tests.
 */
-mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id,
+mio::abm::Person& add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id,
                                   mio::AgeGroup age                        = age_group_15_to_34,
                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0));

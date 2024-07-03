@@ -331,6 +331,7 @@ TEST(TestMovementRules, quarantine)
     auto rng = mio::RandomNumberGenerator();
     auto t   = mio::abm::TimePoint(12346);
     auto dt  = mio::abm::hours(1);
+    auto test_params = mio::abm::TestParameters{1.0,1.0};
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
@@ -338,7 +339,7 @@ TEST(TestMovementRules, quarantine)
 
     auto p_inf1   = make_test_person(work, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, t);
     auto rng_inf1 = mio::abm::Person::RandomNumberGenerator(rng, p_inf1);
-    p_inf1.detect_infection(t);
+    p_inf1.get_tested(rng_inf1, t, test_params);
     ASSERT_EQ(mio::abm::go_to_quarantine(rng_inf1, p_inf1, t, dt, mio::abm::Parameters(num_age_groups)),
               mio::abm::LocationType::Home); //detected infected person quarantines at home
 
@@ -349,7 +350,7 @@ TEST(TestMovementRules, quarantine)
 
     auto p_inf3   = make_test_person(hospital, age_group_15_to_34, mio::abm::InfectionState::InfectedSevere, t);
     auto rng_inf3 = mio::abm::Person::RandomNumberGenerator(rng, p_inf3);
-    p_inf3.detect_infection(t);
+    p_inf1.get_tested(rng_inf3, t, test_params);
     ASSERT_EQ(mio::abm::go_to_quarantine(rng_inf3, p_inf3, t, dt, mio::abm::Parameters(num_age_groups)),
               mio::abm::LocationType::Hospital); //detected infected person does not leave hospital to quarantine
 }
@@ -414,7 +415,7 @@ TEST(TestMovementRules, shop_return)
     auto p     = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
     auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
     home.add_person(p);
-    p.migrate_to(shop);
+    p.move_to(shop);
     p.interact(rng_p, t, dt, params); //person only returns home after some time passed
 
     ASSERT_EQ(mio::abm::go_to_shop(rng_p, p, t, dt, mio::abm::Parameters(num_age_groups)),
@@ -464,7 +465,7 @@ TEST(TestMovementRules, event_return)
     auto p     = mio::abm::Person(rng, home, age_group_15_to_34);
     auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
     home.add_person(p);
-    p.migrate_to(social_event);
+    p.move_to(social_event);
     p.interact(rng_p, t, dt, params);
 
     ASSERT_EQ(mio::abm::go_to_event(rng_p, p, t, dt, mio::abm::Parameters(num_age_groups)),

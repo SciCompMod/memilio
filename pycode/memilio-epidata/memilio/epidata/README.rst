@@ -31,7 +31,7 @@ Sources
 
   - Testing Data (RKI-T)
 
-    https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Testzahlen-gesamt.xlsx
+    https://github.com/robert-koch-institut/SARS-CoV-2-PCR-Testungen_in_Deutschland/raw/main/SARS-CoV-2-PCR-Testungen_in_Deutschland.csv
   
   - Hospitalization data (RKI-H)
   
@@ -89,39 +89,54 @@ optional arguments working for all are:
 +---------------------------------------------+-----------------------------------------------------------+
 | -n, --no-raw                                | Defines if raw data will be stored for further use.       |
 +---------------------------------------------+-----------------------------------------------------------+
+| --no-progress-indicators                    | Disables all progress indicators (used for downloads etc.)|
++---------------------------------------------+-----------------------------------------------------------+
+| --interactive                               | Interactive download (Handle warnings, passwords etc.).   |
++---------------------------------------------+-----------------------------------------------------------+
+| -v, --verbose                              | Increases verbosity level.                                |
++---------------------------------------------+-----------------------------------------------------------+
+| --skip-checks                               | Skips sanity checks etc.                                  |
++---------------------------------------------+-----------------------------------------------------------+
 
 optional arguments working for some are:
 
 +---------------------------------------------+-----------------------------------------------------------+
 | -p, --make-plot                             | Plots the data.                                           |
 +---------------------------------------------+-----------------------------------------------------------+
-| -ed, --end-date                             | Changes date for which data collection is stopped [divi]  |
+| -ed, --end-date                             | Changes date for which data collection is stopped         |
 +---------------------------------------------+-----------------------------------------------------------+
-| -sd, --start-date                           | Changes date for which data collection is started [divi]  |
+| -sd, --start-date                           | Changes date for which data collection is started         |
 +---------------------------------------------+-----------------------------------------------------------+
 | -i, --impute-dates                          | Returns dataframes with all dates instead of only dates   |
 |                                             | where new cases have been reported.                       |
 |                                             |                                                           |
 |                                             | Note that this option will have a negative impact         |
 |                                             | on performance as well as on the storage space needed.    |
-|                                             | [cases]                                                   |
+|                                             |                                                           |
 +---------------------------------------------+-----------------------------------------------------------+
 | -m N, --moving-average N                    | The central N days moving average is computed for the     |
 |                                             | data.                                                     |
 |                                             |                                                           |
 |                                             | Note that the --impute_dates option will be implicitly    |
 |                                             | turned on, as computing the moving average requires all   |
-|                                             | dates to be available. [cases]                            |
+|                                             | dates to be available.                                    |
 +---------------------------------------------+-----------------------------------------------------------+
 | -sb, --split-berlin                         | Berlin data is split into different counties,             |
 |                                             | instead of having only one county for Berlin. [cases]     |
 +---------------------------------------------+-----------------------------------------------------------+
-| -- rep-date                                 | The reporting date will be prefered over possibly given   |
+| --rep-date                                  | The reporting date will be prefered over possibly given   |
 |                                             | dates of disease onset. [cases]                           |
 +---------------------------------------------+-----------------------------------------------------------+
-| -- sanitize-data                            | Different ways to distribute vaccinations to home         |
+| --sanitize-data                             | Different ways to distribute vaccinations to home         |
 |                                             | locations of vaccinated persons[vaccination]              |
 +---------------------------------------------+-----------------------------------------------------------+
+| --username                                  | Username for regionalstatistik.de [population]            |
++---------------------------------------------+-----------------------------------------------------------+
+| --password                                  | Password for regionalstatistik.de [population]            |
++---------------------------------------------+-----------------------------------------------------------+
+| --files                                     | Files to write [case]                                     |
++---------------------------------------------+-----------------------------------------------------------+
+
 
 Hint:
 When using the "--make-plot" option close one figure-window to get the next one.
@@ -176,16 +191,6 @@ RKI-H          Germany     hospit_germany_age                  hospitalizations 
 RKI-H          Germany     hospit_state_age                    hospitalizations per day for different states
 RKI-H          Germany     hospit_germany                      hospitalizations per day in germany
 
-RKI-Estimation Germany     cases_all_germany_estimated         infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
-RKI-Estimation Germany     cases_all_state_estimated           infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states    (Bundesländer)
-RKI-Estimation Germany     cases_all_county_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different counties   (Landkreise)
-RKI-Estimation Germany     cases_all_gender_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different gender
-RKI-Estimation Germany     cases_all_age_estimated             infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges
-RKI-Estimation Germany     cases_all_state_age_estimated       infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and states
-RKI-Estimation Germany     cases_all_state_gender_estimated    infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders and states
-RKI-Estimation Germany     cases_all_county_age_estimated      infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and counties
-RKI-Estimation Germany     cases_all_county_gender_estimated   infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders and counties
-
 P              Germany     county_current_population[_dim401]  population for different age groups from the 2011 census, extrapolated to the current level [with Wartburgkreis and Eisenach separated]
 P              Germany     county_population[_dim401]          population for different age groups from the 2011 census [with Wartburgkreis and Eisenach separated]
 P              Germany     county_table                        raw information on the German counties and its population sizes
@@ -208,8 +213,8 @@ DIVI           Germany     county_divi                         ICU, ICU_ventilat
 DIVI           Germany     state_divi                          ICU, ICU_ventilated over time for different states (Bundesländer) with columns ['Date', 'ICU', 'ICU_ventilated', 'ID_State', 'State']
 DIVI           Germany     germany_divi                        ICU, ICU_ventilated over time for whole Germany with columns ['Date', 'ICU', 'ICU_ventilated']
 
-BAA            Germany     migration_bfa_2020_dim401           number of commuters from one county into another indexed by county ids (with eisenach)
-BAA            Germany     migration_bfa_2020_dim400           number of commuters from one county into another indexed by county ids (with eisenach merged into wartburgkreis)
+BAA            Germany     movement_bfa_2020_dim401           number of commuters from one county into another indexed by county ids (with eisenach)
+BAA            Germany     movement_bfa_2020_dim400           number of commuters from one county into another indexed by county ids (with eisenach merged into wartburgkreis)
 ============== ==========  =================================== =================
 
 More detailed information can be found in the

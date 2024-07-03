@@ -17,6 +17,10 @@ option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." ON)
 option(MEMILIO_BUILD_STATIC_LIBS "Build memilio as a static library." ON)
 option(MEMILIO_ENABLE_MPI "Build memilio with MPI." OFF)
 option(MEMILIO_ENABLE_OPENMP "Enable Multithreading with OpenMP." OFF)
+option(MEMILIO_ENABLE_WARNINGS "Build memilio with warnings." ON)
+option(MEMILIO_ENABLE_WARNINGS_AS_ERRORS "Build memilio with warnings as errors." ON)
+option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler" OFF)
+option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio" OFF)
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
@@ -75,7 +79,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         setup_target_for_coverage_lcov(
             NAME coverage
             EXECUTABLE memilio-test
-            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/simulations*" "${CMAKE_SOURCE_DIR}/examples*" "${CMAKE_BINARY_DIR}/*" "/usr*"
+            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/simulations*" "${CMAKE_SOURCE_DIR}/examples*"
+            "${CMAKE_SOURCE_DIR}/memilio/ad*" "${CMAKE_BINARY_DIR}/*" "/usr*" "${CMAKE_SOURCE_DIR}/*.F"
         )
     endif()
 endif()
@@ -100,29 +105,51 @@ endif((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND(CMAKE_CXX_COMPILER_VERSION VERS
 
 # define flags to enable most warnings and treat them as errors for different compilers
 # add flags to each target separately instead of globally so users have the choice to use their own flags
+if(MEMILIO_ENABLE_WARNINGS)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+            "/W4;")
+    else()
+        string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+            "-Wall;-Wextra;-Wshadow;--pedantic;")
+    endif()
+endif()
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "-Wno-unknown-warning;-Wno-pragmas;-Wall;-Wextra;-Werror;-Wshadow;--pedantic-errors;-Wno-deprecated-copy;-Wno-expansion-to-defined")
+    string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+        "-Wno-unknown-warning;-Wno-pragmas;-Wno-deprecated-copy;-Wno-expansion-to-defined;")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "-Wno-unknown-warning-option;-Wall;-Wextra;-Werror;-Wshadow;--pedantic-errors;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments")
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "/W4;/WX")
+    string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+        "-Wno-unknown-warning-option;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;")
+endif()
+
+if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+            "/WX")
+    else()
+        string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+            "-Werror")
+    endif()
 endif()
 
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
+add_subdirectory(memilio/ad)
 add_subdirectory(memilio)
 
 if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/abm)
     add_subdirectory(models/ode_secir)
     add_subdirectory(models/ode_secirvvs)
+    add_subdirectory(models/lct_secir)
     add_subdirectory(models/ide_secir)
     add_subdirectory(models/ide_seir)
     add_subdirectory(models/ode_seir)
+    add_subdirectory(models/ode_seair)
     add_subdirectory(models/ode_sir)
+    add_subdirectory(models/sde_sir)
+    add_subdirectory(models/sde_sirs)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)

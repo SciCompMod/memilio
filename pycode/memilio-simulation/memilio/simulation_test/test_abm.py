@@ -30,23 +30,23 @@ num_age_groups = 6
 
 
 class TestAbm(unittest.TestCase):
-    def test_world(self):
+    def test_model(self):
         t0 = abm.TimePoint(0)
         sim = abm.Simulation(t0, num_age_groups)
-        world = sim.world
-        self.assertEqual(len(world.persons), 0)
-        self.assertEqual(len(world.locations), 1)
+        model = sim.model
+        self.assertEqual(len(model.persons), 0)
+        self.assertEqual(len(model.locations), 1)
 
     def test_locations(self):
         t0 = abm.TimePoint(0)
         sim = abm.Simulation(t0, num_age_groups)
-        world = sim.world
+        model = sim.model
 
-        home_id = world.add_location(abm.LocationType.Home)
-        social_event_id = world.add_location(abm.LocationType.SocialEvent)
-        self.assertEqual(len(world.locations), 3)
+        home_id = model.add_location(abm.LocationType.Home)
+        social_event_id = model.add_location(abm.LocationType.SocialEvent)
+        self.assertEqual(len(model.locations), 3)
 
-        home = world.locations[home_id.index]
+        home = model.locations[home_id.index]
         self.assertEqual(home.type, abm.LocationType.Home)
 
         testing_ages = [mio.AgeGroup(0)]
@@ -65,47 +65,47 @@ class TestAbm(unittest.TestCase):
     def test_persons(self):
         t0 = abm.TimePoint(0)
         sim = abm.Simulation(t0, 6)
-        world = sim.world
+        model = sim.model
 
-        home_id = world.add_location(abm.LocationType.Home)
-        social_event_id = world.add_location(abm.LocationType.SocialEvent)
+        home_id = model.add_location(abm.LocationType.Home)
+        social_event_id = model.add_location(abm.LocationType.SocialEvent)
 
-        p1 = world.add_person(
+        p1 = model.add_person(
             home_id, mio.AgeGroup(2))
-        p2 = world.add_person(
+        p2 = model.add_person(
             social_event_id, mio.AgeGroup(5))
 
         # check persons
-        self.assertEqual(len(world.persons), 2)
+        self.assertEqual(len(model.persons), 2)
         self.assertEqual(p1.age, mio.AgeGroup(2))
         self.assertEqual(p1.location.index, 1)
-        self.assertEqual(world.persons[0], p1)
-        self.assertEqual(world.persons[1], p2)
+        self.assertEqual(model.persons[0], p1)
+        self.assertEqual(model.persons[1], p2)
 
     def test_simulation(self):
         t0 = abm.TimePoint(0)
         sim = abm.Simulation(t0, num_age_groups)
-        world = sim.world
+        model = sim.model
 
         # add some locations and persons
         for type in abm.LocationType.values():
-            world.add_location(type)
+            model.add_location(type)
         home_id = abm.LocationId(0, abm.LocationType.Home)
         social_event_id = abm.LocationId(0, abm.LocationType.SocialEvent)
         work_id = abm.LocationId(0, abm.LocationType.Work)
-        p1 = world.add_person(
+        p1 = model.add_person(
             home_id, mio.AgeGroup(0))
-        p2 = world.add_person(
+        p2 = model.add_person(
             home_id, mio.AgeGroup(2))
         for type in abm.LocationType.values():
             p1.set_assigned_location(abm.LocationId(0, type))
             p2.set_assigned_location(abm.LocationId(0, type))
 
-        social_event = world.locations[social_event_id.index]
+        social_event = model.locations[social_event_id.index]
 
-        world.parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype, mio.AgeGroup(
+        model.parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype, mio.AgeGroup(
             0)] = 0.0
-        world.parameters.InfectedSymptomsToRecovered[abm.VirusVariant.Wildtype, mio.AgeGroup(
+        model.parameters.InfectedSymptomsToRecovered[abm.VirusVariant.Wildtype, mio.AgeGroup(
             0)] = 0.0
 
         # trips
@@ -114,9 +114,9 @@ class TestAbm(unittest.TestCase):
             0) + abm.hours(8), social_event_id, home_id))
         trip_list.add_trip(abm.Trip(1, abm.TimePoint(0) +
                            abm.hours(8), work_id, home_id))
-        world.trip_list = trip_list
-        world.use_movement_rules = False
-        self.assertEqual(world.trip_list.num_trips(), 2)
+        model.trip_list = trip_list
+        model.use_movement_rules = False
+        self.assertEqual(model.trip_list.num_trips(), 2)
 
         # vaccination
         vaccine = abm.Vaccination(

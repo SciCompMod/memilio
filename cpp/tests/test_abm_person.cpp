@@ -51,7 +51,7 @@ TEST(TestPerson, copyPerson)
     ASSERT_EQ(copied_person.get_person_id(), mio::abm::INVALID_PERSON_ID);
 }
 
-TEST(TestPerson, migrate)
+TEST(TestPerson, move)
 {
     auto rng = mio::RandomNumberGenerator();
 
@@ -61,7 +61,7 @@ TEST(TestPerson, migrate)
     mio::abm::Location loc2(mio::abm::LocationType::School, 0, num_age_groups);
     mio::abm::Location loc3(mio::abm::LocationType::PublicTransport, 0, 6, 2);
     auto person = make_test_person(home, age_group_0_to_4, mio::abm::InfectionState::Recovered);
-    person.migrate_to(loc1, {0});
+    person.move_to(loc1, {0});
 
     ASSERT_EQ(person.get_location(), loc1);
     ASSERT_EQ(loc1.get_subpopulation(t, mio::abm::InfectionState::Recovered), 1);
@@ -69,7 +69,7 @@ TEST(TestPerson, migrate)
     ASSERT_EQ(loc1.get_cells()[0].m_persons.size(), 1u);
     ASSERT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Unknown);
 
-    person.migrate_to(loc2, mio::abm::TransportMode::Walking);
+    person.move_to(loc2, mio::abm::TransportMode::Walking);
 
     ASSERT_EQ(person.get_location(), loc2);
     ASSERT_EQ(loc2.get_subpopulation(t, mio::abm::InfectionState::Recovered), 1);
@@ -77,7 +77,7 @@ TEST(TestPerson, migrate)
     ASSERT_EQ(loc1.get_cells()[0].m_persons.size(), 0u);
     ASSERT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Walking);
 
-    person.migrate_to(loc3, mio::abm::TransportMode::Bike, {0, 1});
+    person.move_to(loc3, mio::abm::TransportMode::Bike, {0, 1});
 
     ASSERT_EQ(loc3.get_cells()[0].m_persons.size(), 1u);
     ASSERT_EQ(loc3.get_cells()[1].m_persons.size(), 1u);
@@ -102,7 +102,8 @@ TEST(TestPerson, setGetAssignedLocation)
 TEST(TestPerson, quarantine)
 {
     using testing::Return;
-    auto rng = mio::RandomNumberGenerator();
+    auto rng         = mio::RandomNumberGenerator();
+    auto test_params = mio::abm::TestParameters{1.01, 1.01}; //100% safe test
 
     auto infection_parameters = mio::abm::Parameters(num_age_groups);
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -123,26 +124,29 @@ TEST(TestPerson, quarantine)
     infection_parameters
         .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
         0.5 * dt.days();
+    infection_parameters.get<mio::abm::AgeGroupGotoSchool>().set_multiple({age_group_5_to_14}, true);
+    infection_parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
 
     auto person     = make_test_person(home, age_group_35_to_59, mio::abm::InfectionState::InfectedSymptoms, t_morning,
                                        infection_parameters);
     auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
 
-    person.detect_infection(t_morning);
+    person.get_tested(rng_person, t_morning, test_params);
 
     ASSERT_EQ(person.get_infection_state(t_morning), mio::abm::InfectionState::InfectedSymptoms);
-    ASSERT_EQ(mio::abm::go_to_work(rng_person, person, t_morning, dt, mio::abm::Parameters(num_age_groups)),
+    ASSERT_EQ(mio::abm::go_to_work(rng_person, person, t_morning, dt, infection_parameters),
               mio::abm::LocationType::Home);
     ASSERT_EQ(person.get_infection_state(t_morning + dt), mio::abm::InfectionState::Recovered);
     person.remove_quarantine();
-    ASSERT_EQ(mio::abm::go_to_work(rng_person, person, t_morning, dt, mio::abm::Parameters(num_age_groups)),
+    ASSERT_EQ(mio::abm::go_to_work(rng_person, person, t_morning, dt, infection_parameters),
               mio::abm::LocationType::Work);
 }
 
 TEST(TestPerson, get_tested)
 {
     using testing::Return;
-    auto rng = mio::RandomNumberGenerator();
+    auto rng                    = mio::RandomNumberGenerator();
+    mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
 
     mio::abm::TimePoint t(0);
     mio::abm::Location loc(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -164,14 +168,15 @@ TEST(TestPerson, get_tested)
         .WillOnce(Return(0.6))
         .WillOnce(Return(0.999));
     ASSERT_EQ(infected.get_tested(rng_infected, t, pcr_test.get_default()), true);
-    ASSERT_EQ(infected.is_in_quarantine(), true);
+    ASSERT_EQ(infected.is_in_quarantine(t, params), true);
+    infected.remove_quarantine();
     ASSERT_EQ(infected.get_tested(rng_infected, t, pcr_test.get_default()), false);
-    ASSERT_EQ(infected.is_in_quarantine(), false);
+    ASSERT_EQ(infected.is_in_quarantine(t, params), false);
     ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_test.get_default()), false);
-    ASSERT_EQ(susceptible.is_in_quarantine(), false);
+    ASSERT_EQ(susceptible.is_in_quarantine(t, params), false);
     ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_test.get_default()), true);
-    ASSERT_EQ(susceptible.is_in_quarantine(), true);
-    ASSERT_EQ(susceptible.get_time_since_negative_test(), mio::abm::days(0));
+    ASSERT_EQ(susceptible.is_in_quarantine(t, params), true);
+    ASSERT_EQ(susceptible.get_time_of_last_test(), mio::abm::TimePoint(0));
 
     // Test antigen test
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
@@ -186,7 +191,7 @@ TEST(TestPerson, get_tested)
     ASSERT_EQ(infected.get_tested(rng_infected, t, antigen_test.get_default()), false);
     ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_test.get_default()), false);
     ASSERT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_test.get_default()), true);
-    ASSERT_EQ(susceptible.get_time_since_negative_test(), mio::abm::days(0));
+    ASSERT_EQ(susceptible.get_time_of_last_test(), mio::abm::TimePoint(0));
 }
 
 TEST(TestPerson, getCells)
@@ -195,7 +200,7 @@ TEST(TestPerson, getCells)
     mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
     auto person = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
     home.add_person(person);
-    person.migrate_to(location, {0, 1});
+    person.move_to(location, {0, 1});
     ASSERT_EQ(person.get_cells().size(), 2);
 }
 

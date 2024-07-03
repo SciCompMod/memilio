@@ -74,9 +74,9 @@ TEST(TestLocation, addRemovePerson)
     home.add_person(person2, {0});
     home.add_person(person3, {0});
 
-    person1.migrate_to(location, {0, 1});
-    person2.migrate_to(location, {0});
-    person3.migrate_to(location, {0, 1});
+    person1.move_to(location, {0, 1});
+    person2.move_to(location, {0});
+    person3.move_to(location, {0, 1});
 
     auto t = mio::abm::TimePoint(0);
     ASSERT_EQ(home.get_number_persons(), 0u);
@@ -119,12 +119,12 @@ TEST(TestLocation, CacheExposureRate)
     auto rng_infected1 = mio::abm::Person::RandomNumberGenerator(rng, infected1);
     infected1.add_new_infection(
         mio::abm::Infection(rng_infected1, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
-    infected1.migrate_to(location, {0});
+    infected1.move_to(location, {0});
     auto infected2     = mio::abm::Person(rng, home, age);
     auto rng_infected2 = mio::abm::Person::RandomNumberGenerator(rng, infected2);
     infected2.add_new_infection(
         mio::abm::Infection(rng_infected2, variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
-    infected2.migrate_to(location, {0, 1});
+    infected2.move_to(location, {0, 1});
 
     //cache precomputed results
     location.cache_exposure_rates(t, dt, num_age_groups);
@@ -155,18 +155,20 @@ TEST(TestLocation, reachCapacity)
 
     auto t     = mio::abm::TimePoint{mio::abm::hours(8).seconds()};
     auto dt    = mio::abm::hours(1);
-    auto world = mio::abm::World(num_age_groups);
+    auto model = mio::abm::Model(num_age_groups);
 
     //setup so p1 doesn't do transition
-    world.parameters
+    model.parameters
         .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
-    world.parameters
+    model.parameters
         .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
+    model.parameters.get<mio::abm::AgeGroupGotoSchool>().set_multiple({age_group_5_to_14}, true);
+    model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
 
-    auto home_id   = world.add_location(mio::abm::LocationType::Home);
-    auto school_id = world.add_location(mio::abm::LocationType::School);
+    auto home_id   = model.add_location(mio::abm::LocationType::Home);
+    auto school_id = model.add_location(mio::abm::LocationType::School);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -181,11 +183,11 @@ TEST(TestLocation, reachCapacity)
         .WillOnce(testing::Return(0.8)) // draw random school hour
         .WillRepeatedly(testing::Return(1.0));
 
-    auto& p1 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedNoSymptoms);
-    auto& p2 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible);
+    auto& p1 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedNoSymptoms);
+    auto& p2 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible);
 
-    auto& home   = world.get_individualized_location(home_id);
-    auto& school = world.get_individualized_location(school_id);
+    auto& home   = model.get_individualized_location(home_id);
+    auto& school = model.get_individualized_location(school_id);
 
     p1.set_assigned_location(school_id);
     p2.set_assigned_location(school_id);
@@ -198,7 +200,7 @@ TEST(TestLocation, reachCapacity)
         mock_exponential_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
 
-    world.evolve(t, dt);
+    model.evolve(t, dt);
 
     ASSERT_EQ(p1.get_location(), school);
     ASSERT_EQ(p2.get_location(), home); // p2 should not be able to enter the school

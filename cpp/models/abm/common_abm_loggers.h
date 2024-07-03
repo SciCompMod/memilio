@@ -89,7 +89,7 @@ struct LogLocationInformation : mio::LogOnce {
     static Type log(const mio::abm::Simulation& sim)
     {
         Type location_information{};
-        for (auto&& location : sim.get_world().get_locations()) {
+        for (auto&& location : sim.get_model().get_locations()) {
             auto n_cells     = location.get_cells().size();
             int loc_capacity = 0;
             for (int i = 0; i < (int)n_cells; i++) {
@@ -119,9 +119,9 @@ struct LogPersonInformation : mio::LogOnce {
     static Type log(const mio::abm::Simulation& sim)
     {
         Type person_information{};
-        for (auto&& person : sim.get_world().get_persons()) {
+        for (auto&& person : sim.get_model().get_persons()) {
             person_information.push_back(std::make_tuple(
-                person.get_person_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index(),
+                person.get_person_id(), sim.get_model().find_location(mio::abm::LocationType::Home, person).get_index(),
                 person.get_age()));
         }
         return person_information;
@@ -148,7 +148,7 @@ struct LogDataForMovement : mio::LogAlways {
     static Type log(const mio::abm::Simulation& sim)
     {
         Type movement_data{};
-        for (Person p : sim.get_world().get_persons()) {
+        for (Person p : sim.get_model().get_persons()) {
             movement_data.push_back(std::make_tuple(
                 p.get_person_id(), p.get_location().get_index(), sim.get_time(), p.get_last_transport_mode(),
                 guess_activity_type(p.get_location().get_type()), p.get_infection_state(sim.get_time())));
@@ -173,7 +173,7 @@ struct LogInfectionState : mio::LogAlways {
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));
         auto curr_time      = sim.get_time();
         PRAGMA_OMP(for)
-        for (auto&& location : sim.get_world().get_locations()) {
+        for (auto&& location : sim.get_model().get_locations()) {
             for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
                 sum[inf_state] += location.get_subpopulation(curr_time, mio::abm::InfectionState(inf_state));
             }

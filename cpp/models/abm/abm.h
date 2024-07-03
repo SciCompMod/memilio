@@ -24,7 +24,7 @@
 
 #include "abm/parameters.h"
 #include "abm/simulation.h"
-#include "abm/world.h"
+#include "abm/model.h"
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/location_type.h"

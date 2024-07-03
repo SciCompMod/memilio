@@ -37,7 +37,7 @@ namespace abm
  * @param[in] t Current time.
  * @param[in] dt Length of the time step.
  * @param[in] params Movement parameters.
- * @return Location that the Person migrates to if the rule is applied, the current Location of the person 
+ * @return Location that the Person moves to if the rule is applied, the current Location of the person 
  * if the rule is not applied because of age, time, etc.
  * 
  * @{

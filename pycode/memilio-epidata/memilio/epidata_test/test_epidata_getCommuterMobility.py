@@ -28,10 +28,9 @@ from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getCommuterMobility as gcm
-from memilio.epidata import progress_indicator
 
 
-class TestCommuterMigration(fake_filesystem_unittest.TestCase):
+class TestCommuterMovement(fake_filesystem_unittest.TestCase):
 
     path = '/home/CMData/'
 
@@ -71,13 +70,12 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
-        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     @patch('builtins.print')
     def test_verify_sorted(self, mock_print):
         self.assertEqual(True, gcm.verify_sorted(self.test_countykey_list))
         self.assertEqual(False, gcm.verify_sorted(self.test_countykey_list2))
-        Errorcall = ('Error. Input list not sorted.')
+        Errorcall = ('Error: Input list not sorted.')
         mock_print.assert_called_with(Errorcall)
 
     @patch('builtins.print')
@@ -85,7 +83,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         (
             countykey2govkey, countykey2localnumlist, gov_county_table,
             state_gov_table) = gcm.assign_geographical_entities(
-            self.countykey_list, self.govkey_list)
+            self.countykey_list, self.govkey_list, True)
         for item in self.test_countykey2govkey.keys():
             self.assertEqual(
                 self.test_countykey2govkey.get(item),
@@ -106,7 +104,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # test case with not matching countykey and govkey lists
         (countykey2govkey, countykey2localnumlist, gov_county_table,
          state_gov_table) = gcm.assign_geographical_entities(
-            self.test_countykey_list, self.test_govkey_list)
+            self.test_countykey_list, self.test_govkey_list, True)
         self.assertEqual(countykey2govkey, collections.OrderedDict())
         self.assertEqual(countykey2localnumlist, collections.OrderedDict())
         self.assertEqual(gov_county_table, [
@@ -115,45 +113,45 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
 
         # test case with different number of data
         gcm.assign_geographical_entities(
-            self.test_countykey_list, self.govkey_list)
-        Errorcall = ('Error. Number of government regions wrong.')
+            self.test_countykey_list, self.govkey_list, True)
+        Errorcall = ('Error: Number of government regions wrong.')
         mock_print.assert_called_with(Errorcall)
 
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
-    @patch('builtins.input', return_value='y')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
     def test_commuter_data(self, mock_input, mock_popul):
-        """! Tests migration data by some randomly chosen tests.
+        """! Tests movement data by some randomly chosen tests.
         """
 
-        df_commuter_migration = gcm.get_commuter_data(
-            out_folder=self.path, ref_year=2022)
+        df_commuter_movement = gcm.get_commuter_data(
+            out_folder=self.path, ref_year=2022, interactive=True)
 
-        # just do some tests on randomly chosen migrations
+        # just do some tests on randomly chosen movements
 
-        # check migration from Leverkusen (averaged from NRW, 05) to Hildburghausen
+        # check movement from Leverkusen (averaged from NRW, 05) to Hildburghausen
         city_from = 5316
         city_to = 16069
         self.assertAlmostEqual(
-            df_commuter_migration.loc[city_from, city_to], 0.451, 2)
+            df_commuter_movement.loc[city_from, city_to], 0.451, 2)
 
-        # check migration from Duisburg to Oberspreewald-Lausitz
+        # check movement from Duisburg to Oberspreewald-Lausitz
         city_from = 5112
         city_to = 12066
         self.assertAlmostEqual(
-            df_commuter_migration.loc[city_from, city_to], 3.143, 2)
+            df_commuter_movement.loc[city_from, city_to], 3.143, 2)
 
-        # check migration from Lahn-Dill-Kreis to Hamburg
+        # check movement from Lahn-Dill-Kreis to Hamburg
         city_from = 6532
         city_to = 2000
-        self.assertEqual(df_commuter_migration.loc[city_from, city_to], 100)
+        self.assertEqual(df_commuter_movement.loc[city_from, city_to], 100)
 
-        # check migration from Herzogtum Lauenburg to Flensburg, Stadt
+        # check movement from Herzogtum Lauenburg to Flensburg, Stadt
         city_from = 1001
         city_to = 1053
-        self.assertEqual(df_commuter_migration.loc[city_from, city_to], 29)
+        self.assertEqual(df_commuter_movement.loc[city_from, city_to], 29)
 
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
-    @patch('builtins.input', return_value='y')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
     @patch('builtins.print')
     def test_get_neighbors_mobility(self, mock_print, mock_input, mock_popul):
 
@@ -161,7 +159,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # direction = both
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             testcountyid, direction='both', abs_tol=0, rel_tol=0,
-            tol_comb='or', out_folder=self.path)
+            tol_comb='or', out_folder=self.path, interactive=True)
         self.assertEqual(len(countykey_list), 398)
         self.assertEqual(271, commuter_all[0])
         self.assertEqual(2234, commuter_all[9])
@@ -171,7 +169,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # direction = in
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             testcountyid, direction='in', abs_tol=0, rel_tol=0,
-            tol_comb='or', out_folder=self.path)
+            tol_comb='or', out_folder=self.path, interactive=True)
         self.assertEqual(len(countykey_list), 393)
         self.assertEqual(70, commuter_all[0])
         self.assertEqual(892, commuter_all[9])
@@ -180,7 +178,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # direction = out
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             testcountyid, direction='out', abs_tol=0, rel_tol=0,
-            tol_comb='or', out_folder=self.path)
+            tol_comb='or', out_folder=self.path, interactive=True)
         self.assertEqual(len(countykey_list), 378)
         self.assertEqual(201, commuter_all[0])
         self.assertEqual(1342, commuter_all[9])
