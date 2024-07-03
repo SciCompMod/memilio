@@ -888,23 +888,23 @@ public:
                 (const));
 };
 
-MockExtrapolation* mock_export_function = nullptr;
+// MockExtrapolation* mock_export_function = nullptr;
 
-mio::IOResult<void> export_input_data_county_timeseries(const std::vector<mio::osecirvvs::Model<double>>& model,
-                                                        const std::string& dir, const std::vector<int>& county,
-                                                        mio::Date date, const std::vector<double>& scaling_factor_inf,
-                                                        double scaling_factor_icu, int num_days,
-                                                        const std::string& divi_path, const std::string& cases_path,
-                                                        const std::string& population_path, bool set_vaccination_data,
-                                                        const std::string& vaccination_path)
-{
-    if (mock_export_function) {
-        return mock_export_function->export_input_data_county_timeseries(
-            model, dir, county, date, scaling_factor_inf, scaling_factor_icu, num_days, divi_path, cases_path,
-            population_path, set_vaccination_data, vaccination_path);
-    }
-    return mio::success();
-}
+// mio::IOResult<void> export_input_data_county_timeseries(const std::vector<mio::osecirvvs::Model<double>>& model,
+//                                                         const std::string& dir, const std::vector<int>& county,
+//                                                         mio::Date date, const std::vector<double>& scaling_factor_inf,
+//                                                         double scaling_factor_icu, int num_days,
+//                                                         const std::string& divi_path, const std::string& cases_path,
+//                                                         const std::string& population_path, bool set_vaccination_data,
+//                                                         const std::string& vaccination_path)
+// {
+//     if (mock_export_function) {
+//         return mock_export_function->export_input_data_county_timeseries(
+//             model, dir, county, date, scaling_factor_inf, scaling_factor_icu, num_days, divi_path, cases_path,
+//             population_path, set_vaccination_data, vaccination_path);
+//     }
+//     return mio::success();
+// }
 } // namespace osecirvvs
 } // namespace mio
 
