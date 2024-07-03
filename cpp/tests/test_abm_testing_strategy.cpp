@@ -137,7 +137,7 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast((6)))
+        .Times(testing::Exactly((6)))
         .WillOnce(testing::Return(0.7)) // Person 1 complies to testing
         .WillOnce(testing::Return(0.7)) // Person 1 is tested
         .WillOnce(testing::Return(0.7)) // Test of Person 1 is positive
