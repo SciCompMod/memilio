@@ -347,8 +347,6 @@ struct TestParameters {
      }
 };
 
-//using TestParameters = std::pair<UncertainValue<>, UncertainValue<>>; // for automated serialize and deserialize
-
 /**
  * @brief Store a map from the TestTypes to their TestParameters.
  */
