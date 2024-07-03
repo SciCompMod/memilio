@@ -255,9 +255,9 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
 
                     # merge eisenach and wartburgkreis
                     commuter_movement_file.replace({commuter_movement_file.columns[2]:
-                                                     {'16056': '16063'}}, inplace=True)
+                                                    {'16056': '16063'}}, inplace=True)
                     commuter_movement_file.replace({commuter_movement_file.columns[0]:
-                                                     {'16056': '16063'}}, inplace=True)
+                                                    {'16056': '16063'}}, inplace=True)
 
                     current_col = countykey2numlist[commuter_movement_file.iloc[i, 0]]
                     curr_county_movedto = commuter_movement_file.iloc[i, 1]
@@ -278,10 +278,10 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                             # TODO
                             val = commuter_movement_file.iloc[i, 4]
                             mat_commuter_movement[current_row,
-                                                   current_col] = val
+                                                  current_col] = val
                             checksum += val
                             counties_movedfrom[countykey2govkey[commuter_movement_file.iloc[i, 2]]
-                                                  ][countykey2localnumlist[commuter_movement_file.iloc[i, 2]]] = 1
+                                               ][countykey2localnumlist[commuter_movement_file.iloc[i, 2]]] = 1
 
                         # take summed values of other REMAINING counties of government region.
                         # here, some counties of the region are stated explicitly and the rest is summed.
@@ -317,7 +317,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                                     globindex = countykey2numlist[gov_county_table[
                                         govkey2numlist[remaining_counties]][mapped_county]]
                                     counties_movedfrom[govkey2numlist[remaining_counties]
-                                                          ][mapped_county] = 1
+                                                       ][mapped_county] = 1
 
                                     # set value computed relatively to county size and effective movement
                                     current_row = globindex
@@ -326,7 +326,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                                         dummy_pop_sum
                                     checksum += val
                                     mat_commuter_movement[current_row,
-                                                           current_col] = val
+                                                          current_col] = val
 
                         # take summed values of ALL counties of a government region.
                         # here, no single county of the region is stated explicitly, all counties are summed together.
@@ -360,7 +360,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                                     globindex = countykey2numlist[gov_county_table[
                                         govkey2numlist[commuter_movement_file.iloc[i, 2]]][mapped_county]]
                                     counties_movedfrom[govkey2numlist[commuter_movement_file.iloc[i, 2]]
-                                                          ][mapped_county] = 1
+                                                       ][mapped_county] = 1
 
                                     # set value computed relatively to county size and effective movement
                                     current_row = globindex
@@ -369,7 +369,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                                         dummy_pop_sum
                                     checksum += val
                                     mat_commuter_movement[current_row,
-                                                           current_col] = val
+                                                          current_col] = val
 
                         # take summed values of other REMAINING counties of a whole Bundesland
                         # here, some counties of the Bundesland are stated explicitly and the rest is summed
@@ -428,7 +428,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                                             dummy_pop_sum
                                         checksum += val
                                         mat_commuter_movement[current_row,
-                                                               current_col] = val
+                                                              current_col] = val
 
                 # sum of total movement 'from'
                 if str(commuter_movement_file.iloc[i, 3]) == 'Einpendler aus dem Bundesgebiet':
@@ -470,9 +470,9 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         old_idx = countykey_list.index(geoger.CountyMerging[merge_id][1])
 
         mat_commuter_movement[new_idx, :] = mat_commuter_movement[new_idx,
-                                                                    :] + mat_commuter_movement[old_idx, :]
+                                                                  :] + mat_commuter_movement[old_idx, :]
         mat_commuter_movement[:, new_idx] = mat_commuter_movement[:,
-                                                                    new_idx] + mat_commuter_movement[:, old_idx]
+                                                                  new_idx] + mat_commuter_movement[:, old_idx]
         mat_commuter_movement[new_idx, new_idx] = 0
 
         mat_commuter_movement = np.delete(

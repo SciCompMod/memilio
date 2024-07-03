@@ -9,8 +9,8 @@ add_library(abm
     person.h
     testing_strategy.cpp
     testing_strategy.h
-    world.cpp
-    world.h
+    model.cpp
+    model.h
     location_type.h
     parameters.h
     parameters.cpp
