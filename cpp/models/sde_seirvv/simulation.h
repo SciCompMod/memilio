@@ -31,26 +31,25 @@ namespace sseirvv
 {
 
 /// @brief A specialized Simulation for mio::ssirs::Model.
-class Simulation : public mio::Simulation<Model>
+class Simulation : public mio::Simulation<ScalarType, Model>
 {
 protected:
-    using mio::Simulation<Model>::set_integrator;
-
+    using mio::Simulation<ScalarType, Model>::set_integrator;
 public:
     /**
-     * @brief Set up the simulation with an ODE solver.
-     * @param[in] model An instance of mio::ssirs::Model.
+     * @brief Set up the simulation with an SDE solver.
+     * @param[in] model An instance of mio::sseirvv::Model.
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.
      */
-    Simulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : mio::Simulation<Model>(model, t0, dt)
+    Simulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 0.1)
+        : mio::Simulation<ScalarType, Model>(model, t0, dt)
     {
-        auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+        auto integrator = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
         set_integrator(integrator);
     }
 
-    using mio::Simulation<Model>::Simulation;
+    using mio::Simulation<ScalarType, Model>::Simulation;
     /**
      * @brief advance simulation to tmax
      * tmax must be greater than get_result().get_last_time_point()
@@ -68,11 +67,11 @@ public:
 };
 
 /**
- * @brief Run a Simulation of a mio::ssirs::Model.
+ * @brief Run a Simulation of a mio::sseirvv::Model.
  * @param[in] t0 Start time.
  * @param[in] tmax End time.
  * @param[in] dt Initial step size of integration.
- * @param[in] model An instance of mio::ssirs::Model.
+ * @param[in] model An instance of mio::sseirvv::Model.
  * @return A TimeSeries to represent the final simulation result
  */
 inline TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model)
@@ -83,23 +82,23 @@ inline TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model 
     return sim.get_result();
 }
 
-/// @brief A specialized FlowSimulation for mio::ssirs::Model.
-class FlowSimulation : public mio::FlowSimulation<Model>
+/// @brief A specialized FlowSimulation for mio::sseirvv::Model.
+class FlowSimulation : public mio::FlowSimulation<ScalarType, Model>
 {
 protected:
-    using mio::FlowSimulation<Model>::set_integrator;
+    using mio::FlowSimulation<ScalarType, Model>::set_integrator;
 
 public:
     /**
      * @brief Set up the simulation with an ODE solver.
-     * @param[in] model An instance of mio::ssirs::Model.
+     * @param[in] model An instance of mio::sseirvv::Model.
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.
      */
-    FlowSimulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : mio::FlowSimulation<Model>(model, t0, dt)
+    FlowSimulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 0.1)
+        : mio::FlowSimulation<ScalarType, Model>(model, t0, dt)
     {
-        auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+        auto integrator = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
         set_integrator(integrator);
     }
 
@@ -131,11 +130,11 @@ public:
 };
 
 /**
- * @brief Run a FlowSimulation of mio::ssirs::Model.
+ * @brief Run a FlowSimulation of mio::sseirvv::Model.
  * @param[in] t0 Start time.
  * @param[in] tmax End time.
  * @param[in] dt Initial step size of integration.
- * @param[in] model An instance of mio::ssirs::Model.
+ * @param[in] model An instance of mio::sseirvv::Model.
  * @return The simulation result as two TimeSeries. The first describes the compartments at each time point,
  *         the second gives the corresponding flows that lead from t0 to each time point.
  */

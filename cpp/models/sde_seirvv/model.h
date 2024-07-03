@@ -46,9 +46,9 @@ using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Exposed
                        Flow<InfectionState::ExposedV1V2, InfectionState::InfectedV1V2>,
                        Flow<InfectionState::InfectedV1V2, InfectionState::RecoveredV1V2>>;
 
-class Model : public FlowModel<InfectionState, Populations<InfectionState>, Parameters, Flows>
+class Model : public FlowModel<ScalarType, InfectionState, Populations<ScalarType, InfectionState>, Parameters, Flows>
 {
-    using Base = FlowModel<InfectionState, mio::Populations<InfectionState>, Parameters, Flows>;
+    using Base = FlowModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>, Parameters, Flows>;
 
 public:
     Model()
@@ -136,7 +136,7 @@ public:
             0.0, y[(size_t)InfectionState::InfectedV1V2] / step_size);
     }
 
-    ScalarType step_size = 1.; ///< A step size of the model with which the stochastic process is realized.
+    ScalarType step_size; ///< A step size of the model with which the stochastic process is realized.
     mutable RandomNumberGenerator rng;
 
 private:

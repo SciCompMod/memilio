@@ -39,7 +39,7 @@ namespace sseirvv
  * with variant 1.
  */
 struct TransmissionProbabilityOnContactV1 {
-    using Type = UncertainValue;
+    using Type = UncertainValue<>;
     static Type get_default()
     {
         return Type(1.0);
@@ -55,7 +55,7 @@ struct TransmissionProbabilityOnContactV1 {
  * with variant 2.
  */
 struct TransmissionProbabilityOnContactV2 {
-    using Type = UncertainValue;
+    using Type = UncertainValue<>;
     static Type get_default()
     {
         return Type(1.0);
@@ -70,7 +70,7 @@ struct TransmissionProbabilityOnContactV2 {
  * @brief The latent time of variant 1 in day unit.
  */
 struct TimeExposedV1 {
-    using Type = UncertainValue;
+    using Type = UncertainValue<ScalarType>;
     static Type get_default()
     {
         return Type(6.0);
@@ -85,7 +85,7 @@ struct TimeExposedV1 {
  * @brief The latent time of variant 2 in day unit.
  */
 struct TimeExposedV2 {
-    using Type = UncertainValue;
+    using Type = UncertainValue<ScalarType>;
     static Type get_default()
     {
         return Type(6.0);
@@ -100,7 +100,7 @@ struct TimeExposedV2 {
  * @brief The infectious time of variant 1 in day unit.
  */
 struct TimeInfectedV1 {
-    using Type = UncertainValue;
+    using Type = UncertainValue<ScalarType>;
     static Type get_default()
     {
         return Type(6.0);
@@ -115,7 +115,7 @@ struct TimeInfectedV1 {
  * @brief The infectious time of variant 2 in day unit.
  */
 struct TimeInfectedV2 {
-    using Type = UncertainValue;
+    using Type = UncertainValue<ScalarType>;
     static Type get_default()
     {
         return Type(6.0);
