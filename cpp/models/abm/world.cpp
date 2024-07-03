@@ -77,7 +77,13 @@ void World::migration(TimePoint t, TimeSpan dt)
 {
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
-        auto&& person     = m_persons[i];
+        auto&& person                = m_persons[i];
+        auto current_infection_state = person->get_infection_state(t);
+        if (current_infection_state == mio::abm::InfectionState::Susceptible && !m_use_migration_rules &&
+            !person->is_in_quarantine(t, parameters)) {
+            continue;
+        }
+
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
 
         auto try_migration_rule = [&](auto rule) -> bool {
@@ -110,7 +116,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                 (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
         }
         else {
-            //no daily routine migration, just infection related
+            // no daily routine migration, just infection related
             (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
                 (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
                 (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
@@ -133,7 +139,9 @@ void World::migration(TimePoint t, TimeSpan dt)
                 current_location.get_type() != LocationType::ICU &&
                 current_location.get_type() != LocationType::Cemetery) {
                 if (!person->is_in_quarantine(t, parameters)) {
-                    auto& target_location = get_individualized_location(trip.migration_destination);
+                    auto& target_location = get_individualized_location(
+                        {person->get_assigned_location_index(trip.migration_destination.type),
+                         trip.migration_destination.type});
                     if (target_location != current_location &&
                         target_location.entry_allowed_dampings(personal_rng, t) &&
                         m_testing_strategy.entry_allowed_testing_schemes(personal_rng, *person,

@@ -40,6 +40,10 @@ Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
     , m_npi_active(false)
 {
     assert(num_cells > 0 && "Number of cells has to be larger than 0.");
+    for (auto& cell : m_cells) {
+        cell.m_cached_exposure_rate_contacts = {{VirusVariant::Count, AgeGroup(num_agegroups)}, 0.};
+        cell.m_cached_exposure_rate_air      = {{VirusVariant::Count}, 0.};
+    }
 }
 
 void Location::add_damping(TimePoint t_begin, double p)
@@ -138,8 +142,12 @@ void Location::interact(Person::RandomNumberGenerator& rng, Person& person, Time
 
 void Location::adjust_contact_rates(size_t num_agegroups)
 {
-    ScalarType total_contacts = 0.;
+    if (m_parameters.get<MaximumContacts>() == std::numeric_limits<ScalarType>::max()) {
+        return;
+    }
+
     for (auto contact_from = AgeGroup(0); contact_from < AgeGroup(num_agegroups); contact_from++) {
+        ScalarType total_contacts = 0.;
         // slizing would be preferred but is problematic since both Tags of ContactRates are AgeGroup
         for (auto contact_to = AgeGroup(0); contact_to < AgeGroup(num_agegroups); contact_to++) {
             total_contacts += m_parameters.get<ContactRates>()[{contact_from, contact_to}];
@@ -151,10 +159,6 @@ void Location::adjust_contact_rates(size_t num_agegroups)
                     total_contacts;
             }
         }
-        total_contacts = 0;
-        //auto contact_rates_slice = m_parameters.get<ContactRates>().slice(AgeGroup(contact_from));
-        //auto total_contacts      = std::accumulate(contact_rates_slice.begin(), contact_rates_slice.end(), 0.);
-        //contact_rates_slice = std::min(1., m_parameters.get<MaximumContacts>() / total_contacts) * contact_rates_slice;
     }
 }
 
@@ -162,9 +166,10 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegrou
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
+    const TimePoint t_middlepoint = t + dt / 2;
     for (auto& cell : m_cells) {
-        cell.m_cached_exposure_rate_contacts = {{VirusVariant::Count, AgeGroup(num_agegroups)}, 0.};
-        cell.m_cached_exposure_rate_air      = {{VirusVariant::Count}, 0.};
+        cell.m_cached_exposure_rate_contacts.array().setZero();
+        cell.m_cached_exposure_rate_air.array().setZero();
         for (auto&& p : cell.m_persons) {
             if (p->is_infected(t)) {
                 auto& inf  = p->get_infection();
@@ -174,9 +179,9 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegrou
                  * to second order accuracy using midpoint rule
                 */
                 cell.m_cached_exposure_rate_contacts[{virus, age}] +=
-                    params.get<InfectionRateFromViralShed>()[{virus}] * inf.get_viral_shed(t + dt / 2);
+                    params.get<InfectionRateFromViralShed>()[{virus}] * inf.get_viral_shed(t_middlepoint);
                 cell.m_cached_exposure_rate_air[{virus}] +=
-                    inf.get_viral_shed(t + dt / 2); // TODO: Adapt function/factor for air transmission.
+                    inf.get_viral_shed(t_middlepoint); // TODO: Adapt function/factor for air transmission.
             }
         }
 
