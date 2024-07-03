@@ -908,39 +908,38 @@ mio::IOResult<void> export_input_data_county_timeseries(const std::vector<mio::o
 } // namespace osecirvvs
 } // namespace mio
 
-// class TestOdeSECIRVVSExportData : public ::testing::Test
-// {
-// protected:
-//     void SetUp() override
-//     {
-//         mio::osecirvvs::mock_export_function = std::make_shared<mio::osecirvvs::MockExtrapolation>();
-//     }
+class TestOdeSECIRVVSExportData : public ::testing::Test
+{
+protected:
+    void SetUp() override
+    {
+        mio::osecirvvs::mock_export_function = std::make_shared<mio::osecirvvs::MockExtrapolation>();
+    }
 
-//     void TearDown() override
-//     {
-//         mio::osecirvvs::mock_export_function.reset();
-//     }
+    void TearDown() override
+    {
+        mio::osecirvvs::mock_export_function.reset();
+    }
 
-//     mio::osecirvvs::MockExtrapolation m_mock_export_function;
-// };
+    mio::osecirvvs::MockExtrapolation m_mock_export_function;
+};
 
-// TEST_F(TestOdeSECIRVVSExportData, ExportFunctionCalled)
-// {
-//     auto num_age_groups = 6; //reading data requires RKI data age groups
-//     auto model1         = std::vector<mio::osecirvvs::Model<double>>({make_model(num_age_groups)});
+TEST_F(TestOdeSECIRVVSExportData, ExportFunctionCalled)
+{
+    auto num_age_groups = 6; //reading data requires RKI data age groups
+    auto model1         = std::vector<mio::osecirvvs::Model<double>>({make_model(num_age_groups)});
 
-//     EXPECT_CALL(m_mock_export_function,
-//                 export_input_data_county_timeseries(::testing::_, ::testing::_, ::testing::_, ::testing::_,
-//                                                     ::testing::_, ::testing::_, ::testing::_, ::testing::_,
-//                                                     ::testing::_, ::testing::_, ::testing::_, ::testing::_))
-//         .Times(1)
-//         .WillOnce(::testing::Return(mio::success()));
+    EXPECT_CALL(*mio::osecirvvs::mock_export_function,
+                export_input_data_county_timeseries(::testing::_, ::testing::_, ::testing::_, ::testing::_,
+                                                    ::testing::_, ::testing::_, ::testing::_, ::testing::_,
+                                                    ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+        .Times(1)
+        .WillOnce(::testing::Return(mio::success()));
 
-//     auto result = mio::osecirvvs::read_input_data_county(
-//         model1, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 10, true);
-//     ASSERT_TRUE(result.has_value());
-// }
-
+    auto result = mio::osecirvvs::read_input_data_county(
+        model1, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 10, true);
+    ASSERT_TRUE(result.has_value());
+}
 TEST(TestOdeSECIRVVS, run_simulation)
 {
     auto num_age_groups = 3;
