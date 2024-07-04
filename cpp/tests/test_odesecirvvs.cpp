@@ -908,21 +908,21 @@ mio::IOResult<void> export_input_data_county_timeseries(const std::vector<mio::o
 } // namespace osecirvvs
 } // namespace mio
 
-class TestOdeSECIRVVSExportData : public ::testing::Test
-{
-protected:
-    void SetUp() override
-    {
-        mio::osecirvvs::mock_export_function = std::make_shared<mio::osecirvvs::MockExtrapolation>();
-    }
+// class TestOdeSECIRVVSExportData : public ::testing::Test
+// {
+// protected:
+//     void SetUp() override
+//     {
+//         mio::osecirvvs::mock_export_function = std::make_shared<mio::osecirvvs::MockExtrapolation>();
+//     }
 
-    void TearDown() override
-    {
-        mio::osecirvvs::mock_export_function.reset();
-    }
+//     void TearDown() override
+//     {
+//         mio::osecirvvs::mock_export_function.reset();
+//     }
 
-    mio::osecirvvs::MockExtrapolation m_mock_export_function;
-};
+//     mio::osecirvvs::MockExtrapolation m_mock_export_function;
+// };
 
 // TEST_F(TestOdeSECIRVVSExportData, ExportFunctionCalled)
 // {
