@@ -1,7 +1,5 @@
 name: CI
 
-env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
 on:
   schedule:
@@ -261,6 +259,10 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux2014_x86_64 #use manylinux2014 here, to be changed when actions for this job will be updated. See Issue #939
+    env:
+      # workaround required for checkout@v3, https://github.com/actions/checkout/issues/1590
+      # to be removed when upgrading to v4 in Issue #939
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true 
     steps:
       - uses: actions/checkout@v3 # use v3 here as v4 produces error with cmake
       - uses: ./.github/actions/build-py
