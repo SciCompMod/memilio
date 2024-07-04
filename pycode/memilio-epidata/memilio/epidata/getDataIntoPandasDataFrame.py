@@ -110,7 +110,7 @@ class Conf:
             self.interactive = True if kwargs['interactive'] == 'True' else False
             self.plot = True if kwargs['make_plot'] == 'True' else False
             self.no_raw = True if kwargs['no_raw'] == 'True' else False
-            self.to_dataset = True if kwargs['to_dataset'] is True else False
+            self.to_dataset = True if kwargs['to_dataset'] == 'True' else False
         else:
             # default values:
             Conf.show_progr = kwargs['show_progress'] if 'show_progress' in kwargs.keys(
@@ -356,6 +356,7 @@ def cli(what):
     - no_raw
     - username
     - password
+    - to_dataset
 
     @param what Defines what packages calls and thus what kind of command line arguments should be defined.
     """
