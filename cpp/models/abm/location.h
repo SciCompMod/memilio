@@ -95,6 +95,7 @@ struct Cell {
 /**
  * @brief All Location%s in the simulated World where Person%s gather.
  */
+using HourlyContactMatrix = std::array<Eigen::MatrixXd, 24>;
 class Location
 {
 public:
@@ -421,6 +422,11 @@ public:
         m_geographical_location = location;
     }
 
+    void assign_contact_matrices(HourlyContactMatrix contact_matrices)
+    {
+        m_hourly_contact_matrices = contact_matrices;
+    }
+
 private:
     std::mutex m_mut; ///< Mutex to protect the list of persons from concurrent modification.
     LocationId m_id; ///< Id of the Location including type and index.
@@ -433,6 +439,7 @@ private:
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
+    HourlyContactMatrix m_hourly_contact_matrices; ///< Contact matrices for the Location.
 };
 
 } // namespace abm
