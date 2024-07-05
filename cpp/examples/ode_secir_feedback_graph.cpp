@@ -134,7 +134,7 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
                                       timeInfectedCriticalMax);
 
     //probabilities
-    double fact                                        = 0.75;
+    double fact                                        = 1.;
     const double transmissionProbabilityOnContactMin[] = {fact * 0.02, fact * 0.05, fact * 0.05,
                                                           fact * 0.05, fact * 0.08, fact * 0.15};
     const double transmissionProbabilityOnContactMax[] = {fact * 0.04, fact * 0.07, fact * 0.07,
@@ -174,10 +174,10 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
                                       deathsPerCriticalMax);
 
     //sasonality
-    const double seasonality_min = 0.1;
-    const double seasonality_max = 0.3;
+    // const double seasonality_min = 0.1;
+    // const double seasonality_max = 0.3;
 
-    assign_uniform_distribution(params.get<mio::osecir::Seasonality>(), seasonality_min, seasonality_max);
+    // assign_uniform_distribution(params.get<mio::osecir::Seasonality>(), seasonality_min, seasonality_max);
 
     return mio::success();
 }
@@ -187,15 +187,21 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_feedback_parameters(mio::osecir::Parameters& params)
+mio::IOResult<void> set_feedback_parameters(mio::osecir::Parameters& params, ScalarType min, ScalarType max)
 {
     params.get<mio::osecir::ICUCapacity>()            = 9;
     params.get<mio::osecir::CutOffGamma>()            = 45;
     params.get<mio::osecir::EpsilonContacts>()        = 0.1;
     params.get<mio::osecir::BlendingFactorLocal>()    = 1. / 3.;
     params.get<mio::osecir::BlendingFactorRegional>() = 1. / 3.;
-    params.get<mio::osecir::ContactReductionMin>()    = {0.2, 0.2, 0.2, 0.2};
-    params.get<mio::osecir::ContactReductionMax>()    = {0.6, 0.6, 0.6, 0.6};
+    params.get<mio::osecir::ContactReductionMin>()    = {min, min, min, min};
+    params.get<mio::osecir::ContactReductionMax>()    = {max, max, max, max};
+
+    auto& icu_occupancy     = params.get<mio::osecir::ICUOccupancyLocal>();
+    Eigen::VectorXd icu_day = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 0.0);
+    for (int t = -50; t <= 0; ++t) {
+        icu_occupancy.add_time_point(t, icu_day);
+    }
 
     return mio::success();
 }
@@ -258,13 +264,12 @@ void set_state_ids(mio::Graph<mio::osecir::Model, mio::MigrationParameters>& gra
  * @param params Object that the NPIs will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_npis(mio::osecir::Parameters& params, const std::string& mode)
+mio::IOResult<void> set_npis(mio::osecir::Parameters& params, const std::string& mode,
+                             const ScalarType reduc_fac_location)
 {
     if (std::strcmp(mode.c_str(), "ClassicDamping") == 0) {
         auto& contacts         = params.get<mio::osecir::ContactPatterns>();
         auto& contact_dampings = contacts.get_dampings();
-
-        const ScalarType reduc_fac_location = 0.4514380487;
 
         const size_t locations       = static_cast<size_t>(ContactLocation::Count);
         const auto group_weights_all = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 1.0);
@@ -293,7 +298,8 @@ mio::IOResult<void> set_npis(mio::osecir::Parameters& params, const std::string&
  * @returns created graph or any io errors that happen during reading of the files.
  */
 mio::IOResult<mio::Graph<mio::osecir::Model, mio::MigrationParameters>>
-get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, const std::string& mode)
+get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, const std::string& mode, ScalarType kmin,
+          ScalarType kmax)
 {
     const auto start_day = mio::get_day_in_year(start_date);
 
@@ -303,10 +309,10 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, co
     params.get<mio::osecir::StartDay>() = start_day;
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
     if (std::strcmp(mode.c_str(), "FeedbackDamping") == 0) {
-        BOOST_OUTCOME_TRY(set_feedback_parameters(params));
+        BOOST_OUTCOME_TRY(set_feedback_parameters(params, kmin, kmax));
     }
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
-    BOOST_OUTCOME_TRY(set_npis(params, mode));
+    BOOST_OUTCOME_TRY(set_npis(params, mode, kmin));
 
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1);
     auto scaling_factor_icu      = 1.0;
@@ -536,54 +542,72 @@ mio::IOResult<void> run_parameter_study(ParameterStudy parameter_study, std::vec
  */
 mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 {
-    const auto start_date = mio::Date(2020, 12, 1);
+    const auto start_date = mio::Date(2020, 10, 1);
 
-    const auto num_days_sim = 100.0;
+    const auto num_days_sim = 200.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 100;
+    const auto num_runs     = 80;
 
-    // auto const modes = {"ClassicDamping", "FeedbackDamping"};
-    auto const modes = {"ClassicDamping"};
+    auto const modes = {"FeedbackDamping"}; //, "FeedbackDamping"};
+
+    auto min_values = std::vector<ScalarType>{0.0};
+
+    auto max_values = std::vector<ScalarType>{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    // const size_t county_id_infected = 3241;
 
     //create or load graph
     for (auto mode : modes) {
-        mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
+        for (size_t min_indx = 0; min_indx < min_values.size(); min_indx++) {
+            for (size_t max_indx = min_indx; max_indx < max_values.size(); max_indx++) {
+                if (std::strcmp(mode, "ClassicDamping") == 0 && min_values[min_indx] != max_values[max_indx]) {
+                    continue;
+                }
+                auto& kmin = min_values[min_indx];
+                auto& kmax = max_values[max_indx];
 
-        auto result_dir_mode = result_dir / mode;
-        // create directory for results
-        if (mio::mpi::is_root()) {
-            boost::filesystem::create_directories(result_dir_mode);
-        }
+                mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
+                auto result_dir_mode = result_dir / ("kmin_" + std::to_string(kmin) + "_kmax_" + std::to_string(kmax)) /
+                                       boost::filesystem::path(mode);
+                if (std::strcmp(mode, "ClassicDamping") == 0) {
+                    result_dir_mode = result_dir / ("fixed_damping_kmin_" + std::to_string(kmin)) / "ClassicDamping";
+                }
+                // create directory for results
+                if (mio::mpi::is_root()) {
+                    boost::filesystem::create_directories(result_dir_mode);
+                }
 
-        BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, end_date, data_dir, mode));
-        params_graph = created;
+                BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, end_date, data_dir, mode, kmin, kmax));
+                params_graph = created;
 
-        std::vector<int> county_ids(params_graph.nodes().size());
-        std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
-            return n.id;
-        });
+                std::vector<int> county_ids(params_graph.nodes().size());
+                std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(),
+                               [](auto& n) {
+                                   return n.id;
+                               });
 
-        //run parameter study
-        if (std::strcmp(mode, "ClassicDamping") == 0) {
-            auto parameter_study_sim =
-                mio::ParameterStudy<mio::osecir::Simulation<mio::FlowSimulation<mio::osecir::Model>>>{
-                    params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
-            BOOST_OUTCOME_TRY(
-                run_parameter_study(parameter_study_sim, county_ids, result_dir_mode, num_days_sim, mode));
-        }
-        else {
-            auto parameter_study_feedback_sim =
-                mio::ParameterStudy<mio::osecir::FeedbackSimulation<mio::FlowSimulation<mio::osecir::Model>>>{
-                    params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
-            BOOST_OUTCOME_TRY(
-                run_parameter_study(parameter_study_feedback_sim, county_ids, result_dir_mode, num_days_sim, mode));
+                //run parameter study
+                if (std::strcmp(mode, "ClassicDamping") == 0) {
+                    auto parameter_study_sim =
+                        mio::ParameterStudy<mio::osecir::Simulation<mio::FlowSimulation<mio::osecir::Model>>>{
+                            params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+                    BOOST_OUTCOME_TRY(
+                        run_parameter_study(parameter_study_sim, county_ids, result_dir_mode, num_days_sim, mode));
+                }
+                else {
+                    auto parameter_study_feedback_sim =
+                        mio::ParameterStudy<mio::osecir::FeedbackSimulation<mio::FlowSimulation<mio::osecir::Model>>>{
+                            params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+                    BOOST_OUTCOME_TRY(run_parameter_study(parameter_study_feedback_sim, county_ids, result_dir_mode,
+                                                          num_days_sim, mode));
+                }
+            }
         }
     }
     return mio::success();
 }
 int main()
 {
-    mio::set_log_level(mio::LogLevel::warn);
+    mio::set_log_level(mio::LogLevel::err);
     mio::mpi::init();
 
     std::string data_dir   = "/localdata1/code_2024/memilio/data";
