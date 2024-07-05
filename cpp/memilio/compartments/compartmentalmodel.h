@@ -45,32 +45,32 @@ using apply_constraints_expr_t = decltype(std::declval<T>().apply_constraints())
 } //namespace details
 
 /**
- * @brief check whether a check_constraints function exists
- * @tparam The type to check for the existence of the member function
+ * @brief Check whether a check_constraints function exists.
+ * @tparam The type to check for the existence of the member function.
  */
 template <class T>
 using has_check_constraints_member_function = is_expression_valid<details::check_constraints_expr_t, T>;
 
 /**
- * @brief check whether a apply_constraints function exists
- * @tparam The type to check for the existence of the member function
+ * @brief Check whether a apply_constraints function exists.
+ * @tparam The type to check for the existence of the member function.
  */
 template <class T>
 using has_apply_constraints_member_function = is_expression_valid<details::apply_constraints_expr_t, T>;
 
 /**
  * @brief CompartmentalModel is a template for a compartmental model for an
- * array of initial populations and a parameter set
- * @tparam FP floating point type, e.g., double
+ * array of initial populations and a parameter set.
+ * @tparam FP floating point type, e.g., double.
  *
  * The Populations must be a concrete class derived from the Populations template,
  * i.e. a multi-dimensional array of compartment populations where each dimension
- * corresponds to a category
+ * corresponds to a category.
  *
  * The ParameterSet must be a concrete class derived form the ParameterSet template,
  * i.e. a compile-time map of parameters used by the model. These can be referenced
  * when defining the flows between compartments and they can be used for parameter
- * studies
+ * studies.
  *
  */
 template <typename FP, class Comp, class Pop, class Params>
@@ -80,7 +80,7 @@ public:
     using Populations  = Pop;
     using ParameterSet = Params;
     /**
-     * @brief CompartmentalModel default constructor
+     * @brief CompartmentalModel default constructor.
      */
     CompartmentalModel(Populations const& po, ParameterSet const& pa)
         : populations{std::move(po)}
@@ -94,29 +94,29 @@ public:
     CompartmentalModel& operator=(CompartmentalModel&&) = default;
     virtual ~CompartmentalModel()                       = default;
 
-    //REMARK: Not pure virtual for easier java/python bindings
+    // REMARK: Not pure virtual for easier java/python bindings.
     virtual void get_derivatives(Eigen::Ref<const Vector<FP>>, Eigen::Ref<const Vector<FP>> /*y*/, FP /*t*/,
                                  Eigen::Ref<Vector<FP>> /*dydt*/) const {};
 
     /**
-     * @brief eval_right_hand_side evaluates the right-hand-side f of the ODE dydt = f(y, t)
+     * @brief Funktion evaluates the right-hand-side f of the ODE dydt = f(y, t).
      *
      * The heart of the compartmental model is a first order ODE dydt = f(y,t), where y is a flat
      * representation of all the compartmental populations at time t. This function evaluates the
      * right-hand-side f of the ODE from the intercompartmental flows. It can be used in an ODE
-     * solver
+     * solver.
      *
      * The distinction between pop and y is only for the case of mobility.
      * If we have mobility, we want to evaluate the evolution of infection states for a small group of travellers (y)
      * while they are in any population (pop). It is important that pop > y always applies.
      *
      * If we consider a simulation without mobility, the function is called with
-     * model.eval_right_hand_side(y, y, t, dydt)
+     * model.eval_right_hand_side(y, y, t, dydt).
      *
-     * @param pop the current state of the population in the geographic unit we are considering
-     * @param y the current state of the model (or a subpopulation) as a flat array
-     * @param t the current time
-     * @param dydt a reference to the calculated output
+     * @param[in] pop The current state of the population in the geographic unit we are considering.
+     * @param[in] y The current state of the model (or a subpopulation) as a flat array.
+     * @param[in] t The current time.
+     * @param[out] dydt A reference to the calculated output.
      */
     void eval_right_hand_side(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
                               Eigen::Ref<Vector<FP>> dydt) const
@@ -126,9 +126,9 @@ public:
     }
 
     /**
-     * @brief get_initial_values returns the initial values for the compartmental populations.
-     * This can be used as initial conditions in an ODE solver
-     * @return the initial populatoins
+     * @brief Returns the initial values for the compartmental populations.
+     * This can be used as initial conditions in an ODE solver.
+     * @return The initial populations.
      */
     Vector<FP> get_initial_values() const
     {
@@ -136,29 +136,28 @@ public:
     }
 
     /**
-     * @brief Checks whether the model satisfies all constraints and applies the constraints, if not.
+     * @brief Checks whether the model satisfies all constraints. If not, it changes values to suffice their constraints.
      *
-     * Attention: This function should be used with care. It is necessary for some test problems to run through quickly,
-     *            but in a manual execution of an example, check_constraints() may be preferred. 
-     *            Note that the apply_constraints() function can and will not set model parameters and 
-     *            compartments to meaningful values.
+     * Attention: This function should be used with care. It can not and will not set model parameters and 
+     *            compartments to meaningful values. In most cases it is preferable to use check_constraints,
+     *            and correct values manually before proceeding with the simulation.
+     *            The main usage for apply_constraints is in automated tests using random values for initialization.
      *
-     * @return Returns true if one (or more) constraint(s) were corrected, otherwise false. 
+     * @return Returns true if one or more constraints were corrected, false otherwise. 
      */
     bool apply_constraints()
     {
-        bool corrected = populations.apply_constraints();
         if constexpr (has_apply_constraints_member_function<ParameterSet>::value) {
-            corrected = (corrected || parameters.apply_constraints());
+            return (parameters.apply_constraints() | populations.apply_constraints());
         }
-        return corrected;
+        else {
+            return populations.check_constraints();
+        }
     }
 
     /**
-     * @brief Checks that the model satisfies any constraints (e.g. parameter or population constraints), and 
-     *  logs an error if constraints are not satisfied.
-     *
-     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
+     * @brief Checks that the model satisfies all constraints (e.g. parameter or population constraints).
+     * @return Returns true if one or more constraints are not satisfied, false otherwise.
      */
     bool check_constraints() const
     {
@@ -175,7 +174,7 @@ public:
 };
 
 /**
- * detect the eval_right_hand_side member function of a compartment model.
+ * Detect the eval_right_hand_side member function of a compartment model.
  * If the eval_right_hand_side member function exists in the type M, this template when instatiated
  * will be equal to the return type of the function.
  * Otherwise the template is invalid.
@@ -189,7 +188,7 @@ using eval_right_hand_side_expr_t =
                                                            std::declval<FP>(), std::declval<Eigen::Ref<Vector<FP>>>()));
 
 /**
- * detect the get_initial_values member function of a compartment model.
+ * Detect the get_initial_values member function of a compartment model.
  * If the detect_initial_values member function exists in the type M, this template when instatiated
  * will be equal to the return type of the function.
  * Otherwise the template is invalid.

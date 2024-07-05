@@ -232,6 +232,8 @@ TEST(TestPopulations, populations_constraints)
     mio::Populations<double, InfectionState, AgeGroup> pop(
         {mio::Index<InfectionState>(InfectionState::Count), mio::Index<AgeGroup>(7)});
 
+    // Check that with valid inputs, the output of both functions is false and
+    // that apply_constraints does not change anything.
     pop.set_group_total<AgeGroup>(mio::Index<AgeGroup>(5), 10);
     EXPECT_FALSE(pop.check_constraints());
     EXPECT_FALSE(pop.apply_constraints());
@@ -240,11 +242,14 @@ TEST(TestPopulations, populations_constraints)
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);
 
-    // Check with negative value for two entries.
+    // Check that with invalid inputs, the output of both functions is true and
+    // that apply_constraints corrects all wrong values.
+    // Set two entries to negative values.
     pop[{mio::Index<InfectionState>(InfectionState::E), mio::Index<AgeGroup>(5)}] = -100;
     pop[{mio::Index<InfectionState>(InfectionState::H), mio::Index<AgeGroup>(3)}] = -10;
     EXPECT_TRUE(pop.check_constraints());
     EXPECT_TRUE(pop.apply_constraints());
+    // Negative values should be corrected to zero.
     EXPECT_NEAR(0., (pop[{mio::Index<InfectionState>(InfectionState::E), mio::Index<AgeGroup>(5)}]), 1e-12);
     EXPECT_NEAR(0., (pop[{mio::Index<InfectionState>(InfectionState::H), mio::Index<AgeGroup>(3)}]), 1e-12);
 
