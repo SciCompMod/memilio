@@ -148,7 +148,7 @@ public:
     bool apply_constraints()
     {
         if constexpr (has_apply_constraints_member_function<ParameterSet>::value) {
-            return (parameters.apply_constraints() | populations.apply_constraints());
+            return ((int)parameters.apply_constraints() | (int)populations.apply_constraints());
         }
         else {
             return populations.check_constraints();
