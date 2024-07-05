@@ -848,7 +848,42 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date)
     model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().array().setConstant(0);
     // set all compartments to zero
     model.populations.array().setConstant(0.0);
-    // Vector assignment necessary as read_input_data_county changes model
+
+    auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
+
+    ASSERT_THAT(mio::osecirvvs::read_input_data(model_vector, {100, 12, 01}, {0},
+                                                std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 0,
+                                                false),
+                IsSuccess());
+
+    // if we enter an old date, the model only should be initialized with the population data.
+    // read population data
+    std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
+    const std::vector<int> region{0};
+    auto population_data = mio::osecirvvs::details::read_population_data(path, region).value();
+
+    // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
+    for (auto i = 0; i < num_age_groups; i++) {
+        EXPECT_NEAR(
+            model_vector[0].populations.array().cast<double>()(i * Eigen::Index(mio::osecirvvs::InfectionState::Count)),
+            population_data[0][i], 1e-5);
+    }
+
+    // sum of all compartments should be equal to the population
+    EXPECT_NEAR(model_vector[0].populations.array().cast<double>().sum(),
+                std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0), 1e-5);
+}
+
+TEST(TestOdeSECIRVVS, model_initialization_old_date_county)
+{
+    constexpr auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
+    auto model                    = make_model(num_age_groups);
+    // set vaccinations to zero
+    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().array().setConstant(0);
+    // set all compartments to zero
+    model.populations.array().setConstant(0.0);
+
     auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
 
     ASSERT_THAT(mio::osecirvvs::read_input_data_county(model_vector, {100, 12, 01}, {0},
@@ -873,73 +908,6 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date)
     EXPECT_NEAR(model_vector[0].populations.array().cast<double>().sum(),
                 std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0), 1e-5);
 }
-
-namespace mio
-{
-namespace osecirvvs
-{
-class MockExtrapolation
-{
-public:
-    MOCK_METHOD(mio::IOResult<void>, export_input_data_county_timeseries,
-                (const std::vector<mio::osecirvvs::Model<double>>&, const std::string&, const std::vector<int>&,
-                 mio::Date, const std::vector<double>&, double, int, const std::string&, const std::string&,
-                 const std::string&, bool, const std::string&),
-                (const));
-};
-
-std::shared_ptr<MockExtrapolation> mock_export_function = nullptr;
-
-// mio::IOResult<void> export_input_data_county_timeseries(const std::vector<mio::osecirvvs::Model<double>>& model,
-//                                                         const std::string& dir, const std::vector<int>& county,
-//                                                         mio::Date date, const std::vector<double>& scaling_factor_inf,
-//                                                         double scaling_factor_icu, int num_days,
-//                                                         const std::string& divi_path, const std::string& cases_path,
-//                                                         const std::string& population_path, bool set_vaccination_data,
-//                                                         const std::string& vaccination_path)
-// {
-//     if (mock_export_function) {
-//         return mock_export_function->export_input_data_county_timeseries(
-//             model, dir, county, date, scaling_factor_inf, scaling_factor_icu, num_days, divi_path, cases_path,
-//             population_path, set_vaccination_data, vaccination_path);
-//     }
-//     return mio::success();
-// }
-} // namespace osecirvvs
-} // namespace mio
-
-// class TestOdeSECIRVVSExportData : public ::testing::Test
-// {
-// protected:
-//     void SetUp() override
-//     {
-//         mio::osecirvvs::mock_export_function = std::make_shared<mio::osecirvvs::MockExtrapolation>();
-//     }
-
-//     void TearDown() override
-//     {
-//         mio::osecirvvs::mock_export_function.reset();
-//     }
-
-//     mio::osecirvvs::MockExtrapolation m_mock_export_function;
-// };
-
-// TEST_F(TestOdeSECIRVVSExportData, ExportFunctionCalled)
-// {
-//     auto num_age_groups = 6; //reading data requires RKI data age groups
-//     auto model1         = std::vector<mio::osecirvvs::Model<double>>({make_model(num_age_groups)});
-
-//     EXPECT_CALL(*mio::osecirvvs::mock_export_function,
-//                 export_input_data_county_timeseries(::testing::_, ::testing::_, ::testing::_, ::testing::_,
-//                                                     ::testing::_, ::testing::_, ::testing::_, ::testing::_,
-//                                                     ::testing::_, ::testing::_, ::testing::_, ::testing::_))
-//         .Times(1)
-//         .WillOnce(::testing::Return(mio::success()));
-
-//     auto result = mio::osecirvvs::read_input_data_county(
-//         model1, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 10, true);
-//     ASSERT_TRUE(result.has_value());
-// }
 
 TEST(TestOdeSECIRVVS, run_simulation)
 {
