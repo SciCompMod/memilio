@@ -909,6 +909,47 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date_county)
                 std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0), 1e-5);
 }
 
+TEST(TestOdeSECIRVVS, set_population_data_overflow_vacc)
+{
+    auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
+    auto model          = make_model(num_age_groups);
+    // set all compartments to zero
+    model.populations.array().setConstant(0.0);
+
+    // if the number of vaccinated individuals is greater than the population, we must limit the number of vaccinated.
+    model.parameters
+        .template get<mio::osecirvvs::DailyFirstVaccination<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] =
+        1e7 + 1;
+
+    model.parameters
+        .template get<mio::osecirvvs::DailyFullVaccination<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] = 1e7;
+
+    // Vector assignment necessary as read_input_data_county changes model
+    auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
+
+    std::string path_pop_data = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
+    const std::vector<int> region{0};
+    auto population_data = mio::osecirvvs::details::read_population_data(path_pop_data, region).value();
+
+    // we choose the date so that no case data is available
+    ASSERT_THAT(mio::osecirvvs::details::set_population_data(
+                    model_vector, path_pop_data, mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"), {0},
+                    {1000, 12, 01}),
+                IsSuccess());
+
+    EXPECT_NEAR(
+        double(model_vector[0].populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive}]), 0.0,
+        1e-10);
+    EXPECT_NEAR(double(model_vector[0].populations[{mio::AgeGroup(0),
+                                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity}]),
+                1, 1e-10);
+    EXPECT_NEAR(double(model_vector[0].populations[{mio::AgeGroup(0),
+                                                    mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}]),
+                population_data[0][0] - 1, 1e-10);
+
+    EXPECT_NEAR(model_vector[0].populations.get_group_total(mio::AgeGroup(0)), population_data[0][0], 1e-9);
+}
+
 TEST(TestOdeSECIRVVS, run_simulation)
 {
     auto num_age_groups = 3;
