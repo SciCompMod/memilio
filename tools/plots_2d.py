@@ -218,19 +218,52 @@ def plot_compartments(path_results, path_plots, modes, compartments, labels, tit
 
 
 def plot_flows(path_results, path_plots, modes, flow_indx, labels, title, log_scale=False, plot_percentiles=True):
+    path_plots = os.path.join(path_plots, title)
     create_folder_if_not_exists(path_plots)
-    plot_data = []
-    labels_modes = []
-    for mode in modes:
-        for index, compartment in enumerate(flow_indx):
-            labels_modes.append(labels[index] + f" {mode}")
-            path_results_mode = os.path.join(path_results, mode, "flows")
-            data = get_results(
-                path_results_mode, compartment, results="total")
-            data = {key: np.diff(data[key]) for key in data.keys()}
-            plot_data.append(data)
-    plot(plot_data, labels_modes, path_plots, title=title,
-         log_scale=log_scale, ylabel="Number Individuals", plot_percentiles=plot_percentiles)
+
+    df = None
+    if title == "Daily Infections":
+        case_data_path = "/localdata1/code_2024/memilio/data/pydata/Germany/cases_all_germany_ma7.json"
+        # start_date is format "YYYY-MM-DD". how to get start_date - 1
+        start_date_m1 = datetime.strptime(
+            start_date, "%Y-%m-%d") - timedelta(days=1)
+        df = pd.read_json(case_data_path)
+        df = df.loc[(df['Date'] >= start_date_m1)].reset_index(drop=True)
+        # drop all cols except 'Date' and 'Confirmed'
+        df = df[['Date', 'Confirmed']]
+        # data is aggregated. get the diff
+        df['Confirmed'] = df['Confirmed'].diff()
+        df = df.iloc[1:]
+
+    # list all files in path_results and filter for kmin and fixed
+    dirs_in_results = [entry for entry in os.listdir(
+        path_results) if entry.startswith("kmin") or entry.startswith("fixed")]
+    plots_dir = os.path.join(path_plots, title)
+    create_folder_if_not_exists(plots_dir)
+
+    for dir_name in dirs_in_results:
+        plot_data = []
+        labels_modes = []
+        for mode in modes:
+            for index, compartment in enumerate(flow_indx):
+                path_results_mode = os.path.join(
+                    path_results, dir_name, mode, "flows")
+                if not os.path.exists(path_results_mode):
+                    continue
+                labels_modes.append(labels[index] + f" {mode}")
+                data = get_results(
+                    path_results_mode, compartment, results="total")
+                data = {key: np.diff(data[key]) for key in data.keys()}
+                plot_data.append(data)
+
+        # get the number of days, cut df to the same length and add to plot_data and labels
+        num_days = len(plot_data[0]['p25'])
+        df_cut = df.iloc[:num_days]
+        plot_data.append(df_cut['Confirmed'].to_numpy())
+        labels_modes.append("Reported Confirmed Cases")
+
+        plot(plot_data, labels_modes, path_plots, title=dir_name,
+             log_scale=log_scale, ylabel="Number Individuals", plot_percentiles=plot_percentiles)
     return 0
 
 
@@ -402,44 +435,57 @@ def plot_contacts(path_results, path_plots, modes, percentile="p50"):
 
 def plot_icu_comp(path_results, path_plots, modes, path_icu_data, log_scale=False, icu_capacity_val=9, plot_percentiles=True):
     create_folder_if_not_exists(path_plots)
-    icu_comp = [7]
-    label = "ICU Occupancy"
-    labels = []
-    title = "ICU Occupancy per 100_000 inhabitants"
 
-    plot_data = []
-    for mode in modes:
-        path_results_mode = os.path.join(path_results, mode)
-        labels.append(label + f" {mode}")
-        plot_data.append(get_results(
-            path_results_mode, icu_comp, results="total"))
-    # calculate ICU occupancy per 100_000 inhabitants
-    for data in plot_data:
-        for key in data.keys():
-            for indx in range(len(data[key])):
-                data[key][indx] = data[key][indx] / total_pop * 100_000
+    # list all files in path_results and filter for kmin and fixed
+    dirs_in_results = [entry for entry in os.listdir(
+        path_results) if entry.startswith("kmin") or entry.startswith("fixed")]
+    plots_dir = os.path.join(path_plots, "ICU_Plots")
+    create_folder_if_not_exists(plots_dir)
 
-    # create dict with same shape and set constant value for ICU capacity
-    icu_capacity = {key: [icu_capacity_val for _ in range(
-        len(plot_data[0][key]))] for key in plot_data[0].keys()}
-    plot_data.append(icu_capacity)
-    labels.append("ICU Capacity")
+    for dir_name in dirs_in_results:
 
-    num_days = len(plot_data[0]['p25']) - 1
-    start_date_datetime = datetime.strptime(start_date, "%Y-%m-%d")
-    end_date_datetime = start_date_datetime + timedelta(days=num_days)
-    end_date = end_date_datetime.strftime("%Y-%m-%d")
+        icu_comp = [7]
+        label = "ICU Occupancy"
+        labels = []
+        title = "ICU Occupancy per 100_000 inhabitants"
 
-    df = pd.read_json(path_icu_data)
+        plot_data = []
+        for mode in modes:
+            path_results_mode = os.path.join(path_results, dir_name, mode)
+            # check if dir exists, othewrise continue
+            if not os.path.exists(path_results_mode):
+                continue
+            labels.append(label + f" {mode}")
+            plot_data.append(get_results(
+                path_results_mode, icu_comp, results="total"))
 
-    filtered_df = df.loc[(df['Date'] >= start_date) &
-                         (df['Date'] <= end_date)]
-    icu_divi = filtered_df['ICU'].to_numpy() / total_pop * 100_000
-    plot_data.append(icu_divi)
-    labels.append("ICU Divi Data")
+        # calculate ICU occupancy per 100_000 inhabitants
+        for data in plot_data:
+            for key in data.keys():
+                for indx in range(len(data[key])):
+                    data[key][indx] = data[key][indx] / total_pop * 100_000
 
-    plot(plot_data, labels, path_plots, title=title,
-         log_scale=log_scale, ylabel="ICU Occupancy per 100_000", plot_percentiles=plot_percentiles)
+        # create dict with same shape and set constant value for ICU capacity
+        icu_capacity = {key: [icu_capacity_val for _ in range(
+            len(plot_data[0][key]))] for key in plot_data[0].keys()}
+        plot_data.append(icu_capacity)
+        labels.append("ICU Capacity")
+
+        num_days = len(plot_data[0]['p25']) - 1
+        start_date_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+        end_date_datetime = start_date_datetime + timedelta(days=num_days)
+        end_date = end_date_datetime.strftime("%Y-%m-%d")
+
+        df = pd.read_json(path_icu_data)
+
+        filtered_df = df.loc[(df['Date'] >= start_date) &
+                             (df['Date'] <= end_date)]
+        icu_divi = filtered_df['ICU'].to_numpy() / total_pop * 100_000
+        plot_data.append(icu_divi)
+        labels.append("ICU Divi Data")
+
+        plot(plot_data, labels, plots_dir, title=dir_name,
+             log_scale=log_scale, ylabel="ICU Occupancy per 100_000", plot_percentiles=plot_percentiles)
     return 0
 
 
@@ -722,6 +768,7 @@ if __name__ == '__main__':
     infected_compartment = [[1, 2, 3, 4, 5, 6, 7]]
     dead_compartment = [[9]]
     flow_se = [[0]]
+    flow_ci = [[3]]
 
     # plot_r0_county_level(path_results, path_plots, modes)
     # plot_contacts(path_results, path_plots, modes)
@@ -733,28 +780,28 @@ if __name__ == '__main__':
     #                   infected_compartment, [""], "Total Infected")
     # plot_compartments(path_results, path_plots, modes,
     #                   dead_compartment, [""], "Total Deaths")
-    # plot_flows(path_results, path_plots, modes,
-    #            flow_se, [""], "Daily Infections", plot_percentiles=False)
-    # plot_icu_comp(path_results, path_plots, modes,
-    #               path_icu_data, plot_percentiles=False)
+    plot_flows(path_results, path_plots, modes,
+               flow_ci, [""], "Daily Infections", plot_percentiles=False)
+    plot_icu_comp(path_results, path_plots, modes,
+                  path_icu_data, plot_percentiles=False)
     # plot_r0(path_results, path_plots, modes)
     # plot_peaks(path_results, path_plots, modes, flow_se)
 
     # plot_peaks_single(path_results, path_plots, ["FeedbackDamping"], flow_se)
 
     # peak plots for daily infections
-    plot_peak_values(path_results, path_plots, [
-                     "FeedbackDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True)
-    plot_peak_values(path_results, path_plots, [
-                     "FeedbackDamping"], flow_se, plot_type='val', title='Daily Infections', flows=True, vertical=True)
+    # plot_peak_values(path_results, path_plots, [
+    #                  "FeedbackDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True)
+    # plot_peak_values(path_results, path_plots, [
+    #                  "FeedbackDamping"], flow_se, plot_type='val', title='Daily Infections', flows=True, vertical=True)
 
-    # peak plots for ICU occupancy
-    plot_peak_values(path_results, path_plots, [
-                     "FeedbackDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True)
-    plot_peak_values(path_results, path_plots, [
-        "FeedbackDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True)
+    # # peak plots for ICU occupancy
+    # plot_peak_values(path_results, path_plots, [
+    #                  "FeedbackDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True)
+    # plot_peak_values(path_results, path_plots, [
+    #     "FeedbackDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True)
 
-    plot_peak_values(path_results, path_plots, [
-                     "ClassicDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True, dir_value='fixed')
-    plot_peak_values(path_results, path_plots, [
-        "ClassicDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True, dir_value='fixed')
+    # plot_peak_values(path_results, path_plots, [
+    #                  "ClassicDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True, dir_value='fixed')
+    # plot_peak_values(path_results, path_plots, [
+    #     "ClassicDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True, dir_value='fixed')
