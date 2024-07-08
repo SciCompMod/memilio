@@ -48,8 +48,8 @@ TEST(TestHouseholds, test_add_household_to_world)
     EXPECT_EQ(persons[3].get_age(), age_group_5_to_14);
 
     // Test location
-    EXPECT_EQ(persons[0].get_location().get_index(), persons[1].get_location().get_index());
-    EXPECT_EQ(persons[2].get_location().get_index(), persons[3].get_location().get_index());
+    EXPECT_EQ(persons[0].get_location(), persons[1].get_location());
+    EXPECT_EQ(persons[2].get_location(), persons[3].get_location());
 }
 
 TEST(TestHouseholds, test_add_household_group_to_world)
@@ -96,11 +96,11 @@ TEST(TestHouseholds, test_add_household_group_to_world)
     EXPECT_EQ(number_of_age35to59_year_olds, 70);
 
     // Test location for some people
-    EXPECT_EQ(persons[0].get_location().get_index(), persons[1].get_location().get_index());
-    EXPECT_EQ(persons[1].get_location().get_index(), persons[5].get_location().get_index());
-    EXPECT_EQ(persons[5].get_location().get_index(), persons[10].get_location().get_index());
+    EXPECT_EQ(persons[0].get_location(), persons[1].get_location());
+    EXPECT_EQ(persons[1].get_location(), persons[5].get_location());
+    EXPECT_EQ(persons[5].get_location(), persons[10].get_location());
 
-    EXPECT_EQ(persons[60].get_location().get_index(), persons[61].get_location().get_index());
-    EXPECT_EQ(persons[61].get_location().get_index(), persons[62].get_location().get_index());
-    EXPECT_EQ(persons[62].get_location().get_index(), persons[63].get_location().get_index());
+    EXPECT_EQ(persons[60].get_location(), persons[61].get_location());
+    EXPECT_EQ(persons[61].get_location(), persons[62].get_location());
+    EXPECT_EQ(persons[62].get_location(), persons[63].get_location());
 }

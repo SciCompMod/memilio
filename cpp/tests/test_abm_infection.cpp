@@ -167,7 +167,7 @@ TEST(TestInfection, getPersonalProtectiveFactor)
     auto rng = mio::RandomNumberGenerator();
 
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
-    auto person   = mio::abm::Person(rng, location.get_id(), age_group_15_to_34);
+    auto person   = mio::abm::Person(rng, location.get_type(), location.get_id(), age_group_15_to_34);
     person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, mio::abm::TimePoint(0));
     auto latest_protection = person.get_latest_protection();
 

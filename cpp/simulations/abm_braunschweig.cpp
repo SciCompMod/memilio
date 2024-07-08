@@ -959,8 +959,8 @@ void write_log_to_file_trip_data(const T& history)
             auto agent_id = std::get<0>(movement_data[movement_data_index][trip_index]);
 
             int start_index = movement_data_index - 1;
-            using Type      = std::tuple<mio::abm::PersonId, uint32_t, mio::abm::TimePoint, mio::abm::TransportMode,
-                                    mio::abm::ActivityType, mio::abm::InfectionState>;
+            using Type      = std::tuple<mio::abm::PersonId, mio::abm::LocationId, mio::abm::TimePoint,
+                                    mio::abm::TransportMode, mio::abm::ActivityType, mio::abm::InfectionState>;
             while (!std::binary_search(std::begin(movement_data[start_index]), std::end(movement_data[start_index]),
                                        movement_data[movement_data_index][trip_index],
                                        [](const Type& v1, const Type& v2) {

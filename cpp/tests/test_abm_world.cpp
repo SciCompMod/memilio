@@ -107,17 +107,17 @@ TEST(TestWorld, findLocation)
     auto& person   = world.get_person(person_id);
 
     person.set_assigned_location(mio::abm::LocationType::Home, home_id);
-    person.set_assigned_location(mio::abm::LocationType::School, work_id);
-    person.set_assigned_location(mio::abm::LocationType::Work, school_id);
+    person.set_assigned_location(mio::abm::LocationType::Work, work_id);
+    person.set_assigned_location(mio::abm::LocationType::School, school_id);
 
-    ASSERT_EQ(world.find_location(mio::abm::LocationType::Work, person_id), work_id);
-    ASSERT_EQ(world.find_location(mio::abm::LocationType::School, person_id), school_id);
-    ASSERT_EQ(world.find_location(mio::abm::LocationType::Home, person_id), home_id);
+    EXPECT_EQ(world.find_location(mio::abm::LocationType::Work, person_id), work_id);
+    EXPECT_EQ(world.find_location(mio::abm::LocationType::School, person_id), school_id);
+    EXPECT_EQ(world.find_location(mio::abm::LocationType::Home, person_id), home_id);
 
     auto&& world_test = std::as_const(world);
-    ASSERT_EQ(world_test.find_location(mio::abm::LocationType::Work, person_id), work_id);
-    ASSERT_EQ(world_test.find_location(mio::abm::LocationType::School, person_id), school_id);
-    ASSERT_EQ(world_test.find_location(mio::abm::LocationType::Home, person_id), home_id);
+    EXPECT_EQ(world_test.find_location(mio::abm::LocationType::Work, person_id), work_id);
+    EXPECT_EQ(world_test.find_location(mio::abm::LocationType::School, person_id), school_id);
+    EXPECT_EQ(world_test.find_location(mio::abm::LocationType::Home, person_id), home_id);
 }
 
 TEST(TestWorld, evolveStateTransition)

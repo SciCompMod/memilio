@@ -31,9 +31,9 @@ namespace mio
 namespace abm
 {
 
-Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location, AgeGroup age,
+Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id, AgeGroup age,
                PersonId person_id)
-    : m_location(location)
+    : m_location(location_id)
     , m_location_type(location_type)
     , m_assigned_locations((uint32_t)LocationType::Count, LocationId::invalid_id())
     , m_quarantine_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))

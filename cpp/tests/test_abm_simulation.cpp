@@ -27,20 +27,15 @@ TEST(TestSimulation, advance_random)
     auto world     = mio::abm::World(num_age_groups);
     auto location1 = world.add_location(mio::abm::LocationType::School);
     auto location2 = world.add_location(mio::abm::LocationType::School);
-    auto pid1      = world.add_person(location1, age_group_5_to_14);
-    auto pid2      = world.add_person(location1, age_group_5_to_14);
-    auto pid3      = world.add_person(location2, age_group_5_to_14);
-    auto pid4      = world.add_person(location2, age_group_5_to_14);
+    auto p1        = world.add_person(location1, age_group_5_to_14);
+    auto p2        = world.add_person(location1, age_group_5_to_14);
+    auto p3        = world.add_person(location2, age_group_5_to_14);
+    auto p4        = world.add_person(location2, age_group_5_to_14);
 
-    auto& p1 = world.get_person(pid1);
-    auto& p2 = world.get_person(pid2);
-    auto& p3 = world.get_person(pid3);
-    auto& p4 = world.get_person(pid4);
-
-    p1.set_assigned_location(location1);
-    p2.set_assigned_location(location1);
-    p3.set_assigned_location(location2);
-    p4.set_assigned_location(location2);
+    world.assign_location(p1, location1);
+    world.assign_location(p2, location1);
+    world.assign_location(p3, location2);
+    world.assign_location(p4, location2);
 
     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
 
@@ -82,39 +77,35 @@ TEST(TestSimulation, advanceWithCommonHistory)
     auto basics_id   = world.add_location(mio::abm::LocationType::BasicsShop);
     auto public_id   = world.add_location(mio::abm::LocationType::PublicTransport);
 
-    auto pid1 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::Exposed);
-    auto pid2 = add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::Exposed);
-    auto pid3 = add_test_person(world, home_id, age_group_35_to_59, mio::abm::InfectionState::Dead);
+    auto person1 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::Exposed);
+    auto person2 = add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::Exposed);
+    auto person3 = add_test_person(world, home_id, age_group_35_to_59, mio::abm::InfectionState::Dead);
 
-    auto& person1 = world.get_person(pid1);
-    auto& person2 = world.get_person(pid2);
-    auto& person3 = world.get_person(pid3);
-
-    person1.set_assigned_location(home_id);
-    person2.set_assigned_location(home_id);
-    person3.set_assigned_location(home_id);
-    person1.set_assigned_location(school_id);
-    person2.set_assigned_location(work_id);
-    person2.set_assigned_location(icu_id);
-    person2.set_assigned_location(hospital_id);
-    person1.set_assigned_location(social_id);
-    person2.set_assigned_location(social_id);
-    person3.set_assigned_location(social_id);
-    person1.set_assigned_location(basics_id);
-    person2.set_assigned_location(basics_id);
-    person3.set_assigned_location(basics_id);
-    person2.set_assigned_location(public_id);
+    world.assign_location(person1, home_id);
+    world.assign_location(person2, home_id);
+    world.assign_location(person3, home_id);
+    world.assign_location(person1, school_id);
+    world.assign_location(person2, work_id);
+    world.assign_location(person2, icu_id);
+    world.assign_location(person2, hospital_id);
+    world.assign_location(person1, social_id);
+    world.assign_location(person2, social_id);
+    world.assign_location(person3, social_id);
+    world.assign_location(person1, basics_id);
+    world.assign_location(person2, basics_id);
+    world.assign_location(person3, basics_id);
+    world.assign_location(person2, public_id);
 
     mio::abm::TripList& trip_list = world.get_trip_list();
 
     // We add trips for person two to test the history and if it is working correctly
-    mio::abm::Trip trip1(person2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id);
-    mio::abm::Trip trip2(person2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id);
-    mio::abm::Trip trip3(person2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(4), hospital_id);
-    mio::abm::Trip trip4(person2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(5), social_id);
-    mio::abm::Trip trip5(person2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(6), basics_id);
-    mio::abm::Trip trip6(person2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(7), public_id);
-    mio::abm::Trip trip7(person2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), home_id);
+    mio::abm::Trip trip1(person2, mio::abm::TimePoint(0) + mio::abm::hours(2), work_id);
+    mio::abm::Trip trip2(person2, mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id);
+    mio::abm::Trip trip3(person2, mio::abm::TimePoint(0) + mio::abm::hours(4), hospital_id);
+    mio::abm::Trip trip4(person2, mio::abm::TimePoint(0) + mio::abm::hours(5), social_id);
+    mio::abm::Trip trip5(person2, mio::abm::TimePoint(0) + mio::abm::hours(6), basics_id);
+    mio::abm::Trip trip6(person2, mio::abm::TimePoint(0) + mio::abm::hours(7), public_id);
+    mio::abm::Trip trip7(person2, mio::abm::TimePoint(0) + mio::abm::hours(8), home_id);
 
     trip_list.add_trip(trip1);
     trip_list.add_trip(trip2);

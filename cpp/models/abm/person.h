@@ -53,7 +53,7 @@ public:
      * @param[in] age The AgeGroup of the Person.
      * @param[in] person_id Index of the Person.
      */
-    explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location, AgeGroup age,
+    explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id, AgeGroup age,
                     PersonId person_id = PersonId::invalid_id());
 
     explicit Person(const Person& other, PersonId id);

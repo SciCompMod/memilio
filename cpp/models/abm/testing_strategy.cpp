@@ -21,7 +21,6 @@
 #include "abm/testing_strategy.h"
 #include "abm/location_id.h"
 #include "memilio/utils/random_number_generator.h"
-#include <tuple>
 #include <utility>
 
 namespace mio
@@ -116,8 +115,7 @@ bool TestingScheme::run_scheme(PersonalRandomNumberGenerator& rng, Person& perso
     return true;
 }
 
-TestingStrategy::TestingStrategy(const std::unordered_map<std::pair<LocationType, LocationId>,
-                                                          std::vector<TestingScheme>, hash>& location_to_schemes_map)
+TestingStrategy::TestingStrategy(const std::vector<Entry>& location_to_schemes_map)
     : m_location_to_schemes_map(location_to_schemes_map.begin(), location_to_schemes_map.end())
 {
 }
@@ -125,18 +123,17 @@ TestingStrategy::TestingStrategy(const std::unordered_map<std::pair<LocationType
 void TestingStrategy::add_testing_scheme(const LocationType& loc_type, const LocationId& loc_id,
                                          const TestingScheme& scheme)
 {
-    auto key = std::tie(loc_type, loc_id);
     auto iter_schemes =
-        std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [&key](const auto& p) {
-            return p == key;
+        std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [&](const auto& p) {
+            return p.type == loc_type && p.id == loc_id;
         });
     if (iter_schemes == m_location_to_schemes_map.end()) {
         //no schemes for this location yet, add a new list with one scheme
-        m_location_to_schemes_map.emplace_back(key, std::vector<TestingScheme>(1, scheme));
+        m_location_to_schemes_map.push_back({loc_type, loc_id, std::vector<TestingScheme>(1, scheme)});
     }
     else {
         //add scheme to existing vector if the scheme doesn't exist yet
-        auto& schemes = iter_schemes->second;
+        auto& schemes = iter_schemes->schemes;
         if (std::find(schemes.begin(), schemes.end(), scheme) == schemes.end()) {
             schemes.push_back(scheme);
         }
@@ -146,14 +143,13 @@ void TestingStrategy::add_testing_scheme(const LocationType& loc_type, const Loc
 void TestingStrategy::remove_testing_scheme(const LocationType& loc_type, const LocationId& loc_id,
                                             const TestingScheme& scheme)
 {
-    auto key = std::tie(loc_type, loc_id);
     auto iter_schemes =
-        std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [&key](const auto& p) {
-            return std::get<0>(p) == std::get<0>(key) && std::get<1>(p) == std::get<1>(key);
+        std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [&](const auto& p) {
+            return p.type == loc_type && p.id == loc_id;
         });
     if (iter_schemes != m_location_to_schemes_map.end()) {
         //remove the scheme from the list
-        auto& schemes_vector = iter_schemes->second;
+        auto& schemes_vector = iter_schemes->schemes;
         auto last            = std::remove(schemes_vector.begin(), schemes_vector.end(), scheme);
         schemes_vector.erase(last, schemes_vector.end());
         //delete the list of schemes for this location if no schemes left
@@ -185,12 +181,12 @@ bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator& rng, Person& p
     for (auto key : {std::make_pair(location.get_type(), location.get_id()),
                      std::make_pair(location.get_type(), LocationId::invalid_id())}) {
         auto iter_schemes =
-            std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [key](auto& p) {
-                return p.first == key;
+            std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [&](const auto& p) {
+                return p.type == key.first && p.id == key.second;
             });
         if (iter_schemes != m_location_to_schemes_map.end()) {
             //apply all testing schemes that are found
-            auto& schemes = iter_schemes->second;
+            auto& schemes = iter_schemes->schemes;
             if (!std::all_of(schemes.begin(), schemes.end(), [&rng, &person, t](TestingScheme& ts) {
                     return !ts.is_active() || ts.run_scheme(rng, person, t);
                 })) {

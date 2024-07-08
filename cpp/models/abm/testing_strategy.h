@@ -179,8 +179,7 @@ public:
      * @param[in] testing_schemes Vector of TestingSchemes that are checked for testing.
      */
     TestingStrategy() = default;
-    explicit TestingStrategy(const std::unordered_map<std::pair<LocationType, LocationId>, std::vector<TestingScheme>,
-                                                      hash>& location_to_schemes_map);
+    explicit TestingStrategy(const std::vector<Entry>& location_to_schemes_map);
 
     /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
@@ -238,8 +237,7 @@ public:
     bool run_strategy(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
 
 private:
-    std::vector<std::tuple<LocationType, LocationId, std::vector<TestingScheme>>>
-        m_location_to_schemes_map; ///< Set of schemes that are checked for testing.
+    std::vector<Entry> m_location_to_schemes_map; ///< Set of schemes that are checked for testing.
 };
 
 } // namespace abm
