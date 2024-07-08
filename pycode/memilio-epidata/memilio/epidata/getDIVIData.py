@@ -300,7 +300,7 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
         impute_dates=impute_dates,
         moving_average=moving_average,
     )
-    data_dict = write_divi_data(
+    datasets = write_divi_data(
         df=preprocess_df,
         directory=directory,
         file_format=file_format,
@@ -308,11 +308,8 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
         moving_average=moving_average,
         conf_obj=conf,
     )
-    df_counties = data_dict['counties']
-    df_states = data_dict['states']
-    df_ger = data_dict['Germany']
-
-    return df_raw, df_counties, df_states, df_ger
+    datasets['raw_data'] = df_raw
+    return datasets
 
 
 def divi_data_sanity_checks(df: pd.DataFrame) -> None:

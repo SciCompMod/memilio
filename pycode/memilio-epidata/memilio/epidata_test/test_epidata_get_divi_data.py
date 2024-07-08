@@ -86,7 +86,11 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     def test_get_divi_data(self, mock_print, mock_file, mock_san):
         mock_file.return_value = self.df_test
         # test case with standard parameters
-        (df, df_county, df_states, df_ger) = gdd.get_divi_data(out_folder=self.path)
+        datasets = gdd.get_divi_data(out_folder=self.path)
+        df = datasets['raw_data']
+        df_county = datasets['counties']
+        df_states = datasets['states']
+        df_ger = datasets['Germany']
         mock_san.assert_has_calls([call(self.df_test)])
         pd.testing.assert_frame_equal(df, self.df_test)
         self.assertEqual(
@@ -122,8 +126,11 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     def test_gdd_ma(self, mock_print, mock_file, mock_san):
         mock_file.return_value = self.df_test
         # test case with moving average
-        (df, df_county, df_states, df_ger) = gdd.get_divi_data(
-            out_folder=self.path, moving_average=3)
+        datasets = gdd.get_divi_data(out_folder=self.path, moving_average=3)
+        df = datasets['raw_data']
+        df_county = datasets['counties']
+        df_states = datasets['states']
+        df_ger = datasets['Germany']
         mock_san.assert_has_calls([call(self.df_test)])
         pd.testing.assert_frame_equal(df, self.df_test)
         self.assertAlmostEqual(
@@ -159,8 +166,11 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     def test_gdd_all_dates(self, mock_print, mock_file, mock_san):
         mock_file.return_value = self.df_test.copy()
         # test case with impute dates is True
-        (df, df_county, df_states, df_ger) = gdd.get_divi_data(
-            out_folder=self.path, impute_dates=True)
+        datasets = gdd.get_divi_data(out_folder=self.path,  impute_dates=True)
+        df = datasets['raw_data']
+        df_county = datasets['counties']
+        df_states = datasets['states']
+        df_ger = datasets['Germany']
         # Test if sanity check was called
         self.assertTrue(mock_san.called)
         pd.testing.assert_frame_equal(df, self.df_test)
