@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, Sascha Korf, Carlotta Gerstein
+* Authors: Rene Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,37 +17,40 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_ABM_LOCATION_TYPE_H
-#define MIO_ABM_LOCATION_TYPE_H
 
-#include <cstdint>
+#ifndef MIO_ABM_LOCATION_ID_H
+#define MIO_ABM_LOCATION_ID_H
+
+#include "memilio/utils/type_safe.h"
+#include <limits>
 
 namespace mio
 {
 namespace abm
 {
 
-/**
- * @brief Type of a Location.
- */
-enum class LocationType : std::uint32_t
-{
-    Home = 0,
-    School,
-    Work,
-    SocialEvent, // TODO: differentiate different kinds
-    BasicsShop, // groceries and other necessities
-    Hospital,
-    ICU,
-    Car,
-    PublicTransport,
-    TransportWithoutContact, // all ways of travel with no contact to other people, e.g. biking or walking
-    Cemetery, // Location for all the dead persons. It is created once for the World.
+/// Unique identifier for a Location within a World.
+struct LocationId : mio::TypeSafe<uint32_t, LocationId>, public OperatorComparison<LocationId> {
+    /// @brief Create an ID.
+    LocationId(uint32_t id)
+        : mio::TypeSafe<uint32_t, LocationId>(id)
+    {
+    }
 
-    Count //last!
+    /// @brief Create an invalid ID.
+    LocationId()
+        : mio::TypeSafe<uint32_t, LocationId>(std::numeric_limits<uint32_t>::max())
+    {
+    }
+
+    /// @brief Value for invalid IDs.
+    const static LocationId invalid_id()
+    {
+        return LocationId();
+    }
 };
 
 } // namespace abm
 } // namespace mio
 
-#endif
+#endif // MIO_ABM_LOCATION_ID_H

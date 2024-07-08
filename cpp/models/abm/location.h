@@ -20,6 +20,7 @@
 #ifndef MIO_ABM_LOCATION_H
 #define MIO_ABM_LOCATION_H
 
+#include "abm/location_id.h"
 #include "abm/mask_type.h"
 #include "abm/parameters.h"
 #include "abm/location_type.h"
@@ -30,6 +31,24 @@ namespace mio
 {
 namespace abm
 {
+
+struct GeographicalLocation {
+    double latitude;
+    double longitude;
+
+    /**
+     * @brief Compare two GeographicalLocation%s.
+     */
+    bool operator==(const GeographicalLocation& other) const
+    {
+        return (latitude == other.latitude && longitude == other.longitude);
+    }
+
+    bool operator!=(const GeographicalLocation& other) const
+    {
+        return !(latitude == other.latitude && longitude == other.longitude);
+    }
+};
 
 struct CellIndex : public mio::Index<CellIndex> {
     CellIndex(size_t i)
@@ -77,24 +96,13 @@ class Location
 {
 public:
     /**
-     * @brief Construct a Location of a certain LocationId.
-     * @param[in] loc_id The #LocationId.
-     * @param[in] num_agegroups [Default: 1] The number of age groups in the model.
-     * @param[in] num_cells [Default: 1] The number of Cell%s in which the Location is divided.
-     */
-    explicit Location(LocationId loc_id, size_t num_agegroups = 1, uint32_t num_cells = 1);
-
-    /**
      * @brief Construct a Location with provided parameters. 
      * @param[in] loc_type The #LocationType.
-     * @param[in] index The index of the Location.
+     * @param[in] loc_id The index of the Location in the World.
      * @param[in] num_agegroups [Default: 1] The number of age groups in the model.
      * @param[in] num_cells [Default: 1] The number of Cell%s in which the Location is divided.
      */
-    explicit Location(LocationType loc_type, uint32_t loc_index, size_t num_agegroups = 1, uint32_t num_cells = 1)
-        : Location(LocationId{loc_index, loc_type}, num_agegroups, num_cells)
-    {
-    }
+    explicit Location(LocationType loc_type, LocationId loc_id, size_t num_agegroups = 1, uint32_t num_cells = 1);
 
     /**
      * @brief Construct a copy of a Location with a new ID.
@@ -106,12 +114,6 @@ public:
     {
         m_id = id;
     }
-
-    /**
-     * @brief Return a copy of this #Location object with an empty m_persons.
-     * @param[in] num_agegroups The number of age groups in the model.
-     */
-    Location copy() const;
 
     /**
      * @brief Compare two Location%s.
@@ -132,16 +134,16 @@ public:
      */
     LocationType get_type() const
     {
-        return m_id.type;
+        return m_type;
     }
 
     /**
-     * @brief Get the index of this Location.
-     * @return The index of the Location.
+     * @brief Get the location's identifier in a World.
+     * @return The location's LocationId by value.
      */
-    unsigned get_index() const
+    LocationId get_id() const
     {
-        return m_id.index;
+        return m_id;
     }
 
     /**
@@ -238,8 +240,8 @@ public:
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("Location");
-        obj.add_element("index", m_id.index);
-        obj.add_element("type", m_id.type);
+        obj.add_element("index", m_id);
+        obj.add_element("type", m_type);
     }
 
     /**
@@ -250,12 +252,12 @@ public:
     static IOResult<Location> deserialize(IOContext& io)
     {
         auto obj   = io.expect_object("Location");
-        auto index = obj.expect_element("index", Tag<uint32_t>{});
-        auto type  = obj.expect_element("type", Tag<uint32_t>{});
+        auto index = obj.expect_element("index", Tag<LocationId>{});
+        auto type  = obj.expect_element("type", Tag<LocationType>{});
         return apply(
             io,
             [](auto&& index_, auto&& type_) {
-                return Location{LocationId{index_, LocationType(type_)}};
+                return Location{type_, index_};
             },
             index, type);
     }
@@ -278,17 +280,9 @@ public:
         m_geographical_location = location;
     }
 
-    /**
-     * @brief Get the location's identifier in a World.
-     * @return The location's LocationId by value.
-     */
-    LocationId get_id() const
-    {
-        return m_id;
-    }
-
 private:
-    LocationId m_id; ///< Id of the Location including type and index.
+    LocationType m_type; ///< Type of the Location.
+    LocationId m_id; ///< Id of the Location. Set by the World owning it.
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.

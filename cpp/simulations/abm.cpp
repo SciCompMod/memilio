@@ -328,7 +328,7 @@ void create_assign_locations(mio::abm::World& world)
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
 
-    auto probability = mio:: UncertainValue<>();
+    auto probability = mio::UncertainValue<>();
     assign_uniform_distribution(probability, 0.5, 1.0);
 
     auto test_type      = mio::abm::AntigenTest();
@@ -379,21 +379,22 @@ void create_assign_locations(mio::abm::World& world)
     //Assign locations to the people
     auto persons = world.get_persons();
     for (auto& person : persons) {
+        const auto id = person.get_id();
         //assign shop and event
-        person.set_assigned_location(event);
+        world.assign_location(id, event);
         counter_event++;
-        person.set_assigned_location(shop);
+        world.assign_location(id, shop);
         counter_shop++;
         //assign hospital and ICU
-        person.set_assigned_location(hospital);
-        person.set_assigned_location(icu);
+        world.assign_location(id, hospital);
+        world.assign_location(id, icu);
         //assign work/school to people depending on their age
         if (person.get_age() == age_group_5_to_14) {
-            person.set_assigned_location(school);
+            world.assign_location(id, school);
             counter_school++;
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            person.set_assigned_location(work);
+            world.assign_location(id, work);
             counter_work++;
         }
         //add new school/work/shop if needed

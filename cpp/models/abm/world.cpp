@@ -18,10 +18,12 @@
 * limitations under the License.
 */
 #include "abm/world.h"
+#include "abm/location_id.h"
 #include "abm/location_type.h"
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/migration_rules.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"
 #include "memilio/utils/stl_util.h"
@@ -33,7 +35,7 @@ namespace abm
 
 LocationId World::add_location(LocationType type, uint32_t num_cells)
 {
-    LocationId id = {static_cast<uint32_t>(m_locations.size()), type};
+    LocationId id{static_cast<uint32_t>(m_locations.size())};
     m_locations.emplace_back(id, parameters.get_num_groups(), num_cells);
     m_has_locations[size_t(type)] = true;
 
@@ -47,22 +49,22 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 
 PersonId World::add_person(const LocationId id, AgeGroup age)
 {
-    return add_person(Person(m_rng, id, age));
+    return add_person(Person(m_rng, get_location(id).get_type(), id, age));
 }
 
 PersonId World::add_person(Person&& person)
 {
-    assert(person.get_location().index != INVALID_LOCATION_INDEX);
-    assert(person.get_location().index < m_locations.size());
-    assert(person.get_age().get() < parameters.get_num_groups());
+    assert(person.get_location() != LocationId::invalid_id());
+    assert(person.get_location() < (LocationId)m_locations.size());
+    assert(person.get_age() < (AgeGroup)parameters.get_num_groups());
 
     PersonId new_id{static_cast<uint32_t>(m_persons.size())};
     m_persons.emplace_back(person, new_id);
     auto& new_person = m_persons.back();
-    new_person.set_assigned_location(m_cemetery_id);
+    new_person.set_assigned_location(LocationType::Cemetery, m_cemetery_id);
 
     if (m_is_local_population_cache_valid) {
-        ++m_local_population_cache[new_person.get_location().index];
+        ++m_local_population_cache[new_person.get_location().get()];
     }
     return new_id;
 }
@@ -148,7 +150,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                 auto& target_location = get_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
                     person.apply_mask_intervention(personal_rng, target_location);
-                    migrate(person.get_person_id(), target_location.get_id(), trip.trip_mode);
+                    migrate(person.get_id(), target_location.get_id(), trip.trip_mode);
                 }
             }
             m_trip_list.increase_index();
@@ -172,7 +174,7 @@ void World::build_compute_local_population_cache() const
         } // implicit taskloop barrier
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_persons; i++) {
-            ++m_local_population_cache[m_persons[i].get_location().index];
+            ++m_local_population_cache[m_persons[i].get_location().get()];
         } // implicit taskloop barrier
     } // implicit single barrier
 }
@@ -227,10 +229,10 @@ void World::compute_exposure_caches(TimePoint t, TimeSpan dt)
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_persons; ++i) {
             const Person& person = m_persons[i];
-            const auto location  = person.get_location().index;
+            const auto location  = person.get_location().get();
             mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
                                                 m_contact_exposure_rates_cache[location], person,
-                                                get_location(person.get_person_id()), t, dt);
+                                                get_location(person.get_id()), t, dt);
         } // implicit taskloop barrier
     } // implicit single barrier
 }
@@ -268,9 +270,9 @@ auto World::get_persons() -> Range<std::pair<PersonIterator, PersonIterator>>
 
 LocationId World::find_location(LocationType type, const PersonId person) const
 {
-    auto index = get_person(person).get_assigned_location_index(type);
-    assert(index != INVALID_LOCATION_INDEX && "unexpected error.");
-    return {index, type};
+    auto location_id = get_person(person).get_assigned_location(type);
+    assert(location_id != LocationId::invalid_id() && "No location.");
+    return location_id;
 }
 
 size_t World::get_subpopulation_combined(TimePoint t, InfectionState s) const

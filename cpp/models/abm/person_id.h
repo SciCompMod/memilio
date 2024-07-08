@@ -29,16 +29,21 @@ namespace mio
 namespace abm
 {
 
+/// Unique identifier for a Person within a World.
 struct PersonId : mio::TypeSafe<uint32_t, PersonId>, public OperatorComparison<PersonId> {
+    /// @brief Create an ID.
     PersonId(uint32_t id)
         : mio::TypeSafe<uint32_t, PersonId>(id)
     {
     }
+
+    /// @brief Create an invalid ID.
     PersonId()
         : mio::TypeSafe<uint32_t, PersonId>(std::numeric_limits<uint32_t>::max())
     {
     }
 
+    /// @brief Value for invalid IDs.
     const static PersonId invalid_id()
     {
         return PersonId();

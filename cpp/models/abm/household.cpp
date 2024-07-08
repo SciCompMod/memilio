@@ -19,7 +19,7 @@
 */
 
 #include "abm/household.h"
-#include "abm/person.h"
+#include "abm/person_id.h"
 #include "abm/location.h"
 #include "memilio/utils/random_number_generator.h"
 
@@ -69,8 +69,8 @@ void add_household_to_world(World& world, const Household& household)
         std::tie(member, count) = memberTouple;
         for (int j = 0; j < count; j++) {
             auto age_group = pick_age_group_from_age_distribution(world.get_rng(), member.get_age_weights());
-            auto& person   = world.get_person(world.add_person(home, age_group));
-            person.set_assigned_location(home);
+            auto person    = world.add_person(home, age_group);
+            world.assign_location(person, home);
         }
     }
 }

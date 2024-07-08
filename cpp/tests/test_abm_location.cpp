@@ -18,21 +18,12 @@
 * limitations under the License.
 */
 
+#include "abm/location_id.h"
 #include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/world.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
-
-TEST(TestLocation, copyLocation)
-{
-    auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
-
-    auto copied_location = location;
-    ASSERT_EQ(copied_location.get_type(), mio::abm::LocationType::School);
-    ASSERT_EQ(copied_location.get_index(), location.get_index());
-    ASSERT_EQ(copied_location.get_cells().size(), location.get_cells().size());
-}
 
 TEST(TestLocation, initCell)
 {
@@ -40,10 +31,10 @@ TEST(TestLocation, initCell)
     ASSERT_EQ(location.get_cells().size(), 2);
 }
 
-TEST(TestLocation, getIndex)
+TEST(TestLocation, getId)
 {
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
-    ASSERT_EQ((int)location.get_index(), 0);
+    ASSERT_EQ(location.get_id(), mio::abm::LocationId(0));
 }
 
 TEST(TestLocation, reachCapacity)
@@ -83,10 +74,10 @@ TEST(TestLocation, reachCapacity)
     auto p1 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedNoSymptoms);
     auto p2 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible);
 
-    world.get_person(p1).set_assigned_location(school_id);
-    world.get_person(p2).set_assigned_location(school_id);
-    world.get_person(p1).set_assigned_location(home_id);
-    world.get_person(p2).set_assigned_location(home_id);
+    world.get_person(p1).set_assigned_location(mio::abm::LocationType::School, school_id);
+    world.get_person(p2).set_assigned_location(mio::abm::LocationType::School, school_id);
+    world.get_person(p1).set_assigned_location(mio::abm::LocationType::Home, home_id);
+    world.get_person(p2).set_assigned_location(mio::abm::LocationType::Home, home_id);
 
     world.get_location(school_id).set_capacity(1, 66);
 

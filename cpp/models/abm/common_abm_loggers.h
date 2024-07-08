@@ -79,7 +79,8 @@ constexpr mio::abm::ActivityType guess_activity_type(mio::abm::LocationType curr
  * @brief Logger to log the LocationInformation of the simulation.
  */
 struct LogLocationInformation : mio::LogOnce {
-    using Type = std::vector<std::tuple<uint32_t, mio::abm::LocationType, mio::abm::GeographicalLocation, size_t, int>>;
+    using Type = std::vector<
+        std::tuple<mio::abm::LocationId, mio::abm::LocationType, mio::abm::GeographicalLocation, size_t, int>>;
     /**
      * @brief Log the LocationInformation of the simulation. 
      * @param[in] sim The simulation of the abm.
@@ -93,15 +94,14 @@ struct LogLocationInformation : mio::LogOnce {
     static Type log(const mio::abm::Simulation& sim)
     {
         Type location_information{};
-        for (auto&& location : sim.get_world().get_locations()) {
+        for (auto& location : sim.get_world().get_locations()) {
             auto n_cells     = location.get_cells().size();
             int loc_capacity = 0;
             for (int i = 0; i < (int)n_cells; i++) {
                 loc_capacity += location.get_capacity(i).persons;
             }
-            location_information.push_back(std::make_tuple(location.get_index(), location.get_type(),
-                                                           location.get_geographical_location(), n_cells,
-                                                           loc_capacity));
+            location_information.push_back(std::make_tuple(
+                location.get_id(), location.get_type(), location.get_geographical_location(), n_cells, loc_capacity));
         }
         return location_information;
     }
@@ -111,7 +111,7 @@ struct LogLocationInformation : mio::LogOnce {
  * @brief Logger to log the Person%s Information in the simulation.
  */
 struct LogPersonInformation : mio::LogOnce {
-    using Type = std::vector<std::tuple<mio::abm::PersonId, uint32_t, mio::AgeGroup>>;
+    using Type = std::vector<std::tuple<mio::abm::PersonId, mio::abm::LocationId, mio::AgeGroup>>;
     /** 
      * @brief Log the LocationInformation of the simulation. 
      * @param[in] sim The simulation of the abm.
@@ -126,8 +126,7 @@ struct LogPersonInformation : mio::LogOnce {
         person_information.reserve(sim.get_world().get_persons().size());
         for (auto& person : sim.get_world().get_persons()) {
             person_information.push_back(std::make_tuple(
-                person.get_person_id(),
-                sim.get_world().find_location(mio::abm::LocationType::Home, person.get_person_id()).get_index(),
+                person.get_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person.get_id()),
                 person.get_age()));
         }
         return person_information;
@@ -138,8 +137,8 @@ struct LogPersonInformation : mio::LogOnce {
  * @brief Logger to log Movement Data of the agents in the simulation.
  */
 struct LogDataForMovement : mio::LogAlways {
-    using Type = std::vector<std::tuple<mio::abm::PersonId, uint32_t, mio::abm::TimePoint, mio::abm::TransportMode,
-                                        mio::abm::ActivityType, mio::abm::InfectionState>>;
+    using Type = std::vector<std::tuple<mio::abm::PersonId, mio::abm::LocationId, mio::abm::TimePoint,
+                                        mio::abm::TransportMode, mio::abm::ActivityType, mio::abm::InfectionState>>;
     /** 
      * @brief Log the Movement Data of the agents in the simulation.
      * @param[in] sim The simulation of the abm.
@@ -155,9 +154,9 @@ struct LogDataForMovement : mio::LogAlways {
     {
         Type movement_data{};
         for (Person p : sim.get_world().get_persons()) {
-            movement_data.push_back(std::make_tuple(
-                p.get_person_id(), p.get_location().get_index(), sim.get_time(), p.get_last_transport_mode(),
-                guess_activity_type(p.get_location().get_type()), p.get_infection_state(sim.get_time())));
+            movement_data.push_back(
+                std::make_tuple(p.get_id(), p.get_location(), sim.get_time(), p.get_last_transport_mode(),
+                                guess_activity_type(p.get_location_type()), p.get_infection_state(sim.get_time())));
         }
         return movement_data;
     }

@@ -27,7 +27,7 @@ TEST(TestWorld, init)
 
     EXPECT_EQ(world.get_locations().size(), 1);
     EXPECT_EQ(world.get_locations()[0].get_type(), mio::abm::LocationType::Cemetery);
-    ASSERT_THAT(world.get_persons(), testing::ElementsAre());
+    EXPECT_THAT(world.get_persons(), testing::ElementsAre());
 }
 
 TEST(TestWorld, addLocation)
@@ -38,8 +38,8 @@ TEST(TestWorld, addLocation)
     auto work_id    = world.add_location(mio::abm::LocationType::Work);
     auto home_id    = world.add_location(mio::abm::LocationType::Home);
 
-    ASSERT_EQ((int)school_id1.index, 1);
-    ASSERT_EQ((int)school_id2.index, 2);
+    ASSERT_EQ(school_id1.get(), 1);
+    ASSERT_EQ(school_id2.get(), 2);
 
     auto& school1 = world.get_location(school_id1);
     auto& school2 = world.get_location(school_id2);
@@ -106,9 +106,9 @@ TEST(TestWorld, findLocation)
     auto person_id = add_test_person(world, home_id);
     auto& person   = world.get_person(person_id);
 
-    person.set_assigned_location(home_id);
-    person.set_assigned_location(work_id);
-    person.set_assigned_location(school_id);
+    person.set_assigned_location(mio::abm::LocationType::Home, home_id);
+    person.set_assigned_location(mio::abm::LocationType::School, work_id);
+    person.set_assigned_location(mio::abm::LocationType::Work, school_id);
 
     ASSERT_EQ(world.find_location(mio::abm::LocationType::Work, person_id), work_id);
     ASSERT_EQ(world.find_location(mio::abm::LocationType::School, person_id), school_id);
@@ -154,9 +154,9 @@ TEST(TestWorld, evolveStateTransition)
     auto& p2 = world.get_persons()[1];
     auto& p3 = world.get_persons()[2];
 
-    p1.set_assigned_location(location1);
-    p2.set_assigned_location(location1);
-    p3.set_assigned_location(location2);
+    p1.set_assigned_location(mio::abm::LocationType::School, location1);
+    p2.set_assigned_location(mio::abm::LocationType::School, location1);
+    p3.set_assigned_location(mio::abm::LocationType::Work, location2);
 
     //setup mock so p2 becomes infected
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
@@ -213,12 +213,12 @@ TEST(TestWorld, evolveMigration) // TODO: this is not a unit test, this is a uni
         auto& p1 = world.get_person(pid1);
         auto& p2 = world.get_person(pid2);
 
-        p1.set_assigned_location(school_id);
-        p2.set_assigned_location(school_id);
-        p1.set_assigned_location(work_id);
-        p2.set_assigned_location(work_id);
-        p1.set_assigned_location(home_id);
-        p2.set_assigned_location(home_id);
+        p1.set_assigned_location(mio::abm::LocationType::School, school_id);
+        p2.set_assigned_location(mio::abm::LocationType::School, school_id);
+        p1.set_assigned_location(mio::abm::LocationType::Work, work_id);
+        p2.set_assigned_location(mio::abm::LocationType::Work, work_id);
+        p1.set_assigned_location(mio::abm::LocationType::Home, home_id);
+        p2.set_assigned_location(mio::abm::LocationType::Home, home_id);
 
         ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
             mock_exponential_dist;
@@ -280,24 +280,24 @@ TEST(TestWorld, evolveMigration) // TODO: this is not a unit test, this is a uni
         auto& p4 = world.get_person(pid4);
         auto& p5 = world.get_person(pid5);
 
-        p1.set_assigned_location(event_id);
-        p2.set_assigned_location(event_id);
-        p1.set_assigned_location(work_id);
-        p2.set_assigned_location(work_id);
-        p1.set_assigned_location(home_id);
-        p2.set_assigned_location(home_id);
-        p3.set_assigned_location(home_id);
-        p4.set_assigned_location(home_id);
-        p3.set_assigned_location(hospital_id);
-        p4.set_assigned_location(hospital_id);
-        p5.set_assigned_location(event_id);
-        p5.set_assigned_location(work_id);
-        p5.set_assigned_location(home_id);
+        p1.set_assigned_location(mio::abm::LocationType::SocialEvent, event_id);
+        p2.set_assigned_location(mio::abm::LocationType::SocialEvent, event_id);
+        p1.set_assigned_location(mio::abm::LocationType::Work, work_id);
+        p2.set_assigned_location(mio::abm::LocationType::Work, work_id);
+        p1.set_assigned_location(mio::abm::LocationType::Home, home_id);
+        p2.set_assigned_location(mio::abm::LocationType::Home, home_id);
+        p3.set_assigned_location(mio::abm::LocationType::Home, home_id);
+        p4.set_assigned_location(mio::abm::LocationType::Home, home_id);
+        p3.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id);
+        p4.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id);
+        p5.set_assigned_location(mio::abm::LocationType::SocialEvent, event_id);
+        p5.set_assigned_location(mio::abm::LocationType::Work, work_id);
+        p5.set_assigned_location(mio::abm::LocationType::Home, home_id);
 
         mio::abm::TripList& data = world.get_trip_list();
-        mio::abm::Trip trip1(p1.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id);
-        mio::abm::Trip trip2(p2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id);
-        mio::abm::Trip trip3(p5.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id);
+        mio::abm::Trip trip1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id);
+        mio::abm::Trip trip2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id);
+        mio::abm::Trip trip3(p5.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id);
         data.add_trip(trip1);
         data.add_trip(trip2);
         data.add_trip(trip3);
@@ -320,9 +320,9 @@ TEST(TestWorld, evolveMigration) // TODO: this is not a unit test, this is a uni
         EXPECT_EQ(world.get_number_persons(home_id), 1);
         EXPECT_EQ(world.get_number_persons(hospital_id), 1);
 
-        world.migrate(p1.get_person_id(), home_id);
-        world.migrate(p2.get_person_id(), home_id);
-        world.migrate(p5.get_person_id(), home_id);
+        world.migrate(p1.get_id(), home_id);
+        world.migrate(p2.get_id(), home_id);
+        world.migrate(p5.get_id(), home_id);
 
         t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
         world.get_trip_list().reset_index();
@@ -339,12 +339,12 @@ TEST(TestWorld, evolveMigration) // TODO: this is not a unit test, this is a uni
         EXPECT_EQ(world.get_number_persons(home_id), 2);
 
         bool weekend = true;
-        mio::abm::Trip tripweekend1(p1.get_person_id(),
-                                    mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), event_id);
-        mio::abm::Trip tripweekend2(p2.get_person_id(),
-                                    mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), home_id);
-        mio::abm::Trip tripweekend3(p5.get_person_id(),
-                                    mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), work_id);
+        mio::abm::Trip tripweekend1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10),
+                                    event_id);
+        mio::abm::Trip tripweekend2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10),
+                                    home_id);
+        mio::abm::Trip tripweekend3(p5.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10),
+                                    work_id);
         data.add_trip(tripweekend1, weekend);
         data.add_trip(tripweekend2, weekend);
         data.add_trip(tripweekend3, weekend);
@@ -387,33 +387,33 @@ TEST(TestWorld, evolveMigration) // TODO: this is not a unit test, this is a uni
         auto& p_dead   = world.get_persons()[0];
         auto& p_severe = world.get_persons()[1];
 
-        p_dead.set_assigned_location(icu_id);
-        p_dead.set_assigned_location(work_id);
-        p_dead.set_assigned_location(home_id);
-        p_severe.set_assigned_location(hospital_id);
-        p_severe.set_assigned_location(icu_id);
-        p_severe.set_assigned_location(home_id);
+        p_dead.set_assigned_location(mio::abm::LocationType::ICU, icu_id);
+        p_dead.set_assigned_location(mio::abm::LocationType::Work, work_id);
+        p_dead.set_assigned_location(mio::abm::LocationType::Home, home_id);
+        p_severe.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id);
+        p_severe.set_assigned_location(mio::abm::LocationType::ICU, icu_id);
+        p_severe.set_assigned_location(mio::abm::LocationType::Home, home_id);
 
         // Add trip to see if a dead person can move outside of cemetery by scheduled
         mio::abm::TripList& trip_list = world.get_trip_list();
-        mio::abm::Trip trip1(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id, home_id);
-        mio::abm::Trip trip2(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);
-        mio::abm::Trip trip3(p_severe.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);
+        mio::abm::Trip trip1(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id, home_id);
+        mio::abm::Trip trip2(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);
+        mio::abm::Trip trip3(p_severe.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);
         trip_list.add_trip(trip1);
         trip_list.add_trip(trip2);
         trip_list.add_trip(trip3);
 
         // Check the dead person got burried and the severely infected person starts in Hospital
         world.evolve(t, dt);
-        EXPECT_EQ(world.get_location(p_dead.get_person_id()).get_type(), mio::abm::LocationType::Cemetery);
+        EXPECT_EQ(world.get_location(p_dead.get_id()).get_type(), mio::abm::LocationType::Cemetery);
         EXPECT_EQ(p_severe.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
-        EXPECT_EQ(world.get_location(p_severe.get_person_id()).get_type(), mio::abm::LocationType::Hospital);
+        EXPECT_EQ(world.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Hospital);
 
         // Check the dead person is still in Cemetery and the severely infected person dies and got burried
         world.evolve(t + dt, dt);
-        EXPECT_EQ(world.get_location(p_dead.get_person_id()).get_type(), mio::abm::LocationType::Cemetery);
+        EXPECT_EQ(world.get_location(p_dead.get_id()).get_type(), mio::abm::LocationType::Cemetery);
         EXPECT_EQ(p_severe.get_infection_state(t + dt), mio::abm::InfectionState::Dead);
-        EXPECT_EQ(world.get_location(p_severe.get_person_id()).get_type(), mio::abm::LocationType::Cemetery);
+        EXPECT_EQ(world.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Cemetery);
     }
 }
 
@@ -436,8 +436,8 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, current_time);
     auto& person    = world.get_person(pid);
     auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
-    person.set_assigned_location(home_id);
-    person.set_assigned_location(work_id);
+    person.set_assigned_location(mio::abm::LocationType::Home, home_id);
+    person.set_assigned_location(mio::abm::LocationType::Work, work_id);
 
     auto testing_criteria = mio::abm::TestingCriteria();
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);

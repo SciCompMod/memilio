@@ -20,8 +20,10 @@
 #ifndef MIO_ABM_TRIP_LIST_H
 #define MIO_ABM_TRIP_LIST_H
 
-#include "abm/location_type.h"
-#include "abm/person.h"
+#include "abm/location_id.h"
+#include "abm/movement_data.h"
+#include "abm/person_id.h"
+#include "abm/time.h"
 
 namespace mio
 {
@@ -96,10 +98,8 @@ struct Trip {
         auto obj = io.create_object("Trip");
         obj.add_element("person_id", person_id);
         obj.add_element("time", time.seconds());
-        obj.add_element("destination_index", migration_destination.index);
-        obj.add_element("destination_type", migration_destination.type);
-        obj.add_element("origin_index", migration_origin.index);
-        obj.add_element("origin_type", migration_origin.type);
+        obj.add_element("destination", migration_destination);
+        obj.add_element("origin", migration_origin);
     }
 
     /**
@@ -109,22 +109,17 @@ struct Trip {
     template <class IOContext>
     static IOResult<Trip> deserialize(IOContext& io)
     {
-        auto obj               = io.expect_object("Trip");
-        auto person_id         = obj.expect_element("person_id", Tag<PersonId>{});
-        auto time              = obj.expect_element("time", Tag<int>{});
-        auto destination_index = obj.expect_element("destination_index", Tag<uint32_t>{});
-        auto destination_type  = obj.expect_element("destination_type", Tag<uint32_t>{});
-        auto origin_index      = obj.expect_element("origin_index", Tag<uint32_t>{});
-        auto origin_type       = obj.expect_element("origin_type", Tag<uint32_t>{});
+        auto obj            = io.expect_object("Trip");
+        auto person_id      = obj.expect_element("person_id", Tag<PersonId>{});
+        auto time           = obj.expect_element("time", Tag<int>{});
+        auto destination_id = obj.expect_element("destination", Tag<LocationId>{});
+        auto origin_id      = obj.expect_element("origin", Tag<LocationId>{});
         return apply(
             io,
-            [](auto&& person_id_, auto&& time_, auto&& destination_index_, auto&& destination_type_,
-               auto&& origin_index_, auto&& origin_type_) {
-                return Trip(person_id_, TimePoint(time_),
-                            LocationId{destination_index_, LocationType(destination_type_)},
-                            LocationId{origin_index_, LocationType(origin_type_)});
+            [](auto&& person_id_, auto&& time_, auto&& destination_id_, auto&& origin_id_) {
+                return Trip(person_id_, TimePoint(time_), destination_id_, origin_id_);
             },
-            person_id, time, destination_index, destination_type, origin_index, origin_type);
+            person_id, time, destination_id, origin_id);
     }
 };
 

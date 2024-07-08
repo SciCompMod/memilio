@@ -19,6 +19,7 @@
 */
 #include "abm/trip_list.h"
 #include "abm/random_events.h"
+#include "memilio/utils/stl_util.h"
 
 namespace mio
 {

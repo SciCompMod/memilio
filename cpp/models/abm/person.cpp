@@ -31,9 +31,11 @@ namespace mio
 namespace abm
 {
 
-Person::Person(mio::RandomNumberGenerator& rng, LocationId location, AgeGroup age, PersonId person_id)
+Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location, AgeGroup age,
+               PersonId person_id)
     : m_location(location)
-    , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
+    , m_location_type(location_type)
+    , m_assigned_locations((uint32_t)LocationType::Count, LocationId::invalid_id())
     , m_quarantine_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_age(age)
     , m_time_at_location(0)
@@ -55,13 +57,6 @@ Person::Person(const Person& other, PersonId id)
     : Person(other)
 {
     m_person_id = id;
-}
-
-Person Person::copy_person(LocationId location)
-{
-    Person copy = *this;
-    copy.set_location(location);
-    return copy;
 }
 
 bool Person::is_infected(TimePoint t) const
@@ -97,9 +92,10 @@ LocationId Person::get_location() const
     return m_location;
 }
 
-void Person::set_location(LocationId id)
+void Person::set_location(LocationType type, LocationId id)
 {
     m_location         = id;
+    m_location_type    = type;
     m_time_at_location = TimeSpan(0);
 }
 
@@ -113,18 +109,18 @@ Infection& Person::get_infection()
     return m_infections.back();
 }
 
-void Person::set_assigned_location(LocationId location)
+void Person::set_assigned_location(LocationType type, LocationId id)
 {
     /* TODO: This is not safe if the location is not the same as added in the world, e.g. the index is wrong. We need to check this.
     * For now only use it like this:  auto home_id   = world.add_location(mio::abm::LocationType::Home);
     *                                 person.set_assigned_location(home);
     */
-    m_assigned_locations[(uint32_t)location.get_type()] = location.get_index();
+    m_assigned_locations[static_cast<uint32_t>(type)] = id;
 }
 
-uint32_t Person::get_assigned_location_index(LocationType type) const
+LocationId Person::get_assigned_location(LocationType type) const
 {
-    return m_assigned_locations[(uint32_t)type];
+    return m_assigned_locations[static_cast<uint32_t>(type)];
 }
 
 bool Person::goes_to_work(TimePoint t, const Parameters& params) const
@@ -189,7 +185,7 @@ bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const T
     }
 }
 
-PersonId Person::get_person_id() const
+PersonId Person::get_id() const
 {
     return m_person_id;
 }

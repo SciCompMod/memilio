@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/location_type.h"
 #include "abm/mask_type.h"
 #include "abm/location.h"
-#include "abm/parameters.h"
 #include "abm/random_events.h"
 
 namespace mio
@@ -27,19 +27,15 @@ namespace mio
 namespace abm
 {
 
-Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
-    : m_id(loc_id)
+Location::Location(LocationType loc_type, LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
+    : m_type(loc_type)
+    , m_id(loc_id)
     , m_parameters(num_agegroups)
     , m_cells(num_cells)
     , m_required_mask(MaskType::Community)
     , m_npi_active(false)
 {
     assert(num_cells > 0 && "Number of cells has to be larger than 0.");
-}
-
-Location Location::copy() const
-{
-    return *this;
 }
 
 /*

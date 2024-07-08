@@ -77,7 +77,6 @@ int main()
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
     world.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
 
-
     // There are 3 households for each household group.
     int n_households = 3;
 
@@ -149,19 +148,20 @@ int main()
     }
 
     // Assign locations to the people
-    for (auto& person : persons) {
+    for (auto& person : world.get_persons()) {
+        const auto pid = person.get_id();
         //assign shop and event
-        person.set_assigned_location(event);
-        person.set_assigned_location(shop);
+        world.assign_location(pid, event);
+        world.assign_location(pid, shop);
         //assign hospital and ICU
-        person.set_assigned_location(hospital);
-        person.set_assigned_location(icu);
+        world.assign_location(pid, hospital);
+        world.assign_location(pid, icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == age_group_5_to_14) {
-            person.set_assigned_location(school);
+        if (person.get_age() == age_group_0_to_4) {
+            world.assign_location(pid, school);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            person.set_assigned_location(work);
+            world.assign_location(pid, work);
         }
     }
 
@@ -186,7 +186,7 @@ int main()
         {
             Type location_ids{};
             for (auto& location : sim.get_world().get_locations()) {
-                location_ids.push_back(std::make_tuple(location.get_type(), location.get_index()));
+                location_ids.push_back(std::make_tuple(location.get_type(), location.get_id().get()));
             }
             return location_ids;
         }

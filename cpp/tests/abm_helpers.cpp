@@ -27,7 +27,7 @@ mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup ag
 {
     assert(age.get() < params.get_num_groups());
     auto rng = mio::RandomNumberGenerator();
-    mio::abm::Person p(rng, location.get_id(), age);
+    mio::abm::Person p(rng, location.get_type(), location.get_id(), age);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
         auto rng_p = mio::abm::PersonalRandomNumberGenerator(rng, p);
         p.add_new_infection(

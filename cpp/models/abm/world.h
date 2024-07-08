@@ -26,6 +26,7 @@
 #include "abm/parameters.h"
 #include "abm/location.h"
 #include "abm/person.h"
+#include "abm/person_id.h"
 #include "abm/time.h"
 #include "abm/trip_list.h"
 #include "abm/random_events.h"
@@ -209,6 +210,11 @@ public:
      */
     LocationId find_location(LocationType type, const PersonId person) const;
 
+    void assign_location(PersonId assignee, LocationId location)
+    {
+        get_person(assignee).set_assigned_location(get_location(location).get_type(), location);
+    }
+
     /** 
      * @brief Get the number of Persons in one #InfectionState at all Location%s.
      * @param[in] t Specified #TimePoint.
@@ -346,7 +352,7 @@ public:
         if (!m_is_local_population_cache_valid) {
             build_compute_local_population_cache();
         }
-        return m_local_population_cache[location.index];
+        return m_local_population_cache[location.get()];
     }
 
     // move a person to another location. this requires that location is part of this world.
@@ -366,8 +372,8 @@ public:
         if (has_moved) {
             m_are_exposure_caches_valid = false;
             if (m_is_local_population_cache_valid) {
-                --m_local_population_cache[origin.index];
-                ++m_local_population_cache[destination.index];
+                --m_local_population_cache[origin.get()];
+                ++m_local_population_cache[destination.get()];
             }
         }
     }
@@ -388,8 +394,8 @@ public:
         }
         auto personal_rng = PersonalRandomNumberGenerator(m_rng, get_person(person));
         mio::abm::interact(personal_rng, get_person(person), get_location(person),
-                           m_air_exposure_rates_cache[get_location(person).get_index()],
-                           m_contact_exposure_rates_cache[get_location(person).get_index()], t, dt, parameters);
+                           m_air_exposure_rates_cache[get_location(person).get_id().get()],
+                           m_contact_exposure_rates_cache[get_location(person).get_id().get()], t, dt, parameters);
     }
 
     /**
@@ -400,16 +406,16 @@ public:
      */
     const Location& get_location(LocationId id) const
     {
-        assert(id.index != INVALID_LOCATION_INDEX);
-        assert(id.index < m_locations.size());
-        return m_locations[id.index];
+        assert(id != LocationId::invalid_id());
+        assert(id < LocationId(m_locations.size()));
+        return m_locations[id.get()];
     }
 
     Location& get_location(LocationId id)
     {
-        assert(id.index != INVALID_LOCATION_INDEX);
-        assert(id.index < m_locations.size());
-        return m_locations[id.index];
+        assert(id != LocationId::invalid_id());
+        assert(id < LocationId(m_locations.size()));
+        return m_locations[id.get()];
     }
     /** @} */
 

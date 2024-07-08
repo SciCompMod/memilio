@@ -36,7 +36,7 @@ TEST(TestPerson, init)
 
     EXPECT_EQ(person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
     EXPECT_EQ(person.get_location(), location.get_id());
-    EXPECT_EQ(person.get_person_id(), mio::abm::PersonId::invalid_id());
+    EXPECT_EQ(person.get_id(), mio::abm::PersonId::invalid_id());
 }
 
 TEST(TestPerson, copyPerson)
@@ -50,7 +50,7 @@ TEST(TestPerson, copyPerson)
 
     EXPECT_EQ(copied_person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
     EXPECT_EQ(copied_person.get_location(), copied_location.get_id());
-    EXPECT_EQ(copied_person.get_person_id(), mio::abm::PersonId::invalid_id());
+    EXPECT_EQ(copied_person.get_id(), mio::abm::PersonId::invalid_id());
 }
 
 TEST(TestPerson, migrate)
@@ -87,10 +87,10 @@ TEST(TestPerson, setGetAssignedLocation)
     mio::abm::Location location(mio::abm::LocationType::Work, 2, num_age_groups);
     auto person = mio::abm::Person(rng, location.get_id(), age_group_35_to_59);
     person.set_assigned_location(location.get_id());
-    EXPECT_EQ((int)person.get_assigned_location_index(mio::abm::LocationType::Work), 2);
+    EXPECT_EQ((int)person.get_assigned_location(mio::abm::LocationType::Work), 2);
 
     person.set_assigned_location({4, mio::abm::LocationType::Work});
-    EXPECT_EQ((int)person.get_assigned_location_index(mio::abm::LocationType::Work), 4);
+    EXPECT_EQ((int)person.get_assigned_location(mio::abm::LocationType::Work), 4);
 }
 
 TEST(TestPerson, quarantine)

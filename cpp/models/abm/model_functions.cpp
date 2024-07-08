@@ -101,13 +101,8 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
 void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExposureRates& local_contact_exposure,
                                const Person& person, const Location& location, const TimePoint t, const TimeSpan dt)
 {
-    assert([&]() {
-        if (person.get_location() != location.get_id()) {
-            mio::log_warning("Person with id {} is not at Location with id {}", person.get_person_id().get(),
-                             location.get_index());
-        }
-        return true;
-    }());
+    mio::log_debug("Person with id {} is not at Location with id {}", person.get_id().get(), location.get_id().get());
+
     if (person.is_infected(t)) {
         auto& infection = person.get_infection();
         auto virus      = infection.get_virus_variant();
@@ -134,7 +129,7 @@ bool migrate(Person& person, const Location& destination, const TransportMode mo
     })); // make sure cell indices are valid
 
     if (person.get_location() != destination.get_id()) {
-        person.set_location(destination.get_id());
+        person.set_location(destination.get_type(), destination.get_id());
         person.get_cells() = cells;
         person.set_last_transport_mode(mode);
 

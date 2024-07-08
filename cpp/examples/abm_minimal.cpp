@@ -128,18 +128,19 @@ int main()
 
     // Assign locations to the people
     for (auto& person : world.get_persons()) {
+        const auto id = person.get_id();
         //assign shop and event
-        person.set_assigned_location(event);
-        person.set_assigned_location(shop);
+        world.assign_location(id, event);
+        world.assign_location(id, shop);
         //assign hospital and ICU
-        person.set_assigned_location(hospital);
-        person.set_assigned_location(icu);
+        world.assign_location(id, hospital);
+        world.assign_location(id, icu);
         //assign work/school to people depending on their age
         if (person.get_age() == age_group_0_to_4) {
-            person.set_assigned_location(school);
+            world.assign_location(id, school);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            person.set_assigned_location(work);
+            world.assign_location(id, work);
         }
     }
 

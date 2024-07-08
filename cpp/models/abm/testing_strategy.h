@@ -21,13 +21,14 @@
 #define MIO_ABM_TESTING_SCHEME_H
 
 #include "abm/config.h"
+#include "abm/location_id.h"
+#include "abm/location_type.h"
 #include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/time.h"
-#include "memilio/utils/random_number_generator.h"
 #include <bitset>
-#include <unordered_set>
+#include <vector>
 
 namespace mio
 {
@@ -158,20 +159,35 @@ private:
  */
 class TestingStrategy
 {
+    struct hash {
+        std::size_t operator()(const std::pair<LocationType, LocationId>& key) const
+        {
+            return std::hash<uint32_t>{}(static_cast<uint32_t>(key.first)) ^
+                   std::hash<uint32_t>{}(static_cast<uint32_t>(key.second));
+        }
+    };
+
 public:
+    struct Entry {
+        LocationType type;
+        LocationId id;
+        std::vector<TestingScheme> schemes;
+    };
+
     /**
      * @brief Create a TestingStrategy.
      * @param[in] testing_schemes Vector of TestingSchemes that are checked for testing.
      */
     TestingStrategy() = default;
-    explicit TestingStrategy(const std::unordered_map<LocationId, std::vector<TestingScheme>>& location_to_schemes_map);
+    explicit TestingStrategy(const std::unordered_map<std::pair<LocationType, LocationId>, std::vector<TestingScheme>,
+                                                      hash>& location_to_schemes_map);
 
     /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
      * @param[in] loc_id LocationId key for TestingScheme to be added.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme);
+    void add_testing_scheme(const LocationType& loc_type, const LocationId& loc_id, const TestingScheme& scheme);
 
     /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain LocationType.
@@ -182,7 +198,7 @@ public:
      */
     void add_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme)
     {
-        add_testing_scheme(LocationId{INVALID_LOCATION_INDEX, loc_type}, scheme);
+        add_testing_scheme(loc_type, LocationId::invalid_id(), scheme);
     }
 
     /**
@@ -190,7 +206,7 @@ public:
      * @param[in] loc_id LocationId key for TestingScheme to be remove.
      * @param[in] scheme TestingScheme to be removed.
      */
-    void remove_testing_scheme(const LocationId& loc_id, const TestingScheme& scheme);
+    void remove_testing_scheme(const LocationType& loc_type, const LocationId& loc_id, const TestingScheme& scheme);
 
     /**
      * @brief Remove a TestingScheme from the set of schemes that are checked for testing at a certain Location.
@@ -201,7 +217,7 @@ public:
      */
     void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme)
     {
-        remove_testing_scheme(LocationId{INVALID_LOCATION_INDEX, loc_type}, scheme);
+        remove_testing_scheme(loc_type, LocationId::invalid_id(), scheme);
     }
 
     /**
@@ -222,7 +238,7 @@ public:
     bool run_strategy(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
 
 private:
-    std::vector<std::pair<LocationId, std::vector<TestingScheme>>>
+    std::vector<std::tuple<LocationType, LocationId, std::vector<TestingScheme>>>
         m_location_to_schemes_map; ///< Set of schemes that are checked for testing.
 };
 

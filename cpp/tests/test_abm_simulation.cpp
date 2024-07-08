@@ -108,13 +108,13 @@ TEST(TestSimulation, advanceWithCommonHistory)
     mio::abm::TripList& trip_list = world.get_trip_list();
 
     // We add trips for person two to test the history and if it is working correctly
-    mio::abm::Trip trip1(person2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id);
-    mio::abm::Trip trip2(person2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id);
-    mio::abm::Trip trip3(person2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(4), hospital_id);
-    mio::abm::Trip trip4(person2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(5), social_id);
-    mio::abm::Trip trip5(person2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(6), basics_id);
-    mio::abm::Trip trip6(person2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(7), public_id);
-    mio::abm::Trip trip7(person2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), home_id);
+    mio::abm::Trip trip1(person2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id);
+    mio::abm::Trip trip2(person2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id);
+    mio::abm::Trip trip3(person2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(4), hospital_id);
+    mio::abm::Trip trip4(person2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(5), social_id);
+    mio::abm::Trip trip5(person2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(6), basics_id);
+    mio::abm::Trip trip6(person2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(7), public_id);
+    mio::abm::Trip trip7(person2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), home_id);
 
     trip_list.add_trip(trip1);
     trip_list.add_trip(trip2);
