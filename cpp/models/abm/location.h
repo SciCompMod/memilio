@@ -194,6 +194,16 @@ public:
     ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus, const Parameters& global_params) const;
 
     /** 
+     * @brief A Person interacts with the population at this Location and may become infected. But for the micro matrices.
+     * @param[in, out] rng Person::RandomNumberGenerator for this Person.
+     * @param[in, out] person The Person that interacts with the population.
+     * @param[in] dt Length of the current Simulation time step.
+     * @param[in] params Parameters of the Model.
+     */
+    void interact_micro(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
+                  const Parameters& params) const;
+
+    /** 
      * @brief A Person interacts with the population at this Location and may become infected.
      * @param[in, out] rng Person::RandomNumberGenerator for this Person.
      * @param[in, out] person The Person that interacts with the population.
@@ -422,9 +432,10 @@ public:
         m_geographical_location = location;
     }
 
-    void assign_contact_matrices(HourlyContactMatrix contact_matrices)
+    void assign_contact_matrices(HourlyContactMatrix contact_matrices, std::vector<uint32_t> assigned_persons)
     {
         m_hourly_contact_matrices = contact_matrices;
+        m_assigned_persons        = assigned_persons;
     }
 
 private:
@@ -440,6 +451,7 @@ private:
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
     HourlyContactMatrix m_hourly_contact_matrices; ///< Contact matrices for the Location.
+    std::vector<uint32_t> m_assigned_persons;
 };
 
 } // namespace abm

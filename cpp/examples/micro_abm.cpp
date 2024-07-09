@@ -56,6 +56,24 @@ mio::IOResult<mio::abm::HourlyContactMatrix> read_hourly_contact_matrix(const st
     return mio::success(hcm);
 }
 
+void assign_contact_matrix(mio::abm::World& world, mio::abm::LocationId location, std::string filename)
+{
+    auto res = read_hourly_contact_matrix(filename);
+    if (!res) {
+        std::cout << res.error().formatted_message();
+        exit(1);
+    }
+
+    std::vector<uint32_t> assigned_persons_for_location;
+    for (auto& person : world.get_persons()) {
+        if (person.get_assigned_locations()[(uint32_t)location.type] == location.index) {
+            assigned_persons_for_location.push_back(person.get_person_id());
+        }
+    }
+
+    world.get_individualized_location(location).assign_contact_matrices(res.value(), assigned_persons_for_location);
+}
+
 int main()
 {
     size_t num_age_groups         = 4;
@@ -172,6 +190,9 @@ int main()
     }
 
     // assign people to the right workplace, randomly to work1, work2 or work3  and to the right school
+    int number_of_persons_max_to_work_1     = 20;
+    int current_number_of_persons_to_work_1 = 0;
+
     auto rng = world.get_rng();
     for (auto& person : world.get_persons()) {
         //to the 2 different schools
@@ -189,8 +210,9 @@ int main()
         if (person.get_age() == age_group_25_to_64) {
             std::vector<double> work_distribution{20.0, 15.0, 5.0};
             auto work = mio::DiscreteDistribution<size_t>::get_instance()(rng, work_distribution);
-            if (work == 0) {
+            if (work == 0 && current_number_of_persons_to_work_1 < number_of_persons_max_to_work_1) {
                 person.set_assigned_location(work1);
+                current_number_of_persons_to_work_1++;
             }
             else if (work == 1) {
                 person.set_assigned_location(work2);
@@ -210,20 +232,16 @@ int main()
         }
     }
 
-    std::string filename = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/contacts/microcontacts/"
-                           "24h_networks_csv/office_20_20.csv";
+    std::string contacts_path =
+        "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/contacts/microcontacts/24h_networks_csv";
 
-    auto res = read_hourly_contact_matrix(filename);
-
-    if (!res) {
-        std::cout << res.error().formatted_message();
-        return res.error().code().value();
-    }
+    assign_contact_matrix(world, work1, mio::path_join(contacts_path, "office_20_20.csv"));
 
     // Run the simulation
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = t0 + mio::abm::days(10);
-    auto sim  = mio::abm::Simulation(t0, std::move(world));
+    world.parameters.check_constraints();
+    auto sim = mio::abm::Simulation(t0, std::move(world));
     // Create a history object to store the time series of the infection states.
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};

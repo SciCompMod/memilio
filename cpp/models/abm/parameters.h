@@ -479,7 +479,7 @@ struct TestData {
  */
 struct LockdownDate {
     using Type = TimePoint;
-    static auto get_default()
+    static auto get_default(AgeGroup /*size*/)
     {
         return TimePoint(std::numeric_limits<int>::max());
     }
