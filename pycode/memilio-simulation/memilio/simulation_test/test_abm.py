@@ -91,7 +91,7 @@ class TestAbm(unittest.TestCase):
         # add some locations and persons 
         home_id = world.add_location(abm.LocationType.Home)
         social_event_id = world.add_location(abm.LocationType.SocialEvent)
-        work_id = world.add_location( abm.LocationType.Work)
+        work_id = world.add_location(abm.LocationType.Work)
         p1_id = world.add_person(home_id, mio.AgeGroup(0))
         p2_id = world.add_person(home_id, mio.AgeGroup(2))
         
