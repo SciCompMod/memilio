@@ -330,7 +330,10 @@ def generate_data(
 
     # data that needs to be scaled 
     data = {"inputs": [],
-            "labels": []}
+            "labels": [],
+            "damping_coeff": [],
+            "damping_day": [], 
+            "damped_matrix": []}
     
     # show progess in terminal for longer runs
     # Due to the random structure, theres currently no need to shuffle the data
@@ -344,9 +347,9 @@ def generate_data(
             inputs = np.asarray(data_run).transpose(1,2,0)[:input_width]
             data["inputs"].append(inputs)
             data["labels"].append(np.asarray(data_run).transpose(1,2,0)[input_width:])
-            all_data["damping_coeff"].append(damping_factor)
-            all_data["damping_day"].append(damping_days_s)
-            all_data["damped_matrix"].append(damped_contact_matrix)
+            data["damping_coeff"].append(damping_factor)
+            data["damping_day"].append(damping_days_s)
+            data["damped_matrix"].append(damped_contact_matrix)
 
             bar.next()
 
@@ -387,7 +390,9 @@ def generate_data(
 
             all_data = {"inputs": scaled_inputs,
                 "labels": scaled_labels,
-                }
+                "damping_coeff": data['damping_coeff'],
+                "damping_day": data['damping_day'],
+                "damped_matrix": data['damped_matrix']}
 
             # check if data directory exists. If necessary create it.
             if not os.path.isdir(path):
@@ -401,16 +406,16 @@ def generate_data(
 if __name__ == "__main__":
 
     input_width = 5
-    label_width = 100
+    label_width = 30
     number_of_dampings = 3
-    num_runs = 4
+    num_runs = 2
     number_of_populations = 400
 
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'data_GNN_with '+str(number_of_dampings)+' dampings')
+        'data_GNN_with_'+str(number_of_dampings)+'_dampings')
 
     generate_data(num_runs, path_data, input_width,
                   label_width, number_of_populations)
