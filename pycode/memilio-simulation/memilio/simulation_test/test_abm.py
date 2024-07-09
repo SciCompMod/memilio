@@ -88,13 +88,13 @@ class TestAbm(unittest.TestCase):
         sim = abm.Simulation(t0, num_age_groups)
         world = sim.world
 
-        # add some locations and persons 
+        # add some locations and persons
         home_id = world.add_location(abm.LocationType.Home)
         social_event_id = world.add_location(abm.LocationType.SocialEvent)
         work_id = world.add_location(abm.LocationType.Work)
         p1_id = world.add_person(home_id, mio.AgeGroup(0))
         p2_id = world.add_person(home_id, mio.AgeGroup(2))
-        
+
         for loc_id in [home_id, social_event_id, work_id]:
             world.assign_location(p1_id, loc_id)
             world.assign_location(p2_id, loc_id)
