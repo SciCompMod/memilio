@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+//Includes from pymio
 #include "pybind_util.h"
 #include "utils/index.h"
 #include "utils/custom_index_array.h"
@@ -25,9 +26,13 @@
 #include "compartments/simulation.h"
 #include "compartments/compartmentalmodel.h"
 #include "epidemiology/populations.h"
+
+//Includes from MEmilio
 #include "ode_sir/model.h"
 #include "ode_sir/infection_state.h"
 #include "memilio/data/analyze_result.h"
+
+#include "pybind11/pybind11.h"
 
 namespace py = pybind11;
 
@@ -74,13 +79,13 @@ PYBIND11_MODULE(_simulation_osir, m)
         .def(py::init<mio::AgeGroup>())
         .def("check_constraints", &mio::osir::Parameters<double>::check_constraints);
 
-    using SirPopulations = mio::Populations<double, mio::AgeGroup, mio::osir::InfectionState>;
-    pymio::bind_Population(m, "Population", mio::Tag<mio::osir::Model<double>::Populations>{});
-    pymio::bind_CompartmentalModel<mio::osir::InfectionState, SirPopulations, mio::osir::Parameters<double>,
+    using Populations = mio::Populations<double, mio::AgeGroup, mio::osir::InfectionState>;
+    pymio::bind_Population(m, "Populations", mio::Tag<mio::osir::Model<double>::Populations>{});
+    pymio::bind_CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters<double>,
                                    pymio::EnablePickling::Never>(m, "ModelBase");
     pymio::bind_class<
         mio::osir::Model<double>, pymio::EnablePickling::Required,
-        mio::CompartmentalModel<double, mio::osir::InfectionState, SirPopulations, mio::osir::Parameters<double>>>(
+        mio::CompartmentalModel<double, mio::osir::InfectionState, Populations, mio::osir::Parameters<double>>>(
         m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
@@ -89,7 +94,7 @@ PYBIND11_MODULE(_simulation_osir, m)
         [](double t0, double tmax, double dt, const mio::osir::Model<double>& model) {
             return mio::simulate(t0, tmax, dt, model);
         },
-        "Simulates a osir from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+        "Simulates an ODE SIR model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
     m.attr("__version__") = "dev";
 }
