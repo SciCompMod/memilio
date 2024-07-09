@@ -88,7 +88,7 @@ TEST(TestPerson, quarantine)
 
     auto infection_parameters = mio::abm::Parameters(num_age_groups);
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
+    mio::abm::Location work(mio::abm::LocationType::Work, 1, num_age_groups);
 
     //setup rng mock so the person has a state transition to Recovered
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -184,8 +184,8 @@ TEST(TestPerson, getCells)
     EXPECT_TRUE(mio::abm::migrate(person, location, mio::abm::TransportMode::Unknown, {3, 5}));
 
     ASSERT_EQ(person.get_cells().size(), 2);
-    EXPECT_EQ(person.get_cells()[0], 3);
-    EXPECT_EQ(person.get_cells()[1], 5);
+    EXPECT_EQ(person.get_cells()[0], 3u);
+    EXPECT_EQ(person.get_cells()[1], 5u);
 }
 
 TEST(TestPerson, interact)
