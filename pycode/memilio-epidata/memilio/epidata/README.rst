@@ -31,7 +31,7 @@ Sources
 
   - Testing Data (RKI-T)
 
-    https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Testzahlen-gesamt.xlsx
+    https://github.com/robert-koch-institut/SARS-CoV-2-PCR-Testungen_in_Deutschland/raw/main/SARS-CoV-2-PCR-Testungen_in_Deutschland.csv
   
   - Hospitalization data (RKI-H)
   
@@ -134,6 +134,8 @@ optional arguments working for some are:
 +---------------------------------------------+-----------------------------------------------------------+
 | --password                                  | Password for regionalstatistik.de [population]            |
 +---------------------------------------------+-----------------------------------------------------------+
+| --files                                     | Files to write [case]                                     |
++---------------------------------------------+-----------------------------------------------------------+
 
 
 Hint:
@@ -188,16 +190,6 @@ RKI-H          Germany     hospit_state_age                    hospitalizations 
 RKI-H          Germany     hospit_germany_age                  hospitalizations per day in germany for different age groups
 RKI-H          Germany     hospit_state_age                    hospitalizations per day for different states
 RKI-H          Germany     hospit_germany                      hospitalizations per day in germany
-
-RKI-Estimation Germany     cases_all_germany_estimated         infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
-RKI-Estimation Germany     cases_all_state_estimated           infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states    (Bundesländer)
-RKI-Estimation Germany     cases_all_county_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different counties   (Landkreise)
-RKI-Estimation Germany     cases_all_gender_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different gender
-RKI-Estimation Germany     cases_all_age_estimated             infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges
-RKI-Estimation Germany     cases_all_state_age_estimated       infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and states
-RKI-Estimation Germany     cases_all_state_gender_estimated    infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders and states
-RKI-Estimation Germany     cases_all_county_age_estimated      infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and counties
-RKI-Estimation Germany     cases_all_county_gender_estimated   infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders and counties
 
 P              Germany     county_current_population[_dim401]  population for different age groups from the 2011 census, extrapolated to the current level [with Wartburgkreis and Eisenach separated]
 P              Germany     county_population[_dim401]          population for different age groups from the 2011 census [with Wartburgkreis and Eisenach separated]

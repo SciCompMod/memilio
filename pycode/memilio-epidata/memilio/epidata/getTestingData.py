@@ -48,27 +48,20 @@ def download_testing_data():
 
     # get country-wide testing data without resolution per federal state
     # but from much more laboratories
-    url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Testzahlen-gesamt.xlsx?__blob=publicationFile'
-    header = {'User-Agent': 'Mozilla/5.0'}
-    r = requests.get(url, headers=header)
-    with io.BytesIO(r.content) as fh:
-        df = pd.io.excel.ExcelFile(fh, engine='openpyxl')
-        sheet_names = df.sheet_names
-        df_test[0] = pd.read_excel(
-            df, sheet_name=sheet_names[1],
-            dtype={'Positivenanteil (%)': float})
-        # start on calender week 12/2020 as in federal states sheet,
-        # below and remove sum at bottom
-        df_test[0] = df_test[0][2:-1].reset_index()
-        df_test[0] = df_test[0].drop(columns='index')
+    url = "https://github.com/robert-koch-institut/SARS-CoV-2-PCR-Testungen_in_Deutschland/raw/main/SARS-CoV-2-PCR-Testungen_in_Deutschland.csv"
+    df_test[0] = gd.get_file(url=url, read_data=False)
+    # start on calender week 12/2020 as in federal states sheet, below
+    df_test[0] = df_test[0].iloc[2:, :].reset_index(drop=True)
 
     # get testing data on federal state level (from only a subset of
     # laboratories)
     url = 'https://ars.rki.de/Docs/SARS_CoV2/Daten/data_wochenbericht.xlsx'
     header = {'User-Agent': 'Mozilla/5.0'}
     r = requests.get(url, headers=header)
+    if r.status_code != 200:  # e.g. 404
+        raise requests.exceptions.HTTPError("HTTPError: "+str(r.status_code))
     with io.BytesIO(r.content) as fh:
-        df = pd.io.excel.ExcelFile(fh, engine='openpyxl')
+        df = pd.io.excel.ExcelFile(fh, engine=gd.Conf.excel_engine)
         sheet_names = df.sheet_names
         df_test[1] = pd.read_excel(df, sheet_name=sheet_names[3], header=[4],
                                    dtype={'Anteil positiv': float})
@@ -93,7 +86,7 @@ def transform_weeks_to_dates(df_test):
         # use %G insteaf of %Y (for year) and %V instead of %W (for month)
         # to get ISO week definition
         df_test[0].loc[i, dd.EngEng['date']] = datetime.strftime(datetime.strptime(
-            df_test[0].loc[i, dd.EngEng['date']] + '-4', "%V/%G-%w"), "%Y-%m-%d")
+            str(df_test[0].loc[i, dd.EngEng['date']]).replace('W', '') + '-4', "%G-%V-%u"), "%Y-%m-%d")
 
     # federal state-based data
     df_test[1].rename(columns={df_test[1].columns[1]: dd.EngEng['date']}, inplace=True)
@@ -233,17 +226,17 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
 
     # drop columns
     df_test[0].drop(
-        columns=['Anzahl Testungen', 'Positiv getestet',
-                 'Anzahl übermittelnder Labore'], inplace=True)
+        columns=['tests_total', 'tests_total_accumulated', 'tests_positive',
+                 'tests_positive_accumulated',
+                 'laboratories_tests', 'capacities_daily',
+                 'capacities_weekly_theoretically', 'capacities_weeklyweek_actually',
+                 'laboratories_capacities', 'laboratories_samplebacklog',
+                 'samplebacklog'], inplace=True)
     df_test[1].drop(columns='Anzahl Gesamt', inplace=True)
 
     # remove unknown locations
     df_test[1] = df_test[1][df_test[1].State != 'unbekannt']
     df_test[1].reset_index(drop=True, inplace=True)
-
-    # correct positive rate to percentage
-    df_test[0][dd.EngEng['positiveRate']
-               ] = df_test[0][dd.EngEng['positiveRate']]/100
 
     # replace state names with IDs
     df_test[1].rename(
@@ -256,7 +249,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     df_test[0] = mdfs.impute_and_reduce_df(
         df_test[0],
         {},
-        [dd.EngEng['positiveRate']],
+        [dd.EngEng['testPositiveRatio']],
         impute='forward', moving_average=moving_average,
         min_date=start_date, max_date=end_date)
 
@@ -270,7 +263,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
         # make plot
         customPlot.plot_multiple_series(
             df_test[0][dd.EngEng['date']],
-            [df_test[0][dd.EngEng['positiveRate']]],
+            [df_test[0][dd.EngEng['testPositiveRatio']]],
             ["Germany"],
             title='Positive rate for Sars-CoV-2 testing', xlabel='Date', ylabel='Positive rate',
             fig_name="Germany_Testing_positive_rate")
@@ -279,7 +272,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     df_test[1] = mdfs.impute_and_reduce_df(
         df_test[1],
         {dd.EngEng["idState"]: [k for k in geoger.get_state_ids()]},
-        [dd.EngEng['positiveRate']],
+        [dd.EngEng['testPositiveRatio']],
         impute='forward', moving_average=moving_average,
         min_date=start_date, max_date=end_date)
     # store positive rates for the all federal states
@@ -294,7 +287,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
             df_test[0][dd.EngEng['date']],
             [df_test[1].loc
              [df_test[1][dd.EngEng['idState']] == stateID,
-              [dd.EngEng['positiveRate']]] for stateID in geoger.get_state_ids()],
+              [dd.EngEng['testPositiveRatio']]] for stateID in geoger.get_state_ids()],
             [stateName for stateName in geoger.get_state_names()],
             title='Positive rate for Sars-CoV-2 testing', xlabel='Date', ylabel='Positive rate',
             fig_name='FederalStates_Testing_positive_rate')
@@ -317,7 +310,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
             columns=({dd.EngEng['idState']: dd.EngEng['idCounty']}),
             inplace=True)
         df_local[dd.EngEng['idCounty']] = county
-        df_test_counties.append(df_test_counties, df_local)
+        df_test_counties.append(df_local)
 
     df_test_counties = pd.concat(df_test_counties)
 

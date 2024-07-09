@@ -22,6 +22,7 @@
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/damping_sampling.h"
+#include "pybind_util.h"
 
 #include <pybind11/stl.h>
 
@@ -32,24 +33,24 @@ namespace pymio
 
 void bind_uncertain_contact_matrix(py::module_& m, std::string const& name)
 {
-    py::class_<mio::UncertainContactMatrix>(m, name.c_str())
+    bind_class<mio::UncertainContactMatrix<double>, EnablePickling::Required>(m, name.c_str())
         .def(py::init<>())
         .def(py::init<const mio::ContactMatrixGroup&>())
         .def_property(
-            "cont_freq_mat", py::overload_cast<>(&mio::UncertainContactMatrix::get_cont_freq_mat),
-            [](mio::UncertainContactMatrix& self, const mio::ContactMatrixGroup& c) {
+            "cont_freq_mat", py::overload_cast<>(&mio::UncertainContactMatrix<double>::get_cont_freq_mat),
+            [](mio::UncertainContactMatrix<double>& self, const mio::ContactMatrixGroup& c) {
                 self.get_cont_freq_mat() = c;
             },
             py::return_value_policy::reference_internal)
         .def_property(
-            "dampings", py::overload_cast<>(&mio::UncertainContactMatrix::get_dampings),
-            [](mio::UncertainContactMatrix& self, const std::vector<mio::DampingSampling>& v) {
+            "dampings", py::overload_cast<>(&mio::UncertainContactMatrix<double>::get_dampings),
+            [](mio::UncertainContactMatrix<double>& self, const std::vector<mio::DampingSampling<double>>& v) {
                 self.get_dampings() = v;
             },
             py::return_value_policy::reference_internal)
         .def_property(
             "school_holidays",
-            [](const mio::UncertainContactMatrix& self) {
+            [](const mio::UncertainContactMatrix<double>& self) {
                 std::vector<std::pair<double, double>> v(self.get_school_holidays().size());
                 std::transform(self.get_school_holidays().begin(), self.get_school_holidays().end(), v.begin(),
                                [](auto& p) {
@@ -57,15 +58,15 @@ void bind_uncertain_contact_matrix(py::module_& m, std::string const& name)
                                });
                 return v;
             },
-            [](mio::UncertainContactMatrix& self, const std::vector<std::pair<double, double>>& v) {
+            [](mio::UncertainContactMatrix<double>& self, const std::vector<std::pair<double, double>>& v) {
                 self.get_school_holidays().resize(v.size());
                 std::transform(v.begin(), v.end(), self.get_school_holidays().begin(), [](auto& p) {
                     return std::make_pair(mio::SimulationTime(p.first), mio::SimulationTime(p.second));
                 });
             })
         .def_property("school_holiday_damping",
-                      py::overload_cast<>(&mio::UncertainContactMatrix::get_school_holiday_damping),
-                      [](mio::UncertainContactMatrix& self, const mio::DampingSampling& v) {
+                      py::overload_cast<>(&mio::UncertainContactMatrix<double>::get_school_holiday_damping),
+                      [](mio::UncertainContactMatrix<double>& self, const mio::DampingSampling<double>& v) {
                           self.get_school_holiday_damping() = v;
                       });
 }

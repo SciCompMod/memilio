@@ -24,9 +24,9 @@ import numpy as np
 import pandas as pd
 
 from memilio.simulation import AgeGroup, ContactMatrix, Damping, UncertainContactMatrix
-from memilio.simulation.secir import Index_InfectionState
-from memilio.simulation.secir import InfectionState as State
-from memilio.simulation.secir import Model, Simulation, simulate, simulate_flows
+from memilio.simulation.osecir import Index_InfectionState
+from memilio.simulation.osecir import InfectionState as State
+from memilio.simulation.osecir import Model, Simulation, simulate, simulate_flows
 
 
 class Test_osecir_integration(unittest.TestCase):
@@ -49,8 +49,8 @@ class Test_osecir_integration(unittest.TestCase):
         model.parameters.StartDay = 60
         model.parameters.Seasonality.value = 0.2
 
-        model.parameters.IncubationTime[A0] = 5.2
-        model.parameters.SerialInterval[A0] = 4.2
+        model.parameters.TimeExposed[A0] = 3.2
+        model.parameters.TimeInfectedNoSymptoms[A0] = 2.
         model.parameters.TimeInfectedSymptoms[A0] = 5.8
         model.parameters.TimeInfectedSevere[A0] = 9.5
         model.parameters.TimeInfectedCritical[A0] = 7.1
@@ -117,11 +117,11 @@ class Test_osecir_integration(unittest.TestCase):
         """
         Tests the correctness of the python bindings. The results of a simulation
         in python get compared to the results of a cpp simulation. Cpp simulation
-        results contained in the file secihurd-compare.csv.
+        results contained in the file ode-secihurd-compare.csv.
         If cpp model changes this test needs to be adjusted accordingly.
         """
         refData = pd.read_csv(
-            os.path.join(self.here + '/data/secihurd-compare.csv'),
+            os.path.join(self.here + '/data/ode-secihurd-compare.csv'),
             sep=r'(?<!#)\s+', engine='python')
         refData.columns = pd.Series(refData.columns.str.replace(
             r"#\s", "", regex=True))
@@ -135,12 +135,12 @@ class Test_osecir_integration(unittest.TestCase):
             t = float(timestep.at['t'])
             self.assertAlmostEqual(
                 t, result.get_time(index_timestep),
-                delta=1e-10)
+                delta=1e-9)
 
             for index_compartment in range(0, 10):
                 self.assertAlmostEqual(
                     timestep[index_compartment + 1],
-                    result[index_timestep][index_compartment], delta=1e-10)
+                    result[index_timestep][index_compartment], delta=1e-9)
 
 
 if __name__ == '__main__':

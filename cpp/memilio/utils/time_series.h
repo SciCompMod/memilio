@@ -22,14 +22,11 @@
 
 #include "memilio/io/io.h"
 #include "memilio/math/eigen.h"
-#include "memilio/math/eigen_util.h"
 #include "memilio/utils/stl_util.h"
-#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/math/floating_point.h"
 
 #include <iterator>
 #include <vector>
-#include <map>
 #include <ostream>
 
 namespace mio
@@ -467,7 +464,7 @@ public:
         // Note: input manipulators (like std::setw, std::left) are consumed by the first argument written to the stream
         // print column labels
         const auto w = width, p = precision;
-        set_ostream_format(out, w, p) << std::left << "Time";
+        set_ostream_format(out, w, p) << std::left << "\nTime";
         for (size_t k = 0; k < static_cast<size_t>(get_num_elements()); k++) {
             if (k < column_labels.size()) {
                 out << " ";

@@ -14,7 +14,7 @@ runs:
         sudo apt-get -qq -y install libhdf5-10* wget gnupg lcov
         sudo apt-get -qq update
     - name: Download examples directory
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.build-artifact }}
         path: cpp

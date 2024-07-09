@@ -18,173 +18,296 @@
 * limitations under the License.
 */
 
-#include "boost/fusion/functional/invocation/invoke.hpp"
-#include "load_test_data.h"
-#include "ide_secir/infection_state.h"
-#include "ide_secir/model.h"
-#include "ide_secir/parameters.h"
-#include "ide_secir/simulation.h"
-#include "memilio/math/eigen.h"
-#include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
 #include "memilio/config.h"
-#include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/state_age_function.h"
-#include <iostream>
 #include <gtest/gtest.h>
 
 TEST(TestStateAgeFunction, testSpecialMember)
-{
+{ // Copy and move (assignment) are defined in base class StateAgeFunction and are equal for all derived classes, therefore test for one Special Member.
+    // Use GammaSurvivalFunction as all parameters are used for this StateAgeFunction.
+    // Constructors of other members will be also tested.
     ScalarType dt = 0.5;
-    mio::SmootherCosine smoothcos(1.0);
+    mio::GammaSurvivalFunction gamma(1., 2., 3.);
 
     // constructor
-    EXPECT_EQ(smoothcos.get_parameter(), 1.0);
-    EXPECT_EQ(smoothcos.get_support_max(dt), 1.0);
+    EXPECT_EQ(gamma.get_distribution_parameter(), 1.);
+    EXPECT_EQ(gamma.get_location(), 2.);
+    EXPECT_EQ(gamma.get_scale(), 3.);
+    EXPECT_NEAR(gamma.get_support_max(dt), 71.5, 1e-14);
+    EXPECT_NEAR(gamma.get_mean(), 5., 1e-14);
 
     // copy
-    mio::SmootherCosine smoothcos2(smoothcos);
-    EXPECT_EQ(smoothcos.get_state_age_function_type(), smoothcos2.get_state_age_function_type());
-    EXPECT_EQ(smoothcos.get_parameter(), smoothcos2.get_parameter());
-    EXPECT_EQ(smoothcos.get_support_max(dt), smoothcos2.get_support_max(dt));
+    mio::GammaSurvivalFunction gamma2(gamma);
+    EXPECT_EQ(gamma.get_state_age_function_type(), gamma2.get_state_age_function_type());
+    EXPECT_EQ(gamma.get_distribution_parameter(), gamma2.get_distribution_parameter());
+    EXPECT_EQ(gamma.get_location(), gamma2.get_location());
+    EXPECT_EQ(gamma.get_scale(), gamma2.get_scale());
+    EXPECT_EQ(gamma.get_support_max(dt), gamma2.get_support_max(dt));
+    EXPECT_EQ(gamma.get_mean(dt), gamma2.get_mean(dt));
 
-    // check copy is true copy, not reference
-    smoothcos.set_parameter(2.0);
-    EXPECT_NE(smoothcos.get_parameter(), smoothcos2.get_parameter());
-    smoothcos.set_parameter(1.0);
+    // check copy is true copy, not reference.
+    gamma.set_distribution_parameter(1.5);
+    EXPECT_NE(gamma.get_distribution_parameter(), gamma2.get_distribution_parameter());
+    gamma.set_distribution_parameter(1.0);
 
     // move
-    mio::SmootherCosine smoothcos3(std::move(smoothcos2));
-    EXPECT_EQ(smoothcos.get_state_age_function_type(), smoothcos3.get_state_age_function_type());
-    EXPECT_EQ(smoothcos.get_parameter(), smoothcos3.get_parameter());
-    EXPECT_EQ(smoothcos.get_support_max(dt), smoothcos3.get_support_max(dt));
+    mio::GammaSurvivalFunction gamma3(std::move(gamma2));
+    EXPECT_EQ(gamma.get_state_age_function_type(), gamma3.get_state_age_function_type());
+    EXPECT_EQ(gamma.get_distribution_parameter(), gamma3.get_distribution_parameter());
+    EXPECT_EQ(gamma.get_location(), gamma3.get_location());
+    EXPECT_EQ(gamma.get_scale(), gamma3.get_scale());
+    EXPECT_EQ(gamma.get_support_max(dt), gamma3.get_support_max(dt));
+    EXPECT_EQ(gamma.get_mean(dt), gamma3.get_mean(dt));
 
     // copy assignment
-    mio::SmootherCosine smoothcos4 = smoothcos3;
-    EXPECT_EQ(smoothcos.get_state_age_function_type(), smoothcos4.get_state_age_function_type());
-    EXPECT_EQ(smoothcos.get_parameter(), smoothcos4.get_parameter());
-    EXPECT_EQ(smoothcos.get_support_max(dt), smoothcos4.get_support_max(dt));
+    mio::GammaSurvivalFunction gamma4 = gamma3;
+    EXPECT_EQ(gamma.get_state_age_function_type(), gamma4.get_state_age_function_type());
+    EXPECT_EQ(gamma.get_distribution_parameter(), gamma4.get_distribution_parameter());
+    EXPECT_EQ(gamma.get_location(), gamma4.get_location());
+    EXPECT_EQ(gamma.get_scale(), gamma4.get_scale());
+    EXPECT_EQ(gamma.get_support_max(dt), gamma4.get_support_max(dt));
+    EXPECT_EQ(gamma.get_mean(dt), gamma4.get_mean(dt));
 
-    // check copy is true copy, not reference
-    smoothcos.set_parameter(2.0);
-    EXPECT_NE(smoothcos.get_parameter(), smoothcos4.get_parameter());
-    smoothcos.set_parameter(1.0);
+    // check copy is true copy, not reference.
+    gamma.set_scale(2.5);
+    EXPECT_NE(gamma.get_scale(), gamma4.get_scale());
+    gamma.set_scale(3.0);
 
     // move assignment
-    mio::SmootherCosine smoothcos5 = std::move(smoothcos4);
-    EXPECT_EQ(smoothcos.get_state_age_function_type(), smoothcos5.get_state_age_function_type());
-    EXPECT_EQ(smoothcos.get_parameter(), smoothcos5.get_parameter());
-    EXPECT_EQ(smoothcos.get_support_max(dt), smoothcos5.get_support_max(dt));
+    mio::GammaSurvivalFunction gamma5 = std::move(gamma4);
+    EXPECT_EQ(gamma.get_state_age_function_type(), gamma5.get_state_age_function_type());
+    EXPECT_EQ(gamma.get_distribution_parameter(), gamma5.get_distribution_parameter());
+    EXPECT_EQ(gamma.get_location(), gamma5.get_location());
+    EXPECT_EQ(gamma.get_scale(), gamma5.get_scale());
+    EXPECT_EQ(gamma.get_support_max(dt), gamma5.get_support_max(dt));
+    EXPECT_EQ(gamma.get_mean(dt), gamma5.get_mean(dt));
 
-    // also test the constructor of ExponentialDecay and ConstantFunction
-    // copy and move (assignment) are defined in base class StateAgeFunction and are equal for all derived classes
-    mio::ExponentialDecay expdecay(1.0);
-    EXPECT_EQ(expdecay.get_parameter(), 1.0);
+    // Test constructors of the other derived classes.
+    // Copy and move (assignment) are defined in base class StateAgeFunction and are equal for all derived classes.
+    mio::ExponentialSurvivalFunction exponential(1.5, 0.5);
+    EXPECT_EQ(exponential.get_distribution_parameter(), 1.5);
+    EXPECT_EQ(exponential.get_location(), 0.5);
 
-    mio::ConstantFunction constfunc(1.0);
-    EXPECT_EQ(constfunc.get_parameter(), 1.0);
+    mio::SmootherCosine smoothcos(2.0, 1.3);
+    EXPECT_EQ(smoothcos.get_distribution_parameter(), 2.0);
+    EXPECT_EQ(smoothcos.get_location(), 1.3);
+
+    mio::LognormSurvivalFunction logn(0.1, 3.3, 0.5);
+    EXPECT_EQ(logn.get_distribution_parameter(), 0.1);
+    EXPECT_EQ(logn.get_location(), 3.3);
+    EXPECT_EQ(logn.get_scale(), 0.5);
+
+    mio::ConstantFunction constfunc(1.4);
+    EXPECT_EQ(constfunc.get_distribution_parameter(), 1.4);
+
+    mio::ErlangDensity erl(2, 0.7);
+    EXPECT_EQ(erl.get_distribution_parameter(), 2);
+    EXPECT_EQ(erl.get_scale(), 0.7);
 }
 
-TEST(TestStateAgeFunction, testSettersAndGettersForParameter)
+TEST(TestStateAgeFunction, testSettersAndGettersForParameters)
 {
-    ScalarType testvalue_before = 1.0;
-    ScalarType testvalue_after  = 2.0;
-
-    // test get and set for function parameter
-    // only for SmootherCosine as set_parameter and get_parameter are equal for all derived classes
-    mio::SmootherCosine smoothcos(testvalue_before);
-    EXPECT_EQ(smoothcos.get_parameter(), testvalue_before);
-
-    smoothcos.set_parameter(testvalue_after);
-    EXPECT_EQ(smoothcos.get_parameter(), testvalue_after);
-}
-
-TEST(TestStateAgeFunction, testGetSupportMax)
-{
-    // Deactivate temporarily log output for next tests.
+    // Deactivate temporarily log output for next tests. Errors are expected here.
     mio::set_log_level(mio::LogLevel::off);
 
-    ScalarType dt = 0.5;
+    ScalarType testvalue_before = 0.5;
+    ScalarType testvalue_after  = 2.1;
 
-    // test get_support_max for all derived classes as this method can be overridden
-    // Check that the maximum support is correct after setting the parameter object of a StateAgeFunction.
-    mio::ExponentialDecay expdecay(1.0);
-    EXPECT_NEAR(expdecay.get_support_max(dt), 23.5, 1e-14);
-    expdecay.set_parameter(2.0);
-    EXPECT_NEAR(expdecay.get_support_max(dt), 12.0, 1e-14);
+    // Test getter and setter for function parameter.
+    // Only test for GammaSurvivalfunction as setter and getter are defined in the base class and thus equal for all derived classes.
+    // Construct GammaSurvivalFunction with an invalid value for the scale parameter.
+    mio::GammaSurvivalFunction gamma(testvalue_before, testvalue_before, -1);
+    // Check if the invalid scale parameter is set to one.
+    EXPECT_EQ(gamma.get_scale(), 1.);
 
-    mio::SmootherCosine smoothcos(1.0);
-    EXPECT_NEAR(smoothcos.get_support_max(dt), 1.0, 1e-14);
-    smoothcos.set_parameter(2.0);
-    EXPECT_NEAR(smoothcos.get_support_max(dt), 2.0, 1e-14);
+    EXPECT_EQ(gamma.get_distribution_parameter(), testvalue_before);
+    gamma.set_distribution_parameter(testvalue_after);
+    EXPECT_EQ(gamma.get_distribution_parameter(), testvalue_after);
 
-    mio::ConstantFunction constfunc(1.0);
-    EXPECT_NEAR(constfunc.get_support_max(dt), -2.0, 1e-14);
-    constfunc.set_parameter(2.0);
-    EXPECT_NEAR(constfunc.get_support_max(dt), -2.0, 1e-14);
+    EXPECT_EQ(gamma.get_location(), testvalue_before);
+    gamma.set_location(testvalue_after);
+    EXPECT_EQ(gamma.get_location(), testvalue_after);
+
+    // Try to set scale to an invalid value and check if the value is corrected.
+    gamma.set_scale(-1);
+    EXPECT_EQ(gamma.get_scale(), 1);
+    gamma.set_scale(testvalue_after);
+    EXPECT_EQ(gamma.get_scale(), testvalue_after);
 
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
+TEST(TestStateAgeFunction, testGetSupportMax)
 {
+    ScalarType dt = 0.5;
+
+    // Test get_support_max for all derived classes as this method can be overridden.
+    // Check that the maximum support is correct after setting the parameters of a StateAgeFunction.
+    mio::ExponentialSurvivalFunction exponential(1.0, 1.0);
+    EXPECT_NEAR(exponential.get_support_max(dt), 24.5, 1e-14);
+    exponential.set_distribution_parameter(2.0);
+    EXPECT_NEAR(exponential.get_support_max(dt), 13.0, 1e-14);
+    exponential.set_location(1.0);
+    EXPECT_NEAR(exponential.get_support_max(dt), 13.0, 1e-14);
+    exponential.set_scale(300.0);
+    EXPECT_NEAR(exponential.get_support_max(dt), 13.0, 1e-14);
+
+    mio::SmootherCosine smoothcos(1.0, 1.);
+    EXPECT_NEAR(smoothcos.get_support_max(dt), 2.0, 1e-14);
+    smoothcos.set_distribution_parameter(2.0);
+    EXPECT_NEAR(smoothcos.get_support_max(dt), 3.0, 1e-14);
+    smoothcos.set_location(0);
+    EXPECT_NEAR(smoothcos.get_support_max(dt), 2.0, 1e-14);
+    smoothcos.set_scale(300.0);
+    EXPECT_NEAR(smoothcos.get_support_max(dt), 2.0, 1e-14);
+
+    mio::GammaSurvivalFunction gamma(1.0, 1, 0.5);
+    EXPECT_NEAR(gamma.get_support_max(dt), 13, 1e-14);
+    gamma.set_distribution_parameter(0.5);
+    EXPECT_NEAR(gamma.get_support_max(dt), 11.5, 1e-14);
+    gamma.set_location(0.0);
+    EXPECT_NEAR(gamma.get_support_max(dt), 10.5, 1e-14);
+    gamma.set_scale(1.0);
+    EXPECT_NEAR(gamma.get_support_max(dt), 21, 1e-14);
+
+    mio::LognormSurvivalFunction logn(0.1, 1.0, 0.5);
+    EXPECT_NEAR(logn.get_support_max(dt), 2.0, 1e-14);
+    logn.set_distribution_parameter(0.5);
+    EXPECT_NEAR(logn.get_support_max(dt), 13.5, 1e-14);
+    logn.set_location(0.0);
+    EXPECT_NEAR(logn.get_support_max(dt), 12.5, 1e-14);
+    logn.set_scale(0.1);
+    EXPECT_NEAR(logn.get_support_max(dt), 2.5, 1e-14);
+
     // Deactivate temporarily log output for next tests.
+    // Errors are expected here as the ConstantFunction is not suited to be a TransitionDistribution.
+    // Support_max would be infinity here but is set to -2.0 in the get_support_max() method.
     mio::set_log_level(mio::LogLevel::off);
 
+    mio::ConstantFunction constfunc(1.0);
+    EXPECT_NEAR(constfunc.get_support_max(dt), -2.0, 1e-14);
+    constfunc.set_distribution_parameter(2.0);
+    EXPECT_NEAR(constfunc.get_support_max(dt), -2.0, 1e-14);
+    constfunc.set_location(2.0);
+    EXPECT_NEAR(constfunc.get_support_max(dt), -2.0, 1e-14);
+    constfunc.set_scale(2.0);
+    EXPECT_NEAR(constfunc.get_support_max(dt), -2.0, 1e-14);
+
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
+
+    mio::ErlangDensity erl(2, 0.5);
+    EXPECT_NEAR(erl.get_support_max(dt), 14, 1e-14);
+    erl.set_distribution_parameter(1);
+    EXPECT_NEAR(erl.get_support_max(dt), 12, 1e-14);
+    erl.set_scale(0.1);
+    EXPECT_NEAR(erl.get_support_max(dt), 3, 1e-14);
+    erl.set_location(300);
+    EXPECT_NEAR(erl.get_support_max(dt), 3, 1e-14);
+}
+
+TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
+{ // Same as testSpecialMember for Wrapper.
     ScalarType dt = 0.5;
-    mio::SmootherCosine smoothcos(1.0);
-    mio::StateAgeFunctionWrapper wrapper(smoothcos);
+    mio::GammaSurvivalFunction gamma(1., 2., 3.);
+    mio::StateAgeFunctionWrapper wrapper(gamma);
 
     // constructor
-    EXPECT_EQ(wrapper.get_parameter(), 1.0);
-    EXPECT_EQ(wrapper.get_support_max(dt), 1.0);
+    EXPECT_EQ(wrapper.get_distribution_parameter(), 1.);
+    EXPECT_EQ(wrapper.get_location(), 2.);
+    EXPECT_EQ(wrapper.get_scale(), 3.);
+    EXPECT_NEAR(wrapper.get_support_max(dt), 71.5, 1e-14);
+    EXPECT_NEAR(wrapper.get_mean(), 5., 1e-14);
 
     // copy
     mio::StateAgeFunctionWrapper wrapper2(wrapper);
     EXPECT_EQ(wrapper.get_state_age_function_type(), wrapper2.get_state_age_function_type());
-    EXPECT_EQ(wrapper.get_parameter(), wrapper2.get_parameter());
+    EXPECT_EQ(wrapper.get_distribution_parameter(), wrapper2.get_distribution_parameter());
+    EXPECT_EQ(wrapper.get_location(), wrapper2.get_location());
+    EXPECT_EQ(wrapper.get_scale(), wrapper2.get_scale());
     EXPECT_EQ(wrapper.get_support_max(dt), wrapper2.get_support_max(dt));
+    EXPECT_EQ(wrapper.get_mean(dt), wrapper2.get_mean(dt));
 
-    // test true copy, not reference
-    wrapper.set_parameter(2.0);
-    EXPECT_NE(wrapper.get_parameter(), wrapper2.get_parameter());
-    wrapper.set_parameter(1.0);
+    // Check copy is true copy, not reference.
+    wrapper.set_distribution_parameter(1.5);
+    EXPECT_NE(wrapper.get_distribution_parameter(), wrapper2.get_distribution_parameter());
+    wrapper.set_distribution_parameter(1.0);
 
     // move
     mio::StateAgeFunctionWrapper wrapper3(std::move(wrapper2));
     EXPECT_EQ(wrapper.get_state_age_function_type(), wrapper3.get_state_age_function_type());
-    EXPECT_EQ(wrapper.get_parameter(), wrapper3.get_parameter());
+    EXPECT_EQ(wrapper.get_distribution_parameter(), wrapper3.get_distribution_parameter());
+    EXPECT_EQ(wrapper.get_location(), wrapper3.get_location());
+    EXPECT_EQ(wrapper.get_scale(), wrapper3.get_scale());
     EXPECT_EQ(wrapper.get_support_max(dt), wrapper3.get_support_max(dt));
+    EXPECT_EQ(wrapper.get_mean(dt), wrapper3.get_mean(dt));
 
     // copy assignment
     mio::StateAgeFunctionWrapper wrapper4 = wrapper3;
     EXPECT_EQ(wrapper.get_state_age_function_type(), wrapper4.get_state_age_function_type());
-    EXPECT_EQ(wrapper.get_parameter(), wrapper4.get_parameter());
+    EXPECT_EQ(wrapper.get_distribution_parameter(), wrapper4.get_distribution_parameter());
+    EXPECT_EQ(wrapper.get_location(), wrapper4.get_location());
+    EXPECT_EQ(wrapper.get_scale(), wrapper4.get_scale());
     EXPECT_EQ(wrapper.get_support_max(dt), wrapper4.get_support_max(dt));
+    EXPECT_EQ(wrapper.get_mean(dt), wrapper4.get_mean(dt));
 
-    // test true copy, not reference
-    wrapper.set_parameter(2.0);
-    EXPECT_NE(wrapper.get_parameter(), wrapper4.get_parameter());
-    wrapper.set_parameter(1.0);
+    // Check copy is true copy, not reference.
+    wrapper.set_scale(2.3);
+    EXPECT_NE(wrapper.get_scale(), wrapper4.get_scale());
+    wrapper.set_scale(3.0);
 
     // move assignment
     mio::StateAgeFunctionWrapper wrapper5 = std::move(wrapper4);
     EXPECT_EQ(wrapper.get_state_age_function_type(), wrapper5.get_state_age_function_type());
-    EXPECT_EQ(wrapper.get_parameter(), wrapper5.get_parameter());
+    EXPECT_EQ(wrapper.get_distribution_parameter(), wrapper5.get_distribution_parameter());
+    EXPECT_EQ(wrapper.get_location(), wrapper5.get_location());
+    EXPECT_EQ(wrapper.get_scale(), wrapper5.get_scale());
     EXPECT_EQ(wrapper.get_support_max(dt), wrapper5.get_support_max(dt));
+    EXPECT_EQ(wrapper.get_mean(dt), wrapper5.get_mean(dt));
 
-    // Also test the constructor of StateAgeFunctionWrapper initialized with ExponentialDecay and ConstantFunction.
+    // Also test the constructor of StateAgeFunctionWrapper initialized with other StateAgeFunction%s.
     // This way we can be sure that clone_impl works for all derived classes of StateAgeFunction.
-    mio::ExponentialDecay expdecay(1.0);
-    mio::StateAgeFunctionWrapper wrapper_exp(expdecay);
-    EXPECT_NEAR(wrapper_exp.get_parameter(), 1.0, 1e-14);
-    EXPECT_NEAR(wrapper_exp.get_support_max(dt), 23.5, 1e-14);
+    mio::ExponentialSurvivalFunction exponential(1., 1.5);
+    mio::StateAgeFunctionWrapper wrapper_exp(exponential);
+    EXPECT_EQ(wrapper_exp.get_distribution_parameter(), 1.0);
+    EXPECT_EQ(wrapper_exp.get_location(), 1.5);
+    EXPECT_NEAR(wrapper_exp.get_support_max(dt), 25, 1e-14);
+    EXPECT_NEAR(wrapper_exp.get_mean(dt), 2.5, 1e-14);
+
+    mio::SmootherCosine smoothcos(2., 1.3);
+    mio::StateAgeFunctionWrapper wrapper_smoothcos(smoothcos);
+    EXPECT_EQ(wrapper_smoothcos.get_distribution_parameter(), 2.);
+    EXPECT_EQ(wrapper_smoothcos.get_location(), 1.3);
+    EXPECT_NEAR(wrapper_smoothcos.get_support_max(dt), 2.0 + 1.3, 1e-14);
+    EXPECT_NEAR(wrapper_smoothcos.get_mean(), 2.3, 1e-14);
+
+    mio::LognormSurvivalFunction logn(0.1, 1, 0.5);
+    mio::StateAgeFunctionWrapper wrapper_logn(logn);
+    EXPECT_EQ(wrapper_logn.get_distribution_parameter(), 0.1);
+    EXPECT_EQ(wrapper_logn.get_location(), 1.0);
+    EXPECT_EQ(wrapper_logn.get_scale(), 0.5);
+    EXPECT_NEAR(wrapper_logn.get_support_max(dt), 2.0, 1e-14);
+    // Mean value computed with python scipy-stats.
+    EXPECT_NEAR(wrapper_logn.get_mean(0.1), 1.502506, 0.1);
 
     mio::ConstantFunction constfunc(1.0);
     mio::StateAgeFunctionWrapper wrapper_const(constfunc);
-    EXPECT_NEAR(wrapper_const.get_parameter(), 1.0, 1e-14);
+    EXPECT_EQ(wrapper_const.get_distribution_parameter(), 1.);
+    // Deactivate temporarily log output as an error is expected here.
+    mio::set_log_level(mio::LogLevel::off);
+
     EXPECT_NEAR(wrapper_const.get_support_max(dt), -2.0, 1e-14);
+    EXPECT_NEAR(wrapper_const.get_mean(), 1., 1e-14);
+
+    // Test if set_state_age_function works.
+    mio::ErlangDensity erl(2, 0.5);
+    wrapper_const.set_state_age_function(erl);
+    EXPECT_EQ(wrapper_const.get_distribution_parameter(), 2);
+    EXPECT_EQ(wrapper_const.get_scale(), 0.5);
+    EXPECT_NEAR(wrapper_const.get_support_max(dt), 14, 1e-14);
+    EXPECT_NEAR(wrapper_const.get_mean(dt), 1, 1e-14);
 
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
@@ -192,44 +315,103 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
 
 TEST(TestStateAgeFunction, testSAFWrapperSettersAndGetters)
 {
-    // test only for SmootherCosine since we have checked set_parameter and get_parameter
-    // as well as get_support_max for all derived classes in previous test
+    // Test getter and setter for Wrapper only for GammaSurvivalFunction since we have checked getter and setter
+    // as well as get_support_max and get_mean for all derived classes in previous test.
 
-    ScalarType testvalue_before = 1.0;
-    ScalarType testvalue_after  = 2.0;
-    ScalarType dt               = 0.5;
+    ScalarType dt = 0.5;
 
-    mio::SmootherCosine smoothcos(testvalue_before);
-    mio::StateAgeFunctionWrapper wrapper(smoothcos);
+    mio::GammaSurvivalFunction gamma(1., 2., 3.);
+    mio::StateAgeFunctionWrapper wrapper(gamma);
 
-    EXPECT_EQ(wrapper.get_parameter(), testvalue_before);
-    EXPECT_EQ(wrapper.get_support_max(dt), testvalue_before);
+    EXPECT_EQ(wrapper.get_distribution_parameter(), 1.);
+    EXPECT_EQ(wrapper.get_location(), 2.);
+    EXPECT_EQ(wrapper.get_scale(), 3.);
+    EXPECT_NEAR(wrapper.get_support_max(dt), 71.5, 1e-14);
+    EXPECT_NEAR(wrapper.get_mean(), 5.0, 1e-14);
 
-    wrapper.set_parameter(testvalue_after);
-    EXPECT_EQ(wrapper.get_parameter(), testvalue_after);
-    EXPECT_EQ(wrapper.get_support_max(dt), testvalue_after);
+    wrapper.set_distribution_parameter(4.5);
+    wrapper.set_location(0.5);
+    wrapper.set_scale(1.5);
+    EXPECT_EQ(wrapper.get_distribution_parameter(), 4.5);
+    EXPECT_EQ(wrapper.get_location(), 0.5);
+    EXPECT_EQ(wrapper.get_scale(), 1.5);
+    EXPECT_EQ(wrapper.get_support_max(dt), 50);
+    EXPECT_NEAR(wrapper.get_mean(), 7.25, 1e-4);
 }
 
 TEST(TestStateAgeFunction, testComparisonOperator)
 {
     // Check that StateAgeFunctions are only considered equal if they are of the same derived
-    // class and have the same parameter
-    mio::ExponentialDecay expdecay(0.5);
-    mio::ExponentialDecay expdecay2(0.5);
-    mio::ExponentialDecay expdecay3(1.0);
-    mio::SmootherCosine smoothcos(0.5);
+    // class and have the same parameter.
+    mio::GammaSurvivalFunction gamma(0.5, 0, 1);
+    mio::GammaSurvivalFunction gamma2(0.5, 0, 1);
+    mio::GammaSurvivalFunction gamma3(2, 0, 1);
+    mio::GammaSurvivalFunction gamma4(0.5, 1.5, 1);
+    mio::GammaSurvivalFunction gamma5(0.5, 0, 2);
+    mio::LognormSurvivalFunction logn(0.5, 0, 1);
 
-    EXPECT_TRUE(expdecay == expdecay2);
-    EXPECT_FALSE(expdecay == expdecay3);
-    EXPECT_FALSE(expdecay == smoothcos);
+    EXPECT_TRUE(gamma == gamma2);
+    EXPECT_FALSE(gamma == gamma3);
+    EXPECT_FALSE(gamma == gamma4);
+    EXPECT_FALSE(gamma == gamma5);
+    EXPECT_FALSE(gamma == logn);
 
     // Check that it also holds when a StateAgeFunctionWrapper is set with the respective functions
-    mio::StateAgeFunctionWrapper wrapper(expdecay);
-    mio::StateAgeFunctionWrapper wrapper2(expdecay2);
-    mio::StateAgeFunctionWrapper wrapper3(expdecay3);
-    mio::StateAgeFunctionWrapper wrapper4(smoothcos);
+    mio::StateAgeFunctionWrapper wrapper(gamma);
+    mio::StateAgeFunctionWrapper wrapper2(gamma2);
+    mio::StateAgeFunctionWrapper wrapper3(gamma3);
+    mio::StateAgeFunctionWrapper wrapper4(gamma4);
+    mio::StateAgeFunctionWrapper wrapper5(gamma5);
+    mio::StateAgeFunctionWrapper wrapper6(logn);
 
     EXPECT_TRUE(wrapper == wrapper2);
     EXPECT_FALSE(wrapper == wrapper3);
     EXPECT_FALSE(wrapper == wrapper4);
+    EXPECT_FALSE(wrapper == wrapper5);
+    EXPECT_FALSE(wrapper == wrapper6);
+}
+
+TEST(TestStateAgeFunction, testGamma)
+{
+    // Check if the following connection between the GammaSurvivalFunction and ErlangDensity is fulfilled:
+    // GammaSurvivalFunction(shape=s, rate=r)(tau)=(1/r) * \sum_{j=1}^{s} ErlangDensity(shape=j,rate=r)(tau),
+    // with a natural number s and a real value r.
+
+    ScalarType rate[]  = {0.5, 0.8, 1, 3};
+    int shape[]        = {1, 3, 5, 10, 20};
+    ScalarType times[] = {0, 0.5, 3, 5.555, 20, 70.34};
+
+    for (ScalarType r : rate) {
+        for (int s : shape) {
+            mio::GammaSurvivalFunction survival(s, 0, 1. / r);
+            // Value of the GammaSurvivalFunction at time 0 should be always 1.
+            EXPECT_EQ(survival.eval(0), 1.0);
+            mio::ErlangDensity density(1, 1. / r);
+            // Value of ErlangDensity for negative values should be 0.
+            EXPECT_EQ(density.eval(-1), 0.0);
+
+            // Test for different times tau.
+            for (ScalarType tau : times) {
+                ScalarType f = 0;
+                // Calculate sum of evaluations of densities as stated in the formula.
+                for (int k = 1; k < s + 1; k++) {
+                    density.set_distribution_parameter(k);
+                    f += density.eval(tau);
+                }
+                // Multiply with (1/r) as stated in the formula and
+                // compare with the evaluation of the GammaSurvivalFunction.
+                EXPECT_NEAR(f / r, survival.eval(tau), 1e-10);
+            }
+        }
+    }
+
+    // Check if  GammaSurvivalFunction reduces to ExponentialSurvivalFunction with the
+    // appropriate choice of parameters.
+    for (ScalarType r : rate) {
+        mio::GammaSurvivalFunction gamma(1, 0, 1. / r);
+        mio::ExponentialSurvivalFunction exp(r);
+        for (ScalarType tau : times) {
+            EXPECT_NEAR(gamma.eval(tau), exp.eval(tau), 1e-10);
+        }
+    }
 }
