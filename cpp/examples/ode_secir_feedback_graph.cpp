@@ -118,8 +118,14 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
 
     const double timeInfectedSymptomsMin[] = {5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465};
     const double timeInfectedSymptomsMax[] = {8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085};
-    const double timeInfectedSevereMin[]   = {3.925, 3.925, 4.85, 6.4, 7.2, 9.};
-    const double timeInfectedSevereMax[]   = {6.075, 6.075, 7., 8.7, 9.8, 13.};
+    const double reduc_time_severe         = 0.5;
+    double timeInfectedSevereMin[]         = {3.925, 3.925, 4.85, 6.4, 7.2, 9.};
+    double timeInfectedSevereMax[]         = {6.075, 6.075, 7., 8.7, 9.8, 13.};
+    // multiply timeInfectedSevereMin and timeInfectedSevereMax by reduc_time_severe
+    for (size_t i = 0; i < 6; i++) {
+        timeInfectedSevereMin[i] *= reduc_time_severe;
+        timeInfectedSevereMax[i] *= reduc_time_severe;
+    }
     const double timeInfectedCriticalMin[] = {4.95, 4.95, 4.86, 14.14, 14.4, 10.};
     const double timeInfectedCriticalMax[] = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
 
@@ -151,8 +157,11 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
     const double recoveredPerInfectedNoSymptomsMax[]  = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
     const double severePerInfectedSymptomsMin[]       = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20};
     const double severePerInfectedSymptomsMax[]       = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
-    const double criticalPerSevereMin[]               = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35};
-    const double criticalPerSevereMax[]               = {0.10, 0.10, 0.10, 0.20, 0.35, 0.45};
+    const double fact_severe                          = 1.5;
+    const double criticalPerSevereMin[]               = {fact_severe * 0.05, fact_severe * 0.05, fact_severe * 0.05,
+                                           fact_severe * 0.10, fact_severe * 0.25, fact_severe * 0.35};
+    const double criticalPerSevereMax[]               = {fact_severe * 0.10, fact_severe * 0.10, fact_severe * 0.10,
+                                           fact_severe * 0.20, fact_severe * 0.35, fact_severe * 0.45};
     const double deathsPerCriticalMin[]               = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5};
     const double deathsPerCriticalMax[]               = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
 
@@ -550,9 +559,9 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 
     auto const modes = {"FeedbackDamping"}; //, "FeedbackDamping"};
 
-    auto min_values = std::vector<ScalarType>{0.0};
+    auto min_values = std::vector<ScalarType>{0.2};
 
-    auto max_values = std::vector<ScalarType>{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    auto max_values = std::vector<ScalarType>{1.0}; //0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
     // const size_t county_id_infected = 3241;
 
     //create or load graph
