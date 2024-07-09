@@ -27,6 +27,7 @@
 #include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"
 #include "memilio/utils/stl_util.h"
+#include <cstdint>
 
 namespace mio
 {
@@ -55,7 +56,7 @@ PersonId World::add_person(const LocationId id, AgeGroup age)
 PersonId World::add_person(Person&& person)
 {
     assert(person.get_location() != LocationId::invalid_id());
-    assert(person.get_location() < (LocationId)m_locations.size());
+    assert(person.get_location() < LocationId((uint32_t)m_locations.size()));
     assert(person.get_age() < (AgeGroup)parameters.get_num_groups());
 
     PersonId new_id{static_cast<uint32_t>(m_persons.size())};
