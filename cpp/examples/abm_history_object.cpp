@@ -157,7 +157,7 @@ int main()
         world.assign_location(pid, hospital);
         world.assign_location(pid, icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == age_group_0_to_4) {
+        if (person.get_age() == age_group_5_to_14) {
             world.assign_location(pid, school);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {

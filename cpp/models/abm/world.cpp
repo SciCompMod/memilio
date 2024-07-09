@@ -271,7 +271,7 @@ auto World::get_persons() -> Range<std::pair<PersonIterator, PersonIterator>>
 LocationId World::find_location(LocationType type, const PersonId person) const
 {
     auto location_id = get_person(person).get_assigned_location(type);
-    assert(location_id != LocationId::invalid_id() && "No location.");
+    assert(location_id != LocationId::invalid_id() && "The person has no assigned location of that type.");
     return location_id;
 }
 

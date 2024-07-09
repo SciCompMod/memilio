@@ -407,14 +407,14 @@ public:
     const Location& get_location(LocationId id) const
     {
         assert(id != LocationId::invalid_id());
-        assert(id < LocationId(m_locations.size()));
+        assert(id < LocationId((uint32_t)m_locations.size()));
         return m_locations[id.get()];
     }
 
     Location& get_location(LocationId id)
     {
         assert(id != LocationId::invalid_id());
-        assert(id < LocationId(m_locations.size()));
+        assert(id < LocationId((uint32_t)m_locations.size()));
         return m_locations[id.get()];
     }
     /** @} */

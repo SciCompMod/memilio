@@ -30,7 +30,7 @@ namespace abm
 {
 
 /// Unique identifier for a Person within a World.
-struct PersonId : mio::TypeSafe<uint32_t, PersonId>, public OperatorComparison<PersonId> {
+struct PersonId : public mio::TypeSafe<uint32_t, PersonId>, public OperatorComparison<PersonId> {
     /// @brief Create an ID.
     PersonId(uint32_t id)
         : mio::TypeSafe<uint32_t, PersonId>(id)

@@ -30,7 +30,7 @@ namespace abm
 {
 
 /// Unique identifier for a Location within a World.
-struct LocationId : mio::TypeSafe<uint32_t, LocationId>, public OperatorComparison<LocationId> {
+struct LocationId : public mio::TypeSafe<uint32_t, LocationId>, public OperatorComparison<LocationId> {
     /// @brief Create an ID.
     LocationId(uint32_t id)
         : mio::TypeSafe<uint32_t, LocationId>(id)
