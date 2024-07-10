@@ -497,7 +497,7 @@ TEST(TestMigrationRules, event_return)
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location social_event(mio::abm::LocationType::SocialEvent, 1, num_age_groups);
-    auto p     = mio::abm::Person(rng, home.get_type(), home.get_id(), age_group_15_to_34);
+    auto p     = mio::abm::Person(rng, social_event.get_type(), social_event.get_id(), age_group_15_to_34);
     auto rng_p = mio::abm::PersonalRandomNumberGenerator(rng, p);
 
     p.add_time_at_location(dt);
