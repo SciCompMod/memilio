@@ -38,8 +38,8 @@ TEST(TestWorld, addLocation)
     auto work_id    = world.add_location(mio::abm::LocationType::Work);
     auto home_id    = world.add_location(mio::abm::LocationType::Home);
 
-    ASSERT_EQ(school_id1.get(), 1);
-    ASSERT_EQ(school_id2.get(), 2);
+    ASSERT_EQ(school_id1.get(), 1u);
+    ASSERT_EQ(school_id2.get(), 2u);
 
     auto& school1 = world.get_location(school_id1);
     auto& school2 = world.get_location(school_id2);
