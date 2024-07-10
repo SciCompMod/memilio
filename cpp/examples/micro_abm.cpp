@@ -114,7 +114,8 @@ int main()
     // Two-person household with two parents.
     auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
     auto twoPersonHousehold_full  = mio::abm::Household();
-    twoPersonHousehold_full.add_members(parent, 2);
+    twoPersonHousehold_full.add_members(child, 1);
+    twoPersonHousehold_full.add_members(child, 1);
     twoPersonHousehold_group.add_households(twoPersonHousehold_full, n_households * 0.3);
 
     // Three-person household with two parents and one child.
@@ -138,9 +139,11 @@ int main()
 
     //2. Schools
     auto school_class1 = world.add_location(mio::abm::LocationType::School);
-    world.get_individualized_location(school_class1).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    world.get_individualized_location(school_class1).get_infection_parameters().set<mio::abm::MaximumContacts>(60);
     auto school_class2 = world.add_location(mio::abm::LocationType::School);
-    world.get_individualized_location(school_class2).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    world.get_individualized_location(school_class2).get_infection_parameters().set<mio::abm::MaximumContacts>(60);
+    auto school_class_other = world.add_location(mio::abm::LocationType::School);
+    world.get_individualized_location(school_class_other).get_infection_parameters().set<mio::abm::MaximumContacts>(60);
 
     //3. Workplaces
     auto work1 = world.add_location(mio::abm::LocationType::Work);
@@ -148,7 +151,11 @@ int main()
     auto work2 = world.add_location(mio::abm::LocationType::Work);
     world.get_individualized_location(work2).get_infection_parameters().set<mio::abm::MaximumContacts>(15);
     auto work3 = world.add_location(mio::abm::LocationType::Work);
-    world.get_individualized_location(work2).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_individualized_location(work3).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    auto work4 = world.add_location(mio::abm::LocationType::Work);
+    world.get_individualized_location(work4).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
+    auto work_other = world.add_location(mio::abm::LocationType::Work);
+    world.get_individualized_location(work_other).get_infection_parameters().set<mio::abm::MaximumContacts>(10000);
 
     //4. Social Events
     // Maximum contacs limit the number of people that a person can infect while being at this location.
@@ -159,7 +166,9 @@ int main()
     auto shop1 = world.add_location(mio::abm::LocationType::BasicsShop);
     world.get_individualized_location(shop1).get_infection_parameters().set<mio::abm::MaximumContacts>(30);
     auto shop2 = world.add_location(mio::abm::LocationType::BasicsShop);
-    world.get_individualized_location(shop2).get_infection_parameters().set<mio::abm::MaximumContacts>(30);
+    world.get_individualized_location(shop2).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    auto shop3 = world.add_location(mio::abm::LocationType::BasicsShop);
+    world.get_individualized_location(shop3).get_infection_parameters().set<mio::abm::MaximumContacts>(10000);
 
     //6. Hospitals
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
@@ -193,42 +202,82 @@ int main()
     int number_of_persons_max_to_work_1     = 20;
     int current_number_of_persons_to_work_1 = 0;
 
+    int number_of_persons_max_to_work_2     = 15;
+    int current_number_of_persons_to_work_2 = 0;
+
+    int number_of_persons_max_to_work_3     = 5;
+    int current_number_of_persons_to_work_3 = 0;
+
+    int number_of_persons_max_to_work_4     = 100;
+    int current_number_of_persons_to_work_4 = 0;
+
+    int number_of_persons_max_to_highschool     = 60;
+    int current_number_of_persons_to_highschool = 0;
+
+    int number_of_persons_max_to_primary_school     = 60;
+    int current_number_of_persons_to_primary_school = 0;
+
+    int number_of_persons_max_to_supermarket_1     = 5;
+    int current_number_of_persons_to_supermarket_1 = 0;
+
+    int number_of_persons_max_to_supermarket_2     = 30;
+    int current_number_of_persons_to_supermarket_2 = 0;
+
     auto rng = world.get_rng();
     for (auto& person : world.get_persons()) {
         //to the 2 different schools
         if (person.get_age() == age_group_5_to_24) {
             std::vector<double> school_distribution{1.0, 1.0};
             auto school = mio::DiscreteDistribution<size_t>::get_instance()(rng, school_distribution);
-            if (school == 0) {
+            if (school == 0 && current_number_of_persons_to_primary_school < number_of_persons_max_to_primary_school) {
                 person.set_assigned_location(school_class1);
+                current_number_of_persons_to_primary_school++;
             }
-            else if (school == 1) {
+            else if (school == 1 && current_number_of_persons_to_highschool < number_of_persons_max_to_highschool) {
                 person.set_assigned_location(school_class2);
+                current_number_of_persons_to_highschool++;
+            }
+            else {
+                person.set_assigned_location(school_class_other);
             }
         }
         //to the 3 different workplaces
         if (person.get_age() == age_group_25_to_64) {
-            std::vector<double> work_distribution{20.0, 15.0, 5.0};
+            std::vector<double> work_distribution{20.0, 15.0, 5.0, 100.0};
             auto work = mio::DiscreteDistribution<size_t>::get_instance()(rng, work_distribution);
             if (work == 0 && current_number_of_persons_to_work_1 < number_of_persons_max_to_work_1) {
                 person.set_assigned_location(work1);
                 current_number_of_persons_to_work_1++;
             }
-            else if (work == 1) {
+            else if (work == 1 && current_number_of_persons_to_work_2 < number_of_persons_max_to_work_2) {
                 person.set_assigned_location(work2);
+                current_number_of_persons_to_work_2++;
+            }
+            else if (work == 2 && current_number_of_persons_to_work_3 < number_of_persons_max_to_work_3) {
+                person.set_assigned_location(work3);
+                current_number_of_persons_to_work_3++;
+            }
+            else if (work == 3 && current_number_of_persons_to_work_4 < number_of_persons_max_to_work_4) {
+                person.set_assigned_location(work4);
+                current_number_of_persons_to_work_4++;
             }
             else {
-                person.set_assigned_location(work3);
+                person.set_assigned_location(work_other);
             }
         }
         //to the 2 different shops
         std::vector<double> shop_distribution{30.0, 5.0};
         auto shop = mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), shop_distribution);
-        if (shop == 0) {
+        if (shop == 0 && current_number_of_persons_to_supermarket_1 < number_of_persons_max_to_supermarket_1) {
             person.set_assigned_location(shop1);
+            current_number_of_persons_to_supermarket_1++;
+        }
+        else if (shop == 1 && current_number_of_persons_to_supermarket_2 < number_of_persons_max_to_supermarket_2) {
+            person.set_assigned_location(shop2);
+            current_number_of_persons_to_supermarket_2++;
         }
         else {
-            person.set_assigned_location(shop2);
+            person.set_assigned_location(shop3);
         }
     }
 
@@ -236,6 +285,15 @@ int main()
         "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/contacts/microcontacts/24h_networks_csv";
 
     assign_contact_matrix(world, work1, mio::path_join(contacts_path, "office_20_20.csv"));
+    assign_contact_matrix(world, work2, mio::path_join(contacts_path, "office_15_15.csv"));
+    assign_contact_matrix(world, work3, mio::path_join(contacts_path, "office_5_5.csv"));
+    assign_contact_matrix(world, work4, mio::path_join(contacts_path, "office_100_100.csv"));
+
+    // assign_contact_matrix(world, school_class1, mio::path_join(contacts_path, "highschool_60_60.csv"));
+    // assign_contact_matrix(world, school_class2, mio::path_join(contacts_path, "primaryschool_60_60.csv"));
+
+    assign_contact_matrix(world, shop1, mio::path_join(contacts_path, "supermarked_5_5.csv"));
+    assign_contact_matrix(world, shop2, mio::path_join(contacts_path, "supermarked_30_30.csv"));
 
     // Run the simulation
     auto t0   = mio::abm::TimePoint(0);
