@@ -25,6 +25,7 @@
 #include "abm/infection.h"
 #include "abm/virus_variant.h"
 #include "memilio/epidemiology/age_group.h"
+#include "memilio/utils/logging.h"
 
 namespace mio
 {
@@ -101,7 +102,10 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
 void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExposureRates& local_contact_exposure,
                                const Person& person, const Location& location, const TimePoint t, const TimeSpan dt)
 {
-    mio::log_debug("Person with id {} is not at Location with id {}", person.get_id().get(), location.get_id().get());
+    if (person.get_location() != location.get_id()) {
+        mio::log_debug("In add_exposure_contribution: Person {} is not at Location {}", person.get_id().get(),
+                       location.get_id().get());
+    }
 
     if (person.is_infected(t)) {
         auto& infection = person.get_infection();
@@ -136,6 +140,8 @@ bool migrate(Person& person, const Location& destination, const TransportMode mo
         return true;
     }
     else {
+        mio::log_debug("In migrate: Person {} already is at Location {}", person.get_id().get(),
+                       destination.get_id().get());
         return false;
     }
 }

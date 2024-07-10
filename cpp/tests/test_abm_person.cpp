@@ -45,9 +45,9 @@ TEST(TestPerson, migrate)
     auto rng = mio::RandomNumberGenerator();
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location loc1(mio::abm::LocationType::PublicTransport, 0, 6, 1);
-    mio::abm::Location loc2(mio::abm::LocationType::School, 1, num_age_groups);
-    mio::abm::Location loc3(mio::abm::LocationType::PublicTransport, 0, 6, 2);
+    mio::abm::Location loc1(mio::abm::LocationType::PublicTransport, 1, 6, 1);
+    mio::abm::Location loc2(mio::abm::LocationType::School, 2, num_age_groups);
+    mio::abm::Location loc3(mio::abm::LocationType::PublicTransport, 3, 6, 2);
     auto person = make_test_person(home, age_group_0_to_4, mio::abm::InfectionState::Recovered);
 
     mio::abm::migrate(person, loc1, mio::abm::TransportMode::Unknown, {0});

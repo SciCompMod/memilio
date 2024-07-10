@@ -31,7 +31,7 @@ TEST(TestLockdownRules, school_closure)
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(6);
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location school(mio::abm::LocationType::School, 0, num_age_groups);
+    mio::abm::Location school(mio::abm::LocationType::School, 1, num_age_groups);
 
     //setup rng mock so one person is home schooled and the other goes to school
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -78,7 +78,7 @@ TEST(TestLockdownRules, school_opening)
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(7);
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location school(mio::abm::LocationType::School, 0, num_age_groups);
+    mio::abm::Location school(mio::abm::LocationType::School, 1, num_age_groups);
     //setup rng mock so the person is homeschooled in case of lockdown
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -114,7 +114,7 @@ TEST(TestLockdownRules, home_office)
     auto dt        = mio::abm::hours(1);
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location work(mio::abm::LocationType::Work, 0);
+    mio::abm::Location work(mio::abm::LocationType::Work, 1);
     mio::abm::Parameters params(num_age_groups);
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
@@ -197,7 +197,7 @@ TEST(TestLockdownRules, social_event_closure)
     auto t_evening = mio::abm::TimePoint(0) + mio::abm::hours(19);
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location event(mio::abm::LocationType::SocialEvent, 0, num_age_groups);
+    mio::abm::Location event(mio::abm::LocationType::SocialEvent, 1, num_age_groups);
     auto p = mio::abm::Person(rng, home.get_type(), home.get_id(), age_group_5_to_14);
     p.set_assigned_location(home.get_type(), home.get_id());
     p.set_assigned_location(event.get_type(), event.get_id());
@@ -218,7 +218,7 @@ TEST(TestLockdownRules, social_events_opening)
     auto t_evening = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(19);
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location event(mio::abm::LocationType::SocialEvent, 0, num_age_groups);
+    mio::abm::Location event(mio::abm::LocationType::SocialEvent, 1, num_age_groups);
     auto p = mio::abm::Person(rng, home.get_type(), home.get_id(), age_group_5_to_14);
     p.set_assigned_location(event.get_type(), event.get_id());
     p.set_assigned_location(home.get_type(), home.get_id());
