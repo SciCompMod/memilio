@@ -83,9 +83,9 @@ void World::interaction(TimePoint t, TimeSpan dt)
 
 void World::planning(TimePoint t, TimeSpan dt, std::unordered_map<uint32_t, Location*>& personId_to_loc_map)
 {
-    PRAGMA_OMP(parallel for)
     bool weekend = t.is_weekend();
-
+    
+    PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person = m_persons[i];
         if ((person->get_planned_time() < t) ||
