@@ -20,3 +20,4 @@ NamespaceIndentation: None
 BreakConstructorInitializersBeforeComma: true
 AlwaysBreakTemplateDeclarations: Yes
 AllowShortLambdasOnASingleLine: Empty
+"editor.formatOnSave": true
