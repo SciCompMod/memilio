@@ -33,6 +33,7 @@
 #include "memilio/utils/stl_util.h"
 
 #include <bitset>
+#include <cstdint>
 #include <initializer_list>
 #include <vector>
 #include <memory>
@@ -90,6 +91,8 @@ public:
                     LocationId origin_id = {origin_loc.get_index(), origin_loc.get_type()};
                     m_persons.push_back(
                         std::make_unique<Person>(person.copy_person(get_individualized_location(origin_id))));
+                    // The default value for a person that is added to a world is active
+                    m_activeness_statuses.push_back(true);
                 }
             }
         }
@@ -288,6 +291,15 @@ public:
     }
 
     /**
+     * Get the world id. Is only relevant for graph abm or hybrid model.
+     * @return The world id
+     */
+    int get_id() const
+    {
+        return m_id;
+    }
+
+    /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing at all Locations that have 
      * the LocationType.
      * @param[in] loc_type LocationId key for TestingScheme to be added.
@@ -302,6 +314,15 @@ public:
      * @param[in] scheme TestingScheme to be added.
      */
     void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
+
+    /**
+     * @brief Flip activeness status of a person in the world.
+     * @param[in] person_id Person whose activeness status is fipped.
+     */
+    void change_activeness(uint32_t person_id)
+    {
+        m_activeness_statuses[person_id] = !m_activeness_statuses[person_id];
+    }
 
 private:
     /**
@@ -318,6 +339,7 @@ private:
     void migration(TimePoint t, TimeSpan dt);
 
     std::vector<std::unique_ptr<Person>> m_persons; ///< Vector with pointers to every Person.
+    std::vector<bool> m_activeness_statuses; ///< Vector with activeness status for every person
     std::vector<std::unique_ptr<Location>> m_locations; ///< Vector with pointers to every Location.
     std::bitset<size_t(LocationType::Count)>
         m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
@@ -330,6 +352,7 @@ private:
         m_migration_rules; ///< Rules that govern the migration between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.
     RandomNumberGenerator m_rng; ///< Global random number generator
+    int m_id; ///< World id. Is only used for abm graph model or hybrid model.
 };
 
 } // namespace abm

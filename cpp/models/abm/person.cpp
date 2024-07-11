@@ -149,7 +149,7 @@ uint32_t Person::get_assigned_location_index(LocationType type) const
 
 bool Person::goes_to_work(TimePoint t, const Parameters& params) const
 {
-    return m_random_workgroup < params.get<WorkRatio>().get_matrix_at(t.days())[0];
+    return (m_random_workgroup < params.get<WorkRatio>().get_matrix_at(t.days())[0] && !m_is_commuter);
 }
 
 TimeSpan Person::get_go_to_work_time(const Parameters& params) const
