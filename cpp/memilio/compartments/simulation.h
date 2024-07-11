@@ -60,6 +60,15 @@ public:
     {
     }
 
+    Simulation(const Simulation& other)
+        : m_integratorCore(other.m_integratorCore)
+        , m_model(std::make_unique<Model>(*other.m_model))
+        , m_integrator(m_integratorCore)
+        , m_result(other.m_result)
+        , m_dt(other.m_dt)
+    {
+    }
+
     /**
      * @brief Set the integrator core used in the simulation.
      * @param[in] integrator A shared pointer to an object derived from IntegratorCore.
