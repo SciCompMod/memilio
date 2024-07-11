@@ -8,6 +8,18 @@ set(MEMILIO_JSONCPP_VERSION "1.9.5")
 set(MEMILIO_RANDOM123_VERSION "v1.14.0")
 set(MEMILIO_IPOPT_VERSION "3.14.12")
 
+# Gperftools for profiling; must be first, so that libraries are included in the profile
+if(MEMILIO_ENABLE_PROFILING)
+    if(NOT UNIX)
+        message(FATAL_ERROR "Profiling with gperftools currently only supported on unix systems.")
+    endif()
+
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(GPERFTOOLS REQUIRED libprofiler)
+    link_libraries(${GPERFTOOLS_LINK_LIBRARIES}) # link globally so all libs are included
+    include_directories(${GPERFTOOLS_INCLUDE_DIRS})
+endif()
+
 # ## SPDLOG
 set(SPDLOG_INSTALL ON)
 
@@ -66,7 +78,9 @@ endif()
 
 # ## BOOST
 if(MEMILIO_USE_BUNDLED_BOOST)
-    message(STATUS "Downloading Boost library. This may take several minutes. This is the time to get yourself a coffee. :-)")
+    message(STATUS "Downloading Boost library")
+
+    string(REPLACE "." "_" MEMILIO_BOOST_VERSION_UNDERSC "${MEMILIO_BOOST_VERSION}")
 
     include(FetchContent)
     FetchContent_Declare(boost
@@ -76,28 +90,6 @@ if(MEMILIO_USE_BUNDLED_BOOST)
 
     if(NOT boost_POPULATED)
         FetchContent_Populate(boost)
-    endif()
-
-    add_custom_target(boost-bootstrap ALL
-        DEPENDS "${boost_SOURCE_DIR}/boost"
-    )
-
-    if(MSVC)
-        add_custom_command(
-            OUTPUT "${boost_SOURCE_DIR}/boost"
-            COMMAND "bootstrap.bat"
-            COMMAND "b2.exe" headers
-            WORKING_DIRECTORY ${boost_SOURCE_DIR}
-            VERBATIM
-        )
-    else()
-        add_custom_command(
-            OUTPUT "${boost_SOURCE_DIR}/boost"
-            COMMAND ./bootstrap.sh
-            COMMAND ./b2 headers
-            WORKING_DIRECTORY ${boost_SOURCE_DIR}
-            VERBATIM
-        )
     endif()
 
     add_library(boost INTERFACE)

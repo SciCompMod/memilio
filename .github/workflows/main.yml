@@ -1,5 +1,6 @@
 name: CI
 
+
 on:
   schedule:
     - cron: "40 2 * * *"
@@ -47,8 +48,7 @@ jobs:
           config: ${{ matrix.config }}
           version: ${{ matrix.version }}
           coverage: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }} # `c && t || f` is (usually) equivalent to `c ? t : f`
-          sanitize-addr: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
-          sanitize-ub: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
+          sanitizers: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
 
   build-cpp-gcc-no-optional-deps:
     if: github.event.pull_request.draft == false
@@ -258,9 +258,9 @@ jobs:
   build-py-simulation:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    container: quay.io/pypa/manylinux2014_x86_64 #use manylinux2014 here, to be changed when actions for this job will be updated. See Issue #939
+    container: quay.io/pypa/manylinux_2_28_x86_64
     steps:
-      - uses: actions/checkout@v3 # use v3 here as v4 produces error with cmake
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/build-py
         with:
           package: simulation
