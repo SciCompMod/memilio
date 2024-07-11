@@ -137,7 +137,6 @@ if(MEMILIO_USE_BUNDLED_BOOST)
         target_compile_definitions(boost_filesystem PUBLIC BOOST_NO_CXX98_FUNCTION_BASE)
     endif()
 
-    target_compile_options(boost_filesystem PUBLIC /wd4127 /wd4459)
     set(Boost_LIBRARIES Boost::boost Boost::filesystem)
     set(Boost_FOUND ON)
 
