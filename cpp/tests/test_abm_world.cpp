@@ -170,7 +170,7 @@ TEST(TestWorld, evolveStateTransition)
     EXPECT_EQ(p3.get_infection_state(t + dt), mio::abm::InfectionState::InfectedSymptoms);
 }
 
-TEST(TestWorld, evolveMigration) // TODO: this is not a unit test, this is a unit of a test!
+TEST(TestWorld, evolveMigration)
 {
     using testing::Return;
 

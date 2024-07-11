@@ -159,16 +159,12 @@ private:
  */
 class TestingStrategy
 {
-    struct hash {
-        std::size_t operator()(const std::pair<LocationType, LocationId>& key) const
-        {
-            return std::hash<uint32_t>{}(static_cast<uint32_t>(key.first)) ^
-                   std::hash<uint32_t>{}(static_cast<uint32_t>(key.second));
-        }
-    };
-
 public:
-    struct Entry {
+    /**
+     * @brief List of testing schemes for a given LocationType and LocationId.
+     * A LocalStrategy with id of value LocationId::invalid_id() is used for all Locations with LocationType type.
+     */
+    struct LocalStrategy {
         LocationType type;
         LocationId id;
         std::vector<TestingScheme> schemes;
@@ -179,10 +175,12 @@ public:
      * @param[in] testing_schemes Vector of TestingSchemes that are checked for testing.
      */
     TestingStrategy() = default;
-    explicit TestingStrategy(const std::vector<Entry>& location_to_schemes_map);
+    explicit TestingStrategy(const std::vector<LocalStrategy>& location_to_schemes_map);
 
     /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
+     * A TestingScheme with loc_id of value LocationId::invalid_id() is used for all Locations of the given type.
+     * @param[in] loc_type LocationType key for TestingScheme to be remove.
      * @param[in] loc_id LocationId key for TestingScheme to be added.
      * @param[in] scheme TestingScheme to be added.
      */
@@ -190,8 +188,7 @@ public:
 
     /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain LocationType.
-     * A TestingScheme applies to all Location of the same type is store in 
-     * LocationId{INVALID_LOCATION_INDEX, location_type} of m_location_to_schemes_map.
+     * A TestingScheme with loc_id of value LocationId::invalid_id() is used for all Locations of the given type.
      * @param[in] loc_type LocationId key for TestingScheme to be added.
      * @param[in] scheme TestingScheme to be added.
      */
@@ -202,6 +199,7 @@ public:
 
     /**
      * @brief Remove a TestingScheme from the set of schemes that are checked for testing at a certain Location.
+     * @param[in] loc_type LocationType key for TestingScheme to be remove.
      * @param[in] loc_id LocationId key for TestingScheme to be remove.
      * @param[in] scheme TestingScheme to be removed.
      */
@@ -209,8 +207,7 @@ public:
 
     /**
      * @brief Remove a TestingScheme from the set of schemes that are checked for testing at a certain Location.
-     * A TestingScheme applies to all Location of the same type is store in 
-     * LocationId{INVALID_LOCATION_INDEX, location_type} of m_location_to_schemes_map.
+     * A TestingScheme with loc_id of value LocationId::invalid_id() is used for all Locations of the given type.
      * @param[in] loc_type LocationType key for TestingScheme to be remove.
      * @param[in] scheme TestingScheme to be removed.
      */
@@ -237,7 +234,7 @@ public:
     bool run_strategy(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
 
 private:
-    std::vector<Entry> m_location_to_schemes_map; ///< Set of schemes that are checked for testing.
+    std::vector<LocalStrategy> m_location_to_schemes_map; ///< Set of schemes that are checked for testing.
 };
 
 } // namespace abm

@@ -91,7 +91,7 @@ struct ScopedMockDistribution {
 
 /**
  * @brief Create a Person without a World object. Intended for simple use in tests.
-*/
+ */
 mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup age = age_group_15_to_34,
                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0),
@@ -99,13 +99,13 @@ mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup ag
 
 /**
  * @brief Add a Person to the World. Intended for simple use in tests.
-*/
+ */
 mio::abm::PersonId add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id,
                                    mio::AgeGroup age                        = age_group_15_to_34,
                                    mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                    mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
 
-/// @brief mio::abm::interact, but it computes the correct exposures for you
+/// @brief Calls mio::abm::interact, but it computes the correct exposures for you.
 void interact_testing(mio::abm::PersonalRandomNumberGenerator& personal_rng, mio::abm::Person& person,
                       const mio::abm::Location& location, const std::vector<mio::abm::Person>& local_population,
                       const mio::abm::TimePoint t, const mio::abm::TimeSpan dt,

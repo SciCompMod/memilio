@@ -55,9 +55,10 @@ PersonId World::add_person(const LocationId id, AgeGroup age)
 
 PersonId World::add_person(Person&& person)
 {
-    assert(person.get_location() != LocationId::invalid_id());
-    assert(person.get_location() < LocationId((uint32_t)m_locations.size()));
-    assert(person.get_age() < (AgeGroup)parameters.get_num_groups());
+    assert(person.get_location() != LocationId::invalid_id() && "Added Person's location must be valid.");
+    assert(person.get_location() < LocationId((uint32_t)m_locations.size()) &&
+           "Added Person's location is not in World.");
+    assert(person.get_age() < (AgeGroup)parameters.get_num_groups() && "Added Person's AgeGroup is too large.");
 
     PersonId new_id{static_cast<uint32_t>(m_persons.size())};
     m_persons.emplace_back(person, new_id);

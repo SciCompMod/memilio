@@ -73,7 +73,7 @@ public:
     Infection& get_infection();
     const Infection& get_infection() const;
 
-    /** 
+    /**
      * @brief Get all Vaccination%s of the Person.
      * @return A vector with all Vaccination%s.
      * @{
@@ -163,7 +163,11 @@ public:
     }
 
     /**
-     * @brief Set an assigned Location of the Person. 
+     * @brief Set an assigned Location of the Person.
+     *
+     * Important: Setting incorrect values will cause issues during simulation. It is preferable to use
+     *            World::assign_location with a valid LocationId, obtained e.g. through World::add_location.
+     *
      * The assigned Location is saved by the index of its LocationId. Assume that a Person has at most one assigned
      * Location of a certain #LocationType.
      * @param[in] id The LocationId of the Location.
@@ -348,7 +352,7 @@ public:
 
     /**
      * @brief Add a new #Vaccination
-     * @param[in] v ExposureType (i. e. vaccine) the person takes.  
+     * @param[in] v ExposureType (i. e. vaccine) the person takes.
      * @param[in] t TimePoint of the Vaccination.
      */
     void add_new_vaccination(ExposureType v, TimePoint t)
@@ -384,12 +388,12 @@ public:
     }
 
     /**
-     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person. 
+     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person.
      */
     std::pair<ExposureType, TimePoint> get_latest_protection() const;
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -423,7 +427,7 @@ public:
 private:
     LocationId m_location; ///< Current Location of the Person.
     LocationType m_location_type; ///< Type of the current Location.
-    std::vector<LocationId> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
+    std::vector<LocationId> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the
     Person always visits the same Home or School etc. */
     std::vector<Vaccination> m_vaccinations; ///< Vector with all Vaccination%s the Person has received.
     std::vector<Infection> m_infections; ///< Vector with all Infection%s the Person had.

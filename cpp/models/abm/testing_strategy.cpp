@@ -115,7 +115,7 @@ bool TestingScheme::run_scheme(PersonalRandomNumberGenerator& rng, Person& perso
     return true;
 }
 
-TestingStrategy::TestingStrategy(const std::vector<Entry>& location_to_schemes_map)
+TestingStrategy::TestingStrategy(const std::vector<LocalStrategy>& location_to_schemes_map)
     : m_location_to_schemes_map(location_to_schemes_map.begin(), location_to_schemes_map.end())
 {
 }

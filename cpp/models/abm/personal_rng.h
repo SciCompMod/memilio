@@ -39,9 +39,9 @@ class Person;
  * for all persons share the same key.
  * The counter is taken from the person.
  * PersonalRandomNumberGenerator is cheap to construct and transparent
- * for the compiler to optimize, so we don't store the RNG persistently, only the 
+ * for the compiler to optimize, so we don't store the RNG persistently, only the
  * counter, so we don't need to store the key in each person. This increases
- * consistency (if the key is changed after the person is created) and 
+ * consistency (if the key is changed after the person is created) and
  * reduces the memory required per person.
  * @see mio::RandomNumberGeneratorBase
  */
@@ -52,7 +52,7 @@ public:
      * Creates a RandomNumberGenerator for a person.
      * @param key Key to be used by the generator.
      * @param id Id of the Person.
-     * @param counter Reference to the Person's RNG Counter. 
+     * @param counter Reference to the Person's RNG Counter.
      */
     PersonalRandomNumberGenerator(mio::Key<uint64_t> key, PersonId id, mio::Counter<uint32_t>& counter);
 
@@ -60,7 +60,7 @@ public:
      * Creates a RandomNumberGenerator for a person.
      * Uses the same key as another RandomNumberGenerator.
      * @param rng RandomNumberGenerator who's key will be used.
-     * @param person Reference to the Person who's counter will be used. 
+     * @param person Reference to the Person who's counter will be used.
      */
     PersonalRandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person);
 

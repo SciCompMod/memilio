@@ -114,7 +114,7 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
 /**
  * Benchmark for the ABM simulation.
  * @param num_persons Number of persons in the simulation.
- * @param seeds Seeds for the random number generator. 
+ * @param seeds Seeds for the random number generator.
  */
 void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer_list<uint32_t> seeds)
 {

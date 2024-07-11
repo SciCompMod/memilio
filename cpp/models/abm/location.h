@@ -197,7 +197,7 @@ public:
      */
     void set_capacity(uint32_t persons, uint32_t volume, uint32_t cell_idx = 0)
     {
-        assert(cell_idx < m_cells.size());
+        assert(cell_idx < m_cells.size() && "Given cell index is too large.");
         m_cells[cell_idx].m_capacity.persons = persons;
         m_cells[cell_idx].m_capacity.volume  = volume;
     }
@@ -209,7 +209,7 @@ public:
      */
     CellCapacity get_capacity(uint32_t cell_idx = 0) const
     {
-        assert(cell_idx < m_cells.size());
+        assert(cell_idx < m_cells.size() && "Given cell index is too large.");
         return m_cells[cell_idx].m_capacity;
     }
 

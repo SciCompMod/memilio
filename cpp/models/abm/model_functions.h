@@ -33,7 +33,7 @@ namespace abm
 
 /**
  * @brief Compute the number of daily transmissions for contact transmission of a virus in a cell.
- * @param[in] rates The local exposure rates. 
+ * @param[in] rates The local exposure rates.
  * @param[in] cell_index Cell index of the Cell.
  * @param[in] virus VirusVariant of interest.
  * @param[in] age_receiver AgeGroup of the receiving Person.
@@ -46,16 +46,16 @@ ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, co
 
 /**
  * @brief Compute the number of daily transmissions for aerosol transmission of a virus in a cell.
- * @param[in] rates The local exposure rates. 
+ * @param[in] rates The local exposure rates.
  * @param[in] cell_index Cell index of the Cell.
  * @param[in] virus VirusVariant of interest.
- * @param[in] global_params The parameter set of the World. 
+ * @param[in] global_params The parameter set of the World.
  * @return Average amount of Infection%s with the virus per day.
  */
 ScalarType daily_transmissions_by_air(const AirExposureRates& rates, const CellIndex cell_index,
                                       const VirusVariant virus, const Parameters& global_params);
 
-/** 
+/**
  * @brief Add the contribution of a person to the local exposure rates.
  * @param[in, out] local_air_exposure Exposure rates by aerosols for the local population.
  * @param[in, out] local_contact_exposure Exposure by rates contacts for the local population.
@@ -67,7 +67,7 @@ ScalarType daily_transmissions_by_air(const AirExposureRates& rates, const CellI
 void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExposureRates& local_contact_exposure,
                                const Person& person, const Location& location, const TimePoint t, const TimeSpan dt);
 
-/** 
+/**
  * @brief Let a Person interact with the population at its current Location, possibly getting infected.
  * @param[in, out] rng PersonalRandomNumberGenerator for this Person.
  * @param[in, out] person The person to interact with the local population.

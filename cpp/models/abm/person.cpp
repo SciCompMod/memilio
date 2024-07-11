@@ -111,10 +111,6 @@ Infection& Person::get_infection()
 
 void Person::set_assigned_location(LocationType type, LocationId id)
 {
-    /* TODO: This is not safe if the location is not the same as added in the world, e.g. the index is wrong. We need to check this.
-    * For now only use it like this:  auto home_id   = world.add_location(mio::abm::LocationType::Home);
-    *                                 person.set_assigned_location(home);
-    */
     m_assigned_locations[static_cast<uint32_t>(type)] = id;
 }
 

@@ -1,6 +1,7 @@
 add_library(abm
     location.cpp
     location.h
+    location_id.h
     household.cpp
     household.h
     simulation.cpp

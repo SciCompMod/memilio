@@ -141,7 +141,7 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
         .WillOnce(testing::Return(0.5));
 
     mio::abm::TestingStrategy test_strategy =
-        mio::abm::TestingStrategy(std::vector<mio::abm::TestingStrategy::Entry>());
+        mio::abm::TestingStrategy(std::vector<mio::abm::TestingStrategy::LocalStrategy>{});
     test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme1);
     test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme2);
     ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date),
