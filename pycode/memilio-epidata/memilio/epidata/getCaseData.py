@@ -443,9 +443,8 @@ def write_case_data(df: pd.DataFrame,
                                    filename, file_format)
             else:
                 dict_of_datasets.update({file: df_local_cs})
-
-    if conf_obj.to_dataset:
-        return dict_of_datasets
+        if conf_obj.to_dataset is True:
+            return dict_of_datasets
 
 
 def get_case_data(read_data: bool = dd.defaultDict['read_data'],
@@ -548,7 +547,7 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
         files=files,
         conf_obj=conf
     )
-    if conf.to_dataset:
+    if conf.to_dataset is True:
         return datasets
 
 
