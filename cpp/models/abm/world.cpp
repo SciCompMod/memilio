@@ -83,8 +83,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
 
 void World::planning(TimePoint t, TimeSpan dt, std::unordered_map<uint32_t, Location*>& personId_to_loc_map)
 {
-    bool weekend = t.is_weekend();
-    
+   
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person = m_persons[i];
@@ -139,6 +138,7 @@ void World::planning(TimePoint t, TimeSpan dt, std::unordered_map<uint32_t, Loca
         }
     }
 
+    bool weekend = t.is_weekend();
     // check if a person makes a trip
     size_t num_trips = m_trip_list.num_trips(weekend);
 
@@ -164,7 +164,6 @@ void World::planning(TimePoint t, TimeSpan dt, std::unordered_map<uint32_t, Loca
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
-    PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person           = m_persons[i];
         auto personal_rng       = Person::RandomNumberGenerator(m_rng, *person);
