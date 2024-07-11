@@ -296,16 +296,27 @@ struct SeverityProtectionFactor {
  */
 struct HighViralLoadProtectionFactor {
     using Type = InputFunctionForProtectionLevel;
-    static auto get_default()
+    
+    HighViralLoadProtectionFactor()
+        : function(get_default())
     {
-        return Type([](ScalarType /*days*/) -> ScalarType {
-            return 0;
-        });
     }
-    static std::string name()
-    {
+
+    static Type get_default() {
+        return [](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        };
+    }
+
+    ScalarType operator()(ScalarType days) const {
+        return function(days);
+    }
+
+    static std::string name() {
         return "HighViralLoadProtectionFactor";
     }
+
+    Type function;
 };
 
 /**
