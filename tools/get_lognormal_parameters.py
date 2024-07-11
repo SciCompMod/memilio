@@ -8,16 +8,13 @@ def get_lognormal_parameters(mean, std):
     The lognormal distribution we consider in state_age_function.h is based on the implementation in scipy and the parameters 
     shape and scale are defined accordingly. 
     """
-    # mu = mean - 0.5 * np.log(np.exp(2*(std-mean))+1)
-    # std = np.sqrt(np.log(np.exp(2*(std-mean)+1)))
-
     variance = std**2
 
-    mean_n = np.log(mean) - 0.5*np.log(1 + variance/mean**2)
-    variance_n = np.log(variance/mean**2 + 1)
+    mean_tmp = np.log(mean) - 0.5*np.log(1 + variance/mean**2)
+    variance_tmp = np.log(variance/mean**2 + 1)
 
-    shape = np.sqrt(variance_n)
-    scale = np.exp(mean_n)
+    shape = np.sqrt(variance_tmp)
+    scale = np.exp(mean_tmp)
 
     # Test if mean and std are as expected for computed shape and scale parameters.
     mean_lognorm, variance_lognorm = lognorm.stats(

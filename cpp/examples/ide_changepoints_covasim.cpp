@@ -86,7 +86,7 @@ mio::UncertainContactMatrix<ScalarType> get_contact_matrix(ScalarType R0)
 
 mio::TimeSeries<ScalarType> get_initial_flows()
 {
-    // The initialization vector for the LCT model is calculated by defining transitions.
+    // The initialization vector for the IDE model is calculated by defining transitions.
     // Create TimeSeries with num_transitions elements.
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
     mio::TimeSeries<ScalarType> init(num_transitions);
@@ -146,39 +146,39 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, b
     mio::StateAgeFunctionWrapper delaydistributioninit(initialfunc);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib((int)mio::isecir::InfectionTransition::Count,
                                                                delaydistributioninit);
-    // E -> C
+    // ExposedToInfectedNoSymptoms
     mio::LognormSurvivalFunction survivalExposedToInfectedNoSymptoms(0.32459285, 0, 4.26907484);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_state_age_function(
         survivalExposedToInfectedNoSymptoms);
-    // C -> I
+    // InfectedNoSymptomsToInfectedSymptoms
     mio::LognormSurvivalFunction survivalInfectedNoSymptomsToInfectedSymptoms(0.71587510, 0, 0.85135303);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
         .set_state_age_function(survivalInfectedNoSymptomsToInfectedSymptoms);
-    // C -> R
+    // InfectedNoSymptomsToRecovered
     mio::LognormSurvivalFunction survivalInfectedNoSymptomsToRecovered(0.24622068, 0, 7.7611400);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered].set_state_age_function(
         survivalInfectedNoSymptomsToRecovered);
-    // I -> H
+    // InfectedSymptomsToInfectedSevere
     mio::LognormSurvivalFunction survivalInfectedSymptomsToInfectedSevere(0.66258947, 0, 5.29920733);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere].set_state_age_function(
         survivalInfectedSymptomsToInfectedSevere);
-    // I -> R
+    // InfectedSymptomsToRecovered
     mio::LognormSurvivalFunction survivalInfectedSymptomsToRecovered(0.24622068, 0, 7.76114000);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered].set_state_age_function(
         survivalInfectedSymptomsToRecovered);
-    // H -> U
+    // InfectedSevereToInfectedCritical
     mio::LognormSurvivalFunction survivalInfectedSevereToInfectedCritical(1.01076765, 0, 0.90000000);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical].set_state_age_function(
         survivalInfectedSevereToInfectedCritical);
-    // H -> R
+    // InfectedSevereToRecovered
     mio::LognormSurvivalFunction survivalInfectedSevereToRecovered(0.33816427, 0, 17.09411753);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered].set_state_age_function(
         survivalInfectedSevereToRecovered);
-    // U -> D
+    // InfectedCriticalToDead
     mio::LognormSurvivalFunction survivalInfectedCriticalToDead(0.42819924, 0, 9.76267505);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead].set_state_age_function(
         survivalInfectedCriticalToDead);
-    // U -> R
+    // InfectedCriticalToRecovered
     mio::LognormSurvivalFunction survivalInfectedCriticalToRecovered(0.33816427, 0, 17.09411753);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_state_age_function(
         survivalInfectedCriticalToRecovered);
@@ -231,11 +231,13 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, b
     sim.advance(tmax);
 
     if (!save_dir.empty()) {
-        std::string R0string     = std::to_string(R0);
-        std::string filename_ide = save_dir + "covasim_fictional_ide_" + R0string.substr(0, R0string.find(".") + 2);
-        if (tmax > 50) {
-            filename_ide = filename_ide + "_long";
-        }
+        std::string R0_string    = std::to_string(R0);
+        std::string tmax_string  = std::to_string(tmax);
+        std::string dt_string    = std::to_string(simulation_parameter["dt_flows"]);
+        std::string filename_ide = save_dir + "fictional_ide_covasim_" + R0_string.substr(0, R0_string.find(".") + 2) +
+                                   "_" + tmax_string.substr(0, tmax_string.find(".")) + "_" +
+                                   dt_string.substr(0, dt_string.find(".") + 5);
+
         std::string filename_ide_flows = filename_ide + "_flows.h5";
         mio::IOResult<void> save_result_status_f =
             mio::save_result({sim.get_transitions()}, {0}, 1, filename_ide_flows);
@@ -244,27 +246,12 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, b
             mio::save_result({sim.get_result()}, {0}, 1, filename_ide_compartments);
     }
 
-    // if (!save_dir.empty()) {
-
-    //     std::string R0string     = std::to_string(R0);
-    //     std::string filename_ide = save_dir + "fictional_ide";
-    //     if (tmax > 50) {
-    //         filename_ide = filename_ide + "_long";
-    //     }
-    //     std::string filename_ide_flows = filename_ide + "_flows.h5";
-    //     mio::IOResult<void> save_result_status_f =
-    //         mio::save_result({sim.get_transitions()}, {0}, 1, filename_ide_flows);
-    //     std::string filename_ide_compartments = filename_ide + "_compartments.h5";
-    //     mio::IOResult<void> save_result_status_c =
-    //         mio::save_result({sim.get_result()}, {0}, 1, filename_ide_compartments);
-    // }
-
     // Return vector with initial compartments.
     return sim.get_result();
 }
 
-void simulate_ode_model(Vector init_compartments, ScalarType R0, ScalarType tmax, bool contact_scaling = true,
-                        std::string save_dir = "")
+mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType R0, ScalarType tmax,
+                                       bool contact_scaling = true, std::string save_dir = "")
 {
     // auto init_compartments = init_compartments2.get_value(0);
     // Use FlowModel to make results directly comparable to IDE model.
@@ -345,99 +332,63 @@ void simulate_ode_model(Vector init_compartments, ScalarType R0, ScalarType tmax
     integrator->set_dt_min(simulation_parameter["dt_flows"]);
     integrator->set_dt_max(simulation_parameter["dt_flows"]);
 
-    auto idx_SE =
-        model_ode.get_flat_flow_index<mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed>(
-            {mio::AgeGroup(0)});
-    auto idx_EC = model_ode.get_flat_flow_index<mio::osecir::InfectionState::Exposed,
-                                                mio::osecir::InfectionState::InfectedNoSymptoms>({mio::AgeGroup(0)});
-    auto idx_CI = model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedNoSymptoms,
-                                                mio::osecir::InfectionState::InfectedSymptoms>({mio::AgeGroup(0)});
-    auto idx_CR = model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedNoSymptoms,
-                                                mio::osecir::InfectionState::Recovered>({mio::AgeGroup(0)});
-    auto idx_IH = model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedSymptoms,
-                                                mio::osecir::InfectionState::InfectedSevere>({mio::AgeGroup(0)});
-    auto idx_IR = model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedSymptoms,
-                                                mio::osecir::InfectionState::Recovered>({mio::AgeGroup(0)});
-    auto idx_HU = model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedSevere,
-                                                mio::osecir::InfectionState::InfectedCritical>({mio::AgeGroup(0)});
-    auto idx_HR = model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedSevere,
-                                                mio::osecir::InfectionState::Recovered>({mio::AgeGroup(0)});
-    auto idx_UD =
-        model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedCritical, mio::osecir::InfectionState::Dead>(
-            {mio::AgeGroup(0)});
-    auto idx_UR = model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedCritical,
-                                                mio::osecir::InfectionState::Recovered>({mio::AgeGroup(0)});
-
-    std::cout << "Indices: " << idx_SE << idx_EC << idx_CI << idx_CR << idx_IH << idx_IR << idx_HU << idx_HR << idx_UD
-              << idx_UR << std::endl;
-
     std::vector<mio::TimeSeries<ScalarType>> results_ode = mio::osecir::simulate_flows<ScalarType>(
         simulation_parameter["t0"], tmax, simulation_parameter["dt_flows"], model_ode, integrator);
 
-    // flows_ode.print_table();
-
     if (!save_dir.empty()) {
-        std::string R0string     = std::to_string(R0);
-        std::string filename_ode = save_dir + "covasim_fictional_ode_" + R0string.substr(0, R0string.find(".") + 2);
-        if (tmax > 50) {
-            filename_ode = filename_ode + "_long";
-        }
+        std::string R0_string    = std::to_string(R0);
+        std::string tmax_string  = std::to_string(tmax);
+        std::string dt_string    = std::to_string(simulation_parameter["dt_flows"]);
+        std::string filename_ode = save_dir + "fictional_ode_covasim_" + R0_string.substr(0, R0_string.find(".") + 2) +
+                                   "_" + tmax_string.substr(0, tmax_string.find(".")) + "_" +
+                                   dt_string.substr(0, dt_string.find(".") + 5);
+
         std::string filename_ode_flows           = filename_ode + "_flows.h5";
         mio::IOResult<void> save_result_status_f = mio::save_result({results_ode[1]}, {0}, 1, filename_ode_flows);
         std::string filename_ode_compartments    = filename_ode + "_compartments.h5";
         mio::IOResult<void> save_result_status_c =
             mio::save_result({results_ode[0]}, {0}, 1, filename_ode_compartments);
     }
-    // if (!save_dir.empty()) {
-    //     std::string R0string = std::to_string(R0);
-    //     // std::string filename_ode = save_dir + "ode_constant_contacts";
-    //     std::string filename_ode = save_dir + "fictional_ide";
-    //     if (tmax > 50) {
-    //         filename_ode = filename_ode + "_long";
-    //     }
-    //     std::string filename_ode_flows           = filename_ode + "_flows.h5";
-    //     mio::IOResult<void> save_result_status_f = mio::save_result({results_ode[1]}, {0}, 1, filename_ode_flows);
-    //     std::string filename_ode_compartments    = filename_ode + "_compartments.h5";
-    //     mio::IOResult<void> save_result_status_c =
-    //         mio::save_result({results_ode[0]}, {0}, 1, filename_ode_compartments);
-    // }
+
+    return mio::success();
 }
 
 int main()
 {
     // Paths are valid if file is executed eg in memilio/build/bin.
-    std::string save_dir = "../../results/";
+    std::string save_dir = "../../results/fictional/covasim/";
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
-    boost::filesystem::create_directory(dir);
+    boost::filesystem::create_directories(dir);
     bool contact_scaling = true;
 
-    // Options used: For R0=2 epidemic peak use tmax=150,
-    // for R0=4 epidemic peak use tmax = 75.
-    // For short things: 10 days and R0=0.5 or 2
+    // Options used: For R0=2 epidemic peak use tmax=200,
+    // For short things: 12 days and R0=0.5 or 2
     ScalarType R0   = 0.5;
-    ScalarType tmax = 200;
+    ScalarType tmax = 12;
 
-    mio::TimeSeries<ScalarType> result = simulate_ide_model(R0, tmax, contact_scaling, save_dir);
-    // if (!result) {
-    //     printf("%s\n", result.error().formatted_message().c_str());
-    //     return -1;
-    // }
+    mio::TimeSeries<ScalarType> result_ide = simulate_ide_model(R0, tmax, contact_scaling, save_dir);
 
-    Vector compartments = result.get_value(0);
+    Vector compartments = result_ide.get_value(0);
 
-    simulate_ode_model(compartments, R0, tmax, contact_scaling, save_dir);
+    auto result_ode = simulate_ode_model(compartments, R0, tmax, contact_scaling, save_dir);
+    if (!result_ode) {
+        printf("%s\n", result_ode.error().formatted_message().c_str());
+        return -1;
+    }
 
     R0   = 2.;
-    tmax = 200;
+    tmax = 12;
 
-    result = simulate_ide_model(R0, tmax, contact_scaling, save_dir);
-    // if (!result) {
-    //     printf("%s\n", result.error().formatted_message().c_str());
-    //     return -1;
-    // }
-    compartments = result.get_value(0);
-    simulate_ode_model(compartments, R0, tmax, contact_scaling, save_dir);
+    result_ide = simulate_ide_model(R0, tmax, contact_scaling, save_dir);
+
+    compartments = result_ide.get_value(0);
+
+    result_ode = simulate_ode_model(compartments, R0, tmax, contact_scaling, save_dir);
+    if (!result_ode) {
+        printf("%s\n", result_ode.error().formatted_message().c_str());
+        return -1;
+    }
 
     return 0;
 }

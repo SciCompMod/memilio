@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
-def plot_changepoint(files, legendplot, flows=True, save=True, save_dir='plots/'):
+def plot_changepoint(files, legendplot, flows=True, fileending="", save=True, save_dir='plots/'):
 
     fig, ax = plt.subplots()
 
@@ -71,82 +71,26 @@ def plot_changepoint(files, legendplot, flows=True, save=True, save_dir='plots/'
     fig.supylabel('Number of new infections')
     plt.subplots_adjust(left=None, bottom=None, right=None,
                         top=None, wspace=None, hspace=0.6)
-    # plt.tight_layout(pad=0, w_pad=0.5, h_pad=0.3)
-
-    if len(files[0].split(
-            '/')[-1].split('_')[2:]) == 3:
-        r_value, num_compartments, modus = files[0].split(
-            '/')[-1].split('_')[2:]
-        filename = f'changepoint_R{r_value}_{num_compartments}_{modus}.png'
-
-    if len(files[0].split(
-            '/')[-1].split('_')[2:]) == 4:
-        r_value, num_compartments, long, modus = files[0].split(
-            '/')[-1].split('_')[2:]
-
-        filename = f'changepoint_R{r_value}_{num_compartments}_long_{modus}.png'
 
     # save result
     if save:
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
-        plt.savefig(save_dir + filename,
+        plt.savefig(save_dir + f"changepoint_{fileending}.png",
                     bbox_inches='tight', dpi=500)
 
 
 if __name__ == '__main__':
     # Path to simulation results
     data_dir = os.path.join(os.path.dirname(
-        __file__), "..", "results/")
+        __file__), "..", "results/fictional/covasim/")
 
     legendplot = list(["ODE", "IDE"])
 
-    # # simulations based on LEOSS data
-    # plot_changepoint([os.path.join(data_dir, f"fictional_ode_0.5_20_flows"),
-    #                   os.path.join(data_dir, f"fictional_ide_0.5_20_flows")],
-    #                  legendplot, flows=True, save=True, save_dir='plots/leoss/changepoints/')
+    plot_changepoint([os.path.join(data_dir, f"fictional_ode_covasim_0.5_12_0.1000_flows"),
+                     os.path.join(data_dir, f"fictional_ide_covasim_0.5_12_0.1000_flows")],
+                     legendplot, flows=True, fileending="0.5_12_0.1000", save=True, save_dir='plots/covasim/changepoints/')
 
-    # plot_changepoint([os.path.join(data_dir, f"fictional_ode_0.5_20_compartments"),
-    #                   os.path.join(data_dir, f"fictional_ide_0.5_20_compartments")],
-    #                  legendplot, flows=False, save=True, save_dir='plots/leoss/changepoints/')
-
-    # plot_changepoint([os.path.join(data_dir, f"fictional_ode_2.0_20_flows"),
-    #                   os.path.join(data_dir, f"fictional_ide_2.0_20_flows")],
-    #                  legendplot, flows=True, save=True, save_dir='plots/leoss/changepoints/')
-
-    # plot_changepoint([os.path.join(data_dir, f"fictional_ode_2.0_20_compartments"),
-    #                   os.path.join(data_dir, f"fictional_ide_2.0_20_compartments")],
-    #                  legendplot, flows=False, save=True, save_dir='plots/leoss/changepoints/')
-
-    # plot_changepoint([os.path.join(data_dir, f"fictional_ode_0.5_20_long_flows"),
-    #                   os.path.join(data_dir, f"fictional_ide_0.5_20_long_flows")],
-    #                  legendplot, flows=True, save=True, save_dir='plots/leoss/changepoints/')
-
-    # plot_changepoint([os.path.join(data_dir, f"fictional_ode_0.5_20_long_compartments"),
-    #                   os.path.join(data_dir, f"fictional_ide_0.5_20_long_compartments")],
-    #                  legendplot, flows=False, save=True, save_dir='plots/leoss/changepoints/')
-
-    # plot_changepoint([os.path.join(data_dir, f"fictional_ode_2.0_20_long_flows"),
-    #                   os.path.join(data_dir, f"fictional_ide_2.0_20_long_flows")],
-    #                  legendplot, flows=True, save=True, save_dir='plots/leoss/changepoints/')
-
-    # plot_changepoint([os.path.join(data_dir, f"fictional_ode_2.0_20_long_compartments"),
-    #                   os.path.join(data_dir, f"fictional_ide_2.0_20_long_compartments")],
-    #                  legendplot, flows=False, save=True, save_dir='plots/leoss/changepoints/')
-
-    # simulations based on Covasim data
-    plot_changepoint([os.path.join(data_dir, f"covasim_fictional_ode_0.5_flows"),
-                      os.path.join(data_dir, f"covasim_fictional_ide_0.5_flows")],
-                     legendplot, flows=True, save=True, save_dir='plots/covasim/changepoints/')
-
-    plot_changepoint([os.path.join(data_dir, f"covasim_fictional_ode_2.0_flows"),
-                      os.path.join(data_dir, f"covasim_fictional_ide_2.0_flows")],
-                     legendplot, flows=True, save=True, save_dir='plots/covasim/changepoints/')
-
-    plot_changepoint([os.path.join(data_dir, f"covasim_fictional_ode_0.5_long_flows"),
-                      os.path.join(data_dir, f"covasim_fictional_ide_0.5_long_flows")],
-                     legendplot, flows=True, save=True, save_dir='plots/covasim/changepoints/')
-
-    plot_changepoint([os.path.join(data_dir, f"covasim_fictional_ode_2.0_long_flows"),
-                      os.path.join(data_dir, f"covasim_fictional_ide_2.0_long_flows")],
-                     legendplot, flows=True, save=True, save_dir='plots/covasim/changepoints/')
+    plot_changepoint([os.path.join(data_dir, f"fictional_ode_covasim_2.0_12_0.1000_flows"),
+                     os.path.join(data_dir, f"fictional_ide_covasim_2.0_12_0.1000_flows")],
+                     legendplot, flows=True, fileending="2.0_12_0.1000", save=True, save_dir='plots/covasim/changepoints/')
