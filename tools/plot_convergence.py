@@ -100,29 +100,35 @@ def read_data(data_dir, dt_ode, timesteps_ide, setting, flows=False):
 # Compute norm of a one-dimensional timeseries
 
 
-def compute_norm(timeseries, timestep):
+def compute_l2_norm(timeseries, timestep):
 
-    norm = np.sqrt(np.sum(timeseries**2 * timestep))
+    norm = np.sqrt(timestep * np.sum(timeseries**2))
 
     return norm
 
-# Compute norm of the difference between time series for S from ODE and time series for S from IDE
+# Compute norm of the difference between time series from ODE and time series from IDE
 
 
-def compute_error_norm_S_timeseries(groundtruth, results, dt_ode, timesteps_ide):
+def compute_error_norm_l2(groundtruth, results, dt_ode, timesteps_ide, flows=False):
+
+    if flows:
+        num_errors = 10
+    else:
+        num_errors = 8
     errors = []
 
     # Compute error for S for every time step
     for i in range(len(results['ide'])):
-        timestep = timesteps_ide[i]
-        scale_timesteps = timestep/float(dt_ode)
-        num_timepoints = len(results['ide'][i])
-        # for now, compute only difference for S
-        difference = groundtruth['ode'][0][int(scale_timesteps*(num_timepoints -
-                                                                1))::int(scale_timesteps)][:, 0]-results['ide'][i][:, 0]
-        errors.append(compute_norm(difference, timestep))
+        errors.append([])
+        for compartment in range(num_errors):
+            timestep = timesteps_ide[i]
+            scale_timesteps = timestep/float(dt_ode)
+            num_timepoints = len(results['ide'][i])
+            difference = groundtruth['ode'][0][int(scale_timesteps*(num_timepoints -
+                                                                    1))::int(scale_timesteps)][:, compartment]-results['ide'][i][:, compartment]
+            errors[i].append(compute_l2_norm(difference, timestep))
 
-    return errors
+    return np.array(errors)
 
 # Compute norm of the difference between ODE and IDE at tmax for all compartments
 
@@ -351,7 +357,7 @@ def main():
 
     timesteps_ide = ['1e-2', '1e-3', '1e-4']  # , '1e-4'
 
-    flows = True
+    flows = False
 
     groundtruth = read_groundtruth(data_dir, dt_ode, setting, flows=flows)
 
@@ -362,7 +368,10 @@ def main():
     errors = compute_error_norm_tmax(
         groundtruth, results, timesteps_ide, flows=flows)
 
-    plot_convergence(errors, timesteps_ide, setting, flows=flows, save=True)
+    errors_l2 = compute_error_norm_l2(
+        groundtruth, results, dt_ode, timesteps_ide, flows=flows)
+
+    plot_convergence(errors_l2, timesteps_ide, setting, flows=flows, save=True)
 
     # print_initial_values(groundtruth, results, dt_ode, timesteps_ide)
 
@@ -375,6 +384,7 @@ def main():
     # print_results(groundtruth, results, timesteps_ide)
 
     # print_errors(errors, timesteps_ide)
+    # print_errors(errors_l2, timesteps_ide)
 
     return
 
