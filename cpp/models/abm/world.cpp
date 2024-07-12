@@ -63,7 +63,7 @@ void World::evolve(TimePoint t, TimeSpan dt)
     // Pass though dt time until the PlanAheadTime and make planning for the agents.
     auto time_counter = t;
     std::unordered_map<uint32_t, Location*> personId_to_loc_map;
-    PRAGMA_OMP(parallel while)
+    PRAGMA_OMP(parallel for)
     while (time_counter.seconds() <= (t + parameters.get<mio::abm::PlanAheadTime>()).seconds()) {
         planning(time_counter, dt, personId_to_loc_map);
         time_counter += dt;
@@ -102,6 +102,7 @@ void World::planning(TimePoint t, TimeSpan dt, std::unordered_map<uint32_t, Loca
                         target_location.get_number_persons() < target_location.get_capacity().persons) {
                         bool wears_mask = person->apply_mask_intervention(personal_rng, target_location);
                         if (wears_mask) {
+                            #pragma omp critical
                             person->add_migration_plan(t, target_location);
                             personId_to_loc_map[person->get_person_id()] = &target_location;
                             return true;
@@ -150,6 +151,7 @@ void World::planning(TimePoint t, TimeSpan dt, std::unordered_map<uint32_t, Loca
             if (!person->is_in_quarantine(t, parameters) && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
+                    #pragma omp critical
                     person->add_migration_plan(t, target_location);
                 }
             }
