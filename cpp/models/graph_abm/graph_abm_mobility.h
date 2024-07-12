@@ -252,7 +252,7 @@ GraphSimulation<Graph<ABMSimulationNode<History...>, ABMMobilityEdge<History...>
 make_abm_graph_sim(abm::TimePoint t0, abm::TimeSpan dt,
                    Graph<ABMSimulationNode<History...>, ABMMobilityEdge<History...>>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<History...>, &apply_mobility<History...>)
+    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<History...>, &apply_mobility<History...>);
 }
 
 } // namespace mio
