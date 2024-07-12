@@ -28,10 +28,6 @@
 #include "abm/person.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/graph.h"
-#include <cstdint>
-#include <utility>
-#include <vcruntime_typeinfo.h>
-#include <vector>
 
 namespace mio
 {
