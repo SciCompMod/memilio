@@ -84,8 +84,10 @@ if(MEMILIO_USE_BUNDLED_BOOST)
 
     include(FetchContent)
     FetchContent_Declare(boost
-        GIT_REPOSITORY https://github.com/boostorg/boost.git
-        GIT_TAG boost-${MEMILIO_BOOST_VERSION})
+
+        # don't use the URL from github, that download isn't complete and requires more setup (subrepositories, bootstrapping)
+        URL https://archives.boost.io/release/${MEMILIO_BOOST_VERSION}/source/boost_${MEMILIO_BOOST_VERSION_UNDERSC}.tar.gz
+    )
     FetchContent_GetProperties(boost)
 
     if(NOT boost_POPULATED)
