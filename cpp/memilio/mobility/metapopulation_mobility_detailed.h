@@ -216,7 +216,7 @@ void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> resul
 }
 
 template <typename FP, class Sim>
-class MigrationModes
+class MobilityFunctions
 {
 public:
     void init_mobility(FP t, FP dt, ExtendedMigrationEdge<FP>& edge, Sim& from_sim, Sim& to_sim)
@@ -268,24 +268,24 @@ public:
     }
 };
 
-template <typename Graph, typename MigrationModes>
+template <typename Graph, typename MobilityFunctions>
 class GraphSimulationExtended : public GraphSimulationBase<Graph>
 {
 public:
     using node_function = std::function<void(double, double, typename Graph::NodeProperty&)>;
     using edge_function =
         std::function<void(double, double, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
-                           typename Graph::NodeProperty&, MigrationModes&)>;
+                           typename Graph::NodeProperty&, MobilityFunctions&)>;
 
-    GraphSimulationExtended(double t0, double dt, const Graph& g, const node_function& node_func, MigrationModes modes)
+    GraphSimulationExtended(double t0, double dt, const Graph& g, const node_function& node_func, MobilityFunctions modes)
         : GraphSimulationBase<Graph>(t0, dt, g, node_func, {})
-        , m_modes(modes)
+        , m_mobility_functions(modes)
     {
     }
 
-    GraphSimulationExtended(double t0, double dt, Graph&& g, const node_function& node_func, MigrationModes modes)
+    GraphSimulationExtended(double t0, double dt, Graph&& g, const node_function& node_func, MobilityFunctions modes)
         : GraphSimulationBase<Graph>(t0, dt, std::move(g), node_func, {})
-        , m_modes(modes)
+        , m_mobility_functions(modes)
     {
     }
 
@@ -361,7 +361,7 @@ public:
     }
 
 private:
-    MigrationModes m_modes;
+    MobilityFunctions m_mobility_functions;
 
     // describes the schedule for each edge, i.e. which node is visited at which time step
     std::vector<std::vector<size_t>> schedule_edges;
@@ -613,7 +613,7 @@ private:
                 auto& node_from = this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property.base_sim;
                 auto& node_to   = this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property.mobility_sim;
                 // m_edge_func(m_t, 0.0, e.property, node_from, node_to, 0);
-                m_modes.init_mobility(this->m_t, 0.0, e.property, node_from, node_to);
+                m_mobility_functions.init_mobility(this->m_t, 0.0, e.property, node_from, node_to);
             }
             // next mobility activity
             else if (indx_schedule > first_mobility[edge_indx]) {
@@ -664,12 +664,12 @@ private:
 
                     if (indx_schedule < mobility_schedule_edges[edge_indx].size() - 1) {
                         // m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 1);
-                        m_modes.update_and_move(this->m_t, dt_mobility, e.property, node_from, node_to);
+                        m_mobility_functions.update_and_move(this->m_t, dt_mobility, e.property, node_from, node_to);
                     }
                     else {
                         // the last time step is handled differently since we have to close the timeseries
                         // m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 2);
-                        m_modes.move_and_delete(this->m_t, dt_mobility, e.property, node_from, node_to);
+                        m_mobility_functions.move_and_delete(this->m_t, dt_mobility, e.property, node_from, node_to);
                     }
                 }
                 else {
@@ -685,7 +685,7 @@ private:
 
                     assert(node_from.get_result().get_last_value() == node_to.get_result().get_last_value());
                     // m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 3);
-                    m_modes.update_only(this->m_t, dt_mobility, e.property, node_from);
+                    m_mobility_functions.update_only(this->m_t, dt_mobility, e.property, node_from);
                 }
             }
         }
@@ -742,12 +742,12 @@ private:
 };
 
 template <typename FP, class Sim>
-GraphSimulationExtended<Graph<ExtendedNodeProperty<Sim>, ExtendedMigrationEdge<FP>>, MigrationModes<FP, Sim>>
+GraphSimulationExtended<Graph<ExtendedNodeProperty<Sim>, ExtendedMigrationEdge<FP>>, MobilityFunctions<FP, Sim>>
 make_extended_migration_sim(FP t0, FP dt, Graph<ExtendedNodeProperty<Sim>, ExtendedMigrationEdge<FP>>&& graph)
 {
-    auto migration_modes = MigrationModes<FP, Sim>();
+    auto migration_modes = MobilityFunctions<FP, Sim>();
     return GraphSimulationExtended<Graph<ExtendedNodeProperty<Sim>, ExtendedMigrationEdge<FP>>,
-                                   MigrationModes<FP, Sim>>(t0, dt, std::move(graph), {}, migration_modes);
+                                   MobilityFunctions<FP, Sim>>(t0, dt, std::move(graph), {}, migration_modes);
 }
 
 /**

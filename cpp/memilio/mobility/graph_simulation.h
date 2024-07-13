@@ -20,10 +20,8 @@
 #ifndef MIO_MOBILITY_GRAPH_SIMULATION_H
 #define MIO_MOBILITY_GRAPH_SIMULATION_H
 
-#include "memilio/math/euler.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/random_number_generator.h"
-#include <cstddef>
 
 namespace mio
 {
