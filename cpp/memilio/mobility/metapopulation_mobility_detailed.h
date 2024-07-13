@@ -45,545 +45,76 @@
 namespace mio
 {
 
-template <class NodePropertyT>
-struct NodeDetailed : Node<NodePropertyT> {
-    template <class... Args>
-    NodeDetailed(int node_id, Args&&... args)
-        : Node<NodePropertyT>(node_id, std::forward<Args>(args)...)
-        , stay_duration(0.5)
-        , mobility(std::forward<Args>(args)...)
-    {
-    }
-
-    template <typename Model>
-    NodeDetailed(int node_id, double duration, Model property_arg, Model mobility_arg, double m_t0,
-                 double m_dt_integration)
-        : Node<NodePropertyT>(node_id, property_arg, m_t0, m_dt_integration)
-        , stay_duration(duration)
-        , mobility(mobility_arg, m_t0, m_dt_integration)
-    {
-    }
-
-    template <class... Args>
-    NodeDetailed(int node_id, double duration, Args&&... args)
-        : Node<NodePropertyT>(node_id, std::forward<Args>(args)...)
-        , stay_duration(duration)
-        , mobility(std::forward<Args>(args)...)
-    {
-    }
-
-    NodeDetailed(int node_id, double duration, NodePropertyT property_arg, NodePropertyT mobility_pt_arg)
-        : Node<NodePropertyT>(node_id, property_arg)
-        , stay_duration(duration)
-        , mobility(mobility_pt_arg)
-    {
-    }
-
+template <typename Sim>
+struct ExtendedNodeProperty {
+    Sim base_sim;
+    Sim mobility_sim;
     double stay_duration;
-    NodePropertyT mobility;
+
+    ExtendedNodeProperty(Sim sim1, Sim sim2, double t)
+        : base_sim(sim1)
+        , mobility_sim(sim2)
+        , stay_duration(t)
+    {
+    }
 };
-
-template <class EdgePropertyT>
-struct EdgeDetailed : Edge<EdgePropertyT> {
-    template <class... Args>
-    EdgeDetailed(size_t start, size_t end, Args&&... args)
-        : Edge<EdgePropertyT>(start, end, std::forward<Args>(args)...)
-        , traveltime(0.)
-        , path{static_cast<int>(start), static_cast<int>(end)}
-    {
-    }
-
-    template <class... Args>
-    EdgeDetailed(size_t start, size_t end, double t_travel, Args&&... args)
-        : Edge<EdgePropertyT>(start, end, std::forward<Args>(args)...)
-        , traveltime(t_travel)
-        , path{static_cast<int>(start), static_cast<int>(end)}
-    {
-    }
-
-    template <class... Args>
-    EdgeDetailed(size_t start, size_t end, double t_travel, std::vector<int> path_mobility, Args&&... args)
-        : Edge<EdgePropertyT>(start, end, std::forward<Args>(args)...)
-        , traveltime(t_travel)
-        , path(path_mobility)
-    {
-    }
-    double traveltime;
-    std::vector<int> path;
-};
-
-template <class NodePropertyT, class EdgePropertyT>
-class GraphDetailed : public Graph<NodePropertyT, EdgePropertyT>
-{
-public:
-    using Graph<NodePropertyT, EdgePropertyT>::Graph;
-
-    template <class ModelType>
-    NodeDetailed<NodePropertyT>& add_node(int id, double duration_stay, ModelType& model1, ModelType& model2)
-    {
-        m_nodes.emplace_back(id, duration_stay, model1, model2);
-        return m_nodes.back();
-    }
-
-    template <class ModelType>
-    NodeDetailed<NodePropertyT>& add_node(int id, double duration_stay, ModelType& model1, ModelType& model2,
-                                          double m_t0, double m_dt_integration)
-    {
-        m_nodes.emplace_back(id, duration_stay, model1, model2, m_t0, m_dt_integration);
-        return m_nodes.back();
-    }
-
-    EdgeDetailed<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, double traveltime,
-                                          mio::MigrationParameters<double>& args)
-    {
-        assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
-        return *insert_sorted_replace(m_edges,
-                                      EdgeDetailed<EdgePropertyT>(start_node_idx, end_node_idx, traveltime, args),
-                                      [](auto&& e1, auto&& e2) {
-                                          return e1.start_node_idx == e2.start_node_idx
-                                                     ? e1.end_node_idx < e2.end_node_idx
-                                                     : e1.start_node_idx < e2.start_node_idx;
-                                      });
-    }
-
-    template <class... Args>
-    EdgeDetailed<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, double traveltime,
-                                          std::vector<int> path, Args&&... args)
-    {
-        assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
-        return *insert_sorted_replace(
-            m_edges,
-            EdgeDetailed<EdgePropertyT>(start_node_idx, end_node_idx, traveltime, path, std::forward<Args>(args)...),
-            [](auto&& e1, auto&& e2) {
-                return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
-                                                              : e1.start_node_idx < e2.start_node_idx;
-            });
-    }
-
-private:
-    std::vector<NodeDetailed<NodePropertyT>> m_nodes;
-    std::vector<EdgeDetailed<EdgePropertyT>> m_edges;
-};
-
-/**
- * @brief Sets the graph nodes for counties or districts.
- * Reads the node ids which could refer to districts or counties and the epidemiological
- * data from json files and creates one node for each id. Every node contains a model.
- * @param[in] params Model Parameters that are used for every node.
- * @param[in] start_date Start date for which the data should be read.
- * @param[in] end_data End date for which the data should be read.
- * @param[in] data_dir Directory that contains the data files.
- * @param[in] population_data_path Path to json file containing the population data.
- * @param[in] stay_times_data_path Path to txt file containing the stay times for the considered local entities.
- * @param[in] is_node_for_county Specifies whether the node ids should be county ids (true) or district ids (false).
- * @param[in, out] params_graph Graph whose nodes are set by the function.
- * @param[in] read_func Function that reads input data for german counties and sets Model compartments.
- * @param[in] node_func Function that returns the county ids.
- * @param[in] scaling_factor_inf Factor of confirmed cases to account for undetected cases in each county.
- * @param[in] scaling_factor_icu Factor of ICU cases to account for underreporting.
- * @param[in] tnt_capacity_factor Factor for test and trace capacity.
- * @param[in] num_days Number of days to be simulated; required to load data for vaccinations during the simulation.
- * @param[in] export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
- */
-template <class TestAndTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
-          class ReadFunction, class NodeIdFunction>
-IOResult<void> set_nodes_detailed(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
-                                  const std::string& population_data_path, const std::string& stay_times_data_path,
-                                  bool is_node_for_county, GraphDetailed<Model, MigrationParams>& params_graph,
-                                  ReadFunction&& read_func, NodeIdFunction&& node_func,
-                                  const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                                  double tnt_capacity_factor, int num_days = 0, bool export_time_series = false)
-{
-
-    BOOST_OUTCOME_TRY(auto&& duration_stay, mio::read_duration_stay(stay_times_data_path));
-    BOOST_OUTCOME_TRY(auto&& node_ids, node_func(population_data_path, is_node_for_county));
-
-    std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
-
-    for (auto& node : nodes) {
-        node.parameters = params;
-    }
-    BOOST_OUTCOME_TRY(read_func(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir.string(),
-                                num_days, export_time_series));
-
-    for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
-
-        auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
-
-        //local parameters
-        auto& tnt_value = nodes[node_idx].parameters.template get<TestAndTrace>();
-        tnt_value       = mio::UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
-        tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
-
-        //holiday periods
-        auto id              = int(mio::regions::CountyId(node_ids[node_idx]));
-        auto holiday_periods = mio::regions::get_holidays(mio::regions::get_state_id(id), start_date, end_date);
-        auto& contacts       = nodes[node_idx].parameters.template get<ContactPattern>();
-        contacts.get_school_holidays() =
-            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
-        std::transform(
-            holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
-                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
-                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
-            });
-
-        //uncertainty in populations
-        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-            for (auto j = mio::Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
-                auto& compartment_value = nodes[node_idx].populations[{i, j}];
-                compartment_value =
-                    mio::UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
-                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
-                                                                                     1.1 * double(compartment_value)));
-            }
-        }
-
-        // Add mobility node
-        auto mobility = nodes[node_idx];
-        mobility.populations.set_total(0);
-
-        params_graph.add_node(node_ids[node_idx], duration_stay((Eigen::Index)node_idx), nodes[node_idx], mobility);
-    }
-    return success();
-}
-
-/**
- * @brief Sets the graph edges.
- * Reads the commuting matrices, travel times and paths from data and creates one edge for each pair of nodes.
- * @param[in] travel_times_path Path to txt file containing the travel times between counties.
- * @param[in] mobility_data_path Path to txt file containing the commuting matrices.
- * @param[in] travelpath_path Path to txt file containing the paths between counties.
- * @param[in, out] params_graph Graph whose nodes are set by the function.
- * @param[in] migrating_compartments Compartments that commute.
- * @param[in] contact_locations_size Number of contact locations.
- * @param[in] commuting_weights Vector with a commuting weight for every AgeGroup.
- */
-template <class ContactLocation, class Model, class MigrationParams, class MigrationCoefficientGroup,
-          class InfectionState>
-IOResult<void>
-set_edges_detailed(const std::string& travel_times_path, const std::string mobility_data_path,
-                   const std::string& travelpath_path, GraphDetailed<Model, MigrationParams>& params_graph,
-                   std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
-                   std::vector<ScalarType> commuting_weights = std::vector<ScalarType>{},
-                   ScalarType theshold_edges                 = 4e-5)
-{
-    BOOST_OUTCOME_TRY(auto&& mobility_data_commuter, mio::read_mobility_plain(mobility_data_path));
-    BOOST_OUTCOME_TRY(auto&& travel_times, mio::read_mobility_plain(travel_times_path));
-    BOOST_OUTCOME_TRY(auto&& path_mobility, mio::read_path_mobility(travelpath_path));
-
-    for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
-        for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {
-            auto& populations = params_graph.nodes()[county_idx_i].property.populations;
-
-            // mobility coefficients have the same number of components as the contact matrices.
-            // so that the same NPIs/dampings can be used for both (e.g. more home office => fewer commuters)
-            auto mobility_coeffs = MigrationCoefficientGroup(contact_locations_size, populations.numel());
-            auto num_age_groups  = (size_t)params_graph.nodes()[county_idx_i].property.parameters.get_num_groups();
-            commuting_weights =
-                (commuting_weights.size() == 0 ? std::vector<ScalarType>(num_age_groups, 1.0) : commuting_weights);
-
-            //commuters
-            auto working_population = 0.0;
-            auto min_commuter_age   = mio::AgeGroup(2);
-            auto max_commuter_age   = mio::AgeGroup(4); //this group is partially retired, only partially commutes
-            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
-                working_population += populations.get_group_total(age) * commuting_weights[size_t(age)];
-            }
-            auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) / working_population;
-            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
-                for (auto compartment : migrating_compartments) {
-                    auto coeff_index = populations.get_flat_index({age, compartment});
-                    mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
-                        commuter_coeff_ij * commuting_weights[size_t(age)];
-                }
-            }
-
-            auto path = path_mobility[county_idx_i][county_idx_j];
-            if (static_cast<size_t>(path[0]) != county_idx_i ||
-                static_cast<size_t>(path[path.size() - 1]) != county_idx_j)
-                std::cout << "Wrong Path for edge " << county_idx_i << " " << county_idx_j << "\n";
-
-            //only add edges with mobility above thresholds for performance
-            if (commuter_coeff_ij > theshold_edges) {
-                params_graph.add_edge(county_idx_i, county_idx_j, travel_times(county_idx_i, county_idx_j),
-                                      path_mobility[county_idx_i][county_idx_j], std::move(mobility_coeffs));
-            }
-        }
-    }
-
-    return success();
-}
 
 template <typename FP = double>
-class MigrationEdgeDetailed : public MigrationEdge<FP>
+class ExtendedMigrationEdge : public MigrationEdge<FP>
 {
 public:
-    using MigrationEdge<FP>::MigrationEdge;
+    double travel_time;
+    std::vector<int> path;
 
-    template <class Sim>
-    void apply_migration(FP t, FP dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to, int mode)
+    ExtendedMigrationEdge(const MigrationParameters<FP>& params, double tt, std::vector<int> p)
+        : MigrationEdge<FP>(params)
+        , travel_time(tt)
+        , path(p)
     {
+    }
 
-        if (mode == 0) {
-            //normal daily migration
-            this->m_migrated.add_time_point(t, (node_from.get_last_state().array() *
-                                                this->m_parameters.get_coefficients().get_matrix_at(t).array() *
-                                                get_migration_factors(node_from, t, node_from.get_last_state()).array())
-                                                   .matrix());
-            this->m_return_times.add_time_point(t + dt);
-            move_migrated(this->m_migrated.get_last_value(), node_from.get_result().get_last_value(),
-                          node_to.get_result().get_last_value());
-        }
-        // change county of migrated
-        else if (mode == 1) {
-            // update status of migrated before moving to next county
-            auto& integrator_node = node_from.get_simulation().get_integrator();
-            update_status_migrated(this->m_migrated.get_last_value(), node_from.get_simulation(), integrator_node,
-                                   node_from.get_result().get_last_value(), t, dt);
-            move_migrated(this->m_migrated.get_last_value(), node_from.get_result().get_last_value(),
-                          node_to.get_result().get_last_value());
-        }
-        // option for last time point to remove time points
-        else if (mode == 2) {
-            Eigen::Index idx      = this->m_return_times.get_num_time_points() - 1;
-            auto& integrator_node = node_from.get_simulation().get_integrator();
-            update_status_migrated(this->m_migrated[idx], node_from.get_simulation(), integrator_node,
-                                   node_from.get_result().get_last_value(), t, dt);
+    ExtendedMigrationEdge(const Eigen::VectorXd& coeffs, double tt, std::vector<int> p)
+        : MigrationEdge<FP>(coeffs)
+        , travel_time(tt)
+        , path(p)
+    {
+    }
 
-            move_migrated(this->m_migrated.get_last_value(), node_from.get_result().get_last_value(),
-                          node_to.get_result().get_last_value());
-
-            for (Eigen::Index i = this->m_return_times.get_num_time_points() - 1; i >= 0; --i) {
-                if (this->m_return_times.get_time(i) <= t) {
-                    this->m_migrated.remove_time_point(i);
-                    this->m_return_times.remove_time_point(i);
-                }
-            }
-        }
-        // just update status of migrated
-        else if (mode == 3) {
-            Eigen::Index idx      = this->m_return_times.get_num_time_points() - 1;
-            auto& integrator_node = node_from.get_simulation().get_integrator();
-            update_status_migrated(this->m_migrated[idx], node_from.get_simulation(), integrator_node,
-                                   node_from.get_result().get_last_value(), t, dt);
-
-            move_migrated(this->m_migrated.get_last_value(), node_from.get_result().get_last_value(),
-                          node_from.get_result().get_last_value());
-        }
-        else {
-            std::cout << "Invalid input mode. Should be 0 or 1."
-                      << "\n";
-        }
+    auto& get_migrated()
+    {
+        return this->m_migrated;
+    }
+    auto& get_return_times()
+    {
+        return this->m_return_times;
+    }
+    auto& get_parameters() const
+    {
+        return this->m_parameters;
     }
 };
 
-/**
- * edge functor for migration simulation.
- * @see MigrationEdge::apply_migration
- */
-template <typename FP, class Sim>
-void apply_migration(FP t, FP dt, MigrationEdgeDetailed<FP>& migrationEdgeDetailed, SimulationNode<Sim>& node_from,
-                     SimulationNode<Sim>& node_to, int mode)
+template <class Sim>
+using ExtendedGraph = Graph<ExtendedNodeProperty<Sim>, ExtendedMigrationEdge<double>>;
+
+// Detect if get_migration_factors is defined for Sim
+template <class Sim>
+using get_migration_factors_expr_t = decltype(get_migration_factors(
+    std::declval<const Sim&>(), std::declval<double>(), std::declval<const Eigen::Ref<const Eigen::VectorXd>&>()));
+
+// Default implementation when get_migration_factors is not defined for Sim
+template <class Sim, std::enable_if_t<!is_expression_valid<get_migration_factors_expr_t, Sim>::value, void*> = nullptr>
+auto get_migration_factors(const Sim& /*sim*/, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
-    migrationEdgeDetailed.apply_migration(t, dt, node_from, node_to, mode);
+    return Eigen::VectorXd::Ones(y.rows());
 }
 
-template <class S>
-class ParameterStudyDetailed : public ParameterStudy<S>
+// Use the user-defined get_migration_factors if it is defined for Sim
+template <class Sim, std::enable_if_t<is_expression_valid<get_migration_factors_expr_t, Sim>::value, void*> = nullptr>
+auto get_migration_factors(const Sim& sim, double t, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
-public:
-    /**
-    * The type of simulation of a single node of the graph.
-    */
-    using Simulation = S;
-    /**
-    * The Graph type that stores the parametes of the simulation.
-    * This is the input of ParameterStudies.
-    */
-    using ParametersGraphDetailed = mio::GraphDetailed<typename Simulation::Model, mio::MigrationParameters<double>>;
-    /**
-    * The Graph type that stores simulations and their results of each run.
-    * This is the output of ParameterStudies for each run.
-    */
-    using SimulationGraphDetailed = mio::GraphDetailed<mio::SimulationNode<Simulation>, mio::MigrationEdge<double>>;
-
-    /**
-     * create study for graph of compartment models.
-     * @param graph graph of parameters
-     * @param t0 start time of simulations
-     * @param tmax end time of simulations
-     * @param graph_sim_dt time step of graph simulation
-     * @param num_runs number of runs
-     */
-    ParameterStudyDetailed(const ParametersGraphDetailed& graph, double t0, double tmax, double graph_sim_dt,
-                           size_t num_runs)
-        : ParameterStudy<S>(graph, t0, tmax, graph_sim_dt, num_runs)
-        , m_graph(graph)
-        , m_num_runs(num_runs)
-        , m_t0{t0}
-        , m_tmax{tmax}
-        , m_dt_graph_sim(graph_sim_dt)
-    {
-    }
-
-    /*
-     * @brief Carry out all simulations in the parameter study.
-     * Save memory and enable more runs by immediately processing and/or discarding the result.
-     * The result processing function is called when a run is finished. It receives the result of the run 
-     * (a SimulationGraphDetailed object) and an ordered index. The values returned by the result processing function 
-     * are gathered and returned as a list.
-     * This function is parallelized if memilio is configured with MEMILIO_ENABLE_MPI.
-     * The MPI processes each contribute a share of the runs. The sample function and result processing function 
-     * are called in the same process that performs the run. The results returned by the result processing function are 
-     * gathered at the root process and returned as a list by the root in the same order as if the programm 
-     * were running sequentially. Processes other than the root return an empty list.
-     * @param sample_graph Function that receives the ParametersGraph and returns a sampled copy.
-     * @param result_processing_function Processing function for simulation results, e.g., output function.
-     * @returns At the root process, a list of values per run that have been returned from the result processing function.
-     *          At all other processes, an empty list.
-     * @tparam SampleGraphFunction Callable type, accepts instance of ParametersGraph.
-     * @tparam HandleSimulationResultFunction Callable type, accepts instance of SimulationGraphDetailed and an index of type size_t.
-     */
-    template <class SampleGraphFunction, class HandleSimulationResultFunction>
-    std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraphDetailed, size_t>>
-    run(SampleGraphFunction sample_graph, HandleSimulationResultFunction result_processing_function)
-    {
-        int num_procs, rank;
-#ifdef MEMILIO_ENABLE_MPI
-        MPI_Comm_size(mpi::get_world(), &num_procs);
-        MPI_Comm_rank(mpi::get_world(), &rank);
-#else
-        num_procs = 1;
-        rank      = 0;
-#endif
-
-        //The ParameterDistributions used for sampling parameters use thread_local_rng()
-        //So we set our own RNG to be used.
-        //Assume that sampling uses the thread_local_rng() and isn't multithreaded
-        this->m_rng.synchronize();
-        thread_local_rng() = this->m_rng;
-
-        auto run_distribution = this->distribute_runs(m_num_runs, num_procs);
-        auto start_run_idx =
-            std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
-        auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
-
-        std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraphDetailed, size_t>>
-            ensemble_result;
-        ensemble_result.reserve(m_num_runs);
-
-        for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
-            log(LogLevel::info, "ParameterStudies: run {}", run_idx);
-
-            //prepare rng for this run by setting the counter to the right offset
-            //Add the old counter so that this call of run() produces different results
-            //from the previous call
-            auto run_rng_counter =
-                this->m_rng.get_counter() +
-                rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(run_idx), Counter<uint32_t>(0));
-            thread_local_rng().set_counter(run_rng_counter);
-
-            //sample
-            auto sim = create_sampled_sim(sample_graph);
-            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.",
-                (thread_local_rng().get_counter() - run_rng_counter).get());
-
-            //perform run
-            sim.advance(m_tmax);
-
-            //handle result and store
-            ensemble_result.emplace_back(result_processing_function(std::move(sim).get_graph(), run_idx));
-        }
-
-        //Set the counter of our RNG so that future calls of run() produce different parameters.
-        this->m_rng.set_counter(this->m_rng.get_counter() +
-                                rng_totalsequence_counter<uint64_t>(m_num_runs, Counter<uint32_t>(0)));
-
-#ifdef MEMILIO_ENABLE_MPI
-        //gather results
-        if (rank == 0) {
-            for (int src_rank = 1; src_rank < num_procs; ++src_rank) {
-                int bytes_size;
-                MPI_Recv(&bytes_size, 1, MPI_INT, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
-                ByteStream bytes(bytes_size);
-                MPI_Recv(bytes.data(), bytes.data_size(), MPI_BYTE, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
-
-                auto src_ensemble_results = deserialize_binary(bytes, Tag<decltype(ensemble_result)>{});
-                if (!src_ensemble_results) {
-                    log_error("Error receiving ensemble results from rank {}.", src_rank);
-                }
-                std::copy(src_ensemble_results.value().begin(), src_ensemble_results.value().end(),
-                          std::back_inserter(ensemble_result));
-            }
-        }
-        else {
-            auto bytes      = serialize_binary(ensemble_result);
-            auto bytes_size = int(bytes.data_size());
-            MPI_Send(&bytes_size, 1, MPI_INT, 0, 0, mpi::get_world());
-            MPI_Send(bytes.data(), bytes.data_size(), MPI_BYTE, 0, 0, mpi::get_world());
-            ensemble_result.clear(); //only return root process
-        }
-#endif
-
-        return ensemble_result;
-    }
-
-private:
-    //sample parameters and create simulation
-    template <class SampleGraphFunction>
-    mio::GraphSimulationDetailed<SimulationGraphDetailed> create_sampled_sim(SampleGraphFunction sample_graph)
-    {
-        SimulationGraphDetailed sim_graph;
-
-        auto sampled_graph = sample_graph(m_graph);
-        for (auto&& node : sampled_graph.nodes()) {
-            sim_graph.add_node(node.id, node.stay_duration, node.property, node.mobility, m_t0, this->m_dt_integration);
-        }
-        for (auto&& edge : sampled_graph.edges()) {
-            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.traveltime, edge.property);
-        }
-        return make_migration_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
-    }
-
-private:
-    // Stores Graph with the names and ranges of all parameters
-    ParametersGraphDetailed m_graph;
-    size_t m_num_runs;
-    double m_t0;
-    double m_tmax;
-    double m_dt_graph_sim;
-};
-
-/**
- * @brief number of migrated people when they return according to the model.
- * E.g. during the time in the other node, some people who left as susceptible will return exposed.
- * Implemented for general compartmentmodel simulations, overload for your custom model if necessary
- * so that it can be found with argument-dependent lookup, i.e. in the same namespace as the model.
- * @param migrated number of people that migrated as input, number of people that return as output
- * @param sim Simulation that is used for the migration
- * @param integrator Integrator that is used for the estimation. Has to be a one-step scheme.
- * @param total total population in the node that the people migrated to.
- * @param t time of migration
- * @param dt timestep
- */
-// template <typename FP, class Sim, class = std::enable_if_t<is_compartment_model_simulation<FP, Sim>::value>>
-// void calculate_migration_returns(Eigen::Ref<typename TimeSeries<FP>::Vector> migrated, const Sim& sim,
-//                                  Eigen::Ref<const typename TimeSeries<FP>::Vector> total, FP t, FP dt)
-// {
-//     auto y0 = migrated.eval();
-//     auto y1 = migrated;
-//     EulerIntegratorCore<FP>().step(
-//         [&](auto&& y, auto&& t_, auto&& dydt) {
-//             sim.get_model().get_derivatives(total, y, t_, dydt);
-//         },
-//         y0, t, dt, y1);
-//     auto flows_model = sim.get_model().get_flow_values();
-//     flows_model *= dt;
-//     sim.get_model().set_flow_values(flows_model);
-// }
-
-template <typename FP>
-using Vector = Eigen::Matrix<FP, Eigen::Dynamic, 1>;
+    return get_migration_factors(sim, t, y);
+}
 
 template <typename FP>
 void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> results_from,
@@ -596,7 +127,6 @@ void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> resul
     for (Eigen::Index j = 0; j < migrated.size(); ++j) {
         if (migrated(j) < -1e-8) {
             std::cout << "Negative Value in migration detected. With value" << migrated(j) << "\n";
-            auto compart        = j % num_comparts;
             auto curr_age_group = int(j / num_comparts);
             auto indx_begin     = curr_age_group * num_comparts;
             auto indx_end       = (curr_age_group + 1) * num_comparts;
@@ -625,7 +155,6 @@ void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> resul
         //     remaining_after_return.data(), remaining_after_return.data() + remaining_after_return.size());
         for (Eigen::Index j = 0; j < results_to.size(); ++j) {
             if (remaining_after_return(j) < -1e-8) {
-                auto compart        = j % num_comparts;
                 auto curr_age_group = int(j / num_comparts);
                 auto indx_begin     = curr_age_group * num_comparts;
                 auto indx_end       = (curr_age_group + 1) * num_comparts;
@@ -686,33 +215,886 @@ void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> resul
     results_to += migrated;
 }
 
-// template <class Sim, class FP>
-// void MigrationEdgeDetailed<FP>::apply_migration(FP t, FP dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to,
-//                                         int mode)
+template <typename FP, class Sim>
+class MigrationModes
+{
+public:
+    void init_mobility(FP t, FP dt, ExtendedMigrationEdge<FP>& edge, Sim& from_sim, Sim& to_sim)
+    {
+        edge.get_migrated().add_time_point(
+            t, (from_sim.get_result().get_last_value().array() *
+                edge.get_parameters().get_coefficients().get_matrix_at(t).array() *
+                get_migration_factors(from_sim, t, from_sim.get_result().get_last_value()).array())
+                   .matrix());
+        edge.get_return_times().add_time_point(t + dt);
+        move_migrated(edge.get_migrated().get_last_value(), from_sim.get_result().get_last_value(),
+                      to_sim.get_result().get_last_value());
+    }
+
+    void update_and_move(FP t, FP dt, ExtendedMigrationEdge<FP>& edge, Sim& from_sim, Sim& to_sim)
+    {
+        auto& integrator_node = from_sim.get_integrator();
+        update_status_migrated(edge.get_migrated().get_last_value(), from_sim, integrator_node,
+                               from_sim.get_result().get_last_value(), t, dt);
+        move_migrated(edge.get_migrated().get_last_value(), from_sim.get_result().get_last_value(),
+                      to_sim.get_result().get_last_value());
+    }
+
+    void update_only(FP t, FP dt, ExtendedMigrationEdge<FP>& edge, Sim& from_sim)
+    {
+        auto& integrator_node = from_sim.get_integrator();
+        update_status_migrated(edge.get_migrated().get_last_value(), from_sim, integrator_node,
+                               from_sim.get_result().get_last_value(), t, dt);
+        move_migrated(edge.get_migrated().get_last_value(), from_sim.get_result().get_last_value(),
+                      from_sim.get_result().get_last_value());
+    }
+
+    void move_and_delete(FP t, FP dt, ExtendedMigrationEdge<FP>& edge, Sim& from_sim, Sim& to_sim)
+    {
+        Eigen::Index idx      = edge.get_return_times().get_num_time_points() - 1;
+        auto& integrator_node = from_sim.get_integrator();
+        update_status_migrated(edge.get_migrated()[idx], from_sim, integrator_node,
+                               from_sim.get_result().get_last_value(), t, dt);
+
+        move_migrated(edge.get_migrated().get_last_value(), from_sim.get_result().get_last_value(),
+                      to_sim.get_result().get_last_value());
+
+        for (Eigen::Index i = edge.get_return_times().get_num_time_points() - 1; i >= 0; --i) {
+            if (edge.get_return_times().get_time(i) <= t) {
+                edge.get_migrated().remove_time_point(i);
+                edge.get_return_times().remove_time_point(i);
+            }
+        }
+    }
+};
+
+template <typename Graph, typename MigrationModes>
+class GraphSimulationExtended : public GraphSimulationBase<Graph>
+{
+public:
+    using node_function = std::function<void(double, double, typename Graph::NodeProperty&)>;
+    using edge_function =
+        std::function<void(double, double, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
+                           typename Graph::NodeProperty&, MigrationModes&)>;
+
+    GraphSimulationExtended(double t0, double dt, const Graph& g, const node_function& node_func, MigrationModes modes)
+        : GraphSimulationBase<Graph>(t0, dt, g, node_func, {})
+        , m_modes(modes)
+    {
+    }
+
+    GraphSimulationExtended(double t0, double dt, Graph&& g, const node_function& node_func, MigrationModes modes)
+        : GraphSimulationBase<Graph>(t0, dt, std::move(g), node_func, {})
+        , m_modes(modes)
+    {
+    }
+
+    inline double round_second_decimal(double x)
+    {
+        return std::round(x * 100.0) / 100.0;
+    }
+
+    void advance(double t_max = 1.0)
+    {
+        ScalarType dt_first_mobility =
+            std::accumulate(this->m_graph.edges().begin(), this->m_graph.edges().end(),
+                            std::numeric_limits<ScalarType>::max(), [&](ScalarType current_min, const auto& e) {
+                                auto traveltime_per_region =
+                                    round_second_decimal(e.property.travel_time / e.property.path.size());
+                                if (traveltime_per_region < 0.01)
+                                    traveltime_per_region = 0.01;
+                                auto start_mobility =
+                                    round_second_decimal(1 - 2 * (traveltime_per_region * e.property.path.size()) -
+                                                         this->m_graph.nodes()[e.end_node_idx].property.stay_duration);
+                                if (start_mobility < 0) {
+                                    start_mobility = 0.;
+                                }
+                                return std::min(current_min, start_mobility);
+                            });
+
+        // set population to zero in mobility nodes before starting
+        for (auto& n : this->m_graph.nodes()) {
+            n.property.mobility_sim.get_result().get_last_value().setZero();
+        }
+
+        auto min_dt    = 0.01;
+        double t_begin = this->m_t - 1.;
+
+        // calc schedule for each edge
+        precompute_schedule();
+        while (this->m_t - epsilon < t_max) {
+            // auto start = std::chrono::system_clock::now();
+
+            t_begin += 1;
+            if (this->m_t + dt_first_mobility > t_max) {
+                dt_first_mobility = t_max - this->m_t;
+                for (auto& n : this->m_graph.nodes()) {
+                    // m_node_func(this->m_t, dt_first_mobility, n.property);
+                    n.property.base_sim.advance(this->m_t + dt_first_mobility);
+                }
+                break;
+            }
+
+            for (auto& node : this->m_graph.nodes()) {
+                node.property.mobility_sim.set_integrator(std::make_shared<mio::EulerIntegratorCore<double>>());
+            }
+
+            size_t indx_schedule = 0;
+            while (t_begin + 1 > this->m_t + 1e-10) {
+                advance_edges(indx_schedule);
+
+                // first we integrate the nodes in time. Afterwards the update on the edges is done.
+                // We start with the edges since the values for t0 are given.
+                advance_local_nodes(indx_schedule);
+                advance_mobility_nodes(indx_schedule);
+
+                indx_schedule++;
+                this->m_t += min_dt;
+            }
+            // At the end of the day. we set each compartment zero for all mobility nodes since we have to estimate
+            // the state of the indivuals moving between different counties.
+            // Therefore there can be differences with the states given by the integrator used for the mobility node.
+            for (auto& n : this->m_graph.nodes()) {
+                n.property.mobility_sim.get_result().get_last_value().setZero();
+            }
+        }
+    }
+
+private:
+    MigrationModes m_modes;
+
+    // describes the schedule for each edge, i.e. which node is visited at which time step
+    std::vector<std::vector<size_t>> schedule_edges;
+
+    // defines if people from a edge are currently in a mobility node. This is necessary to determine the correct
+    // position in the schedule. Otherwise we could add a specific identifier in schedule_edges.
+    std::vector<std::vector<bool>> mobility_schedule_edges;
+
+    // describes the syncronization steps which are necessary for the integrator in the edges and nodes.
+    std::vector<std::vector<size_t>> mb_int_schedule;
+    std::vector<std::vector<size_t>> ln_int_schedule;
+
+    // defines the edges on which mobility takes place for each time step
+    std::vector<std::vector<size_t>> edges_mobility;
+
+    // same for the nodes
+    std::vector<std::vector<size_t>> nodes_mobility;
+    std::vector<std::vector<size_t>> nodes_mobility_m;
+
+    // first mobility activites per edge
+    std::vector<size_t> first_mobility;
+
+    const double epsilon = 1e-10;
+
+    void precompute_schedule()
+    {
+        const size_t timesteps = 100;
+        schedule_edges.reserve(this->m_graph.edges().size());
+        mobility_schedule_edges.reserve(this->m_graph.edges().size());
+
+        // calculate the schedule for each edge
+        for (auto& e : this->m_graph.edges()) {
+            // Initialize the schedule and mobility node vectors for the edge
+            std::vector<size_t> schedule(timesteps, 0);
+            std::vector<bool> is_mobility_node(timesteps, false);
+
+            // Calculate travel time per region, ensuring a minimum value of 0.01
+            const double traveltime_per_region =
+                std::max(0.01, round_second_decimal(e.property.travel_time / e.property.path.size()));
+
+            // Calculate the start time for mobility, ensuring it is not negative
+            const double start_mobility =
+                std::max(0.0, round_second_decimal(1 - 2 * traveltime_per_region * e.property.path.size() -
+                                                   this->m_graph.nodes()[e.end_node_idx].property.stay_duration));
+
+            // Calculate the arrival time at the destination node
+            const double arrive_at = start_mobility + traveltime_per_region * e.property.path.size();
+
+            // Lambda to fill the schedule vector with a specific value over a range
+            auto fill_schedule = [&](size_t start_idx, size_t end_idx, size_t value) {
+                std::fill(schedule.begin() + start_idx, schedule.begin() + end_idx, value);
+            };
+
+            // Lambda to fill the mobility node vector with a boolean value over a range
+            auto fill_mobility = [&](size_t start_idx, size_t end_idx, bool value) {
+                std::fill(is_mobility_node.begin() + start_idx, is_mobility_node.begin() + end_idx, value);
+            };
+
+            // Indices for schedule filling
+            size_t start_idx    = static_cast<size_t>((start_mobility + epsilon) * 100);
+            size_t arrive_idx   = static_cast<size_t>((arrive_at + epsilon) * 100);
+            size_t stay_end_idx = timesteps - (arrive_idx - start_idx);
+
+            // Fill the schedule up to the start of mobility with the start node index
+            fill_schedule(0, start_idx, e.start_node_idx);
+
+            // Mark the mobility period in the mobility node vector
+            fill_mobility(start_idx, arrive_idx, true);
+
+            // Fill the schedule for the path during the mobility period
+            size_t current_index = start_idx;
+            for (size_t county : e.property.path) {
+                size_t next_index = current_index + static_cast<size_t>((traveltime_per_region + epsilon) * 100);
+                fill_schedule(current_index, next_index, county);
+                current_index = next_index;
+            }
+
+            // Fill the remaining schedule after mobility with the end node index
+            fill_schedule(current_index, stay_end_idx, e.property.path.back());
+
+            // Mark the return mobility period in the mobility node vector
+            fill_mobility(stay_end_idx, timesteps, true);
+
+            // Find the first and last true values in the mobility node vector
+            auto first_true = std::find(is_mobility_node.begin(), is_mobility_node.end(), true);
+            auto last_true  = std::find(is_mobility_node.rbegin(), is_mobility_node.rend(), true);
+
+            // Ensure there is at least one true value
+            if (first_true != is_mobility_node.end() && last_true != is_mobility_node.rend()) {
+                size_t first_index = std::distance(is_mobility_node.begin(), first_true);
+                size_t count_true  = std::count(is_mobility_node.begin(), is_mobility_node.end(), true);
+
+                // Create a reversed path segment for the return trip
+                std::vector<size_t> path_reversed(schedule.begin() + first_index,
+                                                  schedule.begin() + first_index + count_true);
+                std::reverse(path_reversed.begin(), path_reversed.end());
+
+                // Copy the reversed path segment to the end of the schedule for the return trip
+                std::copy(path_reversed.begin(), path_reversed.end(), schedule.end() - count_true);
+
+                // Add the schedule and mobility node vectors to their respective containers
+                schedule_edges.push_back(std::move(schedule));
+                mobility_schedule_edges.push_back(std::move(is_mobility_node));
+            }
+            else {
+                log_error("Error in creating schedule.");
+            }
+        }
+
+        // iterate over nodes to create the integration schedule for each node. The integration schedule is necessary
+        // to determine the correct time step for the integrator in the nodes.
+        for (size_t indx_node = 0; indx_node < this->m_graph.nodes().size(); ++indx_node) {
+            // Local node initialization with starting at t=0
+            std::vector<size_t> order_local_node = {0};
+            std::vector<size_t> indx_edges;
+
+            // Find edges starting from the current node and not in mobility at t=0
+            auto find_edges = [&](size_t t, bool mobility) {
+                std::vector<size_t> edges;
+                for (size_t indx_edge = 0; indx_edge < schedule_edges.size(); ++indx_edge) {
+                    if (schedule_edges[indx_edge][t] == indx_node &&
+                        mobility_schedule_edges[indx_edge][t] == mobility) {
+                        edges.push_back(indx_edge);
+                    }
+                }
+                return edges;
+            };
+
+            indx_edges = find_edges(0, false);
+
+            // Iterate through each timestep to identify changes in local node schedule
+            for (size_t indx_t = 1; indx_t < timesteps; ++indx_t) {
+                auto indx_edges_new = find_edges(indx_t, false);
+
+                if (indx_edges_new.size() != indx_edges.size() ||
+                    !std::equal(indx_edges.begin(), indx_edges.end(), indx_edges_new.begin())) {
+                    order_local_node.push_back(indx_t);
+                    indx_edges = indx_edges_new;
+                }
+            }
+
+            // Ensure the last timestep is included
+            if (order_local_node.back() != timesteps - 1) {
+                order_local_node.push_back(timesteps - 1);
+            }
+            ln_int_schedule.push_back(order_local_node);
+
+            // Mobility node initialization
+            std::vector<size_t> order_mobility_node;
+            std::vector<size_t> indx_edges_mobility;
+
+            indx_edges_mobility = find_edges(0, true);
+
+            // Iterate through each timestep to identify changes in mobility node schedule
+            for (size_t indx_t = 1; indx_t < timesteps; ++indx_t) {
+                auto indx_edges_mobility_new = find_edges(indx_t, true);
+
+                if (indx_edges_mobility_new.size() != indx_edges_mobility.size() ||
+                    !std::equal(indx_edges_mobility.begin(), indx_edges_mobility.end(),
+                                indx_edges_mobility_new.begin())) {
+                    order_mobility_node.push_back(indx_t);
+                    indx_edges_mobility = indx_edges_mobility_new;
+                }
+            }
+
+            mb_int_schedule.push_back(order_mobility_node);
+        }
+
+        // Reserve space for first_mobility vector and initialize it
+        first_mobility.reserve(this->m_graph.edges().size());
+        for (size_t indx_edge = 0; indx_edge < this->m_graph.edges().size(); ++indx_edge) {
+            first_mobility[indx_edge] = std::distance(
+                mobility_schedule_edges[indx_edge].begin(),
+                std::find(mobility_schedule_edges[indx_edge].begin(), mobility_schedule_edges[indx_edge].end(), true));
+        }
+
+        // Reserve space for mobility-related vectors
+        edges_mobility.reserve(timesteps);
+        nodes_mobility.reserve(timesteps);
+        nodes_mobility_m.reserve(timesteps);
+
+        // Handle the case where indx_current = 0 separately
+        std::vector<size_t> temp_edges_mobility;
+        for (size_t indx_edge = 0; indx_edge < this->m_graph.edges().size(); ++indx_edge) {
+            if (first_mobility[indx_edge] == 0) {
+                temp_edges_mobility.push_back(indx_edge);
+            }
+        }
+        edges_mobility.push_back(std::move(temp_edges_mobility));
+
+        // Initialize nodes_mobility with all node indices for t=0
+        std::vector<size_t> temp_nodes_mobility(this->m_graph.nodes().size());
+        std::iota(temp_nodes_mobility.begin(), temp_nodes_mobility.end(), 0);
+        nodes_mobility.emplace_back(std::move(temp_nodes_mobility));
+
+        // Initialize nodes_mobility_m with nodes that have mobility activities at t=0
+        std::vector<size_t> temp_nodes_mobility_m;
+        for (size_t node_indx = 0; node_indx < this->m_graph.nodes().size(); ++node_indx) {
+            if (std::binary_search(mb_int_schedule[node_indx].begin(), mb_int_schedule[node_indx].end(), 0)) {
+                temp_nodes_mobility_m.push_back(node_indx);
+            }
+        }
+        nodes_mobility_m.push_back(temp_nodes_mobility_m);
+
+        for (size_t indx_current = 1; indx_current < timesteps; ++indx_current) {
+            std::vector<size_t> temp_edge_mobility;
+            for (size_t indx_edge = 0; indx_edge < this->m_graph.edges().size(); ++indx_edge) {
+                size_t current_node_indx = schedule_edges[indx_edge][indx_current];
+                if (indx_current >= first_mobility[indx_edge]) {
+                    if (mobility_schedule_edges[indx_edge][indx_current] &&
+                        std::binary_search(mb_int_schedule[current_node_indx].begin(),
+                                           mb_int_schedule[current_node_indx].end(), indx_current)) {
+                        temp_edge_mobility.push_back(indx_edge);
+                    }
+                    else if (!mobility_schedule_edges[indx_edge][indx_current] &&
+                             std::binary_search(ln_int_schedule[current_node_indx].begin(),
+                                                ln_int_schedule[current_node_indx].end(), indx_current)) {
+                        temp_edge_mobility.push_back(indx_edge);
+                    }
+                }
+            }
+            edges_mobility.push_back(temp_edge_mobility);
+
+            // Clear and fill temp_nodes_mobility and temp_nodes_mobility_m for current timestep
+            temp_nodes_mobility.clear();
+            temp_nodes_mobility_m.clear();
+            for (size_t node_indx = 0; node_indx < this->m_graph.nodes().size(); ++node_indx) {
+                if (std::binary_search(ln_int_schedule[node_indx].begin(), ln_int_schedule[node_indx].end(),
+                                       indx_current)) {
+                    temp_nodes_mobility.push_back(node_indx);
+                }
+
+                if (std::binary_search(mb_int_schedule[node_indx].begin(), mb_int_schedule[node_indx].end(),
+                                       indx_current)) {
+                    temp_nodes_mobility_m.push_back(node_indx);
+                }
+            }
+            nodes_mobility.push_back(temp_nodes_mobility);
+            nodes_mobility_m.push_back(temp_nodes_mobility_m);
+        }
+    }
+
+    void advance_edges(size_t indx_schedule)
+    {
+        for (const auto& edge_indx : edges_mobility[indx_schedule]) {
+            auto& e = this->m_graph.edges()[edge_indx];
+            // first mobility activity
+            if (indx_schedule == first_mobility[edge_indx]) {
+                auto& node_from = this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property.base_sim;
+                auto& node_to   = this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property.mobility_sim;
+                // m_edge_func(m_t, 0.0, e.property, node_from, node_to, 0);
+                m_modes.init_mobility(this->m_t, 0.0, e.property, node_from, node_to);
+            }
+            // next mobility activity
+            else if (indx_schedule > first_mobility[edge_indx]) {
+                auto current_node_indx = schedule_edges[edge_indx][indx_schedule];
+                bool in_mobility_node  = mobility_schedule_edges[edge_indx][indx_schedule];
+
+                // determine dt, which is equal to the last integration/syncronization point in the current node
+                auto integrator_schedule_row = ln_int_schedule[current_node_indx];
+                if (in_mobility_node)
+                    integrator_schedule_row = mb_int_schedule[current_node_indx];
+                // search the index of indx_schedule in the integrator schedule
+                const size_t indx_current = std::distance(
+                    integrator_schedule_row.begin(),
+                    std::lower_bound(integrator_schedule_row.begin(), integrator_schedule_row.end(), indx_schedule));
+
+                if (integrator_schedule_row[indx_current] != indx_schedule)
+                    std::cout << "Error in schedule."
+                              << "\n";
+
+                ScalarType dt_mobility;
+                if (indx_current == 0) {
+                    dt_mobility = round_second_decimal(e.property.travel_time / e.property.path.size());
+                    if (dt_mobility < 0.01)
+                        dt_mobility = 0.01;
+                }
+                else {
+                    dt_mobility =
+                        round_second_decimal((static_cast<double>(integrator_schedule_row[indx_current]) -
+                                              static_cast<double>(integrator_schedule_row[indx_current - 1])) /
+                                                 100 +
+                                             epsilon);
+                }
+
+                // We have two cases. Either, we want to send the individuals to the next node, or we just want
+                // to update their state since a syncronization step is necessary in the current node.
+                if ((schedule_edges[edge_indx][indx_schedule] != schedule_edges[edge_indx][indx_schedule - 1]) ||
+                    (mobility_schedule_edges[edge_indx][indx_schedule] !=
+                     mobility_schedule_edges[edge_indx][indx_schedule - 1])) {
+                    auto& node_from =
+                        mobility_schedule_edges[edge_indx][indx_schedule - 1]
+                            ? this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property.mobility_sim
+                            : this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property.base_sim;
+
+                    auto& node_to =
+                        mobility_schedule_edges[edge_indx][indx_schedule]
+                            ? this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property.mobility_sim
+                            : this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property.base_sim;
+
+                    if (indx_schedule < mobility_schedule_edges[edge_indx].size() - 1) {
+                        // m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 1);
+                        m_modes.update_and_move(this->m_t, dt_mobility, e.property, node_from, node_to);
+                    }
+                    else {
+                        // the last time step is handled differently since we have to close the timeseries
+                        // m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 2);
+                        m_modes.move_and_delete(this->m_t, dt_mobility, e.property, node_from, node_to);
+                    }
+                }
+                else {
+                    auto& node_from =
+                        mobility_schedule_edges[edge_indx][indx_schedule - 1]
+                            ? this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property.mobility_sim
+                            : this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property.base_sim;
+
+                    auto& node_to =
+                        mobility_schedule_edges[edge_indx][indx_schedule]
+                            ? this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property.mobility_sim
+                            : this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property.base_sim;
+
+                    assert(node_from.get_result().get_last_value() == node_to.get_result().get_last_value());
+                    // m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 3);
+                    m_modes.update_only(this->m_t, dt_mobility, e.property, node_from);
+                }
+            }
+        }
+    }
+
+    void advance_local_nodes(size_t indx_schedule)
+    {
+        for (const auto& n_indx : nodes_mobility[indx_schedule]) {
+            auto& n                   = this->m_graph.nodes()[n_indx];
+            const size_t indx_current = std::distance(
+                ln_int_schedule[n_indx].begin(),
+                std::lower_bound(ln_int_schedule[n_indx].begin(), ln_int_schedule[n_indx].end(), indx_schedule));
+
+            const size_t val_next =
+                (indx_current == ln_int_schedule[n_indx].size() - 1) ? 100 : ln_int_schedule[n_indx][indx_current + 1];
+            const ScalarType next_dt =
+                round_second_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon);
+            n.property.base_sim.advance(this->m_t + next_dt);
+            // m_node_func(this->m_t, next_dt, n.property.base_sim);
+        }
+    }
+
+    void advance_mobility_nodes(size_t indx_schedule)
+    {
+        for (const size_t& n_indx : nodes_mobility_m[indx_schedule]) {
+            auto& n                   = this->m_graph.nodes()[n_indx];
+            const size_t indx_current = std::distance(
+                mb_int_schedule[n_indx].begin(),
+                std::lower_bound(mb_int_schedule[n_indx].begin(), mb_int_schedule[n_indx].end(), indx_schedule));
+            const size_t val_next =
+                (indx_current == mb_int_schedule[n_indx].size() - 1) ? 100 : mb_int_schedule[n_indx][indx_current + 1];
+            const ScalarType next_dt =
+                round_second_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon);
+
+            // get all time points from the last integration step
+            auto& last_time_point = n.property.mobility_sim.get_result().get_time(
+                n.property.mobility_sim.get_result().get_num_time_points() - 1);
+            // wenn last_time_point nicht innerhalb eines intervalls von 1-e10 von t liegt, dann setzte den letzten Zeitpunkt auf m_t
+            if (std::fabs(last_time_point - this->m_t) > 1e-10) {
+                n.property.mobility_sim.get_result().get_last_time() = this->m_t;
+            }
+            // m_node_func(this->m_t, next_dt, n.property.mobility_sim);
+            n.property.mobility_sim.advance(this->m_t + next_dt);
+            Eigen::Index indx_min;
+            while (n.property.mobility_sim.get_result().get_last_value().minCoeff(&indx_min) < -1e-7) {
+                Eigen::Index indx_max;
+                n.property.mobility_sim.get_result().get_last_value().maxCoeff(&indx_max);
+                n.property.mobility_sim.get_result().get_last_value()[indx_max] -=
+                    n.property.mobility_sim.get_result().get_last_value()[indx_min];
+                n.property.mobility_sim.get_result().get_last_value()[indx_min] = 0;
+            }
+        }
+    }
+};
+
+template <typename FP, class Sim>
+GraphSimulationExtended<Graph<ExtendedNodeProperty<Sim>, ExtendedMigrationEdge<FP>>, MigrationModes<FP, Sim>>
+make_extended_migration_sim(FP t0, FP dt, Graph<ExtendedNodeProperty<Sim>, ExtendedMigrationEdge<FP>>&& graph)
+{
+    auto migration_modes = MigrationModes<FP, Sim>();
+    return GraphSimulationExtended<Graph<ExtendedNodeProperty<Sim>, ExtendedMigrationEdge<FP>>,
+                                   MigrationModes<FP, Sim>>(t0, dt, std::move(graph), {}, migration_modes);
+}
 
 /**
- * create a migration simulation.
- * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
- * moves from one node to the other. In the next timestep, the migrated population return to their "home" node. 
- * Returns are adjusted based on the development in the target node. 
- * @param t0 start time of the simulation
- * @param dt time step between migrations
- * @param graph set up for migration simulation
- * @{
+ * @brief number of migrated people when they return according to the model.
+ * E.g. during the time in the other node, some people who left as susceptible will return exposed.
+ * Implemented for general compartmentmodel simulations, overload for your custom model if necessary
+ * so that it can be found with argument-dependent lookup, i.e. in the same namespace as the model.
+ * @param migrated number of people that migrated as input, number of people that return as output
+ * @param sim Simulation that is used for the migration
+ * @param integrator Integrator that is used for the estimation. Has to be a one-step scheme.
+ * @param total total population in the node that the people migrated to.
+ * @param t time of migration
+ * @param dt timestep
  */
-template <typename FP, class Sim>
-GraphSimulationDetailed<GraphDetailed<SimulationNode<Sim>, MigrationEdge<FP>>>
-make_migration_sim(double t0, double dt, const GraphDetailed<SimulationNode<Sim>, MigrationEdge<FP>>& graph)
+
+template <typename FP, class Sim, class = std::enable_if_t<is_compartment_model_simulation<FP, Sim>::value>>
+void update_status_migrated(Eigen::Ref<typename TimeSeries<FP>::Vector> migrated, Sim& sim,
+                            mio::IntegratorCore<FP>& integrator,
+                            Eigen::Ref<const typename TimeSeries<FP>::Vector> total, FP t, FP dt)
 {
-    return make_graph_sim_detailed(t0, dt, graph, &evolve_model<Sim>, &apply_migration<Sim, MigrationEdge>);
+    auto y0 = migrated.eval();
+    auto y1 = migrated;
+    integrator.step(
+        [&](auto&& y, auto&& t_, auto&& dydt) {
+            sim.get_model().get_derivatives(total, y, t_, dydt);
+        },
+        y0, t, dt, y1);
+    auto flows_model = sim.get_model().get_flow_values();
+    flows_model *= dt;
+    sim.get_model().set_flow_values(flows_model);
 }
 
-template <typename FP, class Sim>
-GraphSimulationDetailed<GraphDetailed<SimulationNode<Sim>, MigrationEdge<FP>>>
-make_migration_sim(double t0, double dt, GraphDetailed<SimulationNode<Sim>, MigrationEdge<FP>>&& graph)
-{
-    return make_graph_sim_detailed(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_migration<Sim>);
-}
+// /**
+//  * @brief Sets the graph nodes for counties or districts.
+//  * Reads the node ids which could refer to districts or counties and the epidemiological
+//  * data from json files and creates one node for each id. Every node contains a model.
+//  * @param[in] params Model Parameters that are used for every node.
+//  * @param[in] start_date Start date for which the data should be read.
+//  * @param[in] end_data End date for which the data should be read.
+//  * @param[in] data_dir Directory that contains the data files.
+//  * @param[in] population_data_path Path to json file containing the population data.
+//  * @param[in] stay_times_data_path Path to txt file containing the stay times for the considered local entities.
+//  * @param[in] is_node_for_county Specifies whether the node ids should be county ids (true) or district ids (false).
+//  * @param[in, out] params_graph Graph whose nodes are set by the function.
+//  * @param[in] read_func Function that reads input data for german counties and sets Model compartments.
+//  * @param[in] node_func Function that returns the county ids.
+//  * @param[in] scaling_factor_inf Factor of confirmed cases to account for undetected cases in each county.
+//  * @param[in] scaling_factor_icu Factor of ICU cases to account for underreporting.
+//  * @param[in] tnt_capacity_factor Factor for test and trace capacity.
+//  * @param[in] num_days Number of days to be simulated; required to load data for vaccinations during the simulation.
+//  * @param[in] export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
+//  */
+// template <class TestAndTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
+//           class ReadFunction, class NodeIdFunction>
+// IOResult<void> set_nodes_detailed(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
+//                                   const std::string& population_data_path, const std::string& stay_times_data_path,
+//                                   bool is_node_for_county, GraphDetailed<Model, MigrationParams>& params_graph,
+//                                   ReadFunction&& read_func, NodeIdFunction&& node_func,
+//                                   const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+//                                   double tnt_capacity_factor, int num_days = 0, bool export_time_series = false)
+// {
+
+//     BOOST_OUTCOME_TRY(auto&& duration_stay, mio::read_duration_stay(stay_times_data_path));
+//     BOOST_OUTCOME_TRY(auto&& node_ids, node_func(population_data_path, is_node_for_county));
+
+//     std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
+
+//     for (auto& node : nodes) {
+//         node.parameters = params;
+//     }
+//     BOOST_OUTCOME_TRY(read_func(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir.string(),
+//                                 num_days, export_time_series));
+
+//     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
+
+//         auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
+
+//         //local parameters
+//         auto& tnt_value = nodes[node_idx].parameters.template get<TestAndTrace>();
+//         tnt_value       = mio::UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
+//         tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
+
+//         //holiday periods
+//         auto id              = int(mio::regions::CountyId(node_ids[node_idx]));
+//         auto holiday_periods = mio::regions::get_holidays(mio::regions::get_state_id(id), start_date, end_date);
+//         auto& contacts       = nodes[node_idx].parameters.template get<ContactPattern>();
+//         contacts.get_school_holidays() =
+//             std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
+//         std::transform(
+//             holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
+//                 return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
+//                                       mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
+//             });
+
+//         //uncertainty in populations
+//         for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+//             for (auto j = mio::Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
+//                 auto& compartment_value = nodes[node_idx].populations[{i, j}];
+//                 compartment_value =
+//                     mio::UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
+//                 compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
+//                                                                                      1.1 * double(compartment_value)));
+//             }
+//         }
+
+//         // Add mobility node
+//         auto mobility = nodes[node_idx];
+//         mobility.populations.set_total(0);
+
+//         params_graph.add_node(node_ids[node_idx], duration_stay((Eigen::Index)node_idx), nodes[node_idx], mobility);
+//     }
+//     return success();
+// }
+
+// /**
+//  * @brief Sets the graph edges.
+//  * Reads the commuting matrices, travel times and paths from data and creates one edge for each pair of nodes.
+//  * @param[in] travel_times_path Path to txt file containing the travel times between counties.
+//  * @param[in] mobility_data_path Path to txt file containing the commuting matrices.
+//  * @param[in] travelpath_path Path to txt file containing the paths between counties.
+//  * @param[in, out] params_graph Graph whose nodes are set by the function.
+//  * @param[in] migrating_compartments Compartments that commute.
+//  * @param[in] contact_locations_size Number of contact locations.
+//  * @param[in] commuting_weights Vector with a commuting weight for every AgeGroup.
+//  */
+// template <class ContactLocation, class Model, class MigrationParams, class MigrationCoefficientGroup,
+//           class InfectionState>
+// IOResult<void>
+// set_edges_detailed(const std::string& travel_times_path, const std::string mobility_data_path,
+//                    const std::string& travelpath_path, GraphDetailed<Model, MigrationParams>& params_graph,
+//                    std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
+//                    std::vector<ScalarType> commuting_weights = std::vector<ScalarType>{},
+//                    ScalarType theshold_edges                 = 4e-5)
+// {
+//     BOOST_OUTCOME_TRY(auto&& mobility_data_commuter, mio::read_mobility_plain(mobility_data_path));
+//     BOOST_OUTCOME_TRY(auto&& travel_times, mio::read_mobility_plain(travel_times_path));
+//     BOOST_OUTCOME_TRY(auto&& path_mobility, mio::read_path_mobility(travelpath_path));
+
+//     for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
+//         for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {
+//             auto& populations = params_graph.nodes()[county_idx_i].property.populations;
+
+//             // mobility coefficients have the same number of components as the contact matrices.
+//             // so that the same NPIs/dampings can be used for both (e.g. more home office => fewer commuters)
+//             auto mobility_coeffs = MigrationCoefficientGroup(contact_locations_size, populations.numel());
+//             auto num_age_groups  = (size_t)params_graph.nodes()[county_idx_i].property.parameters.get_num_groups();
+//             commuting_weights =
+//                 (commuting_weights.size() == 0 ? std::vector<ScalarType>(num_age_groups, 1.0) : commuting_weights);
+
+//             //commuters
+//             auto working_population = 0.0;
+//             auto min_commuter_age   = mio::AgeGroup(2);
+//             auto max_commuter_age   = mio::AgeGroup(4); //this group is partially retired, only partially commutes
+//             for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
+//                 working_population += populations.get_group_total(age) * commuting_weights[size_t(age)];
+//             }
+//             auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) / working_population;
+//             for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
+//                 for (auto compartment : migrating_compartments) {
+//                     auto coeff_index = populations.get_flat_index({age, compartment});
+//                     mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
+//                         commuter_coeff_ij * commuting_weights[size_t(age)];
+//                 }
+//             }
+
+//             auto path = path_mobility[county_idx_i][county_idx_j];
+//             if (static_cast<size_t>(path[0]) != county_idx_i ||
+//                 static_cast<size_t>(path[path.size() - 1]) != county_idx_j)
+//                 std::cout << "Wrong Path for edge " << county_idx_i << " " << county_idx_j << "\n";
+
+//             //only add edges with mobility above thresholds for performance
+//             if (commuter_coeff_ij > theshold_edges) {
+//                 params_graph.add_edge(county_idx_i, county_idx_j, travel_times(county_idx_i, county_idx_j),
+//                                       path_mobility[county_idx_i][county_idx_j], std::move(mobility_coeffs));
+//             }
+//         }
+//     }
+
+//     return success();
+// }
+
+
+// template <class S>
+// class ParameterStudyDetailed : public ParameterStudy<S>
+// {
+// public:
+//     /**
+//     * The type of simulation of a single node of the graph.
+//     */
+//     using Simulation = S;
+//     /**
+//     * The Graph type that stores the parametes of the simulation.
+//     * This is the input of ParameterStudies.
+//     */
+//     using ParametersGraphDetailed = mio::GraphDetailed<typename Simulation::Model, mio::MigrationParameters<double>>;
+//     /**
+//     * The Graph type that stores simulations and their results of each run.
+//     * This is the output of ParameterStudies for each run.
+//     */
+//     using SimulationGraphDetailed = mio::GraphDetailed<mio::SimulationNode<Simulation>, mio::MigrationEdge<double>>;
+
+//     /**
+//      * create study for graph of compartment models.
+//      * @param graph graph of parameters
+//      * @param t0 start time of simulations
+//      * @param tmax end time of simulations
+//      * @param graph_sim_dt time step of graph simulation
+//      * @param num_runs number of runs
+//      */
+//     ParameterStudyDetailed(const ParametersGraphDetailed& graph, double t0, double tmax, double graph_sim_dt,
+//                            size_t num_runs)
+//         : ParameterStudy<S>(graph, t0, tmax, graph_sim_dt, num_runs)
+//         , m_graph(graph)
+//         , m_num_runs(num_runs)
+//         , m_t0{t0}
+//         , m_tmax{tmax}
+//         , m_dt_graph_sim(graph_sim_dt)
+//     {
+//     }
+
+//     /*
+//      * @brief Carry out all simulations in the parameter study.
+//      * Save memory and enable more runs by immediately processing and/or discarding the result.
+//      * The result processing function is called when a run is finished. It receives the result of the run
+//      * (a SimulationGraphDetailed object) and an ordered index. The values returned by the result processing function
+//      * are gathered and returned as a list.
+//      * This function is parallelized if memilio is configured with MEMILIO_ENABLE_MPI.
+//      * The MPI processes each contribute a share of the runs. The sample function and result processing function
+//      * are called in the same process that performs the run. The results returned by the result processing function are
+//      * gathered at the root process and returned as a list by the root in the same order as if the programm
+//      * were running sequentially. Processes other than the root return an empty list.
+//      * @param sample_graph Function that receives the ParametersGraph and returns a sampled copy.
+//      * @param result_processing_function Processing function for simulation results, e.g., output function.
+//      * @returns At the root process, a list of values per run that have been returned from the result processing function.
+//      *          At all other processes, an empty list.
+//      * @tparam SampleGraphFunction Callable type, accepts instance of ParametersGraph.
+//      * @tparam HandleSimulationResultFunction Callable type, accepts instance of SimulationGraphDetailed and an index of type size_t.
+//      */
+//     template <class SampleGraphFunction, class HandleSimulationResultFunction>
+//     std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraphDetailed, size_t>>
+//     run(SampleGraphFunction sample_graph, HandleSimulationResultFunction result_processing_function)
+//     {
+//         int num_procs, rank;
+// #ifdef MEMILIO_ENABLE_MPI
+//         MPI_Comm_size(mpi::get_world(), &num_procs);
+//         MPI_Comm_rank(mpi::get_world(), &rank);
+// #else
+//         num_procs = 1;
+//         rank      = 0;
+// #endif
+
+//         //The ParameterDistributions used for sampling parameters use thread_local_rng()
+//         //So we set our own RNG to be used.
+//         //Assume that sampling uses the thread_local_rng() and isn't multithreaded
+//         this->m_rng.synchronize();
+//         thread_local_rng() = this->m_rng;
+
+//         auto run_distribution = this->distribute_runs(m_num_runs, num_procs);
+//         auto start_run_idx =
+//             std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
+//         auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
+
+//         std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraphDetailed, size_t>>
+//             ensemble_result;
+//         ensemble_result.reserve(m_num_runs);
+
+//         for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
+//             log(LogLevel::info, "ParameterStudies: run {}", run_idx);
+
+//             //prepare rng for this run by setting the counter to the right offset
+//             //Add the old counter so that this call of run() produces different results
+//             //from the previous call
+//             auto run_rng_counter =
+//                 this->m_rng.get_counter() +
+//                 rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(run_idx), Counter<uint32_t>(0));
+//             thread_local_rng().set_counter(run_rng_counter);
+
+//             //sample
+//             auto sim = create_sampled_sim(sample_graph);
+//             log(LogLevel::info, "ParameterStudies: Generated {} random numbers.",
+//                 (thread_local_rng().get_counter() - run_rng_counter).get());
+
+//             //perform run
+//             sim.advance(m_tmax);
+
+//             //handle result and store
+//             ensemble_result.emplace_back(result_processing_function(std::move(sim).get_graph(), run_idx));
+//         }
+
+//         //Set the counter of our RNG so that future calls of run() produce different parameters.
+//         this->m_rng.set_counter(this->m_rng.get_counter() +
+//                                 rng_totalsequence_counter<uint64_t>(m_num_runs, Counter<uint32_t>(0)));
+
+// #ifdef MEMILIO_ENABLE_MPI
+//         //gather results
+//         if (rank == 0) {
+//             for (int src_rank = 1; src_rank < num_procs; ++src_rank) {
+//                 int bytes_size;
+//                 MPI_Recv(&bytes_size, 1, MPI_INT, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
+//                 ByteStream bytes(bytes_size);
+//                 MPI_Recv(bytes.data(), bytes.data_size(), MPI_BYTE, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
+
+//                 auto src_ensemble_results = deserialize_binary(bytes, Tag<decltype(ensemble_result)>{});
+//                 if (!src_ensemble_results) {
+//                     log_error("Error receiving ensemble results from rank {}.", src_rank);
+//                 }
+//                 std::copy(src_ensemble_results.value().begin(), src_ensemble_results.value().end(),
+//                           std::back_inserter(ensemble_result));
+//             }
+//         }
+//         else {
+//             auto bytes      = serialize_binary(ensemble_result);
+//             auto bytes_size = int(bytes.data_size());
+//             MPI_Send(&bytes_size, 1, MPI_INT, 0, 0, mpi::get_world());
+//             MPI_Send(bytes.data(), bytes.data_size(), MPI_BYTE, 0, 0, mpi::get_world());
+//             ensemble_result.clear(); //only return root process
+//         }
+// #endif
+
+//         return ensemble_result;
+//     }
+
+// private:
+//     //sample parameters and create simulation
+//     template <class SampleGraphFunction>
+//     mio::GraphSimulationDetailed<SimulationGraphDetailed> create_sampled_sim(SampleGraphFunction sample_graph)
+//     {
+//         SimulationGraphDetailed sim_graph;
+
+//         auto sampled_graph = sample_graph(m_graph);
+//         for (auto&& node : sampled_graph.nodes()) {
+//             sim_graph.add_node(node.id, node.stay_duration, node.property, node.mobility, m_t0, this->m_dt_integration);
+//         }
+//         for (auto&& edge : sampled_graph.edges()) {
+//             sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property.travel_time, edge.property);
+//         }
+//         return make_migration_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
+//     }
+
+// private:
+//     // Stores Graph with the names and ranges of all parameters
+//     ParametersGraphDetailed m_graph;
+//     size_t m_num_runs;
+//     double m_t0;
+//     double m_tmax;
+//     double m_dt_graph_sim;
+// };
 
 } // namespace mio
 
