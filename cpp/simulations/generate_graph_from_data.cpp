@@ -134,10 +134,10 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
     const double riskOfInfectionFromSymptomaticMax    = 0.3;
     const double maxRiskOfInfectionFromSymptomaticMin = 0.3;
     const double maxRiskOfInfectionFromSymptomaticMax = 0.5;
-    const double recoveredPerInfectedNoSymptomsMin[]  = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15};
-    const double recoveredPerInfectedNoSymptomsMax[]  = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
-    const double severePerInfectedSymptomsMin[]       = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20};
-    const double severePerInfectedSymptomsMax[]       = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
+    const double recoveredPerInfectedNoSymptomsMin[]  = {0.2, 0.2, 0.15, 0.15, 0.15, 0.8};
+    const double recoveredPerInfectedNoSymptomsMax[]  = {0.3, 0.3, 0.25, 0.25, 0.25, 0.8};
+    const double severePerInfectedSymptomsMin[]       = {0.006, 0.006, 0.015, 0.049, 0.15, 0.05};
+    const double severePerInfectedSymptomsMax[]       = {0.009, 0.009, 0.023, 0.074, 0.15, 0.05};
     const double criticalPerSevereMin[]               = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35};
     const double criticalPerSevereMax[]               = {0.10, 0.10, 0.10, 0.20, 0.35, 0.45};
     const double deathsPerCriticalMin[]               = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5};
@@ -227,8 +227,9 @@ mio::IOResult<std::vector<mio::osecir::Model>> get_graph(mio::Date start_date, c
     for (auto& node : nodes) {
         node.parameters = params;
     }
-    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
-    auto scaling_factor_icu      = 1.0;
+    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 5.0);
+    scaling_factor_infected[5]   = 2.0;
+    auto scaling_factor_icu      = 4.8;
 
     const auto& read_function_nodes = mio::osecir::read_input_data_county<mio::osecir::Model>;
     BOOST_OUTCOME_TRY(read_function_nodes(nodes, start_date, node_ids, scaling_factor_infected, scaling_factor_icu,
@@ -254,7 +255,7 @@ mio::IOResult<void> generate_extrapolated_data(std::vector<mio::osecir::Model> n
     BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
         nodes, data_dir.string(), node_ids, start_date, scaling_factor_infected, scaling_factor_icu, num_days,
         mio::path_join(data_dir.string(), "pydata/Germany", "county_divi_ma7.json"),
-        mio::path_join(data_dir.string(), "pydata/Germany", "cases_all_county_age_ma7.json"),
+        mio::path_join(data_dir.string(), "pydata/Germany", "cases_all_county_age_repdate_ma7.json"),
         mio::path_join(data_dir.string(), "pydata/Germany", "county_current_population.json")));
 
     return mio::success();
