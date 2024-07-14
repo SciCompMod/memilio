@@ -1061,7 +1061,7 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
     assign_vaccination_state(world, start_date_sim);
     restart_timer(timer, "time taken for assigning vaccination state");
     set_local_parameters(world);
-    // add_testing_strategies(world, true, true);
+    add_testing_strategies(world, true, false);
 }
 
 struct LogInfectionStatePerAgeGroup : mio::LogAlways {

@@ -186,7 +186,7 @@ public:
     void update_location_testing_schemes(TimePoint t,
                                          mio::Range<std::pair<ConstLocationIterator, ConstLocationIterator>> locations);
 
-    bool entry_allowed_testing_schemes(Person::RandomNumberGenerator& rng, Person& person, unsigned id,
+    bool entry_allowed_testing_schemes(Person::RandomNumberGenerator& rng, Person& person, LocationId id,
                                        const mio::abm::TimePoint t);
 
 private:

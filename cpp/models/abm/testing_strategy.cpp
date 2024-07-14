@@ -124,15 +124,18 @@ void TestingStrategy::add_testing_scheme(const LocationId& loc_id, const Testing
     }
 }
 
-bool TestingStrategy::entry_allowed_testing_schemes(Person::RandomNumberGenerator& rng, Person& person, unsigned id,
+bool TestingStrategy::entry_allowed_testing_schemes(Person::RandomNumberGenerator& rng, Person& person, LocationId id,
                                                     const mio::abm::TimePoint t)
 {
-    if (m_testing_schemes_per_location.at(id).empty()) {
+    if (m_testing_schemes_per_location.at(id.index).empty()) {
         return true;
     }
 
-    for (auto&& scheme : m_testing_schemes_per_location.at(id)) {
+    for (auto&& scheme : m_testing_schemes_per_location.at(id.index)) {
         if (scheme.run_scheme(rng, person, t)) {
+            if (id.type == LocationType::Home) {
+                return true;
+            }
             return false;
         }
     }

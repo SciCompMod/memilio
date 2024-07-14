@@ -144,8 +144,8 @@ void World::migration(TimePoint t, TimeSpan dt)
                          trip.migration_destination.type});
                     if (target_location != current_location &&
                         target_location.entry_allowed_dampings(personal_rng, t) &&
-                        m_testing_strategy.entry_allowed_testing_schemes(personal_rng, *person,
-                                                                         target_location.get_index(), t) &&
+                        m_testing_strategy.entry_allowed_testing_schemes(
+                            personal_rng, *person, {target_location.get_index(), target_location.get_type()}, t) &&
                         target_location.get_number_persons() < target_location.get_capacity().persons) {
                         person->apply_mask_intervention(personal_rng, target_location);
                         person->migrate_to(target_location);
