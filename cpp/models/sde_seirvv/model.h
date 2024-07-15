@@ -83,18 +83,31 @@ public:
         // take the minimum of the calculated flow and the source compartment, to ensure that
         // no compartment attains negative values.
 
-        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::ExposedV1>()] = std::clamp(
+        /// Two outgoing flows from S so will clamp their sum to S / step_size
+        const double outflow1 = std::clamp(
             coeffStoIV1 * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::InfectedV1] +
                 sqrt(coeffStoIV1 * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::InfectedV1])  
                     / sqrt(step_size) * s_ev1,
             0.0, y[(size_t)InfectionState::Susceptible] / step_size);
-         
-        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::ExposedV2>()] = std::clamp(
+
+        const double outflow2 = std::clamp(
             coeffStoIV1 * y[(size_t)InfectionState::Susceptible] * 
                 (pop[(size_t)InfectionState::InfectedV1V2] + pop[(size_t)InfectionState::InfectedV2]) +
                 sqrt(coeffStoIV2 * y[(size_t)InfectionState::Susceptible] * (pop[(size_t)InfectionState::InfectedV1V2] 
                     + pop[(size_t)InfectionState::InfectedV2])) / sqrt(step_size) * s_ev2,
             0.0, y[(size_t)InfectionState::Susceptible] / step_size);
+
+        const double outflowSum = outflow1 + outflow2;
+        if (outflowSum > 0)
+        {
+            const double scale = std::clamp(outflowSum, 0.0 , y[(size_t)InfectionState::Susceptible] / step_size) / outflowSum;
+            flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::ExposedV1>()] = outflow1 * scale;
+            flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::ExposedV2>()] = outflow2 * scale;
+        } else
+        {
+            flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::ExposedV1>()] = 0;
+            flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::ExposedV2>()] = 0; 
+        }
 
         flows[get_flat_flow_index<InfectionState::ExposedV1, InfectionState::InfectedV1>()] = std::clamp(
             (1.0 / params.get<TimeExposedV1>()) * y[(size_t)InfectionState::ExposedV1] +
@@ -110,7 +123,7 @@ public:
             (1.0 / params.get<TimeInfectedV1>()) * y[(size_t)InfectionState::InfectedV1] +
                 sqrt((1.0 / params.get<TimeInfectedV1>()) * y[(size_t)InfectionState::InfectedV1]) / sqrt(step_size) * iv1_rv1,
             0.0, y[(size_t)InfectionState::InfectedV1] / step_size);
-
+        
         flows[get_flat_flow_index<InfectionState::InfectedV2, InfectionState::RecoveredV2>()] = std::clamp(
             (1.0 / params.get<TimeInfectedV2>()) * y[(size_t)InfectionState::InfectedV2] +
                 sqrt((1.0 / params.get<TimeInfectedV2>()) * y[(size_t)InfectionState::InfectedV2]) / sqrt(step_size) * iv2_rv2,
