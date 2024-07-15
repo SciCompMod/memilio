@@ -24,11 +24,7 @@
 #include "graph_abm/graph_abm_mobility.h"
 #include "graph_abm/mobility_rules.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/io/history.h"
-#include <cstddef>
-#include <cstdint>
 #include <gtest/gtest.h>
-#include <vector>
 
 TEST(TestGraphAbm, test_activessness)
 {
@@ -86,10 +82,12 @@ TEST(TestGraphAbm, test_evolve_node)
 TEST(TestGraphAbm, test_apply_mobility)
 {
     auto world_1   = mio::abm::World(size_t(1), 1);
+    world_1.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({mio::AgeGroup(0)}, true);
     auto work_id_1 = world_1.add_location(mio::abm::LocationType::Work);
     world_1.get_individualized_location(work_id_1).set_world_id(world_1.get_id());
     auto work_id_2 = world_1.add_location(mio::abm::LocationType::Work);
-    world_1.get_individualized_location(work_id_2).set_world_id(2);
+    auto& work_2 = world_1.get_individualized_location(work_id_2);
+    work_2.set_world_id(2);
     auto home_id = world_1.add_location(mio::abm::LocationType::Home);
     world_1.get_individualized_location(home_id).set_world_id(world_1.get_id());
     auto& p1 = world_1.add_person(home_id, mio::AgeGroup(0));
@@ -104,12 +102,15 @@ TEST(TestGraphAbm, test_apply_mobility)
     world_2.change_activeness(p2.get_person_id());
 
     auto t0 = mio::abm::TimePoint(0) + mio::abm::hours(6);
-    // mio::ABMSimulationNode<MockHistory> node1(MockHistory{}, t0, std::move(world_1));
-    // mio::ABMSimulationNode<MockHistory> node2(MockHistory{}, t0, std::move(world_2));
-    //const auto&& a = mio::apply_commuting;
-    auto a = mio::apply_commuting(p1, t0, world_1.parameters);
-    mio::unused(a);
-    //auto b  = decltype(a);
+    mio::ABMSimulationNode<MockHistory> node1(MockHistory{}, t0, std::move(world_1));
+    mio::ABMSimulationNode<MockHistory> node2(MockHistory{}, t0, std::move(world_2));
 
-    //mio::ABMMobilityEdge<MockHistory> edge({p2.get_person_id()}, {*mio::apply_commuting});
+    mio::ABMMobilityEdge<MockHistory> edge({p2.get_person_id()}, {&mio::apply_commuting});
+    edge.apply_mobility(node1, node2, t0+mio::abm::hours(2));
+
+    EXPECT_EQ(work_2.get_number_persons(), 1);
+    EXPECT_EQ(node1.get_simulation().get_world().get_activeness_statuses()[p1.get_person_id()], true);
+    EXPECT_EQ(node1.get_simulation().get_world().get_activeness_statuses()[p2.get_person_id()], false);
+    EXPECT_EQ(node2.get_simulation().get_world().get_activeness_statuses()[p1.get_person_id()], false);
+    EXPECT_EQ(node2.get_simulation().get_world().get_activeness_statuses()[p2.get_person_id()], true);
 }

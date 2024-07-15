@@ -526,8 +526,6 @@ private:
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
-    bool m_is_commuter =
-        false; ///< Whether the Person commutes i.e. has work in another graph node. Only used for ABM graph model or hybrid graph model.
 };
 
 } // namespace abm

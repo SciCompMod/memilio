@@ -31,11 +31,10 @@ abm::LocationType apply_commuting(const abm::Person& person, abm::TimePoint t, c
     if (current_loc == abm::LocationType::Home && params.get<abm::AgeGroupGotoWork>()[person.get_age()] &&
         t < params.get<abm::LockdownDate>() && t.day_of_week() < 5 && person.goes_to_work(t, params) &&
         !person.is_in_quarantine(t, params)) {
-        return abm::LocationType::Home;
+        return abm::LocationType::Work;
     }
 
     // agents are sent home or to work every time this function is called i.e. if it is called too often they will be sent to work multiple times
     return abm::LocationType::Home;
 }
-
 } // namespace mio

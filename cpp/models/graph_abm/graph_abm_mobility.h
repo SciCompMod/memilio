@@ -45,8 +45,7 @@ public:
 
     template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
     ABMSimulationNode(std::tuple<History...> history, Args&&... args)
-        : m_history(history)
-        , m_simulation(std::forward<Args>(args)...)
+        : m_simulation(std::forward<Args>(args)...), m_history(history)
     {
     }
 
