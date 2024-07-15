@@ -73,23 +73,6 @@ int main()
     ScalarType nb_total_t0 = 10000, nb_exp_t0 = 20, nb_car_t0 = 20, nb_inf_t0 = 3, nb_hosp_t0 = 1, nb_icu_t0 = 1,
                nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    if (setting == 10 || setting == 12 || setting == 13 || setting == 14 || setting == 19 || setting == 25 ||
-        setting == 26 || setting == 28 || setting == 29 || setting == 30 || setting == 31) {
-        nb_rec_t0 = 0.;
-    }
-
-    if (setting == 20) {
-        nb_rec_t0 = 1000.;
-    }
-
-    if (setting == 24) {
-        nb_rec_t0 = 1.;
-    }
-
-    if (setting == 27) {
-        nb_rec_t0 = 0.1;
-    }
-
     mio::osecir::Model<ScalarType> model_ode(1);
 
     // Set parameters.
@@ -127,60 +110,6 @@ int main()
     model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0]      = 0.5;
     model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0]              = 0.5;
     model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0]              = 0.5;
-
-    if (setting == 4) {
-        // Set probabilities that determine proportion between compartments.
-        model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] = 0.;
-        model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0]      = 1.;
-        model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0]              = 1.;
-        model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0]              = 0.5;
-    }
-
-    if (setting == 5 || setting == 12 || setting == 13 || setting == 15 || setting == 20 || setting == 21 ||
-        setting == 23 || setting == 25 || setting == 26 || setting == 28 || setting == 29) {
-        // Set probabilities that determine proportion between compartments.
-        model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] = 0.;
-        model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0]      = 1.;
-        model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0]              = 1.;
-        model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0]              = 1.;
-    }
-
-    if (setting == 30) {
-        // Set probabilities that determine proportion between compartments.
-        model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] = 0.;
-        model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0]      = 1.;
-        model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0]              = 1.;
-        model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0]              = 0.99;
-    }
-
-    if (setting == 31) {
-        // Set probabilities that determine proportion between compartments.
-        model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] = 0.;
-        model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0]      = 1.;
-        model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0]              = 1.;
-        model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0]              = 0.95;
-    }
-
-    if (setting == 6 || setting == 11 || setting == 14) {
-        // Set probabilities that determine proportion between compartments.
-        model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] = 0.;
-        model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0]      = 1.;
-        model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0]              = 1.;
-        model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0]              = 0.;
-    }
-
-    if (setting == 7) {
-        // Set probabilities that determine proportion between compartments.
-        model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] = 1.;
-        model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0]      = 0.;
-        model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0]              = 0.;
-        model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0]              = 0.;
-    }
-
-    if (setting == 8) {
-        // Set probabilities that determine proportion between compartments.
-        model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0] = 0.;
-    }
 
     // Further model parameters.
     model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()[(mio::AgeGroup)0] = 1.0;
@@ -250,21 +179,6 @@ int main()
         mio::TimeSeries<ScalarType> init_transitions(num_transitions);
 
         ScalarType total_infections = 0.;
-
-        if (setting == 11 || setting == 13 || setting == 14 || setting == 18 || setting == 21) {
-            // Compute total_infections by getting number of individuals that currently are or have been infected at time t0_ide.
-            total_infections =
-                secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt_ode - 1]
-                            [(int)mio::osecir::InfectionState::InfectedSymptoms] +
-                secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt_ode - 1]
-                            [(int)mio::osecir::InfectionState::InfectedSevere] +
-                secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt_ode - 1]
-                            [(int)mio::osecir::InfectionState::InfectedCritical] +
-                secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt_ode - 1]
-                            [(int)mio::osecir::InfectionState::Recovered] +
-                secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt_ode - 1]
-                            [(int)mio::osecir::InfectionState::Dead];
-        }
 
         // Initialize model.
         mio::isecir::Parameters parameters;
@@ -356,18 +270,6 @@ int main()
         mio::isecir::compute_initial_flows_for_ide_from_ode(model_ode, model_ide, secihurd_ode, t0_ide, dt_ode, dt_ide);
 
         model_ide.check_constraints(dt_ide);
-
-        if (setting == 15 || setting == 16 || setting == 25) {
-            model_ide.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] =
-                secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt_ode - 1]
-                            [(int)mio::osecir::InfectionState::Recovered];
-        }
-
-        if (setting == 17 || setting == 26) {
-            model_ide.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] =
-                secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt_ode - 1]
-                            [(int)mio::osecir::InfectionState::Susceptible];
-        }
 
         // Carry out simulation.
         std::cout << "Simulating now \n";
