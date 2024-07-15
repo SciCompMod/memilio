@@ -28,8 +28,9 @@ abm::LocationType apply_commuting(const abm::Person& person, abm::TimePoint t, c
 {
     abm::LocationType current_loc = person.get_location().get_type();
 
-    if (current_loc == abm::LocationType::Home && t < params.get<abm::LockdownDate>() && t.day_of_week() < 5 &&
-        person.goes_to_work(t, params) && !person.is_in_quarantine(t, params)) {
+    if (current_loc == abm::LocationType::Home && params.get<abm::AgeGroupGotoWork>()[person.get_age()] &&
+        t < params.get<abm::LockdownDate>() && t.day_of_week() < 5 && person.goes_to_work(t, params) &&
+        !person.is_in_quarantine(t, params)) {
         return abm::LocationType::Home;
     }
 

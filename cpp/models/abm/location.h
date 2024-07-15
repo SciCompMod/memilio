@@ -396,12 +396,21 @@ public:
     }
 
     /**
-     * @brief Get the world id the location is in. Is only relevant for graph ABM.
+     * @brief Get the world id the location is in. Is only relevant for graph ABM or hybrid model.
      * @return World id of the location
      */
     int get_world_id() const
     {
         return m_world_id;
+    }
+
+    /**
+     * @brief Set world id of the Location. Is only relevant for graph ABM or hybrid model.
+     * @param[in] world_id The world id of the location.
+     */
+    void set_world_id(int world_id)
+    {
+        m_world_id = world_id;
     }
 
 private:

@@ -59,11 +59,12 @@ public:
      * @brief Create a World.
      * @param[in] num_agegroups The number of AgeGroup%s in the simulated World. Must be less than MAX_NUM_AGE_GROUPS.
      */
-    World(size_t num_agegroups)
+    World(size_t num_agegroups, int id = 0)
         : parameters(num_agegroups)
         , m_trip_list()
         , m_use_migration_rules(true)
         , m_cemetery_id(add_location(LocationType::Cemetery))
+        , m_id(id)
     {
         assert(num_agegroups < MAX_NUM_AGE_GROUPS && "MAX_NUM_AGE_GROUPS exceeded.");
     }
@@ -72,12 +73,13 @@ public:
      * @brief Create a copied World.
      * @param[in] other The World that needs to be copied. 
      */
-    World(const World& other)
+    World(const World& other, int id = 0)
         : parameters(other.parameters)
         , m_persons()
         , m_locations()
         , m_trip_list(other.m_trip_list)
         , m_cemetery_id(add_location(LocationType::Cemetery))
+        , m_id(id)
     {
         for (auto& origin_loc : other.get_locations()) {
             if (origin_loc.get_type() != LocationType::Cemetery) {
@@ -297,6 +299,15 @@ public:
     int get_id() const
     {
         return m_id;
+    }
+
+    /**
+     * Get activeness status of all persons in the world.
+     * @return Activeness vector
+     */
+    std::vector<bool>& get_activeness_statuses()
+    {
+        return m_activeness_statuses;
     }
 
     /**

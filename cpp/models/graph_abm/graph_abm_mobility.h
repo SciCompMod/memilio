@@ -28,6 +28,8 @@
 #include "abm/person.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/graph.h"
+#include <cstddef>
+#include <vector>
 
 namespace mio
 {
@@ -42,8 +44,9 @@ public:
     using Sim = abm::Simulation;
 
     template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
-    ABMSimulationNode(Args&&... args)
-        : m_simulation(std::forward<Args>(args)...)
+    ABMSimulationNode(std::tuple<History...> history, Args&&... args)
+        : m_history(history)
+        , m_simulation(std::forward<Args>(args)...)
     {
     }
 
@@ -68,7 +71,7 @@ public:
     */
     void evolve(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
     {
-        m_simulation.advance(t + dt, m_history);
+        m_simulation.advance(t + dt, std::get<0>(m_history));
     }
 
 private:
@@ -83,15 +86,16 @@ class ABMMobilityParameters
 {
 
 public:
-    using MobilityRulesVec =
-        std::vector<abm::LocationType (*)(const abm::Person&, abm::TimePoint, const abm::Parameters&)>;
+    using MobilityRuleType = abm::LocationType (*)(const abm::Person&, abm::TimePoint, const abm::Parameters&);
 
     /**
      * Constructor for initializing commuting persons
      * @param commuting_persons Vector holding commuting persons' ids
      */
-    ABMMobilityParameters(const std::vector<uint32_t>& commuting_persons)
+    ABMMobilityParameters(const std::vector<uint32_t>& commuting_persons,
+                          const std::vector<MobilityRuleType>& mobility_rules)
         : m_commuting_persons(commuting_persons)
+        , m_mobility_rules(mobility_rules)
     {
     }
 
@@ -130,28 +134,29 @@ public:
     }
 
     /**
-     * Get/Set the mobility rules.
+     * Get/ the mobility rules.
      * The rules are applied to the persons in m_commuting_persons every time exchange betwen two nodes is triggered.
      */
-    const MobilityRulesVec& get_mobility_rules() const
+    const std::vector<MobilityRuleType>& get_mobility_rules() const
     {
         return m_mobility_rules;
     }
-    MobilityRulesVec& get_mobility_rules()
+    std::vector<MobilityRuleType>& get_mobility_rules()
     {
         return m_mobility_rules;
     }
     /**
-      * @param[in] mobility_rules Vector with rules for mobility between nodes.
+      * @brief Add mobility rule to member vector.
+      * @param[in] mobility_rule Rule to be added for mobility between nodes.
       */
-    void set_mobility_rules(const MobilityRulesVec& mobility_rules)
+    void add_mobility_rule(const MobilityRuleType& mobility_rule)
     {
-        m_mobility_rules = mobility_rules;
+        m_mobility_rules.push_back(mobility_rule);
     }
 
 private:
     std::vector<uint32_t> m_commuting_persons; ///< Person ids that are commuting via an edge
-    MobilityRulesVec m_mobility_rules; ///< Rules for moving persons from one node to another
+    std::vector<MobilityRuleType> m_mobility_rules; ///< Rules for moving persons from one node to another
 };
 
 /**
@@ -160,6 +165,7 @@ private:
 template <class... History>
 class ABMMobilityEdge
 {
+    using MobilityRuleType = abm::LocationType (*)(const abm::Person&, abm::TimePoint, const abm::Parameters&);
 
 public:
     /**
@@ -169,6 +175,20 @@ public:
     ABMMobilityEdge(const ABMMobilityParameters& params)
         : m_parameters(params)
     {
+    }
+
+    ABMMobilityEdge(const std::vector<uint32_t>& commuting_persons,
+                    const std::vector<MobilityRuleType>& mobility_rules = {})
+        : m_parameters(commuting_persons, mobility_rules)
+    {
+    }
+
+    /**
+     * @brief Get mobility paramters.
+     */
+    const ABMMobilityParameters& get_parameters() const
+    {
+        return m_parameters;
     }
 
     /**
