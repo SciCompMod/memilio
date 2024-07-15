@@ -183,13 +183,15 @@ public:
             //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
             auto riskFromInfectedSymptomatic =
                 smoother_cosine(test_and_trace_required, params.template get<TestAndTraceCapacity<FP>>(),
-                                params.template get<TestAndTraceCapacity<FP>>() * 15,
+                                params.template get<TestAndTraceCapacity<FP>>() *
+                                    params.template get<TestAndTraceCapacityMaxRiskSymptoms<FP>>(),
                                 params.template get<RiskOfInfectionFromSymptomatic<FP>>()[i],
                                 params.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[i]);
 
             auto riskFromInfectedNoSymptoms =
                 smoother_cosine(test_and_trace_required, params.template get<TestAndTraceCapacity<FP>>(),
-                                params.template get<TestAndTraceCapacity<FP>>() * 2,
+                                params.template get<TestAndTraceCapacity<FP>>() *
+                                    params.template get<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(),
                                 params.template get<RelativeTransmissionNoSymptoms<FP>>()[i], 1.0);
 
             for (auto j = AgeGroup(0); j < n_agegroups; j++) {
@@ -835,7 +837,9 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::R
             .sum();
     auto riskFromInfectedSymptomatic =
         smoother_cosine(test_and_trace_required, double(params.template get<TestAndTraceCapacity<FP>>()),
-                        params.template get<TestAndTraceCapacity<FP>>() * 5, p_inf.matrix(), p_inf_max.matrix());
+                        params.template get<TestAndTraceCapacity<FP>>() *
+                            params.template get<TestAndTraceCapacityMaxRiskSymptoms<FP>>(),
+                        p_inf.matrix(), p_inf_max.matrix());
 
     //set factor for infected
     auto factors = Eigen::VectorXd::Ones(y.rows()).eval();
