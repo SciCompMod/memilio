@@ -163,18 +163,25 @@ TEST(TestSdeSeirvv, check_constraints_parameters)
     mio::set_log_level(mio::LogLevel::off);
 
     parameters.set<mio::sseirvv::TimeInfectedV1>(0);
-    parameters.set<mio::sseirvv::TimeInfectedV2>(0);
     EXPECT_EQ(parameters.check_constraints(), 1);
 
     parameters.set<mio::sseirvv::TimeInfectedV1>(6);
+    parameters.set<mio::sseirvv::TimeInfectedV2>(0);
+    EXPECT_EQ(parameters.check_constraints(), 1);
+
     parameters.set<mio::sseirvv::TimeInfectedV2>(6);
-    parameters.set<mio::sseirvv::TimeExposedV1>(0);
-    parameters.set<mio::sseirvv::TimeExposedV2>(0);    
+    parameters.set<mio::sseirvv::TimeExposedV1>(0); 
     EXPECT_EQ(parameters.check_constraints(), 1);
 
     parameters.set<mio::sseirvv::TimeExposedV1>(6);
-    parameters.set<mio::sseirvv::TimeExposedV2>(6);   
+    parameters.set<mio::sseirvv::TimeExposedV2>(0);
+    EXPECT_EQ(parameters.check_constraints(), 1);
+
+    parameters.set<mio::sseirvv::TimeExposedV2>(6);
     parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1>(10.);
+    EXPECT_EQ(parameters.check_constraints(), 1);
+
+    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1>(0.04);
     parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2>(10.);
     EXPECT_EQ(parameters.check_constraints(), 1);
     mio::set_log_level(mio::LogLevel::warn);
