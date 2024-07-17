@@ -58,15 +58,16 @@ static constexpr uint32_t INVALID_LOCATION_INDEX = std::numeric_limits<uint32_t>
 struct LocationId {
     uint32_t index;
     LocationType type;
+    int world_id = 0;
 
     bool operator==(const LocationId& rhs) const
     {
-        return (index == rhs.index && type == rhs.type);
+        return (index == rhs.index && type == rhs.type && world_id == rhs.world_id);
     }
 
     bool operator!=(const LocationId& rhs) const
     {
-        return !(index == rhs.index && type == rhs.type);
+        return !(index == rhs.index && type == rhs.type && world_id == rhs.world_id);
     }
 
     bool operator<(const LocationId& rhs) const

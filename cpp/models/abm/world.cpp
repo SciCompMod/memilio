@@ -37,8 +37,9 @@ namespace abm
 
 LocationId World::add_location(LocationType type, uint32_t num_cells)
 {
-    LocationId id = {static_cast<uint32_t>(m_locations.size()), type};
+    LocationId id = {static_cast<uint32_t>(m_locations.size()), type, m_id};
     m_locations.emplace_back(std::make_unique<Location>(id, parameters.get_num_groups(), num_cells));
+    m_locations[id.index]->set_world_id(m_id);
     m_has_locations[size_t(type)] = true;
     return id;
 }
@@ -52,6 +53,18 @@ Person& World::add_person(const LocationId id, AgeGroup age)
     auto& person = *m_persons.back();
     person.set_assigned_location(m_cemetery_id);
     get_individualized_location(id).add_person(person);
+    return person;
+}
+
+Person& World::add_external_person(Location& loc, AgeGroup age)
+{
+    assert(age.get() < parameters.get_num_groups());
+    uint32_t person_id = static_cast<uint32_t>(m_persons.size());
+    m_persons.push_back(std::make_unique<Person>(m_rng, loc, age, person_id));
+    m_activeness_statuses.push_back(false);
+    auto& person = *m_persons.back();
+    person.set_assigned_location(m_cemetery_id);
+    loc.add_person(person);
     return person;
 }
 

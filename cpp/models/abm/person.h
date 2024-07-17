@@ -32,6 +32,7 @@
 #include "memilio/utils/memory.h"
 #include "abm/movement_data.h"
 #include <functional>
+#include <vector>
 
 namespace mio
 {
@@ -282,6 +283,23 @@ public:
     }
 
     /**
+     * @brief Returns the world id of an assigned location of the Person.
+     * Assume that a Person has at most one assigned Location of a certain #LocationType.
+     * @param[in] type #LocationType of the assigned Location.
+     * @return The world id of the assigned Location.
+     */
+    int get_assigned_location_world_id(LocationType type) const;
+
+    /**
+     * @brief Get the assigned locations' world ids of the Person.
+     * @return A vector with the world ids of the assigned locations of the Person
+     */
+    const std::vector<int>& get_assigned_location_world_ids() const
+    {
+        return m_assigned_location_world_ids;
+    }
+
+    /**
      * @brief Draw if the Person goes to work or is in home office during lockdown at a specific TimePoint.
      * Every Person has a random number. Depending on this number and the time, the Person works from home in case of a
      * lockdown.
@@ -526,6 +544,8 @@ private:
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
+    std::vector<int>
+        m_assigned_location_world_ids; ///< Vector with world ids of the assigned locations. Only used in graph abm.
 };
 
 } // namespace abm

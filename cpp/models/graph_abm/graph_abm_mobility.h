@@ -208,9 +208,12 @@ public:
             auto& params           = node_from.get_simulation().get_world().parameters;
             auto& current_location = person.get_location();
             for (auto& rule : m_parameters.get_mobility_rules()) {
-                auto target_type = rule(person, t, params);
+                auto target_type     = rule(person, t, params);
+                auto target_world_id = person.get_assigned_location_world_id(target_type);
                 abm::Location& target_location =
-                    node_from.get_simulation().get_world().find_location(target_type, person);
+                    (target_world_id == node_from.get_simulation().get_world().get_id())
+                        ? node_from.get_simulation().get_world().find_location(target_type, person)
+                        : node_to.get_simulation().get_world().find_location(target_type, person);
                 assert((node_from.get_simulation().get_world().get_id() == target_location.get_world_id() ||
                         node_to.get_simulation().get_world().get_id() == target_location.get_world_id()) &&
                        "Wrong graph edge. Target location is no edge node.");

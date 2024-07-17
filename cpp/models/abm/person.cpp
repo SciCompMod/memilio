@@ -45,6 +45,7 @@ Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age
     , m_person_id(person_id)
     , m_cells{0}
     , m_last_transport_mode(TransportMode::Unknown)
+    , m_assigned_location_world_ids((int)LocationType::Count)
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
     m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
@@ -134,17 +135,24 @@ void Person::set_assigned_location(Location& location)
     * For now only use it like this:  auto home_id   = world.add_location(mio::abm::LocationType::Home);
     *                                 person.set_assigned_location(home);
     */
-    m_assigned_locations[(uint32_t)location.get_type()] = location.get_index();
+    m_assigned_locations[(uint32_t)location.get_type()]          = location.get_index();
+    m_assigned_location_world_ids[(uint32_t)location.get_type()] = location.get_world_id();
 }
 
 void Person::set_assigned_location(LocationId id)
 {
-    m_assigned_locations[(uint32_t)id.type] = id.index;
+    m_assigned_locations[(uint32_t)id.type]          = id.index;
+    m_assigned_location_world_ids[(uint32_t)id.type] = id.world_id;
 }
 
 uint32_t Person::get_assigned_location_index(LocationType type) const
 {
     return m_assigned_locations[(uint32_t)type];
+}
+
+int Person::get_assigned_location_world_id(LocationType type) const
+{
+    return m_assigned_location_world_ids[(uint32_t)type];
 }
 
 bool Person::goes_to_work(TimePoint t, const Parameters& params) const

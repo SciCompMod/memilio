@@ -33,6 +33,7 @@
 #include "memilio/utils/stl_util.h"
 
 #include <bitset>
+#include <cstddef>
 #include <cstdint>
 #include <initializer_list>
 #include <vector>
@@ -184,6 +185,15 @@ public:
     Person& add_person(const LocationId id, AgeGroup age);
 
     /**
+     * @brief Add an external Person i.e. a Person whoseHome location is in another World to the World.
+     * Only used for abm graph model.
+     * @param[in] loc Initial Location of the Person
+     * @param[in] age AgeGroup of the Person
+     * @return Reference to the newly created Person
+     */
+    Person& add_external_person(Location& loc, AgeGroup age);
+
+    /**
      * @brief Get a range of all Location%s in the World.
      * @return A range of all Location%s.
      */
@@ -333,6 +343,30 @@ public:
     void change_activeness(uint32_t person_id)
     {
         m_activeness_statuses[person_id] = !m_activeness_statuses[person_id];
+    }
+
+    /**
+     * @brief Copy the persons from another World to this World.
+     * @param[in] other The World the Person%s are copied from.
+     */
+    void copy_persons_from_other_world(const World& other)
+    {
+        for (auto& person : other.get_persons()) {
+            auto new_person = Person(person.copy_person(person.get_location()));
+            //copy assigned locations
+            for (auto type = 0; type < person.get_assigned_locations().size(); ++type) {
+                auto index    = person.get_assigned_location_index(LocationType(type));
+                auto world_id = person.get_assigned_location_world_id(LocationType(type));
+                new_person.set_assigned_location(LocationId{index, LocationType(type), world_id});
+            }
+            m_persons.push_back(std::make_unique<Person>(new_person));
+            if (person.get_location().get_world_id() == m_id) {
+                m_activeness_statuses.push_back(true);
+            }
+            else {
+                m_activeness_statuses.push_back(false);
+            }
+        }
     }
 
 private:
