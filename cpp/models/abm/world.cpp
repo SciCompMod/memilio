@@ -102,7 +102,7 @@ void World::planning(TimePoint t, TimeSpan dt, std::unordered_map<uint32_t, Loca
                         target_location.get_number_persons() < target_location.get_capacity().persons) {
                         bool wears_mask = person->apply_mask_intervention(personal_rng, target_location);
                         if (wears_mask) {
-                            #pragma omp critical
+                            PRAGMA_OMP(critical)
                             person->add_migration_plan(t, target_location);
                             personId_to_loc_map[person->get_person_id()] = &target_location;
                             return true;
@@ -151,7 +151,7 @@ void World::planning(TimePoint t, TimeSpan dt, std::unordered_map<uint32_t, Loca
             if (!person->is_in_quarantine(t, parameters) && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
-                    #pragma omp critical
+                    PRAGMA_OMP(critical)
                     person->add_migration_plan(t, target_location);
                 }
             }
