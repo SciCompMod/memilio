@@ -59,18 +59,9 @@ def plot_infection_per_location_type_mean(x, y50, y25, y75):
 
     for i in states_plot:
         #rolling average
-        plt.plot(x, gaussian_filter1d(pd.DataFrame(y50[:, i]).rolling(24*3, min_periods=1).sum(), sigma=15), color=color_plot[i])
+        plt.plot(x, gaussian_filter1d(pd.DataFrame(y50[:, i]).rolling(24, min_periods=1).sum(), sigma=15), color=color_plot[i])
 
     plt.legend(legend_plot)
-
-    for i in states_plot:
-        y50_smoothed= gaussian_filter1d(pd.DataFrame(y50[:, i]).rolling(24*3).sum(), sigma=15).flatten()
-        y25_smoothed= gaussian_filter1d(pd.DataFrame(y25[:, i]).rolling(24*3).sum(), sigma=15).flatten()
-        y75_smoothed= gaussian_filter1d(pd.DataFrame(y75[:, i]).rolling(24*3).sum(), sigma=15).flatten()
-        # plt.fill_between(x, y50_smoothed,  y25_smoothed ,
-        #                  alpha=0.5, color=color_plot[i])
-        # plt.fill_between(x, y50_smoothed,  y75_smoothed,
-        #                  alpha=0.5, color=color_plot[i])
         
     #currently the x axis has the values of the time steps, we need to convert them to dates and set the x axis to dates
     start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
@@ -294,7 +285,7 @@ def plot_icu(path):
     # we need just every 24th value
     total_50 = total_50[::24]
     # we just take the first 90 days
-    total_50 = total_50[0:90]*0.3
+    total_50 = total_50[0:90]*0.4
 
     # we calculate the RMSE
     rmse_ICU=np.sqrt(((df_abb['ICU'][0:90] - total_50[:,5])**2).mean())
@@ -510,7 +501,7 @@ if __name__ == "__main__":
                      if os.path.isfile(os.path.join(path, entry))])
     plot_infectoin_states_results(path)
     plot_infections_loc_types_avarage(path)
-    # plot_icu(path+"/..")
+    plot_icu(path+"/..")
     plot_dead(path)
     # plot_tests(path+"/..")
-    # infer_positive_tests(path)   
+    infer_positive_tests(path)   
