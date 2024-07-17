@@ -170,6 +170,7 @@ public:
      *
      * The assigned Location is saved by the index of its LocationId. Assume that a Person has at most one assigned
      * Location of a certain #LocationType.
+     * @param[in] type The LocationType of the Location.
      * @param[in] id The LocationId of the Location.
      */
     void set_assigned_location(LocationType type, LocationId id);

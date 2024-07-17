@@ -169,19 +169,23 @@ public:
      * @brief Add a Location to the World.
      * @param[in] type Type of Location to add.
      * @param[in] num_cells [Default: 1] Number of Cell%s that the Location is divided into.
-     * @return Index and type of the newly created Location.
+     * @return ID of the newly created Location.
      */
     LocationId add_location(LocationType type, uint32_t num_cells = 1);
 
     /**
      * @brief Add a Person to the World.
-     * @param[in] id Index and type of the initial Location of the Person.
+     * @param[in] id The LocationId of the initial Location of the Person.
      * @param[in] age AgeGroup of the person.
-     * @return Reference to the newly created Person.
+     * @return ID of the newly created Person.
      */
     PersonId add_person(const LocationId id, AgeGroup age);
 
-    // adds a copy of person to the world
+    /**
+     * @brief Adds a copy of a given Person to the World.
+     * @param[in] person The Person to copy from. 
+     * @return ID of the newly created Person.
+     */
     PersonId add_person(Person&& person);
 
     /**
@@ -205,14 +209,21 @@ public:
     /**
      * @brief Find an assigned Location of a Person.
      * @param[in] type The #LocationType that specifies the assigned Location.
-     * @param[in] person The Person.
-     * @return Reference to the assigned Location.
+     * @param[in] person PersonId of the Person.
+     * @return ID of the Location of LocationType type assigend to person.
      */
     LocationId find_location(LocationType type, const PersonId person) const;
 
-    void assign_location(PersonId assignee, LocationId location)
+    /**
+     * @brief Assign a Location to a Person.
+     * A Person can have at most one assigned Location of a certain LocationType.
+     * Assigning another Location of an already assigned LocationType will replace the prior assignment.  
+     * @param[in] person The PersonId of the person this location will be assigned to.
+     * @param[in] location The LocationId of the Location.
+     */
+    void assign_location(PersonId person, LocationId location)
     {
-        get_person(assignee).set_assigned_location(get_location(location).get_type(), location);
+        get_person(person).set_assigned_location(get_location(location).get_type(), location);
     }
 
     /**
