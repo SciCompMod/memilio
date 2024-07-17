@@ -43,6 +43,22 @@ def read_total_results_h5(path, comp, group_key='Total'):
     return comp_simulated
 
 
+def read_results_h5(path, comp, group_key='Total'):
+    with h5py.File(path, 'r') as f:
+        keys = list(f.keys())
+        res = np.zeros((len(keys), f[keys[0]][group_key].shape[0]))
+        for i, key in enumerate(keys):
+            group = f[key]
+            total = group[group_key][()]
+            if total.shape[1] > 1:
+                comp_simulated = np.sum(total[:, comp], axis=1)
+            else:
+                comp_simulated = total[:, comp]
+            res[i] = comp_simulated
+
+    return res
+
+
 def get_state_id(county_id):
     county_id_str = str(county_id)
     state_id = None
@@ -462,6 +478,62 @@ def plot_icu_comp(path_results, path_plots, modes, path_icu_data, log_scale=Fals
     return 0
 
 
+def plot_icu_comp_all_dirs(path_results, path_plots, modes, path_icu_data, log_scale=False, icu_capacity_val=9, plot_percentiles=True):
+    create_folder_if_not_exists(path_plots)
+
+    # list all files in path_results and filter for kmin and fixed
+    dirs_in_results = [entry for entry in os.listdir(
+        path_results) if entry.startswith("kmin") or entry.startswith("fixed")]
+    plots_dir = os.path.join(path_plots, "ICU_Plots")
+    create_folder_if_not_exists(plots_dir)
+
+    for dir_name in dirs_in_results:
+
+        icu_comp = [7]
+        label = "ICU Occupancy"
+        labels = []
+        title = "ICU Occupancy per 100_000 inhabitants"
+
+        plot_data = []
+        for mode in modes:
+            path_results_mode = os.path.join(path_results, dir_name, mode)
+            # check if dir exists, othewrise continue
+            if not os.path.exists(path_results_mode):
+                continue
+            labels.append(label + f" {mode}")
+            plot_data.append(get_results(
+                path_results_mode, icu_comp, results="total"))
+
+        # calculate ICU occupancy per 100_000 inhabitants
+        for data in plot_data:
+            for key in data.keys():
+                for indx in range(len(data[key])):
+                    data[key][indx] = data[key][indx] / total_pop * 100_000
+
+        # create dict with same shape and set constant value for ICU capacity
+        icu_capacity = {key: [icu_capacity_val for _ in range(
+            len(plot_data[0][key]))] for key in plot_data[0].keys()}
+        plot_data.append(icu_capacity)
+        labels.append("ICU Capacity")
+
+        num_days = len(plot_data[0]['p25']) - 1
+        start_date_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+        end_date_datetime = start_date_datetime + timedelta(days=num_days)
+        end_date = end_date_datetime.strftime("%Y-%m-%d")
+
+        df = pd.read_json(path_icu_data)
+
+        filtered_df = df.loc[(df['Date'] >= start_date) &
+                             (df['Date'] <= end_date)]
+        icu_divi = filtered_df['ICU'].to_numpy() / total_pop * 100_000
+        plot_data.append(icu_divi)
+        labels.append("ICU Divi Data")
+
+        plot(plot_data, labels, plots_dir, title=dir_name,
+             log_scale=log_scale, ylabel="ICU Occupancy per 100_000", plot_percentiles=plot_percentiles)
+    return 0
+
+
 def plot_peaks(path_results, path_plots, modes, target_indx, percentile="p50", flows=True, title="Peaks for each County"):
     create_folder_if_not_exists(path_plots)
     peaks_modes = []
@@ -543,6 +615,18 @@ def plot_and_save(fig, path, filename):
     plt.close(fig)
 
 
+def get_risk_total(path):
+    data_risk = read_results_h5(path, 0, 'Group1')
+    pop = get_pop()
+    total_pop = pop['Population'].sum()
+    # iterate over all rows from data_risk and scale the risk with the population
+    risk_total = np.zeros(data_risk.shape[1])
+    for i in range(data_risk.shape[0]):
+        risk_total += data_risk[i, :] * \
+            pop['Population'].values[i] / total_pop
+    return risk_total
+
+
 def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p50", flows=True, plot_type='kmin', title='Peak Value', vertical=False, dir_value='kmin'):
     if len(modes) > 1:
         print("Only one mode is allowed for the grid peak plot.")
@@ -583,6 +667,7 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
             gs = GridSpec(1, num_subplots, figure=fig)
 
         all_peaks = []
+        all_risks = []
 
         for run in kmin_dirs:
             if dir_value == 'kmin':
@@ -664,13 +749,17 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
                 sns.boxplot(x='Day', y='Peak Value', data=df_long, ax=ax)
                 ax.set_ylabel(title + ' per 100,000k')
 
+            if modes[0] == 'FeedbackDamping':
+                risk = get_risk_total(os.path.join(
+                    path_results, run, "FeedbackDamping", "risk", percentile, "Results.h5"))
+                all_risks.append(risk)
+
             kmax = float(run.split("_")[3])
             ax.set_title(f'kmin: {kmin}\nkmax: {kmax:.1f}', fontsize=12)
 
             if dir_value == 'fixed':
                 ax.set_title(
                     f'kmin: { float(run.split("_")[-1])}', fontsize=12)
-
         global_min = 0
         global_max = 0
         if plot_type == 'kmin':
@@ -682,7 +771,10 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
             global_max = max(max(peaks)
                              for peaks in all_peaks if peaks) + 10
 
+        count_ax = 0
         for ax in fig.get_axes():
+            if count_ax > num_subplots:
+                break
             ax.set_ylim(global_min, global_max)
             ax.set_xticks(range(0, num_days, 100))
             if not vertical:
@@ -700,12 +792,25 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
                 if ax == fig.get_axes()[len(fig.get_axes()) - 1]:
                     ax.set_xlabel('Days', fontsize=16)
 
+            if modes[0] == 'FeedbackDamping':
+                risk = all_risks[count_ax]
+                ax2 = ax.twinx()
+                ax2.plot(risk, color='red')
+                ax2.set_ylabel('Risk')
+                ax2.yaxis.label.set_color('red')
+                ax2.tick_params(axis='y', colors='red')
+
+            count_ax += 1
+
         plot_and_save(
             fig, plot_dir, f'peaks_grid_{plot_type}_{dir_value}_{kmin}.png')
 
+        count_ax = 0
         for ax in fig.get_axes():
+            if count_ax > num_subplots - 1:
+                break
             ax.set_yscale('symlog')
-            ax.set_ylim(0, 400)
+            ax.set_ylim(0, global_max)
             ax.set_xticks(range(0, num_days, 100))
             ax.set_xlabel('')
             if not vertical:
@@ -723,6 +828,16 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
                 if ax == fig.get_axes()[len(fig.get_axes()) - 1]:
                     ax.set_xlabel('Days', fontsize=16)
 
+            if modes[0] == 'FeedbackDamping':
+                risk = all_risks[count_ax]
+                ax2 = ax.twinx()
+                ax2.plot(risk, color='red')
+                ax2.set_ylabel('Risk')
+                ax2.yaxis.label.set_color('red')
+                ax2.tick_params(axis='y', colors='red')
+
+            count_ax += 1
+
         plot_and_save(
             fig, plot_dir, f'peaks_grid_{plot_type}_{dir_value}_{kmin}_log.png')
 
@@ -731,7 +846,7 @@ if __name__ == '__main__':
     path_cwd = os.getcwd()
     # results/fixed_damping_kmin_0.300000/ClassicDamping/mse_428223962312.262817
     path_results = os.path.join(
-        path_cwd, "results", "kmin_0.200000_kmax_1.000000", "FeedbackDamping")
+        path_cwd, "results")
     path_plots = os.path.join(path_cwd, "plots")
     path_icu_data = os.path.join(
         path_cwd, "data/pydata/Germany/germany_divi_ma7.json")
@@ -754,28 +869,36 @@ if __name__ == '__main__':
     #                   infected_compartment, [""], "Total Infected")
     # plot_compartments(path_results, path_plots, modes,
     #                   dead_compartment, [""], "Total Deaths")
-    plot_flows(path_results, path_plots, modes,
-               flow_se, [""], "Daily Infections", plot_percentiles=True)
-    plot_icu_comp(path_results, path_plots, modes,
-                  path_icu_data, plot_percentiles=True)
+    # plot_flows(path_results, path_plots, modes,
+    #            flow_se, [""], "Daily Infections", plot_percentiles=True)
+    # plot_icu_comp(path_results, path_plots, modes,
+    #               path_icu_data, plot_percentiles=True)
     # plot_r0(path_results, path_plots, modes)
     # plot_peaks(path_results, path_plots, modes, flow_se)
 
     # plot_peaks_single(path_results, path_plots, ["FeedbackDamping"], flow_se)
 
+    # plot_icu_comp_all_dirs(path_results, path_plots, modes,
+    #                        path_icu_data, plot_percentiles=True)
+
     # peak plots for daily infections
-    # plot_peak_values(path_results, path_plots, [
-    #                  "FeedbackDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True)
-    # plot_peak_values(path_results, path_plots, [
-    #                  "FeedbackDamping"], flow_se, plot_type='val', title='Daily Infections', flows=True, vertical=True)
+    plot_peak_values(path_results, path_plots, [
+                     "FeedbackDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True)
+    plot_peak_values(path_results, path_plots, [
+                     "FeedbackDamping"], flow_se, plot_type='val', title='Daily Infections', flows=True, vertical=True)
 
-    # # peak plots for ICU occupancy
-    # plot_peak_values(path_results, path_plots, [
-    #                  "FeedbackDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True)
-    # plot_peak_values(path_results, path_plots, [
-    #     "FeedbackDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True)
+    # peak plots for ICU occupancy
+    plot_peak_values(path_results, path_plots, [
+                     "FeedbackDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True)
+    plot_peak_values(path_results, path_plots, [
+        "FeedbackDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True)
+
+    plot_peak_values(path_results, path_plots, [
+                     "ClassicDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True, dir_value='fixed')
+    plot_peak_values(path_results, path_plots, [
+        "ClassicDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True, dir_value='fixed')
 
     # plot_peak_values(path_results, path_plots, [
-    #                  "ClassicDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True, dir_value='fixed')
+    #     "ClassicDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True, dir_value='fixed')
     # plot_peak_values(path_results, path_plots, [
-    #     "ClassicDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True, dir_value='fixed')
+    #     "ClassicDamping"], flow_se, plot_type='val', title='Daily Infections', vertical=True, dir_value='fixed')
