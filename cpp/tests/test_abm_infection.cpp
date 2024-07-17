@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: David Kerkmann
+* Authors: David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -176,8 +176,10 @@ TEST(TestInfection, getPersonalProtectiveFactor)
         mio::abm::ExposureType::GenericVaccine, mio::AgeGroup(0), mio::abm::VirusVariant::Wildtype}](0);
     auto defaut_severity_protection  = params.get<mio::abm::SeverityProtectionFactor>()[{
         mio::abm::ExposureType::GenericVaccine, mio::AgeGroup(0), mio::abm::VirusVariant::Wildtype}](0);
-    ASSERT_NEAR(defaut_infection_protection, 0, 0.0001);
-    ASSERT_NEAR(defaut_severity_protection, 0, 0.0001);
+    auto defaut_high_viral_load_protection = params.get<mio::abm::HighViralLoadProtectionFactor>()(0);
+    EXPECT_NEAR(defaut_infection_protection, 0, 0.0001);
+    EXPECT_NEAR(defaut_severity_protection, 0, 0.0001);
+    EXPECT_NEAR(defaut_high_viral_load_protection, 0, 0.0001);
 
     // Test linear interpolation with one node
     mio::set_log_level(mio::LogLevel::critical); //this throws an error either way
@@ -187,7 +189,7 @@ TEST(TestInfection, getPersonalProtectiveFactor)
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{2, 0.91}}, days);
     };
     auto t = mio::abm::TimePoint(6 * 24 * 60 * 60);
-    ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0, 0.001);
+    EXPECT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0, 0.001);
     mio::set_log_level(mio::LogLevel::warn); //this throws an error either way
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, person.get_age(),
                                                        mio::abm::VirusVariant::Wildtype}] =
@@ -208,47 +210,47 @@ TEST(TestInfection, getPersonalProtectiveFactor)
     auto infection_protection_factor = params.get<mio::abm::InfectionProtectionFactor>()[{
         latest_protection.first, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
         t.days() - latest_protection.second.days());
-    ASSERT_NEAR(infection_protection_factor, 0.91, 0.0001);
-    ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.91, 0.0001);
+    EXPECT_NEAR(infection_protection_factor, 0.91, 0.0001);
+    EXPECT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.91, 0.0001);
 
     t                           = mio::abm::TimePoint(0) + mio::abm::days(15);
     infection_protection_factor = params.get<mio::abm::InfectionProtectionFactor>()[{
         latest_protection.first, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
         t.days() - latest_protection.second.days());
-    ASSERT_NEAR(infection_protection_factor, 0.8635, 0.0001);
-    ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.8635, 0.0001);
+    EXPECT_NEAR(infection_protection_factor, 0.8635, 0.0001);
+    EXPECT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.8635, 0.0001);
 
     t                           = mio::abm::TimePoint(0) + mio::abm::days(40);
     infection_protection_factor = params.get<mio::abm::InfectionProtectionFactor>()[{
         latest_protection.first, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
         t.days() - latest_protection.second.days());
-    ASSERT_NEAR(infection_protection_factor, 0, 0.0001);
-    ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0, 0.0001);
+    EXPECT_NEAR(infection_protection_factor, 0, 0.0001);
+    EXPECT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0, 0.0001);
 
     // Test Parameter SeverityProtectionFactor
     t                               = mio::abm::TimePoint(0) + mio::abm::days(2);
     auto severity_protection_factor = params.get<mio::abm::SeverityProtectionFactor>()[{
         latest_protection.first, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
         t.days() - latest_protection.second.days());
-    ASSERT_NEAR(severity_protection_factor, 0.91, 0.0001);
+    EXPECT_NEAR(severity_protection_factor, 0.91, 0.0001);
 
     t                          = mio::abm::TimePoint(0) + mio::abm::days(15);
     severity_protection_factor = params.get<mio::abm::SeverityProtectionFactor>()[{
         latest_protection.first, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
         t.days() - latest_protection.second.days());
-    ASSERT_NEAR(severity_protection_factor, 0.8635, 0.0001);
+    EXPECT_NEAR(severity_protection_factor, 0.8635, 0.0001);
 
     t                          = mio::abm::TimePoint(0) + mio::abm::days(40);
     severity_protection_factor = params.get<mio::abm::SeverityProtectionFactor>()[{
         latest_protection.first, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
         t.days() - latest_protection.second.days());
-    ASSERT_NEAR(severity_protection_factor, 0, 0.0001);
+    EXPECT_NEAR(severity_protection_factor, 0, 0.0001);
 
     // Test Parameter HighViralLoadProtectionFactor
     t = mio::abm::TimePoint(0) + mio::abm::days(2);
-    ASSERT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0.91, 0.0001);
+    EXPECT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0.91, 0.0001);
     t = mio::abm::TimePoint(0) + mio::abm::days(15);
-    ASSERT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0.8635, 0.0001);
+    EXPECT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0.8635, 0.0001);
     t = mio::abm::TimePoint(0) + mio::abm::days(40);
-    ASSERT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0, 0.0001);
+    EXPECT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0, 0.0001);
 }
