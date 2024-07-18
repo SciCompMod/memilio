@@ -25,13 +25,14 @@
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/parameter_set.h"
 #include "ide_secir/infection_state.h"
-#include "memilio/math/eigen.h"
-#include "memilio/math/smoother.h"
+//#include "memilio/math/eigen.h"
+//#include "memilio/math/smoother.h"
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/age_group.h"
 
-#include <memory>
+//#include <memory>
+#include <cstddef>
 #include <vector>
 
 namespace mio
@@ -114,8 +115,7 @@ struct TransmissionProbabilityOnContact {
     static Type get_default(AgeGroup size)
     {
         ConstantFunction constfunc(1.0);
-        StateAgeFunctionWrapper stateagewrapper = StateAgeFunctionWrapper(constfunc);
-        return Type(size, stateagewrapper);
+        return Type(size, constfunc);
     }
     static std::string name()
     {
@@ -127,12 +127,12 @@ struct TransmissionProbabilityOnContact {
 * @brief The relative InfectedNoSymptoms infectability.
 */
 struct RelativeTransmissionNoSymptoms {
+
     using Type = CustomIndexArray<StateAgeFunctionWrapper, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         ConstantFunction constfunc(1.0);
-        StateAgeFunctionWrapper stateagewrapper = StateAgeFunctionWrapper(constfunc);
-        return Type(size, stateagewrapper);
+        return Type(size, constfunc);
     }
     static std::string name()
     {
@@ -148,8 +148,7 @@ struct RiskOfInfectionFromSymptomatic {
     static Type get_default(AgeGroup size)
     {
         ConstantFunction constfunc(1.0);
-        StateAgeFunctionWrapper stateagewrapper = StateAgeFunctionWrapper(constfunc);
-        return Type(size, stateagewrapper);
+        return Type(size, constfunc);
     }
     static std::string name()
     {
@@ -259,7 +258,8 @@ public:
             }
 
             for (size_t i = 0; i < (int)InfectionTransition::Count; i++) {
-                if (this->get<TransitionProbabilities>()[j][i] < 0.0 || this->get<TransitionProbabilities>()[i] > 1.0) {
+                if (this->get<TransitionProbabilities>()[j][i] < 0.0 ||
+                    this->get<TransitionProbabilities>()[j][i] > 1.0) {
                     log_error("Constraint check: One parameter in TransitionProbabilities smaller {:d} or larger {:d}",
                               0, 1);
                     return true;
