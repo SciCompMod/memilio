@@ -98,11 +98,6 @@ public:
 template <class Sim>
 using ExtendedGraph = Graph<ExtendedNodeProperty<Sim>, ExtendedMigrationEdge<double>>;
 
-// Detect if get_migration_factors is defined for Sim
-template <class Sim>
-using get_migration_factors_expr_t = decltype(get_migration_factors(
-    std::declval<const Sim&>(), std::declval<double>(), std::declval<const Eigen::Ref<const Eigen::VectorXd>&>()));
-
 // Default implementation when get_migration_factors is not defined for Sim
 template <class Sim, std::enable_if_t<!is_expression_valid<get_migration_factors_expr_t, Sim>::value, void*> = nullptr>
 auto get_migration_factors(const Sim& /*sim*/, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
@@ -736,13 +731,14 @@ private:
                             : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule - 1]]
                                   .property.base_sim;
 
-                    auto& node_to = schedules.mobility_schedule_edges[edge_indx][indx_schedule]
-                                        ? this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]]
-                                              .property.mobility_sim
-                                        : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]]
-                                              .property.base_sim;
-
-                    assert(node_from.get_result().get_last_value() == node_to.get_result().get_last_value());
+                    assert(node_from.get_result().get_last_value() ==
+                           (schedules.mobility_schedule_edges[edge_indx][indx_schedule]
+                                ? this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]]
+                                      .property.mobility_sim
+                                : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]]
+                                      .property.base_sim)
+                               .get_result()
+                               .get_last_value());
                     // m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 3);
                     m_mobility_functions.update_only(this->m_t, dt_mobility, e.property, node_from);
                 }
