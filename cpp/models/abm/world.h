@@ -354,7 +354,7 @@ public:
         for (auto& person : other.get_persons()) {
             auto new_person = Person(person.copy_person(person.get_location()));
             //copy assigned locations
-            for (auto type = 0; type < person.get_assigned_locations().size(); ++type) {
+            for (size_t type = size_t(0); type < person.get_assigned_locations().size(); ++type) {
                 auto index    = person.get_assigned_location_index(LocationType(type));
                 auto world_id = person.get_assigned_location_world_id(LocationType(type));
                 new_person.set_assigned_location(LocationId{index, LocationType(type), world_id});
