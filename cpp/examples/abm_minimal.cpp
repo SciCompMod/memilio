@@ -135,7 +135,7 @@ int main()
         person.set_assigned_location(hospital);
         person.set_assigned_location(icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == age_group_0_to_4) {
+        if (person.get_age() == age_group_5_to_14) {
             person.set_assigned_location(school);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
