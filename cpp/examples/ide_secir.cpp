@@ -38,7 +38,7 @@ int main()
 
     ScalarType tmax                = 10;
     std::vector<ScalarType> N      = std::vector<ScalarType>(num_agegroups, 5000.);
-    std::vector<ScalarType> deaths = std::vector<ScalarType>(num_agegroups, 6.);
+    std::vector<ScalarType> deaths = std::vector<ScalarType>(num_agegroups, 10.);
     ScalarType dt                  = 1.;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
@@ -81,15 +81,15 @@ int main()
     // Initialize model.
     mio::isecir::Model model(std::move(init), N, deaths, num_agegroups);
 
-    // Uncomment two of these lines to use a different method to initialize the model using the TimeSeries init.
+    // Uncomment these lines to use a different method to initialize the model using the TimeSeries init.
     // Initialization method with Susceptibles.
-    //model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
-    //model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Count +
-    //                                     (Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
+    model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
+    model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Count +
+                                         (Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
     // Initialization mehtod with Recovered.
-    //model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
-    //model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Count +
-    //                                     (Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
+    model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] = 0;
+    model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Count +
+                                         (Eigen::Index)mio::isecir::InfectionState::Recovered] = 0;
 
     // Set working parameters.
     // First AgeGroup for Transition Distributions.
@@ -144,11 +144,12 @@ int main()
     sim.advance(tmax);
 
     auto interpolated_results = mio::interpolate_simulation_result(sim.get_result(), dt / 2);
+
     interpolated_results.print_table(
         {"S1", "E1", "C1", "I1", "H1", "U1", "R1", "D1 ", "S2", "E2", "C2", "I2", "H2", "U2", "R2", "D2 "}, 16, 8);
     // Uncomment this line to print the transitions.
-    sim.get_transitions().print_table({"S->E 1", "E->C 1", "C->I 1", "C->R 1", "I->H 1", "I->R 1", "H->U 1",
-                                       "H->R 1", "U->D 1", "U->R 1", "S->E 2", "E->C 2", "C->I 2", "C->R 2",
-                                       "I->H 2", "I->R 2", "H->U 2", "H->R 2", "U->D 2", "U->R 2"},
-                                      16, 8);
+    //sim.get_transitions().print_table({"S->E 1", "E->C 1", "C->I 1", "C->R 1", "I->H 1", "I->R 1", "H->U 1",
+    //                                   "H->R 1", "U->D 1", "U->R 1", "S->E 2", "E->C 2", "C->I 2", "C->R 2",
+    //                                   "I->H 2", "I->R 2", "H->U 2", "H->R 2", "U->D 2", "U->R 2"},
+    //                                  16, 8);
 }

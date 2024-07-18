@@ -188,7 +188,6 @@ void Model::initial_compute_compartments(ScalarType dt)
     else if (Susceptibles_given) {
         // Take initialized value for Susceptibles if value can't be calculated via the standard formula.
         m_initialization_method = 2;
-
         // R; need an initial value for R, therefore do not calculate via compute_recovered()
         for (int group = 0; group < m_num_agegroups; ++group) {
             int Si = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
@@ -497,6 +496,11 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
             current_time    = m_transitions.get_last_time();
             deaths_i        = m_populations.get_last_value()[Di];
         }
+        //We compute the Season Value.
+        ScalarType season_val =
+            1 +
+            parameters.get<Seasonality>() *
+                sin(3.141592653589793 * (std::fmod((parameters.get<StartDay>() + current_time), 365.0) / 182.5 + 0.5));
         // We need to sum, over contacts with all Age Groups.
         for (auto j = AgeGroup(0); j < AgeGroup(m_num_agegroups); ++j) {
 
@@ -510,10 +514,7 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
                                                     static_cast<Eigen::Index>((size_t)j));
 
                 ScalarType state_age = (num_time_points - 1 - l) * dt;
-                ScalarType season_val =
-                    1 + parameters.get<Seasonality>() *
-                            sin(3.141592653589793 *
-                                (std::fmod((parameters.get<StartDay>() + current_time), 365.0) / 182.5 + 0.5));
+
                 sum +=
                     season_val * parameters.get<TransmissionProbabilityOnContact>()[i].eval(state_age) *
                     parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(

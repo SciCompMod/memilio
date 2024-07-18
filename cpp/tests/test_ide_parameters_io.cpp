@@ -30,20 +30,23 @@
 #include "load_test_data.h"
 #include "matchers.h"
 #include <gtest/gtest.h>
+#include <vector>
 
 // Check that initialization based on synthetic RKI data match previous result.
 TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
 {
     // Define start date and the total population used for the initialization.
-    ScalarType total_population = 80 * 1e6;
-    auto start_date             = mio::Date(2020, 6, 3);
-    ScalarType dt               = 0.5;
+    int num_agegroups                        = 1;
+    std::vector<ScalarType> total_population = std::vector(num_agegroups, 80 * 1e6);
+    auto start_date                          = mio::Date(2020, 6, 3);
+    ScalarType dt                            = 0.5;
     // Initialize model.
     // The number of deaths will be overwritten if real data is used for initialization. Therefore, an arbitrary number is used for the number of deaths.
     // Initial time series for the flows will be also overridden.
-    mio::isecir::Model model(mio::TimeSeries<ScalarType>(-1, mio::TimeSeries<ScalarType>::Vector::Constant(
-                                                                 (int)mio::isecir::InfectionTransition::Count, 1.)),
-                             total_population, -1);
+    mio::isecir::Model model(
+        mio::TimeSeries<ScalarType>(-1, mio::TimeSeries<ScalarType>::Vector::Constant(
+                                            (int)mio::isecir::InfectionTransition::Count * num_agegroups, 1.)),
+        total_population, std::vector(num_agegroups, -1.), num_agegroups);
 
     // Set the model parameters so that if the default values are changed, the test is still valid.
     mio::SmootherCosine smoothcos(2.0);
@@ -59,8 +62,8 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
     model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
-    mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, num_agegroups);
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
     mio::ConstantFunction constfunc(1.0);
@@ -92,13 +95,14 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
 TEST(TestIDEParametersIo, ParametersIoRKIFailure)
 {
     // Define start date and the total population used for the initialization.
-    ScalarType total_population = 80 * 1e6;
-    ScalarType dt               = 0.5;
+    int num_agegroups                        = 1;
+    std::vector<ScalarType> total_population = std::vector(num_agegroups, 80 * 1e6);
+    ScalarType dt                            = 0.5;
 
     // Initialize model.
     // The number of deaths will be overwritten if real data is used for initialization. Therefore, an arbitrary number is used for the number of deaths.
     mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count),
-                             total_population, -1);
+                             total_population, std::vector(num_agegroups, -1.), num_agegroups);
 
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);

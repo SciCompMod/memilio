@@ -351,7 +351,7 @@ private:
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
     int m_initialization_method{0}; ///< Gives the initialization of the model.
     //See also get_initialization_method_compartments() for the number code.
-    int m_num_agegroups; //Gives the number of Age Groups.
+    int m_num_agegroups; ///< Gives the number of Age Groups.
 };
 
 } // namespace isecir
