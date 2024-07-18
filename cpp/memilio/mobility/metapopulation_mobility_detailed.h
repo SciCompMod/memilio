@@ -268,6 +268,302 @@ public:
     }
 };
 
+class ScheduleManager
+{
+public:
+    struct Schedule {
+        std::vector<std::vector<size_t>> schedule_edges;
+        std::vector<std::vector<bool>> mobility_schedule_edges;
+        std::vector<std::vector<size_t>> mobility_int_schedule;
+        std::vector<std::vector<size_t>> local_int_schedule;
+        std::vector<std::vector<size_t>> edges_mobility;
+        std::vector<std::vector<size_t>> nodes_mobility;
+        std::vector<std::vector<size_t>> nodes_mobility_m;
+        std::vector<size_t> first_mobility;
+    };
+
+    ScheduleManager(size_t t, double eps = 1e-10)
+        : timesteps(t)
+        , epsilon(eps)
+    {
+    }
+
+    template <typename Graph>
+    Schedule compute_schedule(const Graph& graph)
+    {
+        Schedule schedule;
+        calculate_edge_schedule(graph, schedule);
+        calculate_node_schedule(graph, schedule);
+        return schedule;
+    }
+
+private:
+    /**
+     * @brief Calculates the edge schedule for a given graph.
+     * 
+     * This function computes the vectors schedule_edges and mobility_schedule_edges for each edge in the graph.
+     * The schedule_eges describes for each time step in which node_id the individuals are located.
+     * The mobility_schedule_edges describes for each time step if the individuals are in a mobility node or not.
+     * 
+     * @tparam Graph The type of the graph.
+     * @param graph The graph object containing the nodes and edges.
+     * @param schedule The Schedule object to store the computed schedules.
+     */
+    template <typename Graph>
+    void calculate_edge_schedule(const Graph& graph, Schedule& schedule)
+    {
+        schedule.schedule_edges.reserve(graph.edges().size());
+        schedule.mobility_schedule_edges.reserve(graph.edges().size());
+
+        // calculate the schedule for each edge
+        for (auto& e : graph.edges()) {
+            std::vector<size_t> tmp_schedule(timesteps, 0);
+            std::vector<bool> is_mobility_node(timesteps, false);
+
+            // Calculate travel time per region, ensuring a minimum value of 0.01
+            const double traveltime_per_region =
+                std::max(0.01, round_second_decimal(e.property.travel_time / e.property.path.size()));
+
+            // Calculate the start time for mobility, ensuring it is not negative
+            const double start_mobility =
+                std::max(0.0, round_second_decimal(1 - 2 * traveltime_per_region * e.property.path.size() -
+                                                   graph.nodes()[e.end_node_idx].property.stay_duration));
+
+            // Calculate the arrival time at the destination node
+            const double arrive_at = start_mobility + traveltime_per_region * e.property.path.size();
+
+            // Lambda to fill the schedule vector with the node index during the trip to the destination.
+            auto fill_schedule = [&](size_t start_idx, size_t end_idx, size_t value) {
+                std::fill(tmp_schedule.begin() + start_idx, tmp_schedule.begin() + end_idx, value);
+            };
+
+            // Lambda to fill the schedule for the mobility models with a bool during the trip to the destination.
+            auto fill_mobility = [&](size_t start_idx, size_t end_idx, bool value) {
+                std::fill(is_mobility_node.begin() + start_idx, is_mobility_node.begin() + end_idx, value);
+            };
+
+            // Indices for schedule filling
+            size_t start_idx    = static_cast<size_t>((start_mobility + epsilon) * 100);
+            size_t arrive_idx   = static_cast<size_t>((arrive_at + epsilon) * 100);
+            size_t stay_end_idx = timesteps - (arrive_idx - start_idx);
+
+            // Fill the schedule up to the start of mobility with the start node index
+            fill_schedule(0, start_idx, e.start_node_idx);
+
+            // Mark the mobility period in the mobility node vector
+            fill_mobility(start_idx, arrive_idx, true);
+
+            // Fill the schedule for the path during the mobility period
+            size_t current_index = start_idx;
+            for (size_t county : e.property.path) {
+                size_t next_index = current_index + static_cast<size_t>((traveltime_per_region + epsilon) * 100);
+                fill_schedule(current_index, next_index, county);
+                current_index = next_index;
+            }
+
+            // Fill the remaining schedule after mobility with the end node index
+            fill_schedule(current_index, stay_end_idx, e.property.path.back());
+
+            // Mark the return mobility period in the mobility node vector
+            fill_mobility(stay_end_idx, timesteps, true);
+
+            // Find the first and last true values in the mobility node vector
+            auto first_true = std::find(is_mobility_node.begin(), is_mobility_node.end(), true);
+            auto last_true  = std::find(is_mobility_node.rbegin(), is_mobility_node.rend(), true);
+
+            // Ensure there is at least one true value
+            if (first_true != is_mobility_node.end() && last_true != is_mobility_node.rend()) {
+                size_t first_index = std::distance(is_mobility_node.begin(), first_true);
+                size_t count_true  = std::count(is_mobility_node.begin(), is_mobility_node.end(), true);
+
+                // Create a reversed path segment for the return trip
+                std::vector<size_t> path_reversed(tmp_schedule.begin() + first_index,
+                                                  tmp_schedule.begin() + first_index + count_true);
+                std::reverse(path_reversed.begin(), path_reversed.end());
+
+                // Copy the reversed path segment to the end of the schedule for the return trip
+                std::copy(path_reversed.begin(), path_reversed.end(), tmp_schedule.end() - count_true);
+
+                // Add the schedule and mobility node vectors to their respective containers
+                schedule.schedule_edges.push_back(std::move(tmp_schedule));
+                schedule.mobility_schedule_edges.push_back(std::move(is_mobility_node));
+            }
+            else {
+                log_error("Error in creating schedule.");
+            }
+        }
+    }
+
+    /**
+     * @brief Calculates the node schedule for a given graph.
+     * 
+     * This function computes the vectors local_int_schedule, mobility_int_schedule, edges_mobility, nodes_mobility, 
+     * nodes_mobility_m and first_mobility.
+     * The local_int_schedule vector describes the time steps where we need to synchronize the integrator in the local models.
+     * The mobility_int_schedule vector describes the time steps where we need to synchronize the integrator in the mobility models.
+     * The edges_mobility vector describes all edges where mobility takes place for each time step.
+     * The nodes_mobility vector describes all local models where mobility takes place for each time step.
+     * The nodes_mobility_m vector describes all mobility models where mobility takes place at the beginning of each time step.
+     * The first_mobility vector describes the first time step where mobility takes place for each edge.
+     * 
+     * @tparam Graph The type of the graph object.
+     * @param graph The graph object containing the nodes and edges.
+     * @param schedule The Schedule object to store the computed schedules.
+     */
+    template <typename Graph>
+    void calculate_node_schedule(const Graph& graph, Schedule& schedule)
+    {
+
+        // iterate over nodes to create the integration schedule for each node. The integration schedule is necessary
+        // to determine the correct time step for the integrator in the nodes.
+        for (size_t indx_node = 0; indx_node < graph.nodes().size(); ++indx_node) {
+            // Local node initialization with starting at t=0
+            std::vector<size_t> order_local_node = {0};
+            std::vector<size_t> indx_edges;
+
+            // Find edges starting from the current node and not in mobility at t=0
+            auto find_edges = [&](size_t t, bool mobility) {
+                std::vector<size_t> edges;
+                for (size_t indx_edge = 0; indx_edge < schedule.schedule_edges.size(); ++indx_edge) {
+                    if (schedule.schedule_edges[indx_edge][t] == indx_node &&
+                        schedule.mobility_schedule_edges[indx_edge][t] == mobility) {
+                        edges.push_back(indx_edge);
+                    }
+                }
+                return edges;
+            };
+
+            indx_edges = find_edges(0, false);
+
+            // Iterate through each timestep to identify changes in local node schedule
+            for (size_t indx_t = 1; indx_t < timesteps; ++indx_t) {
+                auto indx_edges_new = find_edges(indx_t, false);
+
+                if (indx_edges_new.size() != indx_edges.size() ||
+                    !std::equal(indx_edges.begin(), indx_edges.end(), indx_edges_new.begin())) {
+                    order_local_node.push_back(indx_t);
+                    indx_edges = indx_edges_new;
+                }
+            }
+
+            // Ensure the last timestep is included
+            if (order_local_node.back() != timesteps - 1) {
+                order_local_node.push_back(timesteps - 1);
+            }
+            schedule.local_int_schedule.push_back(order_local_node);
+
+            // Mobility node initialization
+            std::vector<size_t> order_mobility_node;
+            std::vector<size_t> indx_edges_mobility;
+
+            indx_edges_mobility = find_edges(0, true);
+
+            // Iterate through each timestep to identify changes in mobility node schedule
+            for (size_t indx_t = 1; indx_t < timesteps; ++indx_t) {
+                auto indx_edges_mobility_new = find_edges(indx_t, true);
+
+                if (indx_edges_mobility_new.size() != indx_edges_mobility.size() ||
+                    !std::equal(indx_edges_mobility.begin(), indx_edges_mobility.end(),
+                                indx_edges_mobility_new.begin())) {
+                    order_mobility_node.push_back(indx_t);
+                    indx_edges_mobility = indx_edges_mobility_new;
+                }
+            }
+
+            schedule.mobility_int_schedule.push_back(order_mobility_node);
+        }
+
+        // Reserve space for first_mobility vector and initialize it
+        schedule.first_mobility.reserve(graph.edges().size());
+        for (size_t indx_edge = 0; indx_edge < graph.edges().size(); ++indx_edge) {
+            schedule.first_mobility[indx_edge] =
+                std::distance(schedule.mobility_schedule_edges[indx_edge].begin(),
+                              std::find(schedule.mobility_schedule_edges[indx_edge].begin(),
+                                        schedule.mobility_schedule_edges[indx_edge].end(), true));
+        }
+
+        // Reserve space for mobility-related vectors
+        schedule.edges_mobility.reserve(timesteps);
+        schedule.nodes_mobility.reserve(timesteps);
+        schedule.nodes_mobility_m.reserve(timesteps);
+
+        // Handle the case where indx_current = 0 separately
+        std::vector<size_t> temp_edges_mobility;
+        for (size_t indx_edge = 0; indx_edge < graph.edges().size(); ++indx_edge) {
+            if (schedule.first_mobility[indx_edge] == 0) {
+                temp_edges_mobility.push_back(indx_edge);
+            }
+        }
+        schedule.edges_mobility.push_back(std::move(temp_edges_mobility));
+
+        // Initialize nodes_mobility with all node indices for t=0
+        std::vector<size_t> temp_nodes_mobility(graph.nodes().size());
+        std::iota(temp_nodes_mobility.begin(), temp_nodes_mobility.end(), 0);
+        schedule.nodes_mobility.emplace_back(std::move(temp_nodes_mobility));
+
+        // Initialize nodes_mobility_m with nodes that have mobility activities at t=0
+        std::vector<size_t> temp_nodes_mobility_m;
+        for (size_t node_indx = 0; node_indx < graph.nodes().size(); ++node_indx) {
+            if (std::binary_search(schedule.mobility_int_schedule[node_indx].begin(),
+                                   schedule.mobility_int_schedule[node_indx].end(), 0)) {
+                temp_nodes_mobility_m.push_back(node_indx);
+            }
+        }
+        schedule.nodes_mobility_m.push_back(temp_nodes_mobility_m);
+
+        for (size_t indx_current = 1; indx_current < timesteps; ++indx_current) {
+            std::vector<size_t> temp_edge_mobility;
+            for (size_t indx_edge = 0; indx_edge < graph.edges().size(); ++indx_edge) {
+                size_t current_node_indx = schedule.schedule_edges[indx_edge][indx_current];
+                if (indx_current >= schedule.first_mobility[indx_edge]) {
+                    if (schedule.mobility_schedule_edges[indx_edge][indx_current] &&
+                        std::binary_search(schedule.mobility_int_schedule[current_node_indx].begin(),
+                                           schedule.mobility_int_schedule[current_node_indx].end(), indx_current)) {
+                        temp_edge_mobility.push_back(indx_edge);
+                    }
+                    else if (!schedule.mobility_schedule_edges[indx_edge][indx_current] &&
+                             std::binary_search(schedule.local_int_schedule[current_node_indx].begin(),
+                                                schedule.local_int_schedule[current_node_indx].end(), indx_current)) {
+                        temp_edge_mobility.push_back(indx_edge);
+                    }
+                }
+            }
+            schedule.edges_mobility.push_back(temp_edge_mobility);
+
+            // Clear and fill temp_nodes_mobility and temp_nodes_mobility_m for current timestep
+            temp_nodes_mobility.clear();
+            temp_nodes_mobility_m.clear();
+            for (size_t node_indx = 0; node_indx < graph.nodes().size(); ++node_indx) {
+                if (std::binary_search(schedule.local_int_schedule[node_indx].begin(),
+                                       schedule.local_int_schedule[node_indx].end(), indx_current)) {
+                    temp_nodes_mobility.push_back(node_indx);
+                }
+
+                if (std::binary_search(schedule.mobility_int_schedule[node_indx].begin(),
+                                       schedule.mobility_int_schedule[node_indx].end(), indx_current)) {
+                    temp_nodes_mobility_m.push_back(node_indx);
+                }
+            }
+            schedule.nodes_mobility.push_back(temp_nodes_mobility);
+            schedule.nodes_mobility_m.push_back(temp_nodes_mobility_m);
+        }
+    }
+
+    /**
+     * @brief 
+     * 
+     * @param x 
+     * @return double 
+     */
+    double round_second_decimal(double x)
+    {
+        return std::round(x * 100.0) / 100.0;
+    }
+
+    size_t timesteps;
+    double epsilon;
+};
+
 template <typename Graph, typename MobilityFunctions>
 class GraphSimulationExtended : public GraphSimulationBase<Graph>
 {
@@ -277,16 +573,21 @@ public:
         std::function<void(double, double, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
                            typename Graph::NodeProperty&, MobilityFunctions&)>;
 
-    GraphSimulationExtended(double t0, double dt, const Graph& g, const node_function& node_func, MobilityFunctions modes)
+    GraphSimulationExtended(double t0, double dt, const Graph& g, const node_function& node_func,
+                            MobilityFunctions modes)
         : GraphSimulationBase<Graph>(t0, dt, g, node_func, {})
         , m_mobility_functions(modes)
     {
+        ScheduleManager schedule_manager(100); // Assuming 100 timesteps
+        schedules = schedule_manager.compute_schedule(this->m_graph);
     }
 
     GraphSimulationExtended(double t0, double dt, Graph&& g, const node_function& node_func, MobilityFunctions modes)
         : GraphSimulationBase<Graph>(t0, dt, std::move(g), node_func, {})
         , m_mobility_functions(modes)
     {
+        ScheduleManager schedule_manager(100); // Assuming 100 timesteps
+        schedules = schedule_manager.compute_schedule(this->m_graph);
     }
 
     inline double round_second_decimal(double x)
@@ -320,8 +621,6 @@ public:
         auto min_dt    = 0.01;
         double t_begin = this->m_t - 1.;
 
-        // calc schedule for each edge
-        precompute_schedule();
         while (this->m_t - epsilon < t_max) {
             // auto start = std::chrono::system_clock::now();
 
@@ -362,268 +661,31 @@ public:
 
 private:
     MobilityFunctions m_mobility_functions;
-
-    // describes the schedule for each edge, i.e. which node is visited at which time step
-    std::vector<std::vector<size_t>> schedule_edges;
-
-    // defines if people from a edge are currently in a mobility node. This is necessary to determine the correct
-    // position in the schedule. Otherwise we could add a specific identifier in schedule_edges.
-    std::vector<std::vector<bool>> mobility_schedule_edges;
-
-    // describes the syncronization steps which are necessary for the integrator in the edges and nodes.
-    std::vector<std::vector<size_t>> mb_int_schedule;
-    std::vector<std::vector<size_t>> ln_int_schedule;
-
-    // defines the edges on which mobility takes place for each time step
-    std::vector<std::vector<size_t>> edges_mobility;
-
-    // same for the nodes
-    std::vector<std::vector<size_t>> nodes_mobility;
-    std::vector<std::vector<size_t>> nodes_mobility_m;
-
-    // first mobility activites per edge
-    std::vector<size_t> first_mobility;
-
+    ScheduleManager::Schedule schedules;
     const double epsilon = 1e-10;
-
-    void precompute_schedule()
-    {
-        const size_t timesteps = 100;
-        schedule_edges.reserve(this->m_graph.edges().size());
-        mobility_schedule_edges.reserve(this->m_graph.edges().size());
-
-        // calculate the schedule for each edge
-        for (auto& e : this->m_graph.edges()) {
-            // Initialize the schedule and mobility node vectors for the edge
-            std::vector<size_t> schedule(timesteps, 0);
-            std::vector<bool> is_mobility_node(timesteps, false);
-
-            // Calculate travel time per region, ensuring a minimum value of 0.01
-            const double traveltime_per_region =
-                std::max(0.01, round_second_decimal(e.property.travel_time / e.property.path.size()));
-
-            // Calculate the start time for mobility, ensuring it is not negative
-            const double start_mobility =
-                std::max(0.0, round_second_decimal(1 - 2 * traveltime_per_region * e.property.path.size() -
-                                                   this->m_graph.nodes()[e.end_node_idx].property.stay_duration));
-
-            // Calculate the arrival time at the destination node
-            const double arrive_at = start_mobility + traveltime_per_region * e.property.path.size();
-
-            // Lambda to fill the schedule vector with a specific value over a range
-            auto fill_schedule = [&](size_t start_idx, size_t end_idx, size_t value) {
-                std::fill(schedule.begin() + start_idx, schedule.begin() + end_idx, value);
-            };
-
-            // Lambda to fill the mobility node vector with a boolean value over a range
-            auto fill_mobility = [&](size_t start_idx, size_t end_idx, bool value) {
-                std::fill(is_mobility_node.begin() + start_idx, is_mobility_node.begin() + end_idx, value);
-            };
-
-            // Indices for schedule filling
-            size_t start_idx    = static_cast<size_t>((start_mobility + epsilon) * 100);
-            size_t arrive_idx   = static_cast<size_t>((arrive_at + epsilon) * 100);
-            size_t stay_end_idx = timesteps - (arrive_idx - start_idx);
-
-            // Fill the schedule up to the start of mobility with the start node index
-            fill_schedule(0, start_idx, e.start_node_idx);
-
-            // Mark the mobility period in the mobility node vector
-            fill_mobility(start_idx, arrive_idx, true);
-
-            // Fill the schedule for the path during the mobility period
-            size_t current_index = start_idx;
-            for (size_t county : e.property.path) {
-                size_t next_index = current_index + static_cast<size_t>((traveltime_per_region + epsilon) * 100);
-                fill_schedule(current_index, next_index, county);
-                current_index = next_index;
-            }
-
-            // Fill the remaining schedule after mobility with the end node index
-            fill_schedule(current_index, stay_end_idx, e.property.path.back());
-
-            // Mark the return mobility period in the mobility node vector
-            fill_mobility(stay_end_idx, timesteps, true);
-
-            // Find the first and last true values in the mobility node vector
-            auto first_true = std::find(is_mobility_node.begin(), is_mobility_node.end(), true);
-            auto last_true  = std::find(is_mobility_node.rbegin(), is_mobility_node.rend(), true);
-
-            // Ensure there is at least one true value
-            if (first_true != is_mobility_node.end() && last_true != is_mobility_node.rend()) {
-                size_t first_index = std::distance(is_mobility_node.begin(), first_true);
-                size_t count_true  = std::count(is_mobility_node.begin(), is_mobility_node.end(), true);
-
-                // Create a reversed path segment for the return trip
-                std::vector<size_t> path_reversed(schedule.begin() + first_index,
-                                                  schedule.begin() + first_index + count_true);
-                std::reverse(path_reversed.begin(), path_reversed.end());
-
-                // Copy the reversed path segment to the end of the schedule for the return trip
-                std::copy(path_reversed.begin(), path_reversed.end(), schedule.end() - count_true);
-
-                // Add the schedule and mobility node vectors to their respective containers
-                schedule_edges.push_back(std::move(schedule));
-                mobility_schedule_edges.push_back(std::move(is_mobility_node));
-            }
-            else {
-                log_error("Error in creating schedule.");
-            }
-        }
-
-        // iterate over nodes to create the integration schedule for each node. The integration schedule is necessary
-        // to determine the correct time step for the integrator in the nodes.
-        for (size_t indx_node = 0; indx_node < this->m_graph.nodes().size(); ++indx_node) {
-            // Local node initialization with starting at t=0
-            std::vector<size_t> order_local_node = {0};
-            std::vector<size_t> indx_edges;
-
-            // Find edges starting from the current node and not in mobility at t=0
-            auto find_edges = [&](size_t t, bool mobility) {
-                std::vector<size_t> edges;
-                for (size_t indx_edge = 0; indx_edge < schedule_edges.size(); ++indx_edge) {
-                    if (schedule_edges[indx_edge][t] == indx_node &&
-                        mobility_schedule_edges[indx_edge][t] == mobility) {
-                        edges.push_back(indx_edge);
-                    }
-                }
-                return edges;
-            };
-
-            indx_edges = find_edges(0, false);
-
-            // Iterate through each timestep to identify changes in local node schedule
-            for (size_t indx_t = 1; indx_t < timesteps; ++indx_t) {
-                auto indx_edges_new = find_edges(indx_t, false);
-
-                if (indx_edges_new.size() != indx_edges.size() ||
-                    !std::equal(indx_edges.begin(), indx_edges.end(), indx_edges_new.begin())) {
-                    order_local_node.push_back(indx_t);
-                    indx_edges = indx_edges_new;
-                }
-            }
-
-            // Ensure the last timestep is included
-            if (order_local_node.back() != timesteps - 1) {
-                order_local_node.push_back(timesteps - 1);
-            }
-            ln_int_schedule.push_back(order_local_node);
-
-            // Mobility node initialization
-            std::vector<size_t> order_mobility_node;
-            std::vector<size_t> indx_edges_mobility;
-
-            indx_edges_mobility = find_edges(0, true);
-
-            // Iterate through each timestep to identify changes in mobility node schedule
-            for (size_t indx_t = 1; indx_t < timesteps; ++indx_t) {
-                auto indx_edges_mobility_new = find_edges(indx_t, true);
-
-                if (indx_edges_mobility_new.size() != indx_edges_mobility.size() ||
-                    !std::equal(indx_edges_mobility.begin(), indx_edges_mobility.end(),
-                                indx_edges_mobility_new.begin())) {
-                    order_mobility_node.push_back(indx_t);
-                    indx_edges_mobility = indx_edges_mobility_new;
-                }
-            }
-
-            mb_int_schedule.push_back(order_mobility_node);
-        }
-
-        // Reserve space for first_mobility vector and initialize it
-        first_mobility.reserve(this->m_graph.edges().size());
-        for (size_t indx_edge = 0; indx_edge < this->m_graph.edges().size(); ++indx_edge) {
-            first_mobility[indx_edge] = std::distance(
-                mobility_schedule_edges[indx_edge].begin(),
-                std::find(mobility_schedule_edges[indx_edge].begin(), mobility_schedule_edges[indx_edge].end(), true));
-        }
-
-        // Reserve space for mobility-related vectors
-        edges_mobility.reserve(timesteps);
-        nodes_mobility.reserve(timesteps);
-        nodes_mobility_m.reserve(timesteps);
-
-        // Handle the case where indx_current = 0 separately
-        std::vector<size_t> temp_edges_mobility;
-        for (size_t indx_edge = 0; indx_edge < this->m_graph.edges().size(); ++indx_edge) {
-            if (first_mobility[indx_edge] == 0) {
-                temp_edges_mobility.push_back(indx_edge);
-            }
-        }
-        edges_mobility.push_back(std::move(temp_edges_mobility));
-
-        // Initialize nodes_mobility with all node indices for t=0
-        std::vector<size_t> temp_nodes_mobility(this->m_graph.nodes().size());
-        std::iota(temp_nodes_mobility.begin(), temp_nodes_mobility.end(), 0);
-        nodes_mobility.emplace_back(std::move(temp_nodes_mobility));
-
-        // Initialize nodes_mobility_m with nodes that have mobility activities at t=0
-        std::vector<size_t> temp_nodes_mobility_m;
-        for (size_t node_indx = 0; node_indx < this->m_graph.nodes().size(); ++node_indx) {
-            if (std::binary_search(mb_int_schedule[node_indx].begin(), mb_int_schedule[node_indx].end(), 0)) {
-                temp_nodes_mobility_m.push_back(node_indx);
-            }
-        }
-        nodes_mobility_m.push_back(temp_nodes_mobility_m);
-
-        for (size_t indx_current = 1; indx_current < timesteps; ++indx_current) {
-            std::vector<size_t> temp_edge_mobility;
-            for (size_t indx_edge = 0; indx_edge < this->m_graph.edges().size(); ++indx_edge) {
-                size_t current_node_indx = schedule_edges[indx_edge][indx_current];
-                if (indx_current >= first_mobility[indx_edge]) {
-                    if (mobility_schedule_edges[indx_edge][indx_current] &&
-                        std::binary_search(mb_int_schedule[current_node_indx].begin(),
-                                           mb_int_schedule[current_node_indx].end(), indx_current)) {
-                        temp_edge_mobility.push_back(indx_edge);
-                    }
-                    else if (!mobility_schedule_edges[indx_edge][indx_current] &&
-                             std::binary_search(ln_int_schedule[current_node_indx].begin(),
-                                                ln_int_schedule[current_node_indx].end(), indx_current)) {
-                        temp_edge_mobility.push_back(indx_edge);
-                    }
-                }
-            }
-            edges_mobility.push_back(temp_edge_mobility);
-
-            // Clear and fill temp_nodes_mobility and temp_nodes_mobility_m for current timestep
-            temp_nodes_mobility.clear();
-            temp_nodes_mobility_m.clear();
-            for (size_t node_indx = 0; node_indx < this->m_graph.nodes().size(); ++node_indx) {
-                if (std::binary_search(ln_int_schedule[node_indx].begin(), ln_int_schedule[node_indx].end(),
-                                       indx_current)) {
-                    temp_nodes_mobility.push_back(node_indx);
-                }
-
-                if (std::binary_search(mb_int_schedule[node_indx].begin(), mb_int_schedule[node_indx].end(),
-                                       indx_current)) {
-                    temp_nodes_mobility_m.push_back(node_indx);
-                }
-            }
-            nodes_mobility.push_back(temp_nodes_mobility);
-            nodes_mobility_m.push_back(temp_nodes_mobility_m);
-        }
-    }
 
     void advance_edges(size_t indx_schedule)
     {
-        for (const auto& edge_indx : edges_mobility[indx_schedule]) {
+        for (const auto& edge_indx : schedules.edges_mobility[indx_schedule]) {
             auto& e = this->m_graph.edges()[edge_indx];
             // first mobility activity
-            if (indx_schedule == first_mobility[edge_indx]) {
-                auto& node_from = this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property.base_sim;
-                auto& node_to   = this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property.mobility_sim;
+            if (indx_schedule == schedules.first_mobility[edge_indx]) {
+                auto& node_from =
+                    this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule - 1]].property.base_sim;
+                auto& node_to =
+                    this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]].property.mobility_sim;
                 // m_edge_func(m_t, 0.0, e.property, node_from, node_to, 0);
                 m_mobility_functions.init_mobility(this->m_t, 0.0, e.property, node_from, node_to);
             }
             // next mobility activity
-            else if (indx_schedule > first_mobility[edge_indx]) {
-                auto current_node_indx = schedule_edges[edge_indx][indx_schedule];
-                bool in_mobility_node  = mobility_schedule_edges[edge_indx][indx_schedule];
+            else if (indx_schedule > schedules.first_mobility[edge_indx]) {
+                auto current_node_indx = schedules.schedule_edges[edge_indx][indx_schedule];
+                bool in_mobility_node  = schedules.mobility_schedule_edges[edge_indx][indx_schedule];
 
                 // determine dt, which is equal to the last integration/syncronization point in the current node
-                auto integrator_schedule_row = ln_int_schedule[current_node_indx];
+                auto integrator_schedule_row = schedules.local_int_schedule[current_node_indx];
                 if (in_mobility_node)
-                    integrator_schedule_row = mb_int_schedule[current_node_indx];
+                    integrator_schedule_row = schedules.mobility_int_schedule[current_node_indx];
                 // search the index of indx_schedule in the integrator schedule
                 const size_t indx_current = std::distance(
                     integrator_schedule_row.begin(),
@@ -649,20 +711,24 @@ private:
 
                 // We have two cases. Either, we want to send the individuals to the next node, or we just want
                 // to update their state since a syncronization step is necessary in the current node.
-                if ((schedule_edges[edge_indx][indx_schedule] != schedule_edges[edge_indx][indx_schedule - 1]) ||
-                    (mobility_schedule_edges[edge_indx][indx_schedule] !=
-                     mobility_schedule_edges[edge_indx][indx_schedule - 1])) {
+                if ((schedules.schedule_edges[edge_indx][indx_schedule] !=
+                     schedules.schedule_edges[edge_indx][indx_schedule - 1]) ||
+                    (schedules.mobility_schedule_edges[edge_indx][indx_schedule] !=
+                     schedules.mobility_schedule_edges[edge_indx][indx_schedule - 1])) {
                     auto& node_from =
-                        mobility_schedule_edges[edge_indx][indx_schedule - 1]
-                            ? this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property.mobility_sim
-                            : this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property.base_sim;
+                        schedules.mobility_schedule_edges[edge_indx][indx_schedule - 1]
+                            ? this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule - 1]]
+                                  .property.mobility_sim
+                            : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule - 1]]
+                                  .property.base_sim;
 
-                    auto& node_to =
-                        mobility_schedule_edges[edge_indx][indx_schedule]
-                            ? this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property.mobility_sim
-                            : this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property.base_sim;
+                    auto& node_to = schedules.mobility_schedule_edges[edge_indx][indx_schedule]
+                                        ? this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]]
+                                              .property.mobility_sim
+                                        : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]]
+                                              .property.base_sim;
 
-                    if (indx_schedule < mobility_schedule_edges[edge_indx].size() - 1) {
+                    if (indx_schedule < schedules.mobility_schedule_edges[edge_indx].size() - 1) {
                         // m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 1);
                         m_mobility_functions.update_and_move(this->m_t, dt_mobility, e.property, node_from, node_to);
                     }
@@ -674,14 +740,17 @@ private:
                 }
                 else {
                     auto& node_from =
-                        mobility_schedule_edges[edge_indx][indx_schedule - 1]
-                            ? this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property.mobility_sim
-                            : this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule - 1]].property.base_sim;
+                        schedules.mobility_schedule_edges[edge_indx][indx_schedule - 1]
+                            ? this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule - 1]]
+                                  .property.mobility_sim
+                            : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule - 1]]
+                                  .property.base_sim;
 
-                    auto& node_to =
-                        mobility_schedule_edges[edge_indx][indx_schedule]
-                            ? this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property.mobility_sim
-                            : this->m_graph.nodes()[schedule_edges[edge_indx][indx_schedule]].property.base_sim;
+                    auto& node_to = schedules.mobility_schedule_edges[edge_indx][indx_schedule]
+                                        ? this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]]
+                                              .property.mobility_sim
+                                        : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]]
+                                              .property.base_sim;
 
                     assert(node_from.get_result().get_last_value() == node_to.get_result().get_last_value());
                     // m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 3);
@@ -693,14 +762,16 @@ private:
 
     void advance_local_nodes(size_t indx_schedule)
     {
-        for (const auto& n_indx : nodes_mobility[indx_schedule]) {
-            auto& n                   = this->m_graph.nodes()[n_indx];
-            const size_t indx_current = std::distance(
-                ln_int_schedule[n_indx].begin(),
-                std::lower_bound(ln_int_schedule[n_indx].begin(), ln_int_schedule[n_indx].end(), indx_schedule));
+        for (const auto& n_indx : schedules.nodes_mobility[indx_schedule]) {
+            auto& n = this->m_graph.nodes()[n_indx];
+            const size_t indx_current =
+                std::distance(schedules.local_int_schedule[n_indx].begin(),
+                              std::lower_bound(schedules.local_int_schedule[n_indx].begin(),
+                                               schedules.local_int_schedule[n_indx].end(), indx_schedule));
 
-            const size_t val_next =
-                (indx_current == ln_int_schedule[n_indx].size() - 1) ? 100 : ln_int_schedule[n_indx][indx_current + 1];
+            const size_t val_next = (indx_current == schedules.local_int_schedule[n_indx].size() - 1)
+                                        ? 100
+                                        : schedules.local_int_schedule[n_indx][indx_current + 1];
             const ScalarType next_dt =
                 round_second_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon);
             n.property.base_sim.advance(this->m_t + next_dt);
@@ -710,13 +781,15 @@ private:
 
     void advance_mobility_nodes(size_t indx_schedule)
     {
-        for (const size_t& n_indx : nodes_mobility_m[indx_schedule]) {
-            auto& n                   = this->m_graph.nodes()[n_indx];
-            const size_t indx_current = std::distance(
-                mb_int_schedule[n_indx].begin(),
-                std::lower_bound(mb_int_schedule[n_indx].begin(), mb_int_schedule[n_indx].end(), indx_schedule));
-            const size_t val_next =
-                (indx_current == mb_int_schedule[n_indx].size() - 1) ? 100 : mb_int_schedule[n_indx][indx_current + 1];
+        for (const size_t& n_indx : schedules.nodes_mobility_m[indx_schedule]) {
+            auto& n = this->m_graph.nodes()[n_indx];
+            const size_t indx_current =
+                std::distance(schedules.mobility_int_schedule[n_indx].begin(),
+                              std::lower_bound(schedules.mobility_int_schedule[n_indx].begin(),
+                                               schedules.mobility_int_schedule[n_indx].end(), indx_schedule));
+            const size_t val_next = (indx_current == schedules.mobility_int_schedule[n_indx].size() - 1)
+                                        ? 100
+                                        : schedules.mobility_int_schedule[n_indx][indx_current + 1];
             const ScalarType next_dt =
                 round_second_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon);
 
@@ -928,7 +1001,6 @@ void update_status_migrated(Eigen::Ref<typename TimeSeries<FP>::Vector> migrated
 
 //     return success();
 // }
-
 
 // template <class S>
 // class ParameterStudyDetailed : public ParameterStudy<S>
