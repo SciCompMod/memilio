@@ -372,6 +372,12 @@ public:
     uint32_t get_person_id();
 
     /**
+    * @brief Set the PersonID of the Person.
+    * The PersonID should correspond to the index in m_persons in world.
+    */
+    void set_person_id(uint32_t id);
+
+    /**
      * @brief Get index of Cell%s of the Person.
      * @return A vector of all Cell indices the Person visits at the current Location.
      */

@@ -346,21 +346,37 @@ public:
     }
 
     /**
-     * @brief Copy the persons from another World to this World.
+     * @brief Copy the persons from another World to this World. 
+     * If the persons are at a location in this world they are activated, otherwise they are deactivated. 
      * @param[in] other The World the Person%s are copied from.
      */
     void copy_persons_from_other_world(const World& other)
     {
-        for (auto& person : other.get_persons()) {
-            auto new_person = Person(person.copy_person(person.get_location()));
-            //copy assigned locations
-            for (size_t type = size_t(0); type < person.get_assigned_locations().size(); ++type) {
-                auto index    = person.get_assigned_location_index(LocationType(type));
-                auto world_id = person.get_assigned_location_world_id(LocationType(type));
-                new_person.set_assigned_location(LocationId{index, LocationType(type), world_id});
+        for (auto& p : other.get_persons()) {
+            p.set_person_id(static_cast<uint32_t>(m_persons.size()));
+            m_persons.push_back(std::make_unique<Person>(p.copy_person(p.get_location())));
+            if (p.get_location().get_world_id() == m_id) {
+                m_activeness_statuses.push_back(true);
             }
-            m_persons.push_back(std::make_unique<Person>(new_person));
-            if (person.get_location().get_world_id() == m_id) {
+            else {
+                m_activeness_statuses.push_back(false);
+            }
+        }
+    }
+
+    /**
+    * @brief Set the Person%s of the World.
+    * @param[in] persons The Person%s of the World.
+    */
+    void set_persons(std::vector<Person>& persons)
+    {
+        //first clear old person vector and corresponding activeness vector
+        m_persons.clear();
+        m_activeness_statuses.clear();
+        for (auto& p : persons) {
+            p.set_person_id(static_cast<uint32_t>(m_persons.size()));
+            m_persons.emplace_back(std::make_unique<Person>(p.copy_person(p.get_location())));
+            if (p.get_location().get_world_id() == m_id) {
                 m_activeness_statuses.push_back(true);
             }
             else {

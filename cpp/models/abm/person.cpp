@@ -222,6 +222,11 @@ uint32_t Person::get_person_id()
     return m_person_id;
 }
 
+void Person::set_person_id(uint32_t id)
+{
+    m_person_id = id;
+}
+
 std::vector<uint32_t>& Person::get_cells()
 {
     return m_cells;
