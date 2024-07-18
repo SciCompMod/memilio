@@ -169,3 +169,34 @@ TYPED_TEST(TestMathFloatingPoint, floating_point_greater_equal)
     }};
     test_fp_compare(this->a, this->b, this->params, &mio::floating_point_greater_equal<TypeParam>, truth_table);
 }
+
+TYPED_TEST(TestMathFloatingPoint, round_nth_decimal)
+{
+    using FP = double;
+    FP value = static_cast<FP>(1.234567);
+    EXPECT_EQ(mio::round_nth_decimal(value, 0), static_cast<FP>(1));
+    EXPECT_EQ(mio::round_nth_decimal(value, 1), static_cast<FP>(1.2));
+    EXPECT_EQ(mio::round_nth_decimal(value, 2), static_cast<FP>(1.23));
+    EXPECT_EQ(mio::round_nth_decimal(value, 3), static_cast<FP>(1.235));
+    EXPECT_EQ(mio::round_nth_decimal(value, 4), static_cast<FP>(1.2346));
+    EXPECT_EQ(mio::round_nth_decimal(value, 5), static_cast<FP>(1.23457));
+    EXPECT_EQ(mio::round_nth_decimal(value, 6), static_cast<FP>(1.234567));
+
+    value = static_cast<FP>(-1.234567);
+    EXPECT_EQ(mio::round_nth_decimal(value, 0), static_cast<FP>(-1));
+    EXPECT_EQ(mio::round_nth_decimal(value, 1), static_cast<FP>(-1.2));
+    EXPECT_EQ(mio::round_nth_decimal(value, 2), static_cast<FP>(-1.23));
+    EXPECT_EQ(mio::round_nth_decimal(value, 3), static_cast<FP>(-1.235));
+    EXPECT_EQ(mio::round_nth_decimal(value, 4), static_cast<FP>(-1.2346));
+    EXPECT_EQ(mio::round_nth_decimal(value, 5), static_cast<FP>(-1.23457));
+    EXPECT_EQ(mio::round_nth_decimal(value, 6), static_cast<FP>(-1.234567));
+
+    value = static_cast<FP>(0.999999);
+    EXPECT_EQ(mio::round_nth_decimal(value, 0), static_cast<FP>(1));
+    EXPECT_EQ(mio::round_nth_decimal(value, 1), static_cast<FP>(1.0));
+    EXPECT_EQ(mio::round_nth_decimal(value, 2), static_cast<FP>(1.0));
+    EXPECT_EQ(mio::round_nth_decimal(value, 3), static_cast<FP>(1.0));
+    EXPECT_EQ(mio::round_nth_decimal(value, 4), static_cast<FP>(1.0));
+    EXPECT_EQ(mio::round_nth_decimal(value, 5), static_cast<FP>(1.0));
+    EXPECT_EQ(mio::round_nth_decimal(value, 6), static_cast<FP>(0.999999));
+}

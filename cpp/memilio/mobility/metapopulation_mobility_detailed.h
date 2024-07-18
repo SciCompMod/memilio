@@ -36,6 +36,7 @@
 #include "memilio/utils/date.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/io/mobility_io.h"
+#include "memilio/math/floating_point.h"
 
 #include "boost/filesystem.hpp"
 
@@ -297,7 +298,6 @@ public:
         return schedule;
     }
 
-private:
     /**
      * @brief Calculates the edge schedule for a given graph.
      * 
@@ -322,12 +322,13 @@ private:
 
             // Calculate travel time per region, ensuring a minimum value of 0.01
             const double traveltime_per_region =
-                std::max(0.01, round_second_decimal(e.property.travel_time / e.property.path.size()));
+                std::max(0.01, round_nth_decimal(e.property.travel_time / e.property.path.size(), 2));
 
             // Calculate the start time for mobility, ensuring it is not negative
             const double start_mobility =
-                std::max(0.0, round_second_decimal(1 - 2 * traveltime_per_region * e.property.path.size() -
-                                                   graph.nodes()[e.end_node_idx].property.stay_duration));
+                std::max(0.0, round_nth_decimal(1 - 2 * traveltime_per_region * e.property.path.size() -
+                                                    graph.nodes()[e.end_node_idx].property.stay_duration,
+                                                2));
 
             // Calculate the arrival time at the destination node
             const double arrive_at = start_mobility + traveltime_per_region * e.property.path.size();
@@ -476,10 +477,14 @@ private:
         // Reserve space for first_mobility vector and initialize it
         schedule.first_mobility.reserve(graph.edges().size());
         for (size_t indx_edge = 0; indx_edge < graph.edges().size(); ++indx_edge) {
-            schedule.first_mobility[indx_edge] =
-                std::distance(schedule.mobility_schedule_edges[indx_edge].begin(),
-                              std::find(schedule.mobility_schedule_edges[indx_edge].begin(),
-                                        schedule.mobility_schedule_edges[indx_edge].end(), true));
+            // find the first time step where mobility takes place. If there is no mobility, it is set the size of the schedule.
+            size_t index_time = 0;
+            for (; index_time < schedule.mobility_schedule_edges[indx_edge].size(); ++index_time) {
+                if (schedule.mobility_schedule_edges[indx_edge][index_time]) {
+                    break;
+                }
+            }
+            schedule.first_mobility.push_back(index_time);
         }
 
         // Reserve space for mobility-related vectors
@@ -549,17 +554,6 @@ private:
         }
     }
 
-    /**
-     * @brief 
-     * 
-     * @param x 
-     * @return double 
-     */
-    double round_second_decimal(double x)
-    {
-        return std::round(x * 100.0) / 100.0;
-    }
-
     size_t timesteps;
     double epsilon;
 };
@@ -590,23 +584,19 @@ public:
         schedules = schedule_manager.compute_schedule(this->m_graph);
     }
 
-    inline double round_second_decimal(double x)
-    {
-        return std::round(x * 100.0) / 100.0;
-    }
-
     void advance(double t_max = 1.0)
     {
         ScalarType dt_first_mobility =
             std::accumulate(this->m_graph.edges().begin(), this->m_graph.edges().end(),
                             std::numeric_limits<ScalarType>::max(), [&](ScalarType current_min, const auto& e) {
                                 auto traveltime_per_region =
-                                    round_second_decimal(e.property.travel_time / e.property.path.size());
+                                    round_nth_decimal(e.property.travel_time / e.property.path.size(), 2);
                                 if (traveltime_per_region < 0.01)
                                     traveltime_per_region = 0.01;
                                 auto start_mobility =
-                                    round_second_decimal(1 - 2 * (traveltime_per_region * e.property.path.size()) -
-                                                         this->m_graph.nodes()[e.end_node_idx].property.stay_duration);
+                                    round_nth_decimal(1 - 2 * (traveltime_per_region * e.property.path.size()) -
+                                                          this->m_graph.nodes()[e.end_node_idx].property.stay_duration,
+                                                      2);
                                 if (start_mobility < 0) {
                                     start_mobility = 0.;
                                 }
@@ -697,16 +687,16 @@ private:
 
                 ScalarType dt_mobility;
                 if (indx_current == 0) {
-                    dt_mobility = round_second_decimal(e.property.travel_time / e.property.path.size());
+                    dt_mobility = round_nth_decimal(e.property.travel_time / e.property.path.size(), 2);
                     if (dt_mobility < 0.01)
                         dt_mobility = 0.01;
                 }
                 else {
-                    dt_mobility =
-                        round_second_decimal((static_cast<double>(integrator_schedule_row[indx_current]) -
-                                              static_cast<double>(integrator_schedule_row[indx_current - 1])) /
-                                                 100 +
-                                             epsilon);
+                    dt_mobility = round_nth_decimal((static_cast<double>(integrator_schedule_row[indx_current]) -
+                                                     static_cast<double>(integrator_schedule_row[indx_current - 1])) /
+                                                            100 +
+                                                        epsilon,
+                                                    2);
                 }
 
                 // We have two cases. Either, we want to send the individuals to the next node, or we just want
@@ -773,7 +763,7 @@ private:
                                         ? 100
                                         : schedules.local_int_schedule[n_indx][indx_current + 1];
             const ScalarType next_dt =
-                round_second_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon);
+                round_nth_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon, 2);
             n.property.base_sim.advance(this->m_t + next_dt);
             // m_node_func(this->m_t, next_dt, n.property.base_sim);
         }
@@ -791,7 +781,7 @@ private:
                                         ? 100
                                         : schedules.mobility_int_schedule[n_indx][indx_current + 1];
             const ScalarType next_dt =
-                round_second_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon);
+                round_nth_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon, 2);
 
             // get all time points from the last integration step
             auto& last_time_point = n.property.mobility_sim.get_result().get_time(
