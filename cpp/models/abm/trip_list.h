@@ -24,6 +24,7 @@
 #include "abm/movement_data.h"
 #include "abm/person_id.h"
 #include "abm/time.h"
+#include <vector>
 
 namespace mio
 {
