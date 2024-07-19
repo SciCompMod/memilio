@@ -27,6 +27,8 @@
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/time.h"
+#include "memilio/io/auto_serialize.h"
+
 #include <bitset>
 #include <vector>
 
@@ -92,6 +94,36 @@ public:
      */
     bool evaluate(const Person& p, TimePoint t) const;
 
+    /**
+     * serialize this. 
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("TestingCriteria");
+        obj.add_element("ages", m_ages.to_ulong());
+        obj.add_element("infection_states", m_infection_states.to_ulong());
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<TestingCriteria> deserialize(IOContext& io)
+    {
+        auto obj              = io.expect_object("TestingCriteria");
+        auto ages             = obj.expect_element("ages", Tag<unsigned long>{});
+        auto infection_states = obj.expect_element("infection_states", Tag<unsigned long>{});
+        return apply(
+            io,
+            [](auto&& ages_, auto&& infection_states_) {
+                return TestingCriteria{ages_, infection_states_};
+            },
+            ages, infection_states);
+    }
+
 private:
     std::bitset<MAX_NUM_AGE_GROUPS> m_ages; ///< Set of #AgeGroup%s that are either allowed or required to be tested.
     std::bitset<(size_t)InfectionState::Count>
@@ -144,6 +176,50 @@ public:
      */
     bool run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
+    /**
+     * serialize this. 
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("TestingScheme");
+        obj.add_element("criteria", m_testing_criteria);
+        obj.add_element("min_time_since_last_test", m_minimal_time_since_last_test);
+        obj.add_element("start_date", m_start_date);
+        obj.add_element("end_date", m_end_date);
+        obj.add_element("test_type",
+                        m_test_type.get_default()); // FIXME: m_test_type should contain TestParameters directly
+        obj.add_element("probability", m_probability);
+        obj.add_element("is_active", m_is_active);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<TestingScheme> deserialize(IOContext& io)
+    {
+        auto obj                      = io.expect_object("TestingScheme");
+        auto criteria                 = obj.expect_element("criteria", Tag<TestingCriteria>{});
+        auto min_time_since_last_test = obj.expect_element("min_time_since_last_test", Tag<TimeSpan>{});
+        auto start_date               = obj.expect_element("start_date", Tag<TimePoint>{});
+        auto end_date                 = obj.expect_element("end_date", Tag<TimePoint>{});
+        auto test_type                = obj.expect_element(
+            "test_type", Tag<GenericTest::Type>{}); // FIXME: m_test_type should contain TestParameters directly
+        auto probability = obj.expect_element("probability", Tag<ScalarType>{});
+        auto is_active   = obj.expect_element("is_active", Tag<bool>{});
+        return apply(
+            io,
+            [](auto&& criteria_, auto&& min_time_since_last_test_, auto&& start_date_, auto&& end_date_,
+               auto&& test_type_, auto&& probability_, auto&& is_active_) {
+                return TestingScheme{
+                    criteria_, min_time_since_last_test_, start_date_, end_date_, test_type_, probability_, is_active_};
+            },
+            criteria, min_time_since_last_test, start_date, end_date, test_type, probability, is_active);
+    }
+
 private:
     TestingCriteria m_testing_criteria; ///< TestingCriteria of the scheme.
     TimeSpan m_minimal_time_since_last_test; ///< Shortest period of time between two tests.
@@ -168,6 +244,12 @@ public:
         LocationType type;
         LocationId id;
         std::vector<TestingScheme> schemes;
+
+        /// This method is used by the auto-serialization feature.
+        auto auto_serialize()
+        {
+            return make_auto_serialization("LocalStrategy", NVP("type", type), NVP("id", id), NVP("schemes", schemes));
+        }
     };
 
     /**
@@ -232,6 +314,12 @@ public:
      * @return If the Person is allowed to enter the Location.
      */
     bool run_strategy(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
+
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("TestingStrategy", NVP("schemes", m_location_to_schemes_map));
+    }
 
 private:
     std::vector<LocalStrategy> m_location_to_schemes_map; ///< Set of schemes that are checked for testing.

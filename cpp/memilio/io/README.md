@@ -121,6 +121,28 @@ more efficiently than the provided general free functions.
 - HDF5 support classes for C++
 - Reading of mobility matrix files
 
+## Auto-serialization
+
+This feature provides an easy and convenient method to serialize and deserialize classes, but with additional requirements and a reduced feature set. To give an example:
+
+```cpp
+struct Foo {
+  int i;
+  auto auto_serialize() {
+    return make_auto_serialization("Foo", NVP("i", i));
+  }
+};
+```
+
+The auto-serialization effectively only supports the `add_element` and `expect_element` operations defined in the Concepts section, where the function arguments are provided by the name-value pairs (NVPs). Note that the value part of an NVP is also used to assign a value during deserialization, hence the class members must be used directly in the NVP constructor (i.e. as a non-const lvalue reference).
+
+The requirements for auto-serialization are:
+- The class must be trivially constructible.
+  - Alternatively, you may provide a spezialisation of the struct `AutoSerializableFactory`.
+- There is exactly one NVP for every class member (but the names and their order is arbitrary).
+  - Values must be passed directly.
+- Every class member itself is both (auto-)serializable and assignable.
+
 ## The command line interface
 
 We provide a function `mio::command_line_interface` in the header `memilio/io/cli.h`, that can be used to write to or read from a parameter set. It can take parameters from command line arguments (i.e. the content of `argv` in the main function), and assign them to or get them from a `mio::ParameterSet`. A small example can be seen in `cpp/examples/cli.cpp`.

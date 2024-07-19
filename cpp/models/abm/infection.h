@@ -21,6 +21,7 @@
 #define MIO_ABM_INFECTION_H
 
 #include "abm/personal_rng.h"
+#include "memilio/io/auto_serialize.h"
 #include "abm/time.h"
 #include "abm/infection_state.h"
 #include "abm/virus_variant.h"
@@ -44,11 +45,17 @@ struct ViralLoad {
     ScalarType peak; ///< Peak amplitude of the ViralLoad.
     ScalarType incline; ///< Incline of the ViralLoad during incline phase in log_10 scale per day (always positive).
     ScalarType decline; ///< Decline of the ViralLoad during decline phase in log_10 scale per day (always negative).
+
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("ViralLoad", NVP("start_date", start_date), NVP("end_date", end_date),
+                                       NVP("peak", peak), NVP("incline", incline), NVP("decline", decline));
+    }
 };
 
 class Infection
 {
-
 public:
     /**
      * @brief Create an Infection for a single Person.
@@ -114,7 +121,19 @@ public:
     */
     TimePoint get_start_date() const;
 
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("Infection", NVP("infection_course", m_infection_course),
+                                       NVP("virus_variant", m_virus_variant), NVP("viral_load", m_viral_load),
+                                       NVP("log_norm_alpha", m_log_norm_alpha), NVP("log_norm_beta", m_log_norm_beta),
+                                       NVP("detected", m_detected));
+    }
+
 private:
+    friend AutoSerializableFactory<Infection>;
+    Infection() = default;
+
     /**
      * @brief Determine ViralLoad course and Infection course based on init_state.
      * Calls draw_infection_course_backward for all #InfectionState%s prior and draw_infection_course_forward for all

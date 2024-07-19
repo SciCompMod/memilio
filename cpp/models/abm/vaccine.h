@@ -20,6 +20,7 @@
 #ifndef MIO_ABM_VACCINE_H
 #define MIO_ABM_VACCINE_H
 
+#include "memilio/io/auto_serialize.h"
 #include "abm/time.h"
 
 #include <cstdint>
@@ -44,7 +45,7 @@ enum class ExposureType : std::uint32_t
 /**
  * @brief A tuple of #TimePoint and #ExposureType (i.e. type of the Vaccine).
  * The #TimePoint describes the time of administration of the Vaccine.
-*/
+ */
 struct Vaccination {
     Vaccination(ExposureType exposure, TimePoint t)
         : exposure_type(exposure)
@@ -52,11 +53,27 @@ struct Vaccination {
     {
     }
 
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("Vaccination", NVP("exposure_type", exposure_type), NVP("time", time));
+    }
+
     ExposureType exposure_type;
     TimePoint time;
 };
 
 } // namespace abm
+
+/// @brief Creates an instance of abm::Vaccination for auto-deserialization.
+template <>
+struct AutoSerializableFactory<abm::Vaccination> {
+    static abm::Vaccination create()
+    {
+        return abm::Vaccination(abm::ExposureType::Count, abm::TimePoint());
+    }
+};
+
 } // namespace mio
 
 #endif

@@ -19,6 +19,8 @@
 */
 #include "abm/person.h"
 #include "abm_helpers.h"
+#include "matchers.h"
+#include "memilio/io/json_serializer.h"
 #include "memilio/utils/random_number_generator.h"
 
 TEST(TestWorld, init)
@@ -557,4 +559,68 @@ TEST(TestWorld, checkParameterConstraints)
 
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(-2);
     ASSERT_EQ(params.check_constraints(), true);
+}
+
+TEST(TestWorld, abmTripJsonSerialization)
+{
+    mio::abm::Trip trip(0, mio::abm::TimePoint(0) + mio::abm::hours(8), 1, 2);
+    auto js = mio::serialize_json(trip, true);
+    Json::Value expected_json;
+    expected_json["person_id"]   = Json::UInt(0);
+    expected_json["time"]        = Json::Int(mio::abm::hours(8).seconds());
+    expected_json["destination"] = Json::UInt(1);
+    expected_json["origin"]      = Json::UInt(2);
+    ASSERT_EQ(js.value(), expected_json);
+
+    auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Trip>());
+    ASSERT_THAT(print_wrap(r), IsSuccess());
+    EXPECT_EQ(r.value(), trip);
+}
+
+TEST(TestWorld, jsonSerialization)
+{
+    // Test that a json value x representing World is equal to serialize(deserialize(x)) w.r.t json representation
+
+    // Assuming (de)serialization does not depend on specific values of member variables, and that deserialize is
+    // injective (meaning two instances with different values do not have the same json representation, which can
+    // happen e.g. if not all member variables are serialized),
+    // this sufficiently tests that serialize and deserialize are inverse functions to each other
+
+    auto json_uint_array = [](std::vector<uint32_t> values) {
+        return mio::serialize_json(values).value();
+    };
+
+    unsigned i = 1; // counter s.t. members have different values
+
+    // define a json value for a World
+    Json::Value reference_json; // aka x
+    reference_json["cemetery_id"]                 = Json::UInt(i++);
+    reference_json["location_types"]              = Json::UInt(i++);
+    reference_json["locations"]                   = Json::Value(Json::arrayValue);
+    reference_json["parameters"]                  = mio::serialize_json(mio::abm::Parameters(i++)).value();
+    reference_json["persons"]                     = Json::Value(Json::arrayValue);
+    reference_json["rng"]["counter"]              = Json::UInt(i++);
+    reference_json["rng"]["key"]                  = Json::UInt(i++);
+    reference_json["rng"]["seeds"]                = json_uint_array({i++, i++, i++, i++, i++, i++});
+    reference_json["testing_strategy"]["schemes"] = Json::Value(Json::arrayValue);
+    reference_json["trip_list"]["index"]          = Json::UInt(i++);
+    reference_json["trip_list"]["trips_weekday"]  = Json::Value(Json::arrayValue);
+    reference_json["trip_list"]["trips_weekend"]  = Json::Value(Json::arrayValue);
+    reference_json["use_migration_rules"]         = Json::Value(true);
+
+    // check that the json is deserializable (i.e. a valid representation)
+    auto r = mio::deserialize_json(reference_json, mio::Tag<mio::abm::World>());
+    ASSERT_THAT(print_wrap(r), IsSuccess());
+    // check that the resulting Person is serializable
+    auto result = mio::serialize_json(r.value());
+    ASSERT_TRUE(result.value());
+    // write the resulting json value and the reference value to string to compare their representations.
+    Json::StreamWriterBuilder swb;
+    swb["indentation"] = " ";
+    auto js_writer     = std::unique_ptr<Json::StreamWriter>(swb.newStreamWriter());
+    std::stringstream result_str, reference_str;
+    js_writer->write(reference_json, &reference_str);
+    js_writer->write(result.value(), &result_str);
+    // we compare strings here, as e.g. Json::Int(5) != Json::Uint(5), but their json representation is the same
+    EXPECT_EQ(result_str.str(), reference_str.str());
 }

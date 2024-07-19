@@ -24,6 +24,8 @@
 #include "abm/person.h"
 #include "abm/time.h"
 #include "abm_helpers.h"
+#include "matchers.h"
+#include "memilio/io/json_serializer.h"
 #include "memilio/utils/random_number_generator.h"
 
 #include <gtest/gtest.h>
@@ -321,4 +323,64 @@ TEST(Person, rng)
     p_rng();
     EXPECT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(1));
     EXPECT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{1}));
+}
+
+TEST(TestPerson, jsonSerialization)
+{
+    // Test that a json value x representing Person is equal to serialize(deserialize(x)) w.r.t json representation
+
+    // Assuming (de)serialization does not depend on specific values of member variables, and that deserialize is
+    // injective (meaning two instances with different values do not have the same json representation, which can
+    // happen e.g. if not all member variables are serialized),
+    // this sufficiently tests that serialize and deserialize are inverse functions to each other
+
+    auto json_uint_array = [](std::vector<uint32_t> values) {
+        return mio::serialize_json(values).value();
+    };
+    auto json_double_array = [](std::vector<double> values) {
+        return mio::serialize_json(values).value();
+    };
+
+    unsigned i = 1; // counter s.t. members have different values
+
+    // define a json value for a Person
+    Json::Value reference_json; // aka x
+    reference_json["age_group"]           = Json::UInt(i++);
+    reference_json["assigned_locations"]  = json_uint_array({i++, i++, i++, i++, i++, i++, i++, i++, i++, i++, i++});
+    reference_json["cells"]               = json_uint_array({i++});
+    reference_json["id"]                  = Json::UInt(i++);
+    reference_json["infections"]          = Json::Value(Json::arrayValue);
+    reference_json["last_transport_mode"] = Json::UInt(i++);
+    reference_json["location"]            = Json::UInt(i++);
+    reference_json["mask"]["mask_type"]   = Json::UInt(0);
+    reference_json["mask"]["time_used"]["seconds"] = Json::UInt(i++);
+    reference_json["mask_compliance"] =
+        json_double_array({(double)i++, (double)i++, (double)i++, (double)i++, (double)i++, (double)i++, (double)i++,
+                           (double)i++, (double)i++, (double)i++, (double)i++});
+    reference_json["quarantine_start"]["seconds"]  = Json::UInt(i++);
+    reference_json["rnd_go_to_school_hour"]        = Json::Value((double)i++);
+    reference_json["rnd_go_to_work_hour"]          = Json::Value((double)i++);
+    reference_json["rnd_schoolgroup"]              = Json::Value((double)i++);
+    reference_json["rnd_workgroup"]                = Json::Value((double)i++);
+    reference_json["rng_counter"]                  = Json::UInt(i++);
+    reference_json["time_at_location"]["seconds"]  = Json::UInt(i++);
+    reference_json["time_of_last_test"]["seconds"] = Json::UInt(i++);
+    reference_json["vaccinations"]                 = Json::Value(Json::arrayValue);
+    reference_json["wears_mask"]                   = Json::Value(false);
+
+    // check that the json is deserializable (i.e. a valid representation)
+    auto r = mio::deserialize_json(reference_json, mio::Tag<mio::abm::Person>());
+    ASSERT_THAT(print_wrap(r), IsSuccess());
+    // check that the resulting Person is serializable
+    auto result = mio::serialize_json(r.value());
+    ASSERT_TRUE(result.value());
+    // write the resulting json value and the reference value to string to compare their representations.
+    Json::StreamWriterBuilder swb;
+    swb["indentation"] = " ";
+    auto js_writer     = std::unique_ptr<Json::StreamWriter>(swb.newStreamWriter());
+    std::stringstream result_str, reference_str;
+    js_writer->write(reference_json, &reference_str);
+    js_writer->write(result.value(), &result_str);
+    // we compare strings here, as e.g. Json::Int(5) != Json::Uint(5), but their json representation is the same
+    EXPECT_EQ(result_str.str(), reference_str.str());
 }

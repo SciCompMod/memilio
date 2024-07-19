@@ -23,6 +23,8 @@
 #include "abm/person.h"
 #include "abm/world.h"
 #include "abm_helpers.h"
+#include "matchers.h"
+#include "memilio/io/json_serializer.h"
 #include "memilio/utils/random_number_generator.h"
 
 TEST(TestLocation, initCell)
@@ -192,4 +194,46 @@ TEST(TestLocation, getGeographicalLocation)
     location.set_geographical_location(geographical_location);
 
     ASSERT_EQ(location.get_geographical_location(), geographical_location);
+}
+
+TEST(TestLocation, jsonSerialization)
+{
+    // Test that a json value x representing Location is equal to serialize(deserialize(x)) w.r.t json representation
+
+    // Assuming (de)serialization does not depend on specific values of member variables, and that deserialize is
+    // injective (meaning two instances with different values do not have the same json representation, which can
+    // happen e.g. if not all member variables are serialized),
+    // this sufficiently tests that serialize and deserialize are inverse functions to each other
+
+    unsigned i = 1; // counter s.t. members have different values
+
+    // define a json value for a Location
+    Json::Value reference_json; // aka x
+    reference_json["cells"][0]["capacity"]["persons"]    = Json::UInt(i++);
+    reference_json["cells"][0]["capacity"]["volume"]     = Json::UInt(i++);
+    reference_json["geographical_location"]["latitude"]  = Json::Value((double)i++);
+    reference_json["geographical_location"]["longitude"] = Json::Value((double)i++);
+    reference_json["id"]                                 = Json::UInt(i++);
+    reference_json["npi_active"]                         = Json::Value(false);
+    reference_json["parameters"]["ContactRates"] =
+        mio::serialize_json(mio::abm::ContactRates::get_default(i++)).value();
+    reference_json["parameters"]["MaximumContacts"]                     = Json::Value((double)i++);
+    reference_json["parameters"]["UseLocationCapacityForTransmissions"] = Json::Value(false);
+    reference_json["required_mask"]                                     = Json::UInt(0);
+
+    // check that the json is deserializable (i.e. a valid representation)
+    auto r = mio::deserialize_json(reference_json, mio::Tag<mio::abm::Location>());
+    ASSERT_THAT(print_wrap(r), IsSuccess());
+    // check that the resulting Person is serializable
+    auto result = mio::serialize_json(r.value());
+    ASSERT_TRUE(result.value());
+    // write the resulting json value and the reference value to string to compare their representations.
+    Json::StreamWriterBuilder swb;
+    swb["indentation"] = " ";
+    auto js_writer     = std::unique_ptr<Json::StreamWriter>(swb.newStreamWriter());
+    std::stringstream result_str, reference_str;
+    js_writer->write(reference_json, &reference_str);
+    js_writer->write(result.value(), &result_str);
+    // we compare strings here, as e.g. Json::Int(5) != Json::Uint(5), but their json representation is the same
+    EXPECT_EQ(result_str.str(), reference_str.str());
 }

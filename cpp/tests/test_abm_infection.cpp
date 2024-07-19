@@ -79,12 +79,10 @@ TEST(TestInfection, init)
     EXPECT_NEAR(infection.get_infectivity(mio::abm::TimePoint(0) + mio::abm::days(3)), 0.2689414213699951, 1e-14);
 
     params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_test,
-                                                      virus_variant_test}] = [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.91}, {30, 0.81}}, days);
-    };
-    params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.91}, {30, 0.81}}, days);
-    };
+                                                      virus_variant_test}] = mio::TimeDependentParameterFunctor{
+        mio::TimeDependentParameterFunctor::Type::LinearInterpolation, {{0, 0.91}, {30, 0.81}}};
+    params.get<mio::abm::HighViralLoadProtectionFactor>() = mio::TimeDependentParameterFunctor{
+        mio::TimeDependentParameterFunctor::Type::LinearInterpolation, {{0, 0.91}, {30, 0.81}}};
     auto infection_w_previous_exp =
         mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, age_group_test, params, mio::abm::TimePoint(0),
                             mio::abm::InfectionState::InfectedSymptoms,
@@ -164,7 +162,8 @@ TEST(TestInfection, drawInfectionCourseBackward)
 
 TEST(TestInfection, getPersonalProtectiveFactor)
 {
-    auto rng = mio::RandomNumberGenerator();
+    const ScalarType eps = 1e-4;
+    auto rng             = mio::RandomNumberGenerator();
 
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
     auto person   = mio::abm::Person(rng, location.get_type(), location.get_id(), age_group_15_to_34);
@@ -177,79 +176,79 @@ TEST(TestInfection, getPersonalProtectiveFactor)
         mio::abm::ExposureType::GenericVaccine, mio::AgeGroup(0), mio::abm::VirusVariant::Wildtype}](0);
     auto defaut_severity_protection  = params.get<mio::abm::SeverityProtectionFactor>()[{
         mio::abm::ExposureType::GenericVaccine, mio::AgeGroup(0), mio::abm::VirusVariant::Wildtype}](0);
-    ASSERT_NEAR(defaut_infection_protection, 0, 0.0001);
-    ASSERT_NEAR(defaut_severity_protection, 0, 0.0001);
+    EXPECT_NEAR(defaut_infection_protection, 0, eps);
+    EXPECT_NEAR(defaut_severity_protection, 0, eps);
 
     // Test linear interpolation with one node
-    mio::set_log_level(mio::LogLevel::critical); //this throws an error either way
+    // mio::set_log_level(mio::LogLevel::critical); //this throws an error either way
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, person.get_age(),
                                                        mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{2, 0.91}}, days);
-    };
+        mio::TimeDependentParameterFunctor{mio::TimeDependentParameterFunctor::Type::LinearInterpolation, {{2, 0.91}}};
     auto t = mio::abm::TimePoint(6 * 24 * 60 * 60);
-    ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0, 0.001);
-    mio::set_log_level(mio::LogLevel::warn); //this throws an error either way
+    // TODO: Discuss: Assumption of interpolation in TDPF is that the function is constant with value at front/back entry outside of [front, back] time range. This works with one node as well and prints no errors
+    EXPECT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.91, eps);
+    // mio::set_log_level(mio::LogLevel::warn); //this throws an error either way
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, person.get_age(),
                                                        mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{2, 0.91}, {30, 0.81}}, days);
-    };
+        mio::TimeDependentParameterFunctor{mio::TimeDependentParameterFunctor::Type::LinearInterpolation,
+                                           {{2, 0.91}, {30, 0.81}}};
     params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, person.get_age(),
                                                       mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{2, 0.91}, {30, 0.81}}, days);
-    };
-    params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{2, 0.91}, {30, 0.81}}, days);
-    };
+        mio::TimeDependentParameterFunctor{mio::TimeDependentParameterFunctor::Type::LinearInterpolation,
+                                           {{2, 0.91}, {30, 0.81}}};
+    params.get<mio::abm::HighViralLoadProtectionFactor>() = mio::TimeDependentParameterFunctor{
+        mio::TimeDependentParameterFunctor::Type::LinearInterpolation, {{2, 0.91}, {30, 0.81}}};
 
     // Test Parameter InfectionProtectionFactor and get_protection_factor()
     t                                = mio::abm::TimePoint(0) + mio::abm::days(2);
     auto infection_protection_factor = params.get<mio::abm::InfectionProtectionFactor>()[{
         latest_protection.first, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
         t.days() - latest_protection.second.days());
-    ASSERT_NEAR(infection_protection_factor, 0.91, 0.0001);
-    ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.91, 0.0001);
+    EXPECT_NEAR(infection_protection_factor, 0.91, eps);
+    EXPECT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.91, eps);
 
     t                           = mio::abm::TimePoint(0) + mio::abm::days(15);
     infection_protection_factor = params.get<mio::abm::InfectionProtectionFactor>()[{
         latest_protection.first, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
         t.days() - latest_protection.second.days());
-    ASSERT_NEAR(infection_protection_factor, 0.8635, 0.0001);
-    ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.8635, 0.0001);
+    EXPECT_NEAR(infection_protection_factor, 0.8635, eps);
+    EXPECT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.8635, eps);
 
     t                           = mio::abm::TimePoint(0) + mio::abm::days(40);
     infection_protection_factor = params.get<mio::abm::InfectionProtectionFactor>()[{
         latest_protection.first, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
         t.days() - latest_protection.second.days());
-    ASSERT_NEAR(infection_protection_factor, 0, 0.0001);
-    ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0, 0.0001);
+    EXPECT_NEAR(infection_protection_factor, 0.81,
+                eps); // TODO: why was this 0? should there be an instant falloff after last data point?
+    EXPECT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.81,
+                eps); // TODO: why was this 0? should there be an instant falloff after last data point?
 
     // Test Parameter SeverityProtectionFactor
     t                               = mio::abm::TimePoint(0) + mio::abm::days(2);
     auto severity_protection_factor = params.get<mio::abm::SeverityProtectionFactor>()[{
         latest_protection.first, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
         t.days() - latest_protection.second.days());
-    ASSERT_NEAR(severity_protection_factor, 0.91, 0.0001);
+    EXPECT_NEAR(severity_protection_factor, 0.91, eps);
 
     t                          = mio::abm::TimePoint(0) + mio::abm::days(15);
     severity_protection_factor = params.get<mio::abm::SeverityProtectionFactor>()[{
         latest_protection.first, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
         t.days() - latest_protection.second.days());
-    ASSERT_NEAR(severity_protection_factor, 0.8635, 0.0001);
+    EXPECT_NEAR(severity_protection_factor, 0.8635, eps);
 
     t                          = mio::abm::TimePoint(0) + mio::abm::days(40);
     severity_protection_factor = params.get<mio::abm::SeverityProtectionFactor>()[{
         latest_protection.first, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
         t.days() - latest_protection.second.days());
-    ASSERT_NEAR(severity_protection_factor, 0, 0.0001);
+    EXPECT_NEAR(severity_protection_factor, 0.81,
+                eps); // TODO: why was this 0? should there be an instant falloff after last data point?
 
     // Test Parameter HighViralLoadProtectionFactor
     t = mio::abm::TimePoint(0) + mio::abm::days(2);
-    ASSERT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0.91, 0.0001);
+    EXPECT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0.91, eps);
     t = mio::abm::TimePoint(0) + mio::abm::days(15);
-    ASSERT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0.8635, 0.0001);
+    EXPECT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0.8635, eps);
     t = mio::abm::TimePoint(0) + mio::abm::days(40);
-    ASSERT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0, 0.0001);
+    EXPECT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0.81,
+                eps); // TODO: why was this 0? should there be an instant falloff after last data point?
 }

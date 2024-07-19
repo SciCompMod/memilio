@@ -25,6 +25,7 @@
 #include "abm/parameters.h"
 #include "abm/location_type.h"
 
+#include "memilio/io/auto_serialize.h"
 #include "boost/atomic/atomic.hpp"
 
 namespace mio
@@ -47,6 +48,12 @@ struct GeographicalLocation {
     bool operator!=(const GeographicalLocation& other) const
     {
         return !(latitude == other.latitude && longitude == other.longitude);
+    }
+
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("GraphicalLocation", NVP("latitude", latitude), NVP("longitude", longitude));
     }
 };
 
@@ -73,6 +80,12 @@ struct CellCapacity {
     }
     uint32_t volume; ///< Volume of the Cell.
     uint32_t persons; ///< Maximal number of Person%s at the Cell.
+
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("CellCapacity", NVP("volume", volume), NVP("persons", persons));
+    }
 };
 
 /**
@@ -87,6 +100,12 @@ struct Cell {
     * @return The relative cell size for the Cell.
     */
     ScalarType compute_space_per_person_relative() const;
+
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("Cell", NVP("capacity", m_capacity));
+    }
 }; // namespace mio
 
 /**
@@ -233,36 +252,6 @@ public:
     }
 
     /**
-     * serialize this. 
-     * @see mio::serialize
-     */
-    template <class IOContext>
-    void serialize(IOContext& io) const
-    {
-        auto obj = io.create_object("Location");
-        obj.add_element("index", m_id);
-        obj.add_element("type", m_type);
-    }
-
-    /**
-     * deserialize an object of this class.
-     * @see mio::deserialize
-     */
-    template <class IOContext>
-    static IOResult<Location> deserialize(IOContext& io)
-    {
-        auto obj   = io.expect_object("Location");
-        auto index = obj.expect_element("index", Tag<LocationId>{});
-        auto type  = obj.expect_element("type", Tag<LocationType>{});
-        return apply(
-            io,
-            [](auto&& index_, auto&& type_) {
-                return Location{type_, index_};
-            },
-            index, type);
-    }
-
-    /**
      * @brief Get the geographical location of the Location.
      * @return The geographical location of the Location.
      */
@@ -280,7 +269,19 @@ public:
         m_geographical_location = location;
     }
 
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("Location", NVP("id", m_id), NVP("parameters", m_parameters),
+                                       NVP("cells", m_cells), NVP("required_mask", m_required_mask),
+                                       NVP("npi_active", m_npi_active),
+                                       NVP("geographical_location", m_geographical_location));
+    }
+
 private:
+    friend AutoSerializableFactory<Location>;
+    Location() = default;
+
     LocationType m_type; ///< Type of the Location.
     LocationId m_id; ///< Unique identifier for the Location in the World owning it.
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.

@@ -24,16 +24,45 @@
 #include "abm/time.h"
 #include "abm/virus_variant.h"
 #include "abm/vaccine.h"
+#include "memilio/config.h"
+#include "memilio/io/auto_serialize.h"
+#include "memilio/io/io.h"
+#include "memilio/math/time_dependent_parameter_functor.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/contact_matrix.h"
+#include <algorithm>
 #include <limits>
 
 namespace mio
 {
+
+template <class IOContext>
+void serialize_internal(IOContext& io, const UniformDistribution<double>::ParamType& p)
+{
+    auto obj = io.create_object("UniformDistributionParams");
+    obj.add_element("a", p.params.a());
+    obj.add_element("b", p.params.b());
+}
+
+template <class IOContext>
+IOResult<UniformDistribution<double>::ParamType> deserialize_internal(IOContext& io,
+                                                                      Tag<UniformDistribution<double>::ParamType>)
+{
+    auto obj = io.expect_object("UniformDistributionParams");
+    auto a   = obj.expect_element("a", Tag<double>{});
+    auto b   = obj.expect_element("b", Tag<double>{});
+    return apply(
+        io,
+        [](auto&& a_, auto&& b_) {
+            return UniformDistribution<double>::ParamType{a_, b_};
+        },
+        a, b);
+}
+
 namespace abm
 {
 
@@ -41,7 +70,7 @@ namespace abm
  * @brief Time that a Person is infected but not yet infectious.
  */
 struct IncubationPeriod {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -53,7 +82,7 @@ struct IncubationPeriod {
 };
 
 struct InfectedNoSymptomsToSymptoms {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -65,7 +94,7 @@ struct InfectedNoSymptomsToSymptoms {
 };
 
 struct InfectedNoSymptomsToRecovered {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -77,7 +106,7 @@ struct InfectedNoSymptomsToRecovered {
 };
 
 struct InfectedSymptomsToRecovered {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -89,7 +118,7 @@ struct InfectedSymptomsToRecovered {
 };
 
 struct InfectedSymptomsToSevere {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -101,7 +130,7 @@ struct InfectedSymptomsToSevere {
 };
 
 struct SevereToCritical {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -113,7 +142,7 @@ struct SevereToCritical {
 };
 
 struct SevereToRecovered {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -125,7 +154,7 @@ struct SevereToRecovered {
 };
 
 struct CriticalToRecovered {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -137,7 +166,7 @@ struct CriticalToRecovered {
 };
 
 struct CriticalToDead {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -149,7 +178,7 @@ struct CriticalToDead {
 };
 
 struct RecoveredToSusceptible {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -168,6 +197,14 @@ struct ViralLoadDistributionsParameters {
     UniformDistribution<double>::ParamType viral_load_peak;
     UniformDistribution<double>::ParamType viral_load_incline;
     UniformDistribution<double>::ParamType viral_load_decline;
+
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("ViralLoadDistributionsParameters", NVP("viral_load_peak", viral_load_peak),
+                                       NVP("viral_load_incline", viral_load_incline),
+                                       NVP("viral_load_decline", viral_load_decline));
+    }
 };
 
 struct ViralLoadDistributions {
@@ -191,6 +228,14 @@ struct ViralLoadDistributions {
 struct InfectivityDistributionsParameters {
     UniformDistribution<double>::ParamType infectivity_alpha;
     UniformDistribution<double>::ParamType infectivity_beta;
+
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("InfectivityDistributionsParameters",
+                                       NVP("infectivity_alpha", infectivity_alpha),
+                                       NVP("infectivity_beta", infectivity_beta));
+    }
 };
 
 struct InfectivityDistributions {
@@ -210,7 +255,7 @@ struct InfectivityDistributions {
  * @brief Probability that an Infection is detected.
  */
 struct DetectInfection {
-    using Type = CustomIndexArray< UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -225,7 +270,7 @@ struct DetectInfection {
  * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
  */
 struct MaskProtection {
-    using Type = CustomIndexArray< UncertainValue<>, MaskType>;
+    using Type = CustomIndexArray<UncertainValue<>, MaskType>;
     static Type get_default(AgeGroup /*size*/)
     {
         return Type({MaskType::Count}, 1.);
@@ -251,7 +296,8 @@ struct AerosolTransmissionRates {
     }
 };
 
-using InputFunctionForProtectionLevel = std::function<ScalarType(ScalarType)>;
+// using InputFunctionForProtectionLevel = std::function<ScalarType(ScalarType)>;
+using InputFunctionForProtectionLevel = TimeDependentParameterFunctor;
 
 /**
  * @brief Personal protection factor against #Infection% after #Infection and #Vaccination, which depends on #ExposureType,
@@ -261,9 +307,8 @@ struct InfectionProtectionFactor {
     using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
     static auto get_default(AgeGroup size)
     {
-        return Type({ExposureType::Count, size, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
-            return 0;
-        });
+        return Type({ExposureType::Count, size, VirusVariant::Count},
+                    Type::value_type(TimeDependentParameterFunctor::Type::Zero, {}));
     }
     static std::string name()
     {
@@ -279,9 +324,8 @@ struct SeverityProtectionFactor {
     using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
     static auto get_default(AgeGroup size)
     {
-        return Type({ExposureType::Count, size, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
-            return 0;
-        });
+        return Type({ExposureType::Count, size, VirusVariant::Count},
+                    Type::value_type(TimeDependentParameterFunctor::Type::Zero, {}));
     }
     static std::string name()
     {
@@ -296,9 +340,7 @@ struct HighViralLoadProtectionFactor {
     using Type = InputFunctionForProtectionLevel;
     static auto get_default()
     {
-        return Type([](ScalarType /*days*/) -> ScalarType {
-            return 0;
-        });
+        return Type(TimeDependentParameterFunctor::Type::Zero, {});
     }
     static std::string name()
     {
@@ -310,8 +352,15 @@ struct HighViralLoadProtectionFactor {
  * @brief Parameters that describe the reliability of a test.
  */
 struct TestParameters {
-     UncertainValue<> sensitivity;
-     UncertainValue<> specificity;
+    UncertainValue<> sensitivity;
+    UncertainValue<> specificity;
+
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("TestParameters", NVP("sensitivity", sensitivity),
+                                       NVP("specificity", specificity));
+    }
 };
 
 struct GenericTest {
@@ -390,7 +439,7 @@ struct QuarantineDuration {
  * @brief Parameter for the exponential distribution to decide if a Person goes shopping.
  */
 struct BasicShoppingRate {
-    using Type = CustomIndexArray< UncertainValue<>, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, AgeGroup>;
     static auto get_default(AgeGroup size)
     {
         return Type({size}, 1.0);
@@ -606,6 +655,14 @@ public:
     {
     }
 
+private:
+    Parameters(ParametersBase&& base)
+        : ParametersBase(std::move(base))
+        , m_num_groups(this->get<AgeGroupGotoWork>().size<AgeGroup>().get())
+    {
+    }
+
+public:
     /**
     * @brief Get the number of the age groups.
     */
@@ -754,6 +811,17 @@ public:
         }
 
         return false;
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Parameters> deserialize(IOContext& io)
+    {
+        BOOST_OUTCOME_TRY(auto&& base, ParametersBase::deserialize(io));
+        return success(Parameters(std::move(base)));
     }
 
 private:

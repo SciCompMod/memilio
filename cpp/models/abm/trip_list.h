@@ -191,6 +191,42 @@ public:
         return m_current_index;
     }
 
+    /**
+     * serialize this. 
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("TripList");
+        obj.add_list("trips_weekday", m_trips_weekday.cbegin(), m_trips_weekday.cend());
+        obj.add_list("trips_weekend", m_trips_weekend.cbegin(), m_trips_weekend.cend());
+        obj.add_element("index", m_current_index);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<TripList> deserialize(IOContext& io)
+    {
+        auto obj      = io.expect_object("TripList");
+        auto trips_wd = obj.expect_list("trips_weekday", Tag<Trip>{});
+        auto trips_we = obj.expect_list("trips_weekend", Tag<Trip>{});
+        auto index    = obj.expect_element("index", Tag<uint32_t>{});
+        return apply(
+            io,
+            [](auto&& trips_wd_, auto&& trips_we_, auto&& index_) {
+                TripList tl;
+                tl.m_trips_weekday = trips_wd_;
+                tl.m_trips_weekend = trips_we_;
+                tl.m_current_index = index_;
+                return tl;
+            },
+            trips_wd, trips_we, index);
+    }
+
 private:
     std::vector<Trip> m_trips_weekday; ///< The list of Trip%s a Person makes on a weekday.
     std::vector<Trip> m_trips_weekend; ///< The list of Trip%s a Person makes on a weekend day.
