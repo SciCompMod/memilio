@@ -370,6 +370,12 @@ public:
     */
     void set_persons(std::vector<Person>& persons)
     {
+        //first remove all old persons from the locations
+        for (auto&& person : m_persons) {
+            if (person->get_location().get_world_id() == m_id) {
+                person->get_location().remove_person(*person);
+            }
+        }
         //first clear old person vector and corresponding activeness vector
         m_persons.clear();
         m_activeness_statuses.clear();

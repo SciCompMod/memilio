@@ -165,9 +165,9 @@ private:
 template <class... History>
 class ABMMobilityEdge
 {
-    using MobilityRuleType = abm::LocationType (*)(const abm::Person&, abm::TimePoint, const abm::Parameters&);
 
 public:
+    using MobilityRuleType = abm::LocationType (*)(const abm::Person&, abm::TimePoint, const abm::Parameters&);
     /**
      * Creates edge with mobility parameters
      * @param params mobility parameters including people commuting via the edge and mobility rules
@@ -271,7 +271,10 @@ void evolve_model(abm::TimePoint t, abm::TimeSpan dt, ABMSimulationNode<History.
  * @param[in] graph Graph for simulation.
  */
 template <class... History>
-GraphSimulation<Graph<ABMSimulationNode<History...>, ABMMobilityEdge<History...>>, abm::TimePoint, abm::TimeSpan>
+GraphSimulation<Graph<ABMSimulationNode<History...>, ABMMobilityEdge<History...>>, abm::TimePoint, abm::TimeSpan,
+                void (*)(mio::abm::TimePoint, mio::abm::TimeSpan, mio::ABMMobilityEdge<History...>&,
+                         mio::ABMSimulationNode<History...>&, mio::ABMSimulationNode<History...>&),
+                void (*)(mio::abm::TimePoint, mio::abm::TimeSpan, mio::ABMSimulationNode<History...>&)>
 make_abm_graph_sim(abm::TimePoint t0, abm::TimeSpan dt,
                    Graph<ABMSimulationNode<History...>, ABMMobilityEdge<History...>>&& graph)
 {

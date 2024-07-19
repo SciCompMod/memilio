@@ -19,9 +19,46 @@
 */
 
 #include "abm/abm.h"
+#include "abm/infection_state.h"
+#include "abm/location_type.h"
+#include "abm/time.h"
+#include "graph_abm/graph_abm_mobility.h"
+#include "graph_abm/mobility_rules.h"
+#include "memilio/io/history.h"
+#include "memilio/mobility/graph.h"
 #include <cstddef>
 #include <cstdint>
+#include <map>
+#include <tuple>
+#include <utility>
 #include <vector>
+
+//Logger
+struct Logger : mio::LogAlways {
+    /**
+    * A vector of tuples with the Location information i.e. each tuple contains the following information:
+    * - The LocationId (including the world id)
+    * - The total number of Persons at the location
+    * - A map containing the number of Persons per InfectionState at the location
+    */
+    using Type = std::vector<std::tuple<mio::abm::LocationId, size_t, std::map<mio::abm::InfectionState, size_t>>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Type location_information{};
+        std::map<mio::abm::InfectionState, size_t> persons_per_infection_state;
+        auto t = sim.get_time();
+        for (auto&& loc : sim.get_world().get_locations()) {
+            for (size_t i = 0; i < static_cast<size_t>(mio::abm::InfectionState::Count); ++i) {
+                auto inf_state = mio::abm::InfectionState(i);
+                persons_per_infection_state.insert({inf_state, loc.get_subpopulation(t, inf_state)});
+            }
+            location_information.push_back(
+                std::make_tuple(mio::abm::LocationId{loc.get_index(), loc.get_type(), loc.get_world_id()},
+                                loc.get_number_persons(), persons_per_infection_state));
+        }
+        return location_information;
+    }
+};
 
 int main()
 {
@@ -171,7 +208,7 @@ int main()
             if (person.get_age() == age_group_adults) {
                 //10% of adults in world 0 work in world 1
                 size_t work_world = mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(),
-                                                                                      std::vector<int>{90, 10});
+                                                                                      std::vector<double>{0.9, 0.1});
                 if (work_world == 1) { //person works in other world
                     person.set_assigned_location(work_w2);
                     //add person to edge parameters
@@ -193,7 +230,7 @@ int main()
             if (person.get_age() == age_group_adults) {
                 //20% of adults in world 1 work in world 0
                 size_t work_world = mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(),
-                                                                                      std::vector<int>{20, 80});
+                                                                                      std::vector<double>{0.2, 0.8});
                 if (work_world == 0) { //person works in other world
                     person.set_assigned_location(work_w1);
                     //add person to edge parameters
@@ -209,6 +246,18 @@ int main()
     //copy persons to both worlds
     world1.set_persons(persons);
     world2.set_persons(persons);
+
+    using HistoryType = mio::History<mio::DataWriterToMemory, Logger>;
+    mio::Graph<mio::ABMSimulationNode<HistoryType>, mio::ABMMobilityEdge<HistoryType>> graph;
+    graph.add_node(world1.get_id(), HistoryType{}, start_date, std::move(world1));
+    graph.add_node(world2.get_id(), HistoryType{}, start_date, std::move(world2));
+    graph.add_edge(0, 1, params_e1,
+                   std::vector<mio::ABMMobilityEdge<HistoryType>::MobilityRuleType>{&mio::apply_commuting});
+    graph.add_edge(1, 0, params_e2,
+                   std::vector<mio::ABMMobilityEdge<HistoryType>::MobilityRuleType>{&mio::apply_commuting});
+
+    auto sim = mio::make_abm_graph_sim<HistoryType>(start_date, mio::abm::hours(12), std::move(graph));
+    sim.advance(end_date);
 
     return 0;
 }

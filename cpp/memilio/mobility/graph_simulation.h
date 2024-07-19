@@ -85,13 +85,13 @@ protected:
 };
 
 template <class Graph, class Timepoint = double, class Timespan = double,
-          class edge_f = std::function<void(Timepoint, Timespan, typename Graph::EdgeProperty&,
-                                            typename Graph::NodeProperty&, typename Graph::NodeProperty&)>,
-          class node_f = std::function<void(Timepoint, Timespan, typename Graph::NodeProperty&)>>
+          class edge_f = void (*)(Timepoint, Timespan, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
+                                  typename Graph::NodeProperty&),
+          class node_f = void (*)(Timepoint, Timespan, typename Graph::NodeProperty&)>
 class GraphSimulation : public GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>
 {
+    using GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>::GraphSimulationBase;
     using Base = GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>;
-    using Base::GraphSimulationBase;
 
 public:
     void advance(Timepoint t_max = 1.0)
@@ -255,8 +255,8 @@ private:
 template <typename Timepoint, class Timespan, class Graph, class NodeF, class EdgeF>
 auto make_graph_sim(Timepoint t0, Timespan dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
 {
-    return GraphSimulation<std::decay_t<Graph>>(t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func),
-                                                std::forward<EdgeF>(edge_func));
+    return GraphSimulation<std::decay_t<Graph>, Timepoint, Timespan, EdgeF, NodeF>(
+        t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
 }
 
 template <typename FP, class Graph, class NodeF, class EdgeF>
