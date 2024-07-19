@@ -17,16 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/abm.h"
 #include "abm/household.h"
-#include <cstdio>
+#include "abm/lockdown_rules.h"
+#include "abm/simulation.h"
 #include "abm/world.h"
-#include "memilio/io/io.h"
 #include "abm/location_type.h"
+#include "memilio/io/history.h"
+
 #include <fstream>
 #include <string>
-#include <iostream>
-#include "memilio/io/history.h"
 
 std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
 {
@@ -78,7 +77,6 @@ int main()
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
     world.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
 
-
     // There are 3 households for each household group.
     int n_households = 3;
 
@@ -110,21 +108,21 @@ int main()
     // Add one social event with 5 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);
-    world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     // Add hospital and ICU with 5 maximum contacs.
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
-    world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     auto icu = world.add_location(mio::abm::LocationType::ICU);
-    world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     // Add one supermarket, maximum constacts are assumed to be 20.
     auto shop = world.add_location(mio::abm::LocationType::BasicsShop);
-    world.get_individualized_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    world.get_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
     // At every school, the maximum contacts are 20.
     auto school = world.add_location(mio::abm::LocationType::School);
-    world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    world.get_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
     // At every workplace, maximum contacts are 10.
     auto work = world.add_location(mio::abm::LocationType::Work);
-    world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    world.get_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
 
     // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 30.
     auto testing_min_time      = mio::abm::days(1);
@@ -141,7 +139,7 @@ int main()
     // The infection states are chosen randomly.
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        auto rng = mio::abm::PersonalRandomNumberGenerator(world.get_rng(), person);
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)
@@ -150,19 +148,20 @@ int main()
     }
 
     // Assign locations to the people
-    for (auto& person : persons) {
+    for (auto& person : world.get_persons()) {
+        const auto pid = person.get_id();
         //assign shop and event
-        person.set_assigned_location(event);
-        person.set_assigned_location(shop);
+        world.assign_location(pid, event);
+        world.assign_location(pid, shop);
         //assign hospital and ICU
-        person.set_assigned_location(hospital);
-        person.set_assigned_location(icu);
+        world.assign_location(pid, hospital);
+        world.assign_location(pid, icu);
         //assign work/school to people depending on their age
         if (person.get_age() == age_group_5_to_14) {
-            person.set_assigned_location(school);
+            world.assign_location(pid, school);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            person.set_assigned_location(work);
+            world.assign_location(pid, work);
         }
     }
 
@@ -187,7 +186,7 @@ int main()
         {
             Type location_ids{};
             for (auto& location : sim.get_world().get_locations()) {
-                location_ids.push_back(std::make_tuple(location.get_type(), location.get_index()));
+                location_ids.push_back(std::make_tuple(location.get_type(), location.get_id().get()));
             }
             return location_ids;
         }
