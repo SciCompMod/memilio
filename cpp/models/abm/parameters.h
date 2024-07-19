@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_PARAMETERS_H
-#define EPI_ABM_PARAMETERS_H
+#ifndef MIO_ABM_PARAMETERS_H
+#define MIO_ABM_PARAMETERS_H
 
 #include "abm/mask_type.h"
 #include "abm/time.h"
@@ -27,13 +27,11 @@
 #include "abm/test_type.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/uncertain_value.h"
-#include "memilio/math/eigen.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include <limits>
-#include <set>
 
 namespace mio
 {
@@ -587,10 +585,23 @@ struct ContactRates {
     }
 };
 
+// If true, consider the capacity of the Cell%s of this Location for the computation of relative transmission risk.
+struct UseLocationCapacityForTransmissions {
+    using Type = bool;
+    static Type get_default(AgeGroup)
+    {
+        return false;
+    }
+    static std::string name()
+    {
+        return "UseLocationCapacityForTransmissions";
+    }
+};
+
 /**
  * @brief Parameters of the Infection that depend on the Location.
  */
-using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates>;
+using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates, UseLocationCapacityForTransmissions>;
 
 /**
  * @brief Parameters of the simulation that are the same everywhere within the World.

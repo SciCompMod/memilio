@@ -18,15 +18,20 @@
 * limitations under the License.
 */
 
+//Includes from pymio
 #include "pybind_util.h"
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
 #include "utils/index.h"
-#include "abm/abm.h"
+
+//Includes from MEmilio
+#include "abm/simulation.h"
+
 #include "pybind11/attr.h"
 #include "pybind11/cast.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/operators.h"
+#include <cstdint>
 #include <type_traits>
 
 namespace py = pybind11;
@@ -72,7 +77,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
 
-    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::abm::VirusVariant, mio::AgeGroup>(m, "_AgeParameterArray");
+    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::abm::VirusVariant, mio::AgeGroup>(
+        m, "_AgeParameterArray");
     pymio::bind_CustomIndexArray<mio::abm::TestParameters, mio::abm::TestType>(m, "_TestData");
     pymio::bind_Index<mio::abm::ExposureType>(m, "ExposureTypeIndex");
     pymio::bind_ParameterSet<mio::abm::ParametersBase, pymio::EnablePickling::Never>(m, "ParametersBase");
@@ -80,7 +86,9 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::init<int>())
         .def("check_constraints", &mio::abm::Parameters::check_constraints);
 
-    pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters, pymio::EnablePickling::Never>(m, "LocalInfectionParameters").def(py::init<size_t>());
+    pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters, pymio::EnablePickling::Never>(
+        m, "LocalInfectionParameters")
+        .def(py::init<size_t>());
 
     pymio::bind_class<mio::abm::TimeSpan, pymio::EnablePickling::Never>(m, "TimeSpan")
         .def(py::init<int>(), py::arg("seconds") = 0)
@@ -128,16 +136,16 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::self -= mio::abm::TimeSpan{});
 
     pymio::bind_class<mio::abm::LocationId, pymio::EnablePickling::Never>(m, "LocationId")
-        .def(py::init([](uint32_t idx, mio::abm::LocationType type) {
-            return mio::abm::LocationId{idx, type};
-        }))
-        .def_readwrite("index", &mio::abm::LocationId::index)
-        .def_readwrite("type", &mio::abm::LocationId::type)
-        .def(py::self == py::self)
-        .def(py::self != py::self);
+        .def(py::init<uint32_t>(), py::arg("id"))
+        .def("index", &mio::abm::LocationId::get);
+
+    pymio::bind_class<mio::abm::PersonId, pymio::EnablePickling::Never>(m, "PersonId")
+        .def(py::init<uint32_t>(), py::arg("id"))
+        .def("index", &mio::abm::PersonId::get);
 
     pymio::bind_class<mio::abm::Person, pymio::EnablePickling::Never>(m, "Person")
-        .def("set_assigned_location", py::overload_cast<mio::abm::LocationId>(&mio::abm::Person::set_assigned_location))
+        .def("set_assigned_location",
+             py::overload_cast<mio::abm::LocationType, mio::abm::LocationId>(&mio::abm::Person::set_assigned_location))
         .def_property_readonly("location", py::overload_cast<>(&mio::abm::Person::get_location, py::const_))
         .def_property_readonly("age", &mio::abm::Person::get_age)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
@@ -159,11 +167,11 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("time", &mio::abm::Vaccination::time);
 
     pymio::bind_class<mio::abm::TestingStrategy, pymio::EnablePickling::Never>(m, "TestingStrategy")
-        .def(py::init<const std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>&>());
+        .def(py::init<const std::vector<mio::abm::TestingStrategy::LocalStrategy>&>());
 
     pymio::bind_class<mio::abm::Location, pymio::EnablePickling::Never>(m, "Location")
         .def_property_readonly("type", &mio::abm::Location::get_type)
-        .def_property_readonly("index", &mio::abm::Location::get_index)
+        .def_property_readonly("id", &mio::abm::Location::get_id)
         .def_property("infection_parameters",
                       py::overload_cast<>(&mio::abm::Location::get_infection_parameters, py::const_),
                       [](mio::abm::Location& self, mio::abm::LocalInfectionParameters params) {
@@ -171,8 +179,8 @@ PYBIND11_MODULE(_simulation_abm, m)
                       });
 
     //copying and moving of ranges enabled below, see PYMIO_IGNORE_VALUE_TYPE
-    pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_locations())>(m, "_WorldLocationsRange");
-    pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_persons())>(m, "_WorldPersonsRange");
+    pymio::bind_Range<decltype(std::declval<const mio::abm::World>().get_locations())>(m, "_WorldLocationsRange");
+    pymio::bind_Range<decltype(std::declval<const mio::abm::World>().get_persons())>(m, "_WorldPersonsRange");
 
     pymio::bind_class<mio::abm::Trip, pymio::EnablePickling::Never>(m, "Trip")
         .def(py::init<uint32_t, mio::abm::TimePoint, mio::abm::LocationId, mio::abm::LocationId,
@@ -194,11 +202,13 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_class<mio::abm::World, pymio::EnablePickling::Never>(m, "World")
         .def(py::init<int32_t>())
         .def("add_location", &mio::abm::World::add_location, py::arg("location_type"), py::arg("num_cells") = 1)
-        .def("add_person", &mio::abm::World::add_person, py::arg("location_id"), py::arg("age_group"),
-             py::return_value_policy::reference_internal)
-        .def_property_readonly("locations", &mio::abm::World::get_locations,
+        .def("add_person", py::overload_cast<mio::abm::LocationId, mio::AgeGroup>(&mio::abm::World::add_person),
+             py::arg("location_id"), py::arg("age_group"))
+        .def("assign_location", &mio::abm::World::assign_location, py::arg("person_id"), py::arg("location_id"))
+        .def_property_readonly("locations", py::overload_cast<>(&mio::abm::World::get_locations, py::const_),
                                py::keep_alive<1, 0>{}) //keep this world alive while contents are referenced in ranges
-        .def_property_readonly("persons", &mio::abm::World::get_persons, py::keep_alive<1, 0>{})
+        .def_property_readonly("persons", py::overload_cast<>(&mio::abm::World::get_persons, py::const_),
+                               py::keep_alive<1, 0>{})
         .def_property(
             "trip_list", py::overload_cast<>(&mio::abm::World::get_trip_list),
             [](mio::abm::World& self, const mio::abm::TripList& list) {
