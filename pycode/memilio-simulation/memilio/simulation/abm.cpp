@@ -207,7 +207,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("assign_location", &mio::abm::World::assign_location, py::arg("person_id"), py::arg("location_id"))
         .def_property_readonly("locations", py::overload_cast<>(&mio::abm::World::get_locations, py::const_),
                                py::keep_alive<1, 0>{}) //keep this world alive while contents are referenced in ranges
-        .def_property_readonly("persons", py::overload_cast<>(&mio::abm::World::get_locations, py::const_),
+        .def_property_readonly("persons", py::overload_cast<>(&mio::abm::World::get_persons, py::const_),
                                py::keep_alive<1, 0>{})
         .def_property(
             "trip_list", py::overload_cast<>(&mio::abm::World::get_trip_list),
