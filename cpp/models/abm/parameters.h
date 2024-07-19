@@ -317,9 +317,9 @@ struct TestParameters {
      UncertainValue<> specificity;
 
      /**
-     * serialize this. 
-     * @see mio::serialize
-     */
+      * serialize this. 
+      * @see mio::serialize
+      */
      template <class IOContext>
      void serialize(IOContext& io) const
      {
@@ -329,9 +329,9 @@ struct TestParameters {
      }
 
      /**
-     * deserialize an object of this class.
-     * @see mio::deserialize
-     */
+      * deserialize an object of this class.
+      * @see mio::deserialize
+      */
      template <class IOContext>
      static IOResult<TestParameters> deserialize(IOContext& io)
      {
