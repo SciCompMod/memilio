@@ -561,6 +561,8 @@ TEST(TestWorld, checkParameterConstraints)
     ASSERT_EQ(params.check_constraints(), true);
 }
 
+#ifdef MEMILIO_HAS_JSONCPP
+
 TEST(TestWorld, abmTripJsonSerialization)
 {
     mio::abm::Trip trip(0, mio::abm::TimePoint(0) + mio::abm::hours(8), 1, 2);
@@ -624,3 +626,5 @@ TEST(TestWorld, jsonSerialization)
     // we compare strings here, as e.g. Json::Int(5) != Json::Uint(5), but their json representation is the same
     EXPECT_EQ(result_str.str(), reference_str.str());
 }
+
+#endif // MEMILIO_HAS_JSONCPP

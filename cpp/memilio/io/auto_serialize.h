@@ -166,10 +166,10 @@ using has_auto_serialize = is_expression_valid<details::auto_serialize_expr_t, T
 
 // disables itself if a deserialize member is present or if there is no auto_serialize member
 // generates serialize method depending on NVPs given by auto_serialize
-template <class IOContext, class AutoSerializable,
-          std::enable_if_t<has_auto_serialize<AutoSerializable>::value &&
-                               not has_serialize<IOContext, AutoSerializable>::value,
-                           AutoSerializable*> = nullptr>
+template <
+    class IOContext, class AutoSerializable,
+    std::enable_if_t<has_auto_serialize<AutoSerializable>::value && !has_serialize<IOContext, AutoSerializable>::value,
+                     AutoSerializable*> = nullptr>
 void serialize_internal(IOContext& io, const AutoSerializable& t)
 {
     // Note that this cast is only safe if we do not modify targets.
@@ -181,7 +181,7 @@ void serialize_internal(IOContext& io, const AutoSerializable& t)
 // generates deserialize method depending on NVPs given by auto_serialize
 template <class IOContext, class AutoSerializable,
           std::enable_if_t<has_auto_serialize<AutoSerializable>::value &&
-                               not has_deserialize<IOContext, AutoSerializable>::value,
+                               !has_deserialize<IOContext, AutoSerializable>::value,
                            AutoSerializable*> = nullptr>
 IOResult<AutoSerializable> deserialize_internal(IOContext& io, Tag<AutoSerializable>)
 {

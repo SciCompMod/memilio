@@ -196,6 +196,8 @@ TEST(TestLocation, getGeographicalLocation)
     ASSERT_EQ(location.get_geographical_location(), geographical_location);
 }
 
+#ifdef MEMILIO_HAS_JSONCPP
+
 TEST(TestLocation, jsonSerialization)
 {
     // Test that a json value x representing Location is equal to serialize(deserialize(x)) w.r.t json representation
@@ -237,3 +239,5 @@ TEST(TestLocation, jsonSerialization)
     // we compare strings here, as e.g. Json::Int(5) != Json::Uint(5), but their json representation is the same
     EXPECT_EQ(result_str.str(), reference_str.str());
 }
+
+#endif // MEMILIO_HAS_JSONCPP

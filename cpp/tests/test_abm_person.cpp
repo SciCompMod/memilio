@@ -325,6 +325,8 @@ TEST(Person, rng)
     EXPECT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{1}));
 }
 
+#ifdef MEMILIO_HAS_JSONCPP
+
 TEST(TestPerson, jsonSerialization)
 {
     // Test that a json value x representing Person is equal to serialize(deserialize(x)) w.r.t json representation
@@ -384,3 +386,5 @@ TEST(TestPerson, jsonSerialization)
     // we compare strings here, as e.g. Json::Int(5) != Json::Uint(5), but their json representation is the same
     EXPECT_EQ(result_str.str(), reference_str.str());
 }
+
+#endif // MEMILIO_HAS_JSONCPP
