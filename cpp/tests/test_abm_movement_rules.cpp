@@ -63,46 +63,6 @@ TEST(TestMobilityRules, random_mobility)
     EXPECT_EQ(dest2, default_type) << "should return current location type";
 }
 
-TEST(TestMobilityRules, random_mobility)
-{
-    int t = 0, dt = 1;
-    auto rng          = mio::RandomNumberGenerator();
-    auto default_type = mio::abm::LocationType::Cemetery;
-    auto person       = mio::abm::Person(rng, default_type, 0, age_group_15_to_34);
-    auto p_rng        = mio::abm::PersonalRandomNumberGenerator(rng, person);
-    auto params       = mio::abm::Parameters(num_age_groups);
-
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>> mock_exp_dist;
-    EXPECT_CALL(mock_exp_dist.get_mock(), invoke)
-        .Times(testing::Exactly(2))
-        // values for v in mio::abm::random_transition
-        .WillOnce(testing::Return((t + dt) / 2.))
-        .WillOnce(testing::Return(t + 2. * dt));
-
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_disc_dist;
-    EXPECT_CALL(mock_disc_dist.get_mock(), invoke)
-        .Times(testing::Exactly(1))
-        // arbitrary value for random_idx in mio::abm::random_transition
-        .WillOnce(testing::Return(2));
-
-    const auto random_mobility = [&]() {
-        return mio::abm::random_mobility(p_rng, person, mio::abm::TimePoint{t}, mio::abm::days(dt), params);
-    };
-
-    params.set<mio::abm::LockdownDate>(mio::abm::TimePoint{t + 2 * dt});
-
-    const auto dest0 = random_mobility();
-    EXPECT_NE(dest0, default_type) << "should return a new location type (via random_transition)";
-
-    const auto dest1 = random_mobility();
-    EXPECT_EQ(dest1, default_type) << "should return current location type (via random_transition)";
-
-    params.set<mio::abm::LockdownDate>(mio::abm::TimePoint{t});
-
-    const auto dest2 = random_mobility();
-    EXPECT_EQ(dest2, default_type) << "should return current location type";
-}
-
 TEST(TestMobilityRules, student_goes_to_school)
 {
     auto rng = mio::RandomNumberGenerator();

@@ -99,7 +99,7 @@ TEST(TestModel, getSubpopulationCombined)
 
 TEST(TestModel, findLocation)
 {
-    auto model     = mio::abm::model(num_age_groups);
+    auto model     = mio::abm::Model(num_age_groups);
     auto home_id   = model.add_location(mio::abm::LocationType::Home);
     auto school_id = model.add_location(mio::abm::LocationType::School);
     auto work_id   = model.add_location(mio::abm::LocationType::Work);
