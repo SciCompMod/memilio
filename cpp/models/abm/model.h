@@ -22,7 +22,7 @@
 
 #include "abm/model_functions.h"
 #include "abm/location_type.h"
-#include "abm/moblity_data.h"
+#include "abm/mobility_data.h"
 #include "abm/parameters.h"
 #include "abm/location.h"
 #include "abm/person.h"
@@ -127,7 +127,7 @@ public:
         obj.add_list("trips", trips.begin(), trips.end());
         obj.add_list("locations", get_locations().begin(), get_locations().end());
         obj.add_list("persons", get_persons().begin(), get_persons().end());
-        obj.add_element("use_moblity_rules", m_use_moblity_rules);
+        obj.add_element("use_mobility_rules", m_use_mobility_rules);
     }
 
     /**
@@ -142,13 +142,13 @@ public:
         auto locations         = obj.expect_list("locations", Tag<Location>{});
         auto trip_list         = obj.expect_list("trips", Tag<Trip>{});
         auto persons           = obj.expect_list("persons", Tag<Person>{});
-        auto use_moblity_rules = obj.expect_element("use_moblity_rules", Tag<bool>{});
+        auto use_mobility_rules = obj.expect_element("use_mobility_rules", Tag<bool>{});
         return apply(
             io,
-            [](auto&& size_, auto&& locations_, auto&& trip_list_, auto&& persons_, auto&& use_moblity_rule_) {
-                return Model{size_, locations_, trip_list_, persons_, use_moblity_rule_};
+            [](auto&& size_, auto&& locations_, auto&& trip_list_, auto&& persons_, auto&& use_mobility_rule_) {
+                return Model{size_, locations_, trip_list_, persons_, use_mobility_rule_};
             },
-            size, locations, trip_list, persons, use_moblity_rules);
+            size, locations, trip_list, persons, use_mobility_rules);
     }
 
     /** 
@@ -255,8 +255,8 @@ public:
      * @param[in] param If true uses the mobility rules for changing location to school/work etc., else only the rules
      * regarding hospitalization/ICU/quarantine.
      */
-    void use_moblity_rules(bool param);
-    bool use_moblity_rules() const;
+    void use_mobility_rules(bool param);
+    bool use_mobility_rules() const;
 
     /**
     * @brief Check if at least one Location with a specified LocationType exists.
@@ -375,7 +375,7 @@ public:
      * @param[in] cells The cells within the destination the person should be in.
      */
     inline void change_location(PersonId person, LocationId destination, TransportMode mode = TransportMode::Unknown,
-                        const std::vector<uint32_t>& cells = {0})
+                                const std::vector<uint32_t>& cells = {0})
     {
         LocationId origin    = get_location(person).get_id();
         const bool has_moved = mio::abm::change_location(get_person(person), get_location(destination), mode, cells);
@@ -459,7 +459,7 @@ private:
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */
-    void moblity(TimePoint t, TimeSpan dt);
+    void perform_mobility(TimePoint t, TimeSpan dt);
 
     /// @brief Shape the cache and store how many Person%s are at any Location. Use from single thread!
     void build_compute_local_population_cache() const;
@@ -494,7 +494,7 @@ private:
     std::vector<std::pair<LocationType (*)(PersonalRandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
                                            const Parameters&),
                           std::vector<LocationType>>>
-        m_mobility_rules; ///< Rules that govern the moblity between Location%s.
+        m_mobility_rules; ///< Rules that govern the mobility between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.
     RandomNumberGenerator m_rng; ///< Global random number generator
 };

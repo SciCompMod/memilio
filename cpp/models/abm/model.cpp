@@ -239,82 +239,6 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
     } // implicit single barrier
 }
 
-void Model::build_compute_local_population_cache() const
-{
-    PRAGMA_OMP(single)
-    {
-        const size_t num_locations = m_locations.size();
-        const size_t num_persons   = m_persons.size();
-        m_local_population_cache.resize(num_locations);
-        PRAGMA_OMP(taskloop)
-        for (size_t i = 0; i < num_locations; i++) {
-            m_local_population_cache[i] = 0;
-        } // implicit taskloop barrier
-        PRAGMA_OMP(taskloop)
-        for (size_t i = 0; i < num_persons; i++) {
-            ++m_local_population_cache[m_persons[i].get_location().get()];
-        } // implicit taskloop barrier
-    } // implicit single barrier
-}
-
-void Model::build_exposure_caches()
-{
-    PRAGMA_OMP(single)
-    {
-        const size_t num_locations = m_locations.size();
-        m_air_exposure_rates_cache.resize(num_locations);
-        m_contact_exposure_rates_cache.resize(num_locations);
-        PRAGMA_OMP(taskloop)
-        for (size_t i = 0; i < num_locations; i++) {
-            m_air_exposure_rates_cache[i].resize({CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count});
-            m_contact_exposure_rates_cache[i].resize({CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count,
-                                                      AgeGroup(parameters.get_num_groups())});
-        } // implicit taskloop barrier
-        m_are_exposure_caches_valid    = false;
-        m_exposure_caches_need_rebuild = false;
-    } // implicit single barrier
-}
-
-void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
-{
-    PRAGMA_OMP(single)
-    {
-        // if cache shape was changed (e.g. by add_location), rebuild it
-        if (m_exposure_caches_need_rebuild) {
-            build_exposure_caches();
-        }
-        // use these const values to help omp recognize that the for loops are bounded
-        const auto num_locations = m_locations.size();
-        const auto num_persons   = m_persons.size();
-
-        // 1) reset all cached values
-        // Note: we cannot easily reuse values, as they are time dependant (get_infection_state)
-        PRAGMA_OMP(taskloop)
-        for (size_t i = 0; i < num_locations; ++i) {
-            const auto index         = i;
-            auto& local_air_exposure = m_air_exposure_rates_cache[index];
-            std::for_each(local_air_exposure.begin(), local_air_exposure.end(), [](auto& r) {
-                r = 0.0;
-            });
-            auto& local_contact_exposure = m_contact_exposure_rates_cache[index];
-            std::for_each(local_contact_exposure.begin(), local_contact_exposure.end(), [](auto& r) {
-                r = 0.0;
-            });
-        } // implicit taskloop barrier
-        // here is an implicit (and needed) barrier from parallel for
-
-        // 2) add all contributions from each person
-        PRAGMA_OMP(taskloop)
-        for (size_t i = 0; i < num_persons; ++i) {
-            const Person& person = m_persons[i];
-            const auto location  = person.get_location().get();
-            mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
-                                                m_contact_exposure_rates_cache[location], person,
-                                                get_location(person.get_id()), t, dt);
-        } // implicit taskloop barrier
-    } // implicit single barrier
-}
-
 void Model::begin_step(TimePoint t, TimeSpan dt)
 {
     m_testing_strategy.update_activity_status(t);
@@ -341,28 +265,16 @@ auto Model::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPer
     return std::make_pair(m_persons.cbegin(), m_persons.cend());
 }
 
-const Location& Model::get_individualized_location(LocationId id) const
+auto Model::get_persons() -> Range<std::pair<PersonIterator, PersonIterator>>
 {
-    return *m_locations[id.index];
+    return std::make_pair(m_persons.begin(), m_persons.end());
 }
 
-Location& Model::get_individualized_location(LocationId id)
+LocationId Model::find_location(LocationType type, const PersonId person) const
 {
-    return *m_locations[id.index];
-}
-
-const Location& Model::find_location(LocationType type, const Person& person) const
-{
-    auto index = person.get_assigned_location_index(type);
-    assert(index != INVALID_LOCATION_INDEX && "unexpected error.");
-    return get_individualized_location({index, type});
-}
-
-Location& Model::find_location(LocationType type, const Person& person)
-{
-    auto index = person.get_assigned_location_index(type);
-    assert(index != INVALID_LOCATION_INDEX && "unexpected error.");
-    return get_individualized_location({index, type});
+    auto location_id = get_person(person).get_assigned_location(type);
+    assert(location_id != LocationId::invalid_id() && "The person has no assigned location of that type.");
+    return location_id;
 }
 
 size_t Model::get_subpopulation_combined(TimePoint t, InfectionState s) const

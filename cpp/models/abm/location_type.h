@@ -19,8 +19,6 @@
 */
 #ifndef MIO_ABM_LOCATION_TYPE_H
 #define MIO_ABM_LOCATION_TYPE_H
-#ifndef MIO_ABM_LOCATION_TYPE_H
-#define MIO_ABM_LOCATION_TYPE_H
 
 #include <cstdint>
 
