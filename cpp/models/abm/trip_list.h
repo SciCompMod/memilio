@@ -67,16 +67,16 @@ struct Trip {
     {
     }
 
-    Trip(PersonId id, TimePoint time_new, LocationId destination, const std::vector<uint32_t>& input_cells = {})
-        : Trip(id, time_new, destination, destination, mio::abm::TransportMode::Unknown,
-               mio::abm::ActivityType::UnknownActivity, input_cells)
+    Trip(PersonId id, TimePoint time_new, LocationId dest, const std::vector<uint32_t>& input_cells = {})
+        : Trip(id, time_new, dest, dest, mio::abm::TransportMode::Unknown, mio::abm::ActivityType::UnknownActivity,
+               input_cells)
     {
     }
 
-    Trip(PersonId id, TimePoint time_new, LocationId destination, LocationId origin,
+    Trip(PersonId id, TimePoint time_new, LocationId dest, LocationId org,
          const std::vector<uint32_t>& input_cells = {})
-        : Trip(id, time_new, destination, origin, mio::abm::TransportMode::Unknown,
-               mio::abm::ActivityType::UnknownActivity, input_cells)
+        : Trip(id, time_new, dest, org, mio::abm::TransportMode::Unknown, mio::abm::ActivityType::UnknownActivity,
+               input_cells)
     {
     }
 
