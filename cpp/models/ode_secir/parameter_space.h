@@ -192,9 +192,9 @@ void draw_sample(Model<FP>& model)
 }
 
 template <typename FP = double>
-Graph<Model<FP>, MovementParameters<FP>> draw_sample(Graph<Model<FP>, MovementParameters<FP>>& graph)
+Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityParameters<FP>>& graph)
 {
-    Graph<Model<FP>, MovementParameters<FP>> sampled_graph;
+    Graph<Model<FP>, MobilityParameters<FP>> sampled_graph;
 
     //sample global parameters
     auto& shared_params_model = graph.nodes()[0].property;
@@ -229,7 +229,7 @@ Graph<Model<FP>, MovementParameters<FP>> draw_sample(Graph<Model<FP>, MovementPa
     for (auto& edge : graph.edges()) {
         auto edge_params = edge.property;
         apply_dampings(edge_params.get_coefficients(), shared_contacts.get_dampings(), [&edge_params](auto& v) {
-            return make_movement_damping_vector(edge_params.get_coefficients().get_shape(), v);
+            return make_mobility_damping_vector(edge_params.get_coefficients().get_shape(), v);
         });
         edge_params.set_dynamic_npis_infected(shared_dynamic_npis);
         sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge_params);

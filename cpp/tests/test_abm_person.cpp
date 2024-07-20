@@ -20,7 +20,7 @@
 #include "abm/location_id.h"
 #include "abm/model_functions.h"
 #include "abm/location_type.h"
-#include "abm/migration_rules.h"
+#include "abm/mobility_rules.h"
 #include "abm/person.h"
 #include "abm/time.h"
 #include "abm_helpers.h"

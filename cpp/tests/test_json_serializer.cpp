@@ -559,7 +559,7 @@ TEST(TestJsonSerializer, abmTrip)
 //     expected_json["persons"][0]["Location"]["type"]  = Json::UInt(mio::abm::LocationType::Home);
 //     expected_json["persons"][0]["age"]               = Json::UInt(2);
 //     expected_json["persons"][0]["id"]                = Json::UInt(person);
-//     expected_json["use_movement_rules"]             = Json::Value(true);
+//     expected_json["use_mobility_rules"]             = Json::Value(true);
 //     ASSERT_EQ(js.value(), expected_json);
 
 //     // auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Model>());

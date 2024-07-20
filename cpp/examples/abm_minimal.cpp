@@ -19,7 +19,7 @@
 */
 #include "abm/household.h"
 #include "abm/lockdown_rules.h"
-#include "abm/world.h"
+#include "abm/model.h"
 #include "abm/common_abm_loggers.h"
 
 #include <fstream>
@@ -109,7 +109,7 @@ int main()
     auto start_date            = mio::abm::TimePoint(0);
     auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(10);
     auto test_type             = mio::abm::TestType::Antigen;
-    auto test_parameters       = world.parameters.get<mio::abm::TestData>()[test_type];
+    auto test_parameters       = model.parameters.get<mio::abm::TestData>()[test_type];
     auto testing_criteria_work = mio::abm::TestingCriteria();
     auto testing_scheme_work   = mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date,
                                                          test_parameters, probability);
@@ -132,17 +132,17 @@ int main()
     for (auto& person : model.get_persons()) {
         const auto id = person.get_id();
         //assign shop and event
-        world.assign_location(id, event);
-        world.assign_location(id, shop);
+        model.assign_location(id, event);
+        model.assign_location(id, shop);
         //assign hospital and ICU
-        world.assign_location(id, hospital);
-        world.assign_location(id, icu);
+        model.assign_location(id, hospital);
+        model.assign_location(id, icu);
         //assign work/school to people depending on their age
         if (person.get_age() == age_group_0_to_4) {
-            world.assign_location(id, school);
+            model.assign_location(id, school);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            world.assign_location(id, work);
+            model.assign_location(id, work);
         }
     }
 

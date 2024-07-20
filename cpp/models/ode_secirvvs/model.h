@@ -804,17 +804,17 @@ FP get_infections_relative(const Simulation<FP, Base>& sim, FP /*t*/, const Eige
 }
 
 /**
- * Get movement factors.
- * Used by movement graph simulation.
- * Like infection risk, movement of infected individuals is reduced if they are well isolated.
+ * Get mobility factors.
+ * Used by mobility graph simulation.
+ * Like infection risk, mobility of infected individuals is reduced if they are well isolated.
  * @param model the compartment model with initial values.
  * @param t current simulation time.
  * @param y current value of compartments.
- * @return vector expression, same size as y, with movementfactors per compartment.
+ * @return vector expression, same size as y, with mobility factors per compartment.
  * @tparam Base simulation type that uses a secir compartment model. see Simulation.
  */
 template <typename FP = double, class Base = mio::Simulation<Model<FP>, FP>>
-auto get_movement_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Vector<FP>>& y)
+auto get_mobility_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Vector<FP>>& y)
 
 {
     auto& params = sim.get_model().parameters;

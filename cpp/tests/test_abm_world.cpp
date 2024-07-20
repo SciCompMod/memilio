@@ -170,7 +170,7 @@ TEST(TestModel, evolveStateTransition)
     EXPECT_EQ(p3.get_infection_state(t + dt), mio::abm::InfectionState::InfectedSymptoms);
 }
 
-TEST(TestModel, evolveMovement)
+TEST(TestModel, evolveMobility)
 {
     using testing::Return;
 
@@ -363,7 +363,7 @@ TEST(TestModel, evolveMovement)
         EXPECT_EQ(model.get_number_persons(home_id), 3);
     }
 
-    // Test that a dead person cannot make a movement
+    // Test that a dead person cannot change locations
     {
         auto t     = mio::abm::TimePoint(0);
         auto dt    = mio::abm::days(1);

@@ -22,7 +22,7 @@
 #include "abm/lockdown_rules.h"
 #include "abm/person.h"
 #include "abm/simulation.h"
-#include "abm/world.h"
+#include "abm/model.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/io/io.h"
 #include "memilio/io/result_io.h"
@@ -221,7 +221,7 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
     }
 
     std::map<uint32_t, mio::abm::LocationId> locations        = {};
-    std::map<uint32_t, mio::abm::PersonId> pids_data_to_world = {};
+    std::map<uint32_t, mio::abm::PersonId> pids_data_to_model = {};
     std::map<uint32_t, uint32_t> person_ids                   = {};
     std::map<uint32_t, std::pair<uint32_t, int>> locations_before;
     std::map<uint32_t, std::pair<uint32_t, int>> locations_after;
@@ -359,29 +359,29 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
         auto target_location = locations.find(target_location_id)->second;
         auto start_location  = locations.find(start_location_id)->second;
 
-        auto pid_itr = pids_data_to_world.find(person_data_id);
+        auto pid_itr = pids_data_to_model.find(person_data_id);
 
-        if (pid_itr == pids_data_to_world.end()) { // person has not been added to world yet
+        if (pid_itr == pids_data_to_model.end()) { // person has not been added to model yet
             auto it_first_location_id = locations_before.find(person_data_id);
             if (it_first_location_id == locations_before.end()) {
                 it_first_location_id = locations_after.find(person_data_id);
             }
             auto first_location_id = it_first_location_id->second.first;
             auto first_location    = locations.find(first_location_id)->second;
-            auto person_world_id   = model.add_person(first_location, determine_age_group(age));
+            auto person_model_id   = model.add_person(first_location, determine_age_group(age));
             auto home              = locations.find(home_id)->second;
-            world.assign_location(person_world_id, home);
-            world.assign_location(person_world_id, hospital);
-            world.assign_location(person_world_id, icu);
-            pid_itr = pids_data_to_world.insert_or_assign(person_data_id, person_world_id).first;
+            model.assign_location(person_model_id, home);
+            model.assign_location(person_model_id, hospital);
+            model.assign_location(person_model_id, icu);
+            pid_itr = pids_data_to_model.insert_or_assign(person_data_id, person_model_id).first;
         }
 
-        world.assign_location(
+        model.assign_location(
             pid_itr->second,
             target_location); //This assumes that we only have in each tripchain only one location type for each person
         if (locations.find(start_location_id) == locations.end()) {
             // For trips where the start location is not known use Home instead
-            start_location = world.get_person(pid_itr->second).get_assigned_location(mio::abm::LocationType::Home);
+            start_location = model.get_person(pid_itr->second).get_assigned_location(mio::abm::LocationType::Home);
         }
         model.get_trip_list().add_trip(mio::abm::Trip(
             pid_itr->second, mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location, start_location,
@@ -898,7 +898,7 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
 
     // Create the model object from statistical data.
     create_model_from_data(model, input_file, t0, max_num_persons);
-    model.use_movement_rules(false);
+    model.use_mobility_rules(false);
 
     // Assign an infection state to each person.
     assign_infection_state(model, t0, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
@@ -948,41 +948,41 @@ template <typename T>
 void write_log_to_file_trip_data(const T& history)
 {
 
-    auto movement_data = std::get<0>(history.get_log());
-    std::ofstream myfile3("movement_data.txt");
+    auto mobility_data = std::get<0>(history.get_log());
+    std::ofstream myfile3("mobility_data.txt");
     myfile3 << "agent_id, trip_id, start_location, end_location, start_time, end_time, transport_mode, activity, "
                "infection_state \n";
     int trips_id = 0;
-    for (uint32_t movement_data_index = 2; movement_data_index < movement_data.size(); ++movement_data_index) {
-        myfile3 << "timestep Nr.: " << movement_data_index - 1 << "\n";
-        for (uint32_t trip_index = 0; trip_index < movement_data[movement_data_index].size(); trip_index++) {
-            auto agent_id = std::get<0>(movement_data[movement_data_index][trip_index]);
+    for (uint32_t mobility_data_index = 2; mobility_data_index < mobility_data.size(); ++mobility_data_index) {
+        myfile3 << "timestep Nr.: " << mobility_data_index - 1 << "\n";
+        for (uint32_t trip_index = 0; trip_index < mobility_data[mobility_data_index].size(); trip_index++) {
+            auto agent_id = std::get<0>(mobility_data[mobility_data_index][trip_index]);
 
-            int start_index = movement_data_index - 1;
+            int start_index = mobility_data_index - 1;
             using Type      = std::tuple<mio::abm::PersonId, mio::abm::LocationId, mio::abm::TimePoint,
                                          mio::abm::TransportMode, mio::abm::ActivityType, mio::abm::InfectionState>;
-            while (!std::binary_search(std::begin(movement_data[start_index]), std::end(movement_data[start_index]),
-                                       movement_data[movement_data_index][trip_index],
+            while (!std::binary_search(std::begin(mobility_data[start_index]), std::end(mobility_data[start_index]),
+                                       mobility_data[mobility_data_index][trip_index],
                                        [](const Type& v1, const Type& v2) {
                                            return std::get<0>(v1) < std::get<0>(v2);
                                        })) {
                 start_index--;
             }
             auto start_location_iterator =
-                std::lower_bound(std::begin(movement_data[start_index]), std::end(movement_data[start_index]),
-                                 movement_data[movement_data_index][trip_index], [](const Type& v1, const Type& v2) {
+                std::lower_bound(std::begin(mobility_data[start_index]), std::end(mobility_data[start_index]),
+                                 mobility_data[mobility_data_index][trip_index], [](const Type& v1, const Type& v2) {
                                      return std::get<0>(v1) < std::get<0>(v2);
                                  });
             auto start_location = (int)std::get<1>(*start_location_iterator).get();
 
-            auto end_location = (int)std::get<1>(movement_data[movement_data_index][trip_index]).get();
+            auto end_location = (int)std::get<1>(mobility_data[mobility_data_index][trip_index]).get();
 
-            auto start_time = (int)std::get<2>(movement_data[movement_data_index][trip_index]).seconds();
-            auto end_time   = (int)std::get<2>(movement_data[movement_data_index][trip_index]).seconds();
+            auto start_time = (int)std::get<2>(mobility_data[mobility_data_index][trip_index]).seconds();
+            auto end_time   = (int)std::get<2>(mobility_data[mobility_data_index][trip_index]).seconds();
 
-            auto transport_mode  = (int)std::get<3>(movement_data[movement_data_index][trip_index]);
-            auto activity        = (int)std::get<4>(movement_data[movement_data_index][trip_index]);
-            auto infection_state = (int)std::get<5>(movement_data[movement_data_index][trip_index]);
+            auto transport_mode  = (int)std::get<3>(mobility_data[mobility_data_index][trip_index]);
+            auto activity        = (int)std::get<4>(mobility_data[mobility_data_index][trip_index]);
+            auto infection_state = (int)std::get<5>(mobility_data[mobility_data_index][trip_index]);
             myfile3 << agent_id << ", " << trips_id << ", " << start_location << " , " << end_location << " , "
                     << start_time << " , " << end_time << " , " << transport_mode << " , " << activity << " , "
                     << infection_state << "\n";
@@ -1011,11 +1011,11 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
         auto sim = create_sampled_simulation(input_file, t0, max_num_persons);
         //output object
         mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
-                     mio::abm::LogDataForMovement>
+                     mio::abm::LogDataForMobility>
             historyPersonInf;
         mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
             Eigen::Index(mio::abm::InfectionState::Count)};
-        mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMovement> historyPersonInfDelta;
+        mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMobility> historyPersonInfDelta;
         // Collect the id of location in model.
         std::vector<int> loc_ids;
         for (auto& location : sim.get_model().get_locations()) {

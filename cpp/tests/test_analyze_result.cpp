@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "abm/analyze_result.h"
-#include "abm/world.h"
+#include "abm/model.h"
 #include "matchers.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/data/analyze_result.h"
@@ -175,7 +175,7 @@ TEST(TestInterpolateGraph, basic)
 {
     using Model      = mio::osecir::Model<double>;
     using Simulation = mio::Simulation<double, Model>;
-    auto g           = mio::Graph<mio::SimulationNode<Simulation>, mio::MovementEdge<double>>();
+    auto g           = mio::Graph<mio::SimulationNode<Simulation>, mio::MobilityEdge<double>>();
     g.add_node(0, Model(1), 0.5);
     g.add_node(1, Model(1), 0.5);
     for (auto& n : g.nodes()) {

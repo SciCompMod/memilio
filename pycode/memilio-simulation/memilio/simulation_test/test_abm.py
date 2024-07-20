@@ -110,7 +110,7 @@ class TestAbm(unittest.TestCase):
         trip_list.add_trip(abm.Trip(1, abm.TimePoint(0) +
                            abm.hours(8), work_id, home_id))
         model.trip_list = trip_list
-        model.use_movement_rules = False
+        model.use_mobility_rules = False
         self.assertEqual(model.trip_list.num_trips(), 2)
 
         # vaccination

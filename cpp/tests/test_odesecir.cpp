@@ -966,7 +966,7 @@ TEST(Secir, get_reproduction_number)
     EXPECT_TRUE(mio::osecir::get_reproduction_number((size_t)0, sim));
 }
 
-TEST(Secir, get_movement_factors)
+TEST(Secir, get_mobility_factors)
 {
     auto beta                                                                              = 0.25;
     auto max_beta                                                                          = 0.5;
@@ -980,21 +980,21 @@ TEST(Secir, get_movement_factors)
     mio::osecir::Simulation<> sim(model, 0.0);
     {
         sim.get_model().parameters.get<mio::osecir::TestAndTraceCapacity<double>>() = 45.;
-        auto factors = mio::osecir::get_movement_factors<double>(sim, 0.0, sim.get_result().get_last_value());
+        auto factors = mio::osecir::get_mobility_factors<double>(sim, 0.0, sim.get_result().get_last_value());
         auto cmp     = Eigen::VectorXd::Ones(Eigen::Index(mio::osecir::InfectionState::Count)).eval();
         cmp[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)] = beta;
         ASSERT_THAT(print_wrap(factors), MatrixNear(cmp));
     }
     {
         sim.get_model().parameters.get<mio::osecir::TestAndTraceCapacity<double>>() = 45. / 5.;
-        auto factors = mio::osecir::get_movement_factors<double>(sim, 0.0, sim.get_result().get_last_value());
+        auto factors = mio::osecir::get_mobility_factors<double>(sim, 0.0, sim.get_result().get_last_value());
         auto cmp     = Eigen::VectorXd::Ones(Eigen::Index(mio::osecir::InfectionState::Count)).eval();
         cmp[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)] = max_beta;
         ASSERT_THAT(print_wrap(factors), MatrixNear(cmp));
     }
     {
         sim.get_model().parameters.get<mio::osecir::TestAndTraceCapacity<double>>() = 20.;
-        auto factors = mio::osecir::get_movement_factors<double>(sim, 0.0, sim.get_result().get_last_value());
+        auto factors = mio::osecir::get_mobility_factors<double>(sim, 0.0, sim.get_result().get_last_value());
         ASSERT_GT(factors[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)], beta);
         ASSERT_LT(factors[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)], max_beta);
     }
@@ -1003,15 +1003,15 @@ TEST(Secir, get_movement_factors)
 TEST(Secir, test_commuters)
 {
     auto model                                      = mio::osecir::Model(2);
-    auto movement_factor                           = 0.1;
+    auto mobility_factor                            = 0.1;
     auto non_detection_factor                       = 0.4;
     model.parameters.get_start_commuter_detection() = 0.0;
     model.parameters.get_end_commuter_detection()   = 20.0;
     model.parameters.get_commuter_nondetection()    = non_detection_factor;
     auto sim                                        = mio::osecir::Simulation<>(model);
     auto before_testing                             = sim.get_result().get_last_value().eval();
-    auto moved                                   = (sim.get_result().get_last_value() * movement_factor).eval();
-    auto moved_tested                            = moved.eval();
+    auto moved                                      = (sim.get_result().get_last_value() * mobility_factor).eval();
+    auto moved_tested                               = moved.eval();
 
     mio::osecir::test_commuters<double>(sim, moved_tested, 0.0);
 

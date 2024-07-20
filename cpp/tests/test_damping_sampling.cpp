@@ -65,9 +65,9 @@ TEST(TestDampingSampling, contactMask)
                 MatrixNear((Eigen::MatrixXd(2, 2) << 0.0, 1 - sqrt(0.5), 1 - sqrt(0.5), 0.5).finished()));
 }
 
-TEST(TestDampingSampling, movementMask)
+TEST(TestDampingSampling, mobilityMask)
 {
-    auto m = mio::make_movement_damping_vector(mio::ColumnVectorShape(6), (Eigen::VectorXd(2) << 0.5, 0.25).finished())
+    auto m = mio::make_mobility_damping_vector(mio::ColumnVectorShape(6), (Eigen::VectorXd(2) << 0.5, 0.25).finished())
                  .eval();
     ASSERT_THAT(print_wrap(m), MatrixNear((Eigen::VectorXd(6) << 0.5, 0.5, 0.5, 0.25, 0.25, 0.25).finished()));
 }

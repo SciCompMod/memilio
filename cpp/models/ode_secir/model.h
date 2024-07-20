@@ -637,18 +637,18 @@ IOResult<ScalarType> get_reproduction_number(ScalarType t_value, const Simulatio
 }
 
 /**
- * Get movement factors.
- * Used by movement graph simulation.
- * Like infection risk, movement of infected individuals is reduced if they are well isolated.
+ * Get mobility factors.
+ * Used by mobility graph simulation.
+ * Like infection risk, mobility of infected individuals is reduced if they are well isolated.
  * @param model the compartment model with initial values.
  * @param t current simulation time.
  * @param y current value of compartments.
- * @return vector expression, same size as y, with movement factors per compartment.
+ * @return vector expression, same size as y, with mobility factors per compartment.
  * @tparam FP floating point type, e.g., double.
  * @tparam Base simulation type that uses a secir compartment model; see Simulation.
  */
 template <typename FP = ScalarType, class Base = mio::Simulation<Model<FP>, FP>>
-auto get_movement_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Vector<FP>>& y)
+auto get_mobility_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Vector<FP>>& y)
 {
     auto& params = sim.get_model().parameters;
     //parameters as arrays

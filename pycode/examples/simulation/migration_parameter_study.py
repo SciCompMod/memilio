@@ -25,7 +25,7 @@ import memilio.simulation as mio
 import memilio.simulation.osecir as osecir
 
 
-def run_movement_parameter_study():
+def run_mobility_parameter_study():
     mio.set_log_level(mio.LogLevel.Warning)
 
     # setup basic parameters
@@ -49,7 +49,7 @@ def run_movement_parameter_study():
     model.parameters.CriticalPerSevere[mio.AgeGroup(0)] = 0.25
     model.parameters.DeathsPerCritical[mio.AgeGroup(0)] = 0.3
 
-    # two regions with different populations and with some movement between them
+    # two regions with different populations and with some mobility between them
     graph = osecir.ModelGraph()
     model.populations[mio.AgeGroup(0), osecir.InfectionState.Exposed] = 100
     model.populations[mio.AgeGroup(
@@ -87,12 +87,12 @@ def run_movement_parameter_study():
         2000)
     model.apply_constraints()
     graph.add_node(id=1, model=model)
-    movement_coefficients = 0.1 * np.ones(model.populations.numel())
-    movement_coefficients[osecir.InfectionState.Dead] = 0
-    movement_params = mio.MovementParameters(movement_coefficients)
+    mobility_coefficients = 0.1 * np.ones(model.populations.numel())
+    mobility_coefficients[osecir.InfectionState.Dead] = 0
+    mobility_params = mio.MobilityParameters(mobility_coefficients)
     # one coefficient per (age group x compartment)
-    graph.add_edge(0, 1, movement_params)
-    graph.add_edge(1, 0, movement_params)
+    graph.add_edge(0, 1, mobility_params)
+    graph.add_edge(1, 0, mobility_params)
 
     # process the result of one run
     def handle_result(graph, run_idx):
@@ -127,7 +127,7 @@ def run_movement_parameter_study():
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'movement_parameter_study',
+        'mobility_parameter_study',
         description='Example demonstrating setup of ensemble runs of a geographically resolved ODE SECIHURD model with mobility.')
     args = arg_parser.parse_args()
-    run_movement_parameter_study()
+    run_mobility_parameter_study()

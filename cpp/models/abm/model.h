@@ -75,7 +75,7 @@ public:
     Model(const Parameters& params)
         : parameters(params.get_num_groups())
         , m_trip_list()
-        , m_use_migration_rules(true)
+        , m_use_mobility_rules(true)
         , m_cemetery_id(add_location(LocationType::Cemetery))
     {
         parameters = params;
@@ -374,11 +374,11 @@ public:
      * @param[in] mode The transport mode the person uses to move.
      * @param[in] cells The cells within the destination the person should be in.
      */
-    inline void migrate(PersonId person, LocationId destination, TransportMode mode = TransportMode::Unknown,
+    inline void change_location(PersonId person, LocationId destination, TransportMode mode = TransportMode::Unknown,
                         const std::vector<uint32_t>& cells = {0})
     {
         LocationId origin    = get_location(person).get_id();
-        const bool has_moved = mio::abm::migrate(get_person(person), get_location(destination), mode, cells);
+        const bool has_moved = mio::abm::change_location(get_person(person), get_location(destination), mode, cells);
         // if the person has moved, invalidate exposure caches but keep population caches valid
         if (has_moved) {
             m_are_exposure_caches_valid = false;

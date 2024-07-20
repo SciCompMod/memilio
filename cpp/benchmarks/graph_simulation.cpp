@@ -118,7 +118,7 @@ auto create_simulation()
     mio::osecirvvs::Model model = create_model(cfg.num_agegroups, cfg.t_max);
 
     mio::Graph<mio::SimulationNode<mio::Simulation<ScalarType, mio::osecirvvs::Model<ScalarType>>>,
-               mio::MovementEdge<ScalarType>>
+               mio::MobilityEdge<ScalarType>>
         g;
     for (size_t county_id = 0; county_id < cfg.num_regions; county_id++) {
         g.add_node(county_id, model, cfg.t0);
@@ -136,7 +136,7 @@ auto create_simulation()
         }
     }
 
-    return mio::make_movement_sim(cfg.t0, cfg.dt, std::move(g));
+    return mio::make_mobility_sim(cfg.t0, cfg.dt, std::move(g));
 }
 
 template <class Integrator>

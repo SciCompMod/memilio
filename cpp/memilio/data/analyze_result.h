@@ -109,7 +109,7 @@ std::vector<TimeSeries<double>> ensemble_percentile(const std::vector<std::vecto
  */
 template <class Simulation, typename FP = double>
 std::vector<TimeSeries<double>>
-interpolate_simulation_result(const Graph<SimulationNode<Simulation>, MovementEdge<FP>>& graph_result)
+interpolate_simulation_result(const Graph<SimulationNode<Simulation>, MobilityEdge<FP>>& graph_result)
 {
     std::vector<TimeSeries<double>> interpolated;
     interpolated.reserve(graph_result.nodes().size());

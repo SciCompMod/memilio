@@ -30,9 +30,9 @@ namespace pymio
 {
 
 template <class Simulation>
-void bind_MovementGraph(pybind11::module_& m, std::string const& name)
+void bind_MobilityGraph(pybind11::module_& m, std::string const& name)
 {
-    using G = mio::Graph<mio::SimulationNode<Simulation>, mio::MovementEdge<double>>;
+    using G = mio::Graph<mio::SimulationNode<Simulation>, mio::MobilityEdge<double>>;
     bind_class<G, EnablePickling::IfAvailable>(m, name.c_str())
         .def(pybind11::init<>())
         .def(
@@ -42,7 +42,7 @@ void bind_MovementGraph(pybind11::module_& m, std::string const& name)
             },
             pybind11::arg("id"), pybind11::arg("model"), pybind11::arg("t0") = 0.0, pybind11::arg("dt") = 0.1,
             pybind11::return_value_policy::reference_internal)
-        .def("add_edge", &G::template add_edge<const mio::MovementParameters<double>&>,
+        .def("add_edge", &G::template add_edge<const mio::MobilityParameters<double>&>,
              pybind11::return_value_policy::reference_internal)
         .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>,
              pybind11::return_value_policy::reference_internal)
@@ -78,13 +78,13 @@ void bind_MovementGraph(pybind11::module_& m, std::string const& name)
             pybind11::return_value_policy::reference_internal);
 }
 
-void bind_movement_parameters(pybind11::module_& m, std::string const& name);
+void bind_mobility_parameters(pybind11::module_& m, std::string const& name);
 
-void bind_movement_parameter_edge(pybind11::module_& m, std::string const& name);
+void bind_mobility_parameter_edge(pybind11::module_& m, std::string const& name);
 
-void bind_movement(pybind11::module_& m, std::string const& name);
+void bind_mobility(pybind11::module_& m, std::string const& name);
 
-void bind_movement_edge(pybind11::module_& m, std::string const& name);
+void bind_mobility_edge(pybind11::module_& m, std::string const& name);
 
 template <typename Model>
 void bind_ModelNode(pybind11::module_& m, std::string const& name)
@@ -124,13 +124,13 @@ void bind_SimulationNode(pybind11::module_& m, std::string const& name)
 template <class Model>
 void bind_ModelGraph(pybind11::module_& m, std::string const& name)
 {
-    using G = mio::Graph<Model, mio::MovementParameters<double>>;
+    using G = mio::Graph<Model, mio::MobilityParameters<double>>;
     bind_class<G, EnablePickling::IfAvailable>(m, name.c_str())
         .def(pybind11::init<>())
         .def("add_node", &G::template add_node<const Model&>, pybind11::arg("id"), pybind11::arg("model"),
              pybind11::return_value_policy::reference_internal)
-        .def("add_edge", &G::template add_edge<const mio::MovementParameters<double>&>,
-             pybind11::arg("start_node_idx"), pybind11::arg("end_node_idx"), pybind11::arg("movement_parameters"),
+        .def("add_edge", &G::template add_edge<const mio::MobilityParameters<double>&>, pybind11::arg("start_node_idx"),
+             pybind11::arg("end_node_idx"), pybind11::arg("mobility_parameters"),
              pybind11::return_value_policy::reference_internal)
         .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>,
              pybind11::return_value_policy::reference_internal)

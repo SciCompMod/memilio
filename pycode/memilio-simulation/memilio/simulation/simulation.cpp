@@ -105,29 +105,28 @@ PYBIND11_MODULE(_simulation, m)
 
     pymio::bind_uncertain_contact_matrix(m, "UncertainContactMatrix");
 
-    auto movement_damping_class =
-        pymio::bind_class<mio::VectorDamping, pymio::EnablePickling::Required>(m, "MovementDamping");
-    pymio::bind_damping_members(movement_damping_class);
+    auto mobility_damping_class =
+        pymio::bind_class<mio::VectorDamping, pymio::EnablePickling::Required>(m, "MobilityDamping");
+    pymio::bind_damping_members(mobility_damping_class);
 
-    auto movement_dampings_class =
-        pymio::bind_class<mio::VectorDampings, pymio::EnablePickling::Required>(m, "MovementDampings");
-    pymio::bind_dampings_members(movement_dampings_class);
+    auto mobility_dampings_class =
+        pymio::bind_class<mio::VectorDampings, pymio::EnablePickling::Required>(m, "MobilityDampings");
+    pymio::bind_dampings_members(mobility_dampings_class);
 
-    auto movement_coeffs_class =
-        pymio::bind_class<mio::MovementCoefficients, pymio::EnablePickling::Required>(m, "MovementCoefficients");
-    pymio::bind_damping_expression_members(movement_coeffs_class);
+    auto mobility_coeffs_class =
+        pymio::bind_class<mio::MobilityCoefficients, pymio::EnablePickling::Required>(m, "MobilityCoefficients");
+    pymio::bind_damping_expression_members(mobility_coeffs_class);
 
-    auto movement_coeff_group_class =
-        pymio::bind_class<mio::MovementCoefficientGroup, pymio::EnablePickling::Required>(m,
-                                                                                           "MovementCoefficientGroup");
-    pymio::bind_damping_expression_group_members(movement_coeff_group_class);
+    auto mobility_coeff_group_class = pymio::bind_class<mio::MobilityCoefficientGroup, pymio::EnablePickling::Required>(
+        m, "MobilityCoefficientGroup");
+    pymio::bind_damping_expression_group_members(mobility_coeff_group_class);
 
     pymio::bind_dynamicNPI_members(m, "DynamicNPIs");
 
-    pymio::bind_movement_parameters(m, "MovementParameters");
-    pymio::bind_movement_parameter_edge(m, "MovementParameterEdge");
-    pymio::bind_movement(m, "Movement");
-    pymio::bind_movement_edge(m, "MovementEdge");
+    pymio::bind_mobility_parameters(m, "MobilityParameters");
+    pymio::bind_mobility_parameter_edge(m, "MobilityParameterEdge");
+    pymio::bind_mobility(m, "Mobility");
+    pymio::bind_mobility_edge(m, "MobilityEdge");
 
     m.def(
         "get_state_id_de",

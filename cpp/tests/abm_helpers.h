@@ -20,7 +20,7 @@
 #ifndef ABM_HELPERS_H
 #define ABM_HELPERS_H
 
-#include "abm/world.h"
+#include "abm/model.h"
 
 #include "gmock/gmock.h"
 

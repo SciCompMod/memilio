@@ -25,7 +25,7 @@
 
 #include <gtest/gtest.h>
 
-TEST(TestReadMovement, readFormatted)
+TEST(TestReadMobility, readFormatted)
 {
     Eigen::MatrixXd test_matrix(4, 4);
     for (int i = 0; i < 4; i++) {
@@ -68,7 +68,7 @@ TEST(TestReadMovement, readFormatted)
     ASSERT_EQ(print_wrap(test_matrix), print_wrap(matrix_read.value()));
 }
 
-TEST(TestReadMovement, readPlain)
+TEST(TestReadMobility, readPlain)
 {
     Eigen::MatrixXd test_matrix(6, 6);
 

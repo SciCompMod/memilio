@@ -256,14 +256,14 @@ double get_infections_relative(const DummySim&, double, const Eigen::Ref<const E
 
 //overload required for because the mock is not a compartment model simulation
 template <typename FP, class DummySim>
-void calculate_movement_returns(Eigen::Ref<typename mio::TimeSeries<FP>::Vector>, const DummySim&,
-                                 Eigen::Ref<const typename mio::TimeSeries<FP>::Vector>, double, double)
+void calculate_mobility_returns(Eigen::Ref<typename mio::TimeSeries<FP>::Vector>, const DummySim&,
+                                Eigen::Ref<const typename mio::TimeSeries<FP>::Vector>, double, double)
 {
 }
 
 } // namespace mio_test
 
-TEST(DynamicNPIs, movement)
+TEST(DynamicNPIs, mobility)
 {
     mio::SimulationNode<testing::NiceMock<mio_test::DummySim>> node_from((Eigen::VectorXd(2) << 0.0, 1.0).finished());
     mio::SimulationNode<testing::NiceMock<mio_test::DummySim>> node_to((Eigen::VectorXd(2) << 0.0, 1.0).finished());
@@ -280,15 +280,15 @@ TEST(DynamicNPIs, movement)
     npis.set_base_value(100'000);
     npis.set_interval(mio::SimulationTime(3.0));
 
-    mio::MovementCoefficientGroup coeffs(1, 2);
-    mio::MovementParameters<double> parameters(coeffs);
+    mio::MobilityCoefficientGroup coeffs(1, 2);
+    mio::MobilityParameters<double> parameters(coeffs);
     parameters.set_dynamic_npis_infected(npis);
 
-    mio::MovementEdge<double> edge(parameters);
+    mio::MobilityEdge<double> edge(parameters);
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //initial
 
-    edge.apply_movement(0.5, 0.5, node_from, node_to);
+    edge.apply_mobility(0.5, 0.5, node_from, node_to);
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //not check at the beginning
 
@@ -297,7 +297,7 @@ TEST(DynamicNPIs, movement)
     });
     node_from.evolve(3.0, 2.5);
     node_to.evolve(3.0, 2.5);
-    edge.apply_movement(3.0, 2.5, node_from, node_to);
+    edge.apply_mobility(3.0, 2.5, node_from, node_to);
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //threshold not exceeded
 
@@ -306,7 +306,7 @@ TEST(DynamicNPIs, movement)
     });
     node_from.evolve(4.5, 1.5);
     node_to.evolve(4.5, 1.5);
-    edge.apply_movement(4.5, 1.5, node_from, node_to);
+    edge.apply_mobility(4.5, 1.5, node_from, node_to);
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(),
               0); //threshold exceeded, but only check every 3 days
@@ -316,7 +316,7 @@ TEST(DynamicNPIs, movement)
     });
     node_from.evolve(6.0, 1.5);
     node_to.evolve(6.0, 1.5);
-    edge.apply_movement(6.0, 1.5, node_from, node_to);
+    edge.apply_mobility(6.0, 1.5, node_from, node_to);
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 2); //NPIs implemented
 }

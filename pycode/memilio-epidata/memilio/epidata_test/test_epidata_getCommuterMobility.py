@@ -30,7 +30,7 @@ from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getCommuterMobility as gcm
 
 
-class TestCommuterMovement(fake_filesystem_unittest.TestCase):
+class TestCommuterMobility(fake_filesystem_unittest.TestCase):
 
     path = '/home/CMData/'
 
@@ -120,35 +120,35 @@ class TestCommuterMovement(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
     @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
     def test_commuter_data(self, mock_input, mock_popul):
-        """! Tests movement data by some randomly chosen tests.
+        """! Tests mobility data by some randomly chosen tests.
         """
 
-        df_commuter_movement = gcm.get_commuter_data(
+        df_commuter_mobility = gcm.get_commuter_data(
             out_folder=self.path, ref_year=2022, interactive=True)
 
-        # just do some tests on randomly chosen movements
+        # just do some tests on randomly chosen mobility
 
-        # check movement from Leverkusen (averaged from NRW, 05) to Hildburghausen
+        # check mobility from Leverkusen (averaged from NRW, 05) to Hildburghausen
         city_from = 5316
         city_to = 16069
         self.assertAlmostEqual(
-            df_commuter_movement.loc[city_from, city_to], 0.451, 2)
+            df_commuter_mobility.loc[city_from, city_to], 0.451, 2)
 
-        # check movement from Duisburg to Oberspreewald-Lausitz
+        # check mobility from Duisburg to Oberspreewald-Lausitz
         city_from = 5112
         city_to = 12066
         self.assertAlmostEqual(
-            df_commuter_movement.loc[city_from, city_to], 3.143, 2)
+            df_commuter_mobility.loc[city_from, city_to], 3.143, 2)
 
-        # check movement from Lahn-Dill-Kreis to Hamburg
+        # check mobility from Lahn-Dill-Kreis to Hamburg
         city_from = 6532
         city_to = 2000
-        self.assertEqual(df_commuter_movement.loc[city_from, city_to], 100)
+        self.assertEqual(df_commuter_mobility.loc[city_from, city_to], 100)
 
-        # check movement from Herzogtum Lauenburg to Flensburg, Stadt
+        # check mobility from Herzogtum Lauenburg to Flensburg, Stadt
         city_from = 1001
         city_to = 1053
-        self.assertEqual(df_commuter_movement.loc[city_from, city_to], 29)
+        self.assertEqual(df_commuter_mobility.loc[city_from, city_to], 29)
 
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
     @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)

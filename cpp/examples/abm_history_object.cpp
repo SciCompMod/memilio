@@ -130,7 +130,7 @@ int main()
     auto start_date            = mio::abm::TimePoint(0);
     auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(30);
     auto test_type             = mio::abm::TestType::Antigen;
-    auto test_parameters       = world.parameters.get<mio::abm::TestData>()[test_type];
+    auto test_parameters       = model.parameters.get<mio::abm::TestData>()[test_type];
     auto testing_criteria_work = mio::abm::TestingCriteria();
     auto testing_scheme_work   = mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date,
                                                          test_parameters, probability);
@@ -149,20 +149,20 @@ int main()
     }
 
     // Assign locations to the people
-    for (auto& person : world.get_persons()) {
+    for (auto& person : model.get_persons()) {
         const auto pid = person.get_id();
         //assign shop and event
-        world.assign_location(pid, event);
-        world.assign_location(pid, shop);
+        model.assign_location(pid, event);
+        model.assign_location(pid, shop);
         //assign hospital and ICU
-        world.assign_location(pid, hospital);
-        world.assign_location(pid, icu);
+        model.assign_location(pid, hospital);
+        model.assign_location(pid, icu);
         //assign work/school to people depending on their age
         if (person.get_age() == age_group_5_to_14) {
-            world.assign_location(pid, school);
+            model.assign_location(pid, school);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            world.assign_location(pid, work);
+            model.assign_location(pid, work);
         }
     }
 

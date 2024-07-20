@@ -25,12 +25,12 @@ import memilio.simulation as mio
 import memilio.simulation.osecir as osecir
 
 
-class Test_Movement(unittest.TestCase):
+class Test_Mobility(unittest.TestCase):
     def test_params(self):
-        coeffs = mio.MovementCoefficientGroup(1, 10)
-        coeffs[0] = mio.MovementCoefficients(np.ones(10))
-        coeffs[0].add_damping(mio.MovementDamping(0.5 * np.ones(10), t=1.0))
-        params = mio.MovementParameters(coeffs)
+        coeffs = mio.MobilityCoefficientGroup(1, 10)
+        coeffs[0] = mio.MobilityCoefficients(np.ones(10))
+        coeffs[0].add_damping(mio.MobilityDamping(0.5 * np.ones(10), t=1.0))
+        params = mio.MobilityParameters(coeffs)
         self.assertTrue(
             (params.coefficients.get_matrix_at(0) == np.ones(10)).all())
         self.assertTrue((params.coefficients.get_matrix_at(2)
@@ -47,7 +47,7 @@ class Test_Movement(unittest.TestCase):
         self.assertEqual(graph.get_num_out_edges(1), 0)
 
     def test_sim_graph(self):
-        graph = osecir.MovementGraph()
+        graph = osecir.MobilityGraph()
         graph.add_node(0, osecir.Model(1), 0, 0.1)
         graph.add_node(1, osecir.Model(1), 0)
         graph.add_edge(0, 1, np.ones(10))
@@ -56,13 +56,13 @@ class Test_Movement(unittest.TestCase):
         self.assertEqual(graph.get_num_out_edges(0), 1)
         self.assertEqual(graph.get_num_out_edges(1), 0)
 
-    def test_movement_sim(self):
-        graph = osecir.MovementGraph()
+    def test_mobility_sim(self):
+        graph = osecir.MobilityGraph()
         graph.add_node(0, osecir.Model(1), 0, 0.1)
         graph.add_node(1, osecir.Model(1), 0)
         graph.add_edge(0, 1, np.ones(10))
 
-        sim = osecir.MovementSimulation(graph, t0=0.0)
+        sim = osecir.MobilitySimulation(graph, t0=0.0)
         sim.advance(2)
 
         # integration does adaptive time steps so exact count is unknown

@@ -529,7 +529,7 @@ void set_synthetic_population_data(std::vector<mio::osecirvvs::Model<double>>& c
  * @param data_dir data directory.
  * @returns created graph or any io errors that happen during reading of the files.
  */
-mio::IOResult<mio::Graph<mio::osecirvvs::Model<double>, mio::MovementParameters<double>>>
+mio::IOResult<mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>>
 get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bool late, bool masks, bool test,
           bool long_time)
 {
@@ -547,7 +547,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
     auto scaling_factor_icu      = 1.0;
     auto tnt_capacity_factor     = 1.43 / 100000.;
-    auto moving_compartments  = {mio::osecirvvs::InfectionState::SusceptibleNaive,
+    auto moving_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
                                     mio::osecirvvs::InfectionState::ExposedNaive,
                                     mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
                                     mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
@@ -562,18 +562,18 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
 
     // graph of counties with populations and local parameters
     // and mobility between counties
-    mio::Graph<mio::osecirvvs::Model<double>, mio::MovementParameters<double>> params_graph;
+    mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph;
     const auto& read_function_nodes = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<double>>;
     const auto& read_function_edges = mio::read_mobility_plain;
     const auto& node_id_function    = mio::get_node_ids;
 
     const auto& set_node_function =
         mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
-                       mio::osecirvvs::Model<double>, mio::MovementParameters<double>,
+                       mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
                        mio::osecirvvs::Parameters<double>, decltype(read_function_nodes), decltype(node_id_function)>;
     const auto& set_edge_function =
-        mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>, mio::MovementParameters<double>,
-                       mio::MovementCoefficientGroup, mio::osecirvvs::InfectionState, decltype(read_function_edges)>;
+        mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
+                       mio::MobilityCoefficientGroup, mio::osecirvvs::InfectionState, decltype(read_function_edges)>;
     BOOST_OUTCOME_TRY(set_node_function(
         params, start_date, end_date, data_dir,
         mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"), true,
@@ -622,7 +622,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     const auto num_runs     = 500;
 
     //create or load graph
-    mio::Graph<mio::osecirvvs::Model<double>, mio::MovementParameters<double>> params_graph;
+    mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph;
     if (mode == RunMode::Save) {
         BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, end_date, data_dir, late, masks, test, long_time));
         BOOST_OUTCOME_TRY(write_graph(created, save_dir.string()));

@@ -40,7 +40,7 @@ namespace mio
 
 /**
  * Class that performs multiple simulation runs with randomly sampled parameters.
- * Can simulate movement graphs with one simulation in each node or single simulations.
+ * Can simulate mobility graphs with one simulation in each node or single simulations.
  * @tparam S type of simulation that runs in one node of the graph.
  */
 template <class S>
@@ -55,12 +55,12 @@ public:
     * The Graph type that stores the parametes of the simulation.
     * This is the input of ParameterStudies.
     */
-    using ParametersGraph = mio::Graph<typename Simulation::Model, mio::MovementParameters<double>>;
+    using ParametersGraph = mio::Graph<typename Simulation::Model, mio::MobilityParameters<double>>;
     /**
     * The Graph type that stores simulations and their results of each run.
     * This is the output of ParameterStudies for each run.
     */
-    using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MovementEdge<double>>;
+    using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MobilityEdge<double>>;
 
     /**
      * create study for graph of compartment models.
@@ -350,7 +350,7 @@ private:
             sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
         }
 
-        return make_movement_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
+        return make_mobility_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
     }
 
     std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)

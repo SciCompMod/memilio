@@ -36,14 +36,14 @@ namespace abm
  * @param[in] p Person the rule is applied to.
  * @param[in] t Current time.
  * @param[in] dt Length of the time step.
- * @param[in] params Movement parameters.
+ * @param[in] params Mobility parameters.
  * @return Location that the Person moves to if the rule is applied, the current Location of the person 
  * if the rule is not applied because of age, time, etc.
  * 
  * @{
  */
 /**
- * @brief Completely random movement to any other Location.
+ * @brief Completely random mobility to any other Location.
  */
 LocationType random_mobility(PersonalRandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
                              const Parameters& params);

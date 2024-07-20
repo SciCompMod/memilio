@@ -107,7 +107,7 @@ As you can see, the profile contains a lot of functions that are not of interest
         COM      4,032    168    0.00     0.0           2.30  void?mio::abm::Model::evolve(mio::abm::TimePoint,?mio::abm::TimeSpan)
         COM      4,032    168    0.00     0.0           6.92  void?mio::abm::Model::begin_step(mio::abm::TimePoint,?mio::abm::TimeSpan)
         COM      4,032    168    0.00     0.0           5.40  void?mio::abm::Model::interaction(mio::abm::TimePoint,?mio::abm::TimeSpan)
-        COM      4,032    168    0.00     0.0           5.10  void?mio::abm::Model::movement(mio::abm::TimePoint,?mio::abm::TimeSpan)
+        COM      4,032    168    0.00     0.0           5.10  void?mio::abm::Model::perform_mobility(mio::abm::TimePoint,?mio::abm::TimeSpan)
 
 The output is much shorter and most functions are filtered.
 If the estimated memory requirements exceed 4 GB you need to remove the responsible function from the included functions in the filter. If you added more than one function to the filter, you can check which function is responsible for the increase of required space with the output of ```scorep-score```. The functions at the top of the table are most likely to be responsible. With ```scorep-score -f filter -r scorep-folder/profile.cubex``` you can see the effect of the adjusted filter on the profile without running the experiment.
@@ -140,7 +140,7 @@ However, there are some functions that still appear in the profile that do not a
          COM      4,032    168    0.00     0.0           2.66  void?mio::abm::Model::evolve(mio::abm::TimePoint,?mio::abm::TimeSpan)
          COM      4,032    168    0.00     0.0           7.73  void?mio::abm::Model::begin_step(mio::abm::TimePoint,?mio::abm::TimeSpan)
          COM      4,032    168    0.00     0.0           5.49  void?mio::abm::Model::interaction(mio::abm::TimePoint,?mio::abm::TimeSpan)
-         COM      4,032    168    0.00     0.0           5.17  void?mio::abm::Model::movement(mio::abm::TimePoint,?mio::abm::TimeSpan)
+         COM      4,032    168    0.00     0.0           5.17  void?mio::abm::Model::perform_mobility(mio::abm::TimePoint,?mio::abm::TimeSpan)
       SCOREP         41      1   57.83    89.3    57830258.74  abm_simulation
          COM         24      1    0.00     0.0         532.58  void?mio::abm::Simulation::advance(mio::abm::TimePoint,?History&?...)??with?History?=?{mio::History<mio::abm::TimeSeriesWriter,?mio::abm::LogInfectionState>}?
 

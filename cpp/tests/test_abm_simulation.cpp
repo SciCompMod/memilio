@@ -116,32 +116,32 @@ TEST(TestSimulation, advanceWithCommonHistory)
     trip_list.add_trip(trip7);
 
     mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
-                 mio::abm::LogDataForMovement>
+                 mio::abm::LogDataForMobility>
         historyPersonInf;
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
-    mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMovement> historyPersonInfDelta;
+    mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMobility> historyPersonInfDelta;
     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(model));
     sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(24), historyPersonInf, historyTimeSeries,
                 historyPersonInfDelta);
 
     auto logLocationInfo      = std::get<0>(historyPersonInf.get_log());
     auto logPersonInfo        = std::get<1>(historyPersonInf.get_log());
-    auto logMovementInfo      = std::get<2>(historyPersonInf.get_log());
+    auto logMobilityInfo      = std::get<2>(historyPersonInf.get_log());
     auto logTimeSeries        = std::get<0>(historyTimeSeries.get_log());
-    auto logMovementInfoDelta = std::get<0>(historyPersonInfDelta.get_log());
+    auto logMobilityInfoDelta = std::get<0>(historyPersonInfDelta.get_log());
 
     ASSERT_EQ(logLocationInfo[0].size(), 9); // Check if all locations are in the log, 9 locations
     ASSERT_EQ(logPersonInfo[0].size(), 3); // Check if all persons are in the log, 3 persons
     ASSERT_EQ(
-        logMovementInfo.size(),
-        25); // Check if for all time points Movement data is in the log, 25 time points (24 hours + 1 for the initial state)
+        logMobilityInfo.size(),
+        25); // Check if for all time points Mobility data is in the log, 25 time points (24 hours + 1 for the initial state)
     ASSERT_EQ(logTimeSeries.get_num_time_points(),
               25); // Check if all time points are in the log, 25 time points (24 hours + 1 for the initial state)
     ASSERT_EQ(
-        logMovementInfoDelta.size(),
-        26); // Check if for all time points Movement data is in the log, 26 time points (24 hours + 1 for the initial state + 1 helper entry for calculating the delta)
-    ASSERT_EQ(logMovementInfoDelta[0].size(),
-              3); // Check if all persons are in the delta-logger Movement helper entry 0, 3 persons
-    ASSERT_EQ(logMovementInfoDelta[1].size(), 3); // Check if all persons are in the delta-log first entry, 3 persons
+        logMobilityInfoDelta.size(),
+        26); // Check if for all time points Mobility data is in the log, 26 time points (24 hours + 1 for the initial state + 1 helper entry for calculating the delta)
+    ASSERT_EQ(logMobilityInfoDelta[0].size(),
+              3); // Check if all persons are in the delta-logger Mobility helper entry 0, 3 persons
+    ASSERT_EQ(logMobilityInfoDelta[1].size(), 3); // Check if all persons are in the delta-log first entry, 3 persons
 }

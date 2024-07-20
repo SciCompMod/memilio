@@ -31,7 +31,7 @@
 #include "abm/time.h"
 #include "abm/vaccine.h"
 #include "abm/mask.h"
-#include "abm/movement_data.h"
+#include "abm/mobility_data.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/random_number_generator.h"
 
@@ -168,7 +168,7 @@ public:
      * @brief Set an assigned Location of the Person.
      *
      * Important: Setting incorrect values will cause issues during simulation. It is preferable to use
-     *            World::assign_location with a valid LocationId, obtained e.g. through World::add_location.
+     *            Model::assign_location with a valid LocationId, obtained e.g. through Model::add_location.
      *
      * The assigned Location is saved by the index of its LocationId. Assume that a Person has at most one assigned
      * Location of a certain #LocationType.
@@ -199,7 +199,7 @@ public:
      * Every Person has a random number. Depending on this number and the time, the Person works from home in case of a
      * lockdown.
      * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
-     * @param[in] params Parameters that describe the movement between Location%s.
+     * @param[in] params Parameters that describe the mobility between Location%s.
      * @return True the Person works from home.
      */
     bool goes_to_work(TimePoint t, const Parameters& params) const;
@@ -208,7 +208,7 @@ public:
      * @brief Draw at what time the Person goes to work.
      * Every Person has a random number to determine what time to go to work.
      * Depending on this number Person decides what time has to go to work.
-     * @param[in] params Parameters that describe the movement between Location%s.
+     * @param[in] params Parameters that describe the mobility between Location%s.
      * @return The time of going to work.
      */
     TimeSpan get_go_to_work_time(const Parameters& params) const;
@@ -217,7 +217,7 @@ public:
      * @brief Draw if the Person goes to school or stays at home during lockdown.
      * Every Person has a random number that determines if they go to school in case of a lockdown.
      * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
-     * @param[in] params Parameters that describe the movement between Location%s.
+     * @param[in] params Parameters that describe the mobility between Location%s.
      * @return True if the Person goes to school.
      */
     bool goes_to_school(TimePoint t, const Parameters& params) const;
@@ -226,7 +226,7 @@ public:
      * @brief Draw at what time the Person goes to work.
      * Every Person has a random number to determine what time to go to school.
      * Depending on this number Person decides what time has to go to school.
-     * @param[in] params Parameters that describe the movement between Location%s.
+     * @param[in] params Parameters that describe the mobility between Location%s.
      * @return The time of going to school.
      */
     TimeSpan get_go_to_school_time(const Parameters& params) const;

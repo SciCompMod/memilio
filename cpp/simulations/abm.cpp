@@ -331,7 +331,7 @@ void create_assign_locations(mio::abm::Model& model)
     auto probability = mio::UncertainValue<>();
     assign_uniform_distribution(probability, 0.5, 1.0);
 
-    auto test_params    = world.parameters.get<mio::abm::TestData>()[mio::abm::TestType::Antigen];
+    auto test_params    = model.parameters.get<mio::abm::TestData>()[mio::abm::TestType::Antigen];
     auto testing_scheme = mio::abm::TestingScheme(testing_criteria, testing_min_time, start_date, end_date, test_params,
                                                   probability.draw_sample());
 
@@ -381,20 +381,20 @@ void create_assign_locations(mio::abm::Model& model)
     for (auto& person : persons) {
         const auto id = person.get_id();
         //assign shop and event
-        world.assign_location(id, event);
+        model.assign_location(id, event);
         counter_event++;
-        world.assign_location(id, shop);
+        model.assign_location(id, shop);
         counter_shop++;
         //assign hospital and ICU
-        world.assign_location(id, hospital);
-        world.assign_location(id, icu);
+        model.assign_location(id, hospital);
+        model.assign_location(id, icu);
         //assign work/school to people depending on their age
         if (person.get_age() == age_group_5_to_14) {
-            world.assign_location(id, school);
+            model.assign_location(id, school);
             counter_school++;
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            world.assign_location(id, work);
+            model.assign_location(id, work);
             counter_work++;
         }
         //add new school/work/shop if needed

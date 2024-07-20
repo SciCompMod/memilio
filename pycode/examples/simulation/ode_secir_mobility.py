@@ -54,7 +54,7 @@ def run_ode_secir_mobility_simulation(plot_results=True):
     model.parameters.DeathsPerCritical[mio.AgeGroup(0)] = 0.3
 
     # two regions with different populations and with some mobility between them
-    graph = osecir.MovementGraph()
+    graph = osecir.MobilityGraph()
     model.populations[mio.AgeGroup(0), osecir.InfectionState.Exposed] = 100
     model.populations[mio.AgeGroup(
         0), osecir.InfectionState.InfectedNoSymptoms] = 50
@@ -95,13 +95,13 @@ def run_ode_secir_mobility_simulation(plot_results=True):
     graph.add_node(id=1, model=model, t0=t0)
     mobility_coefficients = 0.1 * np.ones(model.populations.numel())
     mobility_coefficients[osecir.InfectionState.Dead] = 0
-    mobility_params = mio.MovementParameters(mobility_coefficients)
+    mobility_params = mio.MobilityParameters(mobility_coefficients)
     # one coefficient per (age group x compartment)
     graph.add_edge(0, 1, mobility_params)
     graph.add_edge(1, 0, mobility_params)
 
     # run simulation
-    sim = osecir.MovementSimulation(graph, t0, dt=0.5)
+    sim = osecir.MobilitySimulation(graph, t0, dt=0.5)
     sim.advance(tmax)
 
     # process results

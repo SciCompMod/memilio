@@ -431,7 +431,7 @@ TEST(TestOdeSECIRVVS, draw_sample)
 {
     mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
-    mio::Graph<mio::osecirvvs::Model<double>, mio::MovementParameters<double>> graph;
+    mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> graph;
 
     auto num_age_groups = 6;
     //create model with invalid initials so the test fails if no sampling is done
@@ -819,11 +819,11 @@ TEST(TestOdeSECIRVVS, parameter_percentiles)
 
     //build small graph
     auto model = make_model(5);
-    auto graph = mio::Graph<mio::osecirvvs::Model<double>, mio::MovementParameters<double>>();
+    auto graph = mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>();
     graph.add_node(0, model);
 
     //sample a few times
-    auto sampled_graphs = std::vector<mio::Graph<mio::osecirvvs::Model<double>, mio::MovementParameters<double>>>();
+    auto sampled_graphs = std::vector<mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>>();
     std::generate_n(std::back_inserter(sampled_graphs), 10, [&graph]() {
         return mio::osecirvvs::draw_sample(graph, true);
     });
@@ -875,34 +875,34 @@ TEST(TestOdeSECIRVVS, get_infections_relative)
     ASSERT_DOUBLE_EQ(relative_infections, 105 / model.populations.get_total());
 }
 
-TEST(TestOdeSECIRVVS, get_movement_factors)
+TEST(TestOdeSECIRVVS, get_mobility_factors)
 {
     auto num_age_groups = 2;
     auto model          = make_model(num_age_groups);
     auto sim            = mio::osecirvvs::Simulation<>(model);
     auto y              = sim.get_result()[0];
 
-    auto movement_factors = mio::osecirvvs::get_movement_factors<double>(sim, 0.0, y);
+    auto mobility_factors = mio::osecirvvs::get_mobility_factors<double>(sim, 0.0, y);
 
     auto expected_values = (Eigen::VectorXd(Eigen::Index(mio::osecirvvs::InfectionState::Count) * num_age_groups) << 1,
                             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                             1, 1, 1, 1, 1, 1, 1, 1, 0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
                                .finished();
-    ASSERT_THAT(print_wrap(movement_factors), MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
+    ASSERT_THAT(print_wrap(mobility_factors), MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
 }
 
 TEST(TestOdeSECIRVVS, test_commuters)
 {
     auto model                                      = make_model(2);
-    auto movement_factor                           = 0.1;
+    auto mobility_factor                            = 0.1;
     auto non_detection_factor                       = 0.3;
     model.parameters.get_start_commuter_detection() = 0.0;
     model.parameters.get_end_commuter_detection()   = 20.0;
     model.parameters.get_commuter_nondetection()    = non_detection_factor;
     auto sim                                        = mio::osecirvvs::Simulation<>(model);
     auto before_testing                             = sim.get_result().get_last_value().eval();
-    auto moved                                   = (sim.get_result().get_last_value() * movement_factor).eval();
-    auto moved_tested                            = moved.eval();
+    auto moved                                      = (sim.get_result().get_last_value() * mobility_factor).eval();
+    auto moved_tested                               = moved.eval();
 
     mio::osecirvvs::test_commuters<double>(sim, moved_tested, 0.0);
 

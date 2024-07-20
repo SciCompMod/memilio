@@ -189,8 +189,8 @@ PYBIND11_MODULE(_simulation_abm, m)
              py::arg("cells") = std::vector<uint32_t>())
         .def_readwrite("person_id", &mio::abm::Trip::person_id)
         .def_readwrite("time", &mio::abm::Trip::time)
-        .def_readwrite("destination", &mio::abm::Trip::movement_destination)
-        .def_readwrite("origin", &mio::abm::Trip::movement_origin)
+        .def_readwrite("destination", &mio::abm::Trip::destination)
+        .def_readwrite("origin", &mio::abm::Trip::origin)
         .def_readwrite("cells", &mio::abm::Trip::cells);
 
     pymio::bind_class<mio::abm::TripList, pymio::EnablePickling::Never>(m, "TripList")
@@ -215,8 +215,8 @@ PYBIND11_MODULE(_simulation_abm, m)
                 self.get_trip_list() = list;
             },
             py::return_value_policy::reference_internal)
-        .def_property("use_movement_rules", py::overload_cast<>(&mio::abm::Model::use_movement_rules, py::const_),
-                      py::overload_cast<bool>(&mio::abm::Model::use_movement_rules))
+        .def_property("use_mobility_rules", py::overload_cast<>(&mio::abm::Model::use_mobility_rules, py::const_),
+                      py::overload_cast<bool>(&mio::abm::Model::use_mobility_rules))
         .def_readwrite("parameters", &mio::abm::Model::parameters)
         .def_property(
             "testing_strategy", py::overload_cast<>(&mio::abm::Model::get_testing_strategy, py::const_),
