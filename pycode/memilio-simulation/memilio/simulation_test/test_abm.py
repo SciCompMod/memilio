@@ -46,19 +46,18 @@ class TestAbm(unittest.TestCase):
         social_event_id = model.add_location(abm.LocationType.SocialEvent)
         self.assertEqual(len(model.locations), 3)
 
-        home = model.locations[home_id.index]
+        home = model.locations[home_id.index()]
         self.assertEqual(home.type, abm.LocationType.Home)
 
         testing_ages = [mio.AgeGroup(0)]
 
         home.infection_parameters.MaximumContacts = 10
         self.assertEqual(home.infection_parameters.MaximumContacts, 10)
-
         testing_inf_states = []
         testing_crit = abm.TestingCriteria(
             testing_ages, testing_inf_states)
         testing_scheme = abm.TestingScheme(testing_crit, abm.days(
-            1), t0, t0 + abm.days(1), abm.AntigenTest(), 1.0)
+            1), t0, t0 + abm.days(1), model.parameters.TestData[abm.TestType.Antigen], 1.0)
         # initially false, will only active once simulation starts
         self.assertEqual(testing_scheme.active, False)
 
@@ -70,15 +69,16 @@ class TestAbm(unittest.TestCase):
         home_id = model.add_location(abm.LocationType.Home)
         social_event_id = model.add_location(abm.LocationType.SocialEvent)
 
-        p1 = model.add_person(
-            home_id, mio.AgeGroup(2))
-        p2 = model.add_person(
-            social_event_id, mio.AgeGroup(5))
+        p1_id = model.add_person(home_id, mio.AgeGroup(2))
+        p2_id = model.add_person(social_event_id, mio.AgeGroup(5))
+
+        p1 = model.persons[p1_id.index()]
+        p2 = model.persons[p2_id.index()]
 
         # check persons
         self.assertEqual(len(model.persons), 2)
         self.assertEqual(p1.age, mio.AgeGroup(2))
-        self.assertEqual(p1.location.index, 1)
+        self.assertEqual(p1.location.index(), 1)
         self.assertEqual(model.persons[0], p1)
         self.assertEqual(model.persons[1], p2)
 
@@ -88,20 +88,15 @@ class TestAbm(unittest.TestCase):
         model = sim.model
 
         # add some locations and persons
-        for type in abm.LocationType.values():
-            model.add_location(type)
-        home_id = abm.LocationId(0, abm.LocationType.Home)
-        social_event_id = abm.LocationId(0, abm.LocationType.SocialEvent)
-        work_id = abm.LocationId(0, abm.LocationType.Work)
-        p1 = model.add_person(
-            home_id, mio.AgeGroup(0))
-        p2 = model.add_person(
-            home_id, mio.AgeGroup(2))
-        for type in abm.LocationType.values():
-            p1.set_assigned_location(abm.LocationId(0, type))
-            p2.set_assigned_location(abm.LocationId(0, type))
+        home_id = model.add_location(abm.LocationType.Home)
+        social_event_id = model.add_location(abm.LocationType.SocialEvent)
+        work_id = model.add_location(abm.LocationType.Work)
+        p1_id = model.add_person(home_id, mio.AgeGroup(0))
+        p2_id = model.add_person(home_id, mio.AgeGroup(2))
 
-        social_event = model.locations[social_event_id.index]
+        for loc_id in [home_id, social_event_id, work_id]:
+            model.assign_location(p1_id, loc_id)
+            model.assign_location(p2_id, loc_id)
 
         model.parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype, mio.AgeGroup(
             0)] = 0.0

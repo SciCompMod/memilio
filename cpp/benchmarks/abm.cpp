@@ -1,5 +1,5 @@
 #include "abm/simulation.h"
-#include "memilio/utils/stl_util.h"
+
 #include "benchmark/benchmark.h"
 
 mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<uint32_t> seeds)
@@ -23,10 +23,10 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
             home_size         = 0;
         }
 
-        auto age     = mio::AgeGroup(mio::UniformIntDistribution<size_t>::get_instance()(
+        auto age    = mio::AgeGroup(mio::UniformIntDistribution<size_t>::get_instance()(
             model.get_rng(), size_t(0), model.parameters.get_num_groups() - 1));
-        auto& person = model.add_person(home, age);
-        person.set_assigned_location(home);
+        auto person = model.add_person(home, age);
+        model.assign_location(person, home);
         home_size++;
     }
 
@@ -43,13 +43,13 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
         for (auto& person : model.get_persons()) {
             auto loc_idx =
                 mio::UniformIntDistribution<size_t>::get_instance()(model.get_rng(), size_t(0), num_locs - 1);
-            person.set_assigned_location(locs[loc_idx]);
+            model.assign_location(person.get_id(), locs[loc_idx]);
         }
     }
 
     //infections and masks
     for (auto& person : model.get_persons()) {
-        auto prng = mio::abm::Person::RandomNumberGenerator(model.get_rng(), person);
+        auto prng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
         //some % of people are infected, large enough to have some infection activity without everyone dying
         auto pct_infected = 0.05;
         if (mio::UniformDistribution<double>::get_instance()(prng, 0.0, 1.0) < pct_infected) {
@@ -114,7 +114,7 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
 /**
  * Benchmark for the ABM simulation.
  * @param num_persons Number of persons in the simulation.
- * @param seeds Seeds for the random number generator. 
+ * @param seeds Seeds for the random number generator.
  */
 void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer_list<uint32_t> seeds)
 {

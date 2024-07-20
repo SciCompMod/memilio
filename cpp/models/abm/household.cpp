@@ -19,11 +19,9 @@
 */
 
 #include "abm/household.h"
-#include "abm/person.h"
+#include "abm/person_id.h"
 #include "abm/location.h"
-#include "memilio/math/eigen.h"
 #include "memilio/utils/random_number_generator.h"
-#include <string>
 
 namespace mio
 {
@@ -62,9 +60,8 @@ void add_household_to_model(Model& model, const Household& household)
 {
     auto home    = model.add_location(LocationType::Home);
     auto members = household.get_members();
-    model.get_individualized_location(home).set_capacity(household.get_total_number_of_members(),
-                                                         household.get_total_number_of_members() *
-                                                             household.get_space_per_member());
+    model.get_location(home).set_capacity(household.get_total_number_of_members(),
+                                          household.get_total_number_of_members() * household.get_space_per_member());
 
     for (auto& memberTouple : members) {
         int count;
@@ -72,8 +69,8 @@ void add_household_to_model(Model& model, const Household& household)
         std::tie(member, count) = memberTouple;
         for (int j = 0; j < count; j++) {
             auto age_group = pick_age_group_from_age_distribution(model.get_rng(), member.get_age_weights());
-            auto& person   = model.add_person(home, age_group);
-            person.set_assigned_location(home);
+            auto person    = model.add_person(home, age_group);
+            model.assign_location(person, home);
         }
     }
 }

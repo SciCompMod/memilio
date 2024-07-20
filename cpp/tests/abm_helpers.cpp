@@ -26,25 +26,45 @@ mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup ag
                                   mio::abm::Parameters params)
 {
     assert(age.get() < params.get_num_groups());
-    auto rng           = mio::RandomNumberGenerator();
-    mio::abm::Person p = mio::abm::Person(rng, location, age);
+    auto rng = mio::RandomNumberGenerator();
+    mio::abm::Person p(rng, location.get_type(), location.get_id(), age);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
-        auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
+        auto rng_p = mio::abm::PersonalRandomNumberGenerator(rng, p);
         p.add_new_infection(
             mio::abm::Infection(rng_p, static_cast<mio::abm::VirusVariant>(0), age, params, t, infection_state));
     }
     return p;
 }
 
-mio::abm::Person& add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id, mio::AgeGroup age,
-                                  mio::abm::InfectionState infection_state, mio::abm::TimePoint t)
+mio::abm::PersonId add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id, mio::AgeGroup age,
+                                   mio::abm::InfectionState infection_state, mio::abm::TimePoint t)
 {
-    assert(age.get() < model.parameters.get_num_groups());
-    mio::abm::Person& p = model.add_person(loc_id, age);
-    if (infection_state != mio::abm::InfectionState::Susceptible) {
-        auto rng_p = mio::abm::Person::RandomNumberGenerator(model.get_rng(), p);
-        p.add_new_infection(mio::abm::Infection(rng_p, static_cast<mio::abm::VirusVariant>(0), age, model.parameters, t,
-                                                infection_state));
+    return model.add_person(make_test_person(model.get_location(loc_id), age, infection_state, t, model.parameters));
+}
+
+void interact_testing(mio::abm::PersonalRandomNumberGenerator& personal_rng, mio::abm::Person& person,
+                      const mio::abm::Location& location, const std::vector<mio::abm::Person>& local_population,
+                      const mio::abm::TimePoint t, const mio::abm::TimeSpan dt,
+                      const mio::abm::Parameters& global_parameters)
+{
+    // allocate and initialize air exposures with 0
+    mio::abm::AirExposureRates local_air_exposure;
+    local_air_exposure.resize({mio::abm::CellIndex(location.get_cells().size()), mio::abm::VirusVariant::Count});
+    std::for_each(local_air_exposure.begin(), local_air_exposure.end(), [](auto& r) {
+        r = 0.0;
+    });
+    // allocate and initialize contact exposures with 0
+    mio::abm::ContactExposureRates local_contact_exposure;
+    local_contact_exposure.resize({mio::abm::CellIndex(location.get_cells().size()), mio::abm::VirusVariant::Count,
+                                   mio::AgeGroup(global_parameters.get_num_groups())});
+    std::for_each(local_contact_exposure.begin(), local_contact_exposure.end(), [](auto& r) {
+        r = 0.0;
+    });
+    // caclculate current exposures
+    for (const mio::abm::Person& p : local_population) {
+        add_exposure_contribution(local_air_exposure, local_contact_exposure, p, location, t, dt);
     }
-    return p;
+    // run interaction
+    mio::abm::interact(personal_rng, person, location, local_air_exposure, local_contact_exposure, t, dt,
+                       global_parameters);
 }

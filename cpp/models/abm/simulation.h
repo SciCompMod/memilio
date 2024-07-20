@@ -17,14 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_ABM_SIMULATOR_H
-#define MIO_ABM_SIMULATOR_H
+#ifndef MIO_ABM_SIMULATION_H
+#define MIO_ABM_SIMULATION_H
 
 #include "abm/model.h"
 #include "abm/time.h"
-#include "memilio/utils/time_series.h"
-#include "memilio/compartments/compartmentalmodel.h"
-#include "memilio/epidemiology/populations.h"
 #include "memilio/io/history.h"
 
 namespace mio

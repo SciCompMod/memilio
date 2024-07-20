@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen, Rene Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,15 +17,26 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/utils/random_number_generator.h"
+
+#include "abm/personal_rng.h"
+#include "abm/person.h"
 
 namespace mio
 {
-
-RandomNumberGenerator& thread_local_rng()
+namespace abm
 {
-    static thread_local auto rng = RandomNumberGenerator();
-    return rng;
+PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(mio::Key<uint64_t> key, PersonId id,
+                                                             mio::Counter<uint32_t>& counter)
+    : m_key(key)
+    , m_person_id(id)
+    , m_counter(counter)
+{
 }
 
+PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person)
+    : PersonalRandomNumberGenerator(rng.get_key(), person.get_id(), person.get_rng_counter())
+{
+}
+
+} // namespace abm
 } // namespace mio

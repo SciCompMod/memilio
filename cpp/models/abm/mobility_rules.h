@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_ABM_MOVEMENT_RULES_H
-#define MIO_ABM_MOVEMENT_RULES_H
+#ifndef MIO_ABM_MOBILITY_RULES_H
+#define MIO_ABM_MOBILITY_RULES_H
 
 #include "abm/location_type.h"
 #include "abm/parameters.h"
@@ -31,8 +31,8 @@ namespace abm
 {
 
 /**
- * @name Rules for movement between Location%s.
- * @param[inout] rng Person::RandomNumberGenerator for the person.
+ * @name Rules for mobility between Location%s.
+ * @param[inout] rng PersonalRandomNumberGenerator for the person.
  * @param[in] p Person the rule is applied to.
  * @param[in] t Current time.
  * @param[in] dt Length of the time step.
@@ -45,65 +45,65 @@ namespace abm
 /**
  * @brief Completely random movement to any other Location.
  */
-LocationType random_movement(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
-                              const Parameters& params);
+LocationType random_mobility(PersonalRandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
+                             const Parameters& params);
 
 /**
  * @brief School age children go to school in the morning and return later in the day.
  */
-LocationType go_to_school(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
+LocationType go_to_school(PersonalRandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
                           const Parameters& params);
 
 /** 
  * @brief Adults may go shopping in their free time.
  */
-LocationType go_to_shop(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+LocationType go_to_shop(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
                         const Parameters& params);
 
 /**
  * @brief Person%s might go to social events.
  */
-LocationType go_to_event(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+LocationType go_to_event(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
                          const Parameters& params);
 
 /**
  * @brief Adults go to work in the morning and return later in the day.
  */
-LocationType go_to_work(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+LocationType go_to_work(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
                         const Parameters& params);
 
 /**
  * @brief Person%s who are in quarantine should go home.
  */
-LocationType go_to_quarantine(Person::RandomNumberGenerator& rng, const Person& person, TimePoint /*t*/,
+LocationType go_to_quarantine(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint /*t*/,
                               TimeSpan /*dt*/, const Parameters& /*params*/);
 
 /**
  * @brief Infected Person%s may be hospitalized.
  */
-LocationType go_to_hospital(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
+LocationType go_to_hospital(PersonalRandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
                             const Parameters& params);
 
 /**
  * @brief Person%s in the hospital may be put in intensive care.
  */
-LocationType go_to_icu(Person::RandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
+LocationType go_to_icu(PersonalRandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
                        const Parameters& params);
 
 /**
  * @brief Person%s in the hospital/icu return home when they recover.
  */
-LocationType return_home_when_recovered(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t,
+LocationType return_home_when_recovered(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t,
                                         TimeSpan dt, const Parameters& params);
 
 /**
  * @brief Person%s in the icu go to cemetery when they are dead.
  */
-LocationType get_buried(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+LocationType get_buried(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
                         const Parameters& params);
 /**@}*/
 
 } // namespace abm
 } // namespace mio
 
-#endif //MIO_ABM_MOVEMENT_RULES_H
+#endif //MIO_ABM_MOBILITY_RULES_H

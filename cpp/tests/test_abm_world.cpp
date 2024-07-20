@@ -27,7 +27,7 @@ TEST(TestModel, init)
 
     EXPECT_EQ(model.get_locations().size(), 1);
     EXPECT_EQ(model.get_locations()[0].get_type(), mio::abm::LocationType::Cemetery);
-    ASSERT_THAT(model.get_persons(), testing::ElementsAre());
+    EXPECT_THAT(model.get_persons(), testing::ElementsAre());
 }
 
 TEST(TestModel, addLocation)
@@ -38,13 +38,13 @@ TEST(TestModel, addLocation)
     auto work_id    = model.add_location(mio::abm::LocationType::Work);
     auto home_id    = model.add_location(mio::abm::LocationType::Home);
 
-    ASSERT_EQ((int)school_id1.index, 1);
-    ASSERT_EQ((int)school_id2.index, 2);
+    ASSERT_EQ(school_id1.get(), 1u);
+    ASSERT_EQ(school_id2.get(), 2u);
 
-    auto& school1 = model.get_individualized_location(school_id1);
-    auto& school2 = model.get_individualized_location(school_id2);
-    auto& work    = model.get_individualized_location(work_id);
-    auto& home    = model.get_individualized_location(home_id);
+    auto& school1 = model.get_location(school_id1);
+    auto& school2 = model.get_location(school_id2);
+    auto& work    = model.get_location(work_id);
+    auto& home    = model.get_location(home_id);
 
     size_t count_schools = 0;
     for (auto& loc : model.get_locations()) {
@@ -65,12 +65,12 @@ TEST(TestModel, addPerson)
     auto model    = mio::abm::Model(num_age_groups);
     auto location = model.add_location(mio::abm::LocationType::School);
 
-    auto& p1 = model.add_person(location, age_group_15_to_34);
-    auto& p2 = model.add_person(location, age_group_35_to_59);
+    model.add_person(location, age_group_15_to_34);
+    model.add_person(location, age_group_35_to_59);
 
     ASSERT_EQ(model.get_persons().size(), 2);
-    ASSERT_EQ(&model.get_persons()[0], &p1);
-    ASSERT_EQ(&model.get_persons()[1], &p2);
+    ASSERT_EQ(model.get_person(0).get_age(), age_group_15_to_34);
+    ASSERT_EQ(model.get_person(1).get_age(), age_group_35_to_59);
 }
 
 TEST(TestModel, getSubpopulationCombined)
@@ -99,26 +99,25 @@ TEST(TestModel, getSubpopulationCombined)
 
 TEST(TestModel, findLocation)
 {
-    auto model     = mio::abm::Model(num_age_groups);
+    auto model     = mio::abm::model(num_age_groups);
     auto home_id   = model.add_location(mio::abm::LocationType::Home);
     auto school_id = model.add_location(mio::abm::LocationType::School);
     auto work_id   = model.add_location(mio::abm::LocationType::Work);
-    auto& home     = model.get_individualized_location(home_id);
-    auto& school   = model.get_individualized_location(school_id);
-    auto& work     = model.get_individualized_location(work_id);
-    auto person    = make_test_person(home);
-    person.set_assigned_location(home);
-    person.set_assigned_location(work);
-    person.set_assigned_location(school);
+    auto person_id = add_test_person(model, home_id);
+    auto& person   = model.get_person(person_id);
 
-    ASSERT_EQ(model.find_location(mio::abm::LocationType::Work, person), work);
-    ASSERT_EQ(model.find_location(mio::abm::LocationType::School, person), school);
-    ASSERT_EQ(model.find_location(mio::abm::LocationType::Home, person), home);
+    person.set_assigned_location(mio::abm::LocationType::Home, home_id);
+    person.set_assigned_location(mio::abm::LocationType::Work, work_id);
+    person.set_assigned_location(mio::abm::LocationType::School, school_id);
+
+    EXPECT_EQ(model.find_location(mio::abm::LocationType::Work, person_id), work_id);
+    EXPECT_EQ(model.find_location(mio::abm::LocationType::School, person_id), school_id);
+    EXPECT_EQ(model.find_location(mio::abm::LocationType::Home, person_id), home_id);
 
     auto&& model_test = std::as_const(model);
-    ASSERT_EQ(model_test.find_location(mio::abm::LocationType::Work, person), work);
-    ASSERT_EQ(model_test.find_location(mio::abm::LocationType::School, person), school);
-    ASSERT_EQ(model_test.find_location(mio::abm::LocationType::Home, person), home);
+    EXPECT_EQ(model_test.find_location(mio::abm::LocationType::Work, person_id), work_id);
+    EXPECT_EQ(model_test.find_location(mio::abm::LocationType::School, person_id), school_id);
+    EXPECT_EQ(model_test.find_location(mio::abm::LocationType::Home, person_id), home_id);
 }
 
 TEST(TestModel, evolveStateTransition)
@@ -145,13 +144,19 @@ TEST(TestModel, evolveStateTransition)
         2 * dt.days();
 
     auto location1 = model.add_location(mio::abm::LocationType::School);
-    auto& p1 = add_test_person(model, location1, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
-    auto& p2 = add_test_person(model, location1, age_group_15_to_34, mio::abm::InfectionState::Susceptible);
     auto location2 = model.add_location(mio::abm::LocationType::Work);
-    auto& p3       = add_test_person(model, location2, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
-    p1.set_assigned_location(location1);
-    p2.set_assigned_location(location1);
-    p3.set_assigned_location(location2);
+
+    add_test_person(model, location1, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
+    add_test_person(model, location1, age_group_15_to_34, mio::abm::InfectionState::Susceptible);
+    add_test_person(model, location2, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
+
+    auto& p1 = model.get_persons()[0];
+    auto& p2 = model.get_persons()[1];
+    auto& p3 = model.get_persons()[2];
+
+    p1.set_assigned_location(mio::abm::LocationType::School, location1);
+    p2.set_assigned_location(mio::abm::LocationType::School, location1);
+    p3.set_assigned_location(mio::abm::LocationType::Work, location2);
 
     //setup mock so p2 becomes infected
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
@@ -201,18 +206,19 @@ TEST(TestModel, evolveMovement)
             .WillOnce(testing::Return(0.8)) // draw random school hour
             .WillRepeatedly(testing::Return(1.0));
 
-        auto& p2 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t);
-        auto& p1 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+        auto pid2 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t);
+        auto pid1 =
+            add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
 
-        p1.set_assigned_location(school_id);
-        p2.set_assigned_location(school_id);
-        p1.set_assigned_location(work_id);
-        p2.set_assigned_location(work_id);
-        p1.set_assigned_location(home_id);
-        p2.set_assigned_location(home_id);
+        auto& p1 = model.get_person(pid1);
+        auto& p2 = model.get_person(pid2);
 
-        auto& school = model.get_individualized_location(school_id);
-        auto& work   = model.get_individualized_location(work_id);
+        p1.set_assigned_location(mio::abm::LocationType::School, school_id);
+        p2.set_assigned_location(mio::abm::LocationType::School, school_id);
+        p1.set_assigned_location(mio::abm::LocationType::Work, work_id);
+        p2.set_assigned_location(mio::abm::LocationType::Work, work_id);
+        p1.set_assigned_location(mio::abm::LocationType::Home, home_id);
+        p2.set_assigned_location(mio::abm::LocationType::Home, home_id);
 
         ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
             mock_exponential_dist;
@@ -220,10 +226,10 @@ TEST(TestModel, evolveMovement)
 
         model.evolve(t, dt);
 
-        EXPECT_EQ(p1.get_location(), work);
-        EXPECT_EQ(p2.get_location(), school);
-        EXPECT_EQ(school.get_number_persons(), 1);
-        EXPECT_EQ(work.get_number_persons(), 1);
+        EXPECT_EQ(p1.get_location(), work_id);
+        EXPECT_EQ(p2.get_location(), school_id);
+        EXPECT_EQ(model.get_number_persons(school_id), 1);
+        EXPECT_EQ(model.get_number_persons(work_id), 1);
     }
 
     {
@@ -261,29 +267,37 @@ TEST(TestModel, evolveMovement)
             .WillOnce(testing::Return(0.8)) // draw random school hour
             .WillRepeatedly(testing::Return(1.0)); // this forces p1 and p3 to recover
 
-        auto& p1 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
-        auto& p2 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t);
-        auto& p3 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedSevere, t);
-        auto& p4 = add_test_person(model, hospital_id, age_group_5_to_14, mio::abm::InfectionState::Recovered, t);
-        auto& p5 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t);
-        p1.set_assigned_location(event_id);
-        p2.set_assigned_location(event_id);
-        p1.set_assigned_location(work_id);
-        p2.set_assigned_location(work_id);
-        p1.set_assigned_location(home_id);
-        p2.set_assigned_location(home_id);
-        p3.set_assigned_location(home_id);
-        p4.set_assigned_location(home_id);
-        p3.set_assigned_location(hospital_id);
-        p4.set_assigned_location(hospital_id);
-        p5.set_assigned_location(event_id);
-        p5.set_assigned_location(work_id);
-        p5.set_assigned_location(home_id);
+        auto pid1 =
+            add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+        auto pid2 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t);
+        auto pid3 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedSevere, t);
+        auto pid4 = add_test_person(model, hospital_id, age_group_5_to_14, mio::abm::InfectionState::Recovered, t);
+        auto pid5 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t);
+
+        auto& p1 = model.get_person(pid1);
+        auto& p2 = model.get_person(pid2);
+        auto& p3 = model.get_person(pid3);
+        auto& p4 = model.get_person(pid4);
+        auto& p5 = model.get_person(pid5);
+
+        p1.set_assigned_location(mio::abm::LocationType::SocialEvent, event_id);
+        p2.set_assigned_location(mio::abm::LocationType::SocialEvent, event_id);
+        p1.set_assigned_location(mio::abm::LocationType::Work, work_id);
+        p2.set_assigned_location(mio::abm::LocationType::Work, work_id);
+        p1.set_assigned_location(mio::abm::LocationType::Home, home_id);
+        p2.set_assigned_location(mio::abm::LocationType::Home, home_id);
+        p3.set_assigned_location(mio::abm::LocationType::Home, home_id);
+        p4.set_assigned_location(mio::abm::LocationType::Home, home_id);
+        p3.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id);
+        p4.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id);
+        p5.set_assigned_location(mio::abm::LocationType::SocialEvent, event_id);
+        p5.set_assigned_location(mio::abm::LocationType::Work, work_id);
+        p5.set_assigned_location(mio::abm::LocationType::Home, home_id);
 
         mio::abm::TripList& data = model.get_trip_list();
-        mio::abm::Trip trip1(p1.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id);
-        mio::abm::Trip trip2(p2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id);
-        mio::abm::Trip trip3(p5.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id);
+        mio::abm::Trip trip1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id);
+        mio::abm::Trip trip2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id);
+        mio::abm::Trip trip3(p5.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id);
         data.add_trip(trip1);
         data.add_trip(trip2);
         data.add_trip(trip3);
@@ -296,46 +310,41 @@ TEST(TestModel, evolveMovement)
 
         model.evolve(t, dt);
 
-        auto& event    = model.get_individualized_location(event_id);
-        auto& work     = model.get_individualized_location(work_id);
-        auto& home     = model.get_individualized_location(home_id);
-        auto& hospital = model.get_individualized_location(hospital_id);
+        EXPECT_EQ(p1.get_location(), work_id);
+        EXPECT_EQ(p2.get_location(), event_id);
+        EXPECT_EQ(p3.get_location(), hospital_id);
+        EXPECT_EQ(p4.get_location(), home_id);
+        EXPECT_EQ(p5.get_location(), event_id);
+        EXPECT_EQ(model.get_number_persons(event_id), 2);
+        EXPECT_EQ(model.get_number_persons(work_id), 1);
+        EXPECT_EQ(model.get_number_persons(home_id), 1);
+        EXPECT_EQ(model.get_number_persons(hospital_id), 1);
 
-        EXPECT_EQ(p1.get_location(), work);
-        EXPECT_EQ(p2.get_location(), event);
-        EXPECT_EQ(p3.get_location(), hospital);
-        EXPECT_EQ(p4.get_location(), home);
-        EXPECT_EQ(p5.get_location(), event);
-        EXPECT_EQ(event.get_number_persons(), 2);
-        EXPECT_EQ(work.get_number_persons(), 1);
-        EXPECT_EQ(home.get_number_persons(), 1);
-        EXPECT_EQ(hospital.get_number_persons(), 1);
-
-        p1.move_to(home);
-        p2.move_to(home);
-        p5.move_to(home);
+        model.change_location(p1.get_id(), home_id);
+        model.change_location(p2.get_id(), home_id);
+        model.change_location(p5.get_id(), home_id);
 
         t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
         model.get_trip_list().reset_index();
 
         model.evolve(t, dt);
 
-        EXPECT_EQ(p1.get_location(), work);
-        EXPECT_EQ(p2.get_location(), event);
-        EXPECT_EQ(p3.get_location(), home);
-        EXPECT_EQ(p4.get_location(), home);
-        EXPECT_EQ(p5.get_location(), event);
-        EXPECT_EQ(event.get_number_persons(), 2);
-        EXPECT_EQ(work.get_number_persons(), 1);
-        EXPECT_EQ(home.get_number_persons(), 2);
+        EXPECT_EQ(p1.get_location(), work_id);
+        EXPECT_EQ(p2.get_location(), event_id);
+        EXPECT_EQ(p3.get_location(), home_id);
+        EXPECT_EQ(p4.get_location(), home_id);
+        EXPECT_EQ(p5.get_location(), event_id);
+        EXPECT_EQ(model.get_number_persons(event_id), 2);
+        EXPECT_EQ(model.get_number_persons(work_id), 1);
+        EXPECT_EQ(model.get_number_persons(home_id), 2);
 
         bool weekend = true;
-        mio::abm::Trip tripweekend1(p1.get_person_id(),
-                                    mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), event_id);
-        mio::abm::Trip tripweekend2(p2.get_person_id(),
-                                    mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), home_id);
-        mio::abm::Trip tripweekend3(p5.get_person_id(),
-                                    mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), work_id);
+        mio::abm::Trip tripweekend1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10),
+                                    event_id);
+        mio::abm::Trip tripweekend2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10),
+                                    home_id);
+        mio::abm::Trip tripweekend3(p5.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10),
+                                    work_id);
         data.add_trip(tripweekend1, weekend);
         data.add_trip(tripweekend2, weekend);
         data.add_trip(tripweekend3, weekend);
@@ -344,14 +353,14 @@ TEST(TestModel, evolveMovement)
 
         model.evolve(t, dt);
 
-        EXPECT_EQ(p1.get_location(), event);
-        EXPECT_EQ(p2.get_location(), home);
-        EXPECT_EQ(p3.get_location(), home);
-        EXPECT_EQ(p4.get_location(), home);
-        EXPECT_EQ(p5.get_location(), work);
-        EXPECT_EQ(event.get_number_persons(), 1);
-        EXPECT_EQ(work.get_number_persons(), 1);
-        EXPECT_EQ(home.get_number_persons(), 3);
+        EXPECT_EQ(p1.get_location(), event_id);
+        EXPECT_EQ(p2.get_location(), home_id);
+        EXPECT_EQ(p3.get_location(), home_id);
+        EXPECT_EQ(p4.get_location(), home_id);
+        EXPECT_EQ(p5.get_location(), work_id);
+        EXPECT_EQ(model.get_number_persons(event_id), 1);
+        EXPECT_EQ(model.get_number_persons(work_id), 1);
+        EXPECT_EQ(model.get_number_persons(home_id), 3);
     }
 
     // Test that a dead person cannot make a movement
@@ -371,37 +380,40 @@ TEST(TestModel, evolveMovement)
         auto icu_id      = model.add_location(mio::abm::LocationType::ICU);
         auto hospital_id = model.add_location(mio::abm::LocationType::Hospital);
         // Create a person that is dead at time t
-        auto& p_dead = add_test_person(model, icu_id, age_group_60_to_79, mio::abm::InfectionState::Dead, t);
+        add_test_person(model, icu_id, age_group_60_to_79, mio::abm::InfectionState::Dead, t);
         // Create a person that is severe at hospital and will be dead at time t + dt
-        auto& p_severe =
-            add_test_person(model, hospital_id, age_group_60_to_79, mio::abm::InfectionState::Dead, t + dt);
-        p_dead.set_assigned_location(icu_id);
-        p_dead.set_assigned_location(work_id);
-        p_dead.set_assigned_location(home_id);
-        p_severe.set_assigned_location(hospital_id);
-        p_severe.set_assigned_location(icu_id);
-        p_severe.set_assigned_location(home_id);
+        add_test_person(model, hospital_id, age_group_60_to_79, mio::abm::InfectionState::Dead, t + dt);
+
+        auto& p_dead   = model.get_persons()[0];
+        auto& p_severe = model.get_persons()[1];
+
+        p_dead.set_assigned_location(mio::abm::LocationType::ICU, icu_id);
+        p_dead.set_assigned_location(mio::abm::LocationType::Work, work_id);
+        p_dead.set_assigned_location(mio::abm::LocationType::Home, home_id);
+        p_severe.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id);
+        p_severe.set_assigned_location(mio::abm::LocationType::ICU, icu_id);
+        p_severe.set_assigned_location(mio::abm::LocationType::Home, home_id);
 
         // Add trip to see if a dead person can move outside of cemetery by scheduled
         mio::abm::TripList& trip_list = model.get_trip_list();
-        mio::abm::Trip trip1(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id, home_id);
-        mio::abm::Trip trip2(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);
-        mio::abm::Trip trip3(p_severe.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);
+        mio::abm::Trip trip1(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id, home_id);
+        mio::abm::Trip trip2(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);
+        mio::abm::Trip trip3(p_severe.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);
         trip_list.add_trip(trip1);
         trip_list.add_trip(trip2);
         trip_list.add_trip(trip3);
 
         // Check the dead person got burried and the severely infected person starts in Hospital
         model.evolve(t, dt);
-        EXPECT_EQ(p_dead.get_location().get_type(), mio::abm::LocationType::Cemetery);
+        EXPECT_EQ(model.get_location(p_dead.get_id()).get_type(), mio::abm::LocationType::Cemetery);
         EXPECT_EQ(p_severe.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
-        EXPECT_EQ(p_severe.get_location().get_type(), mio::abm::LocationType::Hospital);
+        EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Hospital);
 
         // Check the dead person is still in Cemetery and the severely infected person dies and got burried
         model.evolve(t + dt, dt);
-        EXPECT_EQ(p_dead.get_location().get_type(), mio::abm::LocationType::Cemetery);
+        EXPECT_EQ(model.get_location(p_dead.get_id()).get_type(), mio::abm::LocationType::Cemetery);
         EXPECT_EQ(p_severe.get_infection_state(t + dt), mio::abm::InfectionState::Dead);
-        EXPECT_EQ(p_severe.get_location().get_type(), mio::abm::LocationType::Cemetery);
+        EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Cemetery);
     }
 }
 
@@ -415,16 +427,17 @@ TEST(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         100;
     model.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant(0), age_group_15_to_34}] = 100;
 
-    auto home_id      = model.add_location(mio::abm::LocationType::Home);
-    auto work_id      = model.add_location(mio::abm::LocationType::Work);
-    auto& home        = model.get_individualized_location(home_id);
-    auto& work        = model.get_individualized_location(work_id);
+    auto home_id = model.add_location(mio::abm::LocationType::Home);
+    auto work_id = model.add_location(mio::abm::LocationType::Work);
+    auto& work   = model.get_location(work_id);
+
     auto current_time = mio::abm::TimePoint(0);
-    auto person =
+    auto pid =
         add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, current_time);
-    auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
-    person.set_assigned_location(home);
-    person.set_assigned_location(work);
+    auto& person    = model.get_person(pid);
+    auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
+    person.set_assigned_location(mio::abm::LocationType::Home, home_id);
+    person.set_assigned_location(mio::abm::LocationType::Work, work_id);
 
     auto testing_criteria = mio::abm::TestingCriteria();
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
@@ -434,10 +447,10 @@ TEST(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     const auto start_date        = mio::abm::TimePoint(20);
     const auto end_date          = mio::abm::TimePoint(60 * 60 * 24 * 3);
     const auto probability       = 1.0;
-    const auto test_type         = mio::abm::PCRTest();
+    const auto test_params_pcr   = mio::abm::TestParameters{0.9, 0.99};
 
-    auto testing_scheme =
-        mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_type, probability);
+    auto testing_scheme = mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date,
+                                                  test_params_pcr, probability);
 
     model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
     ASSERT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
@@ -544,180 +557,4 @@ TEST(TestModel, checkParameterConstraints)
 
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(-2);
     ASSERT_EQ(params.check_constraints(), true);
-}
-
-TEST(TestModel, copyModel)
-{
-    auto model = mio::abm::Model(num_age_groups);
-    auto rng   = mio::RandomNumberGenerator();
-
-    model.parameters.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 4.;
-    model.use_movement_rules(false);
-
-    auto school_id1 = model.add_location(mio::abm::LocationType::School);
-    auto school_id2 = model.add_location(mio::abm::LocationType::School);
-    auto work_id    = model.add_location(mio::abm::LocationType::Work);
-    auto home_id    = model.add_location(mio::abm::LocationType::Home);
-
-    auto& school1 = model.get_individualized_location(school_id1);
-    school1.set_required_mask(mio::abm::MaskType::Surgical);
-    school1.set_npi_active(true);
-    auto& school2 = model.get_individualized_location(school_id2);
-    school2.set_required_mask(mio::abm::MaskType::FFP2);
-    auto& work = model.get_individualized_location(work_id);
-    auto& home = model.get_individualized_location(home_id);
-
-    auto& p1    = model.add_person(school_id1, age_group_0_to_4);
-    auto rng_p1 = mio::abm::Person::RandomNumberGenerator(rng, p1);
-    p1.add_new_infection(mio::abm::Infection(rng_p1, mio::abm::VirusVariant::Wildtype, p1.get_age(), model.parameters,
-                                             mio::abm::TimePoint(0)));
-    auto& p2 = model.add_person(school_id2, age_group_15_to_34);
-    p2.set_mask_preferences(std::vector<double>(15, 0.2));
-
-    mio::abm::TripList& trip_data = model.get_trip_list();
-    mio::abm::Trip trip1(p1.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), school_id1, home_id);
-    mio::abm::Trip trip2(p2.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id);
-    trip_data.add_trip(trip1);
-    trip_data.add_trip(trip2);
-
-    auto infection_params =
-        model.parameters.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]
-            .value();
-
-    auto copied_model = mio::abm::Model(model);
-    auto copied_infection_params =
-        copied_model.parameters.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]
-            .value();
-
-    // Assert the parameters, trips, locations and persons of copied model are logically equal to that of original model
-    ASSERT_EQ(copied_infection_params, infection_params);
-    ASSERT_EQ(copied_model.use_movement_rules(), model.use_movement_rules());
-
-    mio::abm::TripList& copied_trip_data = copied_model.get_trip_list();
-    ASSERT_EQ(copied_trip_data.num_trips(), trip_data.num_trips());
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).person_id, trip_data.get_next_trip(false).person_id);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).movement_destination,
-              trip_data.get_next_trip(false).movement_destination);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).movement_origin, trip_data.get_next_trip(false).movement_origin);
-    copied_trip_data.increase_index();
-    trip_data.increase_index();
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).person_id, trip_data.get_next_trip(false).person_id);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).movement_destination,
-              trip_data.get_next_trip(false).movement_destination);
-    ASSERT_EQ(copied_trip_data.get_next_trip(false).movement_origin, trip_data.get_next_trip(false).movement_origin);
-
-    ASSERT_EQ(copied_model.get_locations().size(), model.get_locations().size());
-    ASSERT_EQ(copied_model.get_locations()[1].get_index(), model.get_locations()[1].get_index());
-    ASSERT_EQ(copied_model.get_locations()[2].get_index(), model.get_locations()[2].get_index());
-    ASSERT_EQ(copied_model.get_locations()[3].get_index(), model.get_locations()[3].get_index());
-    ASSERT_EQ(copied_model.get_locations()[4].get_index(), model.get_locations()[4].get_index());
-    ASSERT_EQ(copied_model.get_locations()[1].get_number_persons(), model.get_locations()[1].get_number_persons());
-    ASSERT_EQ(copied_model.get_locations()[2].get_number_persons(), model.get_locations()[2].get_number_persons());
-    ASSERT_EQ(copied_model.get_locations()[3].get_number_persons(), model.get_locations()[3].get_number_persons());
-    ASSERT_EQ(copied_model.get_locations()[4].get_number_persons(), model.get_locations()[4].get_number_persons());
-    ASSERT_EQ(copied_model.get_locations()[1].get_npi_active(), model.get_locations()[1].get_npi_active());
-    ASSERT_EQ(copied_model.get_locations()[2].get_npi_active(), model.get_locations()[2].get_npi_active());
-    ASSERT_EQ(copied_model.get_locations()[3].get_npi_active(), model.get_locations()[3].get_npi_active());
-    ASSERT_EQ(copied_model.get_locations()[4].get_npi_active(), model.get_locations()[4].get_npi_active());
-    ASSERT_EQ(copied_model.get_locations()[1].get_required_mask(), model.get_locations()[1].get_required_mask());
-    ASSERT_EQ(copied_model.get_locations()[2].get_required_mask(), model.get_locations()[2].get_required_mask());
-    ASSERT_EQ(
-        copied_model.get_locations()[1].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
-        model.get_locations()[1].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed));
-    ASSERT_EQ(
-        copied_model.get_locations()[1].get_subpopulation(mio::abm::TimePoint(0),
-                                                          mio::abm::InfectionState::Susceptible),
-        model.get_locations()[1].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Susceptible));
-    ASSERT_EQ(
-        copied_model.get_locations()[2].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
-        model.get_locations()[2].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed));
-    ASSERT_EQ(
-        copied_model.get_locations()[2].get_subpopulation(mio::abm::TimePoint(0),
-                                                          mio::abm::InfectionState::Susceptible),
-        model.get_locations()[2].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Susceptible));
-    ASSERT_EQ(
-        copied_model.get_locations()[3].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
-        model.get_locations()[3].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed));
-    ASSERT_EQ(
-        copied_model.get_locations()[4].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
-        model.get_locations()[4].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed));
-    ASSERT_EQ(copied_model.get_locations()[1].get_cells().size(), model.get_locations()[1].get_cells().size());
-    ASSERT_EQ(copied_model.get_locations()[2].get_cells().size(), model.get_locations()[2].get_cells().size());
-    ASSERT_EQ(copied_model.get_locations()[3].get_cells().size(), model.get_locations()[2].get_cells().size());
-    ASSERT_EQ(copied_model.get_locations()[4].get_cells().size(), model.get_locations()[2].get_cells().size());
-    ASSERT_EQ(copied_model.get_locations()[1].get_cells()[0].m_persons.size(),
-              model.get_locations()[1].get_cells()[0].m_persons.size());
-    ASSERT_EQ(copied_model.get_locations()[2].get_cells()[0].m_persons.size(),
-              model.get_locations()[2].get_cells()[0].m_persons.size());
-    ASSERT_EQ(copied_model.get_locations()[3].get_cells()[0].m_persons.size(),
-              model.get_locations()[3].get_cells()[0].m_persons.size());
-    ASSERT_EQ(copied_model.get_locations()[4].get_cells()[0].m_persons.size(),
-              model.get_locations()[4].get_cells()[0].m_persons.size());
-    ASSERT_EQ(copied_model.get_locations()[1].get_cells()[0].m_persons[0],
-              model.get_locations()[1].get_cells()[0].m_persons[0]);
-    ASSERT_EQ(copied_model.get_locations()[2].get_cells()[0].m_persons[0],
-              model.get_locations()[2].get_cells()[0].m_persons[0]);
-
-    ASSERT_EQ(copied_model.get_persons().size(), model.get_persons().size());
-    ASSERT_EQ(copied_model.get_persons()[0].get_location().get_index(),
-              model.get_persons()[0].get_location().get_index());
-    ASSERT_EQ(copied_model.get_persons()[1].get_location().get_index(),
-              model.get_persons()[1].get_location().get_index());
-    ASSERT_EQ(copied_model.get_persons()[0].get_location().get_type(),
-              model.get_persons()[0].get_location().get_type());
-    ASSERT_EQ(copied_model.get_persons()[1].get_location().get_type(),
-              model.get_persons()[1].get_location().get_type());
-    ASSERT_EQ(copied_model.get_persons()[0].get_infection().get_infection_state(mio::abm::TimePoint(0)),
-              model.get_persons()[0].get_infection().get_infection_state(mio::abm::TimePoint(0)));
-    ASSERT_EQ(copied_model.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Home),
-              model.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Home));
-    ASSERT_EQ(copied_model.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Work),
-              model.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Work));
-    ASSERT_EQ(copied_model.get_persons()[1].get_mask_compliance(mio::abm::LocationType::Home),
-              model.get_persons()[1].get_mask_compliance(mio::abm::LocationType::Home));
-    ASSERT_EQ(copied_model.get_persons()[1].get_mask_compliance(mio::abm::LocationType::Work),
-              model.get_persons()[1].get_mask_compliance(mio::abm::LocationType::Work));
-
-    // Assert the parameters, trips, locations, persons and their member variables of copied model are stored in different address of original model
-    ASSERT_NE(&(copied_model.parameters), &model.parameters);
-    ASSERT_NE(&(copied_model.get_trip_list()), &trip_data);
-
-    ASSERT_NE(&copied_model.get_locations()[1], &model.get_locations()[1]);
-    ASSERT_NE(&copied_model.get_locations()[2], &model.get_locations()[2]);
-    ASSERT_NE(&copied_model.get_locations()[3], &model.get_locations()[3]);
-    ASSERT_NE(&copied_model.get_locations()[4], &model.get_locations()[4]);
-    ASSERT_NE(&copied_model.get_locations()[1].get_cells(), &model.get_locations()[1].get_cells());
-    ASSERT_NE(&copied_model.get_locations()[2].get_cells(), &model.get_locations()[2].get_cells());
-    ASSERT_NE(&copied_model.get_locations()[3].get_cells(), &model.get_locations()[3].get_cells());
-    ASSERT_NE(&copied_model.get_locations()[4].get_cells(), &model.get_locations()[4].get_cells());
-    ASSERT_NE(&(copied_model.get_locations()[1].get_cells()[0]), &(model.get_locations()[1].get_cells()[0]));
-    ASSERT_NE(&(copied_model.get_locations()[2].get_cells()[0]), &(model.get_locations()[2].get_cells()[0]));
-    ASSERT_NE(&(copied_model.get_locations()[1].get_cells()[0].m_persons[0]),
-              &(model.get_locations()[1].get_cells()[0].m_persons[0]));
-    ASSERT_NE(&(copied_model.get_locations()[2].get_cells()[0].m_persons[0]),
-              &(model.get_locations()[2].get_cells()[0].m_persons[0]));
-
-    ASSERT_NE(&copied_model.get_persons()[0], &model.get_persons()[0]);
-    ASSERT_NE(&copied_model.get_persons()[1], &model.get_persons()[1]);
-    ASSERT_NE(&(copied_model.get_persons()[0].get_location()), &model.get_persons()[0].get_location());
-    ASSERT_NE(&(copied_model.get_persons()[1].get_location()), &model.get_persons()[1].get_location());
-    ASSERT_NE(&(copied_model.get_locations()[1]), &(model.get_locations()[1]));
-    ASSERT_NE(&(copied_model.get_locations()[2]), &(model.get_locations()[2]));
-    ASSERT_NE(&(copied_model.get_persons()[0].get_assigned_locations()),
-              &model.get_persons()[0].get_assigned_locations());
-    ASSERT_NE(&(copied_model.get_persons()[1].get_assigned_locations()),
-              &model.get_persons()[1].get_assigned_locations());
-    ASSERT_NE(&(copied_model.get_persons()[0].get_infection()), &model.get_persons()[0].get_infection());
-    ASSERT_NE(&(copied_model.get_persons()[0].get_mask()), &model.get_persons()[0].get_mask());
-    ASSERT_NE(&(copied_model.get_persons()[1].get_mask()), &model.get_persons()[1].get_mask());
-    ASSERT_NE(&(copied_model.get_persons()[0].get_cells()), &model.get_persons()[0].get_cells());
-    ASSERT_NE(&(copied_model.get_persons()[1].get_cells()), &model.get_persons()[1].get_cells());
-
-    // Evolve the model and check that the copied model has not evolved
-    copied_model.get_persons()[0].move_to(work, {0});
-    copied_model.get_persons()[1].move_to(home, {0});
-    ASSERT_NE(copied_model.get_persons()[0].get_location().get_type(),
-              model.get_persons()[0].get_location().get_type());
-    ASSERT_NE(copied_model.get_persons()[1].get_location().get_type(),
-              model.get_persons()[1].get_location().get_type());
 }
