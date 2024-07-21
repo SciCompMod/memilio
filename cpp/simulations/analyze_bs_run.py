@@ -435,13 +435,27 @@ def infer_positive_tests(path):
         total_50 = total_50[::24]
         total_50 = total_50[0:90]
 
-        # we need the real positive tests 
-        # real world
-        f_real = h5py.File(
-            path + "/Results_rki.h5", 'r')
-        real_bs = f_real['3101']
-        total_real = real_bs['Total'][()]
-        total_real = total_real[0:90]
+        # # we need the real positive tests 
+        # # real world
+        # f_real = h5py.File(
+        #     path + "/Results_rki.h5", 'r')
+        # real_bs = f_real['3101']
+        # total_real = real_bs['Total'][()]
+        # total_real = total_real[0:90]
+
+        # we need the real data from the json file cases_all_county_age_repdate_ma7.json 
+        df_abb = pd.read_json(path+"/../pydata/Germany/cases_infected_county_repdate_ma7.json")
+        # we just need the columns cases and date
+        df_abb = df_abb[['Date','Confirmed', 'ID_County']]
+        # we need just the dates bewteen 2021-03-01 and 2021-06-01
+        df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') & (df_abb['Date'] <= '2021-06-01')]
+        # we just need the cases with id 3101
+        df_abb = df_abb[df_abb['ID_County'] == 3101]
+        # we just take the first 90 days
+        df_abb = df_abb[0:90]
+        # we need the amount of new positive tests each day insetad of cumulative
+        df_abb['Confirmed'] = df_abb['Confirmed'].diff()
+
 
         # we take a fraction from each compartment and fit this to the positive tests
         # we take the symptomatic persons
@@ -449,9 +463,9 @@ def infer_positive_tests(path):
         # we take the asymptomatic persons
         asympt_persons = total_50[:,2]+total_50[:,1]+total_50[:,0]
         # we assume r_sns = 20 so symptomatic persons are 20 times more likely to test themselves
-        r_sns = 40
+        r_sns = 20
         # we say the likelyhood to test yourself is 0.8 for symptomatic persons and therefore 0.04 for asymptomatic persons
-        lt_sympt = 0.3
+        lt_sympt = 0.08
         lt_asympt = lt_sympt/r_sns
         sensitivity = 0.6
         specificity = 0.99
@@ -475,14 +489,14 @@ def infer_positive_tests(path):
         ax.plot(xx, inferred_positive_tests_sympt, color='tab:red')
         ax.plot(xx, inferred_positive_tests_asympt, color='tab:blue')
         ax.plot(xx, inferred_positive_tests_asympt+inferred_positive_tests_sympt, color='tab:green')
-        ax.plot(xx, total_real[:,1], color='tab:orange')
+        ax.plot(xx, df_abb['Confirmed'], color='tab:orange')
         ax.set_xlabel('time (days)')
         ax.set_ylabel('Number of positive tests')
         ax.title.set_text('Inferred positive tests')
         ax.legend(['Symptomatic persons','Asymptomatic persons','Symptomatic and Asymptomatic persons','Real positive tests'])
 
         # we also write the rmse
-        rmse_sympt=np.sqrt(((total_real[:,1] - (inferred_positive_tests_sympt+inferred_positive_tests_asympt))**2).mean())
+        rmse_sympt=np.sqrt(((df_abb['Confirmed'] - (inferred_positive_tests_sympt+inferred_positive_tests_asympt))**2).mean())
         ax.text(0.25, 0.8, 'RMSE: '+str( float("{:.2f}".format(rmse_sympt))), horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes, color='pink', fontsize=15)
         plt.show()
 
@@ -500,8 +514,8 @@ if __name__ == "__main__":
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
     plot_infectoin_states_results(path)
-    plot_infections_loc_types_avarage(path)
-    plot_icu(path+"/..")
-    plot_dead(path)
+    # plot_infections_loc_types_avarage(path)
+    # plot_icu(path+"/..")
+    # plot_dead(path)
     # plot_tests(path+"/..")
-    infer_positive_tests(path)   
+    # infer_positive_tests(path)   
