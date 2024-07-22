@@ -46,7 +46,7 @@ class TestAbm(unittest.TestCase):
         social_event_id = world.add_location(abm.LocationType.SocialEvent)
         self.assertEqual(len(world.locations), 3)
 
-        home = world.locations[home_id.index]
+        home = world.locations[home_id.index()]
         self.assertEqual(home.type, abm.LocationType.Home)
 
         testing_ages = [mio.AgeGroup(0)]
@@ -70,15 +70,16 @@ class TestAbm(unittest.TestCase):
         home_id = world.add_location(abm.LocationType.Home)
         social_event_id = world.add_location(abm.LocationType.SocialEvent)
 
-        p1 = world.add_person(
-            home_id, mio.AgeGroup(2))
-        p2 = world.add_person(
-            social_event_id, mio.AgeGroup(5))
+        p1_id = world.add_person(home_id, mio.AgeGroup(2))
+        p2_id = world.add_person(social_event_id, mio.AgeGroup(5))
+
+        p1 = world.persons[p1_id.index()]
+        p2 = world.persons[p2_id.index()]
 
         # check persons
         self.assertEqual(len(world.persons), 2)
         self.assertEqual(p1.age, mio.AgeGroup(2))
-        self.assertEqual(p1.location.index, 1)
+        self.assertEqual(p1.location.index(), 1)
         self.assertEqual(world.persons[0], p1)
         self.assertEqual(world.persons[1], p2)
 
@@ -88,20 +89,15 @@ class TestAbm(unittest.TestCase):
         world = sim.world
 
         # add some locations and persons
-        for type in abm.LocationType.values():
-            world.add_location(type)
-        home_id = abm.LocationId(0, abm.LocationType.Home)
-        social_event_id = abm.LocationId(0, abm.LocationType.SocialEvent)
-        work_id = abm.LocationId(0, abm.LocationType.Work)
-        p1 = world.add_person(
-            home_id, mio.AgeGroup(0))
-        p2 = world.add_person(
-            home_id, mio.AgeGroup(2))
-        for type in abm.LocationType.values():
-            p1.set_assigned_location(abm.LocationId(0, type))
-            p2.set_assigned_location(abm.LocationId(0, type))
+        home_id = world.add_location(abm.LocationType.Home)
+        social_event_id = world.add_location(abm.LocationType.SocialEvent)
+        work_id = world.add_location(abm.LocationType.Work)
+        p1_id = world.add_person(home_id, mio.AgeGroup(0))
+        p2_id = world.add_person(home_id, mio.AgeGroup(2))
 
-        social_event = world.locations[social_event_id.index]
+        for loc_id in [home_id, social_event_id, work_id]:
+            world.assign_location(p1_id, loc_id)
+            world.assign_location(p2_id, loc_id)
 
         world.parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype, mio.AgeGroup(
             0)] = 0.0

@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/person.h"
+#include "abm/testing_strategy.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
 
@@ -91,9 +91,9 @@ TEST(TestTestingScheme, runScheme)
     mio::abm::Location loc_home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location loc_work(mio::abm::LocationType::Work, 0, num_age_groups);
     auto person1     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
-    auto rng_person1 = mio::abm::Person::RandomNumberGenerator(rng, person1);
+    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(rng, person1);
     auto person2     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::Recovered);
-    auto rng_person2 = mio::abm::Person::RandomNumberGenerator(rng, person2);
+    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(rng, person2);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -128,31 +128,33 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
     auto testing_criteria2 = mio::abm::TestingCriteria({}, test_infection_states2);
     auto testing_scheme2 =
         mio::abm::TestingScheme(testing_criteria2, testing_min_time, start_date, end_date, test_type, probability);
-
+    testing_scheme2.update_activity_status(mio::abm::TimePoint(0));
     mio::abm::Location loc_work(mio::abm::LocationType::Work, 0);
     auto person1     = make_test_person(loc_work, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
-    auto rng_person1 = mio::abm::Person::RandomNumberGenerator(rng, person1);
+    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(rng, person1);
     auto person2     = make_test_person(loc_work, age_group_15_to_34, mio::abm::InfectionState::Recovered);
-    auto rng_person2 = mio::abm::Person::RandomNumberGenerator(rng, person2);
+    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(rng, person2);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly((6)))
-        .WillOnce(testing::Return(0.7)) // Person 1 complies to testing
+        .Times(testing::Exactly((8)))
+        .WillOnce(testing::Return(0.7)) // Person 1 complies to testing scheme 1
         .WillOnce(testing::Return(0.7)) // Person 1 is tested
         .WillOnce(testing::Return(0.7)) // Test of Person 1 is positive
         .WillOnce(testing::Return(0.7)) // Person 1 complies to isolation
-        .WillOnce(testing::Return(0.7)) // Person 2 complies to testing
-        .WillOnce(testing::Return(0.5)) // Person 2 is tested negative
-        .WillOnce(testing::Return(0.7)); // Person 1 complies to testing
+        .WillOnce(testing::Return(0.7)) // Person 2 complies to testing scheme 1 but does not its statisfy condition
+        .WillOnce(testing::Return(0.7)) // Person 2 complies to testing scheme 2
+        .WillOnce(testing::Return(0.5)) // Test of Person 2 is negative
+        .WillOnce(testing::Return(0.7)); // Person 1 complies to testing scheme 1
 
     mio::abm::TestingStrategy test_strategy =
-        mio::abm::TestingStrategy(std::unordered_map<mio::abm::LocationId, std::vector<mio::abm::TestingScheme>>());
+        mio::abm::TestingStrategy(std::vector<mio::abm::TestingStrategy::LocalStrategy>{});
     test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme1);
     test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme2);
     EXPECT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date),
               false); // Person tests and tests positive
     EXPECT_EQ(test_strategy.run_strategy(rng_person2, person2, loc_work, start_date),
               true); // Person tests and tests negative
-    EXPECT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date), true); // Person 1 complies to test but the time is too short between tests.
+    EXPECT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date),
+              true); // Person 1 complies to test but the time is too short between tests
 }

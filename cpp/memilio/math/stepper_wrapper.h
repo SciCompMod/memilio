@@ -61,10 +61,9 @@ public:
     ControlledStepperWrapper(double abs_tol = 1e-10, double rel_tol = 1e-5,
                              double dt_min = std::numeric_limits<double>::min(),
                              double dt_max = std::numeric_limits<double>::max())
-        : m_abs_tol(abs_tol)
+        : IntegratorCore<FP>(dt_min, dt_max)
+        , m_abs_tol(abs_tol)
         , m_rel_tol(rel_tol)
-        , m_dt_min(dt_min)
-        , m_dt_max(dt_max)
         , m_stepper(create_stepper())
     {
     }
@@ -82,12 +81,12 @@ public:
     {
         using boost::numeric::odeint::fail;
         using std::max;
-        assert(0 <= m_dt_min);
-        assert(m_dt_min <= m_dt_max);
+        assert(0 <= this->get_dt_min());
+        assert(this->get_dt_min() <= this->get_dt_max());
 
-        if (dt < m_dt_min || dt > m_dt_max) {
-            mio::log_warning("IntegratorCore: Restricting given step size dt = {} to [{}, {}].", dt, m_dt_min,
-                             m_dt_max);
+        if (dt < this->get_dt_min() || dt > this->get_dt_max()) {
+            mio::log_warning("IntegratorCore: Restricting given step size dt = {} to [{}, {}].", dt, this->get_dt_min(),
+                             this->get_dt_max());
         }
         // set initial values for exit conditions
         auto step_result = fail;
@@ -99,9 +98,9 @@ public:
         // or a strictly smaller value on fail.
         // stop only on a successful step or a failed step size adaption (w.r.t. the minimal step size m_dt_min)
         while (step_result == fail && is_dt_valid) {
-            if (dt < m_dt_min) {
+            if (dt < this->get_dt_min()) {
                 is_dt_valid = false;
-                dt          = m_dt_min;
+                dt          = this->get_dt_min();
             }
             // we use the scheme try_step(sys, in, t, out, dt) with sys=f, in=y(t_{k}), out=y(t_{k+1}).
             // this is similiar to do_step, but it can adapt the step size dt. If successful, it also updates t.
@@ -121,11 +120,11 @@ public:
         // bound dt from below
         // the last adaptive step (successful or not) may have calculated a new step size smaller than m_dt_min
 
-        dt = max(dt, m_dt_min);
+        dt = max(dt, this->get_dt_min());
         // check whether the last step failed (which means that m_dt_min was still too large to suffice tolerances)
         if (step_result == fail) {
             // adaptive stepping failed, but we still return the result of the last attempt
-            t += m_dt_min;
+            t += this->get_dt_min();
             return false;
         }
         else {
@@ -151,14 +150,14 @@ public:
     /// @param dt_min sets the minimum step size
     void set_dt_min(FP dt_min)
     {
-        m_dt_min = dt_min;
+        this->get_dt_min() = dt_min;
     }
 
     /// @param dt_max sets the maximum step size
     void set_dt_max(FP dt_max)
     {
-        m_dt_max  = dt_max;
-        m_stepper = create_stepper();
+        this->get_dt_max() = dt_max;
+        m_stepper          = create_stepper();
     }
 
 private:
@@ -167,13 +166,11 @@ private:
     {
         // for more options see: boost/boost/numeric/odeint/stepper/controlled_runge_kutta.hpp
         return Stepper(typename Stepper::error_checker_type(m_abs_tol, m_rel_tol),
-                       typename Stepper::step_adjuster_type(m_dt_max));
+                       typename Stepper::step_adjuster_type(this->get_dt_max()));
     }
 
     FP m_abs_tol, m_rel_tol; ///< Absolute and relative tolerances for integration.
-    FP m_dt_min, m_dt_max; ///< Lower and upper bound to the step size dt.
-    mutable Vector<FP> m_ytp1,
-        m_yt; ///< Temporary storage to avoid allocations in step function.
+    mutable Vector<FP> m_ytp1, m_yt; ///< Temporary storage to avoid allocations in step function.
     mutable Stepper m_stepper; ///< A stepper instance used for integration.
 };
 

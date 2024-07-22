@@ -17,86 +17,76 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/location_id.h"
+#include "abm/model_functions.h"
 #include "abm/location_type.h"
+#include "abm/migration_rules.h"
 #include "abm/person.h"
-
+#include "abm/time.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
+
 #include <gtest/gtest.h>
 
 TEST(TestPerson, init)
 {
     auto rng = mio::RandomNumberGenerator();
 
-    mio::abm::Location location(mio::abm::LocationType::Work, 0, num_age_groups);
+    mio::abm::Location location(mio::abm::LocationType::Work, 7, num_age_groups);
     auto t      = mio::abm::TimePoint(0);
-    auto person = mio::abm::Person(rng, location, age_group_60_to_79);
+    auto person = mio::abm::Person(rng, location.get_type(), location.get_id(), age_group_60_to_79);
 
     EXPECT_EQ(person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
-    EXPECT_EQ(person.get_location(), location);
-    EXPECT_EQ(person.get_person_id(), mio::abm::INVALID_PERSON_ID);
-}
-
-TEST(TestPerson, copyPerson)
-{
-    auto rng             = mio::RandomNumberGenerator();
-    auto location        = mio::abm::Location(mio::abm::LocationType::Work, 0, num_age_groups);
-    auto t               = mio::abm::TimePoint(0);
-    auto person          = mio::abm::Person(rng, location, age_group_60_to_79);
-    auto copied_location = location.copy_location_without_persons(num_age_groups);
-    auto copied_person   = person.copy_person(copied_location);
-
-    EXPECT_EQ(copied_person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
-    EXPECT_EQ(copied_person.get_location(), copied_location);
-    EXPECT_EQ(copied_person.get_person_id(), mio::abm::INVALID_PERSON_ID);
+    EXPECT_EQ(person.get_location(), location.get_id());
+    EXPECT_EQ(person.get_id(), mio::abm::PersonId::invalid_id());
 }
 
 TEST(TestPerson, migrate)
 {
     auto rng = mio::RandomNumberGenerator();
 
-    auto t = mio::abm::TimePoint(0);
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location loc1(mio::abm::LocationType::PublicTransport, 0, 6, 1);
-    mio::abm::Location loc2(mio::abm::LocationType::School, 0, num_age_groups);
-    mio::abm::Location loc3(mio::abm::LocationType::PublicTransport, 0, 6, 2);
+    mio::abm::Location loc1(mio::abm::LocationType::PublicTransport, 1, 6, 1);
+    mio::abm::Location loc2(mio::abm::LocationType::School, 2, num_age_groups);
+    mio::abm::Location loc3(mio::abm::LocationType::PublicTransport, 3, 6, 2);
     auto person = make_test_person(home, age_group_0_to_4, mio::abm::InfectionState::Recovered);
-    person.migrate_to(loc1, {0});
 
-    EXPECT_EQ(person.get_location(), loc1);
-    EXPECT_EQ(loc1.get_subpopulation(t, mio::abm::InfectionState::Recovered), 1);
-    EXPECT_EQ(home.get_subpopulation(t, mio::abm::InfectionState::Recovered), 0);
-    EXPECT_EQ(loc1.get_cells()[0].m_persons.size(), 1u);
+    // check that a person does not move to its current location
+    person.add_time_at_location(mio::abm::hours(1));
+    EXPECT_FALSE(mio::abm::migrate(person, home));
+    EXPECT_EQ(person.get_time_at_location(), mio::abm::hours(1));
+    EXPECT_EQ(person.get_location(), home.get_id());
+
+    // move the person around a bit
+    EXPECT_TRUE(mio::abm::migrate(person, loc1, mio::abm::TransportMode::Unknown, {0}));
+    EXPECT_EQ(person.get_time_at_location(), mio::abm::TimeSpan(0));
+    EXPECT_EQ(person.get_location(), loc1.get_id());
     EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Unknown);
 
-    person.migrate_to(loc2, mio::abm::TransportMode::Walking);
-
-    EXPECT_EQ(person.get_location(), loc2);
-    EXPECT_EQ(loc2.get_subpopulation(t, mio::abm::InfectionState::Recovered), 1);
-    EXPECT_EQ(loc1.get_subpopulation(t, mio::abm::InfectionState::Recovered), 0);
-    EXPECT_EQ(loc1.get_cells()[0].m_persons.size(), 0u);
+    EXPECT_TRUE(mio::abm::migrate(person, loc2, mio::abm::TransportMode::Walking, {0}));
+    EXPECT_EQ(person.get_time_at_location(), mio::abm::TimeSpan(0));
+    EXPECT_EQ(person.get_location(), loc2.get_id());
     EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Walking);
 
-    person.migrate_to(loc3, mio::abm::TransportMode::Bike, {0, 1});
-
-    EXPECT_EQ(loc3.get_cells()[0].m_persons.size(), 1u);
-    EXPECT_EQ(loc3.get_cells()[1].m_persons.size(), 1u);
-    EXPECT_EQ(person.get_cells().size(), 2);
+    EXPECT_TRUE(mio::abm::migrate(person, loc3, mio::abm::TransportMode::Bike, {0, 1}));
+    EXPECT_EQ(person.get_time_at_location(), mio::abm::TimeSpan(0));
+    EXPECT_EQ(person.get_location(), loc3.get_id());
+    EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Bike);
+    ASSERT_EQ(person.get_cells().size(), 2);
     EXPECT_EQ(person.get_cells()[0], 0u);
     EXPECT_EQ(person.get_cells()[1], 1u);
-    EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Bike);
 }
 
 TEST(TestPerson, setGetAssignedLocation)
 {
     auto rng = mio::RandomNumberGenerator();
     mio::abm::Location location(mio::abm::LocationType::Work, 2, num_age_groups);
-    auto person = mio::abm::Person(rng, location, age_group_35_to_59);
-    person.set_assigned_location(location);
-    EXPECT_EQ((int)person.get_assigned_location_index(mio::abm::LocationType::Work), 2);
+    auto person = mio::abm::Person(rng, location.get_type(), location.get_id(), age_group_35_to_59);
+    person.set_assigned_location(location.get_type(), location.get_id());
+    EXPECT_EQ(person.get_assigned_location(mio::abm::LocationType::Work), mio::abm::LocationId(2));
 
-    person.set_assigned_location({4, mio::abm::LocationType::Work});
-    EXPECT_EQ((int)person.get_assigned_location_index(mio::abm::LocationType::Work), 4);
+    person.set_assigned_location(mio::abm::LocationType::Work, mio::abm::LocationId(4));
+    EXPECT_EQ(person.get_assigned_location(mio::abm::LocationType::Work), mio::abm::LocationId(4));
 }
 
 TEST(TestPerson, quarantine)
@@ -107,7 +97,7 @@ TEST(TestPerson, quarantine)
 
     auto infection_parameters = mio::abm::Parameters(num_age_groups);
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
+    mio::abm::Location work(mio::abm::LocationType::Work, 1, num_age_groups);
 
     //setup rng mock so the person has a state transition to Recovered
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -129,7 +119,7 @@ TEST(TestPerson, quarantine)
 
     auto person     = make_test_person(home, age_group_35_to_59, mio::abm::InfectionState::InfectedSymptoms, t_morning,
                                        infection_parameters);
-    auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
+    auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
 
     person.get_tested(rng_person, t_morning, test_params);
 
@@ -151,9 +141,9 @@ TEST(TestPerson, get_tested)
     mio::abm::TimePoint t(0);
     mio::abm::Location loc(mio::abm::LocationType::Home, 0, num_age_groups);
     auto infected       = make_test_person(loc, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
-    auto rng_infected   = mio::abm::Person::RandomNumberGenerator(rng, infected);
-    auto susceptible    = mio::abm::Person(rng, loc, age_group_15_to_34);
-    auto rng_suscetible = mio::abm::Person::RandomNumberGenerator(rng, susceptible);
+    auto rng_infected   = mio::abm::PersonalRandomNumberGenerator(rng, infected);
+    auto susceptible    = mio::abm::Person(rng, loc.get_type(), loc.get_id(), age_group_15_to_34);
+    auto rng_suscetible = mio::abm::PersonalRandomNumberGenerator(rng, susceptible);
 
     auto pcr_test     = mio::abm::PCRTest();
     auto antigen_test = mio::abm::AntigenTest();
@@ -201,11 +191,14 @@ TEST(TestPerson, get_tested)
 TEST(TestPerson, getCells)
 {
     mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 1);
-    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
+    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 1, 6, 7);
     auto person = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
-    home.add_person(person);
-    person.migrate_to(location, {0, 1});
-    EXPECT_EQ(person.get_cells().size(), 2);
+
+    EXPECT_TRUE(mio::abm::migrate(person, location, mio::abm::TransportMode::Unknown, {3, 5}));
+
+    ASSERT_EQ(person.get_cells().size(), 2);
+    EXPECT_EQ(person.get_cells()[0], 3u);
+    EXPECT_EQ(person.get_cells()[1], 5u);
 }
 
 TEST(TestPerson, interact)
@@ -216,10 +209,10 @@ TEST(TestPerson, interact)
     auto infection_parameters = mio::abm::Parameters(num_age_groups);
     mio::abm::Location loc(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::TimePoint t(0);
-    auto person     = mio::abm::Person(rng, loc, age_group_15_to_34);
-    auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
+    auto person     = mio::abm::Person(rng, loc.get_type(), loc.get_id(), age_group_15_to_34);
+    auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
     auto dt         = mio::abm::seconds(8640); //0.1 days
-    person.interact(rng_person, t, dt, infection_parameters);
+    interact_testing(rng_person, person, loc, {person}, t, dt, infection_parameters);
     EXPECT_EQ(person.get_time_at_location(), dt);
 }
 
@@ -264,8 +257,8 @@ TEST(TestPerson, getLatestProtection)
 {
     auto rng                    = mio::RandomNumberGenerator();
     auto location               = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
-    auto person                 = mio::abm::Person(rng, location, age_group_15_to_34);
-    auto prng                   = mio::abm::Person::RandomNumberGenerator(rng, person);
+    auto person                 = mio::abm::Person(rng, location.get_type(), location.get_id(), age_group_15_to_34);
+    auto prng                   = mio::abm::PersonalRandomNumberGenerator(rng, person);
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
 
     auto t = mio::abm::TimePoint(0);
@@ -285,12 +278,11 @@ TEST(TestPerson, getLatestProtection)
 TEST(Person, rng)
 {
     auto rng = mio::RandomNumberGenerator();
-    mio::abm::Location loc(mio::abm::LocationType::Home, 0);
-    auto p = mio::abm::Person(rng, loc, age_group_35_to_59, 13);
+    auto p   = mio::abm::Person(rng, mio::abm::LocationType::Home, 0, age_group_35_to_59, mio::abm::PersonId(13));
 
     EXPECT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(0));
 
-    auto p_rng = mio::abm::Person::RandomNumberGenerator(rng, p);
+    auto p_rng = mio::abm::PersonalRandomNumberGenerator(rng, p);
     EXPECT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{0}));
 
     p_rng();
@@ -310,7 +302,7 @@ TEST(TestPerson, isCompliant)
 
     // Create test person and associated random number generator
     auto person     = make_test_person(home);
-    auto rng_person = mio::abm::Person::RandomNumberGenerator(rng, person);
+    auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
 
     // Test cases with a complete truth table for compliance levels
     struct TestCase {
