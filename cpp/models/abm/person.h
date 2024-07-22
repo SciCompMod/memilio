@@ -17,33 +17,28 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_PERSON_H
-#define EPI_ABM_PERSON_H
+#ifndef MIO_ABM_PERSON_H
+#define MIO_ABM_PERSON_H
 
-#include "abm/location_type.h"
+#include "abm/infection.h"
 #include "abm/infection_state.h"
+#include "abm/location_id.h"
+#include "abm/location.h"
+#include "abm/location_type.h"
 #include "abm/parameters.h"
+#include "abm/person_id.h"
+#include "abm/personal_rng.h"
 #include "abm/time.h"
 #include "abm/vaccine.h"
-#include "abm/mask_type.h"
 #include "abm/mask.h"
+#include "abm/movement_data.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/random_number_generator.h"
-#include "memilio/utils/memory.h"
-#include "abm/movement_data.h"
-#include <functional>
-#include <vector>
 
 namespace mio
 {
 namespace abm
 {
-
-struct LocationId;
-class Location;
-class Infection;
-
-static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
 
 /**
  * @brief Agents in the simulated World that can carry and spread the Infection.
@@ -52,91 +47,16 @@ class Person
 {
 public:
     /**
-    * Random number generator of individual persons.
-    * Increments the random number generator counter of the person when used.
-    * Does not store its own key or counter.
-    * Instead the key needs to be provided from the outside, so that the RNG
-    * for all persons share the same key.
-    * The counter is taken from the person.
-    * Person::RandomNumberGenerator is cheap to construct and transparent
-    * for the compiler to optimize, so we don't store the RNG persistently, only the 
-    * counter, so we don't need to store the key in each person. This increases
-    * consistency (if the key is changed after the person is created) and 
-    * reduces the memory required per person.
-    * @see mio::RandomNumberGeneratorBase
-    */
-    class RandomNumberGenerator : public RandomNumberGeneratorBase<RandomNumberGenerator>
-    {
-    public:
-        /**
-        * Creates a RandomNumberGenerator for a person.
-        * @param key Key to be used by the generator.
-        * @param id Id of the Person.
-        * @param counter Reference to the Person's RNG Counter. 
-        */
-        RandomNumberGenerator(Key<uint64_t> key, uint32_t id, Counter<uint32_t>& counter)
-            : m_key(key)
-            , m_person_id(id)
-            , m_counter(counter)
-        {
-        }
-
-        /**
-        * Creates a RandomNumberGenerator for a person.
-        * Uses the same key as another RandomNumberGenerator.
-        * @param rng RandomNumberGenerator who's key will be used.
-        * @param person Reference to the Person who's counter will be used. 
-        */
-        RandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person)
-            : RandomNumberGenerator(rng.get_key(), person.get_person_id(), person.get_rng_counter())
-        {
-        }
-
-        /**
-        * @return Get the key.
-        */
-        Key<uint64_t> get_key() const
-        {
-            return m_key;
-        }
-
-        /**
-        * @return Get the current counter.
-        */
-        Counter<uint64_t> get_counter() const
-        {
-            return rng_totalsequence_counter<uint64_t>(m_person_id, m_counter);
-        }
-
-        /**
-        * Increment the counter.
-        */
-        void increment_counter()
-        {
-            ++m_counter;
-        }
-
-    private:
-        Key<uint64_t> m_key; ///< Global RNG Key
-        uint32_t m_person_id; ///< Id of the Person
-        Counter<uint32_t>& m_counter; ///< Reference to the Person's rng counter
-    };
-
-    /**
      * @brief Create a Person.
      * @param[in, out] rng RandomNumberGenerator.
      * @param[in, out] location Initial Location of the Person.
      * @param[in] age The AgeGroup of the Person.
      * @param[in] person_id Index of the Person.
      */
-    explicit Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age,
-                    uint32_t person_id = INVALID_PERSON_ID);
+    explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id, AgeGroup age,
+                    PersonId person_id = PersonId::invalid_id());
 
-    /**
-     * @brief Create a copy of this #Person object with a new Location.
-     * @param[in, out] location The new #Location of the Person.
-     */
-    Person copy_person(Location& location);
+    explicit Person(const Person& other, PersonId id);
 
     /**
      * @brief Compare two Person%s.
@@ -146,34 +66,6 @@ public:
         return (m_person_id == other.m_person_id);
     }
 
-    /** 
-     * @brief Time passes and the Person interacts with the population at its current Location.
-     * The Person might become infected.
-     * @param[in] t Current time.
-     * @param[in] dt Length of the current Simulation TimeStep.
-     * @param[in, out] params Infection parameters that are the same in all Location%s.
-     */
-    void interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const Parameters& params);
-
-    /** 
-     * @brief Migrate to a different Location.
-     * @param[in, out] loc_new The new Location of the Person.
-     * @param[in] cells_new The Cell%s that the Person visits at the new Location.
-     * */
-    void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0})
-    {
-        migrate_to(loc_new, TransportMode::Unknown, cells_new);
-    }
-
-    /** 
-     * @brief Migrate to a different Location.
-     * @param[in] loc_new The new Location of the Person.
-     * @param[in] transport_mode The TransportMode the Person used to get to the new Location.
-     * @param[in] cells_new The Cell%s that the Person visits at the new Location.
-     * */
-    void migrate_to(Location& loc_new, mio::abm::TransportMode transport_mode,
-                    const std::vector<uint32_t>& cells = {0});
-
     /**
      * @brief Get the latest #Infection of the Person.
      * @return The latest #Infection of the Person.
@@ -181,9 +73,10 @@ public:
     Infection& get_infection();
     const Infection& get_infection() const;
 
-    /** 
+    /**
      * @brief Get all Vaccination%s of the Person.
      * @return A vector with all Vaccination%s.
+     * @{
      */
     std::vector<Vaccination>& get_vaccinations()
     {
@@ -194,6 +87,7 @@ public:
     {
         return m_vaccinations;
     }
+    /** @} */
 
     /**
      * @brief Returns if the Person is infected at the TimePoint.
@@ -228,9 +122,18 @@ public:
      * @brief Get the current Location of the Person.
      * @return Current Location of the Person.
      */
-    Location& get_location();
+    LocationId get_location() const;
 
-    const Location& get_location() const;
+    LocationType get_location_type() const
+    {
+        return m_location_type;
+    }
+
+    /**
+     * @brief Change the location of the person.
+     * @param[in] id The new location.
+     */
+    void set_location(LocationType type, LocationId id);
 
     /**
      * @brief Get the time the Person has been at its current Location.
@@ -242,6 +145,15 @@ public:
     }
 
     /**
+     * @brief Add to the time the Person has been at its current Location.
+     * @param[in] dt TimeSpan the Person has spent at the Location.
+     */
+    void add_time_at_location(const TimeSpan dt)
+    {
+        m_time_at_location += dt;
+    }
+
+    /**
      * @brief Get the TimePoint of the last negative test.
      * @return TimePoint since the last test.
      */
@@ -249,21 +161,19 @@ public:
     {
         return m_time_of_last_test;
     }
-    /**
-     * @brief Set an assigned Location of the Person. 
-     * The assigned Location is saved by its index of its LocationId. Assume that a Person has at most one assigned
-     * Location per #LocationType.
-     * @param[in] location The new assigned Location.
-     */
-    void set_assigned_location(Location& location);
 
     /**
-     * @brief Set an assigned Location of the Person. 
+     * @brief Set an assigned Location of the Person.
+     *
+     * Important: Setting incorrect values will cause issues during simulation. It is preferable to use
+     *            World::assign_location with a valid LocationId, obtained e.g. through World::add_location.
+     *
      * The assigned Location is saved by the index of its LocationId. Assume that a Person has at most one assigned
      * Location of a certain #LocationType.
+     * @param[in] type The LocationType of the Location.
      * @param[in] id The LocationId of the Location.
      */
-    void set_assigned_location(LocationId id);
+    void set_assigned_location(LocationType type, LocationId id);
 
     /**
      * @brief Returns the index of an assigned Location of the Person.
@@ -271,13 +181,13 @@ public:
      * @param[in] type #LocationType of the assigned Location.
      * @return The index in the LocationId of the assigned Location.
      */
-    uint32_t get_assigned_location_index(LocationType type) const;
+    LocationId get_assigned_location(LocationType type) const;
 
     /**
      * @brief Get the assigned Location%s of the Person.
      * @return A vector with the indices of the assigned Location%s of the Person.
      */
-    const std::vector<uint32_t>& get_assigned_locations() const
+    const std::vector<LocationId>& get_assigned_locations() const
     {
         return m_assigned_locations;
     }
@@ -362,14 +272,14 @@ public:
      * @param[in] params Sensitivity and specificity of the test method.
      * @return True if the test result of the Person is positive.
      */
-    bool get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParameters& params);
+    bool get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const TestParameters& params);
 
     /**
-     * @brief Get the PersonID of the Person.
-     * The PersonID should correspond to the index in m_persons in world.
-     * @return The PersonID.
+     * @brief Get the PersonId of the Person.
+     * The PersonId should correspond to the index in m_persons in world.
+     * @return The PersonId.
      */
-    uint32_t get_person_id();
+    PersonId get_id() const;
 
     /**
     * @brief Set the PersonID of the Person.
@@ -435,7 +345,7 @@ public:
      * @param[in] target The target Location.
      * @return Whether a Person wears a Mask at the Location.
      */
-    bool apply_mask_intervention(RandomNumberGenerator& rng, const Location& target);
+    bool apply_mask_intervention(PersonalRandomNumberGenerator& rng, const Location& target);
 
     /**
      * @brief Decide if a Person is currently wearing a Mask.
@@ -466,9 +376,9 @@ public:
 
     /**
      * @brief Add a new #Vaccination
-     * @param[in] v ExposureType (i. e. vaccine) the person takes.  
+     * @param[in] v ExposureType (i. e. vaccine) the person takes.
      * @param[in] t TimePoint of the Vaccination.
-    */
+     */
     void add_new_vaccination(ExposureType v, TimePoint t)
     {
         m_vaccinations.push_back(Vaccination(v, t));
@@ -477,35 +387,44 @@ public:
     /**
      * @brief Get the transport mode the Person used to get to its current Location.
      * @return TransportMode the Person used to get to its current Location.
-    */
+     */
     mio::abm::TransportMode get_last_transport_mode() const
     {
         return m_last_transport_mode;
     }
 
     /**
-    * Get this persons RandomNumberGenerator counter.
-    * @see mio::abm::Person::RandomNumberGenerator.
-    */
+     * @brief Set the transport mode the Person used to get to its current Location.
+     * @param[in] mode TransportMode the Person used to get to its current Location.
+     */
+    void set_last_transport_mode(const mio::abm::TransportMode mode)
+    {
+        m_last_transport_mode = mode;
+    }
+
+    /**
+     * @brief Get this persons RandomNumberGenerator counter.
+     * @see mio::abm::PersonalRandomNumberGenerator.
+     */
     Counter<uint32_t>& get_rng_counter()
     {
         return m_rng_counter;
     }
 
     /**
-     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person. 
-    */
+     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person.
+     */
     std::pair<ExposureType, TimePoint> get_latest_protection() const;
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("Person");
-        obj.add_element("Location", *m_location);
+        obj.add_element("Location", m_location);
         obj.add_element("age", m_age);
         obj.add_element("id", m_person_id);
     }
@@ -518,9 +437,9 @@ public:
     static IOResult<Person> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("Person");
-        auto loc = obj.expect_element("Location", mio::Tag<Location>{});
+        auto loc = obj.expect_element("Location", mio::Tag<LocationId>{});
         auto age = obj.expect_element("age", Tag<uint32_t>{});
-        auto id  = obj.expect_element("id", Tag<uint32_t>{});
+        auto id  = obj.expect_element("id", Tag<PersonId>{});
         return apply(
             io,
             [](auto&& loc_, auto&& age_, auto&& id_) {
@@ -530,8 +449,9 @@ public:
     }
 
 private:
-    observer_ptr<Location> m_location; ///< Current Location of the Person.
-    std::vector<uint32_t> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
+    LocationId m_location; ///< Current Location of the Person.
+    LocationType m_location_type; ///< Type of the current Location.
+    std::vector<LocationId> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the
     Person always visits the same Home or School etc. */
     std::vector<Vaccination> m_vaccinations; ///< Vector with all Vaccination%s the Person has received.
     std::vector<Infection> m_infections; ///< Vector with all Infection%s the Person had.
@@ -546,7 +466,7 @@ private:
     Mask m_mask; ///< The Mask of the Person.
     bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
-    uint32_t m_person_id; ///< Id of the Person.
+    PersonId m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
