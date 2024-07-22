@@ -37,7 +37,7 @@ def add_external_ids(pd):
             start_or_end_zone = 'start_zone'
             start_or_end_activity = 'activity_start'
             found = False
-            if (row[start_or_end_activity] == 1):  # work places 
+            if (row[start_or_end_activity] == 1):  # work places
                 if (not row['puid'] in person_to_work_place_dict.keys()):
                     # check if a work place is already available and not full
                     if (row[start_or_end_zone] in work_places_dict.keys()):
@@ -236,9 +236,9 @@ def add_home_ids(pd):
     # every row where loc_id_start or loc_id_end is -1 and activity_start or activity_end is 7 is a person who goes /comes from home
     # there we change the loc_id_start and loc_id_end to huid
     for index, row in pd.iterrows():
-        if(row['loc_id_start'] == -1 and row['activity_start'] == 7):
+        if (row['loc_id_start'] == -1 and row['activity_start'] == 7):
             pd.at[index, 'loc_id_start'] = row['huid']
-        if(row['loc_id_end'] == -1 and row['activity_end'] == 7):
+        if (row['loc_id_end'] == -1 and row['activity_end'] == 7):
             pd.at[index, 'loc_id_end'] = row['huid']
     return pd
 
@@ -252,12 +252,13 @@ def add_home_is_in_bs_column(pd):
         print("Column 'home_in_bs' is not present in DataFrame.")
         # add column home_in_bs
         pd['home_in_bs'] = 0
-        #list of persons who are in braunschweig
+        # list of persons who are in braunschweig
         list_person_in_bs = np.array([])
         for index, row in pd.iterrows():
-            if ((row['start_county'] == 3101 and row['activity_start'] == 7) or (row['end_county'] == 3101 and row['activity_end'] == 7)): # this assumes he goes to his home, but could be another persons home
+            # this assumes he goes to his home, but could be another persons home
+            if ((row['start_county'] == 3101 and row['activity_start'] == 7) or (row['end_county'] == 3101 and row['activity_end'] == 7)):
                 list_person_in_bs = np.append(list_person_in_bs, row['puid'])
-        #drop duplicates
+        # drop duplicates
         list_person_in_bs = np.unique(list_person_in_bs)
         for index, row in pd.iterrows():
             if row['puid'] in list_person_in_bs:
@@ -265,97 +266,95 @@ def add_home_is_in_bs_column(pd):
     return pd
 
 
-
-
 def location_type_from_keys_and_values(key, value, intention, key_value_pairs_counts_with_activity_after):
 
-    most_probable_activity =  9999
+    most_probable_activity = 9999
     # we need to save for each key and value pair the amount of different activityAfter values
     if key_value_pairs_counts_with_activity_after[(key_value_pairs_counts_with_activity_after['map_feature_key'] == key) & (key_value_pairs_counts_with_activity_after['map_feature_value'] == value)].shape[0] != 0:
         # get the differnt activity_after values
-        activity_after_values = key_value_pairs_counts_with_activity_after[(key_value_pairs_counts_with_activity_after['map_feature_key'] == key) & (key_value_pairs_counts_with_activity_after['map_feature_value'] == value)]
+        activity_after_values = key_value_pairs_counts_with_activity_after[(key_value_pairs_counts_with_activity_after['map_feature_key'] == key) & (
+            key_value_pairs_counts_with_activity_after['map_feature_value'] == value)]
         # get the most common activity_after value
-        most_common_activity_after = activity_after_values[activity_after_values['counts'] == activity_after_values['counts'].max()]['activity_end'].values[0]
+        most_common_activity_after = activity_after_values[activity_after_values['counts']
+                                                           == activity_after_values['counts'].max()]['activity_end'].values[0]
         # if work is one of the activity_after values we assume that the location is a work location if its bigger than 30% of the total counts
         # see if work is in the activity_after values
         if activity_after_values[activity_after_values['activity_end'] == 1].shape[0] != 0:
             if (activity_after_values[activity_after_values['activity_end'] == 1]['counts'] > 0.3 * key_value_pairs_counts_with_activity_after[(key_value_pairs_counts_with_activity_after['map_feature_key'] == key) & (key_value_pairs_counts_with_activity_after['map_feature_value'] == value)]['counts'].sum()).values[0]:
-                    most_common_activity_after = 1
+                most_common_activity_after = 1
         # map the most common activity_after value to a location type
         most_probable_activity = most_common_activity_after
 
-
-
     location_type = 'SocialEvent'
     if key == 'home':
-        location_type= 'Home'
-    
+        location_type = 'Home'
+
     if key == 'education':
-        location_type= 'School'
+        location_type = 'School'
 
     if key == 'amenity':
         if value in ['fast_food', 'fuel', 'food_court']:
-            location_type= 'BasicsShop'  
-        if value in ['coworking_space','office', 'craft', 'fire_station', 'hospital', 'laboratory', 'office', 'research_institute']:
-            location_type= 'Work'
-        if value in ['school', 'kindergarten', 'university', 'college','childcare', 'language_school', 'music_school', 'prep_school']:
-            location_type= 'School'
+            location_type = 'BasicsShop'
+        if value in ['coworking_space', 'office', 'craft', 'fire_station', 'hospital', 'laboratory', 'office', 'research_institute']:
+            location_type = 'Work'
+        if value in ['school', 'kindergarten', 'university', 'college', 'childcare', 'language_school', 'music_school', 'prep_school']:
+            location_type = 'School'
         else:
-            location_type= 'SocialEvent'
-        
+            location_type = 'SocialEvent'
+
     if key == 'building':
         if value in ['apartments', 'bungalow', 'cabin', 'detached', 'detached_house', 'dormitory', 'double_house', 'duplex', 'dwlling_house', 'farmhouse', 'house', 'houseboat', 'nursing_home', 'residential', 'semi' 'hotel', 'house', 'residential', 'semidetached_house', 'semi_detached', 'semidetached']:
-            location_type= 'Home'
+            location_type = 'Home'
         if value in ['college', 'kindergarten']:
-            location_type= 'School'
+            location_type = 'School'
         if value in ['laboratory', "bakehouse", "bank", "barracks", "brewery", "car_repair", "car_wash", "civic", "clinic", "data_center", "embassy", "factory", "farm", "fire_station", "fuel_station", "government", "hospital", "industrial", "manufacture", "mortuary", "office", "police", "post_office", "presbytery", "prison", "public", "school", "shelter", "sports_centre", "sports_hall", "stable", "warehouse", "workshop"]:
-            location_type= 'Work'
+            location_type = 'Work'
         if value in ["commercial", "fuel", "kiosk", "shop", "supermarket"]:
-            location_type= 'BasicShop'
+            location_type = 'BasicShop'
         else:
-            location_type= 'SocialEvent'
-    
+            location_type = 'SocialEvent'
+
     if key == 'craft':
-        location_type= 'Work'
-    
+        location_type = 'Work'
+
     if key == 'healthcare':
-        location_type= 'Work'
+        location_type = 'Work'
 
     if key == 'historic':
-        location_type= 'SocialEvent'
-    
+        location_type = 'SocialEvent'
+
     if key == 'landuse':
-        location_type= 'SocialEvent'
+        location_type = 'SocialEvent'
 
     if key == 'leisure':
-        location_type= 'SocialEvent'
-    
+        location_type = 'SocialEvent'
+
     if key == 'office':
-        location_type= 'Work'
-    
+        location_type = 'Work'
+
     if key == 'shop':
-        location_type= 'BasicShop'
-    
+        location_type = 'BasicShop'
+
     if key == 'tourism':
         if value in ['apartment', 'guest_house', 'guest_house;apartment']:
-            location_type= 'Home'
-        location_type= 'SocialEvent'
-    
+            location_type = 'Home'
+        location_type = 'SocialEvent'
+
     if key == 'NaN':
         if intention == 1:
-            location_type= 'Work'
+            location_type = 'Work'
         if intention == 2:
-            location_type= 'School'
+            location_type = 'School'
         if intention == 3:
-            location_type= 'BasicShop'
+            location_type = 'BasicShop'
         if intention == 4:
-            location_type= 'SocialEvent'
+            location_type = 'SocialEvent'
         if intention == 5:
-            location_type= 'BasicShop'
+            location_type = 'BasicShop'
         if intention == 6:
-            location_type= 'SocialEvent'
+            location_type = 'SocialEvent'
         if intention == 7:
-            location_type= 'Home'
+            location_type = 'Home'
 
     if most_probable_activity != 9999:
         if most_probable_activity == 1:
@@ -374,9 +373,11 @@ def location_type_from_keys_and_values(key, value, intention, key_value_pairs_co
             location_type = 'Home'
 
     # map from location type string to int
-    location_type_dict = {'Home': 0, 'School': 2, 'Work': 1, 'BasicShop': 3, 'SocialEvent': 4}
+    location_type_dict = {'Home': 0, 'School': 2,
+                          'Work': 1, 'BasicShop': 3, 'SocialEvent': 4}
     return location_type_dict[location_type]
-        
+
+
 def assign_location_type(pd):
     if 'location_type' in pd.columns:
         print("Column 'location_type' is present in DataFrame.")
@@ -384,28 +385,33 @@ def assign_location_type(pd):
     else:
         print("Column 'location_type' is not present in DataFrame.")
         pd['location_type'] = 'SocialEvent'
-        test_pd = pd[['activity_end', 'map_feature_key', 'map_feature_value']].groupby(['map_feature_key', 'map_feature_value','activity_end']).size().reset_index(name='counts')
+        test_pd = pd[['activity_end', 'map_feature_key', 'map_feature_value']].groupby(
+            ['map_feature_key', 'map_feature_value', 'activity_end']).size().reset_index(name='counts')
         for index, row in pd.iterrows():
-            pd.at[index, 'location_type'] = location_type_from_keys_and_values( row['map_feature_key'], row['map_feature_value'], row['activity_end'], test_pd)
+            pd.at[index, 'location_type'] = location_type_from_keys_and_values(
+                row['map_feature_key'], row['map_feature_value'], row['activity_end'], test_pd)
     return pd
+
 
 def add_time_if_null(pd):
     # if start_time is null we set it to 0
     pd['start_time'] = pd['start_time'].fillna("12:30")
     return pd
 
-PATH = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/braunschweig_result_ffa8.csv"
 
-bd = pd.read_csv(PATH)
+# PATH = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/"
+PATH = "/Users/david/Documents/HZI/memilio/data/mobility/"
+FILE = PATH + "braunschweig_result_ffa8.csv"
+bd = pd.read_csv(FILE)
 
 # read in column headers from first line of csv file
-with open(PATH, 'r') as file:
+with open(FILE, 'r') as file:
     first_line = file.readline()
     column_headers = first_line.split(',')
     column_headers = [header.strip() for header in column_headers]
 
 # check if anythiong changed since writing this script
-if(column_headers[0:21] == ['puid', 'start_zone', 'end_zone', 'loc_id_start', 'loc_id_end', 'start_county', 'end_county', 'huid', 'trip_distance', 'start_time', 'travel_time_sec', 'lon_start', 'lat_start', 'lon_end', 'lat_end', 'travel_mode', 'activity_start', 'activity_end', 'age','map_feature_key','map_feature_value']):
+if (column_headers[0:21] == ['puid', 'start_zone', 'end_zone', 'loc_id_start', 'loc_id_end', 'start_county', 'end_county', 'huid', 'trip_distance', 'start_time', 'travel_time_sec', 'lon_start', 'lat_start', 'lon_end', 'lat_end', 'travel_mode', 'activity_start', 'activity_end', 'age', 'map_feature_key', 'map_feature_value']):
     print("Column headers are correct")
 else:
     print("Column headers are not correct")
@@ -424,8 +430,9 @@ print('Location types assigned.')
 bd_new = add_time_if_null(bd_new)
 
 # we need to remove unnecessary columns
-bd_new = bd_new.drop(columns= ['start_zone', 'end_zone', 'loc_id_start', 'start_county', 'end_county', 'trip_distance', 'travel_time_sec', 'lon_start', 'lat_start', 'travel_mode', 'activity_start', 'activity_end', 'map_feature_key','map_feature_value'])
+bd_new = bd_new.drop(columns=['start_zone', 'end_zone', 'loc_id_start', 'start_county', 'end_county', 'trip_distance', 'travel_time_sec',
+                     'lon_start', 'lat_start', 'travel_mode', 'activity_start', 'activity_end', 'map_feature_key', 'map_feature_value'])
 # sort for better search performance
 bd_new = bd_new.sort_values(by=['puid', 'start_time'])
 # Write data back to disk
-bd_new.to_csv('/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/braunschweig_result_ffa8_modified2.csv', index=False)
+bd_new.to_csv(PATH + "braunschweig_result_ffa8_modified2.csv", index=False)

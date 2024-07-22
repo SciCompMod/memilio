@@ -99,7 +99,7 @@ void determine_initial_infection_states_world(const fs::path& input_dir, const m
     auto braunschweig_node                 = initial_graph.value()[braunschweig_id];
     initial_infection_distribution.array() = braunschweig_node.populations.array().cast<double>();
 
-    // extrapolate_real_world_data(braunschweig_node, input_dir.string(), date, 90); // 90 days
+    extrapolate_real_world_data(braunschweig_node, input_dir.string(), date, 90); // 90 days
 }
 
 /**
@@ -1124,6 +1124,36 @@ struct LogInfectionPerLocationTypePerAgeGroup : mio::LogAlways {
     }
 };
 
+struct LogCumulativeDetectedInfections : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+    /** 
+     * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
+     * @param[in] sim The simulation of the abm.
+     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
+     */
+    static Type log(const mio::abm::Simulation& sim)
+    {
+
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(sim.get_world().parameters.get_num_groups()));
+        auto curr_time      = sim.get_time();
+        auto prev_time      = sim.get_prev_time();
+        const auto persons  = sim.get_world().get_persons();
+
+        // PRAGMA_OMP(parallel for)
+        for (auto i = size_t(0); i < persons.size(); ++i) {
+            auto& p = persons[i];
+            if (p.get_should_be_logged()) {
+                // PRAGMA_OMP(atomic)
+                if (p.get_infection().is_detected()) {
+                    uint32_t index = p.get_age().get();
+                    sum[index] += 1;
+                }
+            }
+        }
+        return std::make_pair(curr_time, sum);
+    }
+};
+
 #ifdef MEMILIO_ENABLE_MPI
 template <typename T>
 T gather_results(int rank, int num_procs, int num_runs, T ensemble_vec)
@@ -1198,7 +1228,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     // Prepare vaccination state
     prepare_vaccination_state(mio::offset_date_by_days(start_date, (int)tmax.days()),
                               (input_dir / "pydata/Germany/vacc_county_ageinf_ma7.json").string());
-    restart_timer(timer, "time for vaccinaiton state");
+    restart_timer(timer, "time for vaccination state");
 
     // Loop over a number of runs
     for (size_t run_idx = 0; run_idx < num_runs; run_idx++) {
@@ -1487,7 +1517,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto end_run_idx   = start_run_idx + run_distribution[size_t(rank)];
 
     mio::Date start_date{2021, 3, 1};
-    int max_num_days     = 90;
+    int max_num_days     = 0;
     auto max_num_persons = 400000;
     bool npis_on         = true;
 
@@ -1501,6 +1531,10 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto ensemble_infection_state_per_age_group =
         std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection state per age group results
     ensemble_infection_state_per_age_group.reserve(size_t(num_runs));
+
+    auto ensemble_cumulative_detected_infections =
+        std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of cumulative detected infections
+    ensemble_cumulative_detected_infections.reserve(size_t(num_runs));
 
     auto ensemble_params = std::vector<std::vector<mio::abm::World>>{}; // Vector of all worlds
     ensemble_params.reserve(size_t(num_runs));
@@ -1537,6 +1571,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                 Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_world().parameters.get_num_groups())};
         mio::History<mio::abm::TimeSeriesWriter, LogInfectionStatePerAgeGroup> historyInfectionStatePerAgeGroup{
             Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups())};
+        mio::History<mio::abm::TimeSeriesWriter, LogCumulativeDetectedInfections> historyCumulativeDetectedInfections{
+            Eigen::Index(sim.get_world().parameters.get_num_groups())};
 
         // / NPIS//
         if (npis_on) {
@@ -1887,8 +1923,8 @@ int main(int argc, char** argv)
 #endif
 
     // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
-    // std::string input_dir        = "/Users/david/Documents/HZI/memilio/data";
+    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
     std::string result_dir      = input_dir + "/results_" + currentDateTime();
