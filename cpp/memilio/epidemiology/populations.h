@@ -228,26 +228,30 @@ public:
      * This function can be used to prevent slighly negative function values in compartment sizes that came out
      * due to roundoff errors if, e.g., population sizes were computed in a complex way.
      *
-     * Attention: This function should be used with care. It is necessary for some test problems to run through quickly,
-     *            but in a manual execution of an example, check_constraints() may be preferred. Note that the apply_constraints()
-     *            function can and will not set compartments to meaningful values in a sense of a particular scenario,
-     *            it only sets negative values to zero.
-     */
-    void apply_constraints()
+     * Attention: This function should be used with care. It can not and will not set model parameters and 
+     *            compartments to meaningful values. In most cases it is preferable to use check_constraints,
+     *            and correct values manually before proceeding with the simulation.
+     *            The main usage for apply_constraints is in automated tests using random values for initialization.
+     *
+     * @return Returns true if one (or more) constraint(s) were corrected, otherwise false.
+    */
+    bool apply_constraints()
     {
+        bool corrected = false;
         for (int i = 0; i < this->array().size(); i++) {
             if (this->array()[i] < 0) {
                 log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, this->array()[i],
                             0);
                 this->array()[i] = 0;
+                corrected        = true;
             }
         }
+        return corrected;
     }
 
     /**
-     * @brief Checks whether all compartments have non-negative values and 
-     *  logs an error if constraint is not satisfied.
-     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
+     * @brief Checks whether all compartments have non-negative values and logs an error if constraint is not satisfied.
+     * @return Returns true if one or more constraints are not satisfied, false otherwise.
      */
     bool check_constraints() const
     {

@@ -20,14 +20,9 @@
 #ifndef ABM_HELPERS_H
 #define ABM_HELPERS_H
 
-#include "abm/abm.h"
-#include "abm/virus_variant.h"
-#include "memilio/math/eigen_util.h"
-#include "memilio/epidemiology/age_group.h"
-#include "matchers.h"
-#include "gtest/gtest.h"
+#include "abm/world.h"
+
 #include "gmock/gmock.h"
-#include <memory>
 
 // Assign the name to general age group.
 const size_t num_age_groups   = 6;
@@ -96,7 +91,7 @@ struct ScopedMockDistribution {
 
 /**
  * @brief Create a Person without a World object. Intended for simple use in tests.
-*/
+ */
 mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup age = age_group_15_to_34,
                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0),
@@ -104,10 +99,16 @@ mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup ag
 
 /**
  * @brief Add a Person to the World. Intended for simple use in tests.
-*/
-mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id,
-                                  mio::AgeGroup age                        = age_group_15_to_34,
-                                  mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
-                                  mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
+ */
+mio::abm::PersonId add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id,
+                                   mio::AgeGroup age                        = age_group_15_to_34,
+                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
+                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
+
+/// @brief Calls mio::abm::interact, but it computes the correct exposures for you.
+void interact_testing(mio::abm::PersonalRandomNumberGenerator& personal_rng, mio::abm::Person& person,
+                      const mio::abm::Location& location, const std::vector<mio::abm::Person>& local_population,
+                      const mio::abm::TimePoint t, const mio::abm::TimeSpan dt,
+                      const mio::abm::Parameters& global_parameters);
 
 #endif //ABM_HELPERS_H

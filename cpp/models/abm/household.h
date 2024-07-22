@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef EPI_ABM_HOUSEHOLD_H
-#define EPI_ABM_HOUSEHOLD_H
+#ifndef MIO_ABM_HOUSEHOLD_H
+#define MIO_ABM_HOUSEHOLD_H
 
 #include "abm/world.h"
 #include "memilio/epidemiology/age_group.h"
@@ -212,4 +212,4 @@ void add_household_group_to_world(World& world, const HouseholdGroup& household_
 } // namespace abm
 } // namespace mio
 
-#endif //EPI_ABM_HOUSEHOLD_H
+#endif //MIO_ABM_HOUSEHOLD_H
