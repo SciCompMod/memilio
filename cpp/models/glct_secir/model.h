@@ -72,10 +72,10 @@ public:
     }
 
     /**
-     * @brief Checks that the model satisfies any constraints (e.g. parameter or population constraints), and 
+     * @brief Checks that the model satisfies all constraints (e.g. parameter or population constraints), and 
      *  logs an error if constraints are not satisfied.
      *
-     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
+     * @return Returns true if one or more constraints are not satisfied, false otherwise.
      */
     bool check_constraints() const
     {
@@ -122,15 +122,16 @@ public:
     }
 
     /**
-     * @brief Evaulates the right-hand-side f of the GLCT dydt = f(y, t).
+     * @brief Evaluates the right-hand-side f of the GLCT dydt = f(y, t).
      *
      * The GLCT-SECIR model is defined through ordinary differential equations of the form dydt = f(y, t). 
      * y is a vector containing number of individuals for each (sub-) compartment.
      * This function evaluates the right-hand-side f of the ODE and can be used in an ODE solver.
-     * @param[in] pop the current state of the population in the geographic unit we are considering
-     * @param[in] y the current state of the model (or a subpopulation) as a flat array
-     * @param[in] t the current time
-     * @param[out] dydt a reference to the calculated output
+     *
+     * @param[in] pop The current state of the population in the geographic unit we are considering.
+     * @param[in] y The current state of the model (or a subpopulation) as a flat array.
+     * @param[in] t The current time.
+     * @param[out] dydt A reference to the calculated output.
      */
     void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, ScalarType t,
                          Eigen::Ref<Eigen::VectorXd> dydt) const override

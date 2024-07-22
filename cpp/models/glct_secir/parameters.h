@@ -456,10 +456,10 @@ public:
     }
 
     /**
-     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error
+     * @brief Checks that all parameters satisfy their corresponding constraints and logs an error
      *      if constraints are not satisfied.
      *
-     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
+     * @return Returns true if one or more constraints are not satisfied, false otherwise.
      */
     bool check_constraints() const
     {
