@@ -99,7 +99,7 @@ public:
                                  Eigen::Ref<Vector<FP>> /*dydt*/) const {};
 
     /**
-     * @brief Funktion evaluates the right-hand-side f of the ODE dydt = f(y, t).
+     * @brief This function evaluates the right-hand-side f of the ODE dydt = f(y, t).
      *
      * The heart of the compartmental model is a first order ODE dydt = f(y,t), where y is a flat
      * representation of all the compartmental populations at time t. This function evaluates the
@@ -126,9 +126,9 @@ public:
     }
 
     /**
-     * @brief Returns the initial values for the compartmental populations.
-     * This can be used as initial conditions in an ODE solver.
-     * @return The initial populations.
+     * @brief Get the initial conditions for the ODE dydt = f(y, t).
+     * See eval_right_hand_side for more detail.
+     * @return Current value of model populations as a flat vector.
      */
     Vector<FP> get_initial_values() const
     {
@@ -148,6 +148,7 @@ public:
     bool apply_constraints()
     {
         if constexpr (has_apply_constraints_member_function<ParameterSet>::value) {
+            // use bitwise instead of logical or, so that both apply_constraint functions are called
             return ((int)parameters.apply_constraints() | (int)populations.apply_constraints());
         }
         else {

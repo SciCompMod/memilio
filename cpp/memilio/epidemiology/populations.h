@@ -233,7 +233,7 @@ public:
      *            and correct values manually before proceeding with the simulation.
      *            The main usage for apply_constraints is in automated tests using random values for initialization.
      *
-     * @return  Returns true if one (or more) constraint(s) were corrected, otherwise false.
+     * @return Returns true if one (or more) constraint(s) were corrected, otherwise false.
     */
     bool apply_constraints()
     {
