@@ -352,8 +352,6 @@ def cli(what):
     - verbose
     - skip_checks
     - no_raw
-    - username
-    - password
 
     @param what Defines what packages calls and thus what kind of command line arguments should be defined.
     """
@@ -366,7 +364,7 @@ def cli(what):
 
     cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
                 "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date', 'files'],
-                "population": ['Download population data from official sources', 'username'],
+                "population": ['Download population data from official sources'],
                 "commuter_official": ['Download commuter data from official sources'],
                 "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'sanitize_data'],
                 "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
@@ -485,14 +483,6 @@ def cli(what):
             '--skip-checks', dest='run_checks', action='store_false',
             help='Skips sanity checks etc.')
 
-    if 'username' in what_list:
-        parser.add_argument(
-            '--username', type=str
-        )
-
-        parser.add_argument(
-            '--password', type=str
-        )
     args = vars(parser.parse_args())
 
     return args

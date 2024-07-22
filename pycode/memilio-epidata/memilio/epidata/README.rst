@@ -130,10 +130,6 @@ optional arguments working for some are:
 | --sanitize-data                             | Different ways to distribute vaccinations to home         |
 |                                             | locations of vaccinated persons[vaccination]              |
 +---------------------------------------------+-----------------------------------------------------------+
-| --username                                  | Username for regionalstatistik.de [population]            |
-+---------------------------------------------+-----------------------------------------------------------+
-| --password                                  | Password for regionalstatistik.de [population]            |
-+---------------------------------------------+-----------------------------------------------------------+
 | --files                                     | Files to write [case]                                     |
 +---------------------------------------------+-----------------------------------------------------------+
 
