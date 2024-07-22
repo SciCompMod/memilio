@@ -77,12 +77,23 @@ int main()
     // results node 1
     std::cout << "Results node 1" << std::endl;
     auto interpolated_sim1 =
-        mio::interpolate_simulation_result(sim.get_graph().nodes()[1].property.base_sim.get_result());
+        mio::interpolate_simulation_result(sim.get_graph().nodes()[0].property.base_sim.get_result());
     interpolated_sim1.print_table({"S", "E", "I", "R"});
 
     // results node 1 mobility_sim
     std::cout << "Mobility results node 1" << std::endl;
-    auto interpolated_sim1_mobility = sim.get_graph().nodes()[1].property.mobility_sim.get_result();
+    auto interpolated_sim1_mobility = sim.get_graph().nodes()[0].property.mobility_sim.get_result();
     interpolated_sim1_mobility.print_table({"S", "E", "I", "R"});
+
+    // results node 2
+    std::cout << "Results node 2" << std::endl;
+    auto interpolated_sim2 = sim.get_graph().nodes()[1].property.base_sim.get_result();
+    interpolated_sim2.print_table({"S", "E", "I", "R"});
+
+    // results node 2 mobility_sim
+    std::cout << "Mobility results node 2" << std::endl;
+    auto interpolated_sim2_mobility = sim.get_graph().nodes()[1].property.mobility_sim.get_result();
+    interpolated_sim2_mobility.print_table({"S", "E", "I", "R"});
+
     return 0;
 }

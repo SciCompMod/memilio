@@ -116,6 +116,7 @@ template <typename FP>
 void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> results_from,
                    Eigen::Ref<Vector<FP>> results_to)
 {
+    // before moving the commuters, we need to look for negative values in migrated and correct them.
     const auto group        = 6;
     const auto num_comparts = results_to.size() / group;
 
@@ -245,21 +246,14 @@ public:
                       from_sim.get_result().get_last_value());
     }
 
-    void move_and_delete(FP t, FP dt, ExtendedMigrationEdge<FP>& edge, Sim& from_sim, Sim& to_sim)
+    void move_and_delete(ExtendedMigrationEdge<FP>& edge, Sim& from_sim, Sim& to_sim)
     {
-        Eigen::Index idx      = edge.get_return_times().get_num_time_points() - 1;
-        auto& integrator_node = from_sim.get_integrator();
-        update_status_migrated(edge.get_migrated()[idx], from_sim, integrator_node,
-                               from_sim.get_result().get_last_value(), t, dt);
-
         move_migrated(edge.get_migrated().get_last_value(), from_sim.get_result().get_last_value(),
                       to_sim.get_result().get_last_value());
 
         for (Eigen::Index i = edge.get_return_times().get_num_time_points() - 1; i >= 0; --i) {
-            if (edge.get_return_times().get_time(i) <= t) {
-                edge.get_migrated().remove_time_point(i);
-                edge.get_return_times().remove_time_point(i);
-            }
+            edge.get_migrated().remove_time_point(i);
+            edge.get_return_times().remove_time_point(i);
         }
     }
 };
@@ -606,14 +600,11 @@ public:
         auto min_dt    = 0.01;
         double t_begin = this->m_t - 1.;
 
-        while (this->m_t - epsilon < t_max) {
-            // auto start = std::chrono::system_clock::now();
-
+        while (this->m_t < t_max - epsilon) {
             t_begin += 1;
             if (this->m_t + dt_first_mobility > t_max) {
                 dt_first_mobility = t_max - this->m_t;
                 for (auto& n : this->m_graph.nodes()) {
-                    // m_node_func(this->m_t, dt_first_mobility, n.property);
                     n.property.base_sim.advance(this->m_t + dt_first_mobility);
                 }
                 break;
@@ -717,11 +708,6 @@ private:
                         // m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 1);
                         m_mobility_functions.update_and_move(this->m_t, dt_mobility, e.property, node_from, node_to);
                     }
-                    else {
-                        // the last time step is handled differently since we have to close the timeseries
-                        // m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 2);
-                        m_mobility_functions.move_and_delete(this->m_t, dt_mobility, e.property, node_from, node_to);
-                    }
                 }
                 else {
                     auto& node_from =
@@ -742,6 +728,46 @@ private:
                     // m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 3);
                     m_mobility_functions.update_only(this->m_t, dt_mobility, e.property, node_from);
                 }
+            }
+        }
+        // in the last time step we have to move the individuals back to their local model
+        if (indx_schedule == 99) {
+            auto edge_index = 0;
+            for (auto& e : this->m_graph.edges()) {
+                auto current_node_indx = schedules.schedule_edges[edge_index][indx_schedule];
+                bool in_mobility_node  = schedules.mobility_schedule_edges[edge_index][indx_schedule];
+
+                // determine dt, which is equal to the last integration/syncronization point in the current node
+                auto integrator_schedule_row = schedules.local_int_schedule[current_node_indx];
+                if (in_mobility_node)
+                    integrator_schedule_row = schedules.mobility_int_schedule[current_node_indx];
+                // search the index of indx_schedule in the integrator schedule
+                const size_t indx_current = std::distance(
+                    integrator_schedule_row.begin(),
+                    std::lower_bound(integrator_schedule_row.begin(), integrator_schedule_row.end(), indx_schedule));
+
+                ScalarType dt_mobility;
+                if (indx_current == 0) {
+                    dt_mobility = round_nth_decimal(e.property.travel_time / e.property.path.size(), 2);
+                    if (dt_mobility < 0.01)
+                        dt_mobility = 0.01;
+                }
+                else {
+                    dt_mobility = round_nth_decimal((static_cast<double>(integrator_schedule_row[indx_current]) -
+                                                     static_cast<double>(integrator_schedule_row[indx_current - 1])) /
+                                                            100 +
+                                                        epsilon,
+                                                    2);
+                }
+
+                auto& node_from =
+                    this->m_graph.nodes()[schedules.schedule_edges[edge_index][indx_schedule]].property.mobility_sim;
+
+                auto& node_to =
+                    this->m_graph.nodes()[schedules.schedule_edges[edge_index][indx_schedule]].property.base_sim;
+
+                m_mobility_functions.move_and_delete(e.property, node_from, node_to);
+                edge_index++;
             }
         }
     }
@@ -769,10 +795,12 @@ private:
     {
         for (const size_t& n_indx : schedules.nodes_mobility_m[indx_schedule]) {
             auto& n = this->m_graph.nodes()[n_indx];
+            // determine in which index of mobility_int_schedule we are
             const size_t indx_current =
                 std::distance(schedules.mobility_int_schedule[n_indx].begin(),
                               std::lower_bound(schedules.mobility_int_schedule[n_indx].begin(),
                                                schedules.mobility_int_schedule[n_indx].end(), indx_schedule));
+            // determine the next time step
             const size_t val_next = (indx_current == schedules.mobility_int_schedule[n_indx].size() - 1)
                                         ? 100
                                         : schedules.mobility_int_schedule[n_indx][indx_current + 1];
@@ -782,12 +810,14 @@ private:
             // get all time points from the last integration step
             auto& last_time_point = n.property.mobility_sim.get_result().get_time(
                 n.property.mobility_sim.get_result().get_num_time_points() - 1);
-            // wenn last_time_point nicht innerhalb eines intervalls von 1-e10 von t liegt, dann setzte den letzten Zeitpunkt auf m_t
+            // if the last time point is not within an interval of 1-e10 from t, then set the last time point to m_t
             if (std::fabs(last_time_point - this->m_t) > 1e-10) {
                 n.property.mobility_sim.get_result().get_last_time() = this->m_t;
             }
-            // m_node_func(this->m_t, next_dt, n.property.mobility_sim);
-            n.property.mobility_sim.advance(this->m_t + next_dt);
+            // only advance in time if there are individuals in the mobility model
+            if (n.property.mobility_sim.get_result().get_last_value().sum() > 1e-8) {
+                n.property.mobility_sim.advance(this->m_t + next_dt);
+            }
             Eigen::Index indx_min;
             while (n.property.mobility_sim.get_result().get_last_value().minCoeff(&indx_min) < -1e-7) {
                 Eigen::Index indx_max;
