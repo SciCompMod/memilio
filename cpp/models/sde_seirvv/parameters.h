@@ -176,7 +176,7 @@ public:
 
         int corrected = false;
         if (this->get<TimeExposedV1>() < tol_times) {
-            log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
+            log_warning("Constraint check: Parameter TimeExposedV1 changed from {:.4f} to {:.4f}. Please note that "
                         "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                         "and reset parameters.",
                         this->get<TimeExposedV1>(), tol_times);
@@ -184,7 +184,7 @@ public:
             corrected                 = true;
         }
         if (this->get<TimeExposedV2>() < tol_times) {
-            log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
+            log_warning("Constraint check: Parameter TimeExposedV2 changed from {:.4f} to {:.4f}. Please note that "
                         "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                         "and reset parameters.",
                         this->get<TimeExposedV2>(), tol_times);
@@ -192,7 +192,7 @@ public:
             corrected                 = true;
         }
         if (this->get<TimeInfectedV1>() < tol_times) {
-            log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
+            log_warning("Constraint check: Parameter TimeInfectedV1 changed from {:.4f} to {:.4f}. Please note that "
                         "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                         "and reset parameters.",
                         this->get<TimeInfectedV1>(), tol_times);
@@ -200,7 +200,7 @@ public:
             corrected                 = true;
         }
         if (this->get<TimeInfectedV2>() < tol_times) {
-            log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
+            log_warning("Constraint check: Parameter TimeInfectedV2 changed from {:.4f} to {:.4f}. Please note that "
                         "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                         "and reset parameters.",
                         this->get<TimeInfectedV2>(), tol_times);
@@ -209,14 +209,14 @@ public:
         }
         if (this->get<TransmissionProbabilityOnContactV1>() < 0.0 ||
             this->get<TransmissionProbabilityOnContactV1>() > 1.0) {
-            log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
+            log_warning("Constraint check: Parameter TransmissionProbabilityOnContactV1 changed from {:0.4f} to {:d} ",
                         this->get<TransmissionProbabilityOnContactV1>(), 0.0);
             this->get<TransmissionProbabilityOnContactV1>() = 0.0;
             corrected                                     = true;
         }
         if (this->get<TransmissionProbabilityOnContactV2>() < 0.0 ||
             this->get<TransmissionProbabilityOnContactV2>() > 1.0) {
-            log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
+            log_warning("Constraint check: Parameter TransmissionProbabilityOnContactV2 changed from {:0.4f} to {:d} ",
                         this->get<TransmissionProbabilityOnContactV2>(), 0.0);
             this->get<TransmissionProbabilityOnContactV2>() = 0.0;
             corrected                                     = true;
@@ -234,28 +234,28 @@ public:
         double tol_times = 1e-1;
 
         if (this->get<TimeExposedV1>() < tol_times) {
-            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
+            log_error("Constraint check: Parameter TimeExposedV1 {:.4f} smaller or equal {:.4f}. Please note that "
                       "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                       "and reset parameters.",
                       this->get<TimeExposedV1>(), 0.0);
             return true;
         }
         if (this->get<TimeExposedV2>() < tol_times) {
-            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
+            log_error("Constraint check: Parameter TimeExposedV2 {:.4f} smaller or equal {:.4f}. Please note that "
                       "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                       "and reset parameters.",
                       this->get<TimeExposedV2>(), 0.0);
             return true;
         }
         if (this->get<TimeInfectedV1>() < tol_times) {
-            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
+            log_error("Constraint check: Parameter TimeInfectedV1 {:.4f} smaller or equal {:.4f}. Please note that "
                       "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                       "and reset parameters.",
                       this->get<TimeInfectedV1>(), 0.0);
             return true;
         }
         if (this->get<TimeInfectedV2>() < tol_times) {
-            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
+            log_error("Constraint check: Parameter TimeInfectedV2 {:.4f} smaller or equal {:.4f}. Please note that "
                       "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                       "and reset parameters.",
                       this->get<TimeInfectedV2>(), 0.0);
@@ -264,14 +264,14 @@ public:
         if (this->get<TransmissionProbabilityOnContactV1>() < 0.0 ||
             this->get<TransmissionProbabilityOnContactV1>() > 1.0) {
             log_error(
-                "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
+                "Constraint check: Parameter TransmissionProbabilityOnContactV1 {:.4f} smaller {:.4f} or greater {:.4f}",
                 this->get<TransmissionProbabilityOnContactV1>(), 0.0, 1.0);
             return true;
         }
         if (this->get<TransmissionProbabilityOnContactV2>() < 0.0 ||
             this->get<TransmissionProbabilityOnContactV2>() > 1.0) {
             log_error(
-                "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
+                "Constraint check: Parameter TransmissionProbabilityOnContactV2 {:.4f} smaller {:.4f} or greater {:.4f}",
                 this->get<TransmissionProbabilityOnContactV2>(), 0.0, 1.0);
             return true;
         }

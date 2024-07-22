@@ -27,13 +27,13 @@
 const mio::sseirvv::Model& sseirvv_testing_model()
 {
     static mio::sseirvv::Model model;
-    model.step_size = 1. / 16;
+    model.step_size = 1. / 29;
     model.populations.array().setConstant(1);
     { // set parameters s.t. coeffStoI is 1
-        model.parameters.set<mio::sseirvv::TimeInfectedV1>(1);
-        model.parameters.set<mio::sseirvv::TimeInfectedV2>(1);
         model.parameters.set<mio::sseirvv::TimeExposedV1>(1);
-        model.parameters.set<mio::sseirvv::TimeExposedV2>(1);
+        model.parameters.set<mio::sseirvv::TimeExposedV2>(1./4);
+        model.parameters.set<mio::sseirvv::TimeInfectedV1>(1);
+        model.parameters.set<mio::sseirvv::TimeInfectedV2>(1./9);
         model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1>(1);
         model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2>(1);
         model.parameters.get<mio::sseirvv::ContactPatterns>().get_baseline()(0, 0) = 10;
@@ -69,19 +69,23 @@ TEST(TestSdeSeirvv, get_flows)
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(1.));
 
-    const Eigen::VectorXd y = Eigen::VectorXd::Constant(9, 1);
+    // Non-constant y for a more meaningful test
+    Eigen::VectorXd y = Eigen::VectorXd(10);
+    y << 3,1,2,4,1,1,1,4,4,4;
     Eigen::VectorXd flows   = Eigen::VectorXd::Constant(9, 1);
 
     // results contain two parts : deterministic + stochastic
 
     sseirvv_testing_model().get_flows(y, y, 0, flows);
     auto expected_result = Eigen::VectorXd(9);
-    expected_result << 1 + 4, 2 + 0, 1 + 0, 1 + 4, 1 + 4, 1 + 0, 2 + 0, 1 + 4, 1 + 0;
+    expected_result << 6 + sqrt(6) * sqrt(29), 15 + 0, 1 + 0, 4 + sqrt(4) * sqrt(29), 2 + sqrt(2) * sqrt(29), 
+        9 + 0, 20 + 0, 16 + sqrt(16) * sqrt(29), 36 + 0;
     EXPECT_EQ(flows, expected_result);
 
     sseirvv_testing_model().get_flows(y, y, 0, flows);
     expected_result = Eigen::VectorXd(9);
-    expected_result << 1 + 0, 2 + sqrt(2) * 4, 1 + 4, 1 + 0, 1 + 0, 1 + 4, 2 + sqrt(2) * 4, 1 + 0, 1 + 4;
+    expected_result << 6 + 0, 15 + sqrt(15) * sqrt(29), 1 + sqrt(1) * sqrt(29), 4 + 0, 2 + 0, 9 + sqrt(9) * sqrt(29), 
+        20 + sqrt(20) * sqrt(29), 16 + 0, 36 + sqrt(36) * sqrt(29);
     EXPECT_EQ(flows, expected_result);
 }
 
@@ -189,7 +193,7 @@ TEST(TestSdeSeirvv, check_constraints_parameters)
 
 TEST(TestSdeSeirvv, apply_constraints_parameters)
 {
-    const double tol_times = 1e-1;
+    const ScalarType tol_times = 1e-1;
     mio::sseirvv::Model::ParameterSet parameters;
     parameters.set<mio::sseirvv::TimeInfectedV1>(6);
     parameters.set<mio::sseirvv::TimeInfectedV2>(6);
