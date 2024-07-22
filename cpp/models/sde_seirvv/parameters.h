@@ -67,7 +67,7 @@ struct TransmissionProbabilityOnContactV2 {
 };
 
 /**
- * @brief The latent time of variant 1 in day unit.
+ * @brief The latent time of variant 1 in days.
  */
 struct TimeExposedV1 {
     using Type = UncertainValue<ScalarType>;
@@ -82,7 +82,7 @@ struct TimeExposedV1 {
 };
 
 /**
- * @brief The latent time of variant 2 in day unit.
+ * @brief The latent time of variant 2 in days.
  */
 struct TimeExposedV2 {
     using Type = UncertainValue<ScalarType>;
@@ -97,7 +97,7 @@ struct TimeExposedV2 {
 };
 
 /**
- * @brief The infectious time of variant 1 in day unit.
+ * @brief The infectious time of variant 1 in days.
  */
 struct TimeInfectedV1 {
     using Type = UncertainValue<ScalarType>;
@@ -112,7 +112,7 @@ struct TimeInfectedV1 {
 };
 
 /**
- * @brief The infectious time of variant 2 in day unit.
+ * @brief The infectious time of variant 2 in days.
  */
 struct TimeInfectedV2 {
     using Type = UncertainValue<ScalarType>;
