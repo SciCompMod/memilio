@@ -99,7 +99,7 @@ void determine_initial_infection_states_world(const fs::path& input_dir, const m
     auto braunschweig_node                 = initial_graph.value()[braunschweig_id];
     initial_infection_distribution.array() = braunschweig_node.populations.array().cast<double>();
 
-    extrapolate_real_world_data(braunschweig_node, input_dir.string(), date, 90); // 90 days
+    // extrapolate_real_world_data(braunschweig_node, input_dir.string(), date, 90); // 90 days
 }
 
 /**
@@ -1517,7 +1517,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto end_run_idx   = start_run_idx + run_distribution[size_t(rank)];
 
     mio::Date start_date{2021, 3, 1};
-    int max_num_days     = 0;
+    int max_num_days     = 90;
     auto max_num_persons = 400000;
     bool npis_on         = true;
 
