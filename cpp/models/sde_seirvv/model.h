@@ -97,7 +97,7 @@ public:
                     + pop[(size_t)InfectionState::InfectedV2])) / sqrt(step_size) * s_ev2,
             0.0, y[(size_t)InfectionState::Susceptible] / step_size);
 
-        const double outflowSum = outflow1 + outflow2;
+        const double outflow_sum = outflow1 + outflow2;
         if (outflowSum > 0)
         {
             const double scale = std::clamp(outflowSum, 0.0 , y[(size_t)InfectionState::Susceptible] / step_size) / outflowSum;
