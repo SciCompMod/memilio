@@ -24,6 +24,7 @@
 #include "abm/time.h"
 #include "abm/virus_variant.h"
 #include "abm/vaccine.h"
+#include "abm/test_type.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/parameter_set.h"
@@ -315,49 +316,56 @@ struct HighViralLoadProtectionFactor {
  * @brief Parameters that describe the reliability of a test.
  */
 struct TestParameters {
-    UncertainValue<> sensitivity;
-    UncertainValue<> specificity;
-};
+     UncertainValue<> sensitivity;
+     UncertainValue<> specificity;
 
-struct GenericTest {
-    using Type = TestParameters;
-    static Type get_default()
-    {
-        return Type{0.9, 0.99};
-    }
-    static std::string name()
-    {
-        return "GenericTest";
-    }
+     /**
+      * serialize this. 
+      * @see mio::serialize
+      */
+     template <class IOContext>
+     void serialize(IOContext& io) const
+     {
+         auto obj = io.create_object("TestParameters");
+         obj.add_element("Sensitivity", sensitivity);
+         obj.add_element("Specificity", specificity);
+     }
+
+     /**
+      * deserialize an object of this class.
+      * @see mio::deserialize
+      */
+     template <class IOContext>
+     static IOResult<TestParameters> deserialize(IOContext& io)
+     {
+         auto obj  = io.expect_object("TestParameters");
+         auto sens = obj.expect_element("Sensitivity", mio::Tag<UncertainValue<>>{});
+         auto spec = obj.expect_element("Specificity", mio::Tag<UncertainValue<>>{});
+         return apply(
+             io,
+             [](auto&& sens_, auto&& spec_) {
+                 return TestParameters{sens_, spec_};
+             },
+             sens, spec);
+     }
 };
 
 /**
- * @brief Reliability of an AntigenTest.
+ * @brief Store a map from the TestTypes to their TestParameters.
  */
-struct AntigenTest : public GenericTest {
-    using Type = TestParameters;
-    static Type get_default()
+struct TestData {
+    using Type = CustomIndexArray<TestParameters, TestType>;
+    static auto get_default(AgeGroup /*size*/)
     {
-        return Type{0.8, 0.88};
+        Type default_val                 = Type({TestType::Count});
+        default_val[{TestType::Generic}] = TestParameters{0.9, 0.99};
+        default_val[{TestType::Antigen}] = TestParameters{0.8, 0.88};
+        default_val[{TestType::PCR}]     = TestParameters{0.9, 0.99};
+        return default_val;
     }
     static std::string name()
     {
-        return "AntigenTest";
-    }
-};
-
-/**
- * @brief Reliability of a PCRTest.
- */
-struct PCRTest : public GenericTest {
-    using Type = TestParameters;
-    static Type get_default()
-    {
-        return Type{0.9, 0.99};
-    }
-    static std::string name()
-    {
-        return "PCRTest";
+        return "TestData";
     }
 };
 
@@ -548,7 +556,8 @@ using ParametersBase =
                  InfectivityDistributions, DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate,
                  QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
                  GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
-                 AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
+                 AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor,
+                 TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
