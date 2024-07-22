@@ -869,154 +869,156 @@ void update_status_migrated(Eigen::Ref<typename TimeSeries<FP>::Vector> migrated
     sim.get_model().set_flow_values(flows_model);
 }
 
-// /**
-//  * @brief Sets the graph nodes for counties or districts.
-//  * Reads the node ids which could refer to districts or counties and the epidemiological
-//  * data from json files and creates one node for each id. Every node contains a model.
-//  * @param[in] params Model Parameters that are used for every node.
-//  * @param[in] start_date Start date for which the data should be read.
-//  * @param[in] end_data End date for which the data should be read.
-//  * @param[in] data_dir Directory that contains the data files.
-//  * @param[in] population_data_path Path to json file containing the population data.
-//  * @param[in] stay_times_data_path Path to txt file containing the stay times for the considered local entities.
-//  * @param[in] is_node_for_county Specifies whether the node ids should be county ids (true) or district ids (false).
-//  * @param[in, out] params_graph Graph whose nodes are set by the function.
-//  * @param[in] read_func Function that reads input data for german counties and sets Model compartments.
-//  * @param[in] node_func Function that returns the county ids.
-//  * @param[in] scaling_factor_inf Factor of confirmed cases to account for undetected cases in each county.
-//  * @param[in] scaling_factor_icu Factor of ICU cases to account for underreporting.
-//  * @param[in] tnt_capacity_factor Factor for test and trace capacity.
-//  * @param[in] num_days Number of days to be simulated; required to load data for vaccinations during the simulation.
-//  * @param[in] export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
-//  */
-// template <class TestAndTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
-//           class ReadFunction, class NodeIdFunction>
-// IOResult<void> set_nodes_detailed(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
-//                                   const std::string& population_data_path, const std::string& stay_times_data_path,
-//                                   bool is_node_for_county, GraphDetailed<Model, MigrationParams>& params_graph,
-//                                   ReadFunction&& read_func, NodeIdFunction&& node_func,
-//                                   const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-//                                   double tnt_capacity_factor, int num_days = 0, bool export_time_series = false)
-// {
+/**
+ * @brief Sets the graph nodes for counties or districts.
+ * Reads the node ids which could refer to districts or counties and the epidemiological
+ * data from json files and creates one node for each id. Every node contains a model.
+ * @param[in] params Model Parameters that are used for every node.
+ * @param[in] start_date Start date for which the data should be read.
+ * @param[in] end_data End date for which the data should be read.
+ * @param[in] data_dir Directory that contains the data files.
+ * @param[in] population_data_path Path to json file containing the population data.
+ * @param[in] stay_times_data_path Path to txt file containing the stay times for the considered local entities.
+ * @param[in] is_node_for_county Specifies whether the node ids should be county ids (true) or district ids (false).
+ * @param[in, out] params_graph Graph whose nodes are set by the function.
+ * @param[in] read_func Function that reads input data for german counties and sets Model compartments.
+ * @param[in] node_func Function that returns the county ids.
+ * @param[in] scaling_factor_inf Factor of confirmed cases to account for undetected cases in each county.
+ * @param[in] scaling_factor_icu Factor of ICU cases to account for underreporting.
+ * @param[in] tnt_capacity_factor Factor for test and trace capacity.
+ * @param[in] num_days Number of days to be simulated; required to load data for vaccinations during the simulation.
+ * @param[in] export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
+ */
+template <class TestAndTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
+          class ReadFunction, class NodeIdFunction, typename FP = double>
+IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
+                         const std::string& population_data_path, const std::string& stay_times_data_path,
+                         bool is_node_for_county, mio::ExtendedGraph<Model>& params_graph, ReadFunction&& read_func,
+                         NodeIdFunction&& node_func, const std::vector<double>& scaling_factor_inf,
+                         double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0,
+                         bool export_time_series = false, bool rki_age_groups = true)
+{
 
-//     BOOST_OUTCOME_TRY(auto&& duration_stay, mio::read_duration_stay(stay_times_data_path));
-//     BOOST_OUTCOME_TRY(auto&& node_ids, node_func(population_data_path, is_node_for_county));
+    BOOST_OUTCOME_TRY(auto&& duration_stay, mio::read_duration_stay(stay_times_data_path));
 
-//     std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
+    BOOST_OUTCOME_TRY(auto&& node_ids, node_func(population_data_path, is_node_for_county, rki_age_groups));
+    std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
+    for (auto& node : nodes) {
+        node.parameters = params;
+    }
 
-//     for (auto& node : nodes) {
-//         node.parameters = params;
-//     }
-//     BOOST_OUTCOME_TRY(read_func(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir.string(),
-//                                 num_days, export_time_series));
+    BOOST_OUTCOME_TRY(read_func(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir.string(),
+                                num_days, export_time_series));
 
-//     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
+    for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
 
-//         auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
+        auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
 
-//         //local parameters
-//         auto& tnt_value = nodes[node_idx].parameters.template get<TestAndTrace>();
-//         tnt_value       = mio::UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
-//         tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
+        //local parameters
+        auto& tnt_value = nodes[node_idx].parameters.template get<TestAndTrace>();
+        tnt_value       = mio::UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
+        tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
 
-//         //holiday periods
-//         auto id              = int(mio::regions::CountyId(node_ids[node_idx]));
-//         auto holiday_periods = mio::regions::get_holidays(mio::regions::get_state_id(id), start_date, end_date);
-//         auto& contacts       = nodes[node_idx].parameters.template get<ContactPattern>();
-//         contacts.get_school_holidays() =
-//             std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
-//         std::transform(
-//             holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
-//                 return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
-//                                       mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
-//             });
+        //holiday periods
+        auto id              = int(mio::regions::CountyId(node_ids[node_idx]));
+        auto holiday_periods = mio::regions::get_holidays(mio::regions::get_state_id(id), start_date, end_date);
+        auto& contacts       = nodes[node_idx].parameters.template get<ContactPattern>();
+        contacts.get_school_holidays() =
+            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
+        std::transform(
+            holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
+                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
+                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
+            });
 
-//         //uncertainty in populations
-//         for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-//             for (auto j = mio::Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
-//                 auto& compartment_value = nodes[node_idx].populations[{i, j}];
-//                 compartment_value =
-//                     mio::UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
-//                 compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
-//                                                                                      1.1 * double(compartment_value)));
-//             }
-//         }
+        //uncertainty in populations
+        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+            for (auto j = mio::Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
+                auto& compartment_value = nodes[node_idx].populations[{i, j}];
+                compartment_value =
+                    mio::UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
+                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
+                                                                                     1.1 * double(compartment_value)));
+            }
+        }
 
-//         // Add mobility node
-//         auto mobility = nodes[node_idx];
-//         mobility.populations.set_total(0);
+        // Add mobility node
+        auto mobility_model = nodes[node_idx];
+        mobility_model.populations.set_total(0);
 
-//         params_graph.add_node(node_ids[node_idx], duration_stay((Eigen::Index)node_idx), nodes[node_idx], mobility);
-//     }
-//     return success();
-// }
+        params_graph.add_node(1, nodes[node_idx], mobility_model, duration_stay((Eigen::Index)node_idx));
+    }
+    return success();
+}
 
-// /**
-//  * @brief Sets the graph edges.
-//  * Reads the commuting matrices, travel times and paths from data and creates one edge for each pair of nodes.
-//  * @param[in] travel_times_path Path to txt file containing the travel times between counties.
-//  * @param[in] mobility_data_path Path to txt file containing the commuting matrices.
-//  * @param[in] travelpath_path Path to txt file containing the paths between counties.
-//  * @param[in, out] params_graph Graph whose nodes are set by the function.
-//  * @param[in] migrating_compartments Compartments that commute.
-//  * @param[in] contact_locations_size Number of contact locations.
-//  * @param[in] commuting_weights Vector with a commuting weight for every AgeGroup.
-//  */
-// template <class ContactLocation, class Model, class MigrationParams, class MigrationCoefficientGroup,
-//           class InfectionState>
-// IOResult<void>
-// set_edges_detailed(const std::string& travel_times_path, const std::string mobility_data_path,
-//                    const std::string& travelpath_path, GraphDetailed<Model, MigrationParams>& params_graph,
-//                    std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
-//                    std::vector<ScalarType> commuting_weights = std::vector<ScalarType>{},
-//                    ScalarType theshold_edges                 = 4e-5)
-// {
-//     BOOST_OUTCOME_TRY(auto&& mobility_data_commuter, mio::read_mobility_plain(mobility_data_path));
-//     BOOST_OUTCOME_TRY(auto&& travel_times, mio::read_mobility_plain(travel_times_path));
-//     BOOST_OUTCOME_TRY(auto&& path_mobility, mio::read_path_mobility(travelpath_path));
+/**
+ * @brief Sets the graph edges.
+ * Reads the commuting matrices, travel times and paths from data and creates one edge for each pair of nodes.
+ * @param[in] travel_times_path Path to txt file containing the travel times between counties.
+ * @param[in] mobility_data_path Path to txt file containing the commuting matrices.
+ * @param[in] travelpath_path Path to txt file containing the paths between counties.
+ * @param[in, out] params_graph Graph whose nodes are set by the function.
+ * @param[in] migrating_compartments Compartments that commute.
+ * @param[in] contact_locations_size Number of contact locations.
+ * @param[in] commuting_weights Vector with a commuting weight for every AgeGroup.
+ */
+template <class ContactLocation, class Model, class MigrationParams, class MigrationCoefficientGroup,
+          class InfectionState>
+IOResult<void> set_edges(const std::string& travel_times_dir, const std::string mobility_data_dir,
+                         const std::string& travel_path_dir, mio::ExtendedGraph<Model>& params_graph,
+                         std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
+                         std::vector<ScalarType> commuting_weights = std::vector<ScalarType>{},
+                         ScalarType theshold_edges                 = 4e-5)
+{
+    BOOST_OUTCOME_TRY(auto&& mobility_data_commuter, mio::read_mobility_plain(mobility_data_dir));
+    BOOST_OUTCOME_TRY(auto&& travel_times, mio::read_mobility_plain(travel_times_dir));
+    BOOST_OUTCOME_TRY(auto&& path_mobility, mio::read_path_mobility(travel_path_dir));
 
-//     for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
-//         for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {
-//             auto& populations = params_graph.nodes()[county_idx_i].property.populations;
+    for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
+        for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {
+            auto& populations = params_graph.nodes()[county_idx_i].property.base_sim.populations;
 
-//             // mobility coefficients have the same number of components as the contact matrices.
-//             // so that the same NPIs/dampings can be used for both (e.g. more home office => fewer commuters)
-//             auto mobility_coeffs = MigrationCoefficientGroup(contact_locations_size, populations.numel());
-//             auto num_age_groups  = (size_t)params_graph.nodes()[county_idx_i].property.parameters.get_num_groups();
-//             commuting_weights =
-//                 (commuting_weights.size() == 0 ? std::vector<ScalarType>(num_age_groups, 1.0) : commuting_weights);
+            // mobility coefficients have the same number of components as the contact matrices.
+            // so that the same NPIs/dampings can be used for both (e.g. more home office => fewer commuters)
+            auto mobility_coeffs = MigrationCoefficientGroup(contact_locations_size, populations.numel());
+            auto num_age_groups =
+                (size_t)params_graph.nodes()[county_idx_i].property.base_sim.parameters.get_num_groups();
+            commuting_weights =
+                (commuting_weights.size() == 0 ? std::vector<ScalarType>(num_age_groups, 1.0) : commuting_weights);
 
-//             //commuters
-//             auto working_population = 0.0;
-//             auto min_commuter_age   = mio::AgeGroup(2);
-//             auto max_commuter_age   = mio::AgeGroup(4); //this group is partially retired, only partially commutes
-//             for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
-//                 working_population += populations.get_group_total(age) * commuting_weights[size_t(age)];
-//             }
-//             auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) / working_population;
-//             for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
-//                 for (auto compartment : migrating_compartments) {
-//                     auto coeff_index = populations.get_flat_index({age, compartment});
-//                     mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
-//                         commuter_coeff_ij * commuting_weights[size_t(age)];
-//                 }
-//             }
+            //commuters
+            auto working_population = 0.0;
+            auto min_commuter_age   = mio::AgeGroup(2);
+            auto max_commuter_age   = mio::AgeGroup(4); //this group is partially retired, only partially commutes
+            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
+                working_population += populations.get_group_total(age) * commuting_weights[size_t(age)];
+            }
+            auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) / working_population;
+            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
+                for (auto compartment : migrating_compartments) {
+                    auto coeff_index = populations.get_flat_index({age, compartment});
+                    mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
+                        commuter_coeff_ij * commuting_weights[size_t(age)];
+                }
+            }
 
-//             auto path = path_mobility[county_idx_i][county_idx_j];
-//             if (static_cast<size_t>(path[0]) != county_idx_i ||
-//                 static_cast<size_t>(path[path.size() - 1]) != county_idx_j)
-//                 std::cout << "Wrong Path for edge " << county_idx_i << " " << county_idx_j << "\n";
+            auto path = path_mobility[county_idx_i][county_idx_j];
+            if (static_cast<size_t>(path[0]) != county_idx_i ||
+                static_cast<size_t>(path[path.size() - 1]) != county_idx_j)
+                std::cout << "Wrong Path for edge " << county_idx_i << " " << county_idx_j << "\n";
 
-//             //only add edges with mobility above thresholds for performance
-//             if (commuter_coeff_ij > theshold_edges) {
-//                 params_graph.add_edge(county_idx_i, county_idx_j, travel_times(county_idx_i, county_idx_j),
-//                                       path_mobility[county_idx_i][county_idx_j], std::move(mobility_coeffs));
-//             }
-//         }
-//     }
+            //only add edges with mobility above thresholds for performance
+            if (commuter_coeff_ij > theshold_edges) {
+                params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs),
+                                      travel_times(county_idx_i, county_idx_j),
+                                      path_mobility[county_idx_i][county_idx_j]);
+                //   g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::oseir::InfectionState::Count, 0.01), traveltime, path2);
+            }
+        }
+    }
 
-//     return success();
-// }
+    return success();
+}
 
 // template <class S>
 // class ParameterStudyDetailed : public ParameterStudy<S>
