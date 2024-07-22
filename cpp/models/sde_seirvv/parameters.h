@@ -126,8 +126,6 @@ struct TimeInfectedV2 {
     }
 };
 
-
-
 /**
  * @brief The contact patterns within the society are modelled using a ContactMatrix.
  */
@@ -181,7 +179,7 @@ public:
                         "and reset parameters.",
                         this->get<TimeExposedV1>(), tol_times);
             this->get<TimeExposedV1>() = tol_times;
-            corrected                 = true;
+            corrected                  = true;
         }
         if (this->get<TimeExposedV2>() < tol_times) {
             log_warning("Constraint check: Parameter TimeExposedV2 changed from {:.4f} to {:.4f}. Please note that "
@@ -189,7 +187,7 @@ public:
                         "and reset parameters.",
                         this->get<TimeExposedV2>(), tol_times);
             this->get<TimeExposedV2>() = tol_times;
-            corrected                 = true;
+            corrected                  = true;
         }
         if (this->get<TimeInfectedV1>() < tol_times) {
             log_warning("Constraint check: Parameter TimeInfectedV1 changed from {:.4f} to {:.4f}. Please note that "
@@ -197,7 +195,7 @@ public:
                         "and reset parameters.",
                         this->get<TimeInfectedV1>(), tol_times);
             this->get<TimeInfectedV1>() = tol_times;
-            corrected                 = true;
+            corrected                   = true;
         }
         if (this->get<TimeInfectedV2>() < tol_times) {
             log_warning("Constraint check: Parameter TimeInfectedV2 changed from {:.4f} to {:.4f}. Please note that "
@@ -205,21 +203,21 @@ public:
                         "and reset parameters.",
                         this->get<TimeInfectedV2>(), tol_times);
             this->get<TimeInfectedV2>() = tol_times;
-            corrected                 = true;
+            corrected                   = true;
         }
         if (this->get<TransmissionProbabilityOnContactV1>() < 0.0 ||
             this->get<TransmissionProbabilityOnContactV1>() > 1.0) {
             log_warning("Constraint check: Parameter TransmissionProbabilityOnContactV1 changed from {:0.4f} to {:d} ",
                         this->get<TransmissionProbabilityOnContactV1>(), 0.0);
             this->get<TransmissionProbabilityOnContactV1>() = 0.0;
-            corrected                                     = true;
+            corrected                                       = true;
         }
         if (this->get<TransmissionProbabilityOnContactV2>() < 0.0 ||
             this->get<TransmissionProbabilityOnContactV2>() > 1.0) {
             log_warning("Constraint check: Parameter TransmissionProbabilityOnContactV2 changed from {:0.4f} to {:d} ",
                         this->get<TransmissionProbabilityOnContactV2>(), 0.0);
             this->get<TransmissionProbabilityOnContactV2>() = 0.0;
-            corrected                                     = true;
+            corrected                                       = true;
         }
         return corrected;
     }
@@ -231,7 +229,7 @@ public:
      */
     bool check_constraints() const
     {
-        double tol_times = 1e-1;
+        ScalarType tol_times = 1e-1;
 
         if (this->get<TimeExposedV1>() < tol_times) {
             log_error("Constraint check: Parameter TimeExposedV1 {:.4f} smaller or equal {:.4f}. Please note that "
@@ -286,7 +284,7 @@ private:
 
 public:
     /**
-     * deserialize an object of this class.
+     * Deserialize an object of this class.
      * @see mio::deserialize
      */
     template <class IOContext>

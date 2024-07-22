@@ -69,7 +69,7 @@ public:
         /*
         * Normal distributed values for the stochastic part of the flows, variables are encoded 
         * in the following way: x_y is the stochastic part for the flow from x to y. Variant 
-        * specific compartments also get an addendum v1 or v2 denoting the relevant variant
+        * specific compartments also get an addendum v1 or v2 denoting the relevant variant.
         */
 
         ScalarType s_ev1 = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
@@ -88,11 +88,11 @@ public:
         * no compartment attains negative values.
         */
 
-        // Calculate inv_step_size and inv_sqrt_step_size for optimization
+        // Calculate inv_step_size and inv_sqrt_step_size for optimization.
         ScalarType inv_step_size = 1.0 / step_size;
         ScalarType inv_sqrt_step_size = 1.0 / sqrt(step_size);
 
-        // Two outgoing flows from S so will clamp their sum to S * inv_step_size to ensure non-negative S
+        // Two outgoing flows from S so will clamp their sum to S * inv_step_size to ensure non-negative S.
         const ScalarType outflow1 = std::clamp(
             coeffStoIV1 * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::InfectedV1] +
                 sqrt(coeffStoIV1 * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::InfectedV1])  

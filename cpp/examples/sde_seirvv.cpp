@@ -79,7 +79,7 @@ int main()
     model.check_constraints();
 
     // The second variant enters with 100 individuals at some point tmid. The model does not fix
-    // the increase of totalpopulation caused by this injection
+    // the increase of totalpopulation caused by this injection.
     auto sseirv = mio::sseirvv::simulate(t0, tmid, dt, model);
     model.populations[{mio::sseirvv::InfectionState::Susceptible}] = sseirv.get_last_value()[0];
     model.populations[{mio::sseirvv::InfectionState::ExposedV1}] = sseirv.get_last_value()[1];

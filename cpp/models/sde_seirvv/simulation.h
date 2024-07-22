@@ -51,11 +51,11 @@ public:
 
     using mio::Simulation<ScalarType, Model>::Simulation;
     /**
-     * @brief advance simulation to tmax
-     * tmax must be greater than get_result().get_last_time_point()
-     * @param tmax next stopping point of simulation
+     * @brief Advance simulation to tmax.
+     * tmax must be greater than get_result().get_last_time_point().
+     * @param tmax Next stopping point of simulation.
      */
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
+    Eigen::Ref<Eigen::VectorXd> advance(ScalarType tmax)
     {
         return get_ode_integrator().advance(
             [this](auto&& y, auto&& t, auto&& dydt) {
@@ -74,7 +74,7 @@ public:
  * @param[in] model An instance of mio::sseirvv::Model.
  * @return A TimeSeries to represent the final simulation result
  */
-inline TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model)
+inline TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& model)
 {
     model.check_constraints();
     Simulation sim(model, t0, dt);
@@ -107,18 +107,18 @@ public:
      * tmax must be greater than get_result().get_last_time_point().
      * @param[in] tmax Next stopping time of the simulation.
      */
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
+    Eigen::Ref<Eigen::VectorXd> advance(ScalarType tmax)
     {
         assert(get_flows().get_num_time_points() == get_result().get_num_time_points());
         auto result = this->get_ode_integrator().advance(
-            // see the general mio::FlowSimulation for more details on this DerivFunction
+            // See the general mio::FlowSimulation for more details on this DerivFunction.
             [this](auto&& flows, auto&& t, auto&& dflows_dt) {
                 const auto& pop_result = get_result();
                 auto& model            = get_model();
-                // compute current population
+                // Compute current population.
                 model.get_derivatives(flows - get_flows().get_value(pop_result.get_num_time_points() - 1), m_pop);
                 m_pop += pop_result.get_last_value();
-                // compute the current change in flows with respect to the current population
+                // Compute the current change in flows with respect to the current population.
                 dflows_dt.setZero();
                 model.step_size = get_dt(); // set the current step size
                 model.get_flows(m_pop, m_pop, t, dflows_dt);
@@ -138,7 +138,7 @@ public:
  * @return The simulation result as two TimeSeries. The first describes the compartments at each time point,
  *         the second gives the corresponding flows that lead from t0 to each time point.
  */
-inline std::vector<TimeSeries<ScalarType>> simulate_flows(double t0, double tmax, double dt, Model const& model)
+inline std::vector<TimeSeries<ScalarType>> simulate_flows(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& model)
 {
     model.check_constraints();
     FlowSimulation sim(model, t0, dt);
