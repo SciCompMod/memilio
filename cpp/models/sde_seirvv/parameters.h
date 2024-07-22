@@ -30,9 +30,9 @@ namespace mio
 namespace sseirvv
 {
 
-/***************************************
+/******************************************
  * Define Parameters of the SSEIRVV model *
- ***************************************/
+ ******************************************/
 
 /**
  * @brief Probability of getting infected from a contact 

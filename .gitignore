@@ -282,4 +282,3 @@ docs/html
 docs/xml
 
 # End of https://www.gitignore.io/api/c++,node,python
-.vscode/settings.json
