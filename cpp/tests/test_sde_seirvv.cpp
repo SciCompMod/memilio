@@ -27,13 +27,13 @@
 const mio::sseirvv::Model& sseirvv_testing_model()
 {
     static mio::sseirvv::Model model;
-    model.step_size = 1. / 29;
+    model.step_size = 1.0 / 16;
     model.populations.array().setConstant(1);
     { // set parameters s.t. coeffStoI is 1
         model.parameters.set<mio::sseirvv::TimeExposedV1>(1);
         model.parameters.set<mio::sseirvv::TimeExposedV2>(1./4);
         model.parameters.set<mio::sseirvv::TimeInfectedV1>(1);
-        model.parameters.set<mio::sseirvv::TimeInfectedV2>(1./9);
+        model.parameters.set<mio::sseirvv::TimeInfectedV2>(1./4);
         model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1>(1);
         model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2>(1);
         model.parameters.get<mio::sseirvv::ContactPatterns>().get_baseline()(0, 0) = 10;
@@ -48,8 +48,10 @@ TEST(TestSdeSeirvv, get_flows)
         testing::StrictMock<MockDistribution<mio::DistributionAdapter<std::normal_distribution<double>>>>>
         normal_dist_mock;
 
+    // First two mock rng sets for test without clamping
+    // Third mock rng for test with clamping
     EXPECT_CALL(normal_dist_mock.get_mock(), invoke)
-        .Times(testing::Exactly(18))
+        .Times(testing::Exactly(27))
         .WillOnce(testing::Return(1.))
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(0.))
@@ -67,25 +69,38 @@ TEST(TestSdeSeirvv, get_flows)
         .WillOnce(testing::Return(1.))
         .WillOnce(testing::Return(1.))
         .WillOnce(testing::Return(0.))
-        .WillOnce(testing::Return(1.));
+        .WillOnce(testing::Return(1.)) //end second mock rng
+        .WillOnce(testing::Return(10.))
+        .WillOnce(testing::Return(10.))
+        .WillOnce(testing::Return(10.))
+        .WillOnce(testing::Return(10.))
+        .WillOnce(testing::Return(10.))
+        .WillOnce(testing::Return(10.))
+        .WillOnce(testing::Return(10.))
+        .WillOnce(testing::Return(10.))
+        .WillOnce(testing::Return(10.));
 
     // Non-constant y for a more meaningful test
     Eigen::VectorXd y = Eigen::VectorXd(10);
-    y << 3,1,2,4,1,1,1,4,4,4;
+    y << 1,1,1,1,1,1,1,2,2,2;
     Eigen::VectorXd flows   = Eigen::VectorXd::Constant(9, 1);
 
     // results contain two parts : deterministic + stochastic
-
     sseirvv_testing_model().get_flows(y, y, 0, flows);
     auto expected_result = Eigen::VectorXd(9);
-    expected_result << 6 + sqrt(6) * sqrt(29), 15 + 0, 1 + 0, 4 + sqrt(4) * sqrt(29), 2 + sqrt(2) * sqrt(29), 
-        9 + 0, 20 + 0, 16 + sqrt(16) * sqrt(29), 36 + 0;
+    expected_result << 1 + sqrt(1) * sqrt(16), 3 + 0, 1 + 0, 4 + sqrt(4) * sqrt(16), 1 + sqrt(1) * sqrt(16), 
+        4 + 0, 3 + 0, 8 + sqrt(8) * sqrt(16), 8 + 0;
     EXPECT_EQ(flows, expected_result);
 
     sseirvv_testing_model().get_flows(y, y, 0, flows);
     expected_result = Eigen::VectorXd(9);
-    expected_result << 6 + 0, 15 + sqrt(15) * sqrt(29), 1 + sqrt(1) * sqrt(29), 4 + 0, 2 + 0, 9 + sqrt(9) * sqrt(29), 
-        20 + sqrt(20) * sqrt(29), 16 + 0, 36 + sqrt(36) * sqrt(29);
+    expected_result << 1 + 0, 3 + sqrt(3) * sqrt(16), 1 + sqrt(1) * sqrt(16), 4 + 0, 1 + 0, 
+        4 + sqrt(4) * sqrt(16), 3 + sqrt(3) * sqrt(16), 8 + 0, 8 + sqrt(8) * sqrt(16);
+    EXPECT_EQ(flows, expected_result);
+
+    sseirvv_testing_model().get_flows(y, y, 0, flows);
+    expected_result = Eigen::VectorXd(9);
+    expected_result << 8,8,16,16,16,16,16,32,32;
     EXPECT_EQ(flows, expected_result);
 }
 
