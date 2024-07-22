@@ -30,7 +30,7 @@ namespace mio
 namespace sseirvv
 {
 
-/// @brief A specialized Simulation for mio::ssirs::Model.
+/// @brief A specialized Simulation for mio::sseirvv::Model.
 class Simulation : public mio::Simulation<ScalarType, Model>
 {
 protected:
