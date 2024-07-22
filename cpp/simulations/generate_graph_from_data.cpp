@@ -134,14 +134,14 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
     const double riskOfInfectionFromSymptomaticMax    = 0.3;
     const double maxRiskOfInfectionFromSymptomaticMin = 0.3;
     const double maxRiskOfInfectionFromSymptomaticMax = 0.5;
-    const double recoveredPerInfectedNoSymptomsMin[]  = {0.2, 0.2, 0.15, 0.15, 0.15, 0.8};
-    const double recoveredPerInfectedNoSymptomsMax[]  = {0.3, 0.3, 0.25, 0.25, 0.25, 0.8};
-    const double severePerInfectedSymptomsMin[]       = {0.006, 0.006, 0.015, 0.049, 0.15, 0.05};
-    const double severePerInfectedSymptomsMax[]       = {0.009, 0.009, 0.023, 0.074, 0.15, 0.05};
-    const double criticalPerSevereMin[]               = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35};
-    const double criticalPerSevereMax[]               = {0.10, 0.10, 0.10, 0.20, 0.35, 0.45};
-    const double deathsPerCriticalMin[]               = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5};
-    const double deathsPerCriticalMax[]               = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
+    const double recoveredPerInfectedNoSymptomsMin[]  = {0.5, 0.45, 0.4, 0.3, 0.175, 0.1};
+    const double recoveredPerInfectedNoSymptomsMax[]  = {0.5, 0.45, 0.4, 0.3, 0.175, 0.1};
+    const double severePerInfectedSymptomsMin[]       = {0.03, 0.03, 0.04, 0.17, 0.45, 0.55};
+    const double severePerInfectedSymptomsMax[]       = {0.03, 0.03, 0.04, 0.17, 0.45, 0.55};
+    const double criticalPerSevereMin[]               = {0.10, 0.11, 0.12, 0.14, 0.33, 0.62};
+    const double criticalPerSevereMax[]               = {0.10, 0.11, 0.12, 0.14, 0.33, 0.62};
+    const double deathsPerCriticalMin[]               = {0.12, 0.13, 0.15, 0.29, 0.40, 0.48};
+    const double deathsPerCriticalMax[]               = {0.12, 0.13, 0.15, 0.29, 0.40, 0.48};
 
     array_assign_uniform_distribution(params.get<mio::osecir::TransmissionProbabilityOnContact>(),
                                       transmissionProbabilityOnContactMin, transmissionProbabilityOnContactMax);
