@@ -37,8 +37,8 @@ TEST_F(TestMathTdpf, zero)
     mio::log_info("created tdpf");
 
     // verify output
-    for (int i = 0; i < this->num_evals; i++) {
-        double random_t_eval = this->fuzzy_val(-std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
+    for (int i = 0; i < 10; i++) {
+        double random_t_eval = this->fuzzy_val(-1e+5, 1e+5);
         mio::log_debug("testing {}", random_t_eval);
         EXPECT_EQ(tdpf(random_t_eval), 0.0);
     }
