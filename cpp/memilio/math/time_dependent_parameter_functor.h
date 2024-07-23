@@ -40,7 +40,7 @@ public:
     };
 
     using DataType = std::vector<std::vector<ScalarType>>;
-    TimeDependentParameterFunctor(Type type, DataType data)
+    TimeDependentParameterFunctor(Type type, const DataType& data)
         : m_type(type)
         , m_data(data)
     {
@@ -69,9 +69,11 @@ public:
 
     ScalarType operator()(ScalarType time) const
     {
+        ScalarType value = 0.0;
         switch (m_type) {
         case Type::Zero:
-            return 0.0;
+            // value is explicitly zero-initialized
+            break;
         case Type::LinearInterpolation:
             // find next time point in m_data (strictly) after time
             const auto next_tp = std::upper_bound(m_data.begin(), m_data.end(), time, [](auto&& t, auto&& tp) {
@@ -84,10 +86,10 @@ public:
                 return m_data.back()[1];
             }
             const auto tp = next_tp - 1;
-            return linear_interpolation(time, (*tp)[0], (*next_tp)[0], (*tp)[1], (*next_tp)[1]);
+            value         = linear_interpolation(time, (*tp)[0], (*next_tp)[0], (*tp)[1], (*next_tp)[1]);
+            break;
         }
-
-        return 0.0; // should be unreachable, but without this the compiler may complain about a missing return.
+        return value;
     }
 
     /// This method is used by the auto-serialization feature.
