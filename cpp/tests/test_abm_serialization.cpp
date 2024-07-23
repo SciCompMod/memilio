@@ -9,8 +9,6 @@
 #include "models/abm/time.h"
 #include "models/abm/trip_list.h"
 #include "models/abm/world.h"
-#include "json/config.h"
-#include "json/value.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 
