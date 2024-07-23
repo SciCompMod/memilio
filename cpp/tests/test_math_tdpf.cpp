@@ -1,5 +1,4 @@
 #include "memilio/math/time_dependent_parameter_functor.h"
-#include "memilio/utils/logging.h"
 #include "memilio/utils/random_number_generator.h"
 
 #include <gtest/gtest.h>
@@ -30,19 +29,15 @@ private:
 TEST_F(TestMathTdpf, zero)
 {
     // Test that the Zero-TDPF always returns zero, using a random evaluation point.
-    mio::set_log_level(mio::LogLevel::trace);
-    mio::log_info("entered test");
+
     // initialize
     mio::TimeDependentParameterFunctor tdpf;
-    mio::log_info("created tdpf");
 
     // verify output
     for (int i = 0; i < this->num_evals; i++) {
-        double random_t_eval = this->fuzzy_val(-std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
-        mio::log_debug("testing {}", random_t_eval);
+        auto random_t_eval = this->fuzzy_val(-std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
         EXPECT_EQ(tdpf(random_t_eval), 0.0);
     }
-    mio::log_info("finished test");
 }
 
 TEST_F(TestMathTdpf, linearInterpolation)
