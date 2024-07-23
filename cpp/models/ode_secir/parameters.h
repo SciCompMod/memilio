@@ -646,6 +646,7 @@ public:
 
         if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
             log_error("Constraint check: Parameter DynamicNPIsImplementationDelay smaller {:d}", 0);
+            return true;
         }
 
         const double tol_times = 1e-1; // accepted tolerance for compartment stays
