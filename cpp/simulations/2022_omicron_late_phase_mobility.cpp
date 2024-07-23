@@ -386,6 +386,157 @@ void init_pop_cologne_szenario(mio::Graph<mio::osecirvvs::Model<double>, mio::Mi
 }
 
 /**
+ * @brief Sets the graph nodes for counties or districts.
+ * Reads the node ids which could refer to districts or counties and the epidemiological
+ * data from json files and creates one node for each id. Every node contains a model.
+ * @param[in] params Model Parameters that are used for every node.
+ * @param[in] start_date Start date for which the data should be read.
+ * @param[in] end_data End date for which the data should be read.
+ * @param[in] data_dir Directory that contains the data files.
+ * @param[in] population_data_path Path to json file containing the population data.
+ * @param[in] stay_times_data_path Path to txt file containing the stay times for the considered local entities.
+ * @param[in] is_node_for_county Specifies whether the node ids should be county ids (true) or district ids (false).
+ * @param[in, out] params_graph Graph whose nodes are set by the function.
+ * @param[in] read_func Function that reads input data for german counties and sets Model compartments.
+ * @param[in] node_func Function that returns the county ids.
+ * @param[in] scaling_factor_inf Factor of confirmed cases to account for undetected cases in each county.
+ * @param[in] scaling_factor_icu Factor of ICU cases to account for underreporting.
+ * @param[in] tnt_capacity_factor Factor for test and trace capacity.
+ * @param[in] num_days Number of days to be simulated; required to load data for vaccinations during the simulation.
+ * @param[in] export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
+ */
+template <class ReadFunction, class NodeIdFunction, typename FP = double>
+mio::IOResult<void> set_nodes(const mio::osecirvvs::Parameters<FP>& params, mio::Date start_date, mio::Date end_date,
+                              const fs::path& data_dir, const std::string& population_data_path,
+                              const std::string& stay_times_data_path, bool is_node_for_county,
+                              mio::ExtendedGraph<mio::osecirvvs::Model<FP>>& params_graph, ReadFunction&& read_func,
+                              NodeIdFunction&& node_func, const std::vector<FP>& scaling_factor_inf,
+                              FP scaling_factor_icu, FP tnt_capacity_factor, int num_days = 0,
+                              bool export_time_series = false, bool rki_age_groups = true)
+{
+
+    BOOST_OUTCOME_TRY(auto&& duration_stay, mio::read_duration_stay(stay_times_data_path));
+
+    BOOST_OUTCOME_TRY(auto&& node_ids, node_func(population_data_path, is_node_for_county, rki_age_groups));
+    std::vector<mio::osecirvvs::Model<FP>> nodes(node_ids.size(),
+                                                 mio::osecirvvs::Model<FP>(int(size_t(params.get_num_groups()))));
+    for (auto& node : nodes) {
+        node.parameters = params;
+    }
+
+    BOOST_OUTCOME_TRY(read_func(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir.string(),
+                                num_days, export_time_series));
+
+    for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
+
+        auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
+
+        //local parameters
+        auto& tnt_value = nodes[node_idx].parameters.template get<mio::osecirvvs::TestAndTraceCapacity<FP>>();
+        tnt_value       = mio::UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
+        tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
+
+        //holiday periods
+        auto id              = int(mio::regions::CountyId(node_ids[node_idx]));
+        auto holiday_periods = mio::regions::get_holidays(mio::regions::get_state_id(id), start_date, end_date);
+        auto& contacts       = nodes[node_idx].parameters.template get<mio::osecirvvs::ContactPatterns<FP>>();
+        contacts.get_school_holidays() =
+            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
+        std::transform(
+            holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
+                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
+                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
+            });
+
+        //uncertainty in populations
+        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+            for (auto j = mio::Index<typename mio::osecirvvs::Model<FP>::Compartments>(0);
+                 j < mio::osecirvvs::Model<FP>::Compartments::Count; ++j) {
+                auto& compartment_value = nodes[node_idx].populations[{i, j}];
+                compartment_value =
+                    mio::UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
+                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
+                                                                                     1.1 * double(compartment_value)));
+            }
+        }
+
+        // Add mobility node
+        auto mobility_model = nodes[node_idx];
+        mobility_model.populations.set_total(0);
+
+        params_graph.add_node(1, nodes[node_idx], mobility_model, duration_stay((Eigen::Index)node_idx));
+    }
+    return mio::success();
+}
+
+/**
+ * @brief Sets the graph edges.
+ * Reads the commuting matrices, travel times and paths from data and creates one edge for each pair of nodes.
+ * @param[in] travel_times_path Path to txt file containing the travel times between counties.
+ * @param[in] mobility_data_path Path to txt file containing the commuting matrices.
+ * @param[in] travelpath_path Path to txt file containing the paths between counties.
+ * @param[in, out] params_graph Graph whose nodes are set by the function.
+ * @param[in] migrating_compartments Compartments that commute.
+ * @param[in] contact_locations_size Number of contact locations.
+ * @param[in] commuting_weights Vector with a commuting weight for every AgeGroup.
+ */
+mio::IOResult<void>
+set_edges(const std::string& travel_times_dir, const std::string mobility_data_dir, const std::string& travel_path_dir,
+          mio::ExtendedGraph<mio::osecirvvs::Model<double>>& params_graph,
+          std::initializer_list<mio::osecirvvs::InfectionState>& migrating_compartments, size_t contact_locations_size,
+          std::vector<ScalarType> commuting_weights = std::vector<ScalarType>{}, ScalarType theshold_edges = 4e-5)
+{
+    BOOST_OUTCOME_TRY(auto&& mobility_data_commuter, mio::read_mobility_plain(mobility_data_dir));
+    BOOST_OUTCOME_TRY(auto&& travel_times, mio::read_mobility_plain(travel_times_dir));
+    BOOST_OUTCOME_TRY(auto&& path_mobility, mio::read_path_mobility(travel_path_dir));
+
+    for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
+        for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {
+            auto& populations = params_graph.nodes()[county_idx_i].property.base_sim.populations;
+
+            // mobility coefficients have the same number of components as the contact matrices.
+            // so that the same NPIs/dampings can be used for both (e.g. more home office => fewer commuters)
+            auto mobility_coeffs = mio::MigrationCoefficientGroup(contact_locations_size, populations.numel());
+            auto num_age_groups =
+                (size_t)params_graph.nodes()[county_idx_i].property.base_sim.parameters.get_num_groups();
+            commuting_weights =
+                (commuting_weights.size() == 0 ? std::vector<ScalarType>(num_age_groups, 1.0) : commuting_weights);
+
+            //commuters
+            auto working_population = 0.0;
+            auto min_commuter_age   = mio::AgeGroup(2);
+            auto max_commuter_age   = mio::AgeGroup(4); //this group is partially retired, only partially commutes
+            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
+                working_population += populations.get_group_total(age) * commuting_weights[size_t(age)];
+            }
+            auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) / working_population;
+            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
+                for (auto compartment : migrating_compartments) {
+                    auto coeff_index = populations.get_flat_index({age, compartment});
+                    mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
+                        commuter_coeff_ij * commuting_weights[size_t(age)];
+                }
+            }
+
+            auto path = path_mobility[county_idx_i][county_idx_j];
+            if (static_cast<size_t>(path[0]) != county_idx_i ||
+                static_cast<size_t>(path[path.size() - 1]) != county_idx_j)
+                std::cout << "Wrong Path for edge " << county_idx_i << " " << county_idx_j << "\n";
+
+            //only add edges with mobility above thresholds for performance
+            if (commuter_coeff_ij > theshold_edges) {
+                params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs),
+                                      travel_times(county_idx_i, county_idx_j),
+                                      path_mobility[county_idx_i][county_idx_j]);
+                //   g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::oseir::InfectionState::Count, 0.01), traveltime, path2);
+            }
+        }
+    }
+
+    return mio::success();
+}
+
+/**
  * Create the input graph for the parameter study.
  * Reads files from the data directory.
  * @param start_date start date of the simulation.
@@ -393,14 +544,14 @@ void init_pop_cologne_szenario(mio::Graph<mio::osecirvvs::Model<double>, mio::Mi
  * @param data_dir data directory.
  * @returns created graph or any io errors that happen during reading of the files.
  */
-mio::IOResult<mio::ExtendedGraph<mio::osecirvvs::Model<double>>>
-get_graph(const int num_days, const std::string& data_dir, bool masks, bool ffp2, bool szenario_cologne, bool edges)
+mio::IOResult<mio::ExtendedGraph<mio::osecirvvs::Model<double>>> get_graph(const mio::Date start_date,
+                                                                           const mio::Date end_date, const int num_days,
+                                                                           const std::string& data_dir, bool masks,
+                                                                           bool ffp2, bool szenario_cologne, bool edges)
 {
     mio::unused(num_days, masks, ffp2, szenario_cologne, edges);
     std::string travel_times_dir = mio::path_join(data_dir, "mobility", "travel_times_pathes.txt");
     std::string durations_dir    = mio::path_join(data_dir, "mobility", "activity_duration_work.txt");
-    auto start_date              = mio::Date(2022, 8, 1);
-    auto end_date                = mio::Date(2022, 11, 1);
 
     // global parameters
     const int num_age_groups = 6;
@@ -420,9 +571,7 @@ get_graph(const int num_days, const std::string& data_dir, bool masks, bool ffp2
     const auto& read_function_nodes = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<double>>;
     const auto& node_id_function    = mio::get_node_ids;
 
-    auto set_nodes_status = mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity<double>,
-                                           mio::osecirvvs::ContactPatterns<double>, mio::osecirvvs::Model<double>,
-                                           mio::MigrationParameters<double>, mio::osecirvvs::Parameters<double>>(
+    auto set_nodes_status = set_nodes<decltype(read_function_nodes), decltype(node_id_function)>(
         params, start_date, end_date, data_dir,
         mio::path_join(data_dir, "pydata", "Germany", "county_current_population.json"), durations_dir, true,
         params_graph, read_function_nodes, node_id_function, scaling_factor_infected, scaling_factor_icu,
@@ -433,231 +582,119 @@ get_graph(const int num_days, const std::string& data_dir, bool masks, bool ffp2
     }
 
     // set edges
-    auto migrating_compartments = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                   mio::osecirvvs::InfectionState::ExposedNaive,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                   mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                   mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                   mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
-    auto set_edges_status =
-        mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>, mio::MigrationParameters<double>,
-                       mio::MigrationCoefficientGroup, mio::osecirvvs::InfectionState>(
+    if (edges) {
+        auto migrating_compartments = {mio::osecirvvs::InfectionState::SusceptibleNaive,
+                                       mio::osecirvvs::InfectionState::ExposedNaive,
+                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                       mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                       mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                       mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                       mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                       mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
+        auto set_edges_status       = set_edges(
             travel_times_dir, mio::path_join(data_dir, "mobility", "commuter_migration_with_locals.txt"),
             mio::path_join(data_dir, "mobility", "wegketten_ohne_komma.txt"), params_graph, migrating_compartments,
             contact_locations.size(), std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.});
 
-    if (!set_edges_status) {
-        return set_edges_status.error();
+        if (!set_edges_status) {
+            return set_edges_status.error();
+        }
     }
 
     return params_graph;
 }
-mio::IOResult<void> run(const std::string data_dir)
+mio::IOResult<void> run(const std::string data_dir, std::string res_dir, const int num_runs = 2)
 {
     // mio::set_log_level(mio::LogLevel::critical);
+    auto start_date     = mio::Date(2022, 8, 1);
+    auto end_date       = mio::Date(2022, 11, 1);
     const auto num_days = 90;
     // const int num_runs  = 12;
-    const bool masks = true;
-    const bool ffp2  = true;
-    const bool edges = true;
+    constexpr bool masks  = true;
+    constexpr bool ffp2   = true;
+    const bool edges      = true;
+    bool szenario_cologne = false;
 
     // wenn masks false und ffp2 true, dann error ausgeben
-    if (!masks && ffp2) {
+    if constexpr (!masks && ffp2) {
         mio::log_error("ffp2 only possible with masks");
     }
 
-    bool szenario_cologne = false;
-
     // auto params_graph = get_graph(num_days, masks);
-    BOOST_OUTCOME_TRY(auto&& created, get_graph(num_days, data_dir, masks, ffp2, szenario_cologne, edges));
+    BOOST_OUTCOME_TRY(auto&& created,
+                      get_graph(start_date, end_date, num_days, data_dir, masks, ffp2, szenario_cologne, edges));
     auto params_graph = created;
 
-    // std::string res_dir = "/localdata1/code/memilio/results_paper/t90_f145_mask_" + std::to_string(masks);
+    res_dir += "masks_" + std::to_string(masks) + std::string(ffp2 ? "_ffp2" : "") +
+               std::string(szenario_cologne ? "_cologne" : "") + std::string(!edges ? "_no_edges" : "");
 
-    // res_dir += std::string(ffp2 ? "_ffp2" : "") + std::string(szenario_cologne ? "_cologne" : "") +
-    //            std::string(!edges ? "_no_edges" : "");
+    if (mio::mpi::is_root())
+        std::cout << "res_dir = " << res_dir << "\n";
 
-    // if (mio::mpi::is_root())
-    //     std::cout << "res_dir = " << res_dir << "\n";
+    // check if res_dir dir exist, otherwise create
+    if (!fs::exists(res_dir)) {
+        fs::create_directory(res_dir);
+    }
 
-    // // check if boths dir exist, otherwise create them
-    // if (!fs::exists(res_dir)) {
-    //     fs::create_directory(res_dir);
-    // }
-    // auto write_graph_status = mio::write_graph(params_graph, "/localdata1/code/memilio/save_graph");
+    std::vector<int> county_ids(params_graph.nodes().size());
+    std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
+        return n.id;
+    });
 
-    // std::vector<int> county_ids(params_graph.nodes().size());
-    // std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
-    //     return n.id;
-    // });
+    mio::unused(county_ids);
+    // parameter study
+    auto parameter_study = mio::ParameterStudy<
+        mio::osecirvvs::Simulation<double, mio::FlowSimulation<double, mio::osecirvvs::Model<double>>>,
+        mio::ExtendedGraph<mio::osecirvvs::Model<double>>,
+        mio::ExtendedGraph<mio::Simulation<ScalarType, mio::osecirvvs::Model<double>>>>(params_graph, 0.0, num_days,
+                                                                                        0.01, num_runs);
+    if (mio::mpi::is_root()) {
+        printf("Seeds: ");
+        for (auto s : parameter_study.get_rng().get_seeds()) {
+            printf("%u, ", s);
+        }
+        printf("\n");
+    }
+    auto save_single_run_result = mio::IOResult<void>(mio::success());
+    auto ensemble               = parameter_study.run(
+        [&](auto&& graph) {
+            return draw_sample(graph, 1.0);
+        },
+        [&](auto results_graph, auto&& run_idx) {
+            std::vector<mio::TimeSeries<double>> interpolated_result;
+            interpolated_result.reserve(results_graph.nodes().size());
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
+                           std::back_inserter(interpolated_result), [](auto& n) {
+                               return interpolate_simulation_result(n.property.base_sim.get_result());
+                           });
 
-    // // parameter study
-    // auto parameter_study = mio::ParameterStudy<double, mio::FlowSimulation<mio::osecirvvs::Model<double>>>(
-    //     params_graph, 0.0, num_days, 0.01, num_runs);
-    // if (mio::mpi::is_root()) {
-    //     printf("Seeds: ");
-    //     for (auto s : parameter_study.get_rng().get_seeds()) {
-    //         printf("%u, ", s);
-    //     }
-    //     printf("\n");
-    // }
-    // auto save_single_run_result = mio::IOResult<void>(mio::success());
-    // auto ensemble               = parameter_study.run(
-    //     [&](auto&& graph) {
-    //         return draw_sample(graph, false);
-    //     },
-    //     [&](auto results_graph, auto&& run_idx) {
-    //         auto interpolated_result = mio::interpolate_simulation_result(results_graph);
+            auto params = std::vector<mio::osecirvvs::Model<double>>();
+            params.reserve(results_graph.nodes().size());
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
+                           [](auto&& node) {
+                               return node.property.base_sim.get_model();
+                           });
 
-    //         auto params = std::vector<mio::osecirvvs::Model>();
-    //         params.reserve(results_graph.nodes().size());
-    //         std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-    //                        [](auto&& node) {
-    //                            return node.property.get_simulation().get_model();
-    //                        });
+            std::cout << "Run " << run_idx << " complete." << std::endl;
 
-    //         auto tp_mob_node = results_graph.nodes()[0].node_pt.get_simulation().get_flows().get_num_time_points();
+            return std::make_pair(interpolated_result, params);
+        });
 
-    //         // transmission mobility models
-    //         const std::string results_path_mb = res_dir + "/flows_mb";
-    //         if (!fs::exists(results_path_mb)) {
-    //             fs::create_directory(results_path_mb);
-    //         }
-    //         const std::string results_filename =
-    //             results_path_mb + "/transmission_mobility_run_" + std::to_string(run_idx) + ".txt";
-    //         std::ofstream outfile(results_filename);
-
-    //         outfile << "Node_from Node_to Infections_mobility_node \n";
-    //         for (size_t i = 0; i < results_graph.edges().size(); ++i) {
-    //             auto& edge = results_graph.edges()[i];
-    //             outfile << edge.start_node_idx << " " << edge.end_node_idx << " ";
-    //             const auto size_vec = edge.infecions_mobility.size();
-    //             for (size_t j = 0; j < size_vec; ++j) {
-    //                 outfile << edge.infecions_mobility[j] << " ";
-    //             }
-    //             outfile << "\n";
-    //         }
-    //         outfile.close();
-
-    //         // transmission commuter in local models
-    //         const std::string results_filename_local_transmission =
-    //             results_path_mb + "/transmission_local_run_" + std::to_string(run_idx) + ".txt";
-    //         std::ofstream outfile_transmission_local(results_filename_local_transmission);
-
-    //         outfile_transmission_local << "Node_from Node_to Infections_mobility_node \n";
-    //         for (size_t i = 0; i < results_graph.edges().size(); ++i) {
-    //             auto& edge = results_graph.edges()[i];
-    //             outfile_transmission_local << edge.start_node_idx << " " << edge.end_node_idx << " ";
-    //             const auto size_vec = edge.infecions_local_model.size();
-    //             for (size_t j = 0; j < size_vec; ++j) {
-    //                 outfile_transmission_local << edge.infecions_local_model[j] << " ";
-    //             }
-    //             outfile_transmission_local << "\n";
-    //         }
-    //         outfile_transmission_local.close();
-
-    //         // symptomatic infections commuter in mobility models
-    //         const std::string results_filename_mobility_symp =
-    //             results_path_mb + "/symptomps_mobility_run_" + std::to_string(run_idx) + ".txt";
-    //         std::ofstream outfile_symp_mobility(results_filename_mobility_symp);
-
-    //         outfile_symp_mobility << "Node_from Node_to Infections_mobility_node \n";
-    //         for (size_t i = 0; i < results_graph.edges().size(); ++i) {
-    //             auto& edge = results_graph.edges()[i];
-    //             outfile_symp_mobility << edge.start_node_idx << " " << edge.end_node_idx << " ";
-    //             const auto size_vec = edge.infecions_symptomatic_mobility.size();
-    //             for (size_t j = 0; j < size_vec; ++j) {
-    //                 outfile_symp_mobility << edge.infecions_symptomatic_mobility[j] << " ";
-    //             }
-    //             outfile_symp_mobility << "\n";
-    //         }
-    //         outfile_symp_mobility.close();
-
-    //         // symptomatic infections commuter in local models
-    //         const std::string results_filename_local_symp =
-    //             results_path_mb + "/symptomps_local_run_" + std::to_string(run_idx) + ".txt";
-    //         std::ofstream outfile_symp_local(results_filename_local_symp);
-
-    //         outfile_symp_local << "Node_from Node_to Infections_mobility_node \n";
-    //         for (size_t i = 0; i < results_graph.edges().size(); ++i) {
-    //             auto& edge = results_graph.edges()[i];
-    //             outfile_symp_local << edge.start_node_idx << " " << edge.end_node_idx << " ";
-    //             const auto size_vec = edge.infecions_symptomatic_local_model.size();
-    //             for (size_t j = 0; j < size_vec; ++j) {
-    //                 outfile_symp_local << edge.infecions_symptomatic_local_model[j] << " ";
-    //             }
-    //             outfile_symp_local << "\n";
-    //         }
-    //         outfile_symp_local.close();
-
-    //         // symptomatic infections total in local models
-    //         const std::string results_filename_total_symp =
-    //             results_path_mb + "/total_symptomps_local_run_" + std::to_string(run_idx) + ".txt";
-    //         std::ofstream outfile_symp_local_total(results_filename_total_symp);
-    //         std::vector<int> indx_symp = {20,  36,  56,  73,  89,  109, 126, 142, 162,
-    //                                       179, 195, 215, 232, 248, 268, 285, 301};
-    //         outfile_symp_local_total << "Node Infections_mobility_node \n";
-    //         for (size_t i = 0; i < results_graph.nodes().size(); ++i) {
-    //             auto& node = results_graph.nodes()[i];
-    //             auto flows = mio::interpolate_simulation_result(node.property.get_simulation().get_flows());
-    //             outfile_symp_local_total << i << " ";
-    //             for (auto idx = 0; idx < flows.get_num_time_points(); ++idx) {
-    //                 auto flows_step = flows.get_value(idx);
-    //                 auto sum_infections =
-    //                     std::accumulate(indx_symp.begin(), indx_symp.end(), 0.0, [&flows_step](double sum, int i) {
-    //                         return sum + flows_step(i);
-    //                     });
-    //                 outfile_symp_local_total << sum_infections << " ";
-    //             }
-    //             outfile_symp_local_total << "\n";
-    //         }
-    //         outfile_symp_local_total.close();
-
-    //         // transmission infections total in local models
-    //         const std::string results_filename_total_transmission =
-    //             results_path_mb + "/total_transmission_local_run_" + std::to_string(run_idx) + ".txt";
-    //         std::ofstream outfile_tra_local_total(results_filename_total_transmission);
-    //         std::vector<int> indx_infections = {0,   33,  17,  53,  86,  70,  106, 139, 123,
-    //                                             159, 192, 176, 212, 245, 229, 265, 298, 282};
-    //         outfile_tra_local_total << "Node Infections_mobility_node \n";
-    //         for (size_t i = 0; i < results_graph.nodes().size(); ++i) {
-    //             auto& node = results_graph.nodes()[i];
-    //             auto flows = mio::interpolate_simulation_result(node.property.get_simulation().get_flows());
-    //             outfile_tra_local_total << i << " ";
-    //             for (auto idx = 0; idx < flows.get_num_time_points(); ++idx) {
-    //                 auto flows_step     = flows.get_value(idx);
-    //                 auto sum_infections = std::accumulate(indx_infections.begin(), indx_infections.end(), 0.0,
-    //                                                       [&flows_step](double sum, int i) {
-    //                                                           return sum + flows_step(i);
-    //                                                       });
-    //                 outfile_tra_local_total << sum_infections << " ";
-    //             }
-    //             outfile_tra_local_total << "\n";
-    //         }
-    //         outfile_tra_local_total.close();
-
-    //         std::cout << "Run " << run_idx << " complete." << std::endl;
-
-    //         return std::make_pair(interpolated_result, params);
-    //     });
-
-    // if (ensemble.size() > 0) {
-    //     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
-    //     ensemble_results.reserve(ensemble.size());
-    //     auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model<double>>>{};
-    //     ensemble_params.reserve(ensemble.size());
-    //     for (auto&& run : ensemble) {
-    //         ensemble_results.emplace_back(std::move(run.first));
-    //         ensemble_params.emplace_back(std::move(run.second));
-    //     }
-    //     BOOST_OUTCOME_TRY(mio::save_results(ensemble_results, ensemble_params, county_ids, res_dir, false));
-    // }
+    if (ensemble.size() > 0) {
+        auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
+        ensemble_results.reserve(ensemble.size());
+        auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model<double>>>{};
+        ensemble_params.reserve(ensemble.size());
+        for (auto&& run : ensemble) {
+            ensemble_results.emplace_back(std::move(run.first));
+            ensemble_params.emplace_back(std::move(run.second));
+        }
+        BOOST_OUTCOME_TRY(mio::save_results(ensemble_results, ensemble_params, county_ids, res_dir, false));
+    }
 
     return mio::success();
 }
@@ -667,9 +704,11 @@ int main()
     mio::set_log_level(mio::LogLevel::warn);
     mio::mpi::init();
 
-    const std::string data_dir = "/localdata1/code/memilio/data";
+    const std::string memilio_dir = "/localdata1/pure/memilio";
+    const std::string data_dir    = mio::path_join(memilio_dir, "data"); //"/localdata1/code/memilio/data";
+    std::string results_dir       = mio::path_join(memilio_dir, "results");
 
-    auto result = run(data_dir);
+    auto result = run(data_dir, results_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         mio::mpi::finalize();

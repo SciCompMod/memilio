@@ -35,6 +35,35 @@
 #include <limits>
 #include <numeric>
 
+#include <type_traits>
+
+// Check if a type has a member called 'stay_duration'
+template <typename T, typename = void>
+struct has_stay_duration : std::false_type {
+};
+
+template <typename T>
+struct has_stay_duration<T, std::void_t<decltype(std::declval<T>().stay_duration)>> : std::true_type {
+};
+
+// Check if a type has a member called 'travel_time'
+template <typename T, typename = void>
+struct has_travel_time : std::false_type {
+};
+
+template <typename T>
+struct has_travel_time<T, std::void_t<decltype(std::declval<T>().travel_time)>> : std::true_type {
+};
+
+// Check if a type has a member called 'path'
+template <typename T, typename = void>
+struct has_path : std::false_type {
+};
+
+template <typename T>
+struct has_path<T, std::void_t<decltype(std::declval<T>().path)>> : std::true_type {
+};
+
 namespace mio
 {
 
@@ -42,25 +71,15 @@ namespace mio
  * Class that performs multiple simulation runs with randomly sampled parameters.
  * Can simulate migration graphs with one simulation in each node or single simulations.
  * @tparam S type of simulation that runs in one node of the graph.
+ * @tparam ParametersGraph stores the parameters of the simulation. This is the input of ParameterStudies.
+ * @tparam SimulationGraph stores simulations and their results of each run. This is the output of ParameterStudies for each run.
  */
-template <class S>
+template <class S, class ParametersGraph = Graph<typename S::Model, MigrationParameters<double>>,
+          class SimulationGraph = Graph<SimulationNode<S>, MigrationEdge<double>>>
 class ParameterStudy
 {
 public:
-    /**
-    * The type of simulation of a single node of the graph.
-    */
     using Simulation = S;
-    /**
-    * The Graph type that stores the parametes of the simulation.
-    * This is the input of ParameterStudies.
-    */
-    using ParametersGraph = mio::Graph<typename Simulation::Model, mio::MigrationParameters<double>>;
-    /**
-    * The Graph type that stores simulations and their results of each run.
-    * This is the output of ParameterStudies for each run.
-    */
-    using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge<double>>;
 
     /**
      * create study for graph of compartment models.
@@ -336,21 +355,49 @@ public:
     }
 
 private:
-    //sample parameters and create simulation
     template <class SampleGraphFunction>
-    mio::GraphSimulation<SimulationGraph> create_sampled_simulation(SampleGraphFunction sample_graph)
+    auto create_sampled_simulation(SampleGraphFunction sample_graph)
     {
         SimulationGraph sim_graph;
 
         auto sampled_graph = sample_graph(m_graph);
         for (auto&& node : sampled_graph.nodes()) {
-            sim_graph.add_node(node.id, node.property, m_t0, m_dt_integration);
+            using PropertyType = typename std::decay<decltype(node.property)>::type;
+            add_node_with_properties(sim_graph, node,
+                                     std::integral_constant<bool, has_stay_duration<PropertyType>::value>{});
         }
         for (auto&& edge : sampled_graph.edges()) {
-            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
+            using PropertyType = typename std::decay<decltype(edge.property)>::type;
+            add_edge_with_properties(sim_graph, edge, std::integral_constant < bool,
+                                     has_travel_time<PropertyType>::value&& has_path<PropertyType>::value > {});
         }
 
         return make_migration_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
+    }
+
+    template <typename GraphType, typename NodeType>
+    void add_node_with_properties(GraphType& graph, const NodeType& node, std::false_type)
+    {
+        graph.add_node(node.id, node.property, m_t0, m_dt_integration);
+    }
+
+    template <typename GraphType, typename NodeType>
+    void add_node_with_properties(GraphType& graph, const NodeType& node, std::true_type)
+    {
+        graph.add_node(node.id, node.property.base_sim, node.property.mobility_sim, node.property.stay_duration);
+    }
+
+    template <typename GraphType, typename EdgeType>
+    void add_edge_with_properties(GraphType& graph, const EdgeType& edge, std::false_type)
+    {
+        graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
+    }
+
+    template <typename GraphType, typename EdgeType>
+    void add_edge_with_properties(GraphType& graph, const EdgeType& edge, std::true_type)
+    {
+        graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property.get_parameters(),
+                       edge.property.travel_time, edge.property.path);
     }
 
     std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
