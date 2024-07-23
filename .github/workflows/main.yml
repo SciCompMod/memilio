@@ -28,7 +28,7 @@ jobs:
       - uses: pre-commit/action@v3.0.1
 
   build-cpp-gcc_clang:
-    if: false
+    if: github.event.pull_request.draft == false
     strategy:
       matrix:
         compiler: ["gcc", "clang"]
@@ -51,7 +51,7 @@ jobs:
           sanitizers: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
 
   build-cpp-gcc-no-optional-deps:
-    if: false
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -63,7 +63,7 @@ jobs:
           optional-dependencies: OFF
 
   build-cpp-gcc-openmp:
-    if: false
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
