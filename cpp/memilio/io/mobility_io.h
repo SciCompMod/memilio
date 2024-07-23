@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef READ_TWITTER_H
-#define READ_TWITTER_H
+#ifndef MIO_MOBILITY_IO_H
+#define MIO_MOBILITY_IO_H
 
 #include "memilio/io/json_serializer.h"
 #include "memilio/mobility/graph.h"
@@ -56,6 +56,22 @@ IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename);
  * @param filename name of file to be read
  */
 IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename);
+
+/**
+ * @brief Reads txt file containing the duration of stay in each county.
+          Writes it into a Eigen vector of size N, where N is the number of local entites.
+ * @param filename name of file to be read
+ * @return IOResult<Eigen::MatrixXd> containing the duration of stay in each local entity
+ */
+IOResult<Eigen::MatrixXd> read_duration_stay(const std::string& filename);
+
+/**
+ * @brief For each edge we have the path from the start node to the end node. This functions reads the file and returns the path for each edge.
+ * 
+ * @param filename Filename of the file containing the paths.
+ * @return IOResult<std::vector<std::vector<std::vector<int>>>> contains the paths for each edge. 
+ */
+IOResult<std::vector<std::vector<std::vector<int>>>> read_path_mobility(const std::string& filename);
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -188,4 +204,4 @@ IOResult<Graph<Model, MigrationParameters<FP>>> read_graph(const std::string& di
 
 } // namespace mio
 
-#endif // READ_TWITTER_H
+#endif // MIO_MOBILITY_IO_H

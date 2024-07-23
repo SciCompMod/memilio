@@ -295,7 +295,7 @@ public:
     template <class Sim>
     void apply_migration(FP t, FP dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
 
-private:
+protected:
     MigrationParameters<FP> m_parameters;
     TimeSeries<double> m_migrated;
     TimeSeries<double> m_return_times;

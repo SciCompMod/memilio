@@ -203,6 +203,16 @@ public:
         return index_of_type_v<Flow<Source, Target>, Flows>;
     }
 
+    Eigen::VectorXd get_flow_values() const
+    {
+        return m_flow_values;
+    }
+
+    void set_flow_values(const Eigen::VectorXd& flows)
+    {
+        m_flow_values = flows;
+    }
+
 private:
     mutable Vector<FP> m_flow_values; ///< Cache to avoid allocation in get_derivatives (using get_flows).
 

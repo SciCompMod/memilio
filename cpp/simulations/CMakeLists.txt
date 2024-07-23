@@ -7,6 +7,10 @@ if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
     target_link_libraries(2021_vaccination_delta PRIVATE memilio ode_secirvvs Boost::filesystem ${HDF5_C_LIBRARIES})
     target_compile_options(2021_vaccination_delta PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+    add_executable(2022_omicron_late_phase_mobility 2022_omicron_late_phase_mobility.cpp)
+    target_link_libraries(2022_omicron_late_phase_mobility PRIVATE memilio ode_secirvvs Boost::filesystem ${HDF5_C_LIBRARIES})
+    target_compile_options(2022_omicron_late_phase_mobility PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
     add_executable(abm_simulation abm.cpp)
     target_link_libraries(abm_simulation PRIVATE memilio abm Boost::filesystem ${HDF5_C_LIBRARIES})
     target_compile_options(abm_simulation PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
