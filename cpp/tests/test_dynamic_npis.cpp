@@ -330,7 +330,6 @@ template <template <typename> class Model>
 class MockSimulation
 {
 public:
-    // using Model = mio::osecir::Model<double>;
     MockSimulation(Model<double> m, double t0, double /*dt*/)
         : m_model(m)
         , m_result(t0, m.get_initial_values())
@@ -446,6 +445,7 @@ TEST(DynamicNPIs, secir_delayed_implementation)
               0);
 
     // start with t0 = 0.0
+    model.parameters.get<mio::osecir::DynamicNPIsImplementationDelay<double>>() = 3.0;
     mio::osecir::Simulation<double, mio_test::MockSimulation<mio::osecir::Model>> sim(model, 0.0);
     sim.advance(3.0);
     mio::ContactMatrixGroup const& contact_matrix =

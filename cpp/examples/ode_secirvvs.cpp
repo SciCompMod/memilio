@@ -125,10 +125,10 @@ int main()
     // integrator->set_dt_max(1.0);
     // integrator->set_rel_tolerance(1e-4);
     // integrator->set_abs_tolerance(1e-1);
-    // mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model, integrator);
+    // mio::TimeSeries<double> result = mio::osecirvvs::simulate(t0, tmax, dt, model, integrator);
 
     // use default Cash-Karp adaptive integrator
-    mio::TimeSeries<double> result = mio::simulate<double, mio::osecirvvs::Model<double>>(t0, tmax, dt, model);
+    mio::TimeSeries<double> result = mio::osecirvvs::simulate<double>(t0, tmax, dt, model);
 
     bool print_to_terminal = true;
 
