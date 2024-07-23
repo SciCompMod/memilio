@@ -36,6 +36,7 @@ set(TESTSOURCES
     test_abm_migration_rules.cpp
     test_abm_person.cpp
     test_abm_simulation.cpp
+    test_abm_serialization.cpp
     test_abm_testing_strategy.cpp
     test_abm_world.cpp
     test_math_floating_point.cpp
