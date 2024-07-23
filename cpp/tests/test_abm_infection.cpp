@@ -21,7 +21,6 @@
 #include "abm/location_type.h"
 #include "abm/person.h"
 #include "abm_helpers.h"
-#include "memilio/math/interpolation.h"
 #include "memilio/utils/random_number_generator.h"
 #include "abm_helpers.h"
 
@@ -190,14 +189,12 @@ TEST(TestInfection, getPersonalProtectiveFactor)
     EXPECT_NEAR(defaut_severity_protection, 0, eps);
 
     // Test linear interpolation with one node
-    // mio::set_log_level(mio::LogLevel::critical); //this throws an error either way
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, person.get_age(),
                                                        mio::abm::VirusVariant::Wildtype}] =
         mio::TimeDependentParameterFunctor{mio::TimeDependentParameterFunctor::Type::LinearInterpolation, {{2, 0.91}}};
     auto t = mio::abm::TimePoint(6 * 24 * 60 * 60);
     // TODO: Discuss: Assumption of interpolation in TDPF is that the function is constant with value at front/back entry outside of [front, back] time range. This works with one node as well and prints no errors
     EXPECT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.91, eps);
-    // mio::set_log_level(mio::LogLevel::warn); //this throws an error either way
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, person.get_age(),
                                                        mio::abm::VirusVariant::Wildtype}] =
         mio::TimeDependentParameterFunctor{mio::TimeDependentParameterFunctor::Type::LinearInterpolation,

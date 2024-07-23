@@ -728,6 +728,7 @@ TEST(TestOdeSecir, testModelConstraints)
             EXPECT_LE(secihurd.get_value(i)[5], 9000) << " at row " << i;
         }
     }
+    mio::set_log_level(mio::LogLevel::warn);
 }
 
 TEST(Secir, testAndTraceCapacity)

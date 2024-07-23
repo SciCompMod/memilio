@@ -23,8 +23,6 @@
 #include "abm/person.h"
 #include "abm/world.h"
 #include "abm_helpers.h"
-#include "matchers.h"
-#include "memilio/io/json_serializer.h"
 #include "memilio/utils/random_number_generator.h"
 
 TEST(TestLocation, initCell)
