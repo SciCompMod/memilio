@@ -198,7 +198,9 @@ void World::build_compute_local_population_cache() const
         } // implicit taskloop barrier
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_persons; i++) {
-            ++m_local_population_cache[m_persons[i].get_location().get()];
+            if (m_persons[i].get_location_world_id() == m_id) {
+                ++m_local_population_cache[m_persons[i].get_location().get()];
+            }
         } // implicit taskloop barrier
     } // implicit single barrier
 }

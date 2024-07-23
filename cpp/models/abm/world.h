@@ -480,11 +480,11 @@ public:
 
     /**
      * @brief Flip activeness status of a person in the world.
-     * @param[in] person_id Person whose activeness status is fipped.
+     * @param[in] person_id PersonId of Person whose activeness status is fipped.
      */
-    void change_activeness(uint32_t person_id)
+    void change_activeness(PersonId person_id)
     {
-        m_activeness_statuses[person_id] = !m_activeness_statuses[person_id];
+        m_activeness_statuses[person_id.get()] = !m_activeness_statuses[person_id.get()];
     }
 
     /**
@@ -536,6 +536,15 @@ public:
                 m_activeness_statuses.push_back(false);
             }
         }
+    }
+
+    /**
+     * @brief Invalidate local population and exposure rate cache.
+     */
+    void invalidate_cache()
+    {
+        m_are_exposure_caches_valid       = false;
+        m_is_local_population_cache_valid = false;
     }
 
 private:

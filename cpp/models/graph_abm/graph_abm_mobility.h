@@ -26,6 +26,8 @@
 #include "abm/location_type.h"
 #include "abm/parameters.h"
 #include "abm/person.h"
+#include "abm/person_id.h"
+#include "abm/model_functions.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/graph.h"
 #include <cstddef>
@@ -203,23 +205,37 @@ public:
     {
         // iterate over all persons that could commute via the edge
         for (auto p : m_parameters.get_commuting_persons()) {
+            auto& person_n1 = node_from.get_simulation().get_world().get_person(mio::abm::PersonId(p));
+            auto& person_n2 = node_to.get_simulation().get_world().get_person(mio::abm::PersonId(p));
+            auto& params    = node_from.get_simulation().get_world().parameters;
             // as all nodes have all person it doesn't matter which node's persons we take here
-            auto& person           = node_from.get_simulation().get_world().get_persons()[p];
-            auto& params           = node_from.get_simulation().get_world().parameters;
-            auto& current_location = person.get_location();
+            auto current_location_type = person_n1.get_location_type();
+            auto current_id            = person_n1.get_location();
+            auto current_world_id      = person_n1.get_location_world_id();
             for (auto& rule : m_parameters.get_mobility_rules()) {
-                auto target_type     = rule(person, t, params);
-                auto target_world_id = person.get_assigned_location_world_id(target_type);
-                abm::Location& target_location =
-                    (target_world_id == node_from.get_simulation().get_world().get_id())
-                        ? node_from.get_simulation().get_world().find_location(target_type, person)
-                        : node_to.get_simulation().get_world().find_location(target_type, person);
+                auto target_type      = rule(person_n1, t, params);
+                auto target_world_id  = person_n1.get_assigned_location_world_id(target_type);
+                auto target_id        = person_n1.get_assigned_location(target_type);
+                auto& target_world    = (target_world_id == node_from.get_simulation().get_world().get_id())
+                                            ? node_from.get_simulation().get_world()
+                                            : node_to.get_simulation().get_world();
+                auto& target_location = target_world.get_location(target_id);
                 assert((node_from.get_simulation().get_world().get_id() == target_location.get_world_id() ||
                         node_to.get_simulation().get_world().get_id() == target_location.get_world_id()) &&
                        "Wrong graph edge. Target location is no edge node.");
-                if (target_location != current_location &&
-                    target_location.get_number_persons() < target_location.get_capacity().persons) {
-                    person.migrate_to(target_location);
+                if (target_type == current_location_type &&
+                    (target_id != current_id || target_world_id != current_world_id)) {
+                    mio::log_error("Person with index {} has two assigned locations of the same type.",
+                                   person_n1.get_id().get());
+                }
+                if (target_type != current_location_type &&
+                    target_world.get_number_persons(target_id) < target_location.get_capacity().persons) {
+                    //change person's location in all nodes
+                    mio::abm::migrate(person_n1, target_location);
+                    mio::abm::migrate(person_n2, target_location);
+                    // invalidate both worlds' cache
+                    node_to.get_simulation().get_world().invalidate_cache();
+                    node_from.get_simulation().get_world().invalidate_cache();
                     // change activeness status for commuted person
                     node_to.get_simulation().get_world().change_activeness(p);
                     node_from.get_simulation().get_world().change_activeness(p);

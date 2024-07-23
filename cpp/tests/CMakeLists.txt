@@ -72,8 +72,7 @@ set(TESTSOURCES
     test_lct_secir.cpp
     test_lct_initializer_flows.cpp
     test_ad.cpp
-
-    # test_graph_abm.cpp
+    test_graph_abm.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)
