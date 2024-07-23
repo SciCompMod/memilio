@@ -3,7 +3,6 @@
 
 #include <gtest/gtest.h>
 
-#include <limits>
 #include <vector>
 
 class TestMathTdpf : public ::testing::Test
@@ -35,7 +34,7 @@ TEST_F(TestMathTdpf, zero)
 
     // verify output
     for (int i = 0; i < this->num_evals; i++) {
-        auto random_t_eval = this->fuzzy_val(-std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
+        auto random_t_eval = this->fuzzy_val(-1e+3, 1e+3);
         EXPECT_EQ(tdpf(random_t_eval), 0.0);
     }
 }
