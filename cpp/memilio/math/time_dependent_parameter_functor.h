@@ -80,13 +80,15 @@ public:
                 return t < tp[0];
             });
             if (next_tp == m_data.begin()) { // time is before first data point
-                return m_data.front()[1];
+                value = m_data.front()[1];
             }
-            if (next_tp == m_data.end()) { // time is past last data point
-                return m_data.back()[1];
+            else if (next_tp == m_data.end()) { // time is past last data point
+                value = m_data.back()[1];
             }
-            const auto tp = next_tp - 1;
-            value         = linear_interpolation(time, (*tp)[0], (*next_tp)[0], (*tp)[1], (*next_tp)[1]);
+            else { // time is in between data points
+                const auto tp = next_tp - 1;
+                value         = linear_interpolation(time, (*tp)[0], (*next_tp)[0], (*tp)[1], (*next_tp)[1]);
+            }
             break;
         }
         return value;
