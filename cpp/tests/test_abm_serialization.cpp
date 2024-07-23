@@ -1,7 +1,9 @@
+#include "abm/infection_state.h"
 #include "abm/parameters.h"
 #include "abm/testing_strategy.h"
 #include "abm/vaccine.h"
 #include "matchers.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/uncertain_value.h"
 #include "models/abm/location.h"
@@ -48,7 +50,7 @@ void test_json_serialization_by_representation(const Json::Value& reference_json
 
     // check that the resulting type T is serializable
     auto json_result = mio::serialize_json(t_result.value());
-    ASSERT_TRUE(json_result);
+    ASSERT_THAT(print_wrap(json_result), IsSuccess());
 
     test_equal_json_representation(json_result.value(), reference_json);
 }
@@ -70,7 +72,7 @@ void test_json_serialization_full(const T& reference_object, const Json::Value& 
 {
     // check that the reference type T is serializable
     auto json_result = mio::serialize_json(reference_object);
-    ASSERT_TRUE(json_result);
+    ASSERT_THAT(print_wrap(json_result), IsSuccess());
 
     // check that the reference json is deserializable
     auto t_result = mio::deserialize_json(reference_json, mio::Tag<T>());
@@ -82,7 +84,7 @@ void test_json_serialization_full(const T& reference_object, const Json::Value& 
 
     // do the same once more using the results from above
     auto json_result_2 = mio::serialize_json(t_result.value());
-    ASSERT_TRUE(json_result_2);
+    ASSERT_THAT(print_wrap(json_result_2), IsSuccess());
     auto t_result_2 = mio::deserialize_json(json_result.value(), mio::Tag<T>());
     ASSERT_THAT(print_wrap(t_result_2), IsSuccess());
 
@@ -148,21 +150,25 @@ TEST(TestAbmSerialization, TestingScheme)
     // Test that a json value x is equal to serialize(deserialize(x)) w.r.t json representation.
     // See test_json_serialization_by_representation for more detail.
 
-    mio::abm::TestingScheme testing_scheme(mio::abm::TestingCriteria({}, {}), mio::abm::TimeSpan(1),
-                                           mio::abm::TimePoint(2), mio::abm::TimePoint(3),
-                                           mio::abm::TestParameters{{4.0}, {5.0}}, 6.0);
+    mio::abm::TestingScheme testing_scheme(mio::abm::TestingCriteria({mio::AgeGroup(1)}, {mio::abm::InfectionState(2)}),
+                                           mio::abm::TimeSpan(3), mio::abm::TimePoint(4), mio::abm::TimePoint(5),
+                                           mio::abm::TestParameters{{6.0}, {7.0}}, 8.0);
+
+    Json::Value testing_criteria;
+    testing_criteria["ages"]             = Json::UInt(1 << 1);
+    testing_criteria["infection_states"] = Json::UInt(1 << 2);
 
     Json::Value test_parameters;
-    test_parameters["sensitivity"] = mio::serialize_json(mio::UncertainValue<double>{4.0}).value();
-    test_parameters["specitivity"] = mio::serialize_json(mio::UncertainValue<double>{5.0}).value();
+    test_parameters["sensitivity"] = mio::serialize_json(mio::UncertainValue<double>{6.0}).value();
+    test_parameters["specificity"] = mio::serialize_json(mio::UncertainValue<double>{7.0}).value();
 
     Json::Value reference_json; // aka x
-    reference_json["criteria"]                            = Json::Value(Json::arrayValue);
-    reference_json["min_time_since_last_test"]["seconds"] = Json::UInt(1);
-    reference_json["start_date"]["seconds"]               = Json::UInt(2);
-    reference_json["end_date"]["seconds"]                 = Json::UInt(3);
+    reference_json["criteria"]                            = testing_criteria;
+    reference_json["min_time_since_last_test"]["seconds"] = Json::UInt(3);
+    reference_json["start_date"]["seconds"]               = Json::UInt(4);
+    reference_json["end_date"]["seconds"]                 = Json::UInt(5);
     reference_json["test_params"]                         = test_parameters;
-    reference_json["probability"]                         = Json::Value((double)6);
+    reference_json["probability"]                         = Json::Value((double)8);
     reference_json["is_active"]                           = Json::Value((bool)0);
 
     test_json_serialization_full(testing_scheme, reference_json);
@@ -183,7 +189,7 @@ TEST(TestAbmSerialization, TestingStrategy)
     Json::Value reference_json; // aka x
     reference_json["schemes"][0] = local_strategy;
 
-    test_json_serialization_by_representation<mio::abm::TestingScheme>(reference_json);
+    test_json_serialization_by_representation<mio::abm::TestingStrategy>(reference_json);
 }
 
 TEST(TestAbmSerialization, Person)
@@ -234,15 +240,16 @@ TEST(TestAbmSerialization, Location)
 
     unsigned i = 1; // counter s.t. members have different values
 
+    Json::Value contact_rates = mio::serialize_json(mio::abm::ContactRates::get_default(i++)).value();
+
     Json::Value reference_json; // aka x
-    reference_json["cells"][0]["capacity"]["persons"]    = Json::UInt(i++);
-    reference_json["cells"][0]["capacity"]["volume"]     = Json::UInt(i++);
-    reference_json["geographical_location"]["latitude"]  = Json::Value((double)i++);
-    reference_json["geographical_location"]["longitude"] = Json::Value((double)i++);
-    reference_json["id"]                                 = Json::UInt(i++);
-    reference_json["npi_active"]                         = Json::Value(false);
-    reference_json["parameters"]["ContactRates"] =
-        mio::serialize_json(mio::abm::ContactRates::get_default(i++)).value();
+    reference_json["cells"][0]["capacity"]["persons"]                   = Json::UInt(i++);
+    reference_json["cells"][0]["capacity"]["volume"]                    = Json::UInt(i++);
+    reference_json["geographical_location"]["latitude"]                 = Json::Value((double)i++);
+    reference_json["geographical_location"]["longitude"]                = Json::Value((double)i++);
+    reference_json["id"]                                                = Json::UInt(i++);
+    reference_json["npi_active"]                                        = Json::Value(false);
+    reference_json["parameters"]["ContactRates"]                        = contact_rates;
     reference_json["parameters"]["MaximumContacts"]                     = Json::Value((double)i++);
     reference_json["parameters"]["UseLocationCapacityForTransmissions"] = Json::Value(false);
     reference_json["required_mask"]                                     = Json::UInt(0);
@@ -261,11 +268,13 @@ TEST(TestAbmSerialization, World)
 
     unsigned i = 1; // counter s.t. members have different values
 
+    Json::Value abm_parameters = mio::serialize_json(mio::abm::Parameters(i++)).value();
+
     Json::Value reference_json; // aka x
     reference_json["cemetery_id"]                 = Json::UInt(i++);
     reference_json["location_types"]              = Json::UInt(i++);
     reference_json["locations"]                   = Json::Value(Json::arrayValue);
-    reference_json["parameters"]                  = mio::serialize_json(mio::abm::Parameters(i++)).value();
+    reference_json["parameters"]                  = abm_parameters;
     reference_json["persons"]                     = Json::Value(Json::arrayValue);
     reference_json["rng"]["counter"]              = Json::UInt(i++);
     reference_json["rng"]["key"]                  = Json::UInt(i++);
