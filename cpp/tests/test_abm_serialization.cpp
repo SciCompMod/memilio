@@ -1,6 +1,9 @@
+#include "abm/parameters.h"
+#include "abm/testing_strategy.h"
 #include "abm/vaccine.h"
 #include "matchers.h"
 #include "memilio/io/json_serializer.h"
+#include "memilio/utils/uncertain_value.h"
 #include "models/abm/location.h"
 #include "models/abm/person.h"
 #include "models/abm/time.h"
@@ -140,6 +143,49 @@ TEST(TestAbmSerialization, Infection)
     reference_json["detected"]         = Json::Value((bool)0);
 
     test_json_serialization_by_representation<mio::abm::Infection>(reference_json);
+}
+
+TEST(TestAbmSerialization, TestingScheme)
+{
+    // Test that a json value x is equal to serialize(deserialize(x)) w.r.t json representation.
+    // See test_json_serialization_by_representation for more detail.
+
+    mio::abm::TestingScheme testing_scheme(mio::abm::TestingCriteria({}, {}), mio::abm::TimeSpan(1),
+                                           mio::abm::TimePoint(2), mio::abm::TimePoint(3),
+                                           mio::abm::TestParameters{{4.0}, {5.0}}, 6.0);
+
+    Json::Value test_parameters;
+    test_parameters["sensitivity"] = mio::serialize_json(mio::UncertainValue<double>{4.0}).value();
+    test_parameters["specitivity"] = mio::serialize_json(mio::UncertainValue<double>{5.0}).value();
+
+    Json::Value reference_json; // aka x
+    reference_json["criteria"]                            = Json::Value(Json::arrayValue);
+    reference_json["min_time_since_last_test"]["seconds"] = Json::UInt(1);
+    reference_json["start_date"]["seconds"]               = Json::UInt(2);
+    reference_json["end_date"]["seconds"]                 = Json::UInt(3);
+    reference_json["test_params"]                         = test_parameters;
+    reference_json["probability"]                         = Json::Value((double)6);
+    reference_json["is_active"]                           = Json::Value((bool)0);
+
+    test_json_serialization_full(testing_scheme, reference_json);
+}
+
+TEST(TestAbmSerialization, TestingStrategy)
+{
+    // Test that a json value x is equal to serialize(deserialize(x)) w.r.t json representation.
+    // See test_json_serialization_by_representation for more detail.
+
+    unsigned i = 1; // counter s.t. members have different values
+
+    Json::Value local_strategy;
+    local_strategy["id"]      = Json::UInt(i++);
+    local_strategy["schemes"] = Json::Value(Json::arrayValue);
+    local_strategy["type"]    = Json::UInt(i++);
+
+    Json::Value reference_json; // aka x
+    reference_json["schemes"][0] = local_strategy;
+
+    test_json_serialization_by_representation<mio::abm::TestingScheme>(reference_json);
 }
 
 TEST(TestAbmSerialization, Person)

@@ -188,8 +188,7 @@ public:
         obj.add_element("min_time_since_last_test", m_minimal_time_since_last_test);
         obj.add_element("start_date", m_start_date);
         obj.add_element("end_date", m_end_date);
-        obj.add_element("test_type",
-                        m_test_type.get_default()); // FIXME: m_test_type should contain TestParameters directly
+        obj.add_element("test_params", m_test_parameters);
         obj.add_element("probability", m_probability);
         obj.add_element("is_active", m_is_active);
     }
@@ -206,18 +205,18 @@ public:
         auto min_time_since_last_test = obj.expect_element("min_time_since_last_test", Tag<TimeSpan>{});
         auto start_date               = obj.expect_element("start_date", Tag<TimePoint>{});
         auto end_date                 = obj.expect_element("end_date", Tag<TimePoint>{});
-        auto test_type                = obj.expect_element(
-            "test_type", Tag<GenericTest::Type>{}); // FIXME: m_test_type should contain TestParameters directly
-        auto probability = obj.expect_element("probability", Tag<ScalarType>{});
-        auto is_active   = obj.expect_element("is_active", Tag<bool>{});
+        auto test_params              = obj.expect_element("test_params", Tag<TestParameters>{});
+        auto probability              = obj.expect_element("probability", Tag<ScalarType>{});
+        auto is_active                = obj.expect_element("is_active", Tag<bool>{});
         return apply(
             io,
             [](auto&& criteria_, auto&& min_time_since_last_test_, auto&& start_date_, auto&& end_date_,
-               auto&& test_type_, auto&& probability_, auto&& is_active_) {
+               auto&& test_params_, auto&& probability_, auto&& is_active_) {
                 return TestingScheme{
-                    criteria_, min_time_since_last_test_, start_date_, end_date_, test_type_, probability_, is_active_};
+                    criteria_, min_time_since_last_test_, start_date_, end_date_, test_params_, probability_,
+                    is_active_};
             },
-            criteria, min_time_since_last_test, start_date, end_date, test_type, probability, is_active);
+            criteria, min_time_since_last_test, start_date, end_date, test_params, probability, is_active);
     }
 
 private:
