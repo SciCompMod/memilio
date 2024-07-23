@@ -73,16 +73,17 @@ public:
      * @brief Create a World.
      * @param[in] params Initial simulation parameters.
      */
-    World(const Parameters& params)
+    World(const Parameters& params, int world_id = 0)
         : parameters(params.get_num_groups())
         , m_trip_list()
         , m_use_migration_rules(true)
         , m_cemetery_id(add_location(LocationType::Cemetery))
+        , m_id(world_id)
     {
         parameters = params;
     }
 
-    World(const World& other)
+    World(const World& other, int world_id = 0)
         : parameters(other.parameters)
         , m_local_population_cache()
         , m_air_exposure_rates_cache()
@@ -92,6 +93,7 @@ public:
         , m_exposure_caches_need_rebuild(true)
         , m_persons(other.m_persons)
         , m_locations(other.m_locations)
+        , m_activeness_statuses(other.m_activeness_statuses)
         , m_has_locations(other.m_has_locations)
         , m_testing_strategy(other.m_testing_strategy)
         , m_trip_list(other.m_trip_list)
@@ -99,6 +101,7 @@ public:
         , m_migration_rules(other.m_migration_rules)
         , m_cemetery_id(other.m_cemetery_id)
         , m_rng(other.m_rng)
+        , m_id(world_id)
     {
     }
     World& operator=(const World&) = default;
@@ -189,14 +192,14 @@ public:
      */
     PersonId add_person(Person&& person);
 
-    /**
-     * @brief Add an external Person i.e. a Person whoseHome location is in another World to the World.
-     * Only used for abm graph model.
-     * @param[in] loc Initial Location of the Person
-     * @param[in] age AgeGroup of the Person
-     * @return Reference to the newly created Person
-     */
-    Person& add_external_person(Location& loc, AgeGroup age);
+    // /**
+    //  * @brief Add an external Person i.e. a Person whoseHome location is in another World to the World.
+    //  * Only used for abm graph model.
+    //  * @param[in] loc Initial Location of the Person
+    //  * @param[in] age AgeGroup of the Person
+    //  * @return Reference to the newly created Person
+    //  */
+    // Person& add_external_person(Location& loc, AgeGroup age);
 
     /**
      * @brief Get a range of all Location%s in the World.
@@ -233,7 +236,7 @@ public:
      */
     void assign_location(PersonId person, LocationId location)
     {
-        get_person(person).set_assigned_location(get_location(location).get_type(), location);
+        get_person(person).set_assigned_location(get_location(location).get_type(), location, m_id);
     }
 
     /**
@@ -486,15 +489,20 @@ public:
 
     /**
      * @brief Copy the persons from another World to this World. 
-     * If the persons are at a location in this world they are activated, otherwise they are deactivated. 
+     * If the persons are at a location in this world they are activated, otherwise they are deactivated.
+     * If necessary the person ids are changed such that they correspond to the index in this world's m_persons vector.
      * @param[in] other The World the Person%s are copied from.
      */
     void copy_persons_from_other_world(const World& other)
     {
         for (auto& p : other.get_persons()) {
-            p.set_person_id(static_cast<uint32_t>(m_persons.size()));
-            m_persons.push_back(std::make_unique<Person>(p.copy_person(p.get_location())));
-            if (p.get_location().get_world_id() == m_id) {
+            if (p.get_id() != static_cast<uint32_t>(m_persons.size())) {
+                mio::log_debug("In world.copy_persons_from_other_world: PersonId does not correspond to index in "
+                               "m_persons vector. Person is copied with adapted Id");
+            }
+            PersonId new_id{static_cast<uint32_t>(m_persons.size())};
+            m_persons.emplace_back(p, new_id);
+            if (p.get_location_world_id() == m_id) {
                 m_activeness_statuses.push_back(true);
             }
             else {
@@ -509,19 +517,19 @@ public:
     */
     void set_persons(std::vector<Person>& persons)
     {
-        //first remove all old persons from the locations
-        for (auto&& person : m_persons) {
-            if (person->get_location().get_world_id() == m_id) {
-                person->get_location().remove_person(*person);
-            }
-        }
+        m_is_local_population_cache_valid = false;
+        m_are_exposure_caches_valid       = false;
         //first clear old person vector and corresponding activeness vector
         m_persons.clear();
         m_activeness_statuses.clear();
         for (auto& p : persons) {
-            p.set_person_id(static_cast<uint32_t>(m_persons.size()));
-            m_persons.emplace_back(std::make_unique<Person>(p.copy_person(p.get_location())));
-            if (p.get_location().get_world_id() == m_id) {
+            if (p.get_id() != static_cast<uint32_t>(m_persons.size())) {
+                mio::log_debug("In world.copy_persons_from_other_world: PersonId does not correspond to index in "
+                               "m_persons vector. Person is copied with adapted Id");
+            }
+            PersonId new_id{static_cast<uint32_t>(m_persons.size())};
+            m_persons.emplace_back(p, new_id);
+            if (p.get_location_world_id() == m_id) {
                 m_activeness_statuses.push_back(true);
             }
             else {

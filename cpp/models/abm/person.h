@@ -53,8 +53,8 @@ public:
      * @param[in] age The AgeGroup of the Person.
      * @param[in] person_id Index of the Person.
      */
-    explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id, AgeGroup age,
-                    PersonId person_id = PersonId::invalid_id());
+    explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
+                    int location_world_id, AgeGroup age, PersonId person_id = PersonId::invalid_id());
 
     explicit Person(const Person& other, PersonId id);
 
@@ -129,11 +129,18 @@ public:
         return m_location_type;
     }
 
+    int get_location_world_id() const
+    {
+        return m_location_world_id;
+    }
+
     /**
      * @brief Change the location of the person.
-     * @param[in] id The new location.
+     * @param[in] type The LocationType of the new Location.
+     * @param[in] id The LocationId of the new Location.
+     * @param[in] world_id The world id of the new Location.
      */
-    void set_location(LocationType type, LocationId id);
+    void set_location(LocationType type, LocationId id, int world_id);
 
     /**
      * @brief Get the time the Person has been at its current Location.
@@ -172,8 +179,9 @@ public:
      * Location of a certain #LocationType.
      * @param[in] type The LocationType of the Location.
      * @param[in] id The LocationId of the Location.
+     * @param[in] world_id The world id of the Location.
      */
-    void set_assigned_location(LocationType type, LocationId id);
+    void set_assigned_location(LocationType type, LocationId id, int world_id);
 
     /**
      * @brief Returns the index of an assigned Location of the Person.
@@ -282,10 +290,10 @@ public:
     PersonId get_id() const;
 
     /**
-    * @brief Set the PersonID of the Person.
+    * @brief Set the PersonId of the Person.
     * The PersonID should correspond to the index in m_persons in world.
     */
-    void set_person_id(uint32_t id);
+    void set_id(PersonId id);
 
     /**
      * @brief Get index of Cell%s of the Person.
@@ -451,6 +459,7 @@ public:
 private:
     LocationId m_location; ///< Current Location of the Person.
     LocationType m_location_type; ///< Type of the current Location.
+    int m_location_world_id; ///< World id of the current Location. Only used for Graph ABM.
     std::vector<LocationId> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the
     Person always visits the same Home or School etc. */
     std::vector<Vaccination> m_vaccinations; ///< Vector with all Vaccination%s the Person has received.

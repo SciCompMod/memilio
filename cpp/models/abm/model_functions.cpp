@@ -133,7 +133,7 @@ bool migrate(Person& person, const Location& destination, const TransportMode mo
     })); // make sure cell indices are valid
 
     if (person.get_location() != destination.get_id()) {
-        person.set_location(destination.get_type(), destination.get_id());
+        person.set_location(destination.get_type(), destination.get_id(), destination.get_world_id());
         person.get_cells() = cells;
         person.set_last_transport_mode(mode);
 

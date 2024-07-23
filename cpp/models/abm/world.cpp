@@ -39,7 +39,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     LocationId id{static_cast<uint32_t>(m_locations.size())};
     m_locations.emplace_back(type, id, parameters.get_num_groups(), num_cells);
     m_has_locations[size_t(type)] = true;
-    m_locations[id.index]->set_world_id(m_id);
+    m_locations[id.get()].set_world_id(m_id);
 
     // mark caches for rebuild
     m_is_local_population_cache_valid = false;
@@ -51,7 +51,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 
 PersonId World::add_person(const LocationId id, AgeGroup age)
 {
-    return add_person(Person(m_rng, get_location(id).get_type(), id, age));
+    return add_person(Person(m_rng, get_location(id).get_type(), id, m_id, age));
 }
 
 PersonId World::add_person(Person&& person)
@@ -65,7 +65,7 @@ PersonId World::add_person(Person&& person)
     m_persons.emplace_back(person, new_id);
     m_activeness_statuses.push_back(true);
     auto& new_person = m_persons.back();
-    new_person.set_assigned_location(LocationType::Cemetery, m_cemetery_id);
+    new_person.set_assigned_location(LocationType::Cemetery, m_cemetery_id, m_id);
 
     if (m_is_local_population_cache_valid) {
         ++m_local_population_cache[new_person.get_location().get()];
@@ -73,17 +73,17 @@ PersonId World::add_person(Person&& person)
     return new_id;
 }
 
-Person& World::add_external_person(Location& loc, AgeGroup age)
-{
-    assert(age.get() < parameters.get_num_groups());
-    uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(m_rng, loc, age, person_id));
-    m_activeness_statuses.push_back(false);
-    auto& person = *m_persons.back();
-    person.set_assigned_location(m_cemetery_id);
-    loc.add_person(person);
-    return person;
-}
+// Person& World::add_external_person(Location& loc, AgeGroup age)
+// {
+//     assert(age.get() < parameters.get_num_groups());
+//     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
+//     m_persons.push_back(std::make_unique<Person>(m_rng, loc, age, person_id));
+//     m_activeness_statuses.push_back(false);
+//     auto& person = *m_persons.back();
+//     person.set_assigned_location(m_cemetery_id);
+//     loc.add_person(person);
+//     return person;
+// }
 
 void World::evolve(TimePoint t, TimeSpan dt)
 {
@@ -99,7 +99,9 @@ void World::interaction(TimePoint t, TimeSpan dt)
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
     for (uint32_t person_id = 0; person_id < num_persons; ++person_id) {
-        interact(person_id, t, dt);
+        if (m_activeness_statuses[person_id]) {
+            interact(person_id, t, dt);
+        }
     }
 }
 
@@ -108,74 +110,79 @@ void World::migration(TimePoint t, TimeSpan dt)
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
     for (uint32_t person_id = 0; person_id < num_persons; ++person_id) {
-        Person& person    = m_persons[person_id];
-        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
+        if (m_activeness_statuses[person_id]) {
+            Person& person    = m_persons[person_id];
+            auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
 
-        auto try_migration_rule = [&](auto rule) -> bool {
-            //run migration rule and check if migration can actually happen
-            auto target_type                  = rule(personal_rng, person, t, dt, parameters);
-            const Location& target_location   = get_location(find_location(target_type, person_id));
-            const LocationId current_location = person.get_location();
-            if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
-                if (target_location.get_id() != current_location &&
-                    get_number_persons(target_location.get_id()) < target_location.get_capacity().persons) {
-                    bool wears_mask = person.apply_mask_intervention(personal_rng, target_location);
-                    if (wears_mask) {
-                        migrate(person_id, target_location.get_id());
+            auto try_migration_rule = [&](auto rule) -> bool {
+                //run migration rule and check if migration can actually happen
+                auto target_type = rule(personal_rng, person, t, dt, parameters);
+                if (person.get_assigned_location_world_id(target_type) == m_id) {
+                    const Location& target_location   = get_location(find_location(target_type, person_id));
+                    const LocationId current_location = person.get_location();
+                    if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                        if (target_location.get_id() != current_location &&
+                            get_number_persons(target_location.get_id()) < target_location.get_capacity().persons) {
+                            bool wears_mask = person.apply_mask_intervention(personal_rng, target_location);
+                            if (wears_mask) {
+                                migrate(person_id, target_location.get_id());
+                            }
+                            return true;
+                        }
                     }
-                    return true;
+                }
+                return false;
+            };
+
+            //run migration rules one after the other if the corresponding location type exists
+            //shortcutting of bool operators ensures the rules stop after the first rule is applied
+            if (m_use_migration_rules) {
+                (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
+                    (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
+                    (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
+                    (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
+                    (has_locations({LocationType::School, LocationType::Home}) && try_migration_rule(&go_to_school)) ||
+                    (has_locations({LocationType::Work, LocationType::Home}) && try_migration_rule(&go_to_work)) ||
+                    (has_locations({LocationType::BasicsShop, LocationType::Home}) &&
+                     try_migration_rule(&go_to_shop)) ||
+                    (has_locations({LocationType::SocialEvent, LocationType::Home}) &&
+                     try_migration_rule(&go_to_event)) ||
+                    (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
+            }
+            else {
+                //no daily routine migration, just infection related
+                (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
+                    (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
+                    (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
+                    (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
+                    (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
+            }
+        }
+    }
+
+    // check if a person makes a trip
+    bool weekend     = t.is_weekend();
+    size_t num_trips = m_trip_list.num_trips(weekend);
+
+    if (num_trips != 0) {
+        while (m_trip_list.get_current_index() < num_trips &&
+               m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
+            auto& trip        = m_trip_list.get_next_trip(weekend);
+            auto& person      = get_person(trip.person_id);
+            auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
+            if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
+                auto& target_location = get_location(trip.migration_destination);
+                if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                    person.apply_mask_intervention(personal_rng, target_location);
+                    migrate(person.get_id(), target_location.get_id(), trip.trip_mode);
                 }
             }
-            return false;
-        };
-
-        //run migration rules one after the other if the corresponding location type exists
-        //shortcutting of bool operators ensures the rules stop after the first rule is applied
-        if (m_use_migration_rules) {
-            (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
-                (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
-                (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
-                (has_locations({LocationType::School, LocationType::Home}) && try_migration_rule(&go_to_school)) ||
-                (has_locations({LocationType::Work, LocationType::Home}) && try_migration_rule(&go_to_work)) ||
-                (has_locations({LocationType::BasicsShop, LocationType::Home}) && try_migration_rule(&go_to_shop)) ||
-                (has_locations({LocationType::SocialEvent, LocationType::Home}) && try_migration_rule(&go_to_event)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
-        }
-        else {
-            //no daily routine migration, just infection related
-            (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
-                (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
-                (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
+            m_trip_list.increase_index();
         }
     }
-}
-
-// check if a person makes a trip
-bool weekend     = t.is_weekend();
-size_t num_trips = m_trip_list.num_trips(weekend);
-
-if (num_trips != 0) {
-    while (m_trip_list.get_current_index() < num_trips &&
-           m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
-        auto& trip        = m_trip_list.get_next_trip(weekend);
-        auto& person      = get_person(trip.person_id);
-        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
-        if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
-            auto& target_location = get_location(trip.migration_destination);
-            if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
-                person.apply_mask_intervention(personal_rng, target_location);
-                migrate(person.get_id(), target_location.get_id(), trip.trip_mode);
-            }
-        }
-        m_trip_list.increase_index();
+    if (((t).days() < std::floor((t + dt).days()))) {
+        m_trip_list.reset_index();
     }
-}
-if (((t).days() < std::floor((t + dt).days()))) {
-    m_trip_list.reset_index();
-}
 }
 
 void World::build_compute_local_population_cache() const
