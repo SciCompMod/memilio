@@ -1033,59 +1033,67 @@ TEST(Secir, test_commuters)
 TEST(Secir, check_constraints_parameters)
 {
     auto model = mio::osecir::Model<double>(1);
-    ASSERT_EQ(model.parameters.check_constraints(), 0);
+    EXPECT_EQ(model.parameters.check_constraints(), 0);
 
     mio::set_log_level(mio::LogLevel::off);
     model.parameters.set<mio::osecir::Seasonality<double>>(-0.5);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::Seasonality<double>>(0.2);
     model.parameters.set<mio::osecir::ICUCapacity<double>>(-2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::ICUCapacity<double>>(2);
+    model.parameters.set<mio::osecir::TestAndTraceCapacity<double>>(-1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::TestAndTraceCapacity<double>>(1);
+    model.parameters.set<mio::osecir::TestAndTraceCapacityMaxRisk<double>>(-1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::TestAndTraceCapacityMaxRisk<double>>(1);
     model.parameters.set<mio::osecir::TimeExposed<double>>(-2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::TimeExposed<double>>(2);
     model.parameters.set<mio::osecir::TimeInfectedNoSymptoms<double>>(-1);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::TimeInfectedNoSymptoms<double>>(5);
     model.parameters.set<mio::osecir::TimeInfectedSymptoms<double>>(0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::TimeInfectedSymptoms<double>>(2);
     model.parameters.set<mio::osecir::TimeInfectedSevere<double>>(-1);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::TimeInfectedSevere<double>>(2);
     model.parameters.set<mio::osecir::TimeInfectedCritical<double>>(0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::TimeInfectedCritical<double>>(2);
     model.parameters.set<mio::osecir::TransmissionProbabilityOnContact<double>>(2.0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::TransmissionProbabilityOnContact<double>>(0.5);
     model.parameters.set<mio::osecir::RelativeTransmissionNoSymptoms<double>>(-1.0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::RelativeTransmissionNoSymptoms<double>>(0.5);
     model.parameters.set<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>(3.0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>(0.5);
     model.parameters.set<mio::osecir::RiskOfInfectionFromSymptomatic<double>>(-2.0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::RiskOfInfectionFromSymptomatic<double>>(0.5);
     model.parameters.set<mio::osecir::SeverePerInfectedSymptoms<double>>(-1.0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::SeverePerInfectedSymptoms<double>>(0.5);
     model.parameters.set<mio::osecir::CriticalPerSevere<double>>(-1.0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecir::CriticalPerSevere<double>>(0.5);
     model.parameters.set<mio::osecir::DeathsPerCritical<double>>(1.1);
@@ -1095,6 +1103,8 @@ TEST(Secir, check_constraints_parameters)
     model.parameters.set<mio::osecir::DynamicNPIsImplementationDelay<double>>(-4);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
+    model.parameters.set<mio::osecir::DynamicNPIsImplementationDelay<double>>(3);
+    EXPECT_EQ(model.parameters.check_constraints(), 0);
     mio::set_log_level(mio::LogLevel::warn);
 }
 
@@ -1114,6 +1124,14 @@ TEST(Secir, apply_constraints_parameters)
     model.parameters.set<mio::osecir::ICUCapacity<double>>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecir::ICUCapacity<double>>(), 0);
+
+    model.parameters.set<mio::osecir::TestAndTraceCapacity<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecir::TestAndTraceCapacity<double>>(), 0);
+
+    model.parameters.set<mio::osecir::TestAndTraceCapacityMaxRisk<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecir::TestAndTraceCapacityMaxRisk<double>>(), 0);
 
     model.parameters.set<mio::osecir::TimeExposed<double>>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);

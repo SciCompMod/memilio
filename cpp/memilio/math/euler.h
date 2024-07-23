@@ -34,6 +34,11 @@ template <typename FP = ScalarType>
 class EulerIntegratorCore : public IntegratorCore<FP>
 {
 public:
+    EulerIntegratorCore()
+        : IntegratorCore<FP>(FP{}, FP{})
+    {
+    }
+
     /**
      * @brief Fixed step width of the integration
      *

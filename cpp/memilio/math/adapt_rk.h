@@ -148,10 +148,9 @@ public:
      * @brief Setting up the integrator
      */
     RKIntegratorCore()
-        : m_abs_tol(1e-10)
+        : IntegratorCore<FP>(std::numeric_limits<double>::min(), std::numeric_limits<double>::max())
+        , m_abs_tol(1e-10)
         , m_rel_tol(1e-5)
-        , m_dt_min(std::numeric_limits<double>::min())
-        , m_dt_max(std::numeric_limits<double>::max())
     {
     }
 
@@ -163,10 +162,9 @@ public:
      * @param dt_max upper bound for time step dt
      */
     RKIntegratorCore(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max)
-        : m_abs_tol(abs_tol)
+        : IntegratorCore<FP>(dt_min, dt_max)
+        , m_abs_tol(abs_tol)
         , m_rel_tol(rel_tol)
-        , m_dt_min(dt_min)
-        , m_dt_max(dt_max)
     {
     }
 
@@ -185,16 +183,16 @@ public:
     /// @param dt_min sets the minimum step size
     void set_dt_min(double dt_min)
     {
-        m_dt_min = dt_min;
+        this->get_dt_min() = dt_min;
     }
 
     /// @param dt_max sets the maximum step size
     void set_dt_max(double dt_max)
     {
-        m_dt_max = dt_max;
+        this->get_dt_max() = dt_max;
     }
 
-    // Allow setting different RK tablea schemes
+    // Allow setting different RK tableau schemes
     void set_tableaus(const Tableau& tab, const TableauFinal& final_tab)
     {
         m_tab       = tab;
@@ -212,15 +210,15 @@ public:
     bool step(const DerivFunction<FP>& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
               Eigen::Ref<Eigen::VectorXd> ytp1) const override
     {
-        assert(0 <= m_dt_min);
-        assert(m_dt_min <= m_dt_max);
+        assert(0 <= this->get_dt_min());
+        assert(this->get_dt_min() <= this->get_dt_max());
 
-        if (dt < m_dt_min || dt > m_dt_max) {
-            mio::log_warning("IntegratorCore: Restricting given step size dt = {} to [{}, {}].", dt, m_dt_min,
-                             m_dt_max);
+        if (dt < this->get_dt_min() || dt > this->get_dt_max()) {
+            mio::log_warning("IntegratorCore: Restricting given step size dt = {} to [{}, {}].", dt, this->get_dt_min(),
+                             this->get_dt_max());
         }
 
-        dt = std::min(dt, m_dt_max);
+        dt = std::min(dt, this->get_dt_max());
 
         double t_eval; // shifted time for evaluating yt
         double dt_new; // updated dt
@@ -236,9 +234,9 @@ public:
         m_yt_eval = yt;
 
         while (!converged && !dt_is_invalid) {
-            if (dt < m_dt_min) {
+            if (dt < this->get_dt_min()) {
                 dt_is_invalid = true;
-                dt            = m_dt_min;
+                dt            = this->get_dt_min();
             }
             // compute first column of kt, i.e. kt_0 for each y in yt_eval
             f(m_yt_eval, t, m_kt_values.col(0));
@@ -281,9 +279,9 @@ public:
             // and to avoid dt_new -> dt for step decreases when |error_estimate - eps| -> 0
             dt_new *= 0.9;
             // check if updated dt stays within desired bounds and update dt for next step
-            dt = std::min(dt_new, m_dt_max);
+            dt = std::min(dt_new, this->get_dt_max());
         }
-        dt = std::max(dt, m_dt_min);
+        dt = std::max(dt, this->get_dt_min());
         // return 'converged' in favor of '!dt_is_invalid', as these values only differ if step sizing failed,
         // but the step with size dt_min was accepted.
         return converged;
@@ -293,7 +291,6 @@ protected:
     Tableau m_tab;
     TableauFinal m_tab_final;
     FP m_abs_tol, m_rel_tol;
-    FP m_dt_min, m_dt_max;
     mutable Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> m_kt_values;
     mutable Vector<FP> m_yt_eval;
 
