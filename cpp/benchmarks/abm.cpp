@@ -26,7 +26,7 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
         auto age    = mio::AgeGroup(mio::UniformIntDistribution<size_t>::get_instance()(
             world.get_rng(), size_t(0), world.parameters.get_num_groups() - 1));
         auto person = world.add_person(home, age);
-        world.get_person(person).set_assigned_location(home);
+        world.assign_location(person, home);
         home_size++;
     }
 
@@ -43,7 +43,7 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
         for (auto& person : world.get_persons()) {
             auto loc_idx =
                 mio::UniformIntDistribution<size_t>::get_instance()(world.get_rng(), size_t(0), num_locs - 1);
-            person.set_assigned_location(locs[loc_idx]);
+            world.assign_location(person.get_id(), locs[loc_idx]);
         }
     }
 

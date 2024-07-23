@@ -144,11 +144,11 @@ public:
      * performed after a Person's last test.
      * @param start_date Starting date of the scheme.
      * @param end_date Ending date of the scheme.
-     * @param test_type The type of test to be performed.
+     * @param test_parameters The parameters of test to be performed.
      * @param probability Probability of the test to be performed if a testing rule applies.
      */
     TestingScheme(const TestingCriteria& testing_criteria, TimeSpan minimal_time_since_last_test, TimePoint start_date,
-                  TimePoint end_date, const GenericTest& test_type, ScalarType probability);
+                  TimePoint end_date, TestParameters test_parameters, ScalarType probability);
 
     /**
      * @brief Compares two TestingScheme%s for functional equality.
@@ -225,7 +225,7 @@ private:
     TimeSpan m_minimal_time_since_last_test; ///< Shortest period of time between two tests.
     TimePoint m_start_date; ///< Starting date of the scheme.
     TimePoint m_end_date; ///< Ending date of the scheme.
-    GenericTest m_test_type; ///< Type of the test.
+    TestParameters m_test_parameters; ///< Parameters of the test.
     ScalarType m_probability; ///< Probability of performing the test.
     bool m_is_active = false; ///< Whether the scheme is currently active.
 };
