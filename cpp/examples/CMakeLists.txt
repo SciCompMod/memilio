@@ -104,6 +104,9 @@ add_executable(ide_secir_example ide_secir.cpp)
 target_link_libraries(ide_secir_example PRIVATE memilio ide_secir)
 target_compile_options(ide_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(compute_parameters compute_parameters.cpp)
+target_compile_options(compute_parameters PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ide_changepoints_leoss ide_changepoints_leoss.cpp)
 target_link_libraries(ide_changepoints_leoss PRIVATE memilio ide_secir ode_secir)
 target_compile_options(ide_changepoints_leoss PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
