@@ -31,17 +31,12 @@
 #include "memilio/io/result_io.h"
 #include "memilio/io/io.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/math/eigen.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 #include "ode_secir/infection_state.h"
 #include <string>
 #include <map>
-#include <iostream>
 
 using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
-
-// necessary because num_subcompartments is used as a template argument and has ti be
-constexpr int num_subcompartments = 20;
 
 // Parameters are calculated via examples/compute_parameters.cpp.
 std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
@@ -51,18 +46,18 @@ std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
                                                           {"total_confirmed_cases", 341223.},
                                                           {"deaths", 9710.},
                                                           {"TimeExposed", 4.5},
-                                                          {"TimeInfectedNoSymptoms", 2.52761690},
-                                                          {"TimeInfectedSymptoms", 7.88989994},
-                                                          {"TimeInfectedSevere", 15.22527840},
-                                                          {"TimeInfectedCritical", 16.49289020},
+                                                          {"TimeInfectedNoSymptoms", 3.18163},
+                                                          {"TimeInfectedSymptoms", 7.85313},
+                                                          {"TimeInfectedSevere", 11.9713},
+                                                          {"TimeInfectedCritical", 15.2303},
                                                           {"TransmissionProbabilityOnContact", 0.0733271},
                                                           {"RelativeTransmissionNoSymptoms", 1},
                                                           {"RiskOfInfectionFromSymptomatic", 0.3},
                                                           {"Seasonality", 0.},
-                                                          {"RecoveredPerInfectedNoSymptoms", 0.206901},
-                                                          {"SeverePerInfectedSymptoms", 0.0786429},
-                                                          {"CriticalPerSevere", 0.173176},
-                                                          {"DeathsPerCritical", 0.217177}};
+                                                          {"InfectedSymptomsPerInfectedNoSymptoms", 0.698315},
+                                                          {"SeverePerInfectedSymptoms", 0.104907},
+                                                          {"CriticalPerSevere", 0.369201},
+                                                          {"DeathsPerCritical", 0.387803}};
 
 mio::UncertainContactMatrix<ScalarType> get_contact_matrix(ScalarType R0)
 {
@@ -101,9 +96,9 @@ mio::TimeSeries<ScalarType> get_initial_flows()
     init_transitions[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]        = SusceptibleToExposed_const;
     init_transitions[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = SusceptibleToExposed_const;
     init_transitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] =
-        SusceptibleToExposed_const * (1 - simulation_parameter["RecoveredPerInfectedNoSymptoms"]);
+        SusceptibleToExposed_const * simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"];
     init_transitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered] =
-        SusceptibleToExposed_const * simulation_parameter["RecoveredPerInfectedNoSymptoms"];
+        SusceptibleToExposed_const * (1 - simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"]);
     init_transitions[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] =
         init_transitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
         simulation_parameter["SeverePerInfectedSymptoms"];
@@ -188,9 +183,9 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, b
     // Set other parameters.
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 1.);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] =
-        1 - simulation_parameter["RecoveredPerInfectedNoSymptoms"];
+        simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"];
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] =
-        simulation_parameter["RecoveredPerInfectedNoSymptoms"];
+        1 - simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"];
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere)] =
         simulation_parameter["SeverePerInfectedSymptoms"];
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)] =
@@ -292,7 +287,7 @@ mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType R0, 
 
     // Set probabilities that determine proportion between compartments.
     model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
-        simulation_parameter["RecoveredPerInfectedNoSymptoms"];
+        1 - simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"];
     model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
         simulation_parameter["SeverePerInfectedSymptoms"];
     model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0] =
@@ -377,18 +372,18 @@ int main()
         return -1;
     }
 
-    R0   = 2.;
-    tmax = 12;
+    // R0   = 2.;
+    // tmax = 12;
 
-    result_ide = simulate_ide_model(R0, tmax, contact_scaling, save_dir);
+    // result_ide = simulate_ide_model(R0, tmax, contact_scaling, save_dir);
 
-    compartments = result_ide.get_value(0);
+    // compartments = result_ide.get_value(0);
 
-    result_ode = simulate_ode_model(compartments, R0, tmax, contact_scaling, save_dir);
-    if (!result_ode) {
-        printf("%s\n", result_ode.error().formatted_message().c_str());
-        return -1;
-    }
+    // result_ode = simulate_ode_model(compartments, R0, tmax, contact_scaling, save_dir);
+    // if (!result_ode) {
+    //     printf("%s\n", result_ode.error().formatted_message().c_str());
+    //     return -1;
+    // }
 
     return 0;
 }

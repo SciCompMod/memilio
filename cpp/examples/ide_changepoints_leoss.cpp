@@ -31,12 +31,10 @@
 #include "memilio/io/result_io.h"
 #include "memilio/io/io.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/math/eigen.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 #include "ode_secir/infection_state.h"
 #include <string>
 #include <map>
-#include <iostream>
 
 using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 
@@ -59,7 +57,7 @@ std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
                                                           {"RelativeTransmissionNoSymptoms", 1},
                                                           {"RiskOfInfectionFromSymptomatic", 0.3},
                                                           {"Seasonality", 0.},
-                                                          {"RecoveredPerInfectedNoSymptoms", 0.206901},
+                                                          {"InfectedSymptomsPerInfectedNoSymptoms", 0.793099},
                                                           {"SeverePerInfectedSymptoms", 0.0786429},
                                                           {"CriticalPerSevere", 0.173176},
                                                           {"DeathsPerCritical", 0.217177}};
@@ -101,9 +99,9 @@ mio::TimeSeries<ScalarType> get_initial_flows()
     init_transitions[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]        = SusceptibleToExposed_const;
     init_transitions[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = SusceptibleToExposed_const;
     init_transitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] =
-        SusceptibleToExposed_const * (1 - simulation_parameter["RecoveredPerInfectedNoSymptoms"]);
+        SusceptibleToExposed_const * simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"];
     init_transitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered] =
-        SusceptibleToExposed_const * simulation_parameter["RecoveredPerInfectedNoSymptoms"];
+        SusceptibleToExposed_const * (1 - simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"]);
     init_transitions[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] =
         init_transitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
         simulation_parameter["SeverePerInfectedSymptoms"];
@@ -187,9 +185,9 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, b
     // Set other parameters.
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 1.);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] =
-        1 - simulation_parameter["RecoveredPerInfectedNoSymptoms"];
+        simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"];
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] =
-        simulation_parameter["RecoveredPerInfectedNoSymptoms"];
+        1 - simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"];
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere)] =
         simulation_parameter["SeverePerInfectedSymptoms"];
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)] =
@@ -291,7 +289,7 @@ mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType R0, 
 
     // Set probabilities that determine proportion between compartments.
     model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
-        simulation_parameter["RecoveredPerInfectedNoSymptoms"];
+        1 - simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"];
     model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
         simulation_parameter["SeverePerInfectedSymptoms"];
     model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0] =

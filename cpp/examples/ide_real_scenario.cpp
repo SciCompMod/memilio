@@ -44,21 +44,21 @@ using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
                                                           {"dt_flows", 0.1},
                                                           {"total_population", 83155031.},
-                                                          {"total_confirmed_cases", 0.}, //341223.
+                                                          {"total_confirmed_cases", 341223.},
                                                           {"deaths", 9710.},
                                                           {"TimeExposed", 4.5},
-                                                          {"TimeInfectedNoSymptoms", 2.52761690},
-                                                          {"TimeInfectedSymptoms", 7.88989994},
-                                                          {"TimeInfectedSevere", 15.22527840},
-                                                          {"TimeInfectedCritical", 16.49289020},
+                                                          {"TimeInfectedNoSymptoms", 3.18163},
+                                                          {"TimeInfectedSymptoms", 7.85313},
+                                                          {"TimeInfectedSevere", 11.9713},
+                                                          {"TimeInfectedCritical", 15.2303},
                                                           {"TransmissionProbabilityOnContact", 0.0733271},
                                                           {"RelativeTransmissionNoSymptoms", 1},
                                                           {"RiskOfInfectionFromSymptomatic", 0.3},
                                                           {"Seasonality", 0.},
-                                                          {"RecoveredPerInfectedNoSymptoms", 0.206901},
-                                                          {"SeverePerInfectedSymptoms", 0.0786429},
-                                                          {"CriticalPerSevere", 0.173176},
-                                                          {"DeathsPerCritical", 0.217177},
+                                                          {"InfectedSymptomsPerInfectedNoSymptoms", 0.698315},
+                                                          {"SeverePerInfectedSymptoms", 0.104907},
+                                                          {"CriticalPerSevere", 0.369201},
+                                                          {"DeathsPerCritical", 0.387803},
                                                           {"cont_freq", 5.5}};
 
 std::vector<mio::TimeSeries<ScalarType>> simulate_ide_model(std::string date, ScalarType tmax,
@@ -117,9 +117,9 @@ std::vector<mio::TimeSeries<ScalarType>> simulate_ide_model(std::string date, Sc
     // Set other parameters.
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 1.);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] =
-        1 - simulation_parameter["RecoveredPerInfectedNoSymptoms"];
+        simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"];
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] =
-        simulation_parameter["RecoveredPerInfectedNoSymptoms"];
+        1 - simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"];
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere)] =
         simulation_parameter["SeverePerInfectedSymptoms"];
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)] =
@@ -227,7 +227,7 @@ mio::IOResult<void> simulate_ode_model(std::string date, Vector init_compartment
 
     // Set probabilities that determine proportion between compartments.
     model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
-        simulation_parameter["RecoveredPerInfectedNoSymptoms"];
+        1 - simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"];
     model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
         simulation_parameter["SeverePerInfectedSymptoms"];
     model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0] =
