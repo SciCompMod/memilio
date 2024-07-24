@@ -347,6 +347,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./coverage_python
           files: ./coverage_python/**,./coverage.info
+          functionalities: fixes
           verbose: true
 
   pages:
