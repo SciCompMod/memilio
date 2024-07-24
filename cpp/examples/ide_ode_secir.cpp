@@ -17,24 +17,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "boost/numeric/odeint/stepper/controlled_runge_kutta.hpp"
 #include "ode_secir/infection_state.h"
 #include "ode_secir/model.h"
-#include "memilio/math/adapt_rk.h"
-#include "ode_secir/parameter_space.h"
-#include "ode_secir/analyze_result.h"
 #include "ode_secir/parameters.h"
 
-#include "boost/fusion/functional/invocation/invoke.hpp"
 #include "ide_secir/infection_state.h"
 #include "ide_secir/model_ide.h"
 #include "ide_secir/parameters.h"
 #include "ide_secir/simulation.h"
 #include "ide_secir/initialize_from_ode.h"
 #include "memilio/io/result_io.h"
-#include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/utils/logging.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -152,13 +145,12 @@ int main()
         boost::filesystem::path res_dir("./results/");
         boost::filesystem::create_directory(res_dir);
 
-        auto save_result_status_ode =
-            mio::save_result({secihurd_ode}, {0}, 1,
-                             result_dir + "result_ode_dt=1e-" + std::to_string(dt_ode_exponent) + "_setting" +
-                                 std::to_string(setting) + ".h5");
+        auto save_result_status_ode = mio::save_result({secihurd_ode}, {0}, 1,
+                                                       result_dir + "result_ode_dt=" + fmt::format("{:.4f}", dt_ode) +
+                                                           "_setting" + std::to_string(setting) + ".h5");
         auto save_result_status_ode_flows =
             mio::save_result({secihurd_ode_flows}, {0}, 1,
-                             result_dir + "result_ode_flows_dt=1e-" + std::to_string(dt_ode_exponent) + "_setting" +
+                             result_dir + "result_ode_flows_dt=" + fmt::format("{:.4f}", dt_ode) + "_setting" +
                                  std::to_string(setting) + ".h5");
     }
 
@@ -302,14 +294,14 @@ int main()
 
         if (save_result) {
 
-            auto save_result_status_ide = mio::save_result(
-                {secihurd_ide}, {0}, 1,
-                result_dir + "result_ide_dt=1e-" + std::to_string(dt_ide_exponent) + "_init_dt_ode=1e-" +
-                    std::to_string(dt_ode_exponent) + "_setting" + std::to_string(setting) + ".h5");
-            auto save_result_status_ide_flows = mio::save_result(
-                {secihurd_ide_flows}, {0}, 1,
-                result_dir + "result_ide_flows_dt=1e-" + std::to_string(dt_ide_exponent) + "_init_dt_ode=1e-" +
-                    std::to_string(dt_ode_exponent) + "_setting" + std::to_string(setting) + ".h5");
+            auto save_result_status_ide =
+                mio::save_result({secihurd_ide}, {0}, 1,
+                                 result_dir + "result_ide_dt=" + fmt::format("{:.4f}", dt_ide) + "_init_dt_ode=" +
+                                     fmt::format("{:.4f}", dt_ode) + "_setting" + std::to_string(setting) + ".h5");
+            auto save_result_status_ide_flows =
+                mio::save_result({secihurd_ide_flows}, {0}, 1,
+                                 result_dir + "result_ide_flows_dt=" + fmt::format("{:.4f}", dt_ide) + "_init_dt_ode=" +
+                                     fmt::format("{:.4f}", dt_ode) + "_setting" + std::to_string(setting) + ".h5");
         }
     }
 }
