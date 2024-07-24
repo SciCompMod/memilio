@@ -633,12 +633,12 @@ void set_parameters(mio::abm::Parameters& params)
     params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Alpha, age_group_60_to_79}] = 0.825;
     params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Alpha, age_group_80_plus}]  = 0.9;
 
-    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Alpha, age_group_0_to_4}]   = 0.03;
-    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Alpha, age_group_5_to_14}]  = 0.03;
-    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Alpha, age_group_15_to_34}] = 0.04;
-    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Alpha, age_group_35_to_59}] = 0.17;
-    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Alpha, age_group_60_to_79}] = 0.45;
-    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Alpha, age_group_80_plus}]  = 0.55;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Alpha, age_group_0_to_4}]   = 0.0180;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Alpha, age_group_5_to_14}]  = 0.0237;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Alpha, age_group_15_to_34}] = 0.0373;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Alpha, age_group_35_to_59}] = 0.0795;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Alpha, age_group_60_to_79}] = 0.1664;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Alpha, age_group_80_plus}]  = 0.2374;
 
     params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Alpha, age_group_0_to_4}]   = 0.1;
     params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Alpha, age_group_5_to_14}]  = 0.11;
@@ -1136,7 +1136,6 @@ struct LogCumulativeDetectedInfections : mio::LogAlways {
 
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(sim.get_world().parameters.get_num_groups()));
         auto curr_time      = sim.get_time();
-        auto prev_time      = sim.get_prev_time();
         const auto persons  = sim.get_world().get_persons();
 
         // PRAGMA_OMP(parallel for)
