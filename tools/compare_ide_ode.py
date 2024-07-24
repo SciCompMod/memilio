@@ -107,6 +107,7 @@ def compare_results(files, legendplot, flows=True, fileending="", save=True, sav
                 for i in range(num_plots):
                     axs[int(i/2), i % 2].plot(dates[1:],
                                               total[1:, i]/np.diff(dates), label=legendplot[file], color=colors[file], linestyle=linestyles[file])
+                min_date = dates[1]
         else:
             if file == 0:
                 for i in range(num_plots):
@@ -116,14 +117,15 @@ def compare_results(files, legendplot, flows=True, fileending="", save=True, sav
                 for i in range(num_plots):
                     axs[int(i/2), i % 2].plot(dates,
                                               total[:, i], label=legendplot[file], color=colors[file], linestyle=linestyles[file])
+                min_date = dates[0]
 
         h5file.close()
 
     # define some characteristics of the plot
     for i in range(num_plots):
         axs[int(i/2), i % 2].set_title(secir_dict[i], fontsize=8)
-        # axs[int(i/2), i % 2].set_ylim(bottom=0)
-        axs[int(i/2), i % 2].set_xlim(left=0, right=dates[-1])
+        # axs[int(i/2), i % 2].set_ylim(bottom=10**3, top=5*10**3)
+        axs[int(i/2), i % 2].set_xlim(left=-20, right=dates[-1])
         axs[int(i/2), i % 2].grid(True, linestyle='--')
         # axs[int(i/2), i % 2].legend(fontsize=8)
         axs[int(i/2), i % 2].ticklabel_format(axis='y',
@@ -169,29 +171,63 @@ if __name__ == '__main__':
 
     flows = True
 
+    legendplot = list(["ODE", "IDE"])
+
     # Plot comparison of ODE and IDE models
 
-    # # Simulations based on LEOSS data
+    # -------------- Simulations based on LEOSS data ---------------
 
+    # data_dir = os.path.join(os.path.dirname(
+    #     __file__), "../results/fictional/leoss/")
+
+    # compare_results([os.path.join(data_dir, f"fictional_ode_leoss_2.0_12_0.1000_flows"),
+    #                  os.path.join(data_dir, f"fictional_ide_leoss_2.0_12_0.1000_flows")],
+    #                 legendplot, flows=True, fileending="2.0_12_0.1000_flows", save=True, save_dir='plots/leoss/flows/')
+
+    # # # # # # # # # Simulations based on Covasim data
+    # data_dir = os.path.join(os.path.dirname(
+    #     __file__), "../results/fictional/covasim/")
+
+    # compare_results([os.path.join(data_dir, f"fictional_ode_covasim_0.5_12_0.1000_flows"),
+    #                  os.path.join(data_dir, f"fictional_ide_covasim_0.5_12_0.1000_flows")],
+    #                 legendplot, flows=True, fileending="0.5_12_0.1000_flows", save=True, save_dir='plots/covasim/flows/')
+
+    # compare_results([os.path.join(data_dir, f"fictional_ode_covasim_0.0_12_0.1000_flows"),
+    #                  os.path.join(data_dir, f"fictional_ide_covasim_0.0_12_0.1000_flows")],
+    #                 legendplot, flows=True, fileending="0.0_12_0.1000_flows", save=True, save_dir='plots/covasim/flows/')
+
+    # compare_results([os.path.join(data_dir, f"fictional_ode_covasim_0.0_12_0.1000_compartments"),
+    #                  os.path.join(data_dir, f"fictional_ide_covasim_0.0_12_0.1000_compartments")],
+    #                 legendplot, flows=False, fileending="0.0_12_0.1000_compartments", save=True, save_dir='plots/covasim/compartments/')
+
+    # # # #  Real scenario
     data_dir = os.path.join(os.path.dirname(
-        __file__), "../results/fictional/leoss/")
+        __file__), "../results/real/")
 
-    compare_results([os.path.join(data_dir, f"fictional_ode_leoss_2.0_12_0.1000_flows"),
-                     os.path.join(data_dir, f"fictional_ide_leoss_2.0_12_0.1000_flows")],
-                    legendplot=list(["ODE", "IDE"]), flows=True, fileending="2.0_12_0.1000_flows", save=True, save_dir='plots/leoss/flows/')
+    # compare_results([os.path.join(data_dir, f"ode_2020-11-01_30_0.1000_flows"),
+    #                  os.path.join(data_dir, f"ide_2020-11-01_30_0.1000_flows")],
+    #                 legendplot, flows=True, fileending="2020-11-01_30_0.1000_flows", save=True, save_dir='plots/real/')
 
-    # # Simulations based on Covasim data
-    data_dir = os.path.join(os.path.dirname(
-        __file__), "../results/fictional/covasim/")
+    # compare_results([os.path.join(data_dir, f"ode_2020-11-01_30_0.1000_compartments"),
+    #                  os.path.join(data_dir, f"ide_2020-11-01_30_0.1000_compartments")],
+    #                 legendplot, flows=False, fileending="2020-11-01_30_0.1000_compartments", save=True, save_dir='plots/real/')
 
-    compare_results([os.path.join(data_dir, f"fictional_ode_covasim_0.5_12_0.1000_flows"),
-                     os.path.join(data_dir, f"fictional_ide_covasim_0.5_12_0.1000_flows")],
-                    legendplot=list(["ODE", "IDE"]), flows=True, fileending="0.5_12_0.1000_flows", save=True, save_dir='plots/covasim/flows/')
+    compare_results([os.path.join(data_dir, f"ode_2020-10-01_30_0.1000_flows"),
+                     os.path.join(data_dir, f"ide_2020-10-01_30_0.1000_flows")],
+                    legendplot, flows=True, fileending="2020-10-01_30_0.1000_flows", save=True, save_dir='plots/real/compare_all/')
 
-    compare_results([os.path.join(data_dir, f"fictional_ode_covasim_2.0_12_0.1000_flows"),
-                     os.path.join(data_dir, f"fictional_ide_covasim_2.0_12_0.1000_flows")],
-                    legendplot=list(["ODE", "IDE"]), flows=True, fileending="2.0_12_0.1000_flows", save=True, save_dir='plots/covasim/flows/')
+    compare_results([os.path.join(data_dir, f"ode_2020-10-01_30_0.1000_compartments"),
+                     os.path.join(data_dir, f"ide_2020-10-01_30_0.1000_compartments")],
+                    legendplot, flows=False, fileending="2020-10-01_30_0.1000_compartments", save=True, save_dir='plots/real/compare_all/')
 
-    compare_results([os.path.join(data_dir, f"fictional_ode_covasim_2.0_200_0.1000_compartments"),
-                     os.path.join(data_dir, f"fictional_ide_covasim_2.0_200_0.1000_compartments")],
-                    legendplot=list(["ODE", "IDE"]), flows=False, fileending="2.0_200_0.1000_compartments", save=True, save_dir='plots/covasim/compartments/')
+    # # # # #  Constant init
+    # data_dir = os.path.join(os.path.dirname(
+    #     __file__), "../results/fictional/constant_init/")
+
+    # compare_results([os.path.join(data_dir, f"ode_constant_init_30_0.1000_flows"),
+    #                  os.path.join(data_dir, f"ide_constant_init_30_0.1000_flows")],
+    #                 legendplot, flows=True, fileending="30_0.1000_flows", save=True, save_dir='plots/constant_init/')
+
+    # compare_results([os.path.join(data_dir, f"ode_constant_init_30_0.1000_compartments"),
+    #                  os.path.join(data_dir, f"ide_constant_init_30_0.1000_compartments")],
+    #                 legendplot, flows=False, fileending="30_0.1000_compartments", save=True, save_dir='plots/constant_init/')

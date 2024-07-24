@@ -52,7 +52,7 @@ def plot_changepoint(files, legendplot, flows=True, fileending="", save=True, sa
             # IDE
             elif file == 1:
                 # transform from flows over time interval to flows at time points
-                ax.plot(dates[indices[0][1:]], total[indices[0][1:], 0]/np.diff(dates[indices[0]]), label=legendplot[file],
+                ax.plot(dates[1:], total[1:, 0]/np.diff(dates), label=legendplot[file],
                         color=colors[file], linestyle=linestyles[file])
         else:
             incidence = (total[:-1, 0]-total[1:, 0])/(dates[1:]-dates[:-1])
@@ -63,7 +63,7 @@ def plot_changepoint(files, legendplot, flows=True, fileending="", save=True, sa
 
         # ax.set_title(secir_dict[i], fontsize=8)
         # axs[int(i/2), i % 2].set_ylim(bottom=0)
-        ax.set_xlim(left=0)
+        ax.set_xlim(left=-20)
         ax.grid(True, linestyle='--')
         ax.legend(fontsize=8)
 
@@ -81,16 +81,23 @@ def plot_changepoint(files, legendplot, flows=True, fileending="", save=True, sa
 
 
 if __name__ == '__main__':
-    # Path to simulation results
-    data_dir = os.path.join(os.path.dirname(
-        __file__), "..", "results/fictional/covasim/")
-
     legendplot = list(["ODE", "IDE"])
+    # Path to simulation results
+    # data_dir = os.path.join(os.path.dirname(
+    #     __file__), "..", "results/fictional/covasim/")
 
-    plot_changepoint([os.path.join(data_dir, f"fictional_ode_covasim_0.5_12_0.1000_flows"),
-                     os.path.join(data_dir, f"fictional_ide_covasim_0.5_12_0.1000_flows")],
-                     legendplot, flows=True, fileending="0.5_12_0.1000", save=True, save_dir='plots/covasim/changepoints/')
+    # plot_changepoint([os.path.join(data_dir, f"fictional_ode_covasim_0.5_12_0.1000_flows"),
+    #                  os.path.join(data_dir, f"fictional_ide_covasim_0.5_12_0.1000_flows")],
+    #                  legendplot, flows=True, fileending="0.5_12_0.1000", save=True, save_dir='plots/covasim/changepoints/')
 
-    plot_changepoint([os.path.join(data_dir, f"fictional_ode_covasim_2.0_12_0.1000_flows"),
-                     os.path.join(data_dir, f"fictional_ide_covasim_2.0_12_0.1000_flows")],
-                     legendplot, flows=True, fileending="2.0_12_0.1000", save=True, save_dir='plots/covasim/changepoints/')
+    # plot_changepoint([os.path.join(data_dir, f"fictional_ode_covasim_2.0_12_0.1000_flows"),
+    #                  os.path.join(data_dir, f"fictional_ide_covasim_2.0_12_0.1000_flows")],
+    #  legendplot, flows=True, fileending="2.0_12_0.1000", save=True, save_dir='plots/covasim/changepoints/')
+
+    # # # #  Constant init
+    data_dir = os.path.join(os.path.dirname(
+        __file__), "../results/fictional/constant_init/")
+
+    plot_changepoint([os.path.join(data_dir, f"ode_constant_init_30_0.1000_flows"),
+                     os.path.join(data_dir, f"ide_constant_init_30_0.1000_flows")],
+                     legendplot, flows=True, fileending="30_0.1000", save=True, save_dir='plots/constant_init/changepoints/')

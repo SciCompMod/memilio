@@ -25,7 +25,6 @@
 
 #include "ide_secir/model.h"
 #include "ide_secir/infection_state.h"
-#include "memilio/math/eigen.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/io.h"
 #include "memilio/utils/date.h"
@@ -148,8 +147,10 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     }
 
     if (!max_offset_needed_avail || !min_offset_needed_avail) {
-        log_error("Necessary range of dates needed to compute initial values does not exist in RKI data.");
-        return failure(StatusCode::OutOfRange, path + ", necessary range of dates does not exist in RKI data.");
+        // TODO
+        log_warning("Necessary range of dates needed to compute initial values does not exist in RKI data. Missing "
+                    "dates were set to 0.");
+        // return failure(StatusCode::OutOfRange, path + ", necessary range of dates does not exist in RKI data.");
     }
 
     //--- Calculate the flows "after" InfectedNoSymptomsToInfectedSymptoms. ---
@@ -183,10 +184,10 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     }
 
     //--- Calculate the remaining flows. ---
-    // Compute flow ExposedToInfectedNoSymptoms for -global_support_max, ..., 0.
+    // Compute flow ExposedToInfectedNoSymptoms for -2 * global_support_max, ..., 0.
     // Use mean value of the TransitionDistribution InfectedNoSymptomsToInfectedSymptoms for the calculation.
     Eigen::Index index_shift_mean = Eigen::Index(std::round(mean_InfectedNoSymptomsToInfectedSymptoms / dt));
-    for (Eigen::Index i = -global_support_max_index; i <= 0; i++) {
+    for (Eigen::Index i = -2 * global_support_max_index; i <= 0; i++) {
         model.m_transitions[i + start_shift][Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] =
             (1 / model.parameters.get<TransitionProbabilities>()[Eigen::Index(
                      InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]) *
