@@ -318,7 +318,7 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
     for (auto&& entry : divi_data) {
         auto it      = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
             return r == 0 || r == get_region_id(entry);
-             });
+        });
         auto date_df = entry.date;
         if (it != vregion.end() && date_df == date) {
             auto region_idx      = size_t(it - vregion.begin());
@@ -390,7 +390,7 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
 }
 
 IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
-                             Date date, double scaling_factor_icu)
+                             Date date, const std::vector<double>& scaling_factor_icu)
 {
     std::vector<double> sum_mu_I_U(vregion.size(), 0);
     std::vector<std::vector<double>> mu_I_U{model.size()};
@@ -408,9 +408,10 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
 
     for (size_t region = 0; region < vregion.size(); region++) {
         auto num_groups = model[region].parameters.get_num_groups();
+        int agg         = 0;
         for (auto i = AgeGroup(0); i < num_groups; i++) {
             model[region].populations[{i, InfectionState::InfectedCritical}] =
-                scaling_factor_icu * num_icu[region] * mu_I_U[region][(size_t)i] / sum_mu_I_U[region];
+                scaling_factor_icu[agg++] * num_icu[region] * mu_I_U[region][(size_t)i] / sum_mu_I_U[region];
         }
     }
 

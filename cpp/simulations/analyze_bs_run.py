@@ -175,7 +175,7 @@ def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs, real_bs):
         ax_infected_no_symptoms.plot(
             x, y50[:, 1], color=color_plot[count], label='y50')
         ax_infected_no_symptoms.plot(
-            x_real, y_real[:, 3], '.', color=color_plot[count], label='y_real')
+            x_real, y_real[:, 2], '.', color=color_plot[count], label='y_real')
         ax_infected_no_symptoms.fill_between(
             x, y50[:, 1], y25[:, 1], alpha=0.5, color=color_plot[count])
         ax_infected_no_symptoms.fill_between(
@@ -498,7 +498,7 @@ def infer_positive_tests(path):
     # we assume r_sns = 20 so symptomatic persons are 20 times more likely to test themselves
     r_sns = 20
     # we say the likelyhood to test yourself is 0.8 for symptomatic persons and therefore 0.04 for asymptomatic persons
-    lt_sympt = 0.08
+    lt_sympt = 0.06
     lt_asympt = lt_sympt/r_sns
     sensitivity = 0.6
     specificity = 0.99
@@ -542,8 +542,8 @@ def infer_positive_tests(path):
 
 
 if __name__ == "__main__":
-    path = "/Users/david/Documents/HZI/memilio/data/results_last_run_last_run"
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
+    # path = "/Users/david/Documents/HZI/memilio/data/results_last_run_last_run"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
     # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/1/results_last_run"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_last_run"
 
@@ -553,8 +553,8 @@ if __name__ == "__main__":
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
     plot_infectoin_states_results(path)
-    # plot_infections_loc_types_avarage(path)
-    # plot_icu(path+"/..")
-    # plot_dead(path)
+    plot_infections_loc_types_avarage(path)
+    plot_icu(path+"/..")
+    plot_dead(path)
     # plot_tests(path+"/..")
-    # infer_positive_tests(path)
+    infer_positive_tests(path)
