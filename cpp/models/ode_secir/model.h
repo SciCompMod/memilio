@@ -678,7 +678,7 @@ auto get_mobility_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Re
 }
 
 template <typename FP = ScalarType, class Base = mio::Simulation<Model<FP>, FP>>
-auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> moved, FP time)
+auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> mobile_population, FP time)
 {
     auto& model       = sim.get_model();
     auto nondetection = 1.0;
@@ -693,14 +693,14 @@ auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> moved, FP 
         auto ISyCi = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsConfirmed});
 
         //put detected commuters in their own compartment so they don't contribute to infections in their home node
-        sim.get_result().get_last_value()[INSi] -= moved[INSi] * (1 - nondetection);
-        sim.get_result().get_last_value()[INSCi] += moved[INSi] * (1 - nondetection);
-        sim.get_result().get_last_value()[ISyi] -= moved[ISyi] * (1 - nondetection);
-        sim.get_result().get_last_value()[ISyCi] += moved[ISyi] * (1 - nondetection);
+        sim.get_result().get_last_value()[INSi] -= mobile_population[INSi] * (1 - nondetection);
+        sim.get_result().get_last_value()[INSCi] += mobile_population[INSi] * (1 - nondetection);
+        sim.get_result().get_last_value()[ISyi] -= mobile_population[ISyi] * (1 - nondetection);
+        sim.get_result().get_last_value()[ISyCi] += mobile_population[ISyi] * (1 - nondetection);
 
         //reduce the number of commuters
-        moved[ISyi] *= nondetection;
-        moved[INSi] *= nondetection;
+        mobile_population[ISyi] *= nondetection;
+        mobile_population[INSi] *= nondetection;
     }
 }
 

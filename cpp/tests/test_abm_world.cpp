@@ -394,7 +394,7 @@ TEST(TestModel, evolveMobility)
         p_severe.set_assigned_location(mio::abm::LocationType::ICU, icu_id);
         p_severe.set_assigned_location(mio::abm::LocationType::Home, home_id);
 
-        // Add trip to see if a dead person can move outside of cemetery by scheduled
+        // Add trip to see if a dead person can change location outside of cemetery by scheduled trips
         mio::abm::TripList& trip_list = model.get_trip_list();
         mio::abm::Trip trip1(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id, home_id);
         mio::abm::Trip trip2(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);

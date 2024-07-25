@@ -1010,23 +1010,27 @@ TEST(Secir, test_commuters)
     model.parameters.get_commuter_nondetection()    = non_detection_factor;
     auto sim                                        = mio::osecir::Simulation<>(model);
     auto before_testing                             = sim.get_result().get_last_value().eval();
-    auto moved                                      = (sim.get_result().get_last_value() * mobility_factor).eval();
-    auto moved_tested                               = moved.eval();
+    auto mobile_population                          = (sim.get_result().get_last_value() * mobility_factor).eval();
+    auto mobile_population_tested                   = mobile_population.eval();
 
-    mio::osecir::test_commuters<double>(sim, moved_tested, 0.0);
+    mio::osecir::test_commuters<double>(sim, mobile_population_tested, 0.0);
 
-    ASSERT_NEAR(moved_tested[Eigen::Index(mio::osecir::InfectionState::InfectedNoSymptoms)],
-                moved[Eigen::Index(mio::osecir::InfectionState::InfectedNoSymptoms)] * non_detection_factor, 1e-5);
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecir::InfectionState::InfectedNoSymptoms)],
+                mobile_population[Eigen::Index(mio::osecir::InfectionState::InfectedNoSymptoms)] * non_detection_factor,
+                1e-5);
     ASSERT_NEAR(
         sim.get_result().get_last_value()[Eigen::Index(mio::osecir::InfectionState::InfectedNoSymptomsConfirmed)],
         before_testing[Eigen::Index(mio::osecir::InfectionState::InfectedNoSymptomsConfirmed)] +
-            moved[Eigen::Index(mio::osecir::InfectionState::InfectedNoSymptoms)] * (1 - non_detection_factor),
+            mobile_population[Eigen::Index(mio::osecir::InfectionState::InfectedNoSymptoms)] *
+                (1 - non_detection_factor),
         1e-5);
-    ASSERT_NEAR(moved_tested[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)],
-                moved[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)] * non_detection_factor, 1e-5);
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)],
+                mobile_population[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)] * non_detection_factor,
+                1e-5);
     ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecir::InfectionState::InfectedSymptomsConfirmed)],
                 before_testing[Eigen::Index(mio::osecir::InfectionState::InfectedSymptomsConfirmed)] +
-                    moved[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)] * (1 - non_detection_factor),
+                    mobile_population[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)] *
+                        (1 - non_detection_factor),
                 1e-5);
 }
 

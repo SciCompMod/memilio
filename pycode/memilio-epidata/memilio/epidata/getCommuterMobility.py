@@ -42,7 +42,8 @@ def verify_sorted(countykey_list):
     @param countykey_list List of county regional keys
     """
     countykey_list_is_sorted = np.all(np.array(
-        countykey_list[:-1]) <= np.array(countykey_list[1:]))  # this checks if it is sorted
+        # this checks if it is sorted
+        countykey_list[:-1]) <= np.array(countykey_list[1:]))
     if countykey_list_is_sorted:
         return True
     else:
@@ -245,12 +246,12 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                         and (commuter_mobility_file.iloc[i, 0]).isdigit()):
                     checksum = 0  # sum of county mobility from, to be checked against sum in document
 
-                    # make zero-filled list of counties explicitly moved to from county considered
+                    # make zero-filled list of counties explicitly changed to from county considered
                     # 'implicit' mobility means 'mobility to' which is summed in a larger regional entity and not given in
                     # detail per county
-                    counties_movedfrom = []
+                    counties_changed_node_from = []
                     for gov_region in range(len(gov_county_table)):
-                        counties_movedfrom.append(
+                        counties_changed_node_from.append(
                             np.zeros(len(gov_county_table[gov_region])))
 
                     # merge eisenach and wartburgkreis
@@ -260,10 +261,10 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                                                     {'16056': '16063'}}, inplace=True)
 
                     current_col = countykey2numlist[commuter_mobility_file.iloc[i, 0]]
-                    curr_county_movedto = commuter_mobility_file.iloc[i, 1]
+                    curr_county_changed_node_to = commuter_mobility_file.iloc[i, 1]
                     current_key = commuter_mobility_file.iloc[i, 0]
                     # mobility to itself excluded!
-                    counties_movedfrom[countykey2govkey[current_key]][
+                    counties_changed_node_from[countykey2govkey[current_key]][
                         countykey2localnumlist[current_key]] = 1
 
                 if not isinstance(commuter_mobility_file.iloc[i, 2], float):
@@ -280,8 +281,8 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                             mat_commuter_mobility[current_row,
                                                   current_col] = val
                             checksum += val
-                            counties_movedfrom[countykey2govkey[commuter_mobility_file.iloc[i, 2]]
-                                               ][countykey2localnumlist[commuter_mobility_file.iloc[i, 2]]] = 1
+                            counties_changed_node_from[countykey2govkey[commuter_mobility_file.iloc[i, 2]]
+                                                       ][countykey2localnumlist[commuter_mobility_file.iloc[i, 2]]] = 1
 
                         # take summed values of other REMAINING counties of government region.
                         # here, some counties of the region are stated explicitly and the rest is summed.
@@ -293,14 +294,14 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                             if len(remaining_counties) > 2 and remaining_counties[2] == '0':
                                 remaining_counties = remaining_counties[0:2]
 
-                                # sum population of all counties not explicitly moved from
-                                # of the current gov region moved from
+                                # sum population of all counties not explicitly changed from
+                                # of the current gov region changed from
                             dummy_pop_sum = 0
                             for mapped_county in range(
                                 len(
                                     gov_county_table
                                     [govkey2numlist[remaining_counties]])):
-                                if counties_movedfrom[govkey2numlist[remaining_counties]][mapped_county] < 1:
+                                if counties_changed_node_from[govkey2numlist[remaining_counties]][mapped_county] < 1:
                                     # get identifier (0-401) for county key
                                     globindex = countykey2numlist[gov_county_table[
                                         govkey2numlist[remaining_counties]][mapped_county]]
@@ -312,12 +313,12 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                                 len(
                                     gov_county_table
                                     [govkey2numlist[remaining_counties]])):
-                                if counties_movedfrom[govkey2numlist[remaining_counties]][mapped_county] < 1:
+                                if counties_changed_node_from[govkey2numlist[remaining_counties]][mapped_county] < 1:
                                     # get identifier (0-401) for county key
                                     globindex = countykey2numlist[gov_county_table[
                                         govkey2numlist[remaining_counties]][mapped_county]]
-                                    counties_movedfrom[govkey2numlist[remaining_counties]
-                                                       ][mapped_county] = 1
+                                    counties_changed_node_from[govkey2numlist[remaining_counties]
+                                                               ][mapped_county] = 1
 
                                     # set value computed relatively to county size and effective mobility
                                     current_row = globindex
@@ -331,9 +332,9 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                         # take summed values of ALL counties of a government region.
                         # here, no single county of the region is stated explicitly, all counties are summed together.
                         elif (commuter_mobility_file.iloc[i, 2] in govkey_list and sum(
-                                counties_movedfrom[govkey2numlist[commuter_mobility_file.iloc[i, 2]]]) == 0):
-                            # sum population of all counties not explicitly moved to
-                            # of the current gov region moved to
+                                counties_changed_node_from[govkey2numlist[commuter_mobility_file.iloc[i, 2]]]) == 0):
+                            # sum population of all counties not explicitly changed to
+                            # of the current gov region changed to
                             dummy_pop_sum = 0
                             for mapped_county in range(
                                 len(
@@ -341,7 +342,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                                     [
                                         govkey2numlist
                                         [commuter_mobility_file.iloc[i, 2]]])):
-                                if counties_movedfrom[govkey2numlist[commuter_mobility_file.iloc[i, 2]]][mapped_county] < 1:
+                                if counties_changed_node_from[govkey2numlist[commuter_mobility_file.iloc[i, 2]]][mapped_county] < 1:
                                     # get identifier (0-401) for county key
                                     globindex = countykey2numlist[gov_county_table[
                                         govkey2numlist[commuter_mobility_file.iloc[i, 2]]][mapped_county]]
@@ -355,12 +356,12 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                                     [
                                         govkey2numlist
                                         [commuter_mobility_file.iloc[i, 2]]])):
-                                if counties_movedfrom[govkey2numlist[commuter_mobility_file.iloc[i, 2]]][mapped_county] < 1:
+                                if counties_changed_node_from[govkey2numlist[commuter_mobility_file.iloc[i, 2]]][mapped_county] < 1:
                                     # get identifier (0-401) for county key
                                     globindex = countykey2numlist[gov_county_table[
                                         govkey2numlist[commuter_mobility_file.iloc[i, 2]]][mapped_county]]
-                                    counties_movedfrom[govkey2numlist[commuter_mobility_file.iloc[i, 2]]
-                                                       ][mapped_county] = 1
+                                    counties_changed_node_from[govkey2numlist[commuter_mobility_file.iloc[i, 2]]
+                                                               ][mapped_county] = 1
 
                                     # set value computed relatively to county size and effective mobility
                                     current_row = globindex
@@ -394,15 +395,15 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                             dummy_key = int(
                                 commuter_mobility_file.iloc[i, 2]) - 1
 
-                            # sum population of all counties not explicitly moved
-                            # from the current gov region moved from
+                            # sum population of all counties not explicitly changed
+                            # from the current gov region changed from
                             dummy_pop_sum = 0
                             for j in range(len(state_gov_table[dummy_key])):
                                 # over all government regions not explicitly stated
                                 gov_index = govkey2numlist[state_gov_table[dummy_key][j]]
                                 for mapped_county in range(len(gov_county_table[gov_index])):
                                     # over all counties of the considered gov region
-                                    if counties_movedfrom[gov_index][mapped_county] < 1:
+                                    if counties_changed_node_from[gov_index][mapped_county] < 1:
                                         # get identifier (0-401) for county key
                                         globindex = countykey2numlist[gov_county_table[gov_index]
                                                                       [mapped_county]]
@@ -411,15 +412,16 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
 
                             # distribute out-mobility relatively to county population where mobility comes from
                             for j in range(len(
-                                    state_gov_table[dummy_key])):  # over all government regions not explicitly stated
+                                    # over all government regions not explicitly stated
+                                    state_gov_table[dummy_key])):
                                 gov_index = govkey2numlist[state_gov_table[dummy_key][j]]
                                 for mapped_county in range(len(gov_county_table[gov_index])):
                                     # over all counties of the considered gov region
-                                    if counties_movedfrom[gov_index][mapped_county] < 1:
+                                    if counties_changed_node_from[gov_index][mapped_county] < 1:
                                         # get identifier (0-401) for county key
                                         globindex = countykey2numlist[gov_county_table[gov_index]
                                                                       [mapped_county]]
-                                        counties_movedfrom[gov_index][mapped_county] = 1
+                                        counties_changed_node_from[gov_index][mapped_county] = 1
 
                                         # set value computed relatively to county size and effective mobility
                                         current_row = globindex
@@ -441,7 +443,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                     if abs_err < setup_dict['abs_tol'] and abs_err / checksum < setup_dict['rel_tol']:
                         checksum = 0
                     else:
-                        gd.default_print('Warning', 'Error in calculations for county ' + str(curr_county_movedto) +
+                        gd.default_print('Warning', 'Error in calculations for county ' + str(curr_county_changed_node_to) +
                                          '\nAccumulated values:' + str(checksum) +
                                          ', correct sum:' + str(commuter_mobility_file.iloc[i, 4]))
                         gd.default_print('Debug', 'Absolute error:' + str(abs_err) +

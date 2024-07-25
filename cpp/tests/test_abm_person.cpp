@@ -41,7 +41,7 @@ TEST(TestPerson, init)
     EXPECT_EQ(person.get_id(), mio::abm::PersonId::invalid_id());
 }
 
-TEST(TestPerson, move)
+TEST(TestPerson, change_location)
 {
     auto rng = mio::RandomNumberGenerator();
 

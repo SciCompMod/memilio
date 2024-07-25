@@ -901,71 +901,71 @@ TEST(TestOdeSECIRVVS, test_commuters)
     model.parameters.get_commuter_nondetection()    = non_detection_factor;
     auto sim                                        = mio::osecirvvs::Simulation<>(model);
     auto before_testing                             = sim.get_result().get_last_value().eval();
-    auto moved                                      = (sim.get_result().get_last_value() * mobility_factor).eval();
-    auto moved_tested                               = moved.eval();
+    auto mobile_population                                      = (sim.get_result().get_last_value() * mobility_factor).eval();
+    auto mobile_population_tested                               = mobile_population.eval();
 
-    mio::osecirvvs::test_commuters<double>(sim, moved_tested, 0.0);
+    mio::osecirvvs::test_commuters<double>(sim, mobile_population_tested, 0.0);
 
-    ASSERT_NEAR(moved_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)],
-                moved[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] * non_detection_factor,
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)],
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] * non_detection_factor,
                 1e-5);
     ASSERT_NEAR(
         sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed)] +
-            moved[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] * (1 - non_detection_factor),
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] * (1 - non_detection_factor),
         1e-5);
-    ASSERT_NEAR(moved_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)],
-                moved[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] *
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)],
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] *
                     non_detection_factor,
                 1e-5);
     ASSERT_NEAR(
         sim.get_result()
             .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed)] +
-            moved[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] *
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] *
                 (1 - non_detection_factor),
         1e-5);
-    ASSERT_NEAR(moved_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)],
-                moved[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] *
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)],
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] *
                     non_detection_factor,
                 1e-5);
     ASSERT_NEAR(
         sim.get_result()
             .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed)] +
-            moved[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] *
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] *
                 (1 - non_detection_factor),
         1e-5);
 
-    ASSERT_NEAR(moved_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)],
-                moved[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] * non_detection_factor,
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)],
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] * non_detection_factor,
                 1e-5);
     ASSERT_NEAR(sim.get_result()
                     .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed)],
                 before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed)] +
-                    moved[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] *
+                    mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] *
                         (1 - non_detection_factor),
                 1e-5);
-    ASSERT_NEAR(moved_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)],
-                moved[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] *
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)],
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] *
                     non_detection_factor,
                 1e-5);
     ASSERT_NEAR(
         sim.get_result()
             .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed)] +
-            moved[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] *
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] *
                 (1 - non_detection_factor),
         1e-5);
-    ASSERT_NEAR(moved_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)],
-                moved[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] *
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)],
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] *
                     non_detection_factor,
                 1e-5);
     ASSERT_NEAR(
         sim.get_result().get_last_value()[Eigen::Index(
             mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed)] +
-            moved[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] *
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] *
                 (1 - non_detection_factor),
         1e-5);
 }

@@ -38,10 +38,10 @@ struct Trip {
     PersonId person_id; /**< Person that makes the trip and corresponds to the index into the structure m_persons from
     Model, where all Person%s are saved.*/
     TimePoint time; ///< Time at which a Person changes the Location.
-    LocationId destination; ///< Location where the Person moves to.
+    LocationId destination; ///< Location where the Person changes to.
     LocationId origin; ///< Location where the Person starts the Trip.
     std::vector<uint32_t> cells; /**< If destination consists of different Cell%s, this gives the index of the
-    Cell%s the Person moves to.*/
+    Cell%s the Person changes to.*/
     TransportMode
         trip_mode; ///< Mode of transportation. 1:Bike, 2:Car (Driver), 3:Car (Co-Driver)), 4:Public Transport, 5:Walking, 6:Other/Unknown
     ActivityType
@@ -51,9 +51,9 @@ struct Trip {
      * @brief Construct a new Trip.
      * @param[in] id ID of the Person that makes the Trip.
      * @param[in] time_new Time at which a Person changes the Location this currently cant be set for s specific day just a timepoint in a day.
-     * @param[in] destination Location where the Person moves to.
+     * @param[in] destination Location where the Person changes to.
      * @param[in] origin Location where the person starts the Trip.
-     * @param[in] input_cells The index of the Cell%s the Person moves to.
+     * @param[in] input_cells The index of the Cell%s the Person changes to.
      */
     Trip(PersonId id, TimePoint time_new, LocationId dest, LocationId org, TransportMode mode_of_transport,
          ActivityType type_of_activity, const std::vector<uint32_t>& input_cells = {})

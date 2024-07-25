@@ -252,25 +252,25 @@ class MobilityEdge
 public:
     /**
      * create edge with coefficients.
-     * @param coeffs % of people in each group and compartment that move in each time step.
+     * @param coeffs % of people in each group and compartment that change node in each time step.
      */
     MobilityEdge(const MobilityParameters<FP>& params)
         : m_parameters(params)
-        , m_moved(params.get_coefficients().get_shape().rows())
+        , m_mobile_population(params.get_coefficients().get_shape().rows())
         , m_return_times(0)
-        , m_return_moved(false)
+        , m_return_mobile_population(false)
     {
     }
 
     /**
      * create edge with coefficients.
-     * @param coeffs % of people in each group and compartment that move in each time step.
+     * @param coeffs % of people in each group and compartment that change node in each time step.
      */
     MobilityEdge(const Eigen::VectorXd& coeffs)
         : m_parameters(coeffs)
-        , m_moved(coeffs.rows())
+        , m_mobile_population(coeffs.rows())
         , m_return_times(0)
-        , m_return_moved(false)
+        , m_return_mobile_population(false)
     {
     }
 
@@ -285,42 +285,42 @@ public:
     /**
      * compute mobility from node_from to node_to.
      * mobility is based on coefficients.
-     * moved persons are added to the current state of node_to, subtracted from node_from.
-     * on return, moved persons (adjusted for infections) are subtracted from node_to, added to node_from.
+     * The mobile population added to the current state of node_to, subtracted from node_from.
+     * on return, the mobile population (adjusted for infections) are subtracted from node_to, added to node_from.
      * @param t current time
      * @param dt last time step (fixed to 0.5 for mobility model)
-     * @param node_from node that people moved from, return to
-     * @param node_to node that people moved to, return from
+     * @param node_from node that people changed from, return to
+     * @param node_to node that people changed to, return from
      */
     template <class Sim>
     void apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
 
 private:
     MobilityParameters<FP> m_parameters;
-    TimeSeries<double> m_moved;
+    TimeSeries<double> m_mobile_population;
     TimeSeries<double> m_return_times;
-    bool m_return_moved;
+    bool m_return_mobile_population;
     double m_t_last_dynamic_npi_check               = -std::numeric_limits<double>::infinity();
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
 };
 
 /**
- * adjust number of moved people when they return according to the model.
+ * adjust number of people that changed node when they return according to the model.
  * E.g. during the time in the other node, some people who left as susceptible will return exposed.
  * Implemented for general compartmentmodel simulations, overload for your custom model if necessary
  * so that it can be found with argument-dependent lookup, i.e. in the same namespace as the model.
- * @param[inout] moved number of people that moved as input, number of people that return as output
- * @param params parameters of model in the node that the people moved to.
- * @param total total population in the node that the people moved to.
+ * @param[inout] mobile_population number of people that changed node as input, number of people that return as output
+ * @param params parameters of model in the node that the people changed to.
+ * @param total total population in the node that the people changed to.
  * @param t time of mobility
  * @param dt time between mobility and return
  */
 template <typename FP, class Sim, class = std::enable_if_t<is_compartment_model_simulation<FP, Sim>::value>>
-void calculate_mobility_returns(Eigen::Ref<typename TimeSeries<FP>::Vector> moved, const Sim& sim,
+void calculate_mobility_returns(Eigen::Ref<typename TimeSeries<FP>::Vector> mobile_population, const Sim& sim,
                                 Eigen::Ref<const typename TimeSeries<FP>::Vector> total, FP t, FP dt)
 {
-    auto y0 = moved.eval();
-    auto y1 = moved;
+    auto y0 = mobile_population.eval();
+    auto y1 = mobile_population;
     EulerIntegratorCore<FP>().step(
         [&](auto&& y, auto&& t_, auto&& dydt) {
             sim.get_model().get_derivatives(total, y, t_, dydt);
@@ -401,17 +401,17 @@ using test_commuters_expr_t = decltype(test_commuters(
  * In order to support this feature for your model, implement a test_commuters overload 
  * that can be found with argument-dependent lookup.
  * @param node a node of a mobility graph.
- * @param moved mutable reference to vector of persons per compartment that move.
+ * @param mobile_population mutable reference to vector of persons per compartment that changes nodes.
  * @param t the current simulation time.
  */
 template <class Sim, std::enable_if_t<!is_expression_valid<test_commuters_expr_t, Sim>::value, void*> = nullptr>
-void test_commuters(SimulationNode<Sim>& /*node*/, Eigen::Ref<Eigen::VectorXd> /*moved*/, double /*time*/)
+void test_commuters(SimulationNode<Sim>& /*node*/, Eigen::Ref<Eigen::VectorXd> /*mobile_population*/, double /*time*/)
 {
 }
 template <class Sim, std::enable_if_t<is_expression_valid<test_commuters_expr_t, Sim>::value, void*> = nullptr>
-void test_commuters(SimulationNode<Sim>& node, Eigen::Ref<Eigen::VectorXd> moved, double time)
+void test_commuters(SimulationNode<Sim>& node, Eigen::Ref<Eigen::VectorXd> mobile_population, double time)
 {
-    return test_commuters(node.get_simulation(), moved, time);
+    return test_commuters(node.get_simulation(), mobile_population, time);
 }
 
 template <typename FP>
@@ -444,14 +444,16 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
     //returns
     for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
         if (m_return_times.get_time(i) <= t) {
-            auto v0 = find_value_reverse(node_to.get_result(), m_moved.get_time(i), 1e-10, 1e-10);
+            auto v0 = find_value_reverse(node_to.get_result(), m_mobile_population.get_time(i), 1e-10, 1e-10);
             assert(v0 != node_to.get_result().rend() && "unexpected error.");
-            calculate_mobility_returns<FP, Sim>(m_moved[i], node_to.get_simulation(), *v0, m_moved.get_time(i), dt);
+            calculate_mobility_returns<FP, Sim>(m_mobile_population[i], node_to.get_simulation(), *v0,
+                                                m_mobile_population.get_time(i), dt);
 
             //the lower-order return calculation may in rare cases produce negative compartments,
             //especially at the beginning of the simulation.
             //fix by subtracting the supernumerous returns from the biggest compartment of the age group.
-            Eigen::VectorXd remaining_after_return = (node_to.get_result().get_last_value() - m_moved[i]).eval();
+            Eigen::VectorXd remaining_after_return =
+                (node_to.get_result().get_last_value() - m_mobile_population[i]).eval();
             for (Eigen::Index j = 0; j < node_to.get_result().get_last_value().size(); ++j) {
                 if (remaining_after_return(j) < 0) {
                     auto num_comparts = (Eigen::Index)Sim::Model::Compartments::Count;
@@ -464,31 +466,31 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
                     slice(remaining_after_return, {group * num_comparts, num_comparts}).maxCoeff(&max_index);
                     log_info("Transferring to compartment {}", max_index);
                     max_index += group * num_comparts;
-                    m_moved[i](max_index) -= remaining_after_return(j);
-                    m_moved[i](j) += remaining_after_return(j);
+                    m_mobile_population[i](max_index) -= remaining_after_return(j);
+                    m_mobile_population[i](j) += remaining_after_return(j);
                 }
             }
-            node_from.get_result().get_last_value() += m_moved[i];
-            node_to.get_result().get_last_value() -= m_moved[i];
-            m_moved.remove_time_point(i);
+            node_from.get_result().get_last_value() += m_mobile_population[i];
+            node_to.get_result().get_last_value() -= m_mobile_population[i];
+            m_mobile_population.remove_time_point(i);
             m_return_times.remove_time_point(i);
         }
     }
 
-    if (!m_return_moved && (m_parameters.get_coefficients().get_matrix_at(t).array() > 0.0).any()) {
+    if (!m_return_mobile_population && (m_parameters.get_coefficients().get_matrix_at(t).array() > 0.0).any()) {
         //normal daily mobility
-        m_moved.add_time_point(
+        m_mobile_population.add_time_point(
             t, (node_from.get_last_state().array() * m_parameters.get_coefficients().get_matrix_at(t).array() *
                 get_mobility_factors(node_from, t, node_from.get_last_state()).array())
                    .matrix());
         m_return_times.add_time_point(t + dt);
 
-        test_commuters(node_from, m_moved.get_last_value(), t);
+        test_commuters(node_from, m_mobile_population.get_last_value(), t);
 
-        node_to.get_result().get_last_value() += m_moved.get_last_value();
-        node_from.get_result().get_last_value() -= m_moved.get_last_value();
+        node_to.get_result().get_last_value() += m_mobile_population.get_last_value();
+        node_from.get_result().get_last_value() -= m_mobile_population.get_last_value();
     }
-    m_return_moved = !m_return_moved;
+    m_return_mobile_population = !m_return_mobile_population;
 }
 
 /**
@@ -515,7 +517,7 @@ void apply_mobility(FP t, FP dt, MobilityEdge<FP>& mobilityEdge, SimulationNode<
 /**
  * create a mobility simulation.
  * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
- * moves from one node to the other. In the next timestep, the moved population return to their "home" node. 
+ * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node. 
  * Returns are adjusted based on the development in the target node. 
  * @param t0 start time of the simulation
  * @param dt time step between mobility

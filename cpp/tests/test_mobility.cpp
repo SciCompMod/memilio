@@ -158,7 +158,7 @@ TEST(TestMobility, edgeApplyMobility)
     EXPECT_NEAR(v[6], 0, 5.);
     EXPECT_DOUBLE_EQ(node2.get_result().get_last_value().sum(), 1000);
 
-    //move again
+    //change node again
     node1.evolve(t, 0.5);
     node2.evolve(t, 0.5);
     t += 0.5;

@@ -378,9 +378,9 @@ public:
                                 const std::vector<uint32_t>& cells = {0})
     {
         LocationId origin    = get_location(person).get_id();
-        const bool has_moved = mio::abm::change_location(get_person(person), get_location(destination), mode, cells);
-        // if the person has moved, invalidate exposure caches but keep population caches valid
-        if (has_moved) {
+        const bool has_changed_location = mio::abm::change_location(get_person(person), get_location(destination), mode, cells);
+        // if the person has changed location, invalidate exposure caches but keep population caches valid
+        if (has_changed_location) {
             m_are_exposure_caches_valid = false;
             if (m_is_local_population_cache_valid) {
                 --m_local_population_cache[origin.get()];

@@ -183,9 +183,9 @@ public:
 
     /**
      * compute mobility from node_from to node_to for a given event
-     * @param[in] event index specifying which compartment and age group move
-     * @param node_from node that people moved from
-     * @param node_to node that people moved to
+     * @param[in] event index specifying which compartment and age group change nodes
+     * @param node_from node that people changed from
+     * @param node_to node that people changed to
      */
     template <class Sim>
     void apply_mobility(size_t event, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
@@ -215,7 +215,7 @@ void apply_mobility(StochasticEdge& mobilityEdge, size_t event, SimulationNode<S
 /**
  * create a mobility simulation.
  * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
- * moves from one node to the other. In the next timestep, the moved population return to their "home" node. 
+ * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node. 
  * Returns are adjusted based on the development in the target node. 
  * @param t0 start time of the simulation
  * @param dt time step between mobility
