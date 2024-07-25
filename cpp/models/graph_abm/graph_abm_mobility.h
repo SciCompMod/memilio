@@ -53,7 +53,7 @@ public:
     }
 
     /**
-    *@brief get abm simulation in this node.
+    *@brief Get abm simulation in this node.
     */
     Sim& get_simulation()
     {
@@ -62,6 +62,18 @@ public:
     const Sim& get_simulation() const
     {
         return m_simulation;
+    }
+
+    /**
+     * @brief Get history object(s) in this node.
+     */
+    std::tuple<History...>& get_history()
+    {
+        return m_history;
+    }
+    const std::tuple<History...>& get_history() const
+    {
+        return m_history;
     }
 
     /**
@@ -236,9 +248,11 @@ public:
                     // invalidate both worlds' cache
                     node_to.get_simulation().get_world().invalidate_cache();
                     node_from.get_simulation().get_world().invalidate_cache();
-                    // change activeness status for commuted person
-                    node_to.get_simulation().get_world().change_activeness(p);
-                    node_from.get_simulation().get_world().change_activeness(p);
+                    if (target_world_id != current_world_id) {
+                        // change activeness status for commuted person
+                        node_to.get_simulation().get_world().change_activeness(p);
+                        node_from.get_simulation().get_world().change_activeness(p);
+                    }
                     // only one mobility rule per person can be applied
                     break;
                 }
@@ -275,6 +289,7 @@ void apply_mobility(abm::TimePoint t, abm::TimeSpan /*dt*/, ABMMobilityEdge<Hist
 template <class... History>
 void evolve_model(abm::TimePoint t, abm::TimeSpan dt, ABMSimulationNode<History...>& node)
 {
+    std::cout << "t= " << t.days() << std::endl;
     node.evolve(t, dt);
 }
 

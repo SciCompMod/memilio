@@ -73,18 +73,6 @@ PersonId World::add_person(Person&& person)
     return new_id;
 }
 
-// Person& World::add_external_person(Location& loc, AgeGroup age)
-// {
-//     assert(age.get() < parameters.get_num_groups());
-//     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-//     m_persons.push_back(std::make_unique<Person>(m_rng, loc, age, person_id));
-//     m_activeness_statuses.push_back(false);
-//     auto& person = *m_persons.back();
-//     person.set_assigned_location(m_cemetery_id);
-//     loc.add_person(person);
-//     return person;
-// }
-
 void World::evolve(TimePoint t, TimeSpan dt)
 {
     begin_step(t, dt);
@@ -96,10 +84,16 @@ void World::evolve(TimePoint t, TimeSpan dt)
 
 void World::interaction(TimePoint t, TimeSpan dt)
 {
+    if (t.days() == 14) {
+        std::cout << "stop\n";
+    }
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
     for (uint32_t person_id = 0; person_id < num_persons; ++person_id) {
         if (m_activeness_statuses[person_id]) {
+            if (person_id == 41 && t.days() == 14) {
+                std::cout << "person= " << person_id << std::endl;
+            }
             interact(person_id, t, dt);
         }
     }
@@ -256,9 +250,11 @@ void World::compute_exposure_caches(TimePoint t, TimeSpan dt)
         for (size_t i = 0; i < num_persons; ++i) {
             const Person& person = m_persons[i];
             const auto location  = person.get_location().get();
-            mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
-                                                m_contact_exposure_rates_cache[location], person,
-                                                get_location(person.get_id()), t, dt);
+            if (person.get_location_world_id() == m_id) {
+                mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
+                                                    m_contact_exposure_rates_cache[location], person,
+                                                    get_location(person.get_id()), t, dt);
+            }
         } // implicit taskloop barrier
     } // implicit single barrier
 }
