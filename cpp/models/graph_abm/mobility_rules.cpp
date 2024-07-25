@@ -20,6 +20,7 @@
 
 #include "graph_abm/mobility_rules.h"
 #include "abm/location.h"
+#include "abm/infection_state.h"
 
 namespace mio
 {
@@ -34,7 +35,29 @@ abm::LocationType apply_commuting(const abm::Person& person, abm::TimePoint t, c
         return abm::LocationType::Work;
     }
 
-    // agents are sent home or to work every time this function is called i.e. if it is called too often they will be sent to work multiple times
+    //person is at hospital in non-home world
+    if (current_loc == abm::LocationType::Hospital &&
+        person.get_location_world_id() != person.get_assigned_location_world_id(abm::LocationType::Home)) {
+        //if person is still infected it stays at hospital
+        if (person.is_infected(t)) {
+            return current_loc;
+        }
+        //if person has recovered it goes home
+        else if (person.get_infection_state(t) == abm::InfectionState::Recovered) {
+            return abm::LocationType::Home;
+        }
+        //if person is dead it is sent to cementary
+        else {
+            return abm::LocationType::Cemetery;
+        }
+    }
+    //person is at location in Home world (and should not go to work) it stays at that location
+    if (person.get_location_world_id() == person.get_assigned_location_world_id(abm::LocationType::Home)) {
+        return current_loc;
+    }
+
+    // agents are sent home or to work (if none of the above cases occurs) every time this function is called
+    // i.e. if it is called too often they will be sent to work multiple times
     return abm::LocationType::Home;
 }
 } // namespace mio

@@ -75,10 +75,10 @@ public:
      */
     World(const Parameters& params, int world_id = 0)
         : parameters(params.get_num_groups())
+        , m_id(world_id)
         , m_trip_list()
         , m_use_migration_rules(true)
         , m_cemetery_id(add_location(LocationType::Cemetery))
-        , m_id(world_id)
     {
         parameters = params;
     }
@@ -91,6 +91,7 @@ public:
         , m_is_local_population_cache_valid(false)
         , m_are_exposure_caches_valid(false)
         , m_exposure_caches_need_rebuild(true)
+        , m_id(world_id)
         , m_persons(other.m_persons)
         , m_locations(other.m_locations)
         , m_activeness_statuses(other.m_activeness_statuses)
@@ -101,7 +102,6 @@ public:
         , m_migration_rules(other.m_migration_rules)
         , m_cemetery_id(other.m_cemetery_id)
         , m_rng(other.m_rng)
-        , m_id(world_id)
     {
     }
     World& operator=(const World&) = default;
@@ -371,7 +371,8 @@ public:
     size_t get_subpopulation(LocationId location, TimePoint t, InfectionState state) const
     {
         return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
-            return p.get_location() == location && p.get_infection_state(t) == state;
+            return p.get_location_world_id() == m_id && p.get_location() == location &&
+                   p.get_infection_state(t) == state;
         });
     }
 
@@ -476,6 +477,9 @@ public:
     void change_activeness(PersonId person_id)
     {
         m_activeness_statuses[person_id.get()] = !m_activeness_statuses[person_id.get()];
+        if (get_person(person_id).get_location_world_id() != m_id && m_activeness_statuses[person_id.get()]) {
+            std::cout << "Problem\n";
+        }
     }
 
     /**
@@ -575,6 +579,7 @@ private:
     bool m_are_exposure_caches_valid       = false;
     bool m_exposure_caches_need_rebuild    = true;
 
+    int m_id; ///< World id. Is only used for abm graph model or hybrid model.
     std::vector<Person> m_persons; ///< Vector of every Person.
     std::vector<Location> m_locations; ///< Vector of every Location.
     std::vector<bool> m_activeness_statuses; ///< Vector with activeness status for every person
@@ -589,7 +594,6 @@ private:
         m_migration_rules; ///< Rules that govern the migration between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.
     RandomNumberGenerator m_rng; ///< Global random number generator
-    int m_id; ///< World id. Is only used for abm graph model or hybrid model.
 };
 
 } // namespace abm
