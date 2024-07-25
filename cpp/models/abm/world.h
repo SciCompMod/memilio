@@ -192,15 +192,6 @@ public:
      */
     PersonId add_person(Person&& person);
 
-    // /**
-    //  * @brief Add an external Person i.e. a Person whoseHome location is in another World to the World.
-    //  * Only used for abm graph model.
-    //  * @param[in] loc Initial Location of the Person
-    //  * @param[in] age AgeGroup of the Person
-    //  * @return Reference to the newly created Person
-    //  */
-    // Person& add_external_person(Location& loc, AgeGroup age);
-
     /**
      * @brief Get a range of all Location%s in the World.
      * @return A range of all Location%s.
