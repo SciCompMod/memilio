@@ -170,7 +170,7 @@ int main()
 
     model.parameters.set<mio::osirmobility::TimeInfected<>>(2);
     model.parameters.set<mio::osirmobility::TransmissionProbabilityOnContact<>>(0.04);
-    model.parameters.set<mio::osirmobility::ImpactCommuters<>>(1.);
+    model.parameters.set<mio::osirmobility::ImpactTransmissionDuringCommuting<>>(1.);
     mio::ContactMatrixGroup& contact_matrix =
         model.parameters.get<mio::osirmobility::ContactPatterns<ScalarType>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(1.0);
