@@ -18,9 +18,6 @@
 * limitations under the License.
 */
 #include "abm/simulation.h"
-#include "memilio/utils/logging.h"
-#include "memilio/utils/mioomp.h"
-#include <random>
 
 namespace mio
 {

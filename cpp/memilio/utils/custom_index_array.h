@@ -20,15 +20,9 @@
 #ifndef CUSTOMINDEXARRAY_H
 #define CUSTOMINDEXARRAY_H
 
-#include "memilio/config.h"
-#include "memilio/math/eigen.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/utils/index.h"
 #include "memilio/utils/stl_util.h"
-
-#include <vector>
-#include <array>
-#include <numeric>
 
 namespace
 {
@@ -164,6 +158,14 @@ public:
     using Type              = Typ;
     using Index             = ::mio::Index<Tags...>;
     using InternalArrayType = Eigen::Array<Type, Eigen::Dynamic, 1>;
+
+    /// @brief Create an empty CustomIndexArray with size 0. Use the resize member function to add entries.
+    explicit CustomIndexArray()
+        : m_dimensions(Index::Zero())
+        , m_numel(0)
+        , m_y()
+    {
+    }
 
     /**
      * @brief CustomIndexArray constructor, that initializes the array

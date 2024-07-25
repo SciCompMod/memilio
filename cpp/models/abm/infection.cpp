@@ -26,7 +26,7 @@ namespace mio
 namespace abm
 {
 
-Infection::Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
+Infection::Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
                      TimePoint init_date, InfectionState init_state, std::pair<ExposureType, TimePoint> latest_exposure,
                      bool detected)
     : m_virus_variant(virus)
@@ -39,7 +39,7 @@ Infection::Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, Age
     ScalarType high_viral_load_factor = 1;
     if (latest_exposure.first != ExposureType::NoProtection) {
         high_viral_load_factor -=
-            params.get<HighViralLoadProtectionFactor>()(init_date.days() - latest_exposure.second.days());
+            params.get<HighViralLoadProtectionFactor>()[{age, virus}](init_date.days() - latest_exposure.second.days());
     }
     m_viral_load.peak = vl_params.viral_load_peak.get_distribution_instance()(rng, vl_params.viral_load_peak.params) *
                         high_viral_load_factor;
@@ -112,7 +112,7 @@ TimePoint Infection::get_start_date() const
     return m_viral_load.start_date;
 }
 
-TimePoint Infection::draw_infection_course(Person::RandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
+TimePoint Infection::draw_infection_course(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
                                            TimePoint init_date, InfectionState init_state,
                                            std::pair<ExposureType, TimePoint> latest_protection)
 {
@@ -122,7 +122,7 @@ TimePoint Infection::draw_infection_course(Person::RandomNumberGenerator& rng, A
     return start_date;
 }
 
-void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng, AgeGroup age,
+void Infection::draw_infection_course_forward(PersonalRandomNumberGenerator& rng, AgeGroup age,
                                               const Parameters& params, TimePoint init_date, InfectionState start_state,
                                               std::pair<ExposureType, TimePoint> latest_exposure)
 {
@@ -210,7 +210,7 @@ void Infection::draw_infection_course_forward(Person::RandomNumberGenerator& rng
     }
 }
 
-TimePoint Infection::draw_infection_course_backward(Person::RandomNumberGenerator& rng, AgeGroup age,
+TimePoint Infection::draw_infection_course_backward(PersonalRandomNumberGenerator& rng, AgeGroup age,
                                                     const Parameters& params, TimePoint init_date,
                                                     InfectionState init_state)
 {
