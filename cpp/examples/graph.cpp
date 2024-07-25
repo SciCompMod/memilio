@@ -22,9 +22,12 @@
 #include "ode_seir/parameters.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/io/result_io.h"
 
 int main()
 {
+    mio::set_log_level(mio::LogLevel::off);
+
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 0.5; //time step of migration, daily migration every second step
@@ -34,9 +37,11 @@ int main()
     // set population
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 10000;
 
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<>>(1.);
+
     // set transition times
-    model.parameters.set<mio::oseir::TimeExposed<>>(1);
-    model.parameters.set<mio::oseir::TimeInfected<>>(1);
+    model.parameters.set<mio::oseir::TimeExposed<>>(3.);
+    model.parameters.set<mio::oseir::TimeInfected<>>(5.);
 
     // set contact matrix
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns<>>().get_cont_freq_mat();
@@ -47,9 +52,9 @@ int main()
     auto model_group2 = model;
 
     //some contact restrictions in group 1
-    mio::ContactMatrixGroup& contact_matrix1 =
-        model_group1.parameters.get<mio::oseir::ContactPatterns<>>().get_cont_freq_mat();
-    contact_matrix1[0].add_damping(0.5, mio::SimulationTime(5));
+    // mio::ContactMatrixGroup& contact_matrix1 =
+    //     model_group1.parameters.get<mio::oseir::ContactPatterns<>>().get_cont_freq_mat();
+    // contact_matrix1[0].add_damping(0.5, mio::SimulationTime(5));
 
     //infection starts in group 1
     model_group1.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 9990;
@@ -64,6 +69,20 @@ int main()
     auto sim = mio::make_migration_sim(t0, dt, std::move(g));
 
     sim.advance(tmax);
+
+    auto result_graph = std::move(sim).get_graph();
+    auto result       = mio::interpolate_simulation_result(result_graph);
+
+    std::vector<int> county_ids(result_graph.nodes().size());
+    std::transform(result_graph.nodes().begin(), result_graph.nodes().end(), county_ids.begin(), [](auto& n) {
+        return n.id;
+    });
+
+    // auto save_result_status = save_result(result, county_ids, 1, "graph_result.h5");
+
+    for (auto&& node : result_graph.nodes()) {
+        node.property.get_result().print_table();
+    }
 
     return 0;
 }
