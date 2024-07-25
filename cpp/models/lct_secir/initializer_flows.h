@@ -235,8 +235,7 @@ private:
         }
 
         // Check if model is valid and the calculated initial value vector is valid.
-        m_model.check_constraints();
-        return false;
+        return m_model.check_constraints();
     }
 
     /**
