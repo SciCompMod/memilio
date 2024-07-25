@@ -233,7 +233,7 @@ public:
 
     /**
      * @brief Answers the question if a Person is currently in quarantine.
-     * If a Person is in quarantine this Person cannot move to Location%s other than Home or the Hospital.
+     * If a Person is in quarantine this Person cannot change to Location%s other than Home or the Hospital.
      * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
      * @param[in] params Parameter that includes the length of a quarantine.
      * @return True if the Person is in quarantine.

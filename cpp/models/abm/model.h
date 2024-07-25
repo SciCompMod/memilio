@@ -366,12 +366,12 @@ public:
         return m_local_population_cache[location.get()];
     }
 
-    // move a person to another location. this requires that location is part of this Model.
+    // Change the Location of a Person. this requires that Location is part of this Model.
     /**
-     * @brief Let a person move to another location.
-     * @param[in] person PersonId of a person from this Model.
-     * @param[in] destination LocationId of the location in this Model, which the person should move to.
-     * @param[in] mode The transport mode the person uses to move.
+     * @brief Let a Person change to another Location.
+     * @param[in] person PersonId of a Person from this Model.
+     * @param[in] destination LocationId of the Location in this Model, which the Person should change to.
+     * @param[in] mode The transport mode the person uses to change the Location.
      * @param[in] cells The cells within the destination the person should be in.
      */
     inline void change_location(PersonId person, LocationId destination, TransportMode mode = TransportMode::Unknown,
@@ -455,7 +455,7 @@ private:
      */
     void interaction(TimePoint t, TimeSpan dt);
     /**
-     * @brief Person%s move in the Model according to rules.
+     * @brief Person%s change location in the Model according to rules.
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */

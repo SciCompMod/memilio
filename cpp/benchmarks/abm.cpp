@@ -125,7 +125,7 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
         auto sim = make_simulation(num_persons, seeds);
         state.ResumeTiming();
 
-        //simulated time should be long enough to have full infection runs and move to every location
+        //simulated time should be long enough to have full infection runs and change to every location
         auto final_time = sim.get_time() + mio::abm::days(10);
         sim.advance(final_time);
 
