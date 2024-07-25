@@ -33,7 +33,7 @@ set(TESTSOURCES
     test_abm_location.cpp
     test_abm_lockdown_rules.cpp
     test_abm_masks.cpp
-    test_abm_movement_rules.cpp
+    test_abm_mobility_rules.cpp
     test_abm_person.cpp
     test_abm_simulation.cpp
     test_abm_testing_strategy.cpp
