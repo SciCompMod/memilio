@@ -291,13 +291,14 @@ struct SeverityProtectionFactor {
 };
 
 /**
- * @brief Personal protective factor against high viral load. Its value is between 0 and 1.
+ * @brief Personal protective factor against high viral load, , which depends on #ExposureType,
+ * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
  */
 struct HighViralLoadProtectionFactor {
-    using Type = CustomIndexArray<InputFunctionForProtectionLevel, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
     static auto get_default(AgeGroup size)
     {
-        return Type({size, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
+        return Type({ExposureType::Count, size, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
             return 0;
         });
     }
@@ -305,7 +306,6 @@ struct HighViralLoadProtectionFactor {
     {
         return "HighViralLoadProtectionFactor";
     }
-    Type function;
 };
 
 /**

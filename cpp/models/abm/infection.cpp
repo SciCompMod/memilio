@@ -38,8 +38,8 @@ Infection::Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, Age
     auto vl_params                    = params.get<ViralLoadDistributions>()[{virus, age}];
     ScalarType high_viral_load_factor = 1;
     if (latest_exposure.first != ExposureType::NoProtection) {
-        high_viral_load_factor -=
-            params.get<HighViralLoadProtectionFactor>()[{age, virus}](init_date.days() - latest_exposure.second.days());
+        high_viral_load_factor -= params.get<HighViralLoadProtectionFactor>()[{latest_exposure.first, age, virus}](
+            init_date.days() - latest_exposure.second.days());
     }
     m_viral_load.peak = vl_params.viral_load_peak.get_distribution_instance()(rng, vl_params.viral_load_peak.params) *
                         high_viral_load_factor;
