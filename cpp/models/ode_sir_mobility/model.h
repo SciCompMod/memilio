@@ -85,7 +85,8 @@ public:
                         }
                         flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>(
                             {start_region, age_i})] +=
-                            params.template get<ImpactCommuters<FP>>() * strength * strength_commuter *
+                            params.template get<ImpactTransmissionDuringCommuting<FP>>() * strength *
+                            strength_commuter *
                             pop[population.get_flat_index({start_region_commuter, age_j, InfectionState::Infected})];
                     }
                 }

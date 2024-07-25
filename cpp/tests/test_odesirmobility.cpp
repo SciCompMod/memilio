@@ -57,7 +57,7 @@ TEST(TestOdeSirMobility, compareWithPreviousRun)
     model.parameters.get<mio::osirmobility::ContactPatterns>().get_baseline()(0, 0) = 2.7;
     model.parameters.get<mio::osirmobility::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
 
-    model.parameters.set<mio::osirmobility::ImpactCommuters>(1.);
+    model.parameters.set<mio::osirmobility::ImpactTransmissionDuringCommuting>(1.);
     model.parameters.get<mio::osirmobility::CommutingRatio>().push_back(
         {mio::osirmobility::Region(1), mio::osirmobility::Region(0), 0.2});
     model.parameters.get<mio::osirmobility::CommutingRatio>().push_back(
@@ -141,7 +141,7 @@ TEST(TestOdeSirMobility, checkPopulationConservation)
     }
     model.parameters.set<mio::osirmobility::TimeInfected>(2);
     model.parameters.set<mio::osirmobility::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.set<mio::osirmobility::ImpactCommuters>(1.);
+    model.parameters.set<mio::osirmobility::ImpactTransmissionDuringCommuting>(1.);
     model.parameters.get<mio::osirmobility::ContactPatterns>().get_baseline()(0, 0) = 1.;
     model.parameters.get<mio::osirmobility::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
     model.parameters.get<mio::osirmobility::CommutingRatio>().push_back(
@@ -170,7 +170,7 @@ TEST(TestOdeSirMobility, check_constraints_parameters)
     mio::osirmobility::Model model((size_t)num_regions);
     model.parameters.set<mio::osirmobility::TimeInfected>(6);
     model.parameters.set<mio::osirmobility::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.set<mio::osirmobility::ImpactCommuters>(1.);
+    model.parameters.set<mio::osirmobility::ImpactTransmissionDuringCommuting>(1.);
     model.parameters.get<mio::osirmobility::ContactPatterns>().get_baseline()(0, 0) = 10.;
     model.parameters.get<mio::osirmobility::CommutingRatio>().push_back(
         {mio::osirmobility::Region(1), mio::osirmobility::Region(0), 0.5});
@@ -189,10 +189,10 @@ TEST(TestOdeSirMobility, check_constraints_parameters)
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osirmobility::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.set<mio::osirmobility::ImpactCommuters>(10.);
+    model.parameters.set<mio::osirmobility::ImpactTransmissionDuringCommuting>(10.);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osirmobility::ImpactCommuters>(1.);
+    model.parameters.set<mio::osirmobility::ImpactTransmissionDuringCommuting>(1.);
     model.parameters.get<mio::osirmobility::CommutingRatio>().push_back(
         {mio::osirmobility::Region(1), mio::osirmobility::Region(0), 10.5});
     ASSERT_EQ(model.parameters.check_constraints(), 1);
@@ -211,7 +211,7 @@ TEST(TestOdeSirMobility, apply_constraints_parameters)
     mio::osirmobility::Model model((size_t)num_regions);
     model.parameters.set<mio::osirmobility::TimeInfected>(6);
     model.parameters.set<mio::osirmobility::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.set<mio::osirmobility::ImpactCommuters>(1.);
+    model.parameters.set<mio::osirmobility::ImpactTransmissionDuringCommuting>(1.);
     model.parameters.get<mio::osirmobility::ContactPatterns>().get_baseline()(0, 0) = 10.;
     model.parameters.get<mio::osirmobility::CommutingRatio>().push_back(
         {mio::osirmobility::Region(1), mio::osirmobility::Region(0), 0.5});
@@ -229,11 +229,11 @@ TEST(TestOdeSirMobility, apply_constraints_parameters)
     EXPECT_NEAR(model.parameters.get<mio::osirmobility::TransmissionProbabilityOnContact>(), 0.0, 1e-14);
 
     model.parameters.set<mio::osirmobility::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.set<mio::osirmobility::ImpactCommuters>(10.);
+    model.parameters.set<mio::osirmobility::ImpactTransmissionDuringCommuting>(10.);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::osirmobility::ImpactCommuters>(), 0.0, 1e-14);
+    EXPECT_NEAR(model.parameters.get<mio::osirmobility::ImpactTransmissionDuringCommuting>(), 0.0, 1e-14);
 
-    model.parameters.set<mio::osirmobility::ImpactCommuters>(1.);
+    model.parameters.set<mio::osirmobility::ImpactTransmissionDuringCommuting>(1.);
     model.parameters.get<mio::osirmobility::CommutingRatio>().push_back(
         {mio::osirmobility::Region(1), mio::osirmobility::Region(0), 10.5});
     EXPECT_EQ(model.parameters.apply_constraints(), 1);

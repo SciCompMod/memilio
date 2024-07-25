@@ -87,7 +87,7 @@ struct CommutingRatio {
  * @brief The ratio that regulates the infections during commuting.
 */
 template <typename FP = ScalarType>
-struct ImpactCommuters {
+struct ImpactTransmissionDuringCommuting {
     using Type = UncertainValue<FP>;
     static Type get_default(Region, AgeGroup)
     {
@@ -95,7 +95,7 @@ struct ImpactCommuters {
     }
     static std::string name()
     {
-        return "ImpactCommuters";
+        return "ImpactTransmissionDuringCommuting";
     }
 };
 
@@ -116,7 +116,7 @@ struct PathIntersections {
 
 template <typename FP = ScalarType>
 using ParametersBase = ParameterSet<TransmissionProbabilityOnContact<FP>, TimeInfected<FP>, ContactPatterns<FP>,
-                                    CommutingRatio, ImpactCommuters<FP>, PathIntersections>;
+                                    CommutingRatio, ImpactTransmissionDuringCommuting<FP>, PathIntersections>;
 
 /**
  * @brief Parameters of SIR model.
@@ -180,11 +180,12 @@ public:
                 corrected                                                  = true;
             }
         }
-        if (this->template get<ImpactCommuters<FP>>() < 0.0 || this->template get<ImpactCommuters<FP>>() > 1.0) {
-            log_warning("Constraint check: Parameter ImpactCommuters changed from {:.4f} to {:.4f}.",
-                        this->template get<ImpactCommuters<FP>>(), 0.0);
-            this->template get<ImpactCommuters<FP>>() = 0.0;
-            corrected                                 = true;
+        if (this->template get<ImpactTransmissionDuringCommuting<FP>>() < 0.0 ||
+            this->template get<ImpactTransmissionDuringCommuting<FP>>() > 1.0) {
+            log_warning("Constraint check: Parameter ImpactTransmissionDuringCommuting changed from {:.4f} to {:.4f}.",
+                        this->template get<ImpactTransmissionDuringCommuting<FP>>(), 0.0);
+            this->template get<ImpactTransmissionDuringCommuting<FP>>() = 0.0;
+            corrected                                                   = true;
         }
         for (auto& i : this->template get<CommutingRatio>()) {
             if (std::get<double>(i) < 0.0 || std::get<double>(i) > 1.0) {
@@ -233,9 +234,11 @@ public:
                 return true;
             }
         }
-        if (this->template get<ImpactCommuters<FP>>() < 0.0 || this->template get<ImpactCommuters<FP>>() > 1.0) {
-            log_error("Constraint check: Parameter ImpactCommuters {:.4f} smaller {:.4f} or greater {:.4f}",
-                      this->template get<ImpactCommuters<FP>>(), 0.0, 1.0);
+        if (this->template get<ImpactTransmissionDuringCommuting<FP>>() < 0.0 ||
+            this->template get<ImpactTransmissionDuringCommuting<FP>>() > 1.0) {
+            log_error(
+                "Constraint check: Parameter ImpactTransmissionDuringCommuting {:.4f} smaller {:.4f} or greater {:.4f}",
+                this->template get<ImpactTransmissionDuringCommuting<FP>>(), 0.0, 1.0);
             return true;
         }
         for (auto i : this->template get<CommutingRatio>()) {
