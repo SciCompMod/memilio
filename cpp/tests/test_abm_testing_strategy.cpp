@@ -106,7 +106,7 @@ TEST(TestTestingScheme, runScheme)
     EXPECT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date), false); // Person tests and tests positive
     EXPECT_EQ(testing_scheme2.run_scheme(rng_person2, person2, start_date), true); // Person tests and tests negative
     EXPECT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date),
-              true); // Person doesn't test
+              true); // Person doesn't test because the last test is too recent (this is deterministic)
 }
 
 TEST(TestTestingScheme, initAndRunTestingStrategy)

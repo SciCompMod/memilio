@@ -105,8 +105,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             const LocationId current_location = person.get_location();
 
             // Check if the Person wears mask if required at targeted location
-            if ((target_location.is_mask_required() && person.is_compliant(personal_rng, InterventionType::Mask)) ||
-                !target_location.is_mask_required()) {
+            if (!target_location.is_mask_required() || person.is_compliant(personal_rng, InterventionType::Mask)) {
                 // Check if the capacity of targeted Location is not reached
                 if (target_location.get_id() != current_location &&
                     get_number_persons(target_location.get_id()) < target_location.get_capacity().persons) {
@@ -166,8 +165,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_location(trip.migration_destination);
                 // Check if the Person wears mask if required at targeted location
-                if ((target_location.is_mask_required() && person.is_compliant(personal_rng, InterventionType::Mask)) ||
-                    !target_location.is_mask_required()) {
+                if (!target_location.is_mask_required() || person.is_compliant(personal_rng, InterventionType::Mask)) {
                     // Perform TestingStrategy if required
                     if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
                         migrate(person.get_id(), target_location.get_id(), trip.trip_mode);
