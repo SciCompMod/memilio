@@ -327,7 +327,7 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
  * Reads the commuting matrices from txt files and sets the graph edges with that.
  * @param[in] data_dir Directory that contains the data files.
  * @param[in, out] params_graph Graph whose nodes are set by the function.
- * @param[in] moving_compartments Compartments that commute.
+ * @param[in] mobile_compartments Compartments that commute.
  * @param[in] contact_locations_size Number of contact locations.
  * @param[in] read_func Function that reads commuting matrices.
  * @param[in] commuting_weights Vector with a commuting weight for every AgeGroup.
@@ -335,7 +335,7 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
 template <class ContactLocation, class Model, class MobilityParams, class MobilityCoefficientGroup,
           class InfectionState, class ReadFunction>
 IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MobilityParams>& params_graph,
-                         std::initializer_list<InfectionState>& moving_compartments, size_t contact_locations_size,
+                         std::initializer_list<InfectionState>& mobile_compartments, size_t contact_locations_size,
                          ReadFunction&& read_func,
                          std::vector<ScalarType> commuting_weights = std::vector<ScalarType>{})
 {
@@ -370,7 +370,7 @@ IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MobilityParams>&
             auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) /
                                      working_population; //data is absolute numbers, we need relative
             for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
-                for (auto compartment : moving_compartments) {
+                for (auto compartment : mobile_compartments) {
                     auto coeff_index = populations.get_flat_index({age, compartment});
                     mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
                         commuter_coeff_ij * commuting_weights[size_t(age)];
@@ -381,7 +381,7 @@ IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MobilityParams>&
             auto twitter_coeff    = mobility_data_twitter(county_idx_i, county_idx_j) /
                                  total_population; //data is absolute numbers, we need relative
             for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
-                for (auto compartment : moving_compartments) {
+                for (auto compartment : mobile_compartments) {
                     auto coeff_idx = populations.get_flat_index({age, compartment});
                     mobility_coeffs[size_t(ContactLocation::Other)].get_baseline()[coeff_idx] = twitter_coeff;
                 }

@@ -217,7 +217,7 @@ TEST(TestGraph, set_edges)
     model.populations[{mio::AgeGroup(3), mio::osecir::InfectionState::Exposed}] = 1;
     mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>> params_graph;
     const fs::path& dir      = " ";
-    auto moving_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
+    auto mobile_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
                                 mio::osecir::InfectionState::InfectedNoSymptoms,
                                 mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
 
@@ -229,7 +229,7 @@ TEST(TestGraph, set_edges)
     auto result =
         mio::set_edges<MockContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
                        mio::MobilityCoefficientGroup, mio::osecir::InfectionState, decltype(read_function_edges)>(
-            dir, params_graph, moving_compartments, size_t(2), read_function_edges,
+            dir, params_graph, mobile_compartments, size_t(2), read_function_edges,
             std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.});
 
     auto e_work = (Eigen::ArrayXd(6 * Eigen::Index(mio::osecir::InfectionState::Count)) << 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
