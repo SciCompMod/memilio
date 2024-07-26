@@ -175,7 +175,7 @@ public:
 
     /** 
      * @brief Add a Person to the Model.
-     * @param[in] id Index and type of the initial Location of the Person.
+     * @param[in] id The LocationID of the initial Location of the Person.
      * @param[in] age AgeGroup of the person.
      * @return ID of the newly created Person.
      */
