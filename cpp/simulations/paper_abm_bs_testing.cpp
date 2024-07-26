@@ -909,17 +909,18 @@ void set_local_parameters(mio::abm::World& world)
             break;
         case mio::abm::LocationType::SocialEvent:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_other;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *=
-                5.2675; // scaling due to beeing at other 1/5.2675 * 100% of the time but a way higher contact rate
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *=
-                6.1; // scaling likelihood of SocialEvent infection
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 30;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.8;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 4;
+            break;
+         case mio::abm::LocationType::BasicsShop:
+            loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_other;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 30;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.8;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.14; // 1/7
             break;
         default:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_other;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *=
-                5.2675; // scaling due to beeing at other 1/5.2675 * 100% of the time but a way higher contact rate
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *=
-                0.3; // scaling likelihood of basicshopping infection
             break;
         }
     }
