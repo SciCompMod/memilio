@@ -17,17 +17,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "actions.h"
 #include "memilio/math/euler.h"
 #include "memilio/math/adapt_rk.h"
+#include "memilio/math/integrator.h"
 #include "memilio/math/stepper_wrapper.h"
-#include <actions.h>
+#include "memilio/utils/logging.h"
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include <string>
+
 #include <vector>
-#include <fstream>
-#include <ios>
 #include <cmath>
 
 void sin_deriv(Eigen::Ref<Eigen::VectorXd const> /*y*/, const double t, Eigen::Ref<Eigen::VectorXd> dydt)
@@ -44,6 +44,12 @@ protected:
         t0   = 0.;
         tmax = 2 * std::acos(-1); // 2PI
         err  = 0;
+        mio::set_log_level(mio::LogLevel::off);
+    }
+
+    void TearDown() override
+    {
+        mio::set_log_level(mio::LogLevel::warn);
     }
 
 public:
@@ -148,8 +154,8 @@ TYPED_TEST(TestVerifyNumericalIntegrator, adaptiveStepSizing)
     const double tol    = 1;
     const double dt_min = 1, dt_max = 2 * dt_min;
 
-    this->y   = {Eigen::VectorXd::Zero(3)};
-    this->sol = {Eigen::VectorXd::Zero(3)};
+    this->y   = {Eigen::VectorXd::Zero(1)};
+    this->sol = {Eigen::VectorXd::Zero(1)};
 
     TypeParam integrator;
     integrator.set_abs_tolerance(tol);
@@ -166,9 +172,9 @@ TYPED_TEST(TestVerifyNumericalIntegrator, adaptiveStepSizing)
         c /= -10 * tol;
         dxds.array() = 1 / c; // increasing oscillation with each evaluation (indep. of t and dt)
     };
-    // this deriv function is trivially integrable
+    // this deriv function is easily integrable
     auto deriv_success = [](const auto&&, auto&&, auto&& dxds) {
-        dxds.setZero(); // const f
+        dxds.array() = 1; // const f
     };
 
     // check that on a failed step, dt does decrease, but not below dt_min
@@ -176,6 +182,7 @@ TYPED_TEST(TestVerifyNumericalIntegrator, adaptiveStepSizing)
     t_eval    = 0;
     this->dt  = dt_max;
     step_okay = integrator.step(deriv_fail, this->y[0], t_eval, this->dt, this->sol[0]);
+    c         = 1; // reset deriv_fail
 
     EXPECT_EQ(step_okay, false); // step sizing should fail
     EXPECT_EQ(this->dt, dt_min); // new step size should fall back to dt_min
@@ -191,6 +198,7 @@ TYPED_TEST(TestVerifyNumericalIntegrator, adaptiveStepSizing)
     EXPECT_GE(this->dt, dt_min); // new step size may be larger
     EXPECT_LE(this->dt, dt_max); // but not too large
     EXPECT_EQ(t_eval, dt_min); // used step size should still be dt_min
+    EXPECT_EQ(this->sol[0][0], t_eval); // check that the integration step matches the time step
 
     // check that on a successful step, dt does not increase from dt_max
 
@@ -201,6 +209,7 @@ TYPED_TEST(TestVerifyNumericalIntegrator, adaptiveStepSizing)
     EXPECT_EQ(step_okay, true); // step sizing must be okay
     EXPECT_EQ(this->dt, dt_max); // new step size must not increase from dt_max
     EXPECT_EQ(t_eval, dt_max); // used step size should be dt_max
+    EXPECT_EQ(this->sol[0][0], t_eval); // check that the integration step matches the time step
 
     // check that the integrator does not make time steps for dt not in [dt_min, dt_max]
 
@@ -212,15 +221,17 @@ TYPED_TEST(TestVerifyNumericalIntegrator, adaptiveStepSizing)
     EXPECT_GE(this->dt, dt_min); // new step size must be bounded from below
     EXPECT_LE(this->dt, dt_max); // and above
     EXPECT_EQ(t_eval, dt_min); // step size should fall back to dt_min
+    EXPECT_EQ(this->sol[0][0], t_eval); // check that the integration step matches the time step
 
     t_eval    = 0;
     this->dt  = 2.0 * dt_max;
     step_okay = integrator.step(deriv_success, this->y[0], t_eval, this->dt, this->sol[0]);
 
     EXPECT_EQ(step_okay, true); // step sizing must be okay
-    EXPECT_GE(this->dt, dt_min); // new step size must be bounded
+    EXPECT_GE(this->dt, dt_min); // new step size must be bounded from below
     EXPECT_LE(this->dt, dt_max); // and above
     EXPECT_EQ(t_eval, dt_max); // step size should fall back to dt_max
+    EXPECT_EQ(this->sol[0][0], t_eval); // check that the integration step matches the time step
 }
 
 auto DoStep()
@@ -233,6 +244,12 @@ class MockIntegratorCore : public mio::IntegratorCore<double>
 {
 public:
     MockIntegratorCore()
+        : MockIntegratorCore(0.0, 0.0)
+    {
+    }
+
+    MockIntegratorCore(double dt_min, double dt_max)
+        : IntegratorCore<double>(dt_min, dt_max)
     {
         ON_CALL(*this, step).WillByDefault(DoStep());
     }
@@ -341,4 +358,34 @@ TEST(TestOdeIntegrator, integratorContinuesAtLastState)
 
     integrator.advance(f, 4 * dt0, dt, result);
     integrator.advance(f, 5 * dt0, dt, result);
+}
+
+TEST(TestOdeIntegrator, integratorForcesLastStepSize)
+{
+    using testing::_;
+    using testing::Eq;
+
+    const double dt_min  = 0.7;
+    double dt            = 0.5; // this is on purpose < dt_min
+    const double t_max   = 3.0; // must not be an integer multiple of dt_min
+    const auto mock_core = std::make_shared<testing::StrictMock<MockIntegratorCore>>(dt_min, t_max);
+    auto integrator      = mio::OdeIntegrator<double>(mock_core);
+    auto f               = [](auto&&, auto&&, auto&&) {};
+    auto step_fct        = [&mock_core](auto&&, auto&&, auto& t_, auto& dt_, auto&&) {
+        dt_ = std::max(dt_, mock_core->get_dt_min());
+        t_ += dt_;
+        return true;
+    };
+
+    const auto num_calls = Eigen::Index(t_max / dt_min) + 1;
+    EXPECT_CALL(*mock_core, step).Times(num_calls).WillRepeatedly(testing::Invoke(step_fct));
+
+    // run a mock integration to examine whether only the last step is forced
+    mio::TimeSeries<double> mock_result(0, Eigen::VectorXd::Constant(1, 0));
+    integrator.advance(f, t_max, dt, mock_result);
+
+    EXPECT_EQ(mock_result.get_num_time_points(), num_calls + 1);
+    for (Eigen::Index i = 0; i < mock_result.get_num_time_points(); i++) {
+        EXPECT_DOUBLE_EQ(mock_result.get_time(i), std::min(i * dt_min, t_max));
+    }
 }

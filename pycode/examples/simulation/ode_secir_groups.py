@@ -26,15 +26,15 @@ import numpy as np
 import pandas as pd
 
 from memilio.simulation import AgeGroup, ContactMatrix, Damping, UncertainContactMatrix
-from memilio.simulation.secir import Index_InfectionState
-from memilio.simulation.secir import InfectionState as State
-from memilio.simulation.secir import (Model, Simulation,
-                                      interpolate_simulation_result, simulate)
+from memilio.simulation.osecir import Index_InfectionState
+from memilio.simulation.osecir import InfectionState as State
+from memilio.simulation.osecir import (Model, Simulation,
+                                       interpolate_simulation_result, simulate)
 
 
-def run_secir_groups_simulation(show_plot=True):
+def run_ode_secir_groups_simulation(show_plot=True):
     """
-    Runs the c++ secir model using mulitple age groups 
+    Runs the c++ ODE SECIHURD model using mulitple age groups 
     and plots the results
     """
 
@@ -159,12 +159,12 @@ def run_secir_groups_simulation(show_plot=True):
     ax.plot(t, data[:, 5], label='#InfectedCritical')
     ax.plot(t, data[:, 6], label='#Recovered')
     ax.plot(t, data[:, 7], label='#Dead')
-    ax.set_title("SECIR simulation results (entire population)")
+    ax.set_title("ODE SECIR simulation results (entire population)")
     ax.set_xticks(tick_range)
     ax.set_xticklabels(datelist[tick_range], rotation=45)
     ax.legend()
     fig.tight_layout
-    fig.savefig('Secir_by_compartments.pdf')
+    fig.savefig('osecir_by_compartments.pdf')
 
     # plot dynamics in each comparment by age group
     fig, ax = plt.subplots(4, 2, figsize=(12, 15))
@@ -182,8 +182,9 @@ def run_secir_groups_simulation(show_plot=True):
         ax[int(np.floor(i / 2)), int(i % 2)
            ].set_xticklabels(datelist[tick_range], rotation=45)
     plt.subplots_adjust(hspace=0.5, bottom=0.1, top=0.9)
-    fig.suptitle('SECIR simulation results by age group in each compartment')
-    fig.savefig('Secir_age_groups_in_compartments.pdf')
+    fig.suptitle(
+        'ODE SECIR simulation results by age group in each compartment')
+    fig.savefig('osecir_age_groups_in_compartments.pdf')
 
     fig, ax = plt.subplots(4, 2, figsize=(12, 15))
     for i, title in zip(range(num_compartments), compartments):
@@ -194,8 +195,9 @@ def run_secir_groups_simulation(show_plot=True):
         ax[int(np.floor(i / 2)), int(i % 2)
            ].set_xticklabels(datelist[tick_range], rotation=45)
     plt.subplots_adjust(hspace=0.5, bottom=0.1, top=0.9)
-    fig.suptitle('SECIR simulation results by compartment (entire population)')
-    fig.savefig('Secir_all_parts.pdf')
+    fig.suptitle(
+        'ODE SECIR simulation results by compartment (entire population)')
+    fig.savefig('osecir_all_parts.pdf')
 
     if show_plot:
         plt.show()
@@ -206,9 +208,9 @@ def run_secir_groups_simulation(show_plot=True):
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'secir_groups',
-        description='Simple example demonstrating the setup and simulation of the SECIR model with multiple age groups.')
+        'ode_secir_groups',
+        description='Simple example demonstrating the setup and simulation of the ODE SECIHURD model with multiple age groups.')
     arg_parser.add_argument('-p', '--show_plot',
                             action='store_const', const=True, default=False)
     args = arg_parser.parse_args()
-    run_secir_groups_simulation(**args.__dict__)
+    run_ode_secir_groups_simulation(**args.__dict__)

@@ -17,18 +17,23 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/common_abm_loggers.h"
+#include "abm/location_id.h"
+#include "abm/lockdown_rules.h"
+#include "abm/person.h"
+#include "abm/simulation.h"
+#include "abm/world.h"
+#include "memilio/epidemiology/age_group.h"
+#include "memilio/io/io.h"
+#include "memilio/io/result_io.h"
+#include "memilio/math/interpolation.h"
+#include "memilio/utils/uncertain_value.h"
+#include "boost/algorithm/string/split.hpp"
+#include "boost/algorithm/string/classification.hpp"
 
 #include <fstream>
 #include <vector>
 #include <iostream>
-#include "abm/abm.h"
-#include "memilio/io/result_io.h"
-#include "memilio/utils/uncertain_value.h"
-#include "boost/filesystem.hpp"
-#include "boost/algorithm/string/split.hpp"
-#include "boost/algorithm/string/classification.hpp"
-#include "abm/vaccine.h"
-#include "abm/common_abm_loggers.h"
 
 namespace fs = boost::filesystem;
 
@@ -59,7 +64,7 @@ void assign_uniform_distribution(mio::UncertainValue<>& p, ScalarType min, Scala
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
  * @return random infection state
  */
-mio::abm::InfectionState determine_infection_state(mio::abm::Person::RandomNumberGenerator& rng, ScalarType exposed,
+mio::abm::InfectionState determine_infection_state(mio::abm::PersonalRandomNumberGenerator& rng, ScalarType exposed,
                                                    ScalarType infected_no_symptoms, ScalarType infected_symptoms,
                                                    ScalarType recovered)
 {
@@ -82,7 +87,7 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        auto rng             = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        auto rng             = mio::abm::PersonalRandomNumberGenerator(world.get_rng(), person);
         auto infection_state = determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob,
                                                          infected_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible)
@@ -215,9 +220,9 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         count_of_titles++;
     }
 
-    std::map<uint32_t, mio::abm::LocationId> locations = {};
-    std::map<uint32_t, mio::abm::Person&> persons      = {};
-    std::map<uint32_t, uint32_t> person_ids            = {};
+    std::map<uint32_t, mio::abm::LocationId> locations        = {};
+    std::map<uint32_t, mio::abm::PersonId> pids_data_to_world = {};
+    std::map<uint32_t, uint32_t> person_ids                   = {};
     std::map<uint32_t, std::pair<uint32_t, int>> locations_before;
     std::map<uint32_t, std::pair<uint32_t, int>> locations_after;
 
@@ -225,13 +230,12 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
 
     // We assume that no person goes to an hospital, altough e.g. "Sonstiges" could be a hospital
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
-    world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    world.get_individualized_location(hospital).set_capacity(std::numeric_limits<uint32_t>::max(),
-                                                             std::numeric_limits<uint32_t>::max());
+    world.get_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_location(hospital).set_capacity(std::numeric_limits<uint32_t>::max(),
+                                              std::numeric_limits<uint32_t>::max());
     auto icu = world.add_location(mio::abm::LocationType::ICU);
-    world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    world.get_individualized_location(icu).set_capacity(std::numeric_limits<uint32_t>::max(),
-                                                        std::numeric_limits<uint32_t>::max());
+    world.get_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_location(icu).set_capacity(std::numeric_limits<uint32_t>::max(), std::numeric_limits<uint32_t>::max());
 
     // First we determine the persons number and their starting locations
     int number_of_persons = 0;
@@ -310,7 +314,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             locations.insert({home_id, home});
             mio::abm::GeographicalLocation location_long_lat_home = {(double)row[index["lon_start"]] / 1e+5,
                                                                      (double)row[index["lat_start"]] / 1e+5};
-            world.get_individualized_location(home).set_geographical_location(location_long_lat_home);
+            world.get_location(home).set_geographical_location(location_long_lat_home);
         }
         else {
             home = it_home->second;
@@ -324,7 +328,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
                 get_location_type(activity_end),
                 1); // Assume one place has one activity, this may be untrue but not important for now(?)
             locations.insert({target_location_id, location});
-            world.get_individualized_location(location).set_geographical_location(location_long_lat);
+            world.get_location(location).set_geographical_location(location_long_lat);
         }
     }
     fin.clear();
@@ -339,8 +343,8 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         split_line(line, &row);
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
-        uint32_t person_id = row[index["puid"]];
-        if (person_ids.find(person_id) == person_ids.end())
+        uint32_t person_data_id = row[index["puid"]];
+        if (person_ids.find(person_data_id) == person_ids.end())
             break;
 
         uint32_t age                = row[index["age"]];
@@ -355,34 +359,33 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         auto target_location = locations.find(target_location_id)->second;
         auto start_location  = locations.find(start_location_id)->second;
 
-        auto it_person = persons.find(person_id);
+        auto pid_itr = pids_data_to_world.find(person_data_id);
 
-        if (it_person == persons.end()) {
-            auto it_first_location_id = locations_before.find(person_id);
+        if (pid_itr == pids_data_to_world.end()) { // person has not been added to world yet
+            auto it_first_location_id = locations_before.find(person_data_id);
             if (it_first_location_id == locations_before.end()) {
-                it_first_location_id = locations_after.find(person_id);
+                it_first_location_id = locations_after.find(person_data_id);
             }
             auto first_location_id = it_first_location_id->second.first;
             auto first_location    = locations.find(first_location_id)->second;
-            auto& person           = world.add_person(first_location, determine_age_group(age));
+            auto person_world_id   = world.add_person(first_location, determine_age_group(age));
             auto home              = locations.find(home_id)->second;
-            person.set_assigned_location(home);
-            person.set_assigned_location(hospital);
-            person.set_assigned_location(icu);
-            persons.insert({person_id, person});
-            it_person = persons.find(person_id);
+            world.assign_location(person_world_id, home);
+            world.assign_location(person_world_id, hospital);
+            world.assign_location(person_world_id, icu);
+            pid_itr = pids_data_to_world.insert_or_assign(person_data_id, person_world_id).first;
         }
 
-        it_person->second.set_assigned_location(
+        world.assign_location(
+            pid_itr->second,
             target_location); //This assumes that we only have in each tripchain only one location type for each person
         if (locations.find(start_location_id) == locations.end()) {
             // For trips where the start location is not known use Home instead
-            start_location = {it_person->second.get_assigned_location_index(mio::abm::LocationType::Home),
-                              mio::abm::LocationType::Home};
+            start_location = world.get_person(pid_itr->second).get_assigned_location(mio::abm::LocationType::Home);
         }
         world.get_trip_list().add_trip(mio::abm::Trip(
-            it_person->second.get_person_id(), mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location,
-            start_location, mio::abm::TransportMode(transport_mode), mio::abm::ActivityType(acticity_end)));
+            pid_itr->second, mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location, start_location,
+            mio::abm::TransportMode(transport_mode), mio::abm::ActivityType(acticity_end)));
     }
     world.get_trip_list().use_weekday_trips_on_weekend();
 }
@@ -953,11 +956,11 @@ void write_log_to_file_trip_data(const T& history)
     for (uint32_t movement_data_index = 2; movement_data_index < movement_data.size(); ++movement_data_index) {
         myfile3 << "timestep Nr.: " << movement_data_index - 1 << "\n";
         for (uint32_t trip_index = 0; trip_index < movement_data[movement_data_index].size(); trip_index++) {
-            auto agent_id = (int)std::get<0>(movement_data[movement_data_index][trip_index]);
+            auto agent_id = std::get<0>(movement_data[movement_data_index][trip_index]);
 
             int start_index = movement_data_index - 1;
-            using Type      = std::tuple<uint32_t, uint32_t, mio::abm::TimePoint, mio::abm::TransportMode,
-                                    mio::abm::ActivityType, mio::abm::InfectionState>;
+            using Type      = std::tuple<mio::abm::PersonId, mio::abm::LocationId, mio::abm::TimePoint,
+                                    mio::abm::TransportMode, mio::abm::ActivityType, mio::abm::InfectionState>;
             while (!std::binary_search(std::begin(movement_data[start_index]), std::end(movement_data[start_index]),
                                        movement_data[movement_data_index][trip_index],
                                        [](const Type& v1, const Type& v2) {
@@ -965,14 +968,14 @@ void write_log_to_file_trip_data(const T& history)
                                        })) {
                 start_index--;
             }
-            auto start_location_pointer =
+            auto start_location_iterator =
                 std::lower_bound(std::begin(movement_data[start_index]), std::end(movement_data[start_index]),
                                  movement_data[movement_data_index][trip_index], [](const Type& v1, const Type& v2) {
                                      return std::get<0>(v1) < std::get<0>(v2);
                                  });
-            int start_location = (int)std::get<1>(*start_location_pointer);
+            auto start_location = (int)std::get<1>(*start_location_iterator).get();
 
-            auto end_location = (int)std::get<1>(movement_data[movement_data_index][trip_index]);
+            auto end_location = (int)std::get<1>(movement_data[movement_data_index][trip_index]).get();
 
             auto start_time = (int)std::get<2>(movement_data[movement_data_index][trip_index]).seconds();
             auto end_time   = (int)std::get<2>(movement_data[movement_data_index][trip_index]).seconds();
@@ -1016,7 +1019,7 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
         // Collect the id of location in world.
         std::vector<int> loc_ids;
         for (auto& location : sim.get_world().get_locations()) {
-            loc_ids.push_back(location.get_index());
+            loc_ids.push_back(location.get_id().get());
         }
         // Advance the world to tmax
         sim.advance(tmax, historyPersonInf, historyTimeSeries, historyPersonInfDelta);
