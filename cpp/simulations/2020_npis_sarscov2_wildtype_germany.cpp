@@ -474,7 +474,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
     auto scaling_factor_icu      = 1.0;
     auto tnt_capacity_factor     = 7.5 / 100000.;
-    auto moving_compartments     = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
+    auto mobile_compartments     = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
                                     mio::osecir::InfectionState::InfectedNoSymptoms,
                                     mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
 
@@ -497,7 +497,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
                           mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"),
                           true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
                           scaling_factor_icu, tnt_capacity_factor, 0, false, true));
-    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, moving_compartments, contact_locations.size(),
+    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, mobile_compartments, contact_locations.size(),
                                         read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 
     return mio::success(params_graph);

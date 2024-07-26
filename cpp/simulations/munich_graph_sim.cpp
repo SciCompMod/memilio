@@ -105,7 +105,7 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model<double>, mio::Mobili
 mio::IOResult<void> set_edges(mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
                               const fs::path& data_dir)
 {
-    auto moving_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
+    auto mobile_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
                                 mio::osecir::InfectionState::InfectedNoSymptoms,
                                 mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
     //mobility matrix has to be provided by the user as input and should have shape num_nodes x num_nodes
@@ -125,7 +125,7 @@ mio::IOResult<void> set_edges(mio::Graph<mio::osecir::Model<double>, mio::Mobili
                 mobility_data(node_i, node_j) < 1 ? 0 : mobility_data(node_i, node_j) / populations.get_total();
 
             for (auto age = mio::AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
-                for (auto compartment : moving_compartments) {
+                for (auto compartment : mobile_compartments) {
                     auto coeff_idx                               = populations.get_flat_index({age, compartment});
                     mobility_coeffs[0].get_baseline()[coeff_idx] = coeff;
                 }

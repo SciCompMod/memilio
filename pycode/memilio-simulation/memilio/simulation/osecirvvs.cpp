@@ -329,7 +329,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         [](const std::string& data_dir,
            mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>& params_graph,
            size_t contact_locations_size) {
-            auto moving_comp = {mio::osecirvvs::InfectionState::SusceptibleNaive,
+            auto mobile_comp = {mio::osecirvvs::InfectionState::SusceptibleNaive,
                                 mio::osecirvvs::InfectionState::ExposedNaive,
                                 mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
                                 mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
@@ -345,7 +345,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
             auto result      = mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>,
                                               mio::MobilityParameters<double>, mio::MobilityCoefficientGroup,
                                               mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain)>(
-                data_dir, params_graph, moving_comp, contact_locations_size, mio::read_mobility_plain, weights);
+                data_dir, params_graph, mobile_comp, contact_locations_size, mio::read_mobility_plain, weights);
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);
