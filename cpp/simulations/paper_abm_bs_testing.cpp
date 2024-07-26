@@ -536,6 +536,8 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
             if (number_of_persons_read_in > max_number_persons) {
                 break;
             }
+
+            bool has_home_trip          = row[index["has_home_trip"]];
         }
 
         uint32_t age                = row[index["age"]];
@@ -544,7 +546,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         uint32_t trip_start         = row[index["start_time"]];
         bool home_in_bs             = row[index["home_in_bs"]];
 
-        // Add the trip to the trip list person and location must exist at this point
+        // Add the trip to the trip list, person and location must exist at this point
         auto target_location = locations.find(target_location_id)->second;
         auto it_person       = persons.find(person_id);
         if (it_person == persons.end()) {
@@ -563,6 +565,11 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         }
         trip_vec.push_back(mio::abm::Trip(it_person->second.get_person_id(),
                                           mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location));
+        if (!has_home_trip) {
+            trip_vec.push_back(mio::abm::Trip(it_person->second.get_person_id(),
+            mio::abm::TimePoint(0) + mio::abm::hours(17), locations.find(home_id)->second));
+            has_home_trip = true;
+        }
     }
     world.get_trip_list().add_several_trips(trip_vec);
 }

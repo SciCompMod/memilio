@@ -266,6 +266,30 @@ def add_home_is_in_bs_column(pd):
     return pd
 
 
+def add_has_home_trip_column(pd):
+    # check if csv file has column has_home_trip
+    if 'has_home_trip' in pd.columns:
+        print("Column 'has_home_trip' is present in DataFrame.")
+        # nothing tbd
+    else:
+        print("Column 'has_home_trip' is not present in DataFrame.")
+        # add column has_home_trip
+        pd['has_home_trip'] = 0
+        # list of persons who are in braunschweig
+        list_persons_with_home_trip = np.array([])
+        for index, row in pd.iterrows():
+            # persons that have a home trip
+            if (row['activity_end'] == 7):
+                list_persons_with_home_trip = np.append(
+                    list_persons_with_home_trip, row['puid'])
+        # drop duplicates
+        list_persons_with_home_trip = np.unique(list_persons_with_home_trip)
+        for index, row in pd.iterrows():
+            if row['puid'] in list_persons_with_home_trip:
+                pd.at[index, 'has_home_trip'] = 1
+    return pd
+
+
 def location_type_from_keys_and_values(key, value, intention, key_value_pairs_counts_with_activity_after):
 
     most_probable_activity = 9999
@@ -419,6 +443,8 @@ else:
 
 bd_new = add_home_is_in_bs_column(bd)
 print('Added flag for persons who live in Braunschweig.')
+bd_new = add_has_home_trip_column(bd_new)
+print('Added flag for persons who have a home trip.')
 bd_new = add_home_ids(bd_new)
 print('Home IDs set.')
 bd_new = add_school_ids(bd_new)
