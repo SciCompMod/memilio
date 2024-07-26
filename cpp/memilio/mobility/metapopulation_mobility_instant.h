@@ -285,8 +285,8 @@ public:
     /**
      * compute mobility from node_from to node_to.
      * mobility is based on coefficients.
-     * The mobile population added to the current state of node_to, subtracted from node_from.
-     * on return, the mobile population (adjusted for infections) are subtracted from node_to, added to node_from.
+     * The mobile population is added to the current state of node_to, subtracted from node_from.
+     * on return, the mobile population (adjusted for infections) is subtracted from node_to, added to node_from.
      * @param t current time
      * @param dt last time step (fixed to 0.5 for mobility model)
      * @param node_from node that people changed from, return to
