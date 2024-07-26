@@ -61,10 +61,10 @@ public:
      */
     World(size_t num_agegroups, int id = 0)
         : parameters(num_agegroups)
+        , m_id(id)
         , m_trip_list()
         , m_use_migration_rules(true)
         , m_cemetery_id(add_location(LocationType::Cemetery))
-        , m_id(id)
     {
         assert(num_agegroups < MAX_NUM_AGE_GROUPS && "MAX_NUM_AGE_GROUPS exceeded.");
     }
