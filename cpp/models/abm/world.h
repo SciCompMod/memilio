@@ -477,9 +477,6 @@ public:
     void change_activeness(PersonId person_id)
     {
         m_activeness_statuses[person_id.get()] = !m_activeness_statuses[person_id.get()];
-        if (get_person(person_id).get_location_world_id() != m_id && m_activeness_statuses[person_id.get()]) {
-            std::cout << "Problem\n";
-        }
     }
 
     /**

@@ -84,16 +84,10 @@ void World::evolve(TimePoint t, TimeSpan dt)
 
 void World::interaction(TimePoint t, TimeSpan dt)
 {
-    if (t.days() == 14) {
-        std::cout << "stop\n";
-    }
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
     for (uint32_t person_id = 0; person_id < num_persons; ++person_id) {
         if (m_activeness_statuses[person_id]) {
-            if (person_id == 41 && t.days() == 14) {
-                std::cout << "person= " << person_id << std::endl;
-            }
             interact(person_id, t, dt);
         }
     }

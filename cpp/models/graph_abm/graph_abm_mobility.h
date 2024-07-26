@@ -289,7 +289,6 @@ void apply_mobility(abm::TimePoint t, abm::TimeSpan /*dt*/, ABMMobilityEdge<Hist
 template <class... History>
 void evolve_model(abm::TimePoint t, abm::TimeSpan dt, ABMSimulationNode<History...>& node)
 {
-    std::cout << "t= " << t.days() << std::endl;
     node.evolve(t, dt);
 }
 
