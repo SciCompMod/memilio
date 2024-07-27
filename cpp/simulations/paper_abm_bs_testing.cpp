@@ -530,14 +530,14 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         split_line(line, &row);
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
         uint32_t person_id = row[index["puid"]];
+        bool has_home_trip = true;
         if (person_id != last_person_id) {
             number_of_persons_read_in++;
             last_person_id = person_id;
             if (number_of_persons_read_in > max_number_persons) {
                 break;
             }
-
-            bool has_home_trip          = row[index["has_home_trip"]];
+            has_home_trip = row[index["has_home_trip"]];
         }
 
         uint32_t age                = row[index["age"]];
@@ -552,7 +552,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         if (it_person == persons.end()) {
             auto home    = locations.find(home_id)->second;
             auto& person = world.add_person(home, determine_age_group(age));
-            person.set_mask_preferences({0.0, 0.5, 0.5, 0.5, 0.5, 0.5});
+            person.set_mask_preferences({0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.2, 0.2});
             person.set_assigned_location(home);
             person.set_assigned_location(hospital);
             person.set_assigned_location(icu);
@@ -567,8 +567,8 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
                                           mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location));
         if (!has_home_trip) {
             trip_vec.push_back(mio::abm::Trip(it_person->second.get_person_id(),
-            mio::abm::TimePoint(0) + mio::abm::hours(17), locations.find(home_id)->second));
-            has_home_trip = true;
+                                              mio::abm::TimePoint(0) + mio::abm::hours(17),
+                                              locations.find(home_id)->second));
         }
     }
     world.get_trip_list().add_several_trips(trip_vec);
@@ -626,7 +626,7 @@ void set_parameters(mio::abm::Parameters& params)
 
     //Set testing parameters
     auto pcr_test_values                                          = mio::abm::TestParameters{0.9, 0.99};
-    auto antigen_test_values                                      = mio::abm::TestParameters{0.8, 0.95};
+    auto antigen_test_values                                      = mio::abm::TestParameters{0.69, 0.95};
     auto generic_test_values                                      = mio::abm::TestParameters{0.7, 0.95};
     params.get<mio::abm::TestData>()[mio::abm::TestType::PCR]     = pcr_test_values;
     params.get<mio::abm::TestData>()[mio::abm::TestType::Antigen] = antigen_test_values;
@@ -898,33 +898,33 @@ void set_local_parameters(mio::abm::World& world)
         switch (loc.get_type()) {
         case mio::abm::LocationType::Home:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_home;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 1;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.8;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 1.5;
             loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 1;
             break;
         case mio::abm::LocationType::School:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_school;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 5;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.8;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 7.5;
             loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 1;
             break;
         case mio::abm::LocationType::Work:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_work;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 5;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.8;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.33; // 1/3
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 7.5;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.4; // 2/5z
             break;
         case mio::abm::LocationType::SocialEvent:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_other;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 30;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.8;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 15;
             loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 4;
             break;
-         case mio::abm::LocationType::BasicsShop:
+        case mio::abm::LocationType::BasicsShop:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_other;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 30;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.8;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 15;
             loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.14; // 1/7
+            break;
+        case mio::abm::LocationType::Event:
+            loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_other;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 4;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 4; // 1/7
             break;
         default:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_other;
@@ -1051,6 +1051,58 @@ std::vector<std::vector<double>> distribute_grid_search(int rank, int num_procs,
     return grid_search_rank;
 }
 
+void create_easter_social_event(mio::abm::World& world)
+{
+    // int number_of_persons_per_easter_event = 6;
+    // int actual_number_of_persons           = 0;
+    // auto event                             = world.add_location(mio::abm::LocationType::Event);
+
+    // for (auto& p : world.get_persons()) {
+    //     if (actual_number_of_persons >= number_of_persons_per_easter_event) {
+    //         actual_number_of_persons = 0;
+    //         event                    = world.add_location(mio::abm::LocationType::Event);
+    //     }
+    //     p.set_goes_to_easter(true);
+    //     p.set_assigned_location(event);
+    //     actual_number_of_persons++;
+    // }
+    // we take 50% of each age group and move them to the social event location in a random fashion with 1 person per age group and 2 of the age group 15-34
+    std::vector<std::vector<uint32_t>> person_per_age_group;
+    person_per_age_group.resize(num_age_groupss);
+
+    for (size_t i = 0; i < world.get_persons().size(); i++) {
+        auto& p = world.get_persons()[i];
+        person_per_age_group[determine_age_group_from_rki(p.get_age())].push_back(i);
+    }
+
+    //shuffle this vector
+    std::random_device rd;
+    std::mt19937 g(rd());
+    for (size_t i = 0; i < person_per_age_group.size(); i++) {
+        std::shuffle(person_per_age_group[i].begin(), person_per_age_group[i].end(), g);
+    }
+    int number_of_persons       = (int)(0.3 * world.get_persons().size());
+    int number_of_social_events = number_of_persons / (num_age_groupss + 1);
+
+    for (auto i = 0; i < number_of_social_events; i++) {
+        auto easter_event = world.add_location(mio::abm::LocationType::Event);
+        for (size_t j = 0; j < num_age_groupss; j++) {
+            if (person_per_age_group[j].empty()) {
+                continue;
+            }
+            world.get_persons()[person_per_age_group[j].back()].set_assigned_location(easter_event);
+            world.get_persons()[person_per_age_group[j].back()].set_goes_to_easter(true);
+            person_per_age_group[j].pop_back();
+
+            if (j == 2) {
+                world.get_persons()[person_per_age_group[j].back()].set_assigned_location(easter_event);
+                world.get_persons()[person_per_age_group[j].back()].set_goes_to_easter(true);
+                person_per_age_group[j].pop_back();
+            }
+        }
+    }
+}
+
 /**
  * Create a sampled simulation with start time t0.
  * @param t0 The start time of the Simulation.
@@ -1069,6 +1121,9 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
                            max_num_persons);
     world.use_migration_rules(false);
     restart_timer(timer, "time taken for braunschweig trip input");
+
+    create_easter_social_event(world);
+    restart_timer(timer, "time taken for setting up easter social ebent");
 
     // Assign an infection state to each person.
     assign_infection_state(world, t0);
@@ -1734,7 +1789,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             }
 
             restart_timer(timer, "till advance 14");
-            double normal_infection_viral_shed                                     = 3.5;
+            double normal_infection_viral_shed                                     = 4.2;
             sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>() = normal_infection_viral_shed;
             sim.advance(mio::abm::TimePoint(mio::abm::days(14).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType);
@@ -1752,30 +1807,13 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                 }
             }
 
-            restart_timer(timer, "till advance 30 (eastern starts)");
+            restart_timer(timer, "till advance 31 (march ends)");
             sim.advance(mio::abm::TimePoint(mio::abm::days(31).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType);
-
-            restart_timer(timer, "till advance 37 (eastern ends)");
             double seasonality_april = 0.9;
             sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>() =
                 normal_infection_viral_shed * seasonality_april;
-            double eastern_bonus = 5;
-            for (auto& location : location_it) {
-                if (location.get_type() == mio::abm::LocationType::Home ||
-                    location.get_type() == mio::abm::LocationType::SocialEvent) {
-                    location.get_infection_parameters().get<mio::abm::ContactRates>().array() *= eastern_bonus;
-                }
-            }
-            sim.advance(mio::abm::TimePoint(mio::abm::days(37).seconds()), historyInfectionStatePerAgeGroup,
-                        historyInfectionPerLocationType);
 
-            for (auto& location : location_it) {
-                if (location.get_type() == mio::abm::LocationType::Home ||
-                    location.get_type() == mio::abm::LocationType::SocialEvent) {
-                    location.get_infection_parameters().get<mio::abm::ContactRates>().array() /= eastern_bonus;
-                }
-            }
             restart_timer(timer, "till advance 42");
             sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>() = normal_infection_viral_shed;
             sim.advance(mio::abm::TimePoint(mio::abm::days(42).seconds()), historyInfectionStatePerAgeGroup,
@@ -1813,7 +1851,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                               location.get_index()) != social_event_location_ids_big.end()) {
                     number_of_big_social_events--;
                     if (number_of_big_social_events >= 0) {
-                        location.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.5;
+                        location.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.35;
                         location.set_capacity(15, 0);
                     }
                 }
@@ -1829,7 +1867,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             std::cout << "day 90 finished" << std::endl;
         }
         else {
-            sim.advance(mio::abm::TimePoint(mio::abm::days(max_num_days).seconds()), historyInfectionStatePerAgeGroup,
+            sim.advance(mio::abm::TimePoint(mio::abm::days(20).seconds()), historyInfectionStatePerAgeGroup,
                         historyInfectionPerLocationType);
         }
         ////Advance till here
@@ -1928,9 +1966,9 @@ int main(int argc, char** argv)
 #endif
 
     // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
-    std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
+    // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
     std::string result_dir      = input_dir + "/results_" + currentDateTime();
 

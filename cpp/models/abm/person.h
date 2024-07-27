@@ -517,6 +517,16 @@ public:
             loc, age, id);
     }
 
+    bool get_goes_to_easter() const
+    {
+        return m_goes_to_easter_event;
+    }
+
+    void set_goes_to_easter(bool goes_to_easter)
+    {
+        m_goes_to_easter_event = goes_to_easter;
+    }
+
 private:
     observer_ptr<Location> m_location; ///< Current Location of the Person.
     std::vector<uint32_t> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
@@ -538,7 +548,8 @@ private:
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
-    bool m_should_be_logged = true; ///< Flag to determine if the Person should be logged.
+    bool m_should_be_logged     = true; ///< Flag to determine if the Person should be logged.
+    bool m_goes_to_easter_event = false; ///< Flag to determine if the Person goes to an Easter event.
 };
 
 } // namespace abm

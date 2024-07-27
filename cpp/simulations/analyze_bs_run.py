@@ -21,6 +21,7 @@ import h5py
 from datetime import datetime
 from matplotlib.dates import DateFormatter
 from scipy.ndimage import gaussian_filter1d
+from scipy.signal import savgol_filter
 
 
 def plot_infections_loc_types_avarage(path):
@@ -50,8 +51,8 @@ def plot_infections_loc_types_avarage(path):
 
 def plot_infection_per_location_type_mean(x, y50, y25, y75):
 
-    plt.figure('Infection_states_location_types')
-    plt.title('Infection states per location types avaraged over all runs')
+    plt.figure('Infection_location_types')
+    plt.title('At which location type an infection happened, avaraged over all runs')
 
     color_plot = matplotlib.colormaps.get_cmap('Set1').colors
 
@@ -60,9 +61,19 @@ def plot_infection_per_location_type_mean(x, y50, y25, y75):
                    'SocialEvent', 'BasicsShop','Event']
 
     for i in states_plot:
-        # rolling average
-        plt.plot(x, gaussian_filter1d(pd.DataFrame(y50[:, i]).rolling(
-            24, min_periods=1).sum(), sigma=15), color=color_plot[i%7])
+        # rolling average#
+        ac_color = color_plot[i%len(color_plot)]
+        if(i > len(color_plot)):
+            ac_color = "black"
+        
+        # we need to sum up every 24 hours
+        indexer = pd.api.indexers.FixedForwardWindowIndexer(window_size=24)
+        np_y50 = pd.DataFrame(y50[:, i]).rolling(window=indexer, min_periods=1).sum().to_numpy()
+        np_y50=np_y50[0::24].flatten()
+        # now smoothen this with a gaussian filter
+        np_y50 = gaussian_filter1d(np_y50, sigma=1, mode='nearest')
+        
+        plt.plot(x[0::24], np_y50, color=ac_color)
 
     plt.legend(legend_plot)
 
@@ -75,7 +86,7 @@ def plot_infection_per_location_type_mean(x, y50, y25, y75):
     plt.gca().set_xticklabels(xx[::150])
     plt.gcf().autofmt_xdate()
 
-    plt.xlabel('Time')
+    plt.xlabel('Date')
     plt.ylabel('Number of individuals')
     plt.show()
 
@@ -123,13 +134,8 @@ def plot_infection_states(x, y50, y25, y75, y_real=None):
     for i in states_plot:
         plt.plot(x, y50[:, i], color=color_plot[i])
 
-        # plot real data for comparison, symptomatic and infected daily
-    if y_real is not None:
-        x_real = np.linspace(0, y_real.shape[0]-1, y_real.shape[0])
-        plt.plot(x_real, y_real[:, 1], '.', color='tab:blue')
 
     plt.legend(legend_plot)
-
     for i in states_plot:
         plt.fill_between(x, y50[:, i], y25[:, i],
                          alpha=0.5, color=color_plot[i])
@@ -160,74 +166,66 @@ def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs, real_bs):
 
     color_plot = matplotlib.colormaps.get_cmap('Set1').colors
 
-    fig, ax = plt.subplots(5, len(age_group_access), constrained_layout=True)
+    fig, ax = plt.subplots(6, len(age_group_access), constrained_layout=True)
     fig.set_figwidth(20)
     fig.set_figheight(9)
     for j, count in zip(age_group_access, range(len(age_group_access))):
         y50 = p50_bs[j][()]
         y25 = p25_bs[j][()]
         y75 = p75_bs[j][()]
-        y_real = real_bs[j][()]
+        y_real = np.floor(real_bs[j][()])
 
         # infeced no symptoms
         ax_infected_no_symptoms = ax[0, count]
         ax_infected_no_symptoms.set_xlabel('time (days)')
         ax_infected_no_symptoms.plot(
             x, y50[:, 1], color=color_plot[count], label='y50')
-        ax_infected_no_symptoms.plot(
-            x_real, y_real[:, 2], '.', color=color_plot[count], label='y_real')
         ax_infected_no_symptoms.fill_between(
             x, y50[:, 1], y25[:, 1], alpha=0.5, color=color_plot[count])
         ax_infected_no_symptoms.fill_between(
             x, y50[:, 1], y75[:, 1], alpha=0.5, color=color_plot[count])
         ax_infected_no_symptoms.tick_params(axis='y')
         ax_infected_no_symptoms.title.set_text(
-            'Infected_no_symptoms, Age{}'.format(j))
-        ax_infected_no_symptoms.legend(['Simulation', 'Real'])
+            '#Infected_no_symptoms, Age{}'.format(j))
+        ax_infected_no_symptoms.legend(['Simulation'])
 
         # Infected_symptoms
         ax_infected_symptoms = ax[1, count]
         ax_infected_symptoms.set_xlabel('time (days)')
         ax_infected_symptoms.plot(
             x, y50[:, 2], color=color_plot[count], label='y50')
-        ax_infected_symptoms.plot(
-            x_real, y_real[:, 4], '.', color=color_plot[count], label='y_real')
         ax_infected_symptoms.fill_between(
             x, y50[:, 2], y25[:, 2], alpha=0.5, color=color_plot[count])
         ax_infected_symptoms.fill_between(
             x, y50[:, 2], y75[:, 2], alpha=0.5, color=color_plot[count])
         ax_infected_symptoms.tick_params(axis='y')
         ax_infected_symptoms.title.set_text(
-            'Infected_symptoms, Age{}'.format(j))
-        ax_infected_symptoms.legend(['Simulation', 'Real'])
+            '#Infected_symptoms, Age{}'.format(j))
+        ax_infected_symptoms.legend(['Simulation'])
 
         # Severe
         ax_severe = ax[2, count]
         ax_severe.set_xlabel('time (days)')
         ax_severe.plot(x, y50[:, 4], color=color_plot[count], label='y50')
-        ax_severe.plot(x_real, y_real[:, 6], '.',
-                       color=color_plot[count], label='y_real')
         ax_severe.fill_between(
             x, y50[:, 4], y25[:, 4], alpha=0.5, color=color_plot[count])
         ax_severe.fill_between(
             x, y50[:, 4], y75[:, 4], alpha=0.5, color=color_plot[count])
         ax_severe.tick_params(axis='y')
-        ax_severe.title.set_text('Severe, Age{}'.format(j))
-        ax_severe.legend(['Simulation', 'Real'])
+        ax_severe.title.set_text('#Severe, Age{}'.format(j))
+        ax_severe.legend(['Simulation'])
 
         # Critical
         ax_critical = ax[3, count]
         ax_critical.set_xlabel('time (days)')
         ax_critical.plot(x, y50[:, [5]], color=color_plot[count], label='y50')
-        ax_critical.plot(
-            x_real, y_real[:, [7]], '.', color=color_plot[count], label='y_real')
         ax_critical.fill_between(
             x, y50[:, 5], y25[:, 5], alpha=0.5, color=color_plot[count])
         ax_critical.fill_between(
             x, y50[:, 5], y75[:, 5], alpha=0.5, color=color_plot[count])
         ax_critical.tick_params(axis='y')
-        ax_critical.title.set_text('Critical, Age{}'.format(j))
-        ax_critical.legend(['Simulation', 'Real'])
+        ax_critical.title.set_text('#Critical, Age{}'.format(j))
+        ax_critical.legend(['Simulation'])
 
         # Dead
         ax_dead = ax[4, count]
@@ -240,8 +238,20 @@ def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs, real_bs):
         ax_dead.fill_between(x, y50[:, 7], y75[:, 7],
                              alpha=0.5, color=color_plot[count])
         ax_dead.tick_params(axis='y')
-        ax_dead.title.set_text('Dead, Age{}'.format(j))
+        ax_dead.title.set_text('#Dead, Age{}'.format(j))
         ax_dead.legend(['Simulation', 'Real'])
+
+        # Recovered
+        ax_dead = ax[5, count]
+        ax_dead.set_xlabel('time (days)')
+        ax_dead.plot(x, y50[:, [6]], color=color_plot[count], label='y50')
+        ax_dead.fill_between(x, y50[:, 6], y25[:, 6],
+                             alpha=0.5, color=color_plot[count])
+        ax_dead.fill_between(x, y50[:, 6], y75[:, 6],
+                             alpha=0.5, color=color_plot[count])
+        ax_dead.tick_params(axis='y')
+        ax_dead.title.set_text('#Recovered, Age{}'.format(j))
+        ax_dead.legend(['Simulation'])
 
     # fig.tight_layout()  # otherwise the right y-label is slightly clipped
     plt.show()
@@ -259,16 +269,23 @@ def plot_dead(path):
     # we just take the first 90 days
     total_50 = total_50[0:90]
 
-    # we need the real data
-    f_real = h5py.File(
-        path + "/Results_rki.h5", 'r')
-    real_bs = f_real['3101']
-    y_real = real_bs['Total'][()]
+    # we need the real data json file cases_all_state_repdate_ma7
+    df_abb = pd.read_json(
+        path+"/../pydata/Germany/cases_all_county_repdate_ma7.json")
+    # we just need the columns cases and date
+    df_abb = df_abb[['Date', 'Deaths', 'ID_County']]
+    # we need just the dates bewteen 2021-03-01 and 2021-06-01
+    df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') &
+                    (df_abb['Date'] <= '2021-06-01')]
+    # we just need the cases with id 3101
+    df_abb = df_abb[df_abb['ID_County'] == 3101]
     # we just take the first 90 days
-    y_real = y_real[0:90]
+    df_abb = df_abb[0:90]
+    y_real = df_abb['Deaths'].to_numpy()
 
+ 
     # we calculate the RMSE
-    rmse_dead = np.sqrt(((y_real[:, 9] - total_50[:, 7])**2).mean())
+    rmse_dead = np.sqrt(((y_real- total_50[:, 7])**2).mean())
 
     # we plot this
     fig, ax = plt.subplots(1, 1, constrained_layout=True)
@@ -276,22 +293,22 @@ def plot_dead(path):
     fig.set_figheight(9)
     # we plot the tests positive and the real cases
     start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
-    xx = [start_date + pd.Timedelta(days=int(i)) for i in range(90)]
-    xx = [xx[i].strftime('%Y-%m-%d') for i in range(len(xx))]
-    ax.plot(xx, total_50[:, 7], color='tab:red')
-    ax.plot(xx, y_real[:, 9], color='tab:blue')
+    ax.plot(df_abb['Date'], total_50[:, 7], color='tab:red')
+    ax.plot(df_abb['Date'], y_real, color='tab:blue')
     # we also write the rmse
     ax.text(0.25, 0.8, 'RMSE: '+str(float("{:.2f}".format(rmse_dead))), horizontalalignment='center',
             verticalalignment='center', transform=plt.gca().transAxes, color='pink', fontsize=15)
-    ax.set_xlabel('time (days)')
+    ax.set_xlabel('Date')
     ax.set_ylabel('Number of dead')
-    ax.title.set_text('Dead')
-    ax.legend(['Dead', 'Real dead'])
+    ax.title.set_text('Cumulative Dead')
+    ax.legend(['Dead Simulated', 'Real dead'])
     plt.show()
 
 
 def plot_icu(path):
     df_abb = pd.read_json(path+"/pydata/Germany/county_divi_ma7.json")
+    perc_of_critical_in_icu = 0.3
+
     # we just need the columns ICU_low and ICU_hig
     df_abb = df_abb[['ID_County', 'ICU', 'Date']]
 
@@ -308,25 +325,34 @@ def plot_icu(path):
     # we need just every 24th value
     total_50 = total_50[::24]
     # we just take the first 90 days
-    total_50 = total_50[0:90]*0.4
+    total_50 = total_50[0:90]
+
+    ICU_Simulation = total_50[:, 5]*perc_of_critical_in_icu
+    ICU_Real = df_abb['ICU'][0:90]
+
+    #smooth the data
+    ICU_Real = gaussian_filter1d(ICU_Real, sigma=1, mode='nearest')
+    ICU_Simulation = gaussian_filter1d(ICU_Simulation, sigma=1, mode='nearest')
+
+
 
     # we calculate the RMSE
-    rmse_ICU = np.sqrt(((df_abb['ICU'][0:90] - total_50[:, 5])**2).mean())
+    rmse_ICU = np.sqrt(((ICU_Real - ICU_Simulation)**2).mean())
 
     # plot the ICU beds and the ICU beds taken
     fig, ax = plt.subplots(1, 1, constrained_layout=True)
     fig.set_figwidth(20)
     fig.set_figheight(9)
     # we plot the ICU_low and the ICU_high
-    ax.plot(df_abb['Date'][0:90], df_abb['ICU'][0:90], color='tab:blue')
-    ax.plot(df_abb['Date'][0:90], total_50[:, 5], color='tab:red')
+    ax.plot(df_abb['Date'][0:90], ICU_Real, color='tab:blue')
+    ax.plot(df_abb['Date'][0:90], ICU_Simulation, color='tab:red')
     # we also write the rmse
     ax.text(0.25, 0.8, 'RMSE: '+str(float("{:.2f}".format(rmse_ICU))), horizontalalignment='center',
             verticalalignment='center', transform=plt.gca().transAxes, color='pink', fontsize=15)
-    ax.set_xlabel('time (days)')
-    ax.set_ylabel('Number of ICU beds')
-    ax.title.set_text('ICU beds and ICU beds taken')
-    ax.legend(['ICU beds', 'ICU beds taken'])
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Number of persons in an ICU')
+    ax.title.set_text('Simulated and real ICU beds occupied')
+    ax.legend(['Real in ICU, smoothed','Simulated in ICU, Perc of Critical:'+str(perc_of_critical_in_icu)])
     plt.show()
 
 
@@ -397,7 +423,7 @@ def plot_tests(path):
     # we plot the tests positive and the real cases
     ax.plot(xx, PCR_tests, color='tab:red')
     ax.plot(xx, PCR_tests_positive, color='tab:blue')
-    ax.set_xlabel('time (days)')
+    ax.set_xlabel('Date')
 
     # The amount of persons, who do tests on  a day is:
     PCR_tests_symptomatic = np.zeros(90)
@@ -429,7 +455,7 @@ def plot_tests(path):
     fig.set_figheight(9)
     # we plot the tests positive and the real cases
     ax.plot(xx, sympt_persons, color='tab:red')
-    ax.set_xlabel('time (days)')
+    ax.set_xlabel('Date')
     ax.set_ylabel('Number of symptomatic persons')
     ax.title.set_text('Symptomatic persons')
     ax.legend(['Symptomatic persons'])
@@ -452,6 +478,16 @@ def plot_tests(path):
     plt.show()
 
 
+def calc_positive_tests_overall(infection_states, sensitivity, specificity, r_sns, lt_sympt):
+
+    lt_asympt = lt_sympt/r_sns
+    inferred_positive_tests_sympt = (
+        infection_states[:, 3]*lt_sympt+infection_states[:, 4]*lt_sympt+infection_states[:, 5]*lt_sympt)*sensitivity
+    # asymptomatic persons
+    inferred_positive_tests_asympt = (infection_states[:, 0]*lt_asympt)*(
+        1-specificity)+((infection_states[:, 1]+infection_states[:, 2])*lt_asympt)*sensitivity
+    return inferred_positive_tests_sympt+inferred_positive_tests_asympt, inferred_positive_tests_sympt, inferred_positive_tests_asympt
+
 def infer_positive_tests(path):
     # First way: we just take x amount of eahc compartment and fit this to the positive tested category.
     # A few assumptions:
@@ -466,6 +502,10 @@ def infer_positive_tests(path):
     total_50 = p50_bs['Total'][()]
     total_50 = total_50[::24]
     total_50 = total_50[0:90]
+    time = p50_bs['Time'][()]
+    time = time[::24]
+    time = time[0:90]
+
 
     # # we need the real positive tests
     # # real world
@@ -489,55 +529,63 @@ def infer_positive_tests(path):
     df_abb = df_abb[0:90]
     # we need the amount of new positive tests each day insetad of cumulative
     df_abb['Confirmed'] = df_abb['Confirmed'].diff()
-
-    # we take a fraction from each compartment and fit this to the positive tests
-    # we take the symptomatic persons
-    sympt_persons = total_50[:, 3]+total_50[:, 4]+total_50[:, 5]
-    # we take the asymptomatic persons
-    asympt_persons = total_50[:, 2]+total_50[:, 1]+total_50[:, 0]
-    # we assume r_sns = 20 so symptomatic persons are 20 times more likely to test themselves
-    r_sns = 20
-    # we say the likelyhood to test yourself is 0.8 for symptomatic persons and therefore 0.04 for asymptomatic persons
-    lt_sympt = 0.06
-    lt_asympt = lt_sympt/r_sns
+  
     sensitivity = 0.69
-    specificity = 0.99
+    specificity = 0.95
+    # we need to derive the lowest rmse for the real positive tests and the inferred positive tests we use a grid search
+    # we need to find the best r_sns and lt_sympt
+    best_rmse = 1000000000
+    best_r_sns = 0
+    best_lt_sympt = 0
+    for r_sns in np.linspace(1, 100, 100):
+        for lt_sympt in np.linspace(0.005, 0.1, 100):
+            total_positive_tests, inferred_positive_tests_sympt, inferred_positive_tests_asympt = calc_positive_tests_overall(total_50, sensitivity, specificity, r_sns, lt_sympt)
+            rmse = np.sqrt(((df_abb['Confirmed'] - total_positive_tests)**2).mean())
+            if rmse < best_rmse:
+                best_rmse = rmse
+                best_r_sns = r_sns
+                best_lt_sympt = lt_sympt
+    
+    print("Best RMSE: ", best_rmse)
+    print("Best r_sns: ", best_r_sns)
+    print("Best lt_sympt: ", best_lt_sympt)
 
-    # therefore the amount of pisitive tests is:
-    # symptomatic persons
-    inferred_positive_tests_sympt = (
-        total_50[:, 3]*lt_sympt+total_50[:, 4]*lt_sympt+total_50[:, 5]*lt_sympt)*sensitivity
-    # asymptomatic persons
-    inferred_positive_tests_asympt = (total_50[:, 0]*lt_asympt)*(
-        1-specificity)+((total_50[:, 1]+total_50[:, 2])*lt_asympt)*sensitivity
+
+    total_positive_tests, inferred_positive_tests_sympt, inferred_positive_tests_asympt = calc_positive_tests_overall(total_50, sensitivity, specificity, best_r_sns, best_lt_sympt)
+
 
     # we save the assumed tests done
-    assumed__amount_of_test = (total_50[:, 3]*lt_sympt+total_50[:, 4]*lt_sympt+total_50[:, 5]*lt_sympt)+(
-        total_50[:, 0]*lt_asympt)+(total_50[:, 1]+total_50[:, 2])*lt_asympt
+    # assumed__amount_of_test = (total_50[:, 3]*lt_sympt+total_50[:, 4]*lt_sympt+total_50[:, 5]*lt_sympt)+(
+    #     total_50[:, 0]*lt_asympt)+(total_50[:, 1]+total_50[:, 2])*lt_asympt
+
+    
+
     # we plot this
-    fig, ax = plt.subplots(1, 1, constrained_layout=True)
-    fig.set_figwidth(20)
-    fig.set_figheight(9)
     # we plot the tests positive and the real cases
     start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
-    xx = [start_date + pd.Timedelta(days=int(i)) for i in range(90)]
+    xx = [start_date + pd.Timedelta(days=int(i)) for i in time]
     xx = [xx[i].strftime('%Y-%m-%d') for i in range(len(xx))]
-    ax.plot(xx, inferred_positive_tests_sympt, color='tab:red')
-    ax.plot(xx, inferred_positive_tests_asympt, color='tab:blue')
-    ax.plot(xx, inferred_positive_tests_asympt +
-            inferred_positive_tests_sympt, color='tab:green')
-    ax.plot(xx, df_abb['Confirmed'], color='tab:orange')
-    ax.set_xlabel('time (days)')
-    ax.set_ylabel('Number of positive tests')
-    ax.title.set_text('Inferred positive tests')
-    ax.legend(['Symptomatic persons', 'Asymptomatic persons',
-              'Symptomatic and Asymptomatic persons', 'Real positive tests'])
 
-    # we also write the rmse
-    rmse_sympt = np.sqrt(
-        ((df_abb['Confirmed'] - (inferred_positive_tests_sympt+inferred_positive_tests_asympt))**2).mean())
-    ax.text(0.25, 0.8, 'RMSE: '+str(float("{:.2f}".format(rmse_sympt))), horizontalalignment='center',
-            verticalalignment='center', transform=plt.gca().transAxes, color='pink', fontsize=15)
+    plt.gca().set_xticks(time[::5])
+    plt.gca().set_xticklabels(xx[::5])
+    plt.gcf().autofmt_xdate()
+
+
+
+    plt.plot(xx, inferred_positive_tests_sympt, color='tab:red')
+    plt.plot(xx, inferred_positive_tests_asympt, color='tab:blue')
+    plt.plot(xx, total_positive_tests, color='tab:green')
+    plt.plot(xx, df_abb['Confirmed'], color='tab:orange')
+    plt.xlabel('time (days)')
+    plt.ylabel('Number of positive tests')
+    plt.legend(['Assumed positive from Symptomatic', 'Assumed positive from Asymptomatic',
+              'Assumed positive from all Persons', 'Real positive tests'])
+
+    # we also write calculated best rmse, r_sns and lt_sympt into the title
+    plt.title('Positive tests inferred from model and real positive tests, RMSE: '+str(float("{:.2f}".format(best_rmse)))+' r_sns: '+str(float("{:.2f}".format(best_r_sns)))+' lt_sympt: '+str(float("{:.3f}".format(best_lt_sympt))))
+    
+    
+
     plt.show()
 
 
@@ -552,9 +600,8 @@ if __name__ == "__main__":
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    plot_infectoin_states_results(path)
-    plot_infections_loc_types_avarage(path)
-    plot_icu(path+"/..")
-    plot_dead(path)
-    # plot_tests(path+"/..")
+    # plot_infectoin_states_results(path)
+    # plot_infections_loc_types_avarage(path)
+    # plot_icu(path+"/..")
+    # plot_dead(path)
     infer_positive_tests(path)

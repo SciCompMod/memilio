@@ -101,7 +101,12 @@ LocationType return_home_when_recovered(Person::RandomNumberGenerator& rng, cons
  */
 LocationType get_buried(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
                         const Parameters& params);
-/**@}*/
+
+/**
+ * @brief Persons have a party on eastern.
+ */
+LocationType easter_party(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+                          const Parameters& params);
 
 } // namespace abm
 } // namespace mio

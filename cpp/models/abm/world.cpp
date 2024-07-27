@@ -77,12 +77,7 @@ void World::migration(TimePoint t, TimeSpan dt)
 {
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
-        auto&& person                = m_persons[i];
-        auto current_infection_state = person->get_infection_state(t);
-        if (current_infection_state == mio::abm::InfectionState::Susceptible && !m_use_migration_rules &&
-            !person->is_in_quarantine(t, parameters)) {
-            continue;
-        }
+        auto&& person = m_persons[i];
 
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
 
@@ -102,6 +97,12 @@ void World::migration(TimePoint t, TimeSpan dt)
             return false;
         };
 
+        // auto current_infection_state = person->get_infection_state(t);
+        // if (current_infection_state == mio::abm::InfectionState::Susceptible && !m_use_migration_rules &&
+        //     !person->is_in_quarantine(t, parameters)) {
+        //     continue;
+        // }
+
         //run migration rules one after the other if the corresponding location type exists
         //shortcutting of bool operators ensures the rules stop after the first rule is applied
         if (m_use_migration_rules) {
@@ -117,11 +118,13 @@ void World::migration(TimePoint t, TimeSpan dt)
         }
         else {
             // no daily routine migration, just infection related
+
             (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
                 (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
                 (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
                 (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
+                (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine)) ||
+                (has_locations({LocationType::Event}) && try_migration_rule(&easter_party));
         }
     }
 
@@ -137,7 +140,8 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto personal_rng      = Person::RandomNumberGenerator(m_rng, *person);
             if (current_location.get_type() != LocationType::Hospital &&
                 current_location.get_type() != LocationType::ICU &&
-                current_location.get_type() != LocationType::Cemetery) {
+                current_location.get_type() != LocationType::Cemetery &&
+                current_location.get_type() != LocationType::Event) {
                 if (!person->is_in_quarantine(t, parameters)) {
                     auto& target_location = get_individualized_location(
                         {person->get_assigned_location_index(trip.migration_destination.type),
