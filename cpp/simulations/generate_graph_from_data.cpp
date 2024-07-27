@@ -229,7 +229,7 @@ mio::IOResult<std::vector<mio::osecir::Model>> get_graph(mio::Date start_date, c
     }
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.8);
     auto scaling_factor_icu      = std::vector<double>(size_t(params.get_num_groups()), 0.5);
-    scaling_factor_icu[4]        = 30.0;
+    scaling_factor_icu[4]        = 25.0;
     scaling_factor_icu[5]        = 5.0;
 
     const auto& read_function_nodes = mio::osecir::read_input_data_county<mio::osecir::Model>;

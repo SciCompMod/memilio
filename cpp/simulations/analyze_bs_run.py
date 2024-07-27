@@ -55,14 +55,14 @@ def plot_infection_per_location_type_mean(x, y50, y25, y75):
 
     color_plot = matplotlib.colormaps.get_cmap('Set1').colors
 
-    states_plot = [0, 1, 2, 3, 4]
+    states_plot = [0, 1, 2, 3, 4, 10]
     legend_plot = ['Home', 'School', 'Work',
-                   'SocialEvent', 'BasicsShop', 'Hospital', 'ICU']
+                   'SocialEvent', 'BasicsShop','Event']
 
     for i in states_plot:
         # rolling average
         plt.plot(x, gaussian_filter1d(pd.DataFrame(y50[:, i]).rolling(
-            24, min_periods=1).sum(), sigma=15), color=color_plot[i])
+            24, min_periods=1).sum(), sigma=15), color=color_plot[i%7])
 
     plt.legend(legend_plot)
 
@@ -500,7 +500,7 @@ def infer_positive_tests(path):
     # we say the likelyhood to test yourself is 0.8 for symptomatic persons and therefore 0.04 for asymptomatic persons
     lt_sympt = 0.06
     lt_asympt = lt_sympt/r_sns
-    sensitivity = 0.6
+    sensitivity = 0.69
     specificity = 0.99
 
     # therefore the amount of pisitive tests is:

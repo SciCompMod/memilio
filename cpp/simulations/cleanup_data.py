@@ -423,8 +423,8 @@ def add_time_if_null(pd):
     return pd
 
 
-# PATH = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/"
-PATH = "/Users/david/Documents/HZI/memilio/data/mobility/"
+PATH = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/"
+# PATH = "/Users/david/Documents/HZI/memilio/data/mobility/"
 FILE = PATH + "braunschweig_result_ffa8.csv"
 bd = pd.read_csv(FILE)
 
@@ -449,8 +449,8 @@ bd_new = add_home_ids(bd_new)
 print('Home IDs set.')
 bd_new = add_school_ids(bd_new)
 print('School IDs set.')
-# bd_new = add_external_ids(bd)
-# print('External location IDs set.')
+bd_new = add_external_ids(bd)
+print('External location IDs set.')
 bd_new = assign_location_type(bd_new)
 print('Location types assigned.')
 bd_new = add_time_if_null(bd_new)

@@ -349,21 +349,6 @@ struct InfectionRateFromViralShed {
 };
 
 /**
- * @brief Determines the MobilityRestrictionParameter.
-*/
-struct MobilityRestrictionParameter {
-    using Type = ScalarType;
-    static Type get_default(AgeGroup /*size*/)
-    {
-        return Type(1.0);
-    }
-    static std::string name()
-    {
-        return "MobilityRestrictionParameter";
-    }
-};
-
-/**
  * @brief Aerosol transmission rates. 
 */
 struct AerosolTransmissionRates {
@@ -665,11 +650,11 @@ using ParametersBase =
                  TimeInfectedSevereToRecovered, TimeInfectedCriticalToDead, TimeInfectedCriticalToRecovered,
                  SymptomsPerInfectedNoSymptoms, SeverePerInfectedSymptoms, CriticalPerInfectedSevere,
                  DeathsPerInfectedCritical, ViralLoadDistributions, InfectivityDistributions, VirusShedFactor,
-                 DetectInfection, MaskProtection, InfectionRateFromViralShed, MobilityRestrictionParameter,
-                 AerosolTransmissionRates, LockdownDate, QuarantineDuration, SocialEventRate, BasicShoppingRate,
-                 WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum,
-                 GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor,
-                 SeverityProtectionFactor, HighViralLoadProtectionFactor, TestData>;
+                 DetectInfection, MaskProtection, InfectionRateFromViralShed, AerosolTransmissionRates, LockdownDate,
+                 QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
+                 GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
+                 AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor,
+                 TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
