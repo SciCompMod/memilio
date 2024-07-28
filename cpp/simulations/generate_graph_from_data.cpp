@@ -136,8 +136,8 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
     const double maxRiskOfInfectionFromSymptomaticMax = 0.5;
     const double recoveredPerInfectedNoSymptomsMin[]  = {0.5, 0.45, 0.4, 0.35, 0.175, 0.05};
     const double recoveredPerInfectedNoSymptomsMax[]  = {0.5, 0.45, 0.4, 0.35, 0.175, 0.05};
-    const double severePerInfectedSymptomsMin[]       = {0.03, 0.03, 0.04, 0.17, 0.05, 0.08};
-    const double severePerInfectedSymptomsMax[]       = {0.03, 0.03, 0.04, 0.17, 0.05, 0.08};
+    const double severePerInfectedSymptomsMin[]       = {0.03, 0.03, 0.04, 0.17, 0.025, 0.04};
+    const double severePerInfectedSymptomsMax[]       = {0.03, 0.03, 0.04, 0.17, 0.025, 0.04};
     const double criticalPerSevereMin[]               = {0.10, 0.11, 0.12, 0.14, 0.33, 0.8};
     const double criticalPerSevereMax[]               = {0.10, 0.11, 0.12, 0.14, 0.33, 0.8};
     const double deathsPerCriticalMin[]               = {0.12, 0.13, 0.15, 0.29, 0.40, 0.48};
@@ -209,7 +209,8 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecir::
  * @returns created graph or any io errors that happen during reading of the files.
  */
 mio::IOResult<std::vector<mio::osecir::Model>> get_graph(mio::Date start_date, const int num_days,
-                                                         const fs::path& data_dir)
+                                                         const fs::path& data_dir, double scaling_factor_ag4,
+                                                         double scaling_factor_ag5, double sclaling_infected)
 {
 
     // global parameters
@@ -227,10 +228,10 @@ mio::IOResult<std::vector<mio::osecir::Model>> get_graph(mio::Date start_date, c
     for (auto& node : nodes) {
         node.parameters = params;
     }
-    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.8);
-    auto scaling_factor_icu      = std::vector<double>(size_t(params.get_num_groups()), 0.5);
-    scaling_factor_icu[4]        = 25.0;
-    scaling_factor_icu[5]        = 5.0;
+    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), sclaling_infected);
+    auto scaling_factor_icu      = std::vector<double>(size_t(params.get_num_groups()), 0.05);
+    scaling_factor_icu[4]        = scaling_factor_ag4;
+    scaling_factor_icu[5]        = scaling_factor_ag5;
 
     const auto& read_function_nodes = mio::osecir::read_input_data_county<mio::osecir::Model>;
     BOOST_OUTCOME_TRY(read_function_nodes(nodes, start_date, node_ids, scaling_factor_infected, scaling_factor_icu,
@@ -256,7 +257,7 @@ mio::IOResult<void> generate_extrapolated_data(std::vector<mio::osecir::Model> n
     BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
         nodes, data_dir.string(), node_ids, start_date, scaling_factor_infected, scaling_factor_icu, num_days,
         mio::path_join(data_dir.string(), "pydata/Germany", "county_divi_ma7.json"),
-        mio::path_join(data_dir.string(), "pydata/Germany", "cases_all_county_age_repdate_ma7.json"),
+        mio::path_join(data_dir.string(), "pydata/Germany", "cases_all_county_age_ma7.json"),
         mio::path_join(data_dir.string(), "pydata/Germany", "county_current_population.json")));
 
     return mio::success();

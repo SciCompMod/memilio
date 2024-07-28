@@ -256,7 +256,6 @@ def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs, real_bs):
     # fig.tight_layout()  # otherwise the right y-label is slightly clipped
     plt.show()
 
-
 def plot_dead(path):
     # we will have a seperate plot the cumulative infected individuals, cumulative symptomatic individuals and cumulative dead individual
     # we need to load the data
@@ -271,17 +270,35 @@ def plot_dead(path):
 
     # we need the real data json file cases_all_state_repdate_ma7
     df_abb = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county_repdate_ma7.json")
+        path+"/../pydata/Germany/cases_all_county.json")
+    # read in rki data rki_sum
+
+    f_real = h5py.File(
+    path + "/Results_rki.h5", 'r')
+    real_bs = f_real['3101']
+    total_real = real_bs['Total'][()]
+    total_real = total_real[0:90]
+    y_real = total_real[:, 9]
+    
+
     # we just need the columns cases and date
-    df_abb = df_abb[['Date', 'Deaths', 'ID_County']]
     # we need just the dates bewteen 2021-03-01 and 2021-06-01
-    df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') &
-                    (df_abb['Date'] <= '2021-06-01')]
+    df_abb = df_abb[(df_abb['Date'] >= '2021-02-01') &
+                    (df_abb['Date'] <= '2021-05-01')]
     # we just need the cases with id 3101
     df_abb = df_abb[df_abb['ID_County'] == 3101]
     # we just take the first 90 days
     df_abb = df_abb[0:90]
-    y_real = df_abb['Deaths'].to_numpy()
+    # y_real = df_abb['Deaths'].to_numpy()
+
+    # #smooth y_real with a gaussian filter
+    # y_real = gaussian_filter1d(y_real, sigma=1, mode='nearest')
+    # # floor it to make it an integer
+    # y_real = np.floor(y_real)
+
+    # we want to offset every date by 28 day
+    df_abb['Date'] = df_abb['Date'] + pd.DateOffset(days=28)
+
 
  
     # we calculate the RMSE
@@ -304,10 +321,9 @@ def plot_dead(path):
     ax.legend(['Dead Simulated', 'Real dead'])
     plt.show()
 
-
 def plot_icu(path):
     df_abb = pd.read_json(path+"/pydata/Germany/county_divi_ma7.json")
-    perc_of_critical_in_icu = 0.3
+    perc_of_critical_in_icu = 0.4
 
     # we just need the columns ICU_low and ICU_hig
     df_abb = df_abb[['ID_County', 'ICU', 'Date']]
@@ -354,7 +370,6 @@ def plot_icu(path):
     ax.title.set_text('Simulated and real ICU beds occupied')
     ax.legend(['Real in ICU, smoothed','Simulated in ICU, Perc of Critical:'+str(perc_of_critical_in_icu)])
     plt.show()
-
 
 def plot_tests(path):
 
@@ -477,7 +492,6 @@ def plot_tests(path):
     ax.legend(['Asymptomatic persons', 'Asymptomatic persons positive'])
     plt.show()
 
-
 def calc_positive_tests_overall(infection_states, sensitivity, specificity, r_sns, lt_sympt):
 
     lt_asympt = lt_sympt/r_sns
@@ -580,7 +594,7 @@ def infer_positive_tests(path):
     plt.ylabel('Number of positive tests')
     plt.legend(['Assumed positive from Symptomatic', 'Assumed positive from Asymptomatic',
               'Assumed positive from all Persons', 'Real positive tests'])
-
+ 
     # we also write calculated best rmse, r_sns and lt_sympt into the title
     plt.title('Positive tests inferred from model and real positive tests, RMSE: '+str(float("{:.2f}".format(best_rmse)))+' r_sns: '+str(float("{:.2f}".format(best_r_sns)))+' lt_sympt: '+str(float("{:.3f}".format(best_lt_sympt))))
     
@@ -600,8 +614,8 @@ if __name__ == "__main__":
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    # plot_infectoin_states_results(path)
-    # plot_infections_loc_types_avarage(path)
-    # plot_icu(path+"/..")
-    # plot_dead(path)
+    plot_infectoin_states_results(path)
+    plot_infections_loc_types_avarage(path)
+    plot_icu(path+"/..")
+    plot_dead(path)
     infer_positive_tests(path)
