@@ -214,16 +214,18 @@ def download_file(
     else:
         set_progr = False
     file = bytearray()  # file to be downloaded
-    progress = 0
-    # download file as bytes via iter_content
-    for chunk in req.iter_content(chunk_size=chunk_size):
-        file += chunk  # append chunk to file
-        # note: len(chunk) may be larger (e.g. encoding)
-        # or smaller (for the last chunk) than chunk_size
-        if set_progr:
-            # track progress
+    if set_progr:
+        progress = 0
+        # download file as bytes via iter_content
+        for chunk in req.iter_content(chunk_size=chunk_size):
+            file += chunk  # append chunk to file
+            # note: len(chunk) may be larger (e.g. encoding)
+            # or smaller (for the last chunk) than chunk_size
             progress = min(progress+chunk_size, file_size)
             progress_function(progress/file_size)
+    else:  # download without tracking progress
+        for chunk in req.iter_content(chunk_size=None):
+            file += chunk  # append chunk to file
     # return the downloaded content as file like object
     return BytesIO(file)
 
