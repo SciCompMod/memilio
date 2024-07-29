@@ -207,7 +207,7 @@ def download_file(
         # this is only the number of bytes downloaded, the size of the actual file
         # may be larger (e.g. when 'content-encoding' is gzip; decoding is handled
         # by iter_content)
-        # this is only needed for hte progress indicator
+        # this is only needed for the progress indicator
         file_size = int(req.headers.get('content-length'))
         # if content length is not known, a progress cant be set.
         set_progr = True
