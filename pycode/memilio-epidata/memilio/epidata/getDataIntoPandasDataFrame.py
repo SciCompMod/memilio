@@ -202,11 +202,16 @@ def download_file(
                 "Error: URL " + url + " could not be opened.")
     if req.status_code != 200:  # e.g. 404
         raise requests.exceptions.HTTPError("HTTPError: "+str(req.status_code))
-    # get file size from http header
-    # this is only the number of bytes downloaded, the size of the actual file
-    # may be larger (e.g. when 'content-encoding' is gzip; decoding is handled
-    # by iter_content)
-    file_size = int(req.headers.get('content-length'))
+    if 'content-length' in req.headers:
+        # get file size from http header
+        # this is only the number of bytes downloaded, the size of the actual file
+        # may be larger (e.g. when 'content-encoding' is gzip; decoding is handled
+        # by iter_content)
+        file_size = int(req.headers.get('content-length'))
+        # if content length is not known, a progress cant be set.
+        set_progr = True
+    else:
+        set_progr = False
     file = bytearray()  # file to be downloaded
     if progress_function:
         progress = 0
@@ -215,8 +220,9 @@ def download_file(
             file += chunk  # append chunk to file
             # note: len(chunk) may be larger (e.g. encoding)
             # or smaller (for the last chunk) than chunk_size
-            progress = min(progress+chunk_size, file_size)
-            progress_function(progress/file_size)
+            if set_progr:
+                progress = min(progress+chunk_size, file_size)
+                progress_function(progress/file_size)
     else:  # download without tracking progress
         for chunk in req.iter_content(chunk_size=None):
             file += chunk  # append chunk to file
