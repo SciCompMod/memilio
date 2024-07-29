@@ -166,7 +166,6 @@ TEST(TestPerson, get_tested)
     EXPECT_EQ(susceptible.is_in_quarantine(t, params), false);
     EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_parameters), true);
     EXPECT_EQ(susceptible.is_in_quarantine(t, params), true);
-    EXPECT_EQ(susceptible.get_time_of_last_test(), mio::abm::TimePoint(0));
 
     // Test antigen test
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
@@ -181,7 +180,6 @@ TEST(TestPerson, get_tested)
     EXPECT_EQ(infected.get_tested(rng_infected, t, antigen_parameters), false);
     EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_parameters), false);
     EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_parameters), true);
-    EXPECT_EQ(susceptible.get_time_of_last_test(), mio::abm::TimePoint(0));
 }
 
 TEST(TestPerson, getCells)

@@ -70,11 +70,9 @@ bool TestingCriteria::evaluate(const Person& p, TimePoint t) const
            (m_infection_states.none() || m_infection_states[static_cast<size_t>(p.get_infection_state(t))]);
 }
 
-TestingScheme::TestingScheme(const TestingCriteria& testing_criteria, TimeSpan minimal_time_since_last_test,
-                             TimePoint start_date, TimePoint end_date, TestParameters test_parameters,
-                             double probability)
+TestingScheme::TestingScheme(const TestingCriteria& testing_criteria, TimePoint start_date, TimePoint end_date,
+                             TestParameters test_parameters, double probability)
     : m_testing_criteria(testing_criteria)
-    , m_minimal_time_since_last_test(minimal_time_since_last_test)
     , m_start_date(start_date)
     , m_end_date(end_date)
     , m_test_parameters(test_parameters)
@@ -84,9 +82,8 @@ TestingScheme::TestingScheme(const TestingCriteria& testing_criteria, TimeSpan m
 
 bool TestingScheme::operator==(const TestingScheme& other) const
 {
-    return this->m_testing_criteria == other.m_testing_criteria &&
-           this->m_minimal_time_since_last_test == other.m_minimal_time_since_last_test &&
-           this->m_start_date == other.m_start_date && this->m_end_date == other.m_end_date &&
+    return this->m_testing_criteria == other.m_testing_criteria && this->m_start_date == other.m_start_date &&
+           this->m_end_date == other.m_end_date &&
            this->m_test_parameters.sensitivity == other.m_test_parameters.sensitivity &&
            this->m_test_parameters.specificity == other.m_test_parameters.specificity &&
            this->m_probability == other.m_probability;
@@ -105,12 +102,10 @@ void TestingScheme::update_activity_status(TimePoint t)
 
 bool TestingScheme::run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const
 {
-    if (t - person.get_time_of_last_test() > m_minimal_time_since_last_test) {
-        if (m_testing_criteria.evaluate(person, t)) {
-            double random = UniformDistribution<double>::get_instance()(rng);
-            if (random < m_probability) {
-                return !person.get_tested(rng, t, m_test_parameters);
-            }
+    if (m_testing_criteria.evaluate(person, t)) {
+        double random = UniformDistribution<double>::get_instance()(rng);
+        if (random < m_probability) {
+            return !person.get_tested(rng, t, m_test_parameters);
         }
     }
     return true;
@@ -195,13 +190,13 @@ bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator& rng, Person& p
                         return test_result.is_allowed_to_enter;
                     }
                     // If not, check if the test scheme is active, perform the test and save result.
-                    auto is_person_allowed_to_enter = true;
-                    if (ts.is_active()) {
-                        is_person_allowed_to_enter = ts.run_scheme(rng, person, t);
-                        // In this case, the time_of_testing in the past (i.e. the agent has already performed it).
-                        person.add_test_result(t - ts.get_test_parameters().required_time,
-                                               ts.get_test_parameters().type, is_person_allowed_to_enter);
+                    if (!ts.is_active()) {
+                        return true;
                     }
+                    bool is_person_allowed_to_enter = ts.run_scheme(rng, person, t);
+                    // In this case, the time_of_testing in the past (i.e. the agent has already performed it).
+                    person.add_test_result(t - ts.get_test_parameters().required_time, ts.get_test_parameters().type,
+                                           is_person_allowed_to_enter);
                     return is_person_allowed_to_enter;
                 })) {
                 return false;

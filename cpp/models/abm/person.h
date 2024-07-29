@@ -164,15 +164,6 @@ public:
     }
 
     /**
-     * @brief Get the TimePoint of the last negative test.
-     * @return TimePoint since the last test.
-     */
-    TimePoint get_time_of_last_test() const
-    {
-        return m_time_of_last_test;
-    }
-
-    /**
      * @brief Set an assigned Location of the Person.
      *
      * Important: Setting incorrect values will cause issues during simulation. It is preferable to use
@@ -463,7 +454,6 @@ private:
     double m_random_schoolgroup; ///< Value to determine if the Person goes to school or stays at home during lockdown.
     double m_random_goto_work_hour; ///< Value to determine at what time the Person goes to work.
     double m_random_goto_school_hour; ///< Value to determine at what time the Person goes to school.
-    TimePoint m_time_of_last_test; ///< TimePoint of the last negative test.
     Mask m_mask; ///< The Mask of the Person.
     bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.

@@ -39,7 +39,6 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     , m_quarantine_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_age(age)
     , m_time_at_location(0)
-    , m_time_of_last_test(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_mask(Mask(MaskType::Community))
     , m_wears_mask(false)
     , m_mask_compliance((uint32_t)LocationType::Count, 0.)
@@ -155,8 +154,7 @@ void Person::remove_quarantine()
 
 bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const TestParameters& params)
 {
-    ScalarType random   = UniformDistribution<double>::get_instance()(rng);
-    m_time_of_last_test = t;
+    ScalarType random = UniformDistribution<double>::get_instance()(rng);
     if (is_infected(t)) {
         // true positive
         if (random < params.sensitivity) {
