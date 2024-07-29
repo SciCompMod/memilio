@@ -74,10 +74,10 @@ TEST(TestLocation, reachCapacity)
     auto p1 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedNoSymptoms);
     auto p2 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible);
 
-    world.get_person(p1).set_assigned_location(mio::abm::LocationType::School, school_id);
-    world.get_person(p2).set_assigned_location(mio::abm::LocationType::School, school_id);
-    world.get_person(p1).set_assigned_location(mio::abm::LocationType::Home, home_id);
-    world.get_person(p2).set_assigned_location(mio::abm::LocationType::Home, home_id);
+    world.get_person(p1).set_assigned_location(mio::abm::LocationType::School, school_id, world.get_id());
+    world.get_person(p2).set_assigned_location(mio::abm::LocationType::School, school_id, world.get_id());
+    world.get_person(p1).set_assigned_location(mio::abm::LocationType::Home, home_id, world.get_id());
+    world.get_person(p2).set_assigned_location(mio::abm::LocationType::Home, home_id, world.get_id());
 
     world.get_location(school_id).set_capacity(1, 66);
 

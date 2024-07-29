@@ -41,7 +41,7 @@ int main()
     world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    world.parameters.get<mio::abm::AgeGroupGotoSchool>() = false;
+    world.parameters.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     world.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
     world.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
@@ -55,7 +55,7 @@ int main()
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
     child.set_age_weight(age_group_0_to_4, 1);
-    child.set_age_weight(age_group_0_to_4, 1);
+    child.set_age_weight(age_group_5_to_14, 1);
 
     auto parent = mio::abm::HouseholdMember(num_age_groups); // A parent is 50/50% 15-34 or 35-59.
     parent.set_age_weight(age_group_15_to_34, 1);
@@ -138,7 +138,7 @@ int main()
         world.assign_location(id, hospital);
         world.assign_location(id, icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == age_group_0_to_4) {
+        if (person.get_age() == age_group_5_to_14) {
             world.assign_location(id, school);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
