@@ -212,13 +212,16 @@ if __name__ == '__main__':
     #                  os.path.join(data_dir, f"ide_2020-11-01_30_0.1000_compartments")],
     #                 legendplot, flows=False, fileending="2020-11-01_30_0.1000_compartments", save=True, save_dir='plots/real/')
 
-    compare_results([os.path.join(data_dir, f"ode_2020-10-01_30_0.1000_flows"),
-                     os.path.join(data_dir, f"ide_2020-10-01_30_0.1000_flows")],
-                    legendplot, flows=True, fileending="2020-10-01_30_0.1000_flows", save=True, save_dir='plots/real/compare_all/')
+    start_date = '2020-10-01'
+    simulation_time = 30
+    timestep = '0.1000'
+    compare_results([os.path.join(data_dir, f"ode_{start_date}_{simulation_time}_{timestep}_flows"),
+                     os.path.join(data_dir, f"ide_{start_date}_{simulation_time}_{timestep}_flows")],
+                    legendplot, flows=True, fileending=f"{start_date}_{simulation_time}_{timestep}_flows", save=True, save_dir=f"plots/real/{start_date}/")
 
-    compare_results([os.path.join(data_dir, f"ode_2020-10-01_30_0.1000_compartments"),
-                     os.path.join(data_dir, f"ide_2020-10-01_30_0.1000_compartments")],
-                    legendplot, flows=False, fileending="2020-10-01_30_0.1000_compartments", save=True, save_dir='plots/real/compare_all/')
+    compare_results([os.path.join(data_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
+                     os.path.join(data_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
+                    legendplot, flows=False, fileending=f"{start_date}_{simulation_time}_{timestep}_compartments", save=True, save_dir=f'plots/real/{start_date}/')
 
     # # # # #  Constant init
     # data_dir = os.path.join(os.path.dirname(

@@ -42,7 +42,7 @@ using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 
 // Parameters are calculated via examples/compute_parameters.cpp.
 std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
-                                                          {"dt_flows", 0.1},
+                                                          {"dt_flows", 0.01},
                                                           {"total_population", 83155031.},
                                                           {"total_confirmed_cases", 341223.},
                                                           {"deaths", 9710.},
@@ -59,10 +59,11 @@ std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
                                                           {"SeverePerInfectedSymptoms", 0.104907},
                                                           {"CriticalPerSevere", 0.369201},
                                                           {"DeathsPerCritical", 0.387803},
-                                                          {"cont_freq", 5.5}};
+                                                          {"cont_freq", 5.2},
+                                                          {"scale_confirmed_cases", 2.}};
 
-std::vector<mio::TimeSeries<ScalarType>> simulate_ide_model(std::string date, ScalarType tmax,
-                                                            std::string save_dir = "")
+mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>> simulate_ide_model(std::string date, ScalarType tmax,
+                                                                           std::string save_dir = "")
 {
     // Initialize model.
     mio::isecir::Model model_ide(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count),
@@ -96,7 +97,7 @@ std::vector<mio::TimeSeries<ScalarType>> simulate_ide_model(std::string date, Sc
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered].set_state_age_function(
         survivalInfectedSymptomsToRecovered);
     // InfectedSevereToInfectedCritical
-    mio::LognormSurvivalFunction survivalInfectedSevereToInfectedCritical(1.01076765, 0, 0.90000000);
+    mio::LognormSurvivalFunction survivalInfectedSevereToInfectedCritical(1.010767652595, 0, 0.90000000);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical].set_state_age_function(
         survivalInfectedSevereToInfectedCritical);
     // InfectedSevereToRecovered
@@ -151,11 +152,11 @@ std::vector<mio::TimeSeries<ScalarType>> simulate_ide_model(std::string date, Sc
 
     const fs::path& data_dir = "../../data";
 
-    std::string path_rki = mio::path_join((data_dir / "pydata" / "Germany").string(), "cases_all_germany.json");
+    std::string path_rki = mio::path_join((data_dir / "pydata" / "Germany").string(), "cases_all_germany_ma7.json");
 
-    mio::Date parsed_date = mio::parse_date(date).value();
-    mio::IOResult<void> init_flows =
-        set_initial_flows(model_ide, simulation_parameter["dt_flows"], path_rki, parsed_date, 1.9);
+    mio::Date parsed_date          = mio::parse_date(date).value();
+    mio::IOResult<void> init_flows = set_initial_flows(model_ide, simulation_parameter["dt_flows"], path_rki,
+                                                       parsed_date, simulation_parameter["scale_confirmed_cases"]);
 
     model_ide.check_constraints(simulation_parameter["dt_flows"]);
 
@@ -164,7 +165,7 @@ std::vector<mio::TimeSeries<ScalarType>> simulate_ide_model(std::string date, Sc
 
     // Simulate.
     mio::isecir::Simulation sim(model_ide, simulation_parameter["dt_flows"]);
-    sim.get_transitions().print_table();
+    // sim.get_transitions().print_table();
     sim.advance(tmax);
 
     if (!save_dir.empty()) {
@@ -182,7 +183,8 @@ std::vector<mio::TimeSeries<ScalarType>> simulate_ide_model(std::string date, Sc
     }
 
     // Return vector with simulation results.
-    return {sim.get_result(), sim.get_transitions()};
+    std::vector<mio::TimeSeries<ScalarType>> result = {sim.get_result(), sim.get_transitions()};
+    return mio::success(result);
 }
 
 mio::IOResult<void> simulate_ode_model(std::string date, Vector init_compartments, ScalarType tmax,
@@ -288,16 +290,20 @@ int main()
     boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directories(dir);
 
-    std::string date = "2020-10-01";
-    ScalarType tmax  = 30;
+    std::string start_date     = "2020-10-01";
+    ScalarType simulation_time = 30;
 
-    std::vector<mio::TimeSeries<ScalarType>> result_ide = simulate_ide_model(date, tmax, save_dir);
+    auto result_ide = simulate_ide_model(start_date, simulation_time, save_dir);
+    if (!result_ide) {
+        printf("%s\n", result_ide.error().formatted_message().c_str());
+        return -1;
+    }
 
-    // result_ide[1].print_table();
+    // result_ide.value()[1].print_table();
 
-    Vector init_compartments = result_ide[0].get_value(0);
+    Vector init_compartments = result_ide.value()[0].get_value(0);
 
-    auto result_ode = simulate_ode_model(date, init_compartments, tmax, save_dir);
+    auto result_ode = simulate_ode_model(start_date, init_compartments, simulation_time, save_dir);
     if (!result_ode) {
         printf("%s\n", result_ode.error().formatted_message().c_str());
         return -1;
