@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Rene Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,35 +17,40 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_ABM_INFECTION_STATE_H
-#define MIO_ABM_INFECTION_STATE_H
 
-#include <cstdint>
+#ifndef MIO_ABM_PERSON_ID_H
+#define MIO_ABM_PERSON_ID_H
+
+#include "memilio/utils/type_safe.h"
+#include <limits>
 
 namespace mio
 {
 namespace abm
 {
 
-/** 
- * @brief #InfectionState in ABM.
- * Can be used as 0-based index.
- */
-enum class InfectionState : std::uint32_t
-{
-    Susceptible = 0,
-    Exposed,
-    InfectedNoSymptoms,
-    InfectedSymptoms,
-    InfectedSevere,
-    InfectedCritical,
-    Recovered,
-    Dead,
+/// Unique identifier for a Person within a World.
+struct MEMILIO_ENABLE_EBO PersonId : public mio::TypeSafe<uint32_t, PersonId>, public OperatorComparison<PersonId> {
+    /// @brief Create an ID.
+    PersonId(uint32_t id)
+        : mio::TypeSafe<uint32_t, PersonId>(id)
+    {
+    }
 
-    Count //last!!
+    /// @brief Create an invalid ID.
+    PersonId()
+        : mio::TypeSafe<uint32_t, PersonId>(std::numeric_limits<uint32_t>::max())
+    {
+    }
+
+    /// @brief Value for invalid IDs.
+    const static PersonId invalid_id()
+    {
+        return PersonId();
+    }
 };
 
 } // namespace abm
 } // namespace mio
 
-#endif
+#endif // MIO_ABM_PERSON_ID_H

@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
+* Authors: Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,26 +17,30 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-/** single include header for ABM */
 
-#ifndef EPI_ABM_H
-#define EPI_ABM_H
+#ifndef MIO_ABM_TEST_TYPE_H
+#define MIO_ABM_TEST_TYPE_H
 
-#include "abm/parameters.h"
-#include "abm/simulation.h"
-#include "abm/world.h"
-#include "abm/person.h"
-#include "abm/location.h"
-#include "abm/location_type.h"
-#include "memilio/math/interpolation.h"
-#include "memilio/utils/random_number_generator.h"
-#include "abm/migration_rules.h"
-#include "abm/testing_strategy.h"
-#include "abm/infection.h"
-#include "abm/infection_state.h"
-#include "abm/virus_variant.h"
-#include "abm/vaccine.h"
-#include "abm/household.h"
-#include "abm/lockdown_rules.h"
+#include <cstdint>
+
+namespace mio
+{
+namespace abm
+{
+
+/**
+ * @brief Type of a Test.
+ */
+enum class TestType : std::uint32_t
+{
+    Generic = 0,
+    Antigen,
+    PCR,
+
+    Count
+};
+
+} // namespace abm
+} // namespace mio
 
 #endif

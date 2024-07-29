@@ -17,13 +17,14 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/abm.h"
 #include "abm/analyze_result.h"
+#include "abm/common_abm_loggers.h"
+#include "abm/household.h"
+#include "abm/lockdown_rules.h"
 #include "memilio/io/result_io.h"
+#include "memilio/math/interpolation.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
-#include "boost/filesystem.hpp"
-#include "abm/common_abm_loggers.h"
 
 namespace fs = boost::filesystem;
 
@@ -54,7 +55,7 @@ void assign_uniform_distribution(mio::UncertainValue<>& p, ScalarType min, Scala
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
  * @return random infection state
  */
-mio::abm::InfectionState determine_infection_state(mio::abm::Person::RandomNumberGenerator& rng, ScalarType exposed,
+mio::abm::InfectionState determine_infection_state(mio::abm::PersonalRandomNumberGenerator& rng, ScalarType exposed,
                                                    ScalarType infected_no_symptoms, ScalarType infected_symptoms,
                                                    ScalarType recovered)
 {
@@ -319,19 +320,19 @@ void create_assign_locations(mio::abm::World& world)
     // For the capacity we assume an area of 1.25 m^2 per person (https://doi.org/10.1371/journal.pone.0259037) and a
     // room height of 3 m
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);
-    world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
-    world.get_individualized_location(event).set_capacity(100, 375);
+    world.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
+    world.get_location(event).set_capacity(100, 375);
 
     auto testing_criteria = mio::abm::TestingCriteria();
     auto testing_min_time = mio::abm::days(2);
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
 
-    auto probability = mio:: UncertainValue<>();
+    auto probability = mio::UncertainValue<>();
     assign_uniform_distribution(probability, 0.5, 1.0);
 
-    auto test_type      = mio::abm::AntigenTest();
-    auto testing_scheme = mio::abm::TestingScheme(testing_criteria, testing_min_time, start_date, end_date, test_type,
+    auto test_params    = world.parameters.get<mio::abm::TestData>()[mio::abm::TestType::Antigen];
+    auto testing_scheme = mio::abm::TestingScheme(testing_criteria, testing_min_time, start_date, end_date, test_params,
                                                   probability.draw_sample());
 
     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent, testing_scheme);
@@ -342,11 +343,11 @@ void create_assign_locations(mio::abm::World& world)
     // (https://doi.org/10.1016/j.buildenv.2021.107926))
     // For the ICUs we assume a capacity of 30 agents and the same volume.
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
-    world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    world.get_individualized_location(hospital).set_capacity(584, 26242);
+    world.get_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_location(hospital).set_capacity(584, 26242);
     auto icu = world.add_location(mio::abm::LocationType::ICU);
-    world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    world.get_individualized_location(icu).set_capacity(30, 1350);
+    world.get_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_location(icu).set_capacity(30, 1350);
 
     // Add schools, workplaces and shops.
     // At every school there are 600 students. The maximum contacs are 40.
@@ -360,16 +361,16 @@ void create_assign_locations(mio::abm::World& world)
     // and a volume of 7200 cubic meters (10 m^2 per person (https://doi.org/10.1371/journal.pone.0259037) and 3 m
     // room height).
     auto shop = world.add_location(mio::abm::LocationType::BasicsShop);
-    world.get_individualized_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-    world.get_individualized_location(shop).set_capacity(240, 7200);
+    world.get_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    world.get_location(shop).set_capacity(240, 7200);
 
     auto school = world.add_location(mio::abm::LocationType::School);
-    world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-    world.get_individualized_location(school).set_capacity(600, 3600);
+    world.get_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
+    world.get_location(school).set_capacity(600, 3600);
 
     auto work = world.add_location(mio::abm::LocationType::Work);
-    world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-    world.get_individualized_location(work).set_capacity(100, 3000);
+    world.get_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
+    world.get_location(work).set_capacity(100, 3000);
 
     int counter_event  = 0;
     int counter_school = 0;
@@ -378,47 +379,48 @@ void create_assign_locations(mio::abm::World& world)
     //Assign locations to the people
     auto persons = world.get_persons();
     for (auto& person : persons) {
+        const auto id = person.get_id();
         //assign shop and event
-        person.set_assigned_location(event);
+        world.assign_location(id, event);
         counter_event++;
-        person.set_assigned_location(shop);
+        world.assign_location(id, shop);
         counter_shop++;
         //assign hospital and ICU
-        person.set_assigned_location(hospital);
-        person.set_assigned_location(icu);
+        world.assign_location(id, hospital);
+        world.assign_location(id, icu);
         //assign work/school to people depending on their age
         if (person.get_age() == age_group_5_to_14) {
-            person.set_assigned_location(school);
+            world.assign_location(id, school);
             counter_school++;
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            person.set_assigned_location(work);
+            world.assign_location(id, work);
             counter_work++;
         }
         //add new school/work/shop if needed
         if (counter_event == 1000) {
             counter_event = 0;
             event         = world.add_location(mio::abm::LocationType::SocialEvent);
-            world.get_individualized_location(event).set_capacity(100, 375);
-            world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
+            world.get_location(event).set_capacity(100, 375);
+            world.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
         }
         if (counter_school == 600) {
             counter_school = 0;
             school         = world.add_location(mio::abm::LocationType::School);
-            world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-            world.get_individualized_location(school).set_capacity(600, 3600);
+            world.get_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
+            world.get_location(school).set_capacity(600, 3600);
         }
         if (counter_work == 100) {
             counter_work = 0;
             work         = world.add_location(mio::abm::LocationType::Work);
-            world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-            world.get_individualized_location(work).set_capacity(100, 3000);
+            world.get_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
+            world.get_location(work).set_capacity(100, 3000);
         }
         if (counter_shop == 15000) {
             counter_shop = 0;
             shop         = world.add_location(mio::abm::LocationType::BasicsShop);
-            world.get_individualized_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-            world.get_individualized_location(shop).set_capacity(240, 7200);
+            world.get_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+            world.get_location(shop).set_capacity(240, 7200);
         }
     }
 
@@ -427,7 +429,7 @@ void create_assign_locations(mio::abm::World& world)
 
     testing_min_time           = mio::abm::days(7);
     auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date,
-                                                         end_date, test_type, probability.draw_sample());
+                                                         end_date, test_params, probability.draw_sample());
     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School, testing_scheme_school);
 
     auto test_at_work          = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
@@ -436,7 +438,7 @@ void create_assign_locations(mio::abm::World& world)
     assign_uniform_distribution(probability, 0.1, 0.5);
     testing_min_time         = mio::abm::days(1);
     auto testing_scheme_work = mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date,
-                                                       test_type, probability.draw_sample());
+                                                       test_params, probability.draw_sample());
     world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 }
 
@@ -448,7 +450,7 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        auto rng             = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        auto rng             = mio::abm::PersonalRandomNumberGenerator(world.get_rng(), person);
         auto infection_state = determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob,
                                                          infected_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible) {

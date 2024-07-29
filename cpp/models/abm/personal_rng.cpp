@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen, Rene Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,35 +17,26 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_ABM_INFECTION_STATE_H
-#define MIO_ABM_INFECTION_STATE_H
 
-#include <cstdint>
+#include "abm/personal_rng.h"
+#include "abm/person.h"
 
 namespace mio
 {
 namespace abm
 {
-
-/** 
- * @brief #InfectionState in ABM.
- * Can be used as 0-based index.
- */
-enum class InfectionState : std::uint32_t
+PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(mio::Key<uint64_t> key, PersonId id,
+                                                             mio::Counter<uint32_t>& counter)
+    : m_key(key)
+    , m_person_id(id)
+    , m_counter(counter)
 {
-    Susceptible = 0,
-    Exposed,
-    InfectedNoSymptoms,
-    InfectedSymptoms,
-    InfectedSevere,
-    InfectedCritical,
-    Recovered,
-    Dead,
+}
 
-    Count //last!!
-};
+PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person)
+    : PersonalRandomNumberGenerator(rng.get_key(), person.get_id(), person.get_rng_counter())
+{
+}
 
 } // namespace abm
 } // namespace mio
-
-#endif
