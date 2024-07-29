@@ -192,14 +192,17 @@ bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator& rng, Person& p
                     // If the agent has a test result valid until now, use the result directly
                     if ((test_result.type != TestType::Count) &&
                         (test_result.time_of_testing + ts.get_test_parameters().validity_period >= t)) {
-                        return test_result.result;
+                        return test_result.is_allowed_to_enter;
                     }
-                    // If not, perform the test and save result.
-                    // In this case, the time_of_testing in the past (i.e. the agent has already performed it).
-                    auto result = !ts.is_active() || ts.run_scheme(rng, person, t);
-                    person.add_test_result(t - ts.get_test_parameters().required_time,
-                                           ts.get_test_parameters().type, result);
-                    return result;
+                    // If not, check if the test scheme is active, perform the test and save result.
+                    auto is_person_allowed_to_enter = true;
+                    if (ts.is_active()) {
+                        is_person_allowed_to_enter = ts.run_scheme(rng, person, t);
+                        // In this case, the time_of_testing in the past (i.e. the agent has already performed it).
+                        person.add_test_result(t - ts.get_test_parameters().required_time,
+                                               ts.get_test_parameters().type, is_person_allowed_to_enter);
+                    }
+                    return is_person_allowed_to_enter;
                 })) {
                 return false;
             }

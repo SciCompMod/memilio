@@ -170,7 +170,7 @@ TEST(TestWorld, evolveStateTransition)
     EXPECT_EQ(p3.get_infection_state(t + dt), mio::abm::InfectionState::InfectedSymptoms);
 }
 
-TEST(TestWorld, evolve)
+TEST(TestWorld, evolveMigration)
 {
     using testing::Return;
 
@@ -187,8 +187,6 @@ TEST(TestWorld, evolve)
             2 * dt.days();
         world.parameters.get<mio::abm::AgeGroupGotoSchool>().set_multiple({age_group_5_to_14}, true);
         world.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
-        // Setup so the person look 2 hours ahead.
-        world.parameters.get<mio::abm::PlanAheadTime>() = mio::abm::hours(2);
 
         auto home_id   = world.add_location(mio::abm::LocationType::Home);
         auto school_id = world.add_location(mio::abm::LocationType::School);
@@ -501,7 +499,6 @@ TEST(TestWorld, checkParameterConstraints)
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 0.6;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical]  = 0.7;
     params.get<mio::abm::LockdownDate>()                                  = mio::abm::TimePoint(0);
-    params.get<mio::abm::PlanAheadTime>()                                 = mio::abm::hours(1);
     ASSERT_EQ(params.check_constraints(), false);
 
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -1.;

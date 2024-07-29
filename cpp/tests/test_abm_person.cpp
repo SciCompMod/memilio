@@ -330,5 +330,5 @@ TEST(Person, addAndGetTestResult)
     auto t      = mio::abm::TimePoint(0);
 
     person.add_test_result(t, mio::abm::TestType::Generic, true);
-    ASSERT_TRUE(person.get_test_result(mio::abm::TestType::Generic).result);
+    ASSERT_TRUE(person.get_test_result(mio::abm::TestType::Generic).is_allowed_to_enter);
 }

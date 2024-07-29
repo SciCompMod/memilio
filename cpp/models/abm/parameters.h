@@ -547,21 +547,6 @@ struct AgeGroupGotoWork {
     }
 };
 
-/**
- * @brief The TimeSpan agents plan forward to take tests.  
- */
-struct PlanAheadTime {
-    using Type = TimeSpan;
-    static Type get_default(AgeGroup /*size*/)
-    {
-        return TimeSpan(seconds(0));
-    }
-    static std::string name()
-    {
-        return "PlanAheadTime";
-    }
-};
-
 using ParametersBase =
     ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
                  InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
@@ -570,7 +555,7 @@ using ParametersBase =
                  QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
                  GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
                  AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor,
-                 TestData, PlanAheadTime>;
+                 TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
@@ -777,11 +762,6 @@ public:
 
         if (this->get<LockdownDate>().seconds() < 0.0) {
             log_error("Constraint check: Parameter LockdownDate smaller {:d}", 0);
-            return true;
-        }
-
-        if (this->get<PlanAheadTime>().seconds() < 0.0) {
-            log_error("Constraint check: Parameter PlanAheadTime smaller {:d}", 0);
             return true;
         }
 

@@ -73,7 +73,7 @@ public:
     struct TestResult {
         TimePoint time_of_testing; ///< The TimePoint when the Person performs the test.
         TestType type = TestType::Count; ///< The TestType of the test.
-        bool result; ///< The result of the test.
+        bool is_allowed_to_enter; ///< Whether the person is allowed to enter the Location.
     };
 
     /**
@@ -437,15 +437,15 @@ public:
 
     /**
      * @brief Add TestResult to the Person
-     * @param[in] t The TimePoint of the result.
-     * @param[in] type The TestType of the result.
+     * @param[in] t The TimePoint of the test.
+     * @param[in] type The TestType of the test.
      * @param[in] result The result of the test.
     */
     void add_test_result(TimePoint t, TestType type, bool result);
 
     /**
      * @brief Get the most recent TestResult performed from the Person based on the TestType.
-     * @param[in] type The TestType of the result.
+     * @param[in] type The TestType of the test.
     */
     const TestResult get_test_result(TestType type) const;
 

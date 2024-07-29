@@ -68,7 +68,8 @@ TEST(TestTestingScheme, runScheme)
     const auto start_date       = mio::abm::TimePoint(0);
     const auto end_date         = mio::abm::TimePoint(60 * 60 * 24 * 3);
     const auto probability      = 0.8;
-    const auto test_params_pcr  = mio::abm::TestParameters{0.9, 0.99, mio::abm::hours(48), mio::abm::hours(72), mio::abm::TestType::PCR};
+    const auto test_params_pcr =
+        mio::abm::TestParameters{0.9, 0.99, mio::abm::hours(48), mio::abm::hours(72), mio::abm::TestType::PCR};
 
     std::vector<mio::abm::InfectionState> test_infection_states = {mio::abm::InfectionState::InfectedSymptoms,
                                                                    mio::abm::InfectionState::InfectedNoSymptoms};
@@ -115,7 +116,8 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
     const auto start_date       = mio::abm::TimePoint(0);
     const auto end_date         = mio::abm::TimePoint(60 * 60 * 24 * 3);
     const auto probability      = 0.8;
-    const auto test_params_pcr  = mio::abm::TestParameters{0.9, 0.99, mio::abm::hours(48), mio::abm::hours(72), mio::abm::TestType::PCR};
+    const auto test_params_pcr =
+        mio::abm::TestParameters{0.9, 0.99, mio::abm::hours(48), mio::abm::hours(72), mio::abm::TestType::PCR};
 
     std::vector<mio::abm::InfectionState> test_infection_states = {mio::abm::InfectionState::InfectedSymptoms,
                                                                    mio::abm::InfectionState::InfectedNoSymptoms};
@@ -136,7 +138,7 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(2)) //only sampled twice, testing criteria don't apply to third person
+        .Times(testing::Exactly(2)) //only sampled twice, testing criteria don't apply to third test strategy run.
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.5));
 
@@ -149,5 +151,5 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
     ASSERT_EQ(test_strategy.run_strategy(rng_person2, person2, loc_work, start_date),
               true); // Person tests and tests negative
     ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date),
-              false); // Person doesn't test
+              false); // Person doesn't test but used the last result (false to enter)
 }
