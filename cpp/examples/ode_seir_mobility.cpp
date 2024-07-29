@@ -175,9 +175,9 @@ int main()
     // contact_matrix[0].add_damping(0.5, mio::SimulationTime(5));
 
     model.parameters.get<mio::oseirmobility::CommutingRatio>().push_back(
-        {mio::oseirmobility::Region(0), mio::oseirmobility::Region(1), 0.03});
+        {mio::oseirmobility::Region(0), mio::oseirmobility::Region(1), 0.01});
     model.parameters.get<mio::oseirmobility::CommutingRatio>().push_back(
-        {mio::oseirmobility::Region(1), mio::oseirmobility::Region(0), 0.03});
+        {mio::oseirmobility::Region(1), mio::oseirmobility::Region(0), 0.01});
 
     using DefaultIntegratorCore =
         mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>;
@@ -189,11 +189,11 @@ int main()
     auto result_from_sim = simulate(t0, tmax, dt, model, integrator);
 
     auto save_result_status =
-        mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result_test.h5");
+        mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result.h5");
 
     // bool print_to_terminal = true;
 
-    // sir.print_table();
+    // result_from_sim.print_table();
 
     // if (print_to_terminal) {
 

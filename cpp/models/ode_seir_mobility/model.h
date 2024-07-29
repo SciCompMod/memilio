@@ -52,10 +52,6 @@ public:
 
         for (auto age_i : make_index_range(n_age_groups)) {
             for (auto age_j : make_index_range(n_age_groups)) {
-                double coeffStoI = params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(
-                                       age_i.get(), age_j.get()) *
-                                   params.template get<TransmissionProbabilityOnContact<FP>>()[age_i] /
-                                   population.get_group_total(age_j);
                 for (auto edge : params.template get<CommutingRatio>()) {
                     auto start_region = get<0>(edge);
                     auto end_region   = get<1>(edge);
@@ -92,6 +88,14 @@ public:
                     }
                 }
                 for (auto region : make_index_range(n_regions)) {
+                    auto const population_region     = population.template slice<Region>({(size_t)region, 1});
+                    auto const population_region_age = population_region.template slice<AgeGroup>({(size_t)age_j, 1});
+                    double population_size =
+                        std::accumulate(population_region_age.begin(), population_region_age.end(), 0.);
+                    double coeffStoI =
+                        params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(age_i.get(),
+                                                                                                        age_j.get()) *
+                        params.template get<TransmissionProbabilityOnContact<FP>>()[age_i] / population_size;
                     flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(
                         {region, age_i})] += pop[population.get_flat_index({region, age_j, InfectionState::Infected})];
                     flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(

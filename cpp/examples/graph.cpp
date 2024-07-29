@@ -26,8 +26,6 @@
 
 int main()
 {
-    mio::set_log_level(mio::LogLevel::off);
-
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 0.5; //time step of migration, daily migration every second step
@@ -78,7 +76,7 @@ int main()
         return n.id;
     });
 
-    // auto save_result_status = save_result(result, county_ids, 1, "graph_result.h5");
+    auto save_result_status = save_result(result, county_ids, 1, "graph_result.h5");
 
     for (auto&& node : result_graph.nodes()) {
         node.property.get_result().print_table();
