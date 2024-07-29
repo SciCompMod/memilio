@@ -177,7 +177,10 @@ bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator& rng, Person& p
         return true;
     }
 
-    bool is_person_compliant_to_test = person.is_compliant(rng, InterventionType::Testing);
+    // If the Person does not comply to Testing where there is a testing scheme at the target location, it is not allowed to enter.
+    if (!person.is_compliant(rng, InterventionType::Testing)) {
+        return false;
+    }
 
     //lookup schemes for this specific location as well as the location type
     //lookup in std::vector instead of std::map should be much faster unless for large numbers of schemes
@@ -190,10 +193,8 @@ bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator& rng, Person& p
         if (iter_schemes != m_location_to_schemes_map.end()) {
             //apply all testing schemes that are found
             auto& schemes = iter_schemes->schemes;
-            // If the Person does not comply to Testing where there is a testing scheme at the target location, it is not allowed to enter.
-            // Otherwise, whether the Person is allowed to enter or not depends on the test result(s).
-            if (!is_person_compliant_to_test ||
-                !std::all_of(schemes.begin(), schemes.end(), [&rng, &person, t](TestingScheme& ts) {
+            // Whether the Person is allowed to enter or not depends on the test result(s).
+            if (!std::all_of(schemes.begin(), schemes.end(), [&rng, &person, t](TestingScheme& ts) {
                     return !ts.is_active() || ts.run_scheme(rng, person, t);
                 })) {
                 return false;

@@ -33,7 +33,7 @@ namespace abm
  */
 enum class TestType : std::uint32_t
 {
-    Generic = 0,
+    Generic,
     Antigen,
     PCR,
 

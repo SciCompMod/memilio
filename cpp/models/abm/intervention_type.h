@@ -33,7 +33,7 @@ namespace abm
  */
 enum class InterventionType : std::uint32_t
 {
-    Mask = 0,
+    Mask,
     Testing,
     Isolation,
 

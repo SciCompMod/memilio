@@ -559,7 +559,7 @@ TEST(TestWorld, checkParameterConstraints)
     EXPECT_EQ(params.check_constraints(), true);
 }
 
-TEST(TestWorld, migrateWithAppliedNPIs)
+TEST(TestWorld, migrateRuleWithAppliedNPIs)
 {
     using testing::Return;
     // Test when the NPIs are applied, people can enter targeted location if they comply to the rules.
@@ -683,6 +683,130 @@ TEST(TestWorld, migrateWithAppliedNPIs)
     trip_list.add_trip(trip5);
     world.migrate(p_compliant_go_to_work.get_id(), home_id); // reset person location
     world.migrate(p_compliant_go_to_school.get_id(), home_id); // reset person location
+    world.use_migration_rules(false);
+    world.evolve(t, dt);
+
+    // The complied person is allowed to be at work and wear the required mask
+    EXPECT_EQ(p_compliant_go_to_work.get_location(), work_id);
+    EXPECT_EQ(p_compliant_go_to_work.get_mask().get_type(), mio::abm::MaskType::FFP2);
+
+    // The complied person is allowed to be at school and don't wear mask
+    EXPECT_EQ(p_compliant_go_to_school.get_location(), school_id);
+    EXPECT_EQ(p_compliant_go_to_school.get_mask().get_type(), mio::abm::MaskType::None);
+
+    // The person, who does not wear mask, is not allowed to be in location
+    EXPECT_EQ(p_no_mask.get_mask().get_type(), mio::abm::MaskType::None);
+    EXPECT_NE(p_no_mask.get_location(), work_id);
+
+    // The person, who does not want test, is not allowed to be in location
+    EXPECT_NE(p_no_test.get_location(), work_id);
+
+    // The person does not want to isolate when the test is positive
+    EXPECT_FALSE(p_no_isolation.is_in_quarantine(t, world.parameters));
+}
+
+TEST(TestWorld, tripMigrateWithAppliedNPIs)
+{
+    using testing::Return;
+    // Test when the NPIs are applied, people can enter targeted location if they comply to the rules.
+    auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
+    auto dt    = mio::abm::hours(1);
+    auto world = mio::abm::World(num_age_groups);
+    //auto rng   = mio::RandomNumberGenerator();
+    world.parameters
+        .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        2 * dt.days();
+    world.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
+    world.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
+
+    auto home_id   = world.add_location(mio::abm::LocationType::Home);
+    auto work_id   = world.add_location(mio::abm::LocationType::Work);
+    auto school_id = world.add_location(mio::abm::LocationType::School);
+    auto& work     = world.get_location(work_id);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(16))
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillRepeatedly(testing::Return(1.0));
+
+    auto p_id_compliant_go_to_work =
+        add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+    auto p_id_compliant_go_to_school =
+        add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedNoSymptoms, t);
+    auto p_id_no_mask =
+        add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+    auto p_id_no_test =
+        add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+    auto p_id_no_isolation =
+        add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+
+    auto& p_compliant_go_to_work   = world.get_person(p_id_compliant_go_to_work);
+    auto& p_compliant_go_to_school = world.get_person(p_id_compliant_go_to_school);
+    auto& p_no_mask                = world.get_person(p_id_no_mask);
+    auto& p_no_test                = world.get_person(p_id_no_test);
+    auto& p_no_isolation           = world.get_person(p_id_no_isolation);
+
+    p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Home, home_id);
+    p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Work, work_id);
+    p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Home, home_id);
+    p_compliant_go_to_school.set_assigned_location(mio::abm::LocationType::School, school_id);
+    p_compliant_go_to_school.set_assigned_location(mio::abm::LocationType::Home, home_id);
+    p_no_mask.set_assigned_location(mio::abm::LocationType::Work, work_id);
+    p_no_mask.set_assigned_location(mio::abm::LocationType::Home, home_id);
+    p_no_test.set_assigned_location(mio::abm::LocationType::Work, work_id);
+    p_no_test.set_assigned_location(mio::abm::LocationType::Home, home_id);
+    p_no_isolation.set_assigned_location(mio::abm::LocationType::Work, work_id);
+    p_no_isolation.set_assigned_location(mio::abm::LocationType::Home, home_id);
+
+    auto testing_criteria = mio::abm::TestingCriteria(
+        {}, {mio::abm::InfectionState::InfectedSymptoms, mio::abm::InfectionState::InfectedNoSymptoms});
+    const auto start_date        = mio::abm::TimePoint(0);
+    const auto end_date          = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability       = 1;
+    const auto test_params_pcr   = mio::abm::TestParameters{0.9, 0.99};
+    const auto testing_frequency = mio::abm::days(1);
+
+    auto testing_scheme = mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date,
+                                                  test_params_pcr, probability);
+    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.));
+
+    work.set_required_mask(mio::abm::MaskType::FFP2);
+    p_no_mask.set_compliance(mio::abm::InterventionType::Mask, 0.4);
+    p_no_test.set_compliance(mio::abm::InterventionType::Testing, 0.4);
+    p_no_isolation.set_compliance(mio::abm::InterventionType::Isolation, 0.4);
+
+    // Using trip list
+    mio::abm::TripList& trip_list = world.get_trip_list();
+    mio::abm::Trip trip1(p_compliant_go_to_work.get_id(), t, work_id, home_id);
+    mio::abm::Trip trip2(p_compliant_go_to_school.get_id(), t, school_id, home_id);
+    mio::abm::Trip trip3(p_no_mask.get_id(), t, work_id, home_id);
+    mio::abm::Trip trip4(p_no_test.get_id(), t, work_id, home_id);
+    mio::abm::Trip trip5(p_no_isolation.get_id(), t, work_id, home_id);
+    trip_list.add_trip(trip1);
+    trip_list.add_trip(trip2);
+    trip_list.add_trip(trip3);
+    trip_list.add_trip(trip4);
+    trip_list.add_trip(trip5);
     world.use_migration_rules(false);
     world.evolve(t, dt);
 
