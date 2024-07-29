@@ -97,17 +97,16 @@ TEST(TestTestingScheme, runScheme)
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(6))
+        .Times(testing::Exactly(4))
         .WillOnce(testing::Return(0.7)) // Person 1 got test
         .WillOnce(testing::Return(0.5)) // Person 1 tested positive and cannot enter
         .WillOnce(testing::Return(0.7)) // Person 2 got test
-        .WillOnce(testing::Return(0.5)) // Person 2 tested negative and can enter
-        .WillOnce(testing::Return(0.7)) // Person 1 got test
-        .WillOnce(testing::Return(0.9)); // Person 1 tested negative and can enter
+        .WillOnce(testing::Return(0.5)); // Person 2 tested negative and can enter
+
     ASSERT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date), false); // Person tests and tests positive
     ASSERT_EQ(testing_scheme2.run_scheme(rng_person2, person2, start_date), true); // Person tests and tests negative
     ASSERT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date),
-              true); // Person tests and tests negative
+              false); // Person doesn't test but used the last result (false to enter)
 }
 
 TEST(TestTestingScheme, initAndRunTestingStrategy)

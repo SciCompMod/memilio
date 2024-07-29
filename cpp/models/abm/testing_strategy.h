@@ -148,15 +148,6 @@ public:
      */
     bool run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
-    /**
-     * @brief Gets the TestParameters of the TestingScheme.
-     * @return The TestParameters of the TestingScheme.
-     */
-    TestParameters get_test_parameters() const
-    {
-        return m_test_parameters;
-    }
-
 private:
     TestingCriteria m_testing_criteria; ///< TestingCriteria of the scheme.
     TimePoint m_start_date; ///< Starting date of the scheme.

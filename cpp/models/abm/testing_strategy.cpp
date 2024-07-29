@@ -102,10 +102,20 @@ void TestingScheme::update_activity_status(TimePoint t)
 
 bool TestingScheme::run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const
 {
+    auto test_result = person.get_test_result(m_test_parameters.type);
+    // If the agent has a test result valid until now, use the result directly
+    if ((test_result.type != TestType::Count) &&
+        (test_result.time_of_testing + m_test_parameters.validity_period >= t)) {
+        return test_result.is_allowed_to_enter;
+    }
     if (m_testing_criteria.evaluate(person, t)) {
         double random = UniformDistribution<double>::get_instance()(rng);
         if (random < m_probability) {
-            return !person.get_tested(rng, t, m_test_parameters);
+            // In this case, the time_of_testing in the past (i.e. the agent has already performed it).
+            bool is_person_allowed_to_enter = !person.get_tested(rng, t, m_test_parameters);
+            person.add_test_result(t - m_test_parameters.required_time, m_test_parameters.type,
+                                   is_person_allowed_to_enter);
+            return is_person_allowed_to_enter;
         }
     }
     return true;
@@ -183,21 +193,7 @@ bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator& rng, Person& p
             //apply all testing schemes that are found
             auto& schemes = iter_schemes->schemes;
             if (!std::all_of(schemes.begin(), schemes.end(), [&rng, &person, t](TestingScheme& ts) {
-                    auto test_result = person.get_test_result(ts.get_test_parameters().type);
-                    // If the agent has a test result valid until now, use the result directly
-                    if ((test_result.type != TestType::Count) &&
-                        (test_result.time_of_testing + ts.get_test_parameters().validity_period >= t)) {
-                        return test_result.is_allowed_to_enter;
-                    }
-                    // If not, check if the test scheme is active, perform the test and save result.
-                    if (!ts.is_active()) {
-                        return true;
-                    }
-                    bool is_person_allowed_to_enter = ts.run_scheme(rng, person, t);
-                    // In this case, the time_of_testing in the past (i.e. the agent has already performed it).
-                    person.add_test_result(t - ts.get_test_parameters().required_time, ts.get_test_parameters().type,
-                                           is_person_allowed_to_enter);
-                    return is_person_allowed_to_enter;
+                    return !ts.is_active() || ts.run_scheme(rng, person, t);
                 })) {
                 return false;
             }
