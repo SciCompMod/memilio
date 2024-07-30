@@ -84,7 +84,6 @@ class Conf:
 
         # activate CoW for more predictable behaviour of pandas DataFrames
         pd.options.mode.copy_on_write = True
-
         # read in config file
         # if no config file is given, use default values
         if os.path.exists(path):
@@ -105,12 +104,17 @@ class Conf:
                 if key not in kwargs:
                     kwargs.update({key: parser['SETTINGS'][key]})
 
-            Conf.show_progr = True if kwargs['show_progress'] == 'True' else False
+            Conf.show_progr = True if str(
+                kwargs['show_progress']) == 'True' else False
             Conf.v_level = str(kwargs['verbosity_level'])
-            self.checks = True if kwargs['run_checks'] == 'True' else False
-            self.interactive = True if kwargs['interactive'] == 'True' else False
-            self.plot = True if kwargs['make_plot'] == 'True' else False
-            self.no_raw = True if kwargs['no_raw'] == 'True' else False
+            self.checks = True if str(
+                kwargs['run_checks']) == 'True' else False
+            self.interactive = True if str(
+                kwargs['interactive']) == 'True' else False
+            self.plot = True if str(kwargs['make_plot']) == 'True' else False
+            self.no_raw = True if str(kwargs['no_raw']) == 'True' else False
+            self.to_dataset = True if str(
+                kwargs['to_dataset']) == 'True' else False
         else:
             # default values:
             Conf.show_progr = kwargs['show_progress'] if 'show_progress' in kwargs.keys(
@@ -126,6 +130,8 @@ class Conf:
             self.no_raw = kwargs['no_raw'] if 'no_raw' in kwargs.keys(
             ) else dd.defaultDict['no_raw']
             self.path_to_use = out_folder
+            self.to_dataset = kwargs['to_dataset'] if 'to_dataset' in kwargs.keys(
+            ) else False
 
         # suppress Future & DepricationWarnings
         if VerbosityLevel[Conf.v_level].value <= 2:
@@ -196,13 +202,19 @@ def download_file(
                 "Error: URL " + url + " could not be opened.")
     if req.status_code != 200:  # e.g. 404
         raise requests.exceptions.HTTPError("HTTPError: "+str(req.status_code))
-    # get file size from http header
-    # this is only the number of bytes downloaded, the size of the actual file
-    # may be larger (e.g. when 'content-encoding' is gzip; decoding is handled
-    # by iter_content)
-    file_size = int(req.headers.get('content-length'))
+    if ('content-length' in req.headers) and progress_function:
+        # get file size from http header
+        # this is only the number of bytes downloaded, the size of the actual file
+        # may be larger (e.g. when 'content-encoding' is gzip; decoding is handled
+        # by iter_content)
+        # this is only needed for the progress indicator
+        file_size = int(req.headers.get('content-length'))
+        # if content length is not known, a progress cant be set.
+        set_progr = True
+    else:
+        set_progr = False
     file = bytearray()  # file to be downloaded
-    if progress_function:
+    if set_progr:
         progress = 0
         # download file as bytes via iter_content
         for chunk in req.iter_content(chunk_size=chunk_size):
@@ -352,6 +364,7 @@ def cli(what):
     - verbose
     - skip_checks
     - no_raw
+    - to_dataset
 
     @param what Defines what packages calls and thus what kind of command line arguments should be defined.
     """
@@ -482,6 +495,13 @@ def cli(what):
         parser.add_argument(
             '--skip-checks', dest='run_checks', action='store_false',
             help='Skips sanity checks etc.')
+
+    if '--to-dataset' in sys.argv:
+        parser.add_argument(
+            '--to-dataset', dest='to_dataset',
+            help="To return saved dataframes as objects.",
+            action='store_true'
+        )
 
     args = vars(parser.parse_args())
 

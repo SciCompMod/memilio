@@ -40,11 +40,11 @@ pd.options.mode.copy_on_write = True
 
 
 def read_population_data():
-    '''! Reads Population data from regionalstatistik.de
+    """! Reads Population data from regionalstatistik.de
 
     A request is made to regionalstatistik.de and the StringIO is read in as a csv into the dataframe format.
     @return DataFrame
-    '''
+    """
 
     download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv'
     req = requests.get(download_url)
@@ -53,8 +53,8 @@ def read_population_data():
     return df_pop_raw
 
 
-def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
-    '''! Writes population dataframe into directory with new column names and age groups
+def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_format: str, merge_eisenach: bool):
+    """! Writes population dataframe into directory with new column names and age groups
 
     @param df_pop Population data DataFrame to be exported
     @param directory Directory where data is written to.
@@ -63,7 +63,7 @@ def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
         and 'Eisenach' are listed separately or
         combined as one entity 'Wartburgkreis'.
     @return exported DataFrame
-    '''
+    """
 
     new_cols = [
         dd.EngEng['idCounty'],
@@ -129,7 +129,7 @@ def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
 
 
 def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
-    '''! Assigns population data of all counties of old dataframe in new created dataframe
+    """! Assigns population data of all counties of old dataframe in new created dataframe
 
     In df_pop_raw there might be additional information like federal states, 
     governing regions etc. which is not necessary for the dataframe.
@@ -140,7 +140,7 @@ def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
     @param age_cols Age groups in old DataFrame
     @param idCountyidx indexes in old DataFrame where data of corresponding county starts
     @return new DataFrame
-    '''
+    """
 
     new_cols = {dd.EngEng['idCounty']: counties[:, 1],
                 dd.EngEng['county']: counties[:, 0]}
@@ -218,38 +218,21 @@ def test_total_population(df_pop, age_cols):
         raise gd.DataError('Total Population does not match expectation.')
 
 
-def get_population_data(read_data=dd.defaultDict['read_data'],
-                        file_format=dd.defaultDict['file_format'],
-                        out_folder=dd.defaultDict['out_folder'],
-                        merge_eisenach=True,
-                        **kwargs):
-    """! Download age-stratified population data for the German counties.
 
-    The data we use is:
-    Official 'Bevölkerungsfortschreibung' 12411-02-03-4:
-    'Bevölkerung nach Geschlecht und Altersgruppen (17)' 
-    of regionalstatistik.de. 
-
-    https://www.regionalstatistik.de/genesis/online -> "1: Gebiet, Bevölkerung,
-    Arbeitsmarkt, Wahlen" -> "12: Bevölkerung" -> "12411 Fortschreibung des
-    Bevölkerungsstandes" ->  "12411-02-03-4: Bevölkerung nach Geschlecht und 
-    Altersgruppen (17) - Stichtag 31.12. - regionale Tiefe: Kreise und
-    krfr. Städte". 
-
-    Download the xlsx or csv file and put it under dd.defaultDict['out_folder'], 
-    this normally is Memilio/data/pydata/Germany. 
-    The folders 'pydata/Germany' have to be created if they do not exist yet. 
-    Then this script can be run.
+def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
+                          out_folder: str = dd.defaultDict['out_folder'],
+                          **kwargs
+                          ) -> pd.DataFrame:
+    """! Downloads or reads the population data.
+    If it does not already exist, the folder Germany is generated in the given out_folder.
+    If read_data == True and the file "FullData_population.json" exists, the data is read form this file
+    and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
+    The downloaded dataframe is written to the file "FullData_population".
 
     @param read_data False or True. Defines if data is read from file or
         downloaded. Default defined in defaultDict.
-    @param file_format File format which is used for writing the data.
-        Default defined in defaultDict.
     @param out_folder Path to folder where data is written in folder
         out_folder/Germany. Default defined in defaultDict.
-    @param merge_eisenach [Default: True] or False. Defines whether the
-        counties 'Wartburgkreis' and 'Eisenach' are listed separately or
-        combined as one entity 'Wartburgkreis'.
     @return DataFrame with adjusted population data for all ages to current level.
     """
     conf = gd.Conf(out_folder, **kwargs)
@@ -265,6 +248,22 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
 
     df_pop_raw = read_population_data()
 
+    return df_pop_raw
+
+
+def preprocess_population_data(df_pop_raw: pd.DataFrame,
+                               merge_eisenach: bool = True,
+                               ) -> pd.DataFrame:
+    """! Processing of the downloaded data
+        * the columns are renamed to English and the state and county names are added.
+
+    @param df_pop_raw pd.DataFrame. A Dataframe containing input population data
+    @param merge_eisenach [Default: True] or False. Defines whether the
+     counties 'Wartburgkreis' and 'Eisenach' are listed separately or
+     combined as one entity 'Wartburgkreis'.
+
+    @return df pd.DataFrame. Processed population data
+    """
     column_names = list(df_pop_raw.columns)
     # rename columns
     rename_columns = {
@@ -305,12 +304,92 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
 
     df_pop = assign_population_data(
         df_pop_raw, counties, age_cols, idCounty_idx)
-
     test_total_population(df_pop, age_cols)
+    return df_pop
 
+
+def write_population_data(df_pop: pd.DataFrame,
+                          out_folder: str = dd.defaultDict['out_folder'],
+                          file_format: str = dd.defaultDict['file_format'],
+                          merge_eisenach: bool = True
+                          ) -> None or pd.DataFrame:
+    """! Write the population data into json files
+    Three kinds of structuring of the data are done.
+    We obtain the chronological sequence of ICU and ICU_ventilated
+    stored in the files "county_population".json", "state_population.json" and "germany_population.json"
+    for counties, states and whole Germany, respectively.
+
+    @param df_pop pd.DataFrame. A Dataframe containing processed population data
+    @param file_format str. File format which is used for writing the data. Default defined in defaultDict.
+    @param out_folder str. Folder where data is written to. Default defined in defaultDict.
+    @param merge_eisenach [Default: True] or False. Defines whether the
+        counties 'Wartburgkreis' and 'Eisenach' are listed separately or
+        combined as one entity 'Wartburgkreis'.
+
+    @return None
+    """
+    directory = os.path.join(out_folder, 'Germany')
     df_pop_export = export_population_dataframe(
         df_pop, directory, file_format, merge_eisenach)
+    return df_pop_export
 
+
+def get_population_data(read_data: bool = dd.defaultDict['read_data'],
+                        file_format: str = dd.defaultDict['file_format'],
+                        out_folder: str = dd.defaultDict['out_folder'],
+                        merge_eisenach: bool = True,
+                        **kwargs
+                        ):
+    """! Download age-stratified population data for the German counties.
+
+    The data we use is:
+    Official 'Bevölkerungsfortschreibung' 12411-02-03-4:
+    'Bevölkerung nach Geschlecht und Altersgruppen (17)' 
+    of regionalstatistik.de. 
+    ATTENTION: The raw file cannot be downloaded 
+    automatically by our scripts without an Genesis Online account. In order to
+    work on this dataset, please enter your username and password or manually download it from:
+
+    https://www.regionalstatistik.de/genesis/online -> "1: Gebiet, Bevölkerung,
+    Arbeitsmarkt, Wahlen" -> "12: Bevölkerung" -> "12411 Fortschreibung des
+    Bevölkerungsstandes" ->  "12411-02-03-4: Bevölkerung nach Geschlecht und 
+    Altersgruppen (17) - Stichtag 31.12. - regionale Tiefe: Kreise und
+    krfr. Städte". 
+
+    Download the xlsx or csv file and put it under dd.defaultDict['out_folder'], 
+    this normally is Memilio/data/pydata/Germany. 
+    The folders 'pydata/Germany' have to be created if they do not exist yet. 
+    Then this script can be run.
+
+    @param read_data False or True. Defines if data is read from file or
+        downloaded. Default defined in defaultDict.
+    @param file_format File format which is used for writing the data.
+        Default defined in defaultDict.
+    @param out_folder Path to folder where data is written in folder
+        out_folder/Germany. Default defined in defaultDict.
+    @param merge_eisenach [Default: True] or False. Defines whether the
+        counties 'Wartburgkreis' and 'Eisenach' are listed separately or
+        combined as one entity 'Wartburgkreis'.
+    @param username str. Username to sign in at regionalstatistik.de.
+    @param password str. Password to sign in at regionalstatistik.de.
+    @return DataFrame with adjusted population data for all ages to current level.
+    """
+    raw_df = fetch_population_data(
+        read_data=read_data,
+        out_folder=out_folder,
+        file_format=file_format,
+        **kwargs
+    )
+    preprocess_df = preprocess_population_data(
+        df_pop_raw=raw_df,
+        merge_eisenach=merge_eisenach
+    )
+    df_pop_export = write_population_data(
+        df_pop=preprocess_df,
+        file_format=file_format,
+        out_folder=out_folder,
+        merge_eisenach=True
+    )
     return df_pop_export
 
 
