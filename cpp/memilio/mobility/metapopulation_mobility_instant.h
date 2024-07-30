@@ -401,7 +401,7 @@ using test_commuters_expr_t = decltype(test_commuters(
  * In order to support this feature for your model, implement a test_commuters overload 
  * that can be found with argument-dependent lookup.
  * @param node a node of a mobility graph.
- * @param mobile_population mutable reference to vector of persons per compartment that changes nodes.
+ * @param mobile_population mutable reference to vector of persons per compartment that change nodes.
  * @param t the current simulation time.
  */
 template <class Sim, std::enable_if_t<!is_expression_valid<test_commuters_expr_t, Sim>::value, void*> = nullptr>
@@ -494,7 +494,7 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
 }
 
 /**
- * edge functor for mobility simulation.
+ * edge functor for mobility-based simulation.
  * @see SimulationNode::evolve
  */
 template <class Sim>
@@ -504,7 +504,7 @@ void evolve_model(double t, double dt, SimulationNode<Sim>& node)
 }
 
 /**
- * edge functor for mobility simulation.
+ * edge functor for mobility-based simulation.
  * @see MobilityEdge::apply_mobility
  */
 template <typename FP, class Sim>
@@ -515,13 +515,13 @@ void apply_mobility(FP t, FP dt, MobilityEdge<FP>& mobilityEdge, SimulationNode<
 }
 
 /**
- * create a mobility simulation.
+ * create a mobility-based simulation.
  * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
  * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node. 
  * Returns are adjusted based on the development in the target node. 
  * @param t0 start time of the simulation
  * @param dt time step between mobility
- * @param graph set up for mobility simulation
+ * @param graph set up for mobility-based simulation
  * @{
  */
 template <typename FP, class Sim>

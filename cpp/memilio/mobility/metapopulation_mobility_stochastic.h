@@ -202,7 +202,7 @@ void MobilityEdgeStochastic::apply_mobility(size_t event, SimulationNode<Sim>& n
 }
 
 /**
- * edge functor for mobility simulation.
+ * edge functor for mobility-based simulation.
  * @see MobilityEdgeStochastic::apply_mobility
  */
 template <class Sim, class StochasticEdge>
@@ -213,13 +213,13 @@ void apply_mobility(StochasticEdge& mobilityEdge, size_t event, SimulationNode<S
 }
 
 /**
- * create a mobility simulation.
+ * create a mobility-based simulation.
  * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
  * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node. 
  * Returns are adjusted based on the development in the target node. 
  * @param t0 start time of the simulation
  * @param dt time step between mobility
- * @param graph set up for mobility simulation
+ * @param graph set up for mobility-based simulation
  * @{
  */
 template <class Sim>

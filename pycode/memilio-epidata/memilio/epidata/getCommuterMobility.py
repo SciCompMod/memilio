@@ -492,7 +492,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     gd.check_dir(directory)
     gd.write_dataframe(
         df_commuter_mobility, directory,
-        'commuter_mobility_scaled_' + str(ref_year),
+        'commuter_mobility_' + str(ref_year),
         'txt', {'sep': ' ', 'index': False, 'header': False})
 
     return df_commuter_mobility

@@ -213,8 +213,8 @@ DIVI           Germany     county_divi                         ICU, ICU_ventilat
 DIVI           Germany     state_divi                          ICU, ICU_ventilated over time for different states (Bundesländer) with columns ['Date', 'ICU', 'ICU_ventilated', 'ID_State', 'State']
 DIVI           Germany     germany_divi                        ICU, ICU_ventilated over time for whole Germany with columns ['Date', 'ICU', 'ICU_ventilated']
 
-BAA            Germany     mobility_bfa_2020_dim401           number of commuters from one county into another indexed by county ids (with eisenach)
-BAA            Germany     mobility_bfa_2020_dim400           number of commuters from one county into another indexed by county ids (with eisenach merged into wartburgkreis)
+BAA            Germany     mobility_bfa_2020_dim401           number of commuters from one county into another indexed by county ids (with county Eisenach)
+BAA            Germany     mobility_bfa_2020_dim400           number of commuters from one county into another indexed by county ids (without county Eisenach, i.e., Eisenach merged into county Wartburgkreis)
 ============== ==========  =================================== =================
 
 More detailed information can be found in the

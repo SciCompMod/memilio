@@ -341,7 +341,7 @@ IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MobilityParams>&
 {
     // mobility between nodes
     BOOST_OUTCOME_TRY(auto&& mobility_data_commuter,
-                      read_func((data_dir / "mobility" / "commuter_mobility_scaled.txt").string()));
+                      read_func((data_dir / "mobility" / "commuter_mobility.txt").string()));
     BOOST_OUTCOME_TRY(auto&& mobility_data_twitter,
                       read_func((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
     if (mobility_data_commuter.rows() != Eigen::Index(params_graph.nodes().size()) ||

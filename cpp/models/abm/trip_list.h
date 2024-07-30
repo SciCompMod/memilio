@@ -55,12 +55,12 @@ struct Trip {
      * @param[in] origin Location where the person starts the Trip.
      * @param[in] input_cells The index of the Cell%s the Person changes to.
      */
-    Trip(PersonId id, TimePoint time_new, LocationId dest, LocationId org, TransportMode mode_of_transport,
+    Trip(PersonId id, TimePoint time_new, LocationId dest, LocationId orig, TransportMode mode_of_transport,
          ActivityType type_of_activity, const std::vector<uint32_t>& input_cells = {})
         : person_id(id)
         , time(mio::abm::TimePoint(time_new.time_since_midnight().seconds()))
         , destination(dest)
-        , origin(org)
+        , origin(orig)
         , cells(input_cells)
         , trip_mode(mode_of_transport)
         , activity_type(type_of_activity)
@@ -73,9 +73,9 @@ struct Trip {
     {
     }
 
-    Trip(PersonId id, TimePoint time_new, LocationId dest, LocationId org,
+    Trip(PersonId id, TimePoint time_new, LocationId dest, LocationId orig,
          const std::vector<uint32_t>& input_cells = {})
-        : Trip(id, time_new, dest, org, mio::abm::TransportMode::Unknown, mio::abm::ActivityType::UnknownActivity,
+        : Trip(id, time_new, dest, orig, mio::abm::TransportMode::Unknown, mio::abm::ActivityType::UnknownActivity,
                input_cells)
     {
     }
