@@ -37,11 +37,14 @@ void Simulation::advance(ScalarType tmax)
     m_model->initial_compute_compartments(m_dt);
 
     // For every time step:
+    auto time = m_model->m_transitions.get_last_time();
     while (m_model->m_transitions.get_last_time() < tmax - m_dt / 2) {
         m_model->m_transitions.add_time_point(m_model->m_transitions.get_last_time() + m_dt);
         m_model->m_populations.add_time_point(m_model->m_populations.get_last_time() + m_dt);
-
-        std::cout << "Time: " << m_model->m_transitions.get_last_time() << "\n";
+        if (m_model->m_transitions.get_last_time() >= time) {
+            std::cout << "Time: " << m_model->m_transitions.get_last_time() << "\n";
+            time += 1;
+        }
 
         // Compute Susceptibles:
         m_model->compute_susceptibles(m_dt);

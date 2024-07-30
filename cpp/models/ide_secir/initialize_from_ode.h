@@ -43,7 +43,7 @@ namespace isecir
 *
 * @param[in] model_ode ODE model that is used.
 * @param[in] compartments TimeSeries containing compartments from ODE simulation
-* @param[in] flows TimeSeries where the computed flows will be stored. 
+* @param[out] flows TimeSeries where the computed flows will be stored. 
 * @param[in] t_max Maximal time for which the flows are computed.
 * @param[in] t_window Time window before t_max for which flows will be computed.
 * @param[in] dt_reference Reference time step size (coming from ODE simulation).
