@@ -903,14 +903,6 @@ mio::abm::Simulation create_sampled_simulation(const std::string& input_file, co
     // Assign an infection state to each person.
     assign_infection_state(model, t0, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
 
-    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
-
-    // During the lockdown, 25% of people work from home and schools are closed for 90% of students.
-    // Social events are very rare.
-    mio::abm::set_home_office(t_lockdown, 0.25, model.parameters);
-    mio::abm::set_school_closure(t_lockdown, 0.9, model.parameters);
-    mio::abm::close_social_events(t_lockdown, 0.9, model.parameters);
-
     auto sim = mio::abm::Simulation(t0, std::move(model));
     return sim;
 }
