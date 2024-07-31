@@ -534,7 +534,7 @@ def infer_positive_tests(path):
     best_r_sns = 0
     best_lt_sympt = 0
     for r_sns in np.linspace(1, 100, 100):
-        for lt_sympt in np.linspace(0.005, 0.1, 100):
+        for lt_sympt in np.linspace(0.005, 0.3, 500):
             total_positive_tests, inferred_positive_tests_sympt, inferred_positive_tests_asympt = calc_positive_tests_overall(total_50, sensitivity, specificity, r_sns, lt_sympt)
             rmse = np.sqrt(((df_abb['Confirmed'] - total_positive_tests)**2).mean())
             if rmse < best_rmse:
@@ -598,6 +598,6 @@ if __name__ == "__main__":
                      if os.path.isfile(os.path.join(path, entry))])
     plot_infectoin_states_results(path)
     # plot_infections_loc_types_avarage(path)
-    plot_icu(path+"/..")
-    plot_dead(path)
+    # plot_icu(path+"/..")
+    # plot_dead(path)
     # infer_positive_tests(path)
