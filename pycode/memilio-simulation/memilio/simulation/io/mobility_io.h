@@ -33,7 +33,7 @@ template <class Model>
 void bind_write_graph(pybind11::module_& m)
 {
     m.def("write_graph",
-          [&](const mio::Graph<Model, mio::MigrationParameters<double>>& graph, const std::string& directory) {
+          [&](const mio::Graph<Model, mio::MobilityParameters<double>>& graph, const std::string& directory) {
               int ioflags   = mio::IOF_None;
               auto ioresult = mio::write_graph<double, Model>(graph, directory, ioflags);
           });

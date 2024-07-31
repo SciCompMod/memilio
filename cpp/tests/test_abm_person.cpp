@@ -20,7 +20,7 @@
 #include "abm/location_id.h"
 #include "abm/model_functions.h"
 #include "abm/location_type.h"
-#include "abm/migration_rules.h"
+#include "abm/mobility_rules.h"
 #include "abm/person.h"
 #include "abm/time.h"
 #include "abm_helpers.h"
@@ -41,7 +41,7 @@ TEST(TestPerson, init)
     EXPECT_EQ(person.get_id(), mio::abm::PersonId::invalid_id());
 }
 
-TEST(TestPerson, migrate)
+TEST(TestPerson, change_location)
 {
     auto rng = mio::RandomNumberGenerator();
 
@@ -51,24 +51,24 @@ TEST(TestPerson, migrate)
     mio::abm::Location loc3(mio::abm::LocationType::PublicTransport, 3, 6, 2);
     auto person = make_test_person(home, age_group_0_to_4, mio::abm::InfectionState::Recovered);
 
-    // check that a person does not move to its current location
+    // check that a person does not change location to its current location
     person.add_time_at_location(mio::abm::hours(1));
-    EXPECT_FALSE(mio::abm::migrate(person, home));
+    EXPECT_FALSE(mio::abm::change_location(person, home));
     EXPECT_EQ(person.get_time_at_location(), mio::abm::hours(1));
     EXPECT_EQ(person.get_location(), home.get_id());
 
-    // move the person around a bit
-    EXPECT_TRUE(mio::abm::migrate(person, loc1, mio::abm::TransportMode::Unknown, {0}));
+    // change the location of the person a couple of times
+    EXPECT_TRUE(mio::abm::change_location(person, loc1, mio::abm::TransportMode::Unknown, {0}));
     EXPECT_EQ(person.get_time_at_location(), mio::abm::TimeSpan(0));
     EXPECT_EQ(person.get_location(), loc1.get_id());
     EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Unknown);
 
-    EXPECT_TRUE(mio::abm::migrate(person, loc2, mio::abm::TransportMode::Walking, {0}));
+    EXPECT_TRUE(mio::abm::change_location(person, loc2, mio::abm::TransportMode::Walking, {0}));
     EXPECT_EQ(person.get_time_at_location(), mio::abm::TimeSpan(0));
     EXPECT_EQ(person.get_location(), loc2.get_id());
     EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Walking);
 
-    EXPECT_TRUE(mio::abm::migrate(person, loc3, mio::abm::TransportMode::Bike, {0, 1}));
+    EXPECT_TRUE(mio::abm::change_location(person, loc3, mio::abm::TransportMode::Bike, {0, 1}));
     EXPECT_EQ(person.get_time_at_location(), mio::abm::TimeSpan(0));
     EXPECT_EQ(person.get_location(), loc3.get_id());
     EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Bike);
@@ -189,7 +189,7 @@ TEST(TestPerson, getCells)
     mio::abm::Location location(mio::abm::LocationType::PublicTransport, 1, 6, 7);
     auto person = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
 
-    EXPECT_TRUE(mio::abm::migrate(person, location, mio::abm::TransportMode::Unknown, {3, 5}));
+    EXPECT_TRUE(mio::abm::change_location(person, location, mio::abm::TransportMode::Unknown, {3, 5}));
 
     ASSERT_EQ(person.get_cells().size(), 2);
     EXPECT_EQ(person.get_cells()[0], 3u);
