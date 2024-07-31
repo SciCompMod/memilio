@@ -479,6 +479,11 @@ public:
         m_activeness_statuses[person_id.get()] = !m_activeness_statuses[person_id.get()];
     }
 
+    void set_activeness(PersonId person_id)
+    {
+        m_activeness_statuses[person_id.get()] = false;
+    }
+
     /**
      * @brief Copy the persons from another World to this World. 
      * If the persons are at a location in this world they are activated, otherwise they are deactivated.

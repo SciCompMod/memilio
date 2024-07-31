@@ -1,6 +1,7 @@
 #include "abm/simulation.h"
 
 #include "benchmark/benchmark.h"
+#include <cstddef>
 
 mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<uint32_t> seeds)
 {
@@ -144,6 +145,38 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
     }
 }
 
+void abm_inactive_persons_benchmark(benchmark::State& state, size_t num_persons, size_t num_inactive_persons,
+                                    std::initializer_list<uint32_t> seeds)
+{
+    mio::set_log_level(mio::LogLevel::warn);
+    for (auto&& _ : state) {
+        state.PauseTiming(); //exclude the setup from the benchmark
+        auto sim = make_simulation(num_persons + num_inactive_persons, seeds);
+        //deactivate num_inactive_persons
+        for (size_t p_id = 0; p_id < num_inactive_persons; ++p_id) {
+            sim.get_world().set_activeness(mio::abm::PersonId(p_id));
+        }
+        state.ResumeTiming();
+
+        //simulated time should be long enough to have full infection runs and migration to every location
+        auto final_time = sim.get_time() + mio::abm::days(10);
+        sim.advance(final_time);
+
+        //debug output can be enabled to check for unexpected results (e.g. infections dieing out)
+        //normally should have no significant effect on runtime
+        const bool monitor_infection_activity = false;
+        if constexpr (monitor_infection_activity) {
+            std::cout << "num_persons = " << num_persons << "\n";
+            for (auto inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
+                std::cout << "inf_state = " << inf_state << ", sum = "
+                          << sim.get_world().get_subpopulation_combined(sim.get_time(),
+                                                                        mio::abm::InfectionState(inf_state))
+                          << "\n";
+            }
+        }
+    }
+}
+
 //Measure ABM simulation run time with different sizes and different seeds.
 //Fixed RNG seeds to make runs comparable. When there are code changes, the simulation will still
 //run differently due to different sequence of random numbers being drawn. But for large enough sizes
@@ -155,5 +188,35 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
 BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_50k, 50000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
 BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_100k, 100000, {38462643u, 38327950u})->Unit(benchmark::kMillisecond);
 BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_200k, 200000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(abm_inactive_persons_benchmark, abm_inactive_persons_benchmark_50k, 50000, 50000,
+                  {14159265u, 35897932u})
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_inactive_persons_benchmark, abm_inactive_persons_benchmark_100k, 100000, 100000,
+                  {38462643u, 38327950u})
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_inactive_persons_benchmark, abm_inactive_persons_benchmark_200k, 200000, 200000,
+                  {28841971u, 69399375u})
+    ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(abm_inactive_persons_benchmark, abm_inactive_persons_benchmark_50k_2, 50000, 100000,
+                  {14159265u, 35897932u})
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_inactive_persons_benchmark, abm_inactive_persons_benchmark_100k_2, 100000, 200000,
+                  {38462643u, 38327950u})
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_inactive_persons_benchmark, abm_inactive_persons_benchmark_200k_2, 200000, 400000,
+                  {28841971u, 69399375u})
+    ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(abm_inactive_persons_benchmark, abm_inactive_persons_benchmark_50k_3, 50000, 150000,
+                  {14159265u, 35897932u})
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_inactive_persons_benchmark, abm_inactive_persons_benchmark_100k_3, 100000, 300000,
+                  {38462643u, 38327950u})
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_inactive_persons_benchmark, abm_inactive_persons_benchmark_200k_3, 200000, 600000,
+                  {28841971u, 69399375u})
+    ->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();
