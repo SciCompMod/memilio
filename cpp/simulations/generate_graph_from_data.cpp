@@ -134,14 +134,14 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
     const double riskOfInfectionFromSymptomaticMax    = 0.3;
     const double maxRiskOfInfectionFromSymptomaticMin = 0.3;
     const double maxRiskOfInfectionFromSymptomaticMax = 0.5;
-    const double recoveredPerInfectedNoSymptomsMin[]  = {0.5, 0.45, 0.4, 0.35, 0.175, 0.05};
-    const double recoveredPerInfectedNoSymptomsMax[]  = {0.5, 0.45, 0.4, 0.35, 0.175, 0.05};
-    const double severePerInfectedSymptomsMin[]       = {0.03, 0.03, 0.04, 0.17, 0.025, 0.04};
-    const double severePerInfectedSymptomsMax[]       = {0.03, 0.03, 0.04, 0.17, 0.025, 0.04};
-    const double criticalPerSevereMin[]               = {0.10, 0.11, 0.12, 0.14, 0.33, 0.8};
-    const double criticalPerSevereMax[]               = {0.10, 0.11, 0.12, 0.14, 0.33, 0.8};
-    const double deathsPerCriticalMin[]               = {0.12, 0.13, 0.15, 0.29, 0.40, 0.48};
-    const double deathsPerCriticalMax[]               = {0.12, 0.13, 0.15, 0.29, 0.40, 0.48};
+    const double recoveredPerInfectedNoSymptomsMin[]  = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15};
+    const double recoveredPerInfectedNoSymptomsMax[]  = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
+    const double severePerInfectedSymptomsMin[]       = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20};
+    const double severePerInfectedSymptomsMax[]       = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
+    const double criticalPerSevereMin[]               = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35};
+    const double criticalPerSevereMax[]               = {0.10, 0.10, 0.10, 0.20, 0.35, 0.45};
+    const double deathsPerCriticalMin[]               = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5};
+    const double deathsPerCriticalMax[]               = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
 
     array_assign_uniform_distribution(params.get<mio::osecir::TransmissionProbabilityOnContact>(),
                                       transmissionProbabilityOnContactMin, transmissionProbabilityOnContactMax);
@@ -209,8 +209,7 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecir::
  * @returns created graph or any io errors that happen during reading of the files.
  */
 mio::IOResult<std::vector<mio::osecir::Model>> get_graph(mio::Date start_date, const int num_days,
-                                                         const fs::path& data_dir, double scaling_factor_ag4,
-                                                         double scaling_factor_ag5, double sclaling_infected)
+                                                         const fs::path& data_dir, double sclaling_infected)
 {
 
     // global parameters
@@ -229,9 +228,7 @@ mio::IOResult<std::vector<mio::osecir::Model>> get_graph(mio::Date start_date, c
         node.parameters = params;
     }
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), sclaling_infected);
-    auto scaling_factor_icu      = std::vector<double>(size_t(params.get_num_groups()), 0.05);
-    scaling_factor_icu[4]        = scaling_factor_ag4;
-    scaling_factor_icu[5]        = scaling_factor_ag5;
+    auto scaling_factor_icu      = std::vector<double>(size_t(params.get_num_groups()), 2.0);
 
     const auto& read_function_nodes = mio::osecir::read_input_data_county<mio::osecir::Model>;
     BOOST_OUTCOME_TRY(read_function_nodes(nodes, start_date, node_ids, scaling_factor_infected, scaling_factor_icu,

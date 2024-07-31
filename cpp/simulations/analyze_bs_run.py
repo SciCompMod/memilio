@@ -48,7 +48,6 @@ def plot_infections_loc_types_avarage(path):
     plot_infection_per_location_type_mean(
         time, total_50, total_25, total_75)
 
-
 def plot_infection_per_location_type_mean(x, y50, y25, y75):
 
     plt.figure('Infection_location_types')
@@ -90,7 +89,6 @@ def plot_infection_per_location_type_mean(x, y50, y25, y75):
     plt.ylabel('Number of individuals')
     plt.show()
 
-
 def plot_infectoin_states_results(path):
     # 50-percentile
     f_p50 = h5py.File(
@@ -110,16 +108,9 @@ def plot_infectoin_states_results(path):
 
     time = p50_bs['Time'][()]
 
-    # real world
-    f_real = h5py.File(
-        path + "/Results_rki.h5", 'r')
-    real_bs = f_real['3101']
-    total_real = real_bs['Total'][()]
-
     plot_infection_states_individual(
-        time, p50_bs, p25_bs, p75_bs, real_bs)
-    plot_infection_states(time, total_50, total_25, total_75, total_real)
-
+        time, p50_bs, p25_bs, p75_bs)
+    plot_infection_states(time, total_50, total_25, total_75)
 
 def plot_infection_states(x, y50, y25, y75, y_real=None):
     plt.figure('Infection_states')
@@ -155,11 +146,8 @@ def plot_infection_states(x, y50, y25, y75, y_real=None):
     plt.ylabel('Number of individuals')
     plt.show()
 
+def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs):
 
-def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs, real_bs):
-
-    y_real_total = real_bs['Total'][()]
-    x_real = np.linspace(0, y_real_total.shape[0]-1, y_real_total.shape[0])
 
     age_group_access = ['Group1', 'Group2', 'Group3',
                         'Group4', 'Group5', 'Group6', 'Total']
@@ -173,7 +161,7 @@ def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs, real_bs):
         y50 = p50_bs[j][()]
         y25 = p25_bs[j][()]
         y75 = p75_bs[j][()]
-        y_real = np.floor(real_bs[j][()])
+
 
         # infeced no symptoms
         ax_infected_no_symptoms = ax[0, count]
@@ -231,15 +219,13 @@ def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs, real_bs):
         ax_dead = ax[4, count]
         ax_dead.set_xlabel('time (days)')
         ax_dead.plot(x, y50[:, [7]], color=color_plot[count], label='y50')
-        ax_dead.plot(x_real, y_real[:, [9]], '.',
-                     color=color_plot[count], label='y_real')
         ax_dead.fill_between(x, y50[:, 7], y25[:, 7],
                              alpha=0.5, color=color_plot[count])
         ax_dead.fill_between(x, y50[:, 7], y75[:, 7],
                              alpha=0.5, color=color_plot[count])
         ax_dead.tick_params(axis='y')
         ax_dead.title.set_text('#Dead, Age{}'.format(j))
-        ax_dead.legend(['Simulation', 'Real'])
+        ax_dead.legend(['Simulation'])
 
         # Recovered
         ax_dead = ax[5, count]
@@ -262,68 +248,73 @@ def plot_dead(path):
     f_p50 = h5py.File(
         path+"/infection_state_per_age_group/p50/Results.h5", 'r')
     p50_bs = f_p50['0']
-    total_50 = p50_bs['Total'][()]
-    # we need just every 24th value
-    total_50 = total_50[::24]
-    # we just take the first 90 days
-    total_50 = total_50[0:90]
+
+    age_group_access = ['Group1', 'Group2', 'Group3',
+                        'Group4', 'Group5', 'Group6', 'Total']
 
     # we need the real data json file cases_all_state_repdate_ma7
     df_abb = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county.json")
-    # read in rki data rki_sum
-
-    f_real = h5py.File(
-    path + "/Results_rki.h5", 'r')
-    real_bs = f_real['3101']
-    total_real = real_bs['Total'][()]
-    total_real = total_real[0:90]
-    y_real = total_real[:, 9]
-    
+        path+"/../pydata/Germany/cases_all_county_age_ma7.json")
 
     # we just need the columns cases and date
+    # we need to offset the dates by 19 day
+    df_abb['Date'] = df_abb['Date'] + pd.DateOffset(days=19)
     # we need just the dates bewteen 2021-03-01 and 2021-06-01
-    df_abb = df_abb[(df_abb['Date'] >= '2021-02-01') &
-                    (df_abb['Date'] <= '2021-05-01')]
+    df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') &
+                    (df_abb['Date'] <= '2021-06-01')]
     # we just need the cases with id 3101
     df_abb = df_abb[df_abb['ID_County'] == 3101]
-    # we just take the first 90 days
-    df_abb = df_abb[0:90]
-    # y_real = df_abb['Deaths'].to_numpy()
+    df_abb['Deaths'] = np.floor(df_abb[['Deaths']].to_numpy())
 
-    # #smooth y_real with a gaussian filter
-    # y_real = gaussian_filter1d(y_real, sigma=1, mode='nearest')
-    # # floor it to make it an integer
-    # y_real = np.floor(y_real)
+    # we need the amount of dead persons for each age group: These are A00-A04, A05-A14, A15-A34, A35-A59, A60-A79, A80+
+    age_groups = ['A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+']
+    # we need to sum up the amount of dead persons for each age group
 
-    # we want to offset every date by 28 day
-    df_abb['Date'] = df_abb['Date'] + pd.DateOffset(days=28)
-
-
- 
-    # we calculate the RMSE
-    rmse_dead = np.sqrt(((y_real- total_50[:, 7])**2).mean())
-
-    # we plot this
-    fig, ax = plt.subplots(1, 1, constrained_layout=True)
+    # we want the deaths for the age groups
+    df_abb = df_abb[['Date', 'Deaths', 'Age_RKI']]
+    # we want a plot with 2 rows. Second row has a plot with each age group and the simulated and real dead persons
+    # First row has the cumulative dead persons
+    fig = plt.figure('Dead')
     fig.set_figwidth(20)
     fig.set_figheight(9)
-    # we plot the tests positive and the real cases
-    start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
-    ax.plot(df_abb['Date'], total_50[:, 7], color='tab:red')
-    ax.plot(df_abb['Date'], y_real, color='tab:blue')
-    # we also write the rmse
+    gs = fig.add_gridspec(2,6)
+
+    # we need the cumulative dead persons
+    ax = fig.add_subplot(gs[0, :])
+    df_total_dead = df_abb.groupby('Date').sum()[0:90]
+    y_real = df_total_dead['Deaths'].to_numpy()
+
+    # we calculate the RMSE
+    rmse_dead = np.sqrt(((y_real- p50_bs['Total'][()][:, 7][::24][0:90])**2).mean())
+    # we need to plot the cumulative dead persons from the real world and from the simulation
+    ax.plot(df_total_dead.index, y_real, color='tab:blue')
+    ax.plot(df_total_dead.index, p50_bs['Total'][()][:, 7][::24][0:90], color='tab:red')
     ax.text(0.25, 0.8, 'RMSE: '+str(float("{:.2f}".format(rmse_dead))), horizontalalignment='center',
             verticalalignment='center', transform=plt.gca().transAxes, color='pink', fontsize=15)
     ax.set_xlabel('Date')
-    ax.set_ylabel('Number of dead')
-    ax.title.set_text('Cumulative Dead')
-    ax.legend(['Dead Simulated', 'Real dead'])
-    plt.show()
+    ax.set_label('Number of dead')
+    ax.set_title('Cumulative Dead')
+    ax.legend(['Real dead', 'Simulated dead'])
 
+    # now for each age group
+    for i, age_group in zip(range(6), age_group_access):
+        ax = fig.add_subplot(gs[1, i])
+        # we need the amount of dead persons for each age group 
+        df_abb_age_group = df_abb[df_abb['Age_RKI'] == age_groups[i]][0:90]
+        y_real =  np.floor(df_abb_age_group['Deaths'].to_numpy())
+        # we need to plot the dead persons from the real world and from the simulation
+        ax.plot(df_abb_age_group['Date'], y_real, color='tab:blue')
+        ax.plot(df_abb_age_group['Date'], p50_bs[age_group_access[i]][()][:, 7][::24][0:90], color='tab:red')
+        ax.set_title('Dead, Age{}'.format(i))
+        ax.set_xlabel('Date')
+        ax.set_xticks(df_abb_age_group['Date'][::50])
+        ax.legend(['Real dead, Age{}'.format(i), 'Simulated dead, Age{}'.format(i)])
+    
+    plt.show()
+   
 def plot_icu(path):
     df_abb = pd.read_json(path+"/pydata/Germany/county_divi_ma7.json")
-    perc_of_critical_in_icu = 0.4
+    perc_of_critical_in_icu = 0.5
 
     # we just need the columns ICU_low and ICU_hig
     df_abb = df_abb[['ID_County', 'ICU', 'Date']]
@@ -343,12 +334,12 @@ def plot_icu(path):
     # we just take the first 90 days
     total_50 = total_50[0:90]
 
-    ICU_Simulation = total_50[:, 5]*perc_of_critical_in_icu
-    ICU_Real = df_abb['ICU'][0:90]
+    ICU_Simulation = np.floor(total_50[:, 5]*perc_of_critical_in_icu)
+    ICU_Real = np.floor(df_abb['ICU'][0:90])
 
     #smooth the data
-    ICU_Real = gaussian_filter1d(ICU_Real, sigma=1, mode='nearest')
-    ICU_Simulation = gaussian_filter1d(ICU_Simulation, sigma=1, mode='nearest')
+    # ICU_Real = gaussian_filter1d(ICU_Real, sigma=1, mode='nearest')
+    # ICU_Simulation = gaussian_filter1d(ICU_Simulation, sigma=1, mode='nearest')
 
 
 
@@ -516,18 +507,11 @@ def infer_positive_tests(path):
     total_50 = p50_bs['Total'][()]
     total_50 = total_50[::24]
     total_50 = total_50[0:90]
+
     time = p50_bs['Time'][()]
     time = time[::24]
     time = time[0:90]
 
-
-    # # we need the real positive tests
-    # # real world
-    # f_real = h5py.File(
-    #     path + "/Results_rki.h5", 'r')
-    # real_bs = f_real['3101']
-    # total_real = real_bs['Total'][()]
-    # total_real = total_real[0:90]
 
     # we need the real data from the json file cases_all_county_age_repdate_ma7.json
     df_abb = pd.read_json(
@@ -537,8 +521,6 @@ def infer_positive_tests(path):
     # we need just the dates bewteen 2021-03-01 and 2021-06-01
     df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') &
                     (df_abb['Date'] <= '2021-06-01')]
-    # we just need the cases with id 3101
-    df_abb = df_abb[df_abb['ID_County'] == 3101]
     # we just take the first 90 days
     df_abb = df_abb[0:90]
     # we need the amount of new positive tests each day insetad of cumulative
@@ -615,7 +597,7 @@ if __name__ == "__main__":
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
     plot_infectoin_states_results(path)
-    plot_infections_loc_types_avarage(path)
+    # plot_infections_loc_types_avarage(path)
     plot_icu(path+"/..")
     plot_dead(path)
-    infer_positive_tests(path)
+    # infer_positive_tests(path)

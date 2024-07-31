@@ -125,6 +125,7 @@ IOResult<void> read_confirmed_cases_data(
             auto& t_InfectedSymptoms   = vt_InfectedSymptoms[region_idx];
             auto& t_InfectedSevere     = vt_InfectedSevere[region_idx];
             auto& t_InfectedCritical   = vt_InfectedCritical[region_idx];
+            mio::unused(t_InfectedCritical);
 
             auto& num_InfectedNoSymptoms = vnum_InfectedNoSymptoms[region_idx];
             auto& num_InfectedSymptoms   = vnum_InfectedSymptoms[region_idx];
@@ -169,8 +170,7 @@ IOResult<void> read_confirmed_cases_data(
                     num_icu[age] += mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
                 }
             }
-            if (date_df ==
-                offset_date_by_days(date, -t_InfectedSymptoms[age] - t_InfectedSevere[age] - t_InfectedCritical[age])) {
+            if (date_df == offset_date_by_days(date, -19)) {
                 num_death[age] += region_entry.num_deaths;
                 if (read_icu) {
                     num_icu[age] -= mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
