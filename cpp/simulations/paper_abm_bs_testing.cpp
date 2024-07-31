@@ -82,11 +82,10 @@ std::map<mio::Date, std::vector<std::pair<uint32_t, uint32_t>>> vacc_map;
 /**
  * Determine initial distribution of infection states.
 */
-void determine_initial_infection_states_world(const fs::path& input_dir, const mio::Date date,
-                                              double sclaling_infected)
+void determine_initial_infection_states_world(const fs::path& input_dir, const mio::Date date, double sclaling_infected)
 {
     // estimate intial population by ODE compartiments
-    auto initial_graph = get_graph(date, 1, input_dir, sclaling_infected);
+    auto initial_graph                     = get_graph(date, 1, input_dir, sclaling_infected);
     const size_t braunschweig_id           = 16; // Braunschweig has ID 16
     auto braunschweig_node                 = initial_graph.value()[braunschweig_id];
     initial_infection_distribution.array() = braunschweig_node.populations.array().cast<double>();
@@ -1321,7 +1320,7 @@ void write_grid_search_prematurely_to_file(int rank, const fs::path& result_dir,
     //file name  is grid_search_results_"my_rank".txt
     std::string filename = "grid_search_results_" + std::to_string(rank) + ".txt";
     // look if file exists in folder
-    bool file_exists = std::filesystem::exists(mio::path_join((result_dir / "grid_search").string(), filename));
+    bool file_exists = boost::filesystem::exists(mio::path_join((result_dir / "grid_search").string(), filename));
     if (file_exists) {
         // we open it and attach the new rmse double to the end
         std::ofstream curr_file((result_dir / "/grid_search/" / filename).string(), std::ios::app);
@@ -1745,13 +1744,13 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
     auto end_run_idx   = start_run_idx + run_distribution[size_t(rank)];
 
-    auto viral_shedding_rate = 6.5;
-    auto seasonality_april   = 0.9;
-    auto seasonality_may     = 0.6;
-    auto perc_easter_event   = 0.5;
-    auto dark_figure         = 3.2;
-    auto contact_rate_ssc    = 0.33;
-    auto masks               = 0.5;
+    auto viral_shedding_rate = 5.0;
+    auto seasonality_april   = 0.85;
+    auto seasonality_may     = 0.5;
+    auto perc_easter_event   = 0.4;
+    auto dark_figure         = 2.0;
+    auto contact_rate_ssc    = 0.3;
+    auto masks               = 0.4;
 
     mio::Date start_date{2021, 3, 1};
     int max_num_days     = 90;
@@ -2119,15 +2118,15 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
     std::string result_dir      = input_dir + "/results_" + currentDateTime();
 
     size_t num_runs;
-    bool run_grid_search = true;
+    bool run_grid_search = false;
 
     if (argc == 2) {
         num_runs        = std::stoi(argv[1]);
