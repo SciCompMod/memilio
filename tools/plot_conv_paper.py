@@ -33,13 +33,13 @@ def read_groundtruth(data_dir, exponent_ode, flows=False):
 
     model = 'ode'
     results = {model: []}
-
+    savefreq = 4
     if flows:
         h5file = h5py.File(os.path.join(
-            data_dir, f'result_{model}_flows_dt={exponent_ode:.0f}.h5'), 'r')
+            data_dir, f'result_{model}_flows_dt=1e-{exponent_ode:.0f}_savefrequency{savefreq:.0f}.h5'), 'r')
     else:
         h5file = h5py.File(os.path.join(
-            data_dir, f'result_{model}_dt=1e-{exponent_ode:.0f}.h5'), 'r')
+            data_dir, f'result_{model}_dt=1e-{exponent_ode:.0f}_savefrequency{savefreq:.0f}.h5'), 'r')
 
     if (len(list(h5file.keys())) > 1):
         raise gd.DataError("File should contain one dataset.")
@@ -49,8 +49,8 @@ def read_groundtruth(data_dir, exponent_ode, flows=False):
     data = h5file[list(h5file.keys())[0]]
 
     if flows:
-        # For flows we divide the values by dt_ode to go from \tilde{\sigma} to \hat{\sigma} and make results comparable
-        results[model].append(data['Total'][:, :]/pow(10,-exponent_ode))
+        # Flows are already scaled to one day.
+        results[model].append(data['Total'][:, :])
     else:
         if len(data['Total'][0]) == 8:
             # As there should be only one Group, total is the simulation result
@@ -70,7 +70,7 @@ def read_groundtruth(data_dir, exponent_ode, flows=False):
     return results
 
 
-def read_data(data_dir, dt_ode, timesteps_ide, flows=False):
+def read_data(data_dir, exponent_ode, exponents_ide, flows=False):
     """ Read data into a dict, where the keys correspond to the respective model.
     At the moment we are only storing results of the IDE model here. There
     we have an array that contains all results for SECIHURD for all time points
@@ -79,19 +79,19 @@ def read_data(data_dir, dt_ode, timesteps_ide, flows=False):
     models = ['ide']
     results = {models[0]: []}
     for model in models:
-        for timestep in timesteps_ide:
+        for exponent in exponents_ide:
             if flows:
                 h5file = h5py.File(os.path.join(
-                    data_dir, f'result_{model}_flows_dt={timestep:.4f}_init_dt_ode={dt_ode:.4f}.h5'), 'r')
+                    data_dir, f'result_{model}_flows_dt=1e-{exponent:.0f}_init_dt_ode=1e-{exponent_ode:.0f}.h5'), 'r')
             else:
                 h5file = h5py.File(os.path.join(
-                    data_dir, f'result_{model}_dt={timestep:.4f}_init_dt_ode={dt_ode:.4f}.h5'), 'r')
+                    data_dir, f'result_{model}_dt=1e-{exponent:.0f}_init_dt_ode=1e-{exponent_ode:.0f}.h5'), 'r')
 
             data = h5file[list(h5file.keys())[0]]
 
             if flows:
-                # For flows we divide the values by the step size to go from \tilde{\sigma} to \hat{\sigma} and make results comparable
-                results[model].append(data['Total'][:, :]/timestep)
+                # Flows are already scaled to one day.
+                results[model].append(data['Total'][:, :])
             else:
                 if len(data['Total'][0]) == 8:
                     # As there should be only one Group, total is the simulation result
@@ -112,12 +112,11 @@ def read_data(data_dir, dt_ode, timesteps_ide, flows=False):
 def compute_l2_norm(timeseries, timestep):
     """ Compute norm of a time series."""
 
-    norm = np.sqrt(np.sum(timeseries**2))
-
+    norm = np.sqrt(timestep * np.sum(timeseries**2))
     return norm
 
 
-def compute_relerror_norm_l2(groundtruth, results, dt_ode, timesteps_ide, flows=False):
+def compute_relerror_norm_l2(groundtruth, results, timestep_ode, timesteps_ide, flows=False):
     """ Compute norm of the difference between time series from ODE and time series
     from IDE for all compartments/flows."""
 
@@ -132,25 +131,25 @@ def compute_relerror_norm_l2(groundtruth, results, dt_ode, timesteps_ide, flows=
         errors.append([])
         for compartment in range(num_errors):
             timestep = timesteps_ide[i]
-            scale_timesteps = timestep/dt_ode
+            scale_timesteps = timestep/timestep_ode
             num_timepoints = len(results['ide'][i])
             # Only consider compartments of ODE model for t>=t0_IDE. Use that 2*t0_IDE = t_max.
             if flows:
                 difference = groundtruth['ode'][0][int(scale_timesteps*(num_timepoints/2-1))::int(
                     scale_timesteps)][:, compartment]-results['ide'][i][int(num_timepoints/2-1):][:, compartment]
-                norm_groundtruth=compute_l2_norm(groundtruth['ode'][0][int(scale_timesteps*(num_timepoints/2-1))::int(
+                norm_groundtruth = compute_l2_norm(groundtruth['ode'][0][int(scale_timesteps*(num_timepoints/2-1))::int(
                     scale_timesteps)][:, compartment], timestep)
-                errors[i].append(compute_l2_norm(difference, timestep)/norm_groundtruth)
+                errors[i].append(compute_l2_norm(
+                    difference, timestep)/norm_groundtruth)
             else:
                 difference = groundtruth['ode'][0][int(scale_timesteps*(num_timepoints -
                                                                         1))::int(scale_timesteps)][:, compartment]-results['ide'][i][:, compartment]
-                norm_groundtruth=compute_l2_norm(groundtruth['ode'][0][int(scale_timesteps*(num_timepoints -
-                                                                        1))::int(scale_timesteps)][:, compartment], timestep)
-                errors[i].append(compute_l2_norm(difference, timestep)/norm_groundtruth)
-            
+                norm_groundtruth = compute_l2_norm(groundtruth['ode'][0][int(scale_timesteps*(num_timepoints -
+                                                                                              1))::int(scale_timesteps)][:, compartment], timestep)
+                errors[i].append(compute_l2_norm(
+                    difference, timestep)/norm_groundtruth)
 
     return np.array(errors)
-
 
 
 def plot_convergence(errors, timesteps_ide, flows=False, compartment=None, save=False):
@@ -170,9 +169,7 @@ def plot_convergence(errors, timesteps_ide, flows=False, compartment=None, save=
     # helmholtzdarkblue, helmholtzclaim
     colors = [(0, 40/255, 100/255), (20/255, 200/255, 255/255)]
 
-
     # Plot all compartments.
-    
     if flows:
         fig, axs = plt.subplots(5, 2, sharex=True, figsize=(10, 10))
         num_plots = 10
@@ -184,14 +181,12 @@ def plot_convergence(errors, timesteps_ide, flows=False, compartment=None, save=
 
         # Plot results.
         axs[int(i/2), i % 2].plot(timesteps_ide,
-                                      errors[:, i], '-o', color=colors[1], label='Results')
+                                  errors[:, i], '-o', color=colors[1], label='Results')
 
         # Plot comparison line for linear convergence.
-        factor = 50 * errors[0, i]
-        #comparison = [factor * dt for dt in timesteps_ide]
-        comparison = [ dt for dt in timesteps_ide]
+        comparison = [dt for dt in timesteps_ide]
         axs[int(i/2), i % 2].plot(timesteps_ide, comparison, color='gray',
-                                      label=r"$\mathcal{O}(\Delta t)$")
+                                  label=r"$\mathcal{O}(\Delta t)$")
 
         # Adapt plots.
         axs[int(i/2), i % 2].set_xscale("log", base=10)
@@ -201,26 +196,26 @@ def plot_convergence(errors, timesteps_ide, flows=False, compartment=None, save=
 
     fig.supxlabel('Time step')
     fig.supylabel(
-            r"$\Vert {Z}_{IDE}(t_{max}) - {Z}_{ODE}(t_{max})\Vert$")
+        r"$\Vert {Z}_{IDE}(t_{max}) - {Z}_{ODE}(t_{max})\Vert$")
 
     # Invert x axis only for one plot so that sharex=True and invert_xaxis work as intended.
     axs[0, 0].invert_xaxis()
 
     labels = ['Results', r"$\mathcal{O}(\Delta t)$", ]
     fig.legend(labels, bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
-                   fancybox=False, shadow=False, ncol=1)
+               fancybox=False, shadow=False, ncol=1)
 
     if save:
         if flows:
             if not os.path.isdir('plots/flows'):
-                    os.makedirs('plots/flows')
+                os.makedirs('plots/flows')
             plt.savefig(f'plots/flows/convergence_all_flows.png', format='png',
-                            dpi=500)
+                        dpi=500)
         else:
             if not os.path.isdir('plots/compartments'):
                 os.makedirs('plots/compartments')
             plt.savefig(f'plots/compartments/convergence_all_compartments.png', format='png',
-                            dpi=500)
+                        dpi=500)
 
 
 def plot_convergence_oneplot(errors, timesteps_ide, flows=False, save=False):
@@ -237,7 +232,7 @@ def plot_convergence_oneplot(errors, timesteps_ide, flows=False, save=False):
         secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
                       5: 'ICU', 6: 'Recovered', 7: 'Dead'}
         fig.supylabel(
-            r"$\Vert \widehat{Z}_{IDE} - \widehat{Z}_{ODE}\Vert_2$")
+            r"$\frac{\Vert \widehat{Z}_{IDE} - \widehat{Z}_{ODE}\Vert_2}{\Vert  \widehat{Z}_{ODE}\Vert_2}$")
 
     if flows:
         num_lines = 10
@@ -259,9 +254,7 @@ def plot_convergence_oneplot(errors, timesteps_ide, flows=False, save=False):
                 errors[:, i], '-', marker=MarkerStyle('x', 'full', rotation), markersize=5, color=colors[i], label=secir_dict[i])
 
     # Plot comparison line for linear convergence.
-    factor = 50 * min(errors[0, :])
-    #comparison = [factor * dt for dt in timesteps_ide]
-    comparison = [ dt for dt in timesteps_ide]
+    comparison = [dt for dt in timesteps_ide]
     ax.plot(timesteps_ide, comparison, '--', color='gray',
             label=r"$\mathcal{O}(\Delta t)$")
 
@@ -307,27 +300,39 @@ def main():
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "results")
 
-    timesteps_ide = [1e-1, 1e-2, 1e-3, 1e-4]
+    exponents_ide = [1, 2, 3, 4]
+    timesteps_ide = []
+    for x in exponents_ide:
+        timesteps_ide.append(pow(10, -x))
 
     flows = False
-    
-    exponent_ode=4
-    dt_ode=pow(10,-exponent_ode)
 
-    groundtruth = read_groundtruth(data_dir, exponent_ode,  flows=flows)
+    groundtruth = read_groundtruth(data_dir, 6, flows=flows)
+    timestep_ode = 1e-4
 
-    results = read_data(data_dir, dt_ode, timesteps_ide, flows=flows)
+    results = read_data(data_dir, 6, exponents_ide, flows=flows)
 
     relerrors_l2 = compute_relerror_norm_l2(
-        groundtruth, results, dt_ode, timesteps_ide, flows=flows)
+        groundtruth, results, timestep_ode, timesteps_ide, flows=flows)
 
     plot_convergence_oneplot(
-        relerrors_l2, timesteps_ide,  flows=flows, save=True)
+        relerrors_l2, timesteps_ide, flows=flows, save=True)
     plot_convergence(relerrors_l2, timesteps_ide,  flows=flows, save=True)
 
-    order = compute_order_of_convergence(relerrors_l2, timesteps_ide, flows=flows)
+    order = compute_order_of_convergence(
+        relerrors_l2, timesteps_ide, flows=flows)
 
     print('Orders of convergence: ', order)
+
+    """ have to change some things in compartments (wrong time steps. for flows this comparison works
+    groundtruth4 = read_groundtruth(data_dir,4, flows=flows)
+    resultode = {"ide": []}
+   
+    resultode["ide"].append(groundtruth4["ode"][0])
+    relerrors_l2odes = compute_relerror_norm_l2(
+        groundtruth,resultode, timestep_ode,[timestep_ode], flows=flows)
+    print('Error: ', relerrors_l2odes)"""
+
 
 if __name__ == '__main__':
     main()

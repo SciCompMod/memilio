@@ -42,7 +42,7 @@ void Simulation::advance(ScalarType tmax)
         m_model->m_transitions.add_time_point(m_model->m_transitions.get_last_time() + m_dt);
         m_model->m_populations.add_time_point(m_model->m_populations.get_last_time() + m_dt);
         if (m_model->m_transitions.get_last_time() >= time) {
-            std::cout << "Time: " << m_model->m_transitions.get_last_time() << "\n";
+            std::cout << "Time: " << time << "\n";
             time += 1;
         }
 

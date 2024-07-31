@@ -37,7 +37,7 @@ namespace isecir
 * @brief Takes the resulting compartments of an ODE simulation and computes the respective flows and stores them in a TimeSeries. 
 *
 * With t_max and t_window it can be determined for which time window the flows will be computed. 
-* dt_reference is the time step size of the ODE simulation. By default, we compute tzhe flows with the same time step size.
+* dt_reference is the time step size of the ODE simulation. By default, we compute the flows with the same time step size.
 * It is also possible to compute the corresponding flows for a bigger time step which can be given by dt_comparison. Here we assume, that
 * dt_comparison is a multiple of dt_reference. 
 *

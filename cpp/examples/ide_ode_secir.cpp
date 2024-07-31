@@ -32,15 +32,34 @@
 #include "memilio/config.h"
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
+#include "memilio/math/floating_point.h"
 #include <iostream>
 #include <string>
 
+mio::TimeSeries<ScalarType> remove_time_points(const mio::TimeSeries<ScalarType>& simulation_result,
+                                               ScalarType saving_dt, ScalarType scale = 1)
+{
+    mio::TimeSeries<ScalarType> removed(simulation_result.get_num_elements());
+    ScalarType time = simulation_result.get_time(0);
+    removed.add_time_point(time, scale * simulation_result[0]);
+    time += saving_dt;
+    for (int i = 1; i < simulation_result.get_num_time_points(); i++) {
+        if (mio::floating_point_greater_equal(simulation_result.get_time(i), time, 1e-8)) {
+            removed.add_time_point(simulation_result.get_time(i), scale * simulation_result[i]);
+            time += saving_dt;
+        }
+    }
+    return removed;
+}
+
 int main()
 {
-
     // Here we decide what exactly we want to do in the example below.
     bool print_to_terminal = false;
-    bool save_result       = true;
+    // if save_exponent is set to 0, the simulation result is not saved.
+    ScalarType save_exponent = 4;
+    ScalarType saving_dt     = pow(10, -save_exponent);
+    bool save_ide            = true;
     // Directory where results will be stored.
     std::string result_dir = "../../results/";
 
@@ -48,11 +67,11 @@ int main()
     bool ide_simulation = false;
 
     // General set up.
-    ScalarType t0           = 0;
+    ScalarType t0           = 0.;
     ScalarType tmax         = 70.;
     ScalarType ode_exponent = 4;
     ScalarType dt_ode       = pow(10, -ode_exponent);
-    ScalarType ide_exponent = 1;
+    ScalarType ide_exponent = 4;
     ScalarType dt_ide       = pow(10, -ide_exponent);
     int num_transitions     = (int)mio::isecir::InfectionTransition::Count;
 
@@ -134,17 +153,18 @@ int main()
         secihurd_ode.print_table();
         std::cout << "\n";
     }
-
-    if (save_result) {
+    if (save_exponent != 0) {
         // Create directory "results" if not existent yet.
         boost::filesystem::path res_dir(result_dir);
         boost::filesystem::create_directory(res_dir);
-
-        auto save_result_status_ode = mio::save_result(
-            {secihurd_ode}, {0}, 1, result_dir + "result_ode_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
+        auto save_result_status_ode =
+            mio::save_result({remove_time_points(secihurd_ode, saving_dt)}, {0}, 1,
+                             result_dir + "result_ode_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + "_savefrequency" +
+                                 fmt::format("{:.0f}", save_exponent) + ".h5");
         auto save_result_status_ode_flows =
-            mio::save_result({secihurd_ode_flows}, {0}, 1,
-                             result_dir + "result_ode_flows_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
+            mio::save_result({remove_time_points(secihurd_ode_flows, saving_dt, 1. / dt_ode)}, {0}, 1,
+                             result_dir + "result_ode_flows_dt=1e-" + fmt::format("{:.0f}", ode_exponent) +
+                                 "_savefrequency" + fmt::format("{:.0f}", save_exponent) + ".h5");
         std::cout << "Successfully saved the ODE simulation results. \n";
     }
 
@@ -270,13 +290,13 @@ int main()
         }
 
         std::cout << "Initialization method: " << sim.get_model().get_initialization_method_compartments() << "\n";
-        if (save_result) {
+        if (save_ide) {
             auto save_result_status_ide =
                 mio::save_result({secihurd_ide}, {0}, 1,
                                  result_dir + "result_ide_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
                                      "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
             auto save_result_status_ide_flows =
-                mio::save_result({secihurd_ide_flows}, {0}, 1,
+                mio::save_result({remove_time_points(secihurd_ide_flows, dt_ide, 1. / dt_ide)}, {0}, 1,
                                  result_dir + "result_ide_flows_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
                                      "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
             std::cout << "Successfully saved the IDE simulation results. \n";
