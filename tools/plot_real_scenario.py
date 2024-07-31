@@ -25,14 +25,14 @@ parameters = {
 }
 
 
-def load_data(file, start_date):
+def load_data(file, start_date, simulation_time):
     """ Loads RKI data and computes 'InfectedSymptoms', 'Deaths' and 'NewInfectionsDay' using scales, dates etc from the dictionary parameters.
     Method matches the method for computing initial values for the LCT model. See also cpp/models/lct_secir/parameters_io.h.
     @param[in] file Path to the RKI data file for whole Germany. Can be downloaded eg via pycode/memilio-epidata/memilio/epidata/getCaseData.py.
     """
 
-    parameters['start_date'] = start_date - pd.DateOffset(days=20)
-    parameters['end_date'] = start_date + pd.DateOffset(days=30)
+    parameters['start_date'] = start_date - pd.DateOffset(days=0)
+    parameters['end_date'] = start_date + pd.DateOffset(days=simulation_time)
     # Read data.
     df = pd.read_json(file)
     df = df.drop(columns=['Recovered'])
@@ -83,16 +83,11 @@ def plot_new_infections(files, start_date, simulation_time,
 
     datafile = os.path.join(os.path.dirname(
         __file__), "..", "data", "pydata", "Germany", "cases_all_germany.json")
-    data_rki = load_data(datafile, start_date)
+    data_rki = load_data(datafile, start_date, simulation_time)
 
     datafile_ma7 = os.path.join(os.path.dirname(
         __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json")
-    data_rki_ma7 = load_data(datafile, start_date)
-
-    print("New infections from RKI (ma7)  on 1.10.2020: ",
-          data_rki_ma7[data_rki_ma7["Date"] == "2020-10-01"]["NewInfectionsDay"].values[0])
-    print("New infections from RKI (ma7)  on 2.10.2020: ",
-          data_rki_ma7[data_rki_ma7["Date"] == "2020-10-02"]["NewInfectionsDay"].values[0])
+    data_rki_ma7 = load_data(datafile, start_date, simulation_time)
 
     fig, ax = plt.subplots()
 
@@ -115,12 +110,20 @@ def plot_new_infections(files, start_date, simulation_time,
         total = data['Total'][:, :]
 
         dates = data['Time'][:]
+        timestep = np.diff(dates)[0]
 
         # get indices where dates are >=0
         # indices = np.where(dates >= 0)
         # plot data
         # ODE
         if file == 0:
+            print(f"New infections from RKI (ma7)  on {start_date}: ",
+                  data_rki_ma7[data_rki_ma7["Date"] == start_date]["NewInfectionsDay"].values[0])
+            print(f"Expected new infections at {timestep}: ",
+                  data_rki_ma7[data_rki_ma7["Date"] == start_date]["NewInfectionsDay"].values[0] + timestep * (data_rki_ma7[data_rki_ma7["Date"] == start_date + pd.DateOffset(days=1)]["NewInfectionsDay"].values[0] - data_rki_ma7[data_rki_ma7["Date"] == start_date]["NewInfectionsDay"].values[0]))
+
+            print(f"New infections from RKI (ma7)  on {start_date + pd.DateOffset(days=1)}: ",
+                  data_rki_ma7[data_rki_ma7["Date"] == start_date + pd.DateOffset(days=1)]["NewInfectionsDay"].values[0])
             # transform cumulative flows to flows absolute flows
             # then transform from flows over time interval to flows at time
             # points
@@ -140,25 +143,24 @@ def plot_new_infections(files, start_date, simulation_time,
             ax.plot(dates[1:], total[1:, 0] / np.diff(dates), label=legendplot[file],
                     color=colors[file], linestyle=linestyles[file])
 
-            timestep = np.diff(dates)[0]
-            date_idx = int(-30 / timestep - 1)
+            date_idx = int(-simulation_time / timestep - 1)
             print(
                 f"IDE new infections on {dates[date_idx]}: ", total[date_idx, 0] / timestep)
-            date_idx = int(-30 / timestep)
+            date_idx = int(-simulation_time / timestep)
             print(
                 f"IDE new infections on {dates[date_idx]}: ", total[date_idx, 0] / timestep)
-            date_idx = int(-29 / timestep - 1)
+            date_idx = int(-(simulation_time - 1) / timestep - 1)
             print(
                 f"IDE new infections at {dates[date_idx]}: ", total[date_idx, 0] / timestep)
 
-        ax.scatter(np.linspace(-20, simulation_time, 51),
+        ax.scatter(np.linspace(0, simulation_time, simulation_time + 1),
                    data_rki["NewInfectionsDay"], s=10)
 
         h5file.close()
 
         # ax.set_title(secir_dict[i], fontsize=8)
         # axs[int(i/2), i % 2].set_ylim(bottom=0)
-        ax.set_xlim(left=-20, right=30)
+        ax.set_xlim(left=0)
         ax.grid(True, linestyle='--')
         ax.legend(fontsize=8)
 
@@ -180,11 +182,11 @@ def plot_infectedsymptoms_deaths(
 
     datafile = os.path.join(os.path.dirname(
         __file__), "..", "data", "pydata", "Germany", "cases_all_germany.json")
-    data_rki = load_data(datafile, start_date)
+    data_rki = load_data(datafile, start_date, simulation_time)
 
     datafile_ma7 = os.path.join(os.path.dirname(
         __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json")
-    data_rki_ma7 = load_data(datafile, start_date)
+    data_rki_ma7 = load_data(datafile_ma7, start_date, simulation_time)
 
     # print("Infectedsymptoms from RKI (ma7)  on 1.10.2020: ", data_rki_ma7[data_rki_ma7["Date"]=="2020-10-01"]["InfectedSymptoms"].values[0])
 
@@ -197,13 +199,13 @@ def plot_infectedsymptoms_deaths(
 
     for compartment in range(len(compartments)):
 
-        print(f"{compartments[compartment][0]} from RKI (ma7)  on 1.10.2020: ",
-              data_rki_ma7[data_rki_ma7["Date"] == "2020-10-01"][compartments[compartment][0]].values[0])
+        print(f"{compartments[compartment][0]} from RKI (ma7)  on {start_date}: ",
+              data_rki_ma7[data_rki_ma7["Date"] == start_date][compartments[compartment][0]].values[0])
 
         fig, ax = plt.subplots()
 
-        ax.scatter(np.linspace(-20, simulation_time, 51),
-                   data_rki[compartments[compartment][0]], s=10)
+        ax.scatter(np.linspace(0, simulation_time, simulation_time + 1),
+                   data_rki_ma7[compartments[compartment][0]], s=8)
 
         for file in range(len(files)):
             # load data
@@ -231,11 +233,11 @@ def plot_infectedsymptoms_deaths(
                     color=colors[file], linestyle=linestyles[file])
 
             if file == 0:
-                print(f"{compartments[compartment][0]} in ODE on 01.10.2020: ",
+                print(f"{compartments[compartment][0]} in ODE on {start_date}: ",
                       total[:, compartments[compartment][1]][0])
 
             if file == 1:
-                print(f"{compartments[compartment][0]} in IDE on 01.10.2020: ",
+                print(f"{compartments[compartment][0]} in IDE on {start_date}: ",
                       total[:, compartments[compartment][1]][0])
 
             h5file.close()
@@ -267,19 +269,22 @@ if __name__ == '__main__':
 
     legendplot = list(["ODE", "IDE"])
 
-    start_date = '2020-10-01'
-    simulation_time = 30
+    start_date = '2020-6-1'
+    simulation_time = 45
     timestep = "0.1000"
+
+    if start_date == '2020-6-1':
+        parameters['scaleConfirmed'] = 1.
 
     plot_new_infections([os.path.join(data_dir, f"ode_{start_date}_{simulation_time}_{timestep}_flows"),
                         os.path.join(data_dir, f"ide_{start_date}_{simulation_time}_{timestep}_flows")],
                         pd.Timestamp(start_date), simulation_time,
-                        legendplot, fileending=f"{start_date}_{simulation_time}_{timestep}_flows", save=True, save_dir=f"plots/real/{start_date}/")
+                        legendplot, fileending=f"{start_date}_{simulation_time}_{timestep}_flows", save=True, save_dir=f"plots/real/{start_date}/{simulation_time}/")
 
     plot_infectedsymptoms_deaths([os.path.join(data_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
                                   os.path.join(data_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
                                  pd.Timestamp(start_date), simulation_time,
-                                 legendplot, fileending=f"{start_date}_{simulation_time}_{timestep}", save=True, save_dir=f"plots/real/{start_date}/")
+                                 legendplot, fileending=f"{start_date}_{simulation_time}_{timestep}", save=True, save_dir=f"plots/real/{start_date}/{simulation_time}/")
 
     # plot_real_scenario([os.path.join(data_dir, f"ode_2020-06-01_30_0.1000_flows"),
     #                     os.path.join(data_dir, f"ide_2020-06-01_30_0.1000_flows")],
