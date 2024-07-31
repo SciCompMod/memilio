@@ -29,7 +29,7 @@ namespace mio
 namespace abm
 {
 
-/// Unique identifier for a Location within a World.
+/// Unique identifier for a Location within a Model.
 struct MEMILIO_ENABLE_EBO LocationId : public mio::TypeSafe<uint32_t, LocationId>,
                                        public OperatorComparison<LocationId> {
     /// @brief Create an ID.

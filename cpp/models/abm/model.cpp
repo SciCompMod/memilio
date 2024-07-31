@@ -17,13 +17,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/world.h"
+#include "abm/model.h"
 #include "abm/location_id.h"
 #include "abm/location_type.h"
 #include "abm/intervention_type.h"
 #include "abm/person.h"
 #include "abm/location.h"
-#include "abm/migration_rules.h"
+#include "abm/mobility_rules.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"
@@ -35,7 +35,7 @@ namespace mio
 namespace abm
 {
 
-LocationId World::add_location(LocationType type, uint32_t num_cells)
+LocationId Model::add_location(LocationType type, uint32_t num_cells)
 {
     LocationId id{static_cast<uint32_t>(m_locations.size())};
     m_locations.emplace_back(type, id, parameters.get_num_groups(), num_cells);
@@ -49,16 +49,16 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     return id;
 }
 
-PersonId World::add_person(const LocationId id, AgeGroup age)
+PersonId Model::add_person(const LocationId id, AgeGroup age)
 {
     return add_person(Person(m_rng, get_location(id).get_type(), id, age));
 }
 
-PersonId World::add_person(Person&& person)
+PersonId Model::add_person(Person&& person)
 {
     assert(person.get_location() != LocationId::invalid_id() && "Added Person's location must be valid.");
     assert(person.get_location() < LocationId((uint32_t)m_locations.size()) &&
-           "Added Person's location is not in World.");
+           "Added Person's location is not in Model.");
     assert(person.get_age() < (AgeGroup)parameters.get_num_groups() && "Added Person's AgeGroup is too large.");
 
     PersonId new_id{static_cast<uint32_t>(m_persons.size())};
@@ -72,16 +72,16 @@ PersonId World::add_person(Person&& person)
     return new_id;
 }
 
-void World::evolve(TimePoint t, TimeSpan dt)
+void Model::evolve(TimePoint t, TimeSpan dt)
 {
     begin_step(t, dt);
-    log_info("ABM World interaction.");
+    log_info("ABM Model interaction.");
     interaction(t, dt);
-    log_info("ABM World migration.");
-    migration(t, dt);
+    log_info("ABM Model mobility.");
+    perform_mobility(t, dt);
 }
 
-void World::interaction(TimePoint t, TimeSpan dt)
+void Model::interaction(TimePoint t, TimeSpan dt)
 {
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
@@ -90,7 +90,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
     }
 }
 
-void World::migration(TimePoint t, TimeSpan dt)
+void Model::perform_mobility(TimePoint t, TimeSpan dt)
 {
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
@@ -111,7 +111,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                     get_number_persons(target_location.get_id()) < target_location.get_capacity().persons) {
                     // Perform TestingStrategy if required
                     if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
-                        migrate(person_id, target_location.get_id());
+                        change_location(person_id, target_location.get_id());
                         if (target_location.is_mask_required()) {
                             // If the current MaskProtection level is lower than required, the Person changes mask
                             if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
@@ -131,7 +131,7 @@ void World::migration(TimePoint t, TimeSpan dt)
 
         //run migration rules one after the other if the corresponding location type exists
         //shortcutting of bool operators ensures the rules stop after the first rule is applied
-        if (m_use_migration_rules) {
+        if (m_use_mobility_rules) {
             (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
                 (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
                 (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
@@ -163,12 +163,12 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& person      = get_person(trip.person_id);
             auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
             if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
-                auto& target_location = get_location(trip.migration_destination);
+                auto& target_location = get_location(trip.destination);
                 // Check if the Person wears mask if required at targeted location
                 if (!target_location.is_mask_required() || person.is_compliant(personal_rng, InterventionType::Mask)) {
                     // Perform TestingStrategy if required
                     if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
-                        migrate(person.get_id(), target_location.get_id(), trip.trip_mode);
+                        change_location(person.get_id(), target_location.get_id(), trip.trip_mode);
                         if (target_location.is_mask_required()) {
                             // If the current MaskProtection level is lower than required, the Person changes mask
                             if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
@@ -190,7 +190,7 @@ void World::migration(TimePoint t, TimeSpan dt)
     }
 }
 
-void World::build_compute_local_population_cache() const
+void Model::build_compute_local_population_cache() const
 {
     PRAGMA_OMP(single)
     {
@@ -208,7 +208,7 @@ void World::build_compute_local_population_cache() const
     } // implicit single barrier
 }
 
-void World::build_exposure_caches()
+void Model::build_exposure_caches()
 {
     PRAGMA_OMP(single)
     {
@@ -226,7 +226,7 @@ void World::build_exposure_caches()
     } // implicit single barrier
 }
 
-void World::compute_exposure_caches(TimePoint t, TimeSpan dt)
+void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
 {
     PRAGMA_OMP(single)
     {
@@ -266,7 +266,7 @@ void World::compute_exposure_caches(TimePoint t, TimeSpan dt)
     } // implicit single barrier
 }
 
-void World::begin_step(TimePoint t, TimeSpan dt)
+void Model::begin_step(TimePoint t, TimeSpan dt)
 {
     m_testing_strategy.update_activity_status(t);
 
@@ -278,33 +278,33 @@ void World::begin_step(TimePoint t, TimeSpan dt)
     m_are_exposure_caches_valid = true;
 }
 
-auto World::get_locations() const -> Range<std::pair<ConstLocationIterator, ConstLocationIterator>>
+auto Model::get_locations() const -> Range<std::pair<ConstLocationIterator, ConstLocationIterator>>
 {
     return std::make_pair(m_locations.cbegin(), m_locations.cend());
 }
-auto World::get_locations() -> Range<std::pair<LocationIterator, LocationIterator>>
+auto Model::get_locations() -> Range<std::pair<LocationIterator, LocationIterator>>
 {
     return std::make_pair(m_locations.begin(), m_locations.end());
 }
 
-auto World::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPersonIterator>>
+auto Model::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPersonIterator>>
 {
     return std::make_pair(m_persons.cbegin(), m_persons.cend());
 }
 
-auto World::get_persons() -> Range<std::pair<PersonIterator, PersonIterator>>
+auto Model::get_persons() -> Range<std::pair<PersonIterator, PersonIterator>>
 {
     return std::make_pair(m_persons.begin(), m_persons.end());
 }
 
-LocationId World::find_location(LocationType type, const PersonId person) const
+LocationId Model::find_location(LocationType type, const PersonId person) const
 {
     auto location_id = get_person(person).get_assigned_location(type);
     assert(location_id != LocationId::invalid_id() && "The person has no assigned location of that type.");
     return location_id;
 }
 
-size_t World::get_subpopulation_combined(TimePoint t, InfectionState s) const
+size_t Model::get_subpopulation_combined(TimePoint t, InfectionState s) const
 {
     return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
                            [t, s, this](size_t running_sum, const Location& loc) {
@@ -312,7 +312,7 @@ size_t World::get_subpopulation_combined(TimePoint t, InfectionState s) const
                            });
 }
 
-size_t World::get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const
+size_t Model::get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const
 {
     return std::accumulate(
         m_locations.begin(), m_locations.end(), (size_t)0, [t, s, type, this](size_t running_sum, const Location& loc) {
@@ -320,32 +320,32 @@ size_t World::get_subpopulation_combined_per_location_type(TimePoint t, Infectio
         });
 }
 
-TripList& World::get_trip_list()
+TripList& Model::get_trip_list()
 {
     return m_trip_list;
 }
 
-const TripList& World::get_trip_list() const
+const TripList& Model::get_trip_list() const
 {
     return m_trip_list;
 }
 
-void World::use_migration_rules(bool param)
+void Model::use_mobility_rules(bool param)
 {
-    m_use_migration_rules = param;
+    m_use_mobility_rules = param;
 }
 
-bool World::use_migration_rules() const
+bool Model::use_mobility_rules() const
 {
-    return m_use_migration_rules;
+    return m_use_mobility_rules;
 }
 
-TestingStrategy& World::get_testing_strategy()
+TestingStrategy& Model::get_testing_strategy()
 {
     return m_testing_strategy;
 }
 
-const TestingStrategy& World::get_testing_strategy() const
+const TestingStrategy& Model::get_testing_strategy() const
 {
     return m_testing_strategy;
 }

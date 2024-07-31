@@ -6,8 +6,8 @@ SCOREP_FILE_NAMES_END
 
 SCOREP_REGION_NAMES_BEGIN
     EXCLUDE *
-    INCLUDE *World::begin_step* *World::interaction* *World::migration*
-    INCLUDE *World::evolve*
-    INCLUDE *Simulation::evolve_world*
+    INCLUDE *Model::begin_step* *Model::interaction* *Model::perform_mobility*
+    INCLUDE *Model::evolve*
+    INCLUDE *Simulation::evolve_model*
     INCLUDE *Simulation::advance*
 SCOREP_REGION_NAMES_END

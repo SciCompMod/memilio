@@ -39,10 +39,9 @@ std::string setup(int argc, char** argv, const std::string data_dir)
             mio::log_warning("No arguments given.");
         }
         std::cout << "Using default file twitter_scaled_1252 in data/mobility." << std::endl;
-        std::cout << "Usage: read_graph MIGRATION_FILE"
-                  << "\n\n";
+        std::cout << "Usage: read_graph MOBILITY_FILE" << "\n\n";
         std::cout << "This example performs a simulation based on twitter "
-                     "migration data."
+                     "mobility data."
                   << std::endl;
         return mio::path_join(data_dir, "mobility", "twitter_scaled_1252.txt");
     }
@@ -55,7 +54,7 @@ int main(int argc, char** argv)
 
     const auto t0   = 0.;
     const auto tmax = 10.;
-    using FP = double;
+    using FP        = double;
 
     double cont_freq = 10; // see Polymod study
 
@@ -108,25 +107,25 @@ int main(int argc, char** argv)
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
 
-    std::cout << "Reading Migration File..." << std::flush;
+    std::cout << "Reading Mobility File..." << std::flush;
     auto read_mobility_result = mio::read_mobility_plain(filename);
     if (!read_mobility_result) {
         std::cout << read_mobility_result.error().formatted_message() << '\n';
         return -1;
     }
-    auto& twitter_migration_2018 = read_mobility_result.value();
+    auto& twitter_mobility_2018 = read_mobility_result.value();
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
-    mio::Graph<mio::osecir::Model<FP>, mio::MigrationParameters<FP>> graph;
-    for (int node = 0; node < twitter_migration_2018.rows(); node++) {
+    mio::Graph<mio::osecir::Model<FP>, mio::MobilityParameters<FP>> graph;
+    for (int node = 0; node < twitter_mobility_2018.rows(); node++) {
         graph.add_node(node, model);
     }
-    for (int row = 0; row < twitter_migration_2018.rows(); row++) {
-        for (int col = 0; col < twitter_migration_2018.cols(); col++) {
+    for (int row = 0; row < twitter_mobility_2018.rows(); row++) {
+        for (int col = 0; col < twitter_mobility_2018.cols(); col++) {
             graph.add_edge(row, col,
                            Eigen::VectorXd::Constant(10 * (size_t)nb_groups,
-                                                     twitter_migration_2018(row, col) /
+                                                     twitter_mobility_2018(row, col) /
                                                          graph.nodes()[row].property.populations.get_total()));
         }
     }

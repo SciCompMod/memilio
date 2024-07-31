@@ -524,17 +524,17 @@ TEST(TestJsonSerializer, abmTrip)
     EXPECT_EQ(r.value(), trip);
 }
 
-// TEST(TestJsonSerializer, abmWorld) // FIXME: (de)serialize is only partially implemented
+// TEST(TestJsonSerializer, abmModel) // FIXME: (de)serialize is only partially implemented
 // {
-//     auto world   = mio::abm::World(num_age_groups);
-//     auto home_id = world.add_location(mio::abm::LocationType::Home);
-//     auto work_id = world.add_location(mio::abm::LocationType::Work);
-//     auto person  = world.add_person(home_id, age_group_15_to_34);
+//     auto model   = mio::abm::Model(num_age_groups);
+//     auto home_id = model.add_location(mio::abm::LocationType::Home);
+//     auto work_id = model.add_location(mio::abm::LocationType::Work);
+//     auto person  = model.add_person(home_id, age_group_15_to_34);
 //     mio::abm::Trip trip1(person, mio::abm::TimePoint(0) + mio::abm::hours(8), work_id, home_id);
 //     mio::abm::Trip trip2(person, mio::abm::TimePoint(0) + mio::abm::hours(11), work_id, home_id);
-//     world.get_trip_list().add_trip(trip1, false);
-//     world.get_trip_list().add_trip(trip2, true);
-//     auto js = mio::serialize_json(world);
+//     model.get_trip_list().add_trip(trip1, false);
+//     model.get_trip_list().add_trip(trip2, true);
+//     auto js = mio::serialize_json(model);
 //     Json::Value expected_json;
 //     expected_json["num_agegroups"]                   = Json::UInt(num_age_groups);
 //     expected_json["trips"][0]["person_id"]           = Json::UInt(person);
@@ -559,10 +559,10 @@ TEST(TestJsonSerializer, abmTrip)
 //     expected_json["persons"][0]["Location"]["type"]  = Json::UInt(mio::abm::LocationType::Home);
 //     expected_json["persons"][0]["age"]               = Json::UInt(2);
 //     expected_json["persons"][0]["id"]                = Json::UInt(person);
-//     expected_json["use_migration_rules"]             = Json::Value(true);
+//     expected_json["use_mobility_rules"]             = Json::Value(true);
 //     ASSERT_EQ(js.value(), expected_json);
 
-//     // auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::World>());
+//     // auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Model>());
 //     // ASSERT_THAT(print_wrap(r), IsSuccess());
-//     // EXPECT_EQ(r.value(), world);
+//     // EXPECT_EQ(r.value(), model);
 // }
