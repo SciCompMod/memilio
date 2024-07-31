@@ -192,7 +192,7 @@ def plot_convergence(errors, timesteps_ide, flows=False, compartment=None, save=
         axs[int(i/2), i % 2].set_title(secir_dict[i], fontsize=10)
         axs[int(i/2), i % 2].grid(True, linestyle='--', alpha=0.6)
 
-    fig.supxlabel('Time step $\Delta t$', fontsize=12)
+    fig.supxlabel(r'Time step $\Delta t$', fontsize=12)
 
     # Invert x axis only for one plot so that sharex=True and invert_xaxis work as intended.
     axs[0, 0].invert_xaxis()
@@ -255,7 +255,7 @@ def plot_convergence_oneplot(errors, timesteps_ide, flows=False, save=False):
     plt.yscale("log", base=10)
     plt.gca().invert_xaxis()
 
-    plt.xlabel('Time step $\Delta t$', fontsize=10)
+    plt.xlabel(r'Time step $\Delta t$', fontsize=10)
 
     plt.legend(fontsize=10, framealpha=0.5, ncol=2)
     plt.grid(True, linestyle='--', alpha=0.6)
