@@ -676,9 +676,9 @@ public:
         // the base value to use it in the apply_variant function and also to reset the parameter after the simulation.
         auto base_infectiousness = this->get_model().parameters.template get<TransmissionProbabilityOnContact<FP>>();
 
-        double delay_lockdown;
+        ScalarType delay_npi_implementation;
         auto t        = BaseT::get_result().get_last_time();
-        const auto dt = dyn_npis.get_interval().get();
+        const auto dt = dyn_npis.get_thresholds().size() > 0 ? dyn_npis.get_interval().get() : tmax;
         while (t < tmax) {
 
             auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});
@@ -697,10 +697,11 @@ public:
             }
 
             if (t > 0) {
-                delay_lockdown = 7;
+                delay_npi_implementation =
+                    this->get_model().parameters.template get<DynamicNPIsImplementationDelay<FP>>();
             }
-            else {
-                delay_lockdown = 0;
+            else { // DynamicNPIs for t=0 are 'misused' to be from-start NPIs. I.e., do not enforce delay.
+                delay_npi_implementation = 0;
             }
             t = t + dt_eff;
 
@@ -712,12 +713,12 @@ public:
                         auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
                         if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
                             (exceeded_threshold->first > m_dynamic_npi.first ||
-                             t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
+                             t > ScalarType(m_dynamic_npi.second))) { //old npi was weaker or is expired
 
-                            auto t_start = SimulationTime(t + delay_lockdown);
+                            auto t_start = SimulationTime(t + delay_npi_implementation);
                             auto t_end   = t_start + SimulationTime(dyn_npis.get_duration());
-                            this->get_model().parameters.get_start_commuter_detection() = (double)t_start;
-                            this->get_model().parameters.get_end_commuter_detection()   = (double)t_end;
+                            this->get_model().parameters.get_start_commuter_detection() = (ScalarType)t_start;
+                            this->get_model().parameters.get_end_commuter_detection()   = (ScalarType)t_end;
                             m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
                             implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
                                                    t_start, t_end, [](auto& g) {

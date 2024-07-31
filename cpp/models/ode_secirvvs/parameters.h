@@ -168,7 +168,7 @@ struct ContactPatterns {
 };
 
 /**
- * @brief the NPIs that are enacted if certain infection thresholds are exceeded.
+ * @brief the NPIs that are enforced if certain infection thresholds are exceeded.
  */
 template <typename FP = double>
 struct DynamicNPIsInfectedSymptoms {
@@ -180,6 +180,22 @@ struct DynamicNPIsInfectedSymptoms {
     static std::string name()
     {
         return "DynamicNPIsInfectedSymptoms";
+    }
+};
+
+/**
+ * @brief The delay with which DynamicNPIs are implemented and enforced after exceedance of threshold.
+ */
+template <typename FP = double>
+struct DynamicNPIsImplementationDelay {
+    using Type = UncertainValue<FP>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return 0.;
+    }
+    static std::string name()
+    {
+        return "DynamicNPIsImplementationDelay";
     }
 };
 
@@ -607,13 +623,14 @@ struct InfectiousnessNewVariant {
 template <typename FP = double>
 using ParametersBase = ParameterSet<
     StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, TestAndTraceCapacityMaxRiskNoSymptoms<FP>,
-    TestAndTraceCapacityMaxRiskSymptoms<FP>, ContactPatterns<FP>, DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>,
-    TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>, TimeInfectedSevere<FP>, TimeInfectedCritical<FP>,
-    TransmissionProbabilityOnContact<FP>, RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>,
-    RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>,
-    CriticalPerSevere<FP>, DeathsPerCritical<FP>, VaccinationGap<FP>, DaysUntilEffectivePartialImmunity<FP>,
-    DaysUntilEffectiveImprovedImmunity<FP>, DailyFullVaccination<FP>, DailyFirstVaccination<FP>,
-    ReducExposedPartialImmunity<FP>, ReducExposedImprovedImmunity<FP>, ReducInfectedSymptomsPartialImmunity<FP>,
+    TestAndTraceCapacityMaxRiskSymptoms<FP>, ContactPatterns<FP>, DynamicNPIsImplementationDelay<FP>,
+    DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>, TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>,
+    TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
+    RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
+    MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>,
+    VaccinationGap<FP>, DaysUntilEffectivePartialImmunity<FP>, DaysUntilEffectiveImprovedImmunity<FP>,
+    DailyFullVaccination<FP>, DailyFirstVaccination<FP>, ReducExposedPartialImmunity<FP>,
+    ReducExposedImprovedImmunity<FP>, ReducInfectedSymptomsPartialImmunity<FP>,
     ReducInfectedSymptomsImprovedImmunity<FP>, ReducInfectedSevereCriticalDeadPartialImmunity<FP>,
     ReducInfectedSevereCriticalDeadImprovedImmunity<FP>, ReducTimeInfectedMild<FP>, InfectiousnessNewVariant<FP>,
     StartDayNewVariant>;
@@ -734,6 +751,13 @@ public:
             log_warning("Constraint check: Parameter TestAndTraceCapacityMaxRiskNoSymptoms changed from {} to {}",
                         this->template get<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(), 0);
             this->template set<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(0);
+            corrected = true;
+        }
+
+        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
+            log_warning("Constraint check: Parameter DynamicNPIsImplementationDelay changed from {} to {}",
+                        this->template get<DynamicNPIsImplementationDelay<FP>>(), 0);
+            this->template set<DynamicNPIsImplementationDelay<FP>>(0);
             corrected = true;
         }
 
@@ -953,6 +977,11 @@ public:
             return true;
         }
 
+        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter DynamicNPIsImplementationDelay smaller {:d}", 0);
+            return true;
+        }
+
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
@@ -1123,7 +1152,7 @@ private:
     double m_commuter_nondetection    = 0.0;
     double m_start_commuter_detection = 0.0;
     double m_end_commuter_detection   = 0.0;
-    double m_end_dynamic_npis         = 0.0;
+    double m_end_dynamic_npis         = std::numeric_limits<double>::max();
 };
 
 } // namespace osecirvvs

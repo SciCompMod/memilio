@@ -285,43 +285,55 @@ public:
      */
     Eigen::Ref<Vector<FP>> advance(FP tmax)
     {
+        auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns<FP>>();
-        if (dyn_npis.get_thresholds().size() > 0) {
-            auto t        = BaseT::get_result().get_last_time();
-            const auto dt = dyn_npis.get_interval().get();
 
-            while (t < tmax) {
-                auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});
+        FP delay_npi_implementation; // delay which is needed to implement a NPI that is criterion-dependent
+        auto t        = BaseT::get_result().get_last_time();
+        const auto dt = dyn_npis.get_thresholds().size() > 0 ? dyn_npis.get_interval().get() : tmax;
 
-                BaseT::advance(t + dt_eff);
-                t = t + dt_eff;
+        while (t < tmax) {
+            auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});
 
+            BaseT::advance(t + dt_eff);
+            if (t > 0) {
+                delay_npi_implementation =
+                    this->get_model().parameters.template get<DynamicNPIsImplementationDelay<FP>>();
+            }
+            else { // DynamicNPIs for t=0 are 'misused' to be from-start NPIs. I.e., do not enforce delay.
+                delay_npi_implementation = 0;
+            }
+            t = t + dt_eff;
+
+            if (dyn_npis.get_thresholds().size() > 0) {
                 if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
-                    auto inf_rel =
-                        mio::osecir::get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
-                        dyn_npis.get_base_value();
-                    auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
-                    if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
-                        (exceeded_threshold->first > m_dynamic_npi.first ||
-                         t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
-                        auto t_end    = mio::SimulationTime(t + double(dyn_npis.get_duration()));
-                        m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
-                        mio::implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
-                                                    SimulationTime(t), t_end, [](auto& g) {
-                                                        return mio::make_contact_damping_matrix(g);
-                                                    });
-                    }
+                    if (t < t_end_dyn_npis) {
+                        auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
+                                       dyn_npis.get_base_value();
+                        auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
+                        if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
+                            (exceeded_threshold->first > m_dynamic_npi.first ||
+                             t > ScalarType(m_dynamic_npi.second))) { //old npi was weaker or is expired
 
+                            auto t_start  = SimulationTime(t + delay_npi_implementation);
+                            auto t_end    = t_start + SimulationTime(ScalarType(dyn_npis.get_duration()));
+                            m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
+                            implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
+                                                   t_start, t_end, [](auto& g) {
+                                                       return make_contact_damping_matrix(g);
+                                                   });
+                        }
+                    }
                     m_t_last_npi_check = t;
                 }
             }
+            else {
+                m_t_last_npi_check = t;
+            }
+        }
 
-            return this->get_result().get_last_value();
-        }
-        else {
-            return BaseT::advance(tmax);
-        }
+        return this->get_result().get_last_value();
     }
 
 private:
