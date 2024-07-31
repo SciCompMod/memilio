@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef ABM_MOVEMENT_DATA_H
-#define ABM_MOVEMENT_DATA_H
+#ifndef ABM_MOBILITY_DATA_H
+#define ABM_MOBILITY_DATA_H
 
 #include <cstdint>
 
@@ -60,4 +60,4 @@ enum class ActivityType : uint32_t
 } // namespace abm
 } // namespace mio
 
-#endif //ABM_MOVEMENT_DATA_H
+#endif //ABM_MOBILITY_DATA_H

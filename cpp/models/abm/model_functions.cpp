@@ -126,7 +126,8 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
     }
 }
 
-bool migrate(Person& person, const Location& destination, const TransportMode mode, const std::vector<uint32_t>& cells)
+bool change_location(Person& person, const Location& destination, const TransportMode mode,
+                     const std::vector<uint32_t>& cells)
 {
     assert(std::all_of(cells.begin(), cells.end(), [&](const auto& cell) {
         return cell < destination.get_cells().size();
@@ -140,7 +141,7 @@ bool migrate(Person& person, const Location& destination, const TransportMode mo
         return true;
     }
     else {
-        mio::log_debug("In migrate: Person {} already is at Location {}", person.get_id().get(),
+        mio::log_debug("In change_location: Person {} already is at Location {}", person.get_id().get(),
                        destination.get_id().get());
         return false;
     }
