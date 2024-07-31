@@ -155,84 +155,79 @@ def compute_relerror_norm_l2(groundtruth, results, timestep_ode, timesteps_ide, 
 def plot_convergence(errors, timesteps_ide, flows=False, compartment=None, save=False):
     """ Plot errors against timesteps."""
 
+    # Define subplots and labels.
     if flows:
+        fig, axs = plt.subplots(
+            5, 2, sharex=True,  sharey=True, figsize=(10, 10))
+        num_plots = 10
         secir_dict = {0: r"$\sigma_S^E$", 1: r"$\sigma_E^C$", 2: r"$\sigma_C^I$", 3: r"$\sigma_C^R$", 4: r"$\sigma_I^H$",
                       5: r"$\sigma_I^R$", 6: r"$\sigma_H^U$", 7: r"$\sigma_H^R$", 8: r"$\sigma_U^D$", 9: r"$\sigma_U^R$"}
-
-        compartments = [r"$\sigma_S^E$", r"$\sigma_E^C$", r"$\sigma_C^I$", r"$\sigma_C^R$", r"$\sigma_I^H$",
-                        r"$\sigma_I^R$", r"$\sigma_H^U$", r"$\sigma_H^R$", r"$\sigma_U^D$", r"$\sigma_U^R$"]
+        labels = [
+            r"$\Vert {\widehat{\sigma}}_{\text{IDE}} - {\widehat{\sigma}}_{\text{ODE}}\Vert_2 / \Vert  {\widehat{\sigma}}_{\text{ODE}}\Vert_2$", r"$\mathcal{O}(\Delta t)$"]
     else:
+        fig, axs = plt.subplots(4, 2, sharex=True, figsize=(10, 8))
+        num_plots = 8
         secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
                       5: 'ICU', 6: 'Recovered', 7: 'Dead'}
-        compartments = ['S', 'E', 'C', 'I', 'H', 'U', 'R', 'D']
+        labels = [
+            r"$\Vert \widehat{Z}_{\text{IDE}} - \widehat{Z}_{\text{ODE}}\Vert_2 / \Vert  \widehat{Z}_{\text{ODE}}\Vert_2$", r"$\mathcal{O}(\Delta t)$"]
 
     # helmholtzdarkblue, helmholtzclaim
     colors = [(0, 40/255, 100/255), (20/255, 200/255, 255/255)]
 
-    # Plot all compartments.
-    if flows:
-        fig, axs = plt.subplots(5, 2, sharex=True, figsize=(10, 10))
-        num_plots = 10
-    else:
-        fig, axs = plt.subplots(4, 2, sharex=True, figsize=(10, 8))
-        num_plots = 8
-
     for i in range(num_plots):
-
         # Plot results.
         axs[int(i/2), i % 2].plot(timesteps_ide,
-                                  errors[:, i], '-o', color=colors[1], label='Results')
+                                  errors[:, i], '-o', color=colors[1])
 
         # Plot comparison line for linear convergence.
         comparison = [dt for dt in timesteps_ide]
-        axs[int(i/2), i % 2].plot(timesteps_ide, comparison, color='gray',
-                                  label=r"$\mathcal{O}(\Delta t)$")
+        axs[int(i/2), i % 2].plot(timesteps_ide, comparison,
+                                  '--', color='gray', linewidth=1.2)
 
         # Adapt plots.
         axs[int(i/2), i % 2].set_xscale("log", base=10)
         axs[int(i/2), i % 2].set_yscale("log", base=10)
 
         axs[int(i/2), i % 2].set_title(secir_dict[i], fontsize=10)
+        axs[int(i/2), i % 2].grid(True, linestyle='--', alpha=0.6)
 
-    fig.supxlabel('Time step')
-    fig.supylabel(
-        r"$\Vert {Z}_{IDE}(t_{max}) - {Z}_{ODE}(t_{max})\Vert$")
+    fig.supxlabel('Time step $\Delta t$', fontsize=12)
 
     # Invert x axis only for one plot so that sharex=True and invert_xaxis work as intended.
     axs[0, 0].invert_xaxis()
 
-    labels = ['Results', r"$\mathcal{O}(\Delta t)$", ]
-    fig.legend(labels, bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
-               fancybox=False, shadow=False, ncol=1)
-
+    lgd = fig.legend(labels, ncol=2,  loc='outside lower center',
+                     fontsize=14, bbox_to_anchor=(0.5, -0.06), bbox_transform=fig.transFigure)
+    plt.tight_layout(pad=0, w_pad=0.5, h_pad=0.1)
     if save:
         if flows:
             if not os.path.isdir('plots/flows'):
                 os.makedirs('plots/flows')
-            plt.savefig(f'plots/flows/convergence_all_flows.png', format='png',
+            plt.savefig(f'plots/flows/convergence_all_flows.png', format='png', bbox_extra_artists=(lgd,), bbox_inches='tight',
                         dpi=500)
         else:
             if not os.path.isdir('plots/compartments'):
                 os.makedirs('plots/compartments')
-            plt.savefig(f'plots/compartments/convergence_all_compartments.png', format='png',
+            plt.savefig(f'plots/compartments/convergence_all_compartments.png', format='png', bbox_extra_artists=(lgd,), bbox_inches='tight',
                         dpi=500)
 
 
 def plot_convergence_oneplot(errors, timesteps_ide, flows=False, save=False):
     """ Plot errors against timesteps. This function creates one plot to depict all compartments/flows, respectively."""
 
-    fig, ax = plt.subplots()
+    plt.figure()
 
     if flows:
         secir_dict = {0: r"$\sigma_S^E$", 1: r"$\sigma_E^C$", 2: r"$\sigma_C^I$", 3: r"$\sigma_C^R$", 4: r"$\sigma_I^H$",
                       5: r"$\sigma_I^R$", 6: r"$\sigma_H^U$", 7: r"$\sigma_H^R$", 8: r"$\sigma_U^D$", 9: r"$\sigma_U^R$"}
-        fig.supylabel(
-            r"$\Vert {\widehat{\sigma}}_{IDE} - {\widehat{\sigma}}_{ODE}\Vert_2$")
+        plt.ylabel(
+            r"$\Vert {\widehat{\sigma}}_{\text{IDE}} - {\widehat{\sigma}}_{\text{ODE}}\Vert_2 / \Vert  {\widehat{\sigma}}_{\text{ODE}}\Vert_2$", fontsize=10)
     else:
         secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
                       5: 'ICU', 6: 'Recovered', 7: 'Dead'}
-        fig.supylabel(
-            r"$\frac{\Vert \widehat{Z}_{IDE} - \widehat{Z}_{ODE}\Vert_2}{\Vert  \widehat{Z}_{ODE}\Vert_2}$")
+        plt.ylabel(
+            r"$\Vert \widehat{Z}_{\text{IDE}} - \widehat{Z}_{\text{ODE}}\Vert_2 / \Vert  \widehat{Z}_{\text{ODE}}\Vert_2$", fontsize=10)
 
     if flows:
         num_lines = 10
@@ -241,31 +236,30 @@ def plot_convergence_oneplot(errors, timesteps_ide, flows=False, save=False):
 
     colors = [plt.cm.viridis(x) for x in np.linspace(0, 1, num_lines)]
 
+    # Angles to rotate markers of the plot.
     angles = [0, 45, 0, 45, 0, 45, 0, 45, 0, 45]
-    if not flows:
-        angles[6] = 45
-        angles[7] = 0
 
     for i in range(num_lines):
-
         # Plot results.
         rotation = Affine2D().rotate_deg(angles[i])
-        ax.plot(timesteps_ide,
-                errors[:, i], '-', marker=MarkerStyle('x', 'full', rotation), markersize=5, color=colors[i], label=secir_dict[i])
+        plt.plot(timesteps_ide,
+                 errors[:, i], '-', marker=MarkerStyle('x', 'full', rotation), markersize=5, color=colors[i], label=secir_dict[i])
 
     # Plot comparison line for linear convergence.
     comparison = [dt for dt in timesteps_ide]
-    ax.plot(timesteps_ide, comparison, '--', color='gray',
-            label=r"$\mathcal{O}(\Delta t)$")
+    plt.plot(timesteps_ide, comparison, '--', color='gray',
+             label=r"$\mathcal{O}(\Delta t)$")
 
     # Adapt plots.
-    ax.set_xscale("log", base=10)
-    ax.set_yscale("log", base=10)
-    ax.invert_xaxis()
+    plt.xscale("log", base=10)
+    plt.yscale("log", base=10)
+    plt.gca().invert_xaxis()
 
-    fig.supxlabel('Time step')
+    plt.xlabel('Time step $\Delta t$', fontsize=10)
 
-    fig.legend()
+    plt.legend(fontsize=10, framealpha=0.5, ncol=2)
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.tight_layout()
 
     if save:
         if flows:
@@ -305,7 +299,7 @@ def main():
     for x in exponents_ide:
         timesteps_ide.append(pow(10, -x))
 
-    flows = False
+    flows = True
 
     groundtruth = read_groundtruth(data_dir, 6, flows=flows)
     timestep_ode = 1e-4
@@ -319,19 +313,10 @@ def main():
         relerrors_l2, timesteps_ide, flows=flows, save=True)
     plot_convergence(relerrors_l2, timesteps_ide,  flows=flows, save=True)
 
-    order = compute_order_of_convergence(
+    """order = compute_order_of_convergence(
         relerrors_l2, timesteps_ide, flows=flows)
 
-    print('Orders of convergence: ', order)
-
-    """ have to change some things in compartments (wrong time steps. for flows this comparison works
-    groundtruth4 = read_groundtruth(data_dir,4, flows=flows)
-    resultode = {"ide": []}
-   
-    resultode["ide"].append(groundtruth4["ode"][0])
-    relerrors_l2odes = compute_relerror_norm_l2(
-        groundtruth,resultode, timestep_ode,[timestep_ode], flows=flows)
-    print('Error: ', relerrors_l2odes)"""
+    print('Orders of convergence: ', order)"""
 
 
 if __name__ == '__main__':
