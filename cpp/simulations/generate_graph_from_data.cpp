@@ -136,8 +136,8 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
     const double maxRiskOfInfectionFromSymptomaticMax = 0.5;
     const double recoveredPerInfectedNoSymptomsMin[]  = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15};
     const double recoveredPerInfectedNoSymptomsMax[]  = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
-    const double severePerInfectedSymptomsMin[]       = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20};
-    const double severePerInfectedSymptomsMax[]       = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
+    const double severePerInfectedSymptomsMin[]       = {0.006, 0.006, 0.015, 0.049, 0.1, 0.1};
+    const double severePerInfectedSymptomsMax[]       = {0.009, 0.009, 0.023, 0.074, 0.1, 0.1};
     const double criticalPerSevereMin[]               = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35};
     const double criticalPerSevereMax[]               = {0.10, 0.10, 0.10, 0.20, 0.35, 0.45};
     const double deathsPerCriticalMin[]               = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5};
@@ -228,7 +228,7 @@ mio::IOResult<std::vector<mio::osecir::Model>> get_graph(mio::Date start_date, c
         node.parameters = params;
     }
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), sclaling_infected);
-    auto scaling_factor_icu      = std::vector<double>(size_t(params.get_num_groups()), 2.0);
+    auto scaling_factor_icu      = std::vector<double>(size_t(params.get_num_groups()), 2.5);
 
     const auto& read_function_nodes = mio::osecir::read_input_data_county<mio::osecir::Model>;
     BOOST_OUTCOME_TRY(read_function_nodes(nodes, start_date, node_ids, scaling_factor_infected, scaling_factor_icu,

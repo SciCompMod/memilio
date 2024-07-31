@@ -890,7 +890,7 @@ void set_local_parameters(mio::abm::World& world)
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_home;
             loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 1.5;
             loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 1;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.75; // 2/5z
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.66; // 2/5z
             break;
         case mio::abm::LocationType::School:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_school;
@@ -900,7 +900,7 @@ void set_local_parameters(mio::abm::World& world)
         case mio::abm::LocationType::Work:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_work;
             loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 7.5;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.25; // 2/5z
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.3; // 2/5z
             break;
         case mio::abm::LocationType::SocialEvent:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_other;
