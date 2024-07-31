@@ -166,7 +166,7 @@ def sanitizing_extrapolation_mobility(
     @param age_groups list of all age groups as in df.
     @param column_names list of columns to compute.
     @param age_population Dataframe with number of population per age group and county.
-    @param neighbors_mobility dict with counties as keys and commuter migration to other counties as values.
+    @param neighbors_mobility dict with counties as keys and commuter mobility to other counties as values.
     @return New DataFrame with sanitized data.
     """
     max_sanit_threshold_arr = np.zeros(len(age_groups))
