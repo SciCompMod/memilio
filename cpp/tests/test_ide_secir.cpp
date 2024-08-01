@@ -48,7 +48,7 @@ protected:
         int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
         Vec vec_init(num_transitions * num_agegroups);
-        mio::TimeSeries<ScalarType> init(num_transitions);
+        mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
         vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
         vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
         vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
@@ -73,6 +73,7 @@ protected:
         mio::SmootherCosine smoothcos(2.0);
         mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
         std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+        model->parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(0)] = vec_delaydistrib;
 
         std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
@@ -424,7 +425,7 @@ TEST(IdeSecir, testModelConstraints)
     // Follow the same order as in check_constraints().
 
     // --- Test with wrong size of the initial value vector for the flows.
-    int num_agegroups              = 0;
+    int num_agegroups              = 1;
     std::vector<ScalarType> N      = std::vector<ScalarType>(num_agegroups, 10000.);
     std::vector<ScalarType> deaths = std::vector<ScalarType>(num_agegroups, 10.);
     ScalarType dt                  = 1;

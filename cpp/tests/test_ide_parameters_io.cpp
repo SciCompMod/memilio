@@ -21,8 +21,10 @@
 #include "ide_secir/infection_state.h"
 #include "ide_secir/model.h"
 #include "ide_secir/parameters_io.h"
+#include "ide_secir/simulation.h"
 
 #include "memilio/config.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/date.h"
 #include "memilio/io/io.h"
 
@@ -36,9 +38,9 @@
 TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
 {
     // Define start date and the total population used for the initialization.
-    int num_agegroups                        = 1;
-    std::vector<ScalarType> total_population = std::vector(num_agegroups, 80 * 1e6);
-    auto start_date                          = mio::Date(2020, 6, 3);
+    int num_agegroups                        = 6;
+    std::vector<ScalarType> total_population = std::vector(num_agegroups, 15 * 1e6);
+    auto start_date                          = mio::Date(2020, 11, 1);
     ScalarType dt                            = 0.5;
     // Initialize model.
     // The number of deaths will be overwritten if real data is used for initialization. Therefore, an arbitrary number is used for the number of deaths.
@@ -55,31 +57,37 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
                                                                delaydistribution);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]
         .set_distribution_parameter(1.7);
-    model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
-
+    for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
+        model.parameters.get<mio::isecir::TransitionDistributions>()[group] = vec_delaydistrib;
+    }
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
-    model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
+    for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
+        model.parameters.get<mio::isecir::TransitionProbabilities>()[group] = vec_prob;
+    }
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, num_agegroups);
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
     mio::ConstantFunction constfunc(1.0);
     mio::StateAgeFunctionWrapper prob(constfunc);
-    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
-    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
+
+    for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
+        model.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[group] = prob;
+        model.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[group]   = prob;
+        model.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[group]   = prob;
+    }
 
     // Calculate initialization.
     auto status =
-        mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date);
+        mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_age_ma7.json"), start_date);
 
     ASSERT_THAT(print_wrap(status), IsSuccess());
 
-    // Compare with previous run.
-    auto compare = load_test_data_csv<ScalarType>("ide-parameters-io-compare.csv");
+    //Compare with previous run.
+    auto compare = load_test_data_csv<ScalarType>("ide-ageres-parameters-io-compare.csv");
 
     ASSERT_EQ(compare.size(), static_cast<size_t>(model.m_transitions.get_num_time_points()));
     for (size_t i = 0; i < compare.size(); i++) {
@@ -95,29 +103,29 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
 TEST(TestIDEParametersIo, ParametersIoRKIFailure)
 {
     // Define start date and the total population used for the initialization.
-    int num_agegroups                        = 1;
-    std::vector<ScalarType> total_population = std::vector(num_agegroups, 80 * 1e6);
+    int num_agegroups                        = 6;
+    std::vector<ScalarType> total_population = std::vector(num_agegroups, 15 * 1e6);
     ScalarType dt                            = 0.5;
 
     // Initialize model.
     // The number of deaths will be overwritten if real data is used for initialization. Therefore, an arbitrary number is used for the number of deaths.
-    mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count),
+    mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count * num_agegroups),
                              total_population, std::vector(num_agegroups, -1.), num_agegroups);
 
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);
 
     // --- Case where start_date is later than maximal provided date in file.
-    auto start_date = mio::Date(2020, 6, 9);
+    auto start_date = mio::Date(2021, 01, 05);
     auto status =
-        mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date);
+        mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_age_ma7.json"), start_date);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::OutOfRange));
 
     // --- Case where not all needed dates are provided.
-    start_date = mio::Date(2020, 6, 7);
+    start_date = mio::Date(2020, 10, 1);
     status =
-        mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date);
+        mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_age_ma7.json"), start_date);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::OutOfRange));
 

@@ -32,7 +32,7 @@ namespace isecir
 
 void Simulation::advance(ScalarType tmax)
 {
-    mio::log_info("Simulating IDE-SECIR from t0 = {} until tmax = {} with dt = {}.",
+    mio::log_info("Simulating IDE-SECIR from t0 = {} until tmax = {} with dt = {} .",
                   m_model->m_transitions.get_last_time(), tmax, m_dt);
     m_model->initial_compute_compartments(m_dt);
 

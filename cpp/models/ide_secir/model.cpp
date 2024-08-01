@@ -53,7 +53,7 @@ Model::Model(TimeSeries<ScalarType>&& init, std::vector<ScalarType> N_init, std:
         // Initialize m_populations with zero as the first point of time if no data is provided for the transitions.
         // This can happen for example in the case of initialization with real data.
         m_populations.add_time_point<Eigen::VectorXd>(
-            0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
+            0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count * m_num_agegroups, 0));
     }
 
     // Set deaths at simulation start time t0.
@@ -86,19 +86,22 @@ void Model::compute_compartment_from_flows(ScalarType dt, Eigen::Index idx_Infec
 
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
 
+    int flow_index = get_transition_flat_index(idx_IncomingFlow, static_cast<Eigen::Index>((size_t)group));
+
+    int state_index = get_state_flat_index(idx_InfectionState, static_cast<Eigen::Index>((size_t)group));
+
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
 
         ScalarType state_age = (num_time_points - 1 - i) * dt;
-        int index            = get_state_flat_index(idx_IncomingFlow, static_cast<Eigen::Index>((size_t)group));
 
         sum += (parameters.get<TransitionProbabilities>()[group][idx_TransitionDistribution1] *
                     parameters.get<TransitionDistributions>()[group][idx_TransitionDistribution1].eval(state_age) +
                 (1 - parameters.get<TransitionProbabilities>()[group][idx_TransitionDistribution1]) *
                     parameters.get<TransitionDistributions>()[group][idx_TransitionDistribution2].eval(state_age)) *
-               m_transitions[i + 1][index];
+               m_transitions[i + 1][flow_index];
     }
 
-    m_populations.get_last_value()[idx_InfectionState] = sum;
+    m_populations.get_last_value()[state_index] = sum;
 }
 
 void Model::initial_compute_compartments_infection(ScalarType dt)
@@ -312,7 +315,6 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
 
     Hence calc_time_index goes until std::ceil(support_max/dt) since for std::ceil(support_max/dt)+1 all terms are already zero. 
     This needs to be adjusted if we are changing the finite difference scheme */
-
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(
         parameters.get<TransitionDistributions>()[group][idx_InfectionTransitions].get_support_max(dt, m_tol) / dt);
 
@@ -475,26 +477,17 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
 
         Eigen::Index num_time_points;
         ScalarType current_time;
-        ScalarType deaths_i;
-
-        int Di  = get_state_flat_index(Eigen::Index(InfectionState::Dead), static_cast<Eigen::Index>((size_t)i));
-        int HDi = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToDead),
-                                            static_cast<Eigen::Index>((size_t)i));
 
         if (initialization) {
             // Determine m_forceofinfection at time t0-dt which is the penultimate timepoint in m_transitions.
             num_time_points = m_transitions.get_num_time_points() - 1;
             // Get time of penultimate timepoint in m_transitions.
             current_time = m_transitions.get_time(num_time_points - 1);
-
-            // Determine the number of individuals in Dead compartment at time t0-dt.
-            deaths_i = m_populations[Eigen::Index(0)][Di] - m_transitions.get_last_value()[HDi];
         }
         else {
             // Determine m_forceofinfection for current last time in m_transitions.
             num_time_points = m_transitions.get_num_time_points();
             current_time    = m_transitions.get_last_time();
-            deaths_i        = m_populations.get_last_value()[Di];
         }
         //We compute the Season Value.
         ScalarType season_val =
@@ -504,14 +497,28 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
         // We need to sum, over contacts with all Age Groups.
         for (auto j = AgeGroup(0); j < AgeGroup(m_num_agegroups); ++j) {
 
+            ScalarType deaths_j;
+
+            int Dj  = get_state_flat_index(Eigen::Index(InfectionState::Dead), static_cast<Eigen::Index>((size_t)j));
+            int HDj = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToDead),
+                                                static_cast<Eigen::Index>((size_t)j));
+
+            int ECj = get_transition_flat_index(Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms),
+                                                static_cast<Eigen::Index>((size_t)j));
+            int CIj = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms),
+                                                static_cast<Eigen::Index>((size_t)j));
+
+            if (initialization) {
+                // Determine the number of individuals in Dead compartment at time t0-dt.
+                deaths_j = m_populations[Eigen::Index(0)][Dj] - m_transitions.get_last_value()[HDj];
+            }
+            else {
+                deaths_j = m_populations.get_last_value()[Dj];
+            }
+
             ScalarType sum = 0;
 
             for (Eigen::Index l = num_time_points - 1 - calc_time_index; l < num_time_points - 1; l++) {
-
-                int ECj = get_transition_flat_index(Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms),
-                                                    static_cast<Eigen::Index>((size_t)j));
-                int CRj = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedNoSymptomsToRecovered),
-                                                    static_cast<Eigen::Index>((size_t)j));
 
                 ScalarType state_age = (num_time_points - 1 - l) * dt;
 
@@ -544,11 +551,11 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
                           parameters
                               .get<TransitionDistributions>()[j][(int)InfectionTransition::InfectedSymptomsToRecovered]
                               .eval(state_age)) *
-                         m_transitions[l + 1][CRj] *
+                         m_transitions[l + 1][CIj] *
                          parameters.get<RiskOfInfectionFromSymptomatic>()[j].eval(state_age));
             }
             m_forceofinfection[static_cast<Eigen::Index>((size_t)i)] +=
-                1 / (m_N[static_cast<Eigen::Index>((size_t)i)] - deaths_i) * sum;
+                1 / (m_N[static_cast<Eigen::Index>((size_t)j)] - deaths_j) * sum;
         }
     }
 }
