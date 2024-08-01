@@ -265,15 +265,11 @@ ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const 
 
 void Person::add_test_result(TimePoint t, TestType type, bool result)
 {
-    TestResult test_result;
-    test_result.time_of_testing     = t;
-    test_result.type                = type;
-    test_result.is_allowed_to_enter = result;
     // Remove outdated test results or replace the old result of the same type
-    m_test_results[{type}] = test_result;
+    m_test_results[{type}] = {t, result};
 }
 
-const Person::TestResult Person::get_test_result(TestType type) const
+const TestResult Person::get_test_result(TestType type) const
 {
     return m_test_results[{type}];
 }

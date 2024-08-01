@@ -104,18 +104,17 @@ bool TestingScheme::run_scheme(PersonalRandomNumberGenerator& rng, Person& perso
 {
     auto test_result = person.get_test_result(m_test_parameters.type);
     // If the agent has a test result valid until now, use the result directly
-    if ((test_result.type != TestType::Count) &&
+    if ((test_result.time_of_testing != TimePoint(std::numeric_limits<int>::min())) &&
         (test_result.time_of_testing + m_test_parameters.validity_period >= t)) {
-        return test_result.is_allowed_to_enter;
+        return !test_result.result;
     }
-    if (m_testing_criteria.evaluate(person, t)) {
+    // Otherwise, the time_of_testing in the past (i.e. the agent has already performed it).
+    if (m_testing_criteria.evaluate(person, t - m_test_parameters.required_time)) {
         double random = UniformDistribution<double>::get_instance()(rng);
         if (random < m_probability) {
-            // In this case, the time_of_testing in the past (i.e. the agent has already performed it).
-            bool is_person_allowed_to_enter = !person.get_tested(rng, t, m_test_parameters);
-            person.add_test_result(t - m_test_parameters.required_time, m_test_parameters.type,
-                                   is_person_allowed_to_enter);
-            return is_person_allowed_to_enter;
+            bool result = person.get_tested(rng, t - m_test_parameters.required_time, m_test_parameters);
+            person.add_test_result(t - m_test_parameters.required_time, m_test_parameters.type, result);
+            return !result;
         }
     }
     return true;

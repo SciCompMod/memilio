@@ -70,15 +70,6 @@ public:
     }
 
     /**
-     * @brief The TestResult of a Person.
-     */
-    struct TestResult {
-        TimePoint time_of_testing; ///< The TimePoint when the Person performs the test.
-        TestType type = TestType::Count; ///< The TestType of the test.
-        bool is_allowed_to_enter; ///< Whether the person is allowed to enter the Location.
-    };
-
-    /**
      * @brief Get the latest #Infection of the Person.
      * @return The latest #Infection of the Person.
      */

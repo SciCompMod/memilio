@@ -103,9 +103,11 @@ TEST(TestTestingScheme, runScheme)
         .WillOnce(testing::Return(0.7)) // Person 2 got test
         .WillOnce(testing::Return(0.5)); // Person 2 tested negative and can enter
 
-    ASSERT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date), false); // Person tests and tests positive
-    ASSERT_EQ(testing_scheme2.run_scheme(rng_person2, person2, start_date), true); // Person tests and tests negative
-    ASSERT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date),
+    ASSERT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date + test_params_pcr.required_time),
+              false); // Person tests and tests positive
+    ASSERT_EQ(testing_scheme2.run_scheme(rng_person2, person2, start_date + test_params_pcr.required_time),
+              true); // Person tests and tests negative
+    ASSERT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date + test_params_pcr.required_time),
               false); // Person doesn't test but used the last result (false to enter)
 }
 
@@ -145,10 +147,10 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
         mio::abm::TestingStrategy(std::vector<mio::abm::TestingStrategy::LocalStrategy>{});
     test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme1);
     test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme2);
-    ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date),
+    ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date + test_params_pcr.required_time),
               false); // Person tests and tests positive
-    ASSERT_EQ(test_strategy.run_strategy(rng_person2, person2, loc_work, start_date),
+    ASSERT_EQ(test_strategy.run_strategy(rng_person2, person2, loc_work, start_date + test_params_pcr.required_time),
               true); // Person tests and tests negative
-    ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date),
+    ASSERT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date + test_params_pcr.required_time),
               false); // Person doesn't test but used the last result (false to enter)
 }

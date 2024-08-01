@@ -326,7 +326,17 @@ TEST(Person, addAndGetTestResult)
     mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
     auto person = make_test_person(location);
     auto t      = mio::abm::TimePoint(0);
-
+    // Tests if m_test_results initialized correctly
+    EXPECT_EQ(person.get_test_result(mio::abm::TestType::Generic).time_of_testing,
+              mio::abm::TimePoint(std::numeric_limits<int>::min()));
+    EXPECT_FALSE(person.get_test_result(mio::abm::TestType::Generic).result);
+    EXPECT_EQ(person.get_test_result(mio::abm::TestType::Antigen).time_of_testing,
+              mio::abm::TimePoint(std::numeric_limits<int>::min()));
+    EXPECT_FALSE(person.get_test_result(mio::abm::TestType::Antigen).result);
+    EXPECT_EQ(person.get_test_result(mio::abm::TestType::PCR).time_of_testing,
+              mio::abm::TimePoint(std::numeric_limits<int>::min()));
+    EXPECT_FALSE(person.get_test_result(mio::abm::TestType::PCR).result);
+    // Test if m_test_results updated
     person.add_test_result(t, mio::abm::TestType::Generic, true);
-    ASSERT_TRUE(person.get_test_result(mio::abm::TestType::Generic).is_allowed_to_enter);
+    EXPECT_TRUE(person.get_test_result(mio::abm::TestType::Generic).result);
 }
