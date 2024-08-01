@@ -56,7 +56,7 @@ struct NVP {
     Type value;
 
     NVP()                      = delete;
-    NVP(const NVP&)            = delete;
+    NVP(const NVP&)            = default;
     NVP(NVP&&)                 = default;
     NVP& operator=(const NVP&) = delete;
     NVP& operator=(NVP&&)      = delete;
@@ -77,9 +77,9 @@ struct NVP {
  * @return Collection of all name views and value references used for auto-(de)serialization. 
  */
 template <class... Targets>
-[[nodiscard]] inline auto make_auto_serialization(const std::string_view class_name, NVP<Targets>&&... class_members)
+[[nodiscard]] inline auto make_auto_serialization(const std::string_view&& class_name, NVP<Targets>&&... class_members)
 {
-    return std::make_pair(class_name, std::make_tuple(std::move(class_members)...));
+    return std::make_pair(class_name, std::make_tuple(class_members...));
 }
 
 /**
@@ -112,33 +112,54 @@ namespace details
 template <class T>
 using auto_serialize_expr_t = decltype(std::declval<T>().auto_serialize());
 
-template <class IOObject, class Target>
-void add_nvp(IOObject& obj, NVP<Target> const&& nvp)
+template <class IOContext, class T>
+using serialize_internal_expr_t = decltype(serialize_internal(std::declval<IOContext>(), std::declval<T>()));
+
+template <class IOContext, class IOObject, class Target>
+void add_nvp(IOObject& obj, const NVP<Target> nvp)
 {
-    obj.add_element(std::string{nvp.name}, nvp.value);
+    if constexpr (is_container<Target>::value &&
+                  !is_expression_valid<serialize_internal_expr_t, IOContext, Target>::value) {
+        obj.add_list(std::string{nvp.name}, nvp.value.begin(), nvp.value.end());
+    }
+    else {
+        obj.add_element(std::string{nvp.name}, nvp.value);
+    }
 }
 
 template <class IOContext, class... Targets>
-void auto_serialize_impl(IOContext& io, const std::string_view name, std::tuple<NVP<Targets>...> const&& targets)
+void auto_serialize_impl(IOContext& io, const std::string_view name, const std::tuple<NVP<Targets>...> targets)
 {
     auto obj = io.create_object(std::string{name});
 
     std::apply(
-        [&obj](NVP<Targets> const&&... nvps) {
-            (add_nvp(obj, std::move(nvps)), ...);
+        [&obj](const NVP<Targets>... nvps) {
+            (add_nvp<IOContext>(obj, nvps), ...);
         },
-        std::move(targets));
+        targets);
 }
 
-template <class IOObject, class Target>
-IOResult<Target> expect_nvp(IOObject& obj, NVP<Target>&& nvp)
+template <class IOContext, class IOObject, class Target>
+IOResult<Target> expect_nvp(IOObject& obj, const NVP<Target> nvp)
 {
-    return obj.expect_element(std::string{nvp.name}, Tag<Target>{});
+    if constexpr (is_container<Target>::value &&
+                  !is_expression_valid<serialize_internal_expr_t, IOContext, Target>::value) {
+        return obj.expect_list(std::string{nvp.name}, Tag<typename Target::value_type>{});
+    }
+    else {
+        return obj.expect_element(std::string{nvp.name}, Tag<Target>{});
+    }
 }
+
+// template <class Target>
+// void assign_nvp(NVP<Target> nvp, const Target& value)
+// {
+//     nvp.value = value;
+// }
 
 template <class IOContext, class AutoSerializable, class... Targets>
 IOResult<AutoSerializable> auto_deserialize_impl(IOContext& io, AutoSerializable& a, std::string_view name,
-                                                 std::tuple<NVP<Targets>...>&& targets)
+                                                 std::tuple<NVP<Targets>...> targets)
 {
     auto obj = io.expect_object(std::string{name});
 
@@ -146,13 +167,14 @@ IOResult<AutoSerializable> auto_deserialize_impl(IOContext& io, AutoSerializable
         return apply(
             io,
             [&a, &nvps...](const Targets&... values) {
+                // (assign_nvp(nvps, values), ...);
                 ((nvps.value = values), ...);
                 return a;
             },
-            expect_nvp(obj, std::move(nvps))...);
+            expect_nvp<IOContext>(obj, nvps)...);
     };
 
-    return std::apply(unpacked_apply, std::move(targets));
+    return std::apply(unpacked_apply, targets);
 }
 
 } // namespace details
@@ -173,8 +195,8 @@ template <
 void serialize_internal(IOContext& io, const AutoSerializable& t)
 {
     // Note that this cast is only safe if we do not modify targets.
-    const auto targets = const_cast<AutoSerializable*>(&t)->auto_serialize();
-    details::auto_serialize_impl(io, targets.first, std::move(targets.second));
+    const auto targets = const_cast<AutoSerializable&>(t).auto_serialize();
+    details::auto_serialize_impl(io, targets.first, targets.second);
 }
 
 // disables itself if a deserialize member is present or if there is no auto_serialize member
@@ -187,7 +209,7 @@ IOResult<AutoSerializable> deserialize_internal(IOContext& io, Tag<AutoSerializa
 {
     AutoSerializable a = AutoSerializableFactory<AutoSerializable>::create();
     auto targets       = a.auto_serialize();
-    return details::auto_deserialize_impl(io, a, targets.first, std::move(targets.second));
+    return details::auto_deserialize_impl(io, a, targets.first, targets.second);
 }
 
 } // namespace mio
