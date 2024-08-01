@@ -33,7 +33,7 @@ namespace mio
  * @brief Once a day commuters go to work in another node.
  * @param[in] person Person the rule is applies to
  * @param[in] t Current time point
- * @param[in] params Parameters of person's Home world
+ * @param[in] params Parameters of person's Home model
  * @return LocationType the person is going to
  */
 abm::LocationType apply_commuting(const abm::Person& person, abm::TimePoint t, const abm::Parameters& params);

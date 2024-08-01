@@ -59,8 +59,9 @@ public:
      * @brief Create a Model.
      * @param[in] num_agegroups The number of AgeGroup%s in the simulated Model. Must be less than MAX_NUM_AGE_GROUPS.
      */
-    Model(size_t num_agegroups)
+    Model(size_t num_agegroups, int id = 0)
         : parameters(num_agegroups)
+        , m_id(id)
         , m_trip_list()
         , m_use_mobility_rules(true)
         , m_cemetery_id(add_location(LocationType::Cemetery))
@@ -72,8 +73,9 @@ public:
      * @brief Create a Model.
      * @param[in] params Initial simulation parameters.
      */
-    Model(const Parameters& params)
+    Model(const Parameters& params, int id = 0)
         : parameters(params.get_num_groups())
+        , m_id(id)
         , m_trip_list()
         , m_use_mobility_rules(true)
         , m_cemetery_id(add_location(LocationType::Cemetery))
@@ -81,7 +83,7 @@ public:
         parameters = params;
     }
 
-    Model(const Model& other)
+    Model(const Model& other, int id = 0)
         : parameters(other.parameters)
         , m_local_population_cache()
         , m_air_exposure_rates_cache()
@@ -89,8 +91,10 @@ public:
         , m_is_local_population_cache_valid(false)
         , m_are_exposure_caches_valid(false)
         , m_exposure_caches_need_rebuild(true)
+        , m_id(id)
         , m_persons(other.m_persons)
         , m_locations(other.m_locations)
+        , m_activeness_statuses(other.m_activeness_statuses)
         , m_has_locations(other.m_has_locations)
         , m_testing_strategy(other.m_testing_strategy)
         , m_trip_list(other.m_trip_list)
@@ -223,7 +227,7 @@ public:
      */
     void assign_location(PersonId person, LocationId location)
     {
-        get_person(person).set_assigned_location(get_location(location).get_type(), location);
+        get_person(person).set_assigned_location(get_location(location).get_type(), location, m_id);
     }
 
     /**
@@ -305,6 +309,24 @@ public:
     }
 
     /**
+     * Get the model id. Is only relevant for graph abm or hybrid model.
+     * @return The model id
+     */
+    int get_id() const
+    {
+        return m_id;
+    }
+
+    /**
+     * Get activeness status of all persons in the model.
+     * @return Activeness vector
+     */
+    std::vector<bool>& get_activeness_statuses()
+    {
+        return m_activeness_statuses;
+    }
+
+    /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing at all Locations that have
      * the LocationType.
      * @param[in] loc_type LocationId key for TestingScheme to be added.
@@ -349,7 +371,8 @@ public:
     size_t get_subpopulation(LocationId location, TimePoint t, InfectionState state) const
     {
         return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
-            return p.get_location() == location && p.get_infection_state(t) == state;
+            return p.get_location_model_id() == m_id && p.get_location() == location &&
+                   p.get_infection_state(t) == state;
         });
     }
 
@@ -448,6 +471,80 @@ public:
     }
     /** @} */
 
+    /**
+     * @brief Flip activeness status of a person in the model.
+     * @param[in] person_id PersonId of Person whose activeness status is fipped.
+     */
+    void change_activeness(PersonId person_id)
+    {
+        m_activeness_statuses[person_id.get()] = !m_activeness_statuses[person_id.get()];
+    }
+
+    void set_activeness(PersonId person_id)
+    {
+        m_activeness_statuses[person_id.get()] = false;
+    }
+
+    /**
+     * @brief Copy the persons from another Model to this Model. 
+     * If the persons are at a location in this model they are activated, otherwise they are deactivated.
+     * If necessary the person ids are changed such that they correspond to the index in this model's m_persons vector.
+     * @param[in] other The Model the Person%s are copied from.
+     */
+    void copy_persons_from_other_model(const Model& other)
+    {
+        for (auto& p : other.get_persons()) {
+            if (p.get_id() != static_cast<uint32_t>(m_persons.size())) {
+                mio::log_debug("In model.copy_persons_from_other_model: PersonId does not correspond to index in "
+                               "m_persons vector. Person is copied with adapted Id");
+            }
+            PersonId new_id{static_cast<uint32_t>(m_persons.size())};
+            m_persons.emplace_back(p, new_id);
+            if (p.get_location_model_id() == m_id) {
+                m_activeness_statuses.push_back(true);
+            }
+            else {
+                m_activeness_statuses.push_back(false);
+            }
+        }
+    }
+
+    /**
+    * @brief Set the Person%s of the Model.
+    * @param[in] persons The Person%s of the Model.
+    */
+    void set_persons(std::vector<Person>& persons)
+    {
+        m_is_local_population_cache_valid = false;
+        m_are_exposure_caches_valid       = false;
+        //first clear old person vector and corresponding activeness vector
+        m_persons.clear();
+        m_activeness_statuses.clear();
+        for (auto& p : persons) {
+            if (p.get_id() != static_cast<uint32_t>(m_persons.size())) {
+                mio::log_debug("In model.copy_persons_from_other_model: PersonId does not correspond to index in "
+                               "m_persons vector. Person is copied with adapted Id");
+            }
+            PersonId new_id{static_cast<uint32_t>(m_persons.size())};
+            m_persons.emplace_back(p, new_id);
+            if (p.get_location_model_id() == m_id) {
+                m_activeness_statuses.push_back(true);
+            }
+            else {
+                m_activeness_statuses.push_back(false);
+            }
+        }
+    }
+
+    /**
+     * @brief Invalidate local population and exposure rate cache.
+     */
+    void invalidate_cache()
+    {
+        m_are_exposure_caches_valid       = false;
+        m_is_local_population_cache_valid = false;
+    }
+
 private:
     /**
      * @brief Person%s interact at their Location and may become infected.
@@ -485,8 +582,10 @@ private:
     bool m_are_exposure_caches_valid       = false;
     bool m_exposure_caches_need_rebuild    = true;
 
+    int m_id; ///< Model id. Is only used for abm graph model or hybrid model.
     std::vector<Person> m_persons; ///< Vector of every Person.
     std::vector<Location> m_locations; ///< Vector of every Location.
+    std::vector<bool> m_activeness_statuses; ///< Vector with activeness status for every person
     std::bitset<size_t(LocationType::Count)>
         m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.

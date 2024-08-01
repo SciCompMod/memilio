@@ -281,21 +281,21 @@ public:
     }
 
     /**
-     * @brief Get the world id the location is in. Is only relevant for graph ABM or hybrid model.
-     * @return World id of the location
+     * @brief Get the model id the location is in. Is only relevant for graph ABM or hybrid model.
+     * @return Model id of the location
      */
-    int get_world_id() const
+    int get_model_id() const
     {
-        return m_world_id;
+        return m_model_id;
     }
 
     /**
-     * @brief Set world id of the Location. Is only relevant for graph ABM or hybrid model.
-     * @param[in] world_id The world id of the location.
+     * @brief Set model id of the Location. Is only relevant for graph ABM or hybrid model.
+     * @param[in] model_id The model id of the location.
      */
-    void set_world_id(int world_id)
+    void set_model_id(int model_id)
     {
-        m_world_id = world_id;
+        m_model_id = model_id;
     }
 
 private:
@@ -306,7 +306,7 @@ private:
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
-    int m_world_id = 0; ///< World id the location is in. Only used for ABM graph model or hybrid graph model.
+    int m_model_id = 0; ///< Model id the location is in. Only used for ABM graph model or hybrid graph model.
 };
 
 } // namespace abm

@@ -106,9 +106,9 @@ TEST(TestModel, findLocation)
     auto person_id = add_test_person(model, home_id);
     auto& person   = model.get_person(person_id);
 
-    person.set_assigned_location(mio::abm::LocationType::Home, home_id, world.get_id());
-    person.set_assigned_location(mio::abm::LocationType::Work, work_id, world.get_id());
-    person.set_assigned_location(mio::abm::LocationType::School, school_id, world.get_id());
+    person.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    person.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
+    person.set_assigned_location(mio::abm::LocationType::School, school_id, model.get_id());
 
     EXPECT_EQ(model.find_location(mio::abm::LocationType::Work, person_id), work_id);
     EXPECT_EQ(model.find_location(mio::abm::LocationType::School, person_id), school_id);
@@ -154,9 +154,9 @@ TEST(TestModel, evolveStateTransition)
     auto& p2 = model.get_persons()[1];
     auto& p3 = model.get_persons()[2];
 
-    p1.set_assigned_location(mio::abm::LocationType::School, location1, world.get_id());
-    p2.set_assigned_location(mio::abm::LocationType::School, location1, world.get_id());
-    p3.set_assigned_location(mio::abm::LocationType::Work, location2, world.get_id());
+    p1.set_assigned_location(mio::abm::LocationType::School, location1, model.get_id());
+    p2.set_assigned_location(mio::abm::LocationType::School, location1, model.get_id());
+    p3.set_assigned_location(mio::abm::LocationType::Work, location2, model.get_id());
 
     //setup mock so p2 becomes infected
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
@@ -213,12 +213,12 @@ TEST(TestModel, evolveMobility)
         auto& p1 = model.get_person(pid1);
         auto& p2 = model.get_person(pid2);
 
-        p1.set_assigned_location(mio::abm::LocationType::School, school_id, world.get_id());
-        p2.set_assigned_location(mio::abm::LocationType::School, school_id, world.get_id());
-        p1.set_assigned_location(mio::abm::LocationType::Work, work_id, world.get_id());
-        p2.set_assigned_location(mio::abm::LocationType::Work, work_id, world.get_id());
-        p1.set_assigned_location(mio::abm::LocationType::Home, home_id, world.get_id());
-        p2.set_assigned_location(mio::abm::LocationType::Home, home_id, world.get_id());
+        p1.set_assigned_location(mio::abm::LocationType::School, school_id, model.get_id());
+        p2.set_assigned_location(mio::abm::LocationType::School, school_id, model.get_id());
+        p1.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
+        p2.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
+        p1.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+        p2.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
 
         ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
             mock_exponential_dist;
@@ -280,19 +280,19 @@ TEST(TestModel, evolveMobility)
         auto& p4 = model.get_person(pid4);
         auto& p5 = model.get_person(pid5);
 
-        p1.set_assigned_location(mio::abm::LocationType::SocialEvent, event_id, world.get_id());
-        p2.set_assigned_location(mio::abm::LocationType::SocialEvent, event_id, world.get_id());
-        p1.set_assigned_location(mio::abm::LocationType::Work, work_id, world.get_id());
-        p2.set_assigned_location(mio::abm::LocationType::Work, work_id, world.get_id());
-        p1.set_assigned_location(mio::abm::LocationType::Home, home_id, world.get_id());
-        p2.set_assigned_location(mio::abm::LocationType::Home, home_id, world.get_id());
-        p3.set_assigned_location(mio::abm::LocationType::Home, home_id, world.get_id());
-        p4.set_assigned_location(mio::abm::LocationType::Home, home_id, world.get_id());
-        p3.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id, world.get_id());
-        p4.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id, world.get_id());
-        p5.set_assigned_location(mio::abm::LocationType::SocialEvent, event_id, world.get_id());
-        p5.set_assigned_location(mio::abm::LocationType::Work, work_id, world.get_id());
-        p5.set_assigned_location(mio::abm::LocationType::Home, home_id, world.get_id());
+        p1.set_assigned_location(mio::abm::LocationType::SocialEvent, event_id, model.get_id());
+        p2.set_assigned_location(mio::abm::LocationType::SocialEvent, event_id, model.get_id());
+        p1.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
+        p2.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
+        p1.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+        p2.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+        p3.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+        p4.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+        p3.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id, model.get_id());
+        p4.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id, model.get_id());
+        p5.set_assigned_location(mio::abm::LocationType::SocialEvent, event_id, model.get_id());
+        p5.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
+        p5.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
 
         mio::abm::TripList& data = model.get_trip_list();
         mio::abm::Trip trip1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id);
@@ -387,12 +387,12 @@ TEST(TestModel, evolveMobility)
         auto& p_dead   = model.get_persons()[0];
         auto& p_severe = model.get_persons()[1];
 
-        p_dead.set_assigned_location(mio::abm::LocationType::ICU, icu_id, world.get_id());
-        p_dead.set_assigned_location(mio::abm::LocationType::Work, work_id, world.get_id());
-        p_dead.set_assigned_location(mio::abm::LocationType::Home, home_id, world.get_id());
-        p_severe.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id, world.get_id());
-        p_severe.set_assigned_location(mio::abm::LocationType::ICU, icu_id, world.get_id());
-        p_severe.set_assigned_location(mio::abm::LocationType::Home, home_id, world.get_id());
+        p_dead.set_assigned_location(mio::abm::LocationType::ICU, icu_id, model.get_id());
+        p_dead.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
+        p_dead.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+        p_severe.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id, model.get_id());
+        p_severe.set_assigned_location(mio::abm::LocationType::ICU, icu_id, model.get_id());
+        p_severe.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
 
         // Add trip to see if a dead person can change location outside of cemetery by scheduled trips
         mio::abm::TripList& trip_list = model.get_trip_list();
@@ -436,8 +436,8 @@ TEST(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, current_time);
     auto& person    = model.get_person(pid);
     auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
-    person.set_assigned_location(mio::abm::LocationType::Home, home_id, world.get_id());
-    person.set_assigned_location(mio::abm::LocationType::Work, work_id, world.get_id());
+    person.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    person.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
 
     auto testing_criteria = mio::abm::TestingCriteria();
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);

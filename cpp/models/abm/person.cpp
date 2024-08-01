@@ -32,10 +32,10 @@ namespace abm
 {
 
 Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
-               int location_world_id, AgeGroup age, PersonId person_id)
+               int location_model_id, AgeGroup age, PersonId person_id)
     : m_location(location_id)
     , m_location_type(location_type)
-    , m_location_world_id(location_world_id)
+    , m_location_model_id(location_model_id)
     , m_assigned_locations((uint32_t)LocationType::Count, LocationId::invalid_id())
     , m_quarantine_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_age(age)
@@ -47,7 +47,7 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     , m_person_id(person_id)
     , m_cells{0}
     , m_last_transport_mode(TransportMode::Unknown)
-    , m_assigned_location_world_ids((int)LocationType::Count)
+    , m_assigned_location_model_ids((int)LocationType::Count)
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
     m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
@@ -94,11 +94,11 @@ LocationId Person::get_location() const
     return m_location;
 }
 
-void Person::set_location(LocationType type, LocationId id, int world_id)
+void Person::set_location(LocationType type, LocationId id, int model_id)
 {
     m_location          = id;
     m_location_type     = type;
-    m_location_world_id = world_id;
+    m_location_model_id = model_id;
     m_time_at_location  = TimeSpan(0);
 }
 
@@ -112,10 +112,10 @@ Infection& Person::get_infection()
     return m_infections.back();
 }
 
-void Person::set_assigned_location(LocationType type, LocationId id, int world_id)
+void Person::set_assigned_location(LocationType type, LocationId id, int model_id)
 {
     m_assigned_locations[static_cast<uint32_t>(type)]          = id;
-    m_assigned_location_world_ids[static_cast<uint32_t>(type)] = world_id;
+    m_assigned_location_model_ids[static_cast<uint32_t>(type)] = model_id;
 }
 
 LocationId Person::get_assigned_location(LocationType type) const
@@ -123,9 +123,9 @@ LocationId Person::get_assigned_location(LocationType type) const
     return m_assigned_locations[static_cast<uint32_t>(type)];
 }
 
-int Person::get_assigned_location_world_id(LocationType type) const
+int Person::get_assigned_location_model_id(LocationType type) const
 {
-    return m_assigned_location_world_ids[static_cast<uint32_t>(type)];
+    return m_assigned_location_model_ids[static_cast<uint32_t>(type)];
 }
 
 bool Person::goes_to_work(TimePoint t, const Parameters& params) const

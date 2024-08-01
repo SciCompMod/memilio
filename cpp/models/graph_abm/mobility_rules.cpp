@@ -35,9 +35,9 @@ abm::LocationType apply_commuting(const abm::Person& person, abm::TimePoint t, c
         return abm::LocationType::Work;
     }
 
-    //person is at hospital in non-home world
+    //person is at hospital in non-home model
     if (current_loc == abm::LocationType::Hospital &&
-        person.get_location_world_id() != person.get_assigned_location_world_id(abm::LocationType::Home)) {
+        person.get_location_model_id() != person.get_assigned_location_model_id(abm::LocationType::Home)) {
         //if person is still infected it stays at hospital
         if (person.is_infected(t)) {
             return current_loc;
@@ -51,8 +51,8 @@ abm::LocationType apply_commuting(const abm::Person& person, abm::TimePoint t, c
             return abm::LocationType::Cemetery;
         }
     }
-    //person is at location in Home world (and should not go to work) it stays at that location
-    if (person.get_location_world_id() == person.get_assigned_location_world_id(abm::LocationType::Home)) {
+    //person is at location in Home model (and should not go to work) it stays at that location
+    if (person.get_location_model_id() == person.get_assigned_location_model_id(abm::LocationType::Home)) {
         return current_loc;
     }
 

@@ -217,41 +217,41 @@ public:
     {
         // iterate over all persons that could commute via the edge
         for (auto p : m_parameters.get_commuting_persons()) {
-            auto& person_n1 = node_from.get_simulation().get_world().get_person(mio::abm::PersonId(p));
-            auto& person_n2 = node_to.get_simulation().get_world().get_person(mio::abm::PersonId(p));
-            auto& params    = node_from.get_simulation().get_world().parameters;
+            auto& person_n1 = node_from.get_simulation().get_model().get_person(mio::abm::PersonId(p));
+            auto& person_n2 = node_to.get_simulation().get_model().get_person(mio::abm::PersonId(p));
+            auto& params    = node_from.get_simulation().get_model().parameters;
             // as all nodes have all person it doesn't matter which node's persons we take here
             auto current_location_type = person_n1.get_location_type();
             auto current_id            = person_n1.get_location();
-            auto current_world_id      = person_n1.get_location_world_id();
+            auto current_model_id      = person_n1.get_location_model_id();
             for (auto& rule : m_parameters.get_mobility_rules()) {
                 auto target_type      = rule(person_n1, t, params);
-                auto target_world_id  = person_n1.get_assigned_location_world_id(target_type);
+                auto target_model_id  = person_n1.get_assigned_location_model_id(target_type);
                 auto target_id        = person_n1.get_assigned_location(target_type);
-                auto& target_world    = (target_world_id == node_from.get_simulation().get_world().get_id())
-                                            ? node_from.get_simulation().get_world()
-                                            : node_to.get_simulation().get_world();
-                auto& target_location = target_world.get_location(target_id);
-                assert((node_from.get_simulation().get_world().get_id() == target_location.get_world_id() ||
-                        node_to.get_simulation().get_world().get_id() == target_location.get_world_id()) &&
+                auto& target_model    = (target_model_id == node_from.get_simulation().get_model().get_id())
+                                            ? node_from.get_simulation().get_model()
+                                            : node_to.get_simulation().get_model();
+                auto& target_location = target_model.get_location(target_id);
+                assert((node_from.get_simulation().get_model().get_id() == target_location.get_model_id() ||
+                        node_to.get_simulation().get_model().get_id() == target_location.get_model_id()) &&
                        "Wrong graph edge. Target location is no edge node.");
                 if (target_type == current_location_type &&
-                    (target_id != current_id || target_world_id != current_world_id)) {
+                    (target_id != current_id || target_model_id != current_model_id)) {
                     mio::log_error("Person with index {} has two assigned locations of the same type.",
                                    person_n1.get_id().get());
                 }
                 if (target_type != current_location_type &&
-                    target_world.get_number_persons(target_id) < target_location.get_capacity().persons) {
+                    target_model.get_number_persons(target_id) < target_location.get_capacity().persons) {
                     //change person's location in all nodes
-                    mio::abm::migrate(person_n1, target_location);
-                    mio::abm::migrate(person_n2, target_location);
-                    // invalidate both worlds' cache
-                    node_to.get_simulation().get_world().invalidate_cache();
-                    node_from.get_simulation().get_world().invalidate_cache();
-                    if (target_world_id != current_world_id) {
+                    mio::abm::change_location(person_n1, target_location);
+                    mio::abm::change_location(person_n2, target_location);
+                    // invalidate both models' cache
+                    node_to.get_simulation().get_model().invalidate_cache();
+                    node_from.get_simulation().get_model().invalidate_cache();
+                    if (target_model_id != current_model_id) {
                         // change activeness status for commuted person
-                        node_to.get_simulation().get_world().change_activeness(p);
-                        node_from.get_simulation().get_world().change_activeness(p);
+                        node_to.get_simulation().get_model().change_activeness(p);
+                        node_from.get_simulation().get_model().change_activeness(p);
                     }
                     // only one mobility rule per person can be applied
                     break;

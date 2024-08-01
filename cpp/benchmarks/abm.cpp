@@ -154,11 +154,11 @@ void abm_inactive_persons_benchmark(benchmark::State& state, size_t num_persons,
         auto sim = make_simulation(num_persons + num_inactive_persons, seeds);
         //deactivate num_inactive_persons
         for (size_t p_id = 0; p_id < num_inactive_persons; ++p_id) {
-            sim.get_world().set_activeness(mio::abm::PersonId(p_id));
+            sim.get_model().set_activeness(mio::abm::PersonId(p_id));
         }
         state.ResumeTiming();
 
-        //simulated time should be long enough to have full infection runs and migration to every location
+        //simulated time should be long enough to have full infection runs and mobility to every location
         auto final_time = sim.get_time() + mio::abm::days(10);
         sim.advance(final_time);
 
@@ -169,7 +169,7 @@ void abm_inactive_persons_benchmark(benchmark::State& state, size_t num_persons,
             std::cout << "num_persons = " << num_persons << "\n";
             for (auto inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
                 std::cout << "inf_state = " << inf_state << ", sum = "
-                          << sim.get_world().get_subpopulation_combined(sim.get_time(),
+                          << sim.get_model().get_subpopulation_combined(sim.get_time(),
                                                                         mio::abm::InfectionState(inf_state))
                           << "\n";
             }

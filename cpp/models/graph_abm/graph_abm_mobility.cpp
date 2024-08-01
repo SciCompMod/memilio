@@ -20,7 +20,7 @@
 
 #include "graph_abm/graph_abm_mobility.h"
 #include "abm/simulation.h"
-#include "abm/world.h"
+#include "abm/model.h"
 #include "abm/person.h"
 #include "abm/location_type.h"
 #include "abm/parameters.h"
