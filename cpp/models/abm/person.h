@@ -383,7 +383,7 @@ public:
     }
 
     /**
-     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person.
+     * @brief Get the latest #ExposureType and its initial TimePoint of the Person.
      */
     std::pair<ExposureType, TimePoint> get_latest_protection() const;
 
@@ -431,7 +431,7 @@ public:
      * @brief Get the most recent TestResult performed from the Person based on the TestType.
      * @param[in] type The TestType of the test.
     */
-    const TestResult get_test_result(TestType type) const;
+    TestResult get_test_result(TestType type) const;
 
 private:
     LocationId m_location; ///< Current Location of the Person.

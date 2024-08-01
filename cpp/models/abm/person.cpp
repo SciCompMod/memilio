@@ -269,7 +269,7 @@ void Person::add_test_result(TimePoint t, TestType type, bool result)
     m_test_results[{type}] = {t, result};
 }
 
-const TestResult Person::get_test_result(TestType type) const
+TestResult Person::get_test_result(TestType type) const
 {
     return m_test_results[{type}];
 }

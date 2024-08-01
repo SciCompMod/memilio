@@ -104,7 +104,7 @@ bool TestingScheme::run_scheme(PersonalRandomNumberGenerator& rng, Person& perso
 {
     auto test_result = person.get_test_result(m_test_parameters.type);
     // If the agent has a test result valid until now, use the result directly
-    if ((test_result.time_of_testing != TimePoint(std::numeric_limits<int>::min())) &&
+    if ((test_result.time_of_testing > TimePoint(std::numeric_limits<int>::min())) &&
         (test_result.time_of_testing + m_test_parameters.validity_period >= t)) {
         return !test_result.result;
     }
