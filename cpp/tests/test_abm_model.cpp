@@ -38,8 +38,8 @@ TEST(TestModel, addLocation)
     auto work_id    = model.add_location(mio::abm::LocationType::Work);
     auto home_id    = model.add_location(mio::abm::LocationType::Home);
 
-    ASSERT_EQ(school_id1.get(), 1u);
-    ASSERT_EQ(school_id2.get(), 2u);
+    EXPECT_EQ(school_id1.get(), 1u);
+    EXPECT_EQ(school_id2.get(), 2u);
 
     auto& school1 = model.get_location(school_id1);
     auto& school2 = model.get_location(school_id2);
@@ -52,12 +52,12 @@ TEST(TestModel, addLocation)
             count_schools++;
         }
     }
-    ASSERT_EQ(count_schools, 2);
+    EXPECT_EQ(count_schools, 2);
 
-    ASSERT_EQ(model.get_locations()[1], school1);
-    ASSERT_EQ(model.get_locations()[2], school2);
-    ASSERT_EQ(model.get_locations()[3], work);
-    ASSERT_EQ(model.get_locations()[4], home);
+    EXPECT_EQ(model.get_locations()[1], school1);
+    EXPECT_EQ(model.get_locations()[2], school2);
+    EXPECT_EQ(model.get_locations()[3], work);
+    EXPECT_EQ(model.get_locations()[4], home);
 }
 
 TEST(TestModel, addPerson)
@@ -68,9 +68,9 @@ TEST(TestModel, addPerson)
     model.add_person(location, age_group_15_to_34);
     model.add_person(location, age_group_35_to_59);
 
-    ASSERT_EQ(model.get_persons().size(), 2);
-    ASSERT_EQ(model.get_person(0).get_age(), age_group_15_to_34);
-    ASSERT_EQ(model.get_person(1).get_age(), age_group_35_to_59);
+    EXPECT_EQ(model.get_persons().size(), 2);
+    EXPECT_EQ(model.get_person(0).get_age(), age_group_15_to_34);
+    EXPECT_EQ(model.get_person(1).get_age(), age_group_35_to_59);
 }
 
 TEST(TestModel, getSubpopulationCombined)
@@ -88,13 +88,13 @@ TEST(TestModel, getSubpopulationCombined)
     add_test_person(model, school3, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
     add_test_person(model, home1, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
 
-    ASSERT_EQ(model.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::Susceptible,
+    EXPECT_EQ(model.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::Susceptible,
                                                                  mio::abm::LocationType::School),
               3);
-    ASSERT_EQ(model.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::InfectedNoSymptoms,
+    EXPECT_EQ(model.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::InfectedNoSymptoms,
                                                                  mio::abm::LocationType::School),
               2);
-    ASSERT_EQ(model.get_subpopulation_combined(t, mio::abm::InfectionState::InfectedNoSymptoms), 3);
+    EXPECT_EQ(model.get_subpopulation_combined(t, mio::abm::InfectionState::InfectedNoSymptoms), 3);
 }
 
 TEST(TestModel, findLocation)

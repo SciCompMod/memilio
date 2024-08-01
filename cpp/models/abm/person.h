@@ -241,7 +241,7 @@ public:
      */
     bool is_in_quarantine(TimePoint t, const Parameters& params) const
     {
-        return t < m_quarantine_start + params.get<mio::abm::QuarantineDuration>();
+        return t < m_home_isolation_start + params.get<mio::abm::QuarantineDuration>();
     }
 
     /**
@@ -334,7 +334,7 @@ public:
      * @param[in] t The TimePoint of mask change.
      */
     void set_mask(MaskType type, TimePoint t);
-    
+
     /**
      * @brief Get the multiplicative factor on how likely an #Infection is due to the immune system.
      * @param[in] t TimePoint of check.
@@ -425,7 +425,7 @@ private:
     Person always visits the same Home or School etc. */
     std::vector<Vaccination> m_vaccinations; ///< Vector with all Vaccination%s the Person has received.
     std::vector<Infection> m_infections; ///< Vector with all Infection%s the Person had.
-    TimePoint m_quarantine_start; ///< TimePoint when the Person started quarantine.
+    TimePoint m_home_isolation_start; ///< TimePoint when the Person started isolation at home.
     AgeGroup m_age; ///< AgeGroup the Person belongs to.
     TimeSpan m_time_at_location; ///< Time the Person has spent at its current Location so far.
     double m_random_workgroup; ///< Value to determine if the Person goes to work or works from home during lockdown.

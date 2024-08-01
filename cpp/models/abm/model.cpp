@@ -98,8 +98,8 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
         Person& person    = m_persons[person_id];
         auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
 
-        auto try_migration_rule = [&](auto rule) -> bool {
-            //run migration rule and check if migration can actually happen
+        auto try_mobility_rule = [&](auto rule) -> bool {
+            //run mobility rule and check if change of location can actually happen
             auto target_type                  = rule(personal_rng, person, t, dt, parameters);
             const Location& target_location   = get_location(find_location(target_type, person_id));
             const LocationId current_location = person.get_location();
@@ -129,26 +129,26 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             return false;
         };
 
-        //run migration rules one after the other if the corresponding location type exists
+        //run mobility rules one after the other if the corresponding location type exists
         //shortcutting of bool operators ensures the rules stop after the first rule is applied
         if (m_use_mobility_rules) {
-            (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
-                (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
-                (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
-                (has_locations({LocationType::School, LocationType::Home}) && try_migration_rule(&go_to_school)) ||
-                (has_locations({LocationType::Work, LocationType::Home}) && try_migration_rule(&go_to_work)) ||
-                (has_locations({LocationType::BasicsShop, LocationType::Home}) && try_migration_rule(&go_to_shop)) ||
-                (has_locations({LocationType::SocialEvent, LocationType::Home}) && try_migration_rule(&go_to_event)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
+            (has_locations({LocationType::Cemetery}) && try_mobility_rule(&get_buried)) ||
+                (has_locations({LocationType::Home}) && try_mobility_rule(&return_home_when_recovered)) ||
+                (has_locations({LocationType::Hospital}) && try_mobility_rule(&go_to_hospital)) ||
+                (has_locations({LocationType::ICU}) && try_mobility_rule(&go_to_icu)) ||
+                (has_locations({LocationType::School, LocationType::Home}) && try_mobility_rule(&go_to_school)) ||
+                (has_locations({LocationType::Work, LocationType::Home}) && try_mobility_rule(&go_to_work)) ||
+                (has_locations({LocationType::BasicsShop, LocationType::Home}) && try_mobility_rule(&go_to_shop)) ||
+                (has_locations({LocationType::SocialEvent, LocationType::Home}) && try_mobility_rule(&go_to_event)) ||
+                (has_locations({LocationType::Home}) && try_mobility_rule(&go_to_quarantine));
         }
         else {
-            //no daily routine migration, just infection related
-            (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
-                (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
-                (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
-                (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
+            //no daily routine mobility, just infection related
+            (has_locations({LocationType::Cemetery}) && try_mobility_rule(&get_buried)) ||
+                (has_locations({LocationType::Home}) && try_mobility_rule(&return_home_when_recovered)) ||
+                (has_locations({LocationType::Hospital}) && try_mobility_rule(&go_to_hospital)) ||
+                (has_locations({LocationType::ICU}) && try_mobility_rule(&go_to_icu)) ||
+                (has_locations({LocationType::Home}) && try_mobility_rule(&go_to_quarantine));
         }
     }
 

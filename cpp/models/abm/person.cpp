@@ -36,7 +36,7 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     : m_location(location_id)
     , m_location_type(location_type)
     , m_assigned_locations((uint32_t)LocationType::Count, LocationId::invalid_id())
-    , m_quarantine_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
+    , m_home_isolation_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_age(age)
     , m_time_at_location(0)
     , m_time_of_last_test(TimePoint(-(std::numeric_limits<int>::max() / 2)))
@@ -148,7 +148,7 @@ bool Person::goes_to_school(TimePoint t, const Parameters& params) const
 
 void Person::remove_quarantine()
 {
-    m_quarantine_start = TimePoint(-(std::numeric_limits<int>::max() / 2));
+    m_home_isolation_start = TimePoint(-(std::numeric_limits<int>::max() / 2));
 }
 
 bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const TestParameters& params)
@@ -160,7 +160,7 @@ bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const T
         if (random < params.sensitivity) {
             // If the Person complies to isolation, start the quarantine.
             if (is_compliant(rng, InterventionType::Isolation)) {
-                m_quarantine_start = t;
+                m_home_isolation_start = t;
             }
             m_infections.back().set_detected();
             return true;
@@ -179,7 +179,7 @@ bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const T
         else {
             // If the Person complies to isolation, start the quarantine.
             if (is_compliant(rng, InterventionType::Isolation)) {
-                m_quarantine_start = t;
+                m_home_isolation_start = t;
             }
             return true;
         }
