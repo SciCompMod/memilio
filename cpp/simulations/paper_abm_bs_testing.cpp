@@ -1201,8 +1201,8 @@ struct LogInfectionStatePerAgeGroup : mio::LogAlways {
 
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(
             Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups()));
-        auto curr_time     = sim.get_time();
-        const auto persons = sim.get_world().get_persons();
+        const auto curr_time = sim.get_time();
+        const auto persons   = sim.get_world().get_persons();
 
         // PRAGMA_OMP(parallel for)
         for (auto i = size_t(0); i < persons.size(); ++i) {
@@ -1251,6 +1251,72 @@ struct LogInfectionPerLocationTypePerAgeGroup : mio::LogAlways {
     }
 };
 
+struct LogTestPerLocationTypePerAgeGroup : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+    /** 
+     * @brief Log the TimeSeries of the number of Person%s that have been tested since the last time step.
+     * @param[in] sim The simulation of the abm.
+     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s that have been tested.
+     */
+    static Type log(const mio::abm::Simulation& sim)
+    {
+
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(
+            Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_world().parameters.get_num_groups()));
+        const auto curr_time = sim.get_time();
+        const auto prev_time = sim.get_prev_time();
+        const auto persons   = sim.get_world().get_persons();
+
+        // PRAGMA_OMP(parallel for)
+        for (auto i = size_t(0); i < persons.size(); ++i) {
+            auto& p = persons[i];
+            if (p.get_should_be_logged()) {
+                // PRAGMA_OMP(atomic)
+                if ((p.get_time_of_last_test() > prev_time)) {
+                    auto index = (((size_t)(mio::abm::LocationType::Count)) * ((uint32_t)p.get_age().get())) +
+                                 ((uint32_t)p.get_location().get_type());
+                    sum[index] += 1;
+                }
+            }
+        }
+        return std::make_pair(curr_time, sum);
+    }
+};
+
+struct LogPositveTestPerLocationTypePerAgeGroup : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+    /** 
+     * @brief Log the TimeSeries of the number of Person%s that have been tested positive since the last time step.
+     * @param[in] sim The simulation of the abm.
+     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s that have been tested positive.
+     */
+    static Type log(const mio::abm::Simulation& sim)
+    {
+
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(
+            Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_world().parameters.get_num_groups()));
+        const auto curr_time = sim.get_time();
+        const auto prev_time = sim.get_prev_time();
+        const auto persons   = sim.get_world().get_persons();
+
+        // PRAGMA_OMP(parallel for)
+        for (auto i = size_t(0); i < persons.size(); ++i) {
+            auto& p = persons[i];
+            if (p.get_should_be_logged()) {
+                // PRAGMA_OMP(atomic)
+                // careful: this check assumes a persons goes into quarantine when a test is positive and that the duration of quarantine is >0
+                if (p.get_time_of_last_test() > prev_time &&
+                    p.is_in_quarantine(curr_time, sim.get_world().parameters)) {
+                    auto index = (((size_t)(mio::abm::LocationType::Count)) * ((uint32_t)p.get_age().get())) +
+                                 ((uint32_t)p.get_location().get_type());
+                    sum[index] += 1;
+                }
+            }
+        }
+        return std::make_pair(curr_time, sum);
+    }
+};
+
 struct LogCumulativeDetectedInfections : mio::LogAlways {
     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
     /** 
@@ -1261,9 +1327,9 @@ struct LogCumulativeDetectedInfections : mio::LogAlways {
     static Type log(const mio::abm::Simulation& sim)
     {
 
-        Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(sim.get_world().parameters.get_num_groups()));
-        auto curr_time      = sim.get_time();
-        const auto persons  = sim.get_world().get_persons();
+        Eigen::VectorXd sum  = Eigen::VectorXd::Zero(Eigen::Index(sim.get_world().parameters.get_num_groups()));
+        const auto curr_time = sim.get_time();
+        const auto persons   = sim.get_world().get_persons();
 
         // PRAGMA_OMP(parallel for)
         for (auto i = size_t(0); i < persons.size(); ++i) {
@@ -1277,6 +1343,61 @@ struct LogCumulativeDetectedInfections : mio::LogAlways {
             }
         }
         return std::make_pair(curr_time, sum);
+    }
+};
+
+struct LogEstimatedReproductionNumber : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, double>;
+    /** 
+     * @brief Log the TimeSeries of the estimated reproduction number.
+     * @param[in] sim The simulation of the abm.
+     * @return A pair of the TimePoint and the TimeSeries of the estimated reproduction number.
+     */
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        // time period to take into account for estimating the reproduction number
+        // longer periods lead to more averaged results
+        mio::abm::TimeSpan time_frame = mio::abm::days(1);
+        const auto t                  = sim.get_time();
+        const auto persons            = sim.get_world().get_persons();
+        const auto virus              = mio::abm::VirusVariant::Alpha;
+
+        // PRAGMA_OMP(parallel for)
+        int number_newly_infected = 0;
+        int number_infectious     = 0;
+        for (auto i = size_t(0); i < persons.size(); ++i) {
+            auto& p = persons[i];
+            if (p.get_should_be_logged()) {
+                // PRAGMA_OMP(atomic)
+                if (p.is_infected(t) && !p.is_infected(t - time_frame)) {
+                    number_newly_infected += 1;
+                }
+                // count infectious people at the midpoint of the time period as an estimation
+                if (p.is_infected(t - time_frame / 2)) {
+                    if (p.get_infection().get_viral_shed(t - time_frame / 2) != 0) {
+                        number_infectious += 1;
+                    }
+                }
+            }
+        }
+        // if the infection dies out, the reproduction number has no meaningful value
+        if (number_infectious == 0) {
+            return std::make_pair(t, 0);
+        }
+
+        // assume equal parameters for each age
+        auto vl_params = sim.get_world().parameters.get<mio::abm::ViralLoadDistributions>()[{virus, age_group_0_to_4}];
+
+        // Assume uniform distribution of parameters. Taking mean value of uniform distribution. Factor 1/2 cancels in the division.
+        double average_infectious_period =
+            (vl_params.viral_load_peak.params.a() + vl_params.viral_load_peak.params.b()) /
+                (vl_params.viral_load_incline.params.a() + vl_params.viral_load_incline.params.b()) -
+            (vl_params.viral_load_peak.params.a() + vl_params.viral_load_peak.params.b()) /
+                (vl_params.viral_load_decline.params.a() + vl_params.viral_load_decline.params.b());
+
+        double estimation =
+            (number_newly_infected * average_infectious_period) / (number_infectious * time_frame.days());
+        return std::make_pair(t, estimation);
     }
 };
 
@@ -2118,9 +2239,9 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
     // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
-    // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
+    std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
     std::string result_dir      = input_dir + "/results_" + currentDateTime();

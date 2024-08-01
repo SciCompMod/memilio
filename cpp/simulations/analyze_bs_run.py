@@ -89,7 +89,8 @@ def plot_infection_per_location_type_mean(x, y50, y25, y75):
     plt.ylabel('Number of individuals')
     plt.show()
 
-def plot_infectoin_states_results(path):
+
+def plot_infection_states_results(path):
     # 50-percentile
     f_p50 = h5py.File(
         path+"/infection_state_per_age_group/p50/Results.h5", 'r')
@@ -596,7 +597,7 @@ if __name__ == "__main__":
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    plot_infectoin_states_results(path)
+    plot_infection_states_results(path)
     # plot_infections_loc_types_avarage(path)
     # plot_icu(path+"/..")
     # plot_dead(path)
