@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "abm/lockdown_rules.h"
-#include "abm/migration_rules.h"
+#include "abm/mobility_rules.h"
 #include "abm/person.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"

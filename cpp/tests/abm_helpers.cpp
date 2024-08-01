@@ -36,10 +36,10 @@ mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup ag
     return p;
 }
 
-mio::abm::PersonId add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id, mio::AgeGroup age,
+mio::abm::PersonId add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id, mio::AgeGroup age,
                                    mio::abm::InfectionState infection_state, mio::abm::TimePoint t)
 {
-    return world.add_person(make_test_person(world.get_location(loc_id), age, infection_state, t, world.parameters));
+    return model.add_person(make_test_person(model.get_location(loc_id), age, infection_state, t, model.parameters));
 }
 
 void interact_testing(mio::abm::PersonalRandomNumberGenerator& personal_rng, mio::abm::Person& person,

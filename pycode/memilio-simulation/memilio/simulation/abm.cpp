@@ -179,8 +179,8 @@ PYBIND11_MODULE(_simulation_abm, m)
                       });
 
     //copying and moving of ranges enabled below, see PYMIO_IGNORE_VALUE_TYPE
-    pymio::bind_Range<decltype(std::declval<const mio::abm::World>().get_locations())>(m, "_WorldLocationsRange");
-    pymio::bind_Range<decltype(std::declval<const mio::abm::World>().get_persons())>(m, "_WorldPersonsRange");
+    pymio::bind_Range<decltype(std::declval<const mio::abm::Model>().get_locations())>(m, "_ModelLocationsRange");
+    pymio::bind_Range<decltype(std::declval<const mio::abm::Model>().get_persons())>(m, "_ModelPersonsRange");
 
     pymio::bind_class<mio::abm::Trip, pymio::EnablePickling::Never>(m, "Trip")
         .def(py::init<uint32_t, mio::abm::TimePoint, mio::abm::LocationId, mio::abm::LocationId,
@@ -189,8 +189,8 @@ PYBIND11_MODULE(_simulation_abm, m)
              py::arg("cells") = std::vector<uint32_t>())
         .def_readwrite("person_id", &mio::abm::Trip::person_id)
         .def_readwrite("time", &mio::abm::Trip::time)
-        .def_readwrite("destination", &mio::abm::Trip::migration_destination)
-        .def_readwrite("origin", &mio::abm::Trip::migration_origin)
+        .def_readwrite("destination", &mio::abm::Trip::destination)
+        .def_readwrite("origin", &mio::abm::Trip::origin)
         .def_readwrite("cells", &mio::abm::Trip::cells);
 
     pymio::bind_class<mio::abm::TripList, pymio::EnablePickling::Never>(m, "TripList")
@@ -199,28 +199,28 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("next_trip", &mio::abm::TripList::get_next_trip, py::arg("weekend") = false)
         .def("num_trips", &mio::abm::TripList::num_trips, py::arg("weekend") = false);
 
-    pymio::bind_class<mio::abm::World, pymio::EnablePickling::Never>(m, "World")
+    pymio::bind_class<mio::abm::Model, pymio::EnablePickling::Never>(m, "Model")
         .def(py::init<int32_t>())
-        .def("add_location", &mio::abm::World::add_location, py::arg("location_type"), py::arg("num_cells") = 1)
-        .def("add_person", py::overload_cast<mio::abm::LocationId, mio::AgeGroup>(&mio::abm::World::add_person),
+        .def("add_location", &mio::abm::Model::add_location, py::arg("location_type"), py::arg("num_cells") = 1)
+        .def("add_person", py::overload_cast<mio::abm::LocationId, mio::AgeGroup>(&mio::abm::Model::add_person),
              py::arg("location_id"), py::arg("age_group"))
-        .def("assign_location", &mio::abm::World::assign_location, py::arg("person_id"), py::arg("location_id"))
-        .def_property_readonly("locations", py::overload_cast<>(&mio::abm::World::get_locations, py::const_),
-                               py::keep_alive<1, 0>{}) //keep this world alive while contents are referenced in ranges
-        .def_property_readonly("persons", py::overload_cast<>(&mio::abm::World::get_persons, py::const_),
+        .def("assign_location", &mio::abm::Model::assign_location, py::arg("person_id"), py::arg("location_id"))
+        .def_property_readonly("locations", py::overload_cast<>(&mio::abm::Model::get_locations, py::const_),
+                               py::keep_alive<1, 0>{}) //keep this model alive while contents are referenced in ranges
+        .def_property_readonly("persons", py::overload_cast<>(&mio::abm::Model::get_persons, py::const_),
                                py::keep_alive<1, 0>{})
         .def_property(
-            "trip_list", py::overload_cast<>(&mio::abm::World::get_trip_list),
-            [](mio::abm::World& self, const mio::abm::TripList& list) {
+            "trip_list", py::overload_cast<>(&mio::abm::Model::get_trip_list),
+            [](mio::abm::Model& self, const mio::abm::TripList& list) {
                 self.get_trip_list() = list;
             },
             py::return_value_policy::reference_internal)
-        .def_property("use_migration_rules", py::overload_cast<>(&mio::abm::World::use_migration_rules, py::const_),
-                      py::overload_cast<bool>(&mio::abm::World::use_migration_rules))
-        .def_readwrite("parameters", &mio::abm::World::parameters)
+        .def_property("use_mobility_rules", py::overload_cast<>(&mio::abm::Model::use_mobility_rules, py::const_),
+                      py::overload_cast<bool>(&mio::abm::Model::use_mobility_rules))
+        .def_readwrite("parameters", &mio::abm::Model::parameters)
         .def_property(
-            "testing_strategy", py::overload_cast<>(&mio::abm::World::get_testing_strategy, py::const_),
-            [](mio::abm::World& self, mio::abm::TestingStrategy strategy) {
+            "testing_strategy", py::overload_cast<>(&mio::abm::Model::get_testing_strategy, py::const_),
+            [](mio::abm::Model& self, mio::abm::TestingStrategy strategy) {
                 self.get_testing_strategy() = strategy;
             },
             py::return_value_policy::reference_internal);
@@ -230,8 +230,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("advance",
              static_cast<void (mio::abm::Simulation::*)(mio::abm::TimePoint)>(&mio::abm::Simulation::advance),
              py::arg("tmax"))
-        .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world));
+        .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation::get_model));
 }
 
-PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_locations()))
-PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_persons()))
+PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::Model>().get_locations()))
+PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::Model>().get_persons()))

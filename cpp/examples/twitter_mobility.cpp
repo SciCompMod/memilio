@@ -30,5 +30,5 @@ int main()
 {
     // Place text file needs to be in working directory build/examples/ and
     // start from within examples folder in build directory
-    auto twitter_migration_2018 = mio::read_mobility_formatted("2018_lk_matrix.txt");
+    auto twitter_mobility_2018 = mio::read_mobility_formatted("2018_lk_matrix.txt");
 }

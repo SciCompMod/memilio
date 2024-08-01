@@ -17,12 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/world.h"
+#include "abm/model.h"
 #include "abm/location_id.h"
 #include "abm/location_type.h"
 #include "abm/person.h"
 #include "abm/location.h"
-#include "abm/migration_rules.h"
+#include "abm/mobility_rules.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"
@@ -34,12 +34,11 @@ namespace mio
 namespace abm
 {
 
-LocationId World::add_location(LocationType type, uint32_t num_cells)
+LocationId Model::add_location(LocationType type, uint32_t num_cells)
 {
     LocationId id{static_cast<uint32_t>(m_locations.size())};
     m_locations.emplace_back(type, id, parameters.get_num_groups(), num_cells);
     m_has_locations[size_t(type)] = true;
-    m_locations[id.get()].set_world_id(m_id);
 
     // mark caches for rebuild
     m_is_local_population_cache_valid = false;
@@ -49,23 +48,22 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     return id;
 }
 
-PersonId World::add_person(const LocationId id, AgeGroup age)
+PersonId Model::add_person(const LocationId id, AgeGroup age)
 {
-    return add_person(Person(m_rng, get_location(id).get_type(), id, m_id, age));
+    return add_person(Person(m_rng, get_location(id).get_type(), id, age));
 }
 
-PersonId World::add_person(Person&& person)
+PersonId Model::add_person(Person&& person)
 {
     assert(person.get_location() != LocationId::invalid_id() && "Added Person's location must be valid.");
     assert(person.get_location() < LocationId((uint32_t)m_locations.size()) &&
-           "Added Person's location is not in World.");
+           "Added Person's location is not in Model.");
     assert(person.get_age() < (AgeGroup)parameters.get_num_groups() && "Added Person's AgeGroup is too large.");
 
     PersonId new_id{static_cast<uint32_t>(m_persons.size())};
     m_persons.emplace_back(person, new_id);
-    m_activeness_statuses.push_back(true);
     auto& new_person = m_persons.back();
-    new_person.set_assigned_location(LocationType::Cemetery, m_cemetery_id, m_id);
+    new_person.set_assigned_location(LocationType::Cemetery, m_cemetery_id);
 
     if (m_is_local_population_cache_valid) {
         ++m_local_population_cache[new_person.get_location().get()];
@@ -73,78 +71,70 @@ PersonId World::add_person(Person&& person)
     return new_id;
 }
 
-void World::evolve(TimePoint t, TimeSpan dt)
+void Model::evolve(TimePoint t, TimeSpan dt)
 {
     begin_step(t, dt);
-    log_info("ABM World interaction.");
+    log_info("ABM Model interaction.");
     interaction(t, dt);
-    log_info("ABM World migration.");
-    migration(t, dt);
+    log_info("ABM Model mobility.");
+    perform_mobility(t, dt);
 }
 
-void World::interaction(TimePoint t, TimeSpan dt)
+void Model::interaction(TimePoint t, TimeSpan dt)
 {
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
     for (uint32_t person_id = 0; person_id < num_persons; ++person_id) {
-        if (m_activeness_statuses[person_id]) {
-            interact(person_id, t, dt);
-        }
+        interact(person_id, t, dt);
     }
 }
 
-void World::migration(TimePoint t, TimeSpan dt)
+void Model::perform_mobility(TimePoint t, TimeSpan dt)
 {
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
     for (uint32_t person_id = 0; person_id < num_persons; ++person_id) {
-        if (m_activeness_statuses[person_id]) {
-            Person& person    = m_persons[person_id];
-            auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
+        Person& person    = m_persons[person_id];
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
 
-            auto try_migration_rule = [&](auto rule) -> bool {
-                //run migration rule and check if migration can actually happen
-                auto target_type = rule(personal_rng, person, t, dt, parameters);
-                if (person.get_assigned_location_world_id(target_type) == m_id) {
-                    const Location& target_location   = get_location(find_location(target_type, person_id));
-                    const LocationId current_location = person.get_location();
-                    if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
-                        if (target_location.get_id() != current_location &&
-                            get_number_persons(target_location.get_id()) < target_location.get_capacity().persons) {
-                            bool wears_mask = person.apply_mask_intervention(personal_rng, target_location);
-                            if (wears_mask) {
-                                migrate(person_id, target_location.get_id());
-                            }
-                            return true;
-                        }
+        auto try_mobility_rule = [&](auto rule) -> bool {
+            //run mobility rule and check if change of location can actually happen
+            auto target_type                  = rule(personal_rng, person, t, dt, parameters);
+            const Location& target_location   = get_location(find_location(target_type, person_id));
+            const LocationId current_location = person.get_location();
+            if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                if (target_location.get_id() != current_location &&
+                    get_number_persons(target_location.get_id()) < target_location.get_capacity().persons) {
+                    bool wears_mask = person.apply_mask_intervention(personal_rng, target_location);
+                    if (wears_mask) {
+                        change_location(person_id, target_location.get_id());
                     }
+                    return true;
                 }
-                return false;
-            };
+            }
+            return false;
+        };
 
-            //run migration rules one after the other if the corresponding location type exists
-            //shortcutting of bool operators ensures the rules stop after the first rule is applied
-            if (m_use_migration_rules) {
-                (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
-                    (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
-                    (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
-                    (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
-                    (has_locations({LocationType::School, LocationType::Home}) && try_migration_rule(&go_to_school)) ||
-                    (has_locations({LocationType::Work, LocationType::Home}) && try_migration_rule(&go_to_work)) ||
-                    (has_locations({LocationType::BasicsShop, LocationType::Home}) &&
-                     try_migration_rule(&go_to_shop)) ||
-                    (has_locations({LocationType::SocialEvent, LocationType::Home}) &&
-                     try_migration_rule(&go_to_event)) ||
-                    (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
-            }
-            else {
-                //no daily routine migration, just infection related
-                (has_locations({LocationType::Cemetery}) && try_migration_rule(&get_buried)) ||
-                    (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
-                    (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
-                    (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
-                    (has_locations({LocationType::Home}) && try_migration_rule(&go_to_quarantine));
-            }
+        //run mobility rules one after the other if the corresponding location type exists
+        //shortcutting of bool operators ensures the rules stop after the first rule is applied
+        if (m_use_mobility_rules) {
+            (has_locations({LocationType::Cemetery}) && try_mobility_rule(&get_buried)) ||
+                (has_locations({LocationType::Home}) && try_mobility_rule(&return_home_when_recovered)) ||
+                (has_locations({LocationType::Hospital}) && try_mobility_rule(&go_to_hospital)) ||
+                (has_locations({LocationType::ICU}) && try_mobility_rule(&go_to_icu)) ||
+                (has_locations({LocationType::School, LocationType::Home}) && try_mobility_rule(&go_to_school)) ||
+                (has_locations({LocationType::Work, LocationType::Home}) && try_mobility_rule(&go_to_work)) ||
+                (has_locations({LocationType::BasicsShop, LocationType::Home}) && try_mobility_rule(&go_to_shop)) ||
+                (has_locations({LocationType::SocialEvent, LocationType::Home}) && try_mobility_rule(&go_to_event)) ||
+                (has_locations({LocationType::Home}) && try_mobility_rule(&go_to_quarantine));
+        }
+        else {
+            //no daily routine mobility, just infection related
+            (has_locations({LocationType::Cemetery}) && try_mobility_rule(&get_buried)) ||
+                (has_locations({LocationType::Home}) && try_mobility_rule(&return_home_when_recovered)) ||
+                (has_locations({LocationType::Hospital}) && try_mobility_rule(&go_to_hospital)) ||
+                (has_locations({LocationType::ICU}) && try_mobility_rule(&go_to_icu)) ||
+                (has_locations({LocationType::Home}) && try_mobility_rule(&go_to_quarantine));
         }
     }
 
@@ -159,10 +149,10 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& person      = get_person(trip.person_id);
             auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
             if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
-                auto& target_location = get_location(trip.migration_destination);
+                auto& target_location = get_location(trip.destination);
                 if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
                     person.apply_mask_intervention(personal_rng, target_location);
-                    migrate(person.get_id(), target_location.get_id(), trip.trip_mode);
+                    change_location(person.get_id(), target_location.get_id(), trip.trip_mode);
                 }
             }
             m_trip_list.increase_index();
@@ -173,7 +163,7 @@ void World::migration(TimePoint t, TimeSpan dt)
     }
 }
 
-void World::build_compute_local_population_cache() const
+void Model::build_compute_local_population_cache() const
 {
     PRAGMA_OMP(single)
     {
@@ -186,14 +176,12 @@ void World::build_compute_local_population_cache() const
         } // implicit taskloop barrier
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_persons; i++) {
-            if (m_persons[i].get_location_world_id() == m_id) {
-                ++m_local_population_cache[m_persons[i].get_location().get()];
-            }
+            ++m_local_population_cache[m_persons[i].get_location().get()];
         } // implicit taskloop barrier
     } // implicit single barrier
 }
 
-void World::build_exposure_caches()
+void Model::build_exposure_caches()
 {
     PRAGMA_OMP(single)
     {
@@ -211,7 +199,7 @@ void World::build_exposure_caches()
     } // implicit single barrier
 }
 
-void World::compute_exposure_caches(TimePoint t, TimeSpan dt)
+void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
 {
     PRAGMA_OMP(single)
     {
@@ -244,16 +232,14 @@ void World::compute_exposure_caches(TimePoint t, TimeSpan dt)
         for (size_t i = 0; i < num_persons; ++i) {
             const Person& person = m_persons[i];
             const auto location  = person.get_location().get();
-            if (person.get_location_world_id() == m_id) {
-                mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
-                                                    m_contact_exposure_rates_cache[location], person,
-                                                    get_location(person.get_id()), t, dt);
-            }
+            mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
+                                                m_contact_exposure_rates_cache[location], person,
+                                                get_location(person.get_id()), t, dt);
         } // implicit taskloop barrier
     } // implicit single barrier
 }
 
-void World::begin_step(TimePoint t, TimeSpan dt)
+void Model::begin_step(TimePoint t, TimeSpan dt)
 {
     m_testing_strategy.update_activity_status(t);
 
@@ -265,33 +251,33 @@ void World::begin_step(TimePoint t, TimeSpan dt)
     m_are_exposure_caches_valid = true;
 }
 
-auto World::get_locations() const -> Range<std::pair<ConstLocationIterator, ConstLocationIterator>>
+auto Model::get_locations() const -> Range<std::pair<ConstLocationIterator, ConstLocationIterator>>
 {
     return std::make_pair(m_locations.cbegin(), m_locations.cend());
 }
-auto World::get_locations() -> Range<std::pair<LocationIterator, LocationIterator>>
+auto Model::get_locations() -> Range<std::pair<LocationIterator, LocationIterator>>
 {
     return std::make_pair(m_locations.begin(), m_locations.end());
 }
 
-auto World::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPersonIterator>>
+auto Model::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPersonIterator>>
 {
     return std::make_pair(m_persons.cbegin(), m_persons.cend());
 }
 
-auto World::get_persons() -> Range<std::pair<PersonIterator, PersonIterator>>
+auto Model::get_persons() -> Range<std::pair<PersonIterator, PersonIterator>>
 {
     return std::make_pair(m_persons.begin(), m_persons.end());
 }
 
-LocationId World::find_location(LocationType type, const PersonId person) const
+LocationId Model::find_location(LocationType type, const PersonId person) const
 {
     auto location_id = get_person(person).get_assigned_location(type);
     assert(location_id != LocationId::invalid_id() && "The person has no assigned location of that type.");
     return location_id;
 }
 
-size_t World::get_subpopulation_combined(TimePoint t, InfectionState s) const
+size_t Model::get_subpopulation_combined(TimePoint t, InfectionState s) const
 {
     return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
                            [t, s, this](size_t running_sum, const Location& loc) {
@@ -299,7 +285,7 @@ size_t World::get_subpopulation_combined(TimePoint t, InfectionState s) const
                            });
 }
 
-size_t World::get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const
+size_t Model::get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const
 {
     return std::accumulate(
         m_locations.begin(), m_locations.end(), (size_t)0, [t, s, type, this](size_t running_sum, const Location& loc) {
@@ -307,32 +293,32 @@ size_t World::get_subpopulation_combined_per_location_type(TimePoint t, Infectio
         });
 }
 
-TripList& World::get_trip_list()
+TripList& Model::get_trip_list()
 {
     return m_trip_list;
 }
 
-const TripList& World::get_trip_list() const
+const TripList& Model::get_trip_list() const
 {
     return m_trip_list;
 }
 
-void World::use_migration_rules(bool param)
+void Model::use_mobility_rules(bool param)
 {
-    m_use_migration_rules = param;
+    m_use_mobility_rules = param;
 }
 
-bool World::use_migration_rules() const
+bool Model::use_mobility_rules() const
 {
-    return m_use_migration_rules;
+    return m_use_mobility_rules;
 }
 
-TestingStrategy& World::get_testing_strategy()
+TestingStrategy& Model::get_testing_strategy()
 {
     return m_testing_strategy;
 }
 
-const TestingStrategy& World::get_testing_strategy() const
+const TestingStrategy& Model::get_testing_strategy() const
 {
     return m_testing_strategy;
 }

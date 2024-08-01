@@ -32,7 +32,7 @@
  */
 mio::IOResult<void> write_single_run_result(
     const size_t run,
-    const mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge<double>>& graph)
+    const mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MobilityEdge<double>>& graph)
 {
     std::string abs_path;
     BOOST_OUTCOME_TRY(auto&& created, mio::create_directory("results", abs_path));
