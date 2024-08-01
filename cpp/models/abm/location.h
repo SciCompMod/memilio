@@ -109,7 +109,7 @@ struct Cell {
 }; // namespace mio
 
 /**
- * @brief All Location%s in the simulated World where Person%s gather.
+ * @brief All Location%s in the simulated Model where Person%s gather.
  */
 class Location
 {
@@ -117,7 +117,7 @@ public:
     /**
      * @brief Construct a Location with provided parameters. 
      * @param[in] loc_type The #LocationType.
-     * @param[in] loc_id The index of the Location in the World.
+     * @param[in] loc_id The index of the Location in the Model.
      * @param[in] num_agegroups [Default: 1] The number of age groups in the model.
      * @param[in] num_cells [Default: 1] The number of Cell%s in which the Location is divided.
      */
@@ -157,7 +157,7 @@ public:
     }
 
     /**
-     * @brief Get the location's identifier in a World.
+     * @brief Get the location's identifier in a Model.
      * @return The location's LocationId by value.
      */
     LocationId get_id() const
@@ -283,7 +283,7 @@ private:
     Location() = default;
 
     LocationType m_type; ///< Type of the Location.
-    LocationId m_id; ///< Unique identifier for the Location in the World owning it.
+    LocationId m_id; ///< Unique identifier for the Location in the Model owning it.
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.

@@ -49,7 +49,7 @@ ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, co
  * @param[in] rates The local exposure rates.
  * @param[in] cell_index Cell index of the Cell.
  * @param[in] virus VirusVariant of interest.
- * @param[in] global_params The parameter set of the World.
+ * @param[in] global_params The parameter set of the Model.
  * @return Average amount of Infection%s with the virus per day.
  */
 ScalarType daily_transmissions_by_air(const AirExposureRates& rates, const CellIndex cell_index,
@@ -76,22 +76,22 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
  * @param[in] local_contact_exposure Precomputed exposure by rates contacts for the local population.
  * @param[in] t Current Simulation time.
  * @param[in] dt Length of the current Simulation time step.
- * @param[in] global_parameters Parameters of the World.
+ * @param[in] global_parameters Parameters of the Model.
  */
 void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const Location& location,
               const AirExposureRates& local_air_exposure, const ContactExposureRates& local_contact_exposure,
               const TimePoint t, const TimeSpan dt, const Parameters& global_parameters);
 /**
- * @brief Move a person to another location.
+ * @brief Change a persons location to another location.
  * If the person already is at the destination, neither mode nor cells are set.
- * @param[in, out] person The person to be moved.
- * @param[in] destination The destination to move to.
- * @param[in] mode The transport mode the person uses to move.
+ * @param[in, out] person The person to change location.
+ * @param[in] destination The destination to change location to.
+ * @param[in] mode The transport mode the person uses to change location.
  * @param[in] cells The cells within the destination the person should be in.
  * @return Returns false if the person already is at the given destination, true otherwise.
  */
-bool migrate(Person& person, const Location& destination, const TransportMode mode = TransportMode::Unknown,
-             const std::vector<uint32_t>& cells = {0});
+bool change_location(Person& person, const Location& destination, const TransportMode mode = TransportMode::Unknown,
+                     const std::vector<uint32_t>& cells = {0});
 
 } // namespace abm
 } // namespace mio

@@ -166,7 +166,7 @@ The History object provides a way to save data throughout the simulation process
 
 ### Loggers
 
-The `Logger` struct is a tool for logging data from a given object. Each user-implemented Logger must have a `Type` and implement two functions: `Type log(const T&)` and `bool should_log(const T&)`. The input `T` for these functions is the same as the one given to the `History` member-function `History::log`, e.g. `World&` in the ABM.
+The `Logger` struct is a tool for logging data from a given object. Each user-implemented Logger must have a `Type` and implement two functions: `Type log(const T&)` and `bool should_log(const T&)`. The input `T` for these functions is the same as the one given to the `History` member-function `History::log`, e.g. `Model&` in the ABM.
 
 - `Type`: Return Type of `log`.
 - `log`: This function determines which data from the input `T` is saved. It must have the same return Type `Type` as the Loggers Type `Type`.

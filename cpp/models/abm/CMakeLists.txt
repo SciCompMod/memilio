@@ -13,13 +13,13 @@ add_library(abm
     personal_rng.h
     testing_strategy.cpp
     testing_strategy.h
-    world.cpp
-    world.h
+    model.cpp
+    model.h
     location_type.h
     parameters.h
     parameters.cpp
-    migration_rules.cpp
-    migration_rules.h
+    mobility_rules.cpp
+    mobility_rules.h
     model_functions.cpp
     model_functions.h
     trip_list.cpp

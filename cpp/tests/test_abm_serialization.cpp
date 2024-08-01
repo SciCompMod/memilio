@@ -10,7 +10,7 @@
 #include "models/abm/person.h"
 #include "models/abm/time.h"
 #include "models/abm/trip_list.h"
-#include "models/abm/world.h"
+#include "models/abm/model.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -257,7 +257,7 @@ TEST(TestAbmSerialization, Location)
     test_json_serialization_by_representation<mio::abm::Location>(reference_json);
 }
 
-TEST(TestAbmSerialization, World)
+TEST(TestAbmSerialization, Model)
 {
     // Test that a json value x is equal to serialize(deserialize(x)) w.r.t json representation.
     // See test_json_serialization_by_representation for more detail.
@@ -283,9 +283,9 @@ TEST(TestAbmSerialization, World)
     reference_json["trip_list"]["index"]          = Json::UInt(i++);
     reference_json["trip_list"]["trips_weekday"]  = Json::Value(Json::arrayValue);
     reference_json["trip_list"]["trips_weekend"]  = Json::Value(Json::arrayValue);
-    reference_json["use_migration_rules"]         = Json::Value(true);
+    reference_json["use_mobility_rules"]          = Json::Value(false);
 
-    test_json_serialization_by_representation<mio::abm::World>(reference_json);
+    test_json_serialization_by_representation<mio::abm::Model>(reference_json);
 }
 
 #endif

@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_ABM_MIGRATION_RULES_H
-#define MIO_ABM_MIGRATION_RULES_H
+#ifndef MIO_ABM_MOBILITY_RULES_H
+#define MIO_ABM_MOBILITY_RULES_H
 
 #include "abm/location_type.h"
 #include "abm/parameters.h"
@@ -31,22 +31,22 @@ namespace abm
 {
 
 /**
- * @name Rules for migration between Location%s.
+ * @name Rules for mobility between Location%s.
  * @param[inout] rng PersonalRandomNumberGenerator for the person.
  * @param[in] p Person the rule is applied to.
  * @param[in] t Current time.
  * @param[in] dt Length of the time step.
- * @param[in] params Migration parameters.
- * @return Location that the Person migrates to if the rule is applied, the current Location of the person 
+ * @param[in] params Mobility parameters.
+ * @return Location that the Person moves to if the rule is applied, the current Location of the person 
  * if the rule is not applied because of age, time, etc.
  * 
  * @{
  */
 /**
- * @brief Completely random migration to any other Location.
+ * @brief Completely random mobility to any other Location.
  */
-LocationType random_migration(PersonalRandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
-                              const Parameters& params);
+LocationType random_mobility(PersonalRandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
+                             const Parameters& params);
 
 /**
  * @brief School age children go to school in the morning and return later in the day.
@@ -106,4 +106,4 @@ LocationType get_buried(PersonalRandomNumberGenerator& rng, const Person& person
 } // namespace abm
 } // namespace mio
 
-#endif //MIO_ABM_MIGRATION_RULES_H
+#endif //MIO_ABM_MOBILITY_RULES_H

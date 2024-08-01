@@ -260,11 +260,11 @@ private:
  * @param[in] export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
  * @param[in] rki_age_groups Specifies whether rki-age_groups should be used.
  */
-template <class TestAndTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
+template <class TestAndTrace, class ContactPattern, class Model, class MobilityParams, class Parameters,
           class ReadFunction, class NodeIdFunction, typename FP = double>
 IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
                          const std::string& population_data_path, bool is_node_for_county,
-                         Graph<Model, MigrationParams>& params_graph, ReadFunction&& read_func,
+                         Graph<Model, MobilityParams>& params_graph, ReadFunction&& read_func,
                          NodeIdFunction&& node_func, const std::vector<double>& scaling_factor_inf,
                          double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0,
                          bool export_time_series = false, bool rki_age_groups = true)
@@ -327,21 +327,21 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
  * Reads the commuting matrices from txt files and sets the graph edges with that.
  * @param[in] data_dir Directory that contains the data files.
  * @param[in, out] params_graph Graph whose nodes are set by the function.
- * @param[in] migrating_compartments Compartments that commute.
+ * @param[in] mobile_compartments Compartments that commute.
  * @param[in] contact_locations_size Number of contact locations.
  * @param[in] read_func Function that reads commuting matrices.
  * @param[in] commuting_weights Vector with a commuting weight for every AgeGroup.
  */
-template <class ContactLocation, class Model, class MigrationParams, class MigrationCoefficientGroup,
+template <class ContactLocation, class Model, class MobilityParams, class MobilityCoefficientGroup,
           class InfectionState, class ReadFunction>
-IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>& params_graph,
-                         std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
+IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MobilityParams>& params_graph,
+                         std::initializer_list<InfectionState>& mobile_compartments, size_t contact_locations_size,
                          ReadFunction&& read_func,
                          std::vector<ScalarType> commuting_weights = std::vector<ScalarType>{})
 {
     // mobility between nodes
     BOOST_OUTCOME_TRY(auto&& mobility_data_commuter,
-                      read_func((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
+                      read_func((data_dir / "mobility" / "commuter_mobility.txt").string()));
     BOOST_OUTCOME_TRY(auto&& mobility_data_twitter,
                       read_func((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
     if (mobility_data_commuter.rows() != Eigen::Index(params_graph.nodes().size()) ||
@@ -358,7 +358,7 @@ IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>
             auto& populations = params_graph.nodes()[county_idx_i].property.populations;
             // mobility coefficients have the same number of components as the contact matrices.
             // so that the same NPIs/dampings can be used for both (e.g. more home office => fewer commuters)
-            auto mobility_coeffs = MigrationCoefficientGroup(contact_locations_size, populations.numel());
+            auto mobility_coeffs = MobilityCoefficientGroup(contact_locations_size, populations.numel());
             auto num_age_groups  = (size_t)params_graph.nodes()[county_idx_i].property.parameters.get_num_groups();
             commuting_weights =
                 (commuting_weights.size() == 0 ? std::vector<ScalarType>(num_age_groups, 1.0) : commuting_weights);
@@ -370,7 +370,7 @@ IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>
             auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) /
                                      working_population; //data is absolute numbers, we need relative
             for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
-                for (auto compartment : migrating_compartments) {
+                for (auto compartment : mobile_compartments) {
                     auto coeff_index = populations.get_flat_index({age, compartment});
                     mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
                         commuter_coeff_ij * commuting_weights[size_t(age)];
@@ -381,7 +381,7 @@ IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>
             auto twitter_coeff    = mobility_data_twitter(county_idx_i, county_idx_j) /
                                  total_population; //data is absolute numbers, we need relative
             for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
-                for (auto compartment : migrating_compartments) {
+                for (auto compartment : mobile_compartments) {
                     auto coeff_idx = populations.get_flat_index({age, compartment});
                     mobility_coeffs[size_t(ContactLocation::Other)].get_baseline()[coeff_idx] = twitter_coeff;
                 }

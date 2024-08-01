@@ -32,7 +32,7 @@
 #include "abm/time.h"
 #include "abm/vaccine.h"
 #include "abm/mask.h"
-#include "abm/movement_data.h"
+#include "abm/mobility_data.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/random_number_generator.h"
 
@@ -41,8 +41,10 @@ namespace mio
 namespace abm
 {
 
+static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
+
 /**
- * @brief Agents in the simulated World that can carry and spread the Infection.
+ * @brief Agents in the simulated Model that can carry and spread the Infection.
  */
 class Person
 {
@@ -167,7 +169,7 @@ public:
      * @brief Set an assigned Location of the Person.
      *
      * Important: Setting incorrect values will cause issues during simulation. It is preferable to use
-     *            World::assign_location with a valid LocationId, obtained e.g. through World::add_location.
+     *            Model::assign_location with a valid LocationId, obtained e.g. through Model::add_location.
      *
      * The assigned Location is saved by the index of its LocationId. Assume that a Person has at most one assigned
      * Location of a certain #LocationType.
@@ -198,7 +200,7 @@ public:
      * Every Person has a random number. Depending on this number and the time, the Person works from home in case of a
      * lockdown.
      * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
-     * @param[in] params Parameters that describe the migration between Location%s.
+     * @param[in] params Parameters that describe the mobility between Location%s.
      * @return True the Person works from home.
      */
     bool goes_to_work(TimePoint t, const Parameters& params) const;
@@ -207,7 +209,7 @@ public:
      * @brief Draw at what time the Person goes to work.
      * Every Person has a random number to determine what time to go to work.
      * Depending on this number Person decides what time has to go to work.
-     * @param[in] params Parameters that describe the migration between Location%s.
+     * @param[in] params Parameters that describe the mobility between Location%s.
      * @return The time of going to work.
      */
     TimeSpan get_go_to_work_time(const Parameters& params) const;
@@ -216,7 +218,7 @@ public:
      * @brief Draw if the Person goes to school or stays at home during lockdown.
      * Every Person has a random number that determines if they go to school in case of a lockdown.
      * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
-     * @param[in] params Parameters that describe the migration between Location%s.
+     * @param[in] params Parameters that describe the mobility between Location%s.
      * @return True if the Person goes to school.
      */
     bool goes_to_school(TimePoint t, const Parameters& params) const;
@@ -225,14 +227,14 @@ public:
      * @brief Draw at what time the Person goes to work.
      * Every Person has a random number to determine what time to go to school.
      * Depending on this number Person decides what time has to go to school.
-     * @param[in] params Parameters that describe the migration between Location%s.
+     * @param[in] params Parameters that describe the mobility between Location%s.
      * @return The time of going to school.
      */
     TimeSpan get_go_to_school_time(const Parameters& params) const;
 
     /**
      * @brief Answers the question if a Person is currently in quarantine.
-     * If a Person is in quarantine this Person cannot migrate to Location%s other than Home or the Hospital.
+     * If a Person is in quarantine this Person cannot change to Location%s other than Home or the Hospital.
      * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
      * @param[in] params Parameter that includes the length of a quarantine.
      * @return True if the Person is in quarantine.
@@ -260,7 +262,7 @@ public:
 
     /**
      * @brief Get the PersonId of the Person.
-     * The PersonId should correspond to the index in m_persons in world.
+     * The PersonId should correspond to the index in m_persons in the Model.
      * @return The PersonId.
      */
     PersonId get_id() const;
@@ -291,7 +293,7 @@ public:
      * @brief Get the protection of the Mask.
      * A value of 1 represents full protection and a value of 0 means no protection. This depends on the MaskType of the
      * Mask the Person is wearing.
-     * @param[in] params The parameters of the Infection that are the same everywhere within the World.
+     * @param[in] params The parameters of the Infection that are the same everywhere within the Model.
      * @return The reduction factor of getting an Infection when wearing the Mask.
      */
     ScalarType get_mask_protective_factor(const Parameters& params) const;

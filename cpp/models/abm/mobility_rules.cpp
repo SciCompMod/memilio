@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/migration_rules.h"
+#include "abm/mobility_rules.h"
 #include "abm/person.h"
 #include "abm/random_events.h"
 #include "abm/location_type.h"
@@ -27,8 +27,8 @@ namespace mio
 namespace abm
 {
 
-LocationType random_migration(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
-                              const Parameters& params)
+LocationType random_mobility(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+                             const Parameters& params)
 {
     auto current_loc     = person.get_location_type();
     auto make_transition = [current_loc](auto l) {
