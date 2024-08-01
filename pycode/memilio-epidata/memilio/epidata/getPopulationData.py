@@ -218,7 +218,6 @@ def test_total_population(df_pop, age_cols):
         raise gd.DataError('Total Population does not match expectation.')
 
 
-
 def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
                           out_folder: str = dd.defaultDict['out_folder'],
                           **kwargs
