@@ -39,6 +39,9 @@ def plot_changepoint(files, legendplot, flows=True, fileending="", save=True, sa
 
         dates = data['Time'][:]
 
+        timestep = np.diff(dates)[0]
+        tmax = dates[-1]
+
         # get indices where dates are >=0
         indices = np.where(dates >= 0)
         # plot data
@@ -49,11 +52,19 @@ def plot_changepoint(files, legendplot, flows=True, fileending="", save=True, sa
                 # then transform from flows over time interval to flows at time points
                 ax.plot(dates[indices[0][1:]], np.diff(total[indices[0], 0])/np.diff(dates[indices[0]]), label=legendplot[file],
                         color=colors[file], linestyle=linestyles[file])
+
             # IDE
             elif file == 1:
                 # transform from flows over time interval to flows at time points
                 ax.plot(dates[1:], total[1:, 0]/np.diff(dates), label=legendplot[file],
                         color=colors[file], linestyle=linestyles[file])
+
+                # date_idx = -int(tmax/timestep)-2
+                # print(f"New infections at {dates[date_idx]}: {total[date_idx,0]}")
+                # date_idx = -int(tmax/timestep)-1
+                # print(f"New infections at {dates[date_idx]}: {total[date_idx,0]}")
+                # date_idx = -int(tmax/timestep)
+                # print(f"New infections at {dates[date_idx]}: {total[date_idx,0]}")
         else:
             incidence = (total[:-1, 0]-total[1:, 0])/(dates[1:]-dates[:-1])
             ax.plot(dates[indices[0][1:]], incidence, label=legendplot[file],
@@ -63,14 +74,16 @@ def plot_changepoint(files, legendplot, flows=True, fileending="", save=True, sa
 
         # ax.set_title(secir_dict[i], fontsize=8)
         # axs[int(i/2), i % 2].set_ylim(bottom=0)
-        ax.set_xlim(left=-20)
-        ax.grid(True, linestyle='--')
-        ax.legend(fontsize=8)
+        ax.set_xlim(left=0, right=tmax)
+        ax.grid(True, linestyle='--', alpha=0.5)
+        ax.legend(fontsize=12)
 
-    fig.supxlabel(' Time')
+    fig.supxlabel('Simulation time [days]')
     fig.supylabel('Number of new infections')
     plt.subplots_adjust(left=None, bottom=None, right=None,
                         top=None, wspace=None, hspace=0.6)
+
+    plt.tight_layout()
 
     # save result
     if save:
@@ -83,21 +96,13 @@ def plot_changepoint(files, legendplot, flows=True, fileending="", save=True, sa
 if __name__ == '__main__':
     legendplot = list(["ODE", "IDE"])
     # Path to simulation results
-    # data_dir = os.path.join(os.path.dirname(
-    #     __file__), "..", "results/fictional/covasim/")
-
-    # plot_changepoint([os.path.join(data_dir, f"fictional_ode_covasim_0.5_12_0.1000_flows"),
-    #                  os.path.join(data_dir, f"fictional_ide_covasim_0.5_12_0.1000_flows")],
-    #                  legendplot, flows=True, fileending="0.5_12_0.1000", save=True, save_dir='plots/covasim/changepoints/')
-
-    # plot_changepoint([os.path.join(data_dir, f"fictional_ode_covasim_2.0_12_0.1000_flows"),
-    #                  os.path.join(data_dir, f"fictional_ide_covasim_2.0_12_0.1000_flows")],
-    #  legendplot, flows=True, fileending="2.0_12_0.1000", save=True, save_dir='plots/covasim/changepoints/')
-
-    # # # #  Constant init
     data_dir = os.path.join(os.path.dirname(
-        __file__), "../results/fictional/constant_init/")
+        __file__), "..", "results/fictional/covasim/")
 
-    plot_changepoint([os.path.join(data_dir, f"ode_constant_init_30_0.1000_flows"),
-                     os.path.join(data_dir, f"ide_constant_init_30_0.1000_flows")],
-                     legendplot, flows=True, fileending="30_0.1000", save=True, save_dir='plots/constant_init/changepoints/')
+    plot_changepoint([os.path.join(data_dir, f"fictional_ode_covasim_0.5_12_0.1000_flows"),
+                     os.path.join(data_dir, f"fictional_ide_covasim_0.5_12_0.1000_flows")],
+                     legendplot, flows=True, fileending="0.5_12_0.1000", save=True, save_dir='plots/covasim/changepoints/assessment_probs/')
+
+    plot_changepoint([os.path.join(data_dir, f"fictional_ode_covasim_2.0_12_0.1000_flows"),
+                     os.path.join(data_dir, f"fictional_ide_covasim_2.0_12_0.1000_flows")],
+                     legendplot, flows=True, fileending="2.0_12_0.1000", save=True, save_dir='plots/covasim/changepoints/assessment_probs/')

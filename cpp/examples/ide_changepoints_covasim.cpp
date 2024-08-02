@@ -38,42 +38,67 @@
 
 using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 
-// Parameters are calculated via examples/compute_parameters.cpp.
-std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
-                                                          {"changepoint", 2.0},
-                                                          {"dt_flows", 0.1},
-                                                          {"total_population", 83155031.},
-                                                          {"total_confirmed_cases", 341223.},
-                                                          {"deaths", 9710.},
-                                                          {"TimeExposed", 4.5},
-                                                          {"TimeInfectedNoSymptoms", 3.18163},
-                                                          {"TimeInfectedSymptoms", 7.85313},
-                                                          {"TimeInfectedSevere", 11.9713},
-                                                          {"TimeInfectedCritical", 15.2303},
-                                                          {"TransmissionProbabilityOnContact", 0.0733271},
-                                                          {"RelativeTransmissionNoSymptoms", 1},
-                                                          {"RiskOfInfectionFromSymptomatic", 0.3},
-                                                          {"Seasonality", 0.},
-                                                          {"InfectedSymptomsPerInfectedNoSymptoms", 0.698315},
-                                                          {"SeverePerInfectedSymptoms", 0.104907},
-                                                          {"CriticalPerSevere", 0.369201},
-                                                          {"DeathsPerCritical", 0.387803}};
+// // Parameters are calculated via examples/compute_parameters.cpp.
+// std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
+//                                                           {"changepoint", 2.0},
+//                                                           {"dt_flows", 0.1},
+//                                                           {"total_population", 83155031.},
+//                                                           {"total_confirmed_cases", 341223.},
+//                                                           {"deaths", 9710.},
+//                                                           {"TimeExposed", 4.5},
+//                                                           {"TimeInfectedNoSymptoms", 3.18163},
+//                                                           {"TimeInfectedSymptoms", 7.85313},
+//                                                           {"TimeInfectedSevere", 11.9713},
+//                                                           {"TimeInfectedCritical", 15.2303},
+//                                                           {"TransmissionProbabilityOnContact", 0.0733271},
+//                                                           {"RelativeTransmissionNoSymptoms", 1},
+//                                                           {"RiskOfInfectionFromSymptomatic", 0.3},
+//                                                           {"Seasonality", 0.},
+//                                                           {"InfectedSymptomsPerInfectedNoSymptoms", 0.698315},
+//                                                           {"SeverePerInfectedSymptoms", 0.104907},
+//                                                           {"CriticalPerSevere", 0.369201},
+//                                                           {"DeathsPerCritical", 0.387803}};
 
-mio::UncertainContactMatrix<ScalarType> get_contact_matrix(ScalarType R0)
+// Probabilities from Assessment paper
+std::map<std::string, ScalarType> simulation_parameter = {
+    {"t0", 0.},
+    {"dt_flows", 0.1},
+    {"total_population", 83155031.},
+    {"total_confirmed_cases", 341223.}, // set by RKI data
+    {"deaths", 0.}, // set by RKI data
+    {"TimeExposed", 4.5},
+    {"TimeInfectedNoSymptoms", 2.52762}, // Covasim: 3.18163 // Assessment: 2.52762
+    {"TimeInfectedSymptoms", 7.8899}, //7.85313 //7.8899
+    {"TimeInfectedSevere", 15.2253}, //11.9713 //15.2253
+    {"TimeInfectedCritical", 16.4929}, //15.2303 // 16.4929
+    {"TransmissionProbabilityOnContact", 0.0733271},
+    {"RelativeTransmissionNoSymptoms", 1},
+    {"RiskOfInfectionFromSymptomatic", 0.3},
+    {"Seasonality", 0.},
+    {"InfectedSymptomsPerInfectedNoSymptoms", 0.793099}, // 0.698315 // 0.793099
+    {"SeverePerInfectedSymptoms", 0.0786429}, //0.104907 // 0.0786429
+    {"CriticalPerSevere", 0.173176}, //0.369201 //  0.173176
+    {"DeathsPerCritical", 0.217177}, //0.387803 //  0.217177
+    {"cont_freq",
+     405.0837938714286 /
+         128.42865350758595}}; // computed so that we obtain constant new infections at beginning of simulation
+
+mio::UncertainContactMatrix<ScalarType> get_contact_matrix(ScalarType contact_scaling)
 {
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-    if (R0 <= 1.) {
+    if (contact_scaling <= 1.) {
         // Perform simulation with dropping R0.
-        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
-        contact_matrix[0].add_damping(0., mio::SimulationTime(1.9));
-        contact_matrix[0].add_damping(R0, mio::SimulationTime(2.));
+        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, simulation_parameter["cont_freq"]));
+        contact_matrix[0].add_damping(0., mio::SimulationTime(2.));
+        contact_matrix[0].add_damping(contact_scaling, mio::SimulationTime(2.1));
     }
     else {
         // Perform simulation with rising R0.
-        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, R0 * 2.7463));
-        contact_matrix[0].add_damping(1 - 1. / R0, mio::SimulationTime(-1.));
-        contact_matrix[0].add_damping(1 - 1. / R0, mio::SimulationTime(1.9));
-        contact_matrix[0].add_damping(0., mio::SimulationTime(2.));
+        contact_matrix[0] =
+            mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, contact_scaling * simulation_parameter["cont_freq"]));
+        contact_matrix[0].add_damping(1 - 1. / contact_scaling, mio::SimulationTime(-1.));
+        contact_matrix[0].add_damping(1 - 1. / contact_scaling, mio::SimulationTime(2.));
+        contact_matrix[0].add_damping(0., mio::SimulationTime(2.1));
     }
 
     return mio::UncertainContactMatrix(contact_matrix);
@@ -128,8 +153,7 @@ mio::TimeSeries<ScalarType> get_initial_flows()
     return init;
 }
 
-mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, bool contact_scaling = true,
-                                               std::string save_dir = "")
+mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType contact_scaling, ScalarType tmax, std::string save_dir = "")
 {
     // Initialize model.
     mio::isecir::Model model_ide(std::move(get_initial_flows()), simulation_parameter["total_population"],
@@ -201,14 +225,7 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, b
 
     model_ide.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
-    if (contact_scaling) {
-        model_ide.parameters.get<mio::isecir::ContactPatterns>() = get_contact_matrix(R0);
-    }
-    else {
-        mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-        contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
-        model_ide.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-    }
+    model_ide.parameters.get<mio::isecir::ContactPatterns>() = get_contact_matrix(contact_scaling);
 
     mio::ConstantFunction constfunc(simulation_parameter["TransmissionProbabilityOnContact"]);
     mio::StateAgeFunctionWrapper StateAgeFunctionWrapperide(constfunc);
@@ -226,7 +243,7 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, b
     sim.advance(tmax);
 
     if (!save_dir.empty()) {
-        std::string R0_string    = std::to_string(R0);
+        std::string R0_string    = std::to_string(contact_scaling);
         std::string tmax_string  = std::to_string(tmax);
         std::string dt_string    = std::to_string(simulation_parameter["dt_flows"]);
         std::string filename_ide = save_dir + "fictional_ide_covasim_" + R0_string.substr(0, R0_string.find(".") + 2) +
@@ -245,8 +262,8 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, b
     return sim.get_result();
 }
 
-mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType R0, ScalarType tmax,
-                                       bool contact_scaling = true, std::string save_dir = "")
+mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType contact_scaling, ScalarType tmax,
+                                       std::string save_dir = "")
 {
     // auto init_compartments = init_compartments2.get_value(0);
     // Use FlowModel to make results directly comparable to IDE model.
@@ -310,15 +327,7 @@ mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType R0, 
     // Set Seasonality=0 so that cont_freq_eff is equal to contact_matrix.
     model_ode.parameters.set<mio::osecir::Seasonality<ScalarType>>(simulation_parameter["Seasonality"]);
 
-    if (contact_scaling) {
-        model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = get_contact_matrix(R0);
-    }
-    else {
-        mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-        contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
-        model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() =
-            mio::UncertainContactMatrix(contact_matrix);
-    }
+    model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = get_contact_matrix(contact_scaling);
 
     model_ode.check_constraints();
 
@@ -331,7 +340,7 @@ mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType R0, 
         simulation_parameter["t0"], tmax, simulation_parameter["dt_flows"], model_ode, integrator);
 
     if (!save_dir.empty()) {
-        std::string R0_string    = std::to_string(R0);
+        std::string R0_string    = std::to_string(contact_scaling);
         std::string tmax_string  = std::to_string(tmax);
         std::string dt_string    = std::to_string(simulation_parameter["dt_flows"]);
         std::string filename_ode = save_dir + "fictional_ode_covasim_" + R0_string.substr(0, R0_string.find(".") + 2) +
@@ -355,35 +364,32 @@ int main()
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directories(dir);
-    bool contact_scaling = true;
 
-    // Options used: For R0=2 epidemic peak use tmax=200,
-    // For short things: 12 days and R0=0.5 or 2
-    ScalarType R0   = 0.5;
-    ScalarType tmax = 12;
+    ScalarType contact_scaling = 0.5;
+    ScalarType tmax            = 12;
 
-    mio::TimeSeries<ScalarType> result_ide = simulate_ide_model(R0, tmax, contact_scaling, save_dir);
+    mio::TimeSeries<ScalarType> result_ide = simulate_ide_model(contact_scaling, tmax, save_dir);
 
     Vector compartments = result_ide.get_value(0);
 
-    auto result_ode = simulate_ode_model(compartments, R0, tmax, contact_scaling, save_dir);
+    auto result_ode = simulate_ode_model(compartments, contact_scaling, tmax, save_dir);
     if (!result_ode) {
         printf("%s\n", result_ode.error().formatted_message().c_str());
         return -1;
     }
 
-    // R0   = 2.;
-    // tmax = 12;
+    contact_scaling = 2.;
+    tmax            = 12;
 
-    // result_ide = simulate_ide_model(R0, tmax, contact_scaling, save_dir);
+    result_ide = simulate_ide_model(contact_scaling, tmax, save_dir);
 
-    // compartments = result_ide.get_value(0);
+    compartments = result_ide.get_value(0);
 
-    // result_ode = simulate_ode_model(compartments, R0, tmax, contact_scaling, save_dir);
-    // if (!result_ode) {
-    //     printf("%s\n", result_ode.error().formatted_message().c_str());
-    //     return -1;
-    // }
+    result_ode = simulate_ode_model(compartments, contact_scaling, tmax, save_dir);
+    if (!result_ode) {
+        printf("%s\n", result_ode.error().formatted_message().c_str());
+        return -1;
+    }
 
     return 0;
 }
