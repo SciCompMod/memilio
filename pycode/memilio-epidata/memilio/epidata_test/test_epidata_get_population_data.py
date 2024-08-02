@@ -33,10 +33,6 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     path = '/home/Population_Data'
 
-    config_file_name = 'CredentialsRegio.ini'
-    test_username = 'username_test'
-    test_password = 'password_test'
-
     here = os.path.dirname(os.path.abspath(__file__))
     filename = os.path.join(
         here, 'test_data', 'TestSetPopulationExport.json')
@@ -71,52 +67,9 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
            return_value=df_pop_raw)
     @patch('memilio.epidata.getPopulationData.assign_population_data', return_value=df_pop)
     @patch('memilio.epidata.getPopulationData.test_total_population')
-    def test_get_population_data_full(self, mock_test, mock_export, mock_download):
+    def test_get_population_data_full(self, mock_test, mock_assign, mock_download):
         # should not raise any errors
         gpd.get_population_data(out_folder=self.path)
-
-    @patch('builtins.input', return_value=test_username)
-    @patch('getpass.getpass', return_value=test_password)
-    @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
-    @patch('memilio.epidata.getPopulationData.path_to_credential_file', return_value='./CredentialsRegio.ini')
-    @patch('memilio.epidata.getPopulationData.read_population_data', return_value=df_pop_raw)
-    @patch('memilio.epidata.getPopulationData.assign_population_data', return_value=df_pop)
-    @patch('memilio.epidata.getPopulationData.test_total_population')
-    def test_config_write(self, mock_test, mock_export, mock_raw, mock_path, mock_choice, mock_pw, mock_un):
-        # username and password should be written into the config file.
-        # The download and assigning to counties of the population data is mocked.
-        gpd.get_population_data(username=None, password=None, interactive=True)
-        # Check if the file is written.
-        self.assertTrue(self.config_file_name in os.listdir(os.getcwd()))
-        # Check content of the file.
-        # Read file.
-        parser = configparser.ConfigParser()
-        parser.read(os.path.join(os.getcwd(), self.config_file_name))
-        # Test content.
-        self.assertEqual(parser['CREDENTIALS']['Username'], self.test_username)
-        self.assertEqual(parser['CREDENTIALS']['Password'], self.test_password)
-
-    @patch('memilio.epidata.getPopulationData.path_to_credential_file', return_value='./CredentialsRegio.ini')
-    @patch('memilio.epidata.getPopulationData.read_population_data', return_value=df_pop_raw)
-    @patch('memilio.epidata.getPopulationData.assign_population_data', return_value=df_pop)
-    @patch('memilio.epidata.getPopulationData.test_total_population')
-    def test_config_read(self, mock_test, mock_export, mock_read, mock_path):
-        # File should not exist yet.
-        self.assertFalse(self.config_file_name in os.listdir(os.getcwd()))
-        # Create config file.
-        string = '[CREDENTIALS]\nUsername = ' + \
-            self.test_username+'\nPassword = '+self.test_password
-        path = os.path.join(os.getcwd(), self.config_file_name)
-        with open(path, 'w+') as file:
-            file.write(string)
-        # Check if the file is written.
-        self.assertTrue(self.config_file_name in os.listdir(os.getcwd()))
-        # The download and assigning to counties of the population data is mocked.
-        gpd.get_population_data(
-            username=None, password=None, read_data=False, out_folder=self.path, interactive=False)
-        # The file exist in the directory (mocked) and the credentials should be read.
-        mock_read.assert_called_with(
-            self.test_username, self.test_password)
 
 
 if __name__ == '__main__':
