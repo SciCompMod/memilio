@@ -104,14 +104,15 @@ int main()
         .get<mio::abm::ContactRates>()[{age_group_15_to_34, age_group_15_to_34}] = 10.0;
 
     // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 10.
+    auto validity_period       = mio::abm::days(1);
     auto probability           = 0.5;
     auto start_date            = mio::abm::TimePoint(0);
     auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(10);
     auto test_type             = mio::abm::TestType::Antigen;
     auto test_parameters       = model.parameters.get<mio::abm::TestData>()[test_type];
     auto testing_criteria_work = mio::abm::TestingCriteria();
-    auto testing_scheme_work =
-        mio::abm::TestingScheme(testing_criteria_work, start_date, end_date, test_parameters, probability);
+    auto testing_scheme_work   = mio::abm::TestingScheme(testing_criteria_work, validity_period, start_date, end_date,
+                                                         test_parameters, probability);
     model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.

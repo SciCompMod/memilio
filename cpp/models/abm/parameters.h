@@ -314,7 +314,6 @@ struct TestParameters {
     UncertainValue<> sensitivity;
     UncertainValue<> specificity;
     TimeSpan required_time;
-    TimeSpan validity_period;
     TestType type;
 
     /**
@@ -356,9 +355,9 @@ struct TestData {
     static auto get_default(AgeGroup /*size*/)
     {
         Type default_val                 = Type({TestType::Count});
-        default_val[{TestType::Generic}] = TestParameters{0.9, 0.99, hours(48), hours(72), TestType::Generic};
-        default_val[{TestType::Antigen}] = TestParameters{0.8, 0.88, minutes(30), hours(48), TestType::Antigen};
-        default_val[{TestType::PCR}]     = TestParameters{0.9, 0.99, hours(48), hours(72), TestType::PCR};
+        default_val[{TestType::Generic}] = TestParameters{0.9, 0.99, hours(48), TestType::Generic};
+        default_val[{TestType::Antigen}] = TestParameters{0.8, 0.88, minutes(30), TestType::Antigen};
+        default_val[{TestType::PCR}]     = TestParameters{0.9, 0.99, hours(48), TestType::PCR};
         return default_val;
     }
     static std::string name()

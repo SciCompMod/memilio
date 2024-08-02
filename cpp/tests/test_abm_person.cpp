@@ -92,9 +92,9 @@ TEST(TestPerson, setGetAssignedLocation)
 TEST(TestPerson, quarantine)
 {
     using testing::Return;
-    auto rng         = mio::RandomNumberGenerator();
-    auto test_params = mio::abm::TestParameters{1.01, 1.01, mio::abm::minutes(30), mio::abm::hours(24),
-                                                mio::abm::TestType::Generic}; //100% safe test
+    auto rng = mio::RandomNumberGenerator();
+    auto test_params =
+        mio::abm::TestParameters{1.01, 1.01, mio::abm::minutes(30), mio::abm::TestType::Generic}; //100% safe test
 
     auto infection_parameters = mio::abm::Parameters(num_age_groups);
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);

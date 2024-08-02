@@ -92,18 +92,21 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
     };
 
     model.get_testing_strategy().add_testing_scheme(
-        mio::abm::LocationType::School, mio::abm::TestingScheme(random_criteria(), mio::abm::TimePoint(0),
-                                                                mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
+        mio::abm::LocationType::School,
+        mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
+                                mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
     model.get_testing_strategy().add_testing_scheme(
-        mio::abm::LocationType::Work, mio::abm::TestingScheme(random_criteria(), mio::abm::TimePoint(0),
-                                                              mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
+        mio::abm::LocationType::Work,
+        mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
+                                mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
     model.get_testing_strategy().add_testing_scheme(
-        mio::abm::LocationType::Home, mio::abm::TestingScheme(random_criteria(), mio::abm::TimePoint(0),
-                                                              mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
-    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent,
-                                                    mio::abm::TestingScheme(random_criteria(), mio::abm::TimePoint(0),
-                                                                            mio::abm::TimePoint(0) + mio::abm::days(10),
-                                                                            {}, 0.5));
+        mio::abm::LocationType::Home,
+        mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
+                                mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
+    model.get_testing_strategy().add_testing_scheme(
+        mio::abm::LocationType::SocialEvent,
+        mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
+                                mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
 
     return mio::abm::Simulation(mio::abm::TimePoint(0), std::move(model));
 }
