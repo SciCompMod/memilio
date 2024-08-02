@@ -8,20 +8,38 @@ import matplotlib.pyplot as plt
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 # Define parameters used for simulation, used for plotting real data.
-parameters = {
+# Probabilities from Assessment paper
+parameters_assessment_probs = {
     'TimeExposed': 4.5,
-    'TimeInfectedNoSymptoms': 3.18163,
-    'TimeInfectedSymptoms': 7.85313,
-    'TimeInfectedSevere': 11.9713,
-    'TimeInfectedCritical': 15.2303,
+    'TimeInfectedNoSymptoms':  2.52762,  # Covasim: 3.18163, ## Assessment: 2.52762
+    'TimeInfectedSymptoms': 7.8899,  # 7.85313, ' 7.8899
+    'TimeInfectedSevere': 15.2253,  # 11.9713, # 15.2253
+    'TimeInfectedCritical': 16.4929,  # 15.2303, # 16.4929
     'TimeInfectedNoSymptomsToInfectedSymptoms': 1.1,
     'TimeInfectedSymptomsToInfectedSevere': 6.60011,
-    'TimeInfectedSevereToInfectedCritical': 1.52924,  # 1.52924
+    'TimeInfectedSevereToInfectedCritical': 1.52924,
     'TimeInfectedCriticalToDead': 10.7,
-    'InfectedSymptomsPerInfectedNoSymptoms': 0.698315,
+    'InfectedSymptomsPerInfectedNoSymptoms': 0.793099,  # 0.698315 #0.793099
     'start_date': pd.Timestamp('2020.10.01') - pd.DateOffset(days=20),
     'end_date': pd.Timestamp('2020.10.01') + pd.DateOffset(days=30),
-    'scaleConfirmed': 2.
+    'scaleConfirmed': 1.
+}
+
+# Covasim
+parameters_covasim_probs = {
+    'TimeExposed': 4.5,
+    'TimeInfectedNoSymptoms':  3.18163,  # Covasim: 3.18163, ## Assessment: 2.52762
+    'TimeInfectedSymptoms': 7.85313,  # 7.85313, ' 7.8899
+    'TimeInfectedSevere': 11.9713,  # 11.9713, # 15.2253
+    'TimeInfectedCritical': 15.2303,  # 15.2303, # 16.4929
+    'TimeInfectedNoSymptomsToInfectedSymptoms': 1.1,
+    'TimeInfectedSymptomsToInfectedSevere': 6.60011,
+    'TimeInfectedSevereToInfectedCritical': 1.52924,
+    'TimeInfectedCriticalToDead': 10.7,
+    'InfectedSymptomsPerInfectedNoSymptoms': 0.698315,  # 0.698315 #0.793099
+    'start_date': pd.Timestamp('2020.10.01') - pd.DateOffset(days=20),
+    'end_date': pd.Timestamp('2020.10.01') + pd.DateOffset(days=30),
+    'scaleConfirmed': 1.
 }
 
 
@@ -91,9 +109,12 @@ def plot_new_infections(files, start_date, simulation_time,
 
     fig, ax = plt.subplots()
 
+    ax.scatter(np.linspace(0, simulation_time, simulation_time + 1),
+               data_rki["NewInfectionsDay"], marker="x",  s=20, color='gray', label="RKI data")
+
     # helmholtzdarkblue, helmholtzclaim
     colors = [(0, 40 / 255, 100 / 255), (20 / 255, 200 / 255, 255 / 255)]
-    linestyles = ['-', '--']
+    linestyles = ['-', '-']
     # add results to plot
     for file in range(len(files)):
         # load data
@@ -153,21 +174,26 @@ def plot_new_infections(files, start_date, simulation_time,
             print(
                 f"IDE new infections at {dates[date_idx]}: ", total[date_idx, 0] / timestep)
 
-        ax.scatter(np.linspace(0, simulation_time, simulation_time + 1),
-                   data_rki["NewInfectionsDay"], s=10)
-
         h5file.close()
 
-        # ax.set_title(secir_dict[i], fontsize=8)
-        # axs[int(i/2), i % 2].set_ylim(bottom=0)
-        ax.set_xlim(left=0)
-        ax.grid(True, linestyle='--')
-        ax.legend(fontsize=8)
+    ax.set_xlim(left=0, right=simulation_time)
+    ax.grid(True, linestyle='--', alpha=0.5)
+    ax.legend(fontsize=8)
 
-    fig.supxlabel(' Time')
-    fig.supylabel('Number of new infections')
+    # Define x-ticks.
+    datelist = np.array(pd.date_range(parameters["start_date"].date(),
+                                      periods=simulation_time+1, freq='D').strftime('%m-%d').tolist())
+    tick_range = (np.arange(int((simulation_time) / 5) + 1) * 5)
+    plt.xticks(tick_range, datelist[tick_range],
+               rotation=45, fontsize=12)
+    plt.xticks(np.arange(simulation_time), minor=True)
+
+    fig.supxlabel('Date')
+    fig.supylabel(r'Number of new infections $\widehat{\sigma}_S^E$')
     plt.subplots_adjust(left=None, bottom=None, right=None,
                         top=None, wspace=None, hspace=0.6)
+
+    plt.tight_layout()
 
     # save result
     if save:
@@ -192,7 +218,7 @@ def plot_infectedsymptoms_deaths(
 
     # helmholtzdarkblue, helmholtzclaim
     colors = [(0, 40 / 255, 100 / 255), (20 / 255, 200 / 255, 255 / 255)]
-    linestyles = ['-', '--']
+    linestyles = ['-', '-']
     # add results to plot
 
     compartments = [["InfectedSymptoms", 3], ["Deaths", 7]]
@@ -205,7 +231,7 @@ def plot_infectedsymptoms_deaths(
         fig, ax = plt.subplots()
 
         ax.scatter(np.linspace(0, simulation_time, simulation_time + 1),
-                   data_rki_ma7[compartments[compartment][0]], s=8)
+                   data_rki[compartments[compartment][0]], marker="x",  s=20, color='gray', label="RKI data")
 
         for file in range(len(files)):
             # load data
@@ -242,17 +268,119 @@ def plot_infectedsymptoms_deaths(
 
             h5file.close()
 
-        # ax.set_title(secir_dict[i], fontsize=8)
-        # axs[int(i/2), i % 2].set_ylim(bottom=0)
-        ax.set_xlim(left=0)
-        ax.grid(True, linestyle='--')
+        ax.set_xlim(left=0, right=simulation_time)
+        ax.grid(True, linestyle='--', alpha=0.5)
         ax.legend(fontsize=8)
 
-        fig.supxlabel(' Time')
-        fig.supylabel(
-            f'Number of individuals in {compartments[compartment][0]}')
+        # Define x-ticks.
+        datelist = np.array(pd.date_range(parameters["start_date"].date(),
+                                          periods=simulation_time+1, freq='D').strftime('%m-%d').tolist())
+        tick_range = (np.arange(int((simulation_time) / 5) + 1) * 5)
+        plt.xticks(tick_range, datelist[tick_range],
+                   rotation=45, fontsize=12)
+        plt.xticks(np.arange(simulation_time), minor=True)
+
+        fig.supxlabel('Date')
+        if compartment == 0:
+            fig.supylabel(
+                f'Number of mildly symptomatic individuals')
+        if compartment == 1:
+            fig.supylabel(
+                f'Deaths')
         plt.subplots_adjust(left=None, bottom=None, right=None,
                             top=None, wspace=None, hspace=0.6)
+        plt.tight_layout()
+        # save result
+        if save:
+            if not os.path.isdir(save_dir):
+                os.makedirs(save_dir)
+            plt.savefig(save_dir + f"{compartments[compartment][0]}_{fileending}.png",
+                        bbox_inches='tight', dpi=500)
+
+
+def plot_icu(
+        files, start_date, simulation_time, legendplot, fileending="", save=True, save_dir='plots/'):
+
+    datafile_icu_ma7 = os.path.join(os.path.dirname(
+        __file__), "..", "data", "pydata", "Germany", "germany_divi_ma7.json")
+
+    datafile_icu = os.path.join(os.path.dirname(
+        __file__), "..", "data", "pydata", "Germany", "germany_divi.json")
+
+    df = pd.read_json(datafile_icu)
+    # data_icu_ma7 = load_data(datafile_icu_ma7, start_date, simulation_time)
+
+    # print("Infectedsymptoms from RKI (ma7)  on 1.10.2020: ", data_rki_ma7[data_rki_ma7["Date"]=="2020-10-01"]["InfectedSymptoms"].values[0])
+
+    # helmholtzdarkblue, helmholtzclaim
+    colors = [(0, 40 / 255, 100 / 255), (20 / 255, 200 / 255, 255 / 255)]
+    linestyles = ['-', '-']
+    # add results to plot
+
+    compartments = [["InfectedCritical", 5]]
+
+    for compartment in range(len(compartments)):
+
+        print(f"{compartments[compartment][0]} from DIVI (ma7)  on {start_date}: ",
+              df[df["Date"] == start_date]["ICU"].values[0])
+
+        fig, ax = plt.subplots()
+
+        ax.scatter(np.linspace(0, simulation_time, simulation_time + 1),
+                   df[(df["Date"] >= start_date) & (df["Date"] <= start_date + pd.DateOffset(days=simulation_time))]["ICU"], marker="x",  s=20, color='gray', label="DIVI data")
+
+        for file in range(len(files)):
+            # load data
+            h5file = h5py.File(str(files[file]) + '.h5', 'r')
+
+            if (len(list(h5file.keys())) > 1):
+                raise gd.DataError("File should contain one dataset.")
+            if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
+                raise gd.DataError("Expected only one group.")
+
+            data = h5file[list(h5file.keys())[0]]
+
+            if len(data['Total'][0]) == 8:
+                # As there should be only one Group, total is the simulation result
+                total = data['Total'][:, :]
+            elif len(data['Total'][0]) == 10:
+                # in ODE there are two compartments we don't use, throw these out
+                total = data['Total'][:, [0, 1, 2, 4, 6, 7, 8, 9]]
+
+            dates = data['Time'][:]
+
+            ax.plot(dates, total[:, compartments[compartment][1]], label=legendplot[file],
+                    color=colors[file], linestyle=linestyles[file])
+
+            if file == 0:
+                print(f"{compartments[compartment][0]} in ODE on {start_date}: ",
+                      total[:, compartments[compartment][1]][0])
+
+            if file == 1:
+                print(f"{compartments[compartment][0]} in IDE on {start_date}: ",
+                      total[:, compartments[compartment][1]][0])
+
+            h5file.close()
+
+        ax.set_xlim(left=0, right=simulation_time)
+        ax.grid(True, linestyle='--', alpha=0.5)
+        ax.legend(fontsize=8)
+
+        # Define x-ticks.
+        datelist = np.array(pd.date_range(parameters["start_date"].date(),
+                                          periods=simulation_time+1, freq='D').strftime('%m-%d').tolist())
+        tick_range = (np.arange(int((simulation_time) / 5) + 1) * 5)
+        plt.xticks(tick_range, datelist[tick_range],
+                   rotation=45, fontsize=12)
+        plt.xticks(np.arange(simulation_time), minor=True)
+
+        fig.supxlabel('Date')
+        fig.supylabel(
+            f'Number of individuals in ICU')
+        plt.subplots_adjust(left=None, bottom=None, right=None,
+                            top=None, wspace=None, hspace=0.6)
+
+        plt.tight_layout()
 
         # save result
         if save:
@@ -267,24 +395,34 @@ if __name__ == '__main__':
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "results/real/")
 
-    legendplot = list(["ODE", "IDE"])
+    legendplot = list(["ODE", "IDE", "RKI data"])
 
-    start_date = '2020-6-1'
+    start_date = '2020-10-1'
     simulation_time = 45
     timestep = "0.1000"
+    probs = "assessment_probs"
 
-    if start_date == '2020-6-1':
-        parameters['scaleConfirmed'] = 1.
+    if probs == "assessment_probs":
+        parameters = parameters_assessment_probs
+    else:
+        parameters = parameters_covasim_probs
+
+    # if start_date == '2020-10-1':
+    #     parameters['scaleConfirmed'] = 374.5714285714 / 384.0430695350508
 
     plot_new_infections([os.path.join(data_dir, f"ode_{start_date}_{simulation_time}_{timestep}_flows"),
                         os.path.join(data_dir, f"ide_{start_date}_{simulation_time}_{timestep}_flows")],
                         pd.Timestamp(start_date), simulation_time,
-                        legendplot, fileending=f"{start_date}_{simulation_time}_{timestep}_flows", save=True, save_dir=f"plots/real/{start_date}/{simulation_time}/")
+                        legendplot, fileending=f"{start_date}_{simulation_time}_{timestep}_flows", save=True, save_dir=f"plots/real/{start_date}/{simulation_time}/{probs}/")
 
     plot_infectedsymptoms_deaths([os.path.join(data_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
                                   os.path.join(data_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
                                  pd.Timestamp(start_date), simulation_time,
-                                 legendplot, fileending=f"{start_date}_{simulation_time}_{timestep}", save=True, save_dir=f"plots/real/{start_date}/{simulation_time}/")
+                                 legendplot, fileending=f"{start_date}_{simulation_time}_{timestep}", save=True, save_dir=f"plots/real/{start_date}/{simulation_time}/{probs}/")
+
+    plot_icu([os.path.join(data_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
+              os.path.join(data_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
+             pd.Timestamp(start_date), simulation_time, legendplot=list(["ODE", "IDE", "DIVI data"]), fileending=f"{start_date}_{simulation_time}_{timestep}", save=True, save_dir=f'plots/real/{start_date}/{simulation_time}/{probs}/')
 
     # plot_real_scenario([os.path.join(data_dir, f"ode_2020-06-01_30_0.1000_flows"),
     #                     os.path.join(data_dir, f"ide_2020-06-01_30_0.1000_flows")],

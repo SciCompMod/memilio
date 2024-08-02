@@ -45,28 +45,53 @@
 using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 
 // Parameters are calculated via examples/compute_parameters.cpp.
-std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
-                                                          {"dt_flows", 0.1},
-                                                          {"total_population", 83155031.},
-                                                          {"total_confirmed_cases", 0.}, // set by RKI data
-                                                          {"deaths", 0.}, // set by RKI data
-                                                          {"TimeExposed", 4.5},
-                                                          {"TimeInfectedNoSymptoms", 3.18163},
-                                                          {"TimeInfectedSymptoms", 7.85313},
-                                                          {"TimeInfectedSevere", 11.9713},
-                                                          {"TimeInfectedCritical", 15.2303},
-                                                          {"TransmissionProbabilityOnContact", 0.0733271},
-                                                          {"RelativeTransmissionNoSymptoms", 1},
-                                                          {"RiskOfInfectionFromSymptomatic", 0.3},
-                                                          {"Seasonality", 0.},
-                                                          {"InfectedSymptomsPerInfectedNoSymptoms", 0.698315},
-                                                          {"SeverePerInfectedSymptoms", 0.104907},
-                                                          {"CriticalPerSevere", 0.369201},
-                                                          {"DeathsPerCritical", 0.387803},
-                                                          {"cont_freq", 5.4},
-                                                          {"scale_confirmed_cases", 2.},
-                                                          {"scale_contacts", 1.},
-                                                          {"lockdown_hard", 371 * 14 / (45 * 401.)}};
+// Probabilities from Assessment paper
+std::map<std::string, ScalarType> simulation_parameter = {
+    {"t0", 0.},
+    {"dt_flows", 0.1},
+    {"total_population", 83155031.},
+    {"total_confirmed_cases", 0.}, // set by RKI data
+    {"deaths", 0.}, // set by RKI data
+    {"TimeExposed", 4.5},
+    {"TimeInfectedNoSymptoms", 2.52762}, // Covasim: 3.18163 // Assessment: 2.52762
+    {"TimeInfectedSymptoms", 7.8899}, //7.85313 //7.8899
+    {"TimeInfectedSevere", 15.2253}, //11.9713 //15.2253
+    {"TimeInfectedCritical", 16.4929}, //15.2303 // 16.4929
+    {"TransmissionProbabilityOnContact", 0.0733271},
+    {"RelativeTransmissionNoSymptoms", 1},
+    {"RiskOfInfectionFromSymptomatic", 0.3},
+    {"Seasonality", 0.},
+    {"InfectedSymptomsPerInfectedNoSymptoms", 0.793099}, // 0.698315 // 0.793099
+    {"SeverePerInfectedSymptoms", 0.0786429}, //0.104907 // 0.0786429
+    {"CriticalPerSevere", 0.173176}, //0.369201 //  0.173176
+    {"DeathsPerCritical", 0.217177}, //0.387803 //  0.217177
+    {"scale_confirmed_cases", 1.},
+    {"scale_contacts", 1.},
+    {"lockdown_hard", 371 * 14 / (45 * 401.)}};
+
+// // Covasim
+// std::map<std::string, ScalarType> simulation_parameter = {
+//     {"t0", 0.},
+//     {"dt_flows", 0.1},
+//     {"total_population", 83155031.},
+//     {"total_confirmed_cases", 0.}, // set by RKI data
+//     {"deaths", 0.}, // set by RKI data
+//     {"TimeExposed", 4.5},
+//     {"TimeInfectedNoSymptoms", 3.18163}, // Covasim: 3.18163 // Assessment: 2.52762
+//     {"TimeInfectedSymptoms", 7.85313}, //7.85313 //7.8899
+//     {"TimeInfectedSevere", 11.9713}, //11.9713 //15.2253
+//     {"TimeInfectedCritical", 15.2303}, //15.2303 // 16.4929
+//     {"TransmissionProbabilityOnContact", 0.0733271},
+//     {"RelativeTransmissionNoSymptoms", 1},
+//     {"RiskOfInfectionFromSymptomatic", 0.3},
+//     {"Seasonality", 0.},
+//     {"InfectedSymptomsPerInfectedNoSymptoms", 0.698315}, // 0.698315 // 0.793099
+//     {"SeverePerInfectedSymptoms", 0.104907}, //0.104907 // 0.0786429
+//     {"CriticalPerSevere", 0.369201}, //0.369201 //  0.173176
+//     {"DeathsPerCritical", 0.387803}, //0.387803 //  0.217177
+//     {"scale_confirmed_cases", 1.},
+//     {"scale_contacts", 1.},
+//     {"lockdown_hard", 371 * 14 / (45 * 401.)}};
 
 /**
  * indices of contact matrix corresponding to locations where contacts occur.
@@ -300,7 +325,7 @@ void set_npi_october(mio::ContactMatrixGroup& contact_matrices, mio::Date start_
             mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
     }
     // Remote schooling.
-    v = lockdown_hard * 0.3;
+    v = lockdown_hard * 0.25;
     contact_matrices[size_t(ContactLocation::School)].add_damping(
         Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
         mio::DampingType(int(Intervention::SchoolClosure)), offset_npi);
@@ -693,16 +718,22 @@ int main()
     boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directories(dir);
 
-    // mio::Date start_date(2020, 10, 01);
-    // simulation_parameter["scale_contacts"] =
-    //     (12703.72253209509 + (13585.273121728716 - 12703.72253209509) * simulation_parameter["dt_flows"]) /
-    //     12485.579837015446;
+    mio::Date start_date(2020, 10, 01);
+    // for Covasim probabilities
+    // simulation_parameter["scale_confirmed_cases"] = 374.5714285714 / 1016.49810625866;
+    // simulation_parameter["scale_contacts"] = 6395.938795529226 / 6278.021198079027;
+    // for Assessment ... probabilities
+    // simulation_parameter["scale_confirmed_cases"] = 374.5714285714 / 384.0430695350508;
+    simulation_parameter["scale_contacts"] = 5492.663367720521 / 4925.137071413998;
 
-    mio::Date start_date(2020, 06, 01);
-    simulation_parameter["scale_contacts"] =
-        (318.4809147734314 + (433.0423949077547 - 318.4809147734314) * simulation_parameter["dt_flows"]) /
-        1063.9489750070957;
-    simulation_parameter["scale_confirmed_cases"] = 1.;
+    // mio::Date start_date(2020, 06, 01);
+    // // for Covasim probabilities
+    // // simulation_parameter["scale_contacts"] =
+    // //     (318.4809147734314 + (433.0423949077547 - 318.4809147734314) * simulation_parameter["dt_flows"]) /
+    // //     1063.9489750070957;
+    // // for Assessment ... probabilities
+    // simulation_parameter["scale_contacts"]        = 290.5059771857091 / 852.9469395504317;
+    // simulation_parameter["scale_confirmed_cases"] = 1.;
 
     ScalarType simulation_time = 45;
 
