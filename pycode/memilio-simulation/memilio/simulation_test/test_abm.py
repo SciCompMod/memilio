@@ -56,8 +56,8 @@ class TestAbm(unittest.TestCase):
         testing_inf_states = []
         testing_crit = abm.TestingCriteria(
             testing_ages, testing_inf_states)
-        testing_scheme = abm.TestingScheme(
-            testing_crit, t0, t0 + abm.days(1), model.parameters.TestData[abm.TestType.Antigen], 1.0)
+        testing_scheme = abm.TestingScheme(testing_crit, abm.days(
+            1), t0, t0 + abm.days(1), model.parameters.TestData[abm.TestType.Antigen], 1.0)
         # initially false, will only active once simulation starts
         self.assertEqual(testing_scheme.active, False)
 

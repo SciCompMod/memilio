@@ -155,10 +155,10 @@ PYBIND11_MODULE(_simulation_abm, m)
              py::arg("age_groups"), py::arg("infection_states"));
 
     pymio::bind_class<mio::abm::TestingScheme, pymio::EnablePickling::Never>(m, "TestingScheme")
-        .def(py::init<const mio::abm::TestingCriteria&, mio::abm::TimePoint, mio::abm::TimePoint,
+        .def(py::init<const mio::abm::TestingCriteria&, mio::abm::TimeSpan, mio::abm::TimePoint, mio::abm::TimePoint,
                       const mio::abm::TestParameters&, double>(),
-             py::arg("testing_criteria"), py::arg("start_date"), py::arg("end_date"), py::arg("test_parameters"),
-             py::arg("probability"))
+             py::arg("testing_criteria"), py::arg("testing_validity_period"), py::arg("start_date"),
+             py::arg("end_date"), py::arg("test_parameters"), py::arg("probability"))
         .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
 
     pymio::bind_class<mio::abm::Vaccination, pymio::EnablePickling::Never>(m, "Vaccination")
