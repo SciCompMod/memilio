@@ -1068,7 +1068,7 @@ std::vector<std::vector<double>> distribute_grid_search(int rank, int num_procs,
     //Calculate how many grid points there are, assuming that each parameter has the same amount of points
     int number_of_points = 1;
     for (size_t i = 0; i < grid.size(); i++) {
-        number_of_points *= grid[i].size();
+        number_of_points = number_of_points * grid[i].size();
     }
     //Calculate how many points each rank should calculate
     int points_per_rank = number_of_points / num_procs;
@@ -1077,7 +1077,7 @@ std::vector<std::vector<double>> distribute_grid_search(int rank, int num_procs,
         points_per_rank = number_of_points - points_per_rank * (num_procs - 1);
     }
     // we calculate every possible combination of the grid, independently of the rank
-    std::vector<std::vector<double>> grid_search;
+    std::vector<std::vector<double>> grid_search{};
     std::vector<int> counter_per_dimension(grid.size(), 0);
     for (int i = 0; i < number_of_points; i++) {
         std::vector<double> temp;
@@ -1095,13 +1095,11 @@ std::vector<std::vector<double>> distribute_grid_search(int rank, int num_procs,
             }
         }
     }
-    std::cout << "Test2" << std::endl;
     // we calculate the grid search for the rank
     std::vector<std::vector<double>> grid_search_ranks;
     for (int i = 0; i < points_per_rank; i++) {
         grid_search_ranks.push_back(grid_search[i + rank * points_per_rank]);
     }
-    std::cout << "Test3" << std::endl;
 
     return grid_search_ranks;
 }
@@ -1529,9 +1527,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
 
     // define parameters for grid search
     // Distribute the grid search over the MPI ranks
-    std::cout << "Test1" << std::endl;
     auto grid_search_rank = distribute_grid_search(rank, num_procs, grid_points);
-    std::cout << "Test4" << std::endl;
     // short debug print to see if everything worked. Printing rank and amount of grid points as well as first point
     std::cout << "Rank: " << rank << " has " << grid_search_rank.size() << " grid points" << std::endl;
     std::cout << "First grid point: ";
