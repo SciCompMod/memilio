@@ -1077,29 +1077,29 @@ std::vector<std::vector<double>> distribute_grid_search(int rank, int num_procs,
         points_per_rank = number_of_points - points_per_rank * (num_procs - 1);
     }
     // we calculate every possible combination of the grid, independently of the rank
-    std::vector<std::vector<double>> grid_search{};
-    std::vector<int> counter_per_dimension(grid.size(), 0);
-    for (int i = 0; i < number_of_points; i++) {
-        std::vector<double> temp;
-        for (size_t j = 0; j < grid.size(); j++) {
-            temp.push_back(grid[j][counter_per_dimension[j]]);
-        }
-        grid_search.push_back(temp);
-        // we increase the counter for the last dimension
-        counter_per_dimension.back()++;
-        // we increase the counter for the other dimensions if the last dimension has reached the end
-        for (int j = (int)grid.size() - 1; j >= 0; j--) {
-            if (counter_per_dimension[j] == (int)grid[j].size()) {
-                counter_per_dimension[j] = 0;
-                counter_per_dimension[j - 1]++;
-            }
-        }
-    }
+    // std::vector<std::vector<double>> grid_search{};
+    // std::vector<int> counter_per_dimension(grid.size(), 0);
+    // for (int i = 0; i < number_of_points; i++) {
+    //     std::vector<double> temp;
+    //     for (size_t j = 0; j < grid.size(); j++) {
+    //         temp.push_back(grid[j][counter_per_dimension[j]]);
+    //     }
+    //     grid_search.push_back(temp);
+    //     // we increase the counter for the last dimension
+    //     counter_per_dimension.back()++;
+    //     // we increase the counter for the other dimensions if the last dimension has reached the end
+    //     for (int j = (int)grid.size() - 1; j >= 0; j--) {
+    //         if (counter_per_dimension[j] == (int)grid[j].size()) {
+    //             counter_per_dimension[j] = 0;
+    //             counter_per_dimension[j - 1]++;
+    //         }
+    //     }
+    // }
     // we calculate the grid search for the rank
     std::vector<std::vector<double>> grid_search_ranks;
-    for (int i = 0; i < points_per_rank; i++) {
-        grid_search_ranks.push_back(grid_search[i + rank * points_per_rank]);
-    }
+    // for (int i = 0; i < points_per_rank; i++) {
+    //     grid_search_ranks.push_back(grid_search[i + rank * points_per_rank]);
+    // }
 
     return grid_search_ranks;
 }
