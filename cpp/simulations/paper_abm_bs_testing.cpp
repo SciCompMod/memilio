@@ -1076,6 +1076,7 @@ std::vector<std::vector<double>> distribute_grid_search(int rank, int num_procs,
     if (rank == num_procs - 1) {
         points_per_rank = number_of_points - points_per_rank * (num_procs - 1);
     }
+     std::cout << "Test2" << std::endl;
     // we calculate every possible combination of the grid, independently of the rank
     std::vector<std::vector<double>> grid_search;
     std::vector<int> counter_per_dimension(grid.size(), 0);
@@ -1529,7 +1530,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
 
     std::cout << "Test" << std::endl;
     // Distribute the grid search over the MPI ranks
-    // auto grid_search_rank = distribute_grid_search(rank, num_procs, grid_points);
+    auto grid_search_rank = distribute_grid_search(rank, num_procs, grid_points);
 
     // short debug print to see if everything worked. Printing rank and amount of grid points as well as first point
     std::cout << "Rank: " << rank << " has " << grid_search_rank.size() << " grid points" << std::endl;
