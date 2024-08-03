@@ -2361,7 +2361,8 @@ int main(int argc, char** argv)
 
         std::vector<int> points_per_dim = {2, 2, 2, 2, 2, 2, 4};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
-        auto result                     = run_with_grid_search(input_dir, result_dir, num_runs, grid);
+        std::cout << "Grid size: " << grid.size() << std::endl;
+        auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid);
     }
     else {
         auto result = run(input_dir, result_dir, num_runs);
