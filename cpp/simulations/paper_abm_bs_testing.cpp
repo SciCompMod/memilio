@@ -1540,7 +1540,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
 
     // Run the grid search
     std::vector<double> rmse_results_per_grid_point;
-    rmse_results_per_grid_point.reserve(grid_search_rank.size());
+    rmse_results_per_grid_point.resize(grid_search_rank.size());
 
 PRAGMA_OMP(parallel for)
 for (size_t i = 0; i < grid_search_rank.size(); i++) {
@@ -2312,8 +2312,8 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
