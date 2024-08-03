@@ -1529,7 +1529,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
 
     std::cout << "Test" << std::endl;
     // Distribute the grid search over the MPI ranks
-    auto grid_search_rank = distribute_grid_search(rank, num_procs, grid_points);
+    // auto grid_search_rank = distribute_grid_search(rank, num_procs, grid_points);
 
     // short debug print to see if everything worked. Printing rank and amount of grid points as well as first point
     std::cout << "Rank: " << rank << " has " << grid_search_rank.size() << " grid points" << std::endl;
