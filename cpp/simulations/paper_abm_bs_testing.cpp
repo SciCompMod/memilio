@@ -1813,9 +1813,11 @@ for (size_t i = 0; i < grid_search_rank.size(); i++) {
     auto rmse =
         calculate_rmse_from_results(input_dir, temp_sim_infection_state_per_age_group[0], max_num_days, start_date);
     rmse_results_per_grid_point.at(i) = rmse;
-
-    write_grid_search_prematurely_to_file(rank, result_dir,
-                                          std::make_pair(grid_search_rank[i], rmse_results_per_grid_point[i]));
+#pragma omp critical
+    {
+        write_grid_search_prematurely_to_file(rank, result_dir,
+                                              std::make_pair(grid_search_rank[i], rmse_results_per_grid_point[i]));
+    }
 }
 
 // make the gathered results available to all ranks
