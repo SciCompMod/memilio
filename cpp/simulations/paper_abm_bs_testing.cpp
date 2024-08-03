@@ -1089,7 +1089,7 @@ std::vector<std::vector<double>> distribute_grid_search(int rank, int num_procs,
         counter_per_dimension.back()++;
         // we increase the counter for the other dimensions if the last dimension has reached the end
         for (int k = (int)grid.size() - 1; k >= 0; k--) {
-            if (counter_per_dimension[k] == (int)grid[k].size()) {
+            if (k > 0 && counter_per_dimension[k] == (int)grid[k].size()) {
                 counter_per_dimension[k] = 0;
                 counter_per_dimension[k - 1]++;
             }
