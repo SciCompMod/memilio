@@ -2359,7 +2359,7 @@ int main(int argc, char** argv)
         std::vector<std::pair<double, double>> grid_boundaries = {{4.0, 7.0}, {0.8, 0.95}, {0.5, 0.7}, {0.3, 0.6},
                                                                   {1.0, 5.0}, {0.2, 0.6},  {0.3, 0.5}};
 
-        std::vector<int> points_per_dim = {10, 4, 4, 4, 10, 7, 4};
+        std::vector<int> points_per_dim = {5, 3, 3, 3, 7, 5, 3};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
         std::cout << "Grid size: " << grid.size() << std::endl;
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid);
