@@ -1540,7 +1540,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     std::vector<double> rmse_results_per_grid_point;
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
-PRAGMA_OMP(parallel for)
+PRAGMA_OMP(parallel for num_threads(32))
 for (size_t i = 0; i < grid_search_rank.size(); i++) {
     auto params = grid_search_rank[i];
 
