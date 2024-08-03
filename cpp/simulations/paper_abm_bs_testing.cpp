@@ -1095,14 +1095,14 @@ std::vector<std::vector<double>> distribute_grid_search(int rank, int num_procs,
             }
         }
     }
-    std::cout << "Befor distribution: " << grid_search.size() << std::endl;
+
     // we calculate the grid search for the rank
-    std::vector<std::vector<double>> grid_search_rank;
+    std::vector<std::vector<double>> grid_search_ranks;
     for (int i = 0; i < points_per_rank; i++) {
-        grid_search_rank.push_back(grid_search[i + rank * points_per_rank]);
+        grid_search_ranks.push_back(grid_search[i + rank * points_per_rank]);
     }
-    std::cout << "After distribution: " << grid_search_rank.size() << std::endl;
-    return grid_search_rank;
+
+    return grid_search_ranks;
 }
 
 void create_easter_social_event(mio::abm::World& world, double perc_easter_event)
