@@ -1088,8 +1088,8 @@ std::vector<std::vector<double>> distribute_grid_search(int rank, int num_procs,
         // we increase the counter for the last dimension
         counter_per_dimension.back()++;
         // we increase the counter for the other dimensions if the last dimension has reached the end
-        for (int k = (int)grid.size() - 1; k >= 0; k--) {
-            if (k > 0 && counter_per_dimension[k] == (int)grid[k].size()) {
+        for (int k = (int)grid.size(); k > 0; k--) {
+            if (counter_per_dimension[k] == (int)grid[k].size()) {
                 counter_per_dimension[k] = 0;
                 counter_per_dimension[k - 1]++;
             }
@@ -2310,8 +2310,8 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
