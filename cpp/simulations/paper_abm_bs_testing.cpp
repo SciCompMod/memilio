@@ -1527,6 +1527,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
 
     // define parameters for grid search
 
+    std::cout << "Test" << std::endl;
     // Distribute the grid search over the MPI ranks
     auto grid_search_rank = distribute_grid_search(rank, num_procs, grid_points);
 
