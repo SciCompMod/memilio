@@ -527,6 +527,11 @@ public:
         m_goes_to_easter_event = goes_to_easter;
     }
 
+    bool was_person_ever_infected() const
+    {
+        return !m_infections.empty();
+    }
+
 private:
     observer_ptr<Location> m_location; ///< Current Location of the Person.
     std::vector<uint32_t> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
