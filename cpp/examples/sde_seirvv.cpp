@@ -74,19 +74,13 @@ int main()
 
     model.check_constraints();
 
-    // The second variant enters with 100 individuals at some point tmid. The model does not fix
-    // the increase of totalpopulation caused by this injection.
+    // Simulate the model up until tmid, with only the first variant.
     auto sseirv = mio::sseirvv::simulate(t0, tmid, dt, model);
-    model.populations[{mio::sseirvv::InfectionState::Susceptible}] = sseirv.get_last_value()[0];
-    model.populations[{mio::sseirvv::InfectionState::ExposedV1}] = sseirv.get_last_value()[1];
-    model.populations[{mio::sseirvv::InfectionState::InfectedV1}]  = sseirv.get_last_value()[2];
-    model.populations[{mio::sseirvv::InfectionState::RecoveredV1}] = sseirv.get_last_value()[3];
-    model.populations[{mio::sseirvv::InfectionState::ExposedV2}]  = sseirv.get_last_value()[4];
-    model.populations[{mio::sseirvv::InfectionState::InfectedV2}]  = 100;
-    model.populations[{mio::sseirvv::InfectionState::RecoveredV2}] = sseirv.get_last_value()[6];
-    model.populations[{mio::sseirvv::InfectionState::ExposedV1V2}]  = sseirv.get_last_value()[7];
-    model.populations[{mio::sseirvv::InfectionState::InfectedV1V2}]  = sseirv.get_last_value()[8];
-    model.populations[{mio::sseirvv::InfectionState::RecoveredV1V2}] = sseirv.get_last_value()[9];
+    // Set the model population to the simulation result, so it is used as initial value for the second simulation.
+    model.populations.array() = sseirv.get_last_value().cast<mio::UncertainValue<ScalarType>>();
+    // The second variant enters with 100 individuals. This increases the model population to total_population + 100.
+    model.populations[{mio::sseirvv::InfectionState::InfectedV2}] = 100;
+    // Simulate the model up until tmid, with only the first variant.
     auto sseirv2 = mio::sseirvv::simulate(tmid, tmax, dt, model);
 
     sseirv.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
