@@ -8,7 +8,7 @@ Below is an overview of the model architecture.
 
 ## Simulation
 
-The simulation runs in discrete time steps using an euler-maruyama integration scheme. The Simulation class handles the parameters and the numerical integrator. It also stores the result. 
+The simulation runs in discrete time steps using an Euler-Maruyama integration scheme. The Simulation class handles the parameters and the numerical integrator. It also stores the result. 
 ![SEIRVV_model](https://github.com/user-attachments/assets/8bb70557-071e-4ec0-8e5a-81380eb2086c)
 | Mathematical variable                   | C++ variable name | Description |
 |---------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
