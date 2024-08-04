@@ -37,10 +37,6 @@ int main()
 
     mio::sseirvv::Model model;
     
-    // It is assumed that both variants have the same transmission probability 
-    // on contact and the same time exposed. The time infected is scaled by
-    // 1.35 for the second variant.
-
     ScalarType total_population = 180000;
 
     model.populations[{mio::sseirvv::InfectionState::ExposedV1}]  = 0;
@@ -64,6 +60,9 @@ int main()
         model.populations[{mio::sseirvv::InfectionState::InfectedV1V2}] -
         model.populations[{mio::sseirvv::InfectionState::RecoveredV1V2}];
 
+    // It is assumed that both variants have the same transmission probability 
+    // on contact and the same time exposed. The time infected is scaled by
+    // 1.35 for the second variant.
     model.parameters.get<mio::sseirvv::ContactPatterns>().get_baseline()(0, 0) = 1;
     model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1>(0.076);
     model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2>(0.076);
