@@ -37,11 +37,9 @@ int main()
 
     mio::sseirvv::Model model;
     
-    /*
-    * It is assumed that both variants have the same transmission probability 
-    * on contact and the same time exposed. The time infected is scaled by
-    * 1.35 for the second variant.
-    */
+    // It is assumed that both variants have the same transmission probability 
+    // on contact and the same time exposed. The time infected is scaled by
+    // 1.35 for the second variant.
 
     ScalarType total_population = 180000;
 
