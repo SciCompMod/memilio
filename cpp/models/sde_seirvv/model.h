@@ -66,11 +66,9 @@ public:
         ScalarType coeffStoIV2 = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
                            params.get<TransmissionProbabilityOnContactV2>() / populations.get_total();
         
-        /*
-        * Normal distributed values for the stochastic part of the flows, variables are encoded 
-        * in the following way: x_y is the stochastic part for the flow from x to y. Variant 
-        * specific compartments also get an addendum v1 or v2 denoting the relevant variant.
-        */
+        // Normal distributed values for the stochastic part of the flows, variables are encoded 
+        // in the following way: x_y is the stochastic part for the flow from x to y. Variant 
+        // specific compartments also get an addendum v1 or v2 denoting the relevant variant.
 
         ScalarType s_ev1 = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
         ScalarType s_ev2 = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
