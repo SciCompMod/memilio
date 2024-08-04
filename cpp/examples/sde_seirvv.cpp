@@ -17,14 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <fstream>
-#include <vector>
-#include <iostream>
-
 #include "memilio/utils/logging.h"
+#include "memilio/utils/uncertain_value.h"
 #include "sde_seirvv/model.h"
 #include "sde_seirvv/simulation.h"
-#include "memilio/utils/random_number_generator.h"
+
+#include <vector>
 
 int main()
 {
