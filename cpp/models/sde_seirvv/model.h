@@ -80,11 +80,9 @@ public:
         ScalarType ev1v2_iv1v2 = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
         ScalarType iv1v2_rv1v2 = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);  
 
-        /*
-        * Assuming that no person can change its InfectionState twice in a single time step,
-        * take the minimum of the calculated flow and the source compartment, to ensure that
-        * no compartment attains negative values.
-        */
+        // Assuming that no person can change its InfectionState twice in a single time step,
+        // take the minimum of the calculated flow and the source compartment, to ensure that
+        // no compartment attains negative values.
 
         // Calculate inv_step_size and inv_sqrt_step_size for optimization.
         ScalarType inv_step_size = 1.0 / step_size;
