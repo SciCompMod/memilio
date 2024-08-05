@@ -1,8 +1,7 @@
 import os
 import pickle
-import spektral
 import time
-
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -17,6 +16,7 @@ from keras.optimizers import Adam
 
 from sklearn.model_selection import KFold
 
+import spektral
 from spektral.data import  MixedLoader
 from spektral.layers import ARMAConv, APPNPConv, GATConv, GCNConv
 from spektral.transforms.normalize_adj import NormalizeAdj
@@ -69,6 +69,7 @@ node_features = new_inputs
 node_labels = new_labels
 
 # define parameters of best model 
+
 layers = ARMAConv
 number_of_layers = 1
 number_of_neurons = 1024
@@ -81,6 +82,12 @@ df = pd.DataFrame(
 
 def train_and_evaluate_model(
         epochs, learning_rate, param, configurations):
+    """! Trains and evaluates the GNN with 5 fold cross validation.
+    @param epochs Number of epochs conducted in Training. 
+    @param learning_rate Learning rate which descriebs the learning behavior of the optimizer. 
+    @param param Element from list parameters, containing layer type, number of layers and number of neurons. 
+    @return configurations List of RAMAConv configurations. 
+   """
 
     layer, number_of_layer, number_of_n = param
 
