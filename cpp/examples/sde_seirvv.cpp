@@ -79,7 +79,7 @@ int main()
     model.populations.array() = sseirv.get_last_value().cast<mio::UncertainValue<ScalarType>>();
     // The second variant enters with 100 individuals. This increases the model population to total_population + 100.
     model.populations[{mio::sseirvv::InfectionState::InfectedV2}] = 100;
-    // Simulate the model up until tmid, with only the first variant.
+    // Simulate the model from tmid to tmax, now with both variants.
     auto sseirv2 = mio::sseirvv::simulate(tmid, tmax, dt, model);
 
     sseirv.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
