@@ -545,7 +545,7 @@ public:
         m_is_local_population_cache_valid = false;
     }
 
-private:
+protected:
     /**
      * @brief Person%s interact at their Location and may become infected.
      * @param[in] t The current TimePoint.

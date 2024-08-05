@@ -1,4 +1,6 @@
 add_library(graph_abm
+    model_wrapper.h
+    model_wrapper.cpp
     graph_abm_mobility.cpp
     graph_abm_mobility.h
     mobility_rules.cpp

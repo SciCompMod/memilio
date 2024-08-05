@@ -76,10 +76,9 @@ add_executable(ode_secir_ageres_example ode_secir_ageres.cpp)
 target_link_libraries(ode_secir_ageres_example PRIVATE memilio ode_secir)
 target_compile_options(ode_secir_ageres_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(graph_example graph.cpp)
-target_link_libraries(graph_example PRIVATE memilio ode_seir)
-target_compile_options(graph_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-
+# add_executable(graph_example graph.cpp)
+# target_link_libraries(graph_example PRIVATE memilio ode_seir)
+# target_compile_options(graph_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 add_executable(graph_stochastic_mobility_example graph_stochastic_mobility.cpp)
 target_link_libraries(graph_stochastic_mobility_example PRIVATE memilio ode_secir)
 target_compile_options(graph_stochastic_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -97,7 +96,6 @@ add_executable(twitter_mobility_example twitter_mobility.cpp)
 target_link_libraries(twitter_mobility_example PRIVATE memilio ode_secir)
 
 target_compile_options(twitter_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-
 
 add_executable(ide_seir_example ide_seir.cpp)
 target_link_libraries(ide_seir_example PRIVATE memilio ide_seir)
