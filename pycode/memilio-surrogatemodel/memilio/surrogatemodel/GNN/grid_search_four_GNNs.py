@@ -23,8 +23,6 @@ from spektral.layers import ARMAConv, APPNPConv, GATConv, GCNConv
 from spektral.transforms.normalize_adj import NormalizeAdj
 from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale_laplacian
 
-import re 
-import matplotlib.pyplot as plt
 # load and prepare data
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(
@@ -75,7 +73,7 @@ node_labels = new_labels
 # specify dimensions of the grid search 
 layers = [GCNConv, ARMAConv, APPNPConv, GATConv]
 number_of_layers = [1, 2, 3]
-number_of_neurons = [32,128,512,1024]
+number_of_neurons = [32, 128, 512, 1024]
 
 # summarize all grid search parameters into a list that can be looped through 
 parameters = []
@@ -93,9 +91,13 @@ df = pd.DataFrame(
 
 def train_and_evaluate_model(
         epochs, learning_rate, param):
-
+    """! Trains and evaluates the GNN with 5 fold cross validation.
+    @param epochs Number of epochs conducted in Training. 
+    @param learning_rate Learning rate which descriebs the learning behavior of the optimizer. 
+    @param param Element from list parameters, containing layer type, number of layers and number of neurons. 
+    @return Returns NN output. 
+   """
     layer, number_of_layer, number_of_n = param
-
     class MyDataset(spektral.data.dataset.Dataset):
         def read(self):
             if layer == GCNConv:
@@ -107,9 +109,6 @@ def train_and_evaluate_model(
                 self.a = gcn_filter(adjacency_matrix)
             elif layer == GATConv:
                 self. a = adjacency_matrix
-
-            # self.a = normalized_adjacency(adjacency_matrix)
-            # self.a = rescale_laplacian(normalized_laplacian(adjacency_matrix))
 
             return [spektral.data.Graph(x=x, y=y) for x, y in zip(node_features, node_labels)]
 
@@ -233,6 +232,11 @@ def train_and_evaluate_model(
     loss_fn = MeanAbsolutePercentageError()
 
     def train_step(inputs, target):
+        """! Performs one training step by making a prediction, calculating the loss and  gradients and apply the gradients based on the chosen optimizer. 
+        @param inputs Input data. Usually five days of compartment data. 
+        @param target Labels. The compartment data which has to be predicted. 
+        @return Returns loss and accurycy calculated from prediction and label.
+     """
         with tf.GradientTape() as tape:
             predictions = model(inputs, training=True)
             loss = loss_fn(target, predictions) + sum(model.losses)
@@ -244,6 +248,10 @@ def train_and_evaluate_model(
         return loss, acc
 
     def evaluate(loader):
+        """! Valdidation step, where the NN is applied on the validation dataset.
+        @loader Dataloader which loads the validation data. 
+        @return Returns loss and accurycy calculated from prediction and label of the validation data.
+     """
         output = []
         step = 0
         while step < loader.steps_per_epoch:
@@ -259,48 +267,6 @@ def train_and_evaluate_model(
             if step == loader.steps_per_epoch:
                 output = np.array(output)
                 return np.average(output[:, :-1], 0, weights=output[:, -1])
-
-    n_days = int(new_labels.shape[2]/48)
-
-    def test_evaluation(loader):
-
-        inputs, target = loader.__next__()
-        pred = model(inputs, training=False)
-
-        mean_per_batch = []
-        states_array = []
-        InfectionStates = ['Susceptible','Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
-        for i in InfectionStates:
-        #for i in InfectionState.values():
-            states_array.append(i)
-
-        for batch_p, batch_t in zip(pred, target):
-            MAPE_v = []
-            for v_p, v_t in zip(batch_p, batch_t):
-
-                pred_ = tf.reshape(v_p, (n_days, 48))
-                target_ = tf.reshape(v_t, (n_days, 48))
-
-                diff = pred_ - target_
-                relative_err = (abs(diff))/abs(target_)
-                relative_err_transformed = np.asarray(
-                    relative_err).transpose().reshape(8, -1)
-                relative_err_means_percentage = relative_err_transformed.mean(
-                    axis=1) * 100
-
-                MAPE_v.append(relative_err_means_percentage)
-
-            mean_per_batch.append(np.asarray(MAPE_v).transpose().mean(axis=1))
-
-        mean_percentage = pd.DataFrame(
-            data=np.asarray(mean_per_batch).transpose().mean(axis=1),
-            index=[str(compartment).split('.')[1]
-                   for compartment in states_array[:8]],
-            # index=[str(compartment).split('.')[1]
-            #       for compartment in InfectionState.values()],
-            columns=['Percentage Error'])
-
-        return mean_percentage
 
 
     kf = KFold(n_splits=5)
@@ -341,8 +307,6 @@ def train_and_evaluate_model(
         val_losses_history = []
 
         start = time.perf_counter()
-
-
     
         for batch in loader_tr:
                 step += 1
@@ -382,8 +346,6 @@ def train_and_evaluate_model(
         ################################################################################
         model.set_weights(best_weights)  # Load best model
         test_loss, test_acc = evaluate(loader_te)
-        # test_MAPE = test_evaluation(loader_te)
-        # print(test_MAPE)
 
         print(
                 "Done. Test loss: {:.4f}. Test acc: {:.2f}".format(
@@ -396,15 +358,6 @@ def train_and_evaluate_model(
 
         elapsed = time.perf_counter() - start
 
-    # plot the losses
-    # plt.figure()
-    # plt.plot(np.asarray(losses_history_all).mean(axis=0), label='train loss')
-    # plt.plot(np.asarray(val_losses_history_all).mean(axis=0), label='val loss')
-    # plt.xlabel('Epoch')
-    # plt.ylabel('Loss ( MAPE)')
-    # plt.title('Loss for' + str(layer))
-    # plt.legend()
-    # plt.savefig('losses'+str(layer)+'.png')
 
     # print out stats
     print("Best train losses: {} ".format(train_losses))
@@ -423,8 +376,6 @@ def train_and_evaluate_model(
                              np.mean(val_losses),
                              np.mean(test_scores),
                              (elapsed / 60), test_scores, val_losses, train_losses]
-    # [np.asarray(losses_history_all).mean(axis=0)],
-    # [np.asarray(val_losses_history_all).mean(axis=0)]]
 
     path = os.path.dirname(os.path.realpath(__file__))
     file_path = os.path.join(
@@ -439,7 +390,7 @@ def train_and_evaluate_model(
 
 start_hyper = time.perf_counter()
 epochs = 1500
-filename = '/dataframe_GNN_gridsearch.csv'
+filename = '/dataframe_GNN_gridsearch_.csv'
 for param in parameters:
     train_and_evaluate_model(epochs, 0.001, param)
 
