@@ -44,8 +44,8 @@ enum class TestType : std::uint32_t
 * @brief The TestResult of a Person.
 */
 struct TestResult {
-    TimePoint time_of_testing = TimePoint(std::numeric_limits<int>::min()); ///< The TimePoint when the Person performs the test.
-    bool result; ///< The test result.
+    TimePoint time_of_testing{std::numeric_limits<int>::min()}; ///< The TimePoint when the Person performs the test.
+    bool result{false}; ///< The test result.
 };
 
 } // namespace abm
