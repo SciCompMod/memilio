@@ -470,14 +470,6 @@ void set_parameters(mio::abm::Parameters params)
 
     params.set<mio::abm::IncubationPeriod>({{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, 4.});
 
-    // Set protection level from high viral load. Information based on: https://doi.org/10.1186/s12916-021-02220-0 and https://doi.org/10.1371/journal.pone.0243597
-    params.get<mio::abm::HighViralLoadProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_0_to_4,
-                                                           mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0}, {5, 0.3}, {10, 0.6}, {15, 0.8}, {20, 1}}, days);
-    };
-
     //0-4
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 0.276;
     params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.092;
