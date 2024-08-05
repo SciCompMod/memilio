@@ -175,7 +175,7 @@ TEST(IdeSecir, checkStartTime)
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
-    // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
+    // Create TimeSeries with num_transitions times num_agegroups(=1) elements where transitions needed for simulation will be stored.
     mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
 
     // Define transitions that will be used for initialization.
