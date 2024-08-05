@@ -85,7 +85,7 @@ def train_and_evaluate_model(
     @param epochs Number of epochs conducted in Training. 
     @param learning_rate Learning rate which descriebs the learning behavior of the optimizer. 
     @param param Element from list parameters, containing layer type, number of layers and number of neurons. 
-    @param configurations List of RAMAConv configurations. 
+    @param configurations List of ARMAConv configurations. 
     @return Returns NN output.
    """
 
