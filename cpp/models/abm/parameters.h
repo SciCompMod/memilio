@@ -605,7 +605,7 @@ struct UseLocationCapacityForTransmissions {
 using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates, UseLocationCapacityForTransmissions>;
 
 /**
- * @brief Parameters of the simulation that are the same everywhere within the World.
+ * @brief Parameters of the simulation that are the same everywhere within the Model.
  */
 class Parameters : public ParametersBase
 {

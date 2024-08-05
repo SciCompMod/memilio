@@ -21,7 +21,7 @@
 #include "abm/location_id.h"
 #include "abm/parameters.h"
 #include "abm/person.h"
-#include "abm/world.h"
+#include "abm/model.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
 
@@ -43,20 +43,20 @@ TEST(TestLocation, reachCapacity)
 
     auto t     = mio::abm::TimePoint{mio::abm::hours(8).seconds()};
     auto dt    = mio::abm::hours(1);
-    auto world = mio::abm::World(num_age_groups);
+    auto model = mio::abm::Model(num_age_groups);
 
     //setup so p1 doesn't do transition
-    world.parameters
+    model.parameters
         .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
-    world.parameters
+    model.parameters
         .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
-    world.parameters.get<mio::abm::AgeGroupGotoSchool>().set_multiple({age_group_5_to_14}, true);
-    world.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
+    model.parameters.get<mio::abm::AgeGroupGotoSchool>().set_multiple({age_group_5_to_14}, true);
+    model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
 
-    auto home_id   = world.add_location(mio::abm::LocationType::Home);
-    auto school_id = world.add_location(mio::abm::LocationType::School);
+    auto home_id   = model.add_location(mio::abm::LocationType::Home);
+    auto school_id = model.add_location(mio::abm::LocationType::School);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -71,26 +71,26 @@ TEST(TestLocation, reachCapacity)
         .WillOnce(testing::Return(0.8)) // draw random school hour
         .WillRepeatedly(testing::Return(1.0));
 
-    auto p1 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedNoSymptoms);
-    auto p2 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible);
+    auto p1 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedNoSymptoms);
+    auto p2 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible);
 
-    world.get_person(p1).set_assigned_location(mio::abm::LocationType::School, school_id);
-    world.get_person(p2).set_assigned_location(mio::abm::LocationType::School, school_id);
-    world.get_person(p1).set_assigned_location(mio::abm::LocationType::Home, home_id);
-    world.get_person(p2).set_assigned_location(mio::abm::LocationType::Home, home_id);
+    model.get_person(p1).set_assigned_location(mio::abm::LocationType::School, school_id);
+    model.get_person(p2).set_assigned_location(mio::abm::LocationType::School, school_id);
+    model.get_person(p1).set_assigned_location(mio::abm::LocationType::Home, home_id);
+    model.get_person(p2).set_assigned_location(mio::abm::LocationType::Home, home_id);
 
-    world.get_location(school_id).set_capacity(1, 66);
+    model.get_location(school_id).set_capacity(1, 66);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
 
-    world.evolve(t, dt);
+    model.evolve(t, dt);
 
-    ASSERT_EQ(world.get_person(p1).get_location(), school_id);
-    ASSERT_EQ(world.get_person(p2).get_location(), home_id); // p2 should not be able to enter the school
-    ASSERT_EQ(world.get_number_persons(school_id), 1);
-    ASSERT_EQ(world.get_number_persons(home_id), 1);
+    ASSERT_EQ(model.get_person(p1).get_location(), school_id);
+    ASSERT_EQ(model.get_person(p2).get_location(), home_id); // p2 should not be able to enter the school
+    ASSERT_EQ(model.get_number_persons(school_id), 1);
+    ASSERT_EQ(model.get_number_persons(home_id), 1);
 }
 
 TEST(TestLocation, computeSpacePerPersonRelative)

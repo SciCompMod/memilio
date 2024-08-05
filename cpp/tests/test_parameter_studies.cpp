@@ -152,11 +152,10 @@ TEST(ParameterStudies, sample_graph)
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
 
-    auto graph = mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>();
+    auto graph = mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1,
-                   mio::MigrationParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
+    graph.add_edge(0, 1, mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
     auto study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 0.0, 0.5, 1);
     mio::log_rng_seeds(study.get_rng(), mio::LogLevel::warn);
@@ -289,9 +288,9 @@ TEST(ParameterStudies, check_ensemble_run_result)
         params.get<mio::osecir::TimeInfectedSymptoms<double>>()[i]   = 5.;
         params.get<mio::osecir::TimeInfectedSevere<double>>()[i]     = 10.;
         params.get<mio::osecir::TimeInfectedCritical<double>>()[i]   = 8.;
-        params.get<mio::osecir::Seasonality<double>>()          = 0.0;
-        params.get<mio::osecir::ICUCapacity<double>>()          = 100.0;
-        params.get<mio::osecir::TestAndTraceCapacity<double>>() = 10.0;
+        params.get<mio::osecir::Seasonality<double>>()               = 0.0;
+        params.get<mio::osecir::ICUCapacity<double>>()               = 100.0;
+        params.get<mio::osecir::TestAndTraceCapacity<double>>()      = 10.0;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
