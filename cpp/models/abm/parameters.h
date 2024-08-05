@@ -316,38 +316,40 @@ struct HighViralLoadProtectionFactor {
  * @brief Parameters that describe the reliability of a test.
  */
 struct TestParameters {
-     UncertainValue<> sensitivity;
-     UncertainValue<> specificity;
+    UncertainValue<> sensitivity;
+    UncertainValue<> specificity;
+    TimeSpan required_time;
+    TestType type;
 
-     /**
+    /**
       * serialize this. 
       * @see mio::serialize
       */
-     template <class IOContext>
-     void serialize(IOContext& io) const
-     {
-         auto obj = io.create_object("TestParameters");
-         obj.add_element("Sensitivity", sensitivity);
-         obj.add_element("Specificity", specificity);
-     }
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("TestParameters");
+        obj.add_element("Sensitivity", sensitivity);
+        obj.add_element("Specificity", specificity);
+    }
 
-     /**
+    /**
       * deserialize an object of this class.
       * @see mio::deserialize
       */
-     template <class IOContext>
-     static IOResult<TestParameters> deserialize(IOContext& io)
-     {
-         auto obj  = io.expect_object("TestParameters");
-         auto sens = obj.expect_element("Sensitivity", mio::Tag<UncertainValue<>>{});
-         auto spec = obj.expect_element("Specificity", mio::Tag<UncertainValue<>>{});
-         return apply(
-             io,
-             [](auto&& sens_, auto&& spec_) {
-                 return TestParameters{sens_, spec_};
-             },
-             sens, spec);
-     }
+    template <class IOContext>
+    static IOResult<TestParameters> deserialize(IOContext& io)
+    {
+        auto obj  = io.expect_object("TestParameters");
+        auto sens = obj.expect_element("Sensitivity", mio::Tag<UncertainValue<>>{});
+        auto spec = obj.expect_element("Specificity", mio::Tag<UncertainValue<>>{});
+        return apply(
+            io,
+            [](auto&& sens_, auto&& spec_) {
+                return TestParameters{sens_, spec_};
+            },
+            sens, spec);
+    }
 };
 
 /**
@@ -358,9 +360,9 @@ struct TestData {
     static auto get_default(AgeGroup /*size*/)
     {
         Type default_val                 = Type({TestType::Count});
-        default_val[{TestType::Generic}] = TestParameters{0.9, 0.99};
-        default_val[{TestType::Antigen}] = TestParameters{0.8, 0.88};
-        default_val[{TestType::PCR}]     = TestParameters{0.9, 0.99};
+        default_val[{TestType::Generic}] = TestParameters{0.9, 0.99, hours(48), TestType::Generic};
+        default_val[{TestType::Antigen}] = TestParameters{0.8, 0.88, minutes(30), TestType::Antigen};
+        default_val[{TestType::PCR}]     = TestParameters{0.9, 0.99, hours(48), TestType::PCR};
         return default_val;
     }
     static std::string name()

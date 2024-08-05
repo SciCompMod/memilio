@@ -64,17 +64,17 @@ TEST(TestTestingScheme, runScheme)
     auto testing_criteria1                                   = mio::abm::TestingCriteria({}, test_infection_states1);
     std::vector<mio::abm::TestingCriteria> testing_criterias = {testing_criteria1};
 
-    const auto testing_min_time = mio::abm::days(1);
-    const auto start_date       = mio::abm::TimePoint(0);
-    const auto end_date         = mio::abm::TimePoint(60 * 60 * 24 * 3);
-    const auto probability      = 0.8;
-    const auto test_params_pcr  = mio::abm::TestParameters{0.9, 0.99};
+    auto validity_period       = mio::abm::days(1);
+    const auto start_date      = mio::abm::TimePoint(0);
+    const auto end_date        = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability     = 0.8;
+    const auto test_params_pcr = mio::abm::TestParameters{0.9, 0.99, mio::abm::hours(48), mio::abm::TestType::PCR};
 
     std::vector<mio::abm::InfectionState> test_infection_states = {mio::abm::InfectionState::InfectedSymptoms,
                                                                    mio::abm::InfectionState::InfectedNoSymptoms};
 
-    auto testing_scheme1 = mio::abm::TestingScheme(testing_criteria1, testing_min_time, start_date, end_date,
-                                                   test_params_pcr, probability);
+    auto testing_scheme1 =
+        mio::abm::TestingScheme(testing_criteria1, validity_period, start_date, end_date, test_params_pcr, probability);
 
     EXPECT_EQ(testing_scheme1.is_active(), false);
     testing_scheme1.update_activity_status(mio::abm::TimePoint(10));
@@ -85,8 +85,8 @@ TEST(TestTestingScheme, runScheme)
 
     std::vector<mio::abm::InfectionState> test_infection_states2 = {mio::abm::InfectionState::Recovered};
     auto testing_criteria2 = mio::abm::TestingCriteria({}, test_infection_states2);
-    auto testing_scheme2   = mio::abm::TestingScheme(testing_criteria2, testing_min_time, start_date, end_date,
-                                                     test_params_pcr, probability);
+    auto testing_scheme2 =
+        mio::abm::TestingScheme(testing_criteria2, validity_period, start_date, end_date, test_params_pcr, probability);
 
     mio::abm::Location loc_home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location loc_work(mio::abm::LocationType::Work, 0, num_age_groups);
@@ -98,36 +98,39 @@ TEST(TestTestingScheme, runScheme)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::Exactly(5))
-        .WillOnce(testing::Return(0.7)) // Person got tested
+        .WillOnce(testing::Return(0.7)) // Person 1 got test 
         .WillOnce(testing::Return(0.7)) // Test is positive
-        .WillOnce(testing::Return(0.5)) // Person complies to isolation
-        .WillOnce(testing::Return(0.7)) // Person got tested
-        .WillOnce(testing::Return(0.5)); // Test is negative
-    EXPECT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date), false); // Person tests and tests positive
-    EXPECT_EQ(testing_scheme2.run_scheme(rng_person2, person2, start_date), true); // Person tests and tests negative
-    EXPECT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date),
-              true); // Person doesn't test because the last test is too recent (this is deterministic)
+        .WillOnce(testing::Return(0.5)) // Person 1 complies to isolation
+        .WillOnce(testing::Return(0.7)) // Person 2 got test
+        .WillOnce(testing::Return(0.5)); // Person 2 tested negative and can enter
+
+    EXPECT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date + test_params_pcr.required_time),
+              false); // Person tests and tests positive
+    EXPECT_EQ(testing_scheme2.run_scheme(rng_person2, person2, start_date + test_params_pcr.required_time),
+              true); // Person tests and tests negative
+    EXPECT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date + test_params_pcr.required_time),
+              false); // Person doesn't test but used the last result (false to enter)
 }
 
 TEST(TestTestingScheme, initAndRunTestingStrategy)
 {
-    auto rng                    = mio::RandomNumberGenerator();
-    const auto testing_min_time = mio::abm::days(1);
-    const auto start_date       = mio::abm::TimePoint(0);
-    const auto end_date         = mio::abm::TimePoint(60 * 60 * 24 * 3);
-    const auto probability      = 0.8;
-    const auto test_params_pcr  = mio::abm::TestParameters{0.9, 0.99};
+    auto rng                   = mio::RandomNumberGenerator();
+    auto validity_period       = mio::abm::days(1);
+    const auto start_date      = mio::abm::TimePoint(0);
+    const auto end_date        = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability     = 0.8;
+    const auto test_params_pcr = mio::abm::TestParameters{0.9, 0.99, mio::abm::hours(48), mio::abm::TestType::PCR};
 
     std::vector<mio::abm::InfectionState> test_infection_states = {mio::abm::InfectionState::InfectedSymptoms,
                                                                    mio::abm::InfectionState::InfectedNoSymptoms};
     auto testing_criteria1                                      = mio::abm::TestingCriteria({}, test_infection_states);
-    auto testing_scheme1 = mio::abm::TestingScheme(testing_criteria1, testing_min_time, start_date, end_date,
-                                                   test_params_pcr, probability);
+    auto testing_scheme1 =
+        mio::abm::TestingScheme(testing_criteria1, validity_period, start_date, end_date, test_params_pcr, probability);
     testing_scheme1.update_activity_status(mio::abm::TimePoint(0));
     std::vector<mio::abm::InfectionState> test_infection_states2 = {mio::abm::InfectionState::Recovered};
     auto testing_criteria2 = mio::abm::TestingCriteria({}, test_infection_states2);
-    auto testing_scheme2   = mio::abm::TestingScheme(testing_criteria2, testing_min_time, start_date, end_date,
-                                                     test_params_pcr, probability);
+    auto testing_scheme2 =
+        mio::abm::TestingScheme(testing_criteria2, validity_period, start_date, end_date, test_params_pcr, probability);
     testing_scheme2.update_activity_status(mio::abm::TimePoint(0));
     mio::abm::Location loc_work(mio::abm::LocationType::Work, 0);
     auto person1     = make_test_person(loc_work, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
@@ -151,10 +154,10 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
         mio::abm::TestingStrategy(std::vector<mio::abm::TestingStrategy::LocalStrategy>{});
     test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme1);
     test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme2);
-    EXPECT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date),
+    EXPECT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date + test_params_pcr.required_time),
               false); // Person tests and tests positive
-    EXPECT_EQ(test_strategy.run_strategy(rng_person2, person2, loc_work, start_date),
+    EXPECT_EQ(test_strategy.run_strategy(rng_person2, person2, loc_work, start_date + test_params_pcr.required_time),
               true); // Person tests and tests negative
-    EXPECT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date),
-              true); // Person 1 complies to test but the time is too short between tests
+    EXPECT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date + test_params_pcr.required_time),
+              false); // Person doesn't test but used the last result (false to enter)
 }

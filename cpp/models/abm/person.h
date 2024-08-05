@@ -29,6 +29,7 @@
 #include "abm/person_id.h"
 #include "abm/personal_rng.h"
 #include "abm/time.h"
+#include "abm/test_type.h"
 #include "abm/vaccine.h"
 #include "abm/intervention_type.h"
 #include "abm/mask.h"
@@ -154,15 +155,6 @@ public:
     void add_time_at_location(const TimeSpan dt)
     {
         m_time_at_location += dt;
-    }
-
-    /**
-     * @brief Get the TimePoint of the last negative test.
-     * @return TimePoint since the last test.
-     */
-    TimePoint get_time_of_last_test() const
-    {
-        return m_time_of_last_test;
     }
 
     /**
@@ -382,7 +374,7 @@ public:
     }
 
     /**
-     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person.
+     * @brief Get the latest #ExposureType and its initial TimePoint of the Person.
      */
     std::pair<ExposureType, TimePoint> get_latest_protection() const;
 
@@ -418,6 +410,22 @@ public:
             loc, age, id);
     }
 
+    /**
+     * @brief Add TestResult to the Person
+     * @param[in] t The TimePoint of the test.
+     * @param[in] type The TestType of the test.
+     * @param[in] result The result of the test.
+    */
+    void add_test_result(TimePoint t, TestType type, bool result);
+
+    /**
+     * @brief Get the most recent TestResult performed from the Person based on the TestType.
+     * If time_of_testing == TimePoint(std::numeric_limits<int>::min()), there is no previous TestResult.
+     * @param[in] type The TestType of the test.
+     * @return The latest TestResult of the given Type.
+    */
+    TestResult get_test_result(TestType type) const;
+
 private:
     LocationId m_location; ///< Current Location of the Person.
     LocationType m_location_type; ///< Type of the current Location.
@@ -432,14 +440,14 @@ private:
     double m_random_schoolgroup; ///< Value to determine if the Person goes to school or stays at home during lockdown.
     double m_random_goto_work_hour; ///< Value to determine at what time the Person goes to work.
     double m_random_goto_school_hour; ///< Value to determine at what time the Person goes to school.
-    TimePoint m_time_of_last_test; ///< TimePoint of the last negative test.
     Mask m_mask; ///< The Mask of the Person.
     std::vector<ScalarType>
         m_compliance; ///< Vector of compliance values for all #InterventionType%s. Values from 0 to 1.
     PersonId m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
-    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
+    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
+    CustomIndexArray<TestResult, TestType> m_test_results; ///< CustomIndexArray for TestResults.
 };
 
 } // namespace abm

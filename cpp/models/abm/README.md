@@ -98,7 +98,6 @@ add_household_group_to_model(model, twoPersonHousehold_group);
 During the simulation, people can get tested, and we have to specify the scheme for that:
 
 ```cpp
-auto testing_min_time = mio::abm::days(1);
 auto probability      = 0.5;
 auto start_date       = mio::abm::TimePoint(0);
 auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(30);
@@ -107,7 +106,7 @@ auto test_at_work     = std::vector<mio::abm::LocationType>{mio::abm::LocationTy
 auto testing_criteria_work =
     std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
 auto testing_scheme_work =
-    mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
+    mio::abm::TestingScheme(testing_criteria_work, start_date, end_date, test_type, probability);
 model.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 ```
 
