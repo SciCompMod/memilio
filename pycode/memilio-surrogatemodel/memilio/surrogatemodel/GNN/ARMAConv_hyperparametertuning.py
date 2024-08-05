@@ -1,7 +1,6 @@
 import os
 import pickle
 import time
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -20,7 +19,7 @@ import spektral
 from spektral.data import  MixedLoader
 from spektral.layers import ARMAConv, APPNPConv, GATConv, GCNConv
 from spektral.transforms.normalize_adj import NormalizeAdj
-from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale_laplacian, normalized_adjacency
+from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale_laplacian
 
 #from memilio.simulation.secir import InfectionState
 # load and prepare data
@@ -86,7 +85,8 @@ def train_and_evaluate_model(
     @param epochs Number of epochs conducted in Training. 
     @param learning_rate Learning rate which descriebs the learning behavior of the optimizer. 
     @param param Element from list parameters, containing layer type, number of layers and number of neurons. 
-    @return configurations List of RAMAConv configurations. 
+    @param configurations List of RAMAConv configurations. 
+    @return Returns NN output.
    """
 
     layer, number_of_layer, number_of_n = param
@@ -247,6 +247,11 @@ def train_and_evaluate_model(
     loss_fn = MeanAbsolutePercentageError()
 
     def train_step(inputs, target):
+        """! Performs one training step by making a prediction, calculating the loss and  gradients and apply the gradients based on the chosen optimizer. 
+            @param inputs Input data. Usually five days of compartment data. 
+            @param target Labels. The compartment data which has to be predicted. 
+            @return Returns loss and accurycy calculated from prediction and label.
+        """
         with tf.GradientTape() as tape:
             predictions = model(inputs, training=True)
             loss = loss_fn(target, predictions) + sum(model.losses)
@@ -258,6 +263,10 @@ def train_and_evaluate_model(
         return loss, acc
 
     def evaluate(loader):
+        """! Valdidation step, where the NN is applied on the validation dataset.
+            @loader Dataloader which loads the validation data. 
+            @return Returns loss and accurycy calculated from prediction and label of the validation data.
+        """
         output = []
         step = 0
         while step < loader.steps_per_epoch:
