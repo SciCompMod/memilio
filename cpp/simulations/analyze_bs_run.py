@@ -586,11 +586,114 @@ def infer_positive_tests(path):
     plt.show()
 
 def plot_estimated_reproduction_number(path):
+    f_p50 = h5py.File(
+        path+"/estimated_reproduction_number/p50/Results.h5", 'r')
+    p50_bs = f_p50['0']
+    total_50 = p50_bs['Total'][()]
+    total_50 = total_50[::24]
+    total_50 = total_50[0:90].flatten()
+    # we smooth this with a gaussian filter
+    total_50 = gaussian_filter1d(total_50, sigma=1, mode='nearest')
+    time = p50_bs['Time'][()]
+    time = time[::24]
+    time = time[0:90]
+
+    # we plot this
+    # we plot the tests positive and the real cases
+    plt.plot(time, total_50, color='tab:red')
+    plt.xlabel('time (days)')
+    plt.ylabel('Estimated reproduction number')
+    plt.title('Estimated reproduction number')
+    plt.show()
+
+def plot_cumulative_detected_infections(path):
+    f_p50 = h5py.File(
+        path+"/cumulative_detected_infections/p50/Results.h5", 'r')
+    p50_bs = f_p50['0']
+    total_50 = p50_bs['Total'][()]
+    total_50 = total_50[::24]
+    total_50 = total_50[0:90].flatten()
+    # we smooth this with a gaussian filter
+    total_50 = gaussian_filter1d(total_50, sigma=1, mode='nearest')
+    time = p50_bs['Time'][()]
+    time = time[::24]
+    time = time[0:90]
+
+    # we also plot the amount of new detected infections with diff
+    total_50_diff = np.diff(total_50)
+
+
+    # we plot this
+    # we plot the tests positive and the real cases
+    plt.plot(time, total_50, color='tab:red')
+    plt.xlabel('time (days)')
+    plt.ylabel('Cumulative Amount of detected infections')
+    plt.title('Cumulative detected infections')
+    # also plot the new detected infections with the same color but dashed
+    plt.plot(time[1:], total_50_diff, color='tab:red', linestyle='dashed')
+    plt.show()
+
+def plot_positive_and_done_test(path):
+    f_p50_positive = h5py.File(
+        path+"/test_per_location_type_per_age_group/p50/Results.h5", 'r')
+    p50_bs_positive = f_p50_positive['0']
+    total_50_positive = p50_bs_positive['Total'][()]
+
+    f_p50_done = h5py.File(
+        path+"/test_per_location_type_per_age_group/p50/Results.h5", 'r')
+    p50_bs_done = f_p50_done['0']
+    total_50_done = p50_bs_done['Total'][()]
+
+    time = p50_bs_positive['Time'][()]
+    time = time[::24]
+    time = time[0:90]
+
+
+    # weas one entry is one hour we take the sum every 24 entries to get the daily amount, we do this with cumsum
+    total_50_positive = np.cumsum(total_50_positive, axis=0)
+    total_50_positive = total_50_positive[::24]
+    total_50_positive = total_50_positive[0:90] # we still need to take the difference to get the daily amount
+    total_50_positive = np.diff(total_50_positive, axis=0).flatten()
+    # we smooth this with a gaussian filter
+    total_50_positive = gaussian_filter1d(total_50_positive, sigma=1, mode='nearest')
+
+    #same for the done tests
+    total_50_done = np.cumsum(total_50_done, axis=0)
+    total_50_done = total_50_done[::24]
+    total_50_done = total_50_done[0:90] # we still need to take the difference to get the daily amount
+    total_50_done = np.diff(total_50_done, axis=0).flatten()
+    # we smooth this with a gaussian filter
+    total_50_done = gaussian_filter1d(total_50_done, sigma=1, mode='nearest')
+
+    # we plot this
+    # we plot the tests positive and the real cases
+    start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
+    xx = [start_date + pd.Timedelta(days=int(i)) for i in range(90)]
+    xx = [xx[i].strftime('%Y-%m-%d') for i in range(len(xx))]
+    plt.gcf().autofmt_xdate()
+
+    plt.plot(xx, total_50_positive, color='tab:red')
+    plt.plot(xx, total_50_done, color='tab:blue')
+    plt.xlabel('time (days)')
+    plt.ylabel('Number of tests')
+    plt.legend(['Positive tests', 'Done tests'])
+    plt.title('Positive and done tests')
+    plt.show()
+
+
+
+
     
+
+
+
+
+
+
 
 if __name__ == "__main__":
     # path = "/Users/david/Documents/HZI/memilio/data/results_last_run_last_run"
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_2024-08-06135830"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
     # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/1/results_last_run"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_last_run"
 
@@ -604,3 +707,6 @@ if __name__ == "__main__":
     # plot_icu(path)
     # plot_dead(path)
     # infer_positive_tests(path)
+    # plot_estimated_reproduction_number(path)
+    # plot_cumulative_detected_infections(path)
+    plot_positive_and_done_test(path)
