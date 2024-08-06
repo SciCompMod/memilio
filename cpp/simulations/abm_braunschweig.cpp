@@ -539,19 +539,6 @@ void set_parameters(mio::abm::Parameters params)
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {450, 0.5}}, days);
     };
-    // Set protection level from high viral load. Information based on: https://doi.org/10.1186/s12916-021-02220-0 and https://doi.org/10.1371/journal.pone.0243597
-    params.get<mio::abm::HighViralLoadProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_0_to_4,
-                                                           mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0}, {5, 0.3}, {10, 0.6}, {15, 0.8}, {20, 1}}, days);
-    };
-    params.get<mio::abm::HighViralLoadProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_0_to_4,
-                                                           mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0}, {5, 0.3}, {10, 0.6}, {15, 0.8}, {20, 1}}, days);
-    };
 
     //5-14
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 0.161;
@@ -618,19 +605,6 @@ void set_parameters(mio::abm::Parameters params)
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {450, 0.5}}, days);
     };
-    // Set protection level from high viral load. Information based on: https://doi.org/10.1186/s12916-021-02220-0 and https://doi.org/10.1371/journal.pone.0243597
-    params.get<mio::abm::HighViralLoadProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_5_to_14,
-                                                           mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0}, {5, 0.3}, {10, 0.6}, {15, 0.8}, {20, 1}}, days);
-    };
-    params.get<mio::abm::HighViralLoadProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_5_to_14,
-                                                           mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0}, {5, 0.3}, {10, 0.6}, {15, 0.8}, {20, 1}}, days);
-    };
 
     //15-34
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
@@ -696,19 +670,6 @@ void set_parameters(mio::abm::Parameters params)
         [](ScalarType days) -> ScalarType {
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {180, 0.90}, {450, 0.5}}, days);
-    };
-    // Set protection level from high viral load. Information based on: https://doi.org/10.1186/s12916-021-02220-0 and https://doi.org/10.1371/journal.pone.0243597
-    params.get<mio::abm::HighViralLoadProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_15_to_34,
-                                                           mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0}, {5, 0.3}, {10, 0.6}, {15, 0.8}, {20, 1}}, days);
-    };
-    params.get<mio::abm::HighViralLoadProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_15_to_34,
-                                                           mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0}, {5, 0.3}, {10, 0.6}, {15, 0.8}, {20, 1}}, days);
     };
 
     //35-59
@@ -777,19 +738,6 @@ void set_parameters(mio::abm::Parameters params)
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {180, 0.90}, {450, 0.5}}, days);
     };
-    // Set protection level from high viral load. Information based on: https://doi.org/10.1186/s12916-021-02220-0 and https://doi.org/10.1371/journal.pone.0243597
-    params.get<mio::abm::HighViralLoadProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_35_to_59,
-                                                           mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0}, {5, 0.3}, {10, 0.6}, {15, 0.8}, {20, 1}}, days);
-    };
-    params.get<mio::abm::HighViralLoadProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_35_to_59,
-                                                           mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0}, {5, 0.3}, {10, 0.6}, {15, 0.8}, {20, 1}}, days);
-    };
 
     //60-79
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
@@ -857,19 +805,6 @@ void set_parameters(mio::abm::Parameters params)
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.91}, {60, 0.86}, {90, 0.91}, {120, 0.94}, {150, 0.95}, {180, 0.90}, {450, 0.5}}, days);
     };
-    // Set protection level from high viral load. Information based on: https://doi.org/10.1186/s12916-021-02220-0 and https://doi.org/10.1371/journal.pone.0243597
-    params.get<mio::abm::HighViralLoadProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_60_to_79,
-                                                           mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0}, {5, 0.3}, {10, 0.6}, {15, 0.8}, {20, 1}}, days);
-    };
-    params.get<mio::abm::HighViralLoadProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_60_to_79,
-                                                           mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0}, {5, 0.3}, {10, 0.6}, {15, 0.8}, {20, 1}}, days);
-    };
 
     //80+
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.179;
@@ -936,19 +871,6 @@ void set_parameters(mio::abm::Parameters params)
         [](ScalarType days) -> ScalarType {
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.84}, {60, 0.88}, {90, 0.89}, {120, 0.86}, {150, 0.85}, {180, 0.83}, {450, 0.5}}, days);
-    };
-    // Set protection level from high viral load. Information based on: https://doi.org/10.1186/s12916-021-02220-0 and https://doi.org/10.1371/journal.pone.0243597
-    params.get<mio::abm::HighViralLoadProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_80_plus,
-                                                           mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0}, {5, 0.3}, {10, 0.6}, {15, 0.8}, {20, 1}}, days);
-    };
-    params.get<mio::abm::HighViralLoadProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_80_plus,
-                                                           mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0}, {5, 0.3}, {10, 0.6}, {15, 0.8}, {20, 1}}, days);
     };
 }
 
