@@ -228,7 +228,7 @@ mio::IOResult<std::vector<mio::osecir::Model>> get_graph(mio::Date start_date, c
         node.parameters = params;
     }
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), sclaling_infected);
-    auto scaling_factor_icu      = std::vector<double>(size_t(params.get_num_groups()), 2.5);
+    auto scaling_factor_icu      = std::vector<double>(size_t(params.get_num_groups()), 2.3);
 
     const auto& read_function_nodes = mio::osecir::read_input_data_county<mio::osecir::Model>;
     BOOST_OUTCOME_TRY(read_function_nodes(nodes, start_date, node_ids, scaling_factor_infected, scaling_factor_icu,

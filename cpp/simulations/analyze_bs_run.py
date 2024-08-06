@@ -27,19 +27,19 @@ from scipy.signal import savgol_filter
 def plot_infections_loc_types_avarage(path):
     # 50-percentile
     f_p50 = h5py.File(
-        path+"/infection_per_location_type/p50/Results.h5", 'r')
+        path+"/infection_per_location_type_per_age_group/p50/Results.h5", 'r')
     p50_bs = f_p50['0']
     total_50 = p50_bs['Total'][()]
 
     # 25-percentile
     f_p25 = h5py.File(
-        path+"/infection_per_location_type/p25/Results.h5", 'r')
+        path+"/infection_per_location_type_per_age_group/p25/Results.h5", 'r')
     p25_bs = f_p25['0']
     total_25 = p25_bs['Total'][()]
 
     # 75-percentile
     f_p75 = h5py.File(
-        path + "/infection_per_location_type/p75/Results.h5", 'r')
+        path + "/infection_per_location_type_per_age_group/p75/Results.h5", 'r')
     p75_bs = f_p75['0']
     total_75 = p75_bs['Total'][()]
 
@@ -314,8 +314,8 @@ def plot_dead(path):
     plt.show()
    
 def plot_icu(path):
-    df_abb = pd.read_json(path+"/pydata/Germany/county_divi_ma7.json")
-    perc_of_critical_in_icu = 0.5
+    df_abb = pd.read_json(path+"/../pydata/Germany/county_divi_ma7.json")
+    perc_of_critical_in_icu = 0.45
 
     # we just need the columns ICU_low and ICU_hig
     df_abb = df_abb[['ID_County', 'ICU', 'Date']]
@@ -327,7 +327,7 @@ def plot_icu(path):
 
     # we plot this against this the Amount of persons in the ICU from our model
     f_p50 = h5py.File(
-        path+"/results_last_run/infection_state_per_age_group/p50/Results.h5", 'r')
+        path+"/infection_state_per_age_group/p50/Results.h5", 'r')
     p50_bs = f_p50['0']
     total_50 = p50_bs['Total'][()]
     # we need just every 24th value
@@ -585,10 +585,12 @@ def infer_positive_tests(path):
 
     plt.show()
 
+def plot_estimated_reproduction_number(path):
+    
 
 if __name__ == "__main__":
     # path = "/Users/david/Documents/HZI/memilio/data/results_last_run_last_run"
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_2024-08-06135830"
     # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/1/results_last_run"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_last_run"
 
@@ -597,8 +599,8 @@ if __name__ == "__main__":
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    plot_infection_states_results(path)
-    plot_infections_loc_types_avarage(path)
-    plot_icu(path+"/..")
-    plot_dead(path)
-    infer_positive_tests(path)
+    # plot_infection_states_results(path)
+    # plot_infections_loc_types_avarage(path)
+    # plot_icu(path)
+    # plot_dead(path)
+    # infer_positive_tests(path)
