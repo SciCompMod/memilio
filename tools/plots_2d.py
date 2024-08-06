@@ -103,6 +103,7 @@ def read_county_results_h5(path, comp, group_key='Total'):
 
 def plot(ys, labels, path_plots, title="", log_scale=False, ylabel="Number Individuals", plot_percentiles=True):
     num_data = len(ys)
+    create_folder_if_not_exists(path_plots)
 
     # Set days for x-axis
     num_days = len(ys[0]) - 1
@@ -254,7 +255,7 @@ def plot_flows(path_results, path_plots, modes, flow_indx, labels, title, log_sc
         for index, compartment in enumerate(flow_indx):
             labels_modes.append(labels[index] + f" {mode}")
             path_results_mode = os.path.join(
-                path_results, "flows")
+                path_results, mode, "flows")
             data = get_results(
                 path_results_mode, compartment, results="total")
             data = {key: np.diff(data[key]) for key in data.keys()}
@@ -289,6 +290,61 @@ def plot_r0(path_results, path_plots, modes, percentile="p50"):
             r0_nums.append(r0_mode)
 
     plot(r0_nums, modes, path_plots, title="R0", ylabel="R0")
+
+
+def plot_r0_all_scenarios(path_results, path_plots, modes, percentile="p50"):
+    population = get_pop()
+    total_pop = population['Population'].sum()
+
+    # alle dirs in path_results
+    dirs = [d for d in os.listdir(path_results) if os.path.isdir(
+        os.path.join(path_results, d))]
+
+    r0_nums = []
+    for dir_name in dirs:
+        mode = "FeedbackDamping"
+        if dir_name.startswith("fixed"):
+            mode = 'ClassicDamping'
+
+        path_results_mode = os.path.join(
+            path_results, dir_name,  mode, "r0")
+        path = os.path.join(path_results_mode, percentile,  "Results.h5")
+        with h5py.File(path, 'r') as f:
+            num_days = f['1001']['Group1'].shape[0]
+            r0_mode = np.zeros(num_days)
+            indx_dict = {
+                key: population.index[population['ID_County'] == int(key)] for key in f.keys()}
+            for key, group in f.items():
+                indx_key = indx_dict[key]
+                r0_mode += group['Group1'][()][:, 0] * \
+                    population['Population'][indx_key].values[0] / total_pop
+            r0_nums.append(r0_mode)
+
+    plot(r0_nums, dirs, path_plots, title="R0_all_scenarios", ylabel="R0")
+
+
+def plot_icu_all_scenarios(path_results, path_plots, modes, percentile="p50", log_scale=False):
+
+    icu_compartment = [[7]]
+
+    # alle dirs in path_results
+    dirs = [d for d in os.listdir(path_results) if os.path.isdir(
+        os.path.join(path_results, d))]
+
+    icu_nums = []
+    for dir_name in dirs:
+        mode = "FeedbackDamping"
+        if dir_name.startswith("fixed"):
+            mode = 'ClassicDamping'
+        path_results_mode = os.path.join(
+            path_results, dir_name,  mode)
+        res = get_results(path_results_mode, icu_compartment,
+                          results="total", percentiles=["p50"])
+        # res only has one entry in a dict. transform to list
+        icu_nums.append(res['p50'])
+
+    plot(icu_nums, dirs, path_plots, title="ICU",
+         ylabel="ICU Occupancy", log_scale=log_scale)
 
 
 def plot_r0_county_level(path_results, path_plots, modes, percentile="p50"):
@@ -356,6 +412,73 @@ def plot_r0_county_level(path_results, path_plots, modes, percentile="p50"):
         plt.ylim(y_min - 0.5, y_max + 0.5)
 
     plt.savefig(os.path.join(path_plots, 'violin_plots.png'))
+
+
+def plot_risk_county_level(path_results, path_plots, modes, percentile="p50"):
+    df_modes = []
+    for mode in modes:
+        path_results_mode = os.path.join(path_results, mode, "risk")
+        path = os.path.join(path_results_mode, percentile,  "Results.h5")
+        data = {}
+        with h5py.File(path, 'r') as f:
+            for key in f.keys():
+                group = f[key]
+                total = group['Group1'][()]
+                data[key] = np.sum(total[:], axis=1)
+        df = pd.DataFrame(data)
+        df_modes.append(df)
+
+    # Box Plot
+    plt.figure(figsize=(12 * len(modes), 6))
+    y_min, y_max = float('inf'), float('-inf')
+
+    for i, mode in enumerate(modes):
+        df = df_modes[i]
+        # every second day
+        df = df.iloc[::10]
+        df = df.T
+        plt.subplot(1, len(modes), i + 1)
+        sns.boxplot(data=df, orient="v")
+        plt.xlabel('Time', fontsize=fontsize)
+        if i == 0:
+            plt.ylabel('Perceived Risk', fontsize=fontsize)
+        tick_positions = np.arange(0, len(df.columns), 5)
+        tick_labels = df.columns[tick_positions]
+        plt.xticks(ticks=tick_positions, labels=tick_labels, fontsize=ticks)
+        plt.title(f'Distribution of Perceived Risk Over Time {mode}')
+        y_min = min(y_min, df.min().min())
+        y_max = max(y_max, df.max().max())
+
+    for i in range(len(modes)):
+        plt.subplot(1, len(modes), i + 1)
+        plt.ylim(y_min - 0.5, y_max + 0.5)
+
+    plt.savefig(os.path.join(path_plots, 'plot_risk_box_plots.png'))
+
+    # Violin Plot
+    plt.figure(figsize=(12 * len(modes), 6))
+    y_min, y_max = float('inf'), float('-inf')
+
+    for i, mode in enumerate(modes):
+        df = df_modes[i]
+        df = df.T
+        plt.subplot(1, len(modes), i + 1)
+        sns.violinplot(data=df, orient="v")
+        plt.xlabel('Time', fontsize=fontsize)
+        if i == 0:  # Nur im ersten Plot das y-Label setzen
+            plt.ylabel('Reproduction Number', fontsize=fontsize)
+        tick_positions = np.arange(0, len(df.columns), 5)
+        tick_labels = df.columns[tick_positions]
+        plt.xticks(ticks=tick_positions, labels=tick_labels, fontsize=ticks)
+        plt.title(f'Distribution of Perceived Risk Over Time {mode}')
+        y_min = min(y_min, df.min().min())
+        y_max = max(y_max, df.max().max())
+
+    for i in range(len(modes)):
+        plt.subplot(1, len(modes), i + 1)
+        plt.ylim(y_min - 0.5, y_max + 0.5)
+
+    plt.savefig(os.path.join(path_plots, 'risk_violin_plots.png'))
 
 
 def plot_contacts(path_results, path_plots, modes, percentile="p50"):
@@ -444,7 +567,7 @@ def plot_icu_comp(path_results, path_plots, modes, path_icu_data, log_scale=Fals
 
     plot_data = []
     for mode in modes:
-        path_results_mode = os.path.join(path_results)
+        path_results_mode = os.path.join(path_results, mode)
         labels.append(label + f" {mode}")
         plot_data.append(get_results(
             path_results_mode, icu_comp, results="total"))
@@ -649,7 +772,7 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
             if kmin > all_kmins[0]:
                 continue
 
-        num_subplots = round(10 - index)
+        num_subplots = round(11 - index)
         if dir_value == 'fixed':
             num_subplots = 11
         subplot_width = 8  # Breite eines einzelnen Subplots
@@ -776,7 +899,7 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
             if count_ax > num_subplots:
                 break
             ax.set_ylim(global_min, global_max)
-            ax.set_xticks(range(0, num_days, 100))
+            ax.set_xticks(range(0, num_days, 50))
             if not vertical:
                 ax.set_xlabel('')
                 if ax != fig.get_axes()[0]:
@@ -811,7 +934,7 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
                 break
             ax.set_yscale('symlog')
             ax.set_ylim(0, global_max)
-            ax.set_xticks(range(0, num_days, 100))
+            ax.set_xticks(range(0, num_days, 50))
             ax.set_xlabel('')
             if not vertical:
                 ax.set_xlabel('')
@@ -842,16 +965,219 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
             fig, plot_dir, f'peaks_grid_{plot_type}_{dir_value}_{kmin}_log.png')
 
 
+def get_peak_data(path_results, blending_fact, modes, target_indx, percentile="p50", flows=True, title='Peak Value', dir_type='kmin'):
+    if len(modes) > 1:
+        print("Only one mode is allowed for the grid peak plot.")
+        return
+
+    data = {'b_fact': [], 'kmax': [], 'day': [], 'peak_value': []}
+    for b_fact in blending_fact:
+        path_results_blended = os.path.join(path_results, "BlendingFactorRegional_" + str(
+            b_fact) + "00000")
+
+        kmin_dirs = get_dirs_starting_with_x('kmin', path_results_blended)
+        all_kmax = sorted(set(float(d.split("_")[-1]) for d in kmin_dirs))
+
+        num_days = 0
+
+        for index, kmax in enumerate(all_kmax):
+            path = os.path.join(path_results_blended, kmin_dirs[index],
+                                modes[0], "flows" if flows else "")
+            df = read_data(path, target_indx, percentile, flows)
+
+            if num_days == 0:
+                num_days = df.shape[0]
+
+            # smooth the data from the df and find the peaks
+            def get_peak(df):
+                smoothed = df.rolling(window=7, min_periods=1).mean()
+                # iterate over each column and find the peaks
+                num_counties_no_peak = 0
+                peaks = []
+                for col in smoothed.columns:
+                    peak_indices = find_peaks(
+                        smoothed[col].values, prominence=1, distance=21)[0]
+                    if len(peak_indices) == 0:
+                        peak_indices = find_peaks(
+                            smoothed[col].values, prominence=0, distance=21)[0]
+                    peak_values = smoothed[col].values[peak_indices]
+                    if len(peak_indices) == 0:
+                        num_counties_no_peak += 1
+                        continue
+
+                    peaks.append((peak_indices, peak_values))
+                if num_counties_no_peak > 0:
+                    print("Number of counties without peak: ",
+                          num_counties_no_peak)
+                return peaks
+
+            # peaks contains the peak indices and the peak values for each county
+            peaks = get_peak(df)
+            peak_values = []
+
+            if dir_type == 'kmin':
+                peak_values = {i: 0 for i in range(num_days)}
+                for peak_indices, _ in peaks:
+                    for peak_index in peak_indices:
+                        # Fügen Sie für jeden Peak-Index den Wert 1 hinzu
+                        peak_values[peak_index] += 1
+
+            elif dir_type == 'val':
+                peak_indices = df.idxmax().values
+                # iterate over peaks and scale the peak_value
+                for _, p_values in peaks:
+                    for i in range(len(p_values)):
+                        p_values[i] = p_values[i] / \
+                            get_pop()['Population'].values[i] * 100_000
+
+                # create a  empty dict with the peak values for each day
+                peak_values = {i: [] for i in range(df.shape[0])}
+                for idx, val in peaks:
+                    for i, v in zip(idx, val):
+                        peak_values[i].append(v)
+
+            for day, values in peak_values.items():
+                data['b_fact'].append(b_fact)
+                data['kmax'].append(kmax)
+                data['day'].append(day)
+                data['peak_value'].append(values)
+
+    # Convert dictionary to DataFrame
+    df_peaks = pd.DataFrame(data)
+
+    # delete all with peak_value = 0
+    # if dir_type == 'kmin':
+    #     df_peaks = df_peaks[df_peaks['peak_value'] > 0].reset_index(drop=True)
+    # if dir_type == 'val':
+    #     df_peaks = df_peaks[df_peaks['peak_value'].apply(
+    #         lambda x: len(x) > 0)].reset_index(drop=True)
+
+    return df_peaks
+
+
+def plot_peak_time_kmax(path_results, path_plots, blending_fact, modes, target_indx, percentile="p50", flows=True, title='Peak Value', dir_type='kmin', log_scale=True):
+    data = get_peak_data(path_results, blending_fact,
+                         modes, target_indx, percentile, flows, title, dir_type)
+
+    for b_fact in blending_fact:
+        peak_data = data[data['b_fact'] == b_fact]
+        # Delete all entries with peak_value == 0
+        # peak_data = peak_data[peak_data['peak_value'] > 0].reset_index(drop=True)
+
+        # Explode the peak_value list if necessary
+        if dir_type == 'val':
+            peak_data = peak_data.explode('peak_value')
+            peak_data['peak_value'] = peak_data['peak_value'].astype(float)
+
+        # Calculate the mean peak values for each (kmax, day) combination
+        mean_peaks = peak_data.groupby(['kmax', 'day'])[
+            'peak_value'].mean().reset_index()
+
+        # Pivot the data to create a matrix for the heatmap
+        heatmap_data = mean_peaks.pivot_table(
+            values='peak_value', index='day', columns='kmax', aggfunc='mean')
+
+        # Create the heatmap
+        plt.figure(figsize=(20, 10))
+        if log_scale:
+            sns.heatmap(heatmap_data, cmap="viridis",
+                        norm=SymLogNorm(linthresh=1), fmt=".2f")
+        else:
+            sns.heatmap(heatmap_data, cmap="viridis", fmt=".2f")
+        plt.xlabel('kmax', fontsize=fontsize)
+        plt.ylabel('Day', fontsize=fontsize)
+        plt.xticks(fontsize=ticks)
+        tick_positions = np.arange(0, 200, 20)  # len(heatmap_data.index), 20)
+        tick_labels = [heatmap_data.index[i] for i in tick_positions]
+        plt.yticks(tick_positions + 0.5, tick_labels, rotation=0,
+                   fontsize=ticks)
+        # plt.ylim(0, len(heatmap_data.index))
+        plt.ylim(0, 200)
+        fn = 'peak_time_heatmap_' + dir_type + '_b_fact_' + str(b_fact)
+        if log_scale:
+            fn += '_log'
+        plt.savefig(os.path.join(path_plots, fn + '.png'))
+        plt.clf()
+        plt.close()
+
+
+def plot_peak_time_kmax_variance(path_results, path_plots, blending_fact, modes, target_indx, percentile="p50", flows=True, title='Peak Value', dir_type='kmin', log_scale=True):
+    data = get_peak_data(path_results, blending_fact,
+                         modes, target_indx, percentile, flows, title, dir_type)
+
+    # get all distinct values in b_fact and kmax
+    all_b_fact = data['b_fact'].unique()
+    all_kmax = data['kmax'].unique()
+
+    # create dict with b_fact, kmax and variance
+    data_variance = {'b_fact': [], 'kmax': [], 'mean': []}
+    for b_fact in all_b_fact:
+        for kmax in all_kmax:
+            peak_data = data[(data['b_fact'] == b_fact) & (
+                data['kmax'] == kmax)]
+
+            mean_peak = 0
+
+            # Explode the peak_value list if necessary
+            if dir_type == 'val':
+                # delete all entries with empty list
+                peak_data = peak_data[peak_data['peak_value'].apply(
+                    lambda x: len(x) > 0)].reset_index(drop=True)
+                peak_data = peak_data.explode('peak_value')
+                peak_data['peak_value'] = peak_data['peak_value'].astype(float)
+            else:
+                # Delete all entries with peak_value == 0
+                peak_data = peak_data[peak_data['peak_value']
+                                      > 0].reset_index(drop=True)
+            # Calculate the mean of the peak values for each (kmax, day) combination
+            for day in peak_data['day'].unique():
+                mean_peak += peak_data[peak_data['day']
+                                       == day]['peak_value'].values.mean() * day
+            mean_peak /= peak_data['peak_value'].values.sum()
+
+            data_variance['b_fact'].append(b_fact)
+            data_variance['kmax'].append(kmax)
+            data_variance['mean'].append(mean_peak)
+
+    # plot
+    results_df = pd.DataFrame(data_variance)
+    heatmap_data = results_df.pivot_table(
+        values='mean', index='kmax', columns='b_fact', aggfunc='mean')
+
+    plt.figure(figsize=(20, 10))
+    if log_scale:
+        sns.heatmap(heatmap_data, cmap="viridis",
+                    norm=SymLogNorm(linthresh=1), fmt=".2f")
+    else:
+        sns.heatmap(heatmap_data, cmap="viridis", fmt=".2f")
+    plt.xlabel('Blending Factor Regional', fontsize=fontsize)
+    plt.ylabel('kmax', fontsize=fontsize)
+    plt.xticks(fontsize=ticks)
+    plt.yticks(fontsize=ticks)
+    plt.ylim(0, len(heatmap_data.index))
+    fn = 'peaks_mean_heatmap_' + dir_type
+    if log_scale:
+        fn += '_log'
+    plt.savefig(os.path.join(path_plots, fn + '.png'))
+    plt.clf()
+    plt.close()
+
+    return 0
+
+
 if __name__ == '__main__':
     path_cwd = os.getcwd()
-    # results/fixed_damping_kmin_0.300000/ClassicDamping/mse_428223962312.262817
+    icu_cap = [6, 9, 12, 15]
+    blending_fact = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+    cap_indx = 0
     path_results = os.path.join(
-        path_cwd, "results")
-    path_plots = os.path.join(path_cwd, "plots")
+        path_cwd, "results", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000")  # 'kmin_0.000000_kmax_0.700000'
+    path_plots = os.path.join(
+        path_cwd, "plots", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000")
     path_icu_data = os.path.join(
         path_cwd, "data/pydata/Germany/germany_divi_ma7.json")
 
-    modes = ["ClassicDamping", "FeedbackDamping"]
+    modes = ["FeedbackDamping"]  # "ClassicDamping",
 
     icu_compartment = [[7]]
     infected_compartment = [[1, 2, 3, 4, 5, 6, 7]]
@@ -859,7 +1185,8 @@ if __name__ == '__main__':
     flow_se = [[0]]
     flow_ci = [[3]]
 
-    # plot_r0_county_level(path_results, path_plots, modes)z
+    # plot_r0_county_level(path_results, path_plots, modes)
+    # plot_risk_county_level(path_results, path_plots, modes)
     # plot_contacts(path_results, path_plots, modes)
     # plot_risk(path_results,
     #           path_plots, plot_percentiles=False)
@@ -874,6 +1201,16 @@ if __name__ == '__main__':
     # plot_icu_comp(path_results, path_plots, modes,
     #               path_icu_data, plot_percentiles=True)
     # plot_r0(path_results, path_plots, modes)
+    # plot_r0_all_scenarios(os.path.join(
+    #     path_cwd, "results", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000"), path_plots, modes)
+
+    plot_peak_time_kmax(path_results, path_plots, blending_fact, modes,
+                        icu_compartment, flows=False, dir_type='val', log_scale=True)
+
+    # plot_peak_time_kmax_variance(path_results, path_plots, blending_fact, modes,
+    #                              icu_compartment, flows=False, dir_type='val', log_scale=False)
+
+    # plot_icu_all_scenarios(path_results, path_plots, modes, log_scale=True)
     # plot_peaks(path_results, path_plots, modes, flow_se)
 
     # plot_peaks_single(path_results, path_plots, ["FeedbackDamping"], flow_se)
@@ -882,21 +1219,23 @@ if __name__ == '__main__':
     #                        path_icu_data, plot_percentiles=True)
 
     # peak plots for daily infections
-    plot_peak_values(path_results, path_plots, [
-                     "FeedbackDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True)
-    plot_peak_values(path_results, path_plots, [
-                     "FeedbackDamping"], flow_se, plot_type='val', title='Daily Infections', flows=True, vertical=True)
+    # path_results = os.path.join(
+    #     path_results, "BlendingFactorRegional_0.000000")
+    # plot_peak_values(path_results, path_plots, [
+    #                  "FeedbackDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True)
+    # plot_peak_values(path_results, path_plots, [
+    #                  "FeedbackDamping"], flow_se, plot_type='val', title='Daily Infections', flows=True, vertical=True)
 
-    # peak plots for ICU occupancy
-    plot_peak_values(path_results, path_plots, [
-                     "FeedbackDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True)
-    plot_peak_values(path_results, path_plots, [
-        "FeedbackDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True)
+    # # # peak plots for ICU occupancy
+    # plot_peak_values(path_results, path_plots, [
+    #                  "FeedbackDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True)
+    # plot_peak_values(path_results, path_plots, [
+    #     "FeedbackDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True)
 
-    plot_peak_values(path_results, path_plots, [
-                     "ClassicDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True, dir_value='fixed')
-    plot_peak_values(path_results, path_plots, [
-        "ClassicDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True, dir_value='fixed')
+    # plot_peak_values(path_results, path_plots, [
+    #                  "ClassicDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True, dir_value='fixed')
+    # plot_peak_values(path_results, path_plots, [
+    #     "ClassicDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True, dir_value='fixed')
 
     # plot_peak_values(path_results, path_plots, [
     #     "ClassicDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True, dir_value='fixed')

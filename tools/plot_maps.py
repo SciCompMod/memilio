@@ -57,7 +57,7 @@ def plot_r0_map(path_results, path_plots, days, percentile, mode):
     x = 1
 
 
-def create_colorbar(path_plots, norm):
+def create_colorbar(path_plots, norm, title):
     colors = ["green", "yellow", "red", "purple"]
     cmap = LinearSegmentedColormap.from_list("my_colormap", colors)
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
@@ -68,7 +68,7 @@ def create_colorbar(path_plots, norm):
     cbar = plt.colorbar(sm, orientation='horizontal', cax=ax)
     cbar.ax.tick_params(labelsize=10)
     plt.tight_layout()
-    plt.savefig(os.path.join(path_plots, 'colorbar.png'), dpi=300)
+    plt.savefig(os.path.join(path_plots, title + '_colorbar.png'), dpi=300)
     plt.clf()
 
 
@@ -96,7 +96,7 @@ def plot_maps(path_results, path_plots, compartments, percentile, days, min_val,
 
     norm = SymLogNorm(linthresh=1, linscale=0.7,
                       vmin=min_val, vmax=max_val)
-    create_colorbar(path_plots, norm)
+    create_colorbar(path_plots, norm, filename)
 
     for day in days:
         for file in files_input.values():
@@ -179,13 +179,24 @@ def plot_maps(path_results, path_plots, compartments, percentile, days, min_val,
     print("max value: ", get_max_val)
 
 
+# /localdata1/code_2024/memilio/results/october_2020_original_params/kmin_0.200000_kmax_0.800000/
+
+
 if __name__ == '__main__':
-    modes = ["ClassicDamping", "FeedbackDamping"]
+    modes = ["FeedbackDamping"]
     path_cwd = os.getcwd()
-    path_results = os.path.join(path_cwd, "results")
-    path_plots = os.path.join(path_cwd, "plots")
+    icu_cap = [6, 9, 12, 15]
+    cap_indx = 3
+    # results/fixed_damping_kmin_0.300000/ClassicDamping/mse_428223962312.262817
+    path_results = os.path.join(
+        path_cwd, "results", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000", 'kmin_0.000000_kmax_0.700000')
+
+    # path_results = os.path.join(
+    #     path_cwd, "results", "kmin_0.200000_kmax_0.800000")  # fixed_damping_kmin_0.300000
+    path_plots = os.path.join(
+        path_cwd, "plots", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000")
     path_data = os.path.join(path_cwd, "data")
-    num_days = 99
+    num_days = 199
 
     percentile = "p50"
     days = list(range(0, num_days + 1, 10))

@@ -421,10 +421,9 @@ public:
                 m_model_ptr->parameters.template get<ICUCapacity>();
 
             // TODO: Should we allow values > 1.0? Maximal Reduction later is limited, but it may outweight other factors
-            // icu_occupancy_adjusted_rel = std::min(icu_occupancy_adjusted_rel, 1.0); Now limited later
+            icu_occupancy_adjusted_rel = std::min(icu_occupancy_adjusted_rel, 1.0);
             perceived_risk += icu_occupancy_adjusted_rel * gamma;
         }
-        perceived_risk = std::min(perceived_risk, 1.0);
         m_perceived_risk.add_time_point(
             m_model_ptr->parameters.template get<ICUOccupancyLocal>().get_last_time(),
             Eigen::VectorXd::Constant((size_t)m_model_ptr->parameters.get_num_groups(), perceived_risk));

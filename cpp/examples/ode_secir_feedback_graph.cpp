@@ -1,5 +1,6 @@
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/parameter_studies.h"
+#include "memilio/config.h"
 #include "memilio/geography/regions.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
@@ -111,76 +112,76 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
     // TimeExposed and TimeInfectedNoSymptoms are calculated as described in
     // Khailaie et al. (https://doi.org/10.1186/s12916-020-01884-4)
     // given SI_min = 3.935, SI_max = 4.6, INC = 5.2
-    const double timeExposedMin            = 2.67;
-    const double timeExposedMax            = 4.;
+    const double timeExposedMin = 2.67;
+    // const double timeExposedMax            = 4.;
     const double timeInfectedNoSymptomsMin = 1.2;
-    const double timeInfectedNoSymptomsMax = 2.53;
+    // const double timeInfectedNoSymptomsMax = 2.53;
 
     const double timeInfectedSymptomsMin[] = {5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465};
-    const double timeInfectedSymptomsMax[] = {8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085};
-    const double reduc_time_severe         = 0.5;
-    double timeInfectedSevereMin[]         = {3.925, 3.925, 4.85, 6.4, 7.2, 9.};
-    double timeInfectedSevereMax[]         = {6.075, 6.075, 7., 8.7, 9.8, 13.};
+    // const double timeInfectedSymptomsMax[] = {8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085};
+    const double reduc_time_severe = 0.5;
+    double timeInfectedSevereMin[] = {3.925, 3.925, 4.85, 6.4, 7.2, 9.};
+    // double timeInfectedSevereMax[]         = {6.075, 6.075, 7., 8.7, 9.8, 13.};
     // multiply timeInfectedSevereMin and timeInfectedSevereMax by reduc_time_severe
     for (size_t i = 0; i < 6; i++) {
         timeInfectedSevereMin[i] *= reduc_time_severe;
-        timeInfectedSevereMax[i] *= reduc_time_severe;
+        // timeInfectedSevereMax[i] *= reduc_time_severe;
     }
     const double timeInfectedCriticalMin[] = {4.95, 4.95, 4.86, 14.14, 14.4, 10.};
-    const double timeInfectedCriticalMax[] = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
+    // const double timeInfectedCriticalMax[] = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
 
-    array_assign_uniform_distribution(params.get<mio::osecir::TimeExposed>(), timeExposedMin, timeExposedMax);
+    array_assign_uniform_distribution(params.get<mio::osecir::TimeExposed>(), timeExposedMin, timeExposedMin);
     array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedNoSymptoms>(), timeInfectedNoSymptomsMin,
-                                      timeInfectedNoSymptomsMax);
+                                      timeInfectedNoSymptomsMin);
     array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedSymptoms>(), timeInfectedSymptomsMin,
-                                      timeInfectedSymptomsMax);
+                                      timeInfectedSymptomsMin);
     array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedSevere>(), timeInfectedSevereMin,
-                                      timeInfectedSevereMax);
+                                      timeInfectedSevereMin);
     array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedCritical>(), timeInfectedCriticalMin,
-                                      timeInfectedCriticalMax);
+                                      timeInfectedCriticalMin);
 
     //probabilities
-    double fact                                        = 1.;
-    const double transmissionProbabilityOnContactMin[] = {fact * 0.02, fact * 0.05, fact * 0.05,
-                                                          fact * 0.05, fact * 0.08, fact * 0.15};
+    double fact = 0.8;
+    // const double transmissionProbabilityOnContactMin[] = {fact * 0.02, fact * 0.05, fact * 0.05,
+    //                                                       fact * 0.05, fact * 0.08, fact * 0.15};
     const double transmissionProbabilityOnContactMax[] = {fact * 0.04, fact * 0.07, fact * 0.07,
                                                           fact * 0.07, fact * 0.10, fact * 0.20};
     const double relativeTransmissionNoSymptomsMin     = 1;
-    const double relativeTransmissionNoSymptomsMax     = 1;
+    // const double relativeTransmissionNoSymptomsMax     = 1;
     // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
     // depends on incidence and test and trace capacity
-    const double riskOfInfectionFromSymptomaticMin    = 0.1;
-    const double riskOfInfectionFromSymptomaticMax    = 0.3;
-    const double maxRiskOfInfectionFromSymptomaticMin = 0.3;
+    // const double riskOfInfectionFromSymptomaticMin = 0.1;
+    const double riskOfInfectionFromSymptomaticMax = 0.3;
+    // const double maxRiskOfInfectionFromSymptomaticMin = 0.3;
     const double maxRiskOfInfectionFromSymptomaticMax = 0.5;
-    const double recoveredPerInfectedNoSymptomsMin[]  = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15};
-    const double recoveredPerInfectedNoSymptomsMax[]  = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
-    const double severePerInfectedSymptomsMin[]       = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20};
-    const double severePerInfectedSymptomsMax[]       = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
-    const double fact_severe                          = 1.5;
-    const double criticalPerSevereMin[]               = {fact_severe * 0.05, fact_severe * 0.05, fact_severe * 0.05,
-                                           fact_severe * 0.10, fact_severe * 0.25, fact_severe * 0.35};
-    const double criticalPerSevereMax[]               = {fact_severe * 0.10, fact_severe * 0.10, fact_severe * 0.10,
+    // const double recoveredPerInfectedNoSymptomsMin[] = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15};
+    const double recoveredPerInfectedNoSymptomsMax[] = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
+    // const double severePerInfectedSymptomsMin[] = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20};
+    const double severePerInfectedSymptomsMax[] = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
+    const double fact_severe                    = 1.5;
+    // const double criticalPerSevereMin[] = {fact_severe * 0.05, fact_severe * 0.05, fact_severe * 0.05,
+    //                                        fact_severe * 0.10, fact_severe * 0.25, fact_severe * 0.35};
+    const double criticalPerSevereMax[] = {fact_severe * 0.10, fact_severe * 0.10, fact_severe * 0.10,
                                            fact_severe * 0.20, fact_severe * 0.35, fact_severe * 0.45};
-    const double deathsPerCriticalMin[]               = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5};
-    const double deathsPerCriticalMax[]               = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
+    const double deathsPerCriticalMin[] = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5};
+    // const double deathsPerCriticalMax[]               = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
 
     array_assign_uniform_distribution(params.get<mio::osecir::TransmissionProbabilityOnContact>(),
-                                      transmissionProbabilityOnContactMin, transmissionProbabilityOnContactMax);
+                                      transmissionProbabilityOnContactMax, transmissionProbabilityOnContactMax);
     array_assign_uniform_distribution(params.get<mio::osecir::RelativeTransmissionNoSymptoms>(),
-                                      relativeTransmissionNoSymptomsMin, relativeTransmissionNoSymptomsMax);
+                                      relativeTransmissionNoSymptomsMin, relativeTransmissionNoSymptomsMin);
     array_assign_uniform_distribution(params.get<mio::osecir::RiskOfInfectionFromSymptomatic>(),
-                                      riskOfInfectionFromSymptomaticMin, riskOfInfectionFromSymptomaticMax);
+                                      riskOfInfectionFromSymptomaticMax, riskOfInfectionFromSymptomaticMax);
     array_assign_uniform_distribution(params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>(),
-                                      maxRiskOfInfectionFromSymptomaticMin, maxRiskOfInfectionFromSymptomaticMax);
+                                      maxRiskOfInfectionFromSymptomaticMax, maxRiskOfInfectionFromSymptomaticMax);
     array_assign_uniform_distribution(params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>(),
-                                      recoveredPerInfectedNoSymptomsMin, recoveredPerInfectedNoSymptomsMax);
+                                      recoveredPerInfectedNoSymptomsMax, recoveredPerInfectedNoSymptomsMax);
     array_assign_uniform_distribution(params.get<mio::osecir::SeverePerInfectedSymptoms>(),
-                                      severePerInfectedSymptomsMin, severePerInfectedSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecir::CriticalPerSevere>(), criticalPerSevereMin,
+                                      severePerInfectedSymptomsMax, severePerInfectedSymptomsMax);
+    array_assign_uniform_distribution(params.get<mio::osecir::CriticalPerSevere>(), criticalPerSevereMax,
                                       criticalPerSevereMax);
     array_assign_uniform_distribution(params.get<mio::osecir::DeathsPerCritical>(), deathsPerCriticalMin,
-                                      deathsPerCriticalMax);
+                                      deathsPerCriticalMin);
 
     //sasonality
     // const double seasonality_min = 0.1;
@@ -196,18 +197,18 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_feedback_parameters(mio::osecir::Parameters& params, ScalarType min, ScalarType max)
+mio::IOResult<void> set_feedback_parameters(mio::osecir::Parameters& params, ScalarType min, ScalarType max,
+                                            ScalarType icu_capacity, ScalarType fact_regional)
 {
-    params.get<mio::osecir::ICUCapacity>()            = 9;
+    params.get<mio::osecir::ICUCapacity>()            = icu_capacity;
     params.get<mio::osecir::CutOffGamma>()            = 45;
     params.get<mio::osecir::EpsilonContacts>()        = 0.1;
-    params.get<mio::osecir::BlendingFactorLocal>()    = 1. / 3.;
-    params.get<mio::osecir::BlendingFactorRegional>() = 1. / 3.;
+    params.get<mio::osecir::BlendingFactorLocal>()    = 0.3;
+    params.get<mio::osecir::BlendingFactorRegional>() = fact_regional;
     params.get<mio::osecir::ContactReductionMin>()    = {min, min, min, min};
     params.get<mio::osecir::ContactReductionMax>()    = {max, max, max, max};
-
-    auto& icu_occupancy     = params.get<mio::osecir::ICUOccupancyLocal>();
-    Eigen::VectorXd icu_day = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 0.0);
+    auto& icu_occupancy                               = params.get<mio::osecir::ICUOccupancyLocal>();
+    Eigen::VectorXd icu_day                           = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 0.0);
     for (int t = -50; t <= 0; ++t) {
         icu_occupancy.add_time_point(t, icu_day);
     }
@@ -308,7 +309,7 @@ mio::IOResult<void> set_npis(mio::osecir::Parameters& params, const std::string&
  */
 mio::IOResult<mio::Graph<mio::osecir::Model, mio::MigrationParameters>>
 get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, const std::string& mode, ScalarType kmin,
-          ScalarType kmax)
+          ScalarType kmax, ScalarType icu_capacity, ScalarType fact_regional)
 {
     const auto start_day = mio::get_day_in_year(start_date);
 
@@ -318,7 +319,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, co
     params.get<mio::osecir::StartDay>() = start_day;
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
     if (std::strcmp(mode.c_str(), "FeedbackDamping") == 0) {
-        BOOST_OUTCOME_TRY(set_feedback_parameters(params, kmin, kmax));
+        BOOST_OUTCOME_TRY(set_feedback_parameters(params, kmin, kmax, icu_capacity, fact_regional));
     }
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
     BOOST_OUTCOME_TRY(set_npis(params, mode, kmin));
@@ -555,59 +556,72 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 
     const auto num_days_sim = 200.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 80;
+    const auto num_runs     = 1;
 
-    auto const modes = {"FeedbackDamping"}; //, "FeedbackDamping"};
+    auto const modes = {"FeedbackDamping", "ClassicDamping"}; //, "FeedbackDamping"};
 
-    auto min_values = std::vector<ScalarType>{0.2};
+    auto min_values = std::vector<ScalarType>{0.0};
 
-    auto max_values = std::vector<ScalarType>{1.0}; //0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    auto max_values = std::vector<ScalarType>{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+
+    auto icu_capacities = std::vector<ScalarType>{6.0, 9.0, 12.0, 15.0};
+
+    auto fact_regional = std::vector<ScalarType>{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7};
     // const size_t county_id_infected = 3241;
 
     //create or load graph
-    for (auto mode : modes) {
-        for (size_t min_indx = 0; min_indx < min_values.size(); min_indx++) {
-            for (size_t max_indx = min_indx; max_indx < max_values.size(); max_indx++) {
-                if (std::strcmp(mode, "ClassicDamping") == 0 && min_values[min_indx] != max_values[max_indx]) {
-                    continue;
-                }
-                auto& kmin = min_values[min_indx];
-                auto& kmax = max_values[max_indx];
+    for (auto icu_cap : icu_capacities) {
+        for (auto fact_r : fact_regional) {
+            for (auto mode : modes) {
+                for (size_t min_indx = 0; min_indx < min_values.size(); min_indx++) {
+                    for (size_t max_indx = min_indx; max_indx < max_values.size(); max_indx++) {
+                        if (std::strcmp(mode, "ClassicDamping") == 0 && min_values[min_indx] != max_values[max_indx]) {
+                            continue;
+                        }
+                        auto& kmin = min_values[min_indx];
+                        auto& kmax = max_values[max_indx];
 
-                mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
-                auto result_dir_mode = result_dir / ("kmin_" + std::to_string(kmin) + "_kmax_" + std::to_string(kmax)) /
-                                       boost::filesystem::path(mode);
-                if (std::strcmp(mode, "ClassicDamping") == 0) {
-                    result_dir_mode = result_dir / ("fixed_damping_kmin_" + std::to_string(kmin)) / "ClassicDamping";
-                }
-                // create directory for results
-                if (mio::mpi::is_root()) {
-                    boost::filesystem::create_directories(result_dir_mode);
-                }
+                        mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
+                        auto result_dir_mode = result_dir / ("ICUCap_" + std::to_string(icu_cap)) /
+                                               ("BlendingFactorRegional_" + std::to_string(fact_r)) /
+                                               ("kmin_" + std::to_string(kmin) + "_kmax_" + std::to_string(kmax)) /
+                                               boost::filesystem::path(mode);
+                        if (std::strcmp(mode, "ClassicDamping") == 0) {
+                            result_dir_mode = result_dir / ("ICUCap_" + std::to_string(icu_cap)) /
+                                              ("BlendingFactorRegional_" + std::to_string(fact_r)) /
+                                              ("fixed_damping_kmin_" + std::to_string(kmin)) / "ClassicDamping";
+                        }
+                        // create directory for results
+                        if (mio::mpi::is_root()) {
+                            boost::filesystem::create_directories(result_dir_mode);
+                        }
 
-                BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, end_date, data_dir, mode, kmin, kmax));
-                params_graph = created;
+                        BOOST_OUTCOME_TRY(auto&& created,
+                                          get_graph(start_date, end_date, data_dir, mode, kmin, kmax, icu_cap, fact_r));
+                        params_graph = created;
 
-                std::vector<int> county_ids(params_graph.nodes().size());
-                std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(),
-                               [](auto& n) {
-                                   return n.id;
-                               });
+                        std::vector<int> county_ids(params_graph.nodes().size());
+                        std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(),
+                                       [](auto& n) {
+                                           return n.id;
+                                       });
 
-                //run parameter study
-                if (std::strcmp(mode, "ClassicDamping") == 0) {
-                    auto parameter_study_sim =
-                        mio::ParameterStudy<mio::osecir::Simulation<mio::FlowSimulation<mio::osecir::Model>>>{
-                            params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
-                    BOOST_OUTCOME_TRY(
-                        run_parameter_study(parameter_study_sim, county_ids, result_dir_mode, num_days_sim, mode));
-                }
-                else {
-                    auto parameter_study_feedback_sim =
-                        mio::ParameterStudy<mio::osecir::FeedbackSimulation<mio::FlowSimulation<mio::osecir::Model>>>{
-                            params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
-                    BOOST_OUTCOME_TRY(run_parameter_study(parameter_study_feedback_sim, county_ids, result_dir_mode,
-                                                          num_days_sim, mode));
+                        //run parameter study
+                        if (std::strcmp(mode, "ClassicDamping") == 0) {
+                            auto parameter_study_sim =
+                                mio::ParameterStudy<mio::osecir::Simulation<mio::FlowSimulation<mio::osecir::Model>>>{
+                                    params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+                            BOOST_OUTCOME_TRY(run_parameter_study(parameter_study_sim, county_ids, result_dir_mode,
+                                                                  num_days_sim, mode));
+                        }
+                        else {
+                            auto parameter_study_feedback_sim = mio::ParameterStudy<
+                                mio::osecir::FeedbackSimulation<mio::FlowSimulation<mio::osecir::Model>>>{
+                                params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+                            BOOST_OUTCOME_TRY(run_parameter_study(parameter_study_feedback_sim, county_ids,
+                                                                  result_dir_mode, num_days_sim, mode));
+                        }
+                    }
                 }
             }
         }
