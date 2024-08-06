@@ -89,7 +89,6 @@ def plot_infection_per_location_type_mean(x, y50, y25, y75):
     plt.ylabel('Number of individuals')
     plt.show()
 
-
 def plot_infection_states_results(path):
     # 50-percentile
     f_p50 = h5py.File(
@@ -534,8 +533,8 @@ def infer_positive_tests(path):
     best_rmse = 1000000000
     best_r_sns = 0
     best_lt_sympt = 0
-    for r_sns in np.linspace(1, 100, 100):
-        for lt_sympt in np.linspace(0.005, 0.3, 500):
+    for r_sns in np.linspace(1, 50, 100):
+        for lt_sympt in np.linspace(0.005, 0.1, 500):
             total_positive_tests, inferred_positive_tests_sympt, inferred_positive_tests_asympt = calc_positive_tests_overall(total_50, sensitivity, specificity, r_sns, lt_sympt)
             rmse = np.sqrt(((df_abb['Confirmed'] - total_positive_tests)**2).mean())
             if rmse < best_rmse:
@@ -552,8 +551,19 @@ def infer_positive_tests(path):
 
 
     # we save the assumed tests done
-    # assumed__amount_of_test = (total_50[:, 3]*lt_sympt+total_50[:, 4]*lt_sympt+total_50[:, 5]*lt_sympt)+(
-    #     total_50[:, 0]*lt_asympt)+(total_50[:, 1]+total_50[:, 2])*lt_asympt
+    assumed__amount_of_test = (total_50[:, 3]*lt_sympt+total_50[:, 4]*lt_sympt+total_50[:, 5]*lt_sympt)+(
+        total_50[:, 0]*(best_lt_sympt/best_r_sns))+(total_50[:, 1]+total_50[:, 2])*(best_lt_sympt/best_r_sns)
+    
+    #plot the assumed tests done
+    fig, ax = plt.subplots(1, 1, constrained_layout=True)
+    fig.set_figwidth(20)
+    fig.set_figheight(9)
+    ax.plot(time, assumed__amount_of_test, color='tab:red')
+    ax.set_xlabel('time (days)')
+    ax.set_ylabel('Number of tests')
+    ax.title.set_text('Assumed amount of tests done')
+    ax.legend(['Assumed amount of tests done'])
+    plt.show()
 
     
 
@@ -697,11 +707,11 @@ if __name__ == "__main__":
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    # plot_infection_states_results(path)
-    # plot_infections_loc_types_avarage(path)
-    # plot_icu(path)
-    # plot_dead(path)
-    # infer_positive_tests(path)
-    # plot_estimated_reproduction_number(path)
-    # plot_cumulative_detected_infections(path)
+    plot_infection_states_results(path)
+    plot_infections_loc_types_avarage(path)
+    plot_icu(path)
+    plot_dead(path)
+    infer_positive_tests(path)
+    plot_estimated_reproduction_number(path)
+    plot_cumulative_detected_infections(path)
     plot_positive_and_done_test(path)

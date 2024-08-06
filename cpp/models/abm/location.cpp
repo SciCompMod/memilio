@@ -175,14 +175,19 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegrou
         cell.m_cached_exposure_rate_air.array().setZero();
         for (auto&& p : cell.m_persons) {
             if (p->is_infected(t)) {
-                auto& inf  = p->get_infection();
-                auto virus = inf.get_virus_variant();
-                auto age   = p->get_age();
+                auto& inf                = p->get_infection();
+                auto virus               = inf.get_virus_variant();
+                auto age                 = p->get_age();
+                double quarantine_factor = 1.0;
+                if (p->is_in_quarantine(t_middlepoint, params)) {
+                    quarantine_factor = 0.5;
+                }
                 /* average infectivity over the time step 
                  * to second order accuracy using midpoint rule
                 */
                 cell.m_cached_exposure_rate_contacts[{virus, age}] +=
-                    params.get<InfectionRateFromViralShed>()[{virus}] * inf.get_viral_shed(t_middlepoint);
+                    params.get<InfectionRateFromViralShed>()[{virus}] * inf.get_viral_shed(t_middlepoint) *
+                    quarantine_factor;
                 cell.m_cached_exposure_rate_air[{virus}] +=
                     inf.get_viral_shed(t_middlepoint); // TODO: Adapt function/factor for air transmission.
             }

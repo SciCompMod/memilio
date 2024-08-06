@@ -1902,13 +1902,13 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
     auto end_run_idx   = start_run_idx + run_distribution[size_t(rank)];
 
-    auto viral_shedding_rate = 4.0;
-    auto seasonality_april   = 0.8;
-    auto seasonality_may     = 0.5;
-    auto perc_easter_event   = 0.3;
-    auto dark_figure         = 2.33;
-    auto contact_rate_ssc    = 0.4;
-    auto masks               = 0.3;
+    auto viral_shedding_rate = 5.5;
+    auto seasonality_april   = 0.775;
+    auto seasonality_may     = 0.6;
+    auto perc_easter_event   = 0.4;
+    auto dark_figure         = 3.0;
+    auto contact_rate_ssc    = 0.2;
+    auto masks               = 0.4;
 
     mio::Date start_date{2021, 3, 1};
     int max_num_days     = 90;
@@ -1983,9 +1983,24 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
             const auto location_it = sim.get_world().get_locations();
 
+            // random testing at home
+            auto testing_min_time_home = mio::abm::days(7);
+            auto probability_home      = 0.01;
+            auto start_date_test_home  = mio::abm::TimePoint(mio::abm::days(1).seconds()); // 2021-04-12
+            auto end_date_test_home    = mio::abm::TimePoint(tmax); // 2021-05-30
+            auto test_type_home        = mio::abm::TestType::Antigen; // Antigen test
+            auto test_parameters_home =
+                sim.get_world().parameters.get<mio::abm::TestData>()[test_type_home]; // Test parameters
+            auto testing_criteria_home = mio::abm::TestingCriteria();
+            auto testing_scheme_home =
+                mio::abm::TestingScheme(testing_criteria_home, testing_min_time_home, start_date_test_home,
+                                        end_date_test_home, test_parameters_home, probability_home);
+            sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Home,
+                                                                      testing_scheme_home);
+
             // 1. testing schemes in schools
             auto testing_min_time_school = mio::abm::days(7);
-            auto probability_school      = 1.0;
+            auto probability_school      = 0.1;
             auto start_date_test_school  = mio::abm::TimePoint(mio::abm::days(42).seconds()); // 2021-04-12
             auto end_date_test_school    = mio::abm::TimePoint(tmax); // 2021-05-30
             auto test_type_school        = mio::abm::TestType::Antigen; // Antigen test
@@ -2013,7 +2028,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             std::vector<uint32_t> work_location_ids_35(work_location_ids.begin(),
                                                        work_location_ids.begin() + num_work_locations);
             auto testing_min_time_work = mio::abm::days(1);
-            auto probability_work      = 1.0;
+            auto probability_work      = 0.05;
             auto start_date_test_work  = mio::abm::TimePoint(mio::abm::days(72).seconds());
             auto end_date_test_work    = mio::abm::TimePoint(tmax);
             auto test_type_work        = mio::abm::TestType::Antigen; // Antigen test
@@ -2041,7 +2056,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             std::vector<uint32_t> basics_shop_location_ids_20(
                 basics_shop_location_ids.begin(), basics_shop_location_ids.begin() + num_basics_shop_locations);
             auto testing_min_time_basics_shop = mio::abm::days(2);
-            auto probability_basics_shop      = 1.0;
+            auto probability_basics_shop      = 0.01;
             auto start_date_test_basics_shop  = mio::abm::TimePoint(mio::abm::days(14).seconds());
             auto end_date_test_basics_shop    = mio::abm::TimePoint(tmax);
             auto test_type_basics_shop        = mio::abm::TestType::Antigen; // Antigen test
@@ -2339,8 +2354,8 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
