@@ -649,7 +649,7 @@ void set_parameters(mio::abm::Parameters& params)
     params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Alpha, age_group_15_to_34}] = 0.15;
     params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Alpha, age_group_35_to_59}] = 0.25;
     params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Alpha, age_group_60_to_79}] = 0.43;
-    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Alpha, age_group_80_plus}]  = 0.5;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Alpha, age_group_80_plus}]  = 0.50;
 
     // Set infection parameters
 
@@ -1293,7 +1293,7 @@ struct LogTestPerLocationTypePerAgeGroup : mio::LogAlways {
             auto& p = persons[i];
             if (p.get_should_be_logged()) {
                 // PRAGMA_OMP(atomic)
-                if ((p.get_time_of_last_test() > prev_time)) {
+                if ((p.get_time_of_last_test() == prev_time)) {
                     auto index = (((size_t)(mio::abm::LocationType::Count)) * ((uint32_t)p.get_age().get())) +
                                  ((uint32_t)p.get_location().get_type());
                     sum[index] += 1;
@@ -1326,7 +1326,7 @@ struct LogPositiveTestPerLocationTypePerAgeGroup : mio::LogAlways {
             if (p.get_should_be_logged()) {
                 // PRAGMA_OMP(atomic)
                 // careful: this check assumes a persons goes into quarantine when a test is positive and that the duration of quarantine is >0
-                if (p.get_time_of_last_test() > prev_time &&
+                if (p.get_time_of_last_test() == prev_time &&
                     p.is_in_quarantine(curr_time, sim.get_world().parameters)) {
                     auto index = (((size_t)(mio::abm::LocationType::Count)) * ((uint32_t)p.get_age().get())) +
                                  ((uint32_t)p.get_location().get_type());
@@ -1945,16 +1945,6 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto ensemble_params = std::vector<std::vector<mio::abm::World>>{}; // Vector of all worlds
     ensemble_params.reserve(size_t(num_runs));
 
-    int tid = -1;
-#pragma omp parallel private(tid) // Start of parallel region: forks threads
-    {
-        tid = omp_get_thread_num(); // default is number of CPUs on machine
-        printf("Hello World from thread = %d and rank = %d\n", tid, rank);
-        if (tid == 0) {
-            printf("Number of threads = %d\n", omp_get_num_threads());
-        }
-    } // ** end of the the parallel: joins threads
-
     // Determine inital infection state distribution
     restart_timer(timer, "time for initial setup");
     determine_initial_infection_states_world(input_dir, start_date, dark_figure);
@@ -2286,7 +2276,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         BOOST_OUTCOME_TRY(save_results(final_ensemble_cumulative_detected_infections, ensemble_params, {0},
                                        result_dir / "cumulative_detected_infections/", save_single_runs));
         BOOST_OUTCOME_TRY(save_results(final_ensemble_estimated_reproduction_number, ensemble_params, {0},
-                                       result_dir / "estimated_reproduction_number/", save_single_runs));
+                                       result_dir / "estimated_reproduction_number/", save_single_runs, true, true));
     }
 #else
 
@@ -2299,7 +2289,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     BOOST_OUTCOME_TRY(save_results(ensemble_cumulative_detected_infections, ensemble_params, {0},
                                    result_dir / "cumulative_detected_infections/", save_single_runs));
     BOOST_OUTCOME_TRY(save_results(ensemble_estimated_reproduction_number, ensemble_params, {0},
-                                   result_dir / "estimated_reproduction_number/", save_single_runs));
+                                   result_dir / "estimated_reproduction_number/", save_single_runs, 1));
 
 #endif
     restart_timer(timer, "time taken for data gathering and saving results");

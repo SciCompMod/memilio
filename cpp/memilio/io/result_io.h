@@ -135,11 +135,15 @@ IOResult<void> save_result_with_params(const std::vector<TimeSeries<double>>& re
 template <class Model>
 IOResult<void> save_results(const std::vector<std::vector<TimeSeries<double>>>& ensemble_results,
                             const std::vector<std::vector<Model>>& ensemble_params, const std::vector<int>& county_ids,
-                            const fs::path& result_dir, bool save_single_runs = true, bool save_percentiles = true)
+                            const fs::path& result_dir, bool save_single_runs = true, bool save_percentiles = true,
+                            bool just_one_ag = false)
 {
     //save results and sum of results over nodes
     auto ensemble_result_sum = sum_nodes(ensemble_results);
     auto num_groups          = (int)(size_t)ensemble_params[0][0].parameters.get_num_groups();
+    if (just_one_ag) {
+        num_groups = 1;
+    }
     if (save_single_runs) {
         for (size_t i = 0; i < ensemble_result_sum.size(); ++i) {
             BOOST_OUTCOME_TRY(save_result(ensemble_result_sum[i], {0}, num_groups,
