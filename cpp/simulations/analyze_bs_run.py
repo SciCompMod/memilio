@@ -635,7 +635,7 @@ def plot_cumulative_detected_infections(path):
 
 def plot_positive_and_done_test(path):
     f_p50_positive = h5py.File(
-        path+"/test_per_location_type_per_age_group/p50/Results.h5", 'r')
+        path+"/positive_test_per_location_type_per_age_group/p50/Results.h5", 'r')
     p50_bs_positive = f_p50_positive['0']
     total_50_positive = p50_bs_positive['Total'][()]
 
@@ -650,17 +650,20 @@ def plot_positive_and_done_test(path):
 
 
     # weas one entry is one hour we take the sum every 24 entries to get the daily amount, we do this with cumsum
+    # first we need to sum up over all age groups
+    total_50_positive = np.sum(total_50_positive, axis=1)
     total_50_positive = np.cumsum(total_50_positive, axis=0)
     total_50_positive = total_50_positive[::24]
-    total_50_positive = total_50_positive[0:90] # we still need to take the difference to get the daily amount
+    total_50_positive = total_50_positive[0:91] # we still need to take the difference to get the daily amount
     total_50_positive = np.diff(total_50_positive, axis=0).flatten()
     # we smooth this with a gaussian filter
     total_50_positive = gaussian_filter1d(total_50_positive, sigma=1, mode='nearest')
 
     #same for the done tests
+    total_50_done = np.sum(total_50_done, axis=1)
     total_50_done = np.cumsum(total_50_done, axis=0)
     total_50_done = total_50_done[::24]
-    total_50_done = total_50_done[0:90] # we still need to take the difference to get the daily amount
+    total_50_done = total_50_done[0:91] # we still need to take the difference to get the daily amount
     total_50_done = np.diff(total_50_done, axis=0).flatten()
     # we smooth this with a gaussian filter
     total_50_done = gaussian_filter1d(total_50_done, sigma=1, mode='nearest')
@@ -679,14 +682,6 @@ def plot_positive_and_done_test(path):
     plt.legend(['Positive tests', 'Done tests'])
     plt.title('Positive and done tests')
     plt.show()
-
-
-
-
-    
-
-
-
 
 
 
