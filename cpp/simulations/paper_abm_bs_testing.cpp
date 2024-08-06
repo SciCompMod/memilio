@@ -542,7 +542,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         if (it_person == persons.end()) {
             auto home    = locations.find(home_id)->second;
             auto& person = world.add_person(home, determine_age_group(age));
-            person.set_mask_preferences({0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.2, 0.2});
+            person.set_mask_preferences({0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.25, 0.25});
             person.set_assigned_location(home);
             person.set_assigned_location(hospital);
             person.set_assigned_location(icu);
@@ -1033,7 +1033,7 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
     double rmse_icu  = 0;
     for (size_t i = 0; i < real_data_dead_vec.size(); i++) {
         rmse_dead += pow(real_data_dead_vec[i] - sim_data_vec_dead[i], 2);
-        rmse_icu += pow((int)(sim_data_vec_icu[i] * 0.5) - real_data_icu_vec[i], 2);
+        rmse_icu += pow((int)(sim_data_vec_icu[i] * 0.45) - real_data_icu_vec[i], 2);
     }
     rmse_dead = sqrt(rmse_dead / real_data_dead_vec.size());
     rmse_icu  = sqrt(rmse_icu / real_data_icu_vec.size());
@@ -1054,6 +1054,27 @@ std::vector<std::vector<double>> grid_points(std::vector<std::pair<double, doubl
         double step = (parameter_boundaries[i].second - parameter_boundaries[i].first) / (number_of_points.at(i) - 1);
         for (int j = 0; j < number_of_points.at(i) - 1; j++) {
             temp.push_back(parameter_boundaries[i].first + j * step);
+        }
+        grid.push_back(temp);
+    }
+    return grid;
+}
+
+/**
+ * @brief Calculate a grid search for a given set of parameters.
+ * @input std::vector where size is the amount of parameters, and the first entry is the min and the second is the max value
+ */
+std::vector<std::vector<double>> grid_points(const std::vector<double>& parameter_points,
+                                             const std::vector<int>& number_of_points)
+{
+    std::vector<std::vector<double>> grid;
+    for (size_t i = 0; i < parameter_points.size(); i++) {
+        std::vector<double> temp;
+        double min_value = parameter_points[i] * 0.8;
+        double max_value = parameter_points[i] * 1.2;
+        double step      = (max_value - min_value) / (number_of_points.at(i) - 1);
+        for (int j = 0; j < number_of_points.at(i) - 1; j++) {
+            temp.push_back(min_value + j * step);
         }
         grid.push_back(temp);
     }
@@ -1557,10 +1578,12 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     std::vector<double> rmse_results_per_grid_point;
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
-    omp_set_nested(1);
+    omp_set_max_active_levels(2);
 PRAGMA_OMP(parallel for num_threads(64))
 for (size_t i = 0; i < grid_search_rank.size(); i++) {
     auto params = grid_search_rank[i];
+
+    printf("I am Thread %d\n", omp_get_thread_num());
 
     // grid search for parameters:
     // 1: Viral Shed
@@ -2326,8 +2349,8 @@ int main(int argc, char** argv)
     mio::mpi::init();
 #endif
 
-    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
@@ -2370,13 +2393,13 @@ int main(int argc, char** argv)
         // 5: Dark Figure
         // 6.: Contact rate forst ssocial ebents closure
         // 7.: Masks
-        std::vector<std::pair<double, double>> grid_boundaries = {{4.0, 7.0}, {0.8, 0.95}, {0.5, 0.7}, {0.3, 0.6},
-                                                                  {1.0, 5.0}, {0.2, 0.6},  {0.3, 0.5}};
+        std::vector<std::pair<double, double>> grid_boundaries = {{3.0, 8.0}, {0.6, 0.95}, {0.4, 0.8}, {0.2, 0.6},
+                                                                  {1.0, 5.0}, {0.2, 0.6},  {0.2, 0.6}};
 
-        std::vector<int> points_per_dim = {8, 5, 5, 5, 8, 5, 5};
+        // std::vector<int> points_per_dim = {6, 5, 5, 5, 6, 5, 5};
+        std::vector<int> points_per_dim = {3, 3, 3, 3, 3, 3, 3};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
-        std::cout << "Grid size: " << grid.size() << std::endl;
-        auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid);
+        auto result                     = run_with_grid_search(input_dir, result_dir, num_runs, grid);
     }
     else {
         auto result = run(input_dir, result_dir, num_runs);
