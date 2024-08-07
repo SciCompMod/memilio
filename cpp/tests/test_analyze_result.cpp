@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "abm/analyze_result.h"
-#include "abm/world.h"
+#include "abm/model.h"
 #include "matchers.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/data/analyze_result.h"
@@ -175,7 +175,7 @@ TEST(TestInterpolateGraph, basic)
 {
     using Model      = mio::osecir::Model<double>;
     using Simulation = mio::Simulation<double, Model>;
-    auto g           = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge<double>>();
+    auto g           = mio::Graph<mio::SimulationNode<Simulation>, mio::MobilityEdge<double>>();
     g.add_node(0, Model(1), 0.5);
     g.add_node(1, Model(1), 0.5);
     for (auto& n : g.nodes()) {
@@ -484,34 +484,34 @@ TEST(TestEnsembleParamsPercentile, graph_osecir_basic)
 TEST(TestEnsembleParamsPercentile, graph_abm_basic)
 {
     size_t num_age_groups = 6;
-    auto world1           = mio::abm::World(num_age_groups);
-    auto world2           = mio::abm::World(num_age_groups);
+    auto model1           = mio::abm::Model(num_age_groups);
+    auto model2           = mio::abm::Model(num_age_groups);
 
-    world1.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+    model1.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
         0.1;
-    world1.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
+    model1.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
 
-    world2.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+    model2.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
         0.2;
-    world2.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.3;
+    model2.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.3;
 
-    auto g1 = std::vector<mio::abm::World>({world1, world2});
+    auto g1 = std::vector<mio::abm::Model>({model1, model2});
 
-    world1.parameters
+    model1.parameters
         .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
-    world1.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+    model1.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
         0.3;
-    world1.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.4;
+    model1.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.4;
 
-    world2.parameters
+    model2.parameters
         .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.7;
-    world2.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+    model2.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
         0.4;
-    world2.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.5;
+    model2.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.5;
 
-    auto g2 = std::vector<mio::abm::World>({world1, world2});
+    auto g2 = std::vector<mio::abm::Model>({model1, model2});
 
-    auto ensemble_params = std::vector<std::vector<mio::abm::World>>({g1, g2});
+    auto ensemble_params = std::vector<std::vector<mio::abm::Model>>({g1, g2});
 
     auto ensemble_p49_params = mio::abm::ensemble_params_percentile(ensemble_params, 0.49);
     auto ensemble_p51_params = mio::abm::ensemble_params_percentile(ensemble_params, 0.51);

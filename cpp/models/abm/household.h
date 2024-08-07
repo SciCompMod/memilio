@@ -21,7 +21,7 @@
 #ifndef MIO_ABM_HOUSEHOLD_H
 #define MIO_ABM_HOUSEHOLD_H
 
-#include "abm/world.h"
+#include "abm/model.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/custom_index_array.h"
 #include <numeric>
@@ -195,19 +195,19 @@ private:
 };
 
 /**
- * @brief Adds a specific Household to the World.
- * Adds Person%s to the World according to the age distribution of the HouseholdMember%s of the Household.
- * @param[in,out] world The World to which the Household has to be added.
- * @param[in] household The Household to add to World.
+ * @brief Adds a specific Household to the Model.
+ * Adds Person%s to the Model according to the age distribution of the HouseholdMember%s of the Household.
+ * @param[in,out] model The Model to which the Household has to be added.
+ * @param[in] household The Household to add to Model.
  */
-void add_household_to_world(World& world, const Household& household);
+void add_household_to_model(Model& model, const Household& household);
 
 /**
- * @brief Adds Household%s from a HouseholdGroup to the World.
- * @param[in,out] world The World to which the group has to be added.
+ * @brief Adds Household%s from a HouseholdGroup to the Model.
+ * @param[in,out] model The Model to which the group has to be added.
  * @param[in] household_group The HouseholdGroup to add.
  */
-void add_household_group_to_world(World& world, const HouseholdGroup& household_group);
+void add_household_group_to_model(Model& model, const HouseholdGroup& household_group);
 
 } // namespace abm
 } // namespace mio

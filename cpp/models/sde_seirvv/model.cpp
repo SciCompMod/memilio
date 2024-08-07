@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Martin J. Kuehn
+* Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,18 +17,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/io/mobility_io.h"
 
-// wrapper function to print out matrix entries by gdb's 'print get_element(M,1,1)'
-// (GDB doesn't support calling the overloaded operator())
-double get_element(Eigen::MatrixXd const& m, int i, int j)
-{
-    return m(i, j);
-}
+#include "sde_seirvv/model.h"
 
-int main()
+namespace mio
 {
-    // Place text file needs to be in working directory build/examples/ and
-    // start from within examples folder in build directory
-    auto twitter_migration_2018 = mio::read_mobility_formatted("2018_lk_matrix.txt");
-}
+namespace sseirvv
+{
+
+} // namespace sseirvv
+} // namespace mio

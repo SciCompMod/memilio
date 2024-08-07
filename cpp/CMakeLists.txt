@@ -76,6 +76,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         message(STATUS "Coverage enabled")
         include(CodeCoverage)
         append_coverage_compiler_flags()
+        # In addition to standard flags, disable elision and inlining to prevent e.g. closing brackets being marked as uncovered.
+
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-elide-constructors -fno-default-inline")
         setup_target_for_coverage_lcov(
             NAME coverage
             EXECUTABLE memilio-test
@@ -151,6 +154,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/ode_sir)
     add_subdirectory(models/sde_sir)
     add_subdirectory(models/sde_sirs)
+    add_subdirectory(models/sde_seirvv)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)
