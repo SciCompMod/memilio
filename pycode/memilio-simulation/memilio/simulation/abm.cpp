@@ -73,7 +73,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("PCR", mio::abm::TestType::PCR);
 
     pymio::bind_class<mio::abm::TestParameters, pymio::EnablePickling::Never>(m, "TestParameters")
-        .def(py::init<double, double, double, double>())
+        .def(py::init<double, double, int, int>())
         .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity)
         .def_readwrite("required_time", &mio::abm::TestParameters::required_time)
