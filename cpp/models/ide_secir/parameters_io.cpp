@@ -116,7 +116,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     bool min_offset_needed_avail = false;
     bool max_offset_needed_avail = false;
     // Get first date that is needed to compute inital values.
-    mio::Date min_offset_date = offset_date_by_days(date, min_offset_needed);
+    mio::Date min_offset_date = offset_date_by_days(date, int(min_offset_needed));
 
     // Go through the entries of rki_data and check if date is needed for calculation. Confirmed cases are scaled.
     // Define dummy variables to store the first and the last index of the TimeSeries where the considered entry of rki_data is potentially needed.
