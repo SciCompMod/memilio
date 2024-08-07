@@ -27,7 +27,7 @@
 
 TEST(TestLocation, initCell)
 {
-    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
+    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 0, 2);
     ASSERT_EQ(location.get_cells().size(), 2);
 }
 
@@ -102,7 +102,7 @@ TEST(TestLocation, computeSpacePerPersonRelative)
 {
     using testing::Return;
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 3);
+    mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 0, 3);
     home.set_capacity(4, 264, 0); // Capacity for Cell 1
     home.set_capacity(2, 132, 1); // Capacity for Cell 2
     home.set_capacity(0, 0, 2); // Capacity for Cell 3

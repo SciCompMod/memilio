@@ -37,9 +37,8 @@ namespace abm
 LocationId Model::add_location(LocationType type, uint32_t num_cells)
 {
     LocationId id{static_cast<uint32_t>(m_locations.size())};
-    m_locations.emplace_back(type, id, parameters.get_num_groups(), num_cells);
+    m_locations.emplace_back(type, id, parameters.get_num_groups(), m_id, num_cells);
     m_has_locations[size_t(type)] = true;
-    m_locations[id.get()].set_model_id(m_id);
 
     // mark caches for rebuild
     m_is_local_population_cache_valid = false;

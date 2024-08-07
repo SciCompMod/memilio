@@ -100,19 +100,22 @@ public:
      * @param[in] loc_type The #LocationType.
      * @param[in] loc_id The index of the Location in the Model.
      * @param[in] num_agegroups [Default: 1] The number of age groups in the model.
+     * @param[in] model_id [Default: 0] The model id the Location is in.
      * @param[in] num_cells [Default: 1] The number of Cell%s in which the Location is divided.
      */
-    explicit Location(LocationType loc_type, LocationId loc_id, size_t num_agegroups = 1, uint32_t num_cells = 1);
+    explicit Location(LocationType loc_type, LocationId loc_id, size_t num_agegroups = 1, int model_id = 0,
+                      uint32_t num_cells = 1);
 
     /**
      * @brief Construct a copy of a Location with a new ID.
      * @param[in] other The Location to copy from.
      * @param[in] id The ID for the new Location.
      */
-    explicit Location(const Location& other, LocationId id)
+    explicit Location(const Location& other, LocationId id, int model_id = 0)
         : Location(other)
     {
-        m_id = id;
+        m_id       = id;
+        m_model_id = model_id;
     }
 
     /**
@@ -289,15 +292,6 @@ public:
         return m_model_id;
     }
 
-    /**
-     * @brief Set model id of the Location. Is only relevant for graph ABM or hybrid model.
-     * @param[in] model_id The model id of the location.
-     */
-    void set_model_id(int model_id)
-    {
-        m_model_id = model_id;
-    }
-
 private:
     LocationType m_type; ///< Type of the Location.
     LocationId m_id; ///< Unique identifier for the Location in the Model owning it.
@@ -306,7 +300,7 @@ private:
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
-    int m_model_id = 0; ///< Model id the location is in. Only used for ABM graph model or hybrid graph model.
+    int m_model_id; ///< Model id the location is in. Only used for ABM graph model or hybrid graph model.
 };
 
 } // namespace abm
