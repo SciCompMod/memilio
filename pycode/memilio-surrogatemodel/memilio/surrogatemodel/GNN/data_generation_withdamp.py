@@ -3,30 +3,30 @@ import os
 import pickle
 import random
 import json
+import numpy as np
 from datetime import date
  
-import numpy as np
 from progress.bar import Bar
 from sklearn.preprocessing import FunctionTransformer
 
 from memilio.simulation import (AgeGroup, LogLevel, set_log_level, Damping)
-
 from memilio.simulation.osecir import (Index_InfectionState, interpolate_simulation_result, ParameterStudy,
                                       InfectionState, Model, ModelGraph, 
                                       interpolate_simulation_result, set_edges)
-
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import transformMobilityData as tmd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
-
 def run_secir_groups_simulation(days, populations, num_dampings):
-    """! Uses an ODE SECIR model allowing for asymptomatic infection with 6 different age groups. The model is not stratified by region. 
-    Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
+    """! Uses an ODE SECIR model allowing for asymptomatic infection 
+        with 6 different age groups. The model is not stratified by region. 
+        Virus-specific parameters are fixed and initial number of persons 
+        in the particular infection states are chosen randomly from defined ranges.
     @param Days Describes how many days we simulate within a single run.
     @param damping_day The day when damping is applied.
     @param populations List containing the population in each age group.
-    @return List containing the populations in each compartment used to initialize the run.
+    @return List containing the populations in each compartment 
+            used to initialize the run.
    """
     set_log_level(LogLevel.Off)
 
@@ -121,7 +121,7 @@ def run_secir_groups_simulation(days, populations, num_dampings):
             
             # add damping to model
             model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
-                coeffs=(damping), t=day, level=0, type=0))
+                coeffs = (damping), t=day, level=0, type=0))
 
             damped_matrices.append(model.parameters.ContactPatterns.cont_freq_mat.get_matrix_at(
                 day+1))
@@ -165,20 +165,28 @@ def run_secir_groups_simulation(days, populations, num_dampings):
     return dataset_entry, damped_matrices, num_dampings, damping_coeff
 
 def remove_confirmed_compartments(dataset_entries, num_groups):
-    """! The compartments which contain confirmed cases are not needed and are therefore omitted by summarizing the confirmed 
+    """! The compartments which contain confirmed cases are not 
+        needed and are therefore omitted by summarizing the confirmed 
     compartment with the original compartment. 
-    @param dataset_entries Array that contains the compartmental data with confirmed compartments. 
+    @param dataset_entries Array that contains the compartmental data with 
+            confirmed compartments. 
     @param num_groups Number of age groups.
-    @return Array that contains the compartmental data without confirmed compartments. 
+    @return Array that contains the compartmental data without 
+            confirmed compartments. 
    """
+    
     new_dataset_entries = []
     for i in dataset_entries : 
-      dataset_entries_reshaped  = i.reshape([num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups) ])
+      dataset_entries_reshaped  = i.reshape(
+          [num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups)]
+          )
       sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
       sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
       dataset_entries_reshaped[:, 2] = sum_inf_no_symp
       dataset_entries_reshaped[:, 4] = sum_inf_symp
-      new_dataset_entries.append(np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten())
+      new_dataset_entries.append(np.delete(
+          dataset_entries_reshaped , [3, 5], axis=1).flatten()
+          )
     return new_dataset_entries
 
 
@@ -187,6 +195,7 @@ def get_population(path="data/pydata/Germany/county_population.json"):
     @param path Path to population file. 
     @return List with all 400 populations and 6 age groups. 
    """
+    
     with open(path) as f:
         data = json.load(f)
     population = []
@@ -252,12 +261,14 @@ def getMinimumMatrix():
 
 
 def generate_dampings_withshadowdamp(number_of_dampings, days, min_distance, min_damping_day, n_runs):
-    """! Draw damping days while keeping a minimum distance between the damping days. This method aims to create a 
-        uniform ditribution of drawn damping days. 
+    """! Draw damping days while keeping a minimum distance between the 
+        damping days. This method aims to create a uniform ditribution of 
+        drawn damping days. 
    @param num_of_dampings Number of dampings that have to be drawn.
    @param days Number of days which are simulated (label_width).
    @param min_distance The minimum number of days between two dampings. 
-   @param min_damping_day The earliest day of the simualtion where a damping can take place.   
+   @param min_damping_day The earliest day of the simualtion where a damping 
+        can take place.   
    @param n_runs Number of simulation runs. 
    """
 
@@ -266,10 +277,11 @@ def generate_dampings_withshadowdamp(number_of_dampings, days, min_distance, min
     count_shadow = 0
     while len(all_dampings)<n_runs:
 
-        days_list = list(range((min_damping_day),days))
+        days_list = list(range((min_damping_day), days))
         dampings = []
-        if count_shadow <2:
+        if count_shadow < 2:
             for i in range(number_of_dampings):
+
                 damp = random.choice(days_list)
                 days_before = list(range(damp-(min_distance), damp))
                 days_after = list(range(damp, damp+(min_distance+1)))
@@ -277,14 +289,13 @@ def generate_dampings_withshadowdamp(number_of_dampings, days, min_distance, min
                 days_list = [ele for ele in days_list if ele not in (days_before+days_after)]
         else: 
             # chose a forbidden damping 
-            damp = random.choice(list(range((0-min_distance),0))+ list(range(days+1, (days+min_distance+1))))
+            damp = random.choice(list(range((0-min_distance), 0))+ list(range(days+1, (days+min_distance+1))))
                 
             days_before = list(range(damp-(min_distance), damp))
             days_after = list(range(damp, damp+(min_distance+1)))
             days_list = [ele for ele in days_list if ele not in (days_before+days_after)]
             dampings.append(damp)
-            for i in range(number_of_dampings):
-                
+            for i in range(number_of_dampings):                
                 
                 damp = random.choice(days_list)
                 days_before = list(range(damp-(min_distance), damp))
@@ -294,7 +305,7 @@ def generate_dampings_withshadowdamp(number_of_dampings, days, min_distance, min
                 count_shadow = 0
         
             
-        forbidden_damping_values = list(range((0-min_distance),0))+ list(range(days+1, (days+min_distance+1)))
+        forbidden_damping_values = list(range((0-min_distance), 0))+ list(range(days+1, (days+min_distance+1)))
         dampings = [ele for ele in dampings if ele not in forbidden_damping_values]
         count_runs+=1
         count_shadow +=1
@@ -319,7 +330,10 @@ def generate_data(
     days_sum = label_width+input_width-1
 
     #generate dampings
-    damping_days = generate_dampings_withshadowdamp(number_of_dampings = number_of_dampings, days= label_width, min_distance=7, min_damping_day=input_width, n_runs = num_runs)
+    damping_days = generate_dampings_withshadowdamp(
+        number_of_dampings = number_of_dampings, days = label_width, 
+        min_distance = 7, min_damping_day = input_width, n_runs = num_runs
+        )
     
     # all data including damping information
     all_data = {"inputs": [],
@@ -337,16 +351,16 @@ def generate_data(
     
     # show progess in terminal for longer runs
     # Due to the random structure, theres currently no need to shuffle the data
-    bar = Bar('Number of Runs done', max=num_runs)
+    bar = Bar('Number of Runs done', max = num_runs)
 
     for i in range(num_runs):
             
             data_run, damped_contact_matrix, damping_days_s, damping_factor = run_secir_groups_simulation(
                  days_sum,  population,  damping_days[i])
 
-            inputs = np.asarray(data_run).transpose(1,2,0)[:input_width]
+            inputs = np.asarray(data_run).transpose(1, 2, 0)[:input_width]
             data["inputs"].append(inputs)
-            data["labels"].append(np.asarray(data_run).transpose(1,2,0)[input_width:])
+            data["labels"].append(np.asarray(data_run).transpose(1, 2, 0)[input_width:])
             data["damping_coeff"].append(damping_factor)
             data["damping_day"].append(damping_days_s)
             data["damped_matrix"].append(damped_contact_matrix)
@@ -361,13 +375,15 @@ def generate_data(
 
             # Scale inputs
             inputs = np.asarray(
-                data['inputs']).transpose(2,0,1,3).reshape(num_groups*8,-1)
+                data['inputs']).transpose(2, 0, 1, 3).reshape(num_groups*8, -1)
             scaled_inputs = transformer.transform(inputs)
             original_shape_input = np.asarray(data['inputs']).shape
             
             # Step 1: Reverse the reshape
-            reshaped_back = scaled_inputs.reshape(original_shape_input[2], original_shape_input[0], 
-                                                  original_shape_input[1], original_shape_input[3])
+            reshaped_back = scaled_inputs.reshape(
+                        original_shape_input[2], original_shape_input[0], 
+                        original_shape_input[1], original_shape_input[3]
+                        )
 
             # Step 2: Reverse the transpose
             original_inputs = reshaped_back.transpose(1, 2, 0, 3)
@@ -376,13 +392,15 @@ def generate_data(
             
             # Scale labels
             labels = np.asarray(
-                data['labels']).transpose(2,0,1,3).reshape(num_groups*8, -1)
+                data['labels']).transpose(2, 0, 1, 3).reshape(num_groups*8, -1)
             scaled_labels = transformer.transform(labels)
             original_shape_labels = np.asarray(data['labels']).shape
             
             # Step 1: Reverse the reshape
-            reshaped_back = scaled_labels.reshape(original_shape_labels[2], original_shape_labels[0], 
-                                                  original_shape_labels[1], original_shape_labels[3])
+            reshaped_back = scaled_labels.reshape(
+                        original_shape_labels[2], original_shape_labels[0], 
+                        original_shape_labels[1], original_shape_labels[3]
+                        )
 
             # Step 2: Reverse the transpose
             original_labels = reshaped_back.transpose(1, 2, 0, 3)
