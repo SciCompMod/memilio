@@ -73,9 +73,11 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("PCR", mio::abm::TestType::PCR);
 
     pymio::bind_class<mio::abm::TestParameters, pymio::EnablePickling::Never>(m, "TestParameters")
-        .def(py::init<double, double>())
+        .def(py::init<double, double, double, double>())
         .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
-        .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
+        .def_readwrite("specificity", &mio::abm::TestParameters::specificity)
+        .def_readwrite("required_time", &mio::abm::TestParameters::required_time)
+        .def_readwrite("type", &mio::abm::TestParameters::type);
 
     pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::abm::VirusVariant, mio::AgeGroup>(
         m, "_AgeParameterArray");
