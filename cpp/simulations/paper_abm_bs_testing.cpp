@@ -1771,7 +1771,6 @@ for (size_t i = 0; i < grid_search_rank.size(); i++) {
     sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>() = viral_shedding_rate;
     sim.advance(mio::abm::TimePoint(mio::abm::days(14).seconds()), historyInfectionStatePerAgeGroup,
                 historyInfectionPerLocationType);
-    mio::unused(seasonality_april, seasonality_may, contact_rate_ssc);
     std::cout << "day 14 finished" << std::endl;
 
     // small social events to capacity 5
@@ -1986,7 +1985,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             // random testing at home
             auto testing_min_time_home = mio::abm::days(7);
             auto probability_home      = 0.01;
-            auto start_date_test_home  = mio::abm::TimePoint(mio::abm::days(1).seconds()); // 2021-04-12
+            auto start_date_test_home  = mio::abm::TimePoint(mio::abm::days(0).seconds()); // 2021-04-12
             auto end_date_test_home    = mio::abm::TimePoint(tmax); // 2021-05-30
             auto test_type_home        = mio::abm::TestType::Antigen; // Antigen test
             auto test_parameters_home =
