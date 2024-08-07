@@ -1,10 +1,12 @@
 add_library(ide_secir
     infection_state.h
-    model.h
-    model.cpp
+    model_ide.h
+    model_ide.cpp
     simulation.h
     simulation.cpp
     parameters.h
+    initialize_from_ode.h
+    initialize_from_ode.cpp
     parameters_io.h
     parameters_io.cpp
 )

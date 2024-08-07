@@ -19,7 +19,7 @@
 */
 #include "load_test_data.h"
 #include "ide_secir/infection_state.h"
-#include "ide_secir/model.h"
+#include "ide_secir/model_ide.h"
 #include "ide_secir/parameters.h"
 #include "ide_secir/simulation.h"
 #include "memilio/epidemiology/state_age_function.h"
@@ -68,12 +68,10 @@ protected:
         mio::SmootherCosine smoothcos(2.0);
         mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
         std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
-
         std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
         model->parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
-
         mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
         contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
         model->parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
@@ -676,7 +674,6 @@ TEST(IdeSecir, testParametersConstraints)
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
 }
-
 // The idea of this test is to check whether the proportion between Recovered and Dead is as expected
 // (after simulation for a long enough time, i.e. when the equlibrium is reached).
 TEST(IdeSecir, checkProportionRecoveredDeath)
@@ -736,7 +733,6 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
-
     // Carry out simulation.
     mio::isecir::Simulation sim(model, dt);
     sim.advance(tmax);

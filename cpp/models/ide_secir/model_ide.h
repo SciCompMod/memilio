@@ -24,6 +24,7 @@
 #include "abm/virus_variant.h"
 #include "ide_secir/parameters.h"
 #include "ide_secir/infection_state.h"
+#include "ode_secir/model.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 
@@ -53,6 +54,7 @@ public:
     * @param[in] total_confirmed_cases Total confirmed cases at time t0 can be set if it should be used for initialization.
     * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */
+
     Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths, ScalarType total_confirmed_cases = 0,
           const ParameterSet& Parameterset_init = ParameterSet());
 
@@ -205,8 +207,9 @@ public:
 
         // It may be possible to run the simulation with fewer time points, but this number ensures that it is possible.
         if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(get_global_support_max(dt) / dt)) {
-            log_error(
-                "Initialization failed. Not enough time points for transitions given before start of simulation.");
+            log_error("Initialization failed. Not enough time points for transitions given before start of simulation. "
+                      "{} time points are required.",
+                      (Eigen::Index)std::ceil(get_global_support_max(dt) / dt));
             return true;
         }
 
@@ -219,8 +222,10 @@ public:
             }
         }
         if (m_transitions.get_last_time() != m_populations.get_last_time()) {
-            log_error("Last time point of TimeSeries for transitions does not match last time point of TimeSeries for "
-                      "compartments. Both of these time points have to agree for a sensible simulation.");
+            log_error(
+                "Last time point of TimeSeries for transitions {} does not match last time point of TimeSeries for "
+                "compartments {}. For a meaningful simulation, these two points must match.",
+                m_transitions.get_last_time(), m_populations.get_last_time());
             return true;
         }
 
@@ -304,7 +309,7 @@ private:
     ScalarType m_N{0}; ///< Total population size of the considered region.
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
     int m_initialization_method{0}; ///< Gives the index of the method used for the initialization of the model.
-        //See also get_initialization_method_compartments() for the number code.
+        // See also get_initialization_method_compartments() for the number code.
 };
 
 } // namespace isecir

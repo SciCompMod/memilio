@@ -119,6 +119,9 @@ add_executable(history_example history.cpp)
 target_link_libraries(history_example PRIVATE memilio)
 target_compile_options(history_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ide_ode_secir_example ide_ode_secir.cpp)
+target_link_libraries(ide_ode_secir_example PRIVATE memilio ide_secir)
+
 if(MEMILIO_HAS_JSONCPP)
     add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
     target_link_libraries(ode_secir_read_graph_example PRIVATE memilio ode_secir)

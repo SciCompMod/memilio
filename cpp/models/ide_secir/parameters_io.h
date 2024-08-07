@@ -24,7 +24,7 @@
 
 #ifdef MEMILIO_HAS_JSONCPP
 
-#include "ide_secir/model.h"
+#include "ide_secir/model_ide.h"
 #include "memilio/io/io.h"
 #include "memilio/utils/date.h"
 

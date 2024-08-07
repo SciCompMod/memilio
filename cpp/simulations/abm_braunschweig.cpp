@@ -1028,7 +1028,7 @@ mio::IOResult<void> run(const std::string& input_file, const fs::path& result_di
         write_log_to_file_trip_data(historyPersonInfDelta);
         ++run_idx;
     }
-    BOOST_OUTCOME_TRY(save_result_result);
+    // BOOST_OUTCOME_TRY(save_result_result);
     return mio::success();
 }
 

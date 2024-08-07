@@ -23,7 +23,7 @@
 
 #ifdef MEMILIO_HAS_JSONCPP
 
-#include "ide_secir/model.h"
+#include "ide_secir/model_ide.h"
 #include "ide_secir/infection_state.h"
 #include "memilio/math/eigen.h"
 #include "memilio/io/epi_data.h"

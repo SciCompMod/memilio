@@ -63,7 +63,6 @@ set(TESTSOURCES
     abm_helpers.cpp
     test_ide_seir.cpp
     test_ide_secir.cpp
-    test_state_age_function.cpp
     distributions_helpers.h
     distributions_helpers.cpp
     actions.h
@@ -76,19 +75,19 @@ set(TESTSOURCES
 )
 
 if(MEMILIO_HAS_JSONCPP)
-set(TESTSOURCES ${TESTSOURCES}
-test_json_serializer.cpp
-test_epi_data_io.cpp
-test_lct_parameters_io.cpp
-test_ide_parameters_io.cpp
-)
+    set(TESTSOURCES ${TESTSOURCES}
+        test_json_serializer.cpp
+        test_epi_data_io.cpp
+        test_lct_parameters_io.cpp
+        test_ide_parameters_io.cpp
+    )
 endif()
 
 if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
-set(TESTSOURCES ${TESTSOURCES}
-test_save_parameters.cpp
-test_save_results.cpp
-)
+    set(TESTSOURCES ${TESTSOURCES}
+        test_save_parameters.cpp
+        test_save_results.cpp
+    )
 endif()
 
 add_executable(memilio-test ${TESTSOURCES})

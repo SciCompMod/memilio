@@ -20,7 +20,7 @@
 #include "ide_secir/simulation.h"
 #include "ide_secir/parameters.h"
 #include "ide_secir/infection_state.h"
-#include "ide_secir/model.h"
+#include "ide_secir/model_ide.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include <memory>
@@ -37,12 +37,16 @@ void Simulation::advance(ScalarType tmax)
     m_model->initial_compute_compartments(m_dt);
 
     // For every time step:
+    auto time = m_model->m_transitions.get_last_time();
     while (m_model->m_transitions.get_last_time() < tmax - m_dt / 2) {
-
         m_model->m_transitions.add_time_point(m_model->m_transitions.get_last_time() + m_dt);
         m_model->m_populations.add_time_point(m_model->m_populations.get_last_time() + m_dt);
+        if (m_model->m_transitions.get_last_time() >= time) {
+            std::cout << "Time: " << time << "\n";
+            time += 1;
+        }
 
-        // compute Susceptibles:
+        // Compute Susceptibles:
         m_model->compute_susceptibles(m_dt);
 
         // Compute flows:
