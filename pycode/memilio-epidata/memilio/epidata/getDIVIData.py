@@ -56,8 +56,6 @@ def fetch_divi_data(
 ) -> pd.DataFrame:
     """! Downloads or reads the DIVI ICU data and writes them in different files.
 
-    Available data starts from 2020-04-24.
-    If the given start_date is earlier, it is changed to this date and a warning is printed.
     If it does not already exist, the folder Germany is generated in the given out_folder.
     If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
     and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
@@ -125,6 +123,14 @@ def preprocess_divi_data(df_raw: pd.DataFrame,
             start_date.strftime("%Y-%m-%d") +
             ". Changed it to 2020-04-24.")
         start_date = date(2020, 4, 24)
+     # Dataset will no longer be updated from CW29 2024 on.
+    if end_date > date(2024, 7, 21):
+        gd.default_print(
+            'Warning',
+            "Dataset will no longer be updated after 2024-07-21. "
+            "You asked for " +
+            start_date.strftime("%Y-%m-%d") +
+            ". Use the provided data carefully.")
 
     if conf_obj.checks is True:
         divi_data_sanity_checks(df_raw)
@@ -252,6 +258,8 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
 
     Available data starts from 2020-04-24.
     If the given start_date is earlier, it is changed to this date and a warning is printed.
+    It has been announced that the dataset will no longer be updated from CW29 2024. 
+    If end_date is later, a warning is displayed.
     If it does not already exist, the folder Germany is generated in the given out_folder.
     If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
     and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
