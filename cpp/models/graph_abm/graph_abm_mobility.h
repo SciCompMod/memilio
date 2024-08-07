@@ -222,7 +222,7 @@ public:
         auto& model_to          = node_to.get_simulation().get_model();
         auto& persons_to_change = model_from.get_person_buffer();
         //iterate over all persons that change from node_from
-        for (int i = persons_to_change.size() - 1; i >= 0; --i) {
+        for (int i = int(persons_to_change.size()) - 1; i >= 0; --i) {
             auto& person     = model_from.get_persons()[persons_to_change[i]];
             auto target_type = person.get_location_type();
             //check if Person uses this edge

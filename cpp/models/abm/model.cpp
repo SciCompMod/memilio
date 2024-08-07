@@ -246,8 +246,8 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
             const auto location  = person.get_location().get();
             if (person.get_location_model_id() == m_id) {
                 mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
-                                                    m_contact_exposure_rates_cache[location], person, get_location(i),
-                                                    t, dt);
+                                                    m_contact_exposure_rates_cache[location], person,
+                                                    get_location(uint32_t(i)), t, dt);
             }
         } // implicit taskloop barrier
     } // implicit single barrier
