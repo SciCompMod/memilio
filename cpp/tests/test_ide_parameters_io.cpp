@@ -110,7 +110,7 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::OutOfRange));
 
-    // --- Case where not all needed dates are provided.
+    // --- Case where not all needed dates from the future are provided.
     start_date = mio::Date(2020, 6, 7);
     status =
         mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date);

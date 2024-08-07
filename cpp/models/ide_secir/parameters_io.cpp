@@ -19,13 +19,13 @@
 */
 
 #include "ide_secir/parameters_io.h"
+#include "ide_secir/parameters.h"
 #include "memilio/config.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "ide_secir/model.h"
 #include "ide_secir/infection_state.h"
-#include "memilio/math/eigen.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/io.h"
 #include "memilio/utils/date.h"
@@ -56,6 +56,10 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
         log_error("Specified date does not exist in RKI data.");
         return failure(StatusCode::OutOfRange, path + ", specified date does not exist in RKI data.");
     }
+    auto min_date_entry = std::min_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
+        return a.date < b.date;
+    });
+    auto min_date       = min_date_entry->date;
 
     // Get (global) support_max to determine how many flows in the past we have to compute.
     ScalarType global_support_max         = model.get_global_support_max(dt);
@@ -71,6 +75,9 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
             0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
     }
 
+    // The Dead compartment needs to be set to 0 so that RKI data can be added correctly.
+    model.m_populations[0][Eigen::Index(InfectionState::Dead)] = 0;
+
     // The first time we need is -4 * global_support_max.
     Eigen::Index start_shift = 4 * global_support_max_index;
     // The last time needed is dependent on the mean stay time in the Exposed compartment and
@@ -82,6 +89,15 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
         model.parameters
             .get<TransitionDistributions>()[Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]
             .get_mean(dt);
+    ScalarType mean_InfectedSymptomsToInfectedSevere =
+        model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
+            .get_mean();
+    ScalarType mean_InfectedSevereToInfectedCritical =
+        model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
+            .get_mean();
+    ScalarType mean_InfectedCriticalToDead =
+        model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead].get_mean();
+
     Eigen::Index last_time_index_needed =
         Eigen::Index(std::ceil((mean_ExposedToInfectedNoSymptoms + mean_InfectedNoSymptomsToInfectedSymptoms) / dt));
     // Create TimeSeries with zeros. The index of time zero is start_shift.
@@ -99,6 +115,9 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
 
     bool min_offset_needed_avail = false;
     bool max_offset_needed_avail = false;
+    // Get first date that is needed to compute inital values.
+    mio::Date min_offset_date = offset_date_by_days(date, min_offset_needed);
+
     // Go through the entries of rki_data and check if date is needed for calculation. Confirmed cases are scaled.
     // Define dummy variables to store the first and the last index of the TimeSeries where the considered entry of rki_data is potentially needed.
     Eigen::Index idx_needed_first = 0;
@@ -109,6 +128,9 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
         if ((offset >= min_offset_needed) && (offset <= max_offset_needed)) {
             if (offset == min_offset_needed) {
                 min_offset_needed_avail = true;
+            }
+            if (offset == max_offset_needed) {
+                max_offset_needed_avail = true;
             }
             // Smallest index for which the entry is needed.
             idx_needed_first =
@@ -137,19 +159,46 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
                 }
             }
 
-            if (offset == max_offset_needed) {
-                max_offset_needed_avail = true;
+            // Compute Dead by shifting RKI data according to mean stay times.
+            if (offset == std::floor(-mean_InfectedSymptomsToInfectedSevere - mean_InfectedSevereToInfectedCritical -
+                                     mean_InfectedCriticalToDead)) {
+                model.m_populations[0][Eigen::Index(InfectionState::Dead)] +=
+                    (1 - (-mean_InfectedSymptomsToInfectedSevere - mean_InfectedSevereToInfectedCritical -
+                          mean_InfectedCriticalToDead -
+                          std::floor(-mean_InfectedSymptomsToInfectedSevere - mean_InfectedSevereToInfectedCritical -
+                                     mean_InfectedCriticalToDead))) *
+                    entry.num_deaths;
             }
+            if (offset == std::ceil(-mean_InfectedSymptomsToInfectedSevere - mean_InfectedSevereToInfectedCritical -
+                                    mean_InfectedCriticalToDead)) {
+                model.m_populations[0][Eigen::Index(InfectionState::Dead)] +=
+                    (-mean_InfectedSymptomsToInfectedSevere - mean_InfectedSevereToInfectedCritical -
+                     mean_InfectedCriticalToDead -
+                     std::floor(-mean_InfectedSymptomsToInfectedSevere - mean_InfectedSevereToInfectedCritical -
+                                mean_InfectedCriticalToDead)) *
+                    entry.num_deaths;
+            }
+
             if (offset == 0) {
-                model.m_populations[0][Eigen::Index(InfectionState::Dead)] = entry.num_deaths;
                 model.m_total_confirmed_cases = scale_confirmed_cases * entry.num_confirmed;
             }
         }
     }
 
-    if (!max_offset_needed_avail || !min_offset_needed_avail) {
+    if (!max_offset_needed_avail) {
         log_error("Necessary range of dates needed to compute initial values does not exist in RKI data.");
         return failure(StatusCode::OutOfRange, path + ", necessary range of dates does not exist in RKI data.");
+    }
+
+    if (!min_offset_needed_avail) {
+        std::string min_date_string =
+            std::to_string(min_date.day) + "." + std::to_string(min_date.month) + "." + std::to_string(min_date.year);
+        std::string min_offset_date_string = std::to_string(min_offset_date.day) + "." +
+                                             std::to_string(min_offset_date.month) + "." +
+                                             std::to_string(min_offset_date.year);
+        log_warning("RKI data is needed from " + min_offset_date_string +
+                    " to compute initial values. RKI data is only available from " + min_date_string +
+                    ". Missing dates were set to 0.");
     }
 
     //--- Calculate the flows "after" InfectedNoSymptomsToInfectedSymptoms. ---
@@ -183,10 +232,10 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     }
 
     //--- Calculate the remaining flows. ---
-    // Compute flow ExposedToInfectedNoSymptoms for -global_support_max, ..., 0.
+    // Compute flow ExposedToInfectedNoSymptoms for -2 * global_support_max, ..., 0.
     // Use mean value of the TransitionDistribution InfectedNoSymptomsToInfectedSymptoms for the calculation.
     Eigen::Index index_shift_mean = Eigen::Index(std::round(mean_InfectedNoSymptomsToInfectedSymptoms / dt));
-    for (Eigen::Index i = -global_support_max_index; i <= 0; i++) {
+    for (Eigen::Index i = -2 * global_support_max_index; i <= 0; i++) {
         model.m_transitions[i + start_shift][Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] =
             (1 / model.parameters.get<TransitionProbabilities>()[Eigen::Index(
                      InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]) *
