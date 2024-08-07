@@ -183,14 +183,16 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_Range<decltype(std::declval<const mio::abm::Model>().get_persons())>(m, "_ModelPersonsRange");
 
     pymio::bind_class<mio::abm::Trip, pymio::EnablePickling::Never>(m, "Trip")
-        .def(py::init<uint32_t, mio::abm::TimePoint, mio::abm::LocationId, mio::abm::LocationId,
+        .def(py::init<uint32_t, mio::abm::TimePoint, mio::abm::LocationId, int, mio::abm::LocationId, int,
                       std::vector<uint32_t>>(),
-             py::arg("person_id"), py::arg("time"), py::arg("destination"), py::arg("origin"),
-             py::arg("cells") = std::vector<uint32_t>())
+             py::arg("person_id"), py::arg("time"), py::arg("destination"), py::arg("destination_model_id"),
+             py::arg("origin"), py::arg("origin_model_id"), py::arg("cells") = std::vector<uint32_t>())
         .def_readwrite("person_id", &mio::abm::Trip::person_id)
         .def_readwrite("time", &mio::abm::Trip::time)
         .def_readwrite("destination", &mio::abm::Trip::destination)
+        .def_readwrite("destination_model_id", &mio::abm::Trip::destination_model_id)
         .def_readwrite("origin", &mio::abm::Trip::origin)
+        .def_readwrite("destination_model_id", &mio::abm::Trip::origin_model_id)
         .def_readwrite("cells", &mio::abm::Trip::cells);
 
     pymio::bind_class<mio::abm::TripList, pymio::EnablePickling::Never>(m, "TripList")
@@ -225,12 +227,12 @@ PYBIND11_MODULE(_simulation_abm, m)
             },
             py::return_value_policy::reference_internal);
 
-    pymio::bind_class<mio::abm::Simulation, pymio::EnablePickling::Never>(m, "Simulation")
+    pymio::bind_class<mio::abm::Simulation<>, pymio::EnablePickling::Never>(m, "Simulation")
         .def(py::init<mio::abm::TimePoint, size_t>())
         .def("advance",
-             static_cast<void (mio::abm::Simulation::*)(mio::abm::TimePoint)>(&mio::abm::Simulation::advance),
+             static_cast<void (mio::abm::Simulation<>::*)(mio::abm::TimePoint)>(&mio::abm::Simulation<>::advance),
              py::arg("tmax"))
-        .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation::get_model));
+        .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation<>::get_model));
 }
 
 PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::Model>().get_locations()))
