@@ -47,9 +47,9 @@ TEST(TestPerson, change_location)
     auto rng = mio::RandomNumberGenerator();
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location loc1(mio::abm::LocationType::PublicTransport, 1, 6, 1);
+    mio::abm::Location loc1(mio::abm::LocationType::PublicTransport, 1, 6, 0, 1);
     mio::abm::Location loc2(mio::abm::LocationType::School, 2, num_age_groups);
-    mio::abm::Location loc3(mio::abm::LocationType::PublicTransport, 3, 6, 2);
+    mio::abm::Location loc3(mio::abm::LocationType::PublicTransport, 3, 6, 0, 2);
     auto person = make_test_person(home, age_group_0_to_4, mio::abm::InfectionState::Recovered);
 
     // check that a person does not change location to its current location
@@ -188,7 +188,7 @@ TEST(TestPerson, get_tested)
 TEST(TestPerson, getCells)
 {
     mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 1);
-    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 1, 6, 7);
+    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 1, 6, 0, 7);
     auto person = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
 
     EXPECT_TRUE(mio::abm::change_location(person, location, mio::abm::TransportMode::Unknown, {3, 5}));

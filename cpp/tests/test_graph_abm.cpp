@@ -49,7 +49,7 @@ TEST(TestGraphAbm, test_evolve_node)
     model.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)] = true;
     auto home_id = model.add_location(mio::abm::LocationType::Home);
     auto& home   = model.get_location(home_id);
-    auto work    = mio::abm::Location(mio::abm::LocationType::Work, mio::abm::LocationId(0));
+    auto work    = mio::abm::Location(mio::abm::LocationType::Work, mio::abm::LocationId(0), size_t(1), 1);
     auto pid     = model.add_person(home_id, mio::AgeGroup(0));
     auto index   = model.get_person_index(pid);
     auto& p      = model.get_person(pid);

@@ -518,7 +518,7 @@ public:
             return std::numeric_limits<uint32_t>::max();
         }
         else {
-            return std::distance(m_persons.begin(), it);
+            return static_cast<uint32_t>(std::distance(m_persons.begin(), it));
         }
     }
 

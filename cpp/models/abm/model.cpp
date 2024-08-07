@@ -37,9 +37,8 @@ namespace abm
 LocationId Model::add_location(LocationType type, uint32_t num_cells)
 {
     LocationId id{static_cast<uint32_t>(m_locations.size())};
-    m_locations.emplace_back(type, id, parameters.get_num_groups(), num_cells);
+    m_locations.emplace_back(type, id, parameters.get_num_groups(), m_id, num_cells);
     m_has_locations[size_t(type)] = true;
-    m_locations[id.get()].set_model_id(m_id);
 
     // mark caches for rebuild
     m_is_local_population_cache_valid = false;
@@ -246,8 +245,8 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
             const auto location  = person.get_location().get();
             if (person.get_location_model_id() == m_id) {
                 mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
-                                                    m_contact_exposure_rates_cache[location], person, get_location(i),
-                                                    t, dt);
+                                                    m_contact_exposure_rates_cache[location], person,
+                                                    get_location(uint32_t(i)), t, dt);
             }
         } // implicit taskloop barrier
     } // implicit single barrier
