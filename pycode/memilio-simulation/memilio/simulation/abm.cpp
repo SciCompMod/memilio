@@ -184,15 +184,18 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     pymio::bind_class<mio::abm::Trip, pymio::EnablePickling::Never>(m, "Trip")
         .def(py::init<uint32_t, mio::abm::TimePoint, mio::abm::LocationId, int, mio::abm::LocationId, int,
-                      std::vector<uint32_t>>(),
+                      mio::abm::TransportMode, mio::abm::LocationType, std::vector<uint32_t>>(),
              py::arg("person_id"), py::arg("time"), py::arg("destination"), py::arg("destination_model_id"),
-             py::arg("origin"), py::arg("origin_model_id"), py::arg("cells") = std::vector<uint32_t>())
+             py::arg("origin"), py::arg("origin_model_id"), py::arg("trip_mode") = mio::abm::TransportMode::Unknown,
+             py::arg("destination_type") = mio::abm::LocationType::Home, py::arg("cells") = std::vector<uint32_t>())
         .def_readwrite("person_id", &mio::abm::Trip::person_id)
         .def_readwrite("time", &mio::abm::Trip::time)
         .def_readwrite("destination", &mio::abm::Trip::destination)
         .def_readwrite("destination_model_id", &mio::abm::Trip::destination_model_id)
         .def_readwrite("origin", &mio::abm::Trip::origin)
         .def_readwrite("destination_model_id", &mio::abm::Trip::origin_model_id)
+        .def_readwrite("trip_mode", &mio::abm::Trip::trip_mode)
+        .def_readwrite("destination_type", &mio::abm::Trip::destination_type)
         .def_readwrite("cells", &mio::abm::Trip::cells);
 
     pymio::bind_class<mio::abm::TripList, pymio::EnablePickling::Never>(m, "TripList")
