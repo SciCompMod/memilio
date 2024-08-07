@@ -527,7 +527,7 @@ def infer_positive_tests(path):
     df_abb['Confirmed'] = df_abb['Confirmed'].diff()
   
     sensitivity = 0.69
-    specificity = 0.95
+    specificity = 0.99
     # we need to derive the lowest rmse for the real positive tests and the inferred positive tests we use a grid search
     # we need to find the best r_sns and lt_sympt
     best_rmse = 1000000000
@@ -617,30 +617,54 @@ def plot_estimated_reproduction_number(path):
     plt.show()
 
 def plot_cumulative_detected_infections(path):
+
+    df_abb = pd.read_json(
+        path+"/../pydata/Germany/cases_all_county_repdate_ma7.json")
+    # we need the 
+    df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
+    df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') & (df_abb['Date'] <= '2021-06-01')]
+    df_abb = df_abb[df_abb['ID_County'] == 3101]
+    df_substract = np.floor(df_abb['Confirmed'][0:1])
+    df_abb =   np.floor(df_abb['Confirmed'][0:90])
+    df_abb = df_abb - df_substract.values[0]
+ 
+
+
     f_p50 = h5py.File(
         path+"/cumulative_detected_infections/p50/Results.h5", 'r')
     p50_bs = f_p50['0']
     total_50 = p50_bs['Total'][()]
     total_50 = total_50[::24]
-    total_50 = total_50[0:90].flatten()
+    total_50 = np.floor(total_50[0:90].flatten())
     # we smooth this with a gaussian filter
-    total_50 = gaussian_filter1d(total_50, sigma=1, mode='nearest')
+    
     time = p50_bs['Time'][()]
     time = time[::24]
     time = time[0:90]
 
     # we also plot the amount of new detected infections with diff
     total_50_diff = np.diff(total_50)
+    df_abb_diff = np.diff(df_abb)
 
+
+    # again the rmse
+    rmse_detected = np.sqrt(((df_abb - total_50)**2).mean())
+    total_50 = gaussian_filter1d(total_50, sigma=1, mode='nearest')
 
     # we plot this
     # we plot the tests positive and the real cases
     plt.plot(time, total_50, color='tab:red')
+    plt.plot(time, df_abb, color='tab:blue')
     plt.xlabel('time (days)')
     plt.ylabel('Cumulative Amount of detected infections')
     plt.title('Cumulative detected infections')
     # also plot the new detected infections with the same color but dashed
     plt.plot(time[1:], total_50_diff, color='tab:red', linestyle='dashed')
+    plt.plot(time[1:], df_abb_diff, color='tab:blue', linestyle='dashed')
+    plt.legend(['Simulated detected infections', 'Real detected infections', 'Simulated new detected infections', 'Real new detected infections'])
+    #rmse
+    plt.text(0.25, 0.8, 'RMSE: '+str(float("{:.2f}".format(rmse_detected))), horizontalalignment='center',
+            verticalalignment='center', transform=plt.gca().transAxes, color='pink', fontsize=15)
     plt.show()
 
 def plot_positive_and_done_test(path):
@@ -683,6 +707,8 @@ def plot_positive_and_done_test(path):
     start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
     xx = [start_date + pd.Timedelta(days=int(i)) for i in range(90)]
     xx = [xx[i].strftime('%Y-%m-%d') for i in range(len(xx))]
+    plt.gca().set_xticks(time[::5])
+    plt.gca().set_xticklabels(xx[::5])
     plt.gcf().autofmt_xdate()
 
     plt.plot(xx, total_50_positive, color='tab:red')
@@ -697,7 +723,7 @@ def plot_positive_and_done_test(path):
 
 
 if __name__ == "__main__":
-    # path = "/Users/david/Documents/HZI/memilio/data/results_last_run_last_run"
+    # path = "/Users/david/Documents/HZI/memilio/data/results_last_run"
     path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
     # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/1/results_last_run"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_last_run"

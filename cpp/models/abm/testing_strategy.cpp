@@ -83,7 +83,7 @@ bool TestingScheme::operator==(const TestingScheme& other) const
 
 bool TestingScheme::is_active(const TimePoint t) const
 {
-    return (m_start_date <= t && t <= m_end_date);
+    return (m_start_date <= t && t < m_end_date);
 }
 
 bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& person, TimePoint t) const
@@ -92,11 +92,11 @@ bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& perso
         if (m_testing_criteria.evaluate(person, t)) {
             double random = UniformDistribution<double>::get_instance()(rng);
             if (random < m_probability) {
-                return !person.get_tested(rng, t, m_test_parameters);
+                return person.get_tested(rng, t, m_test_parameters);
             }
         }
     }
-    return true;
+    return false;
 }
 
 TestingStrategy::TestingStrategy(
@@ -174,14 +174,24 @@ void TestingStrategy::update_location_testing_schemes(
             auto& location = locations[i];
             auto loc_id    = location.get_index();
             auto& schemes  = m_location_to_schemes_map;
+            m_testing_schemes_per_location[i].clear();
 
-            auto iter_schemes = std::find_if(schemes.begin(), schemes.end(), [loc_id, &location](auto& p) {
-                return p.first.index == loc_id ||
-                       (p.first.index == INVALID_LOCATION_INDEX && p.first.type == location.get_type());
+            auto iter_schemes_loc_type = std::find_if(schemes.begin(), schemes.end(), [&location](auto& p) {
+                return (p.first.index == INVALID_LOCATION_INDEX && p.first.type == location.get_type());
             });
-            if (iter_schemes != schemes.end()) {
-                m_testing_schemes_per_location[i].clear();
-                for (auto&& scheme : iter_schemes->second) {
+            if (iter_schemes_loc_type != schemes.end()) {
+                for (auto&& scheme : iter_schemes_loc_type->second) {
+                    if (scheme.is_active(t)) {
+                        m_testing_schemes_per_location[i].push_back(scheme);
+                    }
+                }
+            }
+
+            auto iter_schemes_loc_id = std::find_if(schemes.begin(), schemes.end(), [loc_id](auto& p) {
+                return (p.first.index == loc_id);
+            });
+            if (iter_schemes_loc_id != schemes.end()) {
+                for (auto&& scheme : iter_schemes_loc_id->second) {
                     if (scheme.is_active(t)) {
                         m_testing_schemes_per_location[i].push_back(scheme);
                     }
@@ -190,6 +200,5 @@ void TestingStrategy::update_location_testing_schemes(
         }
     }
 }
-
 } // namespace abm
 } // namespace mio

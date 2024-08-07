@@ -527,9 +527,9 @@ public:
         m_goes_to_easter_event = goes_to_easter;
     }
 
-    bool was_person_ever_infected() const
+    bool was_person_tested_positive() const
     {
-        return !m_infections.empty();
+        return m_tested_positive;
     }
 
 private:
@@ -547,7 +547,8 @@ private:
     double m_random_goto_school_hour; ///< Value to determine at what time the Person goes to school.
     TimePoint m_time_of_last_test; ///< TimePoint of the last negative test.
     Mask m_mask; ///< The Mask of the Person.
-    bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.
+    bool m_wears_mask      = false; ///< Whether the Person currently wears a Mask.
+    bool m_tested_positive = false;
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.

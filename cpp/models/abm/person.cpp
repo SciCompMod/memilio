@@ -205,6 +205,7 @@ bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParam
         if (random < params.sensitivity) {
             m_quarantine_start = t;
             m_infections.back().set_detected();
+            m_tested_positive = true;
             return true;
         }
         // false negative
@@ -220,6 +221,7 @@ bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParam
         // false positive
         else {
             m_quarantine_start = t;
+            m_tested_positive  = true;
             return true;
         }
     }
