@@ -1035,8 +1035,8 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
         rmse_dead += pow(real_data_dead_vec[i] - sim_data_vec_dead[i], 2);
         rmse_icu += pow((int)(sim_data_vec_icu[i] * 0.45) - real_data_icu_vec[i], 2);
     }
-    rmse_dead = sqrt(rmse_dead / real_data_dead_vec.size());
-    rmse_icu  = sqrt(rmse_icu / real_data_icu_vec.size());
+    rmse_dead = rmse_dead / real_data_dead_vec.size();
+    rmse_icu  = rmse_icu / real_data_icu_vec.size();
 
     return rmse_dead + rmse_icu;
 }
@@ -2348,18 +2348,39 @@ mio::IOResult<bool> copy_result_folder(std::string const& from_dir, std::string 
 
 int main(int argc, char** argv)
 {
+
     mio::set_log_level(mio::LogLevel::err);
     auto start = std::chrono::system_clock::now();
+
+    int num_procs, rank;
 #ifdef MEMILIO_ENABLE_MPI
     mio::mpi::init();
+    MPI_Comm_size(mio::mpi::get_world(), &num_procs);
+    MPI_Comm_rank(mio::mpi::get_world(), &rank);
+#else
+    num_procs = 1;
+    rank      = 0;
 #endif
 
-    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
-    std::string result_dir      = input_dir + "/results_" + currentDateTime();
+
+#ifdef MEMILIO_ENABLE_MPI
+    // we need to send every rank the same folder
+    std::string result_dir;
+    if (rank == 0)
+        result_dir = input_dir + "/results_" + currentDateTime();
+    int line_size = result_dir.size();
+    MPI_Bcast(&line_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if (rank != 0)
+        result_dir.resize(line_size);
+    MPI_Bcast(const_cast<char*>(result_dir.data()), line_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+#else
+    std::string result_dir = input_dir + "/results_" + currentDateTime();
+#endif
 
     size_t num_runs;
     bool run_grid_search = false;
@@ -2381,11 +2402,12 @@ int main(int argc, char** argv)
         printf("Running with number of runs = %d.\n", (int)num_runs);
         printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
-
-    auto created = create_result_folders(result_dir, run_grid_search);
-    if (!created) {
-        std::cout << created.error().formatted_message();
-        return created.error().code().value();
+    if (rank == 0) {
+        auto created = create_result_folders(result_dir, run_grid_search);
+        if (!created) {
+            std::cout << created.error().formatted_message();
+            return created.error().code().value();
+        }
     }
     timer = TIME_NOW;
 
@@ -2401,7 +2423,7 @@ int main(int argc, char** argv)
         std::vector<std::pair<double, double>> grid_boundaries = {{3.0, 8.0}, {0.6, 0.95}, {0.4, 0.8}, {0.2, 0.6},
                                                                   {1.0, 5.0}, {0.2, 0.6},  {0.2, 0.6}};
 
-        std::vector<int> points_per_dim = {6, 5, 5, 5, 6, 5, 5};
+        std::vector<int> points_per_dim = {5, 5, 5, 5, 5, 5, 5};
         // std::vector<int> points_per_dim = {3, 3, 3, 3, 3, 3, 3};
         auto grid   = grid_points(grid_boundaries, points_per_dim);
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid);
@@ -2412,7 +2434,8 @@ int main(int argc, char** argv)
 
     // copy results into a fixed name folder to have easier access
     std::string last_run_dir = input_dir + "/results_last_run";
-    auto copied              = copy_result_folder(result_dir, last_run_dir);
+    if (rank == 0)
+        auto copied = copy_result_folder(result_dir, last_run_dir);
 
     mio::mpi::finalize();
 
