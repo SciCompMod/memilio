@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Khoa Nguyen
+* Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,37 +18,34 @@
 * limitations under the License.
 */
 
-#ifndef MIO_ABM_TEST_TYPE_H
-#define MIO_ABM_TEST_TYPE_H
+#ifndef MIO_SDE_SEIRVV_INFECTIONSTATE_H
+#define MIO_SDE_SEIRVV_INFECTIONSTATE_H
 
-#include <cstdint>
-#include <limits>
 namespace mio
 {
-namespace abm
+namespace sseirvv
 {
 
 /**
- * @brief Type of a Test.
+ * @brief The InfectionState enum describes the possible
+ * categories for the infectious state of persons
  */
-enum class TestType : std::uint32_t
+enum class InfectionState
 {
-    Generic = 0,
-    Antigen,
-    PCR,
-
+    Susceptible,
+    ExposedV1,
+    InfectedV1,
+    RecoveredV1,
+    ExposedV2,
+    InfectedV2,
+    RecoveredV2,
+    ExposedV1V2,
+    InfectedV1V2,
+    RecoveredV1V2,
     Count
 };
 
-/**
-* @brief The TestResult of a Person.
-*/
-struct TestResult {
-    TimePoint time_of_testing{std::numeric_limits<int>::min()}; ///< The TimePoint when the Person performs the test.
-    bool result{false}; ///< The test result.
-};
-
-} // namespace abm
+} // namespace sseirvv
 } // namespace mio
 
-#endif
+#endif // MIO_SDE_SEIRVV_INFECTIONSTATE_H

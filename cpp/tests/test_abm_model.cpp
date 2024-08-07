@@ -455,14 +455,15 @@ TEST(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedNoSymptoms);
 
-    const auto testing_frequency = mio::abm::days(1);
-    const auto start_date        = mio::abm::TimePoint(20);
-    const auto end_date          = mio::abm::TimePoint(60 * 60 * 24 * 3);
-    const auto probability       = 1.0;
-    const auto test_params_pcr   = mio::abm::TestParameters{0.9, 0.99};
+    auto validity_period   = mio::abm::days(1);
+    const auto start_date  = mio::abm::TimePoint(20);
+    const auto end_date    = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability = 1.0;
+    const auto test_params_pcr =
+        mio::abm::TestParameters{0.9, 0.99, mio::abm::minutes(30), mio::abm::TestType::Generic};
 
-    auto testing_scheme = mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date,
-                                                  test_params_pcr, probability);
+    auto testing_scheme =
+        mio::abm::TestingScheme(testing_criteria, validity_period, start_date, end_date, test_params_pcr, probability);
 
     model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
     ASSERT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
