@@ -36,6 +36,7 @@
 #include "memilio/utils/stl_util.h"
 
 #include <bitset>
+#include <cstdint>
 #include <vector>
 
 namespace mio
@@ -213,21 +214,21 @@ public:
     /**
      * @brief Find an assigned Location of a Person.
      * @param[in] type The #LocationType that specifies the assigned Location.
-     * @param[in] person PersonId of the Person.
+     * @param[in] person_index Index of the Person.
      * @return ID of the Location of LocationType type assigend to person.
      */
-    LocationId find_location(LocationType type, const PersonId person) const;
+    LocationId find_location(LocationType type, const uint32_t person_index) const;
 
     /**
      * @brief Assign a Location to a Person.
      * A Person can have at most one assigned Location of a certain LocationType.
      * Assigning another Location of an already assigned LocationType will replace the prior assignment.  
-     * @param[in] person The PersonId of the person this location will be assigned to.
+     * @param[in] person_index The Index of the person this location will be assigned to.
      * @param[in] location The LocationId of the Location.
      */
-    void assign_location(PersonId person, LocationId location)
+    void assign_location(uint32_t person_index, LocationId location)
     {
-        get_person(person).set_assigned_location(get_location(location).get_type(), location, m_id);
+        get_person(person_index).set_assigned_location(get_location(location).get_type(), location, m_id);
     }
 
     /**
@@ -344,22 +345,48 @@ public:
 
     /**
      * @brief Get a reference to a Person from this Model.
-     * @param[in] id A person's PersonId.
+     * @param[in] index A Person's index in m_persons.
      * @return A reference to the Person.
      * @{
      */
+    Person& get_person(uint32_t index)
+    {
+        assert(index < m_persons.size() && "Given PersonId is not in this Model.");
+        return m_persons[index];
+    }
+
+    const Person& get_person(uint32_t index) const
+    {
+        assert(index < m_persons.size() && "Given PersonId is not in this Model.");
+        return m_persons[index];
+    }
+
+    /**
+     * @brief Get a reference to a Person from this Model.
+     * @param[in] id A Person's id.
+     * @return A reference to the Person.
+     */
     Person& get_person(PersonId id)
     {
-        assert(id.get() < m_persons.size() && "Given PersonId is not in this Model.");
-        return m_persons[id.get()];
+        auto it = std::find_if(m_persons.begin(), m_persons.end(), [id](auto& person) {
+            return person.get_id() == id;
+        });
+        if (it == m_persons.end()) {
+            log_error("Given PersonId is not in this Model.");
+        }
+        return *it;
     }
 
     const Person& get_person(PersonId id) const
     {
-        assert(id.get() < m_persons.size() && "Given PersonId is not in this Model.");
-        return m_persons[id.get()];
+        auto it = std::find_if(m_persons.begin(), m_persons.end(), [id](auto& person) {
+            return person.get_id() == id;
+        });
+        if (it == m_persons.end()) {
+            log_error("Given PersonId is not in this Model.");
+        }
+        return *it;
     }
-    /** @} */
 
     /**
      * @brief Get the number of Person%s of a particular #InfectionState for all Cell%s.
@@ -392,17 +419,17 @@ public:
     // Change the Location of a Person. this requires that Location is part of this Model.
     /**
      * @brief Let a Person change to another Location.
-     * @param[in] person PersonId of a Person from this Model.
+     * @param[in] person_index Index of a Person in m_persons vector of this Model.
      * @param[in] destination LocationId of the Location in this Model, which the Person should change to.
      * @param[in] mode The transport mode the person uses to change the Location.
      * @param[in] cells The cells within the destination the person should be in.
      */
-    inline void change_location(PersonId person, LocationId destination, TransportMode mode = TransportMode::Unknown,
-                                const std::vector<uint32_t>& cells = {0})
+    inline void change_location(uint32_t person_index, LocationId destination,
+                                TransportMode mode = TransportMode::Unknown, const std::vector<uint32_t>& cells = {0})
     {
-        LocationId origin = get_location(person).get_id();
+        LocationId origin = get_location(person_index).get_id();
         const bool has_changed_location =
-            mio::abm::change_location(get_person(person), get_location(destination), mode, cells);
+            mio::abm::change_location(get_person(person_index), get_location(destination), mode, cells);
         // if the person has changed location, invalidate exposure caches but keep population caches valid
         if (has_changed_location) {
             m_are_exposure_caches_valid = false;
@@ -415,11 +442,11 @@ public:
 
     /**
      * @brief Let a person interact with the population at its current location.
-     * @param[in] person PersonId of a person from this Model.
+     * @param[in] person_index Index of a person in m_persons vector of this Model.
      * @param[in] t Time step of the simulation.
      * @param[in] dt Step size of the simulation.
      */
-    inline void interact(PersonId person, TimePoint t, TimeSpan dt)
+    inline void interact(uint32_t person_index, TimePoint t, TimeSpan dt)
     {
         if (!m_are_exposure_caches_valid) {
             // checking caches is only needed for external calls
@@ -427,10 +454,11 @@ public:
             compute_exposure_caches(t, dt);
             m_are_exposure_caches_valid = true;
         }
-        auto personal_rng = PersonalRandomNumberGenerator(m_rng, get_person(person));
-        mio::abm::interact(personal_rng, get_person(person), get_location(person),
-                           m_air_exposure_rates_cache[get_location(person).get_id().get()],
-                           m_contact_exposure_rates_cache[get_location(person).get_id().get()], t, dt, parameters);
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, get_person(person_index));
+        mio::abm::interact(personal_rng, get_person(person_index), get_location(person_index),
+                           m_air_exposure_rates_cache[get_location(person_index).get_id().get()],
+                           m_contact_exposure_rates_cache[get_location(person_index).get_id().get()], t, dt,
+                           parameters);
     }
 
     /**
@@ -456,18 +484,18 @@ public:
 
     /**
      * @brief Get a reference to the location of a person.
-     * @param[in] id PersonId of a person.
+     * @param[in] index Index of a person in m_persons.
      * @return Reference to the Location.
      * @{
      */
-    inline Location& get_location(PersonId id)
+    inline Location& get_location(uint32_t index)
     {
-        return get_location(get_person(id).get_location());
+        return get_location(get_person(index).get_location());
     }
 
-    inline const Location& get_location(PersonId id) const
+    inline const Location& get_location(uint32_t index) const
     {
-        return get_location(get_person(id).get_location());
+        return get_location(get_person(index).get_location());
     }
     /** @} */
 
@@ -485,29 +513,29 @@ public:
         m_activeness_statuses[person_id.get()] = false;
     }
 
-    /**
-     * @brief Copy the persons from another Model to this Model. 
-     * If the persons are at a location in this model they are activated, otherwise they are deactivated.
-     * If necessary the person ids are changed such that they correspond to the index in this model's m_persons vector.
-     * @param[in] other The Model the Person%s are copied from.
-     */
-    void copy_persons_from_other_model(const Model& other)
-    {
-        for (auto& p : other.get_persons()) {
-            if (p.get_id() != static_cast<uint32_t>(m_persons.size())) {
-                mio::log_debug("In model.copy_persons_from_other_model: PersonId does not correspond to index in "
-                               "m_persons vector. Person is copied with adapted Id");
-            }
-            PersonId new_id{static_cast<uint32_t>(m_persons.size())};
-            m_persons.emplace_back(p, new_id);
-            if (p.get_location_model_id() == m_id) {
-                m_activeness_statuses.push_back(true);
-            }
-            else {
-                m_activeness_statuses.push_back(false);
-            }
-        }
-    }
+    // /**
+    //  * @brief Copy the persons from another Model to this Model.
+    //  * If the persons are at a location in this model they are activated, otherwise they are deactivated.
+    //  * If necessary the person ids are changed such that they correspond to the index in this model's m_persons vector.
+    //  * @param[in] other The Model the Person%s are copied from.
+    //  */
+    // void copy_persons_from_other_model(const Model& other)
+    // {
+    //     for (auto& p : other.get_persons()) {
+    //         if (p.get_id() != static_cast<uint32_t>(m_persons.size())) {
+    //             mio::log_debug("In model.copy_persons_from_other_model: PersonId does not correspond to index in "
+    //                            "m_persons vector. Person is copied with adapted Id");
+    //         }
+    //         PersonId new_id{static_cast<uint32_t>(m_persons.size())};
+    //         m_persons.emplace_back(p, new_id);
+    //         if (p.get_location_model_id() == m_id) {
+    //             m_activeness_statuses.push_back(true);
+    //         }
+    //         else {
+    //             m_activeness_statuses.push_back(false);
+    //         }
+    //     }
+    // }
 
     /**
     * @brief Set the Person%s of the Model.
@@ -543,6 +571,27 @@ public:
     {
         m_are_exposure_caches_valid       = false;
         m_is_local_population_cache_valid = false;
+    }
+
+    /**
+     * @brief Get index of person in m_persons.
+     * @param[in] id A person's PersonId. 
+     * First 32 bit are the Person's individual id and second 32 bit the Persons's home model id. 
+     * @return Index of Person in m_persons vector.
+     * @{
+     */
+    uint32_t get_person_index(PersonId id) const
+    {
+        auto it = std::find_if(m_persons.begin(), m_persons.end(), [id](auto& person) {
+            return person.get_id() == id;
+        });
+        if (it == m_persons.end()) {
+            log_error("Given PersonId is not in this Model.");
+            return std::numeric_limits<uint32_t>::max();
+        }
+        else {
+            return std::distance(m_persons.begin(), it);
+        }
     }
 
 protected:

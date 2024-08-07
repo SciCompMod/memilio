@@ -70,7 +70,7 @@ void add_household_to_model(Model& model, const Household& household)
         for (int j = 0; j < count; j++) {
             auto age_group = pick_age_group_from_age_distribution(model.get_rng(), member.get_age_weights());
             auto person    = model.add_person(home, age_group);
-            model.assign_location(person, home);
+            model.assign_location(model.get_person_index(person), home);
         }
     }
 }

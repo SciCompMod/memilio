@@ -74,10 +74,14 @@ TEST(TestLocation, reachCapacity)
     auto p1 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedNoSymptoms);
     auto p2 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible);
 
-    model.get_person(p1).set_assigned_location(mio::abm::LocationType::School, school_id, model.get_id());
-    model.get_person(p2).set_assigned_location(mio::abm::LocationType::School, school_id, model.get_id());
-    model.get_person(p1).set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
-    model.get_person(p2).set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    model.get_person(model.get_person_index(p1))
+        .set_assigned_location(mio::abm::LocationType::School, school_id, model.get_id());
+    model.get_person(model.get_person_index(p2))
+        .set_assigned_location(mio::abm::LocationType::School, school_id, model.get_id());
+    model.get_person(model.get_person_index(p1))
+        .set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    model.get_person(model.get_person_index(p2))
+        .set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
 
     model.get_location(school_id).set_capacity(1, 66);
 
@@ -87,8 +91,9 @@ TEST(TestLocation, reachCapacity)
 
     model.evolve(t, dt);
 
-    ASSERT_EQ(model.get_person(p1).get_location(), school_id);
-    ASSERT_EQ(model.get_person(p2).get_location(), home_id); // p2 should not be able to enter the school
+    ASSERT_EQ(model.get_person(model.get_person_index(p1)).get_location(), school_id);
+    ASSERT_EQ(model.get_person(model.get_person_index(p2)).get_location(),
+              home_id); // p2 should not be able to enter the school
     ASSERT_EQ(model.get_number_persons(school_id), 1);
     ASSERT_EQ(model.get_number_persons(home_id), 1);
 }

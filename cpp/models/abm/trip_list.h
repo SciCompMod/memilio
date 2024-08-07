@@ -25,6 +25,7 @@
 #include "abm/person_id.h"
 #include "abm/time.h"
 #include "abm/location_type.h"
+#include "memilio/io/io.h"
 #include <vector>
 
 namespace mio
@@ -115,6 +116,7 @@ struct Trip {
         obj.add_element("time", time.seconds());
         obj.add_element("destination", destination);
         obj.add_element("origin", origin);
+        obj.add_element("destination_type", destination_type);
     }
 
     /**
@@ -124,17 +126,18 @@ struct Trip {
     template <class IOContext>
     static IOResult<Trip> deserialize(IOContext& io)
     {
-        auto obj            = io.expect_object("Trip");
-        auto person_id      = obj.expect_element("person_id", Tag<PersonId>{});
-        auto time           = obj.expect_element("time", Tag<int>{});
-        auto destination_id = obj.expect_element("destination", Tag<LocationId>{});
-        auto origin_id      = obj.expect_element("origin", Tag<LocationId>{});
+        auto obj              = io.expect_object("Trip");
+        auto person_id        = obj.expect_element("person_id", Tag<PersonId>{});
+        auto time             = obj.expect_element("time", Tag<int>{});
+        auto destination_id   = obj.expect_element("destination", Tag<LocationId>{});
+        auto origin_id        = obj.expect_element("origin", Tag<LocationId>{});
+        auto destination_type = obj.expect_element("destination_type", Tag<LocationType>{});
         return apply(
             io,
-            [](auto&& person_id_, auto&& time_, auto&& destination_id_, auto&& origin_id_) {
-                return Trip(person_id_, TimePoint(time_), destination_id_, origin_id_);
+            [](auto&& person_id_, auto&& time_, auto&& destination_id_, auto&& origin_id_, auto&& destination_type_) {
+                return Trip(person_id_, TimePoint(time_), destination_id_, origin_id_, destination_type_);
             },
-            person_id, time, destination_id, origin_id);
+            person_id, time, destination_id, origin_id, destination_type);
     }
 };
 

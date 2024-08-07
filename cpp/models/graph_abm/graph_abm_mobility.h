@@ -28,9 +28,12 @@
 #include "abm/person.h"
 #include "abm/person_id.h"
 #include "abm/model_functions.h"
+#include "graph_abm/model_wrapper.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/graph.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include <cstddef>
+#include <utility>
 #include <vector>
 
 namespace mio
@@ -43,7 +46,7 @@ class ABMSimulationNode
 {
 
 public:
-    using Sim = abm::Simulation;
+    using Sim = abm::Simulation<ModelWrapper>;
 
     template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
     ABMSimulationNode(std::tuple<History...> history, Args&&... args)
@@ -93,85 +96,85 @@ private:
     std::tuple<History...> m_history;
 };
 
-/**
- * @brief Parameters influencing the mobility between two abm graph nodes.
- */
-class ABMMobilityParameters
-{
+// /**
+//  * @brief Parameters influencing the mobility between two abm graph nodes.
+//  */
+// class ABMMobilityParameters
+// {
 
-public:
-    using MobilityRuleType = abm::LocationType (*)(const abm::Person&, abm::TimePoint, const abm::Parameters&);
+// public:
+//     using MobilityRuleType = abm::LocationType (*)(const abm::Person&, abm::TimePoint, const abm::Parameters&);
 
-    /**
-     * Constructor for initializing commuting persons
-     * @param commuting_persons Vector holding commuting persons' ids
-     */
-    ABMMobilityParameters(const std::vector<uint32_t>& commuting_persons,
-                          const std::vector<MobilityRuleType>& mobility_rules)
-        : m_commuting_persons(commuting_persons)
-        , m_mobility_rules(mobility_rules)
-    {
-    }
+//     /**
+//      * Constructor for initializing commuting persons
+//      * @param commuting_persons Vector holding commuting persons' ids
+//      */
+//     ABMMobilityParameters(const std::vector<uint32_t>& commuting_persons,
+//                           const std::vector<MobilityRuleType>& mobility_rules)
+//         : m_commuting_persons(commuting_persons)
+//         , m_mobility_rules(mobility_rules)
+//     {
+//     }
 
-    /**
-     * Equality comparison operators
-     */
-    bool operator==(const ABMMobilityParameters& other) const
-    {
-        return m_commuting_persons == other.m_commuting_persons;
-    }
-    bool operator!=(const ABMMobilityParameters& other) const
-    {
-        return m_commuting_persons != other.m_commuting_persons;
-    }
+//     /**
+//      * Equality comparison operators
+//      */
+//     bool operator==(const ABMMobilityParameters& other) const
+//     {
+//         return m_commuting_persons == other.m_commuting_persons;
+//     }
+//     bool operator!=(const ABMMobilityParameters& other) const
+//     {
+//         return m_commuting_persons != other.m_commuting_persons;
+//     }
 
-    /**
-      * Get/Set the commuting persons vector.
-      * The vector represents the persons (by their id) that commute from one node to another 
-      * according to mobility rules.
-      */
-    const std::vector<uint32_t>& get_commuting_persons() const
-    {
-        return m_commuting_persons;
-    }
+//     /**
+//       * Get/Set the commuting persons vector.
+//       * The vector represents the persons (by their id) that commute from one node to another
+//       * according to mobility rules.
+//       */
+//     const std::vector<uint32_t>& get_commuting_persons() const
+//     {
+//         return m_commuting_persons;
+//     }
 
-    std::vector<uint32_t>& get_commuting_persons()
-    {
-        return m_commuting_persons;
-    }
-    /**
-     * @param[in] commuting_persons Vector with commuting person ids.
-     */
-    void set_commuting_persons(const std::vector<uint32_t>& commuting_persons)
-    {
-        m_commuting_persons = commuting_persons;
-    }
+//     std::vector<uint32_t>& get_commuting_persons()
+//     {
+//         return m_commuting_persons;
+//     }
+//     /**
+//      * @param[in] commuting_persons Vector with commuting person ids.
+//      */
+//     void set_commuting_persons(const std::vector<uint32_t>& commuting_persons)
+//     {
+//         m_commuting_persons = commuting_persons;
+//     }
 
-    /**
-     * Get/ the mobility rules.
-     * The rules are applied to the persons in m_commuting_persons every time exchange betwen two nodes is triggered.
-     */
-    const std::vector<MobilityRuleType>& get_mobility_rules() const
-    {
-        return m_mobility_rules;
-    }
-    std::vector<MobilityRuleType>& get_mobility_rules()
-    {
-        return m_mobility_rules;
-    }
-    /**
-      * @brief Add mobility rule to member vector.
-      * @param[in] mobility_rule Rule to be added for mobility between nodes.
-      */
-    void add_mobility_rule(const MobilityRuleType& mobility_rule)
-    {
-        m_mobility_rules.push_back(mobility_rule);
-    }
+//     /**
+//      * Get/ the mobility rules.
+//      * The rules are applied to the persons in m_commuting_persons every time exchange betwen two nodes is triggered.
+//      */
+//     const std::vector<MobilityRuleType>& get_mobility_rules() const
+//     {
+//         return m_mobility_rules;
+//     }
+//     std::vector<MobilityRuleType>& get_mobility_rules()
+//     {
+//         return m_mobility_rules;
+//     }
+//     /**
+//       * @brief Add mobility rule to member vector.
+//       * @param[in] mobility_rule Rule to be added for mobility between nodes.
+//       */
+//     void add_mobility_rule(const MobilityRuleType& mobility_rule)
+//     {
+//         m_mobility_rules.push_back(mobility_rule);
+//     }
 
-private:
-    std::vector<uint32_t> m_commuting_persons; ///< Person ids that are commuting via an edge
-    std::vector<MobilityRuleType> m_mobility_rules; ///< Rules for moving persons from one node to another
-};
+// private:
+//     std::vector<uint32_t> m_commuting_persons; ///< Person ids that are commuting via an edge
+//     std::vector<MobilityRuleType> m_mobility_rules; ///< Rules for moving persons from one node to another
+// };
 
 /**
  * Represents the mobility between two nodes.
@@ -181,29 +184,29 @@ class ABMMobilityEdge
 {
 
 public:
-    using MobilityRuleType = abm::LocationType (*)(const abm::Person&, abm::TimePoint, const abm::Parameters&);
-    /**
-     * Creates edge with mobility parameters
-     * @param params mobility parameters including people commuting via the edge and mobility rules
-     */
-    ABMMobilityEdge(const ABMMobilityParameters& params)
-        : m_parameters(params)
-    {
-    }
+    // using MobilityRuleType = abm::LocationType (*)(const abm::Person&, abm::TimePoint, const abm::Parameters&);
+    // /**
+    //  * Creates edge with mobility parameters
+    //  * @param params mobility parameters including people commuting via the edge and mobility rules
+    //  */
+    // ABMMobilityEdge(const ABMMobilityParameters& params)
+    //     : m_parameters(params)
+    // {
+    // }
 
-    ABMMobilityEdge(const std::vector<uint32_t>& commuting_persons,
-                    const std::vector<MobilityRuleType>& mobility_rules = {})
-        : m_parameters(commuting_persons, mobility_rules)
-    {
-    }
+    // ABMMobilityEdge(const std::vector<uint32_t>& commuting_persons,
+    //                 const std::vector<MobilityRuleType>& mobility_rules = {})
+    //     : m_parameters(commuting_persons, mobility_rules)
+    // {
+    // }
 
-    /**
-     * @brief Get mobility paramters.
-     */
-    const ABMMobilityParameters& get_parameters() const
-    {
-        return m_parameters;
-    }
+    // /**
+    //  * @brief Get mobility paramters.
+    //  */
+    // const ABMMobilityParameters& get_parameters() const
+    // {
+    //     return m_parameters;
+    // }
 
     /**
      * @brief Exchanges persons via the edge. 
@@ -213,55 +216,36 @@ public:
      * @param[in] t Echange time point
      */
     void apply_mobility(ABMSimulationNode<History...>& node_from, ABMSimulationNode<History...>& node_to,
-                        abm::TimePoint t)
+                        abm::TimePoint /*t*/)
     {
-        // iterate over all persons that could commute via the edge
-        for (auto p : m_parameters.get_commuting_persons()) {
-            auto& person_n1 = node_from.get_simulation().get_model().get_person(mio::abm::PersonId(p));
-            auto& person_n2 = node_to.get_simulation().get_model().get_person(mio::abm::PersonId(p));
-            auto& params    = node_from.get_simulation().get_model().parameters;
-            // as all nodes have all person it doesn't matter which node's persons we take here
-            auto current_location_type = person_n1.get_location_type();
-            auto current_id            = person_n1.get_location();
-            auto current_model_id      = person_n1.get_location_model_id();
-            for (auto& rule : m_parameters.get_mobility_rules()) {
-                auto target_type      = rule(person_n1, t, params);
-                auto target_model_id  = person_n1.get_assigned_location_model_id(target_type);
-                auto target_id        = person_n1.get_assigned_location(target_type);
-                auto& target_model    = (target_model_id == node_from.get_simulation().get_model().get_id())
-                                            ? node_from.get_simulation().get_model()
-                                            : node_to.get_simulation().get_model();
-                auto& target_location = target_model.get_location(target_id);
-                assert((node_from.get_simulation().get_model().get_id() == target_location.get_model_id() ||
-                        node_to.get_simulation().get_model().get_id() == target_location.get_model_id()) &&
-                       "Wrong graph edge. Target location is no edge node.");
-                if (target_type == current_location_type &&
-                    (target_id != current_id || target_model_id != current_model_id)) {
-                    mio::log_error("Person with index {} has two assigned locations of the same type.",
-                                   person_n1.get_id().get());
+        auto& model_from        = node_from.get_simulation().get_model();
+        auto& model_to          = node_to.get_simulation().get_model();
+        auto& persons_to_change = model_from.get_person_buffer();
+        //iterate over all persons that change from node_from
+        for (int i = persons_to_change.size() - 1; i >= 0; --i) {
+            auto& person     = model_from.get_persons()[persons_to_change[i]];
+            auto target_type = person.get_location_type();
+            //check if Person uses this edge
+            if (person.get_assigned_location_model_id(target_type) == model_to.get_id()) {
+                auto target_id = person.get_assigned_location(target_type);
+                //set correct location for person
+                person.set_location(target_type, target_id, model_to.get_id());
+                //add person to model_to
+                model_to.add_person(std::move(person));
+                //remove person from model_from
+                model_from.remove_person(persons_to_change[i]);
+                // correct indices in persons buffer from node_from
+                for (size_t j = i + 1; j < persons_to_change.size(); ++j) {
+                    persons_to_change[j]--;
                 }
-                if (target_type != current_location_type &&
-                    target_model.get_number_persons(target_id) < target_location.get_capacity().persons) {
-                    //change person's location in all nodes
-                    mio::abm::change_location(person_n1, target_location);
-                    mio::abm::change_location(person_n2, target_location);
-                    // invalidate both models' cache
-                    node_to.get_simulation().get_model().invalidate_cache();
-                    node_from.get_simulation().get_model().invalidate_cache();
-                    if (target_model_id != current_model_id) {
-                        // change activeness status for commuted person
-                        node_to.get_simulation().get_model().change_activeness(p);
-                        node_from.get_simulation().get_model().change_activeness(p);
-                    }
-                    // only one mobility rule per person can be applied
-                    break;
-                }
+                //delete current index from list
+                persons_to_change.erase(persons_to_change.begin() + i);
             }
         }
     }
 
-private:
-    ABMMobilityParameters m_parameters; ///< Mobility parameters
+    // private:
+    //     ABMMobilityParameters m_parameters; ///< Mobility parameters
 };
 
 /**

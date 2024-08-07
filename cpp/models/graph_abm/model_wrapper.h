@@ -24,7 +24,9 @@
 #include "abm/model.h"
 #include "abm/time.h"
 #include "abm/location_id.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/mioomp.h"
+#include "abm/mobility_rules.h"
 #include "abm/mobility_rules.h"
 #include <list>
 
@@ -38,24 +40,27 @@ class ModelWrapper : public abm::Model
 
 public:
     /**
-     * @brief Get a reference to a Person from this Model.
-     * @param[in] id A person's PersonId. 
-     * First 32 bit are the Person's index and second 32 bit the Persons's home model id. 
-     * @return Position of Person in m_persons vector.
-     * @{
+     * @brief Get person buffer for given model id. 
      */
-    size_t get_person_pos(PersonId id)
+    std::vector<size_t>& get_person_buffer()
     {
-        auto it = std::find(Base::m_persons.begin(), Base::m_persons.end(), [id](auto& person) {
-            person.get_id() == id;
-        });
-        if (it == Base::m_persons.end()) {
-            log_error("Given PersonId is not in this Model.");
-            return std::numeric_limits<size_t>::max();
-        }
-        else {
-            return std::distance(Base::m_persons.begin(), it);
-        }
+        return m_person_buffer;
+    }
+
+    //TODO comment
+    void remove_person(size_t pos)
+    {
+        Base::m_persons.erase(Base::m_persons.begin() + pos);
+        Base::m_activeness_statuses.erase(Base::m_activeness_statuses.begin() + pos);
+    }
+
+    void evolve(TimePoint t, TimeSpan dt)
+    {
+        Base::begin_step(t, dt);
+        log_info("Graph ABM Model interaction.");
+        Base::interaction(t, dt);
+        log_info("Graph ABM Model mobility.");
+        perform_mobility(t, dt);
     }
 
 private:
@@ -89,7 +94,9 @@ private:
                 else { //person moves to other world
                     Base::m_activeness_statuses[person_id] = false;
                     person.set_location(target_type, abm::LocationId::invalid_id(), std::numeric_limits<int>::max());
-                    person_buffer.push_back(person_id);
+                    m_person_buffer.push_back(person_id);
+                    m_are_exposure_caches_valid       = false;
+                    m_is_local_population_cache_valid = false;
                     return true;
                 }
                 return false;
@@ -97,27 +104,18 @@ private:
 
             //run mobility rules one after the other if the corresponding location type exists
             //shortcutting of bool operators ensures the rules stop after the first rule is applied
-            if (m_use_mobility_rules) {
-                (Base::has_locations({LocationType::Cemetery}) && try_mobility_rule(&get_buried)) ||
-                    (Base::has_locations({LocationType::Home}) && try_mobility_rule(&return_home_when_recovered)) ||
-                    (Base::has_locations({LocationType::Hospital}) && try_mobility_rule(&go_to_hospital)) ||
-                    (Base::has_locations({LocationType::ICU}) && try_mobility_rule(&go_to_icu)) ||
-                    (Base::has_locations({LocationType::School, LocationType::Home}) &&
-                     try_mobility_rule(&go_to_school)) ||
-                    (Base::has_locations({LocationType::Work, LocationType::Home}) && try_mobility_rule(&go_to_work)) ||
-                    (Base::has_locations({LocationType::BasicsShop, LocationType::Home}) &&
-                     try_mobility_rule(&go_to_shop)) ||
-                    (Base::has_locations({LocationType::SocialEvent, LocationType::Home}) &&
-                     try_mobility_rule(&go_to_event)) ||
-                    (Base::has_locations({LocationType::Home}) && try_mobility_rule(&go_to_quarantine));
+            if (Base::m_use_mobility_rules) {
+                try_mobility_rule(&get_buried) || try_mobility_rule(&return_home_when_recovered) ||
+                    try_mobility_rule(&go_to_hospital) || try_mobility_rule(&go_to_icu) ||
+                    try_mobility_rule(&go_to_school) || try_mobility_rule(&go_to_work) ||
+                    try_mobility_rule(&go_to_shop) || try_mobility_rule(&go_to_event) ||
+                    try_mobility_rule(&go_to_quarantine);
             }
             else {
                 //no daily routine mobility, just infection related
-                (Base::has_locations({LocationType::Cemetery}) && try_mobility_rule(&get_buried)) ||
-                    (Base::has_locations({LocationType::Home}) && try_mobility_rule(&return_home_when_recovered)) ||
-                    (Base::has_locations({LocationType::Hospital}) && try_mobility_rule(&go_to_hospital)) ||
-                    (Base::has_locations({LocationType::ICU}) && try_mobility_rule(&go_to_icu)) ||
-                    (Base::has_locations({LocationType::Home}) && try_mobility_rule(&go_to_quarantine));
+                try_mobility_rule(&get_buried) || try_mobility_rule(&return_home_when_recovered) ||
+                    try_mobility_rule(&go_to_hospital) || try_mobility_rule(&go_to_icu) ||
+                    try_mobility_rule(&go_to_quarantine);
             }
         }
     }
@@ -127,37 +125,39 @@ private:
     size_t num_trips = m_trip_list.num_trips(weekend);
 
     if (num_trips != 0) {
-        while (m_trip_list.get_current_index() < num_trips &&
-               m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
-            auto& trip        = m_trip_list.get_next_trip(weekend);
-            auto person_pos   = get_person_pos(trip.person_id);
-            auto& person      = Base::get_person(person_pos);
-            auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
+        while (Base::m_trip_list.get_current_index() < num_trips &&
+               Base::m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
+            auto& trip        = Base::m_trip_list.get_next_trip(weekend);
+            auto person_index = Base::get_person_index(trip.person_id);
+            auto& person      = Base::get_person(person_index);
+            auto personal_rng = PersonalRandomNumberGenerator(Base::m_rng, person);
             if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
                 if (trip.destination_model_id == Base::m_id) {
                     auto& target_location = get_location(trip.destination);
-                    if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                    if (Base::m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
                         person.apply_mask_intervention(personal_rng, target_location);
-                        change_location(person.get_id(), target_location.get_id(), trip.trip_mode);
+                        Base::change_location(person_index, target_location.get_id(), trip.trip_mode);
                     }
                 }
                 else {
                     //person moves to other world
-                    Base::m_activeness_statuses[person_pos] = false;
+                    Base::m_activeness_statuses[person_index] = false;
                     person.set_location(trip.destination_type, abm::LocationId::invalid_id(),
                                         std::numeric_limits<int>::max());
-                    person_buffer.push_back(person_pos);
+                    m_person_buffer.push_back(person_index);
+                    m_are_exposure_caches_valid       = false;
+                    m_is_local_population_cache_valid = false;
                 }
             }
-            m_trip_list.increase_index();
+            Base::m_trip_list.increase_index();
         }
     }
     if (((t).days() < std::floor((t + dt).days()))) {
-        m_trip_list.reset_index();
+        Base::m_trip_list.reset_index();
     }
     }
 
-    std::list<size_t> person_buffer; ///< List with indices of persons that are deactivated.
+    std::vector<size_t> m_person_buffer; ///< List with indices of persons that are deactivated per target world.
 };
 } // namespace mio
 

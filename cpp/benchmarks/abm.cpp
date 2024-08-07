@@ -3,7 +3,7 @@
 #include "benchmark/benchmark.h"
 #include <cstddef>
 
-mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<uint32_t> seeds)
+mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list<uint32_t> seeds)
 {
     auto rng = mio::RandomNumberGenerator();
     rng.seed(seeds);
