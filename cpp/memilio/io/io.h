@@ -482,7 +482,7 @@ details::ApplyResultT<F, T...> apply(IOContext& io, F f, const IOResult<T>&... r
     IOStatus status[] = {(rs ? IOStatus{} : rs.error())...};
     auto iter_err     = std::find_if(std::begin(status), std::end(status), [](auto& s) {
         return s.is_error();
-        });
+    });
 
     //evaluate f if all succesful
     auto result =
@@ -495,6 +495,16 @@ details::ApplyResultT<F, T...> apply(IOContext& io, F f, const IOResult<T>&... r
         io.set_error(result.error());
     }
     return result;
+}
+
+template <class IOContext, class F, class... T>
+details::ApplyResultT<F, T...> apply(IOContext& io, F f, const std::tuple<IOResult<T>...>& rs)
+{
+    return std::apply(
+        [&io, f](const IOResult<T>&... args) {
+            return apply(io, f, args...);
+        },
+        rs);
 }
 
 //utility for (de-)serializing tuple-like objects
