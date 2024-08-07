@@ -40,7 +40,7 @@ set(TESTSOURCES
     test_abm_testing_strategy.cpp
     test_abm_model.cpp
     test_math_floating_point.cpp
-    test_math_tdpf.cpp
+    test_math_time_series_functor.cpp
     test_analyze_result.cpp
     test_contact_matrix.cpp
     test_type_safe.cpp

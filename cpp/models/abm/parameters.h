@@ -28,7 +28,7 @@
 #include "memilio/config.h"
 #include "memilio/io/auto_serialize.h"
 #include "memilio/io/io.h"
-#include "memilio/math/time_dependent_parameter_functor.h"
+#include "memilio/math/time_series_functor.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/parameter_set.h"
@@ -298,19 +298,15 @@ struct AerosolTransmissionRates {
     }
 };
 
-// using InputFunctionForProtectionLevel = std::function<ScalarType(ScalarType)>;
-using InputFunctionForProtectionLevel = TimeDependentParameterFunctor;
-
 /**
  * @brief Personal protection factor against #Infection% after #Infection and #Vaccination, which depends on #ExposureType,
  * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
  */
 struct InfectionProtectionFactor {
-    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<TimeSeriesFunctor<ScalarType>, ExposureType, AgeGroup, VirusVariant>;
     static auto get_default(AgeGroup size)
     {
-        return Type({ExposureType::Count, size, VirusVariant::Count},
-                    Type::value_type(TimeDependentParameterFunctor::Type::Zero, {}));
+        return Type({ExposureType::Count, size, VirusVariant::Count}, TimeSeriesFunctor<ScalarType>());
     }
     static std::string name()
     {
@@ -323,11 +319,10 @@ struct InfectionProtectionFactor {
  * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
  */
 struct SeverityProtectionFactor {
-    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<TimeSeriesFunctor<ScalarType>, ExposureType, AgeGroup, VirusVariant>;
     static auto get_default(AgeGroup size)
     {
-        return Type({ExposureType::Count, size, VirusVariant::Count},
-                    Type::value_type(TimeDependentParameterFunctor::Type::Zero, {}));
+        return Type({ExposureType::Count, size, VirusVariant::Count}, TimeSeriesFunctor<ScalarType>());
     }
     static std::string name()
     {
@@ -339,10 +334,10 @@ struct SeverityProtectionFactor {
  * @brief Personal protective factor against high viral load. Its value is between 0 and 1.
  */
 struct HighViralLoadProtectionFactor {
-    using Type = InputFunctionForProtectionLevel;
+    using Type = TimeSeriesFunctor<ScalarType>;
     static auto get_default()
     {
-        return Type(TimeDependentParameterFunctor::Type::Zero, {});
+        return Type();
     }
     static std::string name()
     {

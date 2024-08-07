@@ -17,30 +17,31 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_MATH_TIME_DEPENDENT_PARAMETER_FUNCTOR_H
-#define MIO_MATH_TIME_DEPENDENT_PARAMETER_FUNCTOR_H
+#ifndef MIO_MATH_TIME_SERIES_FUNCTOR_H
+#define MIO_MATH_TIME_SERIES_FUNCTOR_H
 
-#include "memilio/config.h"
 #include "memilio/io/auto_serialize.h"
 #include "memilio/math/interpolation.h"
+#include "memilio/utils/time_series.h"
 
 #include <algorithm>
+#include <cassert>
 #include <vector>
 
 namespace mio
 {
 
-class TimeDependentParameterFunctor
+template <class FP>
+class TimeSeriesFunctor
 {
 public:
-    enum class Type
+    enum Type
     {
         Zero,
         LinearInterpolation,
     };
 
-    using DataType = std::vector<std::vector<ScalarType>>;
-    TimeDependentParameterFunctor(Type type, const DataType& data)
+    TimeSeriesFunctor(Type type, const TimeSeries<FP>& data)
         : m_type(type)
         , m_data(data)
     {
@@ -51,43 +52,45 @@ public:
             break;
         case Type::LinearInterpolation:
             // make sure data has the correct shape, i.e. a list of (time, value) pairs
-            assert(m_data.size() > 0);
-            assert(std::all_of(m_data.begin(), m_data.end(), [](auto&& a) {
-                return a.size() == 2;
-            }));
-            // sort by time
-            std::sort(m_data.begin(), m_data.end(), [](auto&& a, auto&& b) {
-                return a[0] < b[0];
-            });
+            assert(m_data.get_num_time_points() > 0 && "Need at least one time point for LinearInterpolation.");
+            assert(m_data.get_num_elements() == 1 && "LinearInterpolation requires exactly one value per time point.");
+            assert(m_data.is_sorted());
         }
     }
 
-    TimeDependentParameterFunctor()
-        : TimeDependentParameterFunctor(Type::Zero, {})
+    TimeSeriesFunctor(Type type, std::vector<std::vector<FP>>&& table)
+        : TimeSeriesFunctor(type, TimeSeries<FP>{table})
     {
     }
 
-    ScalarType operator()(ScalarType time) const
+    TimeSeriesFunctor()
+        : TimeSeriesFunctor(Type::Zero, TimeSeries<FP>{0})
     {
-        ScalarType value = 0.0;
+    }
+
+    FP operator()(FP time) const
+    {
+        FP value = 0.0;
         switch (m_type) {
         case Type::Zero:
             // value is explicitly zero-initialized
             break;
         case Type::LinearInterpolation:
             // find next time point in m_data (strictly) after time
-            const auto next_tp = std::upper_bound(m_data.begin(), m_data.end(), time, [](auto&& t, auto&& tp) {
-                return t < tp[0];
+            auto tp_range      = m_data.get_times();
+            const auto next_tp = std::upper_bound(tp_range.begin(), tp_range.end(), time, [](auto&& t, auto&& tp) {
+                return t < tp;
             });
-            if (next_tp == m_data.begin()) { // time is before first data point
-                value = m_data.front()[1];
+            if (next_tp == tp_range.begin()) { // time is before first data point
+                value = m_data.get_value(0)[0];
             }
-            else if (next_tp == m_data.end()) { // time is past last data point
-                value = m_data.back()[1];
+            else if (next_tp == tp_range.end()) { // time is past last data point
+                value = m_data.get_last_value()[0];
             }
             else { // time is in between data points
-                const auto tp = next_tp - 1;
-                value         = linear_interpolation(time, (*tp)[0], (*next_tp)[0], (*tp)[1], (*next_tp)[1]);
+                const auto i = next_tp - tp_range.begin();
+                value        = linear_interpolation(time, m_data.get_time(i - 1), m_data.get_time(i),
+                                                    m_data.get_value(i - 1)[0], m_data.get_value(i)[0]);
             }
             break;
         }
@@ -97,12 +100,12 @@ public:
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("TimeDependentParameterFunctor", NVP("type", m_type), NVP("data", m_data));
+        return make_auto_serialization("TimeSeriesFunctor", NVP("type", m_type), NVP("data", m_data));
     }
 
 private:
     Type m_type;
-    DataType m_data;
+    TimeSeries<FP> m_data;
 };
 
 } // namespace mio
