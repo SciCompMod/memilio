@@ -2433,8 +2433,8 @@ int main(int argc, char** argv)
     rank      = 0;
 #endif
 
-    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
@@ -2489,12 +2489,12 @@ int main(int argc, char** argv)
         // 3: testing prob symptomatic
         // 4: perc have to test if npi active
 
-        std::vector<std::pair<double, double>> grid_boundaries = {{5.5, 8.0}, {3.0, 6.0}, {0.05, 0.1}, {0.01, 0.05}};
+        std::vector<std::pair<double, double>> grid_boundaries = {{3.0, 8.0}, {1.0, 4.0}, {0.02, 0.1}, {0.01, 0.035}};
 
-        std::vector<int> points_per_dim = {2, 2, 2, 5};
-        // std::vector<int> points_per_dim = {9, 9, 9, 9};
-        auto grid   = grid_points(grid_boundaries, points_per_dim);
-        auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid);
+        // std::vector<int> points_per_dim = {2, 2, 2, 5};
+        std::vector<int> points_per_dim = {9, 9, 9, 9};
+        auto grid                       = grid_points(grid_boundaries, points_per_dim);
+        auto result                     = run_with_grid_search(input_dir, result_dir, num_runs, grid);
     }
     else {
         auto result = run(input_dir, result_dir, num_runs);
