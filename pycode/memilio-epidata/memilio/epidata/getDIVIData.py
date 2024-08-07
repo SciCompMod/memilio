@@ -258,7 +258,7 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
 
     Available data starts from 2020-04-24.
     If the given start_date is earlier, it is changed to this date and a warning is printed.
-    It has been announced that the dataset will no longer be updated from CW29 2024. 
+    It has been announced that the dataset will no longer be updated from 2024-07-21 (CW29). 
     If end_date is later, a warning is displayed.
     If it does not already exist, the folder Germany is generated in the given out_folder.
     If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
