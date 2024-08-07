@@ -130,65 +130,42 @@ using has_auto_serialize = is_expression_valid<details::auto_serialize_expr_t, T
 namespace details
 {
 
-/// add a name-value pair to an io object
-template <class IOContext, class IOObject, class Target>
+/// Add a name-value pair to an io object.
+template <class IOObject, class Target>
 void add_nvp(IOObject& obj, const NVP<Target> nvp)
 {
-    if constexpr (is_container<Target>::value &&
-                  !(has_serialize<IOContext, Target>::value || has_auto_serialize<Target>::value)) {
-        obj.add_list(std::string{nvp.name}, nvp.value.begin(), nvp.value.end());
-    }
-    else {
-        obj.add_element(std::string{nvp.name}, nvp.value);
-    }
+    obj.add_element(std::string{nvp.name}, nvp.value);
 }
 
-/// unpack all name-value pairs from the tuple and add them to a new io object with the given name
+/// Unpack all name-value pairs from the tuple and add them to a new io object with the given name.
 template <class IOContext, class... Targets>
-void auto_serialize_impl(IOContext& io, const std::string_view name, const std::tuple<NVP<Targets>...> targets)
+void auto_serialize_impl(IOContext& io, const std::string_view name, const NVP<Targets>... nvps)
 {
     auto obj = io.create_object(std::string{name});
-
-    std::apply(
-        [&obj](const NVP<Targets>... nvps) {
-            (add_nvp<IOContext>(obj, nvps), ...);
-        },
-        targets);
+    (add_nvp(obj, nvps), ...);
 }
 
-/// retrieve a name-value pair from an io object
-template <class IOContext, class IOObject, class Target>
+/// Retrieve a name-value pair from an io object.
+template <class IOObject, class Target>
 IOResult<Target> expect_nvp(IOObject& obj, const NVP<Target> nvp)
 {
-    if constexpr (is_container<Target>::value &&
-                  !(has_serialize<IOContext, Target>::value || has_auto_serialize<Target>::value)) {
-        return obj.expect_list(std::string{nvp.name}, Tag<typename Target::value_type>{});
-    }
-    else {
-        return obj.expect_element(std::string{nvp.name}, Tag<Target>{});
-    }
+    return obj.expect_element(std::string{nvp.name}, Tag<Target>{});
 }
 
-/// read an io object and its members from the io context using the given names and assign the values to a
+/// Read an io object and its members from the io context using the given names and assign the values to a.
 template <class IOContext, class AutoSerializable, class... Targets>
 IOResult<AutoSerializable> auto_deserialize_impl(IOContext& io, AutoSerializable& a, std::string_view name,
-                                                 std::tuple<NVP<Targets>...> targets)
+                                                 NVP<Targets>... nvps)
 {
     auto obj = io.expect_object(std::string{name});
 
-    const auto results = std::apply(
-        [&obj](NVP<Targets>... nvps) {
-            return std::make_tuple(expect_nvp<IOContext>(obj, nvps)...);
-        },
-        targets);
-
     return apply(
         io,
-        [&a, &targets](const Targets&... values) {
-            targets = std::make_tuple(values...);
+        [&a, &nvps...](const Targets&... values) {
+            ((nvps.value = values), ...);
             return a;
         },
-        results);
+        expect_nvp(obj, nvps)...);
 }
 
 } // namespace details
@@ -208,14 +185,19 @@ template <
                      AutoSerializable*> = nullptr>
 void serialize_internal(IOContext& io, const AutoSerializable& a)
 {
-    // Note that this cons_cast is only safe if we do not modify targets.
+    // Note that the following cons_cast is only safe if we do not modify targets.
     const auto targets = const_cast<AutoSerializable&>(a).auto_serialize();
-    details::auto_serialize_impl(io, targets.first, targets.second);
+    // unpack targets and serialize
+    std::apply(
+        [&io, &targets](auto... nvps) {
+            details::auto_serialize_impl(io, targets.first, nvps...);
+        },
+        targets.second);
 }
 
 /**
  * @brief Deserialization implementation for the auto-serialization feature.
- * Disables itself (SFINAE) if there is no auto_serialize member or if a deserialize member is present.
+ * Disables itself (SFINAE) if there is no auto_serialize member or if a deserialize meember is present.
  * Generates the deserialize method depending on the NVPs given by auto_serialize.
  * @tparam IOContext A type that models the IOContext concept.
  * @tparam AutoSerializable A type that can be auto-serialized.
@@ -232,7 +214,12 @@ IOResult<AutoSerializable> deserialize_internal(IOContext& io, Tag<AutoSerializa
     mio::unused(tag);
     AutoSerializable a = AutoSerializableFactory<AutoSerializable>::create();
     auto targets       = a.auto_serialize();
-    return details::auto_deserialize_impl(io, a, targets.first, targets.second);
+    // unpack targets and deserialize
+    return std::apply(
+        [&io, &targets, &a](auto... nvps) {
+            return details::auto_deserialize_impl(io, a, targets.first, nvps...);
+        },
+        targets.second);
 }
 
 } // namespace mio

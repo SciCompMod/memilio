@@ -497,16 +497,6 @@ details::ApplyResultT<F, T...> apply(IOContext& io, F f, const IOResult<T>&... r
     return result;
 }
 
-template <class IOContext, class F, class... T>
-details::ApplyResultT<F, T...> apply(IOContext& io, F f, const std::tuple<IOResult<T>...>& rs)
-{
-    return std::apply(
-        [&io, f](const IOResult<T>&... args) {
-            return apply(io, f, args...);
-        },
-        rs);
-}
-
 //utility for (de-)serializing tuple-like objects
 namespace details
 {
