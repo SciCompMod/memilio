@@ -12,4 +12,8 @@ if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
     add_executable(simulate_scenario simulate_scenario.cpp)
     target_link_libraries(simulate_scenario PRIVATE memilio ode_secirvvs Boost::filesystem ${HDF5_C_LIBRARIES})
     target_compile_options(simulate_scenario PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+    add_executable(opt_simulate_scenario opt_simulate_scenario.cpp)
+    target_link_libraries(opt_simulate_scenario PRIVATE memilio AD::AD ode_secirvvs Boost::filesystem ${HDF5_C_LIBRARIES})
+    target_compile_options(opt_simulate_scenario PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()

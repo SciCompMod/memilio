@@ -138,6 +138,7 @@ public:
         MPI_Comm_size(mpi::get_world(), &num_procs);
         MPI_Comm_rank(mpi::get_world(), &rank);
 #else
+
         num_procs = 1;
         rank      = 0;
 #endif
