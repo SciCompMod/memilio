@@ -52,7 +52,7 @@ struct TimeExposed {
 };
 
 /**
- * @brief Average time spent in the TimeInfectedNoSymptoms before developing 
+ * @brief Average time spent in InfectedNoSymptoms before developing 
  *  Symptoms or recover in the SECIR model in day unit.
  */
 struct TimeInfectedNoSymptoms {
@@ -68,7 +68,7 @@ struct TimeInfectedNoSymptoms {
 };
 
 /**
- * @brief Average time spent in the TimeInfectedSymptoms before going to Hospital 
+ * @brief Average time spent in InfectedSymptoms before going to Hospital 
  *  or recover in the SECIR model in day unit.
  */
 struct TimeInfectedSymptoms {
@@ -85,7 +85,7 @@ struct TimeInfectedSymptoms {
 
 /**
  * @brief Average time being in the Hospital before treated by ICU or recover in the 
- *  SECIR model in day unit.
+ *  LCT-SECIR model in day unit.
  */
 struct TimeInfectedSevere {
     using Type = ScalarType;
@@ -100,7 +100,7 @@ struct TimeInfectedSevere {
 };
 
 /**
- * @brief Average time treated by ICU before dead or recover in the SECIR model in day unit.
+ * @brief Average time treated by ICU before dead or recover in the LCT-SECIR model in day unit.
  */
 struct TimeInfectedCritical {
     using Type = ScalarType;

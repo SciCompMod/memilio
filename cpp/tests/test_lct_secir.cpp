@@ -320,7 +320,7 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
     }
 
     // Compare InfectionState compartments.
-    mio::TimeSeries<ScalarType> population = model->calculate_compartments(result);
+    mio::TimeSeries<ScalarType> population = LctState::calculate_compartments(result);
     auto compare_population                = load_test_data_csv<ScalarType>("lct-secir-compartments-compare.csv");
 
     ASSERT_EQ(compare_population.size(), static_cast<size_t>(population.get_num_time_points()));
@@ -332,29 +332,6 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
             EXPECT_NEAR(population.get_value(i)[j - 1], compare_population[i][j], 1e-7) << " at row " << i;
         }
     }
-}
-
-// Test calculate_compartments with a TimeSeries that has an incorrect number of elements.
-TEST_F(ModelTestLCTSecir, testCalculatePopWrongSize)
-{
-    // Deactivate temporarily log output because an error is expected.
-    mio::set_log_level(mio::LogLevel::off);
-    // TimeSeries has to have LctState::Count elements.
-    size_t wrong_size = LctState::Count - 2;
-    // Define TimeSeries with wrong_size elements.
-    mio::TimeSeries<ScalarType> wrong_num_elements(wrong_size);
-    Eigen::VectorXd vec_wrong_size = Eigen::VectorXd::Ones(wrong_size);
-    wrong_num_elements.add_time_point(-10, vec_wrong_size);
-    wrong_num_elements.add_time_point(-9, vec_wrong_size);
-    // Call the calculate_compartments function with the TimeSeries with a wrong number of elements.
-    mio::TimeSeries<ScalarType> population = model->calculate_compartments(wrong_num_elements);
-    // A TimeSeries of the right size with values -1 is expected.
-    ASSERT_EQ(1, population.get_num_time_points());
-    for (int i = 0; i < population.get_num_elements(); i++) {
-        EXPECT_EQ(-1, population.get_last_value()[i]);
-    }
-    // Reactive log output.
-    mio::set_log_level(mio::LogLevel::warn);
 }
 
 // Check constraints of Parameters class.
@@ -462,6 +439,34 @@ TEST(TestLCTSecir, testConstraintsParameters)
     constraint_check = parameters_lct.check_constraints();
     EXPECT_FALSE(constraint_check);
 
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
+// Test calculate_compartments function of the LctInfectionState class with a TimeSeries that has an incorrect
+// number of elements.
+TEST(TestLctInfectionState, testCalculatePopWrongSize)
+{
+    // Deactivate temporarily log output because an error is expected.
+    mio::set_log_level(mio::LogLevel::off);
+
+    using Model    = mio::lsecir::Model<2, 3, 1, 1, 5>;
+    using LctState = Model::LctState;
+
+    // TimeSeries has to have LctState::Count elements.
+    size_t wrong_size = LctState::Count - 2;
+    // Define TimeSeries with wrong_size elements.
+    mio::TimeSeries<ScalarType> wrong_num_elements(wrong_size);
+    Eigen::VectorXd vec_wrong_size = Eigen::VectorXd::Ones(wrong_size);
+    wrong_num_elements.add_time_point(-10, vec_wrong_size);
+    wrong_num_elements.add_time_point(-9, vec_wrong_size);
+    // Call the calculate_compartments function with the TimeSeries with a wrong number of elements.
+    mio::TimeSeries<ScalarType> population = LctState::calculate_compartments(wrong_num_elements);
+    // A TimeSeries of the right size with values -1 is expected.
+    EXPECT_EQ(1, population.get_num_time_points());
+    for (int i = 0; i < population.get_num_elements(); i++) {
+        EXPECT_EQ(-1, population.get_last_value()[i]);
+    }
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
 }

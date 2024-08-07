@@ -18,18 +18,15 @@
 * limitations under the License.
 */
 
-#ifndef LCT_SECIR_INFECTIONSTATE_H
-#define LCT_SECIR_INFECTIONSTATE_H
+#ifndef MIO_GLCT_SECIR_INFECTIONSTATE_H
+#define MIO_GLCT_SECIR_INFECTIONSTATE_H
 
 namespace mio
 {
-namespace lsecir
+namespace glsecir
 {
 
-/**
- * @brief The InfectionState enum describes the basic
- * categories for the infection state of persons.
- */
+/// @brief The InfectionState enum describes the basic categories for the infection state of persons.
 enum class InfectionState
 {
     Susceptible        = 0,
@@ -43,26 +40,7 @@ enum class InfectionState
     Count              = 8
 };
 
-/**
- * @brief The InfectionTransition enum describes the possible
- * transitions of the infectious state of persons.
- */
-enum class InfectionTransition
-{
-    SusceptibleToExposed                 = 0,
-    ExposedToInfectedNoSymptoms          = 1,
-    InfectedNoSymptomsToInfectedSymptoms = 2,
-    InfectedNoSymptomsToRecovered        = 3,
-    InfectedSymptomsToInfectedSevere     = 4,
-    InfectedSymptomsToRecovered          = 5,
-    InfectedSevereToInfectedCritical     = 6,
-    InfectedSevereToRecovered            = 7,
-    InfectedCriticalToDead               = 8,
-    InfectedCriticalToRecovered          = 9,
-    Count                                = 10
-};
-
-} // namespace lsecir
+} // namespace glsecir
 } // namespace mio
 
-#endif // LCT_SECIR_INFECTIONSTATE_H
+#endif // MIO_GLCT_SECIR_INFECTIONSTATE_H
