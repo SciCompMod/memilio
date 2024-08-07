@@ -85,9 +85,9 @@ protected:
 };
 
 template <class Graph, class Timepoint = double, class Timespan = double,
-          class edge_f = std::function<void(Timepoint, Timespan, typename Graph::EdgeProperty&,
-                                            typename Graph::NodeProperty&, typename Graph::NodeProperty&)>,
-          class node_f = std::function<void(Timepoint, Timespan, typename Graph::NodeProperty&)>>
+          class edge_f = void (*)(Timepoint, Timespan, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
+                                  typename Graph::NodeProperty&),
+          class node_f = void (*)(Timepoint, Timespan, typename Graph::NodeProperty&)>
 class GraphSimulation : public GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>
 {
     using Base = GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>;

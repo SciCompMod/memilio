@@ -25,7 +25,7 @@
 #include "abm/time.h"
 #include "abm/person_id.h"
 #include "graph_abm/graph_abm_mobility.h"
-#include "graph_abm/mobility_rules.h"
+#include "graph_abm/model_wrapper.h"
 #include "memilio/io/history.h"
 #include "memilio/mobility/graph.h"
 #include <cstddef>
@@ -72,7 +72,7 @@ int main()
     const auto age_group_adults   = mio::AgeGroup(1);
     const auto age_group_seniors  = mio::AgeGroup(2);
 
-    auto model1 = mio::abm::Model(num_age_groups, 0);
+    auto model1 = mio::abm::WrapperModel(num_age_groups, 0);
 
     //Set infection parameters
     model1.parameters.get<mio::abm::IncubationPeriod>()              = 4.;
