@@ -314,6 +314,8 @@ struct HighViralLoadProtectionFactor {
 struct TestParameters {
     UncertainValue<> sensitivity;
     UncertainValue<> specificity;
+    TimeSpan required_time;
+    TestType type;
 
     /**
       * serialize this. 
@@ -325,6 +327,8 @@ struct TestParameters {
         auto obj = io.create_object("TestParameters");
         obj.add_element("Sensitivity", sensitivity);
         obj.add_element("Specificity", specificity);
+        obj.add_element("required_time", required_time);
+        obj.add_element("type", type);
     }
 
     /**
@@ -337,12 +341,14 @@ struct TestParameters {
         auto obj  = io.expect_object("TestParameters");
         auto sens = obj.expect_element("Sensitivity", mio::Tag<UncertainValue<>>{});
         auto spec = obj.expect_element("Specificity", mio::Tag<UncertainValue<>>{});
+        auto time = obj.expect_element("required_time", mio::Tag<TimeSpan>{});
+        auto typ = obj.expect_element("type", mio::Tag<TestType>{});
         return apply(
             io,
-            [](auto&& sens_, auto&& spec_) {
-                return TestParameters{sens_, spec_};
+            [](auto&& sens_, auto&& spec_, auto&& time_span_, auto&& type_) {
+                return TestParameters{sens_, spec_, time_span_, type_};
             },
-            sens, spec);
+            sens, spec, time, typ);
     }
 };
 
@@ -354,9 +360,9 @@ struct TestData {
     static auto get_default(AgeGroup /*size*/)
     {
         Type default_val                 = Type({TestType::Count});
-        default_val[{TestType::Generic}] = TestParameters{0.9, 0.99};
-        default_val[{TestType::Antigen}] = TestParameters{0.8, 0.88};
-        default_val[{TestType::PCR}]     = TestParameters{0.9, 0.99};
+        default_val[{TestType::Generic}] = TestParameters{0.9, 0.99, hours(48), TestType::Generic};
+        default_val[{TestType::Antigen}] = TestParameters{0.8, 0.88, minutes(30), TestType::Antigen};
+        default_val[{TestType::PCR}]     = TestParameters{0.9, 0.99, hours(48), TestType::PCR};
         return default_val;
     }
     static std::string name()
