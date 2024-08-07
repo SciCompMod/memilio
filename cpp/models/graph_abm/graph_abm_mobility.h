@@ -96,86 +96,6 @@ private:
     std::tuple<History...> m_history;
 };
 
-// /**
-//  * @brief Parameters influencing the mobility between two abm graph nodes.
-//  */
-// class ABMMobilityParameters
-// {
-
-// public:
-//     using MobilityRuleType = abm::LocationType (*)(const abm::Person&, abm::TimePoint, const abm::Parameters&);
-
-//     /**
-//      * Constructor for initializing commuting persons
-//      * @param commuting_persons Vector holding commuting persons' ids
-//      */
-//     ABMMobilityParameters(const std::vector<uint32_t>& commuting_persons,
-//                           const std::vector<MobilityRuleType>& mobility_rules)
-//         : m_commuting_persons(commuting_persons)
-//         , m_mobility_rules(mobility_rules)
-//     {
-//     }
-
-//     /**
-//      * Equality comparison operators
-//      */
-//     bool operator==(const ABMMobilityParameters& other) const
-//     {
-//         return m_commuting_persons == other.m_commuting_persons;
-//     }
-//     bool operator!=(const ABMMobilityParameters& other) const
-//     {
-//         return m_commuting_persons != other.m_commuting_persons;
-//     }
-
-//     /**
-//       * Get/Set the commuting persons vector.
-//       * The vector represents the persons (by their id) that commute from one node to another
-//       * according to mobility rules.
-//       */
-//     const std::vector<uint32_t>& get_commuting_persons() const
-//     {
-//         return m_commuting_persons;
-//     }
-
-//     std::vector<uint32_t>& get_commuting_persons()
-//     {
-//         return m_commuting_persons;
-//     }
-//     /**
-//      * @param[in] commuting_persons Vector with commuting person ids.
-//      */
-//     void set_commuting_persons(const std::vector<uint32_t>& commuting_persons)
-//     {
-//         m_commuting_persons = commuting_persons;
-//     }
-
-//     /**
-//      * Get/ the mobility rules.
-//      * The rules are applied to the persons in m_commuting_persons every time exchange betwen two nodes is triggered.
-//      */
-//     const std::vector<MobilityRuleType>& get_mobility_rules() const
-//     {
-//         return m_mobility_rules;
-//     }
-//     std::vector<MobilityRuleType>& get_mobility_rules()
-//     {
-//         return m_mobility_rules;
-//     }
-//     /**
-//       * @brief Add mobility rule to member vector.
-//       * @param[in] mobility_rule Rule to be added for mobility between nodes.
-//       */
-//     void add_mobility_rule(const MobilityRuleType& mobility_rule)
-//     {
-//         m_mobility_rules.push_back(mobility_rule);
-//     }
-
-// private:
-//     std::vector<uint32_t> m_commuting_persons; ///< Person ids that are commuting via an edge
-//     std::vector<MobilityRuleType> m_mobility_rules; ///< Rules for moving persons from one node to another
-// };
-
 /**
  * Represents the mobility between two nodes.
  */
@@ -184,30 +104,6 @@ class ABMMobilityEdge
 {
 
 public:
-    // using MobilityRuleType = abm::LocationType (*)(const abm::Person&, abm::TimePoint, const abm::Parameters&);
-    // /**
-    //  * Creates edge with mobility parameters
-    //  * @param params mobility parameters including people commuting via the edge and mobility rules
-    //  */
-    // ABMMobilityEdge(const ABMMobilityParameters& params)
-    //     : m_parameters(params)
-    // {
-    // }
-
-    // ABMMobilityEdge(const std::vector<uint32_t>& commuting_persons,
-    //                 const std::vector<MobilityRuleType>& mobility_rules = {})
-    //     : m_parameters(commuting_persons, mobility_rules)
-    // {
-    // }
-
-    // /**
-    //  * @brief Get mobility paramters.
-    //  */
-    // const ABMMobilityParameters& get_parameters() const
-    // {
-    //     return m_parameters;
-    // }
-
     /**
      * @brief Exchanges persons via the edge. 
      * Commuters are given by the ABMMobilityParameters and exchanged via mobility rules also given ABMMobilityParameters.
@@ -243,9 +139,6 @@ public:
             }
         }
     }
-
-    // private:
-    //     ABMMobilityParameters m_parameters; ///< Mobility parameters
 };
 
 /**

@@ -51,10 +51,12 @@ namespace abm
 class Model
 {
 public:
-    using LocationIterator      = std::vector<Location>::iterator;
-    using ConstLocationIterator = std::vector<Location>::const_iterator;
-    using PersonIterator        = std::vector<Person>::iterator;
-    using ConstPersonIterator   = std::vector<Person>::const_iterator;
+    using LocationIterator        = std::vector<Location>::iterator;
+    using ConstLocationIterator   = std::vector<Location>::const_iterator;
+    using PersonIterator          = std::vector<Person>::iterator;
+    using ConstPersonIterator     = std::vector<Person>::const_iterator;
+    using ActivenessIterator      = std::vector<bool>::iterator;
+    using ConstActivenessIterator = std::vector<bool>::const_iterator;
 
     /**
      * @brief Create a Model.
@@ -212,6 +214,15 @@ public:
     /** @} */
 
     /**
+     * @brief Get a range of all Person%s activeness statuses in the Model.
+     * @return A range of all Person%s activeness statuses.
+     * @{
+     */
+    Range<std::pair<ConstActivenessIterator, ConstActivenessIterator>> get_activeness_statuses() const;
+    Range<std::pair<ActivenessIterator, ActivenessIterator>> get_activeness_statuses();
+    /** @} */
+
+    /**
      * @brief Find an assigned Location of a Person.
      * @param[in] type The #LocationType that specifies the assigned Location.
      * @param[in] person_index Index of the Person.
@@ -316,15 +327,6 @@ public:
     int get_id() const
     {
         return m_id;
-    }
-
-    /**
-     * Get activeness status of all persons in the model.
-     * @return Activeness vector
-     */
-    std::vector<bool>& get_activeness_statuses()
-    {
-        return m_activeness_statuses;
     }
 
     /**
@@ -498,80 +500,6 @@ public:
         return get_location(get_person(index).get_location());
     }
     /** @} */
-
-    /**
-     * @brief Flip activeness status of a person in the model.
-     * @param[in] person_id PersonId of Person whose activeness status is fipped.
-     */
-    void change_activeness(PersonId person_id)
-    {
-        m_activeness_statuses[person_id.get()] = !m_activeness_statuses[person_id.get()];
-    }
-
-    void set_activeness(PersonId person_id)
-    {
-        m_activeness_statuses[person_id.get()] = false;
-    }
-
-    // /**
-    //  * @brief Copy the persons from another Model to this Model.
-    //  * If the persons are at a location in this model they are activated, otherwise they are deactivated.
-    //  * If necessary the person ids are changed such that they correspond to the index in this model's m_persons vector.
-    //  * @param[in] other The Model the Person%s are copied from.
-    //  */
-    // void copy_persons_from_other_model(const Model& other)
-    // {
-    //     for (auto& p : other.get_persons()) {
-    //         if (p.get_id() != static_cast<uint32_t>(m_persons.size())) {
-    //             mio::log_debug("In model.copy_persons_from_other_model: PersonId does not correspond to index in "
-    //                            "m_persons vector. Person is copied with adapted Id");
-    //         }
-    //         PersonId new_id{static_cast<uint32_t>(m_persons.size())};
-    //         m_persons.emplace_back(p, new_id);
-    //         if (p.get_location_model_id() == m_id) {
-    //             m_activeness_statuses.push_back(true);
-    //         }
-    //         else {
-    //             m_activeness_statuses.push_back(false);
-    //         }
-    //     }
-    // }
-
-    /**
-    * @brief Set the Person%s of the Model.
-    * @param[in] persons The Person%s of the Model.
-    */
-    void set_persons(std::vector<Person>& persons)
-    {
-        m_is_local_population_cache_valid = false;
-        m_are_exposure_caches_valid       = false;
-        //first clear old person vector and corresponding activeness vector
-        m_persons.clear();
-        m_activeness_statuses.clear();
-        for (auto& p : persons) {
-            if (p.get_id() != static_cast<uint32_t>(m_persons.size())) {
-                mio::log_debug("In model.copy_persons_from_other_model: PersonId does not correspond to index in "
-                               "m_persons vector. Person is copied with adapted Id");
-            }
-            PersonId new_id{static_cast<uint32_t>(m_persons.size())};
-            m_persons.emplace_back(p, new_id);
-            if (p.get_location_model_id() == m_id) {
-                m_activeness_statuses.push_back(true);
-            }
-            else {
-                m_activeness_statuses.push_back(false);
-            }
-        }
-    }
-
-    /**
-     * @brief Invalidate local population and exposure rate cache.
-     */
-    void invalidate_cache()
-    {
-        m_are_exposure_caches_valid       = false;
-        m_is_local_population_cache_valid = false;
-    }
 
     /**
      * @brief Get index of person in m_persons.

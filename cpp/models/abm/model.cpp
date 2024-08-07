@@ -284,6 +284,16 @@ auto Model::get_persons() -> Range<std::pair<PersonIterator, PersonIterator>>
     return std::make_pair(m_persons.begin(), m_persons.end());
 }
 
+auto Model::get_activeness_statuses() const -> Range<std::pair<ConstActivenessIterator, ConstActivenessIterator>>
+{
+    return std::make_pair(m_activeness_statuses.cbegin(), m_activeness_statuses.cend());
+}
+
+auto Model::get_activeness_statuses() -> Range<std::pair<ActivenessIterator, ActivenessIterator>>
+{
+    return std::make_pair(m_activeness_statuses.begin(), m_activeness_statuses.end());
+}
+
 LocationId Model::find_location(LocationType type, const uint32_t person_index) const
 {
     auto location_id = get_person(person_index).get_assigned_location(type);

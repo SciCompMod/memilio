@@ -525,25 +525,29 @@ void apply_mobility(FP t, FP dt, MobilityEdge<FP>& mobilityEdge, SimulationNode<
  * @{
  */
 template <typename FP, class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
-                void (*)(double, double, mio::MobilityEdge<>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
-                void (*)(double, double, mio::SimulationNode<Sim>&)>
+GraphSimulation<
+    Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
+    std::function<void(double, double, mio::MobilityEdge<>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&)>,
+    std::function<void(double, double, mio::SimulationNode<Sim>&)>>
 make_mobility_sim(FP t0, FP dt, const Graph<SimulationNode<Sim>, MobilityEdge<FP>>& graph)
 {
-    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>,
-                          static_cast<void (*)(FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
-                              &apply_mobility<FP, Sim>));
+    return make_graph_sim(
+        t0, dt, graph, static_cast<std::function<void(FP, FP, SimulationNode<Sim>&)>>(&evolve_model<Sim>),
+        static_cast<std::function<void(FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>>(
+            &apply_mobility<FP, Sim>));
 }
 
 template <typename FP, class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
-                void (*)(double, double, mio::MobilityEdge<>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
-                void (*)(double, double, mio::SimulationNode<Sim>&)>
+GraphSimulation<
+    Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
+    std::function<void(double, double, mio::MobilityEdge<>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&)>,
+    std::function<void(double, double, mio::SimulationNode<Sim>&)>>
 make_mobility_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MobilityEdge<FP>>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>,
-                          static_cast<void (*)(FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
-                              &apply_mobility<FP, Sim>));
+    return make_graph_sim(
+        t0, dt, std::move(graph), static_cast<std::function<void(FP, FP, SimulationNode<Sim>&)>>(&evolve_model<Sim>),
+        static_cast<std::function<void(FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>>(
+            &apply_mobility<FP, Sim>));
 }
 
 /** @} */
