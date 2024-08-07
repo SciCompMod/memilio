@@ -45,9 +45,10 @@ struct Logger : mio::LogAlways {
     */
     using Type = std::vector<std::tuple<int, mio::abm::LocationType, mio::abm::LocationId, size_t,
                                         std::map<mio::abm::InfectionState, size_t>>>;
-    static Type log(const mio::abm::Simulation& sim)
+    static Type log(const mio::abm::Simulation<mio::ModelWrapper>& sim)
     {
         Type location_information{};
+        location_information.reserve(size_t(mio::abm::LocationType::Count));
         auto t = sim.get_time();
         for (auto&& loc : sim.get_model().get_locations()) {
             std::map<mio::abm::InfectionState, size_t> persons_per_infection_state;
@@ -72,7 +73,7 @@ int main()
     const auto age_group_adults   = mio::AgeGroup(1);
     const auto age_group_seniors  = mio::AgeGroup(2);
 
-    auto model1 = mio::abm::WrapperModel(num_age_groups, 0);
+    auto model1 = mio::ModelWrapper(num_age_groups, 1);
 
     //Set infection parameters
     model1.parameters.get<mio::abm::IncubationPeriod>()              = 4.;
@@ -116,159 +117,153 @@ int main()
     family_hh.add_members(child, 1);
     family_hh.add_members(parent, 2);
 
-    // Vector holding all persons for the graph simulation. This vector is copied to all models at the end.
-    std::vector<mio::abm::Person> persons;
-
     //Household groups for model 1
-    auto single_hh_group_w1 = mio::abm::HouseholdGroup();
-    single_hh_group_w1.add_households(single_hh, 5);
-    auto two_adult_hh_group_w1 = mio::abm::HouseholdGroup();
-    two_adult_hh_group_w1.add_households(two_adult_hh, 3);
-    auto single_parent_hh_group_w1 = mio::abm::HouseholdGroup();
-    single_parent_hh_group_w1.add_households(single_parent_hh, 5);
-    auto family_hh_group_w1 = mio::abm::HouseholdGroup();
-    family_hh_group_w1.add_households(family_hh, 10);
-    add_household_group_to_model(model1, single_hh_group_w1);
-    add_household_group_to_model(model1, two_adult_hh_group_w1);
-    add_household_group_to_model(model1, single_hh_group_w1);
-    add_household_group_to_model(model1, family_hh_group_w1);
+    auto single_hh_group_m1 = mio::abm::HouseholdGroup();
+    single_hh_group_m1.add_households(single_hh, 5);
+    auto two_adult_hh_group_m1 = mio::abm::HouseholdGroup();
+    two_adult_hh_group_m1.add_households(two_adult_hh, 3);
+    auto single_parent_hh_group_m1 = mio::abm::HouseholdGroup();
+    single_parent_hh_group_m1.add_households(single_parent_hh, 5);
+    auto family_hh_group_m1 = mio::abm::HouseholdGroup();
+    family_hh_group_m1.add_households(family_hh, 10);
+    add_household_group_to_model(model1, single_hh_group_m1);
+    add_household_group_to_model(model1, two_adult_hh_group_m1);
+    add_household_group_to_model(model1, single_hh_group_m1);
+    add_household_group_to_model(model1, family_hh_group_m1);
 
-    //add persons from model 0 to vector
-    for (auto& person : model1.get_persons()) {
-        mio::abm::PersonId new_id{static_cast<uint32_t>(persons.size())};
-        persons.emplace_back(person, new_id);
-    }
+    auto model2 = mio::ModelWrapper(num_age_groups, 2);
 
-    auto model2 = mio::abm::Model(num_age_groups, 1);
+    //Set infection parameters
+    model1.parameters.get<mio::abm::IncubationPeriod>()              = 4.;
+    model1.parameters.get<mio::abm::InfectedNoSymptomsToSymptoms>()  = 2.;
+    model1.parameters.get<mio::abm::InfectedNoSymptomsToRecovered>() = 4.;
+    model1.parameters.get<mio::abm::InfectedSymptomsToRecovered>()   = 5.;
+    model1.parameters.get<mio::abm::InfectedSymptomsToSevere>()      = 6.;
+    model1.parameters.get<mio::abm::SevereToRecovered>()             = 8.;
+    model1.parameters.get<mio::abm::SevereToCritical>()              = 7.;
+    model1.parameters.get<mio::abm::CriticalToRecovered>()           = 10.;
+    model1.parameters.get<mio::abm::CriticalToDead>()                = 11.;
+
+    //Age group 0 goes to school and age group 1 goes to work
+    model1.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_children] = true;
+    model1.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_adults]     = true;
 
     //Household groups for model 2
-    auto single_hh_group_w2 = mio::abm::HouseholdGroup();
-    single_hh_group_w2.add_households(single_hh, 6);
-    auto two_adult_hh_group_w2 = mio::abm::HouseholdGroup();
-    two_adult_hh_group_w2.add_households(two_adult_hh, 2);
-    auto single_parent_hh_group_w2 = mio::abm::HouseholdGroup();
-    single_parent_hh_group_w2.add_households(single_parent_hh, 10);
-    auto family_hh_group_w2 = mio::abm::HouseholdGroup();
-    family_hh_group_w2.add_households(family_hh, 11);
-    add_household_group_to_model(model2, single_hh_group_w2);
-    add_household_group_to_model(model2, two_adult_hh_group_w2);
-    add_household_group_to_model(model2, single_hh_group_w2);
-    add_household_group_to_model(model2, family_hh_group_w2);
-
-    //add persons from model 1 to vector
-    for (auto& person : model2.get_persons()) {
-        mio::abm::PersonId new_id{static_cast<uint32_t>(persons.size())};
-        persons.emplace_back(person, new_id);
-    }
+    auto single_hh_group_m2 = mio::abm::HouseholdGroup();
+    single_hh_group_m2.add_households(single_hh, 6);
+    auto two_adult_hh_group_m2 = mio::abm::HouseholdGroup();
+    two_adult_hh_group_m2.add_households(two_adult_hh, 2);
+    auto single_parent_hh_group_m2 = mio::abm::HouseholdGroup();
+    single_parent_hh_group_m2.add_households(single_parent_hh, 10);
+    auto family_hh_group_m2 = mio::abm::HouseholdGroup();
+    family_hh_group_m2.add_households(family_hh, 11);
+    add_household_group_to_model(model2, single_hh_group_m2);
+    add_household_group_to_model(model2, two_adult_hh_group_m2);
+    add_household_group_to_model(model2, single_hh_group_m2);
+    add_household_group_to_model(model2, family_hh_group_m2);
 
     //Create locations for both models
-    //model 0
-    auto event_w1 = model1.add_location(mio::abm::LocationType::SocialEvent);
-    model1.get_location(event_w1).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
-    auto hospital_w1 = model1.add_location(mio::abm::LocationType::Hospital);
-    model1.get_location(hospital_w1).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
-    auto icu_w1 = model1.add_location(mio::abm::LocationType::ICU);
-    model1.get_location(icu_w1).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    auto shop_w1 = model1.add_location(mio::abm::LocationType::BasicsShop);
-    model1.get_location(shop_w1).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-    auto school_w1 = model1.add_location(mio::abm::LocationType::School);
-    model1.get_location(school_w1).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-    auto work_w1 = model1.add_location(mio::abm::LocationType::Work);
-    model1.get_location(work_w1).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
     //model 1
-    auto event_w2 = model2.add_location(mio::abm::LocationType::SocialEvent);
-    model2.get_location(event_w2).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
-    auto hospital_w2 = model2.add_location(mio::abm::LocationType::Hospital);
-    model2.get_location(hospital_w2).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
-    auto icu_w2 = model2.add_location(mio::abm::LocationType::ICU);
-    model2.get_location(icu_w2).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    auto shop_w2 = model2.add_location(mio::abm::LocationType::BasicsShop);
-    model2.get_location(shop_w2).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-    auto school_w2 = model2.add_location(mio::abm::LocationType::School);
-    model2.get_location(school_w2).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-    auto work_w2 = model2.add_location(mio::abm::LocationType::Work);
-    model2.get_location(work_w2).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    auto event_m1 = model1.add_location(mio::abm::LocationType::SocialEvent);
+    model1.get_location(event_m1).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    auto hospital_m1 = model1.add_location(mio::abm::LocationType::Hospital);
+    model1.get_location(hospital_m1).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    auto icu_m1 = model1.add_location(mio::abm::LocationType::ICU);
+    model1.get_location(icu_m1).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    auto shop_m1 = model1.add_location(mio::abm::LocationType::BasicsShop);
+    model1.get_location(shop_m1).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    auto school_m1 = model1.add_location(mio::abm::LocationType::School);
+    model1.get_location(school_m1).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    auto work_m1 = model1.add_location(mio::abm::LocationType::Work);
+    model1.get_location(work_m1).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    //model 2
+    auto event_m2 = model2.add_location(mio::abm::LocationType::SocialEvent);
+    model2.get_location(event_m2).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    auto hospital_m2 = model2.add_location(mio::abm::LocationType::Hospital);
+    model2.get_location(hospital_m2).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    auto icu_m2 = model2.add_location(mio::abm::LocationType::ICU);
+    model2.get_location(icu_m2).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    auto shop_m2 = model2.add_location(mio::abm::LocationType::BasicsShop);
+    model2.get_location(shop_m2).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    auto school_m2 = model2.add_location(mio::abm::LocationType::School);
+    model2.get_location(school_m2).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    auto work_m2 = model2.add_location(mio::abm::LocationType::Work);
+    model2.get_location(work_m2).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
 
     auto start_date = mio::abm::TimePoint(0);
     auto end_date   = mio::abm::TimePoint(0) + mio::abm::days(30);
-    std::vector<uint32_t> params_e1;
-    std::vector<uint32_t> params_e2;
+    mio::unused(end_date);
 
-    //Assign infection states and locations
-    std::vector<double> infection_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
-    for (auto& person : persons) {
+    //Assign infection states and locations to persons from model 1
+    std::vector<double> infection_distribution_m1{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
+    for (auto& person : model1.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
-            mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
-        auto rng = mio::abm::PersonalRandomNumberGenerator(mio::thread_local_rng(), person);
+            mio::DiscreteDistribution<size_t>::get_instance()(model1.get_rng(), infection_distribution_m1));
+        auto rng = mio::abm::PersonalRandomNumberGenerator(model1.get_rng(), person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          model1.parameters, start_date, infection_state));
         }
-        // Assign locations to persons from model 1
-        if (person.get_assigned_location_model_id(mio::abm::LocationType::Home) == model1.get_id()) {
-            person.set_assigned_location(mio::abm::LocationType::SocialEvent, event_w1, model1.get_id());
-            person.set_assigned_location(mio::abm::LocationType::BasicsShop, shop_w1, model1.get_id());
-            person.set_assigned_location(mio::abm::LocationType::Hospital, hospital_w1, model1.get_id());
-            person.set_assigned_location(mio::abm::LocationType::ICU, icu_w1, model1.get_id());
-            if (person.get_age() == age_group_children) {
-                person.set_assigned_location(mio::abm::LocationType::School, school_w1, model1.get_id());
-            }
-            if (person.get_age() == age_group_adults) {
-                //10% of adults in model 0 work in model 1
-                size_t work_model = mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(),
-                                                                                      std::vector<double>{0.9, 0.1});
-                if (work_model == 1) { //person works in other model
-                    person.set_assigned_location(mio::abm::LocationType::Work, work_w2, model2.get_id());
-                    //add person to edge parameters
-                    params_e1.push_back(person.get_id().get());
-                }
-                else { //person works in same model
-                    person.set_assigned_location(mio::abm::LocationType::Work, work_w1, model1.get_id());
-                }
-            }
+        person.set_assigned_location(mio::abm::LocationType::SocialEvent, event_m1, model1.get_id());
+        person.set_assigned_location(mio::abm::LocationType::BasicsShop, shop_m1, model1.get_id());
+        person.set_assigned_location(mio::abm::LocationType::Hospital, hospital_m1, model1.get_id());
+        person.set_assigned_location(mio::abm::LocationType::ICU, icu_m1, model1.get_id());
+        if (person.get_age() == age_group_children) {
+            person.set_assigned_location(mio::abm::LocationType::School, school_m1, model1.get_id());
         }
-        else {
-            person.set_assigned_location(mio::abm::LocationType::SocialEvent, event_w2, model2.get_id());
-            person.set_assigned_location(mio::abm::LocationType::BasicsShop, shop_w2, model2.get_id());
-            person.set_assigned_location(mio::abm::LocationType::Hospital, hospital_w2, model2.get_id());
-            person.set_assigned_location(mio::abm::LocationType::ICU, icu_w2, model2.get_id());
-            if (person.get_age() == age_group_children) {
-                person.set_assigned_location(mio::abm::LocationType::School, school_w2, model2.get_id());
+        if (person.get_age() == age_group_adults) {
+            //10% of adults in model 1 work in model 2
+            size_t work_model = mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(),
+                                                                                  std::vector<double>{0.9, 0.1});
+            if (work_model == 1) { //person works in other model
+                person.set_assigned_location(mio::abm::LocationType::Work, work_m2, model2.get_id());
             }
-            if (person.get_age() == age_group_adults) {
-                //20% of adults in model 1 work in model 0
-                size_t work_model = mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(),
-                                                                                      std::vector<double>{0.2, 0.8});
-                if (work_model == 0) { //person works in other model
-                    person.set_assigned_location(mio::abm::LocationType::Work, work_w1, model1.get_id());
-                    //add person to edge parameters
-                    params_e2.push_back(person.get_id().get());
-                }
-                else { //person works in same model
-                    person.set_assigned_location(mio::abm::LocationType::Work, work_w2, model2.get_id());
-                }
+            else { //person works in same model
+                person.set_assigned_location(mio::abm::LocationType::Work, work_m1, model1.get_id());
             }
         }
     }
 
-    //copy persons to both models
-    model1.set_persons(persons);
-    model2.set_persons(persons);
+    //Assign infection states and locations to persons from model 2
+    std::vector<double> infection_distribution_m2{0.7, 0.1, 0.05, 0.05, 0.1, 0.0, 0.0, 0.0};
+    for (auto& person : model2.get_persons()) {
+        mio::abm::InfectionState infection_state = mio::abm::InfectionState(
+            mio::DiscreteDistribution<size_t>::get_instance()(model2.get_rng(), infection_distribution_m2));
+        auto rng = mio::abm::PersonalRandomNumberGenerator(model2.get_rng(), person);
+        if (infection_state != mio::abm::InfectionState::Susceptible) {
+            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                         model2.parameters, start_date, infection_state));
+        }
+        person.set_assigned_location(mio::abm::LocationType::SocialEvent, event_m2, model2.get_id());
+        person.set_assigned_location(mio::abm::LocationType::BasicsShop, shop_m2, model2.get_id());
+        person.set_assigned_location(mio::abm::LocationType::Hospital, hospital_m2, model2.get_id());
+        person.set_assigned_location(mio::abm::LocationType::ICU, icu_m2, model2.get_id());
+        if (person.get_age() == age_group_children) {
+            person.set_assigned_location(mio::abm::LocationType::School, school_m2, model2.get_id());
+        }
+        if (person.get_age() == age_group_adults) {
+            //20% of adults in model 2 work in model 1
+            size_t work_model = mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(),
+                                                                                  std::vector<double>{0.2, 0.8});
+            if (work_model == 1) { //person works in same model
+                person.set_assigned_location(mio::abm::LocationType::Work, work_m2, model2.get_id());
+            }
+            else { //person works in other model
+                person.set_assigned_location(mio::abm::LocationType::Work, work_m1, model1.get_id());
+            }
+        }
+    }
 
     using HistoryType = mio::History<mio::DataWriterToMemory, Logger>;
     mio::Graph<mio::ABMSimulationNode<HistoryType>, mio::ABMMobilityEdge<HistoryType>> graph;
+    mio::unused(graph);
     graph.add_node(model1.get_id(), HistoryType{}, start_date, std::move(model1));
     graph.add_node(model2.get_id(), HistoryType{}, start_date, std::move(model2));
-    graph.add_edge(0, 1, params_e1,
-                   std::vector<mio::ABMMobilityEdge<HistoryType>::MobilityRuleType>{&mio::apply_commuting});
-    graph.add_edge(1, 0, params_e2,
-                   std::vector<mio::ABMMobilityEdge<HistoryType>::MobilityRuleType>{&mio::apply_commuting});
+    graph.add_edge(0, 1);
+    graph.add_edge(1, 0);
 
     auto sim = mio::make_abm_graph_sim<HistoryType>(start_date, mio::abm::hours(12), std::move(graph));
     sim.advance(end_date);
-
-    auto& log_n1 = std::get<0>(sim.get_graph().nodes()[0].property.get_history()).get_log();
-    auto& log_n2 = std::get<0>(sim.get_graph().nodes()[1].property.get_history()).get_log();
 
     return 0;
 }
