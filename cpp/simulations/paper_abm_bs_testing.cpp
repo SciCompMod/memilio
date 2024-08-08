@@ -1422,7 +1422,7 @@ struct LogEstimatedReproductionNumber : mio::LogAlways {
 
         // time period to take into account for estimating the reproduction number
         // longer periods lead to more averaged results
-        mio::abm::TimeSpan time_frame = mio::abm::days(7);
+        mio::abm::TimeSpan time_frame = sim.get_dt();
         const auto t                  = sim.get_time();
         const auto persons            = sim.get_world().get_persons();
 
@@ -1786,15 +1786,15 @@ for (size_t i = 0; i < grid_search_rank.size(); i++) {
     // 3: testing prob symptomatic
     // 4: perc have to test if npi active
     auto viral_shedding_rate               = params[0];
-    auto seasonality_april                 = 0.75;
+    auto seasonality_april                 = params[2];
     auto seasonality_may                   = 0.4;
     auto perc_easter_event                 = 0.4;
-    auto dark_figure                       = params[1];
-    auto contact_rate_ssc                  = 0.4;
+    auto dark_figure                       = 2.0;
+    auto contact_rate_ssc                  = 0.33;
     auto masks                             = 0.4;
-    const double testing_probability_sympt = 0.055;
+    const double testing_probability_sympt = 0.0055;
     const double ratio_asympt_to_sympt     = 20.0;
-    const double perc_have_to_test         = 0.005;
+    const double perc_have_to_test         = params[1];
 
     mio::Date start_date{2021, 3, 1};
     int max_num_days     = 90;
@@ -2036,16 +2036,16 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
     auto end_run_idx   = start_run_idx + run_distribution[size_t(rank)];
 
-    auto viral_shedding_rate               = 5.225;
+    auto viral_shedding_rate               = 5.5;
     auto seasonality_april                 = 0.7;
     auto seasonality_may                   = 0.4;
     auto perc_easter_event                 = 0.4;
     auto dark_figure                       = 2.0;
     auto contact_rate_ssc                  = 0.4;
     auto masks                             = 0.4;
-    const double testing_probability_sympt = 0.055;
+    const double testing_probability_sympt = 0.06;
     const double ratio_asympt_to_sympt     = 20.0;
-    const double perc_have_to_test         = 0.0035;
+    const double perc_have_to_test         = 0.004;
 
     mio::Date start_date{2021, 3, 1};
     int max_num_days     = 90;
@@ -2481,7 +2481,7 @@ int main(int argc, char** argv)
         // 4: perc have to test if npi active
 
         // std::vector<std::pair<double, double>> grid_boundaries = {{3.0, 8.0}, {1.0, 4.0}, {0.02, 0.1}, {0.005, 0.035}};
-        std::vector<double> grid_boundaries = {5.5, 2.0};
+        std::vector<double> grid_boundaries = {5.5, 0.004, 0.75};
         // std::vector<int> points_per_dim = {2, 2, 2, 5};
         std::vector<int> points_per_dim = {9, 9, 9};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
