@@ -105,7 +105,7 @@ ScalarType Infection::get_viral_shed_integral(TimePoint a, TimePoint b) const
     // Time period after peak
     if (a.days() >= m_viral_load.start_date.days() + m_viral_load.peak / m_viral_load.incline) {
         ScalarType integral = (std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * get_viral_load(b)) + 1) -
-                               std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * get_viral_load(a))) + 1) /
+                               std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * get_viral_load(a)) + 1)) /
                               (m_log_norm_beta * m_viral_load.decline);
         return integral;
     }
