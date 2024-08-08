@@ -285,7 +285,7 @@ def plot_dead(path):
     y_real = df_total_dead['Deaths'].to_numpy()
 
     # we calculate the RMSE
-    rmse_dead = np.sqrt(((y_real- p50_bs['Total'][()][:, 7][::24][0:90])**2).mean())
+    rmse_dead = (((y_real- p50_bs['Total'][()][:, 7][::24][0:90])**2).mean())
     # we need to plot the cumulative dead persons from the real world and from the simulation
     ax.plot(df_total_dead.index, y_real, color='tab:blue')
     ax.plot(df_total_dead.index, p50_bs['Total'][()][:, 7][::24][0:90], color='tab:red')
@@ -344,7 +344,7 @@ def plot_icu(path):
 
 
     # we calculate the RMSE
-    rmse_ICU = np.sqrt(((ICU_Real - ICU_Simulation)**2).mean())
+    rmse_ICU = ((ICU_Real - ICU_Simulation)**2).mean()
 
     # plot the ICU beds and the ICU beds taken
     fig, ax = plt.subplots(1, 1, constrained_layout=True)
@@ -647,10 +647,11 @@ def plot_cumulative_detected_infections(path):
     df_abb_diff = np.diff(df_abb)
 
 
-    # again the rmse
-    rmse_detected = np.sqrt(((df_abb - total_50)**2).mean())
-    total_50 = gaussian_filter1d(total_50, sigma=1, mode='nearest')
 
+    # again the rmse
+    rmse_detected = ((df_abb - total_50)**2).mean()*(0.01*0.01)
+    total_50_diff = gaussian_filter1d(total_50_diff.flatten(), sigma=2, mode='nearest')
+    total_50 = gaussian_filter1d(total_50.flatten(), sigma=2, mode='nearest')
     # we plot this
     # we plot the tests positive and the real cases
     plt.plot(time, total_50, color='tab:red')
@@ -658,13 +659,24 @@ def plot_cumulative_detected_infections(path):
     plt.xlabel('time (days)')
     plt.ylabel('Cumulative Amount of detected infections')
     plt.title('Cumulative detected infections')
-    # also plot the new detected infections with the same color but dashed
-    plt.plot(time[1:], total_50_diff, color='tab:red', linestyle='dashed')
-    plt.plot(time[1:], df_abb_diff, color='tab:blue', linestyle='dashed')
-    plt.legend(['Simulated detected infections', 'Real detected infections', 'Simulated new detected infections', 'Real new detected infections'])
+    plt.legend(['Simulated detected infections', 'Real detected infections'])
     #rmse
     plt.text(0.25, 0.8, 'RMSE: '+str(float("{:.2f}".format(rmse_detected))), horizontalalignment='center',
             verticalalignment='center', transform=plt.gca().transAxes, color='pink', fontsize=15)
+    plt.show()
+
+
+    # also the amount of new detected infections
+    fig, ax = plt.subplots(1, 1, constrained_layout=True)
+    fig.set_figwidth(20)
+    fig.set_figheight(9)
+    # we plot the tests positive and the real cases
+    ax.plot(time[0:89], total_50_diff, color='tab:red')
+    ax.plot(time[0:89], df_abb_diff, color='tab:blue')
+    ax.set_xlabel('time (days)')
+    ax.set_ylabel('Number of new detected infections')
+    ax.title.set_text('New detected infections')
+    ax.legend(['Simulated new detected infections', 'Real new detected infections'])
     plt.show()
 
 def plot_positive_and_done_test(path):
@@ -733,11 +745,11 @@ if __name__ == "__main__":
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    plot_infection_states_results(path)
-    plot_infections_loc_types_avarage(path)
+    # plot_infection_states_results(path)
+    # plot_infections_loc_types_avarage(path)
     plot_icu(path)
     plot_dead(path)
-    infer_positive_tests(path)
-    plot_estimated_reproduction_number(path)
+    # infer_positive_tests(path)
+    # plot_estimated_reproduction_number(path)
     plot_cumulative_detected_infections(path)
     plot_positive_and_done_test(path)
