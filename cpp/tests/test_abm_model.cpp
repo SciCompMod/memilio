@@ -587,6 +587,22 @@ TEST(TestModel, personCanDieInHospital)
     p_severe.set_assigned_location(mio::abm::LocationType::Home, home_id);
     p_severe.set_assigned_location(mio::abm::LocationType::Work, work_id);
 
+    // Check the case where mobility rules are applied
+    // Check the severely infected person go to hospital
+    EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Home);
+    model.evolve(t, dt / 2);
+    EXPECT_EQ(p_severe.get_infection_state(t + dt / 2), mio::abm::InfectionState::InfectedCritical);
+    EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Hospital);
+
+    // Check the severely infected person dies and got burried
+    model.evolve(t + dt, dt);
+    EXPECT_EQ(p_severe.get_infection_state(t + dt), mio::abm::InfectionState::Dead);
+    EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Cemetery);
+
+    
+    // Check the case where mobility rules are not applied
+    p_severe.set_location(mio::abm::LocationType::Home,home_id);
+    model.use_mobility_rules(false); // Reset location of the person
     // Check the severely infected person go to hospital
     EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Home);
     model.evolve(t, dt / 2);
