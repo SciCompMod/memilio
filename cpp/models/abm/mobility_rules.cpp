@@ -137,7 +137,8 @@ LocationType go_to_hospital(PersonalRandomNumberGenerator& /*rng*/, const Person
                             TimeSpan /*dt*/, const Parameters& /*params*/)
 {
     auto current_loc = person.get_location_type();
-    if (person.get_infection_state(t) == InfectionState::InfectedSevere) {
+    if (person.get_infection_state(t) == InfectionState::InfectedSevere ||
+        person.get_infection_state(t) == InfectionState::InfectedCritical) {
         return LocationType::Hospital;
     }
     return current_loc;
