@@ -1412,6 +1412,7 @@ struct LogEstimatedReproductionNumber : mio::LogAlways {
     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
     /** 
      * @brief Log the TimeSeries of the estimated reproduction number.
+     * We use the formula from https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3816335/
      * @param[in] sim The simulation of the abm.
      * @return A pair of the TimePoint and the TimeSeries of the estimated reproduction number.
      */
@@ -1421,14 +1422,15 @@ struct LogEstimatedReproductionNumber : mio::LogAlways {
 
         // time period to take into account for estimating the reproduction number
         // longer periods lead to more averaged results
-        mio::abm::TimeSpan time_frame = mio::abm::days(1);
+        mio::abm::TimeSpan time_frame = sim.get_dt();
         const auto t                  = sim.get_time();
         const auto persons            = sim.get_world().get_persons();
         const auto virus              = mio::abm::VirusVariant::Alpha;
 
         // PRAGMA_OMP(parallel for)
         int number_newly_infected = 0;
-        int number_infectious     = 0;
+        double infection_incidence   = 0;
+        double total_integral_buffer = 0;
         for (auto i = size_t(0); i < persons.size(); ++i) {
             auto& p = persons[i];
             if (p.get_should_be_logged()) {
@@ -1436,30 +1438,21 @@ struct LogEstimatedReproductionNumber : mio::LogAlways {
                 if (p.is_infected(t) && !p.is_infected(t - time_frame)) {
                     number_newly_infected += 1;
                 }
-                // count infectious people at the midpoint of the time period as an estimation
-                if (p.is_infected(t - time_frame / 2)) {
-                    if (p.get_infection().get_viral_shed(t - time_frame / 2) != 0) {
-                        number_infectious += 1;
-                    }
+                // sum the total infection incidence from all infected people in the desired time frame
+                if (p.is_infected(t) || p.is_infected(t - time_frame)) {
+                    // this is the integral of the viral shed between t-time_frame and t
+                    // divided by the total integral to normalize it to a density function
+                    infection_incidence += p.get_infection().get_viral_shed_integral(t - time_frame, t) /
+                                           p.get_infection().get_viral_shed_integral();
                 }
             }
         }
         // if the infection dies out, the reproduction number has no meaningful value
-        if (number_infectious == 0) {
+        if (infection_incidence == 0) {
             return std::make_pair(t, estimation);
         }
 
-        // assume equal parameters for each age
-        auto vl_params = sim.get_world().parameters.get<mio::abm::ViralLoadDistributions>()[{virus, age_group_0_to_4}];
-
-        // Assume uniform distribution of parameters. Taking mean value of uniform distribution. Factor 1/2 cancels in the division.
-        double average_infectious_period =
-            (vl_params.viral_load_peak.params.a() + vl_params.viral_load_peak.params.b()) /
-                (vl_params.viral_load_incline.params.a() + vl_params.viral_load_incline.params.b()) -
-            (vl_params.viral_load_peak.params.a() + vl_params.viral_load_peak.params.b()) /
-                (vl_params.viral_load_decline.params.a() + vl_params.viral_load_decline.params.b());
-
-        estimation[0] += (number_newly_infected * average_infectious_period) / (number_infectious * time_frame.days());
+        estimation[0] = number_newly_infected / infection_incidence;
         return std::make_pair(t, estimation);
     }
 };

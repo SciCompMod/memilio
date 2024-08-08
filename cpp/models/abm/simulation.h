@@ -84,6 +84,14 @@ public:
     }
 
     /**
+     * @brief Get the time step of the Simulation.
+     */
+    TimeSpan get_dt() const
+    {
+        return m_dt;
+    }
+
+    /**
      * @brief Get the current time of the Simulation.
      */
     TimePoint get_time() const

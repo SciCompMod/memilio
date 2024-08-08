@@ -90,7 +90,19 @@ public:
     ScalarType get_viral_shed(TimePoint t) const;
 
     /**
-     * @brief: Get VirusVariant.
+     * @brief Get total viral shed.
+     */
+    ScalarType get_viral_shed_integral() const;
+
+    /**
+     * @brief Get viral shed between two TimePoints.
+     * @param[in] a Left limit of the time period.
+     * @param[in] b Right limit of the time period.
+     */
+    ScalarType get_viral_shed_integral(TimePoint a, TimePoint b) const;
+
+    /**
+     * @brief Get VirusVariant.
      * @return VirusVariant of the Infection.
      */
     VirusVariant get_virus_variant() const;
