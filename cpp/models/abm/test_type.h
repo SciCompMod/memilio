@@ -17,9 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
 #ifndef MIO_ABM_TEST_TYPE_H
 #define MIO_ABM_TEST_TYPE_H
+
+#include "abm/time.h"
+#include "memilio/io/auto_serialize.h"
 
 #include <cstdint>
 
@@ -38,6 +40,20 @@ enum class TestType : std::uint32_t
     PCR,
 
     Count
+};
+
+/**
+* @brief The TestResult of a Person.
+*/
+struct TestResult {
+    TimePoint time_of_testing{std::numeric_limits<int>::min()}; ///< The TimePoint when the Person performs the test.
+    bool result{false}; ///< The test result.
+
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("TestResult", NVP("time_of_testing", time_of_testing), NVP("result", result));
+    }
 };
 
 } // namespace abm

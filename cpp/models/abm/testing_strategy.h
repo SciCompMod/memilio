@@ -143,14 +143,13 @@ public:
     /**
      * @brief Create a TestingScheme.
      * @param[in] testing_criteria Vector of TestingCriteria that are checked for testing.
-     * @param[in] minimal_time_since_last_test TimeSpan of how often this scheme applies, i. e., when a new test is
-     * performed after a Person's last test.
+     * @param validity_period The valid TimeSpan of the test. 
      * @param start_date Starting date of the scheme.
      * @param end_date Ending date of the scheme.
      * @param test_parameters The parameters of test to be performed.
      * @param probability Probability of the test to be performed if a testing rule applies.
      */
-    TestingScheme(const TestingCriteria& testing_criteria, TimeSpan minimal_time_since_last_test, TimePoint start_date,
+    TestingScheme(const TestingCriteria& testing_criteria, TimeSpan validity_period, TimePoint start_date,
                   TimePoint end_date, TestParameters test_parameters, ScalarType probability);
 
     /**
@@ -159,7 +158,7 @@ public:
     bool operator==(const TestingScheme& other) const;
 
     /**
-     * @brief Get the activity status of the scheme.
+     * @brief Gets the activity status of the scheme.
      * @return Whether the TestingScheme is currently active.
      */
     bool is_active() const;
@@ -183,10 +182,9 @@ public:
     auto auto_serialize()
     {
         return make_auto_serialization("TestingScheme", NVP("criteria", m_testing_criteria),
-                                       NVP("min_time_since_last_test", m_minimal_time_since_last_test),
-                                       NVP("start_date", m_start_date), NVP("end_date", m_end_date),
-                                       NVP("test_params", m_test_parameters), NVP("probability", m_probability),
-                                       NVP("is_active", m_is_active));
+                                       NVP("validity_period", m_validity_period), NVP("start_date", m_start_date),
+                                       NVP("end_date", m_end_date), NVP("test_params", m_test_parameters),
+                                       NVP("probability", m_probability), NVP("is_active", m_is_active));
     }
 
 private:
@@ -194,7 +192,7 @@ private:
     TestingScheme() = default;
 
     TestingCriteria m_testing_criteria; ///< TestingCriteria of the scheme.
-    TimeSpan m_minimal_time_since_last_test; ///< Shortest period of time between two tests.
+    TimeSpan m_validity_period; ///< The valid TimeSpan of the test.
     TimePoint m_start_date; ///< Starting date of the scheme.
     TimePoint m_end_date; ///< Ending date of the scheme.
     TestParameters m_test_parameters; ///< Parameters of the test.

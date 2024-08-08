@@ -351,12 +351,15 @@ struct HighViralLoadProtectionFactor {
 struct TestParameters {
     UncertainValue<> sensitivity;
     UncertainValue<> specificity;
+    TimeSpan required_time;
+    TestType type;
 
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
         return make_auto_serialization("TestParameters", NVP("sensitivity", sensitivity),
-                                       NVP("specificity", specificity));
+                                       NVP("specificity", specificity), NVP("required_time", required_time),
+                                       NVP("test_type", type));
     }
 };
 
@@ -368,9 +371,9 @@ struct TestData {
     static auto get_default(AgeGroup /*size*/)
     {
         Type default_val                 = Type({TestType::Count});
-        default_val[{TestType::Generic}] = TestParameters{0.9, 0.99};
-        default_val[{TestType::Antigen}] = TestParameters{0.8, 0.88};
-        default_val[{TestType::PCR}]     = TestParameters{0.9, 0.99};
+        default_val[{TestType::Generic}] = TestParameters{0.9, 0.99, hours(48), TestType::Generic};
+        default_val[{TestType::Antigen}] = TestParameters{0.8, 0.88, minutes(30), TestType::Antigen};
+        default_val[{TestType::PCR}]     = TestParameters{0.9, 0.99, hours(48), TestType::PCR};
         return default_val;
     }
     static std::string name()

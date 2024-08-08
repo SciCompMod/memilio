@@ -1,10 +1,12 @@
 #include "abm/infection_state.h"
 #include "abm/parameters.h"
+#include "abm/test_type.h"
 #include "abm/testing_strategy.h"
 #include "abm/vaccine.h"
 #include "matchers.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/io/json_serializer.h"
+#include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/uncertain_value.h"
 #include "models/abm/location.h"
 #include "models/abm/person.h"
@@ -150,26 +152,29 @@ TEST(TestAbmSerialization, TestingScheme)
     // Test that a json value x is equal to serialize(deserialize(x)) w.r.t json representation.
     // See test_json_serialization_by_representation for more detail.
 
-    mio::abm::TestingScheme testing_scheme(mio::abm::TestingCriteria({mio::AgeGroup(1)}, {mio::abm::InfectionState(2)}),
-                                           mio::abm::TimeSpan(3), mio::abm::TimePoint(4), mio::abm::TimePoint(5),
-                                           mio::abm::TestParameters{{6.0}, {7.0}}, 8.0);
+    mio::abm::TestingScheme testing_scheme(
+        mio::abm::TestingCriteria({mio::AgeGroup(1)}, {mio::abm::InfectionState(2)}), mio::abm::TimeSpan(3),
+        mio::abm::TimePoint(4), mio::abm::TimePoint(5),
+        mio::abm::TestParameters{{6.0}, {7.0}, mio::abm::TimeSpan{8}, mio::abm::TestType(0)}, 9.0);
 
     Json::Value testing_criteria;
     testing_criteria["ages"]             = Json::UInt(1 << 1);
     testing_criteria["infection_states"] = Json::UInt(1 << 2);
 
     Json::Value test_parameters;
-    test_parameters["sensitivity"] = mio::serialize_json(mio::UncertainValue<double>{6.0}).value();
-    test_parameters["specificity"] = mio::serialize_json(mio::UncertainValue<double>{7.0}).value();
+    test_parameters["sensitivity"]              = mio::serialize_json(mio::UncertainValue<double>{6.0}).value();
+    test_parameters["specificity"]              = mio::serialize_json(mio::UncertainValue<double>{7.0}).value();
+    test_parameters["required_time"]["seconds"] = Json::UInt(8);
+    test_parameters["test_type"]                = Json::UInt(0);
 
     Json::Value reference_json; // aka x
-    reference_json["criteria"]                            = testing_criteria;
-    reference_json["min_time_since_last_test"]["seconds"] = Json::UInt(3);
-    reference_json["start_date"]["seconds"]               = Json::UInt(4);
-    reference_json["end_date"]["seconds"]                 = Json::UInt(5);
-    reference_json["test_params"]                         = test_parameters;
-    reference_json["probability"]                         = Json::Value((double)8);
-    reference_json["is_active"]                           = Json::Value((bool)0);
+    reference_json["criteria"]                   = testing_criteria;
+    reference_json["validity_period"]["seconds"] = Json::UInt(3);
+    reference_json["start_date"]["seconds"]      = Json::UInt(4);
+    reference_json["end_date"]["seconds"]        = Json::UInt(5);
+    reference_json["test_params"]                = test_parameters;
+    reference_json["probability"]                = Json::Value((double)9);
+    reference_json["is_active"]                  = Json::Value((bool)0);
 
     test_json_serialization_full(testing_scheme, reference_json);
 }
@@ -214,21 +219,23 @@ TEST(TestAbmSerialization, Person)
     reference_json["infections"]          = Json::Value(Json::arrayValue);
     reference_json["last_transport_mode"] = Json::UInt(i++);
     reference_json["location"]            = Json::UInt(i++);
+    reference_json["location_type"]       = Json::UInt(0);
     reference_json["mask"]["mask_type"]   = Json::UInt(0);
     reference_json["mask"]["time_used"]["seconds"] = Json::UInt(i++);
     reference_json["mask_compliance"] =
         json_double_array({(double)i++, (double)i++, (double)i++, (double)i++, (double)i++, (double)i++, (double)i++,
                            (double)i++, (double)i++, (double)i++, (double)i++});
-    reference_json["quarantine_start"]["seconds"]  = Json::UInt(i++);
-    reference_json["rnd_go_to_school_hour"]        = Json::Value((double)i++);
-    reference_json["rnd_go_to_work_hour"]          = Json::Value((double)i++);
-    reference_json["rnd_schoolgroup"]              = Json::Value((double)i++);
-    reference_json["rnd_workgroup"]                = Json::Value((double)i++);
-    reference_json["rng_counter"]                  = Json::UInt(i++);
-    reference_json["time_at_location"]["seconds"]  = Json::UInt(i++);
-    reference_json["time_of_last_test"]["seconds"] = Json::UInt(i++);
-    reference_json["vaccinations"]                 = Json::Value(Json::arrayValue);
-    reference_json["wears_mask"]                   = Json::Value(false);
+    reference_json["quarantine_start"]["seconds"] = Json::UInt(i++);
+    reference_json["rnd_go_to_school_hour"]       = Json::Value((double)i++);
+    reference_json["rnd_go_to_work_hour"]         = Json::Value((double)i++);
+    reference_json["rnd_schoolgroup"]             = Json::Value((double)i++);
+    reference_json["rnd_workgroup"]               = Json::Value((double)i++);
+    reference_json["rng_counter"]                 = Json::UInt(i++);
+    reference_json["test_results"] =
+        mio::serialize_json(mio::CustomIndexArray<mio::abm::TestResult, mio::abm::TestType>{}).value();
+    reference_json["time_at_location"]["seconds"] = Json::UInt(i++);
+    reference_json["vaccinations"]                = Json::Value(Json::arrayValue);
+    reference_json["wears_mask"]                  = Json::Value(false);
 
     test_json_serialization_by_representation<mio::abm::Person>(reference_json);
 }

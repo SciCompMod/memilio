@@ -30,6 +30,7 @@
 #include "abm/personal_rng.h"
 #include "memilio/io/auto_serialize.h"
 #include "abm/time.h"
+#include "abm/test_type.h"
 #include "abm/vaccine.h"
 #include "abm/mask.h"
 #include "abm/mobility_data.h"
@@ -154,15 +155,6 @@ public:
     void add_time_at_location(const TimeSpan dt)
     {
         m_time_at_location += dt;
-    }
-
-    /**
-     * @brief Get the TimePoint of the last negative test.
-     * @return TimePoint since the last test.
-     */
-    TimePoint get_time_of_last_test() const
-    {
-        return m_time_of_last_test;
     }
 
     /**
@@ -392,7 +384,7 @@ public:
     }
 
     /**
-     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person.
+     * @brief Get the latest #ExposureType and its initial TimePoint of the Person.
      */
     std::pair<ExposureType, TimePoint> get_latest_protection() const;
 
@@ -403,6 +395,7 @@ public:
         return make_auto_serialization(
             "Person",
             NVP("location", m_location),
+            NVP("location_type", m_location_type),
             NVP("assigned_locations", m_assigned_locations),
             NVP("vaccinations", m_vaccinations), 
             NVP("infections", m_infections),
@@ -413,17 +406,33 @@ public:
             NVP("rnd_schoolgroup", m_random_schoolgroup),
             NVP("rnd_go_to_work_hour", m_random_goto_work_hour),
             NVP("rnd_go_to_school_hour", m_random_goto_school_hour),
-            NVP("time_of_last_test", m_time_of_last_test),
             NVP("mask", m_mask),
             NVP("wears_mask", m_wears_mask),
             NVP("mask_compliance", m_mask_compliance),
             NVP("id", m_person_id),
             NVP("cells", m_cells),
             NVP("last_transport_mode", m_last_transport_mode),
-            NVP("rng_counter", m_rng_counter)
+            NVP("rng_counter", m_rng_counter),
+            NVP("test_results", m_test_results)
         );
         // clang-format on
     }
+
+    /**
+     * @brief Add TestResult to the Person
+     * @param[in] t The TimePoint of the test.
+     * @param[in] type The TestType of the test.
+     * @param[in] result The result of the test.
+    */
+    void add_test_result(TimePoint t, TestType type, bool result);
+
+    /**
+     * @brief Get the most recent TestResult performed from the Person based on the TestType.
+     * If time_of_testing == TimePoint(std::numeric_limits<int>::min()), there is no previous TestResult.
+     * @param[in] type The TestType of the test.
+     * @return The latest TestResult of the given Type.
+    */
+    TestResult get_test_result(TestType type) const;
 
 private:
     LocationId m_location; ///< Current Location of the Person.
@@ -439,14 +448,14 @@ private:
     double m_random_schoolgroup; ///< Value to determine if the Person goes to school or stays at home during lockdown.
     double m_random_goto_work_hour; ///< Value to determine at what time the Person goes to work.
     double m_random_goto_school_hour; ///< Value to determine at what time the Person goes to school.
-    TimePoint m_time_of_last_test; ///< TimePoint of the last negative test.
     Mask m_mask; ///< The Mask of the Person.
     bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
     PersonId m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
-    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
+    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
+    CustomIndexArray<TestResult, TestType> m_test_results; ///< CustomIndexArray for TestResults.
 };
 
 } // namespace abm

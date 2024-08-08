@@ -368,8 +368,7 @@ TEST(TestMobilityRules, quarantine)
     auto rng         = mio::RandomNumberGenerator();
     auto t           = mio::abm::TimePoint(12346);
     auto dt          = mio::abm::hours(1);
-    auto test_params = mio::abm::TestParameters{1.0, 1.0};
-
+    auto test_params = mio::abm::TestParameters{1.0, 1.0, mio::abm::minutes(30), mio::abm::TestType::Generic};
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
     mio::abm::Location hospital(mio::abm::LocationType::Hospital, 0, num_age_groups);
