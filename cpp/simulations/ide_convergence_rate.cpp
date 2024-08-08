@@ -193,7 +193,7 @@ void compute_initial_flows_for_ide_from_ode(mio::osecir::Model<ScalarType>& mode
         mio::TimeSeries<ScalarType>::Vector::Constant((int)mio::isecir::InfectionState::Count, 0));
     model_ide.m_populations[0][Eigen::Index(mio::isecir::InfectionState::Dead)] =
         compartments[(Eigen::Index)compartments.get_num_time_points() -
-                     (compartments.get_last_time() - t0_ide) / dt_ode - 1]
+                     (Eigen::Index)((compartments.get_last_time() - t0_ide) / dt_ode) - 1]
                     [(Eigen::Index)mio::osecir::InfectionState::Dead];
 }
 
