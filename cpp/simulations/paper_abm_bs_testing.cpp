@@ -1425,12 +1425,10 @@ struct LogEstimatedReproductionNumber : mio::LogAlways {
         mio::abm::TimeSpan time_frame = sim.get_dt();
         const auto t                  = sim.get_time();
         const auto persons            = sim.get_world().get_persons();
-        const auto virus              = mio::abm::VirusVariant::Alpha;
 
         // PRAGMA_OMP(parallel for)
         int number_newly_infected = 0;
-        double infection_incidence   = 0;
-        double total_integral_buffer = 0;
+        double infection_incidence = 0;
         for (auto i = size_t(0); i < persons.size(); ++i) {
             auto& p = persons[i];
             if (p.get_should_be_logged()) {
