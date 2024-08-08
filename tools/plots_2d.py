@@ -1087,12 +1087,11 @@ def plot_peak_time_kmax(path_results, path_plots, blending_fact, modes, target_i
         plt.xlabel('kmax', fontsize=fontsize)
         plt.ylabel('Day', fontsize=fontsize)
         plt.xticks(fontsize=ticks)
-        tick_positions = np.arange(0, 200, 20)  # len(heatmap_data.index), 20)
+        tick_positions = np.arange(0,  len(heatmap_data.index), 20)
         tick_labels = [heatmap_data.index[i] for i in tick_positions]
         plt.yticks(tick_positions + 0.5, tick_labels, rotation=0,
                    fontsize=ticks)
         # plt.ylim(0, len(heatmap_data.index))
-        plt.ylim(0, 200)
         fn = 'peak_time_heatmap_' + dir_type + '_b_fact_' + str(b_fact)
         if log_scale:
             fn += '_log'
@@ -1169,9 +1168,9 @@ if __name__ == '__main__':
     path_cwd = os.getcwd()
     icu_cap = [6, 9, 12, 15]
     blending_fact = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
-    cap_indx = 0
+    cap_indx = 3
     path_results = os.path.join(
-        path_cwd, "results", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000")  # 'kmin_0.000000_kmax_0.700000'
+        path_cwd, "results", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000")
     path_plots = os.path.join(
         path_cwd, "plots", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000")
     path_icu_data = os.path.join(
@@ -1207,8 +1206,8 @@ if __name__ == '__main__':
     plot_peak_time_kmax(path_results, path_plots, blending_fact, modes,
                         icu_compartment, flows=False, dir_type='val', log_scale=True)
 
-    # plot_peak_time_kmax_variance(path_results, path_plots, blending_fact, modes,
-    #                              icu_compartment, flows=False, dir_type='val', log_scale=False)
+    plot_peak_time_kmax_variance(path_results, path_plots, blending_fact, modes,
+                                 icu_compartment, flows=False, dir_type='val', log_scale=False)
 
     # plot_icu_all_scenarios(path_results, path_plots, modes, log_scale=True)
     # plot_peaks(path_results, path_plots, modes, flow_se)
@@ -1227,10 +1226,10 @@ if __name__ == '__main__':
     #                  "FeedbackDamping"], flow_se, plot_type='val', title='Daily Infections', flows=True, vertical=True)
 
     # # # peak plots for ICU occupancy
-    # plot_peak_values(path_results, path_plots, [
-    #                  "FeedbackDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True)
-    # plot_peak_values(path_results, path_plots, [
-    #     "FeedbackDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True)
+    plot_peak_values(path_results, path_plots, [
+                     "FeedbackDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True)
+    plot_peak_values(path_results, path_plots, [
+        "FeedbackDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True)
 
     # plot_peak_values(path_results, path_plots, [
     #                  "ClassicDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True, dir_value='fixed')
