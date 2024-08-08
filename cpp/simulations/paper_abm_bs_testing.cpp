@@ -615,8 +615,8 @@ void set_parameters(mio::abm::Parameters& params)
                                                                TimeInfectedCriticalToRecovered_my_sigma.second};
 
     //Set testing parameters
-    auto pcr_test_values                                          = mio::abm::TestParameters{0.9, 0.99};
-    auto antigen_test_values                                      = mio::abm::TestParameters{0.69, 0.99};
+    auto pcr_test_values                                          = mio::abm::TestParameters{0.9, 0.995};
+    auto antigen_test_values                                      = mio::abm::TestParameters{0.69, 0.993};
     auto generic_test_values                                      = mio::abm::TestParameters{0.7, 0.95};
     params.get<mio::abm::TestData>()[mio::abm::TestType::PCR]     = pcr_test_values;
     params.get<mio::abm::TestData>()[mio::abm::TestType::Antigen] = antigen_test_values;
@@ -932,7 +932,7 @@ void add_testing_strategies(mio::abm::World& world, bool symptomatic, bool socia
     if (symptomatic) {
         std::cout << "Adding symptomatic testing strategy" << std::endl;
         auto testing_min_time_symptomatic = mio::abm::days(7);
-        auto probability_symptomatic      = 1.0;
+        auto probability_symptomatic      = 0.1;
         auto start_date_test_symptomatic  = mio::abm::TimePoint(mio::abm::days(0).seconds()); // 2021-04-12
         auto end_date_test_symptomatic    = mio::abm::TimePoint(mio::abm::days(90).seconds()); // 2021-05-30
         auto test_type_symptomatic        = mio::abm::TestType::Antigen; // Antigen test
@@ -1422,12 +1422,12 @@ struct LogEstimatedReproductionNumber : mio::LogAlways {
 
         // time period to take into account for estimating the reproduction number
         // longer periods lead to more averaged results
-        mio::abm::TimeSpan time_frame = sim.get_dt();
+        mio::abm::TimeSpan time_frame = mio::abm::days(7);
         const auto t                  = sim.get_time();
         const auto persons            = sim.get_world().get_persons();
 
         // PRAGMA_OMP(parallel for)
-        int number_newly_infected = 0;
+        int number_newly_infected  = 0;
         double infection_incidence = 0;
         for (auto i = size_t(0); i < persons.size(); ++i) {
             auto& p = persons[i];
@@ -1537,8 +1537,8 @@ void get_grid_search_results_and_write_them_to_file(
                   });
 
         // Write the 5 best RMSE at the end of the file
-        file << std::endl << "Top 5 RMSE:" << std::endl;
-        for (size_t i = 0; i < std::min<size_t>(5, gathered_grid_vector_with_rmse.size()); i++) {
+        file << std::endl << "Top 20 RMSE:" << std::endl;
+        for (size_t i = 0; i < std::min<size_t>(20, gathered_grid_vector_with_rmse.size()); i++) {
             file << "Grid point: ";
             for (size_t j = 0; j < gathered_grid_vector_with_rmse[i].first.size(); j++) {
                 file << gathered_grid_vector_with_rmse[i].first.at(j) << " ";
@@ -1577,15 +1577,15 @@ void add_npi_testing_strategies_to_world(mio::abm::Simulation& sim, std::mt19937
     auto end_date_test_school    = mio::abm::TimePoint(mio::abm::days(42).seconds()); // 2021-05-30
     auto testing_criteria_school = mio::abm::TestingCriteria({}, vector_asympt_states);
     auto testing_scheme_school =
-        mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date_test_school, end_date_test_school,
+        mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date_test_school, tmax,
                                 antigen_test_parameters, testing_probability_asympt);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School, testing_scheme_school);
 
     //symptomatic
     auto testing_criteria_school_sympt = mio::abm::TestingCriteria({}, vector_sympt_states);
     auto testing_scheme_school_sympt =
-        mio::abm::TestingScheme(testing_criteria_school_sympt, testing_min_time, start_date_test_school,
-                                end_date_test_school, antigen_test_parameters, testing_probability_sympt);
+        mio::abm::TestingScheme(testing_criteria_school_sympt, testing_min_time, start_date_test_school, tmax,
+                                antigen_test_parameters, testing_probability_sympt);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School,
                                                               testing_scheme_school_sympt);
 
@@ -2037,15 +2037,15 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto end_run_idx   = start_run_idx + run_distribution[size_t(rank)];
 
     auto viral_shedding_rate               = 5.5;
-    auto seasonality_april                 = 0.775;
-    auto seasonality_may                   = 0.5;
+    auto seasonality_april                 = 0.75;
+    auto seasonality_may                   = 0.4;
     auto perc_easter_event                 = 0.4;
-    auto dark_figure                       = 3.0;
-    auto contact_rate_ssc                  = 0.2;
+    auto dark_figure                       = 2.0;
+    auto contact_rate_ssc                  = 0.4;
     auto masks                             = 0.4;
     const double testing_probability_sympt = 0.05;
     const double ratio_asympt_to_sympt     = 20.0;
-    const double perc_have_to_test         = 0.04;
+    const double perc_have_to_test         = 0.005;
 
     mio::Date start_date{2021, 3, 1};
     int max_num_days     = 90;
@@ -2424,8 +2424,8 @@ int main(int argc, char** argv)
     rank      = 0;
 #endif
 
-    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
@@ -2480,7 +2480,7 @@ int main(int argc, char** argv)
         // 3: testing prob symptomatic
         // 4: perc have to test if npi active
 
-        std::vector<std::pair<double, double>> grid_boundaries = {{3.0, 8.0}, {1.0, 4.0}, {0.02, 0.1}, {0.01, 0.035}};
+        std::vector<std::pair<double, double>> grid_boundaries = {{3.0, 8.0}, {1.0, 4.0}, {0.02, 0.1}, {0.005, 0.035}};
 
         // std::vector<int> points_per_dim = {2, 2, 2, 5};
         std::vector<int> points_per_dim = {9, 9, 9, 9};
