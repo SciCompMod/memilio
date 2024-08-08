@@ -249,6 +249,15 @@ def plot_dead(path):
         path+"/infection_state_per_age_group/p50/Results.h5", 'r')
     p50_bs = f_p50['0']
 
+    # do the same for 25 and 75 percentile
+    f_p25 = h5py.File(
+        path+"/infection_state_per_age_group/p25/Results.h5", 'r')
+    p25_bs = f_p25['0']
+
+    f_p75 = h5py.File(
+        path+"/infection_state_per_age_group/p75/Results.h5", 'r')
+    p75_bs = f_p75['0']
+
     age_group_access = ['Group1', 'Group2', 'Group3',
                         'Group4', 'Group5', 'Group6', 'Total']
 
@@ -287,8 +296,10 @@ def plot_dead(path):
     # we calculate the RMSE
     rmse_dead = (((y_real- p50_bs['Total'][()][:, 7][::24][0:90])**2).mean())
     # we need to plot the cumulative dead persons from the real world and from the simulation
-    ax.plot(df_total_dead.index, y_real, color='tab:blue')
-    ax.plot(df_total_dead.index, p50_bs['Total'][()][:, 7][::24][0:90], color='tab:red')
+    ax.plot(df_total_dead.index, y_real, color='tab:red')
+    ax.plot(df_total_dead.index, p50_bs['Total'][()][:, 7][::24][0:90], color='tab:blue')
+    ax.fill_between(df_total_dead.index, p75_bs['Total'][()][:, 7][::24][0:90], p25_bs['Total'][()][:, 7][::24][0:90],
+                            alpha=0.5, color='tab:blue')
     ax.text(0.25, 0.8, 'RMSE: '+str(float("{:.2f}".format(rmse_dead))), horizontalalignment='center',
             verticalalignment='center', transform=plt.gca().transAxes, color='pink', fontsize=15)
     ax.set_xlabel('Date')
@@ -303,8 +314,8 @@ def plot_dead(path):
         df_abb_age_group = df_abb[df_abb['Age_RKI'] == age_groups[i]][0:90]
         y_real =  np.floor(df_abb_age_group['Deaths'].to_numpy())
         # we need to plot the dead persons from the real world and from the simulation
-        ax.plot(df_abb_age_group['Date'], y_real, color='tab:blue')
-        ax.plot(df_abb_age_group['Date'], p50_bs[age_group_access[i]][()][:, 7][::24][0:90], color='tab:red')
+        ax.plot(df_abb_age_group['Date'], y_real, color='tab:red')
+        ax.plot(df_abb_age_group['Date'], p50_bs[age_group_access[i]][()][:, 7][::24][0:90], color='tab:blue')
         ax.set_title('Dead, Age{}'.format(i))
         ax.set_xlabel('Date')
         ax.set_xticks(df_abb_age_group['Date'][::50])
@@ -334,7 +345,30 @@ def plot_icu(path):
     # we just take the first 90 days
     total_50 = total_50[0:90]
 
+     # we plot this against this the Amount of persons in the ICU from our model
+    f_p75 = h5py.File(
+        path+"/infection_state_per_age_group/p75/Results.h5", 'r')
+    p75_bs = f_p75['0']
+    total_75 = p75_bs['Total'][()]
+    # we need just every 24th value
+    total_75 = total_75[::24]
+    # we just take the first 90 days
+    total_75 = total_75[0:90]
+
+    # same with 25 percentile
+    f_p25 = h5py.File(
+        path+"/infection_state_per_age_group/p25/Results.h5", 'r')
+    p25_bs = f_p25['0']
+    total_25 = p25_bs['Total'][()]
+    # we need just every 24th value
+    total_25 = total_25[::24]
+    # we just take the first 90 days
+    total_25 = total_25[0:90]
+    
+
     ICU_Simulation = np.floor(total_50[:, 5]*perc_of_critical_in_icu)
+    ICU_Simulation75 = np.floor(total_75[:, 5]*perc_of_critical_in_icu)
+    ICU_Simulation25 = np.floor(total_25[:, 5]*perc_of_critical_in_icu)
     ICU_Real = np.floor(df_abb['ICU'][0:90])
 
     #smooth the data
@@ -351,8 +385,11 @@ def plot_icu(path):
     fig.set_figwidth(20)
     fig.set_figheight(9)
     # we plot the ICU_low and the ICU_high
-    ax.plot(df_abb['Date'][0:90], ICU_Real, color='tab:blue')
-    ax.plot(df_abb['Date'][0:90], ICU_Simulation, color='tab:red')
+    ax.plot(df_abb['Date'][0:90], ICU_Real, color='tab:red')
+    ax.fill_between(df_abb['Date'][0:90],ICU_Simulation75, ICU_Simulation25,
+                         alpha=0.5, color='tab:blue')
+    ax.plot(df_abb['Date'][0:90], ICU_Simulation, color='tab:blue')
+
     # we also write the rmse
     ax.text(0.25, 0.8, 'RMSE: '+str(float("{:.2f}".format(rmse_ICU))), horizontalalignment='center',
             verticalalignment='center', transform=plt.gca().transAxes, color='pink', fontsize=15)
@@ -733,7 +770,6 @@ def plot_positive_and_done_test(path):
 
 
 
-
 if __name__ == "__main__":
     # path = "/Users/david/Documents/HZI/memilio/data/results_last_run"
     path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
@@ -745,11 +781,11 @@ if __name__ == "__main__":
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    # plot_infection_states_results(path)
-    # plot_infections_loc_types_avarage(path)
+    plot_infection_states_results(path)
+    plot_infections_loc_types_avarage(path)
     plot_icu(path)
     plot_dead(path)
-    # infer_positive_tests(path)
-    # plot_estimated_reproduction_number(path)
+    infer_positive_tests(path)
+    plot_estimated_reproduction_number(path)
     plot_cumulative_detected_infections(path)
     plot_positive_and_done_test(path)
