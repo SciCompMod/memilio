@@ -256,7 +256,6 @@ int main()
 
     using HistoryType = mio::History<mio::DataWriterToMemory, Logger>;
     mio::Graph<mio::ABMSimulationNode<HistoryType>, mio::ABMMobilityEdge<HistoryType>> graph;
-    mio::unused(graph);
     graph.add_node(model1.get_id(), HistoryType{}, start_date, std::move(model1));
     graph.add_node(model2.get_id(), HistoryType{}, start_date, std::move(model2));
     graph.add_edge(0, 1);

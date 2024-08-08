@@ -3,8 +3,6 @@ add_library(graph_abm
     model_wrapper.cpp
     graph_abm_mobility.cpp
     graph_abm_mobility.h
-    mobility_rules.cpp
-    mobility_rules.h
 )
 
 target_link_libraries(graph_abm PUBLIC memilio)

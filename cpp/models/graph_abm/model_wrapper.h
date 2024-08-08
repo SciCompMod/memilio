@@ -40,14 +40,17 @@ class ModelWrapper : public abm::Model
 
 public:
     /**
-     * @brief Get person buffer for given model id. 
+     * @brief Get person buffer. 
      */
     std::vector<size_t>& get_person_buffer()
     {
         return m_person_buffer;
     }
 
-    //TODO comment
+    /** 
+    * @brief Removes person from the model.
+    * @param[in] pos Index of person in m_persons vector.
+    */
     void remove_person(size_t pos)
     {
         Base::m_persons.erase(Base::m_persons.begin() + pos);
