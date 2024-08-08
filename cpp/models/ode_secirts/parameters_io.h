@@ -516,13 +516,17 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
 
                 model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}] = std::max(
                     0.0,
-                    double(SII -
-                           (model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] +
-                            model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] +
-                            model[region].populations[{i, InfectionState::InfectedSevereImprovedImmunity}] +
-                            model[region].populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] +
-                            model[region].populations[{i, InfectionState::DeadImprovedImmunity}] +
-                            model[region].populations[{i, InfectionState::TemporaryImmunImprovedImmunity}])));
+                    double(
+                        SII -
+                        (model[region].populations[{i, InfectionState::ExposedImprovedImmunity}] +
+                         model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}] +
+                         model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] +
+                         model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] +
+                         model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] +
+                         model[region].populations[{i, InfectionState::InfectedSevereImprovedImmunity}] +
+                         model[region].populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] +
+                         model[region].populations[{i, InfectionState::DeadImprovedImmunity}] +
+                         model[region].populations[{i, InfectionState::TemporaryImmunImprovedImmunity}])));
 
                 model[region].populations[{i, InfectionState::SusceptiblePartialImmunity}] = std::max(
                     0.0,
@@ -544,7 +548,7 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
                 for (auto j = Index<InfectionState>(0); j < InfectionState::Count; ++j) {
                     if (model[region].populations[{i, j}] < 0) {
                         log_warning("Compartment at age group {}, infection state {}, is negative: {}", size_t(i),
-                                    size_t(j), model[region].populations[{i, j}] / num_population[region][size_t(i)]);
+                                    size_t(j), model[region].populations[{i, j}]);
                     }
                 }
             }
@@ -610,39 +614,6 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
         if (it != vregion.end()) {
             auto region_idx = size_t(it - vregion.begin());
             AgeGroup age    = vacc_data_entry.age_group;
-
-            // initialize the temporary immunity states
-            if (date_df >=
-                    offset_date_by_days(
-                        date, static_cast<int>(
-                                  -model[region_idx].parameters.template get<TimeTemporaryImmunityPI<FP>>()[age] -
-                                  model[region_idx]
-                                      .parameters.template get<DaysUntilEffectiveImprovedVaccination<FP>>()[age])) &&
-                date_df <=
-                    offset_date_by_days(
-                        date, static_cast<int>(
-                                  -model[region_idx]
-                                       .parameters.template get<DaysUntilEffectiveImprovedVaccination<FP>>()[age]))) {
-                model[region_idx].populations[{age, InfectionState::TemporaryImmunPartialImmunity}] +=
-                    vacc_data_entry.num_vaccinations_completed;
-            }
-
-            if (date_df >=
-                    offset_date_by_days(
-                        date,
-                        static_cast<int>(
-                            -model[region_idx].parameters.template get<TimeTemporaryImmunityII<FP>>()[age] -
-                            model[region_idx].parameters.template get<DaysUntilEffectiveBoosterImmunity<FP>>()[age])) &&
-                date_df <=
-                    offset_date_by_days(
-                        date,
-                        static_cast<int>(
-                            -model[region_idx].parameters.template get<DaysUntilEffectiveBoosterImmunity<FP>>()[age]))
-
-            ) {
-                model[region_idx].populations[{age, InfectionState::TemporaryImmunImprovedImmunity}] +=
-                    vacc_data_entry.num_vaccinations_refreshed + vacc_data_entry.num_vaccinations_refreshed_2;
-            }
 
             // get daily vaccinations for each layer
             for (size_t d = 0; d < (size_t)num_days + 1; ++d) {
@@ -1305,7 +1276,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
                                       const std::string& dir, int num_days, bool export_time_series = false)
 {
     BOOST_OUTCOME_TRY(details::set_vaccination_data(
-        model, path_join(dir, "pydata/Germany", "all_county_ageinf_vacc_ma7.json"), date, county, num_days));
+        model, path_join(dir, "pydata/Germany", "vacc_county_ageinf_ma7.json"), date, county, num_days));
 
     // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
     // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
