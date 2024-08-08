@@ -2037,11 +2037,11 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
     auto end_run_idx   = start_run_idx + run_distribution[size_t(rank)];
 
-    auto viral_shedding_rate               = 5.8;
-    auto seasonality_april                 = 0.6;
-    auto seasonality_may                   = 0.3;
+    auto viral_shedding_rate               = 6.09;
+    auto seasonality_april                 = 0.57;
+    auto seasonality_may                   = 0.5 * seasonality_april;
     auto perc_easter_event                 = 0.6;
-    auto dark_figure                       = 2.2;
+    auto dark_figure                       = 2.1;
     auto contact_rate_ssc                  = 0.45;
     auto masks                             = 0.4;
     const double testing_probability_sympt = 0.08;

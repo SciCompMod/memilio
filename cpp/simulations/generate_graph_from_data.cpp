@@ -134,8 +134,8 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
     const double riskOfInfectionFromSymptomaticMax    = 0.3;
     const double maxRiskOfInfectionFromSymptomaticMin = 0.3;
     const double maxRiskOfInfectionFromSymptomaticMax = 0.5;
-    const double recoveredPerInfectedNoSymptomsMin[]  = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15};
-    const double recoveredPerInfectedNoSymptomsMax[]  = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
+    const double recoveredPerInfectedNoSymptomsMin[]  = {0.2, 0.2, 0.15, 0.5, 0.5, 0.5};
+    const double recoveredPerInfectedNoSymptomsMax[]  = {0.3, 0.3, 0.25, 0.5, 0.5, 0.5};
     const double severePerInfectedSymptomsMin[]       = {0.006, 0.006, 0.015, 0.02, 0.02, 0.01};
     const double severePerInfectedSymptomsMax[]       = {0.009, 0.009, 0.023, 0.02, 0.02, 0.01};
     const double criticalPerSevereMin[]               = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35};
