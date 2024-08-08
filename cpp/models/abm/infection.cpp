@@ -84,9 +84,9 @@ ScalarType Infection::get_viral_shed(TimePoint t) const
 
 ScalarType Infection::get_viral_shed_integral() const
 {
-    ScalarType integral = std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * m_viral_load.peak)) /
+    ScalarType integral = std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * m_viral_load.peak) + 1) /
                           (m_log_norm_beta * m_viral_load.incline); // Integral from start to peak
-    integral -= std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * m_viral_load.peak)) /
+    integral -= std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * m_viral_load.peak) + 1) /
                 (m_log_norm_beta * m_viral_load.decline); // Integral from peak to end
 
     return integral;
@@ -96,26 +96,26 @@ ScalarType Infection::get_viral_shed_integral(TimePoint a, TimePoint b) const
 {
     // Time period before peak
     if (b.days() <= m_viral_load.start_date.days() + m_viral_load.peak / m_viral_load.incline) {
-        ScalarType integral = (std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * get_viral_load(b))) -
-                               std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * get_viral_load(a)))) /
+        ScalarType integral = (std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * get_viral_load(b)) + 1) -
+                               std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * get_viral_load(a)) + 1)) /
                               (m_log_norm_beta * m_viral_load.incline);
         return integral;
     }
 
     // Time period after peak
     if (a.days() >= m_viral_load.start_date.days() + m_viral_load.peak / m_viral_load.incline) {
-        ScalarType integral = (std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * get_viral_load(b))) -
-                               std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * get_viral_load(a)))) /
+        ScalarType integral = (std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * get_viral_load(b)) + 1) -
+                               std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * get_viral_load(a))) + 1) /
                               (m_log_norm_beta * m_viral_load.decline);
         return integral;
     }
 
     // Time period includes peak
-    ScalarType integral = (std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * m_viral_load.peak)) -
-                           std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * get_viral_load(a)))) /
+    ScalarType integral = (std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * m_viral_load.peak) + 1) -
+                           std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * get_viral_load(a)) + 1)) /
                           (m_log_norm_beta * m_viral_load.incline);
-    integral += (std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * get_viral_load(b))) -
-                 std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * m_viral_load.peak))) /
+    integral += (std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * get_viral_load(b)) + 1) -
+                 std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * m_viral_load.peak) + 1)) /
                 (m_log_norm_beta * m_viral_load.decline);
     return integral;
 }
