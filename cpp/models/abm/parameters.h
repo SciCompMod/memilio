@@ -327,8 +327,6 @@ struct TestParameters {
         auto obj = io.create_object("TestParameters");
         obj.add_element("Sensitivity", sensitivity);
         obj.add_element("Specificity", specificity);
-        obj.add_element("required_time", required_time);
-        obj.add_element("type", type);
     }
 
     /**
@@ -341,14 +339,12 @@ struct TestParameters {
         auto obj  = io.expect_object("TestParameters");
         auto sens = obj.expect_element("Sensitivity", mio::Tag<UncertainValue<>>{});
         auto spec = obj.expect_element("Specificity", mio::Tag<UncertainValue<>>{});
-        auto time = obj.expect_element("required_time", mio::Tag<TimeSpan>{});
-        auto typ = obj.expect_element("type", mio::Tag<TestType>{});
         return apply(
             io,
-            [](auto&& sens_, auto&& spec_, auto&& time_span_, auto&& type_) {
-                return TestParameters{sens_, spec_, time_span_, type_};
+            [](auto&& sens_, auto&& spec_) {
+                return TestParameters{sens_, spec_};
             },
-            sens, spec, time, typ);
+            sens, spec);
     }
 };
 

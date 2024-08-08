@@ -72,25 +72,6 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Antigen", mio::abm::TestType::Antigen)
         .value("PCR", mio::abm::TestType::PCR);
 
-    pymio::bind_class<mio::abm::TestParameters, pymio::EnablePickling::Never>(m, "TestParameters")
-        .def(py::init<double, double, mio::abm::TimeSpan, mio::abm::TestType>())
-        .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
-        .def_readwrite("specificity", &mio::abm::TestParameters::specificity)
-        .def_readwrite("required_time", &mio::abm::TestParameters::required_time)
-        .def_readwrite("type", &mio::abm::TestParameters::type);
-
-    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::abm::VirusVariant, mio::AgeGroup>(
-        m, "_AgeParameterArray");
-    pymio::bind_CustomIndexArray<mio::abm::TestParameters, mio::abm::TestType>(m, "_TestData");
-    pymio::bind_Index<mio::abm::ExposureType>(m, "ExposureTypeIndex");
-    pymio::bind_ParameterSet<mio::abm::ParametersBase, pymio::EnablePickling::Never>(m, "ParametersBase");
-    pymio::bind_class<mio::abm::Parameters, pymio::EnablePickling::Never, mio::abm::ParametersBase>(m, "Parameters")
-        .def(py::init<int>())
-        .def("check_constraints", &mio::abm::Parameters::check_constraints);
-
-    pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters, pymio::EnablePickling::Never>(
-        m, "LocalInfectionParameters")
-        .def(py::init<size_t>());
 
     pymio::bind_class<mio::abm::TimeSpan, pymio::EnablePickling::Never>(m, "TimeSpan")
         .def(py::init<int>(), py::arg("seconds") = 0)
@@ -136,6 +117,26 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::self += mio::abm::TimeSpan{})
         .def(py::self - mio::abm::TimeSpan{})
         .def(py::self -= mio::abm::TimeSpan{});
+        
+    pymio::bind_class<mio::abm::TestParameters, pymio::EnablePickling::Never>(m, "TestParameters")
+        .def(py::init<double, double, mio::abm::TimeSpan, mio::abm::TestType>())
+        .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
+        .def_readwrite("specificity", &mio::abm::TestParameters::specificity)
+        .def_readwrite("required_time", &mio::abm::TestParameters::required_time)
+        .def_readwrite("type", &mio::abm::TestParameters::type);
+
+    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::abm::VirusVariant, mio::AgeGroup>(
+        m, "_AgeParameterArray");
+    pymio::bind_CustomIndexArray<mio::abm::TestParameters, mio::abm::TestType>(m, "_TestData");
+    pymio::bind_Index<mio::abm::ExposureType>(m, "ExposureTypeIndex");
+    pymio::bind_ParameterSet<mio::abm::ParametersBase, pymio::EnablePickling::Never>(m, "ParametersBase");
+    pymio::bind_class<mio::abm::Parameters, pymio::EnablePickling::Never, mio::abm::ParametersBase>(m, "Parameters")
+        .def(py::init<int>())
+        .def("check_constraints", &mio::abm::Parameters::check_constraints);
+
+    pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters, pymio::EnablePickling::Never>(
+        m, "LocalInfectionParameters")
+        .def(py::init<size_t>());
 
     pymio::bind_class<mio::abm::LocationId, pymio::EnablePickling::Never>(m, "LocationId")
         .def(py::init<uint32_t>(), py::arg("id"))
