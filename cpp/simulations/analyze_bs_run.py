@@ -325,7 +325,7 @@ def plot_dead(path):
    
 def plot_icu(path):
     df_abb = pd.read_json(path+"/../pydata/Germany/county_divi_ma7.json")
-    perc_of_critical_in_icu = 0.45
+    perc_of_critical_in_icu = 0.47
 
     # we just need the columns ICU_low and ICU_hig
     df_abb = df_abb[['ID_County', 'ICU', 'Date']]
