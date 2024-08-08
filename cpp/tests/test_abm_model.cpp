@@ -369,7 +369,7 @@ TEST(TestModel, evolveMobility)
         auto dt    = mio::abm::days(1);
         auto model = mio::abm::Model(num_age_groups);
 
-        // Time to go from severe to critical infection is 1 day (dt).
+        // Time to go from severe to critical infection is 1/2 day (0.5 * dt).
         model.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
             0.5;
         // Time to go from critical infection to dead state is 1/2 day (0.5 * dt).
@@ -558,4 +558,43 @@ TEST(TestModel, checkParameterConstraints)
 
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(-2);
     ASSERT_EQ(params.check_constraints(), true);
+}
+
+TEST(TestModel, personCanDieInHospital)
+{
+    using testing::Return;
+
+    auto t     = mio::abm::TimePoint(0);
+    auto dt    = mio::abm::days(1);
+    auto model = mio::abm::Model(num_age_groups);
+
+    // Time to go from severe to critical infection is 1/2 day (0.5 * dt).
+    model.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.5;
+    // Time to go from critical infection to dead state is 1/2 day (0.5 * dt).
+    model.parameters.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.5;
+
+    auto home_id     = model.add_location(mio::abm::LocationType::Home);
+    auto work_id     = model.add_location(mio::abm::LocationType::Work);
+    auto icu_id      = model.add_location(mio::abm::LocationType::ICU);
+    auto hospital_id = model.add_location(mio::abm::LocationType::Hospital);
+    // Create a person that is severe at hospital and will be dead at time t + dt
+    add_test_person(model, home_id, age_group_60_to_79, mio::abm::InfectionState::Dead, t + dt);
+
+    auto& p_severe = model.get_persons()[0];
+
+    p_severe.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id);
+    p_severe.set_assigned_location(mio::abm::LocationType::ICU, icu_id);
+    p_severe.set_assigned_location(mio::abm::LocationType::Home, home_id);
+    p_severe.set_assigned_location(mio::abm::LocationType::Work, work_id);
+
+    // Check the severely infected person go to hospital
+    EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Home);
+    model.evolve(t, dt / 2);
+    EXPECT_EQ(p_severe.get_infection_state(t + dt / 2), mio::abm::InfectionState::InfectedCritical);
+    EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Hospital);
+
+    // Check the severely infected person dies and got burried
+    model.evolve(t + dt, dt);
+    EXPECT_EQ(p_severe.get_infection_state(t + dt), mio::abm::InfectionState::Dead);
+    EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Cemetery);
 }
