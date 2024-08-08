@@ -95,8 +95,8 @@ class TestAbm(unittest.TestCase):
         p2_id = model.add_person(home_id, mio.AgeGroup(2))
 
         for loc_id in [home_id, social_event_id, work_id]:
-            model.assign_location(p1_id, loc_id)
-            model.assign_location(p2_id, loc_id)
+            model.assign_location(0, loc_id)
+            model.assign_location(1, loc_id)
 
         model.parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype, mio.AgeGroup(
             0)] = 0.0
@@ -106,9 +106,9 @@ class TestAbm(unittest.TestCase):
         # trips
         trip_list = abm.TripList()
         trip_list.add_trip(abm.Trip(0, abm.TimePoint(
-            0) + abm.hours(8), social_event_id, 0, home_id, 0))
+            0) + abm.hours(8), social_event_id, 0, home_id, 0, abm.TransportMode.Unknown, abm.LocationType.SocialEvent))
         trip_list.add_trip(abm.Trip(1, abm.TimePoint(0) +
-                           abm.hours(8), work_id, 0, home_id, 0))
+                           abm.hours(8), work_id, 0, home_id, 0, abm.TransportMode.Unknown, abm.LocationType.Work))
         model.trip_list = trip_list
         model.use_mobility_rules = False
         self.assertEqual(model.trip_list.num_trips(), 2)

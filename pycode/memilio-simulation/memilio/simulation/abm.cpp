@@ -19,6 +19,7 @@
 */
 
 //Includes from pymio
+#include "abm/mobility_data.h"
 #include "pybind_util.h"
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
@@ -66,6 +67,15 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Car", mio::abm::LocationType::Car)
         .value("PublicTransport", mio::abm::LocationType::PublicTransport)
         .value("TransportWithoutContact", mio::abm::LocationType::TransportWithoutContact);
+
+    pymio::iterable_enum<mio::abm::TransportMode>(m, "TransportMode")
+        .value("Bike", mio::abm::TransportMode::Bike)
+        .value("CarDriver", mio::abm::TransportMode::CarDriver)
+        .value("CarPassenger", mio::abm::TransportMode::CarPassenger)
+        .value("PublicTransport", mio::abm::TransportMode::PublicTransport)
+        .value("Walking", mio::abm::TransportMode::Walking)
+        .value("Other", mio::abm::TransportMode::Other)
+        .value("Unknown", mio::abm::TransportMode::Unknown);
 
     pymio::iterable_enum<mio::abm::TestType>(m, "TestType")
         .value("Generic", mio::abm::TestType::Generic)
@@ -186,8 +196,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::init<uint32_t, mio::abm::TimePoint, mio::abm::LocationId, int, mio::abm::LocationId, int,
                       mio::abm::TransportMode, mio::abm::LocationType, std::vector<uint32_t>>(),
              py::arg("person_id"), py::arg("time"), py::arg("destination"), py::arg("destination_model_id"),
-             py::arg("origin"), py::arg("origin_model_id"), py::arg("trip_mode") = mio::abm::TransportMode::Unknown,
-             py::arg("destination_type") = mio::abm::LocationType::Home, py::arg("cells") = std::vector<uint32_t>())
+             py::arg("origin"), py::arg("origin_model_id"), py::arg("trip_mode"), py::arg("destination_type"),
+             py::arg("cells") = std::vector<uint32_t>())
         .def_readwrite("person_id", &mio::abm::Trip::person_id)
         .def_readwrite("time", &mio::abm::Trip::time)
         .def_readwrite("destination", &mio::abm::Trip::destination)
@@ -209,7 +219,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("add_location", &mio::abm::Model::add_location, py::arg("location_type"), py::arg("num_cells") = 1)
         .def("add_person", py::overload_cast<mio::abm::LocationId, mio::AgeGroup>(&mio::abm::Model::add_person),
              py::arg("location_id"), py::arg("age_group"))
-        .def("assign_location", &mio::abm::Model::assign_location, py::arg("person_id"), py::arg("location_id"))
+        .def("assign_location", &mio::abm::Model::assign_location, py::arg("person_index"), py::arg("location_id"))
         .def_property_readonly("locations", py::overload_cast<>(&mio::abm::Model::get_locations, py::const_),
                                py::keep_alive<1, 0>{}) //keep this model alive while contents are referenced in ranges
         .def_property_readonly("persons", py::overload_cast<>(&mio::abm::Model::get_persons, py::const_),

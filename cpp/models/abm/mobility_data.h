@@ -39,7 +39,8 @@ enum class TransportMode : uint32_t
     PublicTransport,
     Walking,
     Other,
-    Unknown
+    Unknown,
+    Count //last!!
 };
 
 /**
