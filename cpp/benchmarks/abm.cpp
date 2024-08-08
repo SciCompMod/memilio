@@ -2,6 +2,8 @@
 
 #include "benchmark/benchmark.h"
 #include <cstddef>
+#include <cstdint>
+#include <sys/types.h>
 
 mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list<uint32_t> seeds)
 {
@@ -27,7 +29,7 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
         auto age    = mio::AgeGroup(mio::UniformIntDistribution<size_t>::get_instance()(
             model.get_rng(), size_t(0), model.parameters.get_num_groups() - 1));
         auto person = model.add_person(home, age);
-        model.assign_location(person, home);
+        model.assign_location(uint32_t(i), home);
         home_size++;
     }
 
@@ -41,10 +43,10 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
         std::generate(locs.begin(), locs.end(), [&] {
             return model.add_location(loc_type);
         });
-        for (auto& person : model.get_persons()) {
+        for (size_t p = 0; p < num_persons; ++p) {
             auto loc_idx =
                 mio::UniformIntDistribution<size_t>::get_instance()(model.get_rng(), size_t(0), num_locs - 1);
-            model.assign_location(person.get_id(), locs[loc_idx]);
+            model.assign_location(uint32_t(p), locs[loc_idx]);
         }
     }
 
