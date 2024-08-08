@@ -105,21 +105,26 @@ public:
     /**
      * @brief Initialize a TimeSeries with a table.
      * @param table Consists of a list of time points, each of the form (time, value_0, value_1, ..., value_n) for
-     *     some fixed n >= 0.
+     *     some fixed n >= 0. 
      */
     TimeSeries(std::vector<std::vector<FP>> table)
-        : m_data()
+        : m_data() // resized in body
         , m_num_time_points(table.size())
     {
-        assert(table.size() > 0);
-        assert(std::all_of(table.begin(), table.end(), [&table](auto&& a) {
-            return a.size() == table.front().size();
-        }));
+        // check table sizes
+        assert(table.size() > 0 && "At least one entry is required to determine the number of elements.");
+        assert(std::all_of(table.begin(), table.end(),
+                           [&table](auto&& a) {
+                               return a.size() == table.front().size();
+                           }) &&
+               "All table entries must have the same size.");
+        // resize data. note that the table entries contain both time and values
         m_data.resize(table.front().size(), table.size());
-        // sort by time
+        // sort table by time
         std::sort(table.begin(), table.end(), [](auto&& a, auto&& b) {
             return a[0] < b[0];
         });
+        // assign table to data
         for (Eigen::Index tp = 0; tp < m_data.cols(); tp++) {
             for (Eigen::Index i = 0; i < m_data.rows(); i++) {
                 m_data(i, tp) = table[tp][i];

@@ -35,20 +35,36 @@ template <class FP>
 class TimeSeriesFunctor
 {
 public:
+    /**
+     * @brief Type of a TimeSeriesFunctor.
+     * The available types are:
+     * - Zero:
+     *   - No data used.
+     *   - Always returns 0.
+     * - LinearInterpolation:
+     *   - Requires at least one time point with exactly one value each. Time must be strictly monotic increasing.
+     *   - Linearly interpolates between data points. Stays constant with first/last value outside of provided data.
+     */
     enum Type
     {
         Zero,
         LinearInterpolation,
     };
 
+    /**
+     * @brief Creates a functor using the given data.
+     * Note the data requirements of the given functor type.
+     * @param type The type of the functor.
+     * @param table A list of time points, passed to the TimeSeries constructor.
+     */
     TimeSeriesFunctor(Type type, const TimeSeries<FP>& data)
         : m_type(type)
         , m_data(data)
     {
-        // data preprocessing
+        // data shape checks and preprocessing
         switch (m_type) {
         case Type::Zero:
-            // no preprocessing needed
+            // no checks needed
             break;
         case Type::LinearInterpolation:
             // make sure data has the correct shape, i.e. a list of (time, value) pairs
@@ -58,16 +74,30 @@ public:
         }
     }
 
+    /**
+     * @brief Creates a functor using the given table.
+     * Note the data requirements of the given functor type.
+     * @param type The type of the functor.
+     * @param table A list of time points, passed to the TimeSeries constructor.
+     */
     TimeSeriesFunctor(Type type, std::vector<std::vector<FP>>&& table)
         : TimeSeriesFunctor(type, TimeSeries<FP>{table})
     {
     }
 
+    /**
+     * @brief Creates a Zero functor.
+     */
     TimeSeriesFunctor()
         : TimeSeriesFunctor(Type::Zero, TimeSeries<FP>{0})
     {
     }
 
+    /**
+     * @brief Function returning a scalar value.
+     * @param time A scalar value.
+     * @return A scalar value computed from data, depending on the functor's type.
+     */
     FP operator()(FP time) const
     {
         FP value = 0.0;
@@ -76,8 +106,8 @@ public:
             // value is explicitly zero-initialized
             break;
         case Type::LinearInterpolation:
+            auto tp_range = m_data.get_times();
             // find next time point in m_data (strictly) after time
-            auto tp_range      = m_data.get_times();
             const auto next_tp = std::upper_bound(tp_range.begin(), tp_range.end(), time, [](auto&& t, auto&& tp) {
                 return t < tp;
             });
@@ -104,8 +134,8 @@ public:
     }
 
 private:
-    Type m_type;
-    TimeSeries<FP> m_data;
+    Type m_type; ///< Determines what kind of functor this is, e.g. linear interpolation.
+    TimeSeries<FP> m_data; ///< Data used by the functor to compute its values. Its shape depends on type.
 };
 
 } // namespace mio

@@ -179,23 +179,7 @@ public:
      */
     bool run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
-    // /**
-    //  * serialize this.
-    //  * @see mio::serialize
-    //  */
-    // template <class IOContext>
-    // void serialize(IOContext& io) const
-    // {
-    //     auto obj = io.create_object("TestingScheme");
-    //     obj.add_element("criteria", m_testing_criteria), ;
-    //     obj.add_element("min_time_since_last_test", m_minimal_time_since_last_test), ;
-    //     obj.add_element("start_date", m_start_date), ;
-    //     obj.add_element("end_date", m_end_date), ;
-    //     obj.add_element("test_params", m_test_parameters), ;
-    //     obj.add_element("probability", m_probability), ;
-    //     obj.add_element("is_active", m_is_active), ;
-    // }
-
+    /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
         return make_auto_serialization("TestingScheme", NVP("criteria", m_testing_criteria),
@@ -204,32 +188,6 @@ public:
                                        NVP("test_params", m_test_parameters), NVP("probability", m_probability),
                                        NVP("is_active", m_is_active));
     }
-
-    // /**
-    //  * deserialize an object of this class.
-    //  * @see mio::deserialize
-    //  */
-    // template <class IOContext>
-    // static IOResult<TestingScheme> deserialize(IOContext& io)
-    // {
-    //     auto obj                      = io.expect_object("TestingScheme");
-    //     auto criteria                 = obj.expect_element("criteria", Tag<TestingCriteria>{});
-    //     auto min_time_since_last_test = obj.expect_element("min_time_since_last_test", Tag<TimeSpan>{});
-    //     auto start_date               = obj.expect_element("start_date", Tag<TimePoint>{});
-    //     auto end_date                 = obj.expect_element("end_date", Tag<TimePoint>{});
-    //     auto test_params              = obj.expect_element("test_params", Tag<TestParameters>{});
-    //     auto probability              = obj.expect_element("probability", Tag<ScalarType>{});
-    //     auto is_active                = obj.expect_element("is_active", Tag<bool>{});
-    //     return apply(
-    //         io,
-    //         [](auto&& criteria_, auto&& min_time_since_last_test_, auto&& start_date_, auto&& end_date_,
-    //            auto&& test_params_, auto&& probability_, auto&& is_active_) {
-    //             return TestingScheme{
-    //                 criteria_, min_time_since_last_test_, start_date_, end_date_, test_params_, probability_,
-    //                 is_active_};
-    //         },
-    //         criteria, min_time_since_last_test, start_date, end_date, test_params, probability, is_active);
-    // }
 
 private:
     friend AutoSerializableFactory<TestingScheme>;

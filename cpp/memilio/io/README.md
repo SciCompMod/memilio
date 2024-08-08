@@ -4,7 +4,24 @@ This directory contains utilities for reading and writing data from and to files
 
 ## The Serialization framework
 
-## Main functions and types
+### Using serialization
+
+In the next sections we will explain how to implement serialization (both for types and formats), here we quickly show
+how to use it once it already is implemented for a type. Currently, there is support for the Json and a binary format,
+which can be used through the `serialize_json`/`deserialize_json` and `serialize_binary`/`deserialize_binary`,
+respectively. For example
+
+```cpp
+Foo foo{5};
+mio::IOResult<Json::Value> js_result = mio::serialize_json(foo);
+```
+```cpp
+Json::Value js_value;
+js_value["i"] = Json::Int(5);
+mio::IOResult<Foo> foo_result = mio::deserialize_json(js_value, mio::Tag<Foo>{});
+```
+
+### Main functions and types
 
 - functions serialize and deserialize:
      Main entry points to the framework to write and read values, respectively. The functions expect an IOContext
@@ -14,7 +31,33 @@ This directory contains utilities for reading and writing data from and to files
 - IOStatus and IOResult:
      Used for error handling, see section "Error Handling" below.
 
-## Concepts
+### Auto-serialization
+
+Before we get into the details of the framework, this feature provides an easy and convenient alternative to the
+serialize and deserialize functions. To give an example:
+
+```cpp
+struct Foo {
+  int i;
+  auto auto_serialize() {
+    return make_auto_serialization("Foo", NVP("i", i));
+  }
+};
+```
+The auto-serialization is less flexible than the serialize and deserialize functions and has additional requirements:
+- The class must be trivially constructible.
+  - Alternatively, you may provide a specialization of the struct `AutoSerializableFactory`. For more details,
+  view the struct's documentation.
+- There is exactly one NVP for every class member (though the names and their order are arbitrary).
+  - Values must be passed directly, like in the example. No copies, accessors, etc.
+- Every class member itself is both (auto-)(de)serializable and assignable.
+
+As to the feature set, auto-serialization only supports the `add_element` and `expect_element` operations defined in
+the Concepts section below, where each operation's arguments are provided by the name-value pairs (NVPs). Note that the
+value part of an NVP is also used to assign a value during deserialization, hence the class members must be used
+directly in the NVP constructor (i.e. as a non-const lvalue reference).
+
+### Concepts
 
 1. IOContext
 Stores data that describes serialized objects of any type in some unspecified format and provides structured
@@ -66,7 +109,7 @@ for an IOObject `obj`:
           value or it may be empty. Otherwise returns an error. Note that for some formats a wrong key is indistinguishable from
           an empty optional, so make sure to provide the correct key.
 
-## Error handling
+### Error handling
 
 Errors are handled by returning error codes. The type IOStatus contains an error code and an optional string with additional
 information. The type IOResult contains either a value or an IOStatus that describes an error. Operations that can fail return
@@ -78,7 +121,7 @@ inspected, so `expect_...` operations return an IOResult. The `apply` utility fu
 of multiple `expect_...` operations and use the values if all are succesful. See the documentation of `IOStatus`, `IOResult`
 and `apply` below for more details.
 
-## Adding a new data type to be serialized
+### Adding a new data type to be serialized
 
 Serialization of a new type T can be customized by providing _either_ member functions `serialize` and `deserialize` _or_ free functions
 `serialize_internal` and `deserialize_internal`.
@@ -120,28 +163,6 @@ more efficiently than the provided general free functions.
 
 - HDF5 support classes for C++
 - Reading of mobility matrix files
-
-## Auto-serialization
-
-This feature provides an easy and convenient method to serialize and deserialize classes, but with additional requirements and a reduced feature set. To give an example:
-
-```cpp
-struct Foo {
-  int i;
-  auto auto_serialize() {
-    return make_auto_serialization("Foo", NVP("i", i));
-  }
-};
-```
-
-The auto-serialization effectively only supports the `add_element` and `expect_element` operations defined in the Concepts section, where the function arguments are provided by the name-value pairs (NVPs). Note that the value part of an NVP is also used to assign a value during deserialization, hence the class members must be used directly in the NVP constructor (i.e. as a non-const lvalue reference).
-
-The requirements for auto-serialization are:
-- The class must be trivially constructible.
-  - Alternatively, you may provide a spezialisation of the struct `AutoSerializableFactory`.
-- There is exactly one NVP for every class member (but the names and their order is arbitrary).
-  - Values must be passed directly.
-- Every class member itself is both (auto-)serializable and assignable.
 
 ## The command line interface
 

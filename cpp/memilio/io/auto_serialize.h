@@ -41,6 +41,10 @@ namespace mio
 template <class ValueType>
 struct NVP {
     using Type = ValueType&;
+
+    const std::string_view name;
+    Type value;
+
     /**
      * @brief Create a (name, value) pair.
      *
@@ -52,20 +56,12 @@ struct NVP {
         , value(v)
     {
     }
-    const std::string_view name;
-    Type value;
 
     NVP()                      = delete;
     NVP(const NVP&)            = default;
     NVP(NVP&&)                 = default;
     NVP& operator=(const NVP&) = delete;
     NVP& operator=(NVP&&)      = delete;
-
-    NVP& operator=(const ValueType& v)
-    {
-        this->value = v;
-        return *this;
-    }
 };
 
 /**
@@ -118,18 +114,6 @@ namespace details
 template <class T>
 using auto_serialize_expr_t = decltype(std::declval<T>().auto_serialize());
 
-} // namespace details
-
-/**
- * @brief Detect whether T has a auto_serialize member function.
- * @tparam T Any type.
- */
-template <class T>
-using has_auto_serialize = is_expression_valid<details::auto_serialize_expr_t, T>;
-
-namespace details
-{
-
 /// Add a name-value pair to an io object.
 template <class IOObject, class Target>
 void add_nvp(IOObject& obj, const NVP<Target> nvp)
@@ -169,6 +153,13 @@ IOResult<AutoSerializable> auto_deserialize_impl(IOContext& io, AutoSerializable
 }
 
 } // namespace details
+
+/**
+ * @brief Detect whether T has a auto_serialize member function.
+ * @tparam T Any type.
+ */
+template <class T>
+using has_auto_serialize = is_expression_valid<details::auto_serialize_expr_t, T>;
 
 /**
  * @brief Serialization implementation for the auto-serialization feature.
