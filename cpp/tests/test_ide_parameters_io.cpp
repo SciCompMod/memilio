@@ -78,6 +78,9 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
     // Compare with previous run.
     auto compare = load_test_data_csv<ScalarType>("ide-parameters-io-compare.csv");
 
+    EXPECT_NEAR(model.m_populations.get_value(0)[(Eigen::Index)mio::isecir::InfectionState::Dead], 6.3, 1e-4);
+    EXPECT_NEAR(model.m_total_confirmed_cases, 70, 1e-4);
+
     ASSERT_EQ(compare.size(), static_cast<size_t>(model.m_transitions.get_num_time_points()));
     for (size_t i = 0; i < compare.size(); i++) {
         ASSERT_EQ(compare[i].size(), static_cast<size_t>(model.m_transitions.get_num_elements()) + 1) << "at row " << i;
@@ -91,12 +94,13 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
 // Check some cases where computation of initial values for an IDE model based on RKI data should fail.
 TEST(TestIDEParametersIo, ParametersIoRKIFailure)
 {
-    // Define start date and the total population used for the initialization.
+    // Set up.
     ScalarType total_population = 80 * 1e6;
     ScalarType dt               = 0.5;
 
     // Initialize model.
-    // The number of deaths will be overwritten if real data is used for initialization. Therefore, an arbitrary number is used for the number of deaths.
+    // The number of deaths will be overwritten if real data is used for initialization.
+    // Therefore, an arbitrary number is used for the number of deaths.
     mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count),
                              total_population, -1);
 
@@ -116,6 +120,24 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
         mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::OutOfRange));
+
+    // --- Case where not all needed dates from the past are provided.
+    start_date = mio::Date(2020, 5, 24);
+    status =
+        mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date);
+    // Check that status is Success as just a warning is logged.
+    ASSERT_THAT(print_wrap(status), IsSuccess());
+    // Check that the affected flows have actually been set to 0.
+    // As start_date is the first date in the data file, there is some infection data for all times >-1
+    // (as we interpolate linearly in between -1 and 0). Therefore, we only expect the flows to be zero for times <=-1.
+    for (Eigen::Index i = 0; i < model.m_transitions.get_num_time_points() - 2; i++) {
+        // Check only the flows "after" InfectedNoSymptomsToInfectedSymptoms where earlier data is needed.
+        for (Eigen::Index flow = (Eigen::Index)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere;
+             flow < (Eigen::Index)mio::isecir::InfectionTransition::Count; flow++) {
+            EXPECT_EQ(0., model.m_transitions.get_value(i)[flow])
+                << "at time " << model.m_transitions.get_time(i) << " and flow " << flow;
+        }
+    }
 
     // --- Case with empty RKI data file.
     status =
