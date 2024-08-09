@@ -142,11 +142,16 @@ private:
             log_warning("get_person end");
             auto personal_rng = PersonalRandomNumberGenerator(Base::m_rng, person);
             if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
+                log_warning("if id is dest model id");
                 if (trip.destination_model_id == Base::m_id) {
+                    log_warning("target loc");
                     auto& target_location = Base::get_location(trip.destination);
+                    log_warning("target loc end");
                     if (Base::m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
                         person.apply_mask_intervention(personal_rng, target_location);
+                        log_warning("change loc");
                         Base::change_location(person_index, target_location.get_id(), trip.trip_mode);
+                        log_warning("change loc end");
                     }
                 }
                 else {
