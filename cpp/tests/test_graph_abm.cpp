@@ -114,10 +114,10 @@ TEST(TestGraphAbm, test_apply_mobility)
     trips.add_trip(trip1);
     trips.add_trip(trip2);
 
-    // auto t  = mio::abm::TimePoint(0);
-    // auto dt = mio::abm::hours(12);
-    // mio::ABMSimulationNode<MockHistory> node1(MockHistory{}, t, std::move(model1));
-    // mio::ABMSimulationNode<MockHistory> node2(MockHistory{}, t, std::move(model2));
+    auto t = mio::abm::TimePoint(0);
+    //auto dt = mio::abm::hours(12);
+    mio::ABMSimulationNode<MockHistory> node1(MockHistory{}, t, std::move(model1));
+    mio::ABMSimulationNode<MockHistory> node2(MockHistory{}, t, std::move(model2));
 
     // node1.evolve(t, dt);
     // node2.evolve(t, dt);

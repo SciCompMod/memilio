@@ -125,7 +125,7 @@ private:
 
     // check if a person makes a trip
     bool weekend     = t.is_weekend();
-    size_t num_trips = m_trip_list.num_trips(weekend);
+    size_t num_trips = Base::m_trip_list.num_trips(weekend);
 
     if (num_trips != 0) {
         while (Base::m_trip_list.get_current_index() < num_trips &&
