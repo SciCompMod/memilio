@@ -126,17 +126,17 @@ TEST(TestGraphAbm, test_apply_mobility)
     node2.evolve(t, dt);
     mio::log_warning("Evolve node 2 end");
 
-    // EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 0);
-    // EXPECT_EQ(node1.get_simulation().get_model().get_persons().size(), 4);
-    //EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p2_index], false);
-    //EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p4_index], false);
+    EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 0);
+    EXPECT_EQ(node1.get_simulation().get_model().get_persons().size(), 4);
+    EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p2_index], false);
+    EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p4_index], false);
 
-    // mio::ABMMobilityEdge<MockHistory> edge;
-    // edge.apply_mobility(node1, node2, t);
+    mio::ABMMobilityEdge<MockHistory> edge;
+    edge.apply_mobility(node1, node2, t);
 
-    // EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 2);
-    // EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 2);
-    // EXPECT_EQ(node1.get_simulation().get_model().get_person_buffer().size(), 0);
+    EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 2);
+    EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 2);
+    EXPECT_EQ(node1.get_simulation().get_model().get_person_buffer().size(), 0);
 }
 
 TEST(TestGraphABM, test_graph_simulation)
