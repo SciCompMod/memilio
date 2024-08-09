@@ -27,6 +27,7 @@
 #include "abm/time.h"
 #include "graph_abm/graph_abm_mobility.h"
 #include "memilio/epidemiology/age_group.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/miompi.h"
 #include "memilio/mobility/graph.h"
 #include <algorithm>
@@ -119,8 +120,11 @@ TEST(TestGraphAbm, test_apply_mobility)
     mio::ABMSimulationNode<MockHistory> node1(MockHistory{}, t, std::move(model1));
     mio::ABMSimulationNode<MockHistory> node2(MockHistory{}, t, std::move(model2));
 
+    mio::log_warning("Evolve node 1");
     node1.evolve(t, dt);
+    mio::log_warning("Evolve node 2");
     node2.evolve(t, dt);
+    mio::log_warning("Evolve node 2 end");
 
     // EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 0);
     // EXPECT_EQ(node1.get_simulation().get_model().get_persons().size(), 4);

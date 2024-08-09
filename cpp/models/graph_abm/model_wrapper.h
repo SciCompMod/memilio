@@ -25,6 +25,7 @@
 #include "abm/time.h"
 #include "abm/location_id.h"
 #include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"
 #include "abm/mobility_rules.h"
 #include "abm/mobility_rules.h"
@@ -69,6 +70,7 @@ public:
 private:
     void perform_mobility(TimePoint t, TimeSpan dt)
     {
+        log_warning("perform_mobility");
         const uint32_t num_persons = static_cast<uint32_t>(Base::m_persons.size());
     PRAGMA_OMP(parallel for)
     for (uint32_t person_id = 0; person_id < num_persons; ++person_id) {
@@ -123,6 +125,8 @@ private:
         }
     }
 
+    log_warning("begin trips");
+
     // check if a person makes a trip
     bool weekend     = t.is_weekend();
     size_t num_trips = Base::m_trip_list.num_trips(weekend);
@@ -130,9 +134,12 @@ private:
     if (num_trips != 0) {
         while (Base::m_trip_list.get_current_index() < num_trips &&
                Base::m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
-            auto& trip        = Base::m_trip_list.get_next_trip(weekend);
+            auto& trip = Base::m_trip_list.get_next_trip(weekend);
+            log_warning("get_index");
             auto person_index = Base::get_person_index(trip.person_id);
-            auto& person      = Base::get_person(person_index);
+            log_warning("get_index end");
+            auto& person = Base::get_person(person_index);
+            log_warning("get_person end");
             auto personal_rng = PersonalRandomNumberGenerator(Base::m_rng, person);
             if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
                 if (trip.destination_model_id == Base::m_id) {
