@@ -13,6 +13,8 @@
 #include "models/abm/time.h"
 #include "models/abm/trip_list.h"
 #include "models/abm/model.h"
+#include "json/config.h"
+#include "json/value.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -96,8 +98,8 @@ void test_json_serialization_full(const T& reference_object, const Json::Value& 
 
 TEST(TestAbmSerialization, Trip)
 {
-    // Test that a json value x is equal to serialize(deserialize(x)) w.r.t json representation.
-    // See test_json_serialization_by_representation for more detail.
+    // Test (de)serialization w.r.t json representation and the types own equality operator.
+    // See test_json_serialization_full for more detail.
 
     mio::abm::Trip trip(1, mio::abm::TimePoint(0) + mio::abm::hours(2), 3, 4);
 
@@ -149,8 +151,8 @@ TEST(TestAbmSerialization, Infection)
 
 TEST(TestAbmSerialization, TestingScheme)
 {
-    // Test that a json value x is equal to serialize(deserialize(x)) w.r.t json representation.
-    // See test_json_serialization_by_representation for more detail.
+    // Test (de)serialization w.r.t json representation and the types own equality operator.
+    // See test_json_serialization_full for more detail.
 
     mio::abm::TestingScheme testing_scheme(
         mio::abm::TestingCriteria({mio::AgeGroup(1)}, {mio::abm::InfectionState(2)}), mio::abm::TimeSpan(3),
@@ -195,6 +197,18 @@ TEST(TestAbmSerialization, TestingStrategy)
     reference_json["schemes"][0] = local_strategy;
 
     test_json_serialization_by_representation<mio::abm::TestingStrategy>(reference_json);
+}
+
+TEST(TestAbmSerialization, TestResult)
+{
+    // Test that a json value x is equal to serialize(deserialize(x)) w.r.t json representation.
+    // See test_json_serialization_by_representation for more detail.
+
+    Json::Value reference_json; // aka x
+    reference_json["result"]                     = Json::Value(false);
+    reference_json["time_of_testing"]["seconds"] = Json::UInt(1);
+
+    test_json_serialization_by_representation<mio::abm::TestResult>(reference_json);
 }
 
 TEST(TestAbmSerialization, Person)
