@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/location_type.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/stl_util.h"
@@ -510,13 +511,15 @@ TEST(TestJsonSerializer, abmTrip)
     mio::abm::Location work{mio::abm::LocationType::Work, 1};
     auto person = make_test_person(home);
     // add a trip from home (0) to work (1)
-    mio::abm::Trip trip(person.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), 1, 0);
+    mio::abm::Trip trip(person.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), 1, 0,
+                        mio::abm::LocationType::Work);
     auto js = mio::serialize_json(trip, true);
     Json::Value expected_json;
-    expected_json["person_id"]   = Json::UInt(person.get_id());
-    expected_json["time"]        = Json::Int(mio::abm::hours(8).seconds());
-    expected_json["destination"] = Json::UInt(1); // work
-    expected_json["origin"]      = Json::UInt(0); // home
+    expected_json["person_id"]        = Json::UInt64(person.get_id());
+    expected_json["time"]             = Json::Int(mio::abm::hours(8).seconds());
+    expected_json["destination"]      = Json::UInt(1); // work
+    expected_json["origin"]           = Json::UInt(0); // home
+    expected_json["destination_type"] = Json::UInt64(mio::abm::LocationType::Work);
     ASSERT_EQ(js.value(), expected_json);
 
     auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Trip>());
