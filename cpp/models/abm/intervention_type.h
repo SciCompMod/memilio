@@ -1,7 +1,7 @@
-/*
+/* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: David Kerkmann, Khoa Nguyen
+* Authors: Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,10 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_ABM_VACCINE_H
-#define MIO_ABM_VACCINE_H
 
-#include "abm/time.h"
+#ifndef MIO_ABM_INTERVENTION_TYPE_H
+#define MIO_ABM_INTERVENTION_TYPE_H
 
 #include <cstdint>
 
@@ -29,33 +28,17 @@ namespace mio
 namespace abm
 {
 
-/** 
- * @brief #ExposureType in ABM.
- * can be used as 0-based index
- */
-enum class ExposureType : std::uint32_t
-{
-    NoProtection,
-    NaturalInfection,
-    GenericVaccine,
-    Count //last!!
-};
-
 /**
- * @brief A tuple of #TimePoint and #ExposureType (i.e. type of the Vaccine).
- * The #TimePoint describes the time of administration of the Vaccine.
-*/
-struct Vaccination {
-    Vaccination(ExposureType exposure, TimePoint t)
-        : exposure_type(exposure)
-        , time(t)
-    {
-    }
+ * @brief Type of an Intervention.
+ */
+enum class InterventionType : std::uint32_t
+{
+    Mask,
+    Testing,
+    Isolation,
 
-    ExposureType exposure_type;
-    TimePoint time;
+    Count
 };
-
 } // namespace abm
 } // namespace mio
 

@@ -181,6 +181,12 @@ bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator& rng, Person& p
     if (location.get_type() == mio::abm::LocationType::Home) {
         return true;
     }
+
+    // If the Person does not comply to Testing where there is a testing scheme at the target location, it is not allowed to enter.
+    if (!person.is_compliant(rng, InterventionType::Testing)) {
+        return false;
+    }
+
     //lookup schemes for this specific location as well as the location type
     //lookup in std::vector instead of std::map should be much faster unless for large numbers of schemes
     for (auto key : {std::make_pair(location.get_type(), location.get_id()),
@@ -192,6 +198,7 @@ bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator& rng, Person& p
         if (iter_schemes != m_location_to_schemes_map.end()) {
             //apply all testing schemes that are found
             auto& schemes = iter_schemes->schemes;
+            // Whether the Person is allowed to enter or not depends on the test result(s).
             if (!std::all_of(schemes.begin(), schemes.end(), [&rng, &person, t](TestingScheme& ts) {
                     return !ts.is_active() || ts.run_scheme(rng, person, t);
                 })) {
