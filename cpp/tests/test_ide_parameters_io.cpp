@@ -127,16 +127,13 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
         mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_germany.json"), start_date);
     // Check that status is Success as just a warning is logged.
     ASSERT_THAT(print_wrap(status), IsSuccess());
-    // Check that the affected flows have actually been set to 0.
+    // Check that the flow InfectedNoSymptomsToInfectedSymptoms has actually been set to 0.
     // As start_date is the first date in the data file, there is some infection data for all times >-1
-    // (as we interpolate linearly in between -1 and 0). Therefore, we only expect the flows to be zero for times <=-1.
+    // (as we interpolate linearly in between -1 and 0). Therefore, we only expect the flow InfectedNoSymptomsToInfectedSymptoms
+    // to be zero for times <=-1.
     for (Eigen::Index i = 0; i < model.m_transitions.get_num_time_points() - 2; i++) {
-        // Check only the flows "after" InfectedNoSymptomsToInfectedSymptoms where earlier data is needed.
-        for (Eigen::Index flow = (Eigen::Index)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere;
-             flow < (Eigen::Index)mio::isecir::InfectionTransition::Count; flow++) {
-            EXPECT_EQ(0., model.m_transitions.get_value(i)[flow])
-                << "at time " << model.m_transitions.get_time(i) << " and flow " << flow;
-        }
+        EXPECT_EQ(0., model.m_transitions.get_value(
+                          i)[(Eigen::Index)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]);
     }
 
     // --- Case with empty RKI data file.
