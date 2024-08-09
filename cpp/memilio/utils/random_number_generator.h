@@ -21,6 +21,7 @@
 #ifndef MIO_RANDOM_NUMBER_GENERATOR_H
 #define MIO_RANDOM_NUMBER_GENERATOR_H
 
+#include "memilio/io/auto_serialize.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/miompi.h"
@@ -355,6 +356,13 @@ public:
             seed(m_seeds);
         }
 #endif
+    }
+
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("RandomNumberGenerator", NVP("key", m_key), NVP("counter", m_counter),
+                                       NVP("seeds", m_seeds));
     }
 
 private:

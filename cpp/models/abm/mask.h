@@ -23,6 +23,7 @@
 
 #include "abm/mask_type.h"
 #include "abm/time.h"
+#include "memilio/io/auto_serialize.h"
 
 namespace mio
 {
@@ -72,11 +73,27 @@ public:
      */
     void change_mask(MaskType new_mask_type);
 
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("Mask", NVP("mask_type", m_type), NVP("time_used", m_time_used));
+    }
+
 private:
     MaskType m_type; ///< Type of the Mask.
     TimeSpan m_time_used; ///< Length of time the Mask has been used.
 };
 } // namespace abm
+
+/// @brief Creates an instance of abm::Mask for auto-deserialization.
+template <>
+struct AutoSerializableFactory<abm::Mask> {
+    static abm::Mask create()
+    {
+        return abm::Mask(abm::MaskType::Count);
+    }
+};
+
 } // namespace mio
 
 #endif

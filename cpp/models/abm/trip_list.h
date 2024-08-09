@@ -192,6 +192,13 @@ public:
         return m_current_index;
     }
 
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("TestingScheme", NVP("trips_weekday", m_trips_weekday),
+                                       NVP("trips_weekend", m_trips_weekend), NVP("index", m_current_index));
+    }
+
 private:
     std::vector<Trip> m_trips_weekday; ///< The list of Trip%s a Person makes on a weekday.
     std::vector<Trip> m_trips_weekend; ///< The list of Trip%s a Person makes on a weekend day.

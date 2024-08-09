@@ -112,22 +112,16 @@ public:
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("Model");
-        obj.add_element("num_agegroups", parameters.get_num_groups());
-        std::vector<Trip> trips;
-        TripList trip_list = get_trip_list();
-        for (size_t i = 0; i < trip_list.num_trips(false); i++) {
-            trips.push_back(trip_list.get_next_trip(false));
-            trip_list.increase_index();
-        }
-        trip_list.reset_index();
-        for (size_t i = 0; i < trip_list.num_trips(true); i++) {
-            trips.push_back(trip_list.get_next_trip(true));
-            trip_list.increase_index();
-        }
-        obj.add_list("trips", trips.begin(), trips.end());
-        obj.add_list("locations", get_locations().begin(), get_locations().end());
+        obj.add_element("parameters", parameters);
+        // skip caches, they are rebuild by the deserialized model
         obj.add_list("persons", get_persons().begin(), get_persons().end());
+        obj.add_list("locations", get_locations().begin(), get_locations().end());
+        obj.add_element("location_types", m_has_locations.to_ulong());
+        obj.add_element("testing_strategy", m_testing_strategy);
+        obj.add_element("trip_list", m_trip_list);
         obj.add_element("use_mobility_rules", m_use_mobility_rules);
+        obj.add_element("cemetery_id", m_cemetery_id);
+        obj.add_element("rng", m_rng);
     }
 
     /**
@@ -137,18 +131,30 @@ public:
     template <class IOContext>
     static IOResult<Model> deserialize(IOContext& io)
     {
-        auto obj               = io.expect_object("Model");
-        auto size              = obj.expect_element("num_agegroups", Tag<size_t>{});
-        auto locations         = obj.expect_list("locations", Tag<Location>{});
-        auto trip_list         = obj.expect_list("trips", Tag<Trip>{});
-        auto persons           = obj.expect_list("persons", Tag<Person>{});
+        auto obj                = io.expect_object("Model");
+        auto params             = obj.expect_element("parameters", Tag<Parameters>{});
+        auto persons            = obj.expect_list("persons", Tag<Person>{});
+        auto locations          = obj.expect_list("locations", Tag<Location>{});
+        auto location_types     = obj.expect_element("location_types", Tag<unsigned long>{});
+        auto trip_list          = obj.expect_element("trip_list", Tag<TripList>{});
         auto use_mobility_rules = obj.expect_element("use_mobility_rules", Tag<bool>{});
+        auto cemetery_id        = obj.expect_element("cemetery_id", Tag<LocationId>{});
+        auto rng                = obj.expect_element("rng", Tag<RandomNumberGenerator>{});
         return apply(
             io,
-            [](auto&& size_, auto&& locations_, auto&& trip_list_, auto&& persons_, auto&& use_mobility_rule_) {
-                return Model{size_, locations_, trip_list_, persons_, use_mobility_rule_};
+            [](auto&& params_, auto&& persons_, auto&& locations_, auto&& location_types_, auto&& trip_list_,
+               auto&& use_mobility_rules_, auto&& cemetery_id_, auto&& rng_) {
+                Model model{params_};
+                model.m_persons.assign(persons_.cbegin(), persons_.cend());
+                model.m_locations.assign(locations_.cbegin(), locations_.cend());
+                model.m_has_locations      = location_types_;
+                model.m_trip_list          = trip_list_;
+                model.m_use_mobility_rules = use_mobility_rules_;
+                model.m_cemetery_id        = cemetery_id_;
+                model.m_rng                = rng_;
+                return model;
             },
-            size, locations, trip_list, persons, use_mobility_rules);
+            params, persons, locations, location_types, trip_list, use_mobility_rules, cemetery_id, rng);
     }
 
     /** 
@@ -377,8 +383,9 @@ public:
     inline void change_location(PersonId person, LocationId destination, TransportMode mode = TransportMode::Unknown,
                                 const std::vector<uint32_t>& cells = {0})
     {
-        LocationId origin    = get_location(person).get_id();
-        const bool has_changed_location = mio::abm::change_location(get_person(person), get_location(destination), mode, cells);
+        LocationId origin = get_location(person).get_id();
+        const bool has_changed_location =
+            mio::abm::change_location(get_person(person), get_location(destination), mode, cells);
         // if the person has changed location, invalidate exposure caches but keep population caches valid
         if (has_changed_location) {
             m_are_exposure_caches_valid = false;

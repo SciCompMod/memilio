@@ -20,6 +20,8 @@
 #ifndef MIO_ABM_TIME_H
 #define MIO_ABM_TIME_H
 
+#include "memilio/io/auto_serialize.h"
+
 namespace mio
 {
 namespace abm
@@ -142,6 +144,12 @@ public:
         return *this;
     }
     /**@}*/
+
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("TimeSpan", NVP("seconds", m_seconds));
+    }
 
 private:
     int m_seconds; ///< The duration of time in seconds.
@@ -282,6 +290,12 @@ public:
     TimeSpan operator-(const TimePoint& p2) const
     {
         return TimeSpan{m_seconds - p2.seconds()};
+    }
+
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("TimePoint", NVP("seconds", m_seconds));
     }
 
 private:

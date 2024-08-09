@@ -482,7 +482,7 @@ details::ApplyResultT<F, T...> apply(IOContext& io, F f, const IOResult<T>&... r
     IOStatus status[] = {(rs ? IOStatus{} : rs.error())...};
     auto iter_err     = std::find_if(std::begin(status), std::end(status), [](auto& s) {
         return s.is_error();
-        });
+    });
 
     //evaluate f if all succesful
     auto result =

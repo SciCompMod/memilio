@@ -25,16 +25,48 @@
 #include "abm/virus_variant.h"
 #include "abm/vaccine.h"
 #include "abm/test_type.h"
+#include "memilio/config.h"
+#include "memilio/io/auto_serialize.h"
+#include "memilio/io/io.h"
+#include "memilio/math/time_series_functor.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/contact_matrix.h"
+
+#include <algorithm>
 #include <limits>
+#include <type_traits>
 
 namespace mio
 {
+
+template <class IOContext, class T,
+          std::enable_if_t<std::is_same_v<UniformDistribution<double>::ParamType, T>, void*> = nullptr>
+void serialize_internal(IOContext& io, const T& p)
+{
+    auto obj = io.create_object("UniformDistributionParams");
+    obj.add_element("a", p.params.a());
+    obj.add_element("b", p.params.b());
+}
+
+template <class IOContext, class T,
+          std::enable_if_t<std::is_same_v<UniformDistribution<double>::ParamType, T>, void*> = nullptr>
+IOResult<UniformDistribution<double>::ParamType> deserialize_internal(IOContext& io, Tag<T>)
+{
+    auto obj = io.expect_object("UniformDistributionParams");
+    auto a   = obj.expect_element("a", Tag<double>{});
+    auto b   = obj.expect_element("b", Tag<double>{});
+    return apply(
+        io,
+        [](auto&& a_, auto&& b_) {
+            return UniformDistribution<double>::ParamType{a_, b_};
+        },
+        a, b);
+}
+
 namespace abm
 {
 
@@ -169,6 +201,14 @@ struct ViralLoadDistributionsParameters {
     UniformDistribution<double>::ParamType viral_load_peak;
     UniformDistribution<double>::ParamType viral_load_incline;
     UniformDistribution<double>::ParamType viral_load_decline;
+
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("ViralLoadDistributionsParameters", NVP("viral_load_peak", viral_load_peak),
+                                       NVP("viral_load_incline", viral_load_incline),
+                                       NVP("viral_load_decline", viral_load_decline));
+    }
 };
 
 struct ViralLoadDistributions {
@@ -192,6 +232,14 @@ struct ViralLoadDistributions {
 struct InfectivityDistributionsParameters {
     UniformDistribution<double>::ParamType infectivity_alpha;
     UniformDistribution<double>::ParamType infectivity_beta;
+
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
+    {
+        return make_auto_serialization("InfectivityDistributionsParameters",
+                                       NVP("infectivity_alpha", infectivity_alpha),
+                                       NVP("infectivity_beta", infectivity_beta));
+    }
 };
 
 struct InfectivityDistributions {
@@ -252,19 +300,15 @@ struct AerosolTransmissionRates {
     }
 };
 
-using InputFunctionForProtectionLevel = std::function<ScalarType(ScalarType)>;
-
 /**
  * @brief Personal protection factor against #Infection% after #Infection and #Vaccination, which depends on #ExposureType,
  * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
  */
 struct InfectionProtectionFactor {
-    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<TimeSeriesFunctor<ScalarType>, ExposureType, AgeGroup, VirusVariant>;
     static auto get_default(AgeGroup size)
     {
-        return Type({ExposureType::Count, size, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
-            return 0;
-        });
+        return Type({ExposureType::Count, size, VirusVariant::Count}, TimeSeriesFunctor<ScalarType>());
     }
     static std::string name()
     {
@@ -277,12 +321,10 @@ struct InfectionProtectionFactor {
  * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
  */
 struct SeverityProtectionFactor {
-    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<TimeSeriesFunctor<ScalarType>, ExposureType, AgeGroup, VirusVariant>;
     static auto get_default(AgeGroup size)
     {
-        return Type({ExposureType::Count, size, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
-            return 0;
-        });
+        return Type({ExposureType::Count, size, VirusVariant::Count}, TimeSeriesFunctor<ScalarType>());
     }
     static std::string name()
     {
@@ -294,12 +336,10 @@ struct SeverityProtectionFactor {
  * @brief Personal protective factor against high viral load. Its value is between 0 and 1.
  */
 struct HighViralLoadProtectionFactor {
-    using Type = InputFunctionForProtectionLevel;
+    using Type = TimeSeriesFunctor<ScalarType>;
     static auto get_default()
     {
-        return Type([](ScalarType /*days*/) -> ScalarType {
-            return 0;
-        });
+        return Type();
     }
     static std::string name()
     {
@@ -316,34 +356,12 @@ struct TestParameters {
     TimeSpan required_time;
     TestType type;
 
-    /**
-      * serialize this. 
-      * @see mio::serialize
-      */
-    template <class IOContext>
-    void serialize(IOContext& io) const
+    /// This method is used by the auto-serialization feature.
+    auto auto_serialize()
     {
-        auto obj = io.create_object("TestParameters");
-        obj.add_element("Sensitivity", sensitivity);
-        obj.add_element("Specificity", specificity);
-    }
-
-    /**
-      * deserialize an object of this class.
-      * @see mio::deserialize
-      */
-    template <class IOContext>
-    static IOResult<TestParameters> deserialize(IOContext& io)
-    {
-        auto obj  = io.expect_object("TestParameters");
-        auto sens = obj.expect_element("Sensitivity", mio::Tag<UncertainValue<>>{});
-        auto spec = obj.expect_element("Specificity", mio::Tag<UncertainValue<>>{});
-        return apply(
-            io,
-            [](auto&& sens_, auto&& spec_) {
-                return TestParameters{sens_, spec_};
-            },
-            sens, spec);
+        return make_auto_serialization("TestParameters", NVP("sensitivity", sensitivity),
+                                       NVP("specificity", specificity), NVP("required_time", required_time),
+                                       NVP("test_type", type));
     }
 };
 
@@ -617,6 +635,14 @@ public:
     {
     }
 
+private:
+    Parameters(ParametersBase&& base)
+        : ParametersBase(std::move(base))
+        , m_num_groups(this->get<AgeGroupGotoWork>().size<AgeGroup>().get())
+    {
+    }
+
+public:
     /**
     * @brief Get the number of the age groups.
     */
@@ -765,6 +791,17 @@ public:
         }
 
         return false;
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Parameters> deserialize(IOContext& io)
+    {
+        BOOST_OUTCOME_TRY(auto&& base, ParametersBase::deserialize(io));
+        return success(Parameters(std::move(base)));
     }
 
 private:
