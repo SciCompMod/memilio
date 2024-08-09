@@ -155,6 +155,7 @@ private:
                     }
                 }
                 else {
+                    log_warning("changes model");
                     //person moves to other world
                     Base::m_activeness_statuses[person_index] = false;
                     person.set_location(trip.destination_type, abm::LocationId::invalid_id(),
@@ -162,6 +163,7 @@ private:
                     m_person_buffer.push_back(person_index);
                     m_are_exposure_caches_valid       = false;
                     m_is_local_population_cache_valid = false;
+                    log_warning("changes model end");
                 }
             }
             Base::m_trip_list.increase_index();
