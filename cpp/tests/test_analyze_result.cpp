@@ -487,27 +487,31 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
     auto model1           = mio::abm::Model(num_age_groups);
     auto model2           = mio::abm::Model(num_age_groups);
 
-    model1.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        0.1;
-    model1.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
+    model1.parameters
+        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.1;
+    model1.parameters
+        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
 
-    model2.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        0.2;
-    model2.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.3;
+    model2.parameters
+        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
+    model2.parameters
+        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.3;
 
     auto g1 = std::vector<mio::abm::Model>({model1, model2});
 
     model1.parameters
-        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
-    model1.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        0.3;
-    model1.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.4;
+        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
+    model1.parameters
+        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.3;
+    model1.parameters
+        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.4;
 
     model2.parameters
-        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.7;
-    model2.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        0.4;
-    model2.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.5;
+        .get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.7;
+    model2.parameters
+        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.4;
+    model2.parameters
+        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.5;
 
     auto g2 = std::vector<mio::abm::Model>({model1, model2});
 
@@ -518,48 +522,56 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
 
     auto check1 =
         ensemble_p49_params[0]
-            .parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params.a();
     auto check2 =
         ensemble_p49_params[1]
-            .parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params.a();
 
     EXPECT_EQ(check1, 0.1);
     EXPECT_EQ(check2, 0.2);
 
     auto check3 =
         ensemble_p51_params[0]
-            .parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params.a();
     auto check4 =
         ensemble_p51_params[1]
-            .parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params.a();
 
     EXPECT_EQ(check3, 0.3);
     EXPECT_EQ(check4, 0.4);
 
     auto check5 =
         ensemble_p49_params[0]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params.a();
     auto check6 =
         ensemble_p49_params[1]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params.a();
 
     EXPECT_EQ(check5, 0.2);
     EXPECT_EQ(check6, 0.3);
 
     auto check7 =
         ensemble_p51_params[0]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params.a();
     auto check8 =
         ensemble_p51_params[1]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params.a();
 
     EXPECT_EQ(check7, 0.4);
     EXPECT_EQ(check8, 0.5);
