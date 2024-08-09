@@ -136,7 +136,7 @@ private:
             auto personal_rng = PersonalRandomNumberGenerator(Base::m_rng, person);
             if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
                 if (trip.destination_model_id == Base::m_id) {
-                    auto& target_location = get_location(trip.destination);
+                    auto& target_location = Base::get_location(trip.destination);
                     if (Base::m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
                         person.apply_mask_intervention(personal_rng, target_location);
                         Base::change_location(person_index, target_location.get_id(), trip.trip_mode);
