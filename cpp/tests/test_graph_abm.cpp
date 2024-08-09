@@ -86,16 +86,16 @@ TEST(TestGraphAbm, test_apply_mobility)
     EXPECT_EQ(work_1.get_model_id(), 1);
     EXPECT_EQ(work_2.get_model_id(), 2);
 
-    auto p1_id = model1.add_person(home_id, mio::AgeGroup(0));
-    auto p2_id = model1.add_person(home_id, mio::AgeGroup(0));
-    //auto p2_index = model1.get_person_index(p2_id);
-    auto p3_id = model1.add_person(home_id, mio::AgeGroup(1));
-    auto p4_id = model1.add_person(home_id, mio::AgeGroup(1));
-    //auto p4_index = model1.get_person_index(p4_id);
-    auto& p1 = model1.get_person(p1_id);
-    auto& p2 = model1.get_person(p2_id);
-    auto& p3 = model1.get_person(p3_id);
-    auto& p4 = model1.get_person(p4_id);
+    auto p1_id    = model1.add_person(home_id, mio::AgeGroup(0));
+    auto p2_id    = model1.add_person(home_id, mio::AgeGroup(0));
+    auto p2_index = model1.get_person_index(p2_id);
+    auto p3_id    = model1.add_person(home_id, mio::AgeGroup(1));
+    auto p4_id    = model1.add_person(home_id, mio::AgeGroup(1));
+    auto p4_index = model1.get_person_index(p4_id);
+    auto& p1      = model1.get_person(p1_id);
+    auto& p2      = model1.get_person(p2_id);
+    auto& p3      = model1.get_person(p3_id);
+    auto& p4      = model1.get_person(p4_id);
     p1.set_assigned_location(work_1.get_type(), work_1.get_id(), work_1.get_model_id());
     p2.set_assigned_location(work_2.get_type(), work_2.get_id(), work_2.get_model_id());
     p1.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
@@ -122,10 +122,10 @@ TEST(TestGraphAbm, test_apply_mobility)
     node1.evolve(t, dt);
     node2.evolve(t, dt);
 
-    // EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 0);
-    // EXPECT_EQ(node1.get_simulation().get_model().get_persons().size(), 4);
-    // EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p2_index], false);
-    // EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p4_index], false);
+    EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 0);
+    EXPECT_EQ(node1.get_simulation().get_model().get_persons().size(), 4);
+    EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p2_index], false);
+    EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p4_index], false);
 
     // mio::ABMMobilityEdge<MockHistory> edge;
     // edge.apply_mobility(node1, node2, t);
