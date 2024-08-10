@@ -22,6 +22,7 @@
 #include "pybind_util.h"
 #include "utils/parameter_set.h"
 #include "compartments/simulation.h"
+#include "compartments/flow_simulation.h"
 #include "compartments/compartmentalmodel.h"
 #include "mobility/graph_simulation.h"
 #include "mobility/metapopulation_mobility_instant.h"
@@ -267,22 +268,16 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         .def(py::init<int>(), py::arg("num_agegroups"));
 
     pymio::bind_Simulation<mio::osecirvvs::Simulation<>>(m, "Simulation");
+    pymio::bind_Flow_Simulation<mio::osecirvvs::Simulation<double, mio::FlowSimulation<double, mio::osecirvvs::Model<double>>>>(m, "FlowSimulation");
 
     m.def(
-        "simulate",
-        [](double t0, double tmax, double dt, const mio::osecirvvs::Model<double>& model) {
-            return mio::osecirvvs::simulate(t0, tmax, dt, model);
-        },
-        "Simulates an ODE SECIRVVS model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
-        py::arg("model"));
+        "simulate", &mio::osecirvvs::simulate<double>, "Simulates an ODE SECIRVVS model from t0 to tmax.", 
+        py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
 
     m.def(
-        "simulate_flows",
-        [](double t0, double tmax, double dt, const mio::osecirvvs::Model<double>& model) {
-            return mio::osecirvvs::simulate_flows(t0, tmax, dt, model);
-        },
-        "Simulates an ODE SECIRVVS model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
-        py::arg("model"));
+        "simulate_flows", &mio::osecirvvs::simulate_flows<double>, "Simulates an ODE SECIRVVS model with flows from t0 to tmax.", 
+        py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
+
 
     pymio::bind_ModelNode<mio::osecirvvs::Model<double>>(m, "ModelNode");
     pymio::bind_SimulationNode<mio::osecirvvs::Simulation<>>(m, "SimulationNode");

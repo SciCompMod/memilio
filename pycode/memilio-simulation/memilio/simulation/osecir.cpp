@@ -219,22 +219,15 @@ PYBIND11_MODULE(_simulation_osecir, m)
         .def(py::init<int>(), py::arg("num_agegroups"));
 
     pymio::bind_Simulation<mio::osecir::Simulation<>>(m, "Simulation");
+    pymio::bind_Flow_Simulation<mio::osecir::Simulation<double, mio::FlowSimulation<double, mio::osecir::Model<double>>>>(m, "FlowSimulation");
 
     m.def(
-        "simulate",
-        [](double t0, double tmax, double dt, const mio::osecir::Model<double>& model) {
-            return mio::osecir::simulate(t0, tmax, dt, model);
-        },
-        "Simulates an ODE SECIHURD model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
-        py::arg("model"));
+        "simulate", &mio::osecir::simulate<double>, "Simulates an ODE SECIHURD model from t0 to tmax.", 
+        py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
 
     m.def(
-        "simulate_flows",
-        [](double t0, double tmax, double dt, const mio::osecir::Model<double>& model) {
-            return mio::osecir::simulate_flows<double>(t0, tmax, dt, model);
-        },
-        "Simulates an ODE SECIHURD model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
-        py::arg("model"));
+        "simulate_flows", &mio::osecir::simulate_flows<double>, "Simulates an ODE SECIHURD model with flows from t0 to tmax.", 
+        py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
 
     pymio::bind_ModelNode<mio::osecir::Model<double>>(m, "ModelNode");
     pymio::bind_SimulationNode<mio::osecir::Simulation<>>(m, "SimulationNode");
