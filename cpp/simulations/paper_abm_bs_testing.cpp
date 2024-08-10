@@ -1053,14 +1053,14 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
     double rmse_conf = 0;
     for (size_t i = 0; i < real_data_dead_vec.size(); i++) {
         rmse_dead += pow(real_data_dead_vec[i] - sim_data_vec_dead[i], 2);
-        rmse_icu += pow((int)(sim_data_vec_icu[i] * 0.45) - real_data_icu_vec[i], 2);
+        rmse_icu += pow((int)(sim_data_vec_icu[i] * 0.47) - real_data_icu_vec[i], 2);
         rmse_conf += pow(real_data_conf_vec[i] - sim_data_vec_conf[i], 2);
     }
     rmse_dead = rmse_dead / real_data_dead_vec.size();
     rmse_icu  = rmse_icu / real_data_icu_vec.size();
     rmse_conf = rmse_conf / real_data_conf_vec.size();
 
-    return rmse_dead + rmse_icu + (0.01 * 0.01 * rmse_conf);
+    return rmse_dead + rmse_icu + (0.01 * 0.01 * 0.01 * rmse_conf);
 }
 
 /**
@@ -1190,6 +1190,14 @@ void create_easter_social_event(mio::abm::World& world, double perc_easter_event
             world.get_persons()[person_per_age_group[j].back()].set_goes_to_easter(true);
             person_per_age_group[j].pop_back();
 
+            if (j == 3) {
+                if (person_per_age_group[j].empty()) {
+                    continue;
+                }
+                world.get_persons()[person_per_age_group[j].back()].set_assigned_location(easter_event);
+                world.get_persons()[person_per_age_group[j].back()].set_goes_to_easter(true);
+                person_per_age_group[j].pop_back();
+            }
             if (j == 4) {
                 if (person_per_age_group[j].empty()) {
                     continue;
@@ -1775,7 +1783,7 @@ for (size_t i = 0; i < grid_search_rank.size(); i++) {
     // 3: testing prob symptomatic
     // 4: perc have to test if npi active
     auto viral_shedding_rate               = params[0];
-    auto perc_easter_event                 = 0.5;
+    auto perc_easter_event                 = 0.55;
     auto dark_figure                       = params[1];
     auto contact_rate_ssc                  = params[2];
     auto masks                             = 0.45;
@@ -2289,8 +2297,8 @@ int main(int argc, char** argv)
     rank      = 0;
 #endif
 
-    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
@@ -2345,8 +2353,8 @@ int main(int argc, char** argv)
         // 3: testing prob symptomatic
         // 4: perc have to test if npi active
 
-        // std::vector<std::pair<double, double>> grid_boundaries = {{3.0, 8.0}, {1.0, 4.0}, {0.02, 0.1}, {0.005, 0.035}};
-        std::vector<double> grid_boundaries = {5.8, 0.6, 2.2};
+        std::vector<std::pair<double, double>> grid_boundaries = {{1.5, 4.0}, {1.0, 4.0}, {0.2, 0.5}};
+        // std::vector<double> grid_boundaries = {1.5, 0.6, 2.2};
         // std::vector<int> points_per_dim = {2, 2, 2, 5};
         std::vector<int> points_per_dim = {9, 9, 9};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
