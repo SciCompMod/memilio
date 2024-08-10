@@ -552,16 +552,19 @@ def infer_positive_tests(path):
 
     # we need the real data from the json file cases_all_county_age_repdate_ma7.json
     df_abb = pd.read_json(
-        path+"/../pydata/Germany/cases_infected_county_repdate_ma7.json")
+        path+"/../pydata/Germany/cases_all_county_repdate_ma7.json")
     # we just need the columns cases and date
     df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
     # we need just the dates bewteen 2021-03-01 and 2021-06-01
-    df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') &
+    df_abb = df_abb[(df_abb['Date'] >= '2021-02-28') &
                     (df_abb['Date'] <= '2021-06-01')]
     # we just take the first 90 days
-    df_abb = df_abb[0:90]
+    df_abb= df_abb[df_abb['ID_County'] == 3101]
+    df_abb = df_abb[0:91]
+    
     # we need the amount of new positive tests each day insetad of cumulative
     df_abb['Confirmed'] = df_abb['Confirmed'].diff()
+    df_abb['Confirmed'] = df_abb['Confirmed']
   
     sensitivity = 0.69
     specificity = 0.99
@@ -573,7 +576,7 @@ def infer_positive_tests(path):
     for r_sns in np.linspace(1, 50, 100):
         for lt_sympt in np.linspace(0.005, 0.1, 500):
             total_positive_tests, inferred_positive_tests_sympt, inferred_positive_tests_asympt = calc_positive_tests_overall(total_50, sensitivity, specificity, r_sns, lt_sympt)
-            rmse = np.sqrt(((df_abb['Confirmed'] - total_positive_tests)**2).mean())
+            rmse = np.sqrt(((df_abb['Confirmed'][1:91] - total_positive_tests)**2).mean())
             if rmse < best_rmse:
                 best_rmse = rmse
                 best_r_sns = r_sns
@@ -619,7 +622,7 @@ def infer_positive_tests(path):
     plt.plot(xx, inferred_positive_tests_sympt, color='tab:red')
     plt.plot(xx, inferred_positive_tests_asympt, color='tab:blue')
     plt.plot(xx, total_positive_tests, color='tab:green')
-    plt.plot(xx, df_abb['Confirmed'], color='tab:orange')
+    plt.plot(xx, df_abb['Confirmed'][1:91], color='tab:orange')
     plt.xlabel('time (days)')
     plt.ylabel('Number of positive tests')
     plt.legend(['Assumed positive from Symptomatic', 'Assumed positive from Asymptomatic',
