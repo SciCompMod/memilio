@@ -34,7 +34,7 @@ if __name__ == "__main__":
     file_path = os.path.dirname(os.path.abspath(__file__))
     package_dir = os.path.abspath(os.path.join(
         file_path, "../../memilio-simulation-stubs"))
-    output_dir = os.path.join(package_dir, "memilio-stubs/simulation")
+    output_dir = os.path.join(package_dir, "memilio-stubs/")
     output_module_dir = os.path.join(output_dir, 'memilio')
 
     # create folders, if they do not exist
@@ -46,24 +46,24 @@ if __name__ == "__main__":
 
     # get all model modules from memilio.simulation
     # if package structure changes this needs to be adjusted
-    models = [m.name for m in pkgutil.iter_modules(
-        memilio.simulation.__path__)]
+    # models = [m.name for m in pkgutil.iter_modules(
+    #     memilio.simulation.__path__)]
 
     # generate stubs and moce them into correct folder with right name
     # memilio-stubs/simulation module needs same structure as memilio/simulation
     subprocess.check_call(
-        [python_interpreter, '-m', 'pybind11_stubgen', '--ignore-all-errors', '-o', output_dir, 'memilio._simulation'])
-    os.rename(os.path.join(output_module_dir, '_simulation.pyi'),
-              os.path.join(output_dir, '__init__.pyi'))
+        [python_interpreter, '-m', 'pybind11_stubgen', '--ignore-all-errors', '-o', output_dir, 'memilio.simulation'])
+    # os.rename(os.path.join(output_module_dir, 'simulation.pyi'),
+    #           os.path.join(output_dir, '__init__.pyi'))
 
-    for model in models:
-        module_name = "memilio._simulation_" + model
-        subprocess.check_call(
-            [python_interpreter, '-m', 'pybind11_stubgen', '--ignore-all-errors', '-o', output_dir, module_name])
-        os.rename(os.path.join(output_module_dir, '_simulation_' + model + '.pyi'),
-                  os.path.join(output_dir, model + '.pyi'))
+    # for model in models:
+    #     module_name = "memilio._simulation_" + model
+    #     subprocess.check_call(
+    #         [python_interpreter, '-m', 'pybind11_stubgen', '--ignore-all-errors', '-o', output_dir, module_name])
+    #     os.rename(os.path.join(output_module_dir, '_simulation_' + model + '.pyi'),
+    #               os.path.join(output_dir, model + '.pyi'))
 
-    os.rmdir(output_module_dir)
+    # os.rmdir(output_module_dir)
 
     # create setup.py and install package
     with open(os.path.join(package_dir, "setup.py"), "w") as setup_file:

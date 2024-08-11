@@ -46,15 +46,32 @@ function(add_pymio_module target_name)
     install(TARGETS ${target_name} LIBRARY DESTINATION memilio)
 endfunction()
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+#set(CMAKE_VERBOSE_MAKEFILE ON)
 
-# build python extensions
-add_pymio_module(_simulation_abm
-    LINKED_LIBRARIES memilio abm
-    SOURCES memilio/simulation/abm.cpp
-)
+# # build python extensions
+pybind11_add_module(osir_obj MODULE memilio/simulation/models/osir.cpp)
+target_link_libraries(osir_obj PRIVATE memilio ode_sir pybind11::module)
+target_include_directories(osir_obj PRIVATE memilio/simulation)
 
-add_pymio_module(_simulation
-    LINKED_LIBRARIES memilio
+add_library(oseir_obj OBJECT memilio/simulation/models/oseir.cpp)
+target_link_libraries(oseir_obj PRIVATE memilio ode_seir pybind11::module)
+target_include_directories(oseir_obj PRIVATE memilio/simulation)
+
+add_library(osecir_obj OBJECT memilio/simulation/models/osecir.cpp)
+target_link_libraries(osecir_obj PRIVATE memilio ode_secir pybind11::module)
+target_include_directories(osecir_obj PRIVATE memilio/simulation)
+
+# add_library(osecirvvs_obj OBJECT memilio/simulation/models/osecirvvs.cpp)
+# target_link_libraries(osecirvvs_obj PRIVATE memilio ode_secirvvs pybind11::module)
+# target_include_directories(osecirvvs_obj PRIVATE memilio/simulation)
+
+# add_library(abm_obj OBJECT memilio/simulation/models/abm.cpp)
+# target_link_libraries(abm_obj PRIVATE memilio abm pybind11::module)
+# target_include_directories(abm_obj PRIVATE memilio/simulation)
+
+add_pymio_module(simulation
+    LINKED_LIBRARIES memilio ode_sir ode_seir ode_secir # ode_secirvvs # abm
     SOURCES memilio/simulation/simulation.cpp
     memilio/simulation/epidemiology/damping_sampling.cpp
     memilio/simulation/epidemiology/uncertain_matrix.cpp
@@ -64,24 +81,13 @@ add_pymio_module(_simulation
     memilio/simulation/utils/time_series.cpp
     memilio/simulation/utils/parameter_distributions.cpp
     memilio/simulation/utils/uncertain_value.cpp
-)
-
-add_pymio_module(_simulation_osir
-    LINKED_LIBRARIES memilio ode_sir
-    SOURCES memilio/simulation/osir.cpp
-)
-
-add_pymio_module(_simulation_oseir
-    LINKED_LIBRARIES memilio ode_seir
-    SOURCES memilio/simulation/oseir.cpp
-)
-
-add_pymio_module(_simulation_osecir
-    LINKED_LIBRARIES memilio ode_secir
-    SOURCES memilio/simulation/osecir.cpp
-)
-
-add_pymio_module(_simulation_osecirvvs
-    LINKED_LIBRARIES memilio ode_secirvvs
-    SOURCES memilio/simulation/osecirvvs.cpp
+    # memilio/simulation/models/osir.cpp
+    # memilio/simulation/models/oseir.cpp
+    # memilio/simulation/models/osecir.cpp
+    # memilio/simulation/models/osecirvvs.cpp
+    $<TARGET_OBJECTS:osir_obj>
+    $<TARGET_OBJECTS:oseir_obj>
+    $<TARGET_OBJECTS:osecir_obj>
+    # $<TARGET_OBJECTS:osecirvvs_obj>
+    # $<TARGET_OBJECTS:abm_obj>
 )

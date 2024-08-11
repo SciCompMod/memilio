@@ -18,42 +18,9 @@
 * limitations under the License.
 */
 
-//Includes from pymio
-#include "pybind_util.h"
-#include "utils/index.h"
-#include "utils/custom_index_array.h"
-#include "utils/parameter_set.h"
-#include "compartments/simulation.h"
-#include "compartments/compartmentalmodel.h"
-#include "epidemiology/populations.h"
+#include "osir.h"
 
-//Includes from MEmilio
-#include "ode_sir/model.h"
-#include "ode_sir/infection_state.h"
-#include "memilio/data/analyze_result.h"
-
-#include "pybind11/pybind11.h"
-
-namespace py = pybind11;
-
-namespace pymio
-{
-//specialization of pretty_name
-template <>
-std::string pretty_name<mio::osir::InfectionState>()
-{
-    return "InfectionState";
-}
-
-template <>
-std::string pretty_name<mio::AgeGroup>()
-{
-    return "AgeGroup";
-}
-
-} // namespace pymio
-
-PYBIND11_MODULE(_simulation_osir, m)
+void bind_osir(py::module_& m)
 {
     m.def("interpolate_simulation_result",
           static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
@@ -96,5 +63,4 @@ PYBIND11_MODULE(_simulation_osir, m)
         },
         "Simulates an ODE SIR model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
-    m.attr("__version__") = "dev";
 }

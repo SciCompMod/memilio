@@ -18,36 +18,7 @@
 * limitations under the License.
 */
 
-//Includes from pymio
-#include "memilio/config.h"
-#include "pybind_util.h"
-#include "compartments/simulation.h"
-#include "compartments/flow_simulation.h"
-#include "compartments/compartmentalmodel.h"
-#include "epidemiology/populations.h"
-#include "utils/custom_index_array.h"
-#include "utils/parameter_set.h"
-#include "utils/index.h"
-#include "mobility/graph_simulation.h"
-#include "mobility/metapopulation_mobility_instant.h"
-#include "io/mobility_io.h"
-#include "io/result_io.h"
-
-//Includes from MEmilio
-#include "ode_secir/model.h"
-#include "ode_secir/analyze_result.h"
-#include "ode_secir/parameter_space.h"
-#include "ode_secir/parameters_io.h"
-#include "memilio/compartments/parameter_studies.h"
-#include "memilio/data/analyze_result.h"
-#include "memilio/mobility/graph.h"
-#include "memilio/io/mobility_io.h"
-#include "memilio/io/epi_data.h"
-
-#include "pybind11/pybind11.h"
-#include "pybind11/stl_bind.h"
-#include "Eigen/Core"
-#include <vector>
+#include "models/osecir.h"
 
 namespace py = pybind11;
 
@@ -152,25 +123,7 @@ using MobilityGraph = mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>,
 
 PYBIND11_MAKE_OPAQUE(std::vector<MobilityGraph>);
 
-namespace pymio
-{
-
-//specialization of pretty_name
-template <>
-std::string pretty_name<mio::osecir::InfectionState>()
-{
-    return "InfectionState";
-}
-
-template <>
-std::string pretty_name<mio::AgeGroup>()
-{
-    return "AgeGroup";
-}
-
-} // namespace pymio
-
-PYBIND11_MODULE(_simulation_osecir, m)
+void bind_osecir(py::module_& m)
 {
     // https://github.com/pybind/pybind11/issues/1153
     m.def("interpolate_simulation_result",
@@ -289,7 +242,7 @@ PYBIND11_MODULE(_simulation_osecir, m)
            mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
            size_t contact_locations_size) {
             auto mobile_comp = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
-                                mio::osecir::InfectionState::InfectedNoSymptoms,
+                                   mio::osecir::InfectionState::InfectedNoSymptoms,
                                 mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
             auto weights     = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
             auto result = mio::set_edges<ContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
@@ -323,5 +276,4 @@ PYBIND11_MODULE(_simulation_osecir, m)
 
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MobilityGraph>);
 
-    m.attr("__version__") = "dev";
 }

@@ -20,11 +20,13 @@
 
 //Includes from pymio
 #include "pybind_util.h"
+#include "epidemiology/age_group.h"
 #include "epidemiology/damping.h"
 #include "epidemiology/contact_matrix.h"
 #include "epidemiology/damping_sampling.h"
 #include "epidemiology/uncertain_matrix.h"
 #include "epidemiology/dynamic_npis.h"
+#include "epidemiology/simulation_day.h"
 #include "mobility/metapopulation_mobility_instant.h"
 #include "utils/date.h"
 #include "utils/logging.h"
@@ -33,13 +35,17 @@
 #include "utils/uncertain_value.h"
 #include "utils/index.h"
 #include "utils/custom_index_array.h"
+#include "models/osir.h"
+#include "models/oseir.h"
+#include "models/osecir.h"
+#include "models/osecirvvs.h"
+// #include "models/abm.h"
 
 //Includes from MEmilio
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/date.h"
 #include "memilio/geography/regions.h"
 #include "memilio/epidemiology/contact_matrix.h"
-#include "memilio/epidemiology/simulation_day.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/io/epi_data.h"
 
@@ -47,29 +53,15 @@
 
 namespace py = pybind11;
 
-namespace pymio
+namespace
 {
 
-template <>
-std::string pretty_name<mio::AgeGroup>()
-{
-    return "AgeGroup";
-}
-
-template <>
-std::string pretty_name<mio::SimulationDay>()
-{
-    return "SimulationDay";
-}
-
-} // namespace pymio
-
-PYBIND11_MODULE(_simulation, m)
+void bind_simulation(py::module_& m)
 {
     pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>(m, "AgeGroupArray");
     pymio::bind_class<mio::AgeGroup, pymio::EnablePickling::Required, mio::Index<mio::AgeGroup>>(m, "AgeGroup")
         .def(py::init<size_t>());
-
+    
     pymio::bind_CustomIndexArray<double, mio::AgeGroup, mio::SimulationDay>(m, "AgeGroupSimulationDayArray");
     pymio::bind_class<mio::SimulationDay, pymio::EnablePickling::Never, mio::Index<mio::SimulationDay>>(m,
                                                                                                         "SimulationDay")
@@ -168,4 +160,26 @@ PYBIND11_MODULE(_simulation, m)
     });
 
     m.attr("__version__") = "dev";
+}
+
+} // namespace
+
+PYBIND11_MODULE(simulation, m_simulation)
+{
+   bind_simulation(m_simulation);
+
+   auto m_osir = m_simulation.def_submodule("osir");
+   bind_osir(m_osir);
+
+   py::module m_oseir = m_simulation.def_submodule("oseir");
+   bind_oseir(m_oseir);
+
+   py::module m_osecir = m_simulation.def_submodule("osecir");
+   bind_osecir(m_osecir);
+
+//    py::module m_osecirvvs = m_simulation.def_submodule("osecirvvs");
+//    bind_osecirvvs(m_osecirvvs);
+
+//    py::module abm = m.def_submodule("abm");
+//    bind_abm(m);
 }

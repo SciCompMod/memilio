@@ -18,30 +18,7 @@
 * limitations under the License.
 */
 
-//Includes from pymio
-#include "pybind_util.h"
-#include "utils/parameter_set.h"
-#include "compartments/simulation.h"
-#include "compartments/compartmentalmodel.h"
-#include "mobility/graph_simulation.h"
-#include "mobility/metapopulation_mobility_instant.h"
-#include "epidemiology/populations.h"
-#include "io/mobility_io.h"
-#include "io/result_io.h"
-
-//Includes from MEmilio
-#include "ode_secirvvs/model.h"
-#include "ode_secirvvs/infection_state.h"
-#include "ode_secirvvs/analyze_result.h"
-#include "ode_secirvvs/parameter_space.h"
-#include "ode_secirvvs/parameters_io.h"
-#include "memilio/data/analyze_result.h"
-#include "memilio/compartments/flow_simulation.h"
-#include "memilio/compartments/parameter_studies.h"
-
-#include "pybind11/pybind11.h"
-#include "pybind11/stl_bind.h"
-#include <vector>
+#include "models/osecirvvs.h"
 
 namespace py = pybind11;
 
@@ -147,31 +124,14 @@ enum class ContactLocation
     Count,
 };
 
-using MobilityGraph = mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>;
 
 } // namespace
 
-namespace pymio
+void bind_osecirvvs(py::module_& m)
 {
-//specialization of pretty_name
-template <>
-std::string pretty_name<mio::AgeGroup>()
-{
-    return "AgeGroup";
-}
+    using MobilityGraph = mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>;
+    PYBIND11_MAKE_OPAQUE(std::vector<MobilityGraph>);
 
-template <>
-std::string pretty_name<mio::osecirvvs::InfectionState>()
-{
-    return "InfectionState";
-}
-
-} // namespace pymio
-
-PYBIND11_MAKE_OPAQUE(std::vector<MobilityGraph>);
-
-PYBIND11_MODULE(_simulation_osecirvvs, m)
-{
     m.def("interpolate_simulation_result",
           static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
               &mio::interpolate_simulation_result),
@@ -373,5 +333,4 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
 
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MobilityGraph>);
 
-    m.attr("__version__") = "dev";
 }

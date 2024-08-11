@@ -36,7 +36,7 @@
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(_simulation_abm, m)
+void bind_abm(py::module_& m)
 {
     pymio::iterable_enum<mio::abm::InfectionState>(m, "InfectionState")
         .value("Susceptible", mio::abm::InfectionState::Susceptible)
