@@ -677,7 +677,23 @@ def plot_cumulative_detected_infections(path):
     total_50 = total_50[::24]
     total_50 = np.floor(total_50[0:90].flatten())
     # we smooth this with a gaussian filter
-    
+
+    f_p95 = h5py.File(
+        path+"/cumulative_detected_infections/p95/Results.h5", 'r')
+    p95_bs = f_p95['0']
+    total_95 = p95_bs['Total'][()]
+    total_95 = total_95[::24]
+    total_95 = np.floor(total_95[0:90].flatten())
+
+    f_p05 = h5py.File(
+        path+"/cumulative_detected_infections/p95/Results.h5", 'r')
+    p05_bs = f_p05['0']
+    total_05 = p05_bs['Total'][()]
+    total_05 = total_05[::24]
+    total_05 = np.floor(total_05[0:90].flatten())
+
+
+    # we smooth this with a gaussian filter
     time = p50_bs['Time'][()]
     time = time[::24]
     time = time[0:90]
@@ -694,8 +710,10 @@ def plot_cumulative_detected_infections(path):
     total_50 = gaussian_filter1d(total_50.flatten(), sigma=2, mode='nearest')
     # we plot this
     # we plot the tests positive and the real cases
-    plt.plot(time, total_50, color='tab:red')
-    plt.plot(time, df_abb, color='tab:blue')
+    plt.plot(time, total_50, color='tab:blue')
+    plt.plot(time, df_abb, color='tab:red')
+    plt.fill_between(time, total_95, total_05,
+                            alpha=0.5, color='tab:blue')
     plt.xlabel('time (days)')
     plt.ylabel('Cumulative Amount of detected infections')
     plt.title('Cumulative detected infections')
@@ -711,8 +729,8 @@ def plot_cumulative_detected_infections(path):
     fig.set_figwidth(20)
     fig.set_figheight(9)
     # we plot the tests positive and the real cases
-    ax.plot(time[0:89], total_50_diff, color='tab:red')
-    ax.plot(time[0:89], df_abb_diff, color='tab:blue')
+    ax.plot(time[0:89], total_50_diff, color='tab:blue')
+    ax.plot(time[0:89], df_abb_diff, color='tab:red')
     ax.set_xlabel('time (days)')
     ax.set_ylabel('Number of new detected infections')
     ax.title.set_text('New detected infections')
@@ -763,8 +781,8 @@ def plot_positive_and_done_test(path):
     plt.gca().set_xticklabels(xx[::5])
     plt.gcf().autofmt_xdate()
 
-    plt.plot(xx, total_50_positive, color='tab:red')
-    plt.plot(xx, total_50_done, color='tab:blue')
+    plt.plot(xx, total_50_positive, color='tab:green')
+    plt.plot(xx, total_50_done, color='tab:red')
     plt.xlabel('time (days)')
     plt.ylabel('Number of tests')
     plt.legend(['Positive tests', 'Done tests'])
