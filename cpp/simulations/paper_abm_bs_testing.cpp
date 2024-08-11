@@ -1691,9 +1691,9 @@ for (size_t i = 0; i < grid_search_rank.size(); i++) {
 
     printf("I am Thread %d\n", omp_get_thread_num());
 
-    const double viral_shedding_rate        = 1.9;
-    const double dark_figure                = 4.0;
-    const double contact_red_lockdown       = 0.70;
+    const double viral_shedding_rate        = params[0];
+    const double dark_figure                = params[1];
+    const double contact_red_lockdown       = params[2];
     const double damping_community_lockdown = 0.58;
     const double testing_probability_sympt  = 0.028;
 
@@ -1904,7 +1904,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     const auto seasonality_may   = 0.85;
 
     const double masks                            = 0.55;
-    const double after_lockdown_contact_reduction = 0.8;
+    const double after_lockdown_contact_reduction = 0.7;
     const double ratio_asympt_to_sympt            = 20.0;
     const double perc_easter_event                = 0.5;
 
@@ -2222,8 +2222,8 @@ int main(int argc, char** argv)
     rank      = 0;
 #endif
 
-    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
     std::string precomputed_dir = input_dir + "/results";
@@ -2278,10 +2278,10 @@ int main(int argc, char** argv)
         // 3: testing prob symptomatic
         // 4: perc have to test if npi active
 
-        std::vector<std::pair<double, double>> grid_boundaries = {{1.5, 4.0}, {1.0, 4.0}, {0.2, 0.5}};
-        // std::vector<double> grid_boundaries = {1.5, 0.6, 2.2};
+        std::vector<std::pair<double, double>> grid_boundaries = {{1.5, 2.5}, {1.0, 6.0}, {0.2, 0.8}};
+        // std::vector<double> grid_boundaries = {1.9, 4.0, 0.7};
         // std::vector<int> points_per_dim = {2, 2, 2, 5};
-        std::vector<int> points_per_dim = {9, 9, 9};
+        std::vector<int> points_per_dim = {13, 13, 13};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
         auto result                     = run_with_grid_search(input_dir, result_dir, num_runs, grid);
     }
