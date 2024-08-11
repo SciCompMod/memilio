@@ -33,13 +33,13 @@ def plot_infections_loc_types_avarage(path):
 
     # 25-percentile
     f_p25 = h5py.File(
-        path+"/infection_per_location_type_per_age_group/p25/Results.h5", 'r')
+        path+"/infection_per_location_type_per_age_group/p05/Results.h5", 'r')
     p25_bs = f_p25['0']
     total_25 = p25_bs['Total'][()]
 
     # 75-percentile
     f_p75 = h5py.File(
-        path + "/infection_per_location_type_per_age_group/p75/Results.h5", 'r')
+        path + "/infection_per_location_type_per_age_group/p95/Results.h5", 'r')
     p75_bs = f_p75['0']
     total_75 = p75_bs['Total'][()]
 
@@ -97,12 +97,12 @@ def plot_infection_states_results(path):
     total_50 = p50_bs['Total'][()]
     # 25-percentile
     f_p25 = h5py.File(
-        path+"/infection_state_per_age_group/p25/Results.h5", 'r')
+        path+"/infection_state_per_age_group/p05/Results.h5", 'r')
     p25_bs = f_p25['0']
     total_25 = p25_bs['Total'][()]
     # 75-percentile
     f_p75 = h5py.File(
-        path + "/infection_state_per_age_group/p75/Results.h5", 'r')
+        path + "/infection_state_per_age_group/p95/Results.h5", 'r')
     p75_bs = f_p75['0']
     total_75 = p75_bs['Total'][()]
 
@@ -251,11 +251,11 @@ def plot_dead(path):
 
     # do the same for 25 and 75 percentile
     f_p25 = h5py.File(
-        path+"/infection_state_per_age_group/p25/Results.h5", 'r')
+        path+"/infection_state_per_age_group/p05/Results.h5", 'r')
     p25_bs = f_p25['0']
 
     f_p75 = h5py.File(
-        path+"/infection_state_per_age_group/p75/Results.h5", 'r')
+        path+"/infection_state_per_age_group/p95/Results.h5", 'r')
     p75_bs = f_p75['0']
 
     age_group_access = ['Group1', 'Group2', 'Group3',
@@ -347,7 +347,7 @@ def plot_icu(path):
 
      # we plot this against this the Amount of persons in the ICU from our model
     f_p75 = h5py.File(
-        path+"/infection_state_per_age_group/p75/Results.h5", 'r')
+        path+"/infection_state_per_age_group/p95/Results.h5", 'r')
     p75_bs = f_p75['0']
     total_75 = p75_bs['Total'][()]
     # we need just every 24th value
@@ -357,7 +357,7 @@ def plot_icu(path):
 
     # same with 25 percentile
     f_p25 = h5py.File(
-        path+"/infection_state_per_age_group/p25/Results.h5", 'r')
+        path+"/infection_state_per_age_group/p05/Results.h5", 'r')
     p25_bs = f_p25['0']
     total_25 = p25_bs['Total'][()]
     # we need just every 24th value
