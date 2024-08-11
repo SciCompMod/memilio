@@ -18,7 +18,31 @@
 * limitations under the License.
 */
 
-#include "models/osecirvvs.h"
+//Includes from pymio
+#include "pybind_util.h"
+#include "utils/parameter_set.h"
+#include "compartments/simulation.h"
+#include "compartments/compartmentalmodel.h"
+#include "mobility/graph_simulation.h"
+#include "mobility/metapopulation_mobility_instant.h"
+#include "epidemiology/age_group.h"
+#include "epidemiology/populations.h"
+#include "io/mobility_io.h"
+#include "io/result_io.h"
+
+//Includes from MEmilio
+#include "ode_secirvvs/model.h"
+#include "ode_secirvvs/infection_state.h"
+#include "ode_secirvvs/analyze_result.h"
+#include "ode_secirvvs/parameter_space.h"
+#include "ode_secirvvs/parameters_io.h"
+#include "memilio/data/analyze_result.h"
+#include "memilio/compartments/flow_simulation.h"
+#include "memilio/compartments/parameter_studies.h"
+
+#include "pybind11/pybind11.h"
+#include "pybind11/stl_bind.h"
+#include <vector>
 
 namespace py = pybind11;
 
@@ -27,7 +51,7 @@ namespace
 //select only the first node of the graph of each run, used for parameterstudy with single nodes
 template <class Sim>
 std::vector<Sim>
-filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::MigrationEdge<double>>>&& graph_results)
+filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::MobilityEdge<double>>>&& graph_results)
 {
     std::vector<Sim> results;
     results.reserve(graph_results.size());
@@ -46,7 +70,7 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
     pymio::bind_class<mio::ParameterStudy<Simulation>, pymio::EnablePickling::Never>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("num_runs"))
-        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters<double>>&, double, double,
+        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MobilityParameters<double>>&, double, double,
                       double, size_t>(),
              py::arg("model_graph"), py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
         .def_property("num_runs", &mio::ParameterStudy<Simulation>::get_num_runs,
@@ -65,7 +89,7 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
         .def(
             "run",
             [](mio::ParameterStudy<Simulation>& self,
-               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge<double>>, size_t)>
+               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MobilityEdge<double>>, size_t)>
                    handle_result,
                bool variant_high) {
                 self.run(
@@ -124,14 +148,26 @@ enum class ContactLocation
     Count,
 };
 
+using MobilityGraph = mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MobilityEdge<double>>;
 
 } // namespace
 
+
+namespace pymio
+{
+//specialization of pretty_name
+template <>
+inline std::string pretty_name<mio::osecirvvs::InfectionState>()
+{
+    return "InfectionState";
+}
+
+} // namespace pymio
+
+PYBIND11_MAKE_OPAQUE(std::vector<MobilityGraph>);
+
 void bind_osecirvvs(py::module_& m)
 {
-    using MobilityGraph = mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MigrationEdge<double>>;
-    PYBIND11_MAKE_OPAQUE(std::vector<MobilityGraph>);
-
     m.def("interpolate_simulation_result",
           static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
               &mio::interpolate_simulation_result),

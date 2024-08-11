@@ -35,11 +35,6 @@
 #include "utils/uncertain_value.h"
 #include "utils/index.h"
 #include "utils/custom_index_array.h"
-#include "models/osir.h"
-#include "models/oseir.h"
-#include "models/osecir.h"
-#include "models/osecirvvs.h"
-// #include "models/abm.h"
 
 //Includes from MEmilio
 #include "memilio/mobility/metapopulation_mobility_instant.h"
@@ -52,9 +47,6 @@
 #include "pybind11/pybind11.h"
 
 namespace py = pybind11;
-
-namespace
-{
 
 void bind_simulation(py::module_& m)
 {
@@ -160,26 +152,4 @@ void bind_simulation(py::module_& m)
     });
 
     m.attr("__version__") = "dev";
-}
-
-} // namespace
-
-PYBIND11_MODULE(simulation, m_simulation)
-{
-   bind_simulation(m_simulation);
-
-   auto m_osir = m_simulation.def_submodule("osir");
-   bind_osir(m_osir);
-
-   py::module m_oseir = m_simulation.def_submodule("oseir");
-   bind_oseir(m_oseir);
-
-   py::module m_osecir = m_simulation.def_submodule("osecir");
-   bind_osecir(m_osecir);
-
-//    py::module m_osecirvvs = m_simulation.def_submodule("osecirvvs");
-//    bind_osecirvvs(m_osecirvvs);
-
-//    py::module abm = m.def_submodule("abm");
-//    bind_abm(m);
 }

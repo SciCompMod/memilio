@@ -18,7 +18,37 @@
 * limitations under the License.
 */
 
-#include "models/osecir.h"
+//Includes from pymio
+#include "memilio/config.h"
+#include "pybind_util.h"
+#include "compartments/simulation.h"
+#include "compartments/flow_simulation.h"
+#include "compartments/compartmentalmodel.h"
+#include "epidemiology/age_group.h"
+#include "epidemiology/populations.h"
+#include "utils/custom_index_array.h"
+#include "utils/parameter_set.h"
+#include "utils/index.h"
+#include "mobility/graph_simulation.h"
+#include "mobility/metapopulation_mobility_instant.h"
+#include "io/mobility_io.h"
+#include "io/result_io.h"
+
+//Includes from MEmilio
+#include "ode_secir/model.h"
+#include "ode_secir/analyze_result.h"
+#include "ode_secir/parameter_space.h"
+#include "ode_secir/parameters_io.h"
+#include "memilio/compartments/parameter_studies.h"
+#include "memilio/data/analyze_result.h"
+#include "memilio/mobility/graph.h"
+#include "memilio/io/mobility_io.h"
+#include "memilio/io/epi_data.h"
+
+#include "pybind11/pybind11.h"
+#include "pybind11/stl_bind.h"
+#include "Eigen/Core"
+#include <vector>
 
 namespace py = pybind11;
 
@@ -120,6 +150,17 @@ enum class ContactLocation
 using MobilityGraph = mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MobilityEdge<double>>;
 
 } // namespace
+
+namespace pymio
+{
+//specialization of pretty_name
+template <>
+inline std::string pretty_name<mio::osecir::InfectionState>()
+{
+    return "InfectionState";
+}
+
+} // namespace pymio
 
 PYBIND11_MAKE_OPAQUE(std::vector<MobilityGraph>);
 

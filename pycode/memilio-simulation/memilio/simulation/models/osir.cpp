@@ -18,7 +18,36 @@
 * limitations under the License.
 */
 
-#include "osir.h"
+//Includes from pymio
+#include "pybind_util.h"
+#include "utils/index.h"
+#include "utils/custom_index_array.h"
+#include "utils/parameter_set.h"
+#include "compartments/simulation.h"
+#include "compartments/flow_simulation.h"
+#include "compartments/compartmentalmodel.h"
+#include "epidemiology/age_group.h"
+#include "epidemiology/populations.h"
+
+//Includes from MEmilio
+#include "ode_sir/model.h"
+#include "ode_sir/infection_state.h"
+#include "memilio/data/analyze_result.h"
+
+#include "pybind11/pybind11.h"
+
+namespace py = pybind11;
+
+namespace pymio
+{
+//specialization of pretty_name
+template <>
+inline std::string pretty_name<mio::osir::InfectionState>()
+{
+    return "InfectionState";
+}
+
+} // namespace pymio
 
 void bind_osir(py::module_& m)
 {
