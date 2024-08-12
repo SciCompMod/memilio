@@ -429,15 +429,21 @@ public:
     inline void change_location(uint32_t person_index, LocationId destination,
                                 TransportMode mode = TransportMode::Unknown, const std::vector<uint32_t>& cells = {0})
     {
+        mio::log_warning("Get origin");
         LocationId origin = get_location(person_index).get_id();
+        mio::log_warning("has_changed_location");
         const bool has_changed_location =
             mio::abm::change_location(get_person(person_index), get_location(destination), mode, cells);
+        mio::log_warning("has_changed_location end");
         // if the person has changed location, invalidate exposure caches but keep population caches valid
         if (has_changed_location) {
             m_are_exposure_caches_valid = false;
             if (m_is_local_population_cache_valid) {
+                mio::log_warning("Adjust cache 1");
                 --m_local_population_cache[origin.get()];
+                mio::log_warning("Adjust cache 2");
                 ++m_local_population_cache[destination.get()];
+                mio::log_warning("Adjust cache 2 end");
             }
         }
     }
