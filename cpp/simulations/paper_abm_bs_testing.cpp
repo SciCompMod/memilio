@@ -896,7 +896,7 @@ void set_local_parameters(mio::abm::World& world)
             break;
         case mio::abm::LocationType::Event:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_home;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 32;
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 16;
             break;
         default:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_random;
@@ -1892,11 +1892,11 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
     auto end_run_idx   = start_run_idx + run_distribution[size_t(rank)];
 
-    const double viral_shedding_rate        = 1.9;
-    const double dark_figure                = 4.0;
-    const double contact_red_lockdown       = 0.70;
+    const double viral_shedding_rate        = 1.88;
+    const double dark_figure                = 4.1;
+    const double contact_red_lockdown       = 0.67;
     const double damping_community_lockdown = 0.58;
-    const double testing_probability_sympt  = 0.028;
+    const double testing_probability_sympt  = 0.0285;
 
     const double after_lockdown_prob = 1.0;
 
@@ -1906,7 +1906,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     const double masks                            = 0.55;
     const double after_lockdown_contact_reduction = 0.7;
     const double ratio_asympt_to_sympt            = 20.0;
-    const double perc_easter_event                = 0.5;
+    const double perc_easter_event                = 0.55;
 
     mio::Date start_date{2021, 3, 1};
     int date_of_lockdown     = 26;
@@ -2110,7 +2110,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         //calculate RMSE
         auto rmse =
             calculate_rmse_from_results(input_dir, temp_sim_infection_state_per_age_group[0],
-                                        temp_sim_cumulative_detected_infections_per_age_group[0], 20, start_date);
+                                        temp_sim_cumulative_detected_infections_per_age_group[0], tmax, start_date);
         std::cout << "RMSE: " << rmse << std::endl;
 
         //HACK since // gather_results(rank, num_procs, num_runs, ensemble_params);
