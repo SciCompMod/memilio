@@ -118,24 +118,7 @@ def run_secir_groups_simulation(days, populations):
         model.apply_constraints()
         models.append(model)
 
-    graph = ModelGraph()
-    for i in range(num_regions):
-        graph.add_node(int(countykey_list[i]), models[i])
-
-    # get mobility data directory
-    arg_dict = gd.cli("commuter_official")
-
-    directory = arg_dict['out_folder'].split('/pydata')[0]
-    directory = os.path.join(directory, 'mobility/')  
-
-    # Merge Eisenach and Wartbugkreis in Input Data 
-    tmd.updateMobility2022(directory, mobility_file='twitter_scaled_1252')
-    tmd.updateMobility2022(directory, mobility_file='commuter_migration_scaled')
-
-    num_locations = 4
-
-    set_edges(os.path.abspath(os.path.join(directory, os.pardir)), 
-                            graph, num_locations)
+    graph = make_graph(num_regions, countykey_list, models)
 
     study = ParameterStudy(graph, 0, days, dt=dt, num_runs=1)
     study.run()
@@ -151,6 +134,7 @@ def run_secir_groups_simulation(days, populations):
     dataset_entry = copy.deepcopy(results)
 
     return dataset_entry
+
 
 def remove_confirmed_compartments(dataset_entries, num_groups):
     """! The compartments which contain confirmed cases are not needed and are 
@@ -225,6 +209,35 @@ def getBaselineMatrix():
         np.loadtxt(baseline_contact_matrix3)
 
     return baseline
+
+def make_graph(num_regions, countykey_list, models):
+    """! 
+    @param num_regions Number (int) of counties that should be added to the 
+            grap-ODE model. Equals 400 for whole Germany. 
+    @param countykey_list List of keys/IDs for each county. 
+    @models models List of osecir Model with one model per population. 
+    @return graph Graph-ODE model. 
+   """
+    graph = ModelGraph()
+    for i in range(num_regions):
+        graph.add_node(int(countykey_list[i]), models[i])
+
+    # get mobility data directory
+    arg_dict = gd.cli("commuter_official")
+
+    directory = arg_dict['out_folder'].split('/pydata')[0]
+    directory = os.path.join(directory, 'mobility/')  
+
+    # Merge Eisenach and Wartbugkreis in Input Data 
+    tmd.updateMobility2022(directory, mobility_file='twitter_scaled_1252')
+    tmd.updateMobility2022(directory, mobility_file='commuter_migration_scaled')
+
+    num_locations = 4
+
+    set_edges(os.path.abspath(os.path.join(directory, os.pardir)), 
+                            graph, num_locations)
+    return graph
+    
 
 def generate_data(
         num_runs, path, input_width, days, save_data=True):
@@ -317,7 +330,7 @@ if __name__ == "__main__":
     path_data = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'data_GNN_nodamp')
+        'data_GNN_nodamp_test')
  
     input_width = 5
     days = 30
