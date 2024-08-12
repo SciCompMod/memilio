@@ -503,6 +503,9 @@ public:
      */
     inline Location& get_location_by_person(uint32_t index)
     {
+        log_warning("Person index is {}", index);
+        log_warning("Person location type is {}", int(get_person(index).get_location_type()));
+        log_warning("Person model id is {}", get_person(index).get_location_model_id());
         log_warning("Location Id is {}", get_person(index).get_location().get());
         return get_location(get_person(index).get_location());
     }
