@@ -76,6 +76,11 @@ TEST(TestGraphAbm, test_apply_mobility)
     model2.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)]  = true;
     model1.parameters.get<mio::abm::BasicShoppingRate>()[mio::AgeGroup(0)] = 0.0;
     model2.parameters.get<mio::abm::BasicShoppingRate>()[mio::AgeGroup(0)] = 0.0;
+    auto no_social_events                                                  = Eigen::VectorXd::Constant(2, 0.0);
+    model1.parameters.get<mio::abm::SocialEventRate>().add_damping(no_social_events,
+                                                                   mio::SimulationTime(mio::abm::TimePoint(0).days()));
+    model2.parameters.get<mio::abm::SocialEventRate>().add_damping(no_social_events,
+                                                                   mio::SimulationTime(mio::abm::TimePoint(0).days()));
     auto work_id_1  = model1.add_location(mio::abm::LocationType::Work);
     auto home_id    = model1.add_location(mio::abm::LocationType::Home);
     auto work_id_2  = model2.add_location(mio::abm::LocationType::Work);

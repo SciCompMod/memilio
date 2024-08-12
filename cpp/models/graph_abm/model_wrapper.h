@@ -21,6 +21,7 @@
 #ifndef MIO_ABM_MODEL_WRAPPER_H
 #define MIO_ABM_MODEL_WRAPPER_H
 
+#include "abm/location_type.h"
 #include "abm/model.h"
 #include "abm/time.h"
 #include "abm/location_id.h"
