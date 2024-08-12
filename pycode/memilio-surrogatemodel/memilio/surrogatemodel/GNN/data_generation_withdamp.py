@@ -131,23 +131,7 @@ def run_secir_groups_simulation(days, populations, num_dampings):
         model.apply_constraints()
         models.append(model)
 
-    graph = ModelGraph()
-    for i in range(num_regions):
-        graph.add_node(int(countykey_list[i]), models[i])
-
-    # get mobility data directory
-    arg_dict = gd.cli("commuter_official")
-
-    directory = arg_dict['out_folder'].split('/pydata')[0]
-    directory = os.path.join(directory, 'mobility/')  
-
-    # Merge Eisenach and Wartbugkreis in Input Data 
-    tmd.updateMobility2022(directory, mobility_file='twitter_scaled_1252')
-    tmd.updateMobility2022(directory, mobility_file='commuter_migration_scaled')
-
-    num_locations = 4
-
-    set_edges(os.path.abspath(os.path.join(directory, os.pardir)), graph, num_locations)
+    graph = make_graph(num_regions, countykey_list, models)
 
     study = ParameterStudy(graph, 0, days, dt=dt, num_runs=1)
     study.run()
@@ -258,6 +242,35 @@ def getMinimumMatrix():
         np.loadtxt(minimum_contact_matrix3)
 
     return minimum
+
+
+def make_graph(num_regions, countykey_list, models):
+    """! 
+    @param num_regions Number (int) of counties that should be added to the 
+            grap-ODE model. Equals 400 for whole Germany. 
+    @param countykey_list List of keys/IDs for each county. 
+    @models models List of osecir Model with one model per population. 
+    @return graph Graph-ODE model. 
+   """
+    graph = ModelGraph()
+    for i in range(num_regions):
+        graph.add_node(int(countykey_list[i]), models[i])
+
+    # get mobility data directory
+    arg_dict = gd.cli("commuter_official")
+
+    directory = arg_dict['out_folder'].split('/pydata')[0]
+    directory = os.path.join(directory, 'mobility/')  
+
+    # Merge Eisenach and Wartbugkreis in Input Data 
+    tmd.updateMobility2022(directory, mobility_file='twitter_scaled_1252')
+    tmd.updateMobility2022(directory, mobility_file='commuter_migration_scaled')
+
+    num_locations = 4
+
+    set_edges(os.path.abspath(os.path.join(directory, os.pardir)), 
+                            graph, num_locations)
+    return graph
 
 
 def generate_dampings_withshadowdamp(number_of_dampings, days, min_distance, min_damping_day, n_runs):
@@ -425,15 +438,15 @@ if __name__ == "__main__":
 
     input_width = 5
     label_width = 30
-    number_of_dampings = 3
+    number_of_dampings = 1
     num_runs = 2
-    number_of_populations = 400
+    number_of_populations = 20
 
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'data_GNN_with_'+str(number_of_dampings)+'_dampings')
+        'data_GNN_with_'+str(number_of_dampings)+'_dampings_test')
 
     generate_data(num_runs, path_data, input_width,
                   label_width, number_of_populations)
