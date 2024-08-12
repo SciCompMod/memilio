@@ -695,7 +695,11 @@ TEST(TestModel, mobilityTripWithAppliedNPIs)
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(16))
+        .Times(testing::AtLeast(20))
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
         .WillOnce(testing::Return(0.8)) // draw random work group
         .WillOnce(testing::Return(0.8)) // draw random school group
         .WillOnce(testing::Return(0.8)) // draw random work hour
@@ -723,6 +727,8 @@ TEST(TestModel, mobilityTripWithAppliedNPIs)
         add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t - test_time);
     auto p_id_no_test      = add_test_person(model, home_id, age_group_15_to_34,
                                              mio::abm::InfectionState::InfectedNoSymptoms, t - test_time);
+    auto p_id_isolation    = add_test_person(model, home_id, age_group_15_to_34,
+                                             mio::abm::InfectionState::InfectedNoSymptoms, t - test_time);
     auto p_id_no_isolation = add_test_person(model, home_id, age_group_15_to_34,
                                              mio::abm::InfectionState::InfectedNoSymptoms, t - test_time);
 
@@ -730,6 +736,7 @@ TEST(TestModel, mobilityTripWithAppliedNPIs)
     auto& p_compliant_go_to_school = model.get_person(p_id_compliant_go_to_school);
     auto& p_no_mask                = model.get_person(p_id_no_mask);
     auto& p_no_test                = model.get_person(p_id_no_test);
+    auto& p_isolation              = model.get_person(p_id_isolation);
     auto& p_no_isolation           = model.get_person(p_id_no_isolation);
 
     p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Home, home_id);
@@ -741,6 +748,8 @@ TEST(TestModel, mobilityTripWithAppliedNPIs)
     p_no_mask.set_assigned_location(mio::abm::LocationType::Home, home_id);
     p_no_test.set_assigned_location(mio::abm::LocationType::Work, work_id);
     p_no_test.set_assigned_location(mio::abm::LocationType::Home, home_id);
+    p_isolation.set_assigned_location(mio::abm::LocationType::Work, work_id);
+    p_isolation.set_assigned_location(mio::abm::LocationType::Home, home_id);
     p_no_isolation.set_assigned_location(mio::abm::LocationType::Work, work_id);
     p_no_isolation.set_assigned_location(mio::abm::LocationType::Home, home_id);
 
@@ -772,11 +781,15 @@ TEST(TestModel, mobilityTripWithAppliedNPIs)
     mio::abm::Trip trip3(p_no_mask.get_id(), t, work_id, home_id);
     mio::abm::Trip trip4(p_no_test.get_id(), t, work_id, home_id);
     mio::abm::Trip trip5(p_no_isolation.get_id(), t, work_id, home_id);
+    mio::abm::Trip trip6(p_isolation.get_id(), t, work_id, home_id);
+    mio::abm::Trip trip7(p_isolation.get_id(), t + dt, work_id, home_id);
     trip_list.add_trip(trip1);
     trip_list.add_trip(trip2);
     trip_list.add_trip(trip3);
     trip_list.add_trip(trip4);
     trip_list.add_trip(trip5);
+    trip_list.add_trip(trip6);
+    trip_list.add_trip(trip7);
     model.use_mobility_rules(false);
     model.evolve(t, dt);
 
@@ -797,4 +810,9 @@ TEST(TestModel, mobilityTripWithAppliedNPIs)
 
     // The person does not want to isolate when the test is positive
     EXPECT_FALSE(p_no_isolation.is_in_quarantine(t, model.parameters));
+
+    // The person want to isolate when the test is positive and don't move even when having a trip after
+    model.evolve(t + dt, dt);
+    EXPECT_TRUE(p_isolation.is_in_quarantine(t + dt, model.parameters));
+    EXPECT_EQ(p_isolation.get_location(), home_id);
 }
