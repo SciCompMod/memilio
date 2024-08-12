@@ -58,8 +58,8 @@ Model::Model(TimeSeries<ScalarType>&& init, std::vector<ScalarType> N_init, std:
 
     // Set deaths at simulation start time t0.
     for (int group = 0; group < m_num_agegroups; group++) {
-        int index                             = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
-        m_populations[Eigen::Index(0)][index] = deaths[static_cast<Eigen::Index>((size_t)group)];
+        int Di                             = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
+        m_populations[Eigen::Index(0)][Di] = deaths[static_cast<Eigen::Index>((size_t)group)];
     }
 }
 
@@ -141,7 +141,7 @@ void Model::initial_compute_compartments(ScalarType dt)
     // It is possible to calculate the sizes of the other compartments in advance because only the initial values of the flows are used.
     initial_compute_compartments_infection(dt);
 
-    //Check if there are Susceptibles or Recovered given.
+    //We store in two boolians if there are Susceptibles or Recovered given.
     bool Susceptibles_given = true;
     for (int group = 0; group < m_num_agegroups; ++group) {
         int Si = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);

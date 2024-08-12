@@ -25,13 +25,13 @@
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/parameter_set.h"
 #include "ide_secir/infection_state.h"
-//#include "memilio/math/eigen.h"
-//#include "memilio/math/smoother.h"
+#include "memilio/math/eigen.h"
+#include "memilio/math/smoother.h"
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/age_group.h"
 
-//#include <memory>
+#include <memory>
 #include <cstddef>
 #include <vector>
 
@@ -210,6 +210,10 @@ public:
         , m_num_groups{num_agegroups}
     {
     }
+    /**
+     * @brief Gives the number of Age Groups.
+     */
+
     AgeGroup get_num_groups() const
     {
         return m_num_groups;

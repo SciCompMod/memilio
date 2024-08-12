@@ -52,8 +52,8 @@ public:
     *   A warning is displayed if the condition is violated.
     * @param[in] N_init A vector, containg the populations of the considered region, for every AgeGroup.
     * @param[in] deaths A vector, containg the total number of deaths at time t0, for every AgeGroup.
-    * @param[in] total_confirmed_cases A vector, containg the otal confirmed cases at time t0 can be set if it should be used for initialization, for every AgeGroup..
-    * @param[in, out] Parameterset_init Used Parameters for simulation. 
+    * @param[in] num_agegroups The number of Age Groups.
+    * @param[in] total_confirmed_cases A vector, containg the otal confirmed cases at time t0 can be set if it should be used for initialization, for every AgeGroup.
     */
     Model(TimeSeries<ScalarType>&& init, std::vector<ScalarType> N_init, std::vector<ScalarType> deaths,
           int num_agegroups, std::vector<ScalarType> total_confirmed_cases = {});
@@ -98,6 +98,7 @@ public:
      *
      * @param[in] dt Time discretization step size.
      * @param[in] idx_InfectionState Specifies the considered #InfectionState
+     * @param[in] group The Age Group for which we want to compute.
      * @param[in] idx_IncomingFlow Specifies the index of the infoming flow to #InfectionState in m_transitions. 
      * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant TransitionDistribution, 
      *              related to a flow from the considered #InfectionState to any other #InfectionState.
@@ -167,9 +168,10 @@ public:
      *      the value of this incoming flow.
      * @param[in] dt Time step to compute flow for.
      * @param[in] current_time_index The time index the flow should be computed for.
+     * @param[in] group The Age group for which we want to compute the flow.
      */
     void compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt,
-                      Eigen::Index current_time_index, AgeGroup agegroup);
+                      Eigen::Index current_time_index, AgeGroup group);
 
     /**
      * @brief Computes size of a flow for the current last time value in m_transitions.
@@ -182,8 +184,10 @@ public:
      *      compartment of the flow specified in idx_InfectionTransitions. Size of considered flow is calculated via 
      *      the value of this incoming flow.
      * @param[in] dt Time step to compute flow for.
+     * @param[in] group The Age Group for which we want to compute the flow.
      */
-    void compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt, AgeGroup i);
+    void compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt,
+                      AgeGroup group);
 
     /**
      * @brief Sets all required flows for the current last timestep in m_transitions.
@@ -342,7 +346,7 @@ private:
      */
     void update_compartment_from_flow(InfectionState infectionState,
                                       std::vector<InfectionTransition> const& IncomingFlows,
-                                      std::vector<InfectionTransition> const& OutgoingFlows, AgeGroup agegroup);
+                                      std::vector<InfectionTransition> const& OutgoingFlows, AgeGroup group);
 
     // ---- Private parameters. ----
     std::vector<ScalarType> m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
