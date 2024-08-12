@@ -73,16 +73,17 @@ private:
     {
         const uint32_t num_persons = static_cast<uint32_t>(Base::m_persons.size());
     PRAGMA_OMP(parallel for)
-    for (uint32_t person_id = 0; person_id < num_persons; ++person_id) {
-        if (Base::m_activeness_statuses[person_id]) {
-            Person& person    = Base::m_persons[person_id];
+    for (uint32_t person_index = 0; person_index < num_persons; ++person_index) {
+        if (Base::m_activeness_statuses[person_index]) {
+            Person& person    = Base::m_persons[person_index];
             auto personal_rng = PersonalRandomNumberGenerator(Base::m_rng, person);
 
             auto try_mobility_rule = [&](auto rule) -> bool {
                 //run mobility rule and check if change of location can actually happen
                 auto target_type = rule(personal_rng, person, t, dt, parameters);
                 if (person.get_assigned_location_model_id(target_type) == Base::m_id) {
-                    const Location& target_location   = Base::get_location(Base::find_location(target_type, person_id));
+                    const Location& target_location =
+                        Base::get_location(Base::find_location(target_type, person_index));
                     const LocationId current_location = person.get_location();
                     if (Base::m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
                         if (target_location.get_id() != current_location &&
@@ -91,7 +92,7 @@ private:
                             bool wears_mask = person.apply_mask_intervention(personal_rng, target_location);
                             if (wears_mask) {
                                 mio::log_warning("Change loc rules");
-                                Base::change_location(person_id, target_location.get_id());
+                                Base::change_location(person_index, target_location.get_id());
                                 mio::log_warning("End change loc rules");
                             }
                             return true;
@@ -100,9 +101,9 @@ private:
                 }
                 else { //person moves to other world
                     mio::log_warning("Inactive person rules");
-                    Base::m_activeness_statuses[person_id] = false;
+                    Base::m_activeness_statuses[person_index] = false;
                     person.set_location(target_type, abm::LocationId::invalid_id(), std::numeric_limits<int>::max());
-                    m_person_buffer.push_back(person_id);
+                    m_person_buffer.push_back(person_index);
                     m_are_exposure_caches_valid       = false;
                     m_is_local_population_cache_valid = false;
                     mio::log_warning("End inactive person rules");

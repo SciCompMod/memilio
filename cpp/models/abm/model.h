@@ -430,7 +430,7 @@ public:
                                 TransportMode mode = TransportMode::Unknown, const std::vector<uint32_t>& cells = {0})
     {
         mio::log_warning("Get origin");
-        LocationId origin = get_location(person_index).get_id();
+        LocationId origin = get_location_by_person(person_index).get_id();
         mio::log_warning("has_changed_location");
         const bool has_changed_location =
             mio::abm::change_location(get_person(person_index), get_location(destination), mode, cells);
@@ -463,9 +463,9 @@ public:
             m_are_exposure_caches_valid = true;
         }
         auto personal_rng = PersonalRandomNumberGenerator(m_rng, get_person(person_index));
-        mio::abm::interact(personal_rng, get_person(person_index), get_location(person_index),
-                           m_air_exposure_rates_cache[get_location(person_index).get_id().get()],
-                           m_contact_exposure_rates_cache[get_location(person_index).get_id().get()], t, dt,
+        mio::abm::interact(personal_rng, get_person(person_index), get_location_by_person(person_index),
+                           m_air_exposure_rates_cache[get_location_by_person(person_index).get_id().get()],
+                           m_contact_exposure_rates_cache[get_location_by_person(person_index).get_id().get()], t, dt,
                            parameters);
     }
 
@@ -498,12 +498,12 @@ public:
      * @return Reference to the Location.
      * @{
      */
-    inline Location& get_location(uint32_t index)
+    inline Location& get_location_by_person(uint32_t index)
     {
         return get_location(get_person(index).get_location());
     }
 
-    inline const Location& get_location(uint32_t index) const
+    inline const Location& get_location_by_person(uint32_t index) const
     {
         return get_location(get_person(index).get_location());
     }
