@@ -32,6 +32,7 @@
 #include "abm/random_events.h"
 #include "abm/testing_strategy.h"
 #include "memilio/epidemiology/age_group.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 
@@ -488,6 +489,8 @@ public:
         log_error("here 1");
         assert(id != LocationId::invalid_id() && "Given LocationId must be valid.");
         assert(id < LocationId((uint32_t)m_locations.size()) && "Given LocationId is not in this Model.");
+        log_warning("id get is {}", id.get());
+        log_warning("m_locations size is {}", m_locations.size());
         return m_locations[id.get()];
     }
     /** @} */
@@ -500,6 +503,7 @@ public:
      */
     inline Location& get_location_by_person(uint32_t index)
     {
+        log_warning("Location Id is {}", get_person(index).get_location());
         return get_location(get_person(index).get_location());
     }
 
