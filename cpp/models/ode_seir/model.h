@@ -85,10 +85,11 @@ public:
                 const size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
                 const size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
-                const double Nj_inv = 1.0 / (pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj]);
+                const double Nj    = pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj];
+                const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
                 const double coeffStoE =
                     params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(i.get(), j.get()) *
-                    params.template get<TransmissionProbabilityOnContact<FP>>()[i] * Nj_inv;
+                    params.template get<TransmissionProbabilityOnContact<FP>>()[i] * divNj;
 
                 flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(i)] +=
                     coeffStoE * y[Si] * pop[Ij];
@@ -127,8 +128,8 @@ public:
             size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
             for (auto j = AgeGroup(0); j < AgeGroup(num_groups); j++) {
 
-                double Nj    = this->populations.get_group_total(j);
-                double divNj = 1.0 / Nj;
+                const double Nj    = this->populations.get_group_total(j);
+                const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
 
                 double coeffStoE = contact_matrix.get_matrix_at(y.get_time(t_idx))(i.get(), j.get()) *
                                    params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i] * divNj;

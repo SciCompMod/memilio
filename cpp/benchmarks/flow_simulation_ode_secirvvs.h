@@ -40,8 +40,8 @@ class FlowlessModel : public CompartmentalModel<ScalarType, osecirvvs::Infection
 {
     using InfectionState = osecirvvs::InfectionState;
     using Base           = CompartmentalModel<ScalarType, osecirvvs::InfectionState,
-                                    mio::Populations<ScalarType, AgeGroup, osecirvvs::InfectionState>,
-                                    osecirvvs::Parameters<ScalarType>>;
+                                              mio::Populations<ScalarType, AgeGroup, osecirvvs::InfectionState>,
+                                              osecirvvs::Parameters<ScalarType>>;
 
 public:
     FlowlessModel(const Populations& pop, const ParameterSet& params)
@@ -203,7 +203,7 @@ public:
                             pop[ICrPIj] + pop[INSPICj] + pop[ISyPICj] + pop[SIIj] + pop[EIIj] + pop[INSIIj] +
                             pop[ISyIIj] + pop[ISevIIj] + pop[ICrIIj] + pop[INSIICj] + pop[ISyIICj];
 
-                double divNj = 1.0 / Nj; // precompute 1.0/Nj
+                const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
 
                 double ext_inf_force_dummy =
                     cont_freq_eff * divNj *

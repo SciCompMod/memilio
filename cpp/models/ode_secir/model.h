@@ -130,8 +130,8 @@ public:
                                                                  static_cast<Eigen::Index>((size_t)j));
                 double Nj =
                     pop[Sj] + pop[Ej] + pop[INSj] + pop[ISyj] + pop[ISevj] + pop[ICrj] + pop[Rj]; // without died people
-                double divNj   = 1.0 / Nj; // precompute 1.0/Nj
-                double dummy_S = y[Si] * cont_freq_eff * divNj *
+                const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+                double dummy_S     = y[Si] * cont_freq_eff * divNj *
                                  params.template get<TransmissionProbabilityOnContact<FP>>()[i] *
                                  (params.template get<RelativeTransmissionNoSymptoms<FP>>()[j] * pop[INSj] +
                                   riskFromInfectedSymptomatic * pop[ISyj]);
