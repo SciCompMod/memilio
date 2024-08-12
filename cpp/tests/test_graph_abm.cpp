@@ -22,6 +22,7 @@
 #include "abm/location_id.h"
 #include "abm/mobility_data.h"
 #include "abm/model.h"
+#include "abm/parameters.h"
 #include "graph_abm/model_wrapper.h"
 #include "abm/location_type.h"
 #include "abm/time.h"
@@ -69,10 +70,12 @@ TEST(TestGraphAbm, test_evolve_node)
 
 TEST(TestGraphAbm, test_apply_mobility)
 {
-    auto model1                                                           = mio::ModelWrapper(size_t(2), 1);
-    auto model2                                                           = mio::ModelWrapper(size_t(2), 2);
-    model1.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)] = true;
-    model2.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)] = true;
+    auto model1                                                            = mio::ModelWrapper(size_t(2), 1);
+    auto model2                                                            = mio::ModelWrapper(size_t(2), 2);
+    model1.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)]  = true;
+    model2.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)]  = true;
+    model1.parameters.get<mio::abm::BasicShoppingRate>()[mio::AgeGroup(0)] = 0.0;
+    model2.parameters.get<mio::abm::BasicShoppingRate>()[mio::AgeGroup(0)] = 0.0;
     auto work_id_1  = model1.add_location(mio::abm::LocationType::Work);
     auto home_id    = model1.add_location(mio::abm::LocationType::Home);
     auto work_id_2  = model2.add_location(mio::abm::LocationType::Work);
@@ -120,11 +123,8 @@ TEST(TestGraphAbm, test_apply_mobility)
     mio::ABMSimulationNode<MockHistory> node1(MockHistory{}, t, std::move(model1));
     mio::ABMSimulationNode<MockHistory> node2(MockHistory{}, t, std::move(model2));
 
-    mio::log_warning("Evolve node 1");
     node1.evolve(t, dt);
-    mio::log_warning("Evolve node 2");
     node2.evolve(t, dt);
-    mio::log_warning("Evolve node 2 end");
 
     EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 0);
     EXPECT_EQ(node1.get_simulation().get_model().get_persons().size(), 4);

@@ -70,7 +70,6 @@ public:
 private:
     void perform_mobility(TimePoint t, TimeSpan dt)
     {
-        log_warning("perform_mobility");
         const uint32_t num_persons = static_cast<uint32_t>(Base::m_persons.size());
     PRAGMA_OMP(parallel for)
     for (uint32_t person_id = 0; person_id < num_persons; ++person_id) {
@@ -125,8 +124,6 @@ private:
         }
     }
 
-    log_warning("begin trips");
-
     // check if a person makes a trip
     bool weekend     = t.is_weekend();
     size_t num_trips = Base::m_trip_list.num_trips(weekend);
@@ -134,28 +131,19 @@ private:
     if (num_trips != 0) {
         while (Base::m_trip_list.get_current_index() < num_trips &&
                Base::m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
-            auto& trip = Base::m_trip_list.get_next_trip(weekend);
-            log_warning("get_index");
+            auto& trip        = Base::m_trip_list.get_next_trip(weekend);
             auto person_index = Base::get_person_index(trip.person_id);
-            log_warning("get_index end");
-            auto& person = Base::get_person(person_index);
-            log_warning("get_person end");
+            auto& person      = Base::get_person(person_index);
             auto personal_rng = PersonalRandomNumberGenerator(Base::m_rng, person);
             if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
-                log_warning("if id is dest model id");
                 if (trip.destination_model_id == Base::m_id) {
-                    log_warning("target loc");
                     auto& target_location = Base::get_location(trip.destination);
-                    log_warning("target loc end");
                     if (Base::m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
                         person.apply_mask_intervention(personal_rng, target_location);
-                        log_warning("change loc");
                         Base::change_location(person_index, target_location.get_id(), trip.trip_mode);
-                        log_warning("change loc end");
                     }
                 }
                 else {
-                    log_warning("changes model");
                     //person moves to other world
                     Base::m_activeness_statuses[person_index] = false;
                     person.set_location(trip.destination_type, abm::LocationId::invalid_id(),
@@ -163,7 +151,6 @@ private:
                     m_person_buffer.push_back(person_index);
                     m_are_exposure_caches_valid       = false;
                     m_is_local_population_cache_valid = false;
-                    log_warning("changes model end");
                 }
             }
             Base::m_trip_list.increase_index();
