@@ -31,6 +31,7 @@
 #include "memilio/utils/logging.h"
 #include "memilio/utils/miompi.h"
 #include "memilio/mobility/graph.h"
+#include "abm_helpers.h"
 #include <algorithm>
 #include <cstddef>
 #include <gtest/gtest.h>
@@ -122,6 +123,10 @@ TEST(TestGraphAbm, test_apply_mobility)
 
     trips.add_trip(trip1);
     trips.add_trip(trip2);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(testing::Return(1.)); //no random transitions
 
     auto t  = mio::abm::TimePoint(0);
     auto dt = mio::abm::hours(12);
