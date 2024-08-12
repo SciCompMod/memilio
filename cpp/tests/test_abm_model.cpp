@@ -398,10 +398,12 @@ TEST(TestModel, evolveMobility)
         mio::abm::TripList& trip_list = model.get_trip_list();
         mio::abm::Trip trip1(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id, home_id);
         mio::abm::Trip trip2(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);
-        mio::abm::Trip trip3(p_severe.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);
+        mio::abm::Trip trip3(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::days(1), work_id, home_id);
+        mio::abm::Trip trip4(p_severe.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);
         trip_list.add_trip(trip1);
         trip_list.add_trip(trip2);
         trip_list.add_trip(trip3);
+        trip_list.add_trip(trip4);
 
         // Check the dead person got burried and the severely infected person starts in Hospital
         model.evolve(t, dt);
@@ -432,23 +434,25 @@ TEST(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto& work   = model.get_location(work_id);
 
     auto current_time = mio::abm::TimePoint(0);
-    auto pid =
-        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms, current_time);
+
+    auto test_time = mio::abm::minutes(30);
+    // Since tests are performed before current_time, the InfectionState of the Person has to take into account test_time
+    auto pid        = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms,
+                                      current_time - test_time);
     auto& person    = model.get_person(pid);
     auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
     person.set_assigned_location(mio::abm::LocationType::Home, home_id);
     person.set_assigned_location(mio::abm::LocationType::Work, work_id);
 
+    auto validity_period       = mio::abm::days(1);
+    const auto start_date      = mio::abm::TimePoint(20);
+    const auto end_date        = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability     = 1.0;
+    const auto test_params_pcr = mio::abm::TestParameters{0.9, 0.99, test_time, mio::abm::TestType::Generic};
+
     auto testing_criteria = mio::abm::TestingCriteria();
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedNoSymptoms);
-
-    auto validity_period   = mio::abm::days(1);
-    const auto start_date  = mio::abm::TimePoint(20);
-    const auto end_date    = mio::abm::TimePoint(60 * 60 * 24 * 3);
-    const auto probability = 1.0;
-    const auto test_params_pcr =
-        mio::abm::TestParameters{0.9, 0.99, mio::abm::minutes(30), mio::abm::TestType::Generic};
 
     auto testing_scheme =
         mio::abm::TestingScheme(testing_criteria, validity_period, start_date, end_date, test_params_pcr, probability);
@@ -564,10 +568,10 @@ TEST(TestModel, mobilityRulesWithAppliedNPIs)
 {
     using testing::Return;
     // Test when the NPIs are applied, people can enter targeted location if they comply to the rules.
-    auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
-    auto dt    = mio::abm::hours(1);
-    auto model = mio::abm::Model(num_age_groups);
-    //auto rng   = mio::RandomNumberGenerator();
+    auto t         = mio::abm::TimePoint(0) + mio::abm::hours(8);
+    auto dt        = mio::abm::hours(1);
+    auto test_time = mio::abm::minutes(30);
+    auto model     = mio::abm::Model(num_age_groups);
     model.parameters
         .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
@@ -598,18 +602,19 @@ TEST(TestModel, mobilityRulesWithAppliedNPIs)
         .WillOnce(testing::Return(0.8)) // draw random school group
         .WillOnce(testing::Return(0.8)) // draw random work hour
         .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillRepeatedly(testing::Return(1.0));
+        .WillRepeatedly(testing::Return(0.9)); // draw that satisfies all pre-conditions of NPIs
 
+    // Since tests are performed before t, the InfectionState of all the Person have to take into account test_time
     auto p_id_compliant_go_to_work =
-        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t - test_time);
     auto p_id_compliant_go_to_school =
-        add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedNoSymptoms, t);
+        add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t - test_time);
     auto p_id_no_mask =
-        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
-    auto p_id_no_test =
-        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
-    auto p_id_no_isolation =
-        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t - test_time);
+    auto p_id_no_test      = add_test_person(model, home_id, age_group_15_to_34,
+                                             mio::abm::InfectionState::InfectedNoSymptoms, t - test_time);
+    auto p_id_no_isolation = add_test_person(model, home_id, age_group_15_to_34,
+                                             mio::abm::InfectionState::InfectedNoSymptoms, t - test_time);
 
     auto& p_compliant_go_to_work   = model.get_person(p_id_compliant_go_to_work);
     auto& p_compliant_go_to_school = model.get_person(p_id_compliant_go_to_school);
@@ -631,10 +636,10 @@ TEST(TestModel, mobilityRulesWithAppliedNPIs)
 
     auto testing_criteria = mio::abm::TestingCriteria(
         {}, {mio::abm::InfectionState::InfectedSymptoms, mio::abm::InfectionState::InfectedNoSymptoms});
-    const auto start_date  = mio::abm::TimePoint(0);
-    const auto end_date    = mio::abm::TimePoint(60 * 60 * 24 * 3);
-    const auto probability = 1;
-    const auto test_params = mio::abm::TestParameters{0.9, 0.99, mio::abm::minutes(30), mio::abm::TestType::Generic};
+    const auto start_date        = mio::abm::TimePoint(0);
+    const auto end_date          = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability       = 1;
+    const auto test_params       = mio::abm::TestParameters{0.99, 0.99, test_time, mio::abm::TestType::Generic};
     const auto testing_frequency = mio::abm::days(1);
 
     auto testing_scheme =
@@ -675,10 +680,10 @@ TEST(TestModel, mobilityTripWithAppliedNPIs)
 {
     using testing::Return;
     // Test when the NPIs are applied, people can enter targeted location if they comply to the rules.
-    auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
-    auto dt    = mio::abm::hours(1);
-    auto model = mio::abm::Model(num_age_groups);
-    //auto rng   = mio::RandomNumberGenerator();
+    auto t         = mio::abm::TimePoint(0) + mio::abm::hours(8);
+    auto dt        = mio::abm::hours(1);
+    auto test_time = mio::abm::minutes(30);
+    auto model     = mio::abm::Model(num_age_groups);
     model.parameters
         .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
@@ -692,7 +697,7 @@ TEST(TestModel, mobilityTripWithAppliedNPIs)
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(16))
+        .Times(testing::AtLeast(20))
         .WillOnce(testing::Return(0.8)) // draw random work group
         .WillOnce(testing::Return(0.8)) // draw random school group
         .WillOnce(testing::Return(0.8)) // draw random work hour
@@ -709,23 +714,31 @@ TEST(TestModel, mobilityTripWithAppliedNPIs)
         .WillOnce(testing::Return(0.8)) // draw random school group
         .WillOnce(testing::Return(0.8)) // draw random work hour
         .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillRepeatedly(testing::Return(1.0));
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillRepeatedly(testing::Return(0.9)); // draw that satisfies all pre-conditions of NPIs
 
+    // Since tests are performed before t, the InfectionState of all the Person have to take into account test_time
     auto p_id_compliant_go_to_work =
-        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t - test_time);
     auto p_id_compliant_go_to_school =
-        add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedNoSymptoms, t);
+        add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t - test_time);
     auto p_id_no_mask =
-        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
-    auto p_id_no_test =
-        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
-    auto p_id_no_isolation =
-        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
+        add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t - test_time);
+    auto p_id_no_test      = add_test_person(model, home_id, age_group_15_to_34,
+                                             mio::abm::InfectionState::InfectedNoSymptoms, t - test_time);
+    auto p_id_isolation    = add_test_person(model, home_id, age_group_15_to_34,
+                                             mio::abm::InfectionState::InfectedNoSymptoms, t - test_time);
+    auto p_id_no_isolation = add_test_person(model, home_id, age_group_15_to_34,
+                                             mio::abm::InfectionState::InfectedNoSymptoms, t - test_time);
 
     auto& p_compliant_go_to_work   = model.get_person(p_id_compliant_go_to_work);
     auto& p_compliant_go_to_school = model.get_person(p_id_compliant_go_to_school);
     auto& p_no_mask                = model.get_person(p_id_no_mask);
     auto& p_no_test                = model.get_person(p_id_no_test);
+    auto& p_isolation              = model.get_person(p_id_isolation);
     auto& p_no_isolation           = model.get_person(p_id_no_isolation);
 
     p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Home, home_id);
@@ -737,15 +750,17 @@ TEST(TestModel, mobilityTripWithAppliedNPIs)
     p_no_mask.set_assigned_location(mio::abm::LocationType::Home, home_id);
     p_no_test.set_assigned_location(mio::abm::LocationType::Work, work_id);
     p_no_test.set_assigned_location(mio::abm::LocationType::Home, home_id);
+    p_isolation.set_assigned_location(mio::abm::LocationType::Work, work_id);
+    p_isolation.set_assigned_location(mio::abm::LocationType::Home, home_id);
     p_no_isolation.set_assigned_location(mio::abm::LocationType::Work, work_id);
     p_no_isolation.set_assigned_location(mio::abm::LocationType::Home, home_id);
 
     auto testing_criteria = mio::abm::TestingCriteria(
         {}, {mio::abm::InfectionState::InfectedSymptoms, mio::abm::InfectionState::InfectedNoSymptoms});
-    const auto start_date  = mio::abm::TimePoint(0);
-    const auto end_date    = mio::abm::TimePoint(60 * 60 * 24 * 3);
-    const auto probability = 1;
-    const auto test_params = mio::abm::TestParameters{0.9, 0.99, mio::abm::minutes(30), mio::abm::TestType::Generic};
+    const auto start_date        = mio::abm::TimePoint(0);
+    const auto end_date          = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability       = 1;
+    const auto test_params       = mio::abm::TestParameters{0.99, 0.99, test_time, mio::abm::TestType::Generic};
     const auto testing_frequency = mio::abm::days(1);
 
     auto testing_scheme =
@@ -768,11 +783,15 @@ TEST(TestModel, mobilityTripWithAppliedNPIs)
     mio::abm::Trip trip3(p_no_mask.get_id(), t, work_id, home_id);
     mio::abm::Trip trip4(p_no_test.get_id(), t, work_id, home_id);
     mio::abm::Trip trip5(p_no_isolation.get_id(), t, work_id, home_id);
+    mio::abm::Trip trip6(p_isolation.get_id(), t, work_id, home_id);
+    mio::abm::Trip trip7(p_isolation.get_id(), t + dt, work_id, home_id);
     trip_list.add_trip(trip1);
     trip_list.add_trip(trip2);
     trip_list.add_trip(trip3);
     trip_list.add_trip(trip4);
     trip_list.add_trip(trip5);
+    trip_list.add_trip(trip6);
+    trip_list.add_trip(trip7);
     model.use_mobility_rules(false);
     model.evolve(t, dt);
 
@@ -793,4 +812,9 @@ TEST(TestModel, mobilityTripWithAppliedNPIs)
 
     // The person does not want to isolate when the test is positive
     EXPECT_FALSE(p_no_isolation.is_in_quarantine(t, model.parameters));
+
+    // The person want to isolate when the test is positive and don't move even when having a trip after
+    model.evolve(t + dt, dt);
+    EXPECT_TRUE(p_isolation.is_in_quarantine(t + dt, model.parameters));
+    EXPECT_EQ(p_isolation.get_location(), home_id);
 }

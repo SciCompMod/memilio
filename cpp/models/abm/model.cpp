@@ -119,7 +119,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             }
             // update worn mask to target location's requirements
             if (target_location.is_mask_required()) {
-                // If the current MaskProtection level is lower than required, the Person changes mask
+                // if the current MaskProtection level is lower than required, the Person changes mask
                 if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
                     parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
                     person.set_mask(target_location.get_required_mask(), t);
@@ -186,7 +186,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             change_location(person.get_id(), target_location.get_id(), trip.trip_mode);
             // update worn mask to target location's requirements
             if (target_location.is_mask_required()) {
-                // If the current MaskProtection level is lower than required, the Person changes mask
+                // if the current MaskProtection level is lower than required, the Person changes mask
                 if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
                     parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
                     person.set_mask(target_location.get_required_mask(), t);
