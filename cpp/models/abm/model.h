@@ -477,6 +477,7 @@ public:
      */
     const Location& get_location(LocationId id) const
     {
+        log_error("here");
         assert(id != LocationId::invalid_id() && "Given LocationId must be valid.");
         assert(id < LocationId((uint32_t)m_locations.size()) && "Given LocationId is not in this Model.");
         return m_locations[id.get()];
@@ -484,6 +485,7 @@ public:
 
     Location& get_location(LocationId id)
     {
+        log_error("here 1");
         assert(id != LocationId::invalid_id() && "Given LocationId must be valid.");
         assert(id < LocationId((uint32_t)m_locations.size()) && "Given LocationId is not in this Model.");
         return m_locations[id.get()];
