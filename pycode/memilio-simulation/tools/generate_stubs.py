@@ -44,8 +44,9 @@ if __name__ == "__main__":
         pass
 
     # memilio-stubs/simulation module needs same structure as memilio/simulation
+    # can change between [--numpy-array-wrap-with-annotated|--numpy-array-use-type-var|--numpy-array-remove-parameters|] for differend representations of numpy arrays
     subprocess.check_call(
-        [python_interpreter, '-m', 'pybind11_stubgen', '--ignore-all-errors', '--root-suffix=-stubs', '-o', output_dir, 'memilio.simulation'])
+        [python_interpreter, '-m', 'pybind11_stubgen', '--ignore-all-errors', '--root-suffix=-stubs', '--numpy-array-use-type-var', '-o', output_dir, 'memilio.simulation'])
 
     # create setup.py and install package
     with open(os.path.join(package_dir, "setup.py"), "w") as setup_file:

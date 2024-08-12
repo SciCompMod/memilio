@@ -50,6 +50,11 @@ namespace py = pybind11;
 
 void bind_simulation(py::module_& m)
 {
+    pymio::bind_parameter_distribution(m, "ParameterDistribution");
+    pymio::bind_parameter_distribution_normal(m, "ParameterDistributionNormal");
+    pymio::bind_parameter_distribution_uniform(m, "ParameterDistributionUniform");
+    pymio::bind_uncertain_value(m, "UncertainValue");
+
     pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>(m, "AgeGroupArray");
     pymio::bind_class<mio::AgeGroup, pymio::EnablePickling::Required, mio::Index<mio::AgeGroup>>(m, "AgeGroup")
         .def(py::init<size_t>());
@@ -68,12 +73,6 @@ void bind_simulation(py::module_& m)
     pymio::bind_dampings_members(dampings_class);
 
     pymio::bind_time_series(m, "TimeSeries");
-
-    pymio::bind_parameter_distribution(m, "ParameterDistribution");
-    pymio::bind_parameter_distribution_normal(m, "ParameterDistributionNormal");
-    pymio::bind_parameter_distribution_uniform(m, "ParameterDistributionUniform");
-
-    pymio::bind_uncertain_value(m, "UncertainValue");
 
     auto contact_matrix_class =
         pymio::bind_class<mio::ContactMatrix, pymio::EnablePickling::Required>(m, "ContactMatrix");
@@ -108,9 +107,9 @@ void bind_simulation(py::module_& m)
     pymio::bind_dynamicNPI_members(m, "DynamicNPIs");
 
     pymio::bind_mobility_parameters(m, "MobilityParameters");
-    pymio::bind_mobility_parameter_edge(m, "MobilityParameterEdge");
     pymio::bind_mobility(m, "Mobility");
     pymio::bind_mobility_edge(m, "MobilityEdge");
+    pymio::bind_mobility_parameter_edge(m, "MobilityParameterEdge");
 
     m.def(
         "get_state_id_de",
@@ -125,7 +124,7 @@ void bind_simulation(py::module_& m)
             return std::vector<std::pair<mio::Date, mio::Date>>(h.begin(), h.end());
         },
         py::arg("state_id"), py::arg("start_date") = mio::Date(std::numeric_limits<int>::min(), 1, 1),
-        py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1));
+        py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1)); // TODO: Python doesnt know theses default values
 
     m.def(
         "read_mobility_plain",
