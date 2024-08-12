@@ -503,7 +503,7 @@ public:
      */
     inline Location& get_location_by_person(uint32_t index)
     {
-        log_warning("Location Id is {}", get_person(index).get_location());
+        log_warning("Location Id is {}", get_person(index).get_location().get());
         return get_location(get_person(index).get_location());
     }
 
