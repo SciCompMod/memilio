@@ -187,8 +187,8 @@ bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator& rng, Person& p
         return false;
     }
 
-    //lookup schemes for this specific location as well as the location type
-    //lookup in std::vector instead of std::map should be much faster unless for large numbers of schemes
+    // Lookup schemes for this specific location as well as the location type
+    // Lookup in std::vector instead of std::map should be much faster unless for large numbers of schemes
     for (auto key : {std::make_pair(location.get_type(), location.get_id()),
                      std::make_pair(location.get_type(), LocationId::invalid_id())}) {
         auto iter_schemes =
@@ -196,7 +196,7 @@ bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator& rng, Person& p
                 return p.type == key.first && p.id == key.second;
             });
         if (iter_schemes != m_location_to_schemes_map.end()) {
-            //apply all testing schemes that are found
+            // Apply all testing schemes that are found
             auto& schemes = iter_schemes->schemes;
             // Whether the Person is allowed to enter or not depends on the test result(s).
             if (!std::all_of(schemes.begin(), schemes.end(), [&rng, &person, t](TestingScheme& ts) {

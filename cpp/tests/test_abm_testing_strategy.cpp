@@ -98,12 +98,13 @@ TEST(TestTestingScheme, runScheme)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::Exactly(5))
-        .WillOnce(testing::Return(0.7)) // Person 1 got test 
+        .WillOnce(testing::Return(0.7)) // Person 1 got test
         .WillOnce(testing::Return(0.7)) // Test is positive
         .WillOnce(testing::Return(0.5)) // Person 1 complies to isolation
         .WillOnce(testing::Return(0.7)) // Person 2 got test
         .WillOnce(testing::Return(0.5)); // Person 2 tested negative and can enter
 
+    // Taken into account the test delay, the time of result is the start_date + required_time
     EXPECT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date + test_params_pcr.required_time),
               false); // Person tests and tests positive
     EXPECT_EQ(testing_scheme2.run_scheme(rng_person2, person2, start_date + test_params_pcr.required_time),
@@ -141,14 +142,14 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::Exactly((8)))
-        .WillOnce(testing::Return(0.7)) // Person 1 complies to testing scheme 1
-        .WillOnce(testing::Return(0.7)) // Person 1 is tested
+        .WillOnce(testing::Return(0.7)) // Person 1 complies to testing
+        .WillOnce(testing::Return(0.7)) // Person 1 is tested for scheme 1
         .WillOnce(testing::Return(0.7)) // Test of Person 1 is positive
         .WillOnce(testing::Return(0.7)) // Person 1 complies to isolation
-        .WillOnce(testing::Return(0.7)) // Person 2 complies to testing scheme 1 but does not its statisfy condition
-        .WillOnce(testing::Return(0.7)) // Person 2 complies to testing scheme 2
+        .WillOnce(testing::Return(0.7)) // Person 2 complies to testing
+        .WillOnce(testing::Return(0.7)) // Person 2 is tested for scheme 2
         .WillOnce(testing::Return(0.5)) // Test of Person 2 is negative
-        .WillOnce(testing::Return(0.7)); // Person 1 complies to testing scheme 1
+        .WillOnce(testing::Return(0.7)); // Person 1 complies to testing
 
     mio::abm::TestingStrategy test_strategy =
         mio::abm::TestingStrategy(std::vector<mio::abm::TestingStrategy::LocalStrategy>{});

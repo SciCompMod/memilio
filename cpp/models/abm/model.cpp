@@ -99,38 +99,42 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
         auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
 
         auto try_mobility_rule = [&](auto rule) -> bool {
-            //run mobility rule and check if change of location can actually happen
+            // run mobility rule and check if change of location can actually happen
             auto target_type                  = rule(personal_rng, person, t, dt, parameters);
             const Location& target_location   = get_location(find_location(target_type, person_id));
             const LocationId current_location = person.get_location();
 
-            // Check if the Person wears mask if required at targeted location
-            if (!target_location.is_mask_required() || person.is_compliant(personal_rng, InterventionType::Mask)) {
-                // Check if the capacity of targeted Location is not reached
-                if (target_location.get_id() != current_location &&
-                    get_number_persons(target_location.get_id()) < target_location.get_capacity().persons) {
-                    // Perform TestingStrategy if required
-                    if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
-                        change_location(person_id, target_location.get_id());
-                        if (target_location.is_mask_required()) {
-                            // If the current MaskProtection level is lower than required, the Person changes mask
-                            if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
-                                parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
-                                person.set_mask(target_location.get_required_mask(), t);
-                            }
-                        }
-                        else {
-                            person.set_mask(MaskType::None, t);
-                        }
-                        return true;
-                    }
+            // the Person cannot move if they do not wear mask as required at targeted location
+            if (target_location.is_mask_required() && !person.is_compliant(personal_rng, InterventionType::Mask)) {
+                return false;
+            }
+            // the Person cannot move if the capacity of targeted Location is reached
+            if (target_location.get_id() == current_location ||
+                get_number_persons(target_location.get_id()) >= target_location.get_capacity().persons) {
+                return false;
+            }
+            // the Person cannot move if the performed TestingStrategy is positive
+            if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                return false;
+            }
+            // update worn mask to target location's requirements
+            if (target_location.is_mask_required()) {
+                // If the current MaskProtection level is lower than required, the Person changes mask
+                if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
+                    parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
+                    person.set_mask(target_location.get_required_mask(), t);
                 }
             }
-            return false;
+            else {
+                person.set_mask(MaskType::None, t);
+            }
+            // all requirements are met, move to target location
+            change_location(person_id, target_location.get_id());
+            return true;
         };
 
-        //run mobility rules one after the other if the corresponding location type exists
-        //shortcutting of bool operators ensures the rules stop after the first rule is applied
+        // run mobility rules one after the other if the corresponding location type exists
+        // shortcutting of bool operators ensures the rules stop after the first rule is applied
         if (m_use_mobility_rules) {
             (has_locations({LocationType::Cemetery}) && try_mobility_rule(&get_buried)) ||
                 (has_locations({LocationType::Home}) && try_mobility_rule(&return_home_when_recovered)) ||
@@ -143,7 +147,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                 (has_locations({LocationType::Home}) && try_mobility_rule(&go_to_quarantine));
         }
         else {
-            //no daily routine mobility, just infection related
+            // no daily routine mobility, just infection related
             (has_locations({LocationType::Cemetery}) && try_mobility_rule(&get_buried)) ||
                 (has_locations({LocationType::Home}) && try_mobility_rule(&return_home_when_recovered)) ||
                 (has_locations({LocationType::Hospital}) && try_mobility_rule(&go_to_hospital)) ||
@@ -162,25 +166,34 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             auto& trip        = m_trip_list.get_next_trip(weekend);
             auto& person      = get_person(trip.person_id);
             auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
-            if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
-                auto& target_location = get_location(trip.destination);
-                // Check if the Person wears mask if required at targeted location
-                if (!target_location.is_mask_required() || person.is_compliant(personal_rng, InterventionType::Mask)) {
-                    // Perform TestingStrategy if required
-                    if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
-                        change_location(person.get_id(), target_location.get_id(), trip.trip_mode);
-                        if (target_location.is_mask_required()) {
-                            // If the current MaskProtection level is lower than required, the Person changes mask
-                            if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
-                                parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
-                                person.set_mask(target_location.get_required_mask(), t);
-                            }
-                        }
-                        else {
-                            person.set_mask(MaskType::None, t);
-                        }
-                    }
+            // skip the trip if the person is in quarantine or is dead
+            if (person.is_in_quarantine(t, parameters) && person.get_infection_state(t) == InfectionState::Dead) {
+                m_trip_list.increase_index();
+                continue;
+            }
+            auto& target_location = get_location(trip.destination);
+            // skip the trip if the Person wears mask as required at targeted location
+            if (target_location.is_mask_required() && !person.is_compliant(personal_rng, InterventionType::Mask)) {
+                m_trip_list.increase_index();
+                continue;
+            }
+            // skip the trip if the performed TestingStrategy is positive
+            if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                m_trip_list.increase_index();
+                continue;
+            }
+            // all requirements are met, move to target location
+            change_location(person.get_id(), target_location.get_id(), trip.trip_mode);
+            // update worn mask to target location's requirements
+            if (target_location.is_mask_required()) {
+                // If the current MaskProtection level is lower than required, the Person changes mask
+                if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
+                    parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
+                    person.set_mask(target_location.get_required_mask(), t);
                 }
+            }
+            else {
+                person.set_mask(MaskType::None, t);
             }
             m_trip_list.increase_index();
         }
