@@ -128,8 +128,11 @@ TEST(TestGraphAbm, test_apply_mobility)
     mio::ABMSimulationNode<MockHistory> node1(MockHistory{}, t, std::move(model1));
     mio::ABMSimulationNode<MockHistory> node2(MockHistory{}, t, std::move(model2));
 
+    mio::log_warning("Evolve node 1");
     node1.evolve(t, dt);
+    mio::log_warning("Evolve node 2");
     node2.evolve(t, dt);
+    mio::log_warning("End evolve");
 
     EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 0);
     EXPECT_EQ(node1.get_simulation().get_model().get_persons().size(), 4);
@@ -137,7 +140,9 @@ TEST(TestGraphAbm, test_apply_mobility)
     EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p4_index], false);
 
     mio::ABMMobilityEdge<MockHistory> edge;
+    mio::log_warning("Apply mobility");
     edge.apply_mobility(node1, node2, t);
+    mio::log_warning("End apply mobility");
 
     EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 2);
     EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 2);

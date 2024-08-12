@@ -90,18 +90,22 @@ private:
                                 target_location.get_capacity().persons) {
                             bool wears_mask = person.apply_mask_intervention(personal_rng, target_location);
                             if (wears_mask) {
+                                mio::log_warning("Change loc rules");
                                 Base::change_location(person_id, target_location.get_id());
+                                mio::log_warning("End change loc rules");
                             }
                             return true;
                         }
                     }
                 }
                 else { //person moves to other world
+                    mio::log_warning("Inactive person rules");
                     Base::m_activeness_statuses[person_id] = false;
                     person.set_location(target_type, abm::LocationId::invalid_id(), std::numeric_limits<int>::max());
                     m_person_buffer.push_back(person_id);
                     m_are_exposure_caches_valid       = false;
                     m_is_local_population_cache_valid = false;
+                    mio::log_warning("End inactive person rules");
                     return true;
                 }
                 return false;
@@ -132,6 +136,7 @@ private:
     if (num_trips != 0) {
         while (Base::m_trip_list.get_current_index() < num_trips &&
                Base::m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
+            mio::log_warning("Start trips");
             auto& trip        = Base::m_trip_list.get_next_trip(weekend);
             auto person_index = Base::get_person_index(trip.person_id);
             auto& person      = Base::get_person(person_index);
@@ -141,10 +146,13 @@ private:
                     auto& target_location = Base::get_location(trip.destination);
                     if (Base::m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
                         person.apply_mask_intervention(personal_rng, target_location);
+                        mio::log_warning("Change loc trips");
                         Base::change_location(person_index, target_location.get_id(), trip.trip_mode);
+                        mio::log_warning("End change loc trip");
                     }
                 }
                 else {
+                    mio::log_warning("Inactive persons trip");
                     //person moves to other world
                     Base::m_activeness_statuses[person_index] = false;
                     person.set_location(trip.destination_type, abm::LocationId::invalid_id(),
@@ -152,6 +160,7 @@ private:
                     m_person_buffer.push_back(person_index);
                     m_are_exposure_caches_valid       = false;
                     m_is_local_population_cache_valid = false;
+                    mio::log_warning("End inactive persons trip");
                 }
             }
             Base::m_trip_list.increase_index();
