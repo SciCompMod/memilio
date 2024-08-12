@@ -34,8 +34,7 @@ if __name__ == "__main__":
     file_path = os.path.dirname(os.path.abspath(__file__))
     package_dir = os.path.abspath(os.path.join(
         file_path, "../../memilio-simulation-stubs"))
-    output_dir = os.path.join(package_dir, "memilio-stubs/")
-    output_module_dir = os.path.join(output_dir, 'memilio')
+    output_dir = os.path.join(package_dir)
 
     # create folders, if they do not exist
     try:
@@ -46,7 +45,7 @@ if __name__ == "__main__":
 
     # memilio-stubs/simulation module needs same structure as memilio/simulation
     subprocess.check_call(
-        [python_interpreter, '-m', 'pybind11_stubgen', '--ignore-all-errors', '-o', output_dir, 'memilio.simulation'])
+        [python_interpreter, '-m', 'pybind11_stubgen', '--ignore-all-errors', '--root-suffix=-stubs', '-o', output_dir, 'memilio.simulation'])
 
     # create setup.py and install package
     with open(os.path.join(package_dir, "setup.py"), "w") as setup_file:

@@ -3,3 +3,4 @@ max-line-length = 79
 
 [tool.pyright]
 include = ["pycode"]
+exclude = ["pycode/memilio-simulation/_skbuild"]
