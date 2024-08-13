@@ -23,6 +23,7 @@
 #include "abm/person.h"
 #include "abm/model.h"
 #include "abm_helpers.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/random_number_generator.h"
 
 TEST(TestLocation, initCell)
@@ -54,6 +55,7 @@ TEST(TestLocation, reachCapacity)
         2 * dt.days();
     model.parameters.get<mio::abm::AgeGroupGotoSchool>().set_multiple({age_group_5_to_14}, true);
     model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
+    //model.parameters.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(std::numeric_limits<int>::max());
 
     auto home_id   = model.add_location(mio::abm::LocationType::Home);
     auto school_id = model.add_location(mio::abm::LocationType::School);

@@ -26,6 +26,7 @@
 #include "abm/vaccine.h"
 #include "abm/test_type.h"
 #include "memilio/utils/custom_index_array.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/epidemiology/age_group.h"
@@ -39,7 +40,7 @@ namespace abm
 {
 
 // Distribution that can be used for the time spend in InfectionStates
-using InfectionStateTimesDistributionsParameters = UniformDistribution<double>::ParamType;
+using InfectionStateTimesDistributionsParameters = LogNormalDistribution<double>::ParamType;
 
 /**
  * @brief Time that a Person is infected but not yet infectious in day unit
@@ -388,7 +389,7 @@ struct SeverityProtectionFactor {
  */
 struct HighViralLoadProtectionFactor {
     using Type = InputFunctionForProtectionLevel;
-    static auto get_default()
+    static auto get_default(AgeGroup /*size*/)
     {
         return Type([](ScalarType /*days*/) -> ScalarType {
             return 0;
@@ -464,7 +465,7 @@ struct TestData {
  */
 struct LockdownDate {
     using Type = TimePoint;
-    static auto get_default()
+    static auto get_default(AgeGroup /*size*/)
     {
         return TimePoint(std::numeric_limits<int>::max());
     }
@@ -684,7 +685,7 @@ struct ContactRates {
 // If true, consider the capacity of the Cell%s of this Location for the computation of relative transmission risk.
 struct UseLocationCapacityForTransmissions {
     using Type = bool;
-    static Type get_default(AgeGroup)
+    static Type get_default(AgeGroup /*size*/)
     {
         return false;
     }
@@ -729,7 +730,7 @@ public:
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
             for (auto&& v : enum_members<VirusVariant>()) {
 
-                if (this->get<IncubationPeriod>()[{v, i}].params.a() < 0) {
+                if (this->get<IncubationPeriod>()[{v, i}].params.m() < 0) {
                     log_error("Constraint check: Lower end of parameter range IncubationPeriod of virus variant {} and "
                               "age group {:.0f} smaller "
                               "than {:.4f}",
@@ -737,7 +738,7 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedNoSymptomsToSymptoms>()[{v, i}].params.a() < 0.0) {
+                if (this->get<TimeInfectedNoSymptomsToSymptoms>()[{v, i}].params.m() < 0.0) {
                     log_error("Constraint check: Lower end of parameter range TimeInfectedNoSymptomsToSymptoms "
                               "of virus variant "
                               "{} and age group {:.0f} smaller "
@@ -746,7 +747,7 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedNoSymptomsToRecovered>()[{v, i}].params.a() < 0.0) {
+                if (this->get<TimeInfectedNoSymptomsToRecovered>()[{v, i}].params.m() < 0.0) {
                     log_error("Constraint check: Lower end of parameter range TimeInfectedNoSymptomsToRecovered of "
                               "virus variant "
                               "{} and age group {:.0f} smaller "
@@ -755,7 +756,7 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedSymptomsToSevere>()[{v, i}].params.a() < 0.0) {
+                if (this->get<TimeInfectedSymptomsToSevere>()[{v, i}].params.m() < 0.0) {
                     log_error("Constraint check: Lower end of parameter range TimeInfectedSymptomsToSevere of virus "
                               "variant {} "
                               "and age group {:.0f} smaller "
@@ -764,7 +765,7 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedSymptomsToRecovered>()[{v, i}].params.a() < 0.0) {
+                if (this->get<TimeInfectedSymptomsToRecovered>()[{v, i}].params.m() < 0.0) {
                     log_error("Constraint check: Lower end of parameter range TimeInfectedSymptomsToRecovered of virus "
                               "variant {} "
                               "and age group {:.0f} smaller "
@@ -773,7 +774,7 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedSevereToCritical>()[{v, i}].params.a() < 0.0) {
+                if (this->get<TimeInfectedSevereToCritical>()[{v, i}].params.m() < 0.0) {
                     log_error("Constraint check: Lower end of parameter range TimeInfectedSevereToCritical of virus "
                               "variant {} "
                               "and age group {:.0f} smaller "
@@ -782,7 +783,7 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedSevereToRecovered>()[{v, i}].params.a() < 0.0) {
+                if (this->get<TimeInfectedSevereToRecovered>()[{v, i}].params.m() < 0.0) {
                     log_error("Constraint check: Lower end of parameter range TimeInfectedSevereToRecovered of virus "
                               "variant {} "
                               "and age group {:.0f} smaller "
@@ -791,7 +792,7 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedCriticalToDead>()[{v, i}].params.a() < 0.0) {
+                if (this->get<TimeInfectedCriticalToDead>()[{v, i}].params.m() < 0.0) {
                     log_error(
                         "Constraint check: Lower end of parameter range TimeInfectedCriticalToDead of virus variant {} "
                         "and age group {:.0f} smaller "
@@ -800,7 +801,7 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedCriticalToRecovered>()[{v, i}].params.a() < 0.0) {
+                if (this->get<TimeInfectedCriticalToRecovered>()[{v, i}].params.m() < 0.0) {
                     log_error("Constraint check: Lower end of parameter range TimeInfectedCriticalToRecovered of virus "
                               "variant {} "
                               "and age group {:.0f} smaller "

@@ -59,8 +59,9 @@ TEST(TestMasks, maskProtection)
     auto rng = mio::RandomNumberGenerator();
     mio::abm::Parameters params(num_age_groups);
 
-    // set incubation period to two days so that the newly infected person is still exposed
-    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 2.;
+    // set time for state transition to two days so that the newly infected person is still exposed
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>> mock_logNorm_dist;
+    EXPECT_CALL(mock_logNorm_dist.get_mock(), invoke).WillRepeatedly(testing::Return(2));
 
     //setup location with some chance of exposure
     auto t = mio::abm::TimePoint(0);

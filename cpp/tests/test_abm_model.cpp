@@ -180,11 +180,9 @@ TEST(TestModel, evolveMobility)
         auto dt    = mio::abm::hours(1);
         auto model = mio::abm::Model(num_age_groups);
         //setup so p1 doesn't do transition
-        model.parameters
-            .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-            2 * dt.days();
-        model.parameters.get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype,
-                                                                             age_group_15_to_34}] = 2 * dt.days();
+        ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>>
+            mock_logNorm_dist;
+        EXPECT_CALL(mock_logNorm_dist.get_mock(), invoke).WillRepeatedly(testing::Return(2 * dt.days()));
         model.parameters.get<mio::abm::AgeGroupGotoSchool>().set_multiple({age_group_5_to_14}, true);
         model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
 
@@ -236,18 +234,6 @@ TEST(TestModel, evolveMobility)
         auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
         auto dt    = mio::abm::hours(2);
         auto model = mio::abm::Model(num_age_groups);
-        //setup so p1-p5 don't do transition
-        model.parameters
-            .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-            2 * dt.days();
-        model.parameters.get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype,
-                                                                             age_group_15_to_34}] = 2 * dt.days();
-        model.parameters
-            .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-            2 * dt.days();
-        model.parameters
-            .get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-            2 * dt.days();
 
         auto home_id     = model.add_location(mio::abm::LocationType::Home);
         auto event_id    = model.add_location(mio::abm::LocationType::SocialEvent);
@@ -370,13 +356,10 @@ TEST(TestModel, evolveMobility)
         auto dt    = mio::abm::days(1);
         auto model = mio::abm::Model(num_age_groups);
 
-        // Time to go from severe to critical infection is 1 day (dt).
-        model.parameters
-            .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-            0.5;
-        // Time to go from critical infection to dead state is 1/2 day (0.5 * dt).
-        model.parameters
-            .get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.5;
+        //Times for state transitions
+        ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>>
+            mock_logNorm_dist;
+        EXPECT_CALL(mock_logNorm_dist.get_mock(), invoke).WillRepeatedly(testing::Return(0.5));
 
         auto home_id     = model.add_location(mio::abm::LocationType::Home);
         auto work_id     = model.add_location(mio::abm::LocationType::Work);
@@ -532,7 +515,7 @@ TEST(TestModel, checkParameterConstraints)
     params.get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]      = 8.;
     params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -9.;
     ASSERT_EQ(params.check_constraints(), true);
-    params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 9.;
+    params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -9.;
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 1.1;
     ASSERT_EQ(params.check_constraints(), true);
