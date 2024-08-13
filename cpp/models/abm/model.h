@@ -58,6 +58,8 @@ public:
     using ConstPersonIterator     = std::vector<Person>::const_iterator;
     using ActivenessIterator      = std::vector<bool>::iterator;
     using ConstActivenessIterator = std::vector<bool>::const_iterator;
+    using MobilityRuleType        = LocationType (*)(PersonalRandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
+                                              const Parameters&);
 
     /**
      * @brief Create a Model.
@@ -430,21 +432,21 @@ public:
     inline void change_location(uint32_t person_index, LocationId destination,
                                 TransportMode mode = TransportMode::Unknown, const std::vector<uint32_t>& cells = {0})
     {
-        mio::log_warning("Get origin");
-        LocationId origin = get_location_by_person(person_index).get_id();
-        mio::log_warning("has_changed_location");
+        //mio::log_warning("Get origin");
+        LocationId origin = get_location(person_index).get_id();
+        //mio::log_warning("has_changed_location");
         const bool has_changed_location =
             mio::abm::change_location(get_person(person_index), get_location(destination), mode, cells);
-        mio::log_warning("has_changed_location end");
+        //mio::log_warning("has_changed_location end");
         // if the person has changed location, invalidate exposure caches but keep population caches valid
         if (has_changed_location) {
             m_are_exposure_caches_valid = false;
             if (m_is_local_population_cache_valid) {
-                mio::log_warning("Adjust cache 1");
+                //mio::log_warning("Adjust cache 1");
                 --m_local_population_cache[origin.get()];
-                mio::log_warning("Adjust cache 2");
+                //mio::log_warning("Adjust cache 2");
                 ++m_local_population_cache[destination.get()];
-                mio::log_warning("Adjust cache 2 end");
+                //mio::log_warning("Adjust cache 2 end");
             }
         }
     }
@@ -464,9 +466,9 @@ public:
             m_are_exposure_caches_valid = true;
         }
         auto personal_rng = PersonalRandomNumberGenerator(m_rng, get_person(person_index));
-        mio::abm::interact(personal_rng, get_person(person_index), get_location_by_person(person_index),
-                           m_air_exposure_rates_cache[get_location_by_person(person_index).get_id().get()],
-                           m_contact_exposure_rates_cache[get_location_by_person(person_index).get_id().get()], t, dt,
+        mio::abm::interact(personal_rng, get_person(person_index), get_location(person_index),
+                           m_air_exposure_rates_cache[get_location(person_index).get_id().get()],
+                           m_contact_exposure_rates_cache[get_location(person_index).get_id().get()], t, dt,
                            parameters);
     }
 
@@ -478,7 +480,7 @@ public:
      */
     const Location& get_location(LocationId id) const
     {
-        log_error("here");
+        //log_error("here");
         assert(id != LocationId::invalid_id() && "Given LocationId must be valid.");
         assert(id < LocationId((uint32_t)m_locations.size()) && "Given LocationId is not in this Model.");
         return m_locations[id.get()];
@@ -486,11 +488,11 @@ public:
 
     Location& get_location(LocationId id)
     {
-        log_error("here 1");
+        //log_error("here 1");
         assert(id != LocationId::invalid_id() && "Given LocationId must be valid.");
         assert(id < LocationId((uint32_t)m_locations.size()) && "Given LocationId is not in this Model.");
-        log_warning("id get is {}", id.get());
-        log_warning("m_locations size is {}", m_locations.size());
+        // log_warning("id get is {}", id.get());
+        // log_warning("m_locations size is {}", m_locations.size());
         return m_locations[id.get()];
     }
     /** @} */
@@ -501,16 +503,16 @@ public:
      * @return Reference to the Location.
      * @{
      */
-    inline Location& get_location_by_person(uint32_t index)
+    inline Location& get_location(uint32_t index)
     {
-        log_warning("Person index is {}", index);
-        log_warning("Person location type is {}", int(get_person(index).get_location_type()));
-        log_warning("Person model id is {}", get_person(index).get_location_model_id());
-        log_warning("Location Id is {}", get_person(index).get_location().get());
+        // log_warning("Person index is {}", index);
+        // log_warning("Person location type is {}", int(get_person(index).get_location_type()));
+        // log_warning("Person model id is {}", get_person(index).get_location_model_id());
+        // log_warning("Location Id is {}", get_person(index).get_location().get());
         return get_location(get_person(index).get_location());
     }
 
-    inline const Location& get_location_by_person(uint32_t index) const
+    inline const Location& get_location(uint32_t index) const
     {
         return get_location(get_person(index).get_location());
     }
@@ -583,10 +585,7 @@ protected:
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
     TripList m_trip_list; ///< List of all Trip%s the Person%s do.
     bool m_use_mobility_rules; ///< Whether mobility rules are considered.
-    std::vector<std::pair<LocationType (*)(PersonalRandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
-                                           const Parameters&),
-                          std::vector<LocationType>>>
-        m_mobility_rules; ///< Rules that govern the mobility between Location%s.
+    std::vector<MobilityRuleType> m_mobility_rules; ///< Rules that govern the mobility between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.
     RandomNumberGenerator m_rng; ///< Global random number generator
 };

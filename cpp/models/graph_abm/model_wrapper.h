@@ -30,17 +30,28 @@
 #include "memilio/utils/mioomp.h"
 #include "abm/mobility_rules.h"
 #include "abm/mobility_rules.h"
+#include <cstddef>
 #include <list>
+#include <vector>
 
 namespace mio
 {
 using namespace abm;
 class ModelWrapper : public abm::Model
 {
-    using Model::Model;
     using Base = Model;
 
 public:
+    ModelWrapper(size_t num_agegroups, int id,
+                 std::vector<Base::MobilityRuleType> mobility_rules =
+                     std::vector<Base::MobilityRuleType>{&get_buried, &return_home_when_recovered, &go_to_hospital,
+                                                         &go_to_icu, &go_to_school, &go_to_work, &go_to_shop,
+                                                         &go_to_event, &go_to_quarantine})
+        : Base(num_agegroups, id)
+    {
+        Base::m_mobility_rules = mobility_rules;
+    }
+
     /**
      * @brief Get person buffer. 
      */
@@ -112,20 +123,12 @@ private:
                 return false;
             };
 
-            //run mobility rules one after the other if the corresponding location type exists
-            //shortcutting of bool operators ensures the rules stop after the first rule is applied
-            if (Base::m_use_mobility_rules) {
-                try_mobility_rule(&get_buried) || try_mobility_rule(&return_home_when_recovered) ||
-                    try_mobility_rule(&go_to_hospital) || try_mobility_rule(&go_to_icu) ||
-                    try_mobility_rule(&go_to_school) || try_mobility_rule(&go_to_work) ||
-                    try_mobility_rule(&go_to_shop) || try_mobility_rule(&go_to_event) ||
-                    try_mobility_rule(&go_to_quarantine);
-            }
-            else {
-                //no daily routine mobility, just infection related
-                try_mobility_rule(&get_buried) || try_mobility_rule(&return_home_when_recovered) ||
-                    try_mobility_rule(&go_to_hospital) || try_mobility_rule(&go_to_icu) ||
-                    try_mobility_rule(&go_to_quarantine);
+            for (auto rule : Base::m_mobility_rules) {
+                bool applied = try_mobility_rule(rule);
+                //only use one mobility rule per person
+                if (applied) {
+                    break;
+                }
             }
         }
     }

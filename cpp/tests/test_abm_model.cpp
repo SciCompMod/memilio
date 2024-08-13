@@ -413,18 +413,18 @@ TEST(TestModel, evolveMobility)
 
         // Check the dead person got burried and the severely infected person starts in Hospital
         model.evolve(t, dt);
-        EXPECT_EQ(model.get_location_by_person(model.get_person_index(p_dead.get_id())).get_type(),
+        EXPECT_EQ(model.get_location(model.get_person_index(p_dead.get_id())).get_type(),
                   mio::abm::LocationType::Cemetery);
         EXPECT_EQ(p_severe.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
-        EXPECT_EQ(model.get_location_by_person(model.get_person_index(p_severe.get_id())).get_type(),
+        EXPECT_EQ(model.get_location(model.get_person_index(p_severe.get_id())).get_type(),
                   mio::abm::LocationType::Hospital);
 
         // Check the dead person is still in Cemetery and the severely infected person dies and got burried
         model.evolve(t + dt, dt);
-        EXPECT_EQ(model.get_location_by_person(model.get_person_index(p_dead.get_id())).get_type(),
+        EXPECT_EQ(model.get_location(model.get_person_index(p_dead.get_id())).get_type(),
                   mio::abm::LocationType::Cemetery);
         EXPECT_EQ(p_severe.get_infection_state(t + dt), mio::abm::InfectionState::Dead);
-        EXPECT_EQ(model.get_location_by_person(model.get_person_index(p_severe.get_id())).get_type(),
+        EXPECT_EQ(model.get_location(model.get_person_index(p_severe.get_id())).get_type(),
                   mio::abm::LocationType::Cemetery);
     }
 }
