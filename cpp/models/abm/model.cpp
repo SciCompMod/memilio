@@ -167,7 +167,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             auto& person      = get_person(trip.person_id);
             auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
             // skip the trip if the person is in quarantine or is dead
-            if (person.is_in_quarantine(t, parameters) && person.get_infection_state(t) == InfectionState::Dead) {
+            if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
                 m_trip_list.increase_index();
                 continue;
             }
