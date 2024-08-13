@@ -432,21 +432,15 @@ public:
     inline void change_location(uint32_t person_index, LocationId destination,
                                 TransportMode mode = TransportMode::Unknown, const std::vector<uint32_t>& cells = {0})
     {
-        //mio::log_warning("Get origin");
         LocationId origin = get_location(person_index).get_id();
-        //mio::log_warning("has_changed_location");
         const bool has_changed_location =
             mio::abm::change_location(get_person(person_index), get_location(destination), mode, cells);
-        //mio::log_warning("has_changed_location end");
         // if the person has changed location, invalidate exposure caches but keep population caches valid
         if (has_changed_location) {
             m_are_exposure_caches_valid = false;
             if (m_is_local_population_cache_valid) {
-                //mio::log_warning("Adjust cache 1");
                 --m_local_population_cache[origin.get()];
-                //mio::log_warning("Adjust cache 2");
                 ++m_local_population_cache[destination.get()];
-                //mio::log_warning("Adjust cache 2 end");
             }
         }
     }
@@ -480,7 +474,6 @@ public:
      */
     const Location& get_location(LocationId id) const
     {
-        //log_error("here");
         assert(id != LocationId::invalid_id() && "Given LocationId must be valid.");
         assert(id < LocationId((uint32_t)m_locations.size()) && "Given LocationId is not in this Model.");
         return m_locations[id.get()];
@@ -488,11 +481,8 @@ public:
 
     Location& get_location(LocationId id)
     {
-        //log_error("here 1");
         assert(id != LocationId::invalid_id() && "Given LocationId must be valid.");
         assert(id < LocationId((uint32_t)m_locations.size()) && "Given LocationId is not in this Model.");
-        // log_warning("id get is {}", id.get());
-        // log_warning("m_locations size is {}", m_locations.size());
         return m_locations[id.get()];
     }
     /** @} */
@@ -505,10 +495,6 @@ public:
      */
     inline Location& get_location(uint32_t index)
     {
-        // log_warning("Person index is {}", index);
-        // log_warning("Person location type is {}", int(get_person(index).get_location_type()));
-        // log_warning("Person model id is {}", get_person(index).get_location_model_id());
-        // log_warning("Location Id is {}", get_person(index).get_location().get());
         return get_location(get_person(index).get_location());
     }
 
