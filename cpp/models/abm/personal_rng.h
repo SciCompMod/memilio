@@ -23,6 +23,7 @@
 
 #include "memilio/utils/random_number_generator.h"
 #include "abm/person_id.h"
+#include <cstdint>
 
 namespace mio
 {
@@ -77,7 +78,7 @@ public:
      */
     mio::Counter<uint64_t> get_counter() const
     {
-        return mio::rng_totalsequence_counter<uint64_t>(m_person_id.get(), m_counter);
+        return mio::rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(m_person_id.get()), m_counter);
     }
 
     /**

@@ -27,7 +27,7 @@
 
 TEST(TestLocation, initCell)
 {
-    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
+    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 0, 2);
     ASSERT_EQ(location.get_cells().size(), 2);
 }
 
@@ -74,10 +74,14 @@ TEST(TestLocation, reachCapacity)
     auto p1 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedNoSymptoms);
     auto p2 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible);
 
-    model.get_person(p1).set_assigned_location(mio::abm::LocationType::School, school_id);
-    model.get_person(p2).set_assigned_location(mio::abm::LocationType::School, school_id);
-    model.get_person(p1).set_assigned_location(mio::abm::LocationType::Home, home_id);
-    model.get_person(p2).set_assigned_location(mio::abm::LocationType::Home, home_id);
+    model.get_person(model.get_person_index(p1))
+        .set_assigned_location(mio::abm::LocationType::School, school_id, model.get_id());
+    model.get_person(model.get_person_index(p2))
+        .set_assigned_location(mio::abm::LocationType::School, school_id, model.get_id());
+    model.get_person(model.get_person_index(p1))
+        .set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    model.get_person(model.get_person_index(p2))
+        .set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
 
     model.get_location(school_id).set_capacity(1, 66);
 
@@ -87,8 +91,9 @@ TEST(TestLocation, reachCapacity)
 
     model.evolve(t, dt);
 
-    ASSERT_EQ(model.get_person(p1).get_location(), school_id);
-    ASSERT_EQ(model.get_person(p2).get_location(), home_id); // p2 should not be able to enter the school
+    ASSERT_EQ(model.get_person(model.get_person_index(p1)).get_location(), school_id);
+    ASSERT_EQ(model.get_person(model.get_person_index(p2)).get_location(),
+              home_id); // p2 should not be able to enter the school
     ASSERT_EQ(model.get_number_persons(school_id), 1);
     ASSERT_EQ(model.get_number_persons(home_id), 1);
 }
@@ -97,7 +102,7 @@ TEST(TestLocation, computeSpacePerPersonRelative)
 {
     using testing::Return;
 
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 3);
+    mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 0, 3);
     home.set_capacity(4, 264, 0); // Capacity for Cell 1
     home.set_capacity(2, 132, 1); // Capacity for Cell 2
     home.set_capacity(0, 0, 2); // Capacity for Cell 3
