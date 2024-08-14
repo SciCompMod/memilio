@@ -26,7 +26,7 @@
 
 #include "pybind11/pybind11.h"
 
-PYBIND11_MODULE(simulation, m_simulation)
+PYBIND11_MODULE(_simulation, m_simulation)
 {
    pymio::bind_simulation(m_simulation);
 

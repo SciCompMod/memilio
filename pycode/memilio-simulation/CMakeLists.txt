@@ -79,18 +79,7 @@ add_library(simulation_obj OBJECT
     memilio/simulation/utils/uncertain_value.cpp)
 target_link_libraries(simulation_obj PRIVATE memilio pybind11::module)
 
-
-# add_pymio_module(simulation
-#     LINKED_LIBRARIES osir_obj
-#     oseir_obj
-#     osecir_obj
-#     osecirvvs_obj
-#     abm_obj
-#     simulation_obj
-#     SOURCES memilio/simulation/pymio.cpp
-# )
-
-add_pymio_module(simulation
+add_pymio_module(_simulation
     LINKED_LIBRARIES memilio ode_sir ode_seir ode_secir ode_secirvvs abm
     SOURCES memilio/simulation/pymio.cpp
     $<TARGET_OBJECTS:osir_obj>
