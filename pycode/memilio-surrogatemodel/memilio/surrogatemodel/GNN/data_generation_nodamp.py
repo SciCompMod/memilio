@@ -323,6 +323,7 @@ def generate_data(
             with open(os.path.join(path, 'data_secir_age_groups.pickle'), 'wb') as f:
                 pickle.dump(all_data, f)
 
+    return data
 
 if __name__ == "__main__":
 
@@ -330,12 +331,12 @@ if __name__ == "__main__":
     path_data = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'data_GNN_nodamp_test')
+        'data_GNN_nodamp')
  
     input_width = 5
     days = 30
     num_runs = 1000
-    number_of_populations = 400
+    
     generate_data(num_runs, path_data, input_width,
-                  days, number_of_populations)
+                  days)
     
