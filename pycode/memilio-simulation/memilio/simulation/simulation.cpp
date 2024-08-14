@@ -44,9 +44,10 @@
 #include "memilio/io/mobility_io.h"
 #include "memilio/io/epi_data.h"
 
-#include "pybind11/pybind11.h"
-
 namespace py = pybind11;
+
+namespace pymio
+{
 
 void bind_simulation(py::module_& m)
 {
@@ -152,3 +153,5 @@ void bind_simulation(py::module_& m)
 
     m.attr("__version__") = "dev";
 }
+
+} // namespace pymio

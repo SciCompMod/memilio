@@ -20,6 +20,7 @@
 
 //Includes from pymio
 #include "pybind_util.h"
+#include "models/osecirvvs.h"
 #include "utils/parameter_set.h"
 #include "compartments/simulation.h"
 #include "compartments/compartmentalmodel.h"
@@ -40,13 +41,16 @@
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/parameter_studies.h"
 
-#include "pybind11/pybind11.h"
 #include "pybind11/stl_bind.h"
 #include <vector>
 
 namespace py = pybind11;
 
-namespace
+using MobilityGraph = mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MobilityEdge<double>>;
+
+PYBIND11_MAKE_OPAQUE(std::vector<MobilityGraph>);
+
+namespace pymio
 {
 //select only the first node of the graph of each run, used for parameterstudy with single nodes
 template <class Sim>
@@ -67,7 +71,7 @@ filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::Mobil
 template <class Simulation>
 void bind_ParameterStudy(py::module_& m, std::string const& name)
 {
-    pymio::bind_class<mio::ParameterStudy<Simulation>, pymio::EnablePickling::Never>(m, name.c_str())
+    bind_class<mio::ParameterStudy<Simulation>, EnablePickling::Never>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("num_runs"))
         .def(py::init<const mio::Graph<typename Simulation::Model, mio::MobilityParameters<double>>&, double, double,
@@ -148,23 +152,12 @@ enum class ContactLocation
     Count,
 };
 
-using MobilityGraph = mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<>>, mio::MobilityEdge<double>>;
-
-} // namespace
-
-
-namespace pymio
-{
 //specialization of pretty_name
 template <>
 inline std::string pretty_name<mio::osecirvvs::InfectionState>()
 {
     return "InfectionState";
 }
-
-} // namespace pymio
-
-PYBIND11_MAKE_OPAQUE(std::vector<MobilityGraph>);
 
 void bind_osecirvvs(py::module_& m)
 {
@@ -178,7 +171,7 @@ void bind_osecirvvs(py::module_& m)
               &mio::interpolate_simulation_result),
           py::arg("ts"), py::arg("interpolation_times"));
 
-    pymio::iterable_enum<mio::osecirvvs::InfectionState>(m, "InfectionState")
+    iterable_enum<mio::osecirvvs::InfectionState>(m, "InfectionState")
         .value("SusceptibleNaive", mio::osecirvvs::InfectionState::SusceptibleNaive)
         .value("SusceptiblePartialImmunity", mio::osecirvvs::InfectionState::SusceptiblePartialImmunity)
         .value("ExposedNaive", mio::osecirvvs::InfectionState::ExposedNaive)
@@ -211,10 +204,10 @@ void bind_osecirvvs(py::module_& m)
         .value("DeadPartialImmunity", mio::osecirvvs::InfectionState::DeadPartialImmunity)
         .value("DeadImprovedImmunity", mio::osecirvvs::InfectionState::DeadImprovedImmunity);
 
-    pymio::bind_ParameterSet<mio::osecirvvs::ParametersBase<double>, pymio::EnablePickling::Required>(m,
+    bind_ParameterSet<mio::osecirvvs::ParametersBase<double>, EnablePickling::Required>(m,
                                                                                                       "ParametersBase");
 
-    pymio::bind_class<mio::osecirvvs::Parameters<double>, pymio::EnablePickling::Required,
+    bind_class<mio::osecirvvs::Parameters<double>, EnablePickling::Required,
                       mio::osecirvvs::ParametersBase<double>>(m, "Parameters")
         .def(py::init<mio::AgeGroup>())
         .def_property(
@@ -253,16 +246,16 @@ void bind_osecirvvs(py::module_& m)
         .def("apply_constraints", &mio::osecirvvs::Parameters<double>::apply_constraints);
 
     using Populations = mio::Populations<double, mio::AgeGroup, mio::osecirvvs::InfectionState>;
-    pymio::bind_Population(m, "Populations", mio::Tag<mio::osecirvvs::Model<double>::Populations>{});
+    bind_Population(m, "Populations", mio::Tag<mio::osecirvvs::Model<double>::Populations>{});
 
-    pymio::bind_CompartmentalModel<mio::osecirvvs::InfectionState, Populations, mio::osecirvvs::Parameters<double>,
-                                   pymio::EnablePickling::Never>(m, "ModelBase");
-    pymio::bind_class<mio::osecirvvs::Model<double>, pymio::EnablePickling::Required,
+    bind_CompartmentalModel<mio::osecirvvs::InfectionState, Populations, mio::osecirvvs::Parameters<double>,
+                                   EnablePickling::Never>(m, "ModelBase");
+    bind_class<mio::osecirvvs::Model<double>, EnablePickling::Required,
                       mio::CompartmentalModel<double, mio::osecirvvs::InfectionState, Populations,
                                               mio::osecirvvs::Parameters<double>>>(m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
-    pymio::bind_Simulation<mio::osecirvvs::Simulation<>>(m, "Simulation");
+    bind_Simulation<mio::osecirvvs::Simulation<>>(m, "Simulation");
 
     m.def(
         "simulate",
@@ -280,11 +273,11 @@ void bind_osecirvvs(py::module_& m)
         "Simulates an ODE SECIRVVS model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
         py::arg("model"));
 
-    pymio::bind_ModelNode<mio::osecirvvs::Model<double>>(m, "ModelNode");
-    pymio::bind_SimulationNode<mio::osecirvvs::Simulation<>>(m, "SimulationNode");
-    pymio::bind_ModelGraph<mio::osecirvvs::Model<double>>(m, "ModelGraph");
-    pymio::bind_MobilityGraph<mio::osecirvvs::Simulation<>>(m, "MobilityGraph");
-    pymio::bind_GraphSimulation<MobilityGraph>(m, "MobilitySimulation");
+    bind_ModelNode<mio::osecirvvs::Model<double>>(m, "ModelNode");
+    bind_SimulationNode<mio::osecirvvs::Simulation<>>(m, "SimulationNode");
+    bind_ModelGraph<mio::osecirvvs::Model<double>>(m, "ModelGraph");
+    bind_MobilityGraph<mio::osecirvvs::Simulation<>>(m, "MobilityGraph");
+    bind_GraphSimulation<MobilityGraph>(m, "MobilitySimulation");
 
     //normally, std::vector is bound to any python iterable, but this doesn't work for move-only elements
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
@@ -316,7 +309,7 @@ void bind_osecirvvs(py::module_& m)
                     params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
                     mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<double>>, mio::get_node_ids,
                     scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series);
-            return pymio::check_and_throw(result);
+            return check_and_throw(result);
         },
         py::return_value_policy::move);
 
@@ -342,16 +335,16 @@ void bind_osecirvvs(py::module_& m)
                                               mio::MobilityParameters<double>, mio::MobilityCoefficientGroup,
                                               mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain)>(
                 data_dir, params_graph, mobile_comp, contact_locations_size, mio::read_mobility_plain, weights);
-            return pymio::check_and_throw(result);
+            return check_and_throw(result);
         },
         py::return_value_policy::move);
 
 #ifdef MEMILIO_HAS_HDF5
-    pymio::bind_save_results<mio::osecirvvs::Model<double>>(m);
+    bind_save_results<mio::osecirvvs::Model<double>>(m);
 #endif // MEMILIO_HAS_HDF5
 
 #ifdef MEMILIO_HAS_JSONCPP
-    pymio::bind_write_graph<mio::osecirvvs::Model<double>>(m);
+    bind_write_graph<mio::osecirvvs::Model<double>>(m);
     m.def(
         "read_input_data_county",
         [](std::vector<mio::osecirvvs::Model<double>>& model, mio::Date date, const std::vector<int>& county,
@@ -359,7 +352,7 @@ void bind_osecirvvs(py::module_& m)
            int num_days = 0, bool export_time_series = false) {
             auto result = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<double>>(
                 model, date, county, scaling_factor_inf, scaling_factor_icu, dir, num_days, export_time_series);
-            return pymio::check_and_throw(result);
+            return check_and_throw(result);
         },
         py::return_value_policy::move);
 #endif // MEMILIO_HAS_JSONCPP
@@ -370,3 +363,5 @@ void bind_osecirvvs(py::module_& m)
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MobilityGraph>);
 
 }
+
+} // namespace pymio
