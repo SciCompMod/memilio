@@ -24,6 +24,7 @@
 #include "memilio/epidemiology/simulation_day.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/math/eigen.h"
 #include "memilio/math/eigen_util.h"
@@ -41,6 +42,7 @@
 #include "boost/filesystem.hpp"
 
 #include <cassert>
+#include <cstddef>
 #include <string>
 
 namespace mio
@@ -106,144 +108,133 @@ auto get_migration_factors(const Sim& /*sim*/, double /*t*/, const Eigen::Ref<co
 }
 
 template <typename FP>
-void move_migrated(Eigen::Ref<Vector<FP>> migrated, Eigen::Ref<Vector<FP>> results_from,
-                   Eigen::Ref<Vector<FP>> results_to)
+void check_negative_values_vec(Eigen::Ref<Vector<FP>> vec, const size_t num_age_groups, FP tolerance = -1e-10)
 {
-    // before moving the commuters, we need to look for negative values in migrated and correct them.
-    const auto group        = 6;
-    const auto num_comparts = results_to.size() / group;
+    // before moving the commuters, we need to look for negative values in vec and correct them.
+    const size_t num_comparts = vec.size() / num_age_groups;
 
-    // check for negative values in migrated
-    for (Eigen::Index j = 0; j < migrated.size(); ++j) {
-        if (migrated(j) < -1e-8) {
-            std::cout << "Negative Value in migration detected. With value" << migrated(j) << "\n";
-            auto curr_age_group = int(j / num_comparts);
-            auto indx_begin     = curr_age_group * num_comparts;
-            auto indx_end       = (curr_age_group + 1) * num_comparts;
-            // calculate max index in indx boundaries
-            Eigen::Index max_index = indx_begin;
-            for (Eigen::Index i = indx_begin; i < indx_end; ++i) {
-                if (migrated(i) > migrated(max_index)) {
-                    max_index = i;
-                }
+    // check for negative values in vec
+    while (vec.minCoeff() < tolerance) {
+        Eigen::Index min_index;
+        const FP min_value = vec.minCoeff(&min_index);
+
+        const auto curr_age_group = min_index / num_comparts;
+        const auto indx_begin     = curr_age_group * num_comparts;
+        const auto indx_end       = indx_begin + num_comparts;
+
+        auto max_group_indx = indx_begin;
+        for (auto i = indx_begin; i < indx_end; ++i) {
+            if (vec(i) > vec(max_group_indx)) {
+                max_group_indx = i;
             }
-            // we assume that the solution from migrated is bettter because there is contact with other nodes
-            migrated(max_index) = migrated(max_index) + migrated(j);
-            migrated(j)         = migrated(j) - migrated(j);
+        }
+
+        // Correct the negative value
+        vec(min_index) = 0;
+        vec(max_group_indx) += min_value;
+
+        std::cout << "Negative value in vector detected and corrected. Value: " << min_value << "\n";
+    }
+}
+
+template <typename FP, class Sim>
+Eigen::Index find_time_index(Sim& simulation, FP t, bool create_new_tp)
+{
+    auto& results = simulation.get_result();
+    auto& flows   = simulation.get_flows();
+    if (results.get_num_time_points() != flows.get_num_time_points()) {
+        log_error("Number of time points in results " + std::to_string(results.get_num_time_points()) + " and flows " +
+                  std::to_string(flows.get_num_time_points()) + " do not match in find_time_index.");
+    }
+    Eigen::Index t_indx = results.get_num_time_points() - 1;
+    for (; t_indx >= 0; --t_indx) {
+        if (std::abs(results.get_time(t_indx) - t) < 1e-10) {
+            break;
         }
     }
 
-    // calc sum of migrated and from
-    auto sum_migrated = migrated.sum();
-    auto sum_from     = results_from.sum();
-    if (std::abs(sum_migrated - sum_from) < 1e-8) {
-        results_from = migrated;
-    }
-    else {
-        Eigen::VectorXd remaining_after_return = (results_from - migrated).eval();
-        // auto remaining_after_return_as_vector  = std::vector<double>(
-        //     remaining_after_return.data(), remaining_after_return.data() + remaining_after_return.size());
-        for (Eigen::Index j = 0; j < results_to.size(); ++j) {
-            if (remaining_after_return(j) < -1e-8) {
-                auto curr_age_group = int(j / num_comparts);
-                auto indx_begin     = curr_age_group * num_comparts;
-                auto indx_end       = (curr_age_group + 1) * num_comparts;
-                // calculate max index in indx boundaries
-                Eigen::Index max_index = indx_begin;
-                for (Eigen::Index i = indx_begin; i < indx_end; ++i) {
-                    if (remaining_after_return(i) > remaining_after_return(max_index)) {
-                        max_index = i;
-                    }
-                }
-
-                // its possible that the max value in the boundaries is not enough to fill the negative value.
-                // Therefore we have to find multiple max values
-                while (remaining_after_return(max_index) + remaining_after_return(j) < -1e-10) {
-
-                    // calculate sum between indx_begin and indx_end
-                    double result_from_sum_group      = 0;
-                    double result_migration_sum_group = 0;
-                    for (Eigen::Index i = indx_begin; i < indx_end; ++i) {
-                        result_from_sum_group += results_from(i);
-                        result_migration_sum_group += migrated(i);
-                    }
-                    auto diff = result_from_sum_group - result_migration_sum_group;
-                    if (diff < -1e-8) {
-                        std::cout << "Sum of results_from is smaller than sum of migrated. Diff is "
-                                  << result_from_sum_group - result_migration_sum_group << "\n";
-                        // transfer values from migrated to results_from
-                        for (Eigen::Index i = indx_begin; i < indx_end; ++i) {
-                            results_from(i) = migrated(i);
-                        }
-                    }
-
-                    results_from(j)         = results_from(j) + remaining_after_return(max_index);
-                    results_from(max_index) = results_from(max_index) - remaining_after_return(max_index);
-                    remaining_after_return  = (results_from - migrated).eval();
-
-                    max_index = indx_begin;
-                    for (Eigen::Index i = indx_begin; i < indx_end; ++i) {
-                        if (remaining_after_return(i) > remaining_after_return(max_index)) {
-                            max_index = i;
-                        }
-                    }
-                    if (max_index == indx_begin && remaining_after_return(max_index) == 0) {
-                        std::cout << "Fixing negative Value in migration not possible."
-                                  << "\n";
-                    }
-                }
-
-                // we assume that the solution from migrated is bettter because there is contact with other nodes
-                results_from(j)         = results_from(j) - remaining_after_return(j);
-                results_from(max_index) = results_from(max_index) + remaining_after_return(j);
-                remaining_after_return  = (results_from - migrated).eval();
-            }
-        }
+    if (t_indx < 0 && !create_new_tp) {
+        log_error("Time point " + std::to_string(t) + " not found in find_time_index. Lates time point is " +
+                  std::to_string(results.get_last_time()));
     }
 
-    results_from -= migrated;
-    results_to += migrated;
+    if (t_indx < 0 && results.get_last_time() < t && create_new_tp) {
+        // if we allow to create a new time point, we initialize the compartments with zero
+        // the flows are accumulated. Therefore, we can just copy the last value.
+        Eigen::VectorXd results_vec = Eigen::VectorXd::Zero(results.get_last_value().size());
+        results.add_time_point(t, results_vec);
+        flows.add_time_point(t, flows.get_last_value());
+        t_indx = results.get_num_time_points() - 1;
+    }
+
+    return t_indx;
 }
 
 template <typename FP, class Sim>
 class MobilityFunctions
 {
 public:
-    void init_mobility(FP t, FP dt, ExtendedMigrationEdge<FP>& edge, Sim& from_sim, Sim& to_sim)
+    void init_mobility(FP t, ExtendedMigrationEdge<FP>& edge, Sim& from_sim, Sim& to_sim)
     {
+        const auto t_indx_start_mobility_sim_from = find_time_index(from_sim, t, false);
+
+        // initialize the number of commuters at the start of the mobility
+        auto results_from = from_sim.get_result();
         edge.get_migrated().add_time_point(
-            t, (from_sim.get_result().get_last_value().array() *
+            t, (results_from.get_value(t_indx_start_mobility_sim_from).array() *
                 edge.get_parameters().get_coefficients().get_matrix_at(t).array() *
-                get_migration_factors(from_sim, t, from_sim.get_result().get_last_value()).array())
+                get_migration_factors(from_sim, t, results_from.get_value(t_indx_start_mobility_sim_from)).array())
                    .matrix());
-        edge.get_return_times().add_time_point(t + dt);
-        move_migrated(edge.get_migrated().get_last_value(), from_sim.get_result().get_last_value(),
-                      to_sim.get_result().get_last_value());
+        edge.get_return_times().add_time_point(t);
+
+        // move them to the starting mobility model
+        // if the simulation we are adding the commuters to is not having the same time point as the current time point,
+        // we need to add a new time point to the simulation.
+        const auto t_indx_start_mobility_sim_to = find_time_index(to_sim, t, true);
+        to_sim.get_result().get_value(t_indx_start_mobility_sim_to) += edge.get_migrated().get_last_value();
+        from_sim.get_result().get_last_value() -= edge.get_migrated().get_last_value();
     }
 
-    void update_and_move(FP t, FP dt, ExtendedMigrationEdge<FP>& edge, Sim& from_sim, Sim& to_sim)
+    void move_migrated(FP t, ExtendedMigrationEdge<FP>& edge, Sim& from_sim, Sim& to_sim)
     {
-        auto& integrator_node = from_sim.get_integrator();
-        update_status_migrated(edge.get_migrated().get_last_value(), from_sim, integrator_node,
-                               from_sim.get_result().get_last_value(), t, dt);
-        move_migrated(edge.get_migrated().get_last_value(), from_sim.get_result().get_last_value(),
-                      to_sim.get_result().get_last_value());
+        // When moving from one regional entity/model to another, we need to update the local population.
+        // check_negative_values_vec needs to be called once since its checks for negative values and corrects them.
+        const size_t num_age_groups = static_cast<size_t>(from_sim.get_model().parameters.get_num_groups());
+        check_negative_values_vec(edge.get_migrated().get_last_value(), num_age_groups);
+        const auto t_indx_sim_to_arrival = find_time_index(to_sim, t, true);
+        from_sim.get_result().get_last_value() -= edge.get_migrated().get_last_value();
+        to_sim.get_result().get_value(t_indx_sim_to_arrival) += edge.get_migrated().get_last_value();
+
+        // check each result for negative values and correct them if necessary
+        check_negative_values_vec(from_sim.get_result().get_last_value(), num_age_groups);
+        check_negative_values_vec(to_sim.get_result().get_value(t_indx_sim_to_arrival), num_age_groups);
     }
 
-    void update_only(FP t, FP dt, ExtendedMigrationEdge<FP>& edge, Sim& from_sim)
+    void update_commuters(FP t, FP dt, ExtendedMigrationEdge<FP>& edge, Sim& sim, bool is_mobility_model)
     {
-        auto& integrator_node = from_sim.get_integrator();
-        update_status_migrated(edge.get_migrated().get_last_value(), from_sim, integrator_node,
-                               from_sim.get_result().get_last_value(), t, dt);
-        move_migrated(edge.get_migrated().get_last_value(), from_sim.get_result().get_last_value(),
-                      from_sim.get_result().get_last_value());
+        auto& integrator_node                = sim.get_integrator();
+        const auto t_indx_start_mobility_sim = find_time_index(sim, t, true);
+        Eigen::VectorXd flows                = Eigen::VectorXd::Zero(sim.get_flows().get_last_value().size());
+        update_status_migrated(edge.get_migrated().get_last_value(), sim, integrator_node,
+                               sim.get_result().get_value(t_indx_start_mobility_sim), t, dt, flows);
+
+        // if the simulation is holding a mobility model, we need to update the mobility model as well
+        // Therefore, we check if the time point already exists in the mobility model and create a new one if necessary.
+        // Next, we build the population in the mobility model based on the commuters
+        if (is_mobility_model) {
+            const auto t_indx_mobility_model = find_time_index(sim, t + dt, true);
+            if (t_indx_mobility_model != sim.get_result().get_num_time_points() - 1) {
+                log_error("Time point " + std::to_string(t + dt) +
+                          " not the lastest in update_commuters. Latest time point is " +
+                          std::to_string(sim.get_result().get_last_time()));
+            }
+            sim.get_result().get_value(t_indx_mobility_model) += edge.get_migrated().get_last_value();
+            sim.get_flows().get_value(t_indx_mobility_model) += flows;
+        }
     }
 
-    void move_and_delete(ExtendedMigrationEdge<FP>& edge, Sim& from_sim, Sim& to_sim)
+    void delete_migrated(ExtendedMigrationEdge<FP>& edge)
     {
-        move_migrated(edge.get_migrated().get_last_value(), from_sim.get_result().get_last_value(),
-                      to_sim.get_result().get_last_value());
-
         for (Eigen::Index i = edge.get_return_times().get_num_time_points() - 1; i >= 0; --i) {
             edge.get_migrated().remove_time_point(i);
             edge.get_return_times().remove_time_point(i);
@@ -306,11 +297,11 @@ public:
             const double traveltime_per_region =
                 std::max(0.01, round_nth_decimal(e.property.travel_time / e.property.path.size(), 2));
 
-            // Calculate the start time for mobility, ensuring it is not negative
+            // Calculate the start time for mobility, ensuring it greater or equal to 0.01
             const double start_mobility =
-                std::max(0.0, round_nth_decimal(1 - 2 * traveltime_per_region * e.property.path.size() -
-                                                    graph.nodes()[e.end_node_idx].property.stay_duration,
-                                                2));
+                std::max(0.01, round_nth_decimal(1 - 2 * traveltime_per_region * e.property.path.size() -
+                                                     graph.nodes()[e.end_node_idx].property.stay_duration,
+                                                 2));
 
             // Calculate the arrival time at the destination node
             const double arrive_at = start_mobility + traveltime_per_region * e.property.path.size();
@@ -326,9 +317,9 @@ public:
             };
 
             // Indices for schedule filling
-            size_t start_idx    = static_cast<size_t>((start_mobility + epsilon) * 100);
-            size_t arrive_idx   = static_cast<size_t>((arrive_at + epsilon) * 100);
-            size_t stay_end_idx = timesteps - (arrive_idx - start_idx);
+            const size_t start_idx    = static_cast<size_t>((start_mobility + epsilon) * 100);
+            const size_t arrive_idx   = static_cast<size_t>((arrive_at + epsilon) * 100);
+            const size_t stay_end_idx = timesteps - (arrive_idx - start_idx);
 
             // Fill the schedule up to the start of mobility with the start node index
             fill_schedule(0, start_idx, e.start_node_idx);
@@ -357,7 +348,7 @@ public:
             // Ensure there is at least one true value
             if (first_true != is_mobility_node.end() && last_true != is_mobility_node.rend()) {
                 size_t first_index = std::distance(is_mobility_node.begin(), first_true);
-                size_t count_true  = std::count(is_mobility_node.begin(), is_mobility_node.end(), true);
+                size_t count_true  = arrive_idx - start_idx;
 
                 // Create a reversed path segment for the return trip
                 std::vector<size_t> path_reversed(tmp_schedule.begin() + first_index,
@@ -609,12 +600,17 @@ public:
 
             size_t indx_schedule = 0;
             while (t_begin + 1 > this->m_t + 1e-10) {
-                advance_edges(indx_schedule);
-
-                // first we integrate the nodes in time. Afterwards the update on the edges is done.
-                // We start with the edges since the values for t0 are given.
+                // the graph simulation is structured in 3 steps:
+                // 1. move indivudals if necessary
+                // 2. integrate the local nodes
+                // 3. update the status of the commuter and use the obtained values to update the mobility models.
+                move_commuters(indx_schedule);
                 advance_local_nodes(indx_schedule);
-                advance_mobility_nodes(indx_schedule);
+                update_status_commuters(indx_schedule);
+
+                // in the last time step we have to move the individuals back to their local model and
+                // delete the commuters time series
+                handle_last_time_step(indx_schedule);
 
                 indx_schedule++;
                 this->m_t += min_dt;
@@ -633,53 +629,55 @@ private:
     ScheduleManager::Schedule schedules;
     const double epsilon = 1e-10;
 
-    void advance_edges(size_t indx_schedule)
+    template <typename Edge>
+    ScalarType calculate_next_dt(size_t edge_indx, size_t indx_schedule, const Edge& e)
+    {
+        auto current_node_indx = schedules.schedule_edges[edge_indx][indx_schedule];
+        bool in_mobility_node  = schedules.mobility_schedule_edges[edge_indx][indx_schedule];
+
+        // determine dt, which is equal to the last integration/synchronization point in the current node
+        auto integrator_schedule_row = schedules.local_int_schedule[current_node_indx];
+        if (in_mobility_node)
+            integrator_schedule_row = schedules.mobility_int_schedule[current_node_indx];
+        // search the index of indx_schedule in the integrator schedule
+        const size_t indx_current = std::distance(
+            integrator_schedule_row.begin(),
+            std::lower_bound(integrator_schedule_row.begin(), integrator_schedule_row.end(), indx_schedule));
+
+        if (integrator_schedule_row[indx_current] != indx_schedule)
+            throw std::runtime_error("Error in schedule.");
+
+        ScalarType dt_mobility;
+        if (indx_current == integrator_schedule_row.size() - 1) {
+            dt_mobility = round_nth_decimal(e.property.travel_time / e.property.path.size(), 2);
+            if (dt_mobility < 0.01)
+                dt_mobility = 0.01;
+        }
+        else {
+            dt_mobility = round_nth_decimal((static_cast<double>(integrator_schedule_row[indx_current + 1]) -
+                                             static_cast<double>(integrator_schedule_row[indx_current])) /
+                                                    100 +
+                                                epsilon,
+                                            2);
+        }
+
+        return dt_mobility;
+    }
+
+    void move_commuters(size_t indx_schedule)
     {
         for (const auto& edge_indx : schedules.edges_mobility[indx_schedule]) {
             auto& e = this->m_graph.edges()[edge_indx];
-            // first mobility activity
+            // start mobility by initializing the number of commuters and move to initial mobility model
             if (indx_schedule == schedules.first_mobility[edge_indx]) {
                 auto& node_from =
                     this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule - 1]].property.base_sim;
                 auto& node_to =
                     this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]].property.mobility_sim;
-                // m_edge_func(m_t, 0.0, e.property, node_from, node_to, 0);
-                m_mobility_functions.init_mobility(this->m_t, 0.0, e.property, node_from, node_to);
+                m_mobility_functions.init_mobility(this->m_t, e.property, node_from, node_to);
             }
-            // next mobility activity
             else if (indx_schedule > schedules.first_mobility[edge_indx]) {
-                auto current_node_indx = schedules.schedule_edges[edge_indx][indx_schedule];
-                bool in_mobility_node  = schedules.mobility_schedule_edges[edge_indx][indx_schedule];
-
-                // determine dt, which is equal to the last integration/syncronization point in the current node
-                auto integrator_schedule_row = schedules.local_int_schedule[current_node_indx];
-                if (in_mobility_node)
-                    integrator_schedule_row = schedules.mobility_int_schedule[current_node_indx];
-                // search the index of indx_schedule in the integrator schedule
-                const size_t indx_current = std::distance(
-                    integrator_schedule_row.begin(),
-                    std::lower_bound(integrator_schedule_row.begin(), integrator_schedule_row.end(), indx_schedule));
-
-                if (integrator_schedule_row[indx_current] != indx_schedule)
-                    std::cout << "Error in schedule."
-                              << "\n";
-
-                ScalarType dt_mobility;
-                if (indx_current == 0) {
-                    dt_mobility = round_nth_decimal(e.property.travel_time / e.property.path.size(), 2);
-                    if (dt_mobility < 0.01)
-                        dt_mobility = 0.01;
-                }
-                else {
-                    dt_mobility = round_nth_decimal((static_cast<double>(integrator_schedule_row[indx_current]) -
-                                                     static_cast<double>(integrator_schedule_row[indx_current - 1])) /
-                                                            100 +
-                                                        epsilon,
-                                                    2);
-                }
-
-                // We have two cases. Either, we want to send the individuals to the next node, or we just want
-                // to update their state since a syncronization step is necessary in the current node.
+                // send the individuals to the next node
                 if ((schedules.schedule_edges[edge_indx][indx_schedule] !=
                      schedules.schedule_edges[edge_indx][indx_schedule - 1]) ||
                     (schedules.mobility_schedule_edges[edge_indx][indx_schedule] !=
@@ -697,71 +695,27 @@ private:
                                         : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]]
                                               .property.base_sim;
 
-                    if (indx_schedule < schedules.mobility_schedule_edges[edge_indx].size() - 1) {
-                        // m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 1);
-                        m_mobility_functions.update_and_move(this->m_t, dt_mobility, e.property, node_from, node_to);
-                    }
-                }
-                else {
-                    auto& node_from =
-                        schedules.mobility_schedule_edges[edge_indx][indx_schedule - 1]
-                            ? this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule - 1]]
-                                  .property.mobility_sim
-                            : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule - 1]]
-                                  .property.base_sim;
-
-                    assert(node_from.get_result().get_last_value() ==
-                           (schedules.mobility_schedule_edges[edge_indx][indx_schedule]
-                                ? this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]]
-                                      .property.mobility_sim
-                                : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]]
-                                      .property.base_sim)
-                               .get_result()
-                               .get_last_value());
-                    // m_edge_func(m_t, dt_mobility, e.property, node_from, node_to, 3);
-                    m_mobility_functions.update_only(this->m_t, dt_mobility, e.property, node_from);
+                    m_mobility_functions.move_migrated(this->m_t, e.property, node_from, node_to);
                 }
             }
         }
-        // in the last time step we have to move the individuals back to their local model
-        if (indx_schedule == 99) {
-            auto edge_index = 0;
-            for (auto& e : this->m_graph.edges()) {
-                auto current_node_indx = schedules.schedule_edges[edge_index][indx_schedule];
-                bool in_mobility_node  = schedules.mobility_schedule_edges[edge_index][indx_schedule];
+    }
 
-                // determine dt, which is equal to the last integration/syncronization point in the current node
-                auto integrator_schedule_row = schedules.local_int_schedule[current_node_indx];
-                if (in_mobility_node)
-                    integrator_schedule_row = schedules.mobility_int_schedule[current_node_indx];
-                // search the index of indx_schedule in the integrator schedule
-                const size_t indx_current = std::distance(
-                    integrator_schedule_row.begin(),
-                    std::lower_bound(integrator_schedule_row.begin(), integrator_schedule_row.end(), indx_schedule));
+    void update_status_commuters(size_t indx_schedule)
+    {
+        for (const auto& edge_indx : schedules.edges_mobility[indx_schedule]) {
+            auto& e      = this->m_graph.edges()[edge_indx];
+            auto next_dt = calculate_next_dt(edge_indx, indx_schedule, e);
+            auto& node_to =
+                schedules.mobility_schedule_edges[edge_indx][indx_schedule]
+                    ? this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]].property.mobility_sim
+                    : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]].property.base_sim;
 
-                ScalarType dt_mobility;
-                if (indx_current == 0) {
-                    dt_mobility = round_nth_decimal(e.property.travel_time / e.property.path.size(), 2);
-                    if (dt_mobility < 0.01)
-                        dt_mobility = 0.01;
-                }
-                else {
-                    dt_mobility = round_nth_decimal((static_cast<double>(integrator_schedule_row[indx_current]) -
-                                                     static_cast<double>(integrator_schedule_row[indx_current - 1])) /
-                                                            100 +
-                                                        epsilon,
-                                                    2);
-                }
+            // TODO: Muss ich hier node_from oder node_to verwenden? Evtl ist die aktuelle config dann falsch.
+            // Aber sieht gut aus denke ich. Das ja getrennt von exchanges.
 
-                auto& node_from =
-                    this->m_graph.nodes()[schedules.schedule_edges[edge_index][indx_schedule]].property.mobility_sim;
-
-                auto& node_to =
-                    this->m_graph.nodes()[schedules.schedule_edges[edge_index][indx_schedule]].property.base_sim;
-
-                m_mobility_functions.move_and_delete(e.property, node_from, node_to);
-                edge_index++;
-            }
+            m_mobility_functions.update_commuters(this->m_t, next_dt, e.property, node_to,
+                                                  schedules.mobility_schedule_edges[edge_indx][indx_schedule]);
         }
     }
 
@@ -780,44 +734,36 @@ private:
             const ScalarType next_dt =
                 round_nth_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon, 2);
             n.property.base_sim.advance(this->m_t + next_dt);
-            // m_node_func(this->m_t, next_dt, n.property.base_sim);
+            // check if last value contains negative values or nan values
+            if (n.property.base_sim.get_result().get_last_value().minCoeff() < -1e-7 ||
+                std::isnan(n.property.base_sim.get_result().get_last_value().sum())) {
+                auto last_value_as_vec =
+                    std::vector<ScalarType>(n.property.base_sim.get_result().get_last_value().data(),
+                                            n.property.base_sim.get_result().get_last_value().data() +
+                                                n.property.base_sim.get_result().get_last_value().size());
+                std::cout << "Negative Value in local node detected."
+                          << "\n";
+            }
         }
     }
 
-    void advance_mobility_nodes(size_t indx_schedule)
+    void handle_last_time_step(int indx_schedule)
     {
-        for (const size_t& n_indx : schedules.nodes_mobility_m[indx_schedule]) {
-            auto& n = this->m_graph.nodes()[n_indx];
-            // determine in which index of mobility_int_schedule we are
-            const size_t indx_current =
-                std::distance(schedules.mobility_int_schedule[n_indx].begin(),
-                              std::lower_bound(schedules.mobility_int_schedule[n_indx].begin(),
-                                               schedules.mobility_int_schedule[n_indx].end(), indx_schedule));
-            // determine the next time step
-            const size_t val_next = (indx_current == schedules.mobility_int_schedule[n_indx].size() - 1)
-                                        ? 100
-                                        : schedules.mobility_int_schedule[n_indx][indx_current + 1];
-            const ScalarType next_dt =
-                round_nth_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon, 2);
+        if (indx_schedule == 99) {
+            auto edge_index = 0;
+            for (auto& e : this->m_graph.edges()) {
+                auto& node_from =
+                    this->m_graph.nodes()[schedules.schedule_edges[edge_index][indx_schedule]].property.mobility_sim;
+                auto& node_to =
+                    this->m_graph.nodes()[schedules.schedule_edges[edge_index][indx_schedule]].property.base_sim;
 
-            // get all time points from the last integration step
-            auto& last_time_point = n.property.mobility_sim.get_result().get_time(
-                n.property.mobility_sim.get_result().get_num_time_points() - 1);
-            // if the last time point is not within an interval of 1-e10 from t, then set the last time point to m_t
-            if (std::fabs(last_time_point - this->m_t) > 1e-10) {
-                n.property.mobility_sim.get_result().get_last_time() = this->m_t;
-            }
-            // only advance in time if there are individuals in the mobility model
-            if (n.property.mobility_sim.get_result().get_last_value().sum() > 1e-8) {
-                n.property.mobility_sim.advance(this->m_t + next_dt);
-            }
-            Eigen::Index indx_min;
-            while (n.property.mobility_sim.get_result().get_last_value().minCoeff(&indx_min) < -1e-7) {
-                Eigen::Index indx_max;
-                n.property.mobility_sim.get_result().get_last_value().maxCoeff(&indx_max);
-                n.property.mobility_sim.get_result().get_last_value()[indx_max] -=
-                    n.property.mobility_sim.get_result().get_last_value()[indx_min];
-                n.property.mobility_sim.get_result().get_last_value()[indx_min] = 0;
+                if (schedules.schedule_edges[edge_index][indx_schedule] != e.start_node_idx)
+                    log_error("Last node is not the start node in edge " + std::to_string(edge_index) + " at time " +
+                              std::to_string(indx_schedule));
+                // move the individuals back to the local model
+                m_mobility_functions.move_migrated(this->m_t + 0.01, e.property, node_from, node_to);
+                m_mobility_functions.delete_migrated(e.property);
+                edge_index++;
             }
         }
     }
@@ -848,7 +794,8 @@ make_migration_sim(FP t0, FP dt, Graph<ExtendedNodeProperty<Sim>, ExtendedMigrat
 template <typename FP, class Sim, class = std::enable_if_t<is_compartment_model_simulation<FP, Sim>::value>>
 void update_status_migrated(Eigen::Ref<typename TimeSeries<FP>::Vector> migrated, Sim& sim,
                             mio::IntegratorCore<FP>& integrator,
-                            Eigen::Ref<const typename TimeSeries<FP>::Vector> total, FP t, FP dt)
+                            Eigen::Ref<const typename TimeSeries<FP>::Vector> total, FP t, FP dt,
+                            Eigen::VectorXd& flows)
 {
     auto y0 = migrated.eval();
     auto y1 = migrated;
@@ -857,9 +804,8 @@ void update_status_migrated(Eigen::Ref<typename TimeSeries<FP>::Vector> migrated
             sim.get_model().get_derivatives(total, y, t_, dydt);
         },
         y0, t, dt, y1);
-    auto flows_model = sim.get_model().get_flow_values();
-    flows_model *= dt;
-    sim.get_model().set_flow_values(flows_model);
+    flows = sim.get_model().get_flow_values();
+    flows *= dt;
 }
 } // namespace mio
 

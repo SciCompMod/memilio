@@ -607,12 +607,11 @@ mio::IOResult<mio::ExtendedGraph<mio::osecirvvs::Model<double>>> get_graph(const
 
     return params_graph;
 }
-mio::IOResult<void> run(const std::string data_dir, std::string res_dir, const int num_runs = 2)
+mio::IOResult<void> run(const std::string data_dir, std::string res_dir, const int num_runs, const int num_days)
 {
     // mio::set_log_level(mio::LogLevel::critical);
-    auto start_date     = mio::Date(2022, 8, 1);
-    auto end_date       = mio::Date(2022, 11, 1);
-    const auto num_days = 90;
+    auto start_date = mio::Date(2021, 8, 1);
+    auto end_date   = mio::Date(2021, 11, 1);
     // const int num_runs  = 12;
     constexpr bool masks  = true;
     constexpr bool ffp2   = true;
@@ -629,7 +628,7 @@ mio::IOResult<void> run(const std::string data_dir, std::string res_dir, const i
                       get_graph(start_date, end_date, num_days, data_dir, masks, ffp2, szenario_cologne, edges));
     auto params_graph = created;
 
-    res_dir += "masks_" + std::to_string(masks) + std::string(ffp2 ? "_ffp2" : "") +
+    res_dir += "_masks_" + std::to_string(masks) + std::string(ffp2 ? "_ffp2" : "") +
                std::string(szenario_cologne ? "_cologne" : "") + std::string(!edges ? "_no_edges" : "");
 
     if (mio::mpi::is_root())
@@ -645,13 +644,14 @@ mio::IOResult<void> run(const std::string data_dir, std::string res_dir, const i
         return n.id;
     });
 
-    mio::unused(county_ids);
+    // mio::ExtendedGraph<mio::osecirvvs::Simulation<ScalarType, mio::FlowSimulation<ScalarType, mio::osecirvvs::Model<double>>>
     // parameter study
     auto parameter_study = mio::ParameterStudy<
         mio::osecirvvs::Simulation<double, mio::FlowSimulation<double, mio::osecirvvs::Model<double>>>,
         mio::ExtendedGraph<mio::osecirvvs::Model<double>>,
-        mio::ExtendedGraph<mio::Simulation<ScalarType, mio::osecirvvs::Model<double>>>>(params_graph, 0.0, num_days,
-                                                                                        0.01, num_runs);
+        mio::ExtendedGraph<
+            mio::osecirvvs::Simulation<double, mio::FlowSimulation<double, mio::osecirvvs::Model<double>>>>>(
+        params_graph, 0.0, num_days, 0.01, num_runs);
     if (mio::mpi::is_root()) {
         printf("Seeds: ");
         for (auto s : parameter_study.get_rng().get_seeds()) {
@@ -679,9 +679,18 @@ mio::IOResult<void> run(const std::string data_dir, std::string res_dir, const i
                                return node.property.base_sim.get_model();
                            });
 
+            auto flows = std::vector<mio::TimeSeries<ScalarType>>{};
+            flows.reserve(results_graph.nodes().size());
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(flows),
+                           [](auto&& node) {
+                               auto& flow_node         = node.property.base_sim.get_flows();
+                               auto interpolated_flows = mio::interpolate_simulation_result(flow_node);
+                               return interpolated_flows;
+                           });
+
             std::cout << "Run " << run_idx << " complete." << std::endl;
 
-            return std::make_pair(interpolated_result, params);
+            return std::make_tuple(interpolated_result, params, flows);
         });
 
     if (ensemble.size() > 0) {
@@ -689,11 +698,21 @@ mio::IOResult<void> run(const std::string data_dir, std::string res_dir, const i
         ensemble_results.reserve(ensemble.size());
         auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model<double>>>{};
         ensemble_params.reserve(ensemble.size());
+        auto ensemble_flows = std::vector<std::vector<mio::TimeSeries<double>>>{};
+        ensemble_flows.reserve(ensemble.size());
         for (auto&& run : ensemble) {
-            ensemble_results.emplace_back(std::move(run.first));
-            ensemble_params.emplace_back(std::move(run.second));
+            ensemble_results.emplace_back(std::move(std::get<0>(run)));
+            ensemble_params.emplace_back(std::move(std::get<1>(run)));
+            ensemble_flows.emplace_back(std::move(std::get<2>(run)));
         }
         BOOST_OUTCOME_TRY(mio::save_results(ensemble_results, ensemble_params, county_ids, res_dir, false));
+
+        auto result_dir_run_flows = res_dir + "flows";
+        if (mio::mpi::is_root()) {
+            boost::filesystem::create_directories(result_dir_run_flows);
+            printf("Saving Flow results to \"%s\".\n", result_dir_run_flows.c_str());
+        }
+        BOOST_OUTCOME_TRY(save_results(ensemble_flows, ensemble_params, county_ids, result_dir_run_flows, false));
     }
 
     return mio::success();
@@ -708,7 +727,9 @@ int main()
     const std::string data_dir    = mio::path_join(memilio_dir, "data"); //"/localdata1/code/memilio/data";
     std::string results_dir       = mio::path_join(memilio_dir, "results");
 
-    auto result = run(data_dir, results_dir);
+    const auto num_days = 5;
+    const auto num_runs = 1;
+    auto result         = run(data_dir, results_dir, num_runs, num_days);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         mio::mpi::finalize();

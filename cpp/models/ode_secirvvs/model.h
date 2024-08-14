@@ -243,7 +243,10 @@ public:
                         pop[INSPICj] + pop[ISyPICj] + pop[SIIj] + pop[EIIj] + pop[INSIIj] + pop[ISyIIj] + pop[ISevIIj] +
                         pop[ICrIIj] + pop[INSIICj] + pop[ISyIICj];
 
-                FP divNj = 1.0 / Nj; // precompute 1.0/Nj
+                FP divNj = 0.0;
+                if (Nj > 1e-12) {
+                    divNj = 1.0 / Nj; // precompute 1.0/Nj
+                }
 
                 FP ext_inf_force_dummy = cont_freq_eff * divNj *
                                          params.template get<TransmissionProbabilityOnContact<FP>>()[(AgeGroup)i] *

@@ -23,6 +23,7 @@
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/mobility/metapopulation_mobility_detailed.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/compartments/flow_simulation.h"
 #include "memilio/data/analyze_result.h"
 
 int main()
@@ -57,11 +58,12 @@ int main()
     model_group1.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 9990;
     model_group1.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = 10;
 
-    auto sim1          = mio::Simulation<ScalarType, mio::oseir::Model<>>(model_group1, t0, dt);
-    auto sim2          = mio::Simulation<ScalarType, mio::oseir::Model<>>(model_group2, t0, dt);
+    auto sim1          = mio::FlowSimulation<ScalarType, mio::oseir::Model<>>(model_group1, t0, dt);
+    auto sim2          = mio::FlowSimulation<ScalarType, mio::oseir::Model<>>(model_group2, t0, dt);
     double stay_time_1 = 0.3;
     double stay_time_2 = 0.3;
-    mio::ExtendedGraph<mio::Simulation<ScalarType, mio::oseir::Model<>>> g;
+    // mio::ExtendedGraph<mio::Simulation<ScalarType, mio::oseir::Model<>>> g;
+    mio::ExtendedGraph<mio::FlowSimulation<ScalarType, mio::oseir::Model<double>>> g;
     g.add_node(1, sim1, sim2, stay_time_1);
     g.add_node(2, sim1, sim2, stay_time_2);
 
