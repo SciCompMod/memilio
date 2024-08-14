@@ -43,18 +43,16 @@
 namespace mio
 {
 
-template <class IOContext, class T,
-          std::enable_if_t<std::is_same_v<UniformDistribution<double>::ParamType, T>, void*> = nullptr>
-void serialize_internal(IOContext& io, const T& p)
+template <class IOContext>
+void serialize_internal(IOContext& io, const UniformDistribution<double>::ParamType& p)
 {
     auto obj = io.create_object("UniformDistributionParams");
     obj.add_element("a", p.params.a());
     obj.add_element("b", p.params.b());
 }
 
-template <class IOContext, class T,
-          std::enable_if_t<std::is_same_v<UniformDistribution<double>::ParamType, T>, void*> = nullptr>
-IOResult<UniformDistribution<double>::ParamType> deserialize_internal(IOContext& io, Tag<T>)
+template <class IOContext>
+IOResult<UniformDistribution<double>::ParamType> deserialize_internal(IOContext& io, Tag<UniformDistribution<double>::ParamType>)
 {
     auto obj = io.expect_object("UniformDistributionParams");
     auto a   = obj.expect_element("a", Tag<double>{});
