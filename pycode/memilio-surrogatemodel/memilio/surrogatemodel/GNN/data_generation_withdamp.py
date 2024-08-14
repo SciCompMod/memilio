@@ -17,7 +17,7 @@ from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import transformMobilityData as tmd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
-def run_secir_groups_simulation(days, populations, num_dampings):
+def run_secir_groups_simulation(days, populations, dampings):
     """! Uses an ODE SECIR model allowing for asymptomatic infection 
         with 6 different age groups. The model is not stratified by region. 
         Virus-specific parameters are fixed and initial number of persons 
@@ -113,7 +113,7 @@ def run_secir_groups_simulation(days, populations, num_dampings):
         # Generate a damping matrix and assign it to the model
         damped_matrices = []
         damping_coeff = []
-        for day in num_dampings:
+        for day in dampings:
 
             # generat a random damping factor
             damping = np.ones((num_groups, num_groups)
@@ -146,7 +146,7 @@ def run_secir_groups_simulation(days, populations, num_dampings):
     # Omit first column, as the time points are not of interest here.
     dataset_entry = copy.deepcopy(results)
 
-    return dataset_entry, damped_matrices, num_dampings, damping_coeff
+    return dataset_entry, damped_matrices, dampings, damping_coeff
 
 def remove_confirmed_compartments(dataset_entries, num_groups):
     """! The compartments which contain confirmed cases are not 
@@ -331,7 +331,7 @@ def generate_dampings_withshadowdamp(number_of_dampings, days, min_distance, min
     return np.asarray(all_dampings)
 
 def generate_data(
-        num_runs, path, input_width, label_width, save_data=True):
+        num_runs, path, input_width, label_width, number_of_dampings, save_data=True):
     """! Generate dataset by calling run_secir_simulation (num_runs)-often
    @param num_runs Number of times, the function run_secir_simulation is called.
    @param path Path, where the datasets are stored.
@@ -437,11 +437,9 @@ def generate_data(
 if __name__ == "__main__":
 
     input_width = 5
-    label_width = 30
-    number_of_dampings = 1
-    num_runs = 2
-    number_of_populations = 20
-
+    label_width = 100
+    number_of_dampings = 2
+    num_runs = 1000
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(
         os.path.dirname(
@@ -449,5 +447,5 @@ if __name__ == "__main__":
         'data_GNN_with_'+str(number_of_dampings)+'_dampings_test')
 
     generate_data(num_runs, path_data, input_width,
-                  label_width, number_of_populations)
+                  label_width, number_of_dampings)
     
