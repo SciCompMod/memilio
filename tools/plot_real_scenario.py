@@ -180,9 +180,9 @@ def plot_new_infections(files, start_date, simulation_time, T_UD, fileending="",
         __file__), "..", "data", "pydata", "Germany", "cases_all_germany.json")
     data_rki = load_data(datafile, start_date, simulation_time, T_UD)
 
-    datafile_ma7 = os.path.join(os.path.dirname(
-        __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json")
-    data_rki_ma7 = load_data(datafile_ma7, start_date, simulation_time, T_UD)
+    # datafile_ma7 = os.path.join(os.path.dirname(
+    #     __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json")
+    # data_rki_ma7 = load_data(datafile_ma7, start_date, simulation_time, T_UD)
 
     fig, ax = plt.subplots()
 
@@ -219,12 +219,12 @@ def plot_new_infections(files, start_date, simulation_time, T_UD, fileending="",
         # ODE
         if file == 0:
             print(f"New infections from RKI  on {start_date}: ",
-                  data_rki_ma7[data_rki["Date"] == start_date]["NewInfectionsDay"].values[0])
+                  data_rki[data_rki["Date"] == start_date]["NewInfectionsDay"].values[0])
             print(f"Expected new infections at {timestep}: ",
-                  data_rki_ma7[data_rki["Date"] == start_date]["NewInfectionsDay"].values[0] + timestep * (data_rki_ma7[data_rki_ma7["Date"] == start_date + pd.DateOffset(days=1)]["NewInfectionsDay"].values[0] - data_rki_ma7[data_rki_ma7["Date"] == start_date]["NewInfectionsDay"].values[0]))
+                  data_rki[data_rki["Date"] == start_date]["NewInfectionsDay"].values[0] + timestep * (data_rki[data_rki["Date"] == start_date + pd.DateOffset(days=1)]["NewInfectionsDay"].values[0] - data_rki[data_rki["Date"] == start_date]["NewInfectionsDay"].values[0]))
 
             print(f"New infections from RKI  on {start_date + pd.DateOffset(days=1)}: ",
-                  data_rki_ma7[data_rki["Date"] == start_date + pd.DateOffset(days=1)]["NewInfectionsDay"].values[0])
+                  data_rki[data_rki["Date"] == start_date + pd.DateOffset(days=1)]["NewInfectionsDay"].values[0])
             # transform cumulative flows to flows absolute flows
             # then transform from flows over time interval to flows at time
             # points
@@ -258,6 +258,8 @@ def plot_new_infections(files, start_date, simulation_time, T_UD, fileending="",
 
     ax.set_xlim(left=0, right=simulation_time)
     ax.set_ylim(bottom=0)
+    if start_date == pd.Timestamp("2020-6-1"):
+        ax.set_ylim(bottom=0, top=1000)
     ax.grid(True, linestyle='--', alpha=0.5)
     ax.legend(fontsize=12)
 
