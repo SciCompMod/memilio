@@ -33,11 +33,11 @@ set(TESTSOURCES
     test_abm_location.cpp
     test_abm_lockdown_rules.cpp
     test_abm_masks.cpp
-    test_abm_migration_rules.cpp
+    test_abm_mobility_rules.cpp
     test_abm_person.cpp
     test_abm_simulation.cpp
     test_abm_testing_strategy.cpp
-    test_abm_world.cpp
+    test_abm_model.cpp
     test_math_floating_point.cpp
     test_analyze_result.cpp
     test_contact_matrix.cpp
@@ -70,6 +70,7 @@ set(TESTSOURCES
     temp_file_register.h
     sanitizers.cpp
     test_lct_secir.cpp
+    test_lct_initializer_flows.cpp
     test_ad.cpp
 )
 

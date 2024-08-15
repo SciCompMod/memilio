@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Sascha Korf
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen, Rene Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,48 +18,25 @@
 * limitations under the License.
 */
 
-#ifndef ABM_MOVEMENT_DATA_H
-#define ABM_MOVEMENT_DATA_H
-
-#include "abm/time.h"
+#include "abm/personal_rng.h"
+#include "abm/person.h"
 
 namespace mio
 {
 namespace abm
 {
-
-
-/**
- * @brief Mode of Transport.
- */
-enum class TransportMode : uint32_t
+PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(mio::Key<uint64_t> key, PersonId id,
+                                                             mio::Counter<uint32_t>& counter)
+    : m_key(key)
+    , m_person_id(id)
+    , m_counter(counter)
 {
-    Bike = 0,
-    CarDriver,
-    CarPassenger,
-    PublicTransport,
-    Walking,
-    Other,
-    Unknown
-};
+}
 
-
-/**
- * @brief Type of the activity.
- */
-enum class ActivityType : uint32_t
+PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person)
+    : PersonalRandomNumberGenerator(rng.get_key(), person.get_id(), person.get_rng_counter())
 {
-    Workplace = 0,
-    Education,
-    Shopping,
-    Leisure,
-    PrivateMatters,
-    OtherActivity,
-    Home,
-    UnknownActivity
-};
+}
 
 } // namespace abm
 } // namespace mio
-
-#endif //ABM_MOVEMENT_DATA_H

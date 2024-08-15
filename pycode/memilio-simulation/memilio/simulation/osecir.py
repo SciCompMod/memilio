@@ -19,7 +19,7 @@
 #############################################################################
 
 """
-Python bindings for MEmilio SECIR model.
+Python bindings for MEmilio ODE SECIHURD model.
 """
 
-from memilio._simulation_secir import *
+from memilio._simulation_osecir import *

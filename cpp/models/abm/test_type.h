@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Martin J. Kuehn
+* Authors: Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,18 +17,30 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/io/mobility_io.h"
 
-// wrapper function to print out matrix entries by gdb's 'print get_element(M,1,1)'
-// (GDB doesn't support calling the overloaded operator())
-double get_element(Eigen::MatrixXd const& m, int i, int j)
-{
-    return m(i, j);
-}
+#ifndef MIO_ABM_TEST_TYPE_H
+#define MIO_ABM_TEST_TYPE_H
 
-int main()
+#include <cstdint>
+
+namespace mio
 {
-    // Place text file needs to be in working directory build/examples/ and
-    // start from within examples folder in build directory
-    auto twitter_migration_2018 = mio::read_mobility_formatted("2018_lk_matrix.txt");
-}
+namespace abm
+{
+
+/**
+ * @brief Type of a Test.
+ */
+enum class TestType : std::uint32_t
+{
+    Generic = 0,
+    Antigen,
+    PCR,
+
+    Count
+};
+
+} // namespace abm
+} // namespace mio
+
+#endif

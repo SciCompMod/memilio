@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
+* Authors: Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,26 +17,18 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-/** single include header for ABM */
+#include "memilio/io/mobility_io.h"
 
-#ifndef EPI_ABM_H
-#define EPI_ABM_H
+// wrapper function to print out matrix entries by gdb's 'print get_element(M,1,1)'
+// (GDB doesn't support calling the overloaded operator())
+double get_element(Eigen::MatrixXd const& m, int i, int j)
+{
+    return m(i, j);
+}
 
-#include "abm/parameters.h"
-#include "abm/simulation.h"
-#include "abm/world.h"
-#include "abm/person.h"
-#include "abm/location.h"
-#include "abm/location_type.h"
-#include "memilio/math/interpolation.h"
-#include "memilio/utils/random_number_generator.h"
-#include "abm/migration_rules.h"
-#include "abm/testing_strategy.h"
-#include "abm/infection.h"
-#include "abm/infection_state.h"
-#include "abm/virus_variant.h"
-#include "abm/vaccine.h"
-#include "abm/household.h"
-#include "abm/lockdown_rules.h"
-
-#endif
+int main()
+{
+    // Place text file needs to be in working directory build/examples/ and
+    // start from within examples folder in build directory
+    auto twitter_mobility_2018 = mio::read_mobility_formatted("2018_lk_matrix.txt");
+}

@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+//Includes from pymio
 #include "memilio/config.h"
 #include "pybind_util.h"
 #include "compartments/simulation.h"
@@ -31,6 +32,8 @@
 #include "mobility/metapopulation_mobility_instant.h"
 #include "io/mobility_io.h"
 #include "io/result_io.h"
+
+//Includes from MEmilio
 #include "ode_secir/model.h"
 #include "ode_secir/analyze_result.h"
 #include "ode_secir/parameter_space.h"
@@ -40,9 +43,10 @@
 #include "memilio/mobility/graph.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/io/epi_data.h"
-#include "Eigen/Core"
-#include "pybind11/stl_bind.h"
 
+#include "pybind11/pybind11.h"
+#include "pybind11/stl_bind.h"
+#include "Eigen/Core"
 #include <vector>
 
 namespace py = pybind11;
@@ -53,7 +57,7 @@ namespace
 //select only the first node of the graph of each run, used for parameterstudy with single nodes
 template <class Sim>
 std::vector<Sim>
-filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::MigrationEdge<double>>>&& graph_results)
+filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::MobilityEdge<double>>>&& graph_results)
 {
     std::vector<Sim> results;
     results.reserve(graph_results.size());
@@ -72,7 +76,7 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
     pymio::bind_class<mio::ParameterStudy<Simulation>, pymio::EnablePickling::Never>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("num_runs"))
-        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters<double>>&, double, double,
+        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MobilityParameters<double>>&, double, double,
                       double, size_t>(),
              py::arg("model_graph"), py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
         .def_property("num_runs", &mio::ParameterStudy<Simulation>::get_num_runs,
@@ -83,16 +87,15 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
                                py::return_value_policy::reference_internal)
         .def_property_readonly("model", py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model, py::const_),
                                py::return_value_policy::reference_internal)
-        .def_property_readonly("secir_model_graph",
-                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph),
+        .def_property_readonly("model_graph", py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph),
                                py::return_value_policy::reference_internal)
-        .def_property_readonly("secir_model_graph",
+        .def_property_readonly("model_graph",
                                py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph, py::const_),
                                py::return_value_policy::reference_internal)
         .def(
             "run",
             [](mio::ParameterStudy<Simulation>& self,
-               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge<double>>, size_t)>
+               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MobilityEdge<double>>, size_t)>
                    handle_result) {
                 self.run(
                     [](auto&& g) {
@@ -143,17 +146,16 @@ enum class ContactLocation
     Count,
 };
 
-using Simulation     = mio::osecir::Simulation<>;
-using MigrationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge<double>>;
+using MobilityGraph = mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MobilityEdge<double>>;
 
 } // namespace
 
-PYBIND11_MAKE_OPAQUE(std::vector<MigrationGraph>);
+PYBIND11_MAKE_OPAQUE(std::vector<MobilityGraph>);
 
 namespace pymio
 {
 
-//specialization of pretty_name for secir types
+//specialization of pretty_name
 template <>
 std::string pretty_name<mio::osecir::InfectionState>()
 {
@@ -168,7 +170,7 @@ std::string pretty_name<mio::AgeGroup>()
 
 } // namespace pymio
 
-PYBIND11_MODULE(_simulation_secir, m)
+PYBIND11_MODULE(_simulation_osecir, m)
 {
     // https://github.com/pybind/pybind11/issues/1153
     m.def("interpolate_simulation_result",
@@ -206,13 +208,14 @@ PYBIND11_MODULE(_simulation_secir, m)
         .def("check_constraints", &mio::osecir::Parameters<double>::check_constraints)
         .def("apply_constraints", &mio::osecir::Parameters<double>::apply_constraints);
 
-    using SecirPopulations = mio::Populations<double, mio::AgeGroup, mio::osecir::InfectionState>;
-    pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::osecir::Model<double>::Populations>{});
-    pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters<double>,
+    using Populations = mio::Populations<double, mio::AgeGroup, mio::osecir::InfectionState>;
+    pymio::bind_Population(m, "Populations", mio::Tag<mio::osecir::Model<double>::Populations>{});
+    pymio::bind_CompartmentalModel<mio::osecir::InfectionState, Populations, mio::osecir::Parameters<double>,
                                    pymio::EnablePickling::Never>(m, "ModelBase");
-    pymio::bind_class<mio::osecir::Model<double>, pymio::EnablePickling::Required,
-                      mio::CompartmentalModel<double, mio::osecir::InfectionState, SecirPopulations,
-                                              mio::osecir::Parameters<double>>>(m, "Model")
+    pymio::bind_class<
+        mio::osecir::Model<double>, pymio::EnablePickling::Required,
+        mio::CompartmentalModel<double, mio::osecir::InfectionState, Populations, mio::osecir::Parameters<double>>>(
+        m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
     pymio::bind_Simulation<mio::osecir::Simulation<>>(m, "Simulation");
@@ -222,26 +225,27 @@ PYBIND11_MODULE(_simulation_secir, m)
         [](double t0, double tmax, double dt, const mio::osecir::Model<double>& model) {
             return mio::osecir::simulate(t0, tmax, dt, model);
         },
-        "Simulates a Secir Model1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+        "Simulates an ODE SECIHURD model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
+        py::arg("model"));
 
     m.def(
         "simulate_flows",
         [](double t0, double tmax, double dt, const mio::osecir::Model<double>& model) {
             return mio::osecir::simulate_flows<double>(t0, tmax, dt, model);
         },
-        "Simulates a Secir model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
+        "Simulates an ODE SECIHURD model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
         py::arg("model"));
 
     pymio::bind_ModelNode<mio::osecir::Model<double>>(m, "ModelNode");
     pymio::bind_SimulationNode<mio::osecir::Simulation<>>(m, "SimulationNode");
     pymio::bind_ModelGraph<mio::osecir::Model<double>>(m, "ModelGraph");
-    pymio::bind_MigrationGraph<Simulation>(m, "MigrationGraph");
-    pymio::bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
+    pymio::bind_MobilityGraph<mio::osecir::Simulation<>>(m, "MobilityGraph");
+    pymio::bind_GraphSimulation<MobilityGraph>(m, "MobilitySimulation");
 
     //normally, std::vector is bound to any python iterable, but this doesn't work for move-only elements
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
     //interpolate_ensemble_results
-    py::bind_vector<std::vector<MigrationGraph>>(m, "EnsembleGraphResults");
+    py::bind_vector<std::vector<MobilityGraph>>(m, "EnsembleGraphResults");
     bind_ParameterStudy<mio::osecir::Simulation<>>(m, "ParameterStudy");
 
     m.def("set_params_distributions_normal", &mio::osecir::set_params_distributions_normal<double>, py::arg("model"),
@@ -254,17 +258,17 @@ PYBIND11_MODULE(_simulation_secir, m)
         },
         py::arg("model"));
 
-    // These functions are in general not secir dependent, only with the current config
+    // These functions are in general not model dependent, only with the current config
     m.def(
         "set_nodes",
         [](const mio::osecir::Parameters<double>& params, mio::Date start_date, mio::Date end_date,
            const std::string& data_dir, const std::string& population_data_path, bool is_node_for_county,
-           mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>& params_graph,
+           mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
            const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
            int num_days = 0, bool export_time_series = false) {
             auto result = mio::set_nodes<
                 mio::osecir::TestAndTraceCapacity<double>, mio::osecir::ContactPatterns<double>,
-                mio::osecir::Model<double>, mio::MigrationParameters<double>, mio::osecir::Parameters<double>,
+                mio::osecir::Model<double>, mio::MobilityParameters<double>, mio::osecir::Parameters<double>,
                 decltype(mio::osecir::read_input_data_county<mio::osecir::Model<double>>), decltype(mio::get_node_ids)>(
                 params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
                 mio::osecir::read_input_data_county<mio::osecir::Model<double>>, mio::get_node_ids, scaling_factor_inf,
@@ -282,17 +286,16 @@ PYBIND11_MODULE(_simulation_secir, m)
     m.def(
         "set_edges",
         [](const std::string& data_dir,
-           mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>& params_graph,
+           mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
            size_t contact_locations_size) {
-            auto migrating_comp = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
-                                   mio::osecir::InfectionState::InfectedNoSymptoms,
-                                   mio::osecir::InfectionState::InfectedSymptoms,
-                                   mio::osecir::InfectionState::Recovered};
-            auto weights        = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
-            auto result = mio::set_edges<ContactLocation, mio::osecir::Model<double>, mio::MigrationParameters<double>,
-                                         mio::MigrationCoefficientGroup, mio::osecir::InfectionState,
+            auto mobile_comp = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
+                                mio::osecir::InfectionState::InfectedNoSymptoms,
+                                mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
+            auto weights     = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
+            auto result = mio::set_edges<ContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
+                                         mio::MobilityCoefficientGroup, mio::osecir::InfectionState,
                                          decltype(mio::read_mobility_plain)>(
-                data_dir, params_graph, migrating_comp, contact_locations_size, mio::read_mobility_plain, weights);
+                data_dir, params_graph, mobile_comp, contact_locations_size, mio::read_mobility_plain, weights);
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);
@@ -316,9 +319,9 @@ PYBIND11_MODULE(_simulation_secir, m)
 #endif // MEMILIO_HAS_JSONCPP
 
     m.def("interpolate_simulation_result",
-          py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<Simulation>));
+          py::overload_cast<const MobilityGraph&>(&mio::interpolate_simulation_result<mio::osecir::Simulation<>>));
 
-    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MigrationGraph>);
+    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MobilityGraph>);
 
     m.attr("__version__") = "dev";
 }

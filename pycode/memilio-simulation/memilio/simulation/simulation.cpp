@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+//Includes from pymio
 #include "pybind_util.h"
 #include "epidemiology/damping.h"
 #include "epidemiology/contact_matrix.h"
@@ -33,6 +34,7 @@
 #include "utils/index.h"
 #include "utils/custom_index_array.h"
 
+//Includes from MEmilio
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/date.h"
 #include "memilio/geography/regions.h"
@@ -40,6 +42,8 @@
 #include "memilio/epidemiology/simulation_day.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/io/epi_data.h"
+
+#include "pybind11/pybind11.h"
 
 namespace py = pybind11;
 
@@ -101,29 +105,28 @@ PYBIND11_MODULE(_simulation, m)
 
     pymio::bind_uncertain_contact_matrix(m, "UncertainContactMatrix");
 
-    auto migration_damping_class =
-        pymio::bind_class<mio::VectorDamping, pymio::EnablePickling::Required>(m, "MigrationDamping");
-    pymio::bind_damping_members(migration_damping_class);
+    auto mobility_damping_class =
+        pymio::bind_class<mio::VectorDamping, pymio::EnablePickling::Required>(m, "MobilityDamping");
+    pymio::bind_damping_members(mobility_damping_class);
 
-    auto migration_dampings_class =
-        pymio::bind_class<mio::VectorDampings, pymio::EnablePickling::Required>(m, "MigrationDampings");
-    pymio::bind_dampings_members(migration_dampings_class);
+    auto mobility_dampings_class =
+        pymio::bind_class<mio::VectorDampings, pymio::EnablePickling::Required>(m, "MobilityDampings");
+    pymio::bind_dampings_members(mobility_dampings_class);
 
-    auto migration_coeffs_class =
-        pymio::bind_class<mio::MigrationCoefficients, pymio::EnablePickling::Required>(m, "MigrationCoefficients");
-    pymio::bind_damping_expression_members(migration_coeffs_class);
+    auto mobility_coeffs_class =
+        pymio::bind_class<mio::MobilityCoefficients, pymio::EnablePickling::Required>(m, "MobilityCoefficients");
+    pymio::bind_damping_expression_members(mobility_coeffs_class);
 
-    auto migration_coeff_group_class =
-        pymio::bind_class<mio::MigrationCoefficientGroup, pymio::EnablePickling::Required>(m,
-                                                                                           "MigrationCoefficientGroup");
-    pymio::bind_damping_expression_group_members(migration_coeff_group_class);
+    auto mobility_coeff_group_class = pymio::bind_class<mio::MobilityCoefficientGroup, pymio::EnablePickling::Required>(
+        m, "MobilityCoefficientGroup");
+    pymio::bind_damping_expression_group_members(mobility_coeff_group_class);
 
     pymio::bind_dynamicNPI_members(m, "DynamicNPIs");
 
-    pymio::bind_migration_parameters(m, "MigrationParameters");
-    pymio::bind_migration_parameter_edge(m, "MigrationParameterEdge");
-    pymio::bind_migration(m, "Migration");
-    pymio::bind_migration_edge(m, "MigrationEdge");
+    pymio::bind_mobility_parameters(m, "MobilityParameters");
+    pymio::bind_mobility_parameter_edge(m, "MobilityParameterEdge");
+    pymio::bind_mobility(m, "Mobility");
+    pymio::bind_mobility_edge(m, "MobilityEdge");
 
     m.def(
         "get_state_id_de",
