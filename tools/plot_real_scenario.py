@@ -16,10 +16,12 @@ parameters = {
     'TimeInfectedSevere': 15.2253,  # 11.9713, # 15.2253
     # 'TimeInfectedCritical': 16.4929,  # 15.2303, # 16.4929
     'TimeInfectedNoSymptomsToInfectedSymptoms': 1.1,
-    'TimeInfectedSymptomsToInfectedSevere': 6.60011,
+    'TimeInfectedSymptomsToInfectedSevere': 6.6,
+    'TimeInfectedSymptomsToRecovered': 8.0,
     'TimeInfectedSevereToInfectedCritical': 1.5,
     'TimeInfectedCriticalToDead': 10.7,
     'InfectedSymptomsPerInfectedNoSymptoms': 0.793099,  # 0.698315 #0.793099
+    'SeverePerInfectedSymptoms': 0.0786429,
     'start_date': pd.Timestamp('2020.10.01') - pd.DateOffset(days=20),
     'end_date': pd.Timestamp('2020.10.01') + pd.DateOffset(days=30),
     'scaleConfirmed': 1.
@@ -90,10 +92,21 @@ def load_data(file, start_date, simulation_time, T_UD):
     # Calculate individuals in compartment InfectedSymptoms.
     help_I = df['Confirmed'][(df['Date'] >= parameters['start_date'])
                              & (df['Date'] <= parameters['end_date'])].to_numpy()
-    help_I = help_I - (1 - math.fmod(parameters['TimeInfectedSymptoms'], 1)) * df['Confirmed'][(df['Date'] >= parameters['start_date'] + pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptoms'])))
-                                                                                               & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptoms'])))].to_numpy()
-    help_I = help_I - math.fmod(parameters['TimeInfectedSymptoms'], 1) * df['Confirmed'][(df['Date'] >= parameters['start_date'] + pd.DateOffset(days=-math.ceil(
-        parameters['TimeInfectedSymptoms']))) & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=-math.ceil(parameters['TimeInfectedSymptoms'])))].to_numpy()
+    # Shift according to T_I
+    # help_I = help_I - (1 - math.fmod(parameters['TimeInfectedSymptoms'], 1)) * df['Confirmed'][(df['Date'] >= parameters['start_date'] + pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptoms'])))
+    #                                                                                            & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptoms'])))].to_numpy()
+    # help_I = help_I - math.fmod(parameters['TimeInfectedSymptoms'], 1) * df['Confirmed'][(df['Date'] >= parameters['start_date'] + pd.DateOffset(days=-math.ceil(
+    #     parameters['TimeInfectedSymptoms']))) & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=-math.ceil(parameters['TimeInfectedSymptoms'])))].to_numpy()
+
+    # shift according to T_I^H and T_I^R
+    help_I = help_I - parameters["SeverePerInfectedSymptoms"]*((1 - math.fmod(parameters['TimeInfectedSymptomsToInfectedSevere'], 1)) * df['Confirmed'][(df['Date'] >= parameters['start_date'] + pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptomsToInfectedSevere'])))
+                                                                                                                                                        & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptomsToInfectedSevere'])))].to_numpy()) \
+                    - (1-parameters["SeverePerInfectedSymptoms"])*((1 - math.fmod(parameters['TimeInfectedSymptomsToRecovered'], 1)) * df['Confirmed'][(df['Date'] >= parameters['start_date'] + pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptomsToRecovered'])))
+                                                                                                                                                       & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptomsToRecovered'])))].to_numpy())
+    help_I = help_I - parameters["SeverePerInfectedSymptoms"]*(math.fmod(parameters['TimeInfectedSymptomsToInfectedSevere'], 1) * df['Confirmed'][(df['Date'] >= parameters['start_date'] + pd.DateOffset(days=-math.ceil(
+        parameters['TimeInfectedSymptomsToInfectedSevere']))) & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=-math.ceil(parameters['TimeInfectedSymptomsToInfectedSevere'])))].to_numpy()) \
+        - (1-parameters["SeverePerInfectedSymptoms"])*(math.fmod(parameters['TimeInfectedSymptomsToRecovered'], 1) * df['Confirmed'][(df['Date'] >= parameters['start_date'] + pd.DateOffset(days=-math.ceil(
+            parameters['TimeInfectedSymptomsToRecovered']))) & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=-math.ceil(parameters['TimeInfectedSymptomsToRecovered'])))].to_numpy())
     df2['InfectedSymptoms'] = help_I
     # Calculate number of dead individuals.
     help_D = (1 - (1 - math.fmod(parameters['TimeInfectedSymptomsToInfectedSevere'] + parameters['TimeInfectedSevereToInfectedCritical'] + parameters['TimeInfectedCriticalToDead'], 1))) * df['Deaths'][(df['Date'] >= parameters['start_date'] + pd.DateOffset(days=-math.ceil(parameters['TimeInfectedSymptomsToInfectedSevere'] + parameters['TimeInfectedSevereToInfectedCritical'] + parameters['TimeInfectedCriticalToDead'])))
@@ -122,6 +135,10 @@ def get_scale_contacts(files, start_date, simulation_time, T_UD):
     datafile = os.path.join(os.path.dirname(
         __file__), "..", "data", "pydata", "Germany", "cases_all_germany.json")
     data_rki = load_data(datafile, start_date, simulation_time, T_UD)
+
+    # datafile_ma7 = os.path.join(os.path.dirname(
+    #     __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json")
+    # data_rki = load_data(datafile_ma7, start_date, simulation_time, T_UD)
 
     # Load IDE data.
     for file in range(len(files)):
@@ -165,12 +182,14 @@ def plot_new_infections(files, start_date, simulation_time, T_UD, fileending="",
 
     datafile_ma7 = os.path.join(os.path.dirname(
         __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json")
-    data_rki_ma7 = load_data(datafile, start_date, simulation_time, T_UD)
+    data_rki_ma7 = load_data(datafile_ma7, start_date, simulation_time, T_UD)
 
     fig, ax = plt.subplots()
 
     ax.scatter(np.linspace(0, simulation_time, simulation_time + 1),
                data_rki["NewInfectionsDay"], marker="x",  s=20, color='gray', label="Extrapolated RKI data")
+    # ax.plot(np.linspace(0, simulation_time, simulation_time + 1),
+    #            data_rki_ma7["NewInfectionsDay"],  color='gray', label="Extrapolated RKI data MA7")
 
     legendplot = list(["ODE", "IDE"])
     # helmholtzdarkblue, helmholtzclaim
@@ -199,13 +218,13 @@ def plot_new_infections(files, start_date, simulation_time, T_UD, fileending="",
         # plot data
         # ODE
         if file == 0:
-            print(f"New infections from RKI (ma7)  on {start_date}: ",
-                  data_rki_ma7[data_rki_ma7["Date"] == start_date]["NewInfectionsDay"].values[0])
+            print(f"New infections from RKI  on {start_date}: ",
+                  data_rki_ma7[data_rki["Date"] == start_date]["NewInfectionsDay"].values[0])
             print(f"Expected new infections at {timestep}: ",
-                  data_rki_ma7[data_rki_ma7["Date"] == start_date]["NewInfectionsDay"].values[0] + timestep * (data_rki_ma7[data_rki_ma7["Date"] == start_date + pd.DateOffset(days=1)]["NewInfectionsDay"].values[0] - data_rki_ma7[data_rki_ma7["Date"] == start_date]["NewInfectionsDay"].values[0]))
+                  data_rki_ma7[data_rki["Date"] == start_date]["NewInfectionsDay"].values[0] + timestep * (data_rki_ma7[data_rki_ma7["Date"] == start_date + pd.DateOffset(days=1)]["NewInfectionsDay"].values[0] - data_rki_ma7[data_rki_ma7["Date"] == start_date]["NewInfectionsDay"].values[0]))
 
-            print(f"New infections from RKI (ma7)  on {start_date + pd.DateOffset(days=1)}: ",
-                  data_rki_ma7[data_rki_ma7["Date"] == start_date + pd.DateOffset(days=1)]["NewInfectionsDay"].values[0])
+            print(f"New infections from RKI  on {start_date + pd.DateOffset(days=1)}: ",
+                  data_rki_ma7[data_rki["Date"] == start_date + pd.DateOffset(days=1)]["NewInfectionsDay"].values[0])
             # transform cumulative flows to flows absolute flows
             # then transform from flows over time interval to flows at time
             # points
@@ -288,8 +307,8 @@ def plot_infectedsymptoms_deaths(
 
     for compartment in range(len(compartments)):
 
-        print(f"{compartments[compartment][0]} from RKI (ma7)  on {start_date}: ",
-              data_rki_ma7[data_rki_ma7["Date"] == start_date][compartments[compartment][0]].values[0])
+        print(f"{compartments[compartment][0]} from RKI on {start_date}: ",
+              data_rki_ma7[data_rki["Date"] == start_date][compartments[compartment][0]].values[0])
 
         fig, ax = plt.subplots()
 

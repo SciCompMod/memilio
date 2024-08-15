@@ -25,7 +25,6 @@
 
 #include "lct_secir/model.h"
 #include "lct_secir/parameters_io.h"
-#include "lct_secir/simulation.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "ode_secir/model.h"
 #include "ode_secir/infection_state.h"
@@ -304,22 +303,22 @@ void set_npi_october(mio::ContactMatrixGroup& contact_matrices, mio::Date start_
     // For the beginning of the time period, we assume only half of the defined proportion of counties is in a hard lockdown.
     lockdown_hard = lockdown_hard / 2;
     // Contact reduction at home.
-    ScalarType v = 0.3 * (1 - lockdown_hard) + lockdown_hard * 0.4;
+    ScalarType v = 0.2 * (1 - lockdown_hard) + lockdown_hard * 0.4;
     contact_matrices[size_t(ContactLocation::Home)].add_damping(Eigen::MatrixXd::Constant(1, 1, v),
                                                                 mio::DampingLevel(int(InterventionLevel::Main)),
                                                                 mio::DampingType(int(Intervention::Home)), offset_npi);
     // Home-Office + people stopped working.
-    v = (0.25 + 0.025) * (1 - lockdown_hard) + lockdown_hard * (0.25 + 0.15);
+    v = (0.2 + 0.025) * (1 - lockdown_hard) + lockdown_hard * (0.3 + 0.025);
     contact_matrices[size_t(ContactLocation::Work)].add_damping(
         Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
         mio::DampingType(int(Intervention::HomeOffice)), offset_npi);
     // GatheringBanFacilitiesClosure affects ContactLocation Other.
-    v = 0.1 * (1 - lockdown_hard) + lockdown_hard * 0.4;
+    v = 0. * (1 - lockdown_hard) + lockdown_hard * 0.2;
     contact_matrices[size_t(ContactLocation::Other)].add_damping(
         Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
         mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), offset_npi);
     // PhysicalDistanceAndMasks in all locations.
-    v = 0.3 * (1 - lockdown_hard) + lockdown_hard * 0.4;
+    v = 0.2 * (1 - lockdown_hard) + lockdown_hard * 0.4;
     for (auto&& contact_location : contact_locations) {
         contact_matrices[size_t(contact_location.first)].add_damping(
             Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
@@ -337,9 +336,9 @@ void set_npi_october(mio::ContactMatrixGroup& contact_matrices, mio::Date start_
     Moreover the lockdown value of PhysicalDistanceAndMasks in the location school is assumed to apply for all counties.*/
     offset_npi = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 10, 24), start_date));
     // For the second half of the simulation, the proportion of counties in hard lockdown is increased to compensate for the lower proportion before.
-    lockdown_hard = lockdown_hard * 3;
+    lockdown_hard = lockdown_hard * 5;
     // Contact reduction at home.
-    v = 0.6;
+    v = 0.4 * (1 - lockdown_hard) + 0.6 * lockdown_hard;
     contact_matrices[size_t(ContactLocation::Home)].add_damping(Eigen::MatrixXd::Constant(1, 1, v),
                                                                 mio::DampingLevel(int(InterventionLevel::Main)),
                                                                 mio::DampingType(int(Intervention::Home)), offset_npi);
@@ -349,22 +348,22 @@ void set_npi_october(mio::ContactMatrixGroup& contact_matrices, mio::Date start_
         Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
         mio::DampingType(int(Intervention::HomeOffice)), offset_npi);
     // GatheringBanFacilitiesClosure affects ContactLocation Other.
-    v = 0.8;
+    v = 0.6 * (1 - lockdown_hard) + 0.8 * lockdown_hard;
     contact_matrices[size_t(ContactLocation::Other)].add_damping(
         Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::Main)),
         mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), offset_npi);
     // PhysicalDistanceAndMasks in ContactLocation%s Home.
-    v = 0.4 * (1 - lockdown_hard) + lockdown_hard * 0.4;
+    v = 0.2 * (1 - lockdown_hard) + lockdown_hard * 0.4;
     contact_matrices[size_t(ContactLocation::Home)].add_damping(
         Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
         mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
     // PhysicalDistanceAndMasks in ContactLocation%s School.
-    v = 0.6;
+    v = 0.2 * (1 - lockdown_hard) + lockdown_hard * 0.4;
     contact_matrices[size_t(ContactLocation::School)].add_damping(
         Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
         mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
     // PhysicalDistanceAndMasks in ContactLocation%s Work and Other.
-    v = 0.6 * (1 - lockdown_hard) + lockdown_hard * 0.5;
+    v = 0.4 * (1 - lockdown_hard) + lockdown_hard * 0.6;
     contact_matrices[size_t(ContactLocation::Work)].add_damping(
         Eigen::MatrixXd::Constant(1, 1, v), mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
         mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), offset_npi);
@@ -399,8 +398,8 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(const fs::path& d
     const ScalarType age_group_sizes[] = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
     const ScalarType total             = 83155031.0;
     const int numagegroups             = 6;
-    mio::Date end_date                 = mio::offset_date_by_days(start_date, simulation_time);
-
+    // mio::Date end_date                 = mio::offset_date_by_days(start_date, simulation_time);
+    mio::unused(simulation_time);
     auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), 1);
     // Load and set minimum and baseline contacts for each contact location.
     for (auto&& contact_location : contact_locations) {
@@ -428,19 +427,19 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(const fs::path& d
     // ----- Add NPIs to the contact matrices. -----
     // Set of NPIs for June.
     // std::cout << "contacts at beginning: " << contact_matrices.get_matrix_at(0)(0, 0) << std::endl;
-    if (mio::Date(2020, 6, 1) < end_date) {
+    if (start_date == mio::Date(2020, 6, 1)) {
         set_npi_june(contact_matrices, start_date);
     }
 
-    std::cout << "contacts on June 30: " << contact_matrices.get_matrix_at(30)(0, 0) << std::endl;
+    // std::cout << "contacts on June 30: " << contact_matrices.get_matrix_at(30)(0, 0) << std::endl;
     // std::cout << "contacts before NPIs: " << contact_matrices[1].get_matrix_at(30)(0, 0) << std::endl;
     // std::cout << "contacts before NPIs: " << contact_matrices[2].get_matrix_at(30)(0, 0) << std::endl;
     // std::cout << "contacts before NPIs: " << contact_matrices[3].get_matrix_at(30)(0, 0) << std::endl;
 
-    // std::cout << "contacts before NPIs: " << contact_matrices.get_matrix_at(0)(0, 0) << std::endl;
+    std::cout << "contacts before NPIs: " << contact_matrices.get_matrix_at(0)(0, 0) << std::endl;
     // Set of NPIs for October.
-    auto start_npi_october = mio::Date(2020, 10, 1);
-    if (start_npi_october < end_date) {
+    // auto start_npi_october = mio::Date(2020, 10, 1);
+    if (start_date == mio::Date(2020, 10, 1)) {
         set_npi_october(contact_matrices, start_date, simulation_parameters["lockdown_hard"]);
     }
     std::cout << "contacts after NPIs: " << contact_matrices.get_matrix_at(30)(0, 0) << std::endl;
@@ -579,9 +578,6 @@ simulate_ide_model(mio::Date start_date, ScalarType tmax, mio::ContactMatrixGrou
                                                        start_date, simulation_parameter["scale_confirmed_cases"]);
 
     model_ide.check_constraints(simulation_parameter["dt_flows"]);
-
-    std::cout << "Global support max: " << model_ide.get_global_support_max(simulation_parameter["dt_flows"])
-              << std::endl;
 
     // Simulate.
     mio::isecir::Simulation sim(model_ide, simulation_parameter["dt_flows"]);
@@ -771,8 +767,6 @@ int main(int argc, char** argv)
 
     ScalarType simulation_time = 45;
 
-    std::cout << "argc:" << argc << std::endl;
-
     ScalarType T_UD;
     ScalarType T_UR;
     ScalarType shape_UD;
@@ -786,17 +780,12 @@ int main(int argc, char** argv)
         data_dir_tmp                              = argv[1];
         save_dir                                  = argv[2];
         simulation_parameter["DeathsPerCritical"] = std::stod(argv[3]);
-        // std::cout << argv[3] << std::endl;
-        T_UD = std::stod(argv[4]);
-        T_UR = std::stod(argv[5]);
-        // shape_UD = 0.42819924;
-        // scale_UD = 9.76267505;
-        // shape_UR = 0.33816427;
-        // scale_UR = 17.09411753;
-        shape_UD                         = std::stod(argv[6]);
-        scale_UD                         = std::stod(argv[7]);
-        shape_UR                         = std::stod(argv[8]);
-        scale_UR                         = std::stod(argv[9]);
+        T_UD                                      = std::stod(argv[4]);
+        T_UR                                      = std::stod(argv[5]);
+        shape_UD                                  = std::stod(argv[6]);
+        scale_UD                                  = std::stod(argv[7]);
+        shape_UR                                  = std::stod(argv[8]);
+        scale_UR                                  = std::stod(argv[9]);
         start_date                       = mio::Date(std::stoi(argv[10]), std::stoi(argv[11]), std::stoi(argv[12]));
         simulation_time                  = std::stod(argv[13]);
         simulation_parameter["dt_flows"] = std::stod(argv[14]);
