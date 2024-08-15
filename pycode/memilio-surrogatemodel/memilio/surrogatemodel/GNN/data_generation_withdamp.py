@@ -432,6 +432,7 @@ def generate_data(
             # save dict to json file
             with open(os.path.join(path, 'data_secir_age_groups.pickle'), 'wb') as f:
                 pickle.dump(all_data, f)
+    return data
 
 
 if __name__ == "__main__":
