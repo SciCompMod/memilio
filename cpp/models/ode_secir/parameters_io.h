@@ -38,28 +38,27 @@ namespace osecir
 namespace details
 {
 /**
-     * @brief interpolates age_ranges to param_ranges and saves ratios in interpolation
-     * @param age_ranges original age ranges of the data
-     * @param interpolation vector of ratios that are aplied to the data of age_ranges
-     * @param carry_over boolean vector which indicates whether there is an overflow from one age group to the next while interpolating data
+     * @brief Interpolates age_ranges to param_ranges and saves ratios in interpolation.
+     * @param age_ranges Original age ranges of the data.
+     * @param interpolation Vector of ratios that are aplied to the data of age_ranges.
+     * @param carry_over Boolean vector which indicates whether there is an overflow from one age group to the next while interpolating data.
      */
 void interpolate_ages(const std::vector<double>& age_ranges, std::vector<std::vector<double>>& interpolation,
                       std::vector<bool>& carry_over);
 
 /**
-     * @brief reads populations data from RKI
-     * @param[in] path Path to RKI file
-     * @param[in] rki_data Vector of ConfirmedCasesDataEntry%s  
-     * @param[in] region vector of keys of the region of interest
-     * @param[in] year Specifies year at which the data is read
-     * @param[in] month Specifies month at which the data is read
-     * @param[in] day Specifies day at which the data is read
-     * @param[in, out] num_* output vector for number of people in the corresponding compartement
-     * @param[in] t_* vector average time it takes to get from one compartement to another for each age group
-     * @param[in] mu_* vector probabilities to get from one compartement to another for each age group
+     * @brief reads populations data from RKI.
+     * @param[in] rki_data Vector of ConfirmedCasesDataEntry%s.
+     * @param[in] region Vector of keys of the region of interest.
+     * @param[in] year Specifies year at which the data is read.
+     * @param[in] month Specifies month at which the data is read.
+     * @param[in] day Specifies day at which the data is read.
+     * @param[in, out] num_* Output vector for number of people in the corresponding compartement.
+     * @param[in] t_* vector Average time it takes to get from one compartement to another for each age group.
+     * @param[in] mu_* vector Probabilities to get from one compartement to another for each age group.
      */
 IOResult<void> read_confirmed_cases_data(
-    std::string const& path, std::vector<ConfirmedCasesDataEntry>& rki_data, std::vector<int> const& vregion, Date date,
+    std::vector<ConfirmedCasesDataEntry>& rki_data, std::vector<int> const& vregion, Date date,
     std::vector<std::vector<double>>& vnum_Exposed, std::vector<std::vector<double>>& vnum_InfectedNoSymptoms,
     std::vector<std::vector<double>>& vnum_InfectedSymptoms, std::vector<std::vector<double>>& vnum_InfectedSevere,
     std::vector<std::vector<double>>& vnum_icu, std::vector<std::vector<double>>& vnum_death,
@@ -71,19 +70,18 @@ IOResult<void> read_confirmed_cases_data(
     const std::vector<double>& scaling_factor_inf);
 
 /**
- * @brief sets populations data from already read data with multiple age groups into a Model with one age group
- * @tparam FP floating point data type, e.g., double
- * @param[in, out] model vector of objects in which the data is set
- * @param[in] path Path to confirmed cases file
- * @param[in] case_data List of confirmed cases data entries
- * @param[in] region vector of keys of the region of interest
- * @param[in] date Date at which the data is read
- * @param[in] scaling_factor_inf factors by which to scale the confirmed cases of rki data
+ * @brief Sets populations data from already read case data with multiple age groups into a Model with one age group.
+ * @tparam FP Floating point data type, e.g., double.
+ * @param[in, out] model Vector of models in which the data is set.
+ * @param[in] case_data List of confirmed cases data entries.
+ * @param[in] region Vector of keys of the region of interest.
+ * @param[in] date Date at which the data is read.
+ * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.
  */
 template <typename FP = double>
-IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std::string& path,
-                                        std::vector<ConfirmedCasesDataEntry>& case_data, const std::vector<int>& region,
-                                        Date date, const std::vector<double>& scaling_factor_inf)
+IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vector<ConfirmedCasesDataEntry>& case_data,
+                                        const std::vector<int>& region, Date date,
+                                        const std::vector<double>& scaling_factor_inf)
 {
     const size_t num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
     assert(scaling_factor_inf.size() == num_age_groups);
@@ -129,7 +127,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
     std::vector<std::vector<double>> num_InfectedSevere(model.size(), std::vector<double>(num_age_groups, 0.0));
     std::vector<std::vector<double>> num_icu(model.size(), std::vector<double>(num_age_groups, 0.0));
 
-    BOOST_OUTCOME_TRY(read_confirmed_cases_data(path, case_data, region, date, num_Exposed, num_InfectedNoSymptoms,
+    BOOST_OUTCOME_TRY(read_confirmed_cases_data(case_data, region, date, num_Exposed, num_InfectedNoSymptoms,
                                                 num_InfectedSymptoms, num_InfectedSevere, num_icu, num_death, num_rec,
                                                 t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
                                                 t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
@@ -160,9 +158,9 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
 }
 
 /**
- * @brief Sets the infected population for a given model based on confirmed cases data.
- *
- * @tparam FP floating point data type, e.g., double
+ * @brief Sets the infected population for a given model based on confirmed cases data. Here, we
+ * read the case data from a file.
+ * @tparam FP Floating point data type, e.g., double.
  * @param model Vector of models for which the confirmed cases data will be set.
  * @param path Path to the confirmed cases data file.
  * @param region Vector of keys of the region of interest
@@ -175,32 +173,32 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
                                         const std::vector<double>& scaling_factor_inf)
 {
     BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(path));
-    BOOST_OUTCOME_TRY(set_confirmed_cases_data(model, path, case_data, region, date, scaling_factor_inf));
+    BOOST_OUTCOME_TRY(set_confirmed_cases_data(model, case_data, region, date, scaling_factor_inf));
     return success();
 }
 
 /**
-     * @brief reads number of ICU patients from DIVI register into Parameters
-     * @param path Path to DIVI file
-     * @param vregion Keys of the region of interest
-     * @param year Specifies year at which the data is read
-     * @param month Specifies month at which the data is read
-     * @param day Specifies day at which the data is read
-     * @param vnum_icu number of ICU patients
+     * @brief Reads number of ICU patients from DIVI register into Parameters.
+     * @param path Path to DIVI file.
+     * @param vregion Keys of the region of interest.
+     * @param year Specifies year at which the data is read.
+     * @param month Specifies month at which the data is read.
+     * @param day Specifies day at which the data is read.
+     * @param vnum_icu Number of ICU patients.
      */
 IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
                               std::vector<double>& vnum_icu);
 
 /**
-     * @brief sets populations data from DIVI register into Model
-     * @tparam FP floating point data type, e.g., double
-     * @param model vector of objects in which the data is set
-     * @param path Path to DIVI file
-     * @param vregion vector of keys of the regions of interest
-     * @param year Specifies year at which the data is read
-     * @param month Specifies month at which the data is read
-     * @param day Specifies day at which the data is read
-     * @param scaling_factor_icu factor by which to scale the icu cases of divi data
+     * @brief Sets populations data from DIVI register into Model.
+     * @tparam FP floating point data type, e.g., double.
+     * @param model Vector of models in which the data is set.
+     * @param path Path to DIVI file.
+     * @param vregion Vector of keys of the regions of interest.
+     * @param year Specifies year at which the data is read.
+     * @param month Specifies month at which the data is read.
+     * @param day Specifies day at which the data is read.
+     * @param scaling_factor_icu factor by which to scale the icu cases of divi data.
      */
 template <typename FP = double>
 IOResult<void> set_divi_data(std::vector<Model<FP>>& model, const std::string& path, const std::vector<int>& vregion,
@@ -232,21 +230,21 @@ IOResult<void> set_divi_data(std::vector<Model<FP>>& model, const std::string& p
 }
 
 /**
-     * @brief Reads population data from census data
-     * @tparam FP floating point data type, e.g., double
-     * @param[in] path Path to RKI file
-     * @param[in] vregion Vector of keys of the regions of interest
-     * @param[in] accumulate_age_groups Specifies whether population data sould be accumulated to one age group
+     * @brief Reads population data from census data.
+     * @tparam FP floating point data type, e.g., double.
+     * @param[in] path Path to RKI file.
+     * @param[in] vregion Vector of keys of the regions of interest. 
+     * @param[in] accumulate_age_groups Specifies whether population data should be accumulated to one age group.
      */
 IOResult<std::vector<std::vector<double>>>
 read_population_data(const std::string& path, const std::vector<int>& vregion, bool accumulate_age_groups = false);
 
 /**
-* @brief sets population data from census data which has been read into num_population
-* @tparam FP floating point data type, e.g., double
-* @param[in, out] model vector of objects in which the data is set
-* @param[in] num_population vector of population data
-* @param[in] vregion vector of keys of the regions of interest
+* @brief Sets population data from census data which has been read into num_population.
+* @tparam FP floating point data type, e.g., double.
+* @param[in, out] model Vector of models in which the data is set. There should be one model per region.
+* @param[in] num_population Vector of population data. The size should be the same as vregion and model.
+* @param[in] vregion Vector of keys of the regions of interest.
 */
 template <typename FP = double>
 IOResult<void> set_population_data(std::vector<Model<FP>>& model,
@@ -266,12 +264,12 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model,
 }
 
 /**
-* @brief sets population data from census data into a Model
-* @tparam FP floating point data type, e.g., double
-* @param[in, out] model vector of objects in which the data is set
-* @param[in] path Path to RKI file containing population data
-* @param[in] vregion vector of keys of the regions of interest
-* @param[in] accumulate_age_groups specifies whether population data sould be accumulated to one age group
+* @brief Sets population data from census data into a Model.
+* @tparam FP Floating point data type, e.g., double.
+* @param[in, out] model Vector of models in which the data is set.
+* @param[in] path Path to RKI file containing population data.
+* @param[in] vregion Vector of keys of the regions of interest.
+* @param[in] accumulate_age_groups Specifies whether population data should be accumulated to one age group.
 */
 template <typename FP = double>
 IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::string& path,
@@ -287,22 +285,26 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::str
 #ifdef MEMILIO_HAS_HDF5
 
 /**
-* @brief sets populations data from RKI into a Model with one age group
-* @param model vector of models in which the data is set. Copy is made to avoid changing the original model
-* @param data_dir Path to RKI files
-* @param results_dir Path to result files
-* @param region vector of keys of the region of interest
-* @param year Specifies year at which the data is read
-* @param month Specifies month at which the data is read
-* @param day Specifies day at which the data is read
-* @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
+* @brief Uses the initialisation method, which uses the reported data to set the initial conditions for the model for a given day. 
+* The initialisation is applied for a predefined number of days and finally saved in a timeseries for each region. In the end,
+* we save the files "Results_rki.h5" and "Results_rki_sum.h5" in the results_dir.
+* Results_rki.h5 contains a time series for each region and Results_rki_sum.h5 contains the sum of all regions.
+* @param models Vector of models in which the data is set. Copy is made to avoid changing the original model.
+* @param results_dir Path to result files.
+* @param region Vector of keys of the region of interest.
+* @param date Date for which the data should be read.
+* @param scaling_factor_inf Factors by which to scale the confirmed cases of rki data.
+* @param scaling_factor_icu Factor by which to scale the icu cases of divi data.
+* @param num_days Number of days to be simulated/initialized.
+* @param divi_data_path Path to DIVI file.
+* @param confirmed_cases_path Path to confirmed cases file.
+* @param population_data_path Path to population data file.
 */
 template <class Model>
-IOResult<void>
-export_input_data_county_timeseries(std::vector<Model> models, const std::string& dir, std::vector<int> const& region,
-                                    Date date, const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                                    int num_days, const std::string& divi_data_path,
-                                    const std::string& confirmed_cases_path, const std::string& population_data_path)
+IOResult<void> export_input_data_county_timeseries(
+    std::vector<Model> models, const std::string& results_dir, std::vector<int> const& region, Date date,
+    const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, int num_days,
+    const std::string& divi_data_path, const std::string& confirmed_cases_path, const std::string& population_data_path)
 {
     const auto num_age_groups = (size_t)models[0].parameters.get_num_groups();
     assert(scaling_factor_inf.size() == num_age_groups);
@@ -324,18 +326,19 @@ export_input_data_county_timeseries(std::vector<Model> models, const std::string
             log_warning("No DIVI data available for date: {}-{}-{}", offset_day.day, offset_day.month, offset_day.year);
         }
 
-        BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(models, confirmed_cases_path, case_data, region, offset_day,
-                                                            scaling_factor_inf));
+        BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(models, case_data, region, offset_day, scaling_factor_inf));
         BOOST_OUTCOME_TRY(details::set_population_data(models, num_population, region));
         for (size_t r = 0; r < region.size(); r++) {
             extrapolated_data[r][t] = models[r].get_initial_values();
         }
     }
-    auto num_groups = (int)(size_t)models[0].parameters.get_num_groups();
-    BOOST_OUTCOME_TRY(save_result(extrapolated_data, region, num_groups, path_join(dir, "Results_rki.h5")));
+
+    BOOST_OUTCOME_TRY(
+        save_result(extrapolated_data, region, (int)num_age_groups, path_join(results_dir, "Results_rki.h5")));
 
     auto rki_data_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_data});
-    BOOST_OUTCOME_TRY(save_result({rki_data_sum[0][0]}, {0}, num_groups, path_join(dir, "Results_rki_sum.h5")));
+    BOOST_OUTCOME_TRY(
+        save_result({rki_data_sum[0][0]}, {0}, (int)num_age_groups, path_join(results_dir, "Results_rki_sum.h5")));
 
     return success();
 }
@@ -353,12 +356,12 @@ export_input_data_county_timeseries(std::vector<Model> models, const std::string
 #endif // MEMILIO_HAS_HDF5
 
 /**
- * @brief reads population data from population files for the whole country
- * @param model vector of model in which the data is set
- * @param date Date for which the data should be read
- * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
- * @param scaling_factor_icu factor by which to scale the icu cases of divi data
- * @param dir directory of files
+ * @brief Reads population data from population files for the whole country.
+ * @param model Vector of model in which the data is set.
+ * @param date Date for which the data should be read.
+ * @param scaling_factor_inf Factors by which to scale the confirmed cases of rki data.
+ * @param scaling_factor_icu Factor by which to scale the icu cases of divi data.
+ * @param dir Directory of files.
  */
 template <class Model>
 IOResult<void> read_input_data_germany(std::vector<Model>& model, Date date,
@@ -380,13 +383,13 @@ IOResult<void> read_input_data_germany(std::vector<Model>& model, Date date,
 }
 
 /**
- * @brief reads population data from population files for the specefied state
- * @param model vector of model in which the data is set
- * @param date Date for which the data should be read
- * @param state vector of region keys of states of interest
- * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
- * @param scaling_factor_icu factor by which to scale the icu cases of divi data
- * @param dir directory of files
+ * @brief Reads population data from population files for the specefied state.
+ * @param model Vector of model in which the data is set.
+ * @param date Date for which the data should be read.
+ * @param state Vector of region keys of states of interest.
+ * @param scaling_factor_inf Factors by which to scale the confirmed cases of rki data.
+ * @param scaling_factor_icu Factor by which to scale the icu cases of divi data.
+ * @param dir Directory of files.
  */
 template <class Model>
 IOResult<void> read_input_data_state(std::vector<Model>& model, Date date, std::vector<int>& state,
@@ -409,14 +412,14 @@ IOResult<void> read_input_data_state(std::vector<Model>& model, Date date, std::
 }
 
 /**
- * @brief reads population data from population files for the specefied county
- * @param model vector of model in which the data is set
- * @param date Date for which the data should be read
- * @param county vector of region keys of counties of interest
- * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
- * @param scaling_factor_icu factor by which to scale the icu cases of divi data
- * @param dir directory of files
- * @param num_days [Default: 0] Number of days to be simulated; required to extrapolate real data
+ * @brief Reads population data from population files for the specefied county.
+ * @param model Vector of model in which the data is set.
+ * @param date Date for which the data should be read.
+ * @param county Vector of region keys of counties of interest.
+ * @param scaling_factor_inf Factors by which to scale the confirmed cases of rki data.
+ * @param scaling_factor_icu Factor by which to scale the icu cases of divi data.
+ * @param dir Directory of files.
+ * @param num_days [Default: 0] Number of days to be simulated; required to extrapolate real data.
  * @param export_time_series [Default: false] If true, reads data for each day of simulation and writes it in the same directory as the input files.
  */
 template <class Model>

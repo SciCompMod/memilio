@@ -41,11 +41,11 @@ namespace details
 /**
         * @brief Reads subpopulations of infection states from transformed RKI cases file.
         * @param path Path to transformed RKI cases file.
-        * @param vregion vector of keys of the region of interest     
-        * @param date Date for which the arrays are initialized
-        * @param num_* output vector for number of people in the corresponding compartement
-        * @param t_* average time it takes to get from one compartement to another (vector with one element per age group)
-        * @param mu_* probabilities to get from one compartement to another (vector with one element per age group)
+        * @param vregion Vector of keys of the region of interest.
+        * @param date Date for which the arrays are initialized.
+        * @param num_* Output vector for number of people in the corresponding compartement.
+        * @param t_* Average time it takes to get from one compartement to another (vector with one element per age group).
+        * @param mu_* Probabilities to get from one compartement to another (vector with one element per age group).
         * @param scaling_factor_inf Factor for scaling the confirmed cases to account for estimated undetected cases.
         * @see mio::read_confirmed_cases_data
         * @{
@@ -74,12 +74,12 @@ IOResult<void> read_confirmed_cases_data(
 /**@}*/
 
 /**
-        * @brief Reads confirmed cases data and translates data of day t0-delay to recovered compartment,
+        * @brief Reads confirmed cases data and translates data of day t0-delay to recovered compartment.
         * @param path Path to RKI confirmed cases file.
-        * @param vregion vector of keys of the region of interest     
-        * @param date Date for which the arrays are initialized
-        * @param num_rec output vector for number of people in the compartement recovered
-        * @param delay number of days in the past the are used to set recovered compartment.
+        * @param vregion Vector of keys of the region of interest.
+        * @param date Date for which the arrays are initialized.
+        * @param num_rec Output vector for number of people in the compartement recovered.
+        * @param delay Number of days in the past the are used to set recovered compartment.
         * @see mio::read_confirmed_cases_data
         * @{
         */
@@ -92,19 +92,19 @@ IOResult<void> read_confirmed_cases_data_fix_recovered(std::string const& path, 
 /**@}*/
 
 /**
-        * @brief sets populations data from a transformed RKI cases file into a Model.
-        * @param model vector of objects in which the data is set
-        * @param case_data vector of case data. Each inner vector represents a different region
-        * @param region vector of keys of the region of interest
-        * @param date Date for which the arrays are initialized
-        * @param scaling_factor_inf factors by which to scale the confirmed cases of
-        * rki data
+        * @brief Sets the confirmed cases data for a vector of models based on input data.
+        * @param model Vector of objects in which the data is set.
+        * @param case_data Vector of case data. Each inner vector represents a different region.
+        * @param region Vector of keys of the region of interest.
+        * @param date Date for which the arrays are initialized.
+        * @param scaling_factor_inf Factors by which to scale the confirmed cases of RKI data.
+        * @param set_death If true, set the number of deaths.
         */
 template <class Model>
 IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
                                         const std::vector<ConfirmedCasesDataEntry>& case_data,
                                         std::vector<int> const& region, Date date,
-                                        const std::vector<double>& scaling_factor_inf, bool set_death)
+                                        const std::vector<double>& scaling_factor_inf, bool set_death = false)
 {
     auto num_age_groups = (size_t)model[0].parameters.get_num_groups();
     assert(scaling_factor_inf.size() == num_age_groups); //TODO: allow vector or scalar valued scaling factors
@@ -375,6 +375,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
         * @param date Date for which the arrays are initialized
         * @param scaling_factor_inf factors by which to scale the confirmed cases of
         * rki data
+        * @param set_death If true, set the number of deaths.
         */
 template <class Model>
 IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::string& path,
@@ -643,12 +644,12 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::vector<
 }
 
 /**
-* @brief sets population data from census data which has been read into num_population
-* @param[in, out] model vector of objects in which the data is set
-* @param[in] path Path to population data file
-* @param[in] path_rki Path to RKI cases data file
-* @param[in] vregion vector of keys of the regions of interest
-* @param[in] date Date for which the arrays are initialized
+* @brief Sets population data from census data which has been read into num_population.
+* @param[in, out] model Vector of objects in which the data is set.
+* @param[in] path Path to population data file.
+* @param[in] path_rki Path to RKI cases data file.
+* @param[in] vregion Vector of keys of the regions of interest.
+* @param[in] date Date for which the arrays are initialized.
 */
 template <class Model>
 IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::string& path_rki,
@@ -662,14 +663,14 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
 }
 
 /**
- * @brief Sets vaccination data for models stored in a vector
+ * @brief Sets vaccination data for models stored in a vector.
  * 
- * @tparam FP Floating point type used in the Model objects
- * @param model Vector of Model objects in which the vaccination data is set
- * @param vacc_data Vector of VaccinationDataEntry objects containing the vaccination data
- * @param date Start date for the simulation
- * @param vregion Vector of region identifiers
- * @param num_days Number of days for which the simulation is run
+ * @tparam FP Floating point type used in the Model objects.
+ * @param model Vector of Model objects in which the vaccination data is set.
+ * @param vacc_data Vector of VaccinationDataEntry objects containing the vaccination data.
+ * @param date Start date for the simulation.
+ * @param vregion Vector of region identifiers.
+ * @param num_days Number of days for which the simulation is run.
  */
 template <typename FP = double>
 IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::vector<VaccinationDataEntry>& vacc_data,
@@ -797,14 +798,14 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::ve
 }
 
 /**
- * @brief Sets vaccination data for models stored in a vector
+ * @brief Reads vaccination data from a file and sets it for each model.
  * 
- * @tparam FP Floating point type used in the Model objects
- * @param model Vector of Model objects in which the vaccination data is set
- * @param path Path to vaccination data file
- * @param date Start date for the simulation
- * @param vregion Vector of region identifiers
- * @param num_days Number of days for which the simulation is run
+ * @tparam FP Floating point type used in the Model objects.
+ * @param model Vector of Model objects in which the vaccination data is set.
+ * @param path Path to vaccination data file.
+ * @param date Start date for the simulation.
+ * @param vregion Vector of region identifiers.
+ * @param num_days Number of days for which the simulation is run.
  */
 template <typename FP = double>
 IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::string& path, Date date,
@@ -820,27 +821,26 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
 #ifdef MEMILIO_HAS_HDF5
 
 /**
-    * @brief Exports the time series of extrapolated real data according to
-    *   the extrapolation / approximation method used to initialize the model from
-    *   real world data.
-        (This is the vector-valued functionality of set_confirmed_cases_data())
-    * @param model vector of objects in which the data is set
-    * @param data_dir Path to transformed RKI cases files
-    * @param results_dir Path to result files
-    * @param start_date Start date of the time series to be exported.
-    * @param region vector of keys of the region of interest
-    * @param scaling_factor_inf Factor for scaling the confirmed cases to account for an estimated number of undetected cases.
-    * @param scaling_factor_icu Factor for scaling the reported ICU cases to account for possibly unreported ICU cases.
-    * @param num_days Number of days for which the time series is exported.
-    * @param divi_data_path path to divi data file
-    * @param confirmed_cases_path path to confirmed cases file
-    * @param population_data_path path to population data file
-    * @param set_vaccination_data boolean to set vaccination data
-    * @param vaccination_data_path path to vaccination data file
-    */
+* @brief Uses the initialisation method, which uses the reported data to set the initial conditions for the model for a given day. 
+* The initialisation is applied for a predefined number of days and finally saved in a timeseries for each region. In the end,
+* we save the files "Results_rki.h5" and "Results_rki_sum.h5" in the results_dir.
+* Results_rki.h5 contains a time series for each region and Results_rki_sum.h5 contains the sum of all regions.
+* @param models Vector of models in which the data is set. Copy is made to avoid changing the original model.
+* @param results_dir Path to result files.
+* @param counties Vector of keys of the counties of interest.
+* @param date Date for which the data should be read.
+* @param scaling_factor_inf Factors by which to scale the confirmed cases of rki data.
+* @param scaling_factor_icu Factor by which to scale the icu cases of divi data.
+* @param num_days Number of days to be simulated/initialized.
+* @param divi_data_path Path to DIVI file.
+* @param confirmed_cases_path Path to confirmed cases file.
+* @param population_data_path Path to population data file.
+* @param set_vaccination_data Boolean to set vaccination data.
+* @param vaccination_data_path Path to vaccination data file.
+*/
 template <class Model>
 IOResult<void> export_input_data_county_timeseries(
-    std::vector<Model> models, const std::string& dir, const std::vector<int>& counties, Date date,
+    std::vector<Model> models, const std::string& results_dir, const std::vector<int>& counties, Date date,
     const std::vector<double>& scaling_factor_inf, const double scaling_factor_icu, const int num_days,
     const std::string& divi_data_path, const std::string& confirmed_cases_path, const std::string& population_data_path,
     bool set_vaccination_data, const std::string& vaccination_data_path)
@@ -882,26 +882,23 @@ IOResult<void> export_input_data_county_timeseries(
             details::set_confirmed_cases_data(models, case_data, counties, offset_day, scaling_factor_inf, true));
         BOOST_OUTCOME_TRY(details::set_population_data(models, population_data, case_data, counties, offset_day));
 
-        // in set_population_data werden die Anzahl an TOten noch von SusceptibleImprovedImmunity subtrahiert. Da wir egal,
-        // ob wir diese betrachten oder nicht, addieren wir sie hier wieder hinzu bevor wir die Daten speichern.
         for (size_t r = 0; r < counties.size(); r++) {
             extrapolated_data[r][t] = models[r].get_initial_values();
             // in set_population_data the number of death individuals is subtracted from the SusceptibleImprovedImmunity compartment.
             // Since we should be independent whether we consider them or not, we add them back here before we save the data.
             for (size_t age = 0; age < num_groups; age++) {
-                // extrapolated_rki[county][day]((size_t)InfectionState::DeadNaive + age_group_offset)
                 extrapolated_data[r][t][(size_t)InfectionState::SusceptibleImprovedImmunity +
                                         age * (size_t)InfectionState::Count] +=
                     extrapolated_data[r][t][(size_t)InfectionState::DeadNaive + age * (size_t)InfectionState::Count];
             }
         }
     }
-    BOOST_OUTCOME_TRY(
-        save_result(extrapolated_data, counties, static_cast<int>(num_groups), path_join(dir, "Results_rki.h5")));
+    BOOST_OUTCOME_TRY(save_result(extrapolated_data, counties, static_cast<int>(num_groups),
+                                  path_join(results_dir, "Results_rki.h5")));
 
     auto extrapolated_rki_data_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_data});
     BOOST_OUTCOME_TRY(save_result({extrapolated_rki_data_sum[0][0]}, {0}, static_cast<int>(num_groups),
-                                  path_join(dir, "Results_rki_sum.h5")));
+                                  path_join(results_dir, "Results_rki_sum.h5")));
 
     return success();
 }
