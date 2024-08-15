@@ -27,19 +27,19 @@ from scipy.signal import savgol_filter
 def plot_infections_loc_types_avarage(path):
     # 50-percentile
     f_p50 = h5py.File(
-        path+"/infection_per_location_type_per_age_group/p50/Results.h5", 'r')
+        path+"/infection_per_location_type_per_age_group/0/p50/Results.h5", 'r')
     p50_bs = f_p50['0']
     total_50 = p50_bs['Total'][()]
 
     # 25-percentile
     f_p25 = h5py.File(
-        path+"/infection_per_location_type_per_age_group/p05/Results.h5", 'r')
+        path+"/infection_per_location_type_per_age_group/0/p05/Results.h5", 'r')
     p25_bs = f_p25['0']
     total_25 = p25_bs['Total'][()]
 
     # 75-percentile
     f_p75 = h5py.File(
-        path + "/infection_per_location_type_per_age_group/p95/Results.h5", 'r')
+        path + "/infection_per_location_type_per_age_group/0/p95/Results.h5", 'r')
     p75_bs = f_p75['0']
     total_75 = p75_bs['Total'][()]
 
@@ -92,17 +92,17 @@ def plot_infection_per_location_type_mean(x, y50, y25, y75):
 def plot_infection_states_results(path):
     # 50-percentile
     f_p50 = h5py.File(
-        path+"/infection_state_per_age_group/p50/Results.h5", 'r')
+        path+"/infection_state_per_age_group/0/p50/Results.h5", 'r')
     p50_bs = f_p50['0']
     total_50 = p50_bs['Total'][()]
     # 25-percentile
     f_p25 = h5py.File(
-        path+"/infection_state_per_age_group/p05/Results.h5", 'r')
+        path+"/infection_state_per_age_group/0/p05/Results.h5", 'r')
     p25_bs = f_p25['0']
     total_25 = p25_bs['Total'][()]
     # 75-percentile
     f_p75 = h5py.File(
-        path + "/infection_state_per_age_group/p95/Results.h5", 'r')
+        path + "/infection_state_per_age_group/0/p95/Results.h5", 'r')
     p75_bs = f_p75['0']
     total_75 = p75_bs['Total'][()]
 
@@ -246,16 +246,16 @@ def plot_dead(path):
     # we will have a seperate plot the cumulative infected individuals, cumulative symptomatic individuals and cumulative dead individual
     # we need to load the data
     f_p50 = h5py.File(
-        path+"/infection_state_per_age_group/p50/Results.h5", 'r')
+        path+"/infection_state_per_age_group/0/p50/Results.h5", 'r')
     p50_bs = f_p50['0']
 
     # do the same for 25 and 75 percentile
     f_p25 = h5py.File(
-        path+"/infection_state_per_age_group/p05/Results.h5", 'r')
+        path+"/infection_state_per_age_group/0/p05/Results.h5", 'r')
     p25_bs = f_p25['0']
 
     f_p75 = h5py.File(
-        path+"/infection_state_per_age_group/p95/Results.h5", 'r')
+        path+"/infection_state_per_age_group/0/p95/Results.h5", 'r')
     p75_bs = f_p75['0']
 
     age_group_access = ['Group1', 'Group2', 'Group3',
@@ -325,7 +325,7 @@ def plot_dead(path):
    
 def plot_icu(path):
     df_abb = pd.read_json(path+"/../pydata/Germany/county_divi_ma7.json")
-    perc_of_critical_in_icu = 0.47
+    perc_of_critical_in_icu = 0.42
 
     # we just need the columns ICU_low and ICU_hig
     df_abb = df_abb[['ID_County', 'ICU', 'Date']]
@@ -337,7 +337,7 @@ def plot_icu(path):
 
     # we plot this against this the Amount of persons in the ICU from our model
     f_p50 = h5py.File(
-        path+"/infection_state_per_age_group/p50/Results.h5", 'r')
+        path+"/infection_state_per_age_group/0/p50/Results.h5", 'r')
     p50_bs = f_p50['0']
     total_50 = p50_bs['Total'][()]
     # we need just every 24th value
@@ -347,7 +347,7 @@ def plot_icu(path):
 
      # we plot this against this the Amount of persons in the ICU from our model
     f_p75 = h5py.File(
-        path+"/infection_state_per_age_group/p95/Results.h5", 'r')
+        path+"/infection_state_per_age_group/0/p95/Results.h5", 'r')
     p75_bs = f_p75['0']
     total_75 = p75_bs['Total'][()]
     # we need just every 24th value
@@ -357,7 +357,7 @@ def plot_icu(path):
 
     # same with 25 percentile
     f_p25 = h5py.File(
-        path+"/infection_state_per_age_group/p05/Results.h5", 'r')
+        path+"/infection_state_per_age_group/0/p05/Results.h5", 'r')
     p25_bs = f_p25['0']
     total_25 = p25_bs['Total'][()]
     # we need just every 24th value
@@ -436,7 +436,7 @@ def plot_tests(path):
     ratio_testing_symptomatic_vs_asymptomatic = 0.1
 
     f_p50 = h5py.File(
-        path+"/results_last_run/infection_state_per_age_group/p50/Results.h5", 'r')
+        path+"/results_last_run/infection_state_per_age_group/0/p50/Results.h5", 'r')
     p50_bs = f_p50['0']
     total_50 = p50_bs['Total'][()]
     total_50 = total_50[::24]
@@ -539,7 +539,7 @@ def infer_positive_tests(path):
 
     # we need every compartment of the model
     f_p50 = h5py.File(
-        path+"/infection_state_per_age_group/p50/Results.h5", 'r')
+        path+"/infection_state_per_age_group/0/p50/Results.h5", 'r')
     p50_bs = f_p50['0']
     total_50 = p50_bs['Total'][()]
     total_50 = total_50[::24]
@@ -637,7 +637,7 @@ def infer_positive_tests(path):
 
 def plot_estimated_reproduction_number(path):
     f_p50 = h5py.File(
-        path+"/estimated_reproduction_number/p50/Results.h5", 'r')
+        path+"/estimated_reproduction_number/0/p50/Results.h5", 'r')
     p50_bs = f_p50['0']
     total_50 = p50_bs['Total'][()]
     total_50 = total_50[::24]
@@ -671,7 +671,7 @@ def plot_cumulative_detected_infections(path):
 
 
     f_p50 = h5py.File(
-        path+"/cumulative_detected_infections/p50/Results.h5", 'r')
+        path+"/cumulative_detected_infections/0/p50/Results.h5", 'r')
     p50_bs = f_p50['0']
     total_50 = p50_bs['Total'][()]
     total_50 = total_50[::24]
@@ -679,14 +679,14 @@ def plot_cumulative_detected_infections(path):
     # we smooth this with a gaussian filter
 
     f_p95 = h5py.File(
-        path+"/cumulative_detected_infections/p95/Results.h5", 'r')
+        path+"/cumulative_detected_infections/0/p95/Results.h5", 'r')
     p95_bs = f_p95['0']
     total_95 = p95_bs['Total'][()]
     total_95 = total_95[::24]
     total_95 = np.floor(total_95[0:90].flatten())
 
     f_p05 = h5py.File(
-        path+"/cumulative_detected_infections/p95/Results.h5", 'r')
+        path+"/cumulative_detected_infections/0/p95/Results.h5", 'r')
     p05_bs = f_p05['0']
     total_05 = p05_bs['Total'][()]
     total_05 = total_05[::24]
@@ -739,12 +739,12 @@ def plot_cumulative_detected_infections(path):
 
 def plot_positive_and_done_test(path):
     f_p50_positive = h5py.File(
-        path+"/positive_test_per_location_type_per_age_group/p50/Results.h5", 'r')
+        path+"/positive_test_per_location_type_per_age_group/0/p50/Results.h5", 'r')
     p50_bs_positive = f_p50_positive['0']
     total_50_positive = p50_bs_positive['Total'][()]
 
     f_p50_done = h5py.File(
-        path+"/test_per_location_type_per_age_group/p50/Results.h5", 'r')
+        path+"/test_per_location_type_per_age_group/0/p50/Results.h5", 'r')
     p50_bs_done = f_p50_done['0']
     total_50_done = p50_bs_done['Total'][()]
 
