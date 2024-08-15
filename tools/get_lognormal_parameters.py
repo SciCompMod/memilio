@@ -10,7 +10,7 @@ def get_lognormal_parameters(mean, std):
     """
     variance = std**2
 
-    mean_tmp = np.log(mean) - 0.5*np.log(1 + variance/mean**2)
+    mean_tmp = np.log(mean**2/np.sqrt(mean**2+variance))
     variance_tmp = np.log(variance/mean**2 + 1)
 
     shape = np.sqrt(variance_tmp)
@@ -20,13 +20,19 @@ def get_lognormal_parameters(mean, std):
     mean_lognorm, variance_lognorm = lognorm.stats(
         shape, loc=0, scale=scale, moments='mv')
 
+    mean_test = np.exp(scale**2/2)
+
+    # print("Test mean: ", mean_test)
+
+    # print(mean_lognorm, variance_lognorm)
+
     if np.abs(mean_lognorm-mean) > 1e-8:
         print('Distribution does not have expected mean value.')
 
     if np.abs(np.sqrt(variance_lognorm)-std) > 1e-8:
         print('Distribution does not have expected standard deviation.')
 
-    return shape, scale
+    return round(shape, 8), round(scale, 8)
 
 
 def get_weighted_mean(prob_1, stay_time_1, stay_time_2):
@@ -37,8 +43,8 @@ def get_weighted_mean(prob_1, stay_time_1, stay_time_2):
 
 
 if __name__ == '__main__':
-    shape, scale = get_lognormal_parameters(10.7, 4.8)
-    print(f"{shape:.8f}", f"{scale:.8f}")
+    shape, scale = get_lognormal_parameters(2.183, 1.052)
+    print(f"{shape:.12f}", f"{scale:.12f}")
 
-    weighted_mean = get_weighted_mean(0.217177, 10.7, 18.1)
-    print(f"{weighted_mean:.8f}")
+    # weighted_mean = get_weighted_mean(0.217177, 10.7, 18.1)
+    # print(f"{weighted_mean:.8f}")

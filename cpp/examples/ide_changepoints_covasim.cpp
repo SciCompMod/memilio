@@ -62,7 +62,7 @@ using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 // Probabilities from Assessment paper
 std::map<std::string, ScalarType> simulation_parameter = {
     {"t0", 0.},
-    {"dt_flows", 0.1},
+    {"dt_flows", 0.01},
     {"total_population", 83155031.},
     {"total_confirmed_cases", 341223.}, // set by RKI data
     {"deaths", 0.}, // set by RKI data
@@ -80,8 +80,8 @@ std::map<std::string, ScalarType> simulation_parameter = {
     {"CriticalPerSevere", 0.173176}, //0.369201 //  0.173176
     {"DeathsPerCritical", 0.217177}, //0.387803 //  0.217177
     {"cont_freq",
-     405.0837938714286 /
-         128.42865350758595}}; // computed so that we obtain constant new infections at beginning of simulation
+     40.50837938714286 /
+         13.007554628089002}}; // computed so that we obtain constant new infections at beginning of simulation
 
 mio::UncertainContactMatrix<ScalarType> get_contact_matrix(ScalarType contact_scaling)
 {
@@ -147,7 +147,7 @@ mio::TimeSeries<ScalarType> get_initial_flows()
     // Add initial time point to time series.
     init.add_time_point(-350, init_transitions);
     // Add further time points until time 0 with constant values.
-    while (init.get_last_time() < simulation_parameter["t0"] - 1e-10) {
+    while (init.get_last_time() < simulation_parameter["t0"] - 1e-3) {
         init.add_time_point(init.get_last_time() + simulation_parameter["dt_flows"], init_transitions);
     }
     return init;
@@ -360,7 +360,7 @@ mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType cont
 int main()
 {
     // Paths are valid if file is executed eg in memilio/build/bin.
-    std::string save_dir = "../../results/fictional/covasim/";
+    std::string save_dir = "../../results/fictional/covasim/assessment_probs/";
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directories(dir);

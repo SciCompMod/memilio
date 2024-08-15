@@ -38,14 +38,15 @@
 #include "memilio/utils/time_series.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 #include "ode_secir/infection_state.h"
+#include <iomanip>
 #include <string>
 #include <map>
 #include <iostream>
 
 using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 
-// Parameters are calculated via examples/compute_parameters.cpp.
-// Probabilities from Assessment paper
+// // Parameters are calculated via examples/compute_parameters.cpp.
+// // Probabilities from Assessment paper
 std::map<std::string, ScalarType> simulation_parameter = {
     {"t0", 0.},
     {"dt_flows", 0.1},
@@ -139,8 +140,8 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
  * @brief Add NPIs to a given contact matrix from 01/06/2020 on.
  *
  * NPIs have been adjusted so that they approximate the trend of the RKI data for a period of 45 days from 01/06/2020 on.
- * 
- * @param[in] contact_matrices The contact matrices where the NPIs shpuld be added to.
+ *
+ * @param[in] contact_matrices The contact matrices where the NPIs should be added to.
  * @param[in] start_date Start date of the simulation used for setting the NPIs.
  */
 void set_npi_june(mio::ContactMatrixGroup& contact_matrices, mio::Date start_date)
@@ -426,19 +427,20 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(const fs::path& d
 
     // ----- Add NPIs to the contact matrices. -----
     // Set of NPIs for June.
+    // std::cout << "contacts at beginning: " << contact_matrices.get_matrix_at(0)(0, 0) << std::endl;
     if (mio::Date(2020, 6, 1) < end_date) {
         set_npi_june(contact_matrices, start_date);
     }
 
-    std::cout << "contacts before NPIs: " << contact_matrices.get_matrix_at(30)(0, 0) << std::endl;
+    std::cout << "contacts on June 30: " << contact_matrices.get_matrix_at(30)(0, 0) << std::endl;
     // std::cout << "contacts before NPIs: " << contact_matrices[1].get_matrix_at(30)(0, 0) << std::endl;
     // std::cout << "contacts before NPIs: " << contact_matrices[2].get_matrix_at(30)(0, 0) << std::endl;
     // std::cout << "contacts before NPIs: " << contact_matrices[3].get_matrix_at(30)(0, 0) << std::endl;
 
+    // std::cout << "contacts before NPIs: " << contact_matrices.get_matrix_at(0)(0, 0) << std::endl;
     // Set of NPIs for October.
     auto start_npi_october = mio::Date(2020, 10, 1);
     if (start_npi_october < end_date) {
-        std::cout << "Setting NPIs for October" << std::endl;
         set_npi_october(contact_matrices, start_date, simulation_parameters["lockdown_hard"]);
     }
     std::cout << "contacts after NPIs: " << contact_matrices.get_matrix_at(30)(0, 0) << std::endl;
@@ -449,10 +451,40 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(const fs::path& d
     return mio::success(contact_matrices);
 }
 
-mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>> simulate_ide_model(mio::Date start_date, ScalarType tmax,
-                                                                           mio::ContactMatrixGroup contact_matrices,
-                                                                           const fs::path& data_dir,
-                                                                           std::string save_dir = "")
+mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices_simplified(mio::Date start_date,
+                                                                          ScalarType simulation_time)
+{
+    mio::Date end_date = mio::offset_date_by_days(start_date, simulation_time);
+
+    // Set of NPIs for October.
+    auto contact_matrices  = mio::ContactMatrixGroup(1, 1);
+    auto start_npi_october = mio::Date(2020, 10, 1);
+    if (start_npi_october < end_date) {
+
+        contact_matrices[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 5.67952));
+        // contact_matrices[1] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 0));
+        // contact_matrices[2] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 0));
+        // contact_matrices[3] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 0));
+
+        std::cout << "contacts on 2.10. " << contact_matrices.get_matrix_at(1)(0, 0) << std::endl;
+
+        auto offset_npi = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 10, 24), start_npi_october));
+        // unused(offset_npi);
+        contact_matrices[0].add_damping(0., mio::SimulationTime(0.1));
+        contact_matrices[0].add_damping(1 - 3.49629 / 5.67952, offset_npi);
+    }
+    std::cout << "contacts after NPIs: " << contact_matrices.get_matrix_at(30)(0, 0) << std::endl;
+    // std::cout << "contacts before NPIs: " << contact_matrices[1].get_matrix_at(30)(0, 0) << std::endl;
+    // std::cout << "contacts before NPIs: " << contact_matrices[2].get_matrix_at(30)(0, 0) << std::endl;
+    // std::cout << "contacts before NPIs: " << contact_matrices[3].get_matrix_at(30)(0, 0) << std::endl;
+
+    return mio::success(contact_matrices);
+}
+
+mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>>
+simulate_ide_model(mio::Date start_date, ScalarType tmax, mio::ContactMatrixGroup contact_matrices,
+                   const fs::path& data_dir, std::string save_dir = "",
+                   std::vector<ScalarType> lognormal_parameters_U = {0.42819924, 9.76267505, 0.33816427, 17.09411753})
 
 {
     // Initialize model.
@@ -495,11 +527,13 @@ mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>> simulate_ide_model(mio::
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered].set_state_age_function(
         survivalInfectedSevereToRecovered);
     // InfectedCriticalToDead
-    mio::LognormSurvivalFunction survivalInfectedCriticalToDead(0.42819924, 0, 9.76267505);
+    mio::LognormSurvivalFunction survivalInfectedCriticalToDead(lognormal_parameters_U[0], 0,
+                                                                lognormal_parameters_U[1]);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead].set_state_age_function(
         survivalInfectedCriticalToDead);
     // InfectedCriticalToRecovered
-    mio::LognormSurvivalFunction survivalInfectedCriticalToRecovered(0.33816427, 0, 17.09411753);
+    mio::LognormSurvivalFunction survivalInfectedCriticalToRecovered(lognormal_parameters_U[2], 0,
+                                                                     lognormal_parameters_U[3]);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_state_age_function(
         survivalInfectedCriticalToRecovered);
 
@@ -709,14 +743,13 @@ mio::IOResult<void> simulate_ode_model(mio::Date start_date, Vector init_compart
     return mio::success();
 }
 
-int main()
+int main(int argc, char** argv)
 {
     // Paths are valid if file is executed eg in memilio/build/bin.
-    const fs::path& data_dir = "../../data";
+    std::string data_dir_tmp = "../../data";
     std::string save_dir     = "../../results/real/";
-    // Make folder if not existent yet.
-    boost::filesystem::path dir(save_dir);
-    boost::filesystem::create_directories(dir);
+
+    // mio::Date start_date;
 
     mio::Date start_date(2020, 10, 01);
     // for Covasim probabilities
@@ -724,7 +757,8 @@ int main()
     // simulation_parameter["scale_contacts"] = 6395.938795529226 / 6278.021198079027;
     // for Assessment ... probabilities
     // simulation_parameter["scale_confirmed_cases"] = 374.5714285714 / 384.0430695350508;
-    simulation_parameter["scale_contacts"] = 5492.663367720521 / 4925.137071413998;
+    // simulation_parameter["scale_contacts"] = 5492.663367720521 / 4925.137071413998;//qith this scaling we obtain good results
+    simulation_parameter["scale_contacts"] = 5631.554194369167 / 5049.174737884492;
 
     // mio::Date start_date(2020, 06, 01);
     // // for Covasim probabilities
@@ -732,21 +766,71 @@ int main()
     // //     (318.4809147734314 + (433.0423949077547 - 318.4809147734314) * simulation_parameter["dt_flows"]) /
     // //     1063.9489750070957;
     // // for Assessment ... probabilities
-    // simulation_parameter["scale_contacts"]        = 290.5059771857091 / 852.9469395504317;
-    // simulation_parameter["scale_confirmed_cases"] = 1.;
+    // simulation_parameter["scale_contacts"] = 329.9370627868637 / 441.7043774280138;
+    // simulation_parameter["scale_confirmed_cases"] = 318.4809147734314 / 523.9141975428727;
 
     ScalarType simulation_time = 45;
 
+    std::cout << "argc:" << argc << std::endl;
+
+    ScalarType T_UD;
+    ScalarType T_UR;
+    ScalarType shape_UD;
+    ScalarType shape_UR;
+    ScalarType scale_UD;
+    ScalarType scale_UR;
+    std::vector<ScalarType> lognormal_parameters_U = {0.42819924, 9.76267505, 0.33816427, 17.09411753};
+
+    if (argc == 16) {
+
+        data_dir_tmp                              = argv[1];
+        save_dir                                  = argv[2];
+        simulation_parameter["DeathsPerCritical"] = std::stod(argv[3]);
+        // std::cout << argv[3] << std::endl;
+        T_UD = std::stod(argv[4]);
+        T_UR = std::stod(argv[5]);
+        // shape_UD = 0.42819924;
+        // scale_UD = 9.76267505;
+        // shape_UR = 0.33816427;
+        // scale_UR = 17.09411753;
+        shape_UD                         = std::stod(argv[6]);
+        scale_UD                         = std::stod(argv[7]);
+        shape_UR                         = std::stod(argv[8]);
+        scale_UR                         = std::stod(argv[9]);
+        start_date                       = mio::Date(std::stoi(argv[10]), std::stoi(argv[11]), std::stoi(argv[12]));
+        simulation_time                  = std::stod(argv[13]);
+        simulation_parameter["dt_flows"] = std::stod(argv[14]);
+        simulation_parameter["scale_contacts"] = std::stod(argv[15]);
+
+        simulation_parameter["TimeInfectedCritical"] =
+            simulation_parameter["DeathsPerCritical"] * T_UD + (1 - simulation_parameter["DeathsPerCritical"]) * T_UR;
+        std::cout << std::setprecision(10) << "TimeInfCrit: " << simulation_parameter["TimeInfectedCritical"]
+                  << std::endl;
+
+        lognormal_parameters_U = {shape_UD, scale_UD, shape_UR, scale_UR};
+
+        std::cout << std::setprecision(10) << simulation_parameter["DeathsPerCritical"] << ", " << T_UD << ", " << T_UR
+                  << ", " << shape_UD << ", " << scale_UD << ", " << shape_UR << ", " << scale_UR << ", "
+                  << simulation_parameter["scale_contacts"] << std::endl;
+    }
+
+    // Make folder if not existent yet.
+    boost::filesystem::path dir(save_dir);
+    boost::filesystem::create_directories(dir);
+
+    const fs::path data_dir = data_dir_tmp;
+
     mio::ContactMatrixGroup contact_matrices =
         define_contact_matrices(data_dir, simulation_parameter, start_date, simulation_time).value();
+    // mio::ContactMatrixGroup contact_matrices =
+    //     define_contact_matrices_simplified(start_date, simulation_time).value();
 
-    auto result_ide = simulate_ide_model(start_date, simulation_time, contact_matrices, "../../data", save_dir);
+    auto result_ide =
+        simulate_ide_model(start_date, simulation_time, contact_matrices, data_dir, save_dir, lognormal_parameters_U);
     if (!result_ide) {
         printf("%s\n", result_ide.error().formatted_message().c_str());
         return -1;
     }
-
-    // result_ide.value()[1].print_table();
 
     Vector init_compartments = result_ide.value()[0].get_value(0);
 

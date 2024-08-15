@@ -56,6 +56,10 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
         log_error("Specified date does not exist in RKI data.");
         return failure(StatusCode::OutOfRange, path + ", specified date does not exist in RKI data.");
     }
+    auto min_date_entry = std::min_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
+        return a.date < b.date;
+    });
+    auto min_date       = min_date_entry->date;
 
     // Get (global) support_max to determine how many flows in the past we have to compute.
     ScalarType global_support_max         = model.get_global_support_max(dt);
@@ -94,10 +98,6 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     ScalarType mean_InfectedCriticalToDead =
         model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead].get_mean();
 
-    std::cout << "Mean values: " << mean_ExposedToInfectedNoSymptoms << ", "
-              << mean_InfectedNoSymptomsToInfectedSymptoms << ", " << mean_InfectedSymptomsToInfectedSevere << ", "
-              << mean_InfectedSevereToInfectedCritical << ", " << mean_InfectedCriticalToDead << std::endl;
-
     Eigen::Index last_time_index_needed =
         Eigen::Index(std::ceil((mean_ExposedToInfectedNoSymptoms + mean_InfectedNoSymptomsToInfectedSymptoms) / dt));
     // Create TimeSeries with zeros. The index of time zero is start_shift.
@@ -115,6 +115,9 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
 
     bool min_offset_needed_avail = false;
     bool max_offset_needed_avail = false;
+    // Get first date that is needed to compute inital values.
+    mio::Date min_offset_date = offset_date_by_days(date, min_offset_needed);
+
     // Go through the entries of rki_data and check if date is needed for calculation. Confirmed cases are scaled.
     // Define dummy variables to store the first and the last index of the TimeSeries where the considered entry of rki_data is potentially needed.
     Eigen::Index idx_needed_first = 0;
@@ -125,6 +128,9 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
         if ((offset >= min_offset_needed) && (offset <= max_offset_needed)) {
             if (offset == min_offset_needed) {
                 min_offset_needed_avail = true;
+            }
+            if (offset == max_offset_needed) {
+                max_offset_needed_avail = true;
             }
             // Smallest index for which the entry is needed.
             idx_needed_first =
@@ -154,7 +160,6 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
             }
 
             // Compute Dead by shifting RKI data according to mean stay times.
-
             if (offset == std::floor(-mean_InfectedSymptomsToInfectedSevere - mean_InfectedSevereToInfectedCritical -
                                      mean_InfectedCriticalToDead)) {
                 model.m_populations[0][Eigen::Index(InfectionState::Dead)] +=
@@ -177,17 +182,23 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
             if (offset == 0) {
                 model.m_total_confirmed_cases = scale_confirmed_cases * entry.num_confirmed;
             }
-
-            if (offset == max_offset_needed) {
-                max_offset_needed_avail = true;
-            }
         }
     }
-    if (!max_offset_needed_avail || !min_offset_needed_avail) {
-        // TODO
-        log_warning("Necessary range of dates needed to compute initial values does not exist in RKI data. Missing "
-                    "dates were set to 0.");
-        // return failure(StatusCode::OutOfRange, path + ", necessary range of dates does not exist in RKI data.");
+
+    if (!max_offset_needed_avail) {
+        log_error("Necessary range of dates needed to compute initial values does not exist in RKI data.");
+        return failure(StatusCode::OutOfRange, path + ", necessary range of dates does not exist in RKI data.");
+    }
+
+    if (!min_offset_needed_avail) {
+        std::string min_date_string =
+            std::to_string(min_date.day) + "." + std::to_string(min_date.month) + "." + std::to_string(min_date.year);
+        std::string min_offset_date_string = std::to_string(min_offset_date.day) + "." +
+                                             std::to_string(min_offset_date.month) + "." +
+                                             std::to_string(min_offset_date.year);
+        log_warning("RKI data is needed from " + min_offset_date_string +
+                    " to compute initial values. RKI data is only available from " + min_date_string +
+                    ". Missing dates were set to 0.");
     }
 
     //--- Calculate the flows "after" InfectedNoSymptomsToInfectedSymptoms. ---
