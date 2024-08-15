@@ -23,8 +23,6 @@
 #include "memilio/io/io.h"
 #include "memilio/utils/metaprogramming.h"
 
-#include <string>
-#include <string_view>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -33,74 +31,75 @@ namespace mio
 {
 
 /**
- * @brief Pair of name and value used for auto-(de)serialization.
- *
- * This object holds a view of a name and reference of a value. Mind their lifetime!
+ * @brief A pair of name and reference.
+ * 
+ * Used for auto-(de)serialization.
+ * This object holds a pointer to a name and reference to value. Mind their lifetime!
  * @tparam ValueType The (non-cv, non-reference) type of the value. 
  */
 template <class ValueType>
-struct NVP {
-    using Type = ValueType&;
+struct NamedRef {
+    using Reference = ValueType&;
 
-    const std::string_view name;
-    Type value;
+    const char* name;
+    Reference value;
 
     /**
-     * @brief Create a (name, value) pair.
+     * @brief Create a named reference.
      *
-     * @param n A view of the name. 
+     * @param n A string literal. 
      * @param v A non-const lvalue reference to the value. 
      */
-    explicit NVP(const std::string_view n, Type v)
+    explicit NamedRef(const char* n, Reference v)
         : name(n)
         , value(v)
     {
     }
+};
 
-    NVP()                      = delete;
-    NVP(const NVP&)            = default;
-    NVP(NVP&&)                 = default;
-    NVP& operator=(const NVP&) = delete;
-    NVP& operator=(NVP&&)      = delete;
+template <class... Ts>
+struct Members {
+
+    Members(const char* class_name)
+        : name(class_name)
+        , name_value_pairs()
+    {
+    }
+
+    Members(const char* class_name, std::tuple<NamedRef<Ts>...> nvps)
+        : name(class_name)
+        , name_value_pairs(nvps)
+    {
+    }
+
+    template <class T>
+    [[nodiscard]] Members<Ts..., T> add(const char* member_name, T& member)
+    {
+        return Members<Ts..., T>{name, std::tuple_cat(name_value_pairs, std::tuple(NamedRef{member_name, member}))};
+    }
+
+    const char* name;
+    std::tuple<NamedRef<Ts>...> name_value_pairs;
 };
 
 /**
- * @brief Provide names and values for auto-(de)serialization.
+ * @brief Creates an instance of T for later initialization.
  *
- * This function packages the class name and a name-value pair for each class member together to define both a
- * serialize and deserialize function (with limited features).
+ * The default implementation uses the default constructor of T, if available. If there is no default constructor, this
+ * class can be spezialized to provide the method `static T create()`. If there is a default constructor, but it is
+ * private, DefaultFactory<T> can be marked as friend instead.
  *
- * Note that auto-serialization requires that all class members participate in serialization, and that
- * each class member is (auto-)serializable and assignable.
- * 
- * @tparam Targets List of each class member's type.
- * @param class_name The name of the class to auto-serialize.
- * @param class_members A name-value pair (NVP) for each class member.
- * @return Collection of all name views and value references used for auto-(de)serialization. 
+ * The state of the object retured by `create()` is completely arbitrary, and may be invalid. Make sure to set it to a
+ * valid state before using it further.
+ *
+ * @tparam T The type to create.
  */
-template <class... Targets>
-[[nodiscard]] inline auto make_auto_serialization(const std::string_view&& class_name, NVP<Targets>&&... class_members)
-{
-    return std::make_pair(class_name, std::make_tuple(class_members...));
-}
-
-/**
- * @brief Creates an instance of AutoSerializable for auto-deserialization.
- *
- * The default implementation uses the default constructor of AutoSerializable, if available. If there is no default
- * constructor, this class must be spezialized to provide the method `static AutoSerializable create()`. If there is
- * a default constructor, but it is private, AutoSerializableFactory<AutoSerializable> can be marked as friend instead.
- *
- * The state of the object retured by `create()` is completely arbitrary, as it is expected that auto-deserialization
- * will overwrite the value of each class member.
- *
- * @tparam AutoSerializable A type with an auto_serialize member.
- */
-template <class AutoSerializable>
-struct AutoSerializableFactory {
-    static AutoSerializable create()
+template <class T>
+struct DefaultFactory {
+    /// @brief Creates a new instance of T.
+    static T create()
     {
-        return AutoSerializable{};
+        return T{};
     }
 };
 
@@ -115,37 +114,37 @@ template <class T>
 using auto_serialize_expr_t = decltype(std::declval<T>().auto_serialize());
 
 /// Add a name-value pair to an io object.
-template <class IOObject, class Target>
-void add_nvp(IOObject& obj, const NVP<Target> nvp)
+template <class IOObject, class Member>
+void add_nvp(IOObject& obj, const NamedRef<Member> nvp)
 {
-    obj.add_element(std::string{nvp.name}, nvp.value);
+    obj.add_element(nvp.name, nvp.value);
 }
 
 /// Unpack all name-value pairs from the tuple and add them to a new io object with the given name.
-template <class IOContext, class... Targets>
-void auto_serialize_impl(IOContext& io, const std::string_view name, const NVP<Targets>... nvps)
+template <class IOContext, class... Members>
+void auto_serialize_impl(IOContext& io, const char* name, const NamedRef<Members>... nvps)
 {
-    auto obj = io.create_object(std::string{name});
+    auto obj = io.create_object(name);
     (add_nvp(obj, nvps), ...);
 }
 
 /// Retrieve a name-value pair from an io object.
-template <class IOObject, class Target>
-IOResult<Target> expect_nvp(IOObject& obj, const NVP<Target> nvp)
+template <class IOObject, class Member>
+IOResult<Member> expect_nvp(IOObject& obj, const NamedRef<Member> nvp)
 {
-    return obj.expect_element(std::string{nvp.name}, Tag<Target>{});
+    return obj.expect_element(nvp.name, Tag<Member>{});
 }
 
 /// Read an io object and its members from the io context using the given names and assign the values to a.
-template <class IOContext, class AutoSerializable, class... Targets>
-IOResult<AutoSerializable> auto_deserialize_impl(IOContext& io, AutoSerializable& a, std::string_view name,
-                                                 NVP<Targets>... nvps)
+template <class IOContext, class AutoSerializable, class... Members>
+IOResult<AutoSerializable> auto_deserialize_impl(IOContext& io, AutoSerializable& a, const char* name,
+                                                 NamedRef<Members>... nvps)
 {
-    auto obj = io.expect_object(std::string{name});
+    auto obj = io.expect_object(name);
 
     return apply(
         io,
-        [&a, &nvps...](const Targets&... values) {
+        [&a, &nvps...](const Members&... values) {
             ((nvps.value = values), ...);
             return a;
         },
@@ -176,14 +175,14 @@ template <
                      AutoSerializable*> = nullptr>
 void serialize_internal(IOContext& io, const AutoSerializable& a)
 {
-    // Note that the following cons_cast is only safe if we do not modify targets.
-    const auto targets = const_cast<AutoSerializable&>(a).auto_serialize();
-    // unpack targets and serialize
+    // Note that the following cons_cast is only safe if we do not modify members.
+    const auto members = const_cast<AutoSerializable&>(a).auto_serialize();
+    // unpack members and serialize
     std::apply(
-        [&io, &targets](auto... nvps) {
-            details::auto_serialize_impl(io, targets.first, nvps...);
+        [&io, &members](auto... nvps) {
+            details::auto_serialize_impl(io, members.name, nvps...);
         },
-        targets.second);
+        members.name_value_pairs);
 }
 
 /**
@@ -203,14 +202,14 @@ template <class IOContext, class AutoSerializable,
 IOResult<AutoSerializable> deserialize_internal(IOContext& io, Tag<AutoSerializable> tag)
 {
     mio::unused(tag);
-    AutoSerializable a = AutoSerializableFactory<AutoSerializable>::create();
-    auto targets       = a.auto_serialize();
-    // unpack targets and deserialize
+    AutoSerializable a = DefaultFactory<AutoSerializable>::create();
+    auto members       = a.auto_serialize();
+    // unpack members and deserialize
     return std::apply(
-        [&io, &targets, &a](auto... nvps) {
-            return details::auto_deserialize_impl(io, a, targets.first, nvps...);
+        [&io, &members, &a](auto... nvps) {
+            return details::auto_deserialize_impl(io, a, members.name, nvps...);
         },
-        targets.second);
+        members.name_value_pairs);
 }
 
 } // namespace mio

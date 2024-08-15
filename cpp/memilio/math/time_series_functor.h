@@ -24,53 +24,49 @@
 #include "memilio/math/interpolation.h"
 #include "memilio/utils/time_series.h"
 
-#include <algorithm>
 #include <cassert>
 #include <vector>
 
 namespace mio
 {
 
+/**
+ * @brief Type of a TimeSeriesFunctor.
+ * The available types are:
+ * - LinearInterpolation:
+ *   - Requires at least one time point with exactly one value each. Time must be strictly monotic increasing.
+ *   - Linearly interpolates between data points. Stays constant outside of provided data with first/last value.
+ */
+enum TimeSeriesFunctorType
+{
+    LinearInterpolation,
+};
+
 template <class FP>
 class TimeSeriesFunctor
 {
 public:
-    /**
-     * @brief Type of a TimeSeriesFunctor.
-     * The available types are:
-     * - Zero:
-     *   - No data used.
-     *   - Always returns 0.
-     * - LinearInterpolation:
-     *   - Requires at least one time point with exactly one value each. Time must be strictly monotic increasing.
-     *   - Linearly interpolates between data points. Stays constant with first/last value outside of provided data.
-     */
-    enum Type
-    {
-        Zero,
-        LinearInterpolation,
-    };
-
     /**
      * @brief Creates a functor using the given data.
      * Note the data requirements of the given functor type.
      * @param type The type of the functor.
      * @param table A list of time points, passed to the TimeSeries constructor.
      */
-    TimeSeriesFunctor(Type type, const TimeSeries<FP>& data)
+    TimeSeriesFunctor(TimeSeriesFunctorType type, const TimeSeries<FP>& data)
         : m_type(type)
         , m_data(data)
     {
         // data shape checks and preprocessing
         switch (m_type) {
-        case Type::Zero:
-            // no checks needed
-            break;
-        case Type::LinearInterpolation:
+        case TimeSeriesFunctorType::LinearInterpolation:
             // make sure data has the correct shape, i.e. a list of (time, value) pairs
             assert(m_data.get_num_time_points() > 0 && "Need at least one time point for LinearInterpolation.");
             assert(m_data.get_num_elements() == 1 && "LinearInterpolation requires exactly one value per time point.");
-            assert(m_data.is_sorted());
+            assert(m_data.is_strictly_monotonic());
+            break;
+        default:
+            assert(false && "Unhandled TimeSeriesFunctorType!");
+            break;
         }
     }
 
@@ -80,7 +76,7 @@ public:
      * @param type The type of the functor.
      * @param table A list of time points, passed to the TimeSeries constructor.
      */
-    TimeSeriesFunctor(Type type, std::vector<std::vector<FP>>&& table)
+    TimeSeriesFunctor(TimeSeriesFunctorType type, std::vector<std::vector<FP>>&& table)
         : TimeSeriesFunctor(type, TimeSeries<FP>{table})
     {
     }
@@ -89,7 +85,7 @@ public:
      * @brief Creates a Zero functor.
      */
     TimeSeriesFunctor()
-        : TimeSeriesFunctor(Type::Zero, TimeSeries<FP>{0})
+        : TimeSeriesFunctor(TimeSeriesFunctorType::LinearInterpolation, {{FP(0.0), FP(0.0)}})
     {
     }
 
@@ -100,41 +96,23 @@ public:
      */
     FP operator()(FP time) const
     {
-        FP value = 0.0;
         switch (m_type) {
-        case Type::Zero:
-            // value is explicitly zero-initialized
-            break;
-        case Type::LinearInterpolation:
-            auto tp_range = m_data.get_times();
-            // find next time point in m_data (strictly) after time
-            const auto next_tp = std::upper_bound(tp_range.begin(), tp_range.end(), time, [](auto&& t, auto&& tp) {
-                return t < tp;
-            });
-            if (next_tp == tp_range.begin()) { // time is before first data point
-                value = m_data.get_value(0)[0];
-            }
-            else if (next_tp == tp_range.end()) { // time is past last data point
-                value = m_data.get_last_value()[0];
-            }
-            else { // time is in between data points
-                const auto i = next_tp - tp_range.begin();
-                value        = linear_interpolation(time, m_data.get_time(i - 1), m_data.get_time(i),
-                                                    m_data.get_value(i - 1)[0], m_data.get_value(i)[0]);
-            }
-            break;
+        case TimeSeriesFunctorType::LinearInterpolation:
+            return linear_interpolation(time, m_data)[0];
+        default:
+            assert(false && "Unhandled TimeSeriesFunctorType!");
+            return FP();
         }
-        return value;
     }
 
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("TimeSeriesFunctor", NVP("type", m_type), NVP("data", m_data));
+        return Members("TimeSeriesFunctor").add("type", m_type).add("data", m_data);
     }
 
 private:
-    Type m_type; ///< Determines what kind of functor this is, e.g. linear interpolation.
+    TimeSeriesFunctorType m_type; ///< Determines what kind of functor this is, e.g. linear interpolation.
     TimeSeries<FP> m_data; ///< Data used by the functor to compute its values. Its shape depends on type.
 };
 

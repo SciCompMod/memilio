@@ -391,31 +391,27 @@ public:
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        // clang-format off
-        return make_auto_serialization(
-            "Person",
-            NVP("location", m_location),
-            NVP("location_type", m_location_type),
-            NVP("assigned_locations", m_assigned_locations),
-            NVP("vaccinations", m_vaccinations), 
-            NVP("infections", m_infections),
-            NVP("quarantine_start",m_quarantine_start),
-            NVP("age_group", m_age),
-            NVP("time_at_location", m_time_at_location),
-            NVP("rnd_workgroup", m_random_workgroup),
-            NVP("rnd_schoolgroup", m_random_schoolgroup),
-            NVP("rnd_go_to_work_hour", m_random_goto_work_hour),
-            NVP("rnd_go_to_school_hour", m_random_goto_school_hour),
-            NVP("mask", m_mask),
-            NVP("wears_mask", m_wears_mask),
-            NVP("mask_compliance", m_mask_compliance),
-            NVP("id", m_person_id),
-            NVP("cells", m_cells),
-            NVP("last_transport_mode", m_last_transport_mode),
-            NVP("rng_counter", m_rng_counter),
-            NVP("test_results", m_test_results)
-        );
-        // clang-format on
+        return Members("Person")
+            .add("location", m_location)
+            .add("location_type", m_location_type)
+            .add("assigned_locations", m_assigned_locations)
+            .add("vaccinations", m_vaccinations)
+            .add("infections", m_infections)
+            .add("quarantine_start", m_quarantine_start)
+            .add("age_group", m_age)
+            .add("time_at_location", m_time_at_location)
+            .add("rnd_workgroup", m_random_workgroup)
+            .add("rnd_schoolgroup", m_random_schoolgroup)
+            .add("rnd_go_to_work_hour", m_random_goto_work_hour)
+            .add("rnd_go_to_school_hour", m_random_goto_school_hour)
+            .add("mask", m_mask)
+            .add("wears_mask", m_wears_mask)
+            .add("mask_compliance", m_mask_compliance)
+            .add("id", m_person_id)
+            .add("cells", m_cells)
+            .add("last_transport_mode", m_last_transport_mode)
+            .add("rng_counter", m_rng_counter)
+            .add("test_results", m_test_results);
     }
 
     /**
@@ -462,7 +458,7 @@ private:
 
 /// @brief Creates an instance of abm::Person for auto-deserialization.
 template <>
-struct AutoSerializableFactory<abm::Person> {
+struct DefaultFactory<abm::Person> {
     static abm::Person create()
     {
         return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::LocationId(), AgeGroup(0),

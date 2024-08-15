@@ -49,8 +49,12 @@ struct ViralLoad {
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("ViralLoad", NVP("start_date", start_date), NVP("end_date", end_date),
-                                       NVP("peak", peak), NVP("incline", incline), NVP("decline", decline));
+        return Members("ViralLoad")
+            .add("start_date", start_date)
+            .add("end_date", end_date)
+            .add("peak", peak)
+            .add("incline", incline)
+            .add("decline", decline);
     }
 };
 
@@ -124,14 +128,17 @@ public:
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("Infection", NVP("infection_course", m_infection_course),
-                                       NVP("virus_variant", m_virus_variant), NVP("viral_load", m_viral_load),
-                                       NVP("log_norm_alpha", m_log_norm_alpha), NVP("log_norm_beta", m_log_norm_beta),
-                                       NVP("detected", m_detected));
+        return Members("Infection")
+            .add("infection_course", m_infection_course)
+            .add("virus_variant", m_virus_variant)
+            .add("viral_load", m_viral_load)
+            .add("log_norm_alpha", m_log_norm_alpha)
+            .add("log_norm_beta", m_log_norm_beta)
+            .add("detected", m_detected);
     }
 
 private:
-    friend AutoSerializableFactory<Infection>;
+    friend DefaultFactory<Infection>;
     Infection() = default;
 
     /**

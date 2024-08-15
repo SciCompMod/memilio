@@ -53,7 +53,7 @@ struct GeographicalLocation {
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("GraphicalLocation", NVP("latitude", latitude), NVP("longitude", longitude));
+        return Members("GraphicalLocation").add("latitude", latitude).add("longitude", longitude);
     }
 };
 
@@ -84,7 +84,7 @@ struct CellCapacity {
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("CellCapacity", NVP("volume", volume), NVP("persons", persons));
+        return Members("CellCapacity").add("volume", volume).add("persons", persons);
     }
 };
 
@@ -104,7 +104,7 @@ struct Cell {
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("Cell", NVP("capacity", m_capacity));
+        return Members("Cell").add("capacity", m_capacity);
     }
 }; // namespace mio
 
@@ -272,14 +272,17 @@ public:
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("Location", NVP("id", m_id), NVP("parameters", m_parameters),
-                                       NVP("cells", m_cells), NVP("required_mask", m_required_mask),
-                                       NVP("npi_active", m_npi_active),
-                                       NVP("geographical_location", m_geographical_location));
+        return Members("Location")
+            .add("id", m_id)
+            .add("parameters", m_parameters)
+            .add("cells", m_cells)
+            .add("required_mask", m_required_mask)
+            .add("npi_active", m_npi_active)
+            .add("geographical_location", m_geographical_location);
     }
 
 private:
-    friend AutoSerializableFactory<Location>;
+    friend DefaultFactory<Location>;
     Location() = default;
 
     LocationType m_type; ///< Type of the Location.

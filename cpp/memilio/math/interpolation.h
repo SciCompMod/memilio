@@ -17,11 +17,14 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef INTERPOLATION_H_
-#define INTERPOLATION_H_
+#ifndef MIO_MATH_INTERPOLATION_H_
+#define MIO_MATH_INTERPOLATION_H_
+#include "memilio/utils/logging.h"
+#include "memilio/utils/time_series.h"
+
+#include <cassert>
 #include <vector>
 #include <algorithm>
-#include "memilio/utils/logging.h"
 
 namespace mio
 {
@@ -34,7 +37,7 @@ namespace mio
  * @param[in] x_2 Right node of interpolation.
  * @param[in] y_1 Value at left node.
  * @param[in] y_2 Value at right node.
- * @param[out] unnamed Interpolation result.
+ * @return Interpolation result.
  */
 template <typename X, typename V>
 auto linear_interpolation(const X& x_eval, const X& x_1, const X& x_2, const V& y1, const V& y2)
@@ -44,11 +47,43 @@ auto linear_interpolation(const X& x_eval, const X& x_1, const X& x_2, const V& 
 }
 
 /**
+ * @brief Linear interpolation of a TimeSeries.
+ * Assumes that the time points are monotonic increasing. If the time series is strictly monotonic, this function is
+ * continuous in time.
+ * If time is outside of the provided time points, this function has a constant value of the first/last time point.
+ * @param[in] time The time at which to evaluate.
+ * @param[in] data Time points to interpolate. At least one is required.
+ * @return Interpolation result.
+ */
+template <class FP>
+typename TimeSeries<FP>::Vector linear_interpolation(FP time, const TimeSeries<FP>& data)
+{
+    assert(data.get_num_time_points() > 0 && "Interpolation requires at least one time point.");
+    auto tp_range = data.get_times();
+    // find next time point in data (strictly) after time
+    const auto next_tp = std::upper_bound(tp_range.begin(), tp_range.end(), time, [](auto&& t, auto&& tp) {
+        return t < tp;
+    });
+    // interpolate in between values if possible, otherwise return first/last value
+    if (next_tp == tp_range.begin()) { // time is before first data point
+        return data.get_value(0);
+    }
+    else if (next_tp == tp_range.end()) { // time is past last data point
+        return data.get_last_value();
+    }
+    else { // time is in between data points
+        const auto i = next_tp - tp_range.begin();
+        return linear_interpolation(time, data.get_time(i - 1), data.get_time(i), data.get_value(i - 1),
+                                    data.get_value(i));
+    }
+}
+
+/**
  * @brief Linear interpolation between two points of a dataset, which is represented by a vector of pairs of node and value.
  * Return 0 if there is less than two points in the dataset.
  * @param[in] vector Vector of pairs of node and value.
  * @param[in] x_eval Location to evaluate interpolation.
- * @param[out] unnamed Interpolation result.
+ * @return Interpolation result.
  */
 template <typename X, typename Y>
 Y linear_interpolation_of_data_set(std::vector<std::pair<X, Y>> vector, const X& x_eval)
@@ -80,4 +115,4 @@ Y linear_interpolation_of_data_set(std::vector<std::pair<X, Y>> vector, const X&
 
 } // namespace mio
 
-#endif
+#endif // MIO_MATH_INTERPOLATION_H_

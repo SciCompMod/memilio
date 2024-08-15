@@ -52,7 +52,7 @@ struct TestResult {
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("TestResult", NVP("time_of_testing", time_of_testing), NVP("result", result));
+        return Members("TestResult").add("time_of_testing", time_of_testing).add("result", result);
     }
 };
 

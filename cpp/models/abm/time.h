@@ -148,7 +148,7 @@ public:
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("TimeSpan", NVP("seconds", m_seconds));
+        return Members("TimeSpan").add("seconds", m_seconds);
     }
 
 private:
@@ -295,7 +295,7 @@ public:
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("TimePoint", NVP("seconds", m_seconds));
+        return Members("TimePoint").add("seconds", m_seconds);
     }
 
 private:

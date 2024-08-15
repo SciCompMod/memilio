@@ -27,6 +27,9 @@
 #include "boost/outcome/result.hpp"
 #include "boost/outcome/try.hpp"
 #include "boost/optional.hpp"
+
+#include <bitset>
+#include <string>
 #include <tuple>
 #include <iostream>
 
@@ -630,6 +633,55 @@ IOResult<M> deserialize_internal(IOContext& io, Tag<M> /*tag*/)
             return m;
         },
         rows, cols, elements);
+}
+
+/**
+ * @brief Serialize an std::bitset.
+ * @tparam IOContext A type that models the IOContext concept.
+ * @tparam N The size of the bitset.
+ * @param io An IO context.
+ * @param bitset A bitset to be serialized.
+ */
+template <class IOContext, size_t N>
+void serialize_internal(IOContext& io, const std::bitset<N> bitset)
+{
+    std::array<bool, N> bits;
+    for (size_t i = 0; i < N; i++) {
+        bits[i] = bitset[i];
+    }
+    auto obj = io.create_object("BitSet");
+    obj.add_list("bitset", bits.begin(), bits.end());
+}
+
+/**
+ * @brief Deserialize an std::bitset.
+ * @tparam IOContext A type that models the IOContext concept.
+ * @tparam N The size of the bitset.
+ * @param io An IO context.
+ * @param tag Defines the type of the object that is to be deserialized.
+ * @return The restored object if successful, an error otherwise.
+ */
+template <class IOContext, size_t N>
+IOResult<std::bitset<N>> deserialize_internal(IOContext& io, Tag<std::bitset<N>> tag)
+{
+    mio::unused(tag);
+    auto obj  = io.expect_object("BitSet");
+    auto bits = obj.expect_list("bitset", Tag<bool>{});
+    if (bits && bits.value().size() != N) { // "!bits" is handled by apply
+        return failure(StatusCode::InvalidValue, "Incorrent number of booleans to deserialize bitset. Expected " +
+                                                     std::to_string(N) + ", got " +
+                                                     std::to_string(bits.value().size()) + ".");
+    }
+    return apply(
+        io,
+        [](auto&& bits_) {
+            std::bitset<N> bitset;
+            for (size_t i = 0; i < N; i++) {
+                bitset[i] = bits_[i];
+            }
+            return bitset;
+        },
+        bits);
 }
 
 /**

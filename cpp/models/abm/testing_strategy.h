@@ -94,37 +94,9 @@ public:
      */
     bool evaluate(const Person& p, TimePoint t) const;
 
-    /**
-     * serialize this. 
-     * @see mio::serialize
-     */
-    template <class IOContext>
-    void serialize(IOContext& io) const
+    auto auto_serialize()
     {
-        auto obj = io.create_object("TestingCriteria");
-        obj.add_element("ages", m_ages.to_ulong());
-        obj.add_element("infection_states", m_infection_states.to_ulong());
-    }
-
-    /**
-     * deserialize an object of this class.
-     * @see mio::deserialize
-     */
-    template <class IOContext>
-    static IOResult<TestingCriteria> deserialize(IOContext& io)
-    {
-        auto obj              = io.expect_object("TestingCriteria");
-        auto ages             = obj.expect_element("ages", Tag<unsigned long>{});
-        auto infection_states = obj.expect_element("infection_states", Tag<unsigned long>{});
-        return apply(
-            io,
-            [](auto&& ages_, auto&& infection_states_) {
-                TestingCriteria c;
-                c.m_ages             = ages_;
-                c.m_infection_states = infection_states_;
-                return c;
-            },
-            ages, infection_states);
+        return Members("TestingCriteria").add("ages", m_ages).add("infection_states", m_infection_states);
     }
 
 private:
@@ -181,14 +153,18 @@ public:
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("TestingScheme", NVP("criteria", m_testing_criteria),
-                                       NVP("validity_period", m_validity_period), NVP("start_date", m_start_date),
-                                       NVP("end_date", m_end_date), NVP("test_params", m_test_parameters),
-                                       NVP("probability", m_probability), NVP("is_active", m_is_active));
+        return Members("TestingScheme")
+            .add("criteria", m_testing_criteria)
+            .add("validity_period", m_validity_period)
+            .add("start_date", m_start_date)
+            .add("end_date", m_end_date)
+            .add("test_params", m_test_parameters)
+            .add("probability", m_probability)
+            .add("is_active", m_is_active);
     }
 
 private:
-    friend AutoSerializableFactory<TestingScheme>;
+    friend DefaultFactory<TestingScheme>;
     TestingScheme() = default;
 
     TestingCriteria m_testing_criteria; ///< TestingCriteria of the scheme.
@@ -218,7 +194,7 @@ public:
         /// This method is used by the auto-serialization feature.
         auto auto_serialize()
         {
-            return make_auto_serialization("LocalStrategy", NVP("type", type), NVP("id", id), NVP("schemes", schemes));
+            return Members("LocalStrategy").add("type", type).add("id", id).add("schemes", schemes);
         }
     };
 
@@ -288,7 +264,7 @@ public:
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("TestingStrategy", NVP("schemes", m_location_to_schemes_map));
+        return Members("TestingStrategy").add("schemes", m_location_to_schemes_map);
     }
 
 private:

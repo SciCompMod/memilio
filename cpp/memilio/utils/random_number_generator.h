@@ -361,8 +361,7 @@ public:
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("RandomNumberGenerator", NVP("key", m_key), NVP("counter", m_counter),
-                                       NVP("seeds", m_seeds));
+        return Members("RandomNumberGenerator").add("key", m_key).add("counter", m_counter).add("seeds", m_seeds);
     }
 
 private:
@@ -676,6 +675,34 @@ using UniformIntDistribution = DistributionAdapter<std::uniform_int_distribution
  */
 template <class Real>
 using UniformDistribution = DistributionAdapter<std::uniform_real_distribution<Real>>;
+
+template <class IOContext, class UniformDistributionParams,
+          class Real              = typename UniformDistributionParams::DistType::ResultType,
+          std::enable_if_t<std::is_same_v<UniformDistributionParams, typename UniformDistribution<Real>::ParamType>,
+                           void*> = nullptr>
+void serialize_internal(IOContext& io, const UniformDistributionParams& p)
+{
+    auto obj = io.create_object("UniformDistributionParams");
+    obj.add_element("a", p.params.a());
+    obj.add_element("b", p.params.b());
+}
+
+template <class IOContext, class UniformDistributionParams,
+          class Real              = typename UniformDistributionParams::DistType::ResultType,
+          std::enable_if_t<std::is_same_v<UniformDistributionParams, typename UniformDistribution<Real>::ParamType>,
+                           void*> = nullptr>
+IOResult<UniformDistributionParams> deserialize_internal(IOContext& io, Tag<UniformDistributionParams>)
+{
+    auto obj = io.expect_object("UniformDistributionParams");
+    auto a   = obj.expect_element("a", Tag<Real>{});
+    auto b   = obj.expect_element("b", Tag<Real>{});
+    return apply(
+        io,
+        [](auto&& a_, auto&& b_) {
+            return UniformDistributionParams{a_, b_};
+        },
+        a, b);
+}
 
 /**
  * adapted poisson_distribution.

@@ -76,7 +76,7 @@ public:
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("Mask", NVP("mask_type", m_type), NVP("time_used", m_time_used));
+        return Members("Mask").add("mask_type", m_type).add("time_used", m_time_used);
     }
 
 private:
@@ -87,7 +87,7 @@ private:
 
 /// @brief Creates an instance of abm::Mask for auto-deserialization.
 template <>
-struct AutoSerializableFactory<abm::Mask> {
+struct DefaultFactory<abm::Mask> {
     static abm::Mask create()
     {
         return abm::Mask(abm::MaskType::Count);

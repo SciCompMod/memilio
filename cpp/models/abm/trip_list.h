@@ -24,6 +24,7 @@
 #include "abm/mobility_data.h"
 #include "abm/person_id.h"
 #include "abm/time.h"
+#include "memilio/io/auto_serialize.h"
 #include <vector>
 
 namespace mio
@@ -89,38 +90,13 @@ struct Trip {
                (origin == other.origin);
     }
 
-    /**
-     * serialize this. 
-     * @see mio::serialize
-     */
-    template <class IOContext>
-    void serialize(IOContext& io) const
+    auto auto_serialize()
     {
-        auto obj = io.create_object("Trip");
-        obj.add_element("person_id", person_id);
-        obj.add_element("time", time.seconds());
-        obj.add_element("destination", destination);
-        obj.add_element("origin", origin);
-    }
-
-    /**
-     * deserialize an object of this class.
-     * @see mio::deserialize
-     */
-    template <class IOContext>
-    static IOResult<Trip> deserialize(IOContext& io)
-    {
-        auto obj            = io.expect_object("Trip");
-        auto person_id      = obj.expect_element("person_id", Tag<PersonId>{});
-        auto time           = obj.expect_element("time", Tag<int>{});
-        auto destination_id = obj.expect_element("destination", Tag<LocationId>{});
-        auto origin_id      = obj.expect_element("origin", Tag<LocationId>{});
-        return apply(
-            io,
-            [](auto&& person_id_, auto&& time_, auto&& destination_id_, auto&& origin_id_) {
-                return Trip(person_id_, TimePoint(time_), destination_id_, origin_id_);
-            },
-            person_id, time, destination_id, origin_id);
+        return Members("Trip")
+            .add("person_id", person_id)
+            .add("time", time)
+            .add("destination", destination)
+            .add("origin", origin);
     }
 };
 
@@ -195,8 +171,10 @@ public:
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("TestingScheme", NVP("trips_weekday", m_trips_weekday),
-                                       NVP("trips_weekend", m_trips_weekend), NVP("index", m_current_index));
+        return Members("TestingScheme")
+            .add("trips_weekday", m_trips_weekday)
+            .add("trips_weekend", m_trips_weekend)
+            .add("index", m_current_index);
     }
 
 private:
@@ -206,6 +184,15 @@ private:
 };
 
 } // namespace abm
+
+template <>
+struct DefaultFactory<abm::Trip> {
+    static abm::Trip create()
+    {
+        return abm::Trip{abm::PersonId{}, abm::TimePoint{}, abm::LocationId{}};
+    }
+};
+
 } // namespace mio
 
 #endif

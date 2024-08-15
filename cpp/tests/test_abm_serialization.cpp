@@ -1,9 +1,29 @@
+/* 
+* Copyright (C) 2020-2024 MEmilio
+*
+* Authors: René Schmieding
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+#include "matchers.h"
+#include "abm/config.h"
 #include "abm/infection_state.h"
 #include "abm/parameters.h"
 #include "abm/test_type.h"
 #include "abm/testing_strategy.h"
 #include "abm/vaccine.h"
-#include "matchers.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/custom_index_array.h"
@@ -13,28 +33,18 @@
 #include "models/abm/time.h"
 #include "models/abm/trip_list.h"
 #include "models/abm/model.h"
-#include "json/config.h"
-#include "json/value.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 
-void test_equal_json_representation(const Json::Value& test_json, const Json::Value& reference_json)
-{
-    // write the resulting json value and the reference value to string to compare their representations.
-    Json::StreamWriterBuilder swb;
-    swb["indentation"] = " ";
-    auto js_writer     = std::unique_ptr<Json::StreamWriter>(swb.newStreamWriter());
-    std::stringstream test_str, reference_str;
-    js_writer->write(reference_json, &reference_str);
-    js_writer->write(test_json, &test_str);
-    // we compare strings here, as e.g. Json::Int(5) != Json::Uint(5), but their json representation is the same
-    EXPECT_EQ(test_str.str(), reference_str.str());
-}
+#include "json/value.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 /**
- * @brief Test de- and serialization of an object by comparing its json representation.
+ * @brief Test de- and serialization of an object without equality operator.
  *
- * Test that a json value x representing type T is equal to serialize(deserialize(x)) w.r.t json representation.
+ * Test that a json value x representing type T is equal to serialize(deserialize(x)).
  *
  * Assuming the (de)serialization functions' general behavior is independent of specific values of member variables,
  * i.e. the function does not contain conditionals (`if (t > 0)`), optionals (`add_optional`/`expect_optional`), etc.,
@@ -46,7 +56,7 @@ void test_equal_json_representation(const Json::Value& test_json, const Json::Va
  * @param reference_json A json value representing an instance of T.
  */
 template <class T>
-void test_json_serialization_by_representation(const Json::Value& reference_json)
+void test_json_serialization_without_equality(const Json::Value& reference_json)
 {
     // check that the json is deserializable (i.e. a valid representation)
     auto t_result = mio::deserialize_json(reference_json, mio::Tag<T>());
@@ -56,16 +66,14 @@ void test_json_serialization_by_representation(const Json::Value& reference_json
     auto json_result = mio::serialize_json(t_result.value());
     ASSERT_THAT(print_wrap(json_result), IsSuccess());
 
-    test_equal_json_representation(json_result.value(), reference_json);
+    EXPECT_THAT(json_result.value(), JsonEqual(reference_json));
 }
 
 /**
- * @brief Test de- and serialization of an object by comparing its json representation and using its equality operator.
+ * @brief Test de- and serialization of an object using its equality operator.
  *
- * First, test that serializing the reference_object is equal to the reference_json (w.r.t. their representation),
- * and that deserializing the reference_json results in an object equal to the reference_object.
- * Then, repeat this step using its own results as arguments to (de)serialize, to check that serialization and
- * deserialization are inverse functions to each other.
+ * First, test that serializing the reference_object is equal to the reference_json.
+ * Then, test that deserializing the reference_json results in an object equal to the reference_object.
  *
  * @tparam T The type to test.
  * @param reference_object An instance of T.
@@ -77,68 +85,54 @@ void test_json_serialization_full(const T& reference_object, const Json::Value& 
     // check that the reference type T is serializable
     auto json_result = mio::serialize_json(reference_object);
     ASSERT_THAT(print_wrap(json_result), IsSuccess());
+    EXPECT_THAT(json_result.value(), JsonEqual(reference_json));
 
     // check that the reference json is deserializable
     auto t_result = mio::deserialize_json(reference_json, mio::Tag<T>());
     ASSERT_THAT(print_wrap(t_result), IsSuccess());
-
-    // compare both results with other reference values
     EXPECT_EQ(t_result.value(), reference_object);
-    test_equal_json_representation(json_result.value(), reference_json);
-
-    // do the same once more using the results from above
-    auto json_result_2 = mio::serialize_json(t_result.value());
-    ASSERT_THAT(print_wrap(json_result_2), IsSuccess());
-    auto t_result_2 = mio::deserialize_json(json_result.value(), mio::Tag<T>());
-    ASSERT_THAT(print_wrap(t_result_2), IsSuccess());
-
-    EXPECT_EQ(t_result_2.value(), reference_object);
-    test_equal_json_representation(json_result_2.value(), reference_json);
 }
 
 TEST(TestAbmSerialization, Trip)
 {
-    // Test (de)serialization w.r.t json representation and the types own equality operator.
-    // See test_json_serialization_full for more detail.
+    // See test_json_serialization_full for info on this test.
 
-    mio::abm::Trip trip(1, mio::abm::TimePoint(0) + mio::abm::hours(2), 3, 4);
+    mio::abm::Trip trip(1, mio::abm::TimePoint(2), 3, 4);
 
-    Json::Value reference_json; // aka x
-    reference_json["person_id"]   = Json::UInt(1);
-    reference_json["time"]        = Json::Int(mio::abm::hours(2).seconds());
-    reference_json["destination"] = Json::UInt(3);
-    reference_json["origin"]      = Json::UInt(4);
+    Json::Value reference_json;
+    reference_json["person_id"]       = Json::UInt(1);
+    reference_json["time"]["seconds"] = Json::Int(2);
+    reference_json["destination"]     = Json::UInt(3);
+    reference_json["origin"]          = Json::UInt(4);
 
     test_json_serialization_full(trip, reference_json);
 }
 
 TEST(TestAbmSerialization, Vaccination)
 {
-    // Test that a json value x is equal to serialize(deserialize(x)) w.r.t json representation.
-    // See test_json_serialization_by_representation for more detail.
+    // See test_json_serialization_without_equality for info on this test.
 
-    Json::Value reference_json; // aka x
-    reference_json["exposure_type"]   = Json::Int(1);
-    reference_json["time"]["seconds"] = Json::UInt(2);
+    Json::Value reference_json;
+    reference_json["exposure_type"]   = Json::UInt(1);
+    reference_json["time"]["seconds"] = Json::Int(2);
 
-    test_json_serialization_by_representation<mio::abm::Vaccination>(reference_json);
+    test_json_serialization_without_equality<mio::abm::Vaccination>(reference_json);
 }
 
 TEST(TestAbmSerialization, Infection)
 {
-    // Test that a json value x is equal to serialize(deserialize(x)) w.r.t json representation.
-    // See test_json_serialization_by_representation for more detail.
+    // See test_json_serialization_without_equality for info on this test.
 
     unsigned i = 1; // counter s.t. members have different values
 
     Json::Value viral_load;
     viral_load["decline"]               = Json::Value((double)i++);
-    viral_load["end_date"]["seconds"]   = Json::UInt(i++);
+    viral_load["end_date"]["seconds"]   = Json::Int(i++);
     viral_load["incline"]               = Json::Value((double)i++);
     viral_load["peak"]                  = Json::Value((double)i++);
-    viral_load["start_date"]["seconds"] = Json::UInt(i++);
+    viral_load["start_date"]["seconds"] = Json::Int(i++);
 
-    Json::Value reference_json; // aka x
+    Json::Value reference_json;
     reference_json["infection_course"] = Json::Value(Json::arrayValue);
     reference_json["virus_variant"]    = Json::UInt(0);
     reference_json["viral_load"]       = viral_load;
@@ -146,13 +140,12 @@ TEST(TestAbmSerialization, Infection)
     reference_json["log_norm_beta"]    = Json::Value((double)i++);
     reference_json["detected"]         = Json::Value((bool)0);
 
-    test_json_serialization_by_representation<mio::abm::Infection>(reference_json);
+    test_json_serialization_without_equality<mio::abm::Infection>(reference_json);
 }
 
 TEST(TestAbmSerialization, TestingScheme)
 {
-    // Test (de)serialization w.r.t json representation and the types own equality operator.
-    // See test_json_serialization_full for more detail.
+    // See test_json_serialization_full for info on this test.
 
     mio::abm::TestingScheme testing_scheme(
         mio::abm::TestingCriteria({mio::AgeGroup(1)}, {mio::abm::InfectionState(2)}), mio::abm::TimeSpan(3),
@@ -160,20 +153,24 @@ TEST(TestAbmSerialization, TestingScheme)
         mio::abm::TestParameters{{6.0}, {7.0}, mio::abm::TimeSpan{8}, mio::abm::TestType(0)}, 9.0);
 
     Json::Value testing_criteria;
-    testing_criteria["ages"]             = Json::UInt(1 << 1);
-    testing_criteria["infection_states"] = Json::UInt(1 << 2);
+    std::vector<bool> ages_bits(mio::abm::MAX_NUM_AGE_GROUPS, false);
+    ages_bits[1]                       = true;
+    testing_criteria["ages"]["bitset"] = mio::serialize_json(ages_bits).value();
+    std::vector<bool> inf_st_bits((size_t)mio::abm::InfectionState::Count, false);
+    inf_st_bits[2]                                 = true;
+    testing_criteria["infection_states"]["bitset"] = mio::serialize_json(inf_st_bits).value();
 
     Json::Value test_parameters;
     test_parameters["sensitivity"]              = mio::serialize_json(mio::UncertainValue<double>{6.0}).value();
     test_parameters["specificity"]              = mio::serialize_json(mio::UncertainValue<double>{7.0}).value();
-    test_parameters["required_time"]["seconds"] = Json::UInt(8);
+    test_parameters["required_time"]["seconds"] = Json::Int(8);
     test_parameters["test_type"]                = Json::UInt(0);
 
-    Json::Value reference_json; // aka x
+    Json::Value reference_json;
     reference_json["criteria"]                   = testing_criteria;
-    reference_json["validity_period"]["seconds"] = Json::UInt(3);
-    reference_json["start_date"]["seconds"]      = Json::UInt(4);
-    reference_json["end_date"]["seconds"]        = Json::UInt(5);
+    reference_json["validity_period"]["seconds"] = Json::Int(3);
+    reference_json["start_date"]["seconds"]      = Json::Int(4);
+    reference_json["end_date"]["seconds"]        = Json::Int(5);
     reference_json["test_params"]                = test_parameters;
     reference_json["probability"]                = Json::Value((double)9);
     reference_json["is_active"]                  = Json::Value((bool)0);
@@ -183,8 +180,7 @@ TEST(TestAbmSerialization, TestingScheme)
 
 TEST(TestAbmSerialization, TestingStrategy)
 {
-    // Test that a json value x is equal to serialize(deserialize(x)) w.r.t json representation.
-    // See test_json_serialization_by_representation for more detail.
+    // See test_json_serialization_without_equality for info on this test.
 
     unsigned i = 1; // counter s.t. members have different values
 
@@ -193,28 +189,26 @@ TEST(TestAbmSerialization, TestingStrategy)
     local_strategy["schemes"] = Json::Value(Json::arrayValue);
     local_strategy["type"]    = Json::UInt(i++);
 
-    Json::Value reference_json; // aka x
+    Json::Value reference_json;
     reference_json["schemes"][0] = local_strategy;
 
-    test_json_serialization_by_representation<mio::abm::TestingStrategy>(reference_json);
+    test_json_serialization_without_equality<mio::abm::TestingStrategy>(reference_json);
 }
 
 TEST(TestAbmSerialization, TestResult)
 {
-    // Test that a json value x is equal to serialize(deserialize(x)) w.r.t json representation.
-    // See test_json_serialization_by_representation for more detail.
+    // See test_json_serialization_without_equality for info on this test.
 
-    Json::Value reference_json; // aka x
+    Json::Value reference_json;
     reference_json["result"]                     = Json::Value(false);
-    reference_json["time_of_testing"]["seconds"] = Json::UInt(1);
+    reference_json["time_of_testing"]["seconds"] = Json::Int(1);
 
-    test_json_serialization_by_representation<mio::abm::TestResult>(reference_json);
+    test_json_serialization_without_equality<mio::abm::TestResult>(reference_json);
 }
 
 TEST(TestAbmSerialization, Person)
 {
-    // Test that a json value x is equal to serialize(deserialize(x)) w.r.t json representation.
-    // See test_json_serialization_by_representation for more detail.
+    // See test_json_serialization_without_equality for info on this test.
 
     auto json_uint_array = [](std::vector<uint32_t> values) {
         return mio::serialize_json(values).value();
@@ -225,7 +219,7 @@ TEST(TestAbmSerialization, Person)
 
     unsigned i = 1; // counter s.t. members have different values
 
-    Json::Value reference_json; // aka x
+    Json::Value reference_json;
     reference_json["age_group"]           = Json::UInt(i++);
     reference_json["assigned_locations"]  = json_uint_array({i++, i++, i++, i++, i++, i++, i++, i++, i++, i++, i++});
     reference_json["cells"]               = json_uint_array({i++});
@@ -235,11 +229,11 @@ TEST(TestAbmSerialization, Person)
     reference_json["location"]            = Json::UInt(i++);
     reference_json["location_type"]       = Json::UInt(0);
     reference_json["mask"]["mask_type"]   = Json::UInt(0);
-    reference_json["mask"]["time_used"]["seconds"] = Json::UInt(i++);
+    reference_json["mask"]["time_used"]["seconds"] = Json::Int(i++);
     reference_json["mask_compliance"] =
         json_double_array({(double)i++, (double)i++, (double)i++, (double)i++, (double)i++, (double)i++, (double)i++,
                            (double)i++, (double)i++, (double)i++, (double)i++});
-    reference_json["quarantine_start"]["seconds"] = Json::UInt(i++);
+    reference_json["quarantine_start"]["seconds"] = Json::Int(i++);
     reference_json["rnd_go_to_school_hour"]       = Json::Value((double)i++);
     reference_json["rnd_go_to_work_hour"]         = Json::Value((double)i++);
     reference_json["rnd_schoolgroup"]             = Json::Value((double)i++);
@@ -247,23 +241,22 @@ TEST(TestAbmSerialization, Person)
     reference_json["rng_counter"]                 = Json::UInt(i++);
     reference_json["test_results"] =
         mio::serialize_json(mio::CustomIndexArray<mio::abm::TestResult, mio::abm::TestType>{}).value();
-    reference_json["time_at_location"]["seconds"] = Json::UInt(i++);
+    reference_json["time_at_location"]["seconds"] = Json::Int(i++);
     reference_json["vaccinations"]                = Json::Value(Json::arrayValue);
     reference_json["wears_mask"]                  = Json::Value(false);
 
-    test_json_serialization_by_representation<mio::abm::Person>(reference_json);
+    test_json_serialization_without_equality<mio::abm::Person>(reference_json);
 }
 
 TEST(TestAbmSerialization, Location)
 {
-    // Test that a json value x is equal to serialize(deserialize(x)) w.r.t json representation.
-    // See test_json_serialization_by_representation for more detail.
+    // See test_json_serialization_without_equality for info on this test.
 
     unsigned i = 1; // counter s.t. members have different values
 
     Json::Value contact_rates = mio::serialize_json(mio::abm::ContactRates::get_default(i++)).value();
 
-    Json::Value reference_json; // aka x
+    Json::Value reference_json;
     reference_json["cells"][0]["capacity"]["persons"]                   = Json::UInt(i++);
     reference_json["cells"][0]["capacity"]["volume"]                    = Json::UInt(i++);
     reference_json["geographical_location"]["latitude"]                 = Json::Value((double)i++);
@@ -275,13 +268,12 @@ TEST(TestAbmSerialization, Location)
     reference_json["parameters"]["UseLocationCapacityForTransmissions"] = Json::Value(false);
     reference_json["required_mask"]                                     = Json::UInt(0);
 
-    test_json_serialization_by_representation<mio::abm::Location>(reference_json);
+    test_json_serialization_without_equality<mio::abm::Location>(reference_json);
 }
 
 TEST(TestAbmSerialization, Model)
 {
-    // Test that a json value x is equal to serialize(deserialize(x)) w.r.t json representation.
-    // See test_json_serialization_by_representation for more detail.
+    // See test_json_serialization_without_equality for info on this test.
 
     auto json_uint_array = [](std::vector<uint32_t> values) {
         return mio::serialize_json(values).value();
@@ -291,7 +283,7 @@ TEST(TestAbmSerialization, Model)
 
     Json::Value abm_parameters = mio::serialize_json(mio::abm::Parameters(i++)).value();
 
-    Json::Value reference_json; // aka x
+    Json::Value reference_json;
     reference_json["cemetery_id"]                 = Json::UInt(i++);
     reference_json["location_types"]              = Json::UInt(i++);
     reference_json["locations"]                   = Json::Value(Json::arrayValue);
@@ -306,7 +298,7 @@ TEST(TestAbmSerialization, Model)
     reference_json["trip_list"]["trips_weekend"]  = Json::Value(Json::arrayValue);
     reference_json["use_mobility_rules"]          = Json::Value(false);
 
-    test_json_serialization_by_representation<mio::abm::Model>(reference_json);
+    test_json_serialization_without_equality<mio::abm::Model>(reference_json);
 }
 
 #endif

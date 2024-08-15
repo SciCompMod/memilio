@@ -119,7 +119,9 @@ public:
                            }) &&
                "All table entries must have the same size.");
         // resize data. note that the table entries contain both time and values
-        m_data.resize(table.front().size(), table.size());
+        m_data.resize(table.front().size(), 0); // set colums first so reserve allocates correctly
+        reserve(table.size()); // reserve needs to happen before setting the number of rows
+        m_data.resize(Eigen::NoChange, table.size()); // finalize resize by setting the rows
         // sort table by time
         std::sort(table.begin(), table.end(), [](auto&& a, auto&& b) {
             return a[0] < b[0];
@@ -179,7 +181,7 @@ public:
     TimeSeries& operator=(TimeSeries&& other) = default;
 
     /// Check if the time is strictly monotonic increasing.
-    bool is_sorted()
+    bool is_strictly_monotonic() const
     {
         const auto times = get_times();
         auto time_itr    = times.begin();

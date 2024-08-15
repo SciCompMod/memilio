@@ -56,7 +56,7 @@ struct Vaccination {
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("Vaccination", NVP("exposure_type", exposure_type), NVP("time", time));
+        return Members("Vaccination").add("exposure_type", exposure_type).add("time", time);
     }
 
     ExposureType exposure_type;
@@ -67,7 +67,7 @@ struct Vaccination {
 
 /// @brief Creates an instance of abm::Vaccination for auto-deserialization.
 template <>
-struct AutoSerializableFactory<abm::Vaccination> {
+struct DefaultFactory<abm::Vaccination> {
     static abm::Vaccination create()
     {
         return abm::Vaccination(abm::ExposureType::Count, abm::TimePoint());

@@ -38,35 +38,10 @@
 
 #include <algorithm>
 #include <limits>
-#include <type_traits>
+#include <string>
 
 namespace mio
 {
-
-template <class IOContext, class T,
-          std::enable_if_t<std::is_same_v<UniformDistribution<double>::ParamType, T>, void*> = nullptr>
-void serialize_internal(IOContext& io, const T& p)
-{
-    auto obj = io.create_object("UniformDistributionParams");
-    obj.add_element("a", p.params.a());
-    obj.add_element("b", p.params.b());
-}
-
-template <class IOContext, class T,
-          std::enable_if_t<std::is_same_v<UniformDistribution<double>::ParamType, T>, void*> = nullptr>
-IOResult<UniformDistribution<double>::ParamType> deserialize_internal(IOContext& io, Tag<T>)
-{
-    auto obj = io.expect_object("UniformDistributionParams");
-    auto a   = obj.expect_element("a", Tag<double>{});
-    auto b   = obj.expect_element("b", Tag<double>{});
-    return apply(
-        io,
-        [](auto&& a_, auto&& b_) {
-            return UniformDistribution<double>::ParamType{a_, b_};
-        },
-        a, b);
-}
-
 namespace abm
 {
 
@@ -205,9 +180,10 @@ struct ViralLoadDistributionsParameters {
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("ViralLoadDistributionsParameters", NVP("viral_load_peak", viral_load_peak),
-                                       NVP("viral_load_incline", viral_load_incline),
-                                       NVP("viral_load_decline", viral_load_decline));
+        return Members("ViralLoadDistributionsParameters")
+            .add("viral_load_peak", viral_load_peak)
+            .add("viral_load_incline", viral_load_incline)
+            .add("viral_load_decline", viral_load_decline);
     }
 };
 
@@ -236,9 +212,9 @@ struct InfectivityDistributionsParameters {
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("InfectivityDistributionsParameters",
-                                       NVP("infectivity_alpha", infectivity_alpha),
-                                       NVP("infectivity_beta", infectivity_beta));
+        return Members("InfectivityDistributionsParameters")
+            .add("infectivity_alpha", infectivity_alpha)
+            .add("infectivity_beta", infectivity_beta);
     }
 };
 
@@ -359,9 +335,11 @@ struct TestParameters {
     /// This method is used by the auto-serialization feature.
     auto auto_serialize()
     {
-        return make_auto_serialization("TestParameters", NVP("sensitivity", sensitivity),
-                                       NVP("specificity", specificity), NVP("required_time", required_time),
-                                       NVP("test_type", type));
+        return Members("TestParameters")
+            .add("sensitivity", sensitivity)
+            .add("specificity", specificity)
+            .add("required_time", required_time)
+            .add("test_type", type);
     }
 };
 

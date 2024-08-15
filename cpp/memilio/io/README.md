@@ -40,22 +40,22 @@ serialize and deserialize functions. To give an example:
 struct Foo {
   int i;
   auto auto_serialize() {
-    return make_auto_serialization("Foo", NVP("i", i));
+    return Members("Foo").add("i", i);
   }
 };
 ```
 The auto-serialization is less flexible than the serialize and deserialize functions and has additional requirements:
 - The class must be trivially constructible.
-  - Alternatively, you may provide a specialization of the struct `AutoSerializableFactory`. For more details,
+  - Alternatively, you may provide a specialization of the struct `DefaultFactory`. For more details,
   view the struct's documentation.
-- There is exactly one NVP for every class member (though the names and their order are arbitrary).
-  - Values must be passed directly, like in the example. No copies, accessors, etc.
+- Every class member must be added to Members exactly once (though the names and their order are arbitrary).
+  - The members must be passed directly, like in the example. No copies, accessors, etc.
 - Every class member itself is both (auto-)(de)serializable and assignable.
 
 As to the feature set, auto-serialization only supports the `add_element` and `expect_element` operations defined in
-the Concepts section below, where each operation's arguments are provided by the name-value pairs (NVPs). Note that the
-value part of an NVP is also used to assign a value during deserialization, hence the class members must be used
-directly in the NVP constructor (i.e. as a non-const lvalue reference).
+the Concepts section below, where each operation's arguments are provided through the `add` function. Note that the
+value provided to `add` is also used to assign a value during deserialization, hence the class members must be used
+directly in the function (i.e. as a non-const lvalue reference).
 
 ### Concepts
 
