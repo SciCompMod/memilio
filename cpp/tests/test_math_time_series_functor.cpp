@@ -20,7 +20,8 @@
 #include "memilio/math/time_series_functor.h"
 #include "random_number_test.h"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+#include <vector>
 
 using TestMathTimeSeriesFunctor = RandomNumberTest;
 
@@ -95,4 +96,22 @@ TEST_F(TestMathTimeSeriesFunctor, linearInterpolationRandomized)
         double random_t_eval = this->random_number(1.25 * t_min - 0.25 * t_max, 1.25 * t_max - 0.25 * t_min);
         EXPECT_NEAR(tsf(random_t_eval), pcw_lin_fct(random_t_eval), 1e-10) << "i = " << i;
     }
+}
+
+TEST_F(TestMathTimeSeriesFunctor, unhandledTypes)
+{
+    // check that the functor does not accept unhandled types.
+
+    const auto unhandled_type = (mio::TimeSeriesFunctorType)-1;
+
+    // check constructor assert
+    EXPECT_DEBUG_DEATH(mio::TimeSeriesFunctor<double>(unhandled_type, mio::TimeSeries<double>(0)),
+                       "Unhandled TimeSeriesFunctorType!");
+
+    // abuse auto_serialize to set an invalid type
+    mio::TimeSeriesFunctor<double> functor;
+    std::get<0>(functor.auto_serialize().named_refs).value = unhandled_type;
+
+    // check assert in functor call
+    EXPECT_DEBUG_DEATH(functor(0.0), "Unhandled TimeSeriesFunctorType!");
 }
