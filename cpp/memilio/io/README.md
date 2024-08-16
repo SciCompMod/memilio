@@ -7,19 +7,20 @@ This directory contains utilities for reading and writing data from and to files
 ### Using serialization
 
 In the next sections we will explain how to implement serialization (both for types and formats), here we quickly show
-how to use it once it already is implemented for a type. Currently, there is support for the Json and a binary format,
-which can be used through the `serialize_json`/`deserialize_json` and `serialize_binary`/`deserialize_binary`,
-respectively. For example
-
+how to use it once it already is implemented for a type. In the following examples, we serialize (write) `Foo` to a
+file in Json format, then deserialize (read) the Json again.
 ```cpp
 Foo foo{5};
-mio::IOResult<Json::Value> js_result = mio::serialize_json(foo);
+mio::IOResult<void> io_result = mio::write_json("path/to/foo.json", foo);
 ```
 ```cpp
-Json::Value js_value;
-js_value["i"] = Json::Int(5);
-mio::IOResult<Foo> foo_result = mio::deserialize_json(js_value, mio::Tag<Foo>{});
+mio::IOResult<Foo> io_result = mio::read_json("path/to/foo.json", mio::Tag<Foo>{});
+if (io_result) {
+  Foo foo = io_result.value();
+}
 ```
+There is also support for a binary format. If you want to use a format directly, use the
+`serialize_json`/`deserialize_json` and `serialize_binary`/`deserialize_binary` functions.
 
 ### Main functions and types
 
