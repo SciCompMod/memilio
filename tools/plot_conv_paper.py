@@ -222,12 +222,12 @@ def plot_convergence_oneplot(errors, timesteps_ide, flows=False, save=False):
         secir_dict = {0: r"$\sigma_S^E$", 1: r"$\sigma_E^C$", 2: r"$\sigma_C^I$", 3: r"$\sigma_C^R$", 4: r"$\sigma_I^H$",
                       5: r"$\sigma_I^R$", 6: r"$\sigma_H^U$", 7: r"$\sigma_H^R$", 8: r"$\sigma_U^D$", 9: r"$\sigma_U^R$"}
         plt.ylabel(
-            r"$\Vert {\widehat{\sigma}}_{\text{IDE}} - {\widehat{\sigma}}_{\text{ODE}}\Vert_{2,\text{rel}}$", fontsize=10)
+            r"$err_{\text{rel}}$", fontsize=10)
     else:
         secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
                       5: 'ICU', 6: 'Recovered', 7: 'Dead'}
         plt.ylabel(
-            r"$\Vert \widehat{Z}_{\text{IDE}} - \widehat{Z}_{\text{ODE}}\Vert_{2,\text{rel}}$", fontsize=10)
+            r"$err_{\text{rel}}$", fontsize=10)
 
     if flows:
         num_lines = 10
@@ -299,7 +299,7 @@ def main():
     for x in exponents_ide:
         timesteps_ide.append(pow(10, -x))
 
-    flows = False
+    flows = True
 
     groundtruth = read_groundtruth(data_dir, 6, flows=flows)
     timestep_ode = 1e-4
