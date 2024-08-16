@@ -513,7 +513,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
                     'inserted_col', 'ID']
         self.assertEqual(new_cols, exp_cols)
         pd.testing.assert_frame_equal(df[old_cols], self.test_df1)
-        exp_new_col = (10*self.test_df1['test_col3']).rename('inserted_col')
+        exp_new_col = (10*self.test_df1['test_col3']).rename('inserted_col').astype(int)
         pd.testing.assert_series_equal(df['inserted_col'], exp_new_col)
 
         # test with string mapping
