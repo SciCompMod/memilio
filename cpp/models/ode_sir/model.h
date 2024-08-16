@@ -122,6 +122,19 @@ public:
     }
 };
 
+template <typename FP>
+auto get_contact_pattern(Model<FP>& model)
+{
+    auto& contact_pattern = model.parameters.template get<ContactPatterns<FP>>();
+    return contact_pattern;
+}
+
+template <typename FP, typename CP>
+void set_contact_pattern(Model<FP>& model, CP contact_pattern)
+{
+    model.parameters.template get<ContactPatterns<FP>>() = contact_pattern;
+}
+
 } // namespace osir
 } // namespace mio
 

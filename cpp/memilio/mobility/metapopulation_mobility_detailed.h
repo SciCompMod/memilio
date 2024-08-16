@@ -108,10 +108,12 @@ auto get_migration_factors(const Sim& /*sim*/, double /*t*/, const Eigen::Ref<co
 }
 
 template <typename FP>
-void check_negative_values_vec(Eigen::Ref<Vector<FP>> vec, const size_t num_age_groups, FP tolerance = -1e-10)
+void check_negative_values_vec(Eigen::Ref<Vector<FP>> vec, const size_t num_age_groups, FP tolerance = -1e-10,
+                               const size_t max_iterations = 45)
 {
     // before moving the commuters, we need to look for negative values in vec and correct them.
     const size_t num_comparts = vec.size() / num_age_groups;
+    size_t iteration_count    = 0;
 
     // check for negative values in vec
     while (vec.minCoeff() < tolerance) {
@@ -133,7 +135,14 @@ void check_negative_values_vec(Eigen::Ref<Vector<FP>> vec, const size_t num_age_
         vec(min_index) = 0;
         vec(max_group_indx) += min_value;
 
-        std::cout << "Negative value in vector detected and corrected. Value: " << min_value << "\n";
+        // check if the number of iterations is exceeded
+        if (iteration_count > max_iterations) {
+            std::vector<FP> vec_std(vec.data(), vec.data() + vec.size());
+            mio::unused(vec_std);
+            log_error("Number of iterations exceeded in check_negative_values_vec.");
+            std::exit(1);
+        }
+        iteration_count++;
     }
 }
 
@@ -212,10 +221,9 @@ public:
 
     void update_commuters(FP t, FP dt, ExtendedMigrationEdge<FP>& edge, Sim& sim, bool is_mobility_model)
     {
-        auto& integrator_node                = sim.get_integrator();
         const auto t_indx_start_mobility_sim = find_time_index(sim, t, true);
         Eigen::VectorXd flows                = Eigen::VectorXd::Zero(sim.get_flows().get_last_value().size());
-        update_status_migrated(edge.get_migrated().get_last_value(), sim, integrator_node,
+        update_status_migrated(edge.get_migrated().get_last_value(), sim,
                                sim.get_result().get_value(t_indx_start_mobility_sim), t, dt, flows);
 
         // if the simulation is holding a mobility model, we need to update the mobility model as well
@@ -594,10 +602,6 @@ public:
                 break;
             }
 
-            for (auto& node : this->m_graph.nodes()) {
-                node.property.mobility_sim.set_integrator(std::make_shared<mio::EulerIntegratorCore<double>>());
-            }
-
             size_t indx_schedule = 0;
             while (t_begin + 1 > this->m_t + 1e-10) {
                 // the graph simulation is structured in 3 steps:
@@ -629,8 +633,7 @@ private:
     ScheduleManager::Schedule schedules;
     const double epsilon = 1e-10;
 
-    template <typename Edge>
-    ScalarType calculate_next_dt(size_t edge_indx, size_t indx_schedule, const Edge& e)
+    ScalarType calculate_next_dt(size_t edge_indx, size_t indx_schedule)
     {
         auto current_node_indx = schedules.schedule_edges[edge_indx][indx_schedule];
         bool in_mobility_node  = schedules.mobility_schedule_edges[edge_indx][indx_schedule];
@@ -648,12 +651,12 @@ private:
             throw std::runtime_error("Error in schedule.");
 
         ScalarType dt_mobility;
-        if (indx_current == integrator_schedule_row.size() - 1) {
-            dt_mobility = round_nth_decimal(e.property.travel_time / e.property.path.size(), 2);
-            if (dt_mobility < 0.01)
-                dt_mobility = 0.01;
+        if (indx_schedule == 99 || indx_current == integrator_schedule_row.size() - 1) {
+            // if we are at the last iteration, we choose the minimal time step
+            dt_mobility = (100 - indx_schedule) * 0.01;
         }
         else {
+            // else, we calculate the next time step based on the next integration point
             dt_mobility = round_nth_decimal((static_cast<double>(integrator_schedule_row[indx_current + 1]) -
                                              static_cast<double>(integrator_schedule_row[indx_current])) /
                                                     100 +
@@ -701,21 +704,40 @@ private:
         }
     }
 
-    void update_status_commuters(size_t indx_schedule)
+    void update_status_commuters(size_t indx_schedule, const size_t max_num_contacts = 20)
     {
         for (const auto& edge_indx : schedules.edges_mobility[indx_schedule]) {
             auto& e      = this->m_graph.edges()[edge_indx];
-            auto next_dt = calculate_next_dt(edge_indx, indx_schedule, e);
+            auto next_dt = calculate_next_dt(edge_indx, indx_schedule);
             auto& node_to =
                 schedules.mobility_schedule_edges[edge_indx][indx_schedule]
                     ? this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]].property.mobility_sim
                     : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]].property.base_sim;
 
-            // TODO: Muss ich hier node_from oder node_to verwenden? Evtl ist die aktuelle config dann falsch.
-            // Aber sieht gut aus denke ich. Das ja getrennt von exchanges.
+            // get current contact pattern
+            auto contact_pattern_curr = get_contact_pattern(node_to.get_model());
+            auto contacts_copy        = contact_pattern_curr;
+
+            auto& contact_matrix          = contact_pattern_curr.get_cont_freq_mat();
+            Eigen::MatrixXd scaled_matrix = contact_matrix[0].get_baseline().eval() / e.property.travel_time;
+            // check if there a values greater max_num_contacts in the contact matrix. if higher, set to max_num_contacts
+            for (auto i = 0; i < scaled_matrix.rows(); ++i) {
+                for (auto j = 0; j < scaled_matrix.cols(); ++j) {
+                    if (scaled_matrix(i, j) > max_num_contacts) {
+                        scaled_matrix(i, j) = max_num_contacts;
+                    }
+                }
+            }
+
+            contact_matrix[0].get_baseline() = scaled_matrix;
+
+            set_contact_pattern(node_to.get_model(), contact_pattern_curr);
 
             m_mobility_functions.update_commuters(this->m_t, next_dt, e.property, node_to,
                                                   schedules.mobility_schedule_edges[edge_indx][indx_schedule]);
+
+            // reset contact pattern after estimating the state of the commuters
+            set_contact_pattern(node_to.get_model(), contacts_copy);
         }
     }
 
@@ -793,13 +815,12 @@ make_migration_sim(FP t0, FP dt, Graph<ExtendedNodeProperty<Sim>, ExtendedMigrat
 
 template <typename FP, class Sim, class = std::enable_if_t<is_compartment_model_simulation<FP, Sim>::value>>
 void update_status_migrated(Eigen::Ref<typename TimeSeries<FP>::Vector> migrated, Sim& sim,
-                            mio::IntegratorCore<FP>& integrator,
                             Eigen::Ref<const typename TimeSeries<FP>::Vector> total, FP t, FP dt,
                             Eigen::VectorXd& flows)
 {
     auto y0 = migrated.eval();
-    auto y1 = migrated;
-    integrator.step(
+    auto y1 = migrated.setZero();
+    mio::EulerIntegratorCore<FP>().step(
         [&](auto&& y, auto&& t_, auto&& dydt) {
             sim.get_model().get_derivatives(total, y, t_, dydt);
         },
