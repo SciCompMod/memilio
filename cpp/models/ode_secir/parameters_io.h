@@ -269,13 +269,14 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model,
 * @param[in, out] model Vector of models in which the data is set.
 * @param[in] path Path to RKI file containing population data.
 * @param[in] vregion Vector of keys of the regions of interest.
-* @param[in] accumulate_age_groups Specifies whether population data should be accumulated to one age group.
 */
 template <typename FP = double>
 IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::string& path,
-                                   const std::vector<int>& vregion, bool accumulate_age_groups = false)
+                                   const std::vector<int>& vregion)
 {
-    BOOST_OUTCOME_TRY(const auto&& num_population, read_population_data(path, vregion, accumulate_age_groups));
+    // Specifies whether population data should be accumulated to one age group.
+    const bool multiple_age_groups = model[0].parameters.get_num_groups() > 1;
+    BOOST_OUTCOME_TRY(const auto&& num_population, read_population_data(path, vregion, multiple_age_groups));
     BOOST_OUTCOME_TRY(set_population_data(model, num_population, vregion));
     return success();
 }
