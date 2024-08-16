@@ -521,7 +521,7 @@ def fit_age_group_intervals(
                           age_share[0][1]:age_share[-1][1]+1])
             for age in age_share:
                 new_pop[age[1]] += pop_data[age[1]
-                                            ] / sum_pop * df_age_in.iloc[0][population_indx]
+                                            ] / sum_pop * df_age_in.iloc[0, population_indx]
 
             population_indx += 1
 
