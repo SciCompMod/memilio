@@ -20,7 +20,6 @@
 
 //Includes from pymio
 #include "pybind_util.h"
-#include "models/osir.h"
 #include "utils/index.h"
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
@@ -35,6 +34,8 @@
 #include "ode_sir/infection_state.h"
 #include "memilio/data/analyze_result.h"
 
+#include "pybind11/pybind11.h"
+
 namespace py = pybind11;
 
 namespace pymio
@@ -46,7 +47,9 @@ inline std::string pretty_name<mio::osir::InfectionState>()
     return "InfectionState";
 }
 
-void bind_osir(py::module_& m)
+} // namespace pymio
+
+PYBIND11_MODULE(_simulation_osir, m)
 {
     m.def("interpolate_simulation_result",
           static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
@@ -60,24 +63,24 @@ void bind_osir(py::module_& m)
 
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
 
-    iterable_enum<mio::osir::InfectionState>(m, "InfectionState")
+    pymio::iterable_enum<mio::osir::InfectionState>(m, "InfectionState")
         .value("Susceptible", mio::osir::InfectionState::Susceptible)
         .value("Infected", mio::osir::InfectionState::Infected)
         .value("Recovered", mio::osir::InfectionState::Recovered);
 
-    bind_ParameterSet<mio::osir::ParametersBase<double>, EnablePickling::Required>(m, "ParametersBase");
+    pymio::bind_ParameterSet<mio::osir::ParametersBase<double>, pymio::EnablePickling::Required>(m, "ParametersBase");
 
-    bind_class<mio::osir::Parameters<double>, EnablePickling::Required,
+    pymio::bind_class<mio::osir::Parameters<double>, pymio::EnablePickling::Required,
                       mio::osir::ParametersBase<double>>(m, "Parameters")
         .def(py::init<mio::AgeGroup>())
         .def("check_constraints", &mio::osir::Parameters<double>::check_constraints);
 
     using Populations = mio::Populations<double, mio::AgeGroup, mio::osir::InfectionState>;
-    bind_Population(m, "Populations", mio::Tag<mio::osir::Model<double>::Populations>{});
-    bind_CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters<double>,
-                                   EnablePickling::Never>(m, "ModelBase");
-    bind_class<
-        mio::osir::Model<double>, EnablePickling::Required,
+    pymio::bind_Population(m, "Populations", mio::Tag<mio::osir::Model<double>::Populations>{});
+    pymio::bind_CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters<double>,
+                                   pymio::EnablePickling::Never>(m, "ModelBase");
+    pymio::bind_class<
+        mio::osir::Model<double>, pymio::EnablePickling::Required,
         mio::CompartmentalModel<double, mio::osir::InfectionState, Populations, mio::osir::Parameters<double>>>(
         m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
@@ -89,6 +92,5 @@ void bind_osir(py::module_& m)
         },
         "Simulates an ODE SIR model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
+    m.attr("__version__") = "dev";
 }
-
-} // namespace pymio

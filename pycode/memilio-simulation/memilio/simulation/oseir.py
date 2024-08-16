@@ -19,28 +19,7 @@
 #############################################################################
 
 """
-The Python bindings to the MEmilio C++ library.
+Python bindings for MEmilio ODE SEIR model.
 """
 
-from memilio.simulation._simulation import *
-
-
-def __getattr__(attr):
-    if attr == "abm":
-        import memilio.simulation._simulation_abm as abm
-        return abm
-    elif attr == "osir":
-        import memilio.simulation._simulation_osir as osir
-        return osir
-    elif attr == "oseir":
-        import memilio.simulation._simulation_oseir as oseir
-        return oseir
-    elif attr == "osecir":
-        import memilio.simulation._simulation_osecir as osecir
-        return osecir
-    elif attr == "osecirvvs":
-        import memilio.simulation._simulation_osecirvvs as osecirvvs
-        return osecirvvs
-
-    raise AttributeError("module {!r} has no attribute "
-                         "{!r}".format(__name__, attr))
+from memilio.simulation._simulation_oseir import *
