@@ -43,7 +43,6 @@ if __name__ == "__main__":
         shutil.rmtree(os.path.join(package_dir, "memilio-stubs"))
     except:
         pass
-
     # create folders, if they do not exist
     try:
         os.makedirs(package_dir)
@@ -66,18 +65,25 @@ if __name__ == "__main__":
     #       return <logic to compare two Index_SimulationDay instances>
     #
     if flag_configure_generated_stubs:
-        list_protected_module_file_paths = []
 
+        # get all model modules from memilio.simulation
+        # if package structure changes this needs to be adjusted
+        models = [f.rstrip(".py") for f in os.listdir(os.path.join(
+            file_path, "../memilio/simulation")) if f.endswith(".py")]
+        models.remove("__init__")
         stub_files_path = os.path.join(package_dir, "memilio/simulation")
+
+        # read .pyi from protected simulation module
         protected_module_file_path = os.path.join(
             stub_files_path, "_simulation.pyi")
         with open(protected_module_file_path, encoding='utf-8') as file:
             content_protected_module = file.read()
 
-        # # Replace the old namespace with the new one
+        # Replace the protected namespaces with the desired ones
         content_protected_module = content_protected_module.replace(
             "simulation._simulation", "simulation")
 
+        # read .pyi from pure python simulation file
         module_file_path = os.path.join(stub_files_path, "__init__.pyi")
         with open(module_file_path, encoding='utf-8') as file:
             content_module = file.read()
@@ -85,14 +91,10 @@ if __name__ == "__main__":
         content_module = content_module.replace(
             "from memilio.simulation._simulation import *" + os.linesep, "")
 
-        import_submodules_string = [
-            "from memilio.simulation import (",
-            "    abm as abm,",
-            "    osir as osir,",
-            "    oseir as oseir,",
-            "    osecir as osecir,",
-            "    osecirvvs as osecirvvs,",
-            ")"]
+        import_submodules_string = ["from memilio.simulation import ("]
+        import_submodules_string += [(f"    {model} as {model},")
+                                     for model in models]
+        import_submodules_string.append(")")
         import_submodules_string = (os.linesep).join(import_submodules_string)
 
         content_protected_module = import_submodules_string + os.linesep + \
@@ -105,24 +107,21 @@ if __name__ == "__main__":
         # remove the protected module file
         os.remove(protected_module_file_path)
 
-        # get all model modules from memilio.simulation
-        # if package structure changes this needs to be adjusted
-        models = [f.rstrip(".py") for f in os.listdir(os.path.join(
-            file_path, "../memilio/simulation")) if f.endswith(".py")]
-        models.remove("__init__")
-
         for model in models:
+
+            # read .pyi from protected model module
             protected_module_file_path = os.path.join(
                 stub_files_path, "_simulation_" + model + ".pyi")
             with open(protected_module_file_path, encoding='utf-8') as file:
                 content_protected_module = file.read()
 
-            # # Replace the old namespace with the new one
+            # Replace the protected namespaces with the desired ones
             content_protected_module = content_protected_module.replace(
                 "_simulation_" + model, model)
             content_protected_module = content_protected_module.replace(
                 "simulation._simulation", "simulation")
 
+            # read .pyi from pure python code
             module_file_path = os.path.join(stub_files_path, model + ".pyi")
             with open(module_file_path, encoding='utf-8') as file:
                 content_module = file.read()
