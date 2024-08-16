@@ -507,7 +507,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
 
         # test with integer mapping
         df = mdfs.insert_column_by_map(
-            self.test_df1, 'test_col3', 'inserted_col', self.int_map)
+            self.test_df1, 'test_col3', 'inserted_col', self.int_map, int)
         new_cols = df.columns.to_list()
         exp_cols = ['Date', 'test_col1', 'test_col2', 'test_col3',
                     'inserted_col', 'ID']
@@ -518,7 +518,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
 
         # test with string mapping
         df = mdfs.insert_column_by_map(
-            self.test_df1, 'test_col2', 'inserted_col', self.str_map)
+            self.test_df1, 'test_col2', 'inserted_col', self.str_map, str)
         new_cols = df.columns.to_list()
         exp_cols = ['Date', 'test_col1', 'test_col2', 'inserted_col',
                     'test_col3', 'ID']
