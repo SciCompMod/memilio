@@ -62,24 +62,24 @@ struct Members {
 
     Members(const char* class_name)
         : name(class_name)
-        , name_value_pairs()
+        , named_refs()
     {
     }
 
-    Members(const char* class_name, std::tuple<NamedRef<Ts>...> nvps)
+    Members(const char* class_name, std::tuple<NamedRef<Ts>...> named_references)
         : name(class_name)
-        , name_value_pairs(nvps)
+        , named_refs(named_references)
     {
     }
 
     template <class T>
     [[nodiscard]] Members<Ts..., T> add(const char* member_name, T& member)
     {
-        return Members<Ts..., T>{name, std::tuple_cat(name_value_pairs, std::tuple(NamedRef{member_name, member}))};
+        return Members<Ts..., T>{name, std::tuple_cat(named_refs, std::tuple(NamedRef{member_name, member}))};
     }
 
     const char* name;
-    std::tuple<NamedRef<Ts>...> name_value_pairs;
+    std::tuple<NamedRef<Ts>...> named_refs;
 };
 
 /**
@@ -115,40 +115,43 @@ using auto_serialize_expr_t = decltype(std::declval<T>().auto_serialize());
 
 /// Add a name-value pair to an io object.
 template <class IOObject, class Member>
-void add_nvp(IOObject& obj, const NamedRef<Member> nvp)
+void add_named_ref(IOObject& obj, const NamedRef<Member> named_ref)
 {
-    obj.add_element(nvp.name, nvp.value);
+    obj.add_element(named_ref.name, named_ref.value);
 }
 
 /// Unpack all name-value pairs from the tuple and add them to a new io object with the given name.
 template <class IOContext, class... Members>
-void auto_serialize_impl(IOContext& io, const char* name, const NamedRef<Members>... nvps)
+void auto_serialize_impl(IOContext& io, const char* name, const NamedRef<Members>... named_refs)
 {
     auto obj = io.create_object(name);
-    (add_nvp(obj, nvps), ...);
+    (add_named_ref(obj, named_refs), ...);
 }
 
 /// Retrieve a name-value pair from an io object.
 template <class IOObject, class Member>
-IOResult<Member> expect_nvp(IOObject& obj, const NamedRef<Member> nvp)
+IOResult<Member> expect_named_ref(IOObject& obj, const NamedRef<Member> named_ref)
 {
-    return obj.expect_element(nvp.name, Tag<Member>{});
+    return obj.expect_element(named_ref.name, Tag<Member>{});
 }
 
 /// Read an io object and its members from the io context using the given names and assign the values to a.
 template <class IOContext, class AutoSerializable, class... Members>
 IOResult<AutoSerializable> auto_deserialize_impl(IOContext& io, AutoSerializable& a, const char* name,
-                                                 NamedRef<Members>... nvps)
+                                                 NamedRef<Members>... named_refs)
 {
     auto obj = io.expect_object(name);
 
+    // we cannot use expect_named_ref directly in apply, as function arguments have no guarantueed order of evaluation
+    std::tuple<IOResult<Members>...> results{expect_named_ref(obj, named_refs)...};
+
     return apply(
         io,
-        [&a, &nvps...](const Members&... values) {
-            ((nvps.value = values), ...);
+        [&a, &named_refs...](const Members&... values) {
+            ((named_refs.value = values), ...);
             return a;
         },
-        expect_nvp(obj, nvps)...);
+        results);
 }
 
 } // namespace details
@@ -163,7 +166,7 @@ using has_auto_serialize = is_expression_valid<details::auto_serialize_expr_t, T
 /**
  * @brief Serialization implementation for the auto-serialization feature.
  * Disables itself (SFINAE) if there is no auto_serialize member or if a serialize member is present.
- * Generates the serialize method depending on the NVPs given by auto_serialize.
+ * Generates the serialize method depending on the NamedRefs given by auto_serialize.
  * @tparam IOContext A type that models the IOContext concept.
  * @tparam AutoSerializable A type that can be auto-serialized.
  * @param io An IO context.
@@ -179,16 +182,16 @@ void serialize_internal(IOContext& io, const AutoSerializable& a)
     const auto members = const_cast<AutoSerializable&>(a).auto_serialize();
     // unpack members and serialize
     std::apply(
-        [&io, &members](auto... nvps) {
-            details::auto_serialize_impl(io, members.name, nvps...);
+        [&io, &members](auto... named_refs) {
+            details::auto_serialize_impl(io, members.name, named_refs...);
         },
-        members.name_value_pairs);
+        members.named_refs);
 }
 
 /**
  * @brief Deserialization implementation for the auto-serialization feature.
  * Disables itself (SFINAE) if there is no auto_serialize member or if a deserialize meember is present.
- * Generates the deserialize method depending on the NVPs given by auto_serialize.
+ * Generates the deserialize method depending on the NamedRefs given by auto_serialize.
  * @tparam IOContext A type that models the IOContext concept.
  * @tparam AutoSerializable A type that can be auto-serialized.
  * @param io An IO context.
@@ -206,10 +209,10 @@ IOResult<AutoSerializable> deserialize_internal(IOContext& io, Tag<AutoSerializa
     auto members       = a.auto_serialize();
     // unpack members and deserialize
     return std::apply(
-        [&io, &members, &a](auto... nvps) {
-            return details::auto_deserialize_impl(io, a, members.name, nvps...);
+        [&io, &members, &a](auto... named_refs) {
+            return details::auto_deserialize_impl(io, a, members.name, named_refs...);
         },
-        members.name_value_pairs);
+        members.named_refs);
 }
 
 } // namespace mio

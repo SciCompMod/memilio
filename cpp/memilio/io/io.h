@@ -470,6 +470,7 @@ ApplyResultT<F, T...> eval(F f, const IOResult<T>&... rs)
  * @param f the function that is called with the values contained in `rs` as arguments.
  * @param rs zero or more IOResults from previous operations.
  * @return the result of f(rs.value()...) if successful, the first error encountered otherwise.
+ * @{
  */
 template <class IOContext, class F, class... T>
 details::ApplyResultT<F, T...> apply(IOContext& io, F f, const IOResult<T>&... rs)
@@ -499,6 +500,17 @@ details::ApplyResultT<F, T...> apply(IOContext& io, F f, const IOResult<T>&... r
     }
     return result;
 }
+
+template <class IOContext, class F, class... T>
+details::ApplyResultT<F, T...> apply(IOContext& io, F f, const std::tuple<IOResult<T>...>& results)
+{
+    return std::apply(
+        [&](auto&&... rs) {
+            return apply(io, f, rs...);
+        },
+        results);
+}
+/** @} */
 
 //utility for (de-)serializing tuple-like objects
 namespace details
