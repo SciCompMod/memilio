@@ -654,13 +654,13 @@ void set_parameters(mio::abm::Parameters& params)
     // Set infection parameters
     // Set protection level against an severe infection. Information based on: https://doi.org/10.1093/cid/ciaa886
     params.get<mio::abm::SeverityProtectionFactor>() = [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.0}, {30, 0.3}, {150, 0.5}}, days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.8}, {150, 0.8}}, days);
     };
 
     // Set protection level against an severe infection. Information based on: https://doi.org/10.1093/cid/ciaa886
     params.get<mio::abm::InfectionProtectionFactor>() = [](ScalarType days) -> ScalarType {
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0.0}, {10, 0.6}, {30, 0.75}, {150, 0.5}}, days);
+            {{0, 0.6}, {150, 0.6}}, days);
     };
 
     //Set other parameters
