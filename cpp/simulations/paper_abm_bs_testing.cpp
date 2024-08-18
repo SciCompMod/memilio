@@ -659,8 +659,7 @@ void set_parameters(mio::abm::Parameters& params)
 
     // Set protection level against an severe infection. Information based on: https://doi.org/10.1093/cid/ciaa886
     params.get<mio::abm::InfectionProtectionFactor>() = [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0.6}, {150, 0.6}}, days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.6}, {150, 0.6}}, days);
     };
 
     //Set other parameters
@@ -1059,7 +1058,7 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
     rmse_icu  = rmse_icu / real_data_icu_vec.size();
     rmse_conf = rmse_conf / real_data_conf_vec.size();
 
-    return (1.00 * rmse_dead) + (1.00 * rmse_icu) + (0.01 * 0.01 * rmse_conf);
+    return (1.00 * rmse_dead) + (0.00 * rmse_icu) + (0.00001 * 0.01 * rmse_conf);
 }
 
 /**
