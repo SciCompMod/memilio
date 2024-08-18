@@ -687,7 +687,7 @@ def plot_cumulative_detected_infections(path):
     total_95 = np.floor(total_95[0:90].flatten())
 
     f_p05 = h5py.File(
-        path+"/cumulative_detected_infections/0/p95/Results.h5", 'r')
+        path+"/cumulative_detected_infections/0/p05/Results.h5", 'r')
     p05_bs = f_p05['0']
     total_05 = p05_bs['Total'][()]
     total_05 = total_05[::24]
