@@ -1751,7 +1751,7 @@ for (size_t i = 0; i < grid_search_rank.size(); i++) {
     const double masks                            = 0.55;
     const double after_lockdown_contact_reduction = 0.6;
     const double ratio_asympt_to_sympt            = 20.0;
-    const double perc_easter_event                = 0.5;
+    const double perc_easter_event                = 0.45;
 
     mio::Date start_date{2021, 3, 1};
     int date_of_lockdown     = 27;
@@ -1947,12 +1947,15 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
         auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
 
-        const double viral_shedding_rate        = 2.11;
-        const double dark_figure                = 3.0;
-        const double contact_red_lockdown       = 0.65;
+        // const double viral_shedding_rate        = 2.11;
+        const double viral_shedding_rate = params[0];
+        // const double dark_figure                = 3.0;
+        const double dark_figure = params[1];
+        // const double contact_red_lockdown       = 0.65;
+        const double contact_red_lockdown       = params[2];
         const double damping_community_lockdown = 0.5;
-        // const double testing_probability_sympt  = 0.035;
-        const double testing_probability_sympt = params[0];
+        const double testing_probability_sympt  = 0.035;
+        // const double testing_probability_sympt = params[0];
 
         const double lockdown_test_prob       = 1.2;
         const double after_lockdown_test_prob = 0.6;
@@ -1962,9 +1965,9 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
         const double masks                            = 0.55;
         const double after_lockdown_contact_reduction = 0.6;
-        // const double ratio_asympt_to_sympt            = 20.0;
-        const double ratio_asympt_to_sympt = params[1];
-        const double perc_easter_event     = 0.55;
+        const double ratio_asympt_to_sympt            = 20.0;
+        // const double ratio_asympt_to_sympt = params[1];
+        const double perc_easter_event = 0.45;
 
         mio::Date start_date{2021, 3, 1};
         int date_of_lockdown     = 26;
@@ -2320,8 +2323,8 @@ int main(int argc, char** argv)
     rank      = 0;
 #endif
 
-    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
 
@@ -2385,7 +2388,7 @@ int main(int argc, char** argv)
     }
     else {
         // std::vector<std::vector<double>> parameters = {{0.01, 0.03, 0.05}, {5, 10, 30}};
-        std::vector<std::vector<double>> parameters = {{0.035}, {20}};
+        std::vector<std::vector<double>> parameters = {{2.21}, {3.3}, {0.52}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
