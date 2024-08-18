@@ -1058,7 +1058,7 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
     rmse_icu  = rmse_icu / real_data_icu_vec.size();
     rmse_conf = rmse_conf / real_data_conf_vec.size();
 
-    return (1.00 * rmse_dead) + (0.00 * rmse_icu) + (0.00001 * 0.01 * rmse_conf);
+    return (1.00 * rmse_dead) + (0.5 * rmse_icu) + (0.01 * 0.01 * rmse_conf);
 }
 
 /**
@@ -1740,18 +1740,18 @@ for (size_t i = 0; i < grid_search_rank.size(); i++) {
     const double dark_figure                = params[1];
     const double contact_red_lockdown       = params[2];
     const double damping_community_lockdown = 0.5;
-    const double testing_probability_sympt  = 0.035;
+    const double testing_probability_sympt  = params[3];
 
     const double lockdown_test_prob     = 1.2;
-    const auto after_lockdown_test_prob = 0.6;
+    const auto after_lockdown_test_prob = 0.8;
 
     const auto seasonality_april = 0.95;
     const auto seasonality_may   = 0.85;
 
     const double masks                            = 0.55;
-    const double after_lockdown_contact_reduction = 0.7;
+    const double after_lockdown_contact_reduction = 0.6;
     const double ratio_asympt_to_sympt            = 20.0;
-    const double perc_easter_event                = 0.55;
+    const double perc_easter_event                = 0.5;
 
     mio::Date start_date{2021, 3, 1};
     int date_of_lockdown     = 27;
@@ -1947,8 +1947,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
         auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
 
-        const double viral_shedding_rate        = 2.08;
-        const double dark_figure                = 3.3;
+        const double viral_shedding_rate        = 2.11;
+        const double dark_figure                = 3.0;
         const double contact_red_lockdown       = 0.65;
         const double damping_community_lockdown = 0.5;
         // const double testing_probability_sympt  = 0.035;
@@ -1961,7 +1961,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         const auto seasonality_may   = 0.85;
 
         const double masks                            = 0.55;
-        const double after_lockdown_contact_reduction = 0.7;
+        const double after_lockdown_contact_reduction = 0.6;
         // const double ratio_asympt_to_sympt            = 20.0;
         const double ratio_asympt_to_sympt = params[1];
         const double perc_easter_event     = 0.55;
@@ -2369,11 +2369,11 @@ int main(int argc, char** argv)
         // 3: testing prob symptomatic
         // 4: perc have to test if npi active
 
-        // std::vector<std::pair<double, double>> grid_boundaries = {{1.5, 2.5}, {1.0, 6.0}, {0.2, 0.8}};
-        std::vector<double> grid_boundaries = {2.08, 3.3, 0.65};
-        // std::vector<int> points_per_dim = {2, 2, 2, 5};
-        std::vector<int> points_per_dim = {7, 7, 7};
-        auto grid                       = grid_points(grid_boundaries, points_per_dim);
+        std::vector<std::pair<double, double>> grid_boundaries = {{1.8, 2.5}, {2.0, 4.0}, {0.5, 0.8}, {0.03, 0.04}};
+        // std::vector<double> grid_boundaries = {2.08, 3.3, 0.65};
+        std::vector<int> points_per_dim = {11, 11, 7, 11};
+        // std::vector<int> points_per_dim = {7, 7, 7};
+        auto grid = grid_points(grid_boundaries, points_per_dim);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, 0, run_grid_search);
             if (!created) {
@@ -2384,9 +2384,9 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{0.01, 0.03, 0.05}, {5, 10, 30}};
-        // std::vector<std::vector<double>> parameters = {{0.01}, {5}};
-        auto every_combination = every_combination_of_parameters(parameters);
+        // std::vector<std::vector<double>> parameters = {{0.01, 0.03, 0.05}, {5, 10, 30}};
+        std::vector<std::vector<double>> parameters = {{0.035}, {20}};
+        auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
             if (!created) {

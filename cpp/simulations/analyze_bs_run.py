@@ -325,7 +325,7 @@ def plot_dead(path):
    
 def plot_icu(path):
     df_abb = pd.read_json(path+"/../pydata/Germany/county_divi_ma7.json")
-    perc_of_critical_in_icu = 0.42
+    perc_of_critical_in_icu = 0.47
 
     # we just need the columns ICU_low and ICU_hig
     df_abb = df_abb[['ID_County', 'ICU', 'Date']]
@@ -344,6 +344,7 @@ def plot_icu(path):
     total_50 = total_50[::24]
     # we just take the first 90 days
     total_50 = total_50[0:90]
+
 
      # we plot this against this the Amount of persons in the ICU from our model
     f_p75 = h5py.File(
