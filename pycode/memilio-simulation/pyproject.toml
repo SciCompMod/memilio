@@ -1,0 +1,20 @@
+[project]
+name = "memilio-simulation"
+version = "1.0.0"
+readme = "README.rst"
+authors = [{name = "DLR-SC", email = "daniel.abele@dlr.de"}]
+maintainers = [{email = "martin.kuehn@dlr.de"}]
+description = "Part of MEmilio project, python bindings to the C++ libraries that contain the models and simulations."
+
+[build-system]
+requires = [
+    "setuptools>=61.0",
+    "scikit-build>=0.13",
+    "cmake>=3.18",
+    "ninja"
+]
+build-backend = "setuptools.build_meta"
+
+[project.urls] 
+Repository = "https://github.com/SciCompMod/memilio"
+Issues = "https://github.com/SciCompMod/memilio/issues"

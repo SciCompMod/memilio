@@ -1,6 +1,4 @@
 import os
-import subprocess
-import sys
 
 from setuptools import Command, find_packages, setup
 

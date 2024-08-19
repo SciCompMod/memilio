@@ -1,25 +1,10 @@
 import os
-import subprocess
-import sys
 
-from setuptools import find_packages, setup
+from setuptools import find_packages
 
-try:
-    from skbuild import setup
-except ImportError:
-    print('scikit-build is required to build from source.')
-    print('Installation:  python -m pip install scikit-build')
-    subprocess.check_call(
-        [sys.executable, "-m", "pip", "install", "scikit-build"])
-    from skbuild import setup
-
-__version__ = '1.0.0'
+from skbuild import setup
 
 setup(
-    name='memilio-simulation', version=__version__, author='DLR-SC',
-    author_email='daniel.abele@dlr.de', maintainer_email='Martin.Kuehn@DLR.de',
-    url='https://github.com/SciCompMod/memilio',
-    description='Part of MEmilio project, python bindings to the C++ libraries that contain the models and simulations.',
     packages=find_packages(where=os.path.dirname(os.path.abspath(__file__))),
     setup_requires=['cmake'],
     # need shared libs so there is one shared log level
