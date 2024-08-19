@@ -61,17 +61,18 @@ parameters = {
 # }
 
 
-def set_parameters_U(parameters, T_UD):
+def set_parameters_U(parameters, T_UD, mu_IH):
     parameters["TimeInfectedCriticalToDead"] = T_UD
+    parameters["SeverePerInfectedSymptoms"] = mu_IH
     return parameters
 
 
-def load_data(file, start_date, simulation_time, T_UD):
+def load_data(file, start_date, simulation_time, T_UD, mu_IH):
     """ Loads RKI data and computes 'InfectedSymptoms', 'Deaths' and 'NewInfectionsDay' using scales, dates etc from the dictionary parameters.
     Method matches the method for computing initial values for the LCT model. See also cpp/models/lct_secir/parameters_io.h.
     @param[in] file Path to the RKI data file for whole Germany. Can be downloaded eg via pycode/memilio-epidata/memilio/epidata/getCaseData.py.
     """
-    set_parameters_U(parameters, T_UD)
+    set_parameters_U(parameters, T_UD, mu_IH)
     parameters['start_date'] = start_date - pd.DateOffset(days=0)
     parameters['end_date'] = start_date + pd.DateOffset(days=simulation_time)
     # Read data.
@@ -130,11 +131,11 @@ def load_data(file, start_date, simulation_time, T_UD):
     return df2
 
 
-def get_scale_contacts(files, start_date, simulation_time, T_UD):
+def get_scale_contacts(files, start_date, simulation_time, T_UD, mu_IH):
 
     datafile = os.path.join(os.path.dirname(
         __file__), "..", "data", "pydata", "Germany", "cases_all_germany.json")
-    data_rki = load_data(datafile, start_date, simulation_time, T_UD)
+    data_rki = load_data(datafile, start_date, simulation_time, T_UD, mu_IH)
 
     # datafile_ma7 = os.path.join(os.path.dirname(
     #     __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json")
@@ -174,11 +175,11 @@ def get_scale_contacts(files, start_date, simulation_time, T_UD):
     return scale_contacts
 
 
-def plot_new_infections(files, start_date, simulation_time, T_UD, fileending="", save=True, save_dir='plots/'):
+def plot_new_infections(files, start_date, simulation_time, T_UD, mu_IH, fileending="", save=True, save_dir='plots/'):
 
     datafile = os.path.join(os.path.dirname(
         __file__), "..", "data", "pydata", "Germany", "cases_all_germany.json")
-    data_rki = load_data(datafile, start_date, simulation_time, T_UD)
+    data_rki = load_data(datafile, start_date, simulation_time, T_UD, mu_IH)
 
     # datafile_ma7 = os.path.join(os.path.dirname(
     #     __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json")
@@ -287,15 +288,16 @@ def plot_new_infections(files, start_date, simulation_time, T_UD, fileending="",
 
 
 def plot_infectedsymptoms_deaths(
-        files, start_date, simulation_time, T_UD, fileending="", save=True, save_dir='plots/'):
+        files, start_date, simulation_time, T_UD, mu_IH, fileending="", save=True, save_dir='plots/'):
 
     datafile = os.path.join(os.path.dirname(
         __file__), "..", "data", "pydata", "Germany", "cases_all_germany.json")
-    data_rki = load_data(datafile, start_date, simulation_time, T_UD)
+    data_rki = load_data(datafile, start_date, simulation_time, T_UD, mu_IH)
 
     datafile_ma7 = os.path.join(os.path.dirname(
         __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json")
-    data_rki_ma7 = load_data(datafile_ma7, start_date, simulation_time, T_UD)
+    data_rki_ma7 = load_data(datafile_ma7, start_date,
+                             simulation_time, T_UD, mu_IH)
 
     # print("Infectedsymptoms from RKI (ma7)  on 1.10.2020: ", data_rki_ma7[data_rki_ma7["Date"]=="2020-10-01"]["InfectedSymptoms"].values[0])
 

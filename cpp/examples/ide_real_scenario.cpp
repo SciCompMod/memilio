@@ -775,7 +775,8 @@ int main(int argc, char** argv)
     ScalarType scale_UR;
     std::vector<ScalarType> lognormal_parameters_U = {0.42819924, 9.76267505, 0.33816427, 17.09411753};
 
-    if (argc == 16) {
+    std::cout << "argc: " << argc << std::endl;
+    if (argc == 18) {
 
         data_dir_tmp                              = argv[1];
         save_dir                                  = argv[2];
@@ -789,22 +790,24 @@ int main(int argc, char** argv)
         start_date                       = mio::Date(std::stoi(argv[10]), std::stoi(argv[11]), std::stoi(argv[12]));
         simulation_time                  = std::stod(argv[13]);
         simulation_parameter["dt_flows"] = std::stod(argv[14]);
-        simulation_parameter["scale_contacts"] = std::stod(argv[15]);
+        simulation_parameter["scale_contacts"]            = std::stod(argv[15]);
+        simulation_parameter["SeverePerInfectedSymptoms"] = std::stod(argv[16]);
+        simulation_parameter["CriticalPerSevere"]         = std::stod(argv[17]);
 
         simulation_parameter["TimeInfectedCritical"] =
             simulation_parameter["DeathsPerCritical"] * T_UD + (1 - simulation_parameter["DeathsPerCritical"]) * T_UR;
 
         lognormal_parameters_U = {shape_UD, scale_UD, shape_UR, scale_UR};
 
-        std::cout << std::setprecision(10) << simulation_parameter["DeathsPerCritical"] << ", " << T_UD << ", " << T_UR
-                  << ", " << shape_UD << ", " << scale_UD << ", " << shape_UR << ", " << scale_UR << ", "
-                  << simulation_parameter["scale_contacts"] << std::endl;
+        std::cout << std::setprecision(10) << simulation_parameter["SeverePerInfectedSymptoms"] << ", "
+                  << simulation_parameter["CriticalPerSevere"] << ", " << simulation_parameter["DeathsPerCritical"]
+                  << std::endl;
 
-        if (start_date == mio::Date(2020, 6, 1)) {
-            simulation_parameter["SeverePerInfectedSymptoms"] = 0.104907;
-            simulation_parameter["CriticalPerSevere"]         = 0.369201;
-            simulation_parameter["DeathsPerCritical"]         = 0.387803;
-        }
+        std::cout << std::setprecision(10) << T_UD << ", " << T_UR << ", " << shape_UD << ", " << scale_UD << ", "
+                  << shape_UR << ", " << scale_UR << std::endl;
+
+        std::cout << std::setprecision(10) << "Contact scaling: " << simulation_parameter["scale_contacts"]
+                  << std::endl;
     }
 
     // Make folder if not existent yet.
