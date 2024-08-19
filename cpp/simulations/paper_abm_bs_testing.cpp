@@ -400,7 +400,8 @@ mio::AgeGroup determine_age_group(uint32_t age)
 
 void create_world_from_data(mio::abm::World& world, const std::string& filename, const int max_number_persons)
 {
-    // Open File
+
+    // Open File; we use the cleaned up version of https://zenodo.org/records/13318436
     const fs::path p = filename;
     if (!fs::exists(p)) {
         mio::log_error("Cannot read in data. File does not exist.");
@@ -1954,7 +1955,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // const double contact_red_lockdown       = 0.65;
         const double contact_red_lockdown       = params[2];
         const double damping_community_lockdown = 0.5;
-        const double testing_probability_sympt  = 0.035;
+        const double testing_probability_sympt  = 0.034;
         // const double testing_probability_sympt = params[0];
 
         const double lockdown_test_prob       = 1.2;
@@ -2388,7 +2389,7 @@ int main(int argc, char** argv)
     }
     else {
         // std::vector<std::vector<double>> parameters = {{0.01, 0.03, 0.05}, {5, 10, 30}};
-        std::vector<std::vector<double>> parameters = {{2.21}, {3.3}, {0.52}};
+        std::vector<std::vector<double>> parameters = {{2.08}, {2.8}, {0.75}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);

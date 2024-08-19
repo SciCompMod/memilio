@@ -422,7 +422,7 @@ def add_time_if_null(pd):
     pd['start_time'] = pd['start_time'].fillna("12:30")
     return pd
 
-
+# We use https://zenodo.org/records/13318436 as input data
 PATH = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/mobility/"
 # PATH = "/Users/david/Documents/HZI/memilio/data/mobility/"
 FILE = PATH + "braunschweig_result_ffa8.csv"
