@@ -714,30 +714,31 @@ private:
                     ? this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]].property.mobility_sim
                     : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]].property.base_sim;
 
-            // get current contact pattern
+            // get current contact  and scale it but only if mobility model
             auto contact_pattern_curr = get_contact_pattern(node_to.get_model());
             auto contacts_copy        = contact_pattern_curr;
-
-            auto& contact_matrix          = contact_pattern_curr.get_cont_freq_mat();
-            Eigen::MatrixXd scaled_matrix = contact_matrix[0].get_baseline().eval() / e.property.travel_time;
-            // check if there a values greater max_num_contacts in the contact matrix. if higher, set to max_num_contacts
-            for (auto i = 0; i < scaled_matrix.rows(); ++i) {
-                for (auto j = 0; j < scaled_matrix.cols(); ++j) {
-                    if (scaled_matrix(i, j) > max_num_contacts) {
-                        scaled_matrix(i, j) = max_num_contacts;
+            if (schedules.mobility_schedule_edges[edge_indx][indx_schedule]) {
+                auto& contact_matrix          = contact_pattern_curr.get_cont_freq_mat();
+                Eigen::MatrixXd scaled_matrix = contact_matrix[0].get_baseline().eval() / e.property.travel_time;
+                // check if there a values greater max_num_contacts in the contact matrix. if higher, set to max_num_contacts
+                for (auto i = 0; i < scaled_matrix.rows(); ++i) {
+                    for (auto j = 0; j < scaled_matrix.cols(); ++j) {
+                        if (scaled_matrix(i, j) > max_num_contacts) {
+                            scaled_matrix(i, j) = max_num_contacts;
+                        }
                     }
                 }
+
+                contact_matrix[0].get_baseline() = scaled_matrix;
+                set_contact_pattern(node_to.get_model(), contact_pattern_curr);
             }
-
-            contact_matrix[0].get_baseline() = scaled_matrix;
-
-            set_contact_pattern(node_to.get_model(), contact_pattern_curr);
 
             m_mobility_functions.update_commuters(this->m_t, next_dt, e.property, node_to,
                                                   schedules.mobility_schedule_edges[edge_indx][indx_schedule]);
 
             // reset contact pattern after estimating the state of the commuters
-            set_contact_pattern(node_to.get_model(), contacts_copy);
+            if (schedules.mobility_schedule_edges[edge_indx][indx_schedule])
+                set_contact_pattern(node_to.get_model(), contacts_copy);
         }
     }
 

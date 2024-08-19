@@ -26,6 +26,7 @@
 #include "memilio/utils/date.h"
 #include "memilio/utils/miompi.h"
 #include "memilio/utils/random_number_generator.h"
+#include "ode_secirvvs/parameters.h"
 #include "ode_secirvvs/parameters_io.h"
 #include "ode_secirvvs/parameter_space.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
@@ -299,7 +300,7 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
  * @returns any io errors that happen during reading of the files.
  */
 mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvvs::Parameters<double>& params,
-                                         ScalarType scale_contacts = 1.0, ScalarType share_staying = 1.0)
+                                         ScalarType avg_tt = 0.0, ScalarType share_staying = 1.0)
 {
     auto contact_transport_status = mio::read_mobility_plain(data_dir.string() + "//contacts//contacts_transport.txt");
     auto contact_matrix_transport = contact_transport_status.value();
@@ -309,36 +310,85 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
                           mio::read_mobility_plain(
                               (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
 
+        // the other contact matrix containts also the transport contact matrix. Therefore, we need to subtract it.
         if (contact_location.second == "other") {
-            contact_matrices[size_t(contact_location.first)].get_baseline() =
-                (1 - share_staying) * abs(baseline - contact_matrix_transport) / scale_contacts +
-                share_staying * abs(baseline - contact_matrix_transport);
-            contact_matrices[size_t(contact_location.first)].get_minimum() = Eigen::MatrixXd::Zero(6, 6);
+            baseline = abs(baseline - contact_matrix_transport);
         }
-        else {
-            contact_matrices[size_t(contact_location.first)].get_baseline() =
-                (1 - share_staying) * baseline / scale_contacts + share_staying * baseline;
-            contact_matrices[size_t(contact_location.first)].get_minimum() = Eigen::MatrixXd::Zero(6, 6);
+        // Scale the number of contacts
+        auto scaled_baseline = (1 - share_staying) * baseline / (1 - avg_tt) + share_staying * baseline;
+        // Because we only model the acitvity from commuters, some age group should just have the unscaled contacts
+        Eigen::MatrixXd baseline_adjusted = Eigen::MatrixXd::Zero(scaled_baseline.rows(), scaled_baseline.cols());
+        for (auto i = 0; i < 6; i++) {
+            for (auto j = 0; j < 6; j++) {
+                if ((i >= 2 && i <= 5) || (j >= 2 && j <= 5)) {
+                    baseline_adjusted(i, j) = scaled_baseline(i, j);
+                }
+                else {
+                    baseline_adjusted(i, j) = baseline(i, j);
+                }
+            }
         }
+        contact_matrices[size_t(contact_location.first)].get_baseline() = baseline_adjusted;
+        contact_matrices[size_t(contact_location.first)].get_minimum()  = Eigen::MatrixXd::Zero(6, 6);
     }
     params.get<mio::osecirvvs::ContactPatterns<double>>() = mio::UncertainContactMatrix<double>(contact_matrices);
 
     return mio::success();
 }
 
-mio::IOResult<void> set_contact_matrices_transport(const fs::path& data_dir, mio::osecirvvs::Parameters<double>& params,
-                                                   ScalarType scale_contacts = 1.0)
+mio::IOResult<void> set_contact_matrices_transport(const fs::path& data_dir, mio::osecirvvs::Parameters<double>& params)
 {
     auto contact_transport_status = mio::read_mobility_plain(data_dir.string() + "//contacts//contacts_transport.txt");
     auto contact_matrix_transport = contact_transport_status.value();
     auto contact_matrices         = mio::ContactMatrixGroup(1, size_t(params.get_num_groups()));
     // ScalarType const polymod_share_contacts_transport = 1 / 0.2770885028949545;
 
-    contact_matrices[0].get_baseline() = contact_matrix_transport / scale_contacts;
+    contact_matrices[0].get_baseline() = contact_matrix_transport;
     contact_matrices[0].get_minimum()  = Eigen::MatrixXd::Zero(6, 6);
 
     params.get<mio::osecirvvs::ContactPatterns<double>>() = mio::UncertainContactMatrix<double>(contact_matrices);
 
+    return mio::success();
+}
+
+mio::IOResult<void> scale_contacts_local(mio::ExtendedGraph<mio::osecirvvs::Model<double>>& params_graph,
+                                         const fs::path& data_dir, const std::string mobility_data_dir,
+                                         const std::vector<ScalarType> commuting_weights)
+{
+    BOOST_OUTCOME_TRY(auto&& mobility_data_commuter, mio::read_mobility_plain(mobility_data_dir));
+    // average travel time
+    const ScalarType avg_traveltime = std::accumulate(params_graph.edges().begin(), params_graph.edges().end(), 0.0,
+                                                      [](double sum, const auto& e) {
+                                                          return sum + e.property.travel_time;
+                                                      }) /
+                                      params_graph.edges().size();
+
+    // average share of commuters for all counties relative to the total population
+    const ScalarType total_population = std::accumulate(
+        params_graph.nodes().begin(), params_graph.nodes().end(), 0.0, [commuting_weights](double sum, const auto& n) {
+            return sum + n.property.base_sim.populations.get_group_total(mio::AgeGroup(0)) * commuting_weights[0] +
+                   n.property.base_sim.populations.get_group_total(mio::AgeGroup(1)) * commuting_weights[1] +
+                   n.property.base_sim.populations.get_group_total(mio::AgeGroup(2)) * commuting_weights[2] +
+                   n.property.base_sim.populations.get_group_total(mio::AgeGroup(3)) * commuting_weights[3] +
+                   n.property.base_sim.populations.get_group_total(mio::AgeGroup(4)) * commuting_weights[4] +
+                   n.property.base_sim.populations.get_group_total(mio::AgeGroup(5)) * commuting_weights[5];
+        });
+    const ScalarType num_commuters      = std::accumulate(params_graph.edges().begin(), params_graph.edges().end(), 0.0,
+                                                     [mobility_data_commuter](double sum, const auto& e) {
+                                                         auto start_node = e.start_node_idx;
+                                                         auto end_node   = e.end_node_idx;
+                                                         return sum + mobility_data_commuter(start_node, end_node);
+                                                     });
+    const ScalarType avg_commuter_share = num_commuters / total_population;
+
+    std::cout << "avg_commuter_share: " << avg_commuter_share << std::endl;
+    std::cout << "avg_traveltime: " << avg_traveltime << std::endl;
+
+    // scale all contact matrices
+    for (auto& node : params_graph.nodes()) {
+        BOOST_OUTCOME_TRY(
+            set_contact_matrices(data_dir, node.property.base_sim.parameters, avg_traveltime, avg_commuter_share));
+    }
     return mio::success();
 }
 
@@ -406,13 +456,13 @@ void init_pop_cologne_szenario(mio::Graph<mio::osecirvvs::Model<double>, mio::Mi
  * @param[in] export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
  */
 template <class ReadFunction, class NodeIdFunction, typename FP = double>
-mio::IOResult<void> set_nodes(const mio::osecirvvs::Parameters<FP>& params, mio::Date start_date, mio::Date end_date,
-                              const fs::path& data_dir, const std::string& population_data_path,
-                              const std::string& stay_times_data_path, bool is_node_for_county,
-                              mio::ExtendedGraph<mio::osecirvvs::Model<FP>>& params_graph, ReadFunction&& read_func,
-                              NodeIdFunction&& node_func, const std::vector<FP>& scaling_factor_inf,
-                              FP scaling_factor_icu, FP tnt_capacity_factor, int num_days = 0,
-                              bool export_time_series = false, bool rki_age_groups = true)
+mio::IOResult<void>
+set_nodes(const mio::osecirvvs::Parameters<FP>& params, mio::Date start_date, mio::Date end_date,
+          const fs::path& data_dir, const std::string& population_data_path, const std::string& stay_times_data_path,
+          bool is_node_for_county, mio::ExtendedGraph<mio::osecirvvs::Model<FP>>& params_graph,
+          ReadFunction&& read_func, NodeIdFunction&& node_func, const std::vector<FP>& scaling_factor_inf,
+          FP scaling_factor_icu, FP tnt_capacity_factor, int num_days = 0, bool export_time_series = false,
+          bool rki_age_groups = true, bool masks = false, bool ffp2 = false)
 {
 
     BOOST_OUTCOME_TRY(auto&& duration_stay, mio::read_duration_stay(stay_times_data_path));
@@ -464,7 +514,46 @@ mio::IOResult<void> set_nodes(const mio::osecirvvs::Parameters<FP>& params, mio:
         auto mobility_model = nodes[node_idx];
         mobility_model.populations.set_total(0);
 
-        params_graph.add_node(1, nodes[node_idx], mobility_model, duration_stay((Eigen::Index)node_idx));
+        // reduce transmission on contact due to mask obligation in mobility node
+        // first age group not able to  (properly) wear masks
+        if (masks) {
+
+            const double fact_surgical_mask = 0.1;
+            const double fact_ffp2          = 0.001;
+
+            double factor_mask[] = {1, fact_surgical_mask, fact_ffp2, fact_ffp2, fact_ffp2, fact_ffp2};
+            if (!ffp2) {
+                for (size_t j = 1; j < 6; j++) {
+                    factor_mask[j] = factor_mask[j] * fact_surgical_mask / fact_ffp2;
+                }
+            }
+
+            double fac_variant                           = 1.45; //1.94; //https://doi.org/10.7554/eLife.78933
+            double transmissionProbabilityOnContactMin[] = {0.02 * fac_variant, 0.05 * fac_variant, 0.05 * fac_variant,
+                                                            0.05 * fac_variant, 0.08 * fac_variant, 0.1 * fac_variant};
+
+            double transmissionProbabilityOnContactMax[] = {0.04 * fac_variant, 0.07 * fac_variant, 0.07 * fac_variant,
+                                                            0.07 * fac_variant, 0.10 * fac_variant, 0.15 * fac_variant};
+            for (int i = 0; i < 6; i++) {
+                transmissionProbabilityOnContactMin[i] = transmissionProbabilityOnContactMin[i] * factor_mask[i];
+                transmissionProbabilityOnContactMax[i] = transmissionProbabilityOnContactMax[i] * factor_mask[i];
+            }
+            array_assign_uniform_distribution(
+                mobility_model.parameters.template get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>(),
+                transmissionProbabilityOnContactMin, transmissionProbabilityOnContactMax);
+        }
+
+        for (int t_idx = 0; t_idx < num_days; ++t_idx) {
+            auto t = mio::SimulationDay((size_t)t_idx);
+            for (auto j = mio::AgeGroup(0); j < params.get_num_groups(); j++) {
+                mobility_model.parameters.template get<mio::osecirvvs::DailyFirstVaccination<double>>()[{j, t}] = 0;
+                mobility_model.parameters.template get<mio::osecirvvs::DailyFullVaccination<double>>()[{j, t}]  = 0;
+                // mobility_model.parameters.template get<mio::osecirvvs::DailyBoosterVaccination>()[{j, t}] = 0;
+            }
+        }
+
+        params_graph.add_node(node_ids[node_idx], nodes[node_idx], mobility_model,
+                              duration_stay((Eigen::Index)node_idx));
     }
     return mio::success();
 }
@@ -528,7 +617,6 @@ set_edges(const std::string& travel_times_dir, const std::string mobility_data_d
                 params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs),
                                       travel_times(county_idx_i, county_idx_j),
                                       path_mobility[county_idx_i][county_idx_j]);
-                //   g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::oseir::InfectionState::Count, 0.01), traveltime, path2);
             }
         }
     }
@@ -549,7 +637,7 @@ mio::IOResult<mio::ExtendedGraph<mio::osecirvvs::Model<double>>> get_graph(const
                                                                            const std::string& data_dir, bool masks,
                                                                            bool ffp2, bool szenario_cologne, bool edges)
 {
-    mio::unused(num_days, masks, ffp2, szenario_cologne, edges);
+    mio::unused(szenario_cologne);
     std::string travel_times_dir = mio::path_join(data_dir, "mobility", "travel_times_pathes.txt");
     std::string durations_dir    = mio::path_join(data_dir, "mobility", "activity_duration_work.txt");
 
@@ -575,10 +663,15 @@ mio::IOResult<mio::ExtendedGraph<mio::osecirvvs::Model<double>>> get_graph(const
         params, start_date, end_date, data_dir,
         mio::path_join(data_dir, "pydata", "Germany", "county_current_population.json"), durations_dir, true,
         params_graph, read_function_nodes, node_id_function, scaling_factor_infected, scaling_factor_icu,
-        tnt_capacity_factor, num_days, false);
+        tnt_capacity_factor, num_days, false, true, ffp2, masks);
 
     if (!set_nodes_status) {
         return set_nodes_status.error();
+    }
+
+    // iterate over all nodes and set the contact_matrix for the mobility models
+    for (auto& node : params_graph.nodes()) {
+        BOOST_OUTCOME_TRY(set_contact_matrices_transport(data_dir, node.property.base_sim.parameters));
     }
 
     // set edges
@@ -603,6 +696,11 @@ mio::IOResult<mio::ExtendedGraph<mio::osecirvvs::Model<double>>> get_graph(const
         if (!set_edges_status) {
             return set_edges_status.error();
         }
+
+        // if we have edges/mobility, we also need to scale the local contacts
+        BOOST_OUTCOME_TRY(scale_contacts_local(
+            params_graph, data_dir, mio::path_join(data_dir, "mobility", "commuter_migration_with_locals.txt"),
+            std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
     }
 
     return params_graph;
@@ -628,7 +726,7 @@ mio::IOResult<void> run(const std::string data_dir, std::string res_dir, const i
                       get_graph(start_date, end_date, num_days, data_dir, masks, ffp2, szenario_cologne, edges));
     auto params_graph = created;
 
-    res_dir += "_masks_" + std::to_string(masks) + std::string(ffp2 ? "_ffp2" : "") +
+    res_dir += "/masks_" + std::to_string(masks) + std::string(ffp2 ? "_ffp2" : "") +
                std::string(szenario_cologne ? "_cologne" : "") + std::string(!edges ? "_no_edges" : "");
 
     if (mio::mpi::is_root())
@@ -707,7 +805,7 @@ mio::IOResult<void> run(const std::string data_dir, std::string res_dir, const i
         }
         BOOST_OUTCOME_TRY(mio::save_results(ensemble_results, ensemble_params, county_ids, res_dir, false));
 
-        auto result_dir_run_flows = res_dir + "flows";
+        auto result_dir_run_flows = res_dir + "/flows";
         if (mio::mpi::is_root()) {
             boost::filesystem::create_directories(result_dir_run_flows);
             printf("Saving Flow results to \"%s\".\n", result_dir_run_flows.c_str());
@@ -727,8 +825,8 @@ int main()
     const std::string data_dir    = mio::path_join(memilio_dir, "data"); //"/localdata1/code/memilio/data";
     std::string results_dir       = mio::path_join(memilio_dir, "results");
 
-    const auto num_days = 5;
-    const auto num_runs = 1;
+    const auto num_days = 90;
+    const auto num_runs = 10;
     auto result         = run(data_dir, results_dir, num_runs, num_days);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
