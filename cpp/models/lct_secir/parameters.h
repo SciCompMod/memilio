@@ -22,10 +22,13 @@
 #define LCT_SECIR_PARAMS_H
 
 #include "memilio/config.h"
-#include "memilio/utils/parameter_set.h"
 #include "memilio/math/eigen.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
+#include "memilio/epidemiology/age_group.h"
+#include "memilio/utils/parameter_set.h"
 #include "memilio/utils/logging.h"
+#include "memilio/utils/custom_index_array.h"
+#include "memilio/utils/uncertain_value.h"
 
 namespace mio
 {
@@ -40,10 +43,10 @@ namespace lsecir
  * @brief Average Time spent in the Exposed compartment.
  */
 struct TimeExposed {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return 2.0;
+        return Type(size, 2.);
     }
     static std::string name()
     {
@@ -56,10 +59,10 @@ struct TimeExposed {
  *  Symptoms or recover in the SECIR model in day unit.
  */
 struct TimeInfectedNoSymptoms {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return 1.0;
+        return Type(size, 1.);
     }
     static std::string name()
     {
@@ -72,10 +75,10 @@ struct TimeInfectedNoSymptoms {
  *  or recover in the SECIR model in day unit.
  */
 struct TimeInfectedSymptoms {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return 1.5;
+        return Type(size, 1.5);
     }
     static std::string name()
     {
@@ -88,10 +91,10 @@ struct TimeInfectedSymptoms {
  *  SECIR model in day unit.
  */
 struct TimeInfectedSevere {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return 1.0;
+        return Type(size, 1.);
     }
     static std::string name()
     {
@@ -103,10 +106,10 @@ struct TimeInfectedSevere {
  * @brief Average time treated by ICU before dead or recover in the SECIR model in day unit.
  */
 struct TimeInfectedCritical {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
+    static Type get_default(AgeGroup size)
     {
-        return 1.0;
+        return Type(size, 1.);
     }
     static std::string name()
     {
@@ -119,7 +122,7 @@ struct TimeInfectedCritical {
  */
 struct TransmissionProbabilityOnContact {
     using Type = ScalarType;
-    static Type get_default()
+    static Type get_default(AgeGroup)
     {
         return 1.0;
     }
@@ -135,11 +138,9 @@ struct TransmissionProbabilityOnContact {
 struct ContactPatterns {
     using Type = UncertainContactMatrix<ScalarType>;
 
-    static Type get_default()
+    static Type get_default(AgeGroup size)
     {
-        ContactMatrixGroup contact_matrix = ContactMatrixGroup(1, 1);
-        contact_matrix[0]                 = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-        return Type(contact_matrix);
+        return Type(10., static_cast<Eigen::Index>((size_t)size));
     }
     static std::string name()
     {
@@ -152,7 +153,7 @@ struct ContactPatterns {
  */
 struct RelativeTransmissionNoSymptoms {
     using Type = ScalarType;
-    static Type get_default()
+    static Type get_default(AgeGroup)
     {
         return 0.5;
     }
@@ -167,7 +168,7 @@ struct RelativeTransmissionNoSymptoms {
  */
 struct RiskOfInfectionFromSymptomatic {
     using Type = ScalarType;
-    static Type get_default()
+    static Type get_default(AgeGroup)
     {
         return 0.5;
     }
@@ -182,7 +183,7 @@ struct RiskOfInfectionFromSymptomatic {
  */
 struct RecoveredPerInfectedNoSymptoms {
     using Type = ScalarType;
-    static Type get_default()
+    static Type get_default(AgeGroup)
     {
         return 0.5;
     }
@@ -245,7 +246,7 @@ struct DeathsPerCritical {
  */
 struct StartDay {
     using Type = ScalarType;
-    static Type get_default()
+    static Type get_default(AgeGroup)
     {
         return 0.;
     }
@@ -262,7 +263,7 @@ struct StartDay {
  */
 struct Seasonality {
     using Type = ScalarType;
-    static Type get_default()
+    static Type get_default(AgeGroup)
     {
         return Type(0.);
     }
@@ -287,9 +288,15 @@ public:
     /**
      * @brief Default constructor.
      */
-    Parameters()
-        : ParametersBase()
+    Parameters(AgeGroup num_agegroups)
+        : ParametersBase(num_agegroups)
+        , m_num_groups{num_agegroups}
     {
+    }
+
+    AgeGroup get_num_groups() const
+    {
+        return m_num_groups;
     }
 
     /**
@@ -370,8 +377,11 @@ public:
 private:
     Parameters(ParametersBase&& base)
         : ParametersBase(std::move(base))
+        , m_num_groups(this->template get<ContactPatterns<FP>>().get_cont_freq_mat().get_num_groups())
     {
     }
+
+    AgeGroup m_num_groups;
 
 public:
     /**
