@@ -29,12 +29,6 @@ def get_df_daily():
 
 
 def get_population_per_agegroup():
-    datafile = os.path.join(os.path.dirname(
-        __file__), "..", "data", "pydata", "Germany", "12411-04-02-4-B.xlsx")
-    df = pd.read_excel(datafile)
-
-    # TODO
-    # total_population = 83155031.
     # Population from Table 12411-04-02-4-B from regionalstatistik.de, data from 31.12.2020.
     population_per_agegroup = np.array(
         [3969138, 7508662, 18921292, 28666166, 18153339, 5936434])
@@ -50,10 +44,10 @@ def get_relevant_confirmed_cases(start_date, T_IH, T_HU):
 
     # Considered age groups.
     agegroups = ['A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+']
-
+    T_U = 16.49
     # Extract relevant dates to be considered.
-    df_date = df[(df["Date"] >= pd.Timestamp(start_date)-pd.Timedelta(days=T_IH+T_HU+7))
-                 & (df["Date"] <= pd.Timestamp(start_date)-pd.Timedelta(days=T_IH+T_HU-7))]
+    df_date = df[(df["Date"] >= pd.Timestamp(start_date)-pd.Timedelta(days=T_IH+T_HU+T_U))
+                 & (df["Date"] <= pd.Timestamp(start_date)-pd.Timedelta(days=T_IH+T_HU))]
 
     # Get total confirmed cases in considered time frame.
     totaldailyconfirmed = df_date.DailyConfirmed.sum()
@@ -151,14 +145,23 @@ def compute_covasim_probs_per_rki_agegroup():
                               0.00265, 0.00766, 0.02439, 0.08292, 0.16190])
     mu_UD_covasim = mu_CD_covasim/mu_CU_covasim
 
-    # # Compute average by population just to test.
-    # agegroups_covasim = np.array([7752706.0, 7581868,  9483430, 10871964, 10070748,
-    #                                   13304542,  10717241, 7436098, 5092743,  843691])
-    # total_pop = agegroups_covasim.sum()
+    # Compute average by population just to test.
+    agegroups_covasim = np.array([7752706.0, 7581868,  9483430, 10871964, 10070748,
+                                  13304542,  10717241, 7436098, 5092743, 843691])
+    total_pop = agegroups_covasim.sum()
 
-    # mu_UD_average=0
-    # for i in range(len(agegroups_covasim)):
-    #     mu_UD_average+=mu_UD_covasim[i]*agegroups_covasim[i]/total_pop
+    mu_CI_average = 0
+    mu_IH_average = 0
+    mu_HU_average = 0
+    mu_UD_average = 0
+    for i in range(len(agegroups_covasim)):
+        mu_CI_average += mu_CI_covasim[i]*agegroups_covasim[i]/total_pop
+        mu_IH_average += mu_IH_covasim[i]*agegroups_covasim[i]/total_pop
+        mu_HU_average += mu_HU_covasim[i]*agegroups_covasim[i]/total_pop
+        mu_UD_average += mu_UD_covasim[i]*agegroups_covasim[i]/total_pop
+
+    print("Covasim probs by pop: ", mu_CI_average,
+          mu_IH_average, mu_HU_average, mu_UD_average)
 
     # Convert from 10 agegroups from Covasim Paper to 6 age groups according to RKI data.
     mu_CI_rki = covasim_to_rki_agegroups(mu_CI_covasim)
@@ -187,6 +190,28 @@ def compute_adapted_mu(start_date, T_IH, T_HU):
     return mu_CI, mu_IH, mu_HU, mu_UD
 
 
+def compute_mu_by_population():
+    mu_CI_age, mu_IH_age, mu_HU_age, mu_UD_age = compute_covasim_probs_per_rki_agegroup()
+    population_per_agegroup = get_population_per_agegroup()
+
+    mu_CI = 0
+    mu_IH = 0
+    mu_HU = 0
+    mu_UD = 0
+    for i in range(len(population_per_agegroup)):
+        mu_CI += mu_CI_age[i] * population_per_agegroup[i]
+        mu_IH += mu_IH_age[i] * population_per_agegroup[i]
+        mu_HU += mu_HU_age[i] * population_per_agegroup[i]
+        mu_UD += mu_UD_age[i] * population_per_agegroup[i]
+
+    return mu_CI, mu_IH, mu_HU, mu_UD
+
+
+def mu_assessment_by_cases(start_date, T_IH, T_HU):
+    mu_assessment = population_share = get_relevant_confirmed_cases(
+        start_date, T_IH, T_HU)
+
+
 def main():
 
     df_daily = get_df_daily()
@@ -212,6 +237,9 @@ def main():
 
     mu_CI, mu_IH, mu_HU, mu_UD = compute_adapted_mu(start_dates[1], T_IH, T_HU)
     print(f"mu {start_dates[1]}: {mu_CI}, {mu_IH}, {mu_HU}, {mu_UD}")
+
+    mu_CI, mu_IH, mu_HU, mu_UD = compute_mu_by_population()
+    print(f"mu by population: {mu_CI}, {mu_IH}, {mu_HU}, {mu_UD}")
 
 
 if __name__ == "__main__":
