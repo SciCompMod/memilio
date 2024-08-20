@@ -1939,7 +1939,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     num_procs = 1;
     rank      = 0;
 #endif
-
+    std::vector<double> rmse_results_per_grid_point;
+    rmse_results_per_grid_point.resize(parameter_values.size());
     for (size_t par_i = 0; par_i < parameter_values.size(); par_i++) {
         auto params = parameter_values[par_i];
 
@@ -1955,7 +1956,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // const double contact_red_lockdown       = 0.65;
         const double contact_red_lockdown       = params[2];
         const double damping_community_lockdown = 0.5;
-        const double testing_probability_sympt  = 0.034;
+        const double testing_probability_sympt  = 0.038;
         // const double testing_probability_sympt = params[0];
 
         const double lockdown_test_prob       = 1.2;
@@ -2171,18 +2172,19 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
             std::cout << "Run " << run_idx + 1 << " of " << num_runs << " finished." << std::endl;
 
-            //calculate RMSE
-            // int number_of_days_for_rmse = 0;
-            // if (npis_on) {
-            //     number_of_days_for_rmse = 90;
-            // }
-            // else {
-            //     number_of_days_for_rmse = 20;
-            // }
-            // auto rmse = calculate_rmse_from_results(input_dir, temp_sim_infection_state_per_age_group[0],
-            //                                         temp_sim_cumulative_detected_infections_per_age_group[0],
-            //                                         number_of_days_for_rmse, start_date);
-            // std::cout << "RMSE: " << rmse << std::endl;
+            // calculate RMSE
+            int number_of_days_for_rmse = 0;
+            if (npis_on) {
+                number_of_days_for_rmse = 90;
+            }
+            else {
+                number_of_days_for_rmse = 20;
+            }
+            auto rmse = calculate_rmse_from_results(input_dir, temp_sim_infection_state_per_age_group[0],
+                                                    temp_sim_cumulative_detected_infections_per_age_group[0],
+                                                    number_of_days_for_rmse, start_date);
+
+            rmse_results_per_grid_point.at(par_i) += rmse;
 
             //HACK since // gather_results(rank, num_procs, num_runs, ensemble_params);
             //for now this doesnt work, but we can still save the results of the last world since the
@@ -2193,6 +2195,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                 }
             }
         }
+        rmse_results_per_grid_point.at(par_i) /= num_runs;
+        std::cout << "RMSE: " << rmse_results_per_grid_point.at(par_i) << std::endl;
         printf("Saving results ... ");
 
 #ifdef MEMILIO_ENABLE_MPI
@@ -2324,8 +2328,8 @@ int main(int argc, char** argv)
     rank      = 0;
 #endif
 
-    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
 
@@ -2389,7 +2393,7 @@ int main(int argc, char** argv)
     }
     else {
         // std::vector<std::vector<double>> parameters = {{0.01, 0.03, 0.05}, {5, 10, 30}};
-        std::vector<std::vector<double>> parameters = {{2.35}, {2.8}, {0.675}};
+        std::vector<std::vector<double>> parameters = {{2.08}, {2.9}, {0.75}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
