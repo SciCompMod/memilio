@@ -1091,8 +1091,8 @@ std::vector<std::vector<double>> grid_points(const std::vector<double>& paramete
     std::vector<std::vector<double>> grid;
     for (size_t i = 0; i < parameter_points.size(); i++) {
         std::vector<double> temp;
-        double min_value = parameter_points[i] * 0.8;
-        double max_value = parameter_points[i] * 1.2;
+        double min_value = parameter_points[i] * 0.95;
+        double max_value = parameter_points[i] * 1.05;
         double step      = (max_value - min_value) / (number_of_points.at(i) - 1);
         for (int j = 0; j < number_of_points.at(i) - 1; j++) {
             temp.push_back(min_value + j * step);
@@ -2389,7 +2389,7 @@ int main(int argc, char** argv)
     }
     else {
         // std::vector<std::vector<double>> parameters = {{0.01, 0.03, 0.05}, {5, 10, 30}};
-        std::vector<std::vector<double>> parameters = {{2.08}, {2.8}, {0.75}};
+        std::vector<std::vector<double>> parameters = {{2.35}, {2.8}, {0.675}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
