@@ -837,7 +837,6 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
 * @param divi_data_path Path to DIVI file.
 * @param confirmed_cases_path Path to confirmed cases file.
 * @param population_data_path Path to population data file.
-* @param set_vaccination_data Boolean to set vaccination data.
 * @param vaccination_data_path Path to vaccination data file.
 */
 template <class Model>
@@ -845,7 +844,7 @@ IOResult<void> export_input_data_county_timeseries(
     std::vector<Model> models, const std::string& results_dir, const std::vector<int>& counties, Date date,
     const std::vector<double>& scaling_factor_inf, const double scaling_factor_icu, const int num_days,
     const std::string& divi_data_path, const std::string& confirmed_cases_path, const std::string& population_data_path,
-    bool set_vaccination_data, const std::string& vaccination_data_path)
+    const std::string& vaccination_data_path = "")
 {
     const auto num_groups = (size_t)models[0].parameters.get_num_groups();
     assert(scaling_factor_inf.size() == num_groups);
@@ -857,16 +856,16 @@ IOResult<void> export_input_data_county_timeseries(
     BOOST_OUTCOME_TRY(auto&& case_data, read_confirmed_cases_data(confirmed_cases_path));
     BOOST_OUTCOME_TRY(auto&& population_data, details::read_population_data(population_data_path, counties));
 
-    // empty vector if set_vaccination_data is false
+    // empty vector if set_vaccination_data is not set
     std::vector<VaccinationDataEntry> vacc_data;
-    if (set_vaccination_data) {
+    if (!vaccination_data_path.empty()) {
         BOOST_OUTCOME_TRY(vacc_data, read_vaccination_data(vaccination_data_path));
     }
 
     for (int t = 0; t <= num_days; ++t) {
         auto offset_day = offset_date_by_days(date, t);
 
-        if (set_vaccination_data) {
+        if (!vaccination_data_path.empty()) {
             BOOST_OUTCOME_TRY(details::set_vaccination_data(models, vacc_data, offset_day, counties, num_days));
         }
 
@@ -908,7 +907,7 @@ IOResult<void> export_input_data_county_timeseries(
 template <class Model>
 IOResult<void> export_input_data_county_timeseries(std::vector<Model>, const std::string&, const std::vector<int>&,
                                                    Date, const std::vector<double>&, const double, const int,
-                                                   const std::string&, const std::string&, const std::string&, bool,
+                                                   const std::string&, const std::string&, const std::string&,
                                                    const std::string&)
 {
     mio::log_warning("HDF5 not available. Cannot export time series of extrapolated real data.");
@@ -961,12 +960,12 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
         // (This only represents the vectorization of the previous function over all simulation days...)
         log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
                     "For simulation runs over the same time period, deactivate it.");
-        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
-            model, dir, county, date, scaling_factor_inf, scaling_factor_icu, num_days,
-            path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
-            path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"),
-            path_join(dir, "pydata/Germany", "county_current_population.json"), true,
-            path_join(dir, "pydata/Germany", "all_county_ageinf_vacc_ma7.json")));
+        BOOST_OUTCOME_TRY(
+            export_input_data_county_timeseries(model, dir, county, date, scaling_factor_inf, scaling_factor_icu,
+                                                num_days, path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
+                                                path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"),
+                                                path_join(dir, "pydata/Germany", "county_current_population.json"),
+                                                path_join(dir, "pydata/Germany", "all_county_ageinf_vacc_ma7.json")));
     }
 
     return success();
@@ -1019,7 +1018,7 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
         BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
             model, data_dir, node_ids, date, scaling_factor_inf, scaling_factor_icu, num_days,
             path_join(data_dir, "divi_data.json"), path_join(data_dir, "confirmed_cases.json"),
-            path_join(data_dir, "population_data.json"), true, path_join(data_dir, "vaccination_data.json")));
+            path_join(data_dir, "population_data.json"), path_join(data_dir, "vaccination_data.json")));
     }
 
     return success();

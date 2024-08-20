@@ -743,7 +743,7 @@ TEST(TestOdeSECIRVVS, export_time_series_init)
                     std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 2,
                     mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
                     mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
-                    mio::path_join(TEST_DATA_DIR, "county_current_population.json"), true,
+                    mio::path_join(TEST_DATA_DIR, "county_current_population.json"),
                     mio::path_join(TEST_DATA_DIR, "vacc_county_ageinf_ma7.json")),
                 IsSuccess());
 
@@ -780,7 +780,7 @@ TEST(TestOdeSECIRVVS, export_time_series_init_old_date)
                     std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 0,
                     mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
                     mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
-                    mio::path_join(TEST_DATA_DIR, "county_current_population.json"), true,
+                    mio::path_join(TEST_DATA_DIR, "county_current_population.json"),
                     mio::path_join(TEST_DATA_DIR, "vacc_county_ageinf_ma7.json")),
                 IsSuccess());
 
