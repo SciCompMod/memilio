@@ -34,6 +34,10 @@ add_executable(sde_sirs_example sde_sirs.cpp)
 target_link_libraries(sde_sirs_example PRIVATE memilio sde_sirs)
 target_compile_options(sde_sirs_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(sde_seirvv_example sde_seirvv.cpp)
+target_link_libraries(sde_seirvv_example PRIVATE memilio sde_seirvv)
+target_compile_options(sde_seirvv_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_seair_example ode_seair.cpp)
 target_link_libraries(ode_seair_example PRIVATE memilio ode_seair AD::AD)
 target_compile_options(ode_seair_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -96,9 +100,12 @@ add_executable(abm_history_example abm_history_object.cpp)
 target_link_libraries(abm_history_example PRIVATE memilio abm)
 target_compile_options(abm_history_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(twitter_migration_example twitter_migration.cpp)
-target_link_libraries(twitter_migration_example PRIVATE memilio ode_secir)
-target_compile_options(twitter_migration_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+add_executable(twitter_mobility_example twitter_mobility.cpp)
+
+target_link_libraries(twitter_mobility_example PRIVATE memilio ode_secir)
+
+target_compile_options(twitter_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 
 add_executable(ide_seir_example ide_seir.cpp)
 target_link_libraries(ide_seir_example PRIVATE memilio ide_seir)

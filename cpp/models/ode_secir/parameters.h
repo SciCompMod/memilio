@@ -348,14 +348,29 @@ struct TestAndTraceCapacity {
     }
 };
 
+/**
+ * @brief Multiplier for the test and trace capacity to determine when it is considered overloaded.
+ */
 template <typename FP = double>
-using ParametersBase =
-    ParameterSet<StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, ContactPatterns<FP>,
-                 DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>, TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>,
-                 TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
-                 RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>,
-                 RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>,
-                 SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>>;
+struct TestAndTraceCapacityMaxRisk {
+    using Type = UncertainValue<FP>;
+    static Type get_default(AgeGroup)
+    {
+        return Type(5.0);
+    }
+    static std::string name()
+    {
+        return "TestAndTraceCapacityMaxRisk";
+    }
+};
+
+template <typename FP = double>
+using ParametersBase = ParameterSet<
+    StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, TestAndTraceCapacityMaxRisk<FP>,
+    ContactPatterns<FP>, DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>, TimeInfectedNoSymptoms<FP>,
+    TimeInfectedSymptoms<FP>, TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
+    RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
+    MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
@@ -443,6 +458,20 @@ public:
                         this->template get<ICUCapacity<FP>>(), 0);
             this->template set<ICUCapacity<FP>>(0);
             corrected = true;
+        }
+
+        if (this->template get<TestAndTraceCapacity<FP>>() < 0.0) {
+            log_warning("Constraint check: Parameter TestAndTraceCapacity changed from {:0.4f} to {:d}",
+                        this->template get<TestAndTraceCapacity<FP>>(), 0);
+            this->template get<TestAndTraceCapacity<FP>>() = 0;
+            corrected                                      = true;
+        }
+
+        if (this->template get<TestAndTraceCapacityMaxRisk<FP>>() < 0.0) {
+            log_warning("Constraint check: Parameter TestAndTraceCapacityMaxRisk changed from {:0.4f} to {:d}",
+                        this->template get<TestAndTraceCapacityMaxRisk<FP>>(), 0);
+            this->template get<TestAndTraceCapacityMaxRisk<FP>>() = 0;
+            corrected                                             = true;
         }
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
@@ -564,6 +593,16 @@ public:
 
         if (this->template get<ICUCapacity<FP>>() < 0.0) {
             log_error("Constraint check: Parameter ICUCapacity smaller {:d}", 0);
+            return true;
+        }
+
+        if (this->template get<TestAndTraceCapacity<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter TestAndTraceCapacity smaller {:d}", 0);
+            return true;
+        }
+
+        if (this->template get<TestAndTraceCapacityMaxRisk<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter TestAndTraceCapacityMaxRisk smaller {:d}", 0);
             return true;
         }
 
