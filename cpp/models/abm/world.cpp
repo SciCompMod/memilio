@@ -65,7 +65,7 @@ void World::evolve(TimePoint t, TimeSpan dt)
 
 void World::interaction(TimePoint t, TimeSpan dt)
 {
-    PRAGMA_OMP(parallel for num_threads(4))
+    PRAGMA_OMP(parallel for )
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person     = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
@@ -75,7 +75,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
-    PRAGMA_OMP(parallel for num_threads(4))
+    PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person = m_persons[i];
 
@@ -131,7 +131,7 @@ void World::migration(TimePoint t, TimeSpan dt)
     // check if a person makes a trip
     size_t num_trips = m_trip_list.num_trips();
 
-    if (num_trips != 0) {
+    if (!m_use_migration_rules && num_trips != 0) {
         while (m_trip_list.get_current_index() < num_trips &&
                m_trip_list.get_next_trip_time().seconds() < (t + dt).time_since_midnight().seconds()) {
             auto& trip             = m_trip_list.get_next_trip();
@@ -168,9 +168,10 @@ void World::migration(TimePoint t, TimeSpan dt)
 void World::begin_step(TimePoint t, TimeSpan dt)
 {
     m_testing_strategy.update_location_testing_schemes(t, get_locations());
-    PRAGMA_OMP(parallel for num_threads(4))
+    PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];
+        // mio::unused(location, dt);
         location->adjust_contact_rates(parameters.get_num_groups());
         location->cache_exposure_rates(t, dt, parameters.get_num_groups(), parameters);
     }

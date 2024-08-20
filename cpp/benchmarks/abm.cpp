@@ -36,7 +36,7 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
          {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::SocialEvent,
           mio::abm::LocationType::BasicsShop, mio::abm::LocationType::Hospital, mio::abm::LocationType::ICU}) {
 
-        const auto num_locs = std::max(size_t(1), num_persons / 2'000);
+        const auto num_locs = std::max(size_t(1), num_persons / 100);
         std::vector<mio::abm::LocationId> locs(num_locs);
         std::generate(locs.begin(), locs.end(), [&] {
             return world.add_location(loc_type);
@@ -114,6 +114,7 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.863}, {1, 0.969}, {7, 0.029}, {10, 0.002}, {14, 0.0014}, {21, 0}}, days);
     };
+    world.parameters.get<mio::abm::InfectionRateFromViralShed>() = 100;
 
     return mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
 }
@@ -126,6 +127,7 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
 void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer_list<uint32_t> seeds)
 {
     int tid = -1;
+    std::cout << "Number of persons = " << num_persons << "\n";
 #pragma omp parallel private(tid) // Start of parallel region: forks threads
     {
         tid = omp_get_thread_num(); // default is number of CPUs on machine
@@ -167,8 +169,11 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
 //have to be adjusted to get the benchmark back to normal.
 //For small sizes (e.g. 10k) extreme cases are too likely, i.e. infections die out
 //or overwhelm everything, so we don't benchmark these. Results should be mostly transferrable.
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_50k, 50000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_100k, 100000, {38462643u, 38327950u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_200k, 200000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
 
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_400k_pt, 400000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_800k_pt, 800000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_1600k_pt, 1600000, {14159265u, 35897932u})
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_3200k_pt, 3200000, {14159265u, 35897932u})
+    ->Unit(benchmark::kMillisecond);
 BENCHMARK_MAIN();
