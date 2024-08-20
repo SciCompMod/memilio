@@ -2378,7 +2378,7 @@ int main(int argc, char** argv)
         // 4: perc have to test if npi active
 
         // std::vector<std::pair<double, double>> grid_boundaries = {{1.8, 2.5}, {2.0, 4.0}, {0.5, 0.8}, {0.03, 0.04}};
-        std::vector<double> grid_boundaries = {2.1, 3.0, 0.68};
+        std::vector<double> grid_boundaries = {2.1, 2.6, 0.7};
         // std::vector<int> points_per_dim = {11, 11, 7, 11};
         std::vector<int> points_per_dim = {7, 7, 7};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
