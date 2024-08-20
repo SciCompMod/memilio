@@ -263,7 +263,7 @@ def plot_dead(path):
 
     # we need the real data json file cases_all_state_repdate_ma7
     df_abb = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county_age_ma7.json")
+        path+"/../../../pydata/Germany/cases_all_county_age_ma7.json")
 
     # we just need the columns cases and date
     # we need to offset the dates by 19 day
@@ -324,7 +324,7 @@ def plot_dead(path):
     plt.show()
    
 def plot_icu(path):
-    df_abb = pd.read_json(path+"/../pydata/Germany/county_divi_ma7.json")
+    df_abb = pd.read_json(path+"/../../../pydata/Germany/county_divi_ma7.json")
     perc_of_critical_in_icu = 0.47
 
     # we just need the columns ICU_low and ICU_hig
@@ -386,7 +386,7 @@ def plot_icu(path):
     fig.set_figwidth(20)
     fig.set_figheight(9)
     # we plot the ICU_low and the ICU_high
-    ax.plot(df_abb['Date'][0:90], ICU_Real, color='tab:red')
+    ax.plot(df_abb['Date'][0:90], ICU_Real,'x', color='tab:red')
     ax.fill_between(df_abb['Date'][0:90],ICU_Simulation75, ICU_Simulation25,
                          alpha=0.5, color='tab:blue')
     ax.plot(df_abb['Date'][0:90], ICU_Simulation, color='tab:blue')
@@ -553,7 +553,7 @@ def infer_positive_tests(path):
 
     # we need the real data from the json file cases_all_county_age_repdate_ma7.json
     df_abb = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county_repdate_ma7.json")
+        path+"/../../../pydata/Germany/cases_all_county_repdate_ma7.json")
     # we just need the columns cases and date
     df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
     # we need just the dates bewteen 2021-03-01 and 2021-06-01
@@ -660,7 +660,7 @@ def plot_estimated_reproduction_number(path):
 def plot_cumulative_detected_infections(path):
 
     df_abb = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county_repdate_ma7.json")
+        path+"/../../../pydata/Germany/cases_all_county_repdate_ma7.json")
     # we need the 
     df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
     df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') & (df_abb['Date'] <= '2021-06-01')]
@@ -712,7 +712,7 @@ def plot_cumulative_detected_infections(path):
     # we plot this
     # we plot the tests positive and the real cases
     plt.plot(time, total_50, color='tab:blue')
-    plt.plot(time, df_abb, color='tab:red')
+    plt.plot(time, df_abb, 'x', color='tab:red')
     plt.fill_between(time, total_95, total_05,
                             alpha=0.5, color='tab:blue')
     plt.xlabel('time (days)')
@@ -731,7 +731,9 @@ def plot_cumulative_detected_infections(path):
     fig.set_figheight(9)
     # we plot the tests positive and the real cases
     ax.plot(time[0:89], total_50_diff, color='tab:blue')
-    ax.plot(time[0:89], df_abb_diff, color='tab:red')
+    # we dont plot the real curve as a line but as x points and not every day but every 2nd day
+    ax.plot(time[0:89], df_abb_diff[0:89], 'x', color='tab:red')
+
     ax.set_xlabel('time (days)')
     ax.set_ylabel('Number of new detected infections')
     ax.title.set_text('New detected infections')
@@ -794,8 +796,8 @@ def plot_positive_and_done_test(path):
 
 if __name__ == "__main__":
     # path = "/Users/david/Documents/HZI/memilio/data/results_last_run"
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/1/results_last_run"
+    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/5/results_2024-08-20135139"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_last_run"
 
     if (len(sys.argv) > 1):
