@@ -2324,8 +2324,8 @@ int main(int argc, char** argv)
     rank      = 0;
 #endif
 
-    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
 
