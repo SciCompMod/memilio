@@ -1729,7 +1729,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
     omp_set_max_active_levels(2);
-PRAGMA_OMP(parallel for num_threads(64))
+PRAGMA_OMP(parallel for num_threads(128) schedule (dynamic, 4))
 for (size_t i = 0; i < grid_search_rank.size(); i++) {
     auto params = grid_search_rank[i];
     std::random_device rd;
@@ -2328,8 +2328,8 @@ int main(int argc, char** argv)
     rank      = 0;
 #endif
 
-    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
 
@@ -2377,11 +2377,11 @@ int main(int argc, char** argv)
         // 3: testing prob symptomatic
         // 4: perc have to test if npi active
 
-        std::vector<std::pair<double, double>> grid_boundaries = {{1.8, 2.5}, {2.0, 4.0}, {0.5, 0.8}, {0.03, 0.04}};
-        // std::vector<double> grid_boundaries = {2.08, 3.3, 0.65};
-        std::vector<int> points_per_dim = {11, 11, 7, 11};
-        // std::vector<int> points_per_dim = {7, 7, 7};
-        auto grid = grid_points(grid_boundaries, points_per_dim);
+        // std::vector<std::pair<double, double>> grid_boundaries = {{1.8, 2.5}, {2.0, 4.0}, {0.5, 0.8}, {0.03, 0.04}};
+        std::vector<double> grid_boundaries = {2.1, 3.0, 0.68};
+        // std::vector<int> points_per_dim = {11, 11, 7, 11};
+        std::vector<int> points_per_dim = {7, 7, 7};
+        auto grid                       = grid_points(grid_boundaries, points_per_dim);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, 0, run_grid_search);
             if (!created) {
@@ -2393,7 +2393,7 @@ int main(int argc, char** argv)
     }
     else {
         // std::vector<std::vector<double>> parameters = {{0.01, 0.03, 0.05}, {5, 10, 30}};
-        std::vector<std::vector<double>> parameters = {{2.08}, {2.9}, {0.75}};
+        std::vector<std::vector<double>> parameters = {{2.21}, {2.9}, {0.675}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
