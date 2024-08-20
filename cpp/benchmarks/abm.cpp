@@ -179,4 +179,6 @@ BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_1600k_pt, 1600000, {14159265u, 35
     ->Unit(benchmark::kMillisecond);
 BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_3200k_pt, 3200000, {14159265u, 35897932u})
     ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_6400k_pt, 6400000, {14159265u, 35897932u})
+    ->Unit(benchmark::kMillisecond);
 BENCHMARK_MAIN();
