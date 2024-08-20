@@ -69,7 +69,7 @@ namespace mio
 
 /**
  * Class that performs multiple simulation runs with randomly sampled parameters.
- * Can simulate migration graphs with one simulation in each node or single simulations.
+ * Can simulate mobility graphs with one simulation in each node or single simulations.
  * @tparam S type of simulation that runs in one node of the graph.
  * @tparam ParametersGraph stores the parameters of the simulation. This is the input of ParameterStudies.
  * @tparam SimulationGraph stores simulations and their results of each run. This is the output of ParameterStudies for each run.
@@ -372,7 +372,7 @@ private:
                                      has_travel_time<PropertyType>::value&& has_path<PropertyType>::value > {});
         }
 
-        return make_migration_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
+        return make_mobility_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
     }
 
     template <typename GraphType, typename NodeType>

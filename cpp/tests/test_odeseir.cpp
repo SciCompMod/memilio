@@ -422,7 +422,6 @@ TEST(TestSeir, FlowSimulation)
 
     // flows
     EXPECT_EQ(sim[1].get_num_time_points(), 2);
-    sim[1].print_table();
     const auto& flows_t1 = sim[1].get_last_value();
     EXPECT_NEAR(flows_t1[0], 25, 1e-12);
     EXPECT_NEAR(flows_t1[1], 50, 1e-12);
