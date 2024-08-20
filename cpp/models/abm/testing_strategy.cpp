@@ -70,11 +70,10 @@ bool TestingCriteria::evaluate(const Person& p, TimePoint t) const
            (m_infection_states.none() || m_infection_states[static_cast<size_t>(p.get_infection_state(t))]);
 }
 
-TestingScheme::TestingScheme(const TestingCriteria& testing_criteria, TimeSpan minimal_time_since_last_test,
-                             TimePoint start_date, TimePoint end_date, TestParameters test_parameters,
-                             double probability)
+TestingScheme::TestingScheme(const TestingCriteria& testing_criteria, TimeSpan validity_period, TimePoint start_date,
+                             TimePoint end_date, TestParameters test_parameters, double probability)
     : m_testing_criteria(testing_criteria)
-    , m_minimal_time_since_last_test(minimal_time_since_last_test)
+    , m_validity_period(validity_period)
     , m_start_date(start_date)
     , m_end_date(end_date)
     , m_test_parameters(test_parameters)
@@ -84,8 +83,7 @@ TestingScheme::TestingScheme(const TestingCriteria& testing_criteria, TimeSpan m
 
 bool TestingScheme::operator==(const TestingScheme& other) const
 {
-    return this->m_testing_criteria == other.m_testing_criteria &&
-           this->m_minimal_time_since_last_test == other.m_minimal_time_since_last_test &&
+    return this->m_testing_criteria == other.m_testing_criteria && this->m_validity_period == other.m_validity_period &&
            this->m_start_date == other.m_start_date && this->m_end_date == other.m_end_date &&
            this->m_test_parameters.sensitivity == other.m_test_parameters.sensitivity &&
            this->m_test_parameters.specificity == other.m_test_parameters.specificity &&
@@ -105,12 +103,19 @@ void TestingScheme::update_activity_status(TimePoint t)
 
 bool TestingScheme::run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const
 {
-    if (t - person.get_time_of_last_test() > m_minimal_time_since_last_test) {
-        if (m_testing_criteria.evaluate(person, t)) {
-            double random = UniformDistribution<double>::get_instance()(rng);
-            if (random < m_probability) {
-                return !person.get_tested(rng, t, m_test_parameters);
-            }
+    auto test_result = person.get_test_result(m_test_parameters.type);
+    // If the agent has a test result valid until now, use the result directly
+    if ((test_result.time_of_testing > TimePoint(std::numeric_limits<int>::min())) &&
+        (test_result.time_of_testing + m_validity_period >= t)) {
+        return !test_result.result;
+    }
+    // Otherwise, the time_of_testing in the past (i.e. the agent has already performed it).
+    if (m_testing_criteria.evaluate(person, t - m_test_parameters.required_time)) {
+        double random = UniformDistribution<double>::get_instance()(rng);
+        if (random < m_probability) {
+            bool result = person.get_tested(rng, t - m_test_parameters.required_time, m_test_parameters);
+            person.add_test_result(t, m_test_parameters.type, result);
+            return !result;
         }
     }
     return true;
@@ -176,7 +181,6 @@ bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator& rng, Person& p
     if (location.get_type() == mio::abm::LocationType::Home) {
         return true;
     }
-
     //lookup schemes for this specific location as well as the location type
     //lookup in std::vector instead of std::map should be much faster unless for large numbers of schemes
     for (auto key : {std::make_pair(location.get_type(), location.get_id()),

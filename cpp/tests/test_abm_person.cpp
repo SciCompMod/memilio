@@ -92,8 +92,9 @@ TEST(TestPerson, setGetAssignedLocation)
 TEST(TestPerson, quarantine)
 {
     using testing::Return;
-    auto rng         = mio::RandomNumberGenerator();
-    auto test_params = mio::abm::TestParameters{1.01, 1.01}; //100% safe test
+    auto rng = mio::RandomNumberGenerator();
+    auto test_params =
+        mio::abm::TestParameters{1.01, 1.01, mio::abm::minutes(30), mio::abm::TestType::Generic}; //100% safe test
 
     auto infection_parameters = mio::abm::Parameters(num_age_groups);
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -165,7 +166,6 @@ TEST(TestPerson, get_tested)
     EXPECT_EQ(susceptible.is_in_quarantine(t, params), false);
     EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_parameters), true);
     EXPECT_EQ(susceptible.is_in_quarantine(t, params), true);
-    EXPECT_EQ(susceptible.get_time_of_last_test(), mio::abm::TimePoint(0));
 
     // Test antigen test
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
@@ -180,7 +180,6 @@ TEST(TestPerson, get_tested)
     EXPECT_EQ(infected.get_tested(rng_infected, t, antigen_parameters), false);
     EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_parameters), false);
     EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_parameters), true);
-    EXPECT_EQ(susceptible.get_time_of_last_test(), mio::abm::TimePoint(0));
 }
 
 TEST(TestPerson, getCells)
@@ -320,4 +319,24 @@ TEST(Person, rng)
     p_rng();
     EXPECT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(1));
     EXPECT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{1}));
+}
+
+TEST(Person, addAndGetTestResult)
+{
+    mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
+    auto person = make_test_person(location);
+    auto t      = mio::abm::TimePoint(0);
+    // Tests if m_test_results initialized correctly
+    EXPECT_EQ(person.get_test_result(mio::abm::TestType::Generic).time_of_testing,
+              mio::abm::TimePoint(std::numeric_limits<int>::min()));
+    EXPECT_FALSE(person.get_test_result(mio::abm::TestType::Generic).result);
+    EXPECT_EQ(person.get_test_result(mio::abm::TestType::Antigen).time_of_testing,
+              mio::abm::TimePoint(std::numeric_limits<int>::min()));
+    EXPECT_FALSE(person.get_test_result(mio::abm::TestType::Antigen).result);
+    EXPECT_EQ(person.get_test_result(mio::abm::TestType::PCR).time_of_testing,
+              mio::abm::TimePoint(std::numeric_limits<int>::min()));
+    EXPECT_FALSE(person.get_test_result(mio::abm::TestType::PCR).result);
+    // Test if m_test_results updated
+    person.add_test_result(t, mio::abm::TestType::Generic, true);
+    EXPECT_TRUE(person.get_test_result(mio::abm::TestType::Generic).result);
 }

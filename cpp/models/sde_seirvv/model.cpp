@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Khoa Nguyen
+* Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,37 +18,12 @@
 * limitations under the License.
 */
 
-#ifndef MIO_ABM_TEST_TYPE_H
-#define MIO_ABM_TEST_TYPE_H
+#include "sde_seirvv/model.h"
 
-#include <cstdint>
-#include <limits>
 namespace mio
 {
-namespace abm
+namespace sseirvv
 {
 
-/**
- * @brief Type of a Test.
- */
-enum class TestType : std::uint32_t
-{
-    Generic = 0,
-    Antigen,
-    PCR,
-
-    Count
-};
-
-/**
-* @brief The TestResult of a Person.
-*/
-struct TestResult {
-    TimePoint time_of_testing{std::numeric_limits<int>::min()}; ///< The TimePoint when the Person performs the test.
-    bool result{false}; ///< The test result.
-};
-
-} // namespace abm
+} // namespace sseirvv
 } // namespace mio
-
-#endif
