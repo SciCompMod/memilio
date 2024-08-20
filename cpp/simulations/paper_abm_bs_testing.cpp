@@ -1059,7 +1059,7 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
     rmse_icu  = rmse_icu / real_data_icu_vec.size();
     rmse_conf = rmse_conf / real_data_conf_vec.size();
 
-    return (1.00 * rmse_dead) + (0.5 * rmse_icu) + (0.01 * 0.01 * rmse_conf);
+    return (1.00 * rmse_dead) + (0.5 * rmse_icu) + (0.01 * 0.01 * 0.1 * rmse_conf);
 }
 
 /**
@@ -2378,9 +2378,9 @@ int main(int argc, char** argv)
         // 4: perc have to test if npi active
 
         // std::vector<std::pair<double, double>> grid_boundaries = {{1.8, 2.5}, {2.0, 4.0}, {0.5, 0.8}, {0.03, 0.04}};
-        std::vector<double> grid_boundaries = {2.2, 2.8, 0.7};
+        std::vector<double> grid_boundaries = {2.2, 2.8, 0.7, 0.03};
         // std::vector<int> points_per_dim = {11, 11, 7, 11};
-        std::vector<int> points_per_dim = {7, 7, 7};
+        std::vector<int> points_per_dim = {7, 7, 7, 3};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, 0, run_grid_search);
