@@ -678,11 +678,13 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::ve
 {
     auto num_groups = model[0].parameters.get_num_groups();
 
-    auto days_until_effective1 =
-        (int)(double)model[0].parameters.template get<DaysUntilEffectivePartialImmunity<FP>>()[AgeGroup(0)];
-    auto days_until_effective2 =
-        (int)(double)model[0].parameters.template get<DaysUntilEffectiveImprovedImmunity<FP>>()[AgeGroup(0)];
-    auto vaccination_distance = (int)(double)model[0].parameters.template get<VaccinationGap<FP>>()[AgeGroup(0)];
+    // type conversion from UncertainValue -> FP -> int
+    auto days_until_effective1 = static_cast<int>(
+        static_cast<FP>(model[0].parameters.template get<DaysUntilEffectivePartialImmunity<FP>>()[AgeGroup(0)]));
+    auto days_until_effective2 = static_cast<int>(
+        static_cast<FP>(model[0].parameters.template get<DaysUntilEffectiveImprovedImmunity<FP>>()[AgeGroup(0)]));
+    auto vaccination_distance =
+        static_cast<int>(static_cast<FP>(model[0].parameters.template get<VaccinationGap<FP>>()[AgeGroup(0)]));
 
     // iterate over regions (e.g., counties)
     for (size_t i = 0; i < model.size(); ++i) {

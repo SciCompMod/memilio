@@ -275,8 +275,8 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::str
                                    const std::vector<int>& vregion)
 {
     // Specifies whether population data should be accumulated to one age group.
-    const bool multiple_age_groups = model[0].parameters.get_num_groups() > 1;
-    BOOST_OUTCOME_TRY(const auto&& num_population, read_population_data(path, vregion, multiple_age_groups));
+    const bool is_single_age_group = static_cast<size_t>(model[0].parameters.get_num_groups()) == 1;
+    BOOST_OUTCOME_TRY(const auto&& num_population, read_population_data(path, vregion, is_single_age_group));
     BOOST_OUTCOME_TRY(set_population_data(model, num_population, vregion));
     return success();
 }
@@ -378,8 +378,7 @@ IOResult<void> read_input_data_germany(std::vector<Model>& model, Date date,
     }
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_age_ma7.json"), {0}, date,
                                                         scaling_factor_inf));
-    BOOST_OUTCOME_TRY(
-        details::set_population_data(model, path_join(dir, "county_current_population.json"), {0}, false));
+    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), {0}));
     return success();
 }
 
@@ -407,8 +406,7 @@ IOResult<void> read_input_data_state(std::vector<Model>& model, Date date, std::
 
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_state_age_ma7.json"), state,
                                                         date, scaling_factor_inf));
-    BOOST_OUTCOME_TRY(
-        details::set_population_data(model, path_join(dir, "county_current_population.json"), state, false));
+    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), state));
     return success();
 }
 
@@ -438,7 +436,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(
         model, path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"), county, date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(
-        model, path_join(dir, "pydata/Germany", "county_current_population.json"), county, false));
+        model, path_join(dir, "pydata/Germany", "county_current_population.json"), county));
 
     if (export_time_series) {
         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
@@ -479,9 +477,7 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
     }
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(data_dir, "confirmed_cases.json"), node_ids,
                                                         date, scaling_factor_inf));
-    bool single_age_group = scaling_factor_inf.size() == 1 ? true : false;
-    BOOST_OUTCOME_TRY(
-        details::set_population_data(model, path_join(data_dir, "population_data.json"), node_ids, single_age_group));
+    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(data_dir, "population_data.json"), node_ids));
 
     if (export_time_series) {
         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
