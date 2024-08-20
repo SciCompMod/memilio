@@ -108,8 +108,8 @@ auto get_migration_factors(const Sim& /*sim*/, double /*t*/, const Eigen::Ref<co
 }
 
 template <typename FP>
-void check_negative_values_vec(Eigen::Ref<Vector<FP>> vec, const size_t num_age_groups, FP tolerance = -1e-10,
-                               const size_t max_iterations = 45)
+void check_negative_values_vec(Eigen::Ref<Vector<FP>> vec, const size_t num_age_groups, FP tolerance = -1e-7,
+                               const size_t max_iterations = 100)
 {
     // before moving the commuters, we need to look for negative values in vec and correct them.
     const size_t num_comparts = vec.size() / num_age_groups;
@@ -764,8 +764,8 @@ private:
                     std::vector<ScalarType>(n.property.base_sim.get_result().get_last_value().data(),
                                             n.property.base_sim.get_result().get_last_value().data() +
                                                 n.property.base_sim.get_result().get_last_value().size());
-                std::cout << "Negative Value in local node detected."
-                          << "\n";
+                log_error("Negative Value " + std::to_string(n_indx) + " at time " + std::to_string(indx_schedule) +
+                          " in local node detected.");
             }
         }
     }

@@ -381,8 +381,10 @@ mio::IOResult<void> scale_contacts_local(mio::ExtendedGraph<mio::osecirvvs::Mode
                                                      });
     const ScalarType avg_commuter_share = num_commuters / total_population;
 
-    std::cout << "avg_commuter_share: " << avg_commuter_share << std::endl;
-    std::cout << "avg_traveltime: " << avg_traveltime << std::endl;
+    if (mio::mpi::is_root()) {
+        std::cout << "avg_commuter_share: " << avg_commuter_share << std::endl;
+        std::cout << "avg_traveltime: " << avg_traveltime << std::endl;
+    }
 
     // scale all contact matrices
     for (auto& node : params_graph.nodes()) {
@@ -515,7 +517,7 @@ set_nodes(const mio::osecirvvs::Parameters<FP>& params, mio::Date start_date, mi
         mobility_model.populations.set_total(0);
 
         // reduce transmission on contact due to mask obligation in mobility node
-        // first age group not able to  (properly) wear masks
+        // first age group not able to (properly) wear masks
         if (masks) {
 
             const double fact_surgical_mask = 0.1;
@@ -523,7 +525,7 @@ set_nodes(const mio::osecirvvs::Parameters<FP>& params, mio::Date start_date, mi
 
             double factor_mask[] = {1, fact_surgical_mask, fact_ffp2, fact_ffp2, fact_ffp2, fact_ffp2};
             if (!ffp2) {
-                for (size_t j = 1; j < 6; j++) {
+                for (size_t j = 0; j < 6; j++) {
                     factor_mask[j] = factor_mask[j] * fact_surgical_mask / fact_ffp2;
                 }
             }
