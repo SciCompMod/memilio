@@ -295,7 +295,7 @@ public:
     template <class Sim>
     void apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
 
-private:
+protected:
     MobilityParameters<FP> m_parameters;
     TimeSeries<double> m_mobile_population;
     TimeSeries<double> m_return_times;

@@ -395,7 +395,7 @@ mio::IOResult<void> scale_contacts_local(mio::ExtendedGraph<mio::osecirvvs::Mode
 }
 
 // reset population in graph
-void init_pop_cologne_szenario(mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>>& graph,
+void init_pop_cologne_szenario(mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>& graph,
                                const int id_cologne)
 {
     std::vector<std::vector<double>> immunity = {{0.04, 0.61, 0.35}, {0.04, 0.61, 0.35},   {0.075, 0.62, 0.305},
@@ -587,7 +587,7 @@ set_edges(const std::string& travel_times_dir, const std::string mobility_data_d
 
             // mobility coefficients have the same number of components as the contact matrices.
             // so that the same NPIs/dampings can be used for both (e.g. more home office => fewer commuters)
-            auto mobility_coeffs = mio::MigrationCoefficientGroup(contact_locations_size, populations.numel());
+            auto mobility_coeffs = mio::MobilityCoefficientGroup(contact_locations_size, populations.numel());
             auto num_age_groups =
                 (size_t)params_graph.nodes()[county_idx_i].property.base_sim.parameters.get_num_groups();
             commuting_weights =

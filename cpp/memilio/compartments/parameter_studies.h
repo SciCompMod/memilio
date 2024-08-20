@@ -74,8 +74,8 @@ namespace mio
  * @tparam ParametersGraph stores the parameters of the simulation. This is the input of ParameterStudies.
  * @tparam SimulationGraph stores simulations and their results of each run. This is the output of ParameterStudies for each run.
  */
-template <class S, class ParametersGraph = Graph<typename S::Model, MigrationParameters<double>>,
-          class SimulationGraph = Graph<SimulationNode<S>, MigrationEdge<double>>>
+template <class S, class ParametersGraph = Graph<typename S::Model, MobilityParameters<double>>,
+          class SimulationGraph = Graph<SimulationNode<S>, MobilityEdge<double>>>
 class ParameterStudy
 {
 public:

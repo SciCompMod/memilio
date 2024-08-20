@@ -63,21 +63,21 @@ struct ExtendedNodeProperty {
 };
 
 template <typename FP = double>
-class ExtendedMigrationEdge : public MigrationEdge<FP>
+class ExtendedMobilityEdge : public MobilityEdge<FP>
 {
 public:
     double travel_time;
     std::vector<int> path;
 
-    ExtendedMigrationEdge(const MigrationParameters<FP>& params, double tt, std::vector<int> p)
-        : MigrationEdge<FP>(params)
+    ExtendedMobilityEdge(const MobilityParameters<FP>& params, double tt, std::vector<int> p)
+        : MobilityEdge<FP>(params)
         , travel_time(tt)
         , path(p)
     {
     }
 
-    ExtendedMigrationEdge(const Eigen::VectorXd& coeffs, double tt, std::vector<int> p)
-        : MigrationEdge<FP>(coeffs)
+    ExtendedMobilityEdge(const Eigen::VectorXd& coeffs, double tt, std::vector<int> p)
+        : MobilityEdge<FP>(coeffs)
         , travel_time(tt)
         , path(p)
     {
@@ -85,7 +85,7 @@ public:
 
     auto& get_migrated()
     {
-        return this->m_migrated;
+        return this->m_mobile_population;
     }
     auto& get_return_times()
     {
@@ -98,11 +98,11 @@ public:
 };
 
 template <class Sim>
-using ExtendedGraph = Graph<ExtendedNodeProperty<Sim>, ExtendedMigrationEdge<double>>;
+using ExtendedGraph = Graph<ExtendedNodeProperty<Sim>, ExtendedMobilityEdge<double>>;
 
-// Default implementation when get_migration_factors is not defined for Sim
-template <class Sim, std::enable_if_t<!is_expression_valid<get_migration_factors_expr_t, Sim>::value, void*> = nullptr>
-auto get_migration_factors(const Sim& /*sim*/, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
+// Default implementation when get_mobility_factors is not defined for Sim
+template <class Sim, std::enable_if_t<!is_expression_valid<get_mobility_factors_expr_t, Sim>::value, void*> = nullptr>
+auto get_mobility_factors(const Sim& /*sim*/, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
     return Eigen::VectorXd::Ones(y.rows());
 }
@@ -183,7 +183,7 @@ template <typename FP, class Sim>
 class MobilityFunctions
 {
 public:
-    void init_mobility(FP t, ExtendedMigrationEdge<FP>& edge, Sim& from_sim, Sim& to_sim)
+    void init_mobility(FP t, ExtendedMobilityEdge<FP>& edge, Sim& from_sim, Sim& to_sim)
     {
         const auto t_indx_start_mobility_sim_from = find_time_index(from_sim, t, false);
 
@@ -192,7 +192,7 @@ public:
         edge.get_migrated().add_time_point(
             t, (results_from.get_value(t_indx_start_mobility_sim_from).array() *
                 edge.get_parameters().get_coefficients().get_matrix_at(t).array() *
-                get_migration_factors(from_sim, t, results_from.get_value(t_indx_start_mobility_sim_from)).array())
+                get_mobility_factors(from_sim, t, results_from.get_value(t_indx_start_mobility_sim_from)).array())
                    .matrix());
         edge.get_return_times().add_time_point(t);
 
@@ -204,7 +204,7 @@ public:
         from_sim.get_result().get_last_value() -= edge.get_migrated().get_last_value();
     }
 
-    void move_migrated(FP t, ExtendedMigrationEdge<FP>& edge, Sim& from_sim, Sim& to_sim)
+    void move_migrated(FP t, ExtendedMobilityEdge<FP>& edge, Sim& from_sim, Sim& to_sim)
     {
         // When moving from one regional entity/model to another, we need to update the local population.
         // check_negative_values_vec needs to be called once since its checks for negative values and corrects them.
@@ -219,7 +219,7 @@ public:
         check_negative_values_vec(to_sim.get_result().get_value(t_indx_sim_to_arrival), num_age_groups);
     }
 
-    void update_commuters(FP t, FP dt, ExtendedMigrationEdge<FP>& edge, Sim& sim, bool is_mobility_model)
+    void update_commuters(FP t, FP dt, ExtendedMobilityEdge<FP>& edge, Sim& sim, bool is_mobility_model)
     {
         const auto t_indx_start_mobility_sim = find_time_index(sim, t, true);
         Eigen::VectorXd flows                = Eigen::VectorXd::Zero(sim.get_flows().get_last_value().size());
@@ -241,7 +241,7 @@ public:
         }
     }
 
-    void delete_migrated(ExtendedMigrationEdge<FP>& edge)
+    void delete_migrated(ExtendedMobilityEdge<FP>& edge)
     {
         for (Eigen::Index i = edge.get_return_times().get_num_time_points() - 1; i >= 0; --i) {
             edge.get_migrated().remove_time_point(i);
@@ -793,11 +793,11 @@ private:
 };
 
 template <typename FP, class Sim>
-GraphSimulationExtended<Graph<ExtendedNodeProperty<Sim>, ExtendedMigrationEdge<FP>>, MobilityFunctions<FP, Sim>>
-make_migration_sim(FP t0, FP dt, Graph<ExtendedNodeProperty<Sim>, ExtendedMigrationEdge<FP>>&& graph)
+GraphSimulationExtended<Graph<ExtendedNodeProperty<Sim>, ExtendedMobilityEdge<FP>>, MobilityFunctions<FP, Sim>>
+make_mobility_sim(FP t0, FP dt, Graph<ExtendedNodeProperty<Sim>, ExtendedMobilityEdge<FP>>&& graph)
 {
     auto migration_modes = MobilityFunctions<FP, Sim>();
-    return GraphSimulationExtended<Graph<ExtendedNodeProperty<Sim>, ExtendedMigrationEdge<FP>>,
+    return GraphSimulationExtended<Graph<ExtendedNodeProperty<Sim>, ExtendedMobilityEdge<FP>>,
                                    MobilityFunctions<FP, Sim>>(t0, dt, std::move(graph), {}, migration_modes);
 }
 
