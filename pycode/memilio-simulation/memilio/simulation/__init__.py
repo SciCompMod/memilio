@@ -27,19 +27,19 @@ from memilio.simulation._simulation import *
 
 def __getattr__(attr):
     if attr == "abm":
-        import memilio.simulation._simulation_abm as abm
+        import memilio.simulation.abm as abm
         return abm
     elif attr == "osir":
-        import memilio.simulation._simulation_osir as osir
+        import memilio.simulation.osir as osir
         return osir
     elif attr == "oseir":
-        import memilio.simulation._simulation_oseir as oseir
+        import memilio.simulation.oseir as oseir
         return oseir
     elif attr == "osecir":
-        import memilio.simulation._simulation_osecir as osecir
+        import memilio.simulation.osecir as osecir
         return osecir
     elif attr == "osecirvvs":
-        import memilio.simulation._simulation_osecirvvs as osecirvvs
+        import memilio.simulation.osecirvvs as osecirvvs
         return osecirvvs
 
     raise AttributeError("module {!r} has no attribute "

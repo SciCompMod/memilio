@@ -124,7 +124,7 @@ PYBIND11_MODULE(_simulation, m)
             return std::vector<std::pair<mio::Date, mio::Date>>(h.begin(), h.end());
         },
         py::arg("state_id"), py::arg("start_date") = mio::Date(std::numeric_limits<int>::min(), 1, 1),
-        py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1)); // TODO: Python doesnt know theses default values
+        py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1)); 
 
     m.def(
         "read_mobility_plain",
