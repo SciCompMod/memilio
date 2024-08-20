@@ -788,7 +788,7 @@ TEST(TestOdeSECIRTS, draw_sample_graph)
 {
     mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
-    mio::Graph<mio::osecirts::Model<double>, mio::MigrationParameters<double>> graph;
+    mio::Graph<mio::osecirts::Model<double>, mio::MobilityParameters<double>> graph;
 
     auto num_age_groups = 6;
     //create model with invalid initials so the test fails if no sampling is done
@@ -1183,11 +1183,11 @@ TEST(TestOdeSECIRTS, parameter_percentiles)
 
     //build small graph
     auto model = make_model(5);
-    auto graph = mio::Graph<mio::osecirts::Model<double>, mio::MigrationParameters<double>>();
+    auto graph = mio::Graph<mio::osecirts::Model<double>, mio::MobilityParameters<double>>();
     graph.add_node(0, model);
 
     //sample a few times
-    auto sampled_graphs = std::vector<mio::Graph<mio::osecirts::Model<double>, mio::MigrationParameters<double>>>();
+    auto sampled_graphs = std::vector<mio::Graph<mio::osecirts::Model<double>, mio::MobilityParameters<double>>>();
     std::generate_n(std::back_inserter(sampled_graphs), 10, [&graph]() {
         return mio::osecirts::draw_sample(graph);
     });
