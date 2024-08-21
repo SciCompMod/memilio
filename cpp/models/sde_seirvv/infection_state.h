@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Sascha Korf
+* Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,48 +18,34 @@
 * limitations under the License.
 */
 
-#ifndef ABM_MOVEMENT_DATA_H
-#define ABM_MOVEMENT_DATA_H
-
-#include "abm/time.h"
+#ifndef MIO_SDE_SEIRVV_INFECTIONSTATE_H
+#define MIO_SDE_SEIRVV_INFECTIONSTATE_H
 
 namespace mio
 {
-namespace abm
+namespace sseirvv
 {
-
 
 /**
- * @brief Mode of Transport.
+ * @brief The InfectionState enum describes the possible
+ * categories for the infectious state of persons
  */
-enum class TransportMode : uint32_t
+enum class InfectionState
 {
-    Bike = 0,
-    CarDriver,
-    CarPassenger,
-    PublicTransport,
-    Walking,
-    Other,
-    Unknown
+    Susceptible,
+    ExposedV1,
+    InfectedV1,
+    RecoveredV1,
+    ExposedV2,
+    InfectedV2,
+    RecoveredV2,
+    ExposedV1V2,
+    InfectedV1V2,
+    RecoveredV1V2,
+    Count
 };
 
-
-/**
- * @brief Type of the activity.
- */
-enum class ActivityType : uint32_t
-{
-    Workplace = 0,
-    Education,
-    Shopping,
-    Leisure,
-    PrivateMatters,
-    OtherActivity,
-    Home,
-    UnknownActivity
-};
-
-} // namespace abm
+} // namespace sseirvv
 } // namespace mio
 
-#endif //ABM_MOVEMENT_DATA_H
+#endif // MIO_SDE_SEIRVV_INFECTIONSTATE_H

@@ -431,7 +431,7 @@ TEST(TestOdeSECIRVVS, draw_sample)
 {
     mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
-    mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>> graph;
+    mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> graph;
 
     auto num_age_groups = 6;
     //create model with invalid initials so the test fails if no sampling is done
@@ -1008,11 +1008,11 @@ TEST(TestOdeSECIRVVS, parameter_percentiles)
 
     //build small graph
     auto model = make_model(5);
-    auto graph = mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>>();
+    auto graph = mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>();
     graph.add_node(0, model);
 
     //sample a few times
-    auto sampled_graphs = std::vector<mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>>>();
+    auto sampled_graphs = std::vector<mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>>();
     std::generate_n(std::back_inserter(sampled_graphs), 10, [&graph]() {
         return mio::osecirvvs::draw_sample(graph, true);
     });
@@ -1064,97 +1064,97 @@ TEST(TestOdeSECIRVVS, get_infections_relative)
     ASSERT_DOUBLE_EQ(relative_infections, 105 / model.populations.get_total());
 }
 
-TEST(TestOdeSECIRVVS, get_migration_factors)
+TEST(TestOdeSECIRVVS, get_mobility_factors)
 {
     auto num_age_groups = 2;
     auto model          = make_model(num_age_groups);
     auto sim            = mio::osecirvvs::Simulation<>(model);
     auto y              = sim.get_result()[0];
 
-    auto migration_factors = mio::osecirvvs::get_migration_factors<double>(sim, 0.0, y);
+    auto mobility_factors = mio::osecirvvs::get_mobility_factors<double>(sim, 0.0, y);
 
     auto expected_values = (Eigen::VectorXd(Eigen::Index(mio::osecirvvs::InfectionState::Count) * num_age_groups) << 1,
                             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                             1, 1, 1, 1, 1, 1, 1, 1, 0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
                                .finished();
-    ASSERT_THAT(print_wrap(migration_factors), MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
+    ASSERT_THAT(print_wrap(mobility_factors), MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
 }
 
 TEST(TestOdeSECIRVVS, test_commuters)
 {
     auto model                                      = make_model(2);
-    auto migration_factor                           = 0.1;
+    auto mobility_factor                            = 0.1;
     auto non_detection_factor                       = 0.3;
     model.parameters.get_start_commuter_detection() = 0.0;
     model.parameters.get_end_commuter_detection()   = 20.0;
     model.parameters.get_commuter_nondetection()    = non_detection_factor;
     auto sim                                        = mio::osecirvvs::Simulation<>(model);
     auto before_testing                             = sim.get_result().get_last_value().eval();
-    auto migrated                                   = (sim.get_result().get_last_value() * migration_factor).eval();
-    auto migrated_tested                            = migrated.eval();
+    auto mobile_population                                      = (sim.get_result().get_last_value() * mobility_factor).eval();
+    auto mobile_population_tested                               = mobile_population.eval();
 
-    mio::osecirvvs::test_commuters<double>(sim, migrated_tested, 0.0);
+    mio::osecirvvs::test_commuters<double>(sim, mobile_population_tested, 0.0);
 
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] * non_detection_factor,
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)],
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] * non_detection_factor,
                 1e-5);
     ASSERT_NEAR(
         sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed)] +
-            migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] * (1 - non_detection_factor),
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] * (1 - non_detection_factor),
         1e-5);
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] *
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)],
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] *
                     non_detection_factor,
                 1e-5);
     ASSERT_NEAR(
         sim.get_result()
             .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed)] +
-            migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] *
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] *
                 (1 - non_detection_factor),
         1e-5);
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] *
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)],
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] *
                     non_detection_factor,
                 1e-5);
     ASSERT_NEAR(
         sim.get_result()
             .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed)] +
-            migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] *
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] *
                 (1 - non_detection_factor),
         1e-5);
 
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] * non_detection_factor,
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)],
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] * non_detection_factor,
                 1e-5);
     ASSERT_NEAR(sim.get_result()
                     .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed)],
                 before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed)] +
-                    migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] *
+                    mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] *
                         (1 - non_detection_factor),
                 1e-5);
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] *
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)],
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] *
                     non_detection_factor,
                 1e-5);
     ASSERT_NEAR(
         sim.get_result()
             .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed)] +
-            migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] *
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] *
                 (1 - non_detection_factor),
         1e-5);
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] *
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)],
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] *
                     non_detection_factor,
                 1e-5);
     ASSERT_NEAR(
         sim.get_result().get_last_value()[Eigen::Index(
             mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed)] +
-            migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] *
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] *
                 (1 - non_detection_factor),
         1e-5);
 }
@@ -1162,107 +1162,122 @@ TEST(TestOdeSECIRVVS, test_commuters)
 TEST(TestOdeSECIRVVS, check_constraints_parameters)
 {
     auto model = mio::osecirvvs::Model<double>(1);
-    ASSERT_EQ(model.parameters.check_constraints(), 0);
+    EXPECT_EQ(model.parameters.check_constraints(), 0);
 
     mio::set_log_level(mio::LogLevel::off);
     model.parameters.set<mio::osecirvvs::Seasonality<double>>(-0.2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::Seasonality<double>>(0.2);
     model.parameters.set<mio::osecirvvs::ICUCapacity<double>>(-2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ICUCapacity<double>>(2);
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacity<double>>(-1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacity<double>>(1);
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(-1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(1);
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskSymptoms<double>>(-1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskSymptoms<double>>(1);
     model.parameters.set<mio::osecirvvs::TimeExposed<double>>(-2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::TimeExposed<double>>(2);
     model.parameters.set<mio::osecirvvs::TimeInfectedNoSymptoms<double>>(0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::TimeInfectedNoSymptoms<double>>(5);
     model.parameters.set<mio::osecirvvs::TimeInfectedSymptoms<double>>(0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::TimeInfectedSymptoms<double>>(2);
     model.parameters.set<mio::osecirvvs::TimeInfectedSevere<double>>(-1);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::TimeInfectedSevere<double>>(2);
     model.parameters.set<mio::osecirvvs::TimeInfectedCritical<double>>(0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::TimeInfectedCritical<double>>(2);
     model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact<double>>(2.0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact<double>>(0.5);
     model.parameters.set<mio::osecirvvs::RelativeTransmissionNoSymptoms<double>>(-1.0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::RelativeTransmissionNoSymptoms<double>>(0.5);
     model.parameters.set<mio::osecirvvs::RecoveredPerInfectedNoSymptoms<double>>(3.0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::RecoveredPerInfectedNoSymptoms<double>>(0.5);
     model.parameters.set<mio::osecirvvs::RiskOfInfectionFromSymptomatic<double>>(-0.8);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::RiskOfInfectionFromSymptomatic<double>>(0.5);
     model.parameters.set<mio::osecirvvs::SeverePerInfectedSymptoms<double>>(-0.1);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::SeverePerInfectedSymptoms<double>>(0.5);
     model.parameters.set<mio::osecirvvs::CriticalPerSevere<double>>(-1.0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::CriticalPerSevere<double>>(0.5);
     model.parameters.set<mio::osecirvvs::DeathsPerCritical<double>>(1.1);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::DeathsPerCritical<double>>(0.5);
     model.parameters.set<mio::osecirvvs::VaccinationGap<double>>(0.2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::VaccinationGap<double>>(2);
     model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity<double>>(-2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity<double>>(30);
     model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity<double>>(-0.2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity<double>>(30);
     model.parameters.set<mio::osecirvvs::ReducExposedPartialImmunity<double>>(0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducExposedPartialImmunity<double>>(0.5);
     model.parameters.set<mio::osecirvvs::ReducExposedImprovedImmunity<double>>(-0.2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducExposedImprovedImmunity<double>>(0.5);
     model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<double>>(0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<double>>(0.5);
     model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<double>>(0.);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<double>>(0.5);
     model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<double>>(-4);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<double>>(0.5);
     model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>(-4);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>(0.5);
     model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild<double>>(-0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild<double>>(1);
     model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant<double>>(-4);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant<double>>(1);
+    EXPECT_EQ(model.parameters.check_constraints(), 0);
 
     mio::set_log_level(mio::LogLevel::warn);
 }
@@ -1283,6 +1298,18 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
     model.parameters.set<mio::osecirvvs::ICUCapacity<double>>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::Seasonality<double>>(), 0);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacity<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<double>>(), 0);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(), 0);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskSymptoms<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TestAndTraceCapacityMaxRiskSymptoms<double>>(), 0);
 
     model.parameters.set<mio::osecirvvs::TimeExposed<double>>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
@@ -1380,6 +1407,8 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
     model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant<double>>(-4);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::InfectiousnessNewVariant<double>>()[indx_agegroup], 1);
+
+    EXPECT_EQ(model.parameters.apply_constraints(), 0);
 
     mio::set_log_level(mio::LogLevel::warn);
 }

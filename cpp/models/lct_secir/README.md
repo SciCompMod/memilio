@@ -57,7 +57,9 @@ The notation of the compartments with indices here stands for subcompartments an
 
 A simple example can be found at [LCT minimal example](../../examples/lct_secir.cpp).
 
-## Initialization 
+## Initialization
 
 - The file [parameters_io](parameters_io.h) provides functionality to compute an initial value vector for the LCT-SECIR model based on real data.
+
+- The file [initializer_flows](initializer_flows.h) provides functionality to compute an initial value vector for the LCT-SECIR model based on initial data in the form of a TimeSeries of InfectionTransitions. For the concept of the InfectionTransitions or flows, see also the IDE-SECIR model. This method can be particularly useful if a comparison is to be made with an IDE model with matching initialization or if the real data is in the form of flows.
 

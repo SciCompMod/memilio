@@ -29,5 +29,6 @@
 #cmakedefine MEMILIO_HAS_JSONCPP
 #cmakedefine MEMILIO_ENABLE_MPI
 #cmakedefine MEMILIO_ENABLE_OPENMP
+#cmakedefine MEMILIO_ENABLE_PROFILING
 
 #endif

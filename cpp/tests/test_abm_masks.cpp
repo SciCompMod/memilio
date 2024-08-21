@@ -65,16 +65,15 @@ TEST(TestMasks, maskProtection)
     //setup location with some chance of exposure
     auto t = mio::abm::TimePoint(0);
     mio::abm::Location infection_location(mio::abm::LocationType::School, 0, num_age_groups);
-    auto susc_person1 = mio::abm::Person(rng, infection_location, age_group_15_to_34);
-    auto susc_person2 = mio::abm::Person(rng, infection_location, age_group_15_to_34);
-    auto infected1    = make_test_person(infection_location, age_group_15_to_34,
-                                         mio::abm::InfectionState::InfectedSymptoms, t, params); // infected 7 days prior
-
-    infection_location.add_person(infected1);
+    auto susc_person1 =
+        mio::abm::Person(rng, infection_location.get_type(), infection_location.get_id(), age_group_15_to_34);
+    auto susc_person2 =
+        mio::abm::Person(rng, infection_location.get_type(), infection_location.get_id(), age_group_15_to_34);
+    auto infected1 = make_test_person(infection_location, age_group_15_to_34,
+                                      mio::abm::InfectionState::InfectedSymptoms, t, params); // infected 7 days prior
 
     //cache precomputed results
     auto dt = mio::abm::days(1);
-    infection_location.cache_exposure_rates(t, dt, num_age_groups);
     // susc_person1 wears a mask, default protection is 1
     susc_person1.set_wear_mask(true);
     // susc_person2 does not wear a mask
@@ -84,11 +83,11 @@ TEST(TestMasks, maskProtection)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
 
-    auto p1_rng = mio::abm::Person::RandomNumberGenerator(rng, susc_person1);
-    infection_location.interact(p1_rng, susc_person1, t, dt, params);
+    auto p1_rng = mio::abm::PersonalRandomNumberGenerator(rng, susc_person1);
+    interact_testing(p1_rng, susc_person1, infection_location, {susc_person1, susc_person2, infected1}, t, dt, params);
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillOnce(testing::Return(0.5));
-    auto p2_rng = mio::abm::Person::RandomNumberGenerator(rng, susc_person2);
-    infection_location.interact(p2_rng, susc_person2, t, dt, params);
+    auto p2_rng = mio::abm::PersonalRandomNumberGenerator(rng, susc_person2);
+    interact_testing(p2_rng, susc_person2, infection_location, {susc_person1, susc_person2, infected1}, t, dt, params);
 
     // The person susc_person1 should have full protection against an infection, susc_person2 not
     ASSERT_EQ(susc_person1.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);

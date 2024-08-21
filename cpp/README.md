@@ -10,6 +10,7 @@ Directory structure:
 - tests: unit tests for framework and models.
 - cmake: build utility code
 - thirdparty: configuration of dependencies
+- benchmarks: applications to analyze runtime performance of the framework
 
 ## Requirements
 
@@ -53,6 +54,11 @@ Options can be specified with `cmake .. -D<OPTION>=<VALUE>` or by editing the `b
 - `MEMILIO_USE_BUNDLED_SPDLOG/_BOOST/_EIGEN/_JSONCPP`: use the corresponding dependency bundled with this project, ON or OFF, default ON.
 - `MEMILIO_BUILD_BENCHMARKS`: build the benchmarks for this project, ON or OFF, default OFF.
 - `MEMILIO_SANITIZE_ADDRESS/_UNDEFINED`: compile with specified sanitizers to check correctness, ON or OFF, default OFF.
+- `MEMILIO_ENABLE_OPENMP`: compile MEmilio with multithreading using OpenMP, ON or OFF, default OFF.
+- `MEMILIO_ENABLE_MPI`: compile MEmilio with distributed memory parallelization using MPI. ON or OFF, default OFF. Requires an MPI implementation to be installed on the system. 
+- `MEMILIO_ENABLE_WARNINGS`: enable compilation warnings (beyond those enabled in the compiler by default). ON or OFF, default ON.
+- `MEMILIO_ENABLE_WARNINGS_AS_ERRORS`: compilation warnings are treated as compilation errors. ON or OFF, default ON.
+- `MEMILIO_ENABLE_PROFILING`: compile with runtime profiling support. ON or OFF, default OFF. See [here](benchmarks/profiling.md) for information.
 
 Other important options may need:
 - `CMAKE_BUILD_TYPE`: controls compiler optimizations and diagnostics, Debug, Release, or RelWithDebInfo; not available for Multi-Config CMake Generators like Visual Studio, set the build type in the IDE or when running the compiler.

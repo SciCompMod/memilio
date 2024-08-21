@@ -17,25 +17,20 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/migration_rules.h"
+#include "abm/mobility_rules.h"
 #include "abm/person.h"
-#include "abm/location.h"
 #include "abm/random_events.h"
-#include "abm/location.h"
-#include "memilio/utils/random_number_generator.h"
 #include "abm/location_type.h"
-
-#include <random>
 
 namespace mio
 {
 namespace abm
 {
 
-LocationType random_migration(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
-                              const Parameters& params)
+LocationType random_mobility(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+                             const Parameters& params)
 {
-    auto current_loc     = person.get_location().get_type();
+    auto current_loc     = person.get_location_type();
     auto make_transition = [current_loc](auto l) {
         return std::make_pair(l, l == current_loc ? 0. : 1.);
     };
@@ -48,10 +43,10 @@ LocationType random_migration(Person::RandomNumberGenerator& rng, const Person& 
     return current_loc;
 }
 
-LocationType go_to_school(Person::RandomNumberGenerator& /*rng*/, const Person& person, TimePoint t, TimeSpan dt,
+LocationType go_to_school(PersonalRandomNumberGenerator& /*rng*/, const Person& person, TimePoint t, TimeSpan dt,
                           const Parameters& params)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_type();
 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
         person.get_go_to_school_time(params) >= t.time_since_midnight() &&
@@ -67,10 +62,10 @@ LocationType go_to_school(Person::RandomNumberGenerator& /*rng*/, const Person& 
     return current_loc;
 }
 
-LocationType go_to_work(Person::RandomNumberGenerator& /*rng*/, const Person& person, TimePoint t, TimeSpan dt,
+LocationType go_to_work(PersonalRandomNumberGenerator& /*rng*/, const Person& person, TimePoint t, TimeSpan dt,
                         const Parameters& params)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_type();
 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
         params.get<mio::abm::AgeGroupGotoWork>()[person.get_age()] && t.day_of_week() < 5 &&
@@ -86,10 +81,10 @@ LocationType go_to_work(Person::RandomNumberGenerator& /*rng*/, const Person& pe
     return current_loc;
 }
 
-LocationType go_to_shop(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+LocationType go_to_shop(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
                         const Parameters& params)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_type();
     //leave
     if (t.day_of_week() < 6 && t.hour_of_day() > 7 && t.hour_of_day() < 22 && current_loc == LocationType::Home &&
         !person.is_in_quarantine(t, params)) {
@@ -105,10 +100,10 @@ LocationType go_to_shop(Person::RandomNumberGenerator& rng, const Person& person
     return current_loc;
 }
 
-LocationType go_to_event(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
+LocationType go_to_event(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
                          const Parameters& params)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_type();
     //leave
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
         ((t.day_of_week() <= 4 && t.hour_of_day() >= 19) || (t.day_of_week() >= 5 && t.hour_of_day() >= 10)) &&
@@ -127,10 +122,10 @@ LocationType go_to_event(Person::RandomNumberGenerator& rng, const Person& perso
     return current_loc;
 }
 
-LocationType go_to_quarantine(Person::RandomNumberGenerator& /*rng*/, const Person& person, TimePoint t,
+LocationType go_to_quarantine(PersonalRandomNumberGenerator& /*rng*/, const Person& person, TimePoint t,
                               TimeSpan /*dt*/, const Parameters& params)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_type();
     if (person.is_in_quarantine(t, params) && current_loc != LocationType::Hospital &&
         current_loc != LocationType::ICU) {
         return LocationType::Home;
@@ -138,30 +133,30 @@ LocationType go_to_quarantine(Person::RandomNumberGenerator& /*rng*/, const Pers
     return current_loc;
 }
 
-LocationType go_to_hospital(Person::RandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
+LocationType go_to_hospital(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
                             TimeSpan /*dt*/, const Parameters& /*params*/)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_type();
     if (person.get_infection_state(t) == InfectionState::InfectedSevere) {
         return LocationType::Hospital;
     }
     return current_loc;
 }
 
-LocationType go_to_icu(Person::RandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t, TimeSpan /*dt*/,
+LocationType go_to_icu(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t, TimeSpan /*dt*/,
                        const Parameters& /*params*/)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_type();
     if (person.get_infection_state(t) == InfectionState::InfectedCritical) {
         return LocationType::ICU;
     }
     return current_loc;
 }
 
-LocationType return_home_when_recovered(Person::RandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
+LocationType return_home_when_recovered(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
                                         TimeSpan /*dt*/, const Parameters& /*params*/)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_type();
     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&
         person.get_infection_state(t) == InfectionState::Recovered) {
         return LocationType::Home;
@@ -169,10 +164,10 @@ LocationType return_home_when_recovered(Person::RandomNumberGenerator& /*rng*/, 
     return current_loc;
 }
 
-LocationType get_buried(Person::RandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
+LocationType get_buried(PersonalRandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
                         TimeSpan /*dt*/, const Parameters& /*params*/)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_type();
     if (person.get_infection_state(t) == InfectionState::Dead) {
         return LocationType::Cemetery;
     }

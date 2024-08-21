@@ -161,10 +161,9 @@ void draw_sample(Model<FP>& model)
     * @return Graph with nodes and edges from the input graph sampled.
     */
 template <typename FP = double>
-Graph<Model<FP>, MigrationParameters<FP>> draw_sample(Graph<Model<FP>, MigrationParameters<FP>>& graph,
-                                                      bool variant_high)
+Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityParameters<FP>>& graph, bool variant_high)
 {
-    Graph<Model<FP>, MigrationParameters<FP>> sampled_graph;
+    Graph<Model<FP>, MobilityParameters<FP>> sampled_graph;
 
     //sample global parameters
     auto& shared_params_model = graph.nodes()[0].property;

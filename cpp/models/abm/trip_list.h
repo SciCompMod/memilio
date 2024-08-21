@@ -17,17 +17,14 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_TRIP_LIST_H
-#define EPI_ABM_TRIP_LIST_H
+#ifndef MIO_ABM_TRIP_LIST_H
+#define MIO_ABM_TRIP_LIST_H
 
-#include "abm/parameters.h"
-#include "abm/location.h"
-#include "abm/infection.h"
-#include "abm/location_type.h"
-
-#include "memilio/math/eigen.h"
-#include <array>
-#include <random>
+#include "abm/location_id.h"
+#include "abm/mobility_data.h"
+#include "abm/person_id.h"
+#include "abm/time.h"
+#include <vector>
 
 namespace mio
 {
@@ -35,16 +32,16 @@ namespace abm
 {
 
 /**
- * @brief A trip describes a migration from one Location to another Location.
+ * @brief A trip describes a change of Location from one Location to another Location.
  */
 struct Trip {
-    uint32_t person_id; /**< Person that makes the trip and corresponds to the index into the structure m_persons from
-    World, where all Person%s are saved.*/
+    PersonId person_id; /**< Person that makes the trip and corresponds to the index into the structure m_persons from
+    Model, where all Person%s are saved.*/
     TimePoint time; ///< Time at which a Person changes the Location.
-    LocationId migration_destination; ///< Location where the Person migrates to.
-    LocationId migration_origin; ///< Location where the Person starts the Trip.
-    std::vector<uint32_t> cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
-    Cell%s the Person migrates to.*/
+    LocationId destination; ///< Location where the Person changes to.
+    LocationId origin; ///< Location where the Person starts the Trip.
+    std::vector<uint32_t> cells; /**< If destination consists of different Cell%s, this gives the index of the
+    Cell%s the Person changes to.*/
     TransportMode
         trip_mode; ///< Mode of transportation. 1:Bike, 2:Car (Driver), 3:Car (Co-Driver)), 4:Public Transport, 5:Walking, 6:Other/Unknown
     ActivityType
@@ -54,32 +51,32 @@ struct Trip {
      * @brief Construct a new Trip.
      * @param[in] id ID of the Person that makes the Trip.
      * @param[in] time_new Time at which a Person changes the Location this currently cant be set for s specific day just a timepoint in a day.
-     * @param[in] destination Location where the Person migrates to.
+     * @param[in] destination Location where the Person changes to.
      * @param[in] origin Location where the person starts the Trip.
-     * @param[in] input_cells The index of the Cell%s the Person migrates to.
+     * @param[in] input_cells The index of the Cell%s the Person changes to.
      */
-    Trip(uint32_t id, TimePoint time_new, LocationId destination, LocationId origin, TransportMode mode_of_transport,
+    Trip(PersonId id, TimePoint time_new, LocationId dest, LocationId orig, TransportMode mode_of_transport,
          ActivityType type_of_activity, const std::vector<uint32_t>& input_cells = {})
         : person_id(id)
         , time(mio::abm::TimePoint(time_new.time_since_midnight().seconds()))
-        , migration_destination(destination)
-        , migration_origin(origin)
+        , destination(dest)
+        , origin(orig)
         , cells(input_cells)
         , trip_mode(mode_of_transport)
         , activity_type(type_of_activity)
     {
     }
 
-    Trip(uint32_t id, TimePoint time_new, LocationId destination, const std::vector<uint32_t>& input_cells = {})
-        : Trip(id, time_new, destination, destination, mio::abm::TransportMode::Unknown,
-               mio::abm::ActivityType::UnknownActivity, input_cells)
+    Trip(PersonId id, TimePoint time_new, LocationId dest, const std::vector<uint32_t>& input_cells = {})
+        : Trip(id, time_new, dest, dest, mio::abm::TransportMode::Unknown, mio::abm::ActivityType::UnknownActivity,
+               input_cells)
     {
     }
 
-    Trip(uint32_t id, TimePoint time_new, LocationId destination, LocationId origin,
+    Trip(PersonId id, TimePoint time_new, LocationId dest, LocationId orig,
          const std::vector<uint32_t>& input_cells = {})
-        : Trip(id, time_new, destination, origin, mio::abm::TransportMode::Unknown,
-               mio::abm::ActivityType::UnknownActivity, input_cells)
+        : Trip(id, time_new, dest, orig, mio::abm::TransportMode::Unknown, mio::abm::ActivityType::UnknownActivity,
+               input_cells)
     {
     }
 
@@ -88,8 +85,8 @@ struct Trip {
      */
     bool operator==(const Trip& other) const
     {
-        return (person_id == other.person_id) && (time == other.time) &&
-               (migration_destination == other.migration_destination) && (migration_origin == other.migration_origin);
+        return (person_id == other.person_id) && (time == other.time) && (destination == other.destination) &&
+               (origin == other.origin);
     }
 
     /**
@@ -102,10 +99,8 @@ struct Trip {
         auto obj = io.create_object("Trip");
         obj.add_element("person_id", person_id);
         obj.add_element("time", time.seconds());
-        obj.add_element("destination_index", migration_destination.index);
-        obj.add_element("destination_type", migration_destination.type);
-        obj.add_element("origin_index", migration_origin.index);
-        obj.add_element("origin_type", migration_origin.type);
+        obj.add_element("destination", destination);
+        obj.add_element("origin", origin);
     }
 
     /**
@@ -115,22 +110,17 @@ struct Trip {
     template <class IOContext>
     static IOResult<Trip> deserialize(IOContext& io)
     {
-        auto obj               = io.expect_object("Trip");
-        auto person_id         = obj.expect_element("person_id", Tag<uint32_t>{});
-        auto time              = obj.expect_element("time", Tag<int>{});
-        auto destination_index = obj.expect_element("destination_index", Tag<uint32_t>{});
-        auto destination_type  = obj.expect_element("destination_type", Tag<uint32_t>{});
-        auto origin_index      = obj.expect_element("origin_index", Tag<uint32_t>{});
-        auto origin_type       = obj.expect_element("origin_type", Tag<uint32_t>{});
+        auto obj            = io.expect_object("Trip");
+        auto person_id      = obj.expect_element("person_id", Tag<PersonId>{});
+        auto time           = obj.expect_element("time", Tag<int>{});
+        auto destination_id = obj.expect_element("destination", Tag<LocationId>{});
+        auto origin_id      = obj.expect_element("origin", Tag<LocationId>{});
         return apply(
             io,
-            [](auto&& person_id_, auto&& time_, auto&& destination_index_, auto&& destination_type_,
-               auto&& origin_index_, auto&& origin_type_) {
-                return Trip(person_id_, TimePoint(time_),
-                            LocationId{destination_index_, LocationType(destination_type_)},
-                            LocationId{origin_index_, LocationType(origin_type_)});
+            [](auto&& person_id_, auto&& time_, auto&& destination_id_, auto&& origin_id_) {
+                return Trip(person_id_, TimePoint(time_), destination_id_, origin_id_);
             },
-            person_id, time, destination_index, destination_type, origin_index, origin_type);
+            person_id, time, destination_id, origin_id);
     }
 };
 
@@ -158,7 +148,7 @@ public:
     TimePoint get_next_trip_time(bool weekend) const;
 
     /**
-     * @brief Add a Trip to migration data.
+     * @brief Add a Trip to the trip list.
      * @param[in] trip The Trip to be added.
      * @param[in] weekend If the Trip is made on a weekend day.     
      */
