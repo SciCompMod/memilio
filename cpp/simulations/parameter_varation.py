@@ -3,17 +3,20 @@ import argparse
 import os
 import pandas as pd
 import numpy as np
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
+import colormaps as cmaps
 import h5py
 from datetime import datetime
 from matplotlib.dates import DateFormatter
 from scipy.ndimage import gaussian_filter1d
 from scipy.signal import savgol_filter
+import seaborn as sns
 
 def plot_of_cumuative_infections(path, index=0):
     # plot cumulative infections
@@ -66,6 +69,32 @@ def plot_positive_tests(path, index):
     # we smooth this with a gaussian filter
     total_50_done = gaussian_filter1d(total_50_done, sigma=1, mode='nearest')
     return total_50_done
+
+def get_maximum_dead(path, index):
+    deaths_p50_normal = h5py.File(
+            path+"/infection_state_per_age_group/"+str(index)+"/p50/Results.h5", 'r')
+    p50_bs_deaths_normal = deaths_p50_normal['0']['Total'][()][:, 7][::24][0:90]
+    return np.max(p50_bs_deaths_normal)
+
+def get_maximum_hospitalized(path, index):
+    hospitalized_p50_normal = h5py.File(
+            path+"/infection_state_per_age_group/"+str(index)+"/p50/Results.h5", 'r')
+    p50_bs_hospitalized_normal = hospitalized_p50_normal['0']['Total'][()][:, 5][::24][0:90]
+    return np.max(p50_bs_hospitalized_normal)
+
+def get_maximum_cum_infected(path, index):
+    infected_p50_normal = h5py.File(
+            path+"/infection_per_location_type_per_age_group/"+str(index)+"/p50/Results.h5", 'r')
+    locations = [0, 1, 2, 3, 4, 10]
+    p50_bs_infected_normal = infected_p50_normal['0']['Total'][()]
+    p50_bs_normal_all_locations = np.zeros(len(p50_bs_infected_normal))
+    for location in locations:
+        p50_bs_normal_all_locations += p50_bs_infected_normal[:, location]
+    cum_inf_normal_50 = np.cumsum(p50_bs_normal_all_locations)
+    return np.max(cum_inf_normal_50)
+
+
+
 
 if __name__ == "__main__":
     
@@ -160,24 +189,93 @@ if __name__ == "__main__":
     fig, axs = plt.subplots(2, 2, figsize=(10, 10))
     fig.suptitle('Parameter Variation', fontsize=16)
     fig.show()
-    # first plot is the maximum of the cumulative infections
-    highest_value = 0
-    for i in range(len(values_1)):
-        for j in range(len(values_2)):
+
+    # first plot
+    value_for_values = np.zeros((len(values_1), len(values_2)))
+    for i, value_1 in enumerate(values_1):
+        for j, value_2 in enumerate(values_2):
             index = (i)*len(values_2)+(j)
-            plot_data = plot_of_cumuative_infections(path_data, index)
-            plot_data.max()
-            # plot the square
-            axs[0, 0].add_patch(mpatches.Rectangle((i, j), 1, 1, color=cmx.viridis(plot_data.max()/highest_value)))
+            value_for_values[i, j] = get_maximum_cum_infected(path_data, index)
+    # permute the values, so that the plot is correct
+    value_for_values = np.flip(value_for_values, axis=1)
+    # we need a seaborn heatmap for the colorbar
 
-            
-
-
-
-
-
-
-
-
+    sns.heatmap(value_for_values, ax=axs[0, 0], cmap='viridis', cbar_kws={'label': 'Maximum Cumulative Infections'}, annot=True, fmt=".0f")
+    axs[0, 0].set_title('Maximum Cumulative Infections')
+    # x and y axis labels
+    axs[0, 0].set_xticklabels(values_2)
+    axs[0, 0].set_yticklabels(values_1)
+    axs[0, 0].set_xlabel(variable_2)
+    axs[0, 0].set_ylabel(variable_1)
 
     
+    
+                
+
+    
+    # second plot
+    value_for_values = np.zeros((len(values_1), len(values_2)))
+    for i, value_1 in enumerate(values_1):
+        for j, value_2 in enumerate(values_2):
+            index = (i)*len(values_2)+(j)
+            value_for_values[i, j] = get_maximum_dead(path_data, index)
+    # permute the values, so that the plot is correct
+    value_for_values = np.flip(value_for_values, axis=1)
+    # we need a seaborn heatmap for the colorbar
+    sns.heatmap(value_for_values, ax=axs[0, 1], cmap='viridis', cbar_kws={'label': 'Maximum Dead'}, annot=True, fmt=".0f")
+    axs[0, 1].set_title('Maximum Dead')
+    # x and y axis labels
+    axs[0, 1].set_xticklabels(values_2)
+    axs[0, 1].set_yticklabels(values_1)
+    axs[0, 1].set_xlabel(variable_2)
+    axs[0, 1].set_ylabel(variable_1)
+
+    # third plot
+    value_for_values = np.zeros((len(values_1), len(values_2)))
+    for i, value_1 in enumerate(values_1):
+        for j, value_2 in enumerate(values_2):
+            index = (i)*len(values_2)+(j)
+            value_for_values[i, j] = get_maximum_hospitalized(path_data, index)
+    # permute the values, so that the plot is correct
+    value_for_values = np.flip(value_for_values, axis=1)
+    # we need a seaborn heatmap for the colorbar
+    sns.heatmap(value_for_values, ax=axs[1, 0], cmap='viridis', cbar_kws={'label': 'Maximum Hospitalized'}, annot=True, fmt=".0f")
+    axs[1, 0].set_title('Maximum Hospitalized')
+    # x and y axis labels
+    axs[1, 0].set_xticklabels(values_2)
+    axs[1, 0].set_yticklabels(values_1)
+    axs[1, 0].set_xlabel(variable_2)
+    axs[1, 0].set_ylabel(variable_1)
+
+    # fourth plot
+    value_for_values = np.zeros((len(values_1), len(values_2)))
+    for i, value_1 in enumerate(values_1):
+        for j, value_2 in enumerate(values_2):
+            index = (i)*len(values_2)+(j)
+            value_for_values[i, j] = get_maximum_cum_infected(path_data, index)
+    # permute the values, so that the plot is correct
+    value_for_values = np.flip(value_for_values, axis=1)
+    # we need a seaborn heatmap for the colorbar
+    sns.heatmap(value_for_values, ax=axs[1, 1], cmap='viridis', cbar_kws={'label': 'Maximum Cumulative Infections'}, annot=True, fmt=".0f")
+    axs[1, 1].set_title('Maximum Cumulative Infections')
+    # x and y axis labels
+    axs[1, 1].set_xticklabels(values_2)
+    axs[1, 1].set_yticklabels(values_1)
+    axs[1, 1].set_xlabel(variable_2)
+    axs[1, 1].set_ylabel(variable_1)
+
+    plt.show()
+
+    
+
+                
+
+
+
+
+
+
+
+
+
+        

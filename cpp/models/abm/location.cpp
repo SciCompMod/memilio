@@ -180,7 +180,7 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegrou
                 auto age                 = p->get_age();
                 double quarantine_factor = 1.0;
                 if (p->is_in_quarantine(t_middlepoint, params)) {
-                    quarantine_factor = 0.5;
+                    quarantine_factor = 1-params.get<QuarantineEffectiveness>();
                 }
                 /* average infectivity over the time step 
                  * to second order accuracy using midpoint rule
