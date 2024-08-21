@@ -2224,6 +2224,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
             rmse_results_per_grid_point.at(par_i) += rmse;
 
+            std::cout << "RMSE: " << rmse << std::endl;
+
             //HACK since // gather_results(rank, num_procs, num_runs, ensemble_params);
             //for now this doesnt work, but we can still save the results of the last world since the
             //parameters are the same for each run
@@ -2235,12 +2237,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         }
 
 #ifdef MEMILIO_ENABLE_MPI
-        // gather rmse with reduce sum
-        double rmse_sum = 0;
-        MPI_Reduce(&rmse_results_per_grid_point.at(0), &rmse_sum, 1, MPI_DOUBLE, MPI_SUM, 0, mio::mpi::get_world());
-        if (rank == 0) {
-            std::cout << "RMSE sum: " << rmse_sum << std::endl;
-        }
+
         //gather results
         auto final_ensemble_infection_per_loc_type_per_age_group =
             gather_results(rank, num_procs, num_runs, ensemble_infection_per_loc_type_per_age_group);
@@ -2369,8 +2366,8 @@ int main(int argc, char** argv)
     rank      = 0;
 #endif
 
-    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
 
