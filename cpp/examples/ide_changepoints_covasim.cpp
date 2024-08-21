@@ -58,9 +58,7 @@ std::map<std::string, ScalarType> simulation_parameter = {
     {"SeverePerInfectedSymptoms", 0.078643},
     {"CriticalPerSevere", 0.173176},
     {"DeathsPerCritical", 0.387803},
-    {"cont_freq",
-     40.50837938714286 /
-         13.007554628089002}}; // computed so that we obtain constant new infections at beginning of simulation
+    {"cont_freq", 3.114219}}; // computed so that we obtain constant new infections at beginning of simulation
 
 mio::UncertainContactMatrix<ScalarType> get_contact_matrix(ScalarType contact_scaling)
 {
