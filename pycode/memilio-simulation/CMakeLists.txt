@@ -32,9 +32,6 @@ endif()
 # add in C++ library
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
 
-# add path to bindings
-include_directories(memilio/simulation/bindings)
-
 # Function to add a pybind11 module
 function(add_pymio_module target_name)
     set(options)
@@ -45,7 +42,8 @@ function(add_pymio_module target_name)
 
     pybind11_add_module(${target_name} MODULE ${PYBIND11_MODULE_SOURCES})
     target_link_libraries(${target_name} PRIVATE ${PYBIND11_MODULE_LINKED_LIBRARIES})
-    install(TARGETS ${target_name} LIBRARY DESTINATION memilio/simulation)
+    target_include_directories(${target_name} PRIVATE memilio/simulation)
+    install(TARGETS ${target_name} LIBRARY DESTINATION memilio/simulation/bindings)
 endfunction()
 
 
