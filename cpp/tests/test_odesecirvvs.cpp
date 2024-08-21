@@ -761,6 +761,7 @@ TEST(TestOdeSECIRVVS, export_time_series_init)
 
 TEST(TestOdeSECIRVVS, export_time_series_init_old_date)
 {
+    mio::set_log_level(mio::LogLevel::off);
     TempFileRegister temp_file_register;
     auto tmp_results_dir = temp_file_register.get_unique_path();
     ASSERT_THAT(mio::create_directory(tmp_results_dir), IsSuccess());
@@ -801,6 +802,7 @@ TEST(TestOdeSECIRVVS, export_time_series_init_old_date)
     // sum of all compartments should be equal to the population
     EXPECT_NEAR(results_extrapolated.sum(), std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0),
                 1e-5);
+    mio::set_log_level(mio::LogLevel::warn);
 }
 
 // Model initialization should return same start values as export time series on that day
@@ -841,6 +843,7 @@ TEST(TestOdeSECIRVVS, model_initialization)
 
 TEST(TestOdeSECIRVVS, model_initialization_old_date)
 {
+    mio::set_log_level(mio::LogLevel::off);
     constexpr auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
     auto model                    = make_model(num_age_groups);
     // set vaccinations to zero
@@ -872,10 +875,12 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date)
     // sum of all compartments should be equal to the population
     EXPECT_NEAR(model_vector[0].populations.array().cast<double>().sum(),
                 std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0), 1e-5);
+    mio::set_log_level(mio::LogLevel::warn);
 }
 
 TEST(TestOdeSECIRVVS, model_initialization_old_date_county)
 {
+    mio::set_log_level(mio::LogLevel::off);
     constexpr auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
     auto model                    = make_model(num_age_groups);
     // set vaccinations to zero
@@ -907,6 +912,7 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date_county)
     // sum of all compartments should be equal to the population
     EXPECT_NEAR(model_vector[0].populations.array().cast<double>().sum(),
                 std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0), 1e-5);
+    mio::set_log_level(mio::LogLevel::warn);
 }
 
 TEST(TestOdeSECIRVVS, set_population_data_overflow_vacc)
@@ -916,7 +922,6 @@ TEST(TestOdeSECIRVVS, set_population_data_overflow_vacc)
     // set all compartments to zero
     model.populations.array().setConstant(0.0);
 
-    // if the number of vaccinated individuals is greater than the population, we must limit the number of vaccinated.
     model.parameters
         .template get<mio::osecirvvs::DailyFirstVaccination<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] =
         1e7 + 1;
@@ -924,7 +929,6 @@ TEST(TestOdeSECIRVVS, set_population_data_overflow_vacc)
     model.parameters
         .template get<mio::osecirvvs::DailyFullVaccination<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] = 1e7;
 
-    // Vector assignment necessary as read_input_data_county changes model
     auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
 
     std::string path_pop_data = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
@@ -964,7 +968,6 @@ TEST(TestOdeSECIRVVS, set_population_data_no_data_avail)
     model.parameters
         .template get<mio::osecirvvs::DailyFullVaccination<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] = 0;
 
-    // Vector assignment necessary as read_input_data_county changes model
     auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
 
     std::string path_pop_data = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
