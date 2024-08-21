@@ -1729,7 +1729,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
     omp_set_max_active_levels(2);
-PRAGMA_OMP(parallel for num_threads(128) schedule (dynamic, 4))
+PRAGMA_OMP(parallel for num_threads(128) )
 for (size_t i = 0; i < grid_search_rank.size(); i++) {
     auto params = grid_search_rank[i];
     std::random_device rd;
@@ -1750,7 +1750,7 @@ for (size_t i = 0; i < grid_search_rank.size(); i++) {
     const auto seasonality_may   = 0.85;
 
     const double masks                            = 0.55;
-    const double after_lockdown_contact_reduction = params[3];
+    const double after_lockdown_contact_reduction = 0.52;
     const double ratio_asympt_to_sympt            = 20.0;
     const double perc_easter_event                = 0.45;
 
@@ -1969,11 +1969,11 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         const double after_lockdown_contact_reduction = 0.6;
         const double ratio_asympt_to_sympt            = 20.0;
         // const double ratio_asympt_to_sympt = params[1];
-        const double perc_easter_event = 0.4;
+        const double perc_easter_event = 0.45;
 
         mio::Date start_date{2021, 3, 1};
-        int date_of_lockdown     = 26;
-        int end_date_of_lockdown = 60;
+        int date_of_lockdown     = 27;
+        int end_date_of_lockdown = 61;
         int max_num_days         = 90;
         auto max_num_persons     = 400000;
         bool npis_on             = true;
@@ -2393,7 +2393,7 @@ int main(int argc, char** argv)
     }
     else {
         // std::vector<std::vector<double>> parameters = {{0.01, 0.03, 0.05}, {5, 10, 30}};
-        std::vector<std::vector<double>> parameters = {{2.2}, {3.0}, {0.6}};
+        std::vector<std::vector<double>> parameters = {{2.23}, {2.84}, {0.66}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
