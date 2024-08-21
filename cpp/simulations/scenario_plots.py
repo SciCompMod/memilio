@@ -15,7 +15,7 @@ from matplotlib.dates import DateFormatter
 from scipy.ndimage import gaussian_filter1d
 from scipy.signal import savgol_filter
 
-def plot_cumulative_infections(path, folder_normal, folder_high, folder_enough):
+def plot_scenario(path, folder, folder_high, folder_enough):
 
     # four plots with 3 lines for each scenario and another one for the real data
     # we do one plot with 3 subplots first two plots in upper left and right are 
@@ -30,14 +30,14 @@ def plot_cumulative_infections(path, folder_normal, folder_high, folder_enough):
                     'SocialEvent', 'BasicsShop','Event']
     
     # folders to iterate over
-    folders = [folder_normal, folder_high, folder_enough]
+    folders = [folder, folder_high, folder_enough]
     # for folder in [folder_normal, folder_high, folder_enough]:
     # we plot both in separate plots
     fig, axs = plt.subplots(2, 2, figsize=(19, 10))
     fig.suptitle('Infection and Tests during the first 90 days for normal and high testing scenarios')
 
     inf_p50_normal = h5py.File(
-            path+folder_normal+"/infection_per_location_type_per_age_group/0/p50/Results.h5", 'r')
+            path+"/infection_per_location_type_per_age_group/"+folder+"/p50/Results.h5", 'r')
     time = inf_p50_normal['0']['Time'][()] 
     start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
     xx = [start_date + pd.Timedelta(days=int(i)) for i in time]
@@ -46,32 +46,32 @@ def plot_cumulative_infections(path, folder_normal, folder_high, folder_enough):
 
     for folder in folders:
         inf_p50_normal = h5py.File(
-            path+folder+"/infection_per_location_type_per_age_group/0/p50/Results.h5", 'r')
+            path+"/infection_per_location_type_per_age_group/"+folder+"/p50/Results.h5", 'r')
         inf_p75_normal = h5py.File(
-            path+folder+"/infection_per_location_type_per_age_group/0/p75/Results.h5", 'r')
+            path+"/infection_per_location_type_per_age_group/"+folder+"/p75/Results.h5", 'r')
         inf_p25_normal = h5py.File(
-            path+folder+"/infection_per_location_type_per_age_group/0/p25/Results.h5", 'r')
+            path+"/infection_per_location_type_per_age_group/"+folder+"/p25/Results.h5", 'r')
         p50_bs_normal = inf_p50_normal['0']['Total'][()] 
         p25_bs_normal = inf_p25_normal['0']['Total'][()] 
         p75_bs_normal = inf_p75_normal['0']['Total'][()] 
 
         tests_p50_normal =  h5py.File(
-            path+folder+"/test_per_location_type_per_age_group/0/p50/Results.h5", 'r')
+            path+"/test_per_location_type_per_age_group/"+folder+"/p50/Results.h5", 'r')
         tests_p25_normal =  h5py.File(
-            path+folder+"/test_per_location_type_per_age_group/0/p25/Results.h5", 'r')
+            path+"/test_per_location_type_per_age_group/"+folder+"/p25/Results.h5", 'r')
         tests_p75_normal =  h5py.File(
-            path+folder+"/test_per_location_type_per_age_group/0/p75/Results.h5", 'r')
+            path+"/test_per_location_type_per_age_group/"+folder+"/p75/Results.h5", 'r')
         p50_bs_tests_normal = tests_p50_normal['0']['Total'][()]
         p25_bs_tests_normal = tests_p25_normal['0']['Total'][()]
         p75_bs_tests_normal = tests_p75_normal['0']['Total'][()]
 
 
         test_p_pos_p50_normal = h5py.File(
-            path+folder+"/positive_test_per_location_type_per_age_group/0/p50/Results.h5", 'r')
+            path+"/positive_test_per_location_type_per_age_group/"+folder+"/p50/Results.h5", 'r')
         test_p_pos_p25_normal = h5py.File(
-            path+folder+"/positive_test_per_location_type_per_age_group/0/p25/Results.h5", 'r')
+            path+"/positive_test_per_location_type_per_age_group/"+folder+"/p25/Results.h5", 'r')
         test_p_pos_p75_normal = h5py.File(
-            path+folder+"/positive_test_per_location_type_per_age_group/0/p75/Results.h5", 'r')
+            path+"/positive_test_per_location_type_per_age_group/"+folder+"/p75/Results.h5", 'r')
         p50_bs_test_p_pos_normal = test_p_pos_p50_normal['0']['Total'][()]
         p25_bs_test_p_pos_normal = test_p_pos_p25_normal['0']['Total'][()]
         p75_bs_test_p_pos_normal = test_p_pos_p75_normal['0']['Total'][()]
@@ -189,9 +189,13 @@ def plot_cumulative_infections(path, folder_normal, folder_high, folder_enough):
 
 
 if __name__ == "__main__":
-    path_to_data = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/"
-    path_to_main_data = "results_2024-08-20204040"
-    path_to_high_testing_data = "results_2024-08-21152952"
-    path_to_enough_testing_data = "results_2024-08-20215706"
+    path_to_scenario_1 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_2024-08-21181533"
+    path_to_scenario_2 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/"
+    path_to_scenario_3 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/"
+    path_to_main_data = "0"
+    path_to_high_testing_data = "1"
+    path_to_enough_testing_data = "2"
 
-    plot_cumulative_infections(path_to_data, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)
+    plot_scenario(path_to_scenario_1, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)
+    # plot_scenario(path_to_scenario_2, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)
+    # plot_scenario(path_to_scenario_3, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)

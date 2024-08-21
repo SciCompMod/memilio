@@ -81,75 +81,102 @@ if __name__ == "__main__":
     # we want to plot in the title of the plot 
     # they all should have the same y-axis, so we can compare them, the highest value should be the maximum of all plots
     
-    fig = plt.figure('Parameter Variation', figsize=(1, 1))
-    gs = fig.add_gridspec(len(values_1), len(values_2), hspace=0.4, wspace=0.4)
+    # fig = plt.figure('Parameter Variation', figsize=(1, 1))
+    # gs = fig.add_gridspec(len(values_1), len(values_2), hspace=0.4, wspace=0.4)
+    # fig.suptitle('Parameter Variation', fontsize=16)
+    # fig.show()
+    # highest_value = 0
+    # for i in range(len(values_1)):
+    #     for j in range(len(values_2)):
+    #         index = (i)*len(values_2)+(j)
+    #         plot_data = plot_of_cumuative_infections(path_data, index)
+    #         if np.max(plot_data) > highest_value:
+    #             highest_value = np.max(plot_data)
+
+    # for i, value_1 in enumerate(values_1):
+    #     for j, value_2 in enumerate(values_2):
+    #         index = (i)*len(values_2)+(j)
+    #         ax = fig.add_subplot(gs[i, j])
+    #         ax.set_title(f'{variable_1}={value_1}, {variable_2}={value_2}')
+    #         plot_data = plot_of_cumuative_infections(path_data, index)
+    #         ax.set_ylim(0, highest_value)
+    #         ax.plot(plot_data, label='Cumulative Infections')
+    #         ax.legend()
+    # plt.show()
+
+
+    # fig = plt.figure('Parameter Variation', figsize=(1, 1))
+    # gs = fig.add_gridspec(len(values_1), len(values_2), hspace=0.4, wspace=0.4)
+    # fig.suptitle('Parameter Variation', fontsize=16)
+    # fig.show()
+    # highest_value = 0
+    # for i in range(len(values_1)):
+    #     for j in range(len(values_2)):
+    #         index = (i)*len(values_2)+(j)
+    #         plot_data = plot_number_of_tests(path_data, index)
+    #         if np.max(plot_data) > highest_value:
+    #             highest_value = np.max(plot_data)
+    # for i, value_1 in enumerate(values_1):
+    #     for j, value_2 in enumerate(values_2):
+    #         index = (i)*len(values_2)+(j)
+            
+    #         ax = fig.add_subplot(gs[i, j])
+    #         ax.set_title(f'{variable_1}={value_1}, {variable_2}={value_2}')
+    #         ax.set_ylim(0, highest_value)
+    #         plot_data = plot_number_of_tests(path_data, index)
+    #         ax.plot(plot_data, label='Number of Tests')
+    #         ax.legend()
+    # plt.show()
+    # fig = plt.figure('Parameter Variation', figsize=(1, 1))
+    # gs = fig.add_gridspec(len(values_1), len(values_2), hspace=0.4, wspace=0.4)
+    # fig.suptitle('Parameter Variation', fontsize=16)
+    # fig.show()
+    # highest_value = 0
+    # for i in range(len(values_1)):
+    #     for j in range(len(values_2)):
+    #         index = (i)*len(values_2)+(j)
+    #         plot_data = plot_positive_tests(path_data, index)
+    #         if np.max(plot_data) > highest_value:
+    #             highest_value = np.max(plot_data)
+    # for i, value_1 in enumerate(values_1):
+    #     for j, value_2 in enumerate(values_2):
+    #         index = (i)*len(values_2)+(j)
+            
+    #         ax = fig.add_subplot(gs[i, j])
+    #         ax.set_title(f'{variable_1}={value_1}, {variable_2}={value_2}')
+    #         ax.set_ylim(0, highest_value)
+    #         plot_data = plot_positive_tests(path_data, index)
+    #         ax.plot(plot_data, label='Positive Tests')
+    #         ax.legend()
+    # plt.show()
+
+    # we want to have four plots in one figure
+    # in each plot for each value of the parameter we want to plot a big square in a color which is defined by the value of the interesting value in that plot
+    # first plot that value is the maximum of the cumulative infections
+    # second plot that value is the maximum of the daily infections
+    # third plot that value is the maximum of persons dead
+    # fourth plot that value is the maximum of persons in the hospital
+
+    fig, axs = plt.subplots(2, 2, figsize=(10, 10))
     fig.suptitle('Parameter Variation', fontsize=16)
     fig.show()
+    # first plot is the maximum of the cumulative infections
     highest_value = 0
     for i in range(len(values_1)):
         for j in range(len(values_2)):
             index = (i)*len(values_2)+(j)
             plot_data = plot_of_cumuative_infections(path_data, index)
-            if np.max(plot_data) > highest_value:
-                highest_value = np.max(plot_data)
+            plot_data.max()
+            # plot the square
+            axs[0, 0].add_patch(mpatches.Rectangle((i, j), 1, 1, color=cmx.viridis(plot_data.max()/highest_value)))
 
-    for i, value_1 in enumerate(values_1):
-        for j, value_2 in enumerate(values_2):
-            index = (i)*len(values_2)+(j)
-            ax = fig.add_subplot(gs[i, j])
-            ax.set_title(f'{variable_1}={value_1}, {variable_2}={value_2}')
-            plot_data = plot_of_cumuative_infections(path_data, index)
-            ax.set_ylim(0, highest_value)
-            ax.plot(plot_data, label='Cumulative Infections')
-            ax.legend()
-    plt.show()
-
-
-    fig = plt.figure('Parameter Variation', figsize=(1, 1))
-    gs = fig.add_gridspec(len(values_1), len(values_2), hspace=0.4, wspace=0.4)
-    fig.suptitle('Parameter Variation', fontsize=16)
-    fig.show()
-    highest_value = 0
-    for i in range(len(values_1)):
-        for j in range(len(values_2)):
-            index = (i)*len(values_2)+(j)
-            plot_data = plot_number_of_tests(path_data, index)
-            if np.max(plot_data) > highest_value:
-                highest_value = np.max(plot_data)
-    for i, value_1 in enumerate(values_1):
-        for j, value_2 in enumerate(values_2):
-            index = (i)*len(values_2)+(j)
             
-            ax = fig.add_subplot(gs[i, j])
-            ax.set_title(f'{variable_1}={value_1}, {variable_2}={value_2}')
-            ax.set_ylim(0, highest_value)
-            plot_data = plot_number_of_tests(path_data, index)
-            ax.plot(plot_data, label='Number of Tests')
-            ax.legend()
-    plt.show()
-    fig = plt.figure('Parameter Variation', figsize=(1, 1))
-    gs = fig.add_gridspec(len(values_1), len(values_2), hspace=0.4, wspace=0.4)
-    fig.suptitle('Parameter Variation', fontsize=16)
-    fig.show()
-    highest_value = 0
-    for i in range(len(values_1)):
-        for j in range(len(values_2)):
-            index = (i)*len(values_2)+(j)
-            plot_data = plot_positive_tests(path_data, index)
-            if np.max(plot_data) > highest_value:
-                highest_value = np.max(plot_data)
-    for i, value_1 in enumerate(values_1):
-        for j, value_2 in enumerate(values_2):
-            index = (i)*len(values_2)+(j)
-            
-            ax = fig.add_subplot(gs[i, j])
-            ax.set_title(f'{variable_1}={value_1}, {variable_2}={value_2}')
-            ax.set_ylim(0, highest_value)
-            plot_data = plot_positive_tests(path_data, index)
-            ax.plot(plot_data, label='Positive Tests')
-            ax.legend()
 
-    plt.show()
+
+
+
+
+
 
 
 
