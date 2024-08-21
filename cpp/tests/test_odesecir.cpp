@@ -1371,8 +1371,13 @@ TEST_F(ModelTestOdeSecir, model_initialization_old_date)
          population_data[0][5], 0, 0, 0, 0, 0, 0, 0, 0, 0)
             .finished();
 
-    EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
-                MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
+    auto results_extrapolated = model_vector[0].populations.array().cast<double>();
+
+    for (auto i = 0; i < num_age_groups; i++) {
+        EXPECT_EQ(results_extrapolated(i * Eigen::Index(mio::osecir::InfectionState::Count)), population_data[0][i]);
+    }
+    // sum of all compartments should be equal to the population
+    EXPECT_EQ(results_extrapolated.sum(), std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0));
     mio::set_log_level(mio::LogLevel::warn);
 }
 

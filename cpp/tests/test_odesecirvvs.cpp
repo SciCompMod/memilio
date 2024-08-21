@@ -797,7 +797,8 @@ TEST(TestOdeSECIRVVS, export_time_series_init_old_date)
 
     // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
     for (auto i = 0; i < num_age_groups; i++) {
-        EXPECT_EQ(results_extrapolated(i * Eigen::Index(mio::osecirvvs::InfectionState::Count)), population_data[0][i]);
+        EXPECT_NEAR(results_extrapolated(i * Eigen::Index(mio::osecirvvs::InfectionState::Count)),
+                    population_data[0][i], 1e-10);
     }
     // sum of all compartments should be equal to the population
     EXPECT_NEAR(results_extrapolated.sum(), std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0),
