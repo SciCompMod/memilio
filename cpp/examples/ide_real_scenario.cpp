@@ -404,13 +404,13 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(const fs::path& d
         set_npi_june(contact_matrices, start_date);
     }
 
-    std::cout << "contacts before NPIs: " << contact_matrices.get_matrix_at(0)(0, 0) << std::endl;
+    std::cout << "Contacts before NPIs: " << contact_matrices.get_matrix_at(0)(0, 0) << std::endl;
     // Set of NPIs for October.
     // auto start_npi_october = mio::Date(2020, 10, 1);
     if (start_date == mio::Date(2020, 10, 1)) {
         set_npi_october(contact_matrices, start_date, simulation_parameters["lockdown_hard"]);
     }
-    std::cout << "contacts after NPIs: " << contact_matrices.get_matrix_at(30)(0, 0) << std::endl;
+    std::cout << "Contacts after NPIs: " << contact_matrices.get_matrix_at(30)(0, 0) << std::endl;
 
     return mio::success(contact_matrices);
 }
@@ -425,16 +425,16 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices_simplified(mio::D
     auto start_npi_october = mio::Date(2020, 10, 1);
     if (start_npi_october < end_date) {
 
-        contact_matrices[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 5.67952));
+        contact_matrices[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 7.69129));
 
-        std::cout << "contacts on 2.10. " << contact_matrices.get_matrix_at(1)(0, 0) << std::endl;
+        std::cout << "Contacts before NPIs " << contact_matrices.get_matrix_at(1)(0, 0) << std::endl;
 
         auto offset_npi = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 10, 24), start_npi_october));
         // unused(offset_npi);
         contact_matrices[0].add_damping(0., mio::SimulationTime(0.1));
-        contact_matrices[0].add_damping(1 - 3.49629 / 5.67952, offset_npi);
+        contact_matrices[0].add_damping(1 - 3.51782 / 7.69129, offset_npi);
     }
-    std::cout << "contacts after NPIs: " << contact_matrices.get_matrix_at(30)(0, 0) << std::endl;
+    std::cout << "Contacts after NPIs: " << contact_matrices.get_matrix_at(30)(0, 0) << std::endl;
 
     return mio::success(contact_matrices);
 }
@@ -719,8 +719,7 @@ int main(int argc, char** argv)
 
     mio::ContactMatrixGroup contact_matrices =
         define_contact_matrices(data_dir, simulation_parameter, start_date, simulation_time).value();
-    // mio::ContactMatrixGroup contact_matrices =
-    //     define_contact_matrices_simplified(start_date, simulation_time).value();
+    // mio::ContactMatrixGroup contact_matrices = define_contact_matrices_simplified(start_date, simulation_time).value();
 
     auto result_ide =
         simulate_ide_model(start_date, simulation_time, contact_matrices, data_dir, save_dir, lognormal_parameters_U);
