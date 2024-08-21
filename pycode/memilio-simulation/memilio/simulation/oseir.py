@@ -22,4 +22,4 @@
 Python bindings for MEmilio ODE SEIR model.
 """
 
-from memilio._simulation_oseir import *
+from memilio.simulation._simulation_oseir import *

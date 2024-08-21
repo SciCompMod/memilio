@@ -27,9 +27,9 @@
 //Includes from MEmilio
 #include "abm/simulation.h"
 
+#include "pybind11/pybind11.h"
 #include "pybind11/attr.h"
 #include "pybind11/cast.h"
-#include "pybind11/pybind11.h"
 #include "pybind11/operators.h"
 #include <cstdint>
 #include <type_traits>
@@ -231,6 +231,8 @@ PYBIND11_MODULE(_simulation_abm, m)
              static_cast<void (mio::abm::Simulation::*)(mio::abm::TimePoint)>(&mio::abm::Simulation::advance),
              py::arg("tmax"))
         .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation::get_model));
+
+    m.attr("__version__") = "dev";
 }
 
 PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::Model>().get_locations()))

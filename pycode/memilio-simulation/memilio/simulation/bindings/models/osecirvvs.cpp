@@ -25,6 +25,7 @@
 #include "compartments/compartmentalmodel.h"
 #include "mobility/graph_simulation.h"
 #include "mobility/metapopulation_mobility_instant.h"
+#include "epidemiology/age_group.h"
 #include "epidemiology/populations.h"
 #include "io/mobility_io.h"
 #include "io/result_io.h"
@@ -155,13 +156,7 @@ namespace pymio
 {
 //specialization of pretty_name
 template <>
-std::string pretty_name<mio::AgeGroup>()
-{
-    return "AgeGroup";
-}
-
-template <>
-std::string pretty_name<mio::osecirvvs::InfectionState>()
+inline std::string pretty_name<mio::osecirvvs::InfectionState>()
 {
     return "InfectionState";
 }

@@ -52,13 +52,8 @@ void bind_single_tag_template_members(pybind11::module_& m, pybind11::class_<C>&
 template <class C, class T, class... Ts>
 void bind_single_tag_template_members(pybind11::module_& m, pybind11::class_<C>& c)
 {
-    std::string tname = pretty_name<T>();
-    c.def(("size_" + tname).c_str(), &C::template size<T>);
 
-    // Only add if the Index is multidimensional, e.g. only when Index::indices exists, because it is used in resize
-    if constexpr (has_indices_attribute<C>::value){
-        c.def(("resize_" + tname).c_str(), &C::template resize<T>);
-    }
+    std::string tname = pretty_name<T>();
 
     // Catch warning ImportError: generic_type: type "" is already registered!
     try {
@@ -66,6 +61,13 @@ void bind_single_tag_template_members(pybind11::module_& m, pybind11::class_<C>&
     }
     catch (std::runtime_error& e) {
     }
+
+    c.def(("size_" + tname).c_str(), &C::template size<T>);
+    // Only add if the Index is multidimensional, e.g. only when Index::indices exists, because it is used in resize
+    if constexpr (has_indices_attribute<C>::value){
+        c.def(("resize_" + tname).c_str(), &C::template resize<T>);
+    }
+
     bind_single_tag_template_members<C, Ts...>(m, c); //next Tag
 }
 
@@ -161,6 +163,13 @@ std::enable_if_t<(sizeof...(Tags) > 1)> bind_single_or_multi_index_members_Custo
                                                                                             pybind11::class_<C>& c,
                                                                                             std::string const& name)
 {
+    // Catch warning ImportError: generic_type: type "" is already registered!
+    try {
+        bind_MultiIndex<Tags...>(m, ("MultiIndex_" + name).c_str());
+    }
+    catch (std::runtime_error& e) {
+    }
+
     c.def("size", [](const C& self) {
         return self.size().indices; //tuple of single indices
     });
@@ -168,13 +177,6 @@ std::enable_if_t<(sizeof...(Tags) > 1)> bind_single_or_multi_index_members_Custo
         self.resize(new_dims); //tuple of single indices
     });
     // c.def("resize", pybind11::overload_cast<mio::Index<Tags...>>(&C::resize));
-
-    // Catch warning ImportError: generic_type: type "" is already registered!
-    try {
-        bind_MultiIndex<Tags...>(m, ("MultiIndex_" + name).c_str());
-    }
-    catch (std::runtime_error& e) {
-    }
 }
 
 template <class Type, class... Tags>
@@ -183,6 +185,12 @@ void bind_CustomIndexArray(pybind11::module_& m, std::string const& name)
     using C          = typename mio::CustomIndexArray<Type, Tags...>;
     using Index      = typename mio::CustomIndexArray<Type, Tags...>::Index;
     decltype(auto) c = bind_class<C, EnablePickling::Required>(m, name.c_str());
+
+    //TODO: __setitem__ with list or numpy array, e.g. array[AgeGroup(0):AgeGroup(3)] = [1, 2, 3]
+    //TODO: __getitem__. Is it ever necessary to store a reference to a slice?
+    bind_single_tag_template_members<C, Tags...>(m, c);
+    bind_single_or_multi_index_members_CustomIndexArray<C, Tags...>(m, c, name);
+
     c.def(pybind11::init([](Index const& sizes, Type const& val) {
          return C(sizes, val);
      }))
@@ -225,11 +233,6 @@ void bind_CustomIndexArray(pybind11::module_& m, std::string const& name)
     if constexpr (std::is_convertible<double, Type>::value) {
         c.def("__setitem__", &assign_scalar<C, double, Tags...>);
     }
-    //TODO: __setitem__ with list or numpy array, e.g. array[AgeGroup(0):AgeGroup(3)] = [1, 2, 3]
-    //TODO: __getitem__. Is it ever necessary to store a reference to a slice?
-
-    bind_single_or_multi_index_members_CustomIndexArray<C, Tags...>(m, c, name);
-    bind_single_tag_template_members<C, Tags...>(m, c);
 }
 
 } // namespace pymio

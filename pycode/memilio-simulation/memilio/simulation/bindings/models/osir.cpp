@@ -24,7 +24,9 @@
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
 #include "compartments/simulation.h"
+#include "compartments/flow_simulation.h"
 #include "compartments/compartmentalmodel.h"
+#include "epidemiology/age_group.h"
 #include "epidemiology/populations.h"
 
 //Includes from MEmilio
@@ -40,15 +42,9 @@ namespace pymio
 {
 //specialization of pretty_name
 template <>
-std::string pretty_name<mio::osir::InfectionState>()
+inline std::string pretty_name<mio::osir::InfectionState>()
 {
     return "InfectionState";
-}
-
-template <>
-std::string pretty_name<mio::AgeGroup>()
-{
-    return "AgeGroup";
 }
 
 } // namespace pymio

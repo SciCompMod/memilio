@@ -26,6 +26,7 @@
 #include "compartments/simulation.h"
 #include "compartments/flow_simulation.h"
 #include "compartments/compartmentalmodel.h"
+#include "epidemiology/age_group.h"
 #include "epidemiology/populations.h"
 
 //Includes from MEmilio
@@ -41,15 +42,9 @@ namespace pymio
 {
 //specialization of pretty_name
 template <>
-std::string pretty_name<mio::oseir::InfectionState>()
+inline std::string pretty_name<mio::oseir::InfectionState>()
 {
     return "InfectionState";
-}
-
-template <>
-std::string pretty_name<mio::AgeGroup>()
-{
-    return "AgeGroup";
 }
 
 } // namespace pymio

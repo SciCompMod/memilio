@@ -285,7 +285,8 @@ template <class E, class... Args>
 auto iterable_enum(pybind11::module_& m, const std::string& name, Args&&... args)
 {
     using T = std::underlying_type_t<E>;
-
+    auto enum_class = pybind11::enum_<E>(m, name.c_str(), std::forward<Args>(args)...);
+    
     //dummy type that provides iteration of enums
     //not meant to be used directly by users, so name starts with _
     struct Values {
@@ -299,7 +300,6 @@ auto iterable_enum(pybind11::module_& m, const std::string& name, Args&&... args
             return (size_t)E::Count; //len() expects integer
         });
 
-    auto enum_class = pybind11::enum_<E>(m, name.c_str(), std::forward<Args>(args)...);
     enum_class.def_static("values", []() {
         return Values{};
     });
