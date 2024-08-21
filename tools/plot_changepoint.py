@@ -100,12 +100,12 @@ if __name__ == '__main__':
     legendplot = list(["ODE", "IDE"])
     # Path to simulation results
     data_dir = os.path.join(os.path.dirname(
-        __file__), "..", "results/fictional/covasim/assessment_probs/")
+        __file__), "..", "results/fictional/covasim/")
 
     plot_changepoint([os.path.join(data_dir, f"fictional_ode_covasim_0.5_12_0.0100_flows"),
                      os.path.join(data_dir, f"fictional_ide_covasim_0.5_12_0.0100_flows")],
-                     legendplot, flows=True, fileending="0.5_12_0.0100", save=True, save_dir='plots/covasim/changepoints/assessment_probs/')
+                     legendplot, flows=True, fileending="0.5_12_0.0100", save=True, save_dir='plots/covasim/changepoints/')
 
     plot_changepoint([os.path.join(data_dir, f"fictional_ode_covasim_2.0_12_0.0100_flows"),
                      os.path.join(data_dir, f"fictional_ide_covasim_2.0_12_0.0100_flows")],
-                     legendplot, flows=True, fileending="2.0_12_0.0100", save=True, save_dir='plots/covasim/changepoints/assessment_probs/')
+                     legendplot, flows=True, fileending="2.0_12_0.0100", save=True, save_dir='plots/covasim/changepoints/')

@@ -38,47 +38,26 @@
 
 using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 
-// // Parameters are calculated via examples/compute_parameters.cpp.
-// std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
-//                                                           {"changepoint", 2.0},
-//                                                           {"dt_flows", 0.1},
-//                                                           {"total_population", 83155031.},
-//                                                           {"total_confirmed_cases", 341223.},
-//                                                           {"deaths", 9710.},
-//                                                           {"TimeExposed", 4.5},
-//                                                           {"TimeInfectedNoSymptoms", 3.18163},
-//                                                           {"TimeInfectedSymptoms", 7.85313},
-//                                                           {"TimeInfectedSevere", 11.9713},
-//                                                           {"TimeInfectedCritical", 15.2303},
-//                                                           {"TransmissionProbabilityOnContact", 0.0733271},
-//                                                           {"RelativeTransmissionNoSymptoms", 1},
-//                                                           {"RiskOfInfectionFromSymptomatic", 0.3},
-//                                                           {"Seasonality", 0.},
-//                                                           {"InfectedSymptomsPerInfectedNoSymptoms", 0.698315},
-//                                                           {"SeverePerInfectedSymptoms", 0.104907},
-//                                                           {"CriticalPerSevere", 0.369201},
-//                                                           {"DeathsPerCritical", 0.387803}};
-
-// Probabilities from Assessment paper
+// Used parameters
 std::map<std::string, ScalarType> simulation_parameter = {
     {"t0", 0.},
     {"dt_flows", 0.01},
     {"total_population", 83155031.},
-    {"total_confirmed_cases", 341223.}, // set by RKI data
-    {"deaths", 0.}, // set by RKI data
+    {"total_confirmed_cases", 341223.},
+    {"deaths", 0.},
     {"TimeExposed", 4.5},
-    {"TimeInfectedNoSymptoms", 2.52762}, // Covasim: 3.18163 // Assessment: 2.52762
-    {"TimeInfectedSymptoms", 7.8899}, //7.85313 //7.8899
-    {"TimeInfectedSevere", 15.2253}, //11.9713 //15.2253
-    {"TimeInfectedCritical", 16.4929}, //15.2303 // 16.4929
+    {"TimeInfectedNoSymptoms", 2.527617},
+    {"TimeInfectedSymptoms", 7.889900},
+    {"TimeInfectedSevere", 15.225278},
+    {"TimeInfectedCritical", 15.230258},
     {"TransmissionProbabilityOnContact", 0.0733271},
     {"RelativeTransmissionNoSymptoms", 1},
     {"RiskOfInfectionFromSymptomatic", 0.3},
     {"Seasonality", 0.},
-    {"InfectedSymptomsPerInfectedNoSymptoms", 0.793099}, // 0.698315 // 0.793099
-    {"SeverePerInfectedSymptoms", 0.0786429}, //0.104907 // 0.0786429
-    {"CriticalPerSevere", 0.173176}, //0.369201 //  0.173176
-    {"DeathsPerCritical", 0.217177}, //0.387803 //  0.217177
+    {"InfectedSymptomsPerInfectedNoSymptoms", 0.793099},
+    {"SeverePerInfectedSymptoms", 0.078643},
+    {"CriticalPerSevere", 0.173176},
+    {"DeathsPerCritical", 0.387803},
     {"cont_freq",
      40.50837938714286 /
          13.007554628089002}}; // computed so that we obtain constant new infections at beginning of simulation
@@ -265,7 +244,6 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType contact_scaling, Scala
 mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType contact_scaling, ScalarType tmax,
                                        std::string save_dir = "")
 {
-    // auto init_compartments = init_compartments2.get_value(0);
     // Use FlowModel to make results directly comparable to IDE model.
     mio::osecir::Model model_ode(1);
 
@@ -360,7 +338,7 @@ mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType cont
 int main()
 {
     // Paths are valid if file is executed eg in memilio/build/bin.
-    std::string save_dir = "../../results/fictional/covasim/assessment_probs/";
+    std::string save_dir = "../../results/fictional/covasim/";
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directories(dir);

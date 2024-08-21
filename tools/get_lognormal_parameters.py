@@ -46,5 +46,14 @@ if __name__ == '__main__':
     shape, scale = get_lognormal_parameters(2.183, 1.052)
     print(f"{shape:.12f}", f"{scale:.12f}")
 
-    # weighted_mean = get_weighted_mean(0.217177, 10.7, 18.1)
-    # print(f"{weighted_mean:.8f}")
+    weighted_mean = get_weighted_mean(0.793099, 1.1, 8.0)
+    print(f"{weighted_mean:.6f}")
+
+    weighted_mean = get_weighted_mean(0.078643, 6.6, 8.0)
+    print(f"{weighted_mean:.6f}")
+
+    weighted_mean = get_weighted_mean(0.173176, 1.5, 18.1)
+    print(f"{weighted_mean:.6f}")
+
+    weighted_mean = get_weighted_mean(0.387803, 10.7, 18.1)
+    print(f"{weighted_mean:.6f}")

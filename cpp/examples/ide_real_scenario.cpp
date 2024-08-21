@@ -23,8 +23,6 @@
 #include "ide_secir/parameters_io.h"
 #include "ide_secir/simulation.h"
 
-#include "lct_secir/model.h"
-#include "lct_secir/parameters_io.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "ode_secir/model.h"
 #include "ode_secir/infection_state.h"
@@ -46,52 +44,27 @@ using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 
 // // Parameters are calculated via examples/compute_parameters.cpp.
 // // Probabilities from Assessment paper
-std::map<std::string, ScalarType> simulation_parameter = {
-    {"t0", 0.},
-    {"dt_flows", 0.1},
-    {"total_population", 83155031.},
-    {"total_confirmed_cases", 0.}, // set by RKI data
-    {"deaths", 0.}, // set by RKI data
-    {"TimeExposed", 4.5},
-    {"TimeInfectedNoSymptoms", 2.52762}, // Covasim: 3.18163 // Assessment: 2.52762
-    {"TimeInfectedSymptoms", 7.8899}, //7.85313 //7.8899
-    {"TimeInfectedSevere", 15.2253}, //11.9713 //15.2253
-    {"TimeInfectedCritical", 16.4929}, //15.2303 // 16.4929
-    {"TransmissionProbabilityOnContact", 0.0733271},
-    {"RelativeTransmissionNoSymptoms", 1},
-    {"RiskOfInfectionFromSymptomatic", 0.3},
-    {"Seasonality", 0.},
-    {"InfectedSymptomsPerInfectedNoSymptoms", 0.793099}, // 0.698315 // 0.793099
-    {"SeverePerInfectedSymptoms", 0.0786429}, //0.104907 // 0.0786429
-    {"CriticalPerSevere", 0.173176}, //0.369201 //  0.173176
-    {"DeathsPerCritical", 0.217177}, //0.387803 //  0.217177
-    {"scale_confirmed_cases", 1.},
-    {"scale_contacts", 1.},
-    {"lockdown_hard", 371 * 14 / (45 * 401.)}};
-
-// // Covasim
-// std::map<std::string, ScalarType> simulation_parameter = {
-//     {"t0", 0.},
-//     {"dt_flows", 0.1},
-//     {"total_population", 83155031.},
-//     {"total_confirmed_cases", 0.}, // set by RKI data
-//     {"deaths", 0.}, // set by RKI data
-//     {"TimeExposed", 4.5},
-//     {"TimeInfectedNoSymptoms", 3.18163}, // Covasim: 3.18163 // Assessment: 2.52762
-//     {"TimeInfectedSymptoms", 7.85313}, //7.85313 //7.8899
-//     {"TimeInfectedSevere", 11.9713}, //11.9713 //15.2253
-//     {"TimeInfectedCritical", 15.2303}, //15.2303 // 16.4929
-//     {"TransmissionProbabilityOnContact", 0.0733271},
-//     {"RelativeTransmissionNoSymptoms", 1},
-//     {"RiskOfInfectionFromSymptomatic", 0.3},
-//     {"Seasonality", 0.},
-//     {"InfectedSymptomsPerInfectedNoSymptoms", 0.698315}, // 0.698315 // 0.793099
-//     {"SeverePerInfectedSymptoms", 0.104907}, //0.104907 // 0.0786429
-//     {"CriticalPerSevere", 0.369201}, //0.369201 //  0.173176
-//     {"DeathsPerCritical", 0.387803}, //0.387803 //  0.217177
-//     {"scale_confirmed_cases", 1.},
-//     {"scale_contacts", 1.},
-//     {"lockdown_hard", 371 * 14 / (45 * 401.)}};
+std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
+                                                          {"dt_flows", 0.1},
+                                                          {"total_population", 83155031.},
+                                                          {"total_confirmed_cases", 0.}, // set by RKI data
+                                                          {"deaths", 0.}, // set by RKI data
+                                                          {"TimeExposed", 4.5},
+                                                          {"TimeInfectedNoSymptoms", 2.527617},
+                                                          {"TimeInfectedSymptoms", 7.889900},
+                                                          {"TimeInfectedSevere", 15.225278},
+                                                          {"TimeInfectedCritical", 15.230258},
+                                                          {"TransmissionProbabilityOnContact", 0.0733271},
+                                                          {"RelativeTransmissionNoSymptoms", 1},
+                                                          {"RiskOfInfectionFromSymptomatic", 0.3},
+                                                          {"Seasonality", 0.},
+                                                          {"InfectedSymptomsPerInfectedNoSymptoms", 0.793099},
+                                                          {"SeverePerInfectedSymptoms", 0.078643},
+                                                          {"CriticalPerSevere", 0.173176},
+                                                          {"DeathsPerCritical", 0.387803},
+                                                          {"scale_confirmed_cases", 1.},
+                                                          {"scale_contacts", 1.},
+                                                          {"lockdown_hard", 371 * 14 / (45 * 401.)}};
 
 /**
  * indices of contact matrix corresponding to locations where contacts occur.
@@ -431,11 +404,6 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(const fs::path& d
         set_npi_june(contact_matrices, start_date);
     }
 
-    // std::cout << "contacts on June 30: " << contact_matrices.get_matrix_at(30)(0, 0) << std::endl;
-    // std::cout << "contacts before NPIs: " << contact_matrices[1].get_matrix_at(30)(0, 0) << std::endl;
-    // std::cout << "contacts before NPIs: " << contact_matrices[2].get_matrix_at(30)(0, 0) << std::endl;
-    // std::cout << "contacts before NPIs: " << contact_matrices[3].get_matrix_at(30)(0, 0) << std::endl;
-
     std::cout << "contacts before NPIs: " << contact_matrices.get_matrix_at(0)(0, 0) << std::endl;
     // Set of NPIs for October.
     // auto start_npi_october = mio::Date(2020, 10, 1);
@@ -443,9 +411,6 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(const fs::path& d
         set_npi_october(contact_matrices, start_date, simulation_parameters["lockdown_hard"]);
     }
     std::cout << "contacts after NPIs: " << contact_matrices.get_matrix_at(30)(0, 0) << std::endl;
-    // std::cout << "contacts before NPIs: " << contact_matrices[1].get_matrix_at(30)(0, 0) << std::endl;
-    // std::cout << "contacts before NPIs: " << contact_matrices[2].get_matrix_at(30)(0, 0) << std::endl;
-    // std::cout << "contacts before NPIs: " << contact_matrices[3].get_matrix_at(30)(0, 0) << std::endl;
 
     return mio::success(contact_matrices);
 }
@@ -461,9 +426,6 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices_simplified(mio::D
     if (start_npi_october < end_date) {
 
         contact_matrices[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 5.67952));
-        // contact_matrices[1] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 0));
-        // contact_matrices[2] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 0));
-        // contact_matrices[3] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 0));
 
         std::cout << "contacts on 2.10. " << contact_matrices.get_matrix_at(1)(0, 0) << std::endl;
 
@@ -473,9 +435,6 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices_simplified(mio::D
         contact_matrices[0].add_damping(1 - 3.49629 / 5.67952, offset_npi);
     }
     std::cout << "contacts after NPIs: " << contact_matrices.get_matrix_at(30)(0, 0) << std::endl;
-    // std::cout << "contacts before NPIs: " << contact_matrices[1].get_matrix_at(30)(0, 0) << std::endl;
-    // std::cout << "contacts before NPIs: " << contact_matrices[2].get_matrix_at(30)(0, 0) << std::endl;
-    // std::cout << "contacts before NPIs: " << contact_matrices[3].get_matrix_at(30)(0, 0) << std::endl;
 
     return mio::success(contact_matrices);
 }
@@ -581,7 +540,7 @@ simulate_ide_model(mio::Date start_date, ScalarType tmax, mio::ContactMatrixGrou
 
     // Simulate.
     mio::isecir::Simulation sim(model_ide, simulation_parameter["dt_flows"]);
-    // sim.get_transitions().print_table();
+
     sim.advance(tmax);
 
     if (!save_dir.empty()) {
@@ -608,7 +567,6 @@ simulate_ide_model(mio::Date start_date, ScalarType tmax, mio::ContactMatrixGrou
 mio::IOResult<void> simulate_ode_model(mio::Date start_date, Vector init_compartments, ScalarType tmax,
                                        mio::ContactMatrixGroup contact_matrices, std::string save_dir = "")
 {
-    // auto init_compartments = init_compartments2.get_value(0);
     // Use FlowModel to make results directly comparable to IDE model.
     mio::osecir::Model model_ode(1);
 
@@ -651,45 +609,6 @@ mio::IOResult<void> simulate_ode_model(mio::Date start_date, Vector init_compart
 
     model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() =
         mio::UncertainContactMatrix<ScalarType>(contact_matrices);
-
-    // // Set initial values for compartments by using a helper LCT model.
-    // mio::unused(init_compartments);
-    // // Initialize LCT model.
-    // constexpr int num_subcompartments = 1;
-    // using Model = mio::lsecir::Model<num_subcompartments, num_subcompartments, num_subcompartments, num_subcompartments,
-    //                                  num_subcompartments>;
-    // using LctState = Model::LctState;
-    // Model model_lct(std::move(Eigen::VectorXd::Zero(LctState::Count)));
-
-    // // Calculate initial value vector for subcompartments with RKI data.
-    // std::string path = "../../data/pydata/Germany/cases_all_germany_ma7.json";
-    // BOOST_OUTCOME_TRY(mio::lsecir::set_initial_data_from_confirmed_cases<Model>(
-    //     model_lct, path, start_date, simulation_parameter["total_population"],
-    //     simulation_parameter["scale_confirmed_cases"]));
-
-    // mio::TimeSeries<ScalarType> result_lct = mio::lsecir::simulate(0, 0, simulation_parameter["dt_flows"], model_lct);
-    // // Calculate result without division in subcompartments.
-    // mio::TimeSeries<ScalarType> init_populations_lct = model_lct.calculate_populations(result_lct);
-    // // init_populations_lct.print_table();
-
-    // model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] =
-    //     init_populations_lct[0][int(mio::lsecir::InfectionState::Susceptible)];
-    // model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] =
-    //     init_populations_lct[0][int(mio::lsecir::InfectionState::Exposed)];
-    // model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] =
-    //     init_populations_lct[0][int(mio::lsecir::InfectionState::InfectedNoSymptoms)];
-    // model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-    // model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] =
-    //     init_populations_lct[0][int(mio::lsecir::InfectionState::InfectedSymptoms)];
-    // model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
-    // model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}] =
-    //     init_populations_lct[0][int(mio::lsecir::InfectionState::InfectedSevere)];
-    // model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}] =
-    //     init_populations_lct[0][int(mio::lsecir::InfectionState::InfectedCritical)];
-    // model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}] =
-    //     init_populations_lct[0][int(mio::lsecir::InfectionState::Recovered)];
-    // model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}] =
-    //     init_populations_lct[0][int(mio::lsecir::InfectionState::Dead)];
 
     // Use mio::isecir::InfectionState when accessing init_compartments since this is computed using the IDE model.
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] =
@@ -745,25 +664,7 @@ int main(int argc, char** argv)
     std::string data_dir_tmp = "../../data";
     std::string save_dir     = "../../results/real/";
 
-    // mio::Date start_date;
-
     mio::Date start_date(2020, 10, 01);
-    // for Covasim probabilities
-    // simulation_parameter["scale_confirmed_cases"] = 374.5714285714 / 1016.49810625866;
-    // simulation_parameter["scale_contacts"] = 6395.938795529226 / 6278.021198079027;
-    // for Assessment ... probabilities
-    // simulation_parameter["scale_confirmed_cases"] = 374.5714285714 / 384.0430695350508;
-    // simulation_parameter["scale_contacts"] = 5492.663367720521 / 4925.137071413998;//qith this scaling we obtain good results
-    simulation_parameter["scale_contacts"] = 5631.554194369167 / 5049.174737884492;
-
-    // mio::Date start_date(2020, 06, 01);
-    // // for Covasim probabilities
-    // // simulation_parameter["scale_contacts"] =
-    // //     (318.4809147734314 + (433.0423949077547 - 318.4809147734314) * simulation_parameter["dt_flows"]) /
-    // //     1063.9489750070957;
-    // // for Assessment ... probabilities
-    // simulation_parameter["scale_contacts"] = 329.9370627868637 / 441.7043774280138;
-    // simulation_parameter["scale_confirmed_cases"] = 318.4809147734314 / 523.9141975428727;
 
     ScalarType simulation_time = 45;
 

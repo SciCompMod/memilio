@@ -11,54 +11,20 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 # Probabilities from Assessment paper
 parameters = {
     'TimeExposed': 4.5,
-    'TimeInfectedNoSymptoms':  2.52762,  # Covasim: 3.18163, ## Assessment: 2.52762
-    'TimeInfectedSymptoms': 7.8899,  # 7.85313, ' 7.8899
-    'TimeInfectedSevere': 15.2253,  # 11.9713, # 15.2253
-    # 'TimeInfectedCritical': 16.4929,  # 15.2303, # 16.4929
+    'TimeInfectedNoSymptoms':  2.527617,  # Covasim: 3.18163, ## Assessment: 2.52762
+    'TimeInfectedSymptoms': 7.889900,  # 7.85313, ' 7.8899
+    'TimeInfectedSevere': 15.225278,  # 11.9713, # 15.2253
     'TimeInfectedNoSymptomsToInfectedSymptoms': 1.1,
     'TimeInfectedSymptomsToInfectedSevere': 6.6,
     'TimeInfectedSymptomsToRecovered': 8.0,
     'TimeInfectedSevereToInfectedCritical': 1.5,
     'TimeInfectedCriticalToDead': 10.7,
     'InfectedSymptomsPerInfectedNoSymptoms': 0.793099,  # 0.698315 #0.793099
-    'SeverePerInfectedSymptoms': 0.0786429,
+    'SeverePerInfectedSymptoms': 0.078643,
     'start_date': pd.Timestamp('2020.10.01') - pd.DateOffset(days=20),
     'end_date': pd.Timestamp('2020.10.01') + pd.DateOffset(days=30),
     'scaleConfirmed': 1.
 }
-
-# parameters_assessment_probs_differentUD = {
-#     'TimeExposed': 4.5,
-#     'TimeInfectedNoSymptoms':  2.52762,  # Covasim: 3.18163, ## Assessment: 2.52762
-#     'TimeInfectedSymptoms': 7.8899,  # 7.85313, ' 7.8899
-#     'TimeInfectedSevere': 15.2253,  # 11.9713, # 15.2253
-#     'TimeInfectedCritical': 2.183,  # 15.2303, # 16.4929
-#     'TimeInfectedNoSymptomsToInfectedSymptoms': 1.1,
-#     'TimeInfectedSymptomsToInfectedSevere': 6.60011,
-#     'TimeInfectedSevereToInfectedCritical': 1.5,
-#     'TimeInfectedCriticalToDead': 2.183,
-#     'InfectedSymptomsPerInfectedNoSymptoms': 0.793099,  # 0.698315 #0.793099
-#     'start_date': pd.Timestamp('2020.10.01') - pd.DateOffset(days=20),
-#     'end_date': pd.Timestamp('2020.10.01') + pd.DateOffset(days=30),
-#     'scaleConfirmed': 1.
-# }
-
-# # Covasim
-# parameters_covasim_probs = {
-#     'TimeExposed': 4.5,
-#     'TimeInfectedNoSymptoms':  3.18163,  # Covasim: 3.18163, ## Assessment: 2.52762
-#     'TimeInfectedSymptoms': 7.85313,  # 7.85313, ' 7.8899
-#     'TimeInfectedSevere': 11.9713,  # 11.9713, # 15.2253
-#     'TimeInfectedCritical': 15.2303,  # 15.2303, # 16.4929
-#     'TimeInfectedNoSymptomsToInfectedSymptoms': 1.1,
-#     'TimeInfectedSymptomsToInfectedSevere': 6.60011,
-#     'TimeInfectedSevereToInfectedCritical': 1.52924,
-#     'TimeInfectedCriticalToDead': 10.7,
-#     'InfectedSymptomsPerInfectedNoSymptoms': 0.698315,  # 0.698315 #0.793099
-#     'start_date': pd.Timestamp('2020.10.01') - pd.DateOffset(days=20),
-#     'end_date': pd.Timestamp('2020.10.01') + pd.DateOffset(days=30),
-#     'scaleConfirmed': 1.
-# }
 
 
 def set_parameters_U(parameters, T_UD, mu_IH):
@@ -93,11 +59,6 @@ def load_data(file, start_date, simulation_time, T_UD, mu_IH):
     # Calculate individuals in compartment InfectedSymptoms.
     help_I = df['Confirmed'][(df['Date'] >= parameters['start_date'])
                              & (df['Date'] <= parameters['end_date'])].to_numpy()
-    # Shift according to T_I
-    # help_I = help_I - (1 - math.fmod(parameters['TimeInfectedSymptoms'], 1)) * df['Confirmed'][(df['Date'] >= parameters['start_date'] + pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptoms'])))
-    #                                                                                            & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptoms'])))].to_numpy()
-    # help_I = help_I - math.fmod(parameters['TimeInfectedSymptoms'], 1) * df['Confirmed'][(df['Date'] >= parameters['start_date'] + pd.DateOffset(days=-math.ceil(
-    #     parameters['TimeInfectedSymptoms']))) & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=-math.ceil(parameters['TimeInfectedSymptoms'])))].to_numpy()
 
     # shift according to T_I^H and T_I^R
     help_I = help_I - parameters["SeverePerInfectedSymptoms"]*((1 - math.fmod(parameters['TimeInfectedSymptomsToInfectedSevere'], 1)) * df['Confirmed'][(df['Date'] >= parameters['start_date'] + pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptomsToInfectedSevere'])))
@@ -173,6 +134,45 @@ def get_scale_contacts(files, start_date, simulation_time, T_UD, mu_IH):
     scale_contacts = new_infections_rki/new_infections_ide
 
     return scale_contacts
+
+
+def get_scale_confirmed_cases(files, start_date):
+    for file in range(len(files)):
+        # load data
+        h5file = h5py.File(str(files[file]) + '.h5', 'r')
+
+        if (len(list(h5file.keys())) > 1):
+            raise gd.DataError("File should contain one dataset.")
+        if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
+            raise gd.DataError("Expected only one group.")
+
+        data = h5file[list(h5file.keys())[0]]
+
+        if len(data['Total'][0]) == 8:
+            # As there should be only one Group, total is the simulation result
+            total = data['Total'][:, :]
+        elif len(data['Total'][0]) == 10:
+            # in ODE there are two compartments we don't use, throw these out
+            total = data['Total'][:, [0, 1, 2, 4, 6, 7, 8, 9]]
+
+        dates = data['Time'][:]
+
+    icu_ide = total[:, 5][0]
+    print(f"ICU in IDE on {start_date}: ",
+          total[:, 5][0])
+
+    datafile_icu = os.path.join(os.path.dirname(
+        __file__), "..", "data", "pydata", "Germany", "germany_divi.json")
+
+    df = pd.read_json(datafile_icu)
+
+    icu_divi = df[df["Date"] == start_date]["ICU"].values[0]
+    print(f"ICU from DIVI (ma7)  on {start_date}: ",
+          df[df["Date"] == start_date]["ICU"].values[0])
+
+    scale_confirmed_cases = icu_divi/icu_ide
+
+    return scale_confirmed_cases
 
 
 def plot_new_infections(files, start_date, simulation_time, T_UD, mu_IH, fileending="", save=True, save_dir='plots/'):

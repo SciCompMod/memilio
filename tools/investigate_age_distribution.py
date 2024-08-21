@@ -7,7 +7,7 @@ import numpy as np
 def get_df_daily():
     # Read file.
     datafile = os.path.join(os.path.dirname(
-        __file__), "..", "data", "pydata", "Germany", "cases_all_age.json")
+        __file__), "..", "data", "pydata", "Germany", "cases_all_age_all_dates.json")
     df = pd.read_json(datafile)
 
     # Create df_daily, where daily confirmed (and daily deaths) will be stored.
@@ -47,7 +47,7 @@ def get_relevant_confirmed_cases(start_date, T_IH, T_HU):
     T_U = 16.49
     # Extract relevant dates to be considered.
     df_date = df[(df["Date"] >= pd.Timestamp(start_date)-pd.Timedelta(days=T_IH+T_HU+T_U))
-                 & (df["Date"] <= pd.Timestamp(start_date)-pd.Timedelta(days=T_IH+T_HU))]
+                 & (df["Date"] <= pd.Timestamp(start_date)+pd.Timedelta(days=45-(T_IH+T_HU+T_U)))]  # T_IH+T_HU
 
     # Get total confirmed cases in considered time frame.
     totaldailyconfirmed = df_date.DailyConfirmed.sum()
@@ -83,7 +83,7 @@ def plot(start_dates, T_IH, T_HU):
 
     proportions = [proportions_june,
                    proportions_october, population_per_agegroup]
-    labels = ["June scenario", "October scenario", "Population"]
+    labels = ["June", "October", "Population"]
     colors = [plt.cm.viridis(x) for x in np.linspace(0., 0.9, 3)]
 
     # Plot.
@@ -145,23 +145,23 @@ def compute_covasim_probs_per_rki_agegroup():
                               0.00265, 0.00766, 0.02439, 0.08292, 0.16190])
     mu_UD_covasim = mu_CD_covasim/mu_CU_covasim
 
-    # Compute average by population just to test.
-    agegroups_covasim = np.array([7752706.0, 7581868,  9483430, 10871964, 10070748,
-                                  13304542,  10717241, 7436098, 5092743, 843691])
-    total_pop = agegroups_covasim.sum()
+    # # Compute average by population just to test.
+    # agegroups_covasim = np.array([7752706.0, 7581868,  9483430, 10871964, 10070748,
+    #                               13304542,  10717241, 7436098, 5092743, 843691])
+    # total_pop = agegroups_covasim.sum()
 
-    mu_CI_average = 0
-    mu_IH_average = 0
-    mu_HU_average = 0
-    mu_UD_average = 0
-    for i in range(len(agegroups_covasim)):
-        mu_CI_average += mu_CI_covasim[i]*agegroups_covasim[i]/total_pop
-        mu_IH_average += mu_IH_covasim[i]*agegroups_covasim[i]/total_pop
-        mu_HU_average += mu_HU_covasim[i]*agegroups_covasim[i]/total_pop
-        mu_UD_average += mu_UD_covasim[i]*agegroups_covasim[i]/total_pop
+    # mu_CI_average = 0
+    # mu_IH_average = 0
+    # mu_HU_average = 0
+    # mu_UD_average = 0
+    # for i in range(len(agegroups_covasim)):
+    #     mu_CI_average += mu_CI_covasim[i]*agegroups_covasim[i]/total_pop
+    #     mu_IH_average += mu_IH_covasim[i]*agegroups_covasim[i]/total_pop
+    #     mu_HU_average += mu_HU_covasim[i]*agegroups_covasim[i]/total_pop
+    #     mu_UD_average += mu_UD_covasim[i]*agegroups_covasim[i]/total_pop
 
-    print("Covasim probs by pop: ", mu_CI_average,
-          mu_IH_average, mu_HU_average, mu_UD_average)
+    # print("Covasim probs by pop: ", mu_CI_average,
+    #       mu_IH_average, mu_HU_average, mu_UD_average)
 
     # Convert from 10 agegroups from Covasim Paper to 6 age groups according to RKI data.
     mu_CI_rki = covasim_to_rki_agegroups(mu_CI_covasim)
@@ -208,8 +208,25 @@ def compute_mu_by_population():
 
 
 def mu_assessment_by_cases(start_date, T_IH, T_HU):
-    mu_assessment = population_share = get_relevant_confirmed_cases(
+    population_share = get_relevant_confirmed_cases(
         start_date, T_IH, T_HU)
+
+    mu_CI_assessment = np.array([0.75, 0.75, 0.8, 0.8, 0.8, 0.8])
+    mu_IH_assessment = np.array([0.0075, 0.0075, 0.019, 0.0615, 0.165, 0.225])
+    mu_HU_assessment = np.array([0.075, 0.075, 0.15, 0.15, 0.3, 0.4])
+    mu_UD_assessment = np.array([0.05, 0.05, 0.14, 0.14, 0.4, 0.6])
+
+    mu_CI = 0
+    mu_IH = 0
+    mu_HU = 0
+    mu_UD = 0
+    for i in range(len(population_share)):
+        mu_CI += mu_CI_assessment[i] * population_share[i]
+        mu_IH += mu_IH_assessment[i] * population_share[i]
+        mu_HU += mu_HU_assessment[i] * population_share[i]
+        mu_UD += mu_UD_assessment[i] * population_share[i]
+
+    return mu_CI, mu_IH, mu_HU, mu_UD
 
 
 def main():
@@ -240,6 +257,12 @@ def main():
 
     mu_CI, mu_IH, mu_HU, mu_UD = compute_mu_by_population()
     print(f"mu by population: {mu_CI}, {mu_IH}, {mu_HU}, {mu_UD}")
+
+    # mu_CI, mu_IH, mu_HU, mu_UD = mu_assessment_by_cases(start_dates[0], T_IH, T_HU)
+    # print(f"Assessment mu by cases June: {mu_CI}, {mu_IH}, {mu_HU}, {mu_UD}")
+
+    # mu_CI, mu_IH, mu_HU, mu_UD = mu_assessment_by_cases(start_dates[1], T_IH, T_HU)
+    # print(f"Assessment mu by cases October: {mu_CI}, {mu_IH}, {mu_HU}, {mu_UD}")
 
 
 if __name__ == "__main__":
