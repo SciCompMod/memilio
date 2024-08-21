@@ -33,7 +33,7 @@ def plot_scenario(path, folder, folder_high, folder_enough):
     folders = [folder, folder_high, folder_enough]
     # for folder in [folder_normal, folder_high, folder_enough]:
     # we plot both in separate plots
-    fig, axs = plt.subplots(2, 2, figsize=(19, 10))
+    fig, axs = plt.subplots(3, 2, figsize=(19, 10))
     fig.suptitle('Infection and Tests during the first 90 days for normal and high testing scenarios')
 
     inf_p50_normal = h5py.File(
@@ -75,6 +75,29 @@ def plot_scenario(path, folder, folder_high, folder_enough):
         p50_bs_test_p_pos_normal = test_p_pos_p50_normal['0']['Total'][()]
         p25_bs_test_p_pos_normal = test_p_pos_p25_normal['0']['Total'][()]
         p75_bs_test_p_pos_normal = test_p_pos_p75_normal['0']['Total'][()]
+
+        deaths_p50_normal = h5py.File(
+            path+"/infection_state_per_age_group/"+folder+"/p50/Results.h5", 'r')
+        deaths_p25_normal = h5py.File(
+            path+"/infection_state_per_age_group/"+folder+"/p25/Results.h5", 'r')
+        deaths_p75_normal = h5py.File(
+            path+"/infection_state_per_age_group/"+folder+"/p75/Results.h5", 'r')
+        p50_bs_deaths_normal = deaths_p50_normal['0']['Total'][()][:, 7][::24][0:90]
+        p25_bs_deaths_normal = deaths_p25_normal['0']['Total'][()][:, 7][::24][0:90]
+        p75_bs_deaths_normal = deaths_p75_normal['0']['Total'][()][:, 7][::24][0:90]
+
+        reproduction_p50_normal = h5py.File(
+            path+"/estimated_reproduction_number/"+folder+"/p50/Results.h5", 'r')
+        reproduction_p25_normal = h5py.File(
+            path+"/estimated_reproduction_number/"+folder+"/p25/Results.h5", 'r')
+        reproduction_p75_normal = h5py.File(
+            path+"/estimated_reproduction_number/"+folder+"/p75/Results.h5", 'r')
+        p50_bs_reproduction_normal = reproduction_p50_normal['0']['Total'][()][::24][0:90].flatten()
+        p25_bs_reproduction_normal = reproduction_p25_normal['0']['Total'][()][::24][0:90].flatten()
+        p75_bs_reproduction_normal = reproduction_p75_normal['0']['Total'][()][::24][0:90].flatten()
+
+
+
 
         total_50_positive = np.sum(p50_bs_test_p_pos_normal, axis=1)
         total_50_positive = np.cumsum(total_50_positive, axis=0)
@@ -147,6 +170,7 @@ def plot_scenario(path, folder, folder_high, folder_enough):
         new_inf_normal_75 = np.diff(cum_inf_normal_75)
 
 
+
         # first plot
         axs[0, 0].plot(xx, new_inf_normal_50, label='Normal')
         axs[0, 0].fill_between(xx, new_inf_normal_25, new_inf_normal_75, alpha=0.5)
@@ -165,6 +189,17 @@ def plot_scenario(path, folder, folder_high, folder_enough):
         # fourth plot
         axs[1, 1].plot(xx, total_50_positive, label='Normal')
         axs[1, 1].fill_between(xx, total_25_positive, total_75_positive, alpha=0.5)
+
+        # plot dead in last row 
+        axs[2, 0].plot(xx, p50_bs_deaths_normal, label='Normal')
+        axs[2, 0].fill_between(xx, p25_bs_deaths_normal, p75_bs_deaths_normal, alpha=0.5)
+
+        # plot reproduction number
+        axs[2, 1].plot(xx, p50_bs_reproduction_normal, label='Normal')
+        axs[2, 1].fill_between(xx, p25_bs_reproduction_normal, p75_bs_reproduction_normal, alpha=0.5)
+        axs[2, 1].set_ylim([0, max(p75_bs_reproduction_normal)*1.5])
+
+
     
   
 
@@ -180,6 +215,13 @@ def plot_scenario(path, folder, folder_high, folder_enough):
     axs[1, 1].set_title('Daily Positive Tests')
     axs[1, 1].set_ylabel('Number of Positive Tests')
     axs[1, 1].set_xlabel('Date')
+    axs[2, 0].set_title('Cumulative Deaths')
+    axs[2, 0].set_ylabel('Number of Deaths')
+    axs[2, 0].set_xlabel('Date')
+    axs[2, 1].set_title('Reproduction Number')
+    axs[2, 1].set_ylabel('Reproduction Number')
+    axs[2, 1].set_xlabel('Date')
+
     for ax in axs.flat:
         ax.set_xticks(xx[::10])
         ax.set_xticklabels(xx[::10])
@@ -188,14 +230,16 @@ def plot_scenario(path, folder, folder_high, folder_enough):
 
 
 
+
+
 if __name__ == "__main__":
     path_to_scenario_1 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_2024-08-21181533"
-    path_to_scenario_2 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/"
+    path_to_scenario_2 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_2024-08-21194839"
     path_to_scenario_3 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/"
     path_to_main_data = "0"
     path_to_high_testing_data = "1"
     path_to_enough_testing_data = "2"
 
     plot_scenario(path_to_scenario_1, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)
-    # plot_scenario(path_to_scenario_2, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)
+    plot_scenario(path_to_scenario_2, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)
     # plot_scenario(path_to_scenario_3, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)
