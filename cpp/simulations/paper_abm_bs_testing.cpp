@@ -1776,6 +1776,8 @@ for (size_t i = 0; i < grid_search_rank.size(); i++) {
     const double after_lockdown_contact_reduction = 0.55;
     const double ratio_asympt_to_sympt            = 20.0;
     const double perc_easter_event                = 0.25;
+    const auto quarantine_duration                = mio::abm::days(10);
+    const double quarantine_effectiveness         = 0.5;
 
     mio::Date start_date{2021, 3, 1};
     int date_of_lockdown     = 29;
@@ -1873,7 +1875,8 @@ for (size_t i = 0; i < grid_search_rank.size(); i++) {
 
         sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>() = viral_shedding_rate;
         sim.get_world().parameters.get<mio::abm::MaskProtection>()             = masks;
-
+        sim.get_world().parameters.get<mio::abm::QuarantineEffectiveness>()    = quarantine_effectiveness;
+        sim.get_world().parameters.get<mio::abm::QuarantineDuration>()         = quarantine_duration;
         restart_timer(timer, "till advance 27 (march ends & lockdown starts)");
         sim.advance(mio::abm::TimePoint(mio::abm::days(27).seconds()), historyInfectionPerLocationType,
                     historyInfectionStatePerAgeGroup, historyCumulativeDetectedInfectionsPerAgeGroup);
@@ -1969,20 +1972,23 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     for (size_t par_i = 0; par_i < parameter_values.size(); par_i++) {
         auto params = parameter_values[par_i];
 
+        std::cout << "Parameter values: ";
+        for (size_t j = 0; j < params.size(); j++) {
+            std::cout << params.at(j) << " ";
+        }
+        std::cout << std::endl;
+
         auto run_distribution = distribute_runs(num_runs, num_procs);
         auto start_run_idx =
             std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
         auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
 
-        // const double viral_shedding_rate        = 2.11;
-        const double viral_shedding_rate = params[0];
-        // const double dark_figure                = 3.0;
-        const double dark_figure = params[1];
-        // const double contact_red_lockdown       = 0.65;
+        const double viral_shedding_rate        = params[0];
+        const double dark_figure                = params[1];
         const double contact_red_lockdown       = params[2];
         const double damping_community_lockdown = 0.5;
         const double testing_probability_sympt  = 0.036;
-        // const double testing_probability_sympt = params[0];
+        // const double testing_probability_sympt = params[3];
 
         const double lockdown_test_prob       = 1.25;
         const double after_lockdown_test_prob = 0.75;
@@ -1993,8 +1999,10 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         const double masks                            = 0.55;
         const double after_lockdown_contact_reduction = 0.55;
         const double ratio_asympt_to_sympt            = 20.0;
-        // const double ratio_asympt_to_sympt = params[1];
-        const double perc_easter_event = 0.2;
+        // const double ratio_asympt_to_sympt    = params[4];
+        const double perc_easter_event        = 0.2;
+        const auto quarantine_duration        = mio::abm::days(10);
+        const double quarantine_effectiveness = 0.5;
 
         mio::Date start_date{2021, 3, 1};
         int date_of_lockdown     = 29;
@@ -2132,6 +2140,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
                 sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>() = viral_shedding_rate;
                 sim.get_world().parameters.get<mio::abm::MaskProtection>()             = masks;
+                sim.get_world().parameters.get<mio::abm::QuarantineEffectiveness>()    = quarantine_effectiveness;
+                sim.get_world().parameters.get<mio::abm::QuarantineDuration>()         = quarantine_duration;
 
                 restart_timer(timer, "till advance 27 (march ends & lockdown starts)");
                 sim.advance(mio::abm::TimePoint(mio::abm::days(27).seconds()),
@@ -2223,11 +2233,14 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                 }
             }
         }
-        rmse_results_per_grid_point.at(par_i) /= num_runs;
-        std::cout << "RMSE: " << rmse_results_per_grid_point.at(par_i) << std::endl;
-        printf("Saving results ... ");
 
 #ifdef MEMILIO_ENABLE_MPI
+        // gather rmse with reduce sum
+        double rmse_sum = 0;
+        MPI_Reduce(&rmse_results_per_grid_point.at(0), &rmse_sum, 1, MPI_DOUBLE, MPI_SUM, 0, mio::mpi::get_world());
+        if (rank == 0) {
+            std::cout << "RMSE sum: " << rmse_sum << std::endl;
+        }
         //gather results
         auto final_ensemble_infection_per_loc_type_per_age_group =
             gather_results(rank, num_procs, num_runs, ensemble_infection_per_loc_type_per_age_group);
