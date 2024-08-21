@@ -1667,8 +1667,8 @@ void add_npi_testing_strategies_to_world(mio::abm::Simulation& sim, mio::abm::Ti
                                                               testing_scheme_sympt_al);
 
     // easter event
-    sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Event, testing_scheme_asympt_wl);
-    sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Event, testing_scheme_sympt_wl);
+    // sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Event, testing_scheme_asympt_wl);
+    // sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Event, testing_scheme_sympt_wl);
 }
 
 void write_grid_search_prematurely_to_file(int rank, const fs::path& result_dir,
@@ -1729,7 +1729,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
     omp_set_max_active_levels(2);
-PRAGMA_OMP(parallel for num_threads(128) )
+PRAGMA_OMP(parallel for num_threads(90) )
 for (size_t i = 0; i < grid_search_rank.size(); i++) {
     auto params = grid_search_rank[i];
     std::random_device rd;
@@ -1750,9 +1750,9 @@ for (size_t i = 0; i < grid_search_rank.size(); i++) {
     const auto seasonality_may   = 0.85;
 
     const double masks                            = 0.55;
-    const double after_lockdown_contact_reduction = 0.52;
+    const double after_lockdown_contact_reduction = 0.55;
     const double ratio_asympt_to_sympt            = 20.0;
-    const double perc_easter_event                = 0.45;
+    const double perc_easter_event                = 0.25;
 
     mio::Date start_date{2021, 3, 1};
     int date_of_lockdown     = 27;
@@ -1966,10 +1966,10 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         const auto seasonality_may   = 0.85;
 
         const double masks                            = 0.55;
-        const double after_lockdown_contact_reduction = 0.6;
+        const double after_lockdown_contact_reduction = 0.55;
         const double ratio_asympt_to_sympt            = 20.0;
         // const double ratio_asympt_to_sympt = params[1];
-        const double perc_easter_event = 0.33;
+        const double perc_easter_event = 0.25;
 
         mio::Date start_date{2021, 3, 1};
         int date_of_lockdown     = 27;
@@ -2357,7 +2357,7 @@ int main(int argc, char** argv)
         printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
     else if (argc == 3) {
-        num_runs        = 11;
+        num_runs        = 9;
         run_grid_search = true;
         printf("running with grid search\n");
         printf("Running with number of runs = 1\n");
@@ -2378,9 +2378,9 @@ int main(int argc, char** argv)
         // 4: perc have to test if npi active
 
         // std::vector<std::pair<double, double>> grid_boundaries = {{1.8, 2.5}, {2.0, 4.0}, {0.5, 0.8}, {0.03, 0.04}};
-        std::vector<double> grid_boundaries = {2.2, 2.8, 0.7, 0.55};
+        std::vector<double> grid_boundaries = {2.3, 2.6, 0.55};
         // std::vector<int> points_per_dim = {11, 11, 7, 11};
-        std::vector<int> points_per_dim = {7, 7, 7, 7};
+        std::vector<int> points_per_dim = {7, 7, 7};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, 0, run_grid_search);
@@ -2393,7 +2393,7 @@ int main(int argc, char** argv)
     }
     else {
         // std::vector<std::vector<double>> parameters = {{0.01, 0.03, 0.05}, {5, 10, 30}};
-        std::vector<std::vector<double>> parameters = {{2.29}, {2.80}, {0.60}};
+        std::vector<std::vector<double>> parameters = {{2.3}, {2.6}, {0.55}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
