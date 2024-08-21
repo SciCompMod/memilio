@@ -34,7 +34,7 @@ plt.plot(processors, speedup, marker='o')
 plt.plot(processors, ideal_speedup, marker='o')
 plt.xlabel('Number of Processors')
 plt.ylabel('Speedup')
-plt.title('Speedup vs. Number of Processors')
+plt.title('Speedup vs. Number of Processors for 800k Agents')
 plt.legend(['Speedup', 'Ideal Speedup'])
 plt.grid(True)
 plt.show()
@@ -65,6 +65,7 @@ plt.show()
 
 # Fourth plot: Memory Usage vs. Population Size
 population_size = [25, 50, 100, 200, 400, 800, 1600, 3200]  # Population size in thousand
+population_size = [p * 1000 for p in population_size]
 memory_usage = [10,22, 50, 111, 228,455,900,1777]  # Memory usage in MB 
 
 plt.figure()

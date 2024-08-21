@@ -251,19 +251,28 @@ def plot_dead(path):
 
     # do the same for 25 and 75 percentile
     f_p25 = h5py.File(
-        path+"/infection_state_per_age_group/0/p05/Results.h5", 'r')
+        path+"/infection_state_per_age_group/0/p25/Results.h5", 'r')
     p25_bs = f_p25['0']
 
     f_p75 = h5py.File(
-        path+"/infection_state_per_age_group/0/p95/Results.h5", 'r')
+        path+"/infection_state_per_age_group/0/p75/Results.h5", 'r')
     p75_bs = f_p75['0']
+
+    # do the same for 05 and 95 percentile
+    f_p05 = h5py.File(
+        path+"/infection_state_per_age_group/0/p05/Results.h5", 'r')
+    p05_bs = f_p05['0']
+
+    f_p95 = h5py.File(
+        path+"/infection_state_per_age_group/0/p95/Results.h5", 'r')
+    p95_bs = f_p95['0']
 
     age_group_access = ['Group1', 'Group2', 'Group3',
                         'Group4', 'Group5', 'Group6', 'Total']
 
     # we need the real data json file cases_all_state_repdate_ma7
     df_abb = pd.read_json(
-        path+"/../../../pydata/Germany/cases_all_county_age_ma7.json")
+        path+"/../pydata/Germany/cases_all_county_age_ma7.json")
 
     # we just need the columns cases and date
     # we need to offset the dates by 19 day
@@ -296,10 +305,12 @@ def plot_dead(path):
     # we calculate the RMSE
     rmse_dead = (((y_real- p50_bs['Total'][()][:, 7][::24][0:90])**2).mean())
     # we need to plot the cumulative dead persons from the real world and from the simulation
-    ax.plot(df_total_dead.index, y_real, color='tab:red')
+    ax.plot(df_total_dead.index, y_real, 'v',color='tab:red')
     ax.plot(df_total_dead.index, p50_bs['Total'][()][:, 7][::24][0:90], color='tab:blue')
     ax.fill_between(df_total_dead.index, p75_bs['Total'][()][:, 7][::24][0:90], p25_bs['Total'][()][:, 7][::24][0:90],
                             alpha=0.5, color='tab:blue')
+    ax.fill_between(df_total_dead.index, p95_bs['Total'][()][:, 7][::24][0:90], p05_bs['Total'][()][:, 7][::24][0:90],
+                            alpha=0.25, color='tab:blue')
     ax.text(0.25, 0.8, 'RMSE: '+str(float("{:.2f}".format(rmse_dead))), horizontalalignment='center',
             verticalalignment='center', transform=plt.gca().transAxes, color='pink', fontsize=15)
     ax.set_xlabel('Date')
@@ -316,6 +327,8 @@ def plot_dead(path):
         # we need to plot the dead persons from the real world and from the simulation
         ax.plot(df_abb_age_group['Date'], y_real, color='tab:red')
         ax.plot(df_abb_age_group['Date'], p50_bs[age_group_access[i]][()][:, 7][::24][0:90], color='tab:blue')
+        ax.fill_between(df_abb_age_group['Date'], p75_bs[age_group_access[i]][()][:, 7][::24][0:90], p25_bs[age_group_access[i]][()][:, 7][::24][0:90],
+                            alpha=0.5, color='tab:blue')
         ax.set_title('Dead, Age{}'.format(i))
         ax.set_xlabel('Date')
         ax.set_xticks(df_abb_age_group['Date'][::50])
@@ -324,7 +337,7 @@ def plot_dead(path):
     plt.show()
    
 def plot_icu(path):
-    df_abb = pd.read_json(path+"/../../../pydata/Germany/county_divi_ma7.json")
+    df_abb = pd.read_json(path+"/../pydata/Germany/county_divi_ma7.json")
     perc_of_critical_in_icu = 0.47
 
     # we just need the columns ICU_low and ICU_hig
@@ -348,7 +361,7 @@ def plot_icu(path):
 
      # we plot this against this the Amount of persons in the ICU from our model
     f_p75 = h5py.File(
-        path+"/infection_state_per_age_group/0/p95/Results.h5", 'r')
+        path+"/infection_state_per_age_group/0/p75/Results.h5", 'r')
     p75_bs = f_p75['0']
     total_75 = p75_bs['Total'][()]
     # we need just every 24th value
@@ -358,18 +371,40 @@ def plot_icu(path):
 
     # same with 25 percentile
     f_p25 = h5py.File(
-        path+"/infection_state_per_age_group/0/p05/Results.h5", 'r')
+        path+"/infection_state_per_age_group/0/p25/Results.h5", 'r')
     p25_bs = f_p25['0']
     total_25 = p25_bs['Total'][()]
     # we need just every 24th value
     total_25 = total_25[::24]
     # we just take the first 90 days
     total_25 = total_25[0:90]
+
+    # same with 05 and 95 percentile
+    f_p05 = h5py.File(
+        path+"/infection_state_per_age_group/0/p05/Results.h5", 'r')
+    p05_bs = f_p05['0']
+    total_05 = p05_bs['Total'][()]
+    # we need just every 24th value
+    total_05 = total_05[::24]
+    # we just take the first 90 days
+    total_05 = total_05[0:90]
+
+    f_p95 = h5py.File(
+        path+"/infection_state_per_age_group/0/p95/Results.h5", 'r')
+    p95_bs = f_p95['0']
+    total_95 = p95_bs['Total'][()]
+    # we need just every 24th value
+    total_95 = total_95[::24]
+    # we just take the first 90 days
+    total_95 = total_95[0:90]
+
     
 
     ICU_Simulation = np.floor(total_50[:, 5]*perc_of_critical_in_icu)
     ICU_Simulation75 = np.floor(total_75[:, 5]*perc_of_critical_in_icu)
     ICU_Simulation25 = np.floor(total_25[:, 5]*perc_of_critical_in_icu)
+    ICU_Simulation05 = np.floor(total_05[:, 5]*perc_of_critical_in_icu)
+    ICU_Simulation95 = np.floor(total_95[:, 5]*perc_of_critical_in_icu)
     ICU_Real = np.floor(df_abb['ICU'][0:90])
 
     #smooth the data
@@ -389,6 +424,8 @@ def plot_icu(path):
     ax.plot(df_abb['Date'][0:90], ICU_Real,'x', color='tab:red')
     ax.fill_between(df_abb['Date'][0:90],ICU_Simulation75, ICU_Simulation25,
                          alpha=0.5, color='tab:blue')
+    ax.fill_between(df_abb['Date'][0:90],ICU_Simulation05, ICU_Simulation95,
+                         alpha=0.25, color='tab:blue')
     ax.plot(df_abb['Date'][0:90], ICU_Simulation, color='tab:blue')
 
     # we also write the rmse
@@ -553,7 +590,7 @@ def infer_positive_tests(path):
 
     # we need the real data from the json file cases_all_county_age_repdate_ma7.json
     df_abb = pd.read_json(
-        path+"/../../../pydata/Germany/cases_all_county_repdate_ma7.json")
+        path+"/../pydata/Germany/cases_all_county_repdate_ma7.json")
     # we just need the columns cases and date
     df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
     # we need just the dates bewteen 2021-03-01 and 2021-06-01
@@ -660,7 +697,7 @@ def plot_estimated_reproduction_number(path):
 def plot_cumulative_detected_infections(path):
 
     df_abb = pd.read_json(
-        path+"/../../../pydata/Germany/cases_all_county_repdate_ma7.json")
+        path+"/../pydata/Germany/cases_all_county_repdate_ma7.json")
     # we need the 
     df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
     df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') & (df_abb['Date'] <= '2021-06-01')]
@@ -796,8 +833,8 @@ def plot_positive_and_done_test(path):
 
 if __name__ == "__main__":
     # path = "/Users/david/Documents/HZI/memilio/data/results_last_run"
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/5/results_2024-08-20135139"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
+    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_last_run"
 
     if (len(sys.argv) > 1):
