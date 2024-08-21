@@ -38,16 +38,16 @@ def get_population_per_agegroup():
     return population_per_agegroup
 
 
-def get_relevant_confirmed_cases(start_date, T_IH, T_HU):
+def get_relevant_confirmed_cases(start_date, T_IH, T_HU, T_U):
     # Get dataframe with daily confirmed cases.
     df = get_df_daily()
 
     # Considered age groups.
     agegroups = ['A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+']
-    T_U = 16.49
+
     # Extract relevant dates to be considered.
     df_date = df[(df["Date"] >= pd.Timestamp(start_date)-pd.Timedelta(days=T_IH+T_HU+T_U))
-                 & (df["Date"] <= pd.Timestamp(start_date)+pd.Timedelta(days=45-(T_IH+T_HU+T_U)))]  # T_IH+T_HU
+                 & (df["Date"] <= pd.Timestamp(start_date)-pd.Timedelta(days=T_IH+T_HU))]
 
     # Get total confirmed cases in considered time frame.
     totaldailyconfirmed = df_date.DailyConfirmed.sum()
@@ -71,14 +71,15 @@ def get_relevant_confirmed_cases(start_date, T_IH, T_HU):
     return dailyconfirmed_per_agegroup
 
 
-def plot(start_dates, T_IH, T_HU):
+def plot(start_dates, T_IH, T_HU, T_U):
 
     agegroups = ['A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+']
 
     # Get proportions per age group for June and Ocotber scenario and corresponding share of total population.
-    proportions_june = get_relevant_confirmed_cases(start_dates[0], T_IH, T_HU)
+    proportions_june = get_relevant_confirmed_cases(
+        start_dates[0], T_IH, T_HU, T_U)
     proportions_october = get_relevant_confirmed_cases(
-        start_dates[1], T_IH, T_HU)
+        start_dates[1], T_IH, T_HU, T_U)
     population_per_agegroup = get_population_per_agegroup()
 
     proportions = [proportions_june,
@@ -172,10 +173,11 @@ def compute_covasim_probs_per_rki_agegroup():
     return mu_CI_rki, mu_IH_rki, mu_HU_rki, mu_UD_rki
 
 
-def compute_adapted_mu(start_date, T_IH, T_HU):
+def compute_adapted_mu(start_date, T_IH, T_HU, T_U):
     mu_CI_age, mu_IH_age, mu_HU_age, mu_UD_age = compute_covasim_probs_per_rki_agegroup()
 
-    population_share = get_relevant_confirmed_cases(start_date, T_IH, T_HU)
+    population_share = get_relevant_confirmed_cases(
+        start_date, T_IH, T_HU, T_U)
 
     mu_CI = 0
     mu_IH = 0
@@ -235,7 +237,7 @@ def main():
 
     T_IH = 6.6
     T_HU = 1.5
-    T_UD = 10.7
+    T_U = 15.230258
 
     # # from Assessment Paper
     # mu_IH = 0.0786429
@@ -247,12 +249,14 @@ def main():
 
     start_dates = ["2020-06-01", "2020-10-01"]
 
-    plot(start_dates, T_IH, T_HU)
+    plot(start_dates, T_IH, T_HU, T_U)
 
-    mu_CI, mu_IH, mu_HU, mu_UD = compute_adapted_mu(start_dates[0], T_IH, T_HU)
+    mu_CI, mu_IH, mu_HU, mu_UD = compute_adapted_mu(
+        start_dates[0], T_IH, T_HU, T_U)
     print(f"mu {start_dates[0]}: {mu_CI}, {mu_IH}, {mu_HU}, {mu_UD}")
 
-    mu_CI, mu_IH, mu_HU, mu_UD = compute_adapted_mu(start_dates[1], T_IH, T_HU)
+    mu_CI, mu_IH, mu_HU, mu_UD = compute_adapted_mu(
+        start_dates[1], T_IH, T_HU, T_U)
     print(f"mu {start_dates[1]}: {mu_CI}, {mu_IH}, {mu_HU}, {mu_UD}")
 
     mu_CI, mu_IH, mu_HU, mu_UD = compute_mu_by_population()
