@@ -1969,7 +1969,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         const double after_lockdown_contact_reduction = 0.6;
         const double ratio_asympt_to_sympt            = 20.0;
         // const double ratio_asympt_to_sympt = params[1];
-        const double perc_easter_event = 0.45;
+        const double perc_easter_event = 0.33;
 
         mio::Date start_date{2021, 3, 1};
         int date_of_lockdown     = 27;
@@ -2393,7 +2393,7 @@ int main(int argc, char** argv)
     }
     else {
         // std::vector<std::vector<double>> parameters = {{0.01, 0.03, 0.05}, {5, 10, 30}};
-        std::vector<std::vector<double>> parameters = {{2.23}, {2.84}, {0.66}};
+        std::vector<std::vector<double>> parameters = {{2.29}, {2.80}, {0.60}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
