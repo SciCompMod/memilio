@@ -167,7 +167,6 @@ struct StateTransitionDistWrapper {
 
     double get(PersonalRandomNumberGenerator& rng)
     {
-        log_warning("here in derived");
         return m_dist->get(rng);
     }
 

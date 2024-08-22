@@ -242,6 +242,9 @@ TEST(TestModel, evolveMobility)
             .WillOnce(testing::Return(0.8)) // draw random work hour
             .WillOnce(testing::Return(0.8)) // draw random school hour
             .WillRepeatedly(testing::Return(1.0)); // this forces p1 and p3 to recover
+        ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>>
+            mock_logNorm_dist;
+        EXPECT_CALL(mock_logNorm_dist.get_mock(), invoke).WillRepeatedly(testing::Return(2 * dt.days()));
 
         auto pid1 =
             add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
