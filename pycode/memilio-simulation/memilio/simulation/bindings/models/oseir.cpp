@@ -24,12 +24,14 @@
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
 #include "compartments/simulation.h"
+#include "compartments/flow_simulation.h"
 #include "compartments/compartmentalmodel.h"
+#include "epidemiology/age_group.h"
 #include "epidemiology/populations.h"
 
 //Includes from MEmilio
-#include "ode_sir/model.h"
-#include "ode_sir/infection_state.h"
+#include "ode_seir/model.h"
+#include "ode_seir/infection_state.h"
 #include "memilio/data/analyze_result.h"
 
 #include "pybind11/pybind11.h"
@@ -40,20 +42,14 @@ namespace pymio
 {
 //specialization of pretty_name
 template <>
-std::string pretty_name<mio::osir::InfectionState>()
+inline std::string pretty_name<mio::oseir::InfectionState>()
 {
     return "InfectionState";
 }
 
-template <>
-std::string pretty_name<mio::AgeGroup>()
-{
-    return "AgeGroup";
-}
-
 } // namespace pymio
 
-PYBIND11_MODULE(_simulation_osir, m)
+PYBIND11_MODULE(_simulation_oseir, m)
 {
     m.def("interpolate_simulation_result",
           static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
@@ -67,32 +63,39 @@ PYBIND11_MODULE(_simulation_osir, m)
 
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
 
-    pymio::iterable_enum<mio::osir::InfectionState>(m, "InfectionState")
-        .value("Susceptible", mio::osir::InfectionState::Susceptible)
-        .value("Infected", mio::osir::InfectionState::Infected)
-        .value("Recovered", mio::osir::InfectionState::Recovered);
+    pymio::iterable_enum<mio::oseir::InfectionState>(m, "InfectionState")
+        .value("Susceptible", mio::oseir::InfectionState::Susceptible)
+        .value("Exposed", mio::oseir::InfectionState::Exposed)
+        .value("Infected", mio::oseir::InfectionState::Infected)
+        .value("Recovered", mio::oseir::InfectionState::Recovered);
 
-    pymio::bind_ParameterSet<mio::osir::ParametersBase<double>, pymio::EnablePickling::Required>(m, "ParametersBase");
+    pymio::bind_ParameterSet<mio::oseir::ParametersBase<double>, pymio::EnablePickling::Required>(m, "ParametersBase");
 
-    pymio::bind_class<mio::osir::Parameters<double>, pymio::EnablePickling::Required,
-                      mio::osir::ParametersBase<double>>(m, "Parameters")
+    pymio::bind_class<mio::oseir::Parameters<double>, pymio::EnablePickling::Required,
+                      mio::oseir::ParametersBase<double>>(m, "Parameters", py::module_local{})
+
         .def(py::init<mio::AgeGroup>())
-        .def("check_constraints", &mio::osir::Parameters<double>::check_constraints);
+        .def("check_constraints", &mio::oseir::Parameters<double>::check_constraints);
 
-    using Populations = mio::Populations<double, mio::AgeGroup, mio::osir::InfectionState>;
-    pymio::bind_Population(m, "Populations", mio::Tag<mio::osir::Model<double>::Populations>{});
-    pymio::bind_CompartmentalModel<mio::osir::InfectionState, Populations, mio::osir::Parameters<double>,
+    using Populations = mio::Populations<double, mio::AgeGroup, mio::oseir::InfectionState>;
+    pymio::bind_Population(m, "Populations", mio::Tag<mio::oseir::Model<double>::Populations>{});
+    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters<double>,
                                    pymio::EnablePickling::Never>(m, "ModelBase");
     pymio::bind_class<
-        mio::osir::Model<double>, pymio::EnablePickling::Required,
-        mio::CompartmentalModel<double, mio::osir::InfectionState, Populations, mio::osir::Parameters<double>>>(
+        mio::oseir::Model<double>, pymio::EnablePickling::Required,
+        mio::CompartmentalModel<double, mio::oseir::InfectionState, Populations, mio::oseir::Parameters<double>>>(
         m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
-    pymio::bind_Simulation<mio::Simulation<double, mio::osir::Model<double>>>(m, "Simulation");
-    
+    pymio::bind_Simulation<mio::Simulation<double, mio::oseir::Model<double>>>(m, "Simulation");
+    pymio::bind_Flow_Simulation<mio::FlowSimulation<double, mio::oseir::Model<double>>>(m, "FlowSimulation");
+
     m.def(
-        "simulate", &mio::simulate<double, mio::osir::Model<double>>, "Simulates an ODE SIR model from t0 to tmax.", 
+        "simulate", &mio::simulate<double, mio::oseir::Model<double>>, "Simulates an ODE SEIR from t0 to tmax.", 
+        py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
+
+    m.def(
+        "simulate_flows", &mio::simulate_flows<double, mio::oseir::Model<double>>, "Simulates an ODE SEIR with flows from t0 to tmax.", 
         py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
 
     m.attr("__version__") = "dev";

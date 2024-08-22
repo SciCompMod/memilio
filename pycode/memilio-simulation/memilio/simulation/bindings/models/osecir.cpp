@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Khoa Nguyen
+* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -19,11 +19,11 @@
 */
 
 //Includes from pymio
-#include "memilio/config.h"
 #include "pybind_util.h"
 #include "compartments/simulation.h"
 #include "compartments/flow_simulation.h"
 #include "compartments/compartmentalmodel.h"
+#include "epidemiology/age_group.h"
 #include "epidemiology/populations.h"
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
@@ -43,6 +43,7 @@
 #include "memilio/mobility/graph.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/io/epi_data.h"
+#include "memilio/config.h"
 
 #include "pybind11/pybind11.h"
 #include "pybind11/stl_bind.h"
@@ -150,25 +151,18 @@ using MobilityGraph = mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>,
 
 } // namespace
 
-PYBIND11_MAKE_OPAQUE(std::vector<MobilityGraph>);
-
 namespace pymio
 {
-
 //specialization of pretty_name
 template <>
-std::string pretty_name<mio::osecir::InfectionState>()
+inline std::string pretty_name<mio::osecir::InfectionState>()
 {
     return "InfectionState";
 }
 
-template <>
-std::string pretty_name<mio::AgeGroup>()
-{
-    return "AgeGroup";
-}
-
 } // namespace pymio
+
+PYBIND11_MAKE_OPAQUE(std::vector<MobilityGraph>);
 
 PYBIND11_MODULE(_simulation_osecir, m)
 {
@@ -282,7 +276,7 @@ PYBIND11_MODULE(_simulation_osecir, m)
            mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
            size_t contact_locations_size) {
             auto mobile_comp = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
-                                mio::osecir::InfectionState::InfectedNoSymptoms,
+                                   mio::osecir::InfectionState::InfectedNoSymptoms,
                                 mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
             auto weights     = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
             auto result = mio::set_edges<ContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,

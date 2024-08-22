@@ -20,11 +20,13 @@
 
 //Includes from pymio
 #include "pybind_util.h"
+#include "epidemiology/age_group.h"
 #include "epidemiology/damping.h"
 #include "epidemiology/contact_matrix.h"
 #include "epidemiology/damping_sampling.h"
 #include "epidemiology/uncertain_matrix.h"
 #include "epidemiology/dynamic_npis.h"
+#include "epidemiology/simulation_day.h"
 #include "math/integrator.h"
 #include "mobility/metapopulation_mobility_instant.h"
 #include "utils/date.h"
@@ -40,7 +42,6 @@
 #include "memilio/utils/date.h"
 #include "memilio/geography/regions.h"
 #include "memilio/epidemiology/contact_matrix.h"
-#include "memilio/epidemiology/simulation_day.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/io/epi_data.h"
 
@@ -48,29 +49,17 @@
 
 namespace py = pybind11;
 
-namespace pymio
-{
-
-template <>
-std::string pretty_name<mio::AgeGroup>()
-{
-    return "AgeGroup";
-}
-
-template <>
-std::string pretty_name<mio::SimulationDay>()
-{
-    return "SimulationDay";
-}
-
-} // namespace pymio
-
 PYBIND11_MODULE(_simulation, m)
 {
+    pymio::bind_parameter_distribution(m, "ParameterDistribution");
+    pymio::bind_parameter_distribution_normal(m, "ParameterDistributionNormal");
+    pymio::bind_parameter_distribution_uniform(m, "ParameterDistributionUniform");
+    pymio::bind_uncertain_value(m, "UncertainValue");
+
     pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>(m, "AgeGroupArray");
     pymio::bind_class<mio::AgeGroup, pymio::EnablePickling::Required, mio::Index<mio::AgeGroup>>(m, "AgeGroup")
         .def(py::init<size_t>());
-
+    
     pymio::bind_CustomIndexArray<double, mio::AgeGroup, mio::SimulationDay>(m, "AgeGroupSimulationDayArray");
     pymio::bind_class<mio::SimulationDay, pymio::EnablePickling::Never, mio::Index<mio::SimulationDay>>(m,
                                                                                                         "SimulationDay")
@@ -85,12 +74,6 @@ PYBIND11_MODULE(_simulation, m)
     pymio::bind_dampings_members(dampings_class);
 
     pymio::bind_time_series(m, "TimeSeries");
-
-    pymio::bind_parameter_distribution(m, "ParameterDistribution");
-    pymio::bind_parameter_distribution_normal(m, "ParameterDistributionNormal");
-    pymio::bind_parameter_distribution_uniform(m, "ParameterDistributionUniform");
-
-    pymio::bind_uncertain_value(m, "UncertainValue");
 
     pymio::bind_Integrator_Core(m);
 
@@ -127,9 +110,9 @@ PYBIND11_MODULE(_simulation, m)
     pymio::bind_dynamicNPI_members(m, "DynamicNPIs");
 
     pymio::bind_mobility_parameters(m, "MobilityParameters");
-    pymio::bind_mobility_parameter_edge(m, "MobilityParameterEdge");
     pymio::bind_mobility(m, "Mobility");
     pymio::bind_mobility_edge(m, "MobilityEdge");
+    pymio::bind_mobility_parameter_edge(m, "MobilityParameterEdge");
 
     m.def(
         "get_state_id_de",
@@ -144,7 +127,7 @@ PYBIND11_MODULE(_simulation, m)
             return std::vector<std::pair<mio::Date, mio::Date>>(h.begin(), h.end());
         },
         py::arg("state_id"), py::arg("start_date") = mio::Date(std::numeric_limits<int>::min(), 1, 1),
-        py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1));
+        py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1)); 
 
     m.def(
         "read_mobility_plain",

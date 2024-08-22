@@ -35,7 +35,7 @@ namespace pymio
 
 void bind_Integrator_Core(pybind11::module_& m)
 {
-    pybind11::class_<mio::IntegratorCore<double>, std::shared_ptr<mio::IntegratorCore<double>>>(m, "IntegratorCore")
+    pymio::bind_class<mio::IntegratorCore<double>, pymio::EnablePickling::Never, std::shared_ptr<mio::IntegratorCore<double>>>(m, "IntegratorCore")
         .def_property(
             "dt_max", pybind11::overload_cast<>(&mio::IntegratorCore<double>::get_dt_max, pybind11::const_),
             [](mio::IntegratorCore<double>& self, double dt_max) {
@@ -47,7 +47,7 @@ void bind_Integrator_Core(pybind11::module_& m)
                 self.get_dt_min() = dt_min;
             });
 
-    pybind11::class_<mio::EulerIntegratorCore<double>, mio::IntegratorCore<double>, std::shared_ptr<mio::EulerIntegratorCore<double>>>(m, "EulerIntegratorCore")
+    pymio::bind_class<mio::EulerIntegratorCore<double>, pymio::EnablePickling::Never, mio::IntegratorCore<double>, std::shared_ptr<mio::EulerIntegratorCore<double>>>(m, "EulerIntegratorCore")
         .def(pybind11::init<>())
         .def("step", 
             [](const mio::EulerIntegratorCore<double>& self, pybind11::function f, Eigen::Ref<const Eigen::VectorXd> yt, double t, double dt, Eigen::Ref<Eigen::VectorXd> ytp1) {
@@ -62,13 +62,13 @@ void bind_Integrator_Core(pybind11::module_& m)
         );
 
     using RungeKuttaCashKarp54Integrator = mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>;
-    pybind11::class_<RungeKuttaCashKarp54Integrator, mio::IntegratorCore<double>, std::shared_ptr<RungeKuttaCashKarp54Integrator>>(m, "RungeKuttaCashKarp54IntegratorCore")
+    pymio::bind_class<RungeKuttaCashKarp54Integrator, pymio::EnablePickling::Never, mio::IntegratorCore<double>, std::shared_ptr<RungeKuttaCashKarp54Integrator>>(m, "RungeKuttaCashKarp54IntegratorCore")
         .def(pybind11::init<>())
         .def(pybind11::init<const double, const double, const double, const double>(), pybind11::arg("abs_tol"), pybind11::arg("rel_tol"), pybind11::arg("dt_min"), pybind11::arg("dt_max"))
         .def("set_abs_tolerance", &RungeKuttaCashKarp54Integrator::set_abs_tolerance, pybind11::arg("tol"))
         .def("set_rel_tolerance", &RungeKuttaCashKarp54Integrator::set_rel_tolerance, pybind11::arg("tol"));
 
-    pybind11::class_<mio::RKIntegratorCore<double>, mio::IntegratorCore<double>, std::shared_ptr<mio::RKIntegratorCore<double>>>(m, "RKIntegratorCore")
+    pymio::bind_class<mio::RKIntegratorCore<double>, pymio::EnablePickling::Never, mio::IntegratorCore<double>, std::shared_ptr<mio::RKIntegratorCore<double>>>(m, "RKIntegratorCore")
         .def(pybind11::init<>())
         .def(pybind11::init<double, double, double, double>(),
              pybind11::arg("abs_tol") = 1e-10,
