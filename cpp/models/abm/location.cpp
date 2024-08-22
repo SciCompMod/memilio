@@ -116,10 +116,6 @@ void Location::interact(Person::RandomNumberGenerator& rng, Person& person, Time
     ScalarType mask_protection = person.get_mask_protective_factor(global_params);
     assert(person.get_cells().size() && "Person is in multiple cells. Interact logic is incorrect at the moment.");
 
-    if (person.get_infection_state(t) != InfectionState::Susceptible && m_id.type == LocationType::Event) {
-        std::cout << "Person is not susc at event" << std::endl;
-    }
-
     for (auto cell_index :
          person.get_cells()) { // TODO: the logic here is incorrect in case a person is in multiple cells
         std::pair<VirusVariant, ScalarType> local_indiv_expected_trans[static_cast<uint32_t>(VirusVariant::Count)];
