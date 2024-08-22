@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Henrik Zunker
+* Authors: Maximilian Betz, Henrik Zunker
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -28,18 +28,27 @@
 namespace pymio
 {
 
-template <class Model, EnablePickling F>
-void bind_Flow_Simulation(pybind11::module_& m)
+/*
+ * @brief bind FlowSimulation for any model
+ */
+template <class FlowSimulation>
+void bind_Flow_Simulation(pybind11::module_& m, std::string const& name)
 {
-    bind_class<mio::FlowSimulation<double, Model>, F>(m, "FlowSimulation")
-        .def(pybind11::init<const Model&, double, double>(), pybind11::arg("model"), pybind11::arg("t0") = 0,
+    bind_class<FlowSimulation, EnablePickling::IfAvailable>(m, name.c_str())
+        .def(pybind11::init<const typename FlowSimulation::Model&, double, double>(), pybind11::arg("model"), pybind11::arg("t0") = 0,
              pybind11::arg("dt") = 0.1)
-        .def_property_readonly(
-            "result", pybind11::overload_cast<>(&mio::FlowSimulation<double, Model>::get_result, pybind11::const_),
-            pybind11::return_value_policy::reference_internal)
-        .def_property_readonly("flows", &mio::FlowSimulation<double, Model>::get_flows,
+        .def_property_readonly("result", pybind11::overload_cast<>(&FlowSimulation::get_result, pybind11::const_),
                                pybind11::return_value_policy::reference_internal)
-        .def("advance", &mio::FlowSimulation<double, Model>::advance, pybind11::arg("tmax"));
+        .def_property_readonly("flows", pybind11::overload_cast<>(&FlowSimulation::get_flows, pybind11::const_),
+                               pybind11::return_value_policy::reference_internal)
+        .def_property_readonly("model", pybind11::overload_cast<>(&FlowSimulation::get_model, pybind11::const_),
+                               pybind11::return_value_policy::reference_internal)
+        .def_property_readonly("dt", pybind11::overload_cast<>(&FlowSimulation::get_dt, pybind11::const_),
+                               pybind11::return_value_policy::reference_internal)
+        .def_property("integrator", pybind11::overload_cast<>(&FlowSimulation::get_integrator, pybind11::const_),
+                               &FlowSimulation::set_integrator, pybind11::return_value_policy::reference_internal)
+        .def("advance", &FlowSimulation::advance, pybind11::arg("tmax"))
+        .doc() = "A class for the simulation of a flow model.";
 }
 
 } // namespace pymio

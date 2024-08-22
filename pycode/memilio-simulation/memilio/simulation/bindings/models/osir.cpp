@@ -85,12 +85,11 @@ PYBIND11_MODULE(_simulation_osir, m)
         m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
+    pymio::bind_Simulation<mio::Simulation<double, mio::osir::Model<double>>>(m, "Simulation");
+    
     m.def(
-        "simulate",
-        [](double t0, double tmax, double dt, const mio::osir::Model<double>& model) {
-            return mio::simulate(t0, tmax, dt, model);
-        },
-        "Simulates an ODE SIR model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+        "simulate", &mio::simulate<double, mio::osir::Model<double>>, "Simulates an ODE SIR model from t0 to tmax.", 
+        py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
 
     m.attr("__version__") = "dev";
 }

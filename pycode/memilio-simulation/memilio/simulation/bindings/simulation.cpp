@@ -27,6 +27,7 @@
 #include "epidemiology/uncertain_matrix.h"
 #include "epidemiology/dynamic_npis.h"
 #include "epidemiology/simulation_day.h"
+#include "math/integrator.h"
 #include "mobility/metapopulation_mobility_instant.h"
 #include "utils/date.h"
 #include "utils/logging.h"
@@ -73,6 +74,8 @@ PYBIND11_MODULE(_simulation, m)
     pymio::bind_dampings_members(dampings_class);
 
     pymio::bind_time_series(m, "TimeSeries");
+
+    pymio::bind_Integrator_Core(m);
 
     auto contact_matrix_class =
         pymio::bind_class<mio::ContactMatrix, pymio::EnablePickling::Required>(m, "ContactMatrix");
