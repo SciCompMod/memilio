@@ -143,7 +143,7 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
         state.ResumeTiming();
 
         //simulated time should be long enough to have full infection runs and migration to every location
-        auto final_time = sim.get_time() + mio::abm::days(10);
+        auto final_time = sim.get_time() + mio::abm::days(1);
         sim.advance(final_time);
 
         //debug output can be enabled to check for unexpected results (e.g. infections dieing out)
@@ -179,5 +179,6 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
 //     ->Unit(benchmark::kMillisecond);
 // BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_3200k_pt, 3200000, {14159265u, 35897932u})
 //     ->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_5000k_pt, 500000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_5000k_pt, 2500000, {14159265u, 35897932u})
+    ->Unit(benchmark::kMillisecond);
 BENCHMARK_MAIN();

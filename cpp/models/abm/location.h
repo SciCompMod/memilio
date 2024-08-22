@@ -106,6 +106,7 @@ public:
      */
     Location(LocationId loc_id, size_t num_agegroups = 1, uint32_t num_cells = 1);
 
+    bool location_contaminated = false;
     /**
      * @brief Construct a Location with provided parameters. 
      * @param[in] loc_type The #LocationType.

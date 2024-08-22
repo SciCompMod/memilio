@@ -171,12 +171,13 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegrou
         cell.m_cached_exposure_rate_air.array().setZero();
         for (auto&& p : cell.m_persons) {
             if (p->is_infected(t)) {
+                location_contaminated    = true;
                 auto& inf                = p->get_infection();
                 auto virus               = inf.get_virus_variant();
                 auto age                 = p->get_age();
                 double quarantine_factor = 1.0;
                 if (p->is_in_quarantine(t_middlepoint, params)) {
-                    quarantine_factor = 1-params.get<QuarantineEffectiveness>();
+                    quarantine_factor = 1 - params.get<QuarantineEffectiveness>();
                 }
                 /* average infectivity over the time step 
                  * to second order accuracy using midpoint rule
