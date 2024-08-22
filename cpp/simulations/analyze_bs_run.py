@@ -272,7 +272,7 @@ def plot_dead(path):
 
     # we need the real data json file cases_all_state_repdate_ma7
     df_abb = pd.read_json(
-        path+"/../../../pydata/Germany/cases_all_county_age_ma7.json")
+        path+"/../pydata/Germany/cases_all_county_age_ma7.json")
 
     # we just need the columns cases and date
     # we need to offset the dates by 19 day
@@ -337,7 +337,7 @@ def plot_dead(path):
     plt.show()
    
 def plot_icu(path):
-    df_abb = pd.read_json(path+"/../../../pydata/Germany/county_divi_ma7.json")
+    df_abb = pd.read_json(path+"/../pydata/Germany/county_divi_ma7.json")
     perc_of_critical_in_icu_age = [0.55,0.55,0.55,0.55,0.54,0.46]
     # perc_of_critical_in_icu_age =0.47
 
@@ -591,7 +591,7 @@ def infer_positive_tests(path):
 
     # we need the real data from the json file cases_all_county_age_repdate_ma7.json
     df_abb = pd.read_json(
-        path+"/../../../pydata/Germany/cases_all_county_repdate_ma7.json")
+        path+"/../pydata/Germany/cases_all_county_repdate_ma7.json")
     # we just need the columns cases and date
     df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
     # we need just the dates bewteen 2021-03-01 and 2021-06-01
@@ -698,7 +698,7 @@ def plot_estimated_reproduction_number(path):
 def plot_cumulative_detected_infections(path):
 
     df_abb = pd.read_json(
-        path+"/../../../pydata/Germany/cases_all_county_repdate_ma7.json")
+        path+"/../pydata/Germany/cases_all_county_repdate_ma7.json")
     # we need the 
     df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
     df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') & (df_abb['Date'] <= '2021-06-01')]
@@ -746,6 +746,8 @@ def plot_cumulative_detected_infections(path):
     # again the rmse
     rmse_detected = ((df_abb - total_50)**2).mean()*(0.01*0.01*0.05)
     total_50_diff = gaussian_filter1d(total_50_diff.flatten(), sigma=2, mode='nearest')
+    total_05_diff = gaussian_filter1d(total_05.flatten(), sigma=2, mode='nearest')
+    total_95_diff = gaussian_filter1d(total_95.flatten(), sigma=2, mode='nearest')
     total_50 = gaussian_filter1d(total_50.flatten(), sigma=2, mode='nearest')
     # we plot this
     # we plot the tests positive and the real cases
@@ -771,7 +773,8 @@ def plot_cumulative_detected_infections(path):
     ax.plot(time[0:89], total_50_diff, color='tab:blue')
     # we dont plot the real curve as a line but as x points and not every day but every 2nd day
     ax.plot(time[0:89], df_abb_diff[0:89], 'x', color='tab:red')
-
+    ax.fill_between(time[0:89], total_95_diff[0:89], total_05_diff[0:89],
+                            alpha=0.5, color='tab:blue')
     ax.set_xlabel('time (days)')
     ax.set_ylabel('Number of new detected infections')
     ax.title.set_text('New detected infections')
@@ -789,10 +792,7 @@ def plot_positive_and_done_test(path):
     p50_bs_done = f_p50_done['0']
     total_50_done = p50_bs_done['Total'][()]
 
-    time = p50_bs_positive['Time'][()]
-    time = time[::24]
-    time = time[0:90]
-
+    time = p50_bs_positive['Time'][()][::24][0:90]
 
     # weas one entry is one hour we take the sum every 24 entries to get the daily amount, we do this with cumsum
     # first we need to sum up over all age groups
@@ -834,8 +834,8 @@ def plot_positive_and_done_test(path):
 
 if __name__ == "__main__":
     # path = "/Users/david/Documents/HZI/memilio/data/results_last_run"
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/7/results_2024-08-21223144"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
+    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/128_runs/results_2024-08-21224038"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_last_run"
 
     if (len(sys.argv) > 1):
@@ -843,11 +843,11 @@ if __name__ == "__main__":
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    # plot_infection_states_results(path)
-    # plot_infections_loc_types_avarage(path)
+    plot_infection_states_results(path)
+    plot_infections_loc_types_avarage(path)
     plot_icu(path)
-    # plot_dead(path)
-    # plot_cumulative_detected_infections(path)
+    plot_dead(path)
+    plot_cumulative_detected_infections(path)
     # plot_positive_and_done_test(path)
 
 

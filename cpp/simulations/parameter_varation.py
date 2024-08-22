@@ -203,6 +203,7 @@ if __name__ == "__main__":
             value_for_values[i, j] = get_maximum_cum_infected(path_data, index)
     # permute the values, so that the plot is correct
     value_for_values = np.flip(value_for_values, axis=1)
+    value_for_values = np.flip(value_for_values, axis=0)
     # we need a seaborn heatmap for the colorbar
 
     sns.heatmap(value_for_values, ax=axs[0, 0], cmap='viridis', cbar_kws={'label': 'Maximum Cumulative Infections'}, annot=True, fmt=".0f")
@@ -226,6 +227,7 @@ if __name__ == "__main__":
             value_for_values[i, j] = get_maximum_dead(path_data, index)
     # permute the values, so that the plot is correct
     value_for_values = np.flip(value_for_values, axis=1)
+    value_for_values = np.flip(value_for_values, axis=0)
     # we need a seaborn heatmap for the colorbar
     sns.heatmap(value_for_values, ax=axs[0, 1], cmap='viridis', cbar_kws={'label': 'Maximum Dead'}, annot=True, fmt=".0f")
     axs[0, 1].set_title('Maximum Dead')
