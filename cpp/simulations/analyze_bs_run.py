@@ -272,7 +272,7 @@ def plot_dead(path):
 
     # we need the real data json file cases_all_state_repdate_ma7
     df_abb = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county_age_ma7.json")
+        path+"/../../../pydata/Germany/cases_all_county_age_ma7.json")
 
     # we just need the columns cases and date
     # we need to offset the dates by 19 day
@@ -337,9 +337,8 @@ def plot_dead(path):
     plt.show()
    
 def plot_icu(path):
-    df_abb = pd.read_json(path+"/../pydata/Germany/county_divi_ma7.json")
-    perc_of_critical_in_icu = 0.47
-    perc_of_critical_in_icu_age = [0.56,0.56,0.56,0.57,0.55,0.47]
+    df_abb = pd.read_json(path+"/../../../pydata/Germany/county_divi_ma7.json")
+    perc_of_critical_in_icu_age = [0.55,0.55,0.55,0.55,0.54,0.46]
     # perc_of_critical_in_icu_age =0.47
 
     age_group_access = ['Group1', 'Group2', 'Group3',
@@ -357,67 +356,57 @@ def plot_icu(path):
     # we plot this against this the Amount of persons in the ICU from our model
     f_p50 = h5py.File(
         path+"/infection_state_per_age_group/0/p50/Results.h5", 'r')
-    p50_bs = f_p50['0']
-    total_50 = p50_bs['Total'][()]
-    total_50_age = p50_bs[age_group_access[0]][()]
+    total_50 = f_p50['0']['Total'][()][::24][0:90]
+
+    total_50_age = f_p50['0'][age_group_access[0]][()]
     for i in range(6):
-        total_50_age += np.floor(p50_bs[age_group_access[i]][()]*perc_of_critical_in_icu_age[i])
-    # we need just every 24th value
-    total_50 = total_50[::24]
-    total_50_age = total_50_age[::24]
-    # we just take the first 90 days
-    total_50 = total_50[0:90]
-    total_50_age = total_50_age[0:90]
+              total_50_age += f_p50['0'][age_group_access[i]][()]*perc_of_critical_in_icu_age[i]
+    total_50_age = total_50_age[::24][0:90]
 
 
      # we plot this against this the Amount of persons in the ICU from our model
     f_p75 = h5py.File(
         path+"/infection_state_per_age_group/0/p75/Results.h5", 'r')
-    p75_bs = f_p75['0']
-    total_75 = p75_bs['Total'][()]
-    # we need just every 24th value
-    total_75 = total_75[::24]
-    # we just take the first 90 days
-    total_75 = total_75[0:90]
+    total_75 = f_p75['0']['Total'][()][::24][0:90]
+    total_75_age = f_p75['0'][age_group_access[0]][()]
+    for i in range(6):
+        total_75_age += f_p75['0'][age_group_access[i]][()]*perc_of_critical_in_icu_age[i]
+    total_75_age = total_75_age[::24][0:90]
 
     # same with 25 percentile
     f_p25 = h5py.File(
         path+"/infection_state_per_age_group/0/p25/Results.h5", 'r')
-    p25_bs = f_p25['0']
-    total_25 = p25_bs['Total'][()]
-    # we need just every 24th value
-    total_25 = total_25[::24]
-    # we just take the first 90 days
-    total_25 = total_25[0:90]
+    total_25 = f_p25['0']['Total'][()][::24][0:90]
+    total_25_age = f_p25['0'][age_group_access[0]][()]
+    for i in range(6):
+        total_25_age += f_p25['0'][age_group_access[i]][()]*perc_of_critical_in_icu_age[i]
+    total_25_age = total_25_age[::24][0:90]
 
     # same with 05 and 95 percentile
     f_p05 = h5py.File(
         path+"/infection_state_per_age_group/0/p05/Results.h5", 'r')
-    p05_bs = f_p05['0']
-    total_05 = p05_bs['Total'][()]
-    # we need just every 24th value
-    total_05 = total_05[::24]
-    # we just take the first 90 days
-    total_05 = total_05[0:90]
+    total_05 = f_p05['0']['Total'][()][::24][0:90]
+    total_05_age = f_p05['0'][age_group_access[0]][()]
+    for i in range(6):
+        total_05_age += f_p05['0'][age_group_access[i]][()]*perc_of_critical_in_icu_age[i]
+    total_05_age = total_05_age[::24][0:90]
 
     f_p95 = h5py.File(
         path+"/infection_state_per_age_group/0/p95/Results.h5", 'r')
-    p95_bs = f_p95['0']
-    total_95 = p95_bs['Total'][()]
-    # we need just every 24th value
-    total_95 = total_95[::24]
-    # we just take the first 90 days
-    total_95 = total_95[0:90]
+    total_95 = f_p95['0']['Total'][()][::24][0:90]
+    total_95_age = f_p95['0'][age_group_access[0]][()]
+    for i in range(6):
+        total_95_age += f_p95['0'][age_group_access[i]][()]*perc_of_critical_in_icu_age[i]
+    total_95_age = total_95_age[::24][0:90]
 
     
 
-    ICU_Simulation = np.floor(total_50[:, 5]*perc_of_critical_in_icu)
-    ICU_Simulation_age = np.floor(total_50_age[:, 5])
-    ICU_Simulation75 = np.floor(total_75[:, 5]*perc_of_critical_in_icu)
-    ICU_Simulation25 = np.floor(total_25[:, 5]*perc_of_critical_in_icu)
-    ICU_Simulation05 = np.floor(total_05[:, 5]*perc_of_critical_in_icu)
-    ICU_Simulation95 = np.floor(total_95[:, 5]*perc_of_critical_in_icu)
-    ICU_Real = np.floor(df_abb['ICU'][0:90])
+    ICU_Simulation = np.floor(total_50_age[:, 5])
+    ICU_Simulation75 = np.floor(total_75_age[:, 5])
+    ICU_Simulation25 = np.floor(total_25_age[:, 5])
+    ICU_Simulation05 = np.floor(total_05_age[:, 5])
+    ICU_Simulation95 = np.floor(total_95_age[:, 5])
+    ICU_Real = np.ceil(df_abb['ICU'][0:90])
 
     #smooth the data
     # ICU_Real = gaussian_filter1d(ICU_Real, sigma=1, mode='nearest')
@@ -439,7 +428,6 @@ def plot_icu(path):
     ax.fill_between(df_abb['Date'][0:90],ICU_Simulation05, ICU_Simulation95,
                          alpha=0.25, color='tab:blue')
     ax.plot(df_abb['Date'][0:90], ICU_Simulation, color='tab:blue')
-    ax.plot(df_abb['Date'][0:90], ICU_Simulation_age, color='tab:blue', linestyle='dashed')
 
     # we also write the rmse
     ax.text(0.25, 0.8, 'RMSE: '+str(float("{:.2f}".format(rmse_ICU))), horizontalalignment='center',
@@ -447,7 +435,7 @@ def plot_icu(path):
     ax.set_xlabel('Date')
     ax.set_ylabel('Number of persons in an ICU')
     ax.title.set_text('Simulated and real ICU beds occupied')
-    ax.legend(['Real in ICU, smoothed','Simulated in ICU, Perc of Critical:'+str(perc_of_critical_in_icu)])
+    ax.legend(['Real in ICU, smoothed','Simulated in ICU'])
     plt.show()
 
 def plot_tests(path):
@@ -603,7 +591,7 @@ def infer_positive_tests(path):
 
     # we need the real data from the json file cases_all_county_age_repdate_ma7.json
     df_abb = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county_repdate_ma7.json")
+        path+"/../../../pydata/Germany/cases_all_county_repdate_ma7.json")
     # we just need the columns cases and date
     df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
     # we need just the dates bewteen 2021-03-01 and 2021-06-01
@@ -710,7 +698,7 @@ def plot_estimated_reproduction_number(path):
 def plot_cumulative_detected_infections(path):
 
     df_abb = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county_repdate_ma7.json")
+        path+"/../../../pydata/Germany/cases_all_county_repdate_ma7.json")
     # we need the 
     df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
     df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') & (df_abb['Date'] <= '2021-06-01')]
@@ -756,7 +744,7 @@ def plot_cumulative_detected_infections(path):
 
 
     # again the rmse
-    rmse_detected = ((df_abb - total_50)**2).mean()*(0.01*0.01)
+    rmse_detected = ((df_abb - total_50)**2).mean()*(0.01*0.01*0.05)
     total_50_diff = gaussian_filter1d(total_50_diff.flatten(), sigma=2, mode='nearest')
     total_50 = gaussian_filter1d(total_50.flatten(), sigma=2, mode='nearest')
     # we plot this
@@ -846,8 +834,8 @@ def plot_positive_and_done_test(path):
 
 if __name__ == "__main__":
     # path = "/Users/david/Documents/HZI/memilio/data/results_last_run"
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/"
+    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/7/results_2024-08-21223144"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_last_run"
 
     if (len(sys.argv) > 1):
@@ -855,12 +843,12 @@ if __name__ == "__main__":
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    plot_infection_states_results(path)
-    plot_infections_loc_types_avarage(path)
+    # plot_infection_states_results(path)
+    # plot_infections_loc_types_avarage(path)
     plot_icu(path)
-    plot_dead(path)
-    plot_cumulative_detected_infections(path)
-    plot_positive_and_done_test(path)
+    # plot_dead(path)
+    # plot_cumulative_detected_infections(path)
+    # plot_positive_and_done_test(path)
 
 
     # infer_positive_tests(path)
