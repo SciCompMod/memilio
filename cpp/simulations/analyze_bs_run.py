@@ -339,6 +339,12 @@ def plot_dead(path):
 def plot_icu(path):
     df_abb = pd.read_json(path+"/../pydata/Germany/county_divi_ma7.json")
     perc_of_critical_in_icu = 0.47
+    perc_of_critical_in_icu_age = [0.56,0.56,0.56,0.57,0.55,0.47]
+    # perc_of_critical_in_icu_age =0.47
+
+    age_group_access = ['Group1', 'Group2', 'Group3',
+                        'Group4', 'Group5', 'Group6', 'Total']
+
 
     # we just need the columns ICU_low and ICU_hig
     df_abb = df_abb[['ID_County', 'ICU', 'Date']]
@@ -353,10 +359,15 @@ def plot_icu(path):
         path+"/infection_state_per_age_group/0/p50/Results.h5", 'r')
     p50_bs = f_p50['0']
     total_50 = p50_bs['Total'][()]
+    total_50_age = p50_bs[age_group_access[0]][()]
+    for i in range(6):
+        total_50_age += np.floor(p50_bs[age_group_access[i]][()]*perc_of_critical_in_icu_age[i])
     # we need just every 24th value
     total_50 = total_50[::24]
+    total_50_age = total_50_age[::24]
     # we just take the first 90 days
     total_50 = total_50[0:90]
+    total_50_age = total_50_age[0:90]
 
 
      # we plot this against this the Amount of persons in the ICU from our model
@@ -401,6 +412,7 @@ def plot_icu(path):
     
 
     ICU_Simulation = np.floor(total_50[:, 5]*perc_of_critical_in_icu)
+    ICU_Simulation_age = np.floor(total_50_age[:, 5])
     ICU_Simulation75 = np.floor(total_75[:, 5]*perc_of_critical_in_icu)
     ICU_Simulation25 = np.floor(total_25[:, 5]*perc_of_critical_in_icu)
     ICU_Simulation05 = np.floor(total_05[:, 5]*perc_of_critical_in_icu)
@@ -427,6 +439,7 @@ def plot_icu(path):
     ax.fill_between(df_abb['Date'][0:90],ICU_Simulation05, ICU_Simulation95,
                          alpha=0.25, color='tab:blue')
     ax.plot(df_abb['Date'][0:90], ICU_Simulation, color='tab:blue')
+    ax.plot(df_abb['Date'][0:90], ICU_Simulation_age, color='tab:blue', linestyle='dashed')
 
     # we also write the rmse
     ax.text(0.25, 0.8, 'RMSE: '+str(float("{:.2f}".format(rmse_ICU))), horizontalalignment='center',
@@ -810,7 +823,7 @@ def plot_positive_and_done_test(path):
     total_50_done = total_50_done[0:91] # we still need to take the difference to get the daily amount
     total_50_done = np.diff(total_50_done, axis=0).flatten()
     # we smooth this with a gaussian filter
-    total_50_done = gaussian_filter1d(total_50_done, sigma=1, mode='nearest')
+    total_50_done = gaussian_filter1d(total_50_done, sigma=2, mode='nearest')
 
     # we plot this
     # we plot the tests positive and the real cases
@@ -846,7 +859,9 @@ if __name__ == "__main__":
     plot_infections_loc_types_avarage(path)
     plot_icu(path)
     plot_dead(path)
-    infer_positive_tests(path)
-    plot_estimated_reproduction_number(path)
     plot_cumulative_detected_infections(path)
     plot_positive_and_done_test(path)
+
+
+    # infer_positive_tests(path)
+    # plot_estimated_reproduction_number(path)

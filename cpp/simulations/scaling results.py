@@ -23,10 +23,11 @@ plt.grid(True)
 plt.show()
 
 # Second plot: Speedup vs. Number of Processors
-# time for 800k agents on x processors
+# time for 6400k agents on x processors
 processors = [1, 2, 4, 8, 16, 32]  # Number of processors
 time_800k = [95, 49, 32, 19, 12.1, 8.3]  # Time in seconds
-speedup = [time_800k[0] / t for t in time_800k]
+time_6400k = [741, 407, 220, 143, 93, 59]  # Time in seconds
+speedup = [time_6400k[0] / t for t in time_6400k]
 ideal_speedup = [p for p in processors]
 
 plt.figure()

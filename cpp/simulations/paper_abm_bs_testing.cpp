@@ -1588,6 +1588,7 @@ void add_npi_testing_strategies_to_world(mio::abm::Simulation& sim, mio::abm::Ti
     double testing_probability_asympt = testing_probability_sympt / ratio_asympt_to_sympt;
     auto start_date_test              = mio::abm::TimePoint(mio::abm::days(0).seconds());
     auto lockdown_start_date          = mio::abm::TimePoint(mio::abm::days(30).seconds());
+    auto easter_end_date              = mio::abm::TimePoint(mio::abm::days(37).seconds());
     auto lockdown_end_date            = mio::abm::TimePoint(mio::abm::days(60).seconds());
     auto end_date_test                = tmax;
 
@@ -1611,11 +1612,17 @@ void add_npi_testing_strategies_to_world(mio::abm::Simulation& sim, mio::abm::Ti
     auto testing_scheme_sympt =
         mio::abm::TestingScheme(testing_criteria_sympt, testing_min_time, start_date_test, lockdown_start_date,
                                 antigen_test_parameters, testing_probability_sympt);
+    auto testing_scheme_asympt_easter =
+        mio::abm::TestingScheme(testing_criteria_asympt, testing_min_time, lockdown_start_date, easter_end_date,
+                                antigen_test_parameters, 0.66 * testing_probability_asympt);
+    auto testing_scheme_sympt_easter =
+        mio::abm::TestingScheme(testing_criteria_sympt, testing_min_time, lockdown_start_date, easter_end_date,
+                                antigen_test_parameters, 0.66 * testing_probability_sympt);
     auto testing_scheme_asympt_wl =
-        mio::abm::TestingScheme(testing_criteria_asympt, testing_min_time, lockdown_start_date, lockdown_end_date,
+        mio::abm::TestingScheme(testing_criteria_asympt, testing_min_time, easter_end_date, lockdown_end_date,
                                 antigen_test_parameters, lockdown_prob * testing_probability_asympt);
     auto testing_scheme_sympt_wl =
-        mio::abm::TestingScheme(testing_criteria_sympt, testing_min_time, lockdown_start_date, lockdown_end_date,
+        mio::abm::TestingScheme(testing_criteria_sympt, testing_min_time, easter_end_date, lockdown_end_date,
                                 antigen_test_parameters, lockdown_prob * testing_probability_sympt);
     auto testing_scheme_asympt_al =
         mio::abm::TestingScheme(testing_criteria_asympt, testing_min_time, lockdown_end_date, end_date_test,
@@ -1626,6 +1633,10 @@ void add_npi_testing_strategies_to_world(mio::abm::Simulation& sim, mio::abm::Ti
 
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School, testing_scheme_asympt);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School, testing_scheme_sympt);
+    sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School,
+                                                              testing_scheme_asympt_easter);
+    sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School,
+                                                              testing_scheme_sympt_easter);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School, testing_scheme_asympt_wl);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School, testing_scheme_sympt_wl);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School, testing_scheme_asympt_al);
@@ -1634,6 +1645,10 @@ void add_npi_testing_strategies_to_world(mio::abm::Simulation& sim, mio::abm::Ti
     // Work
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_asympt);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_sympt);
+    sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work,
+                                                              testing_scheme_asympt_easter);
+    sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work,
+                                                              testing_scheme_sympt_easter);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_asympt_wl);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_sympt_wl);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_asympt_al);
@@ -1643,6 +1658,10 @@ void add_npi_testing_strategies_to_world(mio::abm::Simulation& sim, mio::abm::Ti
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::BasicsShop,
                                                               testing_scheme_asympt);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::BasicsShop, testing_scheme_sympt);
+    sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::BasicsShop,
+                                                              testing_scheme_asympt_easter);
+    sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::BasicsShop,
+                                                              testing_scheme_sympt_easter);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::BasicsShop,
                                                               testing_scheme_asympt_wl);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::BasicsShop,
@@ -1657,6 +1676,10 @@ void add_npi_testing_strategies_to_world(mio::abm::Simulation& sim, mio::abm::Ti
                                                               testing_scheme_asympt);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent,
                                                               testing_scheme_sympt);
+    sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent,
+                                                              testing_scheme_asympt_easter);
+    sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent,
+                                                              testing_scheme_sympt_easter);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent,
                                                               testing_scheme_asympt_wl);
     sim.get_world().get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent,
@@ -1741,10 +1764,10 @@ for (size_t i = 0; i < grid_search_rank.size(); i++) {
     const double dark_figure                = params[1];
     const double contact_red_lockdown       = params[2];
     const double damping_community_lockdown = 0.5;
-    const double testing_probability_sympt  = 0.033;
+    const double testing_probability_sympt  = 0.036;
 
-    const double lockdown_test_prob     = 1.2;
-    const auto after_lockdown_test_prob = 0.8;
+    const double lockdown_test_prob     = 1.25;
+    const auto after_lockdown_test_prob = 0.75;
 
     const auto seasonality_april = 0.95;
     const auto seasonality_may   = 0.85;
@@ -1753,9 +1776,11 @@ for (size_t i = 0; i < grid_search_rank.size(); i++) {
     const double after_lockdown_contact_reduction = 0.55;
     const double ratio_asympt_to_sympt            = 20.0;
     const double perc_easter_event                = 0.25;
+    const auto quarantine_duration                = mio::abm::days(10);
+    const double quarantine_effectiveness         = 0.5;
 
     mio::Date start_date{2021, 3, 1};
-    int date_of_lockdown     = 27;
+    int date_of_lockdown     = 29;
     int end_date_of_lockdown = 61;
     int max_num_days         = 90;
     auto max_num_persons     = 400000;
@@ -1835,6 +1860,8 @@ for (size_t i = 0; i < grid_search_rank.size(); i++) {
                                      damping_community_lockdown); // from 2021-03-15
                 location.add_damping(mio::abm::TimePoint(mio::abm::days(end_date_of_lockdown).seconds()),
                                      0.8); // from 2021-03-15
+                location.add_damping(mio::abm::TimePoint(mio::abm::days(mio::abm::days(72).seconds()).seconds()),
+                                     0.2); // from 2021-03-15
             }
             if (location.get_type() == mio::abm::LocationType::Work) {
                 location.add_damping(mio::abm::TimePoint(mio::abm::days(0).seconds()), 0.75); // from 2021-03-15
@@ -1848,7 +1875,8 @@ for (size_t i = 0; i < grid_search_rank.size(); i++) {
 
         sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>() = viral_shedding_rate;
         sim.get_world().parameters.get<mio::abm::MaskProtection>()             = masks;
-
+        sim.get_world().parameters.get<mio::abm::QuarantineEffectiveness>()    = quarantine_effectiveness;
+        sim.get_world().parameters.get<mio::abm::QuarantineDuration>()         = quarantine_duration;
         restart_timer(timer, "till advance 27 (march ends & lockdown starts)");
         sim.advance(mio::abm::TimePoint(mio::abm::days(27).seconds()), historyInfectionPerLocationType,
                     historyInfectionStatePerAgeGroup, historyCumulativeDetectedInfectionsPerAgeGroup);
@@ -1944,23 +1972,26 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
     for (size_t par_i = 0; par_i < parameter_values.size(); par_i++) {
         auto params = parameter_values[par_i];
 
+        std::cout << "Parameter values: ";
+        for (size_t j = 0; j < params.size(); j++) {
+            std::cout << params.at(j) << " ";
+        }
+        std::cout << std::endl;
+
         auto run_distribution = distribute_runs(num_runs, num_procs);
         auto start_run_idx =
             std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
         auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
 
-        // const double viral_shedding_rate        = 2.11;
-        const double viral_shedding_rate = params[0];
-        // const double dark_figure                = 3.0;
-        const double dark_figure = params[1];
-        // const double contact_red_lockdown       = 0.65;
+        const double viral_shedding_rate        = params[0];
+        const double dark_figure                = params[1];
         const double contact_red_lockdown       = params[2];
         const double damping_community_lockdown = 0.5;
-        const double testing_probability_sympt  = 0.033;
-        // const double testing_probability_sympt = params[0];
+        const double testing_probability_sympt  = 0.036;
+        // const double testing_probability_sympt = params[3];
 
-        const double lockdown_test_prob       = 1.2;
-        const double after_lockdown_test_prob = 0.6;
+        const double lockdown_test_prob       = 1.25;
+        const double after_lockdown_test_prob = 0.75;
 
         const auto seasonality_april = 0.95;
         const auto seasonality_may   = 0.85;
@@ -1968,11 +1999,13 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         const double masks                            = 0.55;
         const double after_lockdown_contact_reduction = 0.55;
         const double ratio_asympt_to_sympt            = 20.0;
-        // const double ratio_asympt_to_sympt = params[1];
-        const double perc_easter_event = 0.25;
+        // const double ratio_asympt_to_sympt    = params[4];
+        const double perc_easter_event        = 0.2;
+        const auto quarantine_duration        = mio::abm::days(10);
+        const double quarantine_effectiveness = 0.5;
 
         mio::Date start_date{2021, 3, 1};
-        int date_of_lockdown     = 27;
+        int date_of_lockdown     = 29;
         int end_date_of_lockdown = 61;
         int max_num_days         = 90;
         auto max_num_persons     = 400000;
@@ -2091,6 +2124,9 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                                              damping_community_lockdown); // from 2021-03-15
                         location.add_damping(mio::abm::TimePoint(mio::abm::days(end_date_of_lockdown).seconds()),
                                              0.8); // from 2021-03-15
+                        location.add_damping(
+                            mio::abm::TimePoint(mio::abm::days(mio::abm::days(72).seconds()).seconds()),
+                            0.2); // from 2021-03-15
                     }
                     if (location.get_type() == mio::abm::LocationType::Work) {
                         location.add_damping(mio::abm::TimePoint(mio::abm::days(0).seconds()), 0.75); // from 2021-03-15
@@ -2104,6 +2140,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
                 sim.get_world().parameters.get<mio::abm::InfectionRateFromViralShed>() = viral_shedding_rate;
                 sim.get_world().parameters.get<mio::abm::MaskProtection>()             = masks;
+                sim.get_world().parameters.get<mio::abm::QuarantineEffectiveness>()    = quarantine_effectiveness;
+                sim.get_world().parameters.get<mio::abm::QuarantineDuration>()         = quarantine_duration;
 
                 restart_timer(timer, "till advance 27 (march ends & lockdown starts)");
                 sim.advance(mio::abm::TimePoint(mio::abm::days(27).seconds()),
@@ -2186,6 +2224,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
             rmse_results_per_grid_point.at(par_i) += rmse;
 
+            std::cout << "RMSE: " << rmse << std::endl;
+
             //HACK since // gather_results(rank, num_procs, num_runs, ensemble_params);
             //for now this doesnt work, but we can still save the results of the last world since the
             //parameters are the same for each run
@@ -2195,11 +2235,9 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                 }
             }
         }
-        rmse_results_per_grid_point.at(par_i) /= num_runs;
-        std::cout << "RMSE: " << rmse_results_per_grid_point.at(par_i) << std::endl;
-        printf("Saving results ... ");
 
 #ifdef MEMILIO_ENABLE_MPI
+
         //gather results
         auto final_ensemble_infection_per_loc_type_per_age_group =
             gather_results(rank, num_procs, num_runs, ensemble_infection_per_loc_type_per_age_group);
