@@ -98,17 +98,25 @@ def get_maximum_cum_infected(path, index):
 
 if __name__ == "__main__":
     
-    path_data = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_2024-08-15140128"
+    # path_data = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_2024-08-15140128"
     variable_1 = "test_likelihood_symptom"
     variable_2 = "test_likelihood_asymptom"
-    values_1 = [0.01, 0.03, 0.05]
-    values_2 = [5, 10, 30]
+    values_1 = [0.018,0.036,0.054,0.072,0.09]
+    values_2 = [40,30,20,10,1]
 
     path_data = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_2024-08-21224000"
     variable_1 = "quarantine lenth"
     variable_2 = "quarantine efficiancy"
-    values_1 = [2, 4, 8, 16]
-    values_2 = [0.1, 0.25, 0.5, 1.0]
+    values_1 = [1,4,7,10,13,16]
+    values_2 = [0.0,0.25,0.5,0.75,1.0]
+
+    path_data = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_2024-08-21224000"
+    variable_1 = "test_likelihood_symptom"
+    variable_2 = "quarantine lenth"
+    values_1 = [0.018,0.036,0.054,0.072,0.09]
+    values_2 = [1,4,7,10,13,16]
+
+
     # we want to have a Grid Plot with the size of the values
     # in each grid we plot a certain plot which we can define
     # on the general structure of the plot we we write the values of the parameters
