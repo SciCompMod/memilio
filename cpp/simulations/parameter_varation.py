@@ -104,6 +104,11 @@ if __name__ == "__main__":
     values_1 = [0.01, 0.03, 0.05]
     values_2 = [5, 10, 30]
 
+    path_data = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_2024-08-21224000"
+    variable_1 = "quarantine lenth"
+    variable_2 = "quarantine efficiancy"
+    values_1 = [2, 4, 8, 16]
+    values_2 = [0.1, 0.25, 0.5, 1.0]
     # we want to have a Grid Plot with the size of the values
     # in each grid we plot a certain plot which we can define
     # on the general structure of the plot we we write the values of the parameters
@@ -265,17 +270,6 @@ if __name__ == "__main__":
     axs[1, 1].set_ylabel(variable_1)
 
     plt.show()
-
-    
-
-                
-
-
-
-
-
-
-
 
 
         
