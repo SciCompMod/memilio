@@ -2000,9 +2000,11 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         const double after_lockdown_contact_reduction = 0.55;
         const double ratio_asympt_to_sympt            = 20.0;
         // const double ratio_asympt_to_sympt    = params[4];
-        const double perc_easter_event        = 0.2;
-        const auto quarantine_duration        = mio::abm::days(10);
-        const double quarantine_effectiveness = 0.5;
+        const double perc_easter_event = 0.2;
+        // const auto quarantine_duration        = mio::abm::days(10);
+        // const double quarantine_effectiveness = 0.5;
+        const auto quarantine_duration        = mio::abm::days(params[3]);
+        const double quarantine_effectiveness = params[4];
 
         mio::Date start_date{2021, 3, 1};
         int date_of_lockdown     = 29;
@@ -2366,8 +2368,8 @@ int main(int argc, char** argv)
     rank      = 0;
 #endif
 
-    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
 
@@ -2431,7 +2433,8 @@ int main(int argc, char** argv)
     }
     else {
         // std::vector<std::vector<double>> parameters = {{0.01, 0.03, 0.05}, {5, 10, 30}};
-        std::vector<std::vector<double>> parameters = {{2.3}, {2.6}, {0.55}};
+        // std::vector<std::vector<double>> parameters = {{2.3}, {2.6}, {0.55}, {2, 4, 8, 16}, {0.1, 0.25, 0.5, 1.0}};
+        std::vector<std::vector<double>> parameters = {{2.3}, {2.6}, {0.55}, {16}, {1.0}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
