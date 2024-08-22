@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann
+* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann, Julia Bicker
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -25,6 +25,7 @@
 #include "abm/virus_variant.h"
 #include "abm/vaccine.h"
 #include "abm/test_type.h"
+#include "abm/state_transition_dist.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/uncertain_value.h"
@@ -46,10 +47,11 @@ using InfectionStateTimesDistributionsParameters = LogNormalDistribution<double>
  * @brief Time that a Person is infected but not yet infectious in day unit
  */
 struct IncubationPeriod {
-    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<StateTransitionDistWrapper, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
+        LogNormal log_norm(1., 1.);
+        return Type({VirusVariant::Count, size}, StateTransitionDistWrapper(log_norm));
     }
     static std::string name()
     {
@@ -61,10 +63,11 @@ struct IncubationPeriod {
 * @brief Time that a Person is infected but presymptomatic in day unit
 */
 struct TimeInfectedNoSymptomsToSymptoms {
-    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<StateTransitionDistWrapper, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
+        LogNormal log_norm(1., 1.);
+        return Type({VirusVariant::Count, size}, StateTransitionDistWrapper(log_norm));
     }
     static std::string name()
     {
@@ -76,10 +79,11 @@ struct TimeInfectedNoSymptomsToSymptoms {
 * @brief Time that a Person is infected when staying asymptomatic in day unit
 */
 struct TimeInfectedNoSymptomsToRecovered {
-    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<StateTransitionDistWrapper, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
+        LogNormal log_norm(1., 1.);
+        return Type({VirusVariant::Count, size}, StateTransitionDistWrapper(log_norm));
     }
     static std::string name()
     {
@@ -92,10 +96,11 @@ struct TimeInfectedNoSymptomsToRecovered {
 *        who do not need to be hospitalized yet in day unit
 */
 struct TimeInfectedSymptomsToSevere {
-    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<StateTransitionDistWrapper, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
+        LogNormal log_norm(1., 1.);
+        return Type({VirusVariant::Count, size}, StateTransitionDistWrapper(log_norm));
     }
     static std::string name()
     {
@@ -107,10 +112,11 @@ struct TimeInfectedSymptomsToSevere {
 * @brief Time that a Person is infected and symptomatic who will recover in day unit
 */
 struct TimeInfectedSymptomsToRecovered {
-    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<StateTransitionDistWrapper, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
+        LogNormal log_norm(1., 1.);
+        return Type({VirusVariant::Count, size}, StateTransitionDistWrapper(log_norm));
     }
     static std::string name()
     {
@@ -122,10 +128,11 @@ struct TimeInfectedSymptomsToRecovered {
  * @brief Time that a Person is infected and 'simply' hospitalized before becoming critical in day unit
  */
 struct TimeInfectedSevereToCritical {
-    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<StateTransitionDistWrapper, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
+        LogNormal log_norm(1., 1.);
+        return Type({VirusVariant::Count, size}, StateTransitionDistWrapper(log_norm));
     }
     static std::string name()
     {
@@ -137,10 +144,11 @@ struct TimeInfectedSevereToCritical {
  * @brief Time that a Person is infected and 'simply' hospitalized before recovering in day unit
  */
 struct TimeInfectedSevereToRecovered {
-    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<StateTransitionDistWrapper, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
+        LogNormal log_norm(1., 1.);
+        return Type({VirusVariant::Count, size}, StateTransitionDistWrapper(log_norm));
     }
     static std::string name()
     {
@@ -152,10 +160,11 @@ struct TimeInfectedSevereToRecovered {
  * @brief Time that a Person is treated by ICU before dying in day unit
  */
 struct TimeInfectedCriticalToDead {
-    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<StateTransitionDistWrapper, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
+        LogNormal log_norm(1., 1.);
+        return Type({VirusVariant::Count, size}, StateTransitionDistWrapper(log_norm));
     }
     static std::string name()
     {
@@ -167,10 +176,12 @@ struct TimeInfectedCriticalToDead {
  * @brief Time that a Person is treated by ICU before recovering in day unit
  */
 struct TimeInfectedCriticalToRecovered {
-    using Type = CustomIndexArray<InfectionStateTimesDistributionsParameters, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<StateTransitionDistWrapper, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type({VirusVariant::Count, size}, InfectionStateTimesDistributionsParameters{1., 1.});
+        LogNormal log_norm(1., 1.);
+        StateTransitionDistWrapper dist(log_norm);
+        return Type({VirusVariant::Count, size}, dist);
     }
     static std::string name()
     {
@@ -730,16 +741,16 @@ public:
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
             for (auto&& v : enum_members<VirusVariant>()) {
 
-                if (this->get<IncubationPeriod>()[{v, i}].params.m() < 0) {
-                    log_error("Constraint check: Lower end of parameter range IncubationPeriod of virus variant {} and "
+                if (this->get<IncubationPeriod>()[{v, i}].params()[0] < 0) {
+                    log_error("Constraint check: Mean of parameter IncubationPeriod of virus variant {} and "
                               "age group {:.0f} smaller "
                               "than {:.4f}",
                               (uint32_t)v, (size_t)i, 0);
                     return true;
                 }
 
-                if (this->get<TimeInfectedNoSymptomsToSymptoms>()[{v, i}].params.m() < 0.0) {
-                    log_error("Constraint check: Lower end of parameter range TimeInfectedNoSymptomsToSymptoms "
+                if (this->get<TimeInfectedNoSymptomsToSymptoms>()[{v, i}].params()[0] < 0.0) {
+                    log_error("Constraint check: Mean of parameter TimeInfectedNoSymptomsToSymptoms "
                               "of virus variant "
                               "{} and age group {:.0f} smaller "
                               "than {:d}",
@@ -747,8 +758,8 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedNoSymptomsToRecovered>()[{v, i}].params.m() < 0.0) {
-                    log_error("Constraint check: Lower end of parameter range TimeInfectedNoSymptomsToRecovered of "
+                if (this->get<TimeInfectedNoSymptomsToRecovered>()[{v, i}].params()[0] < 0.0) {
+                    log_error("Constraint check: Mean of parameter TimeInfectedNoSymptomsToRecovered of "
                               "virus variant "
                               "{} and age group {:.0f} smaller "
                               "than {:d}",
@@ -756,8 +767,8 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedSymptomsToSevere>()[{v, i}].params.m() < 0.0) {
-                    log_error("Constraint check: Lower end of parameter range TimeInfectedSymptomsToSevere of virus "
+                if (this->get<TimeInfectedSymptomsToSevere>()[{v, i}].params()[0] < 0.0) {
+                    log_error("Constraint check: Mean of parameter TimeInfectedSymptomsToSevere of virus "
                               "variant {} "
                               "and age group {:.0f} smaller "
                               "than {:d}",
@@ -765,8 +776,8 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedSymptomsToRecovered>()[{v, i}].params.m() < 0.0) {
-                    log_error("Constraint check: Lower end of parameter range TimeInfectedSymptomsToRecovered of virus "
+                if (this->get<TimeInfectedSymptomsToRecovered>()[{v, i}].params()[0] < 0.0) {
+                    log_error("Constraint check: Mean of parameter TimeInfectedSymptomsToRecovered of virus "
                               "variant {} "
                               "and age group {:.0f} smaller "
                               "than {:d}",
@@ -774,8 +785,8 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedSevereToCritical>()[{v, i}].params.m() < 0.0) {
-                    log_error("Constraint check: Lower end of parameter range TimeInfectedSevereToCritical of virus "
+                if (this->get<TimeInfectedSevereToCritical>()[{v, i}].params()[0] < 0.0) {
+                    log_error("Constraint check: Mean of parameter TimeInfectedSevereToCritical of virus "
                               "variant {} "
                               "and age group {:.0f} smaller "
                               "than {:d}",
@@ -783,8 +794,8 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedSevereToRecovered>()[{v, i}].params.m() < 0.0) {
-                    log_error("Constraint check: Lower end of parameter range TimeInfectedSevereToRecovered of virus "
+                if (this->get<TimeInfectedSevereToRecovered>()[{v, i}].params()[0] < 0.0) {
+                    log_error("Constraint check: Mean of parameter TimeInfectedSevereToRecovered of virus "
                               "variant {} "
                               "and age group {:.0f} smaller "
                               "than {:d}",
@@ -792,17 +803,16 @@ public:
                     return true;
                 }
 
-                if (this->get<TimeInfectedCriticalToDead>()[{v, i}].params.m() < 0.0) {
-                    log_error(
-                        "Constraint check: Lower end of parameter range TimeInfectedCriticalToDead of virus variant {} "
-                        "and age group {:.0f} smaller "
-                        "than {:d}",
-                        (uint32_t)v, (size_t)i, 0);
+                if (this->get<TimeInfectedCriticalToDead>()[{v, i}].params()[0] < 0.0) {
+                    log_error("Constraint check: Mean of parameter TimeInfectedCriticalToDead of virus variant {} "
+                              "and age group {:.0f} smaller "
+                              "than {:d}",
+                              (uint32_t)v, (size_t)i, 0);
                     return true;
                 }
 
-                if (this->get<TimeInfectedCriticalToRecovered>()[{v, i}].params.m() < 0.0) {
-                    log_error("Constraint check: Lower end of parameter range TimeInfectedCriticalToRecovered of virus "
+                if (this->get<TimeInfectedCriticalToRecovered>()[{v, i}].params()[0] < 0.0) {
+                    log_error("Constraint check: Mean of parameter TimeInfectedCriticalToRecovered of virus "
                               "variant {} "
                               "and age group {:.0f} smaller "
                               "than {:d}",
