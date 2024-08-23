@@ -1724,8 +1724,8 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     std::vector<double> rmse_results_per_grid_point;
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
-    omp_set_max_active_levels(2);
-#pragma omp parallel for num_threads(64)
+    omp_set_max_active_levels(1);
+#pragma omp parallel for num_threads(64) schedule(dynamic)
     for (size_t i = 0; i < grid_search_rank.size(); i++) {
         auto params = grid_search_rank[i];
 
@@ -2416,10 +2416,10 @@ int main(int argc, char** argv)
         // 3: testing prob symptomatic
         // 4: perc have to test if npi active
 
-        std::vector<std::pair<double, double>> grid_boundaries = {{1.8, 2.5}, {2.0, 4.0}, {0.5, 0.8}};
+        std::vector<std::pair<double, double>> grid_boundaries = {{1.8, 2.2}, {2.5, 4.0}, {0.3, 0.7}};
         // std::vector<double> grid_boundaries = {2.3, 2.6, 0.55};
         // std::vector<int> points_per_dim = {11, 11, 7, 11};
-        std::vector<int> points_per_dim = {5, 5, 7};
+        std::vector<int> points_per_dim = {13, 13, 13};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, 0, run_grid_search);
