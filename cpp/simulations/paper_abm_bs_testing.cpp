@@ -2367,8 +2367,8 @@ int main(int argc, char** argv)
     rank      = 0;
 #endif
 
-    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
 
@@ -2396,13 +2396,13 @@ int main(int argc, char** argv)
         printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
     else if (argc == 3) {
-        num_runs        = 9;
+        num_runs        = 3;
         run_grid_search = true;
         printf("running with grid search\n");
         printf("Running with number of runs %d.\n", (int)num_runs);
     }
     else {
-        num_runs = 1;
+        num_runs = 9;
         printf("Running with number of runs = %d.\n", (int)num_runs);
         printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
@@ -2419,7 +2419,7 @@ int main(int argc, char** argv)
         // std::vector<std::pair<double, double>> grid_boundaries = {{1.8, 2.5}, {2.0, 4.0}, {0.5, 0.8}, {0.03, 0.04}};
         std::vector<double> grid_boundaries = {2.3, 2.6, 0.55};
         // std::vector<int> points_per_dim = {11, 11, 7, 11};
-        std::vector<int> points_per_dim = {7, 7, 7};
+        std::vector<int> points_per_dim = {5, 5, 5};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, 0, run_grid_search);
