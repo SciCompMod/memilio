@@ -121,12 +121,12 @@ void Location::interact(Person::RandomNumberGenerator& rng, Person& person, Time
         std::pair<VirusVariant, ScalarType> local_indiv_expected_trans[static_cast<uint32_t>(VirusVariant::Count)];
         for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
             VirusVariant virus = static_cast<VirusVariant>(v);
-            ScalarType local_indiv_expected_trans_v =
+            ScalarType exposed_viral_shed =
                 (transmission_contacts_per_day(cell_index, virus, age_receiver, global_params.get_num_groups()) +
                  transmission_air_per_day(cell_index, virus, global_params)) *
                 (1 - mask_protection) * (1 - person.get_protection_factor(t, virus, global_params));
-
-            local_indiv_expected_trans[v] = std::make_pair(virus, local_indiv_expected_trans_v);
+            ScalarType infection_rate = global_params.get<InfectionRateFromViralShed>()[{virus}] * exposed_viral_shed;
+            local_indiv_expected_trans[v] = std::make_pair(virus, infection_rate);
         }
         VirusVariant virus =
             random_transition(rng, VirusVariant::Count, dt,
@@ -183,8 +183,7 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegrou
                  * to second order accuracy using midpoint rule
                 */
                 cell.m_cached_exposure_rate_contacts[{virus, age}] +=
-                    params.get<InfectionRateFromViralShed>()[{virus}] * inf.get_viral_shed(t_middlepoint) *
-                    quarantine_factor;
+                    inf.get_viral_shed(t_middlepoint) * quarantine_factor * (1 - p->get_mask_protective_factor(params));
                 cell.m_cached_exposure_rate_air[{virus}] +=
                     inf.get_viral_shed(t_middlepoint); // TODO: Adapt function/factor for air transmission.
             }
