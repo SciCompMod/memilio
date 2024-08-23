@@ -1933,7 +1933,7 @@ std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
 
 mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, size_t num_runs,
                         std::vector<std::vector<double>> parameter_values, mio::RandomNumberGenerator rng,
-                        bool save_single_runs = true)
+                        bool save_single_runs = false)
 {
     int num_procs, rank;
 #ifdef MEMILIO_ENABLE_MPI
@@ -2231,7 +2231,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             gather_results(rank, num_procs, num_runs, ensemble_positive_test_per_loc_type_per_age_group);
         auto final_ensemble_cumulative_detected_infections =
             gather_results(rank, num_procs, num_runs, ensemble_cumulative_detected_infections);
-        auto final_ensemble_estimated_new_reproduction_number =
+        auto final_ensemble_estimated_new_detected_infections =
             gather_results(rank, num_procs, num_runs, ensemble_estimated_new_detected_infections);
         auto final_ensemble_estimated_reproduction_number =
             gather_results(rank, num_procs, num_runs, ensemble_estimated_reproduction_number);
@@ -2253,7 +2253,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             BOOST_OUTCOME_TRY(save_results(final_ensemble_cumulative_detected_infections, ensemble_params, {0},
                                            result_dir / "cumulative_detected_infections" / std::to_string(par_i),
                                            save_single_runs));
-            BOOST_OUTCOME_TRY(save_results(ensemble_estimated_new_detected_infections, ensemble_params, {0},
+            BOOST_OUTCOME_TRY(save_results(final_ensemble_estimated_new_detected_infections, ensemble_params, {0},
                                            result_dir / "new_detected_infections" / std::to_string(par_i),
                                            save_single_runs));
             BOOST_OUTCOME_TRY(save_results(final_ensemble_estimated_reproduction_number, ensemble_params, {0},
