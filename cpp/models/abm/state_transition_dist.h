@@ -125,6 +125,39 @@ private:
     LogNormalDistribution<double>::ParamType m_dist;
 };
 
+struct Exponential : StateTransitionDist {
+
+    Exponential(double p1)
+        : StateTransitionDist()
+        , m_dist(p1)
+    {
+    }
+
+    std::vector<double> params() const override
+    {
+        return {m_dist.params.lambda()};
+    }
+
+    double get(PersonalRandomNumberGenerator& rng) override
+    {
+        return m_dist.get_distribution_instance()(rng, m_dist.params);
+    }
+
+protected:
+    /**
+     * @brief Implements clone for Exponential.
+     * 
+     * @return Pointer to StateTransitionDist.
+     */
+    StateTransitionDist* clone_impl() const override
+    {
+        return new Exponential(*this);
+    }
+
+private:
+    ExponentialDistribution<double>::ParamType m_dist;
+};
+
 struct StateTransitionDistWrapper {
 
     StateTransitionDistWrapper()
