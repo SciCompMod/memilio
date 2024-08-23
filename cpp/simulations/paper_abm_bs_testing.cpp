@@ -1107,7 +1107,7 @@ std::vector<std::vector<double>> distribute_grid_search(int rank, int num_procs,
     }
     // we calculate every possible combination of the grid, independently of the rank
     std::vector<std::vector<double>> grid_search{};
-    std::vector<int> counter_per_dimension(grid.size(), 0);
+    std::vector<size_t> counter_per_dimension(grid.size(), 0);
     for (int i = 0; i < number_of_points; i++) {
         std::vector<double> temp;
         for (size_t j = 0; j < grid.size(); j++) {
@@ -1115,10 +1115,10 @@ std::vector<std::vector<double>> distribute_grid_search(int rank, int num_procs,
         }
         grid_search.push_back(temp);
         // we increase the counter for the last dimension
-        counter_per_dimension.back()++;
+        counter_per_dimension[grid.size() - 1]++;
         // we increase the counter for the other dimensions if the last dimension has reached the end
-        for (int k = (int)grid.size(); k > 0; k--) {
-            if (counter_per_dimension[k] == (int)grid[k].size()) {
+        for (size_t k = grid.size() - 1; k > 0; k--) {
+            if (counter_per_dimension[k] == grid[k].size()) {
                 counter_per_dimension[k] = 0;
                 counter_per_dimension[k - 1]++;
             }
@@ -1128,6 +1128,14 @@ std::vector<std::vector<double>> distribute_grid_search(int rank, int num_procs,
     std::vector<std::vector<double>> grid_search_ranks;
     for (int i = 0; i < points_per_rank; i++) {
         grid_search_ranks.push_back(grid_search[i + rank * points_per_rank]);
+    }
+    // we print the grid search for the rank
+    std::cout << "Rank " << rank << " has the following grid search: " << std::endl;
+    for (size_t i = 0; i < grid_search_ranks.size(); i++) {
+        for (size_t j = 0; j < grid_search_ranks[i].size(); j++) {
+            std::cout << grid_search_ranks[i][j] << " ";
+        }
+        std::cout << std::endl;
     }
 
     return grid_search_ranks;
@@ -1157,11 +1165,8 @@ void create_easter_social_event(mio::abm::World& world, double perc_easter_event
         person_per_age_group[determine_age_group_from_rki(p.get_age())].push_back(i);
     }
 
-    //shuffle this vector
-    std::random_device rd;
-    std::mt19937 g(rd());
     for (size_t i = 0; i < person_per_age_group.size(); i++) {
-        std::shuffle(person_per_age_group[i].begin(), person_per_age_group[i].end(), g);
+        std::shuffle(person_per_age_group[i].begin(), person_per_age_group[i].end(), world.get_rng());
     }
     int number_of_persons       = (int)(perc_easter_event * world.get_persons().size());
     int number_of_social_events = number_of_persons / (num_age_groupss + 1);
@@ -1441,6 +1446,23 @@ struct LogEstimatedReproductionNumber : mio::LogAlways {
     }
 };
 
+mio::TimeSeries<ScalarType> get_new_detected_infections(mio::TimeSeries<ScalarType> cumulative_infections)
+{
+    mio::TimeSeries<ScalarType> new_detected_infection(mio::TimeSeries<ScalarType>::zero(
+        cumulative_infections.get_num_time_points() / 24, cumulative_infections.get_num_elements()));
+    for (Eigen::Index i = 1; i < cumulative_infections.get_num_time_points() / 24; i++) {
+        new_detected_infection[i] = cumulative_infections[i * 24] - cumulative_infections[(i - 1) * 24];
+    }
+    // we print this for debugging
+    for (Eigen::Index i = 0; i < new_detected_infection.get_num_time_points(); i++) {
+        for (Eigen::Index j = 0; j < new_detected_infection.get_num_elements(); j++) {
+            std::cout << new_detected_infection[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+    return new_detected_infection;
+}
+
 #ifdef MEMILIO_ENABLE_MPI
 template <typename T>
 T gather_results(int rank, int num_procs, int num_runs, T ensemble_vec)
@@ -1682,7 +1704,7 @@ void write_grid_search_prematurely_to_file(int rank, const fs::path& result_dir,
 }
 
 mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::path& result_dir, int num_runs,
-                                         std::vector<std::vector<double>> grid_points)
+                                         std::vector<std::vector<double>> grid_points, mio::RandomNumberGenerator& rng)
 {
     int num_procs, rank;
 #ifdef MEMILIO_ENABLE_MPI
@@ -1697,12 +1719,6 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     // Distribute the grid search over the MPI ranks
     auto grid_search_rank = distribute_grid_search(rank, num_procs, grid_points);
     // short debug print to see if everything worked. Printing rank and amount of grid points as well as first point
-    std::cout << "Rank: " << rank << " has " << grid_search_rank.size() << " grid points" << std::endl;
-    std::cout << "First grid point: ";
-    for (size_t j = 0; j < grid_search_rank[0].size(); j++) {
-        std::cout << grid_search_rank[0].at(j) << " ";
-    }
-    std::cout << std::endl;
 
     // Run the grid search
     std::vector<double> rmse_results_per_grid_point;
@@ -1712,8 +1728,6 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
 #pragma omp parallel for num_threads(90)
     for (size_t i = 0; i < grid_search_rank.size(); i++) {
         auto params = grid_search_rank[i];
-        std::random_device rd;
-        std::mt19937 g(rd());
 
         printf("I am Thread %d\n", omp_get_thread_num());
 
@@ -1723,8 +1737,8 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
         const double damping_community_lockdown = 0.5;
         const double testing_probability_sympt  = 0.036;
 
-        const double lockdown_test_prob     = 1.25;
-        const auto after_lockdown_test_prob = 0.75;
+        const double lockdown_test_prob     = 1.1;
+        const auto after_lockdown_test_prob = 0.9;
 
         const auto seasonality_april = 0.95;
         const auto seasonality_may   = 0.85;
@@ -1756,6 +1770,10 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
 
             // Loop over a number of runs
             auto world = mio::abm::World(num_age_groupss);
+            auto run_rng_counter =
+                mio::rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(j), mio::Counter<uint32_t>(0));
+            rng.set_counter(run_rng_counter);
+            world.get_rng() = rng;
 
             create_sampled_world(world, input_dir, t0, max_num_persons, start_date, perc_easter_event);
 
@@ -1914,7 +1932,8 @@ std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
 }
 
 mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, size_t num_runs,
-                        std::vector<std::vector<double>> parameter_values, bool save_single_runs = true)
+                        std::vector<std::vector<double>> parameter_values, mio::RandomNumberGenerator rng,
+                        bool save_single_runs = true)
 {
     int num_procs, rank;
 #ifdef MEMILIO_ENABLE_MPI
@@ -1947,8 +1966,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // const double testing_probability_sympt  = 0.036;
         const double testing_probability_sympt = params[3];
 
-        const double lockdown_test_prob       = 1.25;
-        const double after_lockdown_test_prob = 0.75;
+        const double lockdown_test_prob       = 1.1;
+        const double after_lockdown_test_prob = 0.9;
 
         const auto seasonality_april = 0.95;
         const auto seasonality_may   = 0.85;
@@ -1997,6 +2016,10 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of estimated reproduction number
         ensemble_estimated_reproduction_number.reserve(size_t(num_runs));
 
+        auto ensemble_estimated_new_detected_infections =
+            std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of estimated reproduction number
+        ensemble_estimated_new_detected_infections.reserve(size_t(num_runs));
+
         auto ensemble_params = std::vector<std::vector<mio::abm::World>>{}; // Vector of all worlds
         ensemble_params.reserve(size_t(num_runs));
 
@@ -2010,10 +2033,11 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // Loop over a number of runs
         for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
 
-            std::random_device rd;
-            std::mt19937 g(rd());
-
             auto world = mio::abm::World(num_age_groupss);
+            auto run_rng_counter =
+                mio::rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(run_idx), mio::Counter<uint32_t>(0));
+            rng.set_counter(run_rng_counter);
+            world.get_rng() = rng;
 
             create_sampled_world(world, input_dir, t0, max_num_persons, start_date, perc_easter_event);
 
@@ -2151,8 +2175,11 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                 std::get<0>(historyPositiveTestPerLocationTypePerAgeGroup.get_log())};
             auto temp_sim_cumulative_detected_infections_per_age_group = std::vector<mio::TimeSeries<ScalarType>>{
                 std::get<0>(historyCumulativeDetectedInfectionsPerAgeGroup.get_log())};
+            auto temp_sim_estimated_new_detected_infections = std::vector<mio::TimeSeries<ScalarType>>{
+                get_new_detected_infections(temp_sim_cumulative_detected_infections_per_age_group[0])};
             auto temp_sim_estimated_reproduction_number =
                 std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyEstimatedReproductionNumber.get_log())};
+
             // Push result of the simulation back to the result vector
             ensemble_infection_per_loc_type_per_age_group.emplace_back(temp_sim_infection_per_loc_type_per_age_group);
             ensemble_infection_state_per_age_group.emplace_back(temp_sim_infection_state_per_age_group);
@@ -2160,6 +2187,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             ensemble_positive_test_per_loc_type_per_age_group.emplace_back(
                 temp_sim_positive_test_per_loc_type_per_age_group);
             ensemble_cumulative_detected_infections.emplace_back(temp_sim_cumulative_detected_infections_per_age_group);
+            ensemble_estimated_new_detected_infections.emplace_back(temp_sim_estimated_new_detected_infections);
             ensemble_estimated_reproduction_number.emplace_back(temp_sim_estimated_reproduction_number);
 
             std::cout << "Run " << run_idx + 1 << " of " << num_runs << " finished." << std::endl;
@@ -2203,8 +2231,11 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             gather_results(rank, num_procs, num_runs, ensemble_positive_test_per_loc_type_per_age_group);
         auto final_ensemble_cumulative_detected_infections =
             gather_results(rank, num_procs, num_runs, ensemble_cumulative_detected_infections);
+        auto final_ensemble_estimated_new_reproduction_number =
+            gather_results(rank, num_procs, num_runs, ensemble_estimated_new_detected_infections);
         auto final_ensemble_estimated_reproduction_number =
             gather_results(rank, num_procs, num_runs, ensemble_estimated_reproduction_number);
+
         if (rank == 0) {
             BOOST_OUTCOME_TRY(save_results(
                 final_ensemble_infection_per_loc_type_per_age_group, ensemble_params, {0},
@@ -2222,12 +2253,17 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             BOOST_OUTCOME_TRY(save_results(final_ensemble_cumulative_detected_infections, ensemble_params, {0},
                                            result_dir / "cumulative_detected_infections" / std::to_string(par_i),
                                            save_single_runs));
+            BOOST_OUTCOME_TRY(save_results(ensemble_estimated_new_detected_infections, ensemble_params, {0},
+                                           result_dir / "new_detected_infections" / std::to_string(par_i),
+                                           save_single_runs));
             BOOST_OUTCOME_TRY(save_results(final_ensemble_estimated_reproduction_number, ensemble_params, {0},
                                            result_dir / "estimated_reproduction_number" / std::to_string(par_i),
                                            save_single_runs, true, true));
         }
 #else
-
+        BOOST_OUTCOME_TRY(save_results(ensemble_infection_per_loc_type_per_age_group, ensemble_params, {0},
+                                       result_dir / "infection_per_location_type_per_age_group" / std::to_string(par_i),
+                                       save_single_runs));
         BOOST_OUTCOME_TRY(save_results(ensemble_infection_state_per_age_group, ensemble_params, {0},
                                        result_dir / "infection_state_per_age_group" / std::to_string(par_i),
                                        save_single_runs));
@@ -2243,6 +2279,9 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         BOOST_OUTCOME_TRY(save_results(ensemble_estimated_reproduction_number, ensemble_params, {0},
                                        result_dir / "estimated_reproduction_number" / std::to_string(par_i),
                                        save_single_runs, 1));
+        BOOST_OUTCOME_TRY(save_results(ensemble_estimated_new_detected_infections, ensemble_params, {0},
+                                       result_dir / "new_detected_infections" / std::to_string(par_i), save_single_runs,
+                                       1));
 
 #endif
         restart_timer(timer, "time taken for data gathering and saving results");
@@ -2270,6 +2309,7 @@ mio::IOResult<bool> create_result_folders(std::string const& result_dir, int n_p
     std::string pos_test_p_loc_t_p_ag = result_dir + "/positive_test_per_location_type_per_age_group/";
     std::string cum_det_inf           = result_dir + "/cumulative_detected_infections/";
     std::string est_rep_num           = result_dir + "/estimated_reproduction_number/";
+    std::string new_det_inf           = result_dir + "/new_detected_infections/";
 
     BOOST_OUTCOME_TRY(mio::create_directory(result_dir));
     BOOST_OUTCOME_TRY(mio::create_directory(inf_p_loc_t_p_ag));
@@ -2277,6 +2317,7 @@ mio::IOResult<bool> create_result_folders(std::string const& result_dir, int n_p
     BOOST_OUTCOME_TRY(mio::create_directory(test_p_loc_t_p_ag));
     BOOST_OUTCOME_TRY(mio::create_directory(pos_test_p_loc_t_p_ag));
     BOOST_OUTCOME_TRY(mio::create_directory(cum_det_inf));
+    BOOST_OUTCOME_TRY(mio::create_directory(new_det_inf));
     BOOST_OUTCOME_TRY(mio::create_directory(est_rep_num));
     if (n_params > 0) {
         // we create n_param folders in each of the subfolders
@@ -2287,6 +2328,7 @@ mio::IOResult<bool> create_result_folders(std::string const& result_dir, int n_p
             BOOST_OUTCOME_TRY(mio::create_directory(pos_test_p_loc_t_p_ag + "/" + std::to_string(i)));
             BOOST_OUTCOME_TRY(mio::create_directory(cum_det_inf + "/" + std::to_string(i)));
             BOOST_OUTCOME_TRY(mio::create_directory(est_rep_num + "/" + std::to_string(i)));
+            BOOST_OUTCOME_TRY(mio::create_directory(new_det_inf + "/" + std::to_string(i)));
         }
     }
 
@@ -2309,6 +2351,11 @@ int main(int argc, char** argv)
 
     mio::set_log_level(mio::LogLevel::err);
     auto start = std::chrono::system_clock::now();
+
+    // we need one seed
+    std::initializer_list<uint32_t> seeds = {14159265u, 35897932u};
+    auto rng                              = mio::RandomNumberGenerator();
+    rng.seed(seeds);
 
     int num_procs, rank;
 #ifdef MEMILIO_ENABLE_MPI
@@ -2352,7 +2399,7 @@ int main(int argc, char** argv)
         num_runs        = 9;
         run_grid_search = true;
         printf("running with grid search\n");
-        printf("Running with number of runs = 1\n");
+        printf("Running with number of runs %d.\n", (int)num_runs);
     }
     else {
         num_runs = 1;
@@ -2381,12 +2428,10 @@ int main(int argc, char** argv)
                 return created.error().code().value();
             }
         }
-        auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid);
+        auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        // std::vector<std::vector<double>> parameters = {{2.26}, {2.64}, {0.56}};
-        // std::vector<std::vector<double>> parameters = {{2.3}, {2.6}, {0.55}, {2, 4, 8, 16}, {0.1, 0.25, 0.5, 1.0}};
-        std::vector<std::vector<double>> parameters = {{2.05}, {2.64}, {0.50}, {0.036}, {20.0}, {10}, {0.5}};
+        std::vector<std::vector<double>> parameters = {{2.05}, {2.90}, {0.45}, {0.036}, {20.0}, {10}, {0.5}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
@@ -2395,7 +2440,7 @@ int main(int argc, char** argv)
                 return created.error().code().value();
             }
         }
-        auto result = run(input_dir, result_dir, num_runs, every_combination);
+        auto result = run(input_dir, result_dir, num_runs, every_combination, rng);
     }
 
     // copy results into a fixed name folder to have easier access
