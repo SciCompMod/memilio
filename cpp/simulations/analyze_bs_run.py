@@ -282,7 +282,7 @@ def plot_dead(path):
                     (df_abb['Date'] <= '2021-06-01')]
     # we just need the cases with id 3101
     df_abb = df_abb[df_abb['ID_County'] == 3101]
-    df_abb['Deaths'] = np.floor(df_abb[['Deaths']].to_numpy())
+    df_abb['Deaths'] = np.round(df_abb[['Deaths']].to_numpy())
 
     # we need the amount of dead persons for each age group: These are A00-A04, A05-A14, A15-A34, A35-A59, A60-A79, A80+
     age_groups = ['A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+']
@@ -323,7 +323,7 @@ def plot_dead(path):
         ax = fig.add_subplot(gs[1, i])
         # we need the amount of dead persons for each age group 
         df_abb_age_group = df_abb[df_abb['Age_RKI'] == age_groups[i]][0:90]
-        y_real =  np.floor(df_abb_age_group['Deaths'].to_numpy())
+        y_real =  np.round(df_abb_age_group['Deaths'].to_numpy())
         # we need to plot the dead persons from the real world and from the simulation
         ax.plot(df_abb_age_group['Date'], y_real, color='tab:red')
         ax.plot(df_abb_age_group['Date'], p50_bs[age_group_access[i]][()][:, 7][::24][0:90], color='tab:blue')
@@ -402,7 +402,7 @@ def plot_icu(path):
     total_95_age = total_95_age[::24][0:90]
 
     
-    ICU_Simulation_one_percentile = np.floor(total_50[:, 5]*perc_of_critical_in_icu)
+    ICU_Simulation_one_percentile = np.round(total_50[:, 5]*perc_of_critical_in_icu)
     ICU_Simulation = np.round(total_50_age[:, 5])
     ICU_Simulation75 = np.round(total_75_age[:, 5])
     ICU_Simulation25 = np.round(total_25_age[:, 5])
@@ -706,32 +706,75 @@ def plot_cumulative_detected_infections(path):
     df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
     df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') & (df_abb['Date'] <= '2021-06-01')]
     df_abb = df_abb[df_abb['ID_County'] == 3101]
-    df_substract = np.floor(df_abb['Confirmed'][0:1])
-    df_abb =   np.floor(df_abb['Confirmed'][0:90])
+    df_substract = np.round(df_abb['Confirmed'][0:1])
+    df_abb =   np.round(df_abb['Confirmed'][0:90])
     df_abb = df_abb - df_substract.values[0]
+    
+    df_diff = df_abb.diff()
  
 
 
     f_p50 = h5py.File(
         path+"/cumulative_detected_infections/0/p50/Results.h5", 'r')
-    total_50 = np.floor(f_p50['0']['Total'][()][::24][0:90].flatten())
+    total_50 = np.round(f_p50['0']['Total'][()][::24][0:90].flatten())
     # we smooth this with a gaussian filter
 
     f_p95 = h5py.File(
         path+"/cumulative_detected_infections/0/p95/Results.h5", 'r')
-    total_95 = np.floor(f_p95['0']['Total'][()][::24][0:90].flatten())
+    total_95 = np.round(f_p95['0']['Total'][()][::24][0:90].flatten())
 
     f_p05 = h5py.File(
         path+"/cumulative_detected_infections/0/p05/Results.h5", 'r')
-    total_05 = np.floor(f_p05['0']['Total'][()][::24][0:90].flatten())
+    total_05 = np.round(f_p05['0']['Total'][()][::24][0:90].flatten())
 
     f_p25 = h5py.File(
         path+"/cumulative_detected_infections/0/p25/Results.h5", 'r')
-    total_25 = np.floor(f_p25['0']['Total'][()][::24][0:90].flatten())
+    total_25 = np.round(f_p25['0']['Total'][()][::24][0:90].flatten())
 
     f_p75 = h5py.File(
         path+"/cumulative_detected_infections/0/p75/Results.h5", 'r')
-    total_75 = np.floor(f_p75['0']['Total'][()][::24][0:90].flatten())
+    total_75 = np.round(f_p75['0']['Total'][()][::24][0:90].flatten())
+
+
+    # we do the same for the new infecitons (same as above but folder   new_detected_infections)
+    f_p50_diff = h5py.File(
+        path+"/new_detected_infections/0/p50/Results.h5", 'r')
+    total_50_diff = np.round(f_p50_diff['0']['Total'][()].flatten())
+
+    f_p95_diff = h5py.File(
+        path+"/new_detected_infections/0/p95/Results.h5", 'r')
+    total_95_diff = np.round(f_p95_diff['0']['Total'][()].flatten())
+    
+    f_p05_diff = h5py.File(
+        path+"/new_detected_infections/0/p05/Results.h5", 'r')
+    total_05_diff = np.round(f_p05_diff['0']['Total'][()].flatten())
+
+    f_p25_diff = h5py.File(
+        path+"/new_detected_infections/0/p25/Results.h5", 'r')
+    total_25_diff = np.round(f_p25_diff['0']['Total'][()].flatten())
+
+    f_p75_diff = h5py.File(
+        path+"/new_detected_infections/0/p75/Results.h5", 'r')
+    total_75_diff = np.round(f_p75_diff['0']['Total'][()].flatten())
+
+    # we need to sum every 24 entries to get the daily amount
+    total_50_diff = np.cumsum(total_50_diff, axis=0)
+    total_50_diff = np.diff(total_50_diff)[0:90]
+
+    total_95_diff = np.cumsum(total_95_diff, axis=0)
+    total_95_diff = np.diff(total_95_diff)[0:90]
+
+    total_05_diff = np.cumsum(total_05_diff, axis=0)
+    total_05_diff = np.diff(total_05_diff)[0:90]
+
+    total_75_diff = np.cumsum(total_75_diff, axis=0)
+    total_75_diff = np.diff(total_75_diff)[0:90]
+
+    total_25_diff = np.cumsum(total_25_diff, axis=0)
+    total_25_diff = np.diff(total_25_diff)[0:90]
+
+
+
 
 
     # we smooth this with a gaussian filter
@@ -739,24 +782,10 @@ def plot_cumulative_detected_infections(path):
     time = time[::24]
     time = time[0:90]
 
-    # we also plot the amount of new detected infections with diff
-    total_50_diff = np.diff(total_50)
-    total_95_diff = np.diff(total_95)
-    total_05_diff = np.diff(total_05)
-    total_25_diff = np.diff(total_25)
-    total_75_diff = np.diff(total_75)
-    df_abb_diff = np.diff(df_abb)
+    # we calculate the RMSE
+    rmse_detected = ((df_abb - total_50)**2).mean() *0.01*0.01*0.1
 
 
-
-    # again the rmse
-    rmse_detected = ((df_abb - total_50)**2).mean()*(0.01*0.01*0.05)
-    total_50_diff = gaussian_filter1d(total_50_diff.flatten(), sigma=2, mode='nearest')
-    total_05_diff = gaussian_filter1d(total_05_diff.flatten(), sigma=2, mode='nearest')
-    total_95_diff = gaussian_filter1d(total_95_diff.flatten(), sigma=2, mode='nearest')
-    total_75_diff = gaussian_filter1d(total_75_diff.flatten(), sigma=2, mode='nearest')
-    total_25_diff = gaussian_filter1d(total_25_diff.flatten(), sigma=2, mode='nearest')
-    total_50 = gaussian_filter1d(total_50.flatten(), sigma=2, mode='nearest')
 
     # we plot this
     # we plot the tests positive and the real cases
@@ -784,11 +813,11 @@ def plot_cumulative_detected_infections(path):
     # we plot the tests positive and the real cases
     ax.plot(time[0:89], total_50_diff, color='tab:blue')
     # we dont plot the real curve as a line but as x points and not every day but every 2nd day
-    ax.plot(time[0:89], df_abb_diff[0:89], 'x', color='tab:red')
-    ax.fill_between(time[0:89], total_95_diff[0:89], total_05_diff[0:89],
+    ax.plot(time[0:89], df_diff[0:89], 'x', color='tab:red')
+    ax.fill_between(time[0:89], total_95_diff, total_05_diff,
                             alpha=0.75, color='tab:blue')
-    ax.fill_between(time[0:89], total_75_diff[0:89], total_25_diff[0:89],
-                            alpha=0.5, color='tab:blue')
+    ax.fill_between(time[0:89], total_75_diff, total_25_diff,
+                            alpha=0.5, color='tab:blue')    
     ax.set_xlabel('time (days)')
     ax.set_ylabel('Number of new detected infections')
     ax.title.set_text('New detected infections')
@@ -857,13 +886,12 @@ if __name__ == "__main__":
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    plot_infection_states_results(path)
-    plot_infections_loc_types_avarage(path)
-    plot_icu(path)
-    plot_dead(path)
+    # plot_infection_states_results(path)
+    # plot_infections_loc_types_avarage(path)
+    # plot_icu(path)
+    # plot_dead(path)
     plot_cumulative_detected_infections(path)
-    plot_positive_and_done_test(path)
-
+    # plot_positive_and_done_test(path)
 
     # infer_positive_tests(path)
     # plot_estimated_reproduction_number(path)
