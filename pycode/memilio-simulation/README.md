@@ -12,17 +12,7 @@ To install the package, use the command (from the directory containing `setup.py
 pip install .
 ```
 
-This builds the C++ library and C++ Python extension module and copies everything required to your site-packages. 
-
-For developement of code use
-
-```bash
-pip install -e .[dev]
-```
-
-This command allows you to work on the code without having to reinstall the package after a change. Note that this only works for changes to Python code. If C++ code is modified, the install command has to be repeated every time. The command also installs all additional dependencies required for development and maintenance. 
-
-For development, it may be easier to use the alternative command `python setup.py <build|install|develop>` which provides better configuration and observation of the C++ build process.
+This builds the C++ library and C++ Python extension module and copies everything required to your site-packages.
 
 All the requirements of the [C++ library](../../cpp/README.md) must be met in order to build and use the python bindings. A virtual environment is recommended. 
 
@@ -38,11 +28,33 @@ python setup.py install -- -DCMAKE_BUILD_TYPE=Debug -DMEMILIO_USE_BUNDLED_PYBIND
 
 Alternatively, the `CMakeCache.txt` in the directory created by Scikit-Build can be edited to set the options.
 
+## Development
+
+For developement of the cpp bindings use
+
+```bash
+pip install -e .[dev]
+```
+
+This command allows you to work on the code without having to reinstall the package after a change. Note that this only works for changes to Python code. If C++ code is modified, the install command has to be repeated every time. The command also installs all additional dependencies required for development and maintenance. 
+
+For development, it may be easier to use the alternative command `python setup.py <build|install|develop>` which provides better configuration and observation of the C++ build process.
+
+The [bindings](memilio/simulation/bindings/) folder contains all the C++ code to expose the MEmilio library to Python and follows its structure, expect for the models that are bundled in a subfolder.
+
+In order to add a new model, the following steps need to be taken:
+1. Add new bindings including a model file in the [models](memilio/simulation/bindings/models/) folder that defines the new module
+2. Add the new module to the building process by modifying [CMakeLists.txt](CMakeLists.txt)
+3. Add a python module file similar to the other models, e.g. [osir.py](memilio/simulation/osir.py) (needed for the structure of the python package) and modify getter function in [__init__.py](memilio/simulation/__init__.py)
+4. Write new tests and examples
+
+The bindings can also be expanded with pure Python code by expanding the existing python files or adding new ones underneath the [simulation](memilio/simulation/) folder. 
+
 ## Stubs
 
-A stub file is a file containing a skeleton of the public interface of that Python module including classes, variables, functions and their types. They help by enabling autocompletes and type annotations. `pybind11-stubgen` is used to generate the stub files for the MEmilio Python Bindings and provide them as a separate stubs-only package.
+A stub file is a file containing a skeleton of the public interface of that Python module including classes, variables, functions and their types. They help by enabling autocompletes and type annotations. `mypy stubgen` is used to generate the stub files for the MEmilio Python Bindings and provide them as a separate stubs-only package.
 
-For installing stubs you first need to install our package `memilio.simulation` and the external dependency `pybind11-stubgen` for your python interpreter. Then run [generate_stubs.py](tools/generate_stubs.py) to generate the stubs-only package and install it as `memilio-stubs`, e.g. from the [current folder](.)
+For installing stubs you first need to install our package `memilio.simulation` (not in editable mode -e) and the external dependency `mypy` for your python interpreter. Then run [generate_stubs.py](tools/generate_stubs.py) to generate the stubs-only package and install it as `memilio-stubs`, e.g. from the [current folder](.)
 
 ```bash
 python ./tools/generate_stubs.py
@@ -59,7 +71,7 @@ The package provides the following modules:
 - `memilio.simulation.osecirvvs`: Extended ODE SECIHURD model to include vaccinations and multi-layered immunity, among other enhancements, with the ability to integrate new disease variants. Simulation includes demographic and geographic resolution, corresponds to the model in `cpp/models/ode_secirvvs`.
 `memilio.simulation.abm`: Agent based model and simulation, corresponds to the model in `cpp/models/abm` (python model is incomplete and work in progress).
 
-Detailed documentation under construction. See the scripts in the examples directory for more information.
+Detailed documentation under construction. See the scripts in the [examples](../examples/simulation/) directory for more information.
 
 ## Testing
 
