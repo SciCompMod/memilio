@@ -185,7 +185,7 @@ LocationType easter_party(Person::RandomNumberGenerator& /*rng*/, const Person& 
     auto current_loc = person.get_location().get_type();
     //leave
     if (person.get_goes_to_easter() && t.days() > 35.0 && t.days() < 37.0 && (t.hour_of_day() >= 12) &&
-        (t.hour_of_day() <= 22) && !person.is_in_quarantine(t, params)) {
+        (t.hour_of_day() <= 20) && !person.is_in_quarantine(t, params)) {
         return LocationType::Event;
     }
 
