@@ -276,7 +276,7 @@ def plot_dead(path):
 
     # we just need the columns cases and date
     # we need to offset the dates by 19 day
-    df_abb['Date'] = df_abb['Date'] + pd.DateOffset(days=16)
+    df_abb['Date'] = df_abb['Date'] + pd.DateOffset(days=18)
     # we need just the dates bewteen 2021-03-01 and 2021-06-01
     df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') &
                     (df_abb['Date'] <= '2021-06-01')]

@@ -170,7 +170,7 @@ IOResult<void> read_confirmed_cases_data(
                     num_icu[age] += mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
                 }
             }
-            if (date_df == offset_date_by_days(date, -16)) {
+            if (date_df == offset_date_by_days(date, -18)) {
                 num_death[age] += region_entry.num_deaths;
                 if (read_icu) {
                     num_icu[age] -= mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
