@@ -19,10 +19,11 @@
 */
 
 #include "lct_secir/model.h"
-#include "lct_secir/initializer_flows.h"
+//#include "lct_secir/initializer_flows.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/logging.h"
 #include "memilio/compartments/simulation.h"
@@ -45,33 +46,32 @@ int main()
 
     // Variable defines whether the class Initializer is used to define an initial vector from flows or whether a manually
     // defined initial vector is used to initialize the LCT model.
-    bool use_initializer_flows = true;
+    //bool use_initializer_flows = true;
 
     ScalarType tmax = 20;
 
     // Set Parameters.
-    model.parameters.get<mio::lsecir::TimeExposed>()            = 3.2;
-    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2.;
-    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 5.8;
-    model.parameters.get<mio::lsecir::TimeInfectedSevere>()     = 9.5;
-    // It is also possible to change values with the set function.
-    model.parameters.set<mio::lsecir::TimeInfectedCritical>(7.1);
+    model.parameters.get<mio::lsecir::TimeExposed>()[(mio::AgeGroup)0]            = 3.2;
+    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[(mio::AgeGroup)0] = 2.;
+    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0]   = 5.8;
+    model.parameters.get<mio::lsecir::TimeInfectedSevere>()[(mio::AgeGroup)0]     = 9.5;
+    model.parameters.get<mio::lsecir::TimeInfectedCritical>()[(mio::AgeGroup)0]   = 7.1;
 
-    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.05;
+    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = 0.05;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
     // From SimulationTime 5, the contact pattern is reduced to 30% of the initial value.
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(5.));
 
-    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 0.7;
-    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 0.25;
-    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.09;
-    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.2;
-    model.parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.25;
-    model.parameters.set<mio::lsecir::DeathsPerCritical>(0.3);
+    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0] = 0.7;
+    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0] = 0.25;
+    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0] = 0.09;
+    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]      = 0.2;
+    model.parameters.get<mio::lsecir::CriticalPerSevere>()[(mio::AgeGroup)0]              = 0.25;
+    model.parameters.get<mio::lsecir::DeathsPerCritical>()[(mio::AgeGroup)0]              = 0.3;
 
-    if (use_initializer_flows) {
+    /*if (use_initializer_flows) {
         // Example how to use the class Initializer for the definition of an initial vector for the LCT model.
 
         ScalarType dt                    = 0.001;
@@ -110,47 +110,45 @@ int main()
             return 1;
         }
     }
-    else {
-        // Simple example how to initialize model without flows.
-        // Define the initial values with the distribution of the population into subcompartments.
-        // This method of defining the initial values using a vector of vectors is not necessary, but should remind you
-        // how the entries of the initial value vector relate to the defined template parameters of the model or the number
-        // of subcompartments. It is also possible to define the initial values directly.
-        std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
-                                                                    {50},  {10, 10, 5, 3, 2}, {20},         {10}};
+    else {*/
+    // Simple example how to initialize model without flows.
+    // Define the initial values with the distribution of the population into subcompartments.
+    // This method of defining the initial values using a vector of vectors is not necessary, but should remind you
+    // how the entries of the initial value vector relate to the defined template parameters of the model or the number
+    // of subcompartments. It is also possible to define the initial values directly.
+    std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
+                                                                {50},  {10, 10, 5, 3, 2}, {20},         {10}};
 
-        // Assert that initial_populations has the right shape.
-        if (initial_populations.size() != (size_t)InfectionState::Count) {
-            mio::log_error(
-                "The number of vectors in initial_populations does not match the number of InfectionStates.");
-            return 1;
-        }
-        if ((initial_populations[(size_t)InfectionState::Susceptible].size() !=
-             LctState::get_num_subcompartments<InfectionState::Susceptible>()) ||
-            (initial_populations[(size_t)InfectionState::Exposed].size() != NumExposed) ||
-            (initial_populations[(size_t)InfectionState::InfectedNoSymptoms].size() != NumInfectedNoSymptoms) ||
-            (initial_populations[(size_t)InfectionState::InfectedSymptoms].size() != NumInfectedSymptoms) ||
-            (initial_populations[(size_t)InfectionState::InfectedSevere].size() != NumInfectedSevere) ||
-            (initial_populations[(size_t)InfectionState::InfectedCritical].size() != NumInfectedCritical) ||
-            (initial_populations[(size_t)InfectionState::Recovered].size() !=
-             LctState::get_num_subcompartments<InfectionState::Recovered>()) ||
-            (initial_populations[(size_t)InfectionState::Dead].size() !=
-             LctState::get_num_subcompartments<InfectionState::Dead>())) {
-            mio::log_error(
-                "The length of at least one vector in initial_populations does not match the related number of "
-                "subcompartments.");
-            return 1;
-        }
-
-        // Transfer the initial values in initial_populations to the model.
-        std::vector<ScalarType> flat_initial_populations;
-        for (auto&& vec : initial_populations) {
-            flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
-        }
-        for (size_t i = 0; i < LctState::Count; i++) {
-            model.populations[mio::Index<LctState>(i)] = flat_initial_populations[i];
-        }
+    // Assert that initial_populations has the right shape.
+    if (initial_populations.size() != (size_t)InfectionState::Count) {
+        mio::log_error("The number of vectors in initial_populations does not match the number of InfectionStates.");
+        return 1;
     }
+    if ((initial_populations[(size_t)InfectionState::Susceptible].size() !=
+         LctState::get_num_subcompartments<InfectionState::Susceptible>()) ||
+        (initial_populations[(size_t)InfectionState::Exposed].size() != NumExposed) ||
+        (initial_populations[(size_t)InfectionState::InfectedNoSymptoms].size() != NumInfectedNoSymptoms) ||
+        (initial_populations[(size_t)InfectionState::InfectedSymptoms].size() != NumInfectedSymptoms) ||
+        (initial_populations[(size_t)InfectionState::InfectedSevere].size() != NumInfectedSevere) ||
+        (initial_populations[(size_t)InfectionState::InfectedCritical].size() != NumInfectedCritical) ||
+        (initial_populations[(size_t)InfectionState::Recovered].size() !=
+         LctState::get_num_subcompartments<InfectionState::Recovered>()) ||
+        (initial_populations[(size_t)InfectionState::Dead].size() !=
+         LctState::get_num_subcompartments<InfectionState::Dead>())) {
+        mio::log_error("The length of at least one vector in initial_populations does not match the related number of "
+                       "subcompartments.");
+        return 1;
+    }
+
+    // Transfer the initial values in initial_populations to the model.
+    std::vector<ScalarType> flat_initial_populations;
+    for (auto&& vec : initial_populations) {
+        flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
+    }
+    for (size_t i = 0; i < LctState::Count; i++) {
+        model.populations[{(mio::AgeGroup)0, mio::Index<LctState>(i)}] = flat_initial_populations[i];
+    }
+    //}
 
     // Perform a simulation.
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, 0.5, model);
