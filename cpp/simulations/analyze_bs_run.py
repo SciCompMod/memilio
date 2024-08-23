@@ -417,7 +417,7 @@ def plot_icu(path):
 
 
     # we calculate the RMSE
-    rmse_ICU = ((ICU_Real - ICU_Simulation)**2).mean()
+    rmse_ICU = ((ICU_Real - ICU_Simulation_one_percentile)**2).mean()
 
     # plot the ICU beds and the ICU beds taken
     fig, ax = plt.subplots(1, 1, constrained_layout=True)
