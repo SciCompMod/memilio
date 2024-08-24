@@ -1719,7 +1719,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
     omp_set_max_active_levels(2);
-#pragma omp parallel for num_threads(1) firstprivate(rng)
+#pragma omp parallel for num_threads(64) firstprivate(rng)
     for (size_t i = 0; i < grid_search_rank.size(); i++) {
         auto params = grid_search_rank[i];
 
