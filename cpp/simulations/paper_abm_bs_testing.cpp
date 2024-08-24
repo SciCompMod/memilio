@@ -1453,13 +1453,7 @@ mio::TimeSeries<ScalarType> get_new_detected_infections(mio::TimeSeries<ScalarTy
     for (Eigen::Index i = 1; i < cumulative_infections.get_num_time_points() / 24; i++) {
         new_detected_infection[i] = cumulative_infections[i * 24] - cumulative_infections[(i - 1) * 24];
     }
-    // we print this for debugging
-    for (Eigen::Index i = 0; i < new_detected_infection.get_num_time_points(); i++) {
-        for (Eigen::Index j = 0; j < new_detected_infection.get_num_elements(); j++) {
-            std::cout << new_detected_infection[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
+
     return new_detected_infection;
 }
 
@@ -1735,7 +1729,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
         const double dark_figure                = params[1];
         const double contact_red_lockdown       = params[2];
         const double damping_community_lockdown = 0.5;
-        const double testing_probability_sympt  = 0.036;
+        const double testing_probability_sympt  = 0.033;
 
         const double lockdown_test_prob     = 1.1;
         const auto after_lockdown_test_prob = 0.9;
@@ -2420,7 +2414,7 @@ int main(int argc, char** argv)
         std::vector<std::pair<double, double>> grid_boundaries = {{1.8, 2.2}, {2.5, 4.0}, {0.3, 0.7}};
         // std::vector<double> grid_boundaries = {2.3, 2.6, 0.55};
         // std::vector<int> points_per_dim = {11, 11, 7, 11};
-        std::vector<int> points_per_dim = {2, 2, 5};
+        std::vector<int> points_per_dim = {12, 12, 12};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, 0, run_grid_search);
@@ -2432,7 +2426,7 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{1.8}, {2.96}, {0.54}, {0.036}, {20.0}, {10}, {0.5}};
+        std::vector<std::vector<double>> parameters = {{1.8}, {2.96}, {0.54}, {0.033}, {20.0}, {10}, {0.5}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
