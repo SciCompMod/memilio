@@ -1704,7 +1704,7 @@ void write_grid_search_prematurely_to_file(int rank, const fs::path& result_dir,
 }
 
 mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::path& result_dir, int num_runs,
-                                         std::vector<std::vector<double>> grid_points, mio::RandomNumberGenerator& rng)
+                                         std::vector<std::vector<double>> grid_points, mio::RandomNumberGenerator rng)
 {
     int num_procs, rank;
 #ifdef MEMILIO_ENABLE_MPI
@@ -1725,7 +1725,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
     omp_set_max_active_levels(2);
-#pragma omp parallel for num_threads(64)
+#pragma omp parallel for num_threads(4) firstprivate(rng)
     for (size_t i = 0; i < grid_search_rank.size(); i++) {
         auto params = grid_search_rank[i];
 
@@ -1773,6 +1773,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
             auto run_rng_counter =
                 mio::rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(j), mio::Counter<uint32_t>(0));
             rng.set_counter(run_rng_counter);
+
             world.get_rng() = rng;
 
             create_sampled_world(world, input_dir, t0, max_num_persons, start_date, perc_easter_event);
@@ -2419,7 +2420,7 @@ int main(int argc, char** argv)
         std::vector<std::pair<double, double>> grid_boundaries = {{1.8, 2.2}, {2.5, 4.0}, {0.3, 0.7}};
         // std::vector<double> grid_boundaries = {2.3, 2.6, 0.55};
         // std::vector<int> points_per_dim = {11, 11, 7, 11};
-        std::vector<int> points_per_dim = {11, 11, 11};
+        std::vector<int> points_per_dim = {2, 2, 5};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, 0, run_grid_search);
