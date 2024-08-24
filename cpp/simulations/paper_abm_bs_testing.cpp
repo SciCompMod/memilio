@@ -2381,7 +2381,7 @@ int main(int argc, char** argv)
         printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
     else if (argc == 3) {
-        num_runs        = 1;
+        num_runs        = 9;
         run_grid_search = true;
         printf("running with grid search\n");
         printf("Running with number of runs %d.\n", (int)num_runs);
