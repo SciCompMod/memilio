@@ -65,22 +65,13 @@ public:
     template <typename... History>
     void advance(TimePoint tmax, History&... history)
     {
+
         //log initial system state
         (history.log(*this), ...);
-        double sum = 0;
         while (m_t < tmax) {
             evolve_world(tmax);
-            double start, end;
-            #ifdef MEMILIO_ENABLE_OPENMP
-            start = omp_get_wtime();
-            #endif
             (history.log(*this), ...);
-            #ifdef MEMILIO_ENABLE_OPENMP
-            end = omp_get_wtime();
-            #endif
-            sum = sum + (end - start);
         }
-        std::cout << "Time spent on logging: " << sum << std::endl;
     }
 
     /**
