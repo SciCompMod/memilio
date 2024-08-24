@@ -2347,11 +2347,6 @@ int main(int argc, char** argv)
     mio::set_log_level(mio::LogLevel::err);
     auto start = std::chrono::system_clock::now();
 
-    // we need one seed
-    std::initializer_list<uint32_t> seeds = {14159265u, 35897932u};
-    auto rng                              = mio::RandomNumberGenerator();
-    rng.seed(seeds);
-
     int num_procs, rank;
 #ifdef MEMILIO_ENABLE_MPI
     mio::mpi::init();
@@ -2361,6 +2356,11 @@ int main(int argc, char** argv)
     num_procs = 1;
     rank      = 0;
 #endif
+    // we need one seed
+    std::initializer_list<uint32_t> seeds = {14159265u, 35897932u};
+    auto rng                              = mio::RandomNumberGenerator();
+    rng.seed(seeds);
+    rng.synchronize();
 
     std::string input_dir = "/p/project1/loki/memilio/memilio/data";
     // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
@@ -2414,7 +2414,7 @@ int main(int argc, char** argv)
         std::vector<std::pair<double, double>> grid_boundaries = {{1.8, 2.2}, {2.5, 4.0}, {0.3, 0.7}};
         // std::vector<double> grid_boundaries = {2.3, 2.6, 0.55};
         // std::vector<int> points_per_dim = {11, 11, 7, 11};
-        std::vector<int> points_per_dim = {12, 12, 12};
+        std::vector<int> points_per_dim = {5, 5, 5};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, 0, run_grid_search);
@@ -2426,7 +2426,7 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{1.8}, {2.96}, {0.54}, {0.033}, {20.0}, {10}, {0.5}};
+        std::vector<std::vector<double>> parameters = {{1.8}, {2.5}, {0.3}, {0.033}, {20.0}, {10}, {0.5}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
