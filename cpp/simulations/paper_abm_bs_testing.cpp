@@ -74,44 +74,23 @@ const std::map<mio::osecir::InfectionState, mio::abm::InfectionState> infection_
     {mio::osecir::InfectionState::Recovered, mio::abm::InfectionState::Recovered},
     {mio::osecir::InfectionState::Dead, mio::abm::InfectionState::Dead}};
 
-mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_infection_distribution{
-    {mio::AgeGroup(num_age_groupss), mio::osecir::InfectionState::Count}, 0.5};
-
 std::map<mio::Date, std::vector<std::pair<uint32_t, uint32_t>>> vacc_map;
 
 /**
  * Determine initial distribution of infection states.
 */
-void determine_initial_infection_states_world(const fs::path& input_dir, const mio::Date date, double sclaling_infected)
+mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState>
+determine_initial_infection_states_world(const fs::path& input_dir, const mio::Date date, double sclaling_infected)
 {
     // estimate intial population by ODE compartiments
-    auto initial_graph                     = get_graph(date, 1, input_dir, sclaling_infected);
-    const size_t braunschweig_id           = 16; // Braunschweig has ID 16
-    auto braunschweig_node                 = initial_graph.value()[braunschweig_id];
+    auto initial_graph           = get_graph(date, 1, input_dir, sclaling_infected);
+    const size_t braunschweig_id = 16; // Braunschweig has ID 16
+    auto braunschweig_node       = initial_graph.value()[braunschweig_id];
+    mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_infection_distribution{
+        {mio::AgeGroup(num_age_groupss), mio::osecir::InfectionState::Count}, 0.5};
+
     initial_infection_distribution.array() = braunschweig_node.populations.array().cast<double>();
-}
-
-/**
- * Assign an infection state to each person according to real world data read in through the ODE secir model.
- * Infections are set with probabilities computed by the values in the rows in initial_infection_distribution.
- */
-void assign_infection_state_prob(mio::abm::World& world, mio::abm::TimePoint t)
-{
-    // convert initial population to ABM initial infections
-    for (auto& person : world.get_persons()) {
-        if (person.get_should_be_logged()) {
-            auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
-
-            auto infection_state = mio::osecir::InfectionState(mio::DiscreteDistribution<size_t>::get_instance()(
-                rng, initial_infection_distribution.slice(person.get_age()).as_array().array()));
-
-            if (infection_state != mio::osecir::InfectionState::Susceptible) {
-                person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Alpha, person.get_age(),
-                                                             world.parameters, t,
-                                                             infection_state_map.at(infection_state)));
-            }
-        }
-    }
+    return initial_infection_distribution;
 }
 
 /**
@@ -121,7 +100,9 @@ void assign_infection_state_prob(mio::abm::World& world, mio::abm::TimePoint t)
  * The number of agents in the model should fit to the sum of the rows in initial_infection_distribution,
  * otherwise many agents will be susceptible.
  */
-void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t)
+void assign_infection_state(
+    mio::abm::World& world, mio::abm::TimePoint t,
+    mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_infection_distribution)
 {
     // save all persons with age groups
     std::vector<std::vector<uint32_t>> persons_by_age(num_age_groupss);
@@ -1205,8 +1186,10 @@ void create_easter_social_event(mio::abm::World& world, double perc_easter_event
  * Create a sampled simulation with start time t0.
  * @param t0 The start time of the Simulation.
  */
-void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, const mio::abm::TimePoint& t0,
-                          int max_num_persons, mio::Date start_date_sim, double perc_easter_event)
+void create_sampled_world(
+    mio::abm::World& world, const fs::path& input_dir, const mio::abm::TimePoint& t0, int max_num_persons,
+    mio::Date start_date_sim, double perc_easter_event,
+    mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_infection_distribution)
 {
     mio::unused(start_date_sim);
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
@@ -1225,7 +1208,7 @@ void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, con
     restart_timer(timer, "time taken for setting up easter social ebent");
 
     // Assign an infection state to each person.
-    assign_infection_state(world, t0);
+    assign_infection_state(world, t0, initial_infection_distribution);
     restart_timer(timer, "time taken for assigning infection state");
 
     // Assign vaccination status to each person.
@@ -1717,7 +1700,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
     omp_set_max_active_levels(2);
-#pragma omp parallel for num_threads(3) firstprivate(rng, initial_infection_distribution)
+#pragma omp parallel for num_threads(3) firstprivate(rng)
     for (size_t i = 0; i < grid_search_rank.size(); i++) {
         auto params = grid_search_rank[i];
 
@@ -1759,7 +1742,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
 
         // Determine inital infection state distribution
         restart_timer(timer, "time for initial setup");
-        determine_initial_infection_states_world(input_dir, start_date, dark_figure);
+        auto initial_infection = determine_initial_infection_states_world(input_dir, start_date, dark_figure);
         restart_timer(timer, "time for determine_initial_infection_states_world");
         prepare_vaccination_state(mio::offset_date_by_days(start_date, (int)tmax.days()),
                                   (input_dir / "pydata/Germany/vacc_county_ageinf_ma7.json").string());
@@ -1773,7 +1756,8 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
             rng.set_counter(run_rng_counter);
             world.get_rng() = rng;
 
-            create_sampled_world(world, input_dir, t0, max_num_persons, start_date, perc_easter_event);
+            create_sampled_world(world, input_dir, t0, max_num_persons, start_date, perc_easter_event,
+                                 initial_infection);
 
             restart_timer(timer, "time taken for create sampled world");
             auto sim = mio::abm::Simulation(t0, std::move(world));
@@ -2025,7 +2009,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
 
         // Determine inital infection state distribution
         restart_timer(timer, "time for initial setup");
-        determine_initial_infection_states_world(input_dir, start_date, dark_figure);
+        auto initial_infection = determine_initial_infection_states_world(input_dir, start_date, dark_figure);
         restart_timer(timer, "time for determine_initial_infection_states_world");
         prepare_vaccination_state(mio::offset_date_by_days(start_date, (int)tmax.days()),
                                   (input_dir / "pydata/Germany/vacc_county_ageinf_ma7.json").string());
@@ -2039,7 +2023,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             rng.set_counter(run_rng_counter);
             world.get_rng() = rng;
 
-            create_sampled_world(world, input_dir, t0, max_num_persons, start_date, perc_easter_event);
+            create_sampled_world(world, input_dir, t0, max_num_persons, start_date, perc_easter_event,
+                                 initial_infection);
 
             restart_timer(timer, "time taken for create sampled world");
             auto sim = mio::abm::Simulation(t0, std::move(world));
@@ -2367,8 +2352,8 @@ int main(int argc, char** argv)
     rng.seed(seeds);
     rng.synchronize();
 
-    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
 
