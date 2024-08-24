@@ -1717,11 +1717,17 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
     omp_set_max_active_levels(2);
-#pragma omp parallel for num_threads(64) firstprivate(rng)
+#pragma omp parallel for num_threads(3) firstprivate(rng, initial_infection_distribution)
     for (size_t i = 0; i < grid_search_rank.size(); i++) {
         auto params = grid_search_rank[i];
 
         printf("I am Thread %d\n", omp_get_thread_num());
+        // print my parameters
+        std::cout << "Rank: " << rank << " Thread: " << omp_get_thread_num() << " Parameters: ";
+        for (size_t j = 0; j < params.size(); j++) {
+            std::cout << params.at(j) << " ";
+        }
+        std::cout << std::endl;
 
         const double viral_shedding_rate        = params[0];
         const double dark_figure                = params[1];
@@ -1886,6 +1892,8 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
             auto rmse = calculate_rmse_from_results(input_dir, temp_sim_infection_state_per_age_group[0],
                                                     temp_sim_cumulative_detected_infections_per_age_group[0],
                                                     max_num_days, start_date);
+            //write rmse as debug output
+            std::cout << "RMSE: " << rmse << std::endl;
             rmse_results_per_grid_point.at(i) += rmse;
         }
         rmse_results_per_grid_point.at(i) /= num_runs;
@@ -2424,8 +2432,7 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{1.9375}, {2.0, 3.0, 4.0}, {0.5125}, {0.033}, {20.0}, {10},
-                                                       {0.5}};
+        std::vector<std::vector<double>> parameters = {{1.9375}, {2.0, 3.6}, {0.5125}, {0.033}, {20.0}, {10}, {0.5}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
