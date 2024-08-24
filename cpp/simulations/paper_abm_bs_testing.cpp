@@ -1705,6 +1705,12 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     // Distribute the grid search over the MPI ranks
     auto grid_search_rank = distribute_grid_search(rank, num_procs, grid_points);
     // short debug print to see if everything worked. Printing rank and amount of grid points as well as first point
+    std::cout << "Rank: " << rank << " has " << grid_search_rank.size() << " grid points" << std::endl;
+    std::cout << "First grid point: ";
+    for (size_t j = 0; j < grid_search_rank[0].size(); j++) {
+        std::cout << grid_search_rank[0].at(j) << " ";
+    }
+    std::cout << std::endl;
 
     // Run the grid search
     std::vector<double> rmse_results_per_grid_point;
@@ -2353,8 +2359,8 @@ int main(int argc, char** argv)
     rng.seed(seeds);
     rng.synchronize();
 
-    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
 
@@ -2382,10 +2388,11 @@ int main(int argc, char** argv)
         printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
     else if (argc == 3) {
-        num_runs        = 9;
+        num_runs        = 1;
         run_grid_search = true;
         printf("running with grid search\n");
         printf("Running with number of runs %d.\n", (int)num_runs);
+        printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
     else {
         num_runs = 1;
@@ -2405,7 +2412,7 @@ int main(int argc, char** argv)
         std::vector<std::pair<double, double>> grid_boundaries = {{1.5, 2.2}, {2.0, 3.6}, {0.4, 0.7}};
         // std::vector<double> grid_boundaries = {2.3, 2.6, 0.55};
         // std::vector<int> points_per_dim = {11, 11, 7, 11};
-        std::vector<int> points_per_dim = {2, 9, 2};
+        std::vector<int> points_per_dim = {2, 4, 2};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, 0, run_grid_search);
@@ -2417,7 +2424,8 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{1.9375}, {2.0}, {0.5125}, {0.033}, {20.0}, {10}, {0.5}};
+        std::vector<std::vector<double>> parameters = {{1.9375}, {2.0, 3.0, 4.0}, {0.5125}, {0.033}, {20.0}, {10},
+                                                       {0.5}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
