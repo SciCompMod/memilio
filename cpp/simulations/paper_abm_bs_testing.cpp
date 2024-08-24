@@ -1725,7 +1725,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
     omp_set_max_active_levels(2);
-#pragma omp parallel for num_threads(4) firstprivate(rng)
+#pragma omp parallel for num_threads(64) firstprivate(rng)
     for (size_t i = 0; i < grid_search_rank.size(); i++) {
         auto params = grid_search_rank[i];
 
@@ -2432,7 +2432,7 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{2.05}, {2.90}, {0.45}, {0.036}, {20.0}, {10}, {0.5}};
+        std::vector<std::vector<double>> parameters = {{1.8}, {2.96}, {0.54}, {0.036}, {20.0}, {10}, {0.5}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
