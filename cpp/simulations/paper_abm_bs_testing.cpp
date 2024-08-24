@@ -1129,14 +1129,6 @@ std::vector<std::vector<double>> distribute_grid_search(int rank, int num_procs,
     for (int i = 0; i < points_per_rank; i++) {
         grid_search_ranks.push_back(grid_search[i + rank * points_per_rank]);
     }
-    // we print the grid search for the rank
-    std::cout << "Rank " << rank << " has the following grid search: " << std::endl;
-    for (size_t i = 0; i < grid_search_ranks.size(); i++) {
-        for (size_t j = 0; j < grid_search_ranks[i].size(); j++) {
-            std::cout << grid_search_ranks[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
 
     return grid_search_ranks;
 }
@@ -1767,7 +1759,6 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
             auto run_rng_counter =
                 mio::rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(j), mio::Counter<uint32_t>(0));
             rng.set_counter(run_rng_counter);
-
             world.get_rng() = rng;
 
             create_sampled_world(world, input_dir, t0, max_num_persons, start_date, perc_easter_event);
@@ -2411,10 +2402,10 @@ int main(int argc, char** argv)
         // 3: testing prob symptomatic
         // 4: perc have to test if npi active
 
-        std::vector<std::pair<double, double>> grid_boundaries = {{1.8, 2.2}, {2.5, 4.0}, {0.3, 0.7}};
+        std::vector<std::pair<double, double>> grid_boundaries = {{1.5, 2.2}, {2.0, 3.6}, {0.4, 0.7}};
         // std::vector<double> grid_boundaries = {2.3, 2.6, 0.55};
         // std::vector<int> points_per_dim = {11, 11, 7, 11};
-        std::vector<int> points_per_dim = {2, 2, 2};
+        std::vector<int> points_per_dim = {9, 9, 9};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, 0, run_grid_search);
