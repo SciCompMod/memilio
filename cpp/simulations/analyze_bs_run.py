@@ -886,12 +886,12 @@ if __name__ == "__main__":
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    # plot_infection_states_results(path)
-    # plot_infections_loc_types_avarage(path)
-    # plot_icu(path)
-    # plot_dead(path)
+    plot_infection_states_results(path)
+    plot_infections_loc_types_avarage(path)
+    plot_icu(path)
+    plot_dead(path)
     plot_cumulative_detected_infections(path)
-    # plot_positive_and_done_test(path)
+    plot_positive_and_done_test(path)
 
     # infer_positive_tests(path)
     # plot_estimated_reproduction_number(path)
