@@ -2382,7 +2382,7 @@ int main(int argc, char** argv)
         printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
     else if (argc == 3) {
-        num_runs        = 1;
+        num_runs        = 9;
         run_grid_search = true;
         printf("running with grid search\n");
         printf("Running with number of runs %d.\n", (int)num_runs);
@@ -2405,7 +2405,7 @@ int main(int argc, char** argv)
         std::vector<std::pair<double, double>> grid_boundaries = {{1.5, 2.2}, {2.0, 3.6}, {0.4, 0.7}};
         // std::vector<double> grid_boundaries = {2.3, 2.6, 0.55};
         // std::vector<int> points_per_dim = {11, 11, 7, 11};
-        std::vector<int> points_per_dim = {6, 6, 6};
+        std::vector<int> points_per_dim = {2, 9, 2};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, 0, run_grid_search);
@@ -2417,7 +2417,7 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{1.8}, {2.5}, {0.5}, {0.033}, {20.0}, {10}, {0.5}};
+        std::vector<std::vector<double>> parameters = {{1.9375}, {2.0}, {0.5125}, {0.033}, {20.0}, {10}, {0.5}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
