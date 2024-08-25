@@ -2410,7 +2410,7 @@ int main(int argc, char** argv)
             {1.79, 1.83}, {3.28, 3.29}, {0.52, 0.56}, {0.03, 0.04}, {1.0, 15.0}};
         // std::vector<double> grid_boundaries = {1.78, 3.28, 0.55, 0.034, };
         // std::vector<int> points_per_dim = {11, 11, 7, 11};
-        std::vector<int> points_per_dim = {3, 2, 3, 20, 20};
+        std::vector<int> points_per_dim = {3, 2, 3, 17, 17};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, 0, run_grid_search);
