@@ -999,7 +999,7 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
     rmse_icu  = rmse_icu / real_data_icu_vec.size();
     rmse_conf = rmse_conf / real_data_conf_vec.size();
 
-    return (1.00 * rmse_dead) + (0.20 * rmse_icu) + (0.01 * 0.01 * 0.1 * rmse_conf);
+    return (1.00 * rmse_dead) + (0.1 * rmse_icu) + (0.01 * 0.01 * 0.1 * rmse_conf);
 }
 
 /**
