@@ -999,7 +999,7 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
     rmse_icu  = rmse_icu / real_data_icu_vec.size();
     rmse_conf = rmse_conf / real_data_conf_vec.size();
 
-    return (1.00 * rmse_dead) + (0.5 * rmse_icu) + (0.01 * 0.1 * rmse_conf);
+    return (1.00 * rmse_dead) + (0.20 * rmse_icu) + (0.01 * 0.01 * 0.1 * rmse_conf);
 }
 
 /**
@@ -1716,10 +1716,10 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
         const double dark_figure                = params[1];
         const double contact_red_lockdown       = params[2];
         const double damping_community_lockdown = 0.5;
-        // const double testing_probability_sympt  = 0.033;
-        // const double ratio_asympt_to_sympt      = 20.0;
-        const double testing_probability_sympt = params[3];
-        const double ratio_asympt_to_sympt     = params[4];
+        const double testing_probability_sympt  = 0.037;
+        const double ratio_asympt_to_sympt      = 20.0;
+        // const double testing_probability_sympt = params[3];
+        // const double ratio_asympt_to_sympt     = params[4];
 
         const double lockdown_test_prob     = 1.1;
         const auto after_lockdown_test_prob = 0.9;
@@ -2384,7 +2384,7 @@ int main(int argc, char** argv)
         printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
     else if (argc == 3) {
-        num_runs        = 9;
+        num_runs        = 11;
         run_grid_search = true;
         printf("running with grid search\n");
         printf("Running with number of runs %d.\n", (int)num_runs);
@@ -2405,12 +2405,12 @@ int main(int argc, char** argv)
         // 3: testing prob symptomatic
         // 4: perc have to test if npi active
 
-        // std::vector<std::pair<double, double>> grid_boundaries = {{1.5, 2.2}, {2.0, 3.6}, {0.4, 0.7}};
-        std::vector<std::pair<double, double>> grid_boundaries = {
-            {1.79, 1.83}, {3.28, 3.29}, {0.52, 0.56}, {0.03, 0.04}, {1.0, 15.0}};
+        std::vector<std::pair<double, double>> grid_boundaries = {{1.5, 2.2}, {2.0, 3.6}, {0.4, 0.7}};
+        // std::vector<std::pair<double, double>> grid_boundaries = {
+        // {1.79, 1.83}, {3.28, 3.29}, {0.52, 0.56}, {0.03, 0.04}, {1.0, 15.0}};
         // std::vector<double> grid_boundaries = {1.78, 3.28, 0.55, 0.034, };
         // std::vector<int> points_per_dim = {11, 11, 7, 11};
-        std::vector<int> points_per_dim = {3, 2, 3, 17, 17};
+        std::vector<int> points_per_dim = {13, 13, 13};
         auto grid                       = grid_points(grid_boundaries, points_per_dim);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, 0, run_grid_search);
