@@ -272,7 +272,7 @@ def plot_dead(path):
 
     # we need the real data json file cases_all_state_repdate_ma7
     df_abb = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county_age_ma7.json")
+        path+"/../../../pydata/Germany/cases_all_county_age_ma7.json")
 
     # we just need the columns cases and date
     # we need to offset the dates by 19 day
@@ -338,7 +338,7 @@ def plot_dead(path):
    
 def plot_icu(path):
     
-    df_abb = pd.read_json(path+"/../pydata/Germany/county_divi.json")
+    df_abb = pd.read_json(path+"/../../../pydata/Germany/county_divi.json")
 
     perc_of_critical_in_icu_age = [0.55,0.55,0.55,0.56,0.54,0.46]
     perc_of_critical_in_icu=0.55
@@ -417,7 +417,7 @@ def plot_icu(path):
 
 
     # we calculate the RMSE
-    rmse_ICU = ((ICU_Real - ICU_Simulation_one_percentile)**2).mean()
+    rmse_ICU = ((ICU_Real - ICU_Simulation_one_percentile)**2).mean()*0.1
 
     # plot the ICU beds and the ICU beds taken
     fig, ax = plt.subplots(1, 1, constrained_layout=True)
@@ -594,7 +594,7 @@ def infer_positive_tests(path):
 
     # we need the real data from the json file cases_all_county_age_repdate_ma7.json
     df_abb = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county_repdate_ma7.json")
+        path+"/../../../pydata/Germany/cases_all_county_repdate_ma7.json")
     # we just need the columns cases and date
     df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
     # we need just the dates bewteen 2021-03-01 and 2021-06-01
@@ -701,7 +701,7 @@ def plot_estimated_reproduction_number(path):
 def plot_cumulative_detected_infections(path):
 
     df_abb = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county_repdate_ma7.json")
+        path+"/../../../pydata/Germany/cases_all_county_repdate_ma7.json")
     # we need the 
     df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
     df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') & (df_abb['Date'] <= '2021-06-01')]
@@ -783,7 +783,7 @@ def plot_cumulative_detected_infections(path):
     time = time[0:90]
 
     # we calculate the RMSE
-    rmse_detected = ((df_abb - total_50)**2).mean() *0.01*0.01*0.1
+    rmse_detected = ((df_abb - total_50)**2).mean() *0.01
 
 
 
@@ -877,8 +877,8 @@ def plot_positive_and_done_test(path):
 
 if __name__ == "__main__":
     # path = "/Users/david/Documents/HZI/memilio/data/results_last_run"
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/128_runs/results_2024-08-21224038"
+    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/123/results_2024-08-25204206"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_last_run"
 
     if (len(sys.argv) > 1):

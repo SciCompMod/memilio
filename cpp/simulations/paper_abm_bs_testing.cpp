@@ -2405,13 +2405,17 @@ int main(int argc, char** argv)
         // 3: testing prob symptomatic
         // 4: perc have to test if npi active
 
-        std::vector<std::pair<double, double>> grid_boundaries = {{1.5, 2.2}, {2.0, 3.6}, {0.4, 0.7}};
+        // std::vector<std::pair<double, double>> grid_boundaries = {{1.5, 2.2}, {2.0, 3.6}, {0.4, 0.7}};
+        // std::vector<int> points_per_dim                        = {13, 13, 13};
+
+        std::vector<double> grid_boundaries = {2.025, 2.66, 0.4};
+        std::vector<int> points_per_dim     = {9, 9, 9};
+
         // std::vector<std::pair<double, double>> grid_boundaries = {
         // {1.79, 1.83}, {3.28, 3.29}, {0.52, 0.56}, {0.03, 0.04}, {1.0, 15.0}};
-        // std::vector<double> grid_boundaries = {1.78, 3.28, 0.55, 0.034, };
-        // std::vector<int> points_per_dim = {11, 11, 7, 11};
-        std::vector<int> points_per_dim = {13, 13, 13};
-        auto grid                       = grid_points(grid_boundaries, points_per_dim);
+        // std::vector<int> points_per_dim = {4, 4, 4, 9, 9};
+
+        auto grid = grid_points(grid_boundaries, points_per_dim);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, 0, run_grid_search);
             if (!created) {
@@ -2422,7 +2426,7 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{1.79}, {3.28}, {0.52}, {0.036}, {20.0}, {10.0}, {0.5}};
+        std::vector<std::vector<double>> parameters = {{2.025}, {2.66}, {0.4}, {0.031}, {7.125}, {10.0}, {0.5}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
