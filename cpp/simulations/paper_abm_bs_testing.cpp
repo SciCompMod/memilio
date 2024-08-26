@@ -1036,7 +1036,7 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
     std::cout << "RMSE icu: " << rmse_icu << std::endl;
     std::cout << "RMSE conf: " << rmse_conf << std::endl;
 
-    return (1.00 * rmse_dead) + (0.1 * rmse_icu) + (0.01 * 0.01 * 0.2 * rmse_conf);
+    return (1.00 * rmse_dead) + (0.1 * rmse_icu) + (0.01 * 0.01 * rmse_conf);
 }
 
 /**
@@ -2446,8 +2446,12 @@ int main(int argc, char** argv)
             {1.6, 2.2}, {2.5, 4.5}, {0.2, 0.8}, {0.025, 0.040}, {3, 11}};
         std::vector<int> points_per_dim = {6, 6, 6, 6, 6};
 
-        // std::vector<double> grid_boundaries = {2.025, 2.66, 0.4};
-        // std::vector<int> points_per_dim     = {9, 9, 9};
+        // std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.0333333, 5.0};
+        // std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.03, 5};
+        // std::vector<double> grid_boundaries = {1.8, 4, 0.433333, 0.0366667, 9};
+        // std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.0366667, 6.33333};
+        // std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.0333333, 6.33333};
+        // std::vector<int> points_per_dim     = {5, 9, 9};
 
         // std::vector<std::pair<double, double>> grid_boundaries = {
         // {1.79, 1.83}, {3.28, 3.29}, {0.52, 0.56}, {0.03, 0.04}, {1.0, 15.0}};
