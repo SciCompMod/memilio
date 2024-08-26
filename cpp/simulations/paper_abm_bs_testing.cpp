@@ -2458,7 +2458,7 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{2.05}, {2.9}, {0.45}, {0.033}, {7.0}, {10.0}, {0.5}};
+        std::vector<std::vector<double>> parameters = {{1.95}, {2.9}, {0.45}, {0.033}, {7.0}, {10.0}, {0.5}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
