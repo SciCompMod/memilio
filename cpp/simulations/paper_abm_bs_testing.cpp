@@ -952,10 +952,10 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
 {
     // We need to read in the results from the results directory
     auto real_data_dead_path =
-        mio::path_join((data_dir / "pydata" / "Germany").string(), "cases_all_county_age_ma7.json");
-    auto real_data_icu_path = mio::path_join((data_dir / "pydata" / "Germany").string(), "county_divi_ma7.json");
+        mio::path_join((data_dir / "pydata" / "Germany").string(), "cases_all_county_age_ma1.json");
+    auto real_data_icu_path = mio::path_join((data_dir / "pydata" / "Germany").string(), "county_divi.json");
     auto real_detected_path =
-        mio::path_join((data_dir / "pydata" / "Germany").string(), "cases_all_county_age_repdate_ma7.json");
+        mio::path_join((data_dir / "pydata" / "Germany").string(), "cases_all_county_age_repdate.json");
     auto divi_data     = mio::read_divi_data(real_data_icu_path);
     auto death_data    = mio::read_confirmed_cases_data(real_data_dead_path);
     auto detected_data = mio::read_confirmed_cases_data(real_detected_path);
@@ -986,6 +986,37 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
         sim_data_vec_dead.push_back(number_of_persons_dead);
     }
 
+    // for debugging we print the simulated and real data
+    // std::cout << "Real data dead: ";
+    // for (auto& entry : real_data_dead_vec) {
+    //     std::cout << entry << " ";
+    // }
+    // std::cout << std::endl;
+    // std::cout << "Simulated data dead: ";
+    // for (auto& entry : sim_data_vec_dead) {
+    //     std::cout << entry << " ";
+    // }
+    // std::cout << std::endl;
+    // std::cout << "Real data icu: ";
+    // for (auto& entry : real_data_icu_vec) {
+    //     std::cout << entry << " ";
+    // }
+    // std::cout << std::endl;
+    // std::cout << "Simulated data icu: ";
+    // for (auto& entry : sim_data_vec_icu) {
+    //     std::cout << entry << " ";
+    // }
+    // std::cout << std::endl;
+    // std::cout << "Real data conf: ";
+    // for (auto& entry : real_data_conf_vec) {
+    //     std::cout << entry << " ";
+    // }
+    // std::cout << std::endl;
+    // std::cout << "Simulated data conf: ";
+    // for (auto& entry : sim_data_vec_conf) {
+    //     std::cout << entry << " ";
+    // }
+    // std::cout << std::endl;
     // now we calculate the RMSE
     double rmse_dead = 0;
     double rmse_icu  = 0;
@@ -2427,7 +2458,7 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{1.91}, {3.02}, {0.425}, {0.033}, {7.0}, {10.0}, {0.5}};
+        std::vector<std::vector<double>> parameters = {{2.05}, {2.9}, {0.45}, {0.033}, {7.0}, {10.0}, {0.5}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
