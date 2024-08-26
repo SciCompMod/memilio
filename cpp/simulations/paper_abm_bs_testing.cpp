@@ -1737,7 +1737,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
     omp_set_max_active_levels(2);
-#pragma omp parallel for num_threads(64) firstprivate(rng)
+#pragma omp parallel for num_threads(72) firstprivate(rng)
     for (size_t i = 0; i < grid_search_rank.size(); i++) {
         auto params = grid_search_rank[i];
 
@@ -2443,8 +2443,8 @@ int main(int argc, char** argv)
         // 4: perc have to test if npi active
 
         std::vector<std::pair<double, double>> grid_boundaries = {
-            {1.6, 2.2}, {2.0, 4.0}, {0.3, 0.7}, {0.030, 0.040}, {5, 9}};
-        std::vector<int> points_per_dim = {4, 4, 4, 4, 4};
+            {1.6, 2.2}, {2.5, 4.5}, {0.2, 0.8}, {0.025, 0.040}, {3, 11}};
+        std::vector<int> points_per_dim = {6, 6, 6, 6, 6};
 
         // std::vector<double> grid_boundaries = {2.025, 2.66, 0.4};
         // std::vector<int> points_per_dim     = {9, 9, 9};
@@ -2464,7 +2464,7 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{1.95}, {2.9}, {0.45}, {0.033}, {7.0}, {10.0}, {0.5}};
+        std::vector<std::vector<double>> parameters = {{2.0}, {3.33}, {0.3}, {0.033}, {5.0}, {10.0}, {0.5}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
