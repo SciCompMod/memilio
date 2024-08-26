@@ -2436,7 +2436,7 @@ int main(int argc, char** argv)
         // 3: testing prob symptomatic
         // 4: perc have to test if npi active
 
-        // std::vector<std::pair<double, double>> grid_boundaries = {
+        std::vector<std::pair<double, double>> grid_boundaries = {
             {1.6, 2.2}, {2.0, 4.0}, {0.3, 0.7}, {0.030, 0.040}, {5, 9}};
         std::vector<int> points_per_dim = {4, 4, 4, 4, 4};
 
