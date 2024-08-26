@@ -2386,8 +2386,8 @@ int main(int argc, char** argv)
     rng.seed(seeds);
     rng.synchronize();
 
-    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
 
@@ -2437,11 +2437,11 @@ int main(int argc, char** argv)
         // 4: perc have to test if npi active
 
         // std::vector<std::pair<double, double>> grid_boundaries = {
-        //     {1.6, 2.2}, {2.0, 4.0}, {0.3, 0.7}, {0.030, 0.040}, {5, 9}};
-        // std::vector<int> points_per_dim = {4, 4, 4, 4, 4};
+            {1.6, 2.2}, {2.0, 4.0}, {0.3, 0.7}, {0.030, 0.040}, {5, 9}};
+        std::vector<int> points_per_dim = {4, 4, 4, 4, 4};
 
-        std::vector<double> grid_boundaries = {2.025, 2.66, 0.4};
-        std::vector<int> points_per_dim     = {9, 9, 9};
+        // std::vector<double> grid_boundaries = {2.025, 2.66, 0.4};
+        // std::vector<int> points_per_dim     = {9, 9, 9};
 
         // std::vector<std::pair<double, double>> grid_boundaries = {
         // {1.79, 1.83}, {3.28, 3.29}, {0.52, 0.56}, {0.03, 0.04}, {1.0, 15.0}};
