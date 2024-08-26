@@ -562,11 +562,15 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 
     auto min_values = std::vector<ScalarType>{0.0};
 
-    auto max_values = std::vector<ScalarType>{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    // auto max_values = std::vector<ScalarType>{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    auto max_values = std::vector<ScalarType>{0.02, 0.04, 0.06, 0.08, 0.12, 0.14, 0.16, 0.18, 0.22, 0.24,
+                                              0.26, 0.28, 0.32, 0.34, 0.36, 0.38, 0.42, 0.44, 0.46, 0.48};
 
-    auto icu_capacities = std::vector<ScalarType>{6.0, 9.0, 12.0, 15.0};
+    auto icu_capacities = std::vector<ScalarType>{9.0};
 
-    auto fact_regional = std::vector<ScalarType>{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7};
+    // auto fact_regional = std::vector<ScalarType>{0.6, 0.7};
+    auto fact_regional = std::vector<ScalarType>{0.02, 0.04, 0.06, 0.08, 0.12, 0.14, 0.16, 0.18,
+                                                 0.22, 0.24, 0.26, 0.28, 0.32, 0.34, 0.36, 0.38};
     // const size_t county_id_infected = 3241;
 
     //create or load graph

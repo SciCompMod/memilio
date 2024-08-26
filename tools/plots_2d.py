@@ -31,6 +31,7 @@ legendsize = 15
 ticks = 15
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 colors_state_risk = sns.color_palette("tab20")
+color_map = 'viridis'
 
 
 def read_total_results_h5(path, comp, group_key='Total'):
@@ -928,41 +929,40 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
         plot_and_save(
             fig, plot_dir, f'peaks_grid_{plot_type}_{dir_value}_{kmin}.png')
 
-        count_ax = 0
-        for ax in fig.get_axes():
-            if count_ax > num_subplots - 1:
-                break
-            ax.set_yscale('symlog')
-            ax.set_ylim(0, global_max)
-            ax.set_xticks(range(0, num_days, 50))
-            ax.set_xlabel('')
-            if not vertical:
-                ax.set_xlabel('')
-                if ax != fig.get_axes()[0]:
-                    ax.set_yticklabels([])
-                    ax.set_ylabel('')
-                if ax == fig.get_axes()[len(fig.get_axes()) // 2]:
-                    ax.set_xlabel('Days', fontsize=16)
-            else:
-                ax.set_xlabel('')
-                ax.set_ylabel('')
-                if ax == fig.get_axes()[len(fig.get_axes()) // 2]:
-                    ax.set_ylabel(title + ' per 100,000k')
-                if ax == fig.get_axes()[len(fig.get_axes()) - 1]:
-                    ax.set_xlabel('Days', fontsize=16)
+        # count_ax = 0
+        # for ax in fig.get_axes():
+        #     if count_ax >= num_subplots:
+        #         break
+        #     ax.set_yscale('symlog')
+        #     ax.set_ylim(global_min, global_max)
+        #     ax.set_xticks(range(0, num_days, 50))
+        #     if not vertical:
+        #         ax.set_xlabel('')
+        #         if ax != fig.get_axes()[0]:
+        #             ax.set_yticklabels([])
+        #             ax.set_ylabel('')
+        #         if ax == fig.get_axes()[len(fig.get_axes()) // 2]:
+        #             ax.set_xlabel('Days', fontsize=16)
+        #     else:
+        #         ax.set_xlabel('')
+        #         ax.set_ylabel('')
+        #         if ax == fig.get_axes()[len(fig.get_axes()) // 2]:
+        #             ax.set_ylabel(title + ' per 100,000k')
+        #         if ax == fig.get_axes()[len(fig.get_axes()) - 1]:
+        #             ax.set_xlabel('Days', fontsize=16)
 
-            if modes[0] == 'FeedbackDamping':
-                risk = all_risks[count_ax]
-                ax2 = ax.twinx()
-                ax2.plot(risk, color='red')
-                ax2.set_ylabel('Risk')
-                ax2.yaxis.label.set_color('red')
-                ax2.tick_params(axis='y', colors='red')
+        #     if modes[0] == 'FeedbackDamping':
+        #         risk = all_risks[count_ax]
+        #         ax2 = ax.twinx()
+        #         ax2.plot(risk, color='red')
+        #         ax2.set_ylabel('Risk')
+        #         ax2.yaxis.label.set_color('red')
+        #         ax2.tick_params(axis='y', colors='red')
 
-            count_ax += 1
+        #     count_ax += 1
 
-        plot_and_save(
-            fig, plot_dir, f'peaks_grid_{plot_type}_{dir_value}_{kmin}_log.png')
+        # plot_and_save(
+        #     fig, plot_dir, f'peaks_grid_{plot_type}_{dir_value}_{kmin}_log.png')
 
 
 def get_peak_data(path_results, blending_fact, modes, target_indx, percentile="p50", flows=True, title='Peak Value', dir_type='kmin'):
@@ -972,8 +972,8 @@ def get_peak_data(path_results, blending_fact, modes, target_indx, percentile="p
 
     data = {'b_fact': [], 'kmax': [], 'day': [], 'peak_value': []}
     for b_fact in blending_fact:
-        path_results_blended = os.path.join(path_results, "BlendingFactorRegional_" + str(
-            b_fact) + "00000")
+        path_results_blended = os.path.join(
+            path_results, f"BlendingFactorRegional_{b_fact:.2f}" + "0000")
 
         kmin_dirs = get_dirs_starting_with_x('kmin', path_results_blended)
         all_kmax = sorted(set(float(d.split("_")[-1]) for d in kmin_dirs))
@@ -1063,19 +1063,33 @@ def plot_peak_time_kmax(path_results, path_plots, blending_fact, modes, target_i
         peak_data = data[data['b_fact'] == b_fact]
         # Delete all entries with peak_value == 0
         # peak_data = peak_data[peak_data['peak_value'] > 0].reset_index(drop=True)
-
-        # Explode the peak_value list if necessary
-        if dir_type == 'val':
-            peak_data = peak_data.explode('peak_value')
-            peak_data['peak_value'] = peak_data['peak_value'].astype(float)
+        data_variance = {'b_fact': [], 'kmax': [], 'mean': [], 'variance': []}
 
         # Calculate the mean peak values for each (kmax, day) combination
         mean_peaks = peak_data.groupby(['kmax', 'day'])[
             'peak_value'].mean().reset_index()
 
-        # Pivot the data to create a matrix for the heatmap
-        heatmap_data = mean_peaks.pivot_table(
-            values='peak_value', index='day', columns='kmax', aggfunc='mean')
+        # delete all rows with peak_value == 0
+        mean_peaks = mean_peaks[mean_peaks['peak_value'] > 0].reset_index(
+            drop=True)
+        all_kmax = mean_peaks['kmax'].unique()
+        # create df with columns kmax
+        for kmax in all_kmax:
+            peak_data_kmax = mean_peaks[mean_peaks['kmax'] == kmax]
+            peak_days = peak_data_kmax['day'].values
+            # calculate the mean and the variance for peak_days
+            mean_peak = peak_days.mean()
+            var_peak = peak_days.var()
+            data_variance['b_fact'].append(b_fact)
+            data_variance['kmax'].append(kmax)
+            data_variance['mean'].append(mean_peak)
+            data_variance['variance'].append(var_peak)
+
+    statistical_measures = ['mean', 'variance']
+    for measure in statistical_measures:
+        results_df = pd.DataFrame(data_variance)
+        heatmap_data = results_df.pivot_table(
+            values=measure, index='kmax', columns='b_fact', aggfunc=lambda x: x)
 
         # Create the heatmap
         plt.figure(figsize=(20, 10))
@@ -1109,13 +1123,14 @@ def plot_peak_time_kmax_variance(path_results, path_plots, blending_fact, modes,
     all_kmax = data['kmax'].unique()
 
     # create dict with b_fact, kmax and variance
-    data_variance = {'b_fact': [], 'kmax': [], 'mean': []}
+    data_variance = {'b_fact': [], 'kmax': [], 'mean': [], 'variance': []}
     for b_fact in all_b_fact:
         for kmax in all_kmax:
             peak_data = data[(data['b_fact'] == b_fact) & (
                 data['kmax'] == kmax)]
 
             mean_peak = 0
+            var_peak = 0
 
             # Explode the peak_value list if necessary
             if dir_type == 'val':
@@ -1124,57 +1139,180 @@ def plot_peak_time_kmax_variance(path_results, path_plots, blending_fact, modes,
                     lambda x: len(x) > 0)].reset_index(drop=True)
                 peak_data = peak_data.explode('peak_value')
                 peak_data['peak_value'] = peak_data['peak_value'].astype(float)
+                # Calculate the mean of the peak values for each (kmax, day) combination
+                for day in peak_data['day'].unique():
+                    mean_peak += peak_data[peak_data['day']
+                                           == day]['peak_value'].values.mean() * day
+                mean_peak /= peak_data['peak_value'].values.sum()
+
+                # same for the variance
+                for day in peak_data['day'].unique():
+                    var_peak += peak_data[peak_data['day']
+                                          == day]['peak_value'].values.var() * day
+                var_peak /= peak_data['peak_value'].values.sum()
+
             else:
                 # Delete all entries with peak_value == 0
                 peak_data = peak_data[peak_data['peak_value']
                                       > 0].reset_index(drop=True)
-            # Calculate the mean of the peak values for each (kmax, day) combination
-            for day in peak_data['day'].unique():
-                mean_peak += peak_data[peak_data['day']
-                                       == day]['peak_value'].values.mean() * day
-            mean_peak /= peak_data['peak_value'].values.sum()
+                peak_days = peak_data['day'].values
+                # calculate the mean and the variance for peak_days
+                mean_peak = peak_days.mean()
+                var_peak = peak_days.var()
 
             data_variance['b_fact'].append(b_fact)
             data_variance['kmax'].append(kmax)
             data_variance['mean'].append(mean_peak)
+            data_variance['variance'].append(var_peak)
 
     # plot
-    results_df = pd.DataFrame(data_variance)
-    heatmap_data = results_df.pivot_table(
-        values='mean', index='kmax', columns='b_fact', aggfunc='mean')
+    statistical_measures = ['mean', 'variance']
+    for measure in statistical_measures:
+        results_df = pd.DataFrame(data_variance)
+        heatmap_data = results_df.pivot_table(
+            values=measure, index='kmax', columns='b_fact', aggfunc=lambda x: x)
 
-    plt.figure(figsize=(20, 10))
-    if log_scale:
-        sns.heatmap(heatmap_data, cmap="viridis",
-                    norm=SymLogNorm(linthresh=1), fmt=".2f")
-    else:
-        sns.heatmap(heatmap_data, cmap="viridis", fmt=".2f")
-    plt.xlabel('Blending Factor Regional', fontsize=fontsize)
-    plt.ylabel('kmax', fontsize=fontsize)
-    plt.xticks(fontsize=ticks)
-    plt.yticks(fontsize=ticks)
-    plt.ylim(0, len(heatmap_data.index))
-    fn = 'peaks_mean_heatmap_' + dir_type
-    if log_scale:
-        fn += '_log'
-    plt.savefig(os.path.join(path_plots, fn + '.png'))
-    plt.clf()
-    plt.close()
+        # plot the heatmap
+        plt.figure(figsize=(20, 10))
+        if log_scale:
+            sns.heatmap(heatmap_data, cmap=color_map,
+                        norm=SymLogNorm(linthresh=1), fmt=".2f")
+        else:
+            sns.heatmap(heatmap_data, cmap=color_map, fmt=".2f")
+        plt.xlabel('Blending Factor Regional', fontsize=fontsize)
+        plt.ylabel('kmax', fontsize=fontsize)
+        plt.xticks(fontsize=ticks)
+        plt.yticks(fontsize=ticks)
+        plt.ylim(0, len(heatmap_data.index))
+        fn = 'peaks_' + measure + '_heatmap_' + dir_type
+        if log_scale:
+            fn += '_log'
+        plt.savefig(os.path.join(path_plots, fn + '.png'))
+        plt.clf()
+        plt.close()
+
+        # plot bar chart for each b_fact
+        colors = plt.cm.viridis(np.linspace(0, 1, len(all_b_fact)))
+        for i, b_fact in enumerate(all_b_fact):
+            data_b_fact = results_df[results_df['b_fact'] == b_fact]
+            plt.figure(figsize=(20, 10))
+
+            # Berechnen der Positionen der Balken
+            bar_width = 0.4
+            positions = np.arange(len(data_b_fact['kmax']))
+
+            plt.bar(positions, data_b_fact[measure],
+                    width=bar_width, color=colors[i], edgecolor='black')
+            plt.xlabel('kmax', fontsize=fontsize)
+            if dir_type == 'kmin':
+                plt.ylabel(measure + ' peak days', fontsize=fontsize)
+            else:
+                plt.ylabel(measure + ' peak value', fontsize=fontsize)
+            plt.xticks(positions, data_b_fact['kmax'], fontsize=ticks)
+            plt.yticks(fontsize=ticks)
+            plt.title(f'{measure} for b_fact {b_fact}', fontsize=fontsize)
+            plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+            # if kmin and mean, fix y axis to interval 0- 150
+            if measure == 'mean' and dir_type == 'kmin':
+                plt.ylim(0, 150)
+            if measure == 'variance' and dir_type == 'kmin':
+                plt.ylim(0, 350)
+
+            plt.savefig(os.path.join(
+                path_plots, f'{measure}_bar_chart_{b_fact}_{dir_type}.png'))
+            plt.clf()
+            plt.close()
 
     return 0
+
+
+def plot_peaks_all_blending_factors(path_results, path_plots, blending_fact):
+    for b_fact in blending_fact:
+        path_blended = os.path.join(
+            path_results, "BlendingFactorRegional_" + str(b_fact) + "00000")
+        path_plot_b_fact = os.path.join(
+            path_plots, "BlendingFactorRegional_" + str(b_fact) + "00000")
+        create_folder_if_not_exists(path_plot_b_fact)
+        plot_peak_values(path_blended, path_plot_b_fact, [
+            "FeedbackDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True)
+        plot_peak_values(path_blended, path_plot_b_fact, [
+            "FeedbackDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True)
+        plot_peak_values(path_results, path_plot_b_fact, [
+                         "FeedbackDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True)
+        plot_peak_values(path_results, path_plot_b_fact, [
+                         "FeedbackDamping"], flow_se, plot_type='val', title='Daily Infections', flows=True, vertical=True)
+
+
+def get_all_blending_factors(path_results):
+    blending_factors = []
+    for entry in os.listdir(path_results):
+        if entry.startswith("BlendingFactorRegional"):
+            blending_factors.append(float(entry.split("_")[-1]))
+    # return sorted list
+    blending_factors.sort()
+    return blending_factors
+
+
+def get_all_kmaxs(path_results):
+    kmaxs = []
+    for entry in os.listdir(path_results):
+        # entry is of type 'kmin_0.000000_kmax_0.040000'. how to get the last value?
+        if entry.startswith("kmin"):
+            kmaxs.append(float(entry.split("_")[-1]))
+    # return sorted list
+    kmaxs.sort()
+    return kmaxs
+
+
+def violin_plot_all_kmax(path_results, path_plots, modes, blending_fact, kmaxs, target_indx, percentile="p50", flows=False, title='Peak Value', dir_type='kmin', log_scale=True):
+    data = get_peak_data(path_results, blending_fact,
+                         modes, target_indx, percentile, flows, title, dir_type)
+
+    # delete all rows where b_fact is not in blending_fact
+    data = data[data['b_fact'].isin(blending_fact)]
+    # same for kmax
+    data = data[data['kmax'].isin(kmaxs)]
+
+    for b_fact in blending_fact:
+        peak_data = data[data['b_fact'] == b_fact]
+        # Reduce dimension peak_value
+        # i) delete all rows with peak_value = 0
+        peak_data = peak_data[peak_data['peak_value']
+                              > 0.0].reset_index(drop=True)
+        # ii) explode the peak_value list
+        peak_data = peak_data.loc[peak_data.index.repeat(peak_data['peak_value'])].copy().reset_index(
+            drop=True)
+        # iii) delete the peak_value column
+        peak_data.drop(columns=['peak_value'], inplace=True)
+
+        plt.figure(figsize=(10, 6))
+        sns.violinplot(x='kmax', y='day', data=peak_data,
+                       inner="box", linewidth=2, palette='Blues')
+
+        # Set the labels and title
+        plt.xlabel('kmax', fontsize=fontsize)
+        plt.ylabel('Day', fontsize=fontsize)
+        plt.ylim(60, 200)
+        plt.savefig(os.path.join(path_plots, f'violin_plot_{b_fact}.png'))
 
 
 if __name__ == '__main__':
     path_cwd = os.getcwd()
     icu_cap = [6, 9, 12, 15]
-    blending_fact = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
-    cap_indx = 3
+    cap_indx = 1
     path_results = os.path.join(
         path_cwd, "results", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000")
     path_plots = os.path.join(
         path_cwd, "plots", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000")
     path_icu_data = os.path.join(
         path_cwd, "data/pydata/Germany/germany_divi_ma7.json")
+
+    blending_fact = get_all_blending_factors(path_results)
+    all_kmax = get_all_kmaxs(os.path.join(
+        path_results, "BlendingFactorRegional_0.000000"))
+    # blending_fact = [0.00, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70]
+    all_kmax = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 
     modes = ["FeedbackDamping"]  # "ClassicDamping",
 
@@ -1203,11 +1341,14 @@ if __name__ == '__main__':
     # plot_r0_all_scenarios(os.path.join(
     #     path_cwd, "results", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000"), path_plots, modes)
 
-    plot_peak_time_kmax(path_results, path_plots, blending_fact, modes,
-                        icu_compartment, flows=False, dir_type='val', log_scale=True)
+    violin_plot_all_kmax(path_results, path_plots, modes, blending_fact, all_kmax, icu_compartment,
+                         flows=False, title='Peak Value', dir_type='kmin', log_scale=True)
+
+    # plot_peak_time_kmax(path_results, path_plots, blending_fact, modes,
+    #                     icu_compartment, flows=False, dir_type='kmin', log_scale=True)
 
     plot_peak_time_kmax_variance(path_results, path_plots, blending_fact, modes,
-                                 icu_compartment, flows=False, dir_type='val', log_scale=False)
+                                 icu_compartment, flows=False, dir_type='kmin', log_scale=False)
 
     # plot_icu_all_scenarios(path_results, path_plots, modes, log_scale=True)
     # plot_peaks(path_results, path_plots, modes, flow_se)
@@ -1217,24 +1358,7 @@ if __name__ == '__main__':
     # plot_icu_comp_all_dirs(path_results, path_plots, modes,
     #                        path_icu_data, plot_percentiles=True)
 
-    # peak plots for daily infections
-    # path_results = os.path.join(
-    #     path_results, "BlendingFactorRegional_0.000000")
-    # plot_peak_values(path_results, path_plots, [
-    #                  "FeedbackDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True)
-    # plot_peak_values(path_results, path_plots, [
-    #                  "FeedbackDamping"], flow_se, plot_type='val', title='Daily Infections', flows=True, vertical=True)
-
-    # # # peak plots for ICU occupancy
-    plot_peak_values(path_results, path_plots, [
-                     "FeedbackDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True)
-    plot_peak_values(path_results, path_plots, [
-        "FeedbackDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True)
-
-    # plot_peak_values(path_results, path_plots, [
-    #                  "ClassicDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True, dir_value='fixed')
-    # plot_peak_values(path_results, path_plots, [
-    #     "ClassicDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True, dir_value='fixed')
+    # plot_peaks_all_blending_factors(path_results, path_plots, blending_fact)
 
     # plot_peak_values(path_results, path_plots, [
     #     "ClassicDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True, dir_value='fixed')
