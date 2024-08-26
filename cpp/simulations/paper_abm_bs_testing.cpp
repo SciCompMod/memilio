@@ -1747,10 +1747,10 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
         const double dark_figure                = params[1];
         const double contact_red_lockdown       = params[2];
         const double damping_community_lockdown = 0.5;
-        const double testing_probability_sympt  = 0.037;
-        const double ratio_asympt_to_sympt      = 20.0;
-        // const double testing_probability_sympt = params[3];
-        // const double ratio_asympt_to_sympt     = params[4];
+        // const double testing_probability_sympt  = 0.037;
+        // const double ratio_asympt_to_sympt      = 20.0;
+        const double testing_probability_sympt = params[3];
+        const double ratio_asympt_to_sympt     = params[4];
 
         const double lockdown_test_prob     = 1.1;
         const auto after_lockdown_test_prob = 0.9;
