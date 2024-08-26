@@ -270,9 +270,9 @@ def plot_dead(path):
     age_group_access = ['Group1', 'Group2', 'Group3',
                         'Group4', 'Group5', 'Group6', 'Total']
 
-    # we need the real data json file cases_all_state_repdate_ma7
+    # we need the real data json file cases_all_county_age
     df_abb = pd.read_json(
-        path+"/../../../pydata/Germany/cases_all_county_age_ma7.json")
+        path+"/../pydata/Germany/cases_all_county_age_ma1.json")
 
     # we just need the columns cases and date
     # we need to offset the dates by 19 day
@@ -282,7 +282,7 @@ def plot_dead(path):
                     (df_abb['Date'] <= '2021-06-01')]
     # we just need the cases with id 3101
     df_abb = df_abb[df_abb['ID_County'] == 3101]
-    df_abb['Deaths'] = np.round(df_abb[['Deaths']].to_numpy())
+    # df_abb['Deaths'] = np.round(df_abb[['Deaths']].to_numpy())
 
     # we need the amount of dead persons for each age group: These are A00-A04, A05-A14, A15-A34, A35-A59, A60-A79, A80+
     age_groups = ['A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+']
@@ -338,7 +338,7 @@ def plot_dead(path):
    
 def plot_icu(path):
     
-    df_abb = pd.read_json(path+"/../../../pydata/Germany/county_divi.json")
+    df_abb = pd.read_json(path+"/../pydata/Germany/county_divi.json")
 
     perc_of_critical_in_icu_age = [0.55,0.55,0.55,0.56,0.54,0.46]
     perc_of_critical_in_icu=0.55
@@ -402,13 +402,13 @@ def plot_icu(path):
     total_95_age = total_95_age[::24][0:90]
 
     
-    ICU_Simulation_one_percentile = np.round(total_50[:, 5]*perc_of_critical_in_icu)
+    ICU_Simulation_one_percentile = np.floor(total_50[:, 5]*perc_of_critical_in_icu)
     ICU_Simulation = np.round(total_50_age[:, 5])
     ICU_Simulation75 = np.round(total_75_age[:, 5])
     ICU_Simulation25 = np.round(total_25_age[:, 5])
     ICU_Simulation05 = np.round(total_05_age[:, 5])
     ICU_Simulation95 = np.round(total_95_age[:, 5])
-    ICU_Real = np.round(df_abb['ICU'][0:90])
+    ICU_Real = df_abb['ICU'][0:90]
 
     #smooth the data
     # ICU_Real = gaussian_filter1d(ICU_Real, sigma=1, mode='nearest')
@@ -572,110 +572,6 @@ def calc_positive_tests_overall(infection_states, sensitivity, specificity, r_sn
         1-specificity)+((infection_states[:, 1]+infection_states[:, 2])*lt_asympt)*sensitivity
     return inferred_positive_tests_sympt+inferred_positive_tests_asympt, inferred_positive_tests_sympt, inferred_positive_tests_asympt
 
-def infer_positive_tests(path):
-    # First way: we just take x amount of eahc compartment and fit this to the positive tested category.
-    # A few assumptions:
-    # 1. The specificities of the tests are 99.9% this means that we have 0.1% false positives. We just assme, that nonsymptomatics test themselves very rarely, e.g. we just take a fraction of symptomatic persons.
-    # 2. We just have a around 60% sensitivity, this means that we have 40% false negatives.
-    # 3. We assume that it is way more likely to test yourself if you are symptomatic than if you are asymptomatic
-
-    # we need every compartment of the model
-    f_p50 = h5py.File(
-        path+"/infection_state_per_age_group/0/p50/Results.h5", 'r')
-    p50_bs = f_p50['0']
-    total_50 = p50_bs['Total'][()]
-    total_50 = total_50[::24]
-    total_50 = total_50[0:90]
-
-    time = p50_bs['Time'][()]
-    time = time[::24]
-    time = time[0:90]
-
-
-    # we need the real data from the json file cases_all_county_age_repdate_ma7.json
-    df_abb = pd.read_json(
-        path+"/../../../pydata/Germany/cases_all_county_repdate_ma7.json")
-    # we just need the columns cases and date
-    df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
-    # we need just the dates bewteen 2021-03-01 and 2021-06-01
-    df_abb = df_abb[(df_abb['Date'] >= '2021-02-28') &
-                    (df_abb['Date'] <= '2021-06-01')]
-    # we just take the first 90 days
-    df_abb= df_abb[df_abb['ID_County'] == 3101]
-    df_abb = df_abb[0:91]
-    
-    # we need the amount of new positive tests each day insetad of cumulative
-    df_abb['Confirmed'] = df_abb['Confirmed'].diff()
-    df_abb['Confirmed'] = df_abb['Confirmed']
-  
-    sensitivity = 0.69
-    specificity = 0.99
-    # we need to derive the lowest rmse for the real positive tests and the inferred positive tests we use a grid search
-    # we need to find the best r_sns and lt_sympt
-    best_rmse = 1000000000
-    best_r_sns = 0
-    best_lt_sympt = 0
-    for r_sns in np.linspace(1, 50, 100):
-        for lt_sympt in np.linspace(0.005, 0.1, 500):
-            total_positive_tests, inferred_positive_tests_sympt, inferred_positive_tests_asympt = calc_positive_tests_overall(total_50, sensitivity, specificity, r_sns, lt_sympt)
-            rmse = np.sqrt(((df_abb['Confirmed'][1:91] - total_positive_tests)**2).mean())
-            if rmse < best_rmse:
-                best_rmse = rmse
-                best_r_sns = r_sns
-                best_lt_sympt = lt_sympt
-    
-    print("Best RMSE: ", best_rmse)
-    print("Best r_sns: ", best_r_sns)
-    print("Best lt_sympt: ", best_lt_sympt)
-
-
-    total_positive_tests, inferred_positive_tests_sympt, inferred_positive_tests_asympt = calc_positive_tests_overall(total_50, sensitivity, specificity, best_r_sns, best_lt_sympt)
-
-
-    # we save the assumed tests done
-    assumed__amount_of_test = (total_50[:, 3]*lt_sympt+total_50[:, 4]*lt_sympt+total_50[:, 5]*lt_sympt)+(
-        total_50[:, 0]*(best_lt_sympt/best_r_sns))+(total_50[:, 1]+total_50[:, 2])*(best_lt_sympt/best_r_sns)
-    
-    #plot the assumed tests done
-    fig, ax = plt.subplots(1, 1, constrained_layout=True)
-    fig.set_figwidth(20)
-    fig.set_figheight(9)
-    ax.plot(time, assumed__amount_of_test, color='tab:red')
-    ax.set_xlabel('time (days)')
-    ax.set_ylabel('Number of tests')
-    ax.title.set_text('Assumed amount of tests done')
-    ax.legend(['Assumed amount of tests done'])
-    plt.show()
-
-    
-
-    # we plot this
-    # we plot the tests positive and the real cases
-    start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
-    xx = [start_date + pd.Timedelta(days=int(i)) for i in time]
-    xx = [xx[i].strftime('%Y-%m-%d') for i in range(len(xx))]
-
-    plt.gca().set_xticks(time[::5])
-    plt.gca().set_xticklabels(xx[::5])
-    plt.gcf().autofmt_xdate()
-
-
-
-    plt.plot(xx, inferred_positive_tests_sympt, color='tab:red')
-    plt.plot(xx, inferred_positive_tests_asympt, color='tab:blue')
-    plt.plot(xx, total_positive_tests, color='tab:green')
-    plt.plot(xx, df_abb['Confirmed'][1:91], color='tab:orange')
-    plt.xlabel('time (days)')
-    plt.ylabel('Number of positive tests')
-    plt.legend(['Assumed positive from Symptomatic', 'Assumed positive from Asymptomatic',
-              'Assumed positive from all Persons', 'Real positive tests'])
- 
-    # we also write calculated best rmse, r_sns and lt_sympt into the title
-    plt.title('Positive tests inferred from model and real positive tests, RMSE: '+str(float("{:.2f}".format(best_rmse)))+' r_sns: '+str(float("{:.2f}".format(best_r_sns)))+' lt_sympt: '+str(float("{:.3f}".format(best_lt_sympt))))
-    
-    
-
-    plt.show()
 
 def plot_estimated_reproduction_number(path):
     f_p50 = h5py.File(
@@ -701,7 +597,7 @@ def plot_estimated_reproduction_number(path):
 def plot_cumulative_detected_infections(path):
 
     df_abb = pd.read_json(
-        path+"/../../../pydata/Germany/cases_all_county_repdate_ma7.json")
+        path+"/../pydata/Germany/cases_all_county_repdate.json")
     # we need the 
     df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
     df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') & (df_abb['Date'] <= '2021-06-01')]
@@ -783,7 +679,7 @@ def plot_cumulative_detected_infections(path):
     time = time[0:90]
 
     # we calculate the RMSE
-    rmse_detected = ((df_abb - total_50)**2).mean() *0.01
+    rmse_detected = ((df_abb - total_50)**2).mean() * 0.01 * 0.01 * 0.2
 
 
 
@@ -874,11 +770,10 @@ def plot_positive_and_done_test(path):
     plt.show()
 
 
-
 if __name__ == "__main__":
     # path = "/Users/david/Documents/HZI/memilio/data/results_last_run"
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/123/results_2024-08-25204206"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
+    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/123/results_2024-08-25204206"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_last_run"
 
     if (len(sys.argv) > 1):
@@ -886,12 +781,11 @@ if __name__ == "__main__":
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    plot_infection_states_results(path)
-    plot_infections_loc_types_avarage(path)
+    # plot_infection_states_results(path)
+    # plot_infections_loc_types_avarage(path)
     plot_icu(path)
     plot_dead(path)
     plot_cumulative_detected_infections(path)
-    plot_positive_and_done_test(path)
+    # plot_positive_and_done_test(path)
 
-    # infer_positive_tests(path)
     # plot_estimated_reproduction_number(path)
