@@ -955,7 +955,7 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
         mio::path_join((data_dir / "pydata" / "Germany").string(), "cases_all_county_age_ma1.json");
     auto real_data_icu_path = mio::path_join((data_dir / "pydata" / "Germany").string(), "county_divi.json");
     auto real_detected_path =
-        mio::path_join((data_dir / "pydata" / "Germany").string(), "cases_all_county_age_repdate.json");
+        mio::path_join((data_dir / "pydata" / "Germany").string(), "cases_all_county_age_repdate_ma1.json");
     auto divi_data     = mio::read_divi_data(real_data_icu_path);
     auto death_data    = mio::read_confirmed_cases_data(real_data_dead_path);
     auto detected_data = mio::read_confirmed_cases_data(real_detected_path);
@@ -1006,17 +1006,17 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
     // for (auto& entry : sim_data_vec_icu) {
     //     std::cout << entry << " ";
     // }
-    // std::cout << std::endl;
-    // std::cout << "Real data conf: ";
-    // for (auto& entry : real_data_conf_vec) {
-    //     std::cout << entry << " ";
-    // }
-    // std::cout << std::endl;
-    // std::cout << "Simulated data conf: ";
-    // for (auto& entry : sim_data_vec_conf) {
-    //     std::cout << entry << " ";
-    // }
-    // std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << "Real data conf: ";
+    for (auto& entry : real_data_conf_vec) {
+        std::cout << entry << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Simulated data conf: ";
+    for (auto& entry : sim_data_vec_conf) {
+        std::cout << entry << " ";
+    }
+    std::cout << std::endl;
     // now we calculate the RMSE
     double rmse_dead = 0;
     double rmse_icu  = 0;
@@ -1029,6 +1029,12 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
     rmse_dead = rmse_dead / real_data_dead_vec.size();
     rmse_icu  = rmse_icu / real_data_icu_vec.size();
     rmse_conf = rmse_conf / real_data_conf_vec.size();
+
+    //write  to terminal
+
+    std::cout << "RMSE dead: " << rmse_dead << std::endl;
+    std::cout << "RMSE icu: " << rmse_icu << std::endl;
+    std::cout << "RMSE conf: " << rmse_conf << std::endl;
 
     return (1.00 * rmse_dead) + (0.1 * rmse_icu) + (0.01 * 0.01 * 0.2 * rmse_conf);
 }
