@@ -1,10 +1,77 @@
 #include "abm/abm.h"
 #include "abm/household.h"
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 #include <fstream>
+#include <ostream>
 #include <string>
 #include <iostream>
+#include <utility>
+#include <vector>
 #include "abm/common_abm_loggers.h"
+#include "abm/location_type.h"
+#include "abm/person.h"
+#include "abm/simulation.h"
+#include "abm/time.h"
+#include "abm/world.h"
+#include "memilio/io/history.h"
 #include "memilio/utils/random_number_generator.h"
+
+struct LocationPerPersonLogger : public mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, std::vector<uint32_t>>;
+
+    Type log(const mio::abm::Simulation& sim)
+    {
+        location_per_person.resize(sim.get_world().get_persons().size());
+        std::transform(sim.get_world().get_persons().begin(), sim.get_world().get_persons().end(),
+                       location_per_person.begin(), [](const mio::abm::Person& p) {
+                           return p.get_location().get_index();
+                       });
+        return std::pair(sim.get_time(), location_per_person);
+    }
+
+    std::vector<uint32_t> location_per_person;
+};
+
+void write_contacts(std::ostream& out, const mio::abm::World& world,
+                    const std::vector<LocationPerPersonLogger::Type>& loclog)
+{
+    out << "# Time, ID, Contact1, Intensity1, Contact2, Intensity2, ...\n";
+    // std::cout << loclog.size() << "\n";
+    // std::vector<std::pair<int, uint32_t>> stays(world.get_persons().size(), {0, 0}); // t0, loc
+    // for (size_t p = 0; p < stays.size(); p++) {
+    //     stays[p].second = loclog[0].second[p];
+    //     stays[p].first  = loclog[0].first.seconds();
+    // }
+    for (size_t t = 1; t < loclog.size(); t++) {
+        for (size_t p = 0; p < loclog[t].second.size(); p++) {
+            std::string preamble(std::to_string(loclog[t].first.hours()) + ", " + std::to_string(p));
+            // write contacts
+            assert(loclog[t].second[p] != mio::abm::INVALID_LOCATION_INDEX);
+            const auto& loc = world.get_locations()[loclog[t].second[p]];
+            for (size_t contact = 0; contact < loc.get_assigned_persons().size(); contact++) {
+                auto p_loc = std::find(loc.get_assigned_persons().begin(), loc.get_assigned_persons().end(), p);
+                const auto& matrices = loc.get_contact_matrices();
+                const auto& t_matrix = matrices[loclog[t].first.hour_of_day()];
+                assert(p_loc != loc.get_assigned_persons().end());
+                const auto intensity = t_matrix(p_loc - loc.get_assigned_persons().begin(), contact);
+                if (intensity > 0) {
+                    out << preamble << ", " << loc.get_assigned_persons()[contact] << ", " << intensity;
+                    preamble = "";
+                }
+            }
+            // // reset stay
+            // stays[p].first  = loclog[t].first.seconds();
+            // stays[p].second = loclog[t].second[p];
+
+            if (preamble.empty()) {
+                out << "\n";
+            }
+        }
+    }
+}
 
 mio::IOResult<mio::abm::HourlyContactMatrix> read_hourly_contact_matrix(const std::string& csv_file)
 {
@@ -303,8 +370,12 @@ int main()
     // Create a history object to store the time series of the infection states.
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
+    mio::History<mio::DataWriterToMemory, LocationPerPersonLogger> loclog;
     // Run the simulation until tmax with the history object.
-    sim.advance(tmax, historyTimeSeries);
+    sim.advance(tmax, historyTimeSeries, loclog);
+
+    std::ofstream contactfile("micro_abm_contacts.csv");
+    write_contacts(contactfile, sim.get_world(), std::get<0>(loclog.get_log()));
 
     std::ofstream outfile("micro_abm.txt");
     std::get<0>(historyTimeSeries.get_log())

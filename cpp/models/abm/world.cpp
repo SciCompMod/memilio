@@ -24,6 +24,7 @@
 #include "abm/location.h"
 #include "abm/migration_rules.h"
 #include "abm/infection.h"
+#include "abm/trip_list.h"
 #include "abm/vaccine.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"

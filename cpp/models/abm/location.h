@@ -201,7 +201,7 @@ public:
      * @param[in] params Parameters of the Model.
      */
     void interact_micro(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
-                  const Parameters& params) const;
+                        const Parameters& params) const;
 
     /** 
      * @brief A Person interacts with the population at this Location and may become infected.
@@ -436,6 +436,16 @@ public:
     {
         m_hourly_contact_matrices = contact_matrices;
         m_assigned_persons        = assigned_persons;
+    }
+
+    const HourlyContactMatrix& get_contact_matrices() const
+    {
+        return m_hourly_contact_matrices;
+    }
+
+    const std::vector<uint32_t>& get_assigned_persons() const
+    {
+        return m_assigned_persons;
     }
 
 private:
