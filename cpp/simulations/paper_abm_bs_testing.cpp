@@ -2408,7 +2408,7 @@ int main(int argc, char** argv)
         // std::vector<std::pair<double, double>> grid_boundaries = {{1.5, 2.2}, {2.0, 3.6}, {0.4, 0.7}};
         // std::vector<int> points_per_dim                        = {13, 13, 13};
 
-        std::vector<double> grid_boundaries = {2.025, 2.66, 0.4};
+        std::vector<double> grid_boundaries = {1.85, 3.06, 0.45};
         std::vector<int> points_per_dim     = {9, 9, 9};
 
         // std::vector<std::pair<double, double>> grid_boundaries = {
