@@ -24,7 +24,6 @@ def run_secir_groups_simulation(days, populations):
         Virus-specific parameters are fixed and initial number of persons 
         in the particular infection states are chosen randomly from defined ranges.
     @param Days Describes how many days we simulate within a single run.
-    @param damping_day The day when damping is applied.
     @param populations List containing the population in each age group.
     @return List containing the populations in each compartment used to initialize 
             the run.
@@ -98,7 +97,6 @@ def run_secir_groups_simulation(days, populations):
             model.parameters.SeverePerInfectedSymptoms[AgeGroup(i)] = 0.2
             model.parameters.CriticalPerSevere[AgeGroup(i)] = 0.25
             model.parameters.DeathsPerCritical[AgeGroup(i)] = 0.3
-            # twice the value of RiskOfInfectionFromSymptomatic
             model.parameters.MaxRiskOfInfectionFromSymptomatic[AgeGroup(
                 i)] = 0.5
 
@@ -108,7 +106,6 @@ def run_secir_groups_simulation(days, populations):
 
         # Load baseline and minimum contact matrix and assign them to the model
         baseline = getBaselineMatrix()
-        #minimum = getMinimumMatrix()
 
         model.parameters.ContactPatterns.cont_freq_mat[0].baseline = baseline
         model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
