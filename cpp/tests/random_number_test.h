@@ -21,6 +21,8 @@
 
 #include <gtest/gtest.h>
 
+#include <random>
+
 class RandomNumberTest : public ::testing::Test
 {
 public:
@@ -33,7 +35,7 @@ public:
     template <class FP = double>
     double random_number(FP min = FP{-1e+3}, FP max = {1e+3})
     {
-        return mio::UniformDistribution<FP>::get_instance()(m_rng, min, max);
+        return std::uniform_real_distribution<FP>(min, max)(m_rng);
     }
 
     /// @brief Access the random number generator. Should only be used for debugging.
