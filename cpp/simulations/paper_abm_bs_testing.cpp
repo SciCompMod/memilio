@@ -1745,7 +1745,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     std::vector<double> rmse_results_per_grid_point;
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
-#pragma omp parallel for num_threads(128) firstprivate(rng)
+#pragma omp parallel for num_threads(96) firstprivate(rng)
     for (size_t i = 0; i < grid_search_rank.size(); i++) {
         auto params = grid_search_rank[i];
 
@@ -2453,7 +2453,7 @@ int main(int argc, char** argv)
 
         std::vector<std::pair<double, double>> grid_boundaries = {
             {1.4, 2.0}, {2.5, 5.5}, {0.35, 0.8}, {0.02, 0.045}, {3, 15}};
-        std::vector<int> points_per_dim = {8, 8, 8, 8, 8};
+        std::vector<int> points_per_dim = {6, 6, 6, 6, 6};
 
         // std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.0333333, 5.0};
         // std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.03, 5};
