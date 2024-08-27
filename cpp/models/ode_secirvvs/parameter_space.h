@@ -238,6 +238,7 @@ ExtendedGraph<Model<FP>> draw_sample(ExtendedGraph<Model<FP>>& graph, FP fact_ma
 
     //sample global parameters
     auto& shared_params_base_model = graph.nodes()[0].property.base_sim;
+    auto& shared_mobility_model    = graph.nodes()[0].property.mobility_sim;
     draw_sample_infection(shared_params_base_model);
     auto& shared_contacts = shared_params_base_model.parameters.template get<ContactPatterns<FP>>();
     shared_contacts.draw_sample_dampings();
@@ -271,7 +272,7 @@ ExtendedGraph<Model<FP>> draw_sample(ExtendedGraph<Model<FP>>& graph, FP fact_ma
         // without vaccinations and the contact patterns are different.
         auto& node_mobility_model      = params_node.property.mobility_sim;
         auto node_mobility_contacts    = node_mobility_model.parameters.template get<ContactPatterns<FP>>();
-        node_mobility_model.parameters = shared_params_base_model.parameters;
+        node_mobility_model.parameters = shared_mobility_model.parameters;
         node_mobility_model.parameters.template get<ContactPatterns<FP>>() = node_mobility_contacts;
 
         // set vaccination parameters to zero
