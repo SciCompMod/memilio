@@ -17,6 +17,7 @@ add_library(memilio
     epidemiology/dynamic_npis.h
     epidemiology/dynamic_npis.cpp
     epidemiology/lct_infection_state.h
+    epidemiology/lct_populations.h
     geography/regions.h
     geography/regions.cpp
     epidemiology/simulation_day.h
