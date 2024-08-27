@@ -100,6 +100,7 @@ TEST_F(TestMathTimeSeriesFunctor, linearInterpolationRandomized)
 
 TEST_F(TestMathTimeSeriesFunctor, unhandledTypes)
 {
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
     // check that the functor does not accept unhandled types.
 
     const auto unhandled_type = (mio::TimeSeriesFunctorType)-1;
