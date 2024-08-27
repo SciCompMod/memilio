@@ -1071,7 +1071,7 @@ std::vector<std::vector<double>> grid_points(const std::vector<double>& paramete
         double min_value = parameter_points[i] * 0.95;
         double max_value = parameter_points[i] * 1.05;
         double step      = (max_value - min_value) / (number_of_points.at(i) - 1);
-        for (int j = 0; j < number_of_points.at(i) - 1; j++) {
+        for (int j = 0; j < number_of_points.at(i); j++) {
             temp.push_back(min_value + j * step);
         }
         grid.push_back(temp);
@@ -2442,16 +2442,16 @@ int main(int argc, char** argv)
         // 3: testing prob symptomatic
         // 4: perc have to test if npi active
 
-        // std::vector<std::pair<double, double>> grid_boundaries = {
-        //     {1.6, 2.2}, {2.5, 4.5}, {0.2, 0.8}, {0.025, 0.040}, {3, 11}};
-        // std::vector<int> points_per_dim = {6, 6, 6, 6, 6};
+        std::vector<std::pair<double, double>> grid_boundaries = {
+            {1.6, 2.2}, {2.5, 4.5}, {0.2, 0.8}, {0.025, 0.040}, {3, 11}};
+        std::vector<int> points_per_dim = {6, 6, 6, 6, 6};
 
         // std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.0333333, 5.0};
         // std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.03, 5};
         // std::vector<double> grid_boundaries = {1.8, 4, 0.433333, 0.0366667, 9};
         // std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.0366667, 6.33333};
-        std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.0333333, 6.33333};
-        std::vector<int> points_per_dim     = {4, 4, 4, 4, 4};
+        // std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.0333333, 6.33333};
+        // std::vector<int> points_per_dim     = {4, 4, 4, 4, 4};
 
         // std::vector<std::pair<double, double>> grid_boundaries = {
         // {1.79, 1.83}, {3.28, 3.29}, {0.52, 0.56}, {0.03, 0.04}, {1.0, 15.0}};
@@ -2468,7 +2468,7 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{2.0}, {3.33}, {0.3}, {0.033}, {5.0}, {10.0}, {0.5}};
+        std::vector<std::vector<double>> parameters = {{2.0}, {3.27}, {0.3}, {0.031}, {6.0}, {10.0}, {0.5}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
