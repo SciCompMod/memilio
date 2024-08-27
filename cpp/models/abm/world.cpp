@@ -66,7 +66,7 @@ void World::evolve(TimePoint t, TimeSpan dt)
 
 void World::interaction(TimePoint t, TimeSpan dt)
 {
-#pragma omp parallel for num_threads(4)
+#pragma omp parallel for num_threads(2)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person     = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
@@ -76,7 +76,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
-#pragma omp parallel for num_threads(4)
+#pragma omp parallel for num_threads(2)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person = m_persons[i];
 
@@ -169,7 +169,7 @@ void World::migration(TimePoint t, TimeSpan dt)
 void World::begin_step(TimePoint t, TimeSpan dt)
 {
     m_testing_strategy.update_location_testing_schemes(t, get_locations());
-#pragma omp parallel for num_threads(4)
+#pragma omp parallel for num_threads(2)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location                 = m_locations[i];
         location->location_contaminated = false;
