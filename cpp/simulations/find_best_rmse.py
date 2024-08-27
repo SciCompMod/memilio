@@ -1,6 +1,6 @@
 import os
 # Define the folder path
-folder_path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/2/grid_search/grid_search"
+folder_path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/rmse_grid/grid_search"
 
 # Initialize a list to store the RMSE values and parameters
 rmse_values = []

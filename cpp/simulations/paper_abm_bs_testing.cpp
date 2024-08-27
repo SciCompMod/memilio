@@ -1038,7 +1038,7 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
     std::cout << "RMSE icu: " << rmse_icu << std::endl;
     std::cout << "RMSE conf: " << rmse_conf << std::endl;
 
-    return (1.00 * rmse_dead) + (0.1 * rmse_icu) + (0.01 * 0.01 * 4.0 * rmse_conf);
+    return (1.00 * rmse_dead) + (0.1 * rmse_icu) + (0.01 * 0.01 * 3.0 * rmse_conf);
 }
 
 /**
@@ -1745,7 +1745,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     std::vector<double> rmse_results_per_grid_point;
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
-#pragma omp parallel for num_threads(64) firstprivate(rng)
+#pragma omp parallel for num_threads(128) firstprivate(rng)
     for (size_t i = 0; i < grid_search_rank.size(); i++) {
         auto params = grid_search_rank[i];
 
@@ -2401,8 +2401,8 @@ int main(int argc, char** argv)
     rng.seed(seeds);
     rng.synchronize();
 
-    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
 
@@ -2452,8 +2452,8 @@ int main(int argc, char** argv)
         // 4: perc have to test if npi active
 
         std::vector<std::pair<double, double>> grid_boundaries = {
-            {1.7, 2.1}, {2.5, 4.0}, {0.2, 0.8}, {0.02, 0.04}, {4, 11}};
-        std::vector<int> points_per_dim = {4, 4, 4, 2, 2};
+            {1.4, 2.0}, {2.5, 5.5}, {0.35, 0.8}, {0.02, 0.045}, {3, 15}};
+        std::vector<int> points_per_dim = {8, 8, 8, 8, 8};
 
         // std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.0333333, 5.0};
         // std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.03, 5};
@@ -2477,7 +2477,7 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{2.0}, {3.27}, {0.45}, {0.025}, {8.0}, {10.0}, {0.5}};
+        std::vector<std::vector<double>> parameters = {{1.7}, {3.7}, {0.56}, {0.028}, {5.4}, {10.0}, {0.5}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
