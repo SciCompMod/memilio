@@ -20,7 +20,7 @@
 #ifndef MIO_ABM_TIME_H
 #define MIO_ABM_TIME_H
 
-#include "memilio/io/auto_serialize.h"
+#include "memilio/io/default_serialize.h"
 
 namespace mio
 {

@@ -24,7 +24,7 @@
 #include "abm/mobility_data.h"
 #include "abm/person_id.h"
 #include "abm/time.h"
-#include "memilio/io/auto_serialize.h"
+#include "memilio/io/default_serialize.h"
 #include <vector>
 
 namespace mio

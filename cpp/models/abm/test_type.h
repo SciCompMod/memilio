@@ -21,7 +21,7 @@
 #define MIO_ABM_TEST_TYPE_H
 
 #include "abm/time.h"
-#include "memilio/io/auto_serialize.h"
+#include "memilio/io/default_serialize.h"
 
 #include <cstdint>
 

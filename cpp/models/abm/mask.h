@@ -23,7 +23,7 @@
 
 #include "abm/mask_type.h"
 #include "abm/time.h"
-#include "memilio/io/auto_serialize.h"
+#include "memilio/io/default_serialize.h"
 
 namespace mio
 {

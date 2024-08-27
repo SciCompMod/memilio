@@ -26,7 +26,7 @@
 #include "abm/vaccine.h"
 #include "abm/test_type.h"
 #include "memilio/config.h"
-#include "memilio/io/auto_serialize.h"
+#include "memilio/io/default_serialize.h"
 #include "memilio/io/io.h"
 #include "memilio/math/time_series_functor.h"
 #include "memilio/utils/custom_index_array.h"

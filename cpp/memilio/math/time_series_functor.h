@@ -20,7 +20,7 @@
 #ifndef MIO_MATH_TIME_SERIES_FUNCTOR_H
 #define MIO_MATH_TIME_SERIES_FUNCTOR_H
 
-#include "memilio/io/auto_serialize.h"
+#include "memilio/io/default_serialize.h"
 #include "memilio/math/interpolation.h"
 #include "memilio/utils/time_series.h"
 

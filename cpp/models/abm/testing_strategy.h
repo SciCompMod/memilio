@@ -27,7 +27,7 @@
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/time.h"
-#include "memilio/io/auto_serialize.h"
+#include "memilio/io/default_serialize.h"
 
 #include <bitset>
 #include <vector>
