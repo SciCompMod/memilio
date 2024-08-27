@@ -177,8 +177,8 @@ struct ViralLoadDistributionsParameters {
     UniformDistribution<double>::ParamType viral_load_incline;
     UniformDistribution<double>::ParamType viral_load_decline;
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("ViralLoadDistributionsParameters")
             .add("viral_load_peak", viral_load_peak)
@@ -209,8 +209,8 @@ struct InfectivityDistributionsParameters {
     UniformDistribution<double>::ParamType infectivity_alpha;
     UniformDistribution<double>::ParamType infectivity_beta;
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("InfectivityDistributionsParameters")
             .add("infectivity_alpha", infectivity_alpha)
@@ -332,8 +332,8 @@ struct TestParameters {
     TimeSpan required_time;
     TestType type;
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("TestParameters")
             .add("sensitivity", sensitivity)

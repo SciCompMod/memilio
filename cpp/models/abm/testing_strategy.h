@@ -94,7 +94,7 @@ public:
      */
     bool evaluate(const Person& p, TimePoint t) const;
 
-    auto auto_serialize()
+    auto default_serialize()
     {
         return Members("TestingCriteria").add("ages", m_ages).add("infection_states", m_infection_states);
     }
@@ -150,8 +150,8 @@ public:
      */
     bool run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("TestingScheme")
             .add("criteria", m_testing_criteria)
@@ -191,8 +191,8 @@ public:
         LocationId id;
         std::vector<TestingScheme> schemes;
 
-        /// This method is used by the auto-serialization feature.
-        auto auto_serialize()
+        /// This method is used by the default serialization feature.
+        auto default_serialize()
         {
             return Members("LocalStrategy").add("type", type).add("id", id).add("schemes", schemes);
         }
@@ -261,8 +261,8 @@ public:
      */
     bool run_strategy(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("TestingStrategy").add("schemes", m_location_to_schemes_map);
     }

@@ -32,7 +32,7 @@ There is also support for a binary format. If you want to use a format directly,
 - IOStatus and IOResult:
      Used for error handling, see section "Error Handling" below.
 
-### Auto-serialization
+### Default serialization
 
 Before we get into the details of the framework, this feature provides an easy and convenient alternative to the
 serialize and deserialize functions. To give an example:
@@ -40,20 +40,25 @@ serialize and deserialize functions. To give an example:
 ```cpp
 struct Foo {
   int i;
-  auto auto_serialize() {
+  auto default_serialize() {
     return Members("Foo").add("i", i);
   }
 };
 ```
-The auto-serialization is less flexible than the serialize and deserialize functions and has additional requirements:
-- The class must be trivially constructible.
+The default serialization is less flexible than the serialize and deserialize functions and has additional 
+requirements:
+- The class must be default constructible.
+  - A *private* default constructor can be used by marking the struct `DefaultFactory` as a friend.
+    For the example above, the line `friend DefaultFactory<Foo>;` would be added to the class definition.
   - Alternatively, you may provide a specialization of the struct `DefaultFactory`. For more details,
-  view the struct's documentation.
-- Every class member must be added to Members exactly once (though the names and their order are arbitrary).
+    view the struct's documentation.
+- Every class member must be added to `Members` exactly once, and the provided names must be unique.
   - The members must be passed directly, like in the example. No copies, accessors, etc.
-- Every class member itself is both (auto-)(de)serializable and assignable.
+  - It is recommended, but not required, to add member variables to `Members` in the same order they are declared in
+    the class, using the variables' names or something very similar. 
+- Every class member itself must be serializable, deserializable and assignable.
 
-As to the feature set, auto-serialization only supports the `add_element` and `expect_element` operations defined in
+As to the feature set, default-serialization only supports the `add_element` and `expect_element` operations defined in
 the Concepts section below, where each operation's arguments are provided through the `add` function. Note that the
 value provided to `add` is also used to assign a value during deserialization, hence the class members must be used
 directly in the function (i.e. as a non-const lvalue reference).

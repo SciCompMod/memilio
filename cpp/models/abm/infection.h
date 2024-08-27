@@ -46,8 +46,8 @@ struct ViralLoad {
     ScalarType incline; ///< Incline of the ViralLoad during incline phase in log_10 scale per day (always positive).
     ScalarType decline; ///< Decline of the ViralLoad during decline phase in log_10 scale per day (always negative).
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("ViralLoad")
             .add("start_date", start_date)
@@ -125,8 +125,8 @@ public:
     */
     TimePoint get_start_date() const;
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("Infection")
             .add("infection_course", m_infection_course)

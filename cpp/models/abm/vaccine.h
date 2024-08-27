@@ -53,8 +53,8 @@ struct Vaccination {
     {
     }
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("Vaccination").add("exposure_type", exposure_type).add("time", time);
     }
@@ -65,7 +65,7 @@ struct Vaccination {
 
 } // namespace abm
 
-/// @brief Creates an instance of abm::Vaccination for auto-deserialization.
+/// @brief Creates an instance of abm::Vaccination for default serialization.
 template <>
 struct DefaultFactory<abm::Vaccination> {
     static abm::Vaccination create()

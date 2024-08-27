@@ -108,9 +108,9 @@ TEST_F(TestMathTimeSeriesFunctor, unhandledTypes)
     EXPECT_DEBUG_DEATH(mio::TimeSeriesFunctor<double>(unhandled_type, mio::TimeSeries<double>(0)),
                        "Unhandled TimeSeriesFunctorType!");
 
-    // abuse auto_serialize to set an invalid type
+    // abuse default_serialize to set an invalid type
     mio::TimeSeriesFunctor<double> functor;
-    std::get<0>(functor.auto_serialize().named_refs).value = unhandled_type;
+    std::get<0>(functor.default_serialize().named_refs).value = unhandled_type;
 
     // check assert in functor call
     EXPECT_DEBUG_DEATH(functor(0.0), "Unhandled TimeSeriesFunctorType!");

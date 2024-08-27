@@ -105,8 +105,8 @@ public:
         }
     }
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("TimeSeriesFunctor").add("type", m_type).add("data", m_data);
     }

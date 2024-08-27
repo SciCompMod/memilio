@@ -145,8 +145,8 @@ public:
     }
     /**@}*/
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("TimeSpan").add("seconds", m_seconds);
     }
@@ -292,8 +292,8 @@ public:
         return TimeSpan{m_seconds - p2.seconds()};
     }
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("TimePoint").add("seconds", m_seconds);
     }

@@ -90,7 +90,7 @@ struct Trip {
                (origin == other.origin);
     }
 
-    auto auto_serialize()
+    auto default_serialize()
     {
         return Members("Trip")
             .add("person_id", person_id)
@@ -168,8 +168,8 @@ public:
         return m_current_index;
     }
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("TestingScheme")
             .add("trips_weekday", m_trips_weekday)
@@ -185,6 +185,7 @@ private:
 
 } // namespace abm
 
+/// @brief Creates an instance of abm::Trip for default serialization.
 template <>
 struct DefaultFactory<abm::Trip> {
     static abm::Trip create()

@@ -50,8 +50,8 @@ struct GeographicalLocation {
         return !(latitude == other.latitude && longitude == other.longitude);
     }
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("GraphicalLocation").add("latitude", latitude).add("longitude", longitude);
     }
@@ -81,8 +81,8 @@ struct CellCapacity {
     uint32_t volume; ///< Volume of the Cell.
     uint32_t persons; ///< Maximal number of Person%s at the Cell.
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("CellCapacity").add("volume", volume).add("persons", persons);
     }
@@ -101,8 +101,8 @@ struct Cell {
     */
     ScalarType compute_space_per_person_relative() const;
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("Cell").add("capacity", m_capacity);
     }
@@ -269,8 +269,8 @@ public:
         m_geographical_location = location;
     }
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("Location")
             .add("id", m_id)

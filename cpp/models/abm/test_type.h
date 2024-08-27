@@ -49,8 +49,8 @@ struct TestResult {
     TimePoint time_of_testing{std::numeric_limits<int>::min()}; ///< The TimePoint when the Person performs the test.
     bool result{false}; ///< The test result.
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("TestResult").add("time_of_testing", time_of_testing).add("result", result);
     }

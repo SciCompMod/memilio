@@ -358,8 +358,8 @@ public:
 #endif
     }
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("RandomNumberGenerator").add("key", m_key).add("counter", m_counter).add("seeds", m_seeds);
     }

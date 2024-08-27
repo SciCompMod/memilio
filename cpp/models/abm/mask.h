@@ -73,8 +73,8 @@ public:
      */
     void change_mask(MaskType new_mask_type);
 
-    /// This method is used by the auto-serialization feature.
-    auto auto_serialize()
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
         return Members("Mask").add("mask_type", m_type).add("time_used", m_time_used);
     }
@@ -85,7 +85,7 @@ private:
 };
 } // namespace abm
 
-/// @brief Creates an instance of abm::Mask for auto-deserialization.
+/// @brief Creates an instance of abm::Mask for default serialization.
 template <>
 struct DefaultFactory<abm::Mask> {
     static abm::Mask create()
