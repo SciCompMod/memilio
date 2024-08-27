@@ -679,14 +679,15 @@ IOResult<std::bitset<N>> deserialize_internal(IOContext& io, Tag<std::bitset<N>>
     mio::unused(tag);
     auto obj  = io.expect_object("BitSet");
     auto bits = obj.expect_list("bitset", Tag<bool>{});
-    if (bits && bits.value().size() != N) { // "!bits" is handled by apply
-        return failure(StatusCode::InvalidValue, "Incorrent number of booleans to deserialize bitset. Expected " +
-                                                     std::to_string(N) + ", got " +
-                                                     std::to_string(bits.value().size()) + ".");
-    }
+
     return apply(
         io,
-        [](auto&& bits_) {
+        [](auto&& bits_) -> IOResult<std::bitset<N>> {
+            if (bits_.size() != N) {
+                return failure(StatusCode::InvalidValue,
+                               "Incorrent number of booleans to deserialize bitset. Expected " + std::to_string(N) +
+                                   ", got " + std::to_string(bits_.size()) + ".");
+            }
             std::bitset<N> bitset;
             for (size_t i = 0; i < N; i++) {
                 bitset[i] = bits_[i];

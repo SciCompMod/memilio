@@ -24,7 +24,6 @@
 #include "memilio/io/serializer_base.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/metaprogramming.h"
-#include <boost/exception/detail/type_info.hpp>
 #include <memory>
 #include <sstream>
 #include <type_traits>
@@ -78,7 +77,6 @@ public:
     */
     bool read(unsigned char* p, size_t s)
     {
-        std::cout << m_read_head << " + " << s << " / " << m_buf.size() << "\n";
         if (s <= (m_buf.size() - m_read_head)) {
             auto read_begin = m_buf.begin() + m_read_head;
             auto read_end   = read_begin + s;

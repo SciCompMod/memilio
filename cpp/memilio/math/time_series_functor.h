@@ -37,7 +37,7 @@ namespace mio
  *   - Requires at least one time point with exactly one value each. Time must be strictly monotic increasing.
  *   - Linearly interpolates between data points. Stays constant outside of provided data with first/last value.
  */
-enum TimeSeriesFunctorType
+enum class TimeSeriesFunctorType
 {
     LinearInterpolation,
 };
