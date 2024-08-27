@@ -1036,7 +1036,7 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
     std::cout << "RMSE icu: " << rmse_icu << std::endl;
     std::cout << "RMSE conf: " << rmse_conf << std::endl;
 
-    return (1.00 * rmse_dead) + (0.1 * rmse_icu) + (0.01 * 0.01 * rmse_conf);
+    return (1.00 * rmse_dead) + (0.1 * rmse_icu) + (0.01 * 0.01 * 4.0 * rmse_conf);
 }
 
 /**
@@ -1068,8 +1068,8 @@ std::vector<std::vector<double>> grid_points(const std::vector<double>& paramete
     std::vector<std::vector<double>> grid;
     for (size_t i = 0; i < parameter_points.size(); i++) {
         std::vector<double> temp;
-        double min_value = parameter_points[i] * 0.95;
-        double max_value = parameter_points[i] * 1.05;
+        double min_value = parameter_points[i] * 0.9;
+        double max_value = parameter_points[i] * 1.0;
         double step      = (max_value - min_value) / (number_of_points.at(i) - 1);
         for (int j = 0; j < number_of_points.at(i); j++) {
             temp.push_back(min_value + j * step);
@@ -1758,8 +1758,8 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
         const double testing_probability_sympt = params[3];
         const double ratio_asympt_to_sympt     = params[4];
 
-        const double lockdown_test_prob     = 1.1;
-        const auto after_lockdown_test_prob = 0.9;
+        const double lockdown_test_prob     = 1.2;
+        const auto after_lockdown_test_prob = 1.0;
 
         const auto seasonality_april = 0.95;
         const auto seasonality_may   = 0.85;
@@ -1990,8 +1990,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         // const double testing_probability_sympt  = 0.036;
         const double testing_probability_sympt = params[3];
 
-        const double lockdown_test_prob       = 1.1;
-        const double after_lockdown_test_prob = 0.9;
+        const double lockdown_test_prob       = 1.2;
+        const double after_lockdown_test_prob = 1.0;
 
         const auto seasonality_april = 0.95;
         const auto seasonality_may   = 0.85;
@@ -2443,7 +2443,7 @@ int main(int argc, char** argv)
         // 4: perc have to test if npi active
 
         std::vector<std::pair<double, double>> grid_boundaries = {
-            {1.6, 2.2}, {2.5, 4.5}, {0.2, 0.8}, {0.025, 0.040}, {3, 11}};
+            {1.7, 2.1}, {2.5, 4.0}, {0.2, 0.8}, {0.02, 0.04}, {4, 11}};
         std::vector<int> points_per_dim = {6, 6, 6, 6, 6};
 
         // std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.0333333, 5.0};
@@ -2468,7 +2468,7 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{2.0}, {3.27}, {0.3}, {0.031}, {6.0}, {10.0}, {0.5}};
+        std::vector<std::vector<double>> parameters = {{2.0}, {3.27}, {0.45}, {0.025}, {8.0}, {10.0}, {0.5}};
         auto every_combination                      = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
