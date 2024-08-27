@@ -74,8 +74,6 @@ const std::map<mio::osecir::InfectionState, mio::abm::InfectionState> infection_
     {mio::osecir::InfectionState::Recovered, mio::abm::InfectionState::Recovered},
     {mio::osecir::InfectionState::Dead, mio::abm::InfectionState::Dead}};
 
-std::map<mio::Date, std::vector<std::pair<uint32_t, uint32_t>>> vacc_map;
-
 /**
  * Determine initial distribution of infection states.
 */
@@ -166,7 +164,8 @@ size_t determine_age_group_from_rki(mio::AgeGroup age)
     }
 }
 
-void prepare_vaccination_state(mio::Date simulation_end, const std::string& filename)
+std::map<mio::Date, std::vector<std::pair<uint32_t, uint32_t>>> prepare_vaccination_state(mio::Date simulation_end,
+                                                                                          const std::string& filename)
 {
     // for saving previous day of vaccination
     std::vector<std::pair<uint32_t, uint32_t>> vacc_vector_prev(num_age_groupss);
@@ -174,6 +173,7 @@ void prepare_vaccination_state(mio::Date simulation_end, const std::string& file
     for (size_t i = 0; i < num_age_groupss; ++i) {
         vacc_vector_prev[i] = std::make_pair(0, 0);
     }
+    std::map<mio::Date, std::vector<std::pair<uint32_t, uint32_t>>> vacc_map{};
 
     //Read in file with vaccination data
     auto vacc_data = mio::read_vaccination_data(filename).value();
@@ -202,6 +202,7 @@ void prepare_vaccination_state(mio::Date simulation_end, const std::string& file
             }
         }
     }
+    return vacc_map;
 }
 
 /**
@@ -210,7 +211,8 @@ void prepare_vaccination_state(mio::Date simulation_end, const std::string& file
  * @param input 
  * @return int 
  */
-void assign_vaccination_state(mio::abm::World& world, mio::Date simulation_beginning)
+void assign_vaccination_state(mio::abm::World& world, mio::Date simulation_beginning,
+                              std::map<mio::Date, std::vector<std::pair<uint32_t, uint32_t>>> vacc_map)
 {
     // we check if we even have enough people to vaccinate in each respective age group
     std::vector<size_t> num_persons_by_age(num_age_groupss);
@@ -1050,6 +1052,9 @@ std::vector<std::vector<double>> grid_points(std::vector<std::pair<double, doubl
     for (size_t i = 0; i < parameter_boundaries.size(); i++) {
         std::vector<double> temp;
         double step = (parameter_boundaries[i].second - parameter_boundaries[i].first) / (number_of_points.at(i) - 1);
+        if (number_of_points.at(i) == 1) {
+            step = 0;
+        }
         for (int j = 0; j < number_of_points.at(i); j++) {
             temp.push_back(parameter_boundaries[i].first + j * step);
         }
@@ -1071,6 +1076,9 @@ std::vector<std::vector<double>> grid_points(const std::vector<double>& paramete
         double min_value = parameter_points[i] * 0.9;
         double max_value = parameter_points[i] * 1.0;
         double step      = (max_value - min_value) / (number_of_points.at(i) - 1);
+        if (number_of_points.at(i) == 1) {
+            step = 0;
+        }
         for (int j = 0; j < number_of_points.at(i); j++) {
             temp.push_back(min_value + j * step);
         }
@@ -1226,7 +1234,8 @@ void create_easter_social_event(mio::abm::World& world, double perc_easter_event
 void create_sampled_world(
     mio::abm::World& world, const fs::path& input_dir, const mio::abm::TimePoint& t0, int max_num_persons,
     mio::Date start_date_sim, double perc_easter_event,
-    mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_infection_distribution)
+    mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_infection_distribution,
+    std::map<mio::Date, std::vector<std::pair<uint32_t, uint32_t>>> vacc_map)
 {
     mio::unused(start_date_sim);
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
@@ -1249,7 +1258,7 @@ void create_sampled_world(
     restart_timer(timer, "time taken for assigning infection state");
 
     // Assign vaccination status to each person.
-    assign_vaccination_state(world, start_date_sim);
+    assign_vaccination_state(world, start_date_sim, vacc_map);
     restart_timer(timer, "time taken for assigning vaccination state");
     set_local_parameters(world);
 }
@@ -1736,15 +1745,14 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     std::vector<double> rmse_results_per_grid_point;
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
-    omp_set_nested(1);
-    omp_set_max_active_levels(1);
 #pragma omp parallel for num_threads(64) firstprivate(rng)
     for (size_t i = 0; i < grid_search_rank.size(); i++) {
         auto params = grid_search_rank[i];
 
         printf("I am Thread %d\n", omp_get_thread_num());
         // print my parameters
-        std::cout << "Rank: " << rank << " Thread: " << omp_get_thread_num() << " Parameters: ";
+        std::cout << "Rank: " << rank << " Thread: " << omp_get_thread_num() << "place bound: " << omp_get_place_num()
+                  << " Parameters: ";
         for (size_t j = 0; j < params.size(); j++) {
             std::cout << params.at(j) << " ";
         }
@@ -1785,8 +1793,8 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
         restart_timer(timer, "time for initial setup");
         auto initial_infection = determine_initial_infection_states_world(input_dir, start_date, dark_figure);
         restart_timer(timer, "time for determine_initial_infection_states_world");
-        prepare_vaccination_state(mio::offset_date_by_days(start_date, (int)tmax.days()),
-                                  (input_dir / "pydata/Germany/vacc_county_ageinf_ma7.json").string());
+        auto vacc_map = prepare_vaccination_state(mio::offset_date_by_days(start_date, (int)tmax.days()),
+                                                  (input_dir / "pydata/Germany/vacc_county_ageinf_ma7.json").string());
         restart_timer(timer, "time for vaccinaiton state");
         for (int j = 0; j < num_runs; j++) {
 
@@ -1798,7 +1806,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
             world.get_rng() = rng;
 
             create_sampled_world(world, input_dir, t0, max_num_persons, start_date, perc_easter_event,
-                                 initial_infection);
+                                 initial_infection, vacc_map);
 
             restart_timer(timer, "time taken for create sampled world");
             auto sim = mio::abm::Simulation(t0, std::move(world));
@@ -2052,8 +2060,8 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         restart_timer(timer, "time for initial setup");
         auto initial_infection = determine_initial_infection_states_world(input_dir, start_date, dark_figure);
         restart_timer(timer, "time for determine_initial_infection_states_world");
-        prepare_vaccination_state(mio::offset_date_by_days(start_date, (int)tmax.days()),
-                                  (input_dir / "pydata/Germany/vacc_county_ageinf_ma7.json").string());
+        auto vacc_map = prepare_vaccination_state(mio::offset_date_by_days(start_date, (int)tmax.days()),
+                                                  (input_dir / "pydata/Germany/vacc_county_ageinf_ma7.json").string());
         restart_timer(timer, "time for vaccinaiton state");
         // Loop over a number of runs
         for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
@@ -2065,7 +2073,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             world.get_rng() = rng;
 
             create_sampled_world(world, input_dir, t0, max_num_persons, start_date, perc_easter_event,
-                                 initial_infection);
+                                 initial_infection, vacc_map);
 
             restart_timer(timer, "time taken for create sampled world");
             auto sim = mio::abm::Simulation(t0, std::move(world));
@@ -2445,7 +2453,7 @@ int main(int argc, char** argv)
 
         std::vector<std::pair<double, double>> grid_boundaries = {
             {1.7, 2.1}, {2.5, 4.0}, {0.2, 0.8}, {0.02, 0.04}, {4, 11}};
-        std::vector<int> points_per_dim = {4, 4, 4, 1, 1};
+        std::vector<int> points_per_dim = {4, 4, 4, 2, 2};
 
         // std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.0333333, 5.0};
         // std::vector<double> grid_boundaries = {2, 3.33333, 0.3, 0.03, 5};
