@@ -107,7 +107,7 @@ void bind_SimulationNode(pybind11::module_& m, std::string const& name)
 {
     bind_class<mio::Node<mio::SimulationNode<Simulation>>, EnablePickling::IfAvailable>(m, name.c_str())
         .def_property_readonly("id",
-                               [](const mio::Node<Simulation>& self) {
+                               [](const mio::Node<mio::SimulationNode<Simulation>>& self) {
                                    return self.id;
                                })
         .def_property_readonly(

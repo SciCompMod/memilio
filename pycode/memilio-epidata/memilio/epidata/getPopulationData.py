@@ -23,9 +23,7 @@
 @brief Downloads data about population statistic
 
 """
-import configparser
 import warnings
-import getpass
 import requests
 import os
 import io
@@ -41,81 +39,18 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 pd.options.mode.copy_on_write = True
 
 
-def read_population_data(username, password):
+def read_population_data():
     """! Reads Population data from regionalstatistik.de
 
-    Username and Password are required to sign in on regionalstatistik.de.
     A request is made to regionalstatistik.de and the StringIO is read in as a csv into the dataframe format.
-
-    @param username Username to sign in at regionalstatistik.de. 
-    @param password Password to sign in at regionalstatistik.de.
     @return DataFrame
     """
 
     download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv'
-    req = requests.get(download_url, auth=(username, password))
+    req = requests.get(download_url)
     df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=6)
 
     return df_pop_raw
-
-# This function is needed for unittests
-# Fakefilesystem has problems with os.path
-
-
-def path_to_credential_file():
-    """! Returns path to .ini file where credentials are stored.
-    The Path can be changed if neccessary.
-    """
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'CredentialsRegio.ini')
-
-
-def manage_credentials(interactive):
-    """! Manages credentials for regionalstatistik.de (needed for dowload).
-
-    A connfig file inside the epidata folder is either written (if not existent yet)
-    with input from user or read with following format:
-    [CREDENTIALS]
-    Username = XXXXX
-    Password = XXXXX
-
-    @return Username and password to sign in at regionalstatistik.de. 
-    """
-    # path where ini file is found
-    path = path_to_credential_file()
-
-    gd.default_print(
-        'Info', 'No passwaord and/or username for regionalstatistik.de provided. Try to read from .ini file.')
-
-    # check if .ini file exists
-    if not os.path.exists(path):
-        if interactive:
-            gd.default_print(
-                'Info', '.ini file not found. Writing CredentialsRegio.ini...')
-            username = input(
-                "Please enter username for https://www.regionalstatistik.de/genesis/online\n")
-            password = getpass.getpass(
-                "Please enter password for https://www.regionalstatistik.de/genesis/online\n")
-            # create file
-            write_ini = gd.user_choice(
-                message='Do you want the credentials to be stored in an unencrypted .ini file?\n' +
-                'The next time this function is called, the credentials can be read from that file.')
-            if write_ini:
-                string = '[CREDENTIALS]\nUsername = ' + \
-                    username+'\nPassword = '+password
-                with open(path, 'w+') as file:
-                    file.write(string)
-        else:
-            raise gd.DataError(
-                'No .ini file found. Cannot access regionalstatistik.de for downloading population data.')
-
-    else:
-        parser = configparser.ConfigParser()
-        parser.read(path)
-
-        username = parser['CREDENTIALS']['Username']
-        password = parser['CREDENTIALS']['Password']
-
-    return username, password
 
 
 def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_format: str, merge_eisenach: bool):
@@ -285,8 +220,6 @@ def test_total_population(df_pop, age_cols):
 
 def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
                           out_folder: str = dd.defaultDict['out_folder'],
-                          username='',
-                          password='',
                           **kwargs
                           ) -> pd.DataFrame:
     """! Downloads or reads the population data.
@@ -299,9 +232,6 @@ def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
         downloaded. Default defined in defaultDict.
     @param out_folder Path to folder where data is written in folder
         out_folder/Germany. Default defined in defaultDict.
-    @param username Username to sign in at regionalstatistik.de.
-    @param password Password to sign in at regionalstatistik.de.
-
     @return DataFrame with adjusted population data for all ages to current level.
     """
     conf = gd.Conf(out_folder, **kwargs)
@@ -312,14 +242,10 @@ def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
             'Warning', 'Read_data is not supportet for getPopulationData.py. Setting read_data = False')
         read_data = False
 
-    # If no username or password is provided, the credentials are either read from an .ini file or,
-    # if the file does not exist they have to be given as user input.
-    if (username is None) or (password is None):
-        username, password = manage_credentials(conf.interactive)
     directory = os.path.join(out_folder, 'Germany')
     gd.check_dir(directory)
 
-    df_pop_raw = read_population_data(username, password)
+    df_pop_raw = read_population_data()
 
     return df_pop_raw
 
@@ -411,8 +337,6 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
                         file_format: str = dd.defaultDict['file_format'],
                         out_folder: str = dd.defaultDict['out_folder'],
                         merge_eisenach: bool = True,
-                        username='',
-                        password='',
                         **kwargs
                         ):
     """! Download age-stratified population data for the German counties.
@@ -453,8 +377,6 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
         read_data=read_data,
         out_folder=out_folder,
         file_format=file_format,
-        username=username,
-        password=password,
         **kwargs
     )
     preprocess_df = preprocess_population_data(
