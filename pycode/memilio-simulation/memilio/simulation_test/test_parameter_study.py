@@ -22,13 +22,13 @@ import unittest
 import numpy as np
 
 import memilio.simulation as mio
-import memilio.simulation.secir as secir
+import memilio.simulation.osecir as osecir
 
 
 class Test_ParameterStudy(unittest.TestCase):
 
     def _get_model(self):
-        model = secir.Model(1)
+        model = osecir.Model(1)
 
         A0 = mio.AgeGroup(0)
 
@@ -43,19 +43,19 @@ class Test_ParameterStudy(unittest.TestCase):
         model.parameters.ContactPatterns.cont_freq_mat.add_damping(
             mio.Damping(np.r_[0.7], 30.0))
 
-        model.populations[A0, secir.InfectionState.Exposed] = 100
-        model.populations[A0, secir.InfectionState.InfectedNoSymptoms] = 50
+        model.populations[A0, osecir.InfectionState.Exposed] = 100
+        model.populations[A0, osecir.InfectionState.InfectedNoSymptoms] = 50
         model.populations[A0,
-                          secir.InfectionState.InfectedNoSymptomsConfirmed] = 0
-        model.populations[A0, secir.InfectionState.InfectedSymptoms] = 50
+                          osecir.InfectionState.InfectedNoSymptomsConfirmed] = 0
+        model.populations[A0, osecir.InfectionState.InfectedSymptoms] = 50
         model.populations[A0,
-                          secir.InfectionState.InfectedSymptomsConfirmed] = 0
-        model.populations[A0, secir.InfectionState.InfectedSevere] = 20
-        model.populations[A0, secir.InfectionState.InfectedCritical] = 10
-        model.populations[A0, secir.InfectionState.Recovered] = 10
-        model.populations[A0, secir.InfectionState.Dead] = 0
+                          osecir.InfectionState.InfectedSymptomsConfirmed] = 0
+        model.populations[A0, osecir.InfectionState.InfectedSevere] = 20
+        model.populations[A0, osecir.InfectionState.InfectedCritical] = 10
+        model.populations[A0, osecir.InfectionState.Recovered] = 10
+        model.populations[A0, osecir.InfectionState.Dead] = 0
         model.populations.set_difference_from_total(
-            (A0, secir.InfectionState.Susceptible), 10000)
+            (A0, osecir.InfectionState.Susceptible), 10000)
 
         model.parameters.TransmissionProbabilityOnContact[A0] = 1.0
         model.parameters.RecoveredPerInfectedNoSymptoms[A0] = 0.09
@@ -69,16 +69,16 @@ class Test_ParameterStudy(unittest.TestCase):
 
     def test_graph(self):
         model = self._get_model()
-        graph = secir.ModelGraph()
+        graph = osecir.ModelGraph()
         graph.add_node(0, model)
         graph.add_node(1, model)
         graph.add_edge(0, 1, 0.01 * np.ones(10))
         graph.add_edge(1, 0, 0.01 * np.ones(10))
 
-        study = secir.ParameterStudy(graph, t0=1, tmax=10, dt=0.5, num_runs=3)
+        study = osecir.ParameterStudy(graph, t0=1, tmax=10, dt=0.5, num_runs=3)
 
-        self.assertEqual(study.secir_model_graph.num_nodes, 2)
-        self.assertEqual(study.secir_model_graph.num_edges, 2)
+        self.assertEqual(study.model_graph.num_nodes, 2)
+        self.assertEqual(study.model_graph.num_edges, 2)
 
     def test_run(self):
         model = self._get_model()
@@ -86,7 +86,7 @@ class Test_ParameterStudy(unittest.TestCase):
         t0 = 1
         tmax = 10
         num_runs = 3
-        study = secir.ParameterStudy(model, t0, tmax, num_runs)
+        study = osecir.ParameterStudy(model, t0, tmax, num_runs)
 
         self.assertEqual(study.t0, t0)
         self.assertEqual(study.tmax, tmax)

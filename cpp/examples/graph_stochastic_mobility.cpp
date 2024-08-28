@@ -94,12 +94,12 @@ int main(int /*argc*/, char** /*argv*/)
                                                                           fact * num_total);
     }
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MigrationEdgeStochastic>
+    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MobilityEdgeStochastic>
         graph;
     graph.add_node(1001, model, t0);
     graph.add_node(1002, model2, t0);
 
-    auto transition_rates = mio::MigrationCoefficients(model.populations.numel());
+    auto transition_rates = mio::MobilityCoefficients(model.populations.numel());
     ScalarType kappa      = 0.01;
 
     for (auto age = mio::AgeGroup(0); age < num_age_groups; age++) {
@@ -134,7 +134,7 @@ int main(int /*argc*/, char** /*argv*/)
     graph.add_edge(0, 1, std::move(transition_rates));
     graph.add_edge(1, 0, std::move(transition_rates));
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(graph));
+    auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
 
     sim.advance(tmax);
 
