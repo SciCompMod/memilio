@@ -1,7 +1,10 @@
 #include "memilio/io/mobility_io.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/logging.h"
+
+#ifdef MEMILIO_HAS_HDF5
 #include "memilio/io/hdf5_cpp.h"
+#endif // MEMILIO_HAS_HDF5
 
 #include <iostream>
 #include <fstream>
@@ -136,6 +139,7 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
     return success(mobility);
 }
 
+#ifdef MEMILIO_HAS_HDF5
 IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<double>>>& ensemble_edges,
                           const std::vector<std::pair<int, int>>& pairs_edges, const fs::path& result_dir,
                           bool save_single_runs, bool save_percentiles)
@@ -277,5 +281,6 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
     }
     return success();
 }
+#endif // MEMILIO_HAS_HDF5
 
 } // namespace mio
