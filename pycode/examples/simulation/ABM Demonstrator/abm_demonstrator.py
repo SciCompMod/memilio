@@ -49,6 +49,23 @@ age_group_60_to_79 = AgeGroup(4)
 age_group_80_plus = AgeGroup(5)
 
 
+def age_group_to_string(age_group):
+    if (age_group == age_group_0_to_4):
+        return "0"
+    elif (age_group == age_group_5_to_14):
+        return "1"
+    elif (age_group == age_group_15_to_34):
+        return "2"
+    elif (age_group == age_group_35_to_59):
+        return "3"
+    elif (age_group == age_group_60_to_79):
+        return "4"
+    elif (age_group == age_group_80_plus):
+        return "5"
+    else:
+        return "AgeGroup not found"
+
+
 def set_infection_parameters(parameters):
 
     infection_params = abm.Parameters(num_age_groups)
@@ -663,20 +680,49 @@ def write_infection_paths_to_file_states(path, log):
     f.close()
 
 
-def write_infection_paths_to_file(path, log):
-    agent_ids = [log[2][0][i][1] for i in range(len(log[2][0]))]
+def write_infection_paths_to_file(path, world, tmax):
     with open(path, 'w') as f:
         f.write("Agent_id S E I_ns I_sy I_sev I_cri R D\n")
-        for id in agent_ids:
+        for person in world.persons:
             line = str(id) + " "
-            # times_per_state is number of time points per compartment: [S, E, I_ns, I_sy, I_sev, I_cri, R, D]
-            times_per_state = [0 for comp in range(8)]
-            for t in range(len(log[2])):
-                times_per_state[int(log[2][t][id][3])] += 1
-            for state in range(len(times_per_state)):
-                line += str(times_per_state[state]) + " "
-            f.write(line)
-            f.write('\n')
+            if person.infection_state(tmax) == abm.InfectionState.Susceptible:
+                line += str(tmax.hours) + " "
+                for i in range(int(abm.InfectionState.Count)-1):
+                    line += "0 "
+            else:
+                time_S = max(
+                    person.infection.get_infection_start() - abm.TimePoint(0), abm.TimeSpan(0))
+                time_E = person.infection.get_time_in_state(
+                    abm.InfectionState.Exposed)
+                time_INS = person.infection.get_time_in_state(
+                    abm.InfectionState.InfectedNoSymptoms)
+                time_ISy = person.infection.get_time_in_state(
+                    abm.InfectionState.InfectedSymptoms)
+                time_ISev = person.infection.get_time_in_state(
+                    abm.InfectionState.InfectedSevere)
+                time_ICri = person.infection.get_time_in_state(
+                    abm.InfectionState.InfectedCritical)
+                time_R = 0
+                time_D = 0
+                if (person.infection_state(tmax) == abm.InfectionState.Recovered):
+                    time_infected = time_E + time_INS + time_ISy + time_ISev + time_ICri
+                    if (time_S.hours == 0):
+                        time_R = tmax - \
+                            (time_infected +
+                             (person.infection.get_infection_start() - abm.TimePoint(0)))
+                    else:
+                        time_R = tmax - time_S - time_infected
+                if (person.infection_state(tmax) == abm.InfectionState.Dead):
+                    time_infected = time_E + time_INS + time_ISy + time_ISev + time_ICri
+                    if (time_S.hours == 0):
+                        time_R = tmax - \
+                            (time_infected +
+                             (person.infection.get_infection_start() - abm.TimePoint(0)))
+                    else:
+                        time_R = tmax - time_S - time_infected
+                line += str(time_S.hours) + " " + str(time_E.hours) + " " + str(time_INS.hours) + " " + str(time_ISy) + " " \
+                    + str(time_ISev) + " " + str(time_ICri) + \
+                    " " + str(time_R) + " " + str(time_D)
     f.close()
 
 
@@ -697,10 +743,20 @@ def set_sim_result_at_start(sim):
         result += location.population.get_last_value()
 
 
+def write_age_and_hh(world, path):
+    with open(path, 'w') as f:
+        for person in world.persons:
+            line = str(person.id) + " " + age_group_to_string(person.age) + " " + \
+                str(person.assigned_location(abm.LocationType.Home))
+            f.write(line)
+            f.write('\n')
+        f.close()
+
+
 def run_abm_simulation():
     mio.set_log_level(mio.LogLevel.Warning)
     input_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/'
-    output_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/'
+    output_path = 'H:/Documents/INSIDeDemonstrator/share_with_julia/memilio_output/20240828/'
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(0)
     # starting time point
@@ -728,18 +784,20 @@ def run_abm_simulation():
     assign_locations(sim.world)
     # output object
     history = History()
+    # just used for debugging
+    # write_age_and_hh(sim.world, os.path.join(output_path, 'age_hh.txt'))
     # advance simulation until tmax
     sim.advance(tmax, history)
     # results collected during the simulation
     log = history.log
+    # write infection paths per agent to file
+    write_infection_paths_to_file(os.path.join(
+        output_path, 'infection_paths.txt'), sim.world, tmax)
     # write simulation results to txt file
     write_results_to_file(os.path.join(output_path, 'output.txt'), log)
     # write location mapping to txt file
     write_location_mapping_to_file(
         os.path.join(output_path, 'location_mapping.txt'), mapping)
-    # write infection paths per agent to file
-    write_infection_paths_to_file(os.path.join(
-        output_path, 'infection_paths.txt'), log)
 
     print('done')
 

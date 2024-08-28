@@ -19,6 +19,7 @@
 */
 
 #include "abm/infection.h"
+#include <algorithm>
 #include <math.h>
 
 namespace mio
@@ -85,12 +86,13 @@ ScalarType Infection::get_infectivity(TimePoint t) const
     auto scaled_time       = TimePoint(0) + seconds(int(scaling_factor * (t.seconds() - time_shift.seconds()) -
                                                   (scaling_factor - 1) * m_viral_load.start_date.seconds()));
     ScalarType infectivity = 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(scaled_time))));
-    if (m_infection_course.size() > 3 && m_infection_course[3].second == InfectionState::InfectedSevere) {
-        return infectivity;
-    }
-    else {
-        return 0.75 * infectivity;
-    }
+    return 0.75 * infectivity;
+    // if (m_infection_course.size() > 3 && m_infection_course[3].second == InfectionState::InfectedSevere) {
+    //     return infectivity;
+    // }
+    // else {
+    //     return 0.75 * infectivity;
+    // }
 }
 
 VirusVariant Infection::get_virus_variant() const
@@ -132,6 +134,19 @@ bool Infection::is_detected() const
 TimePoint Infection::get_start_date() const
 {
     return m_viral_load.start_date;
+}
+
+TimeSpan Infection::get_time_in_state(InfectionState state)
+{
+    auto pos = std::find_if(m_infection_course.begin(), m_infection_course.end(),
+                            [state](const std::pair<TimePoint, InfectionState>& inf) {
+                                return (inf.second == state);
+                            });
+    // infection state is not part of infection course
+    if (pos == m_infection_course.end()) {
+        return TimeSpan(0);
+    }
+    return ((pos + 1)->first - pos->first);
 }
 
 TimePoint Infection::draw_infection_course(Person::RandomNumberGenerator& rng, AgeGroup age, const Parameters& params,

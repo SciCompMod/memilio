@@ -120,6 +120,14 @@ public:
     */
     TimePoint get_start_date() const;
 
+    /**
+     * @brief Get the the time in #InfectionState. 
+     * If the infection state is not part of the infection course, the time is zero.
+     * @param[in] state InfectionState of the query.
+     * @return TimeSpan spent in state.
+     */
+    TimeSpan get_time_in_state(InfectionState state);
+
 private:
     /**
      * @brief Determine ViralLoad course and Infection course based on init_state.
@@ -159,11 +167,6 @@ private:
      */
     TimePoint draw_infection_course_backward(Person::RandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
                                              TimePoint init_date, InfectionState init_state);
-
-    /**
-     * @return the time a person is infected.
-    */
-    void get_time_infected();
 
     std::vector<std::pair<TimePoint, InfectionState>> m_infection_course; ///< Start date of each #InfectionState.
     VirusVariant m_virus_variant; ///< Variant of the Infection.

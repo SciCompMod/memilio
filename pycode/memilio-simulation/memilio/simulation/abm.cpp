@@ -191,8 +191,18 @@ PYBIND11_MODULE(_simulation_abm, m)
              [](mio::abm::Person& self, mio::abm::Infection& infection, mio::abm::TimePoint t) {
                  self.add_new_infection(std::move(infection), t);
              })
+        .def("assigned_location",
+             [](mio::abm::Person& self, mio::abm::LocationType type) {
+                 return self.get_assigned_location_index(type);
+             })
+        .def("infection_state",
+             [](mio::abm::Person& self, mio::abm::TimePoint t) {
+                 return self.get_infection_state(t);
+             })
+        .def_property_readonly("infection", py::overload_cast<>(&mio::abm::Person::get_infection, py::const_))
         .def_property_readonly("location", py::overload_cast<>(&mio::abm::Person::get_location, py::const_))
         .def_property_readonly("age", &mio::abm::Person::get_age)
+        .def_property_readonly("id", &mio::abm::Person::get_person_id)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
 
     py::class_<mio::abm::HouseholdMember>(m, "HouseholdMember")
@@ -238,7 +248,11 @@ PYBIND11_MODULE(_simulation_abm, m)
             auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
             return mio::abm::Infection(rng, variant, person.get_age(), world.parameters, start_date, start_state,
                                        person.get_latest_protection(), detected);
-        }));
+        }))
+        .def("get_infection_start", &mio::abm::Infection::get_infection_start)
+        .def("get_time_in_state", [](mio::abm::Infection& self, mio::abm::InfectionState state) {
+            return self.get_time_in_state(state);
+        });
 
     py::class_<mio::abm::Location>(m, "Location")
         .def("set_capacity", &mio::abm::Location::set_capacity)
