@@ -1608,10 +1608,10 @@ void add_npi_testing_strategies_to_world(mio::abm::Simulation& sim, mio::abm::Ti
                                 antigen_test_parameters, testing_probability_sympt);
     auto testing_scheme_asympt_easter =
         mio::abm::TestingScheme(testing_criteria_asympt, testing_min_time, lockdown_start_date, easter_end_date,
-                                antigen_test_parameters, 0.66 * testing_probability_asympt);
+                                antigen_test_parameters, 1.0 * testing_probability_asympt);
     auto testing_scheme_sympt_easter =
         mio::abm::TestingScheme(testing_criteria_sympt, testing_min_time, lockdown_start_date, easter_end_date,
-                                antigen_test_parameters, 0.66 * testing_probability_sympt);
+                                antigen_test_parameters, 1.0 * testing_probability_sympt);
     auto testing_scheme_asympt_wl =
         mio::abm::TestingScheme(testing_criteria_asympt, testing_min_time, easter_end_date, lockdown_end_date,
                                 antigen_test_parameters, lockdown_prob * testing_probability_asympt);
@@ -1995,18 +1995,18 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         const double viral_shedding_rate        = params[0];
         const double dark_figure                = params[1];
         const double contact_red_lockdown       = params[2];
-        const double damping_community_lockdown = 0.5;
+        const double damping_community_lockdown = 0.8;
         // const double testing_probability_sympt  = 0.036;
         const double testing_probability_sympt = params[3];
 
-        const double lockdown_test_prob       = 1.2;
+        const double lockdown_test_prob       = 1.0;
         const double after_lockdown_test_prob = 1.0;
 
         const auto seasonality_april = 0.95;
         const auto seasonality_may   = 0.85;
 
         const double masks                            = 0.25;
-        const double after_lockdown_contact_reduction = 0.50;
+        const double after_lockdown_contact_reduction = 1.0;
         // const double ratio_asympt_to_sympt            = 20.0;
         const double ratio_asympt_to_sympt = params[4];
         const double perc_easter_event     = 0.2;
@@ -2122,7 +2122,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                         location.add_damping(mio::abm::TimePoint(mio::abm::days(0).seconds()), 0.5); // from 2021-03-01
                         location.get_infection_parameters().get<mio::abm::ContactRates>().array() *= (0.5);
                         location.add_damping(mio::abm::TimePoint(mio::abm::days(date_of_lockdown).seconds()),
-                                             0.00); // from 2021-03-15
+                                             0.5); // from 2021-03-15
                         location.add_damping(mio::abm::TimePoint(mio::abm::days(end_date_of_lockdown).seconds()),
                                              0.5); // from 2021-04-12 till 2021-05-30
                     }
@@ -2146,7 +2146,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                         location.add_damping(mio::abm::TimePoint(mio::abm::days(0).seconds()), 0.75); // from 2021-03-15
                         // location.get_infection_parameters().get<mio::abm::ContactRates>().array() *= (0.75 * 0.75);
                         location.add_damping(mio::abm::TimePoint(mio::abm::days(date_of_lockdown).seconds()),
-                                             0.7); // from 2021-03-15
+                                             0.75); // from 2021-03-15
                         location.add_damping(mio::abm::TimePoint(mio::abm::days(end_date_of_lockdown).seconds()),
                                              0.75); // from 2021-03-15
                     }
@@ -2475,7 +2475,8 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{1.76}, {3.7}, {0.53}, {0.035}, {15.0}, {10.0}, {0.5}};
+        std::vector<std::vector<double>> parameters = {{1.76}, {3.7},  {1.0}, {0.035, 0.105, 0.175},
+                                                       {15.0}, {10.0}, {0.5}};
         // std::vector<std::vector<double>> parameters = {
         //     {1.76}, {3.7}, {0.53}, {0.035}, {15.0}, {2, 5, 8, 11, 14}, {0.0, 0.25, 0.5, 0.75, 1.0}};
         auto every_combination = every_combination_of_parameters(parameters);
