@@ -1745,7 +1745,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
     std::vector<double> rmse_results_per_grid_point;
     rmse_results_per_grid_point.resize(grid_search_rank.size());
 
-#pragma omp parallel for num_threads(96) firstprivate(rng)
+#pragma omp parallel for num_threads(128) firstprivate(rng)
     for (size_t i = 0; i < grid_search_rank.size(); i++) {
         auto params = grid_search_rank[i];
 
@@ -2458,7 +2458,7 @@ int main(int argc, char** argv)
         std::vector<double> grid_boundaries = {1.76, 3.7, 0.53, 0.035, 15.0};
         // std::vector<double> grid_boundaries = {1.76, 3.7, 0.53, 0.03, 7.8};
         // std::vector<double> grid_boundaries = {1.88, 3.7, 0.35, 0.035, 12.6};
-        std::vector<int> points_per_dim = {6, 6, 6, 6, 6};
+        std::vector<int> points_per_dim = {4, 4, 4, 4, 4};
 
         // std::vector<std::pair<double, double>> grid_boundaries = {
         // {1.79, 1.83}, {3.28, 3.29}, {0.52, 0.56}, {0.03, 0.04}, {1.0, 15.0}};
@@ -2475,9 +2475,9 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        // std::vector<std::vector<double>> parameters = {{1.76}, {3.7}, {0.53}, {0.035}, {15.0}, {10.0}, {0.5}};
-        std::vector<std::vector<double>> parameters = {
-            {1.76}, {3.7}, {0.53}, {0.035}, {15.0}, {2, 5, 8, 11, 14}, {0.0, 0.25, 0.5, 0.75, 1.0}};
+        std::vector<std::vector<double>> parameters = {{1.76}, {3.7}, {0.53}, {0.035}, {15.0}, {10.0}, {0.5}};
+        // std::vector<std::vector<double>> parameters = {
+        //     {1.76}, {3.7}, {0.53}, {0.035}, {15.0}, {2, 5, 8, 11, 14}, {0.0, 0.25, 0.5, 0.75, 1.0}};
         auto every_combination = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
