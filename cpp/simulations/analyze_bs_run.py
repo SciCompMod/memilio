@@ -679,7 +679,7 @@ def plot_cumulative_detected_infections(path):
     time = time[0:90]
 
     # we calculate the RMSE
-    rmse_detected = ((df_abb - total_50)**2).mean() * 0.01 * 0.01 * 4.0
+    rmse_detected = ((df_abb - total_50)**2).mean() * 0.01 * 0.01 * 3.0
 
 
 
