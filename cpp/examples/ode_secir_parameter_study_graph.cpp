@@ -228,7 +228,7 @@ int main()
     const auto num_days_sim = 30.0;
     const auto num_runs     = 10;
 
-    mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>> params_graph;
+    mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>> params_graph;
 
     const int num_age_groups = 6;
     mio::osecir::Model model(num_age_groups);
@@ -294,7 +294,7 @@ int main()
             edges.reserve(results_graph.edges().size());
             std::transform(results_graph.edges().begin(), results_graph.edges().end(), std::back_inserter(edges),
                            [](auto&& edge) {
-                               return edge.property.get_migrated();
+                               return edge.property.get_mobility_results();
                            });
 
             std::cout << "Run " << run_id << " done\n";

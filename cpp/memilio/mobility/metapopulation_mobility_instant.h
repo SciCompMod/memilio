@@ -139,7 +139,7 @@ public:
      * @param coeffs mobility coefficients
      */
     MobilityParameters(const Eigen::VectorXd& coeffs)
-        : m_coefficients({MigrationCoefficients(coeffs)})
+        : m_coefficients({MobilityCoefficients(coeffs)})
         , m_save_indices(0)
     {
     }
@@ -147,10 +147,10 @@ public:
     /**
     * @brief Constructor for a new MobilityParameters object.
     *
-    * @param coeffs migration coefficients
+    * @param coeffs Mobility coefficients
     * @param save_indices 2D vector of indices. Each inner vector represents a group of indices to be saved.
     */
-    MobilityParameters(const MigrationCoefficientGroup& coeffs, const std::vector<std::vector<size_t>>& save_indices)
+    MobilityParameters(const MobilityCoefficientGroup& coeffs, const std::vector<std::vector<size_t>>& save_indices)
         : m_coefficients(coeffs)
         , m_save_indices(save_indices)
     {
@@ -159,11 +159,11 @@ public:
     /**
     * @brief Constructor for a new MobilityParameters object.
     *
-    * @param coeffs migration coefficients
+    * @param coeffs Mobility coefficients
     * @param save_indices 2D vector of indices. Each inner vector represents a group of indices to be saved.
     */
     MobilityParameters(const Eigen::VectorXd& coeffs, const std::vector<std::vector<size_t>>& save_indices)
-        : m_coefficients({MigrationCoefficients(coeffs)})
+        : m_coefficients({MobilityCoefficients(coeffs)})
         , m_save_indices(save_indices)
     {
     }
@@ -314,13 +314,13 @@ public:
     }
 
     /**
-     * create edge with coefficients as MigrationParameters object and a 2d vector of indices which determine which compartments we save.
+     * create edge with coefficients as MobilityParameters object and a 2d vector of indices which determine which compartments we save.
      * @param coeffs % of people in each group and compartment that migrate in each time step.
      * @param save_indices 2D vector of indices. Each inner vector represents a group of indices to be saved.
      */
-    MigrationEdge(const MigrationParameters<FP>& params, const std::vector<std::vector<size_t>>& save_indices)
+    MobilityEdge(const MobilityParameters<FP>& params, const std::vector<std::vector<size_t>>& save_indices)
         : m_parameters(params)
-        , m_migrated(params.get_coefficients().get_shape().rows())
+        , m_mobile_population(params.get_coefficients().get_shape().rows())
         , m_return_times(0)
         , m_return_mobile_population(false)
         , m_save_indices(save_indices)
@@ -333,9 +333,9 @@ public:
      * @param coeffs % of people in each group and compartment that migrate in each time step.
      * @param save_indices 2D vector of indices. Each inner vector represents a group of indices to be saved.
      */
-    MigrationEdge(const Eigen::VectorXd& coeffs, const std::vector<std::vector<size_t>>& save_indices)
+    MobilityEdge(const Eigen::VectorXd& coeffs, const std::vector<std::vector<size_t>>& save_indices)
         : m_parameters(coeffs)
-        , m_migrated(coeffs.rows())
+        , m_mobile_population(coeffs.rows())
         , m_return_times(0)
         , m_return_mobile_population(false)
         , m_save_indices(save_indices)
@@ -355,11 +355,11 @@ public:
     * Retrieve the count of commuters in selected infection states, 
     * along with the total number of commuter.
     */
-    TimeSeries<ScalarType>& get_migrated()
+    TimeSeries<ScalarType>& get_mobility_results()
     {
         return m_mobility_results;
     }
-    const TimeSeries<ScalarType>& get_migrated() const
+    const TimeSeries<ScalarType>& get_mobility_results() const
     {
         return m_mobility_results;
     }
@@ -388,7 +388,7 @@ private:
     TimeSeries<double> m_mobility_results; // save results from edges + entry for the total number of commuters
 
     /**
-     * Computes a condensed version of m_migrated and puts it in m_mobility_results.
+     * Computes a condensed version of m_mobile_population and puts it in m_mobility_results.
      * m_mobility_results then only contains commuters with infection states InfectedNoSymptoms and InfectedSymptoms.
      * Additionally, the total number of commuters is stored in the last entry of m_mobility_results.
      * @param[in] t current time
@@ -397,12 +397,12 @@ private:
 };
 
 template <typename FP>
-void MigrationEdge<FP>::condense_m_mobility(const double t)
+void MobilityEdge<FP>::condense_m_mobility(const double t)
 {
     const size_t save_indices_size = this->m_save_indices.size();
     if (save_indices_size > 0) {
 
-        const auto& last_value           = m_migrated.get_last_value();
+        const auto& last_value           = m_mobile_population.get_last_value();
         Eigen::VectorXd condensed_values = Eigen::VectorXd::Zero(save_indices_size + 1);
 
         // sum up the values of m_save_indices for each group (e.g. Age groups)
@@ -415,7 +415,7 @@ void MigrationEdge<FP>::condense_m_mobility(const double t)
                        });
 
         // the last value is the sum of commuters
-        condensed_values[save_indices_size] = m_migrated.get_last_value().sum();
+        condensed_values[save_indices_size] = m_mobile_population.get_last_value().sum();
 
         // Move the condensed values to the m_mobility_results time series
         m_mobility_results.add_time_point(t, std::move(condensed_values));
@@ -588,8 +588,8 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
                     m_mobile_population[i](j) += remaining_after_return(j);
                 }
             }
-            node_from.get_result().get_last_value() += m_migrated[i];
-            node_to.get_result().get_last_value() -= m_migrated[i];
+            node_from.get_result().get_last_value() += m_mobile_population[i];
+            node_to.get_result().get_last_value() -= m_mobile_population[i];
             condense_m_mobility(t);
             m_mobile_population.remove_time_point(i);
             m_return_times.remove_time_point(i);

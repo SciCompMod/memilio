@@ -297,7 +297,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     graph.add_node(0, model);
     graph.add_node(1, model);
     graph.add_edge(0, 1,
-                   mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
+                   mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0), indices_save_edges));
 
     auto num_runs        = 3;
     auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
@@ -331,7 +331,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
             ensemble_edges.back().reserve(results_graph.edges().size());
             std::transform(results_graph.edges().begin(), results_graph.edges().end(),
                            std::back_inserter(ensemble_edges.back()), [](auto&& edge) {
-                               return edge.property.get_migrated();
+                               return edge.property.get_mobility_results();
                            });
 
             return 0; //function needs to return something

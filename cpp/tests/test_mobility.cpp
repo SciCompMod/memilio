@@ -216,21 +216,21 @@ TEST(TestMobility, condense_m_mobility)
     double t = 0.;
     mio::SimulationNode<mio::osecir::Simulation<>> node1(model, t);
     mio::SimulationNode<mio::osecir::Simulation<>> node2(model, t);
-    mio::MigrationEdge edge1(Eigen::VectorXd::Constant(10, 0.1), indices_save_edges);
-    edge1.apply_migration(t, 0.0, node1, node2);
-    auto migrated = edge1.get_migrated().get_last_value();
-    EXPECT_NEAR(migrated[0], 1.0, 1e-12);
-    EXPECT_NEAR(migrated[1], 2.0, 1e-12);
-    EXPECT_NEAR(migrated[2], 100.0, 1e-12);
+    mio::MobilityEdge edge1(Eigen::VectorXd::Constant(10, 0.1), indices_save_edges);
+    edge1.apply_mobility(t, 0.0, node1, node2);
+    auto mobility = edge1.get_mobility_results().get_last_value();
+    EXPECT_NEAR(mobility[0], 1.0, 1e-12);
+    EXPECT_NEAR(mobility[1], 2.0, 1e-12);
+    EXPECT_NEAR(mobility[2], 100.0, 1e-12);
 
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 100;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 30;
     mio::SimulationNode<mio::osecir::Simulation<>> node3(model, t);
     mio::SimulationNode<mio::osecir::Simulation<>> node4(model, t);
-    mio::MigrationEdge edge2(Eigen::VectorXd::Constant(10, 0.1), indices_save_edges);
-    edge2.apply_migration(t, 0.5, node3, node4);
-    migrated = edge2.get_migrated().get_last_value();
-    EXPECT_NEAR(migrated[0], 11.0, 1e-12);
-    EXPECT_NEAR(migrated[1], 5.0, 1e-12);
-    EXPECT_NEAR(migrated[2], 113.0, 1e-12);
+    mio::MobilityEdge edge2(Eigen::VectorXd::Constant(10, 0.1), indices_save_edges);
+    edge2.apply_mobility(t, 0.5, node3, node4);
+    mobility = edge2.get_mobility_results().get_last_value();
+    EXPECT_NEAR(mobility[0], 11.0, 1e-12);
+    EXPECT_NEAR(mobility[1], 5.0, 1e-12);
+    EXPECT_NEAR(mobility[2], 113.0, 1e-12);
 }

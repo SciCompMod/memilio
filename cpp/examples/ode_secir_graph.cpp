@@ -30,7 +30,7 @@ int main()
 {
     const auto t0   = 0.;
     const auto tmax = 30.;
-    const auto dt   = 0.5; //time step of migration, daily migration every second step
+    const auto dt   = 0.5; //time step of Mobility, daily Mobility every second step
 
     const size_t num_groups = 1;
     mio::osecir::Model model(num_groups);
@@ -90,18 +90,18 @@ int main()
             model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}));
     }
 
-    mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge<ScalarType>> g;
+    mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MobilityEdge<ScalarType>> g;
     g.add_node(1001, model_group1, t0);
     g.add_node(1002, model_group2, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
     g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    auto sim = mio::make_mobility_sim(t0, dt, std::move(g));
 
     sim.advance(tmax);
 
     auto& edge_1_0 = sim.get_graph().edges()[1];
-    auto& results  = edge_1_0.property.get_migrated();
+    auto& results  = edge_1_0.property.get_mobility_results();
     results.print_table({"Commuter INS", "Commuter ISy", "Commuter Total"});
 
     return 0;
