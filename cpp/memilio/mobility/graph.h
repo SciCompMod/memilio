@@ -331,13 +331,14 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
  * @param[in] contact_locations_size Number of contact locations.
  * @param[in] read_func Function that reads commuting matrices.
  * @param[in] commuting_weights Vector with a commuting weight for every AgeGroup.
+ * @param[in] indices_of_saved_edges Vector of vectors with indices of the compartments that should be saved on the edges.
  */
 template <class ContactLocation, class Model, class MobilityParams, class MobilityCoefficientGroup,
           class InfectionState, class ReadFunction>
 IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MobilityParams>& params_graph,
                          std::initializer_list<InfectionState>& mobile_compartments, size_t contact_locations_size,
                          ReadFunction&& read_func, std::vector<ScalarType> commuting_weights,
-                         bool save_results_edges = false, std::vector<std::vector<size_t>> indices_save_edges = {})
+                         std::vector<std::vector<size_t>> indices_of_saved_edges = {})
 {
     // mobility between nodes
     BOOST_OUTCOME_TRY(auto&& mobility_data_commuter,
@@ -390,12 +391,7 @@ IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MobilityParams>&
             //only add edges with mobility above thresholds for performance
             //thresholds are chosen empirically so that more than 99% of mobility is covered, approx. 1/3 of the edges
             if (commuter_coeff_ij > 4e-5 || twitter_coeff > 1e-5) {
-                if (save_results_edges) {
-                    params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs), indices_save_edges);
-                }
-                else {
-                    params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs));
-                }
+                params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs), indices_of_saved_edges);
             }
         }
     }

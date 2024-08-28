@@ -297,7 +297,8 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     graph.add_node(0, model);
     graph.add_node(1, model);
     graph.add_edge(0, 1,
-                   mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0), indices_save_edges));
+                   mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0),
+                                                   indices_save_edges));
 
     auto num_runs        = 3;
     auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
@@ -434,36 +435,36 @@ TEST(TestSaveResult, save_edges)
 
     // group 0
     auto result_from_file_group0 = results_from_file.value()[0];
-    ASSERT_EQ(result_from_file_group0.get_groups().get_num_time_points(), 3);
-    ASSERT_EQ(result_from_file_group0.get_groups().get_num_elements(), 6);
-    ASSERT_EQ(result_from_file_group0.get_groups().get_value(0), (Eigen::VectorXd(6) << 0, 0, 0, 2, 2, 2).finished());
-    ASSERT_EQ(result_from_file_group0.get_groups().get_value(1), (Eigen::VectorXd(6) << 1, 1, 1, 3, 3, 3).finished());
-    ASSERT_EQ(result_from_file_group0.get_groups().get_value(2), (Eigen::VectorXd(6) << 1, 1, 1, 5, 5, 5).finished());
-    ASSERT_EQ(result_from_file_group0.get_groups().get_time(0), 0.0);
-    ASSERT_EQ(result_from_file_group0.get_groups().get_time(1), 1.0);
-    ASSERT_EQ(result_from_file_group0.get_groups().get_time(2), 2.0);
+    EXPECT_EQ(result_from_file_group0.get_groups().get_num_time_points(), 3);
+    EXPECT_EQ(result_from_file_group0.get_groups().get_num_elements(), 6);
+    EXPECT_EQ(result_from_file_group0.get_groups().get_value(0), (Eigen::VectorXd(6) << 0, 0, 0, 2, 2, 2).finished());
+    EXPECT_EQ(result_from_file_group0.get_groups().get_value(1), (Eigen::VectorXd(6) << 1, 1, 1, 3, 3, 3).finished());
+    EXPECT_EQ(result_from_file_group0.get_groups().get_value(2), (Eigen::VectorXd(6) << 1, 1, 1, 5, 5, 5).finished());
+    EXPECT_EQ(result_from_file_group0.get_groups().get_time(0), 0.0);
+    EXPECT_EQ(result_from_file_group0.get_groups().get_time(1), 1.0);
+    EXPECT_EQ(result_from_file_group0.get_groups().get_time(2), 2.0);
 
-    ASSERT_EQ(result_from_file_group0.get_totals().get_num_time_points(), 3);
-    ASSERT_EQ(result_from_file_group0.get_totals().get_num_elements(), 3);
-    ASSERT_EQ(result_from_file_group0.get_totals().get_value(0), Eigen::VectorXd::Constant(3, 2));
-    ASSERT_EQ(result_from_file_group0.get_totals().get_value(1), Eigen::VectorXd::Constant(3, 4));
-    ASSERT_EQ(result_from_file_group0.get_totals().get_value(2), Eigen::VectorXd::Constant(3, 6));
-    ASSERT_EQ(result_from_file_group0.get_totals().get_time(0), 0.0);
-    ASSERT_EQ(result_from_file_group0.get_totals().get_time(1), 1.0);
-    ASSERT_EQ(result_from_file_group0.get_totals().get_time(2), 2.0);
+    EXPECT_EQ(result_from_file_group0.get_totals().get_num_time_points(), 3);
+    EXPECT_EQ(result_from_file_group0.get_totals().get_num_elements(), 3);
+    EXPECT_EQ(result_from_file_group0.get_totals().get_value(0), Eigen::VectorXd::Constant(3, 2));
+    EXPECT_EQ(result_from_file_group0.get_totals().get_value(1), Eigen::VectorXd::Constant(3, 4));
+    EXPECT_EQ(result_from_file_group0.get_totals().get_value(2), Eigen::VectorXd::Constant(3, 6));
+    EXPECT_EQ(result_from_file_group0.get_totals().get_time(0), 0.0);
+    EXPECT_EQ(result_from_file_group0.get_totals().get_time(1), 1.0);
+    EXPECT_EQ(result_from_file_group0.get_totals().get_time(2), 2.0);
 
     // group 1
     auto result_from_file_group1 = results_from_file.value()[1];
-    ASSERT_EQ(result_from_file_group1.get_groups().get_num_elements(), 3);
-    ASSERT_EQ(result_from_file_group1.get_groups().get_value(0), Eigen::VectorXd::Constant(3, 3));
-    ASSERT_EQ(result_from_file_group1.get_groups().get_value(1), Eigen::VectorXd::Constant(3, 4));
-    ASSERT_EQ(result_from_file_group1.get_groups().get_value(2), Eigen::VectorXd::Constant(3, 7));
-    ASSERT_EQ(result_from_file_group1.get_groups().get_time(0), 0.0);
-    ASSERT_EQ(result_from_file_group1.get_groups().get_time(1), 1.0);
-    ASSERT_EQ(result_from_file_group1.get_groups().get_time(2), 2.0);
+    EXPECT_EQ(result_from_file_group1.get_groups().get_num_elements(), 3);
+    EXPECT_EQ(result_from_file_group1.get_groups().get_value(0), Eigen::VectorXd::Constant(3, 3));
+    EXPECT_EQ(result_from_file_group1.get_groups().get_value(1), Eigen::VectorXd::Constant(3, 4));
+    EXPECT_EQ(result_from_file_group1.get_groups().get_value(2), Eigen::VectorXd::Constant(3, 7));
+    EXPECT_EQ(result_from_file_group1.get_groups().get_time(0), 0.0);
+    EXPECT_EQ(result_from_file_group1.get_groups().get_time(1), 1.0);
+    EXPECT_EQ(result_from_file_group1.get_groups().get_time(2), 2.0);
 
-    ASSERT_EQ(result_from_file_group1.get_totals().get_num_elements(), 3);
-    ASSERT_EQ(result_from_file_group1.get_totals().get_value(0), Eigen::VectorXd::Constant(3, 3));
-    ASSERT_EQ(result_from_file_group1.get_totals().get_value(1), Eigen::VectorXd::Constant(3, 4));
-    ASSERT_EQ(result_from_file_group1.get_totals().get_value(2), Eigen::VectorXd::Constant(3, 7));
+    EXPECT_EQ(result_from_file_group1.get_totals().get_num_elements(), 3);
+    EXPECT_EQ(result_from_file_group1.get_totals().get_value(0), Eigen::VectorXd::Constant(3, 3));
+    EXPECT_EQ(result_from_file_group1.get_totals().get_value(1), Eigen::VectorXd::Constant(3, 4));
+    EXPECT_EQ(result_from_file_group1.get_totals().get_value(2), Eigen::VectorXd::Constant(3, 7));
 }

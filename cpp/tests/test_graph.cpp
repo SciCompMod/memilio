@@ -285,7 +285,6 @@ TEST(TestGraph, set_edges_saving_edges)
                                    mio::osecir::InfectionState::InfectedSymptoms,
                                    mio::osecir::InfectionState::Recovered};
 
-    bool save_results_edges = true;
     // get indices of INS and ISy compartments.
     std::vector<std::vector<size_t>> indices_save_edges(2);
 
@@ -316,7 +315,7 @@ TEST(TestGraph, set_edges_saving_edges)
         mio::set_edges<MockContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
                        mio::MobilityCoefficientGroup, mio::osecir::InfectionState, decltype(read_function_edges)>(
             dir, params_graph, mobile_compartments, size_t(2), read_function_edges,
-            std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}, save_results_edges, indices_save_edges);
+            std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.},  indices_save_edges);
 
     EXPECT_EQ(params_graph.edges().size(), 2);
 
