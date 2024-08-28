@@ -649,18 +649,18 @@ IOResult<ScalarType> get_reproduction_number(ScalarType t_value, const Simulatio
 }
 
 /**
- * Get migration factors.
- * Used by migration graph simulation.
- * Like infection risk, migration of infected individuals is reduced if they are well isolated.
+ * Get mobility factors.
+ * Used by mobility graph simulation.
+ * Like infection risk, mobility of infected individuals is reduced if they are well isolated.
  * @param model the compartment model with initial values.
  * @param t current simulation time.
  * @param y current value of compartments.
- * @return vector expression, same size as y, with migration factors per compartment.
+ * @return vector expression, same size as y, with mobility factors per compartment.
  * @tparam FP floating point type, e.g., double.
  * @tparam Base simulation type that uses a secir compartment model; see Simulation.
  */
 template <typename FP = ScalarType, class Base = mio::Simulation<Model<FP>, FP>>
-auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Vector<FP>>& y)
+auto get_mobility_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Vector<FP>>& y)
 {
     auto& params = sim.get_model().parameters;
     //parameters as arrays
@@ -690,7 +690,7 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::R
 }
 
 template <typename FP = ScalarType, class Base = mio::Simulation<Model<FP>, FP>>
-auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> migrated, FP time)
+auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> mobile_population, FP time)
 {
     auto& model       = sim.get_model();
     auto nondetection = 1.0;
@@ -705,14 +705,14 @@ auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> migrated, 
         auto ISyCi = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsConfirmed});
 
         //put detected commuters in their own compartment so they don't contribute to infections in their home node
-        sim.get_result().get_last_value()[INSi] -= migrated[INSi] * (1 - nondetection);
-        sim.get_result().get_last_value()[INSCi] += migrated[INSi] * (1 - nondetection);
-        sim.get_result().get_last_value()[ISyi] -= migrated[ISyi] * (1 - nondetection);
-        sim.get_result().get_last_value()[ISyCi] += migrated[ISyi] * (1 - nondetection);
+        sim.get_result().get_last_value()[INSi] -= mobile_population[INSi] * (1 - nondetection);
+        sim.get_result().get_last_value()[INSCi] += mobile_population[INSi] * (1 - nondetection);
+        sim.get_result().get_last_value()[ISyi] -= mobile_population[ISyi] * (1 - nondetection);
+        sim.get_result().get_last_value()[ISyCi] += mobile_population[ISyi] * (1 - nondetection);
 
         //reduce the number of commuters
-        migrated[ISyi] *= nondetection;
-        migrated[INSi] *= nondetection;
+        mobile_population[ISyi] *= nondetection;
+        mobile_population[INSi] *= nondetection;
     }
 }
 

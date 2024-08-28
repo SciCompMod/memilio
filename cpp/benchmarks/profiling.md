@@ -103,11 +103,11 @@ As you can see, the profile contains a lot of functions that are not of interest
 
         USR     39,240  1,635    0.00     0.0           0.28  Json::ValueType?Json::Value::type()?const
         ...
-        COM      4,032    168    0.00     0.0           0.63  void?mio::abm::Simulation::evolve_world(mio::abm::TimePoint)
-        COM      4,032    168    0.00     0.0           2.30  void?mio::abm::World::evolve(mio::abm::TimePoint,?mio::abm::TimeSpan)
-        COM      4,032    168    0.00     0.0           6.92  void?mio::abm::World::begin_step(mio::abm::TimePoint,?mio::abm::TimeSpan)
-        COM      4,032    168    0.00     0.0           5.40  void?mio::abm::World::interaction(mio::abm::TimePoint,?mio::abm::TimeSpan)
-        COM      4,032    168    0.00     0.0           5.10  void?mio::abm::World::migration(mio::abm::TimePoint,?mio::abm::TimeSpan)
+        COM      4,032    168    0.00     0.0           0.63  void?mio::abm::Simulation::evolve_model(mio::abm::TimePoint)
+        COM      4,032    168    0.00     0.0           2.30  void?mio::abm::Model::evolve(mio::abm::TimePoint,?mio::abm::TimeSpan)
+        COM      4,032    168    0.00     0.0           6.92  void?mio::abm::Model::begin_step(mio::abm::TimePoint,?mio::abm::TimeSpan)
+        COM      4,032    168    0.00     0.0           5.40  void?mio::abm::Model::interaction(mio::abm::TimePoint,?mio::abm::TimeSpan)
+        COM      4,032    168    0.00     0.0           5.10  void?mio::abm::Model::perform_mobility(mio::abm::TimePoint,?mio::abm::TimeSpan)
 
 The output is much shorter and most functions are filtered.
 If the estimated memory requirements exceed 4 GB you need to remove the responsible function from the included functions in the filter. If you added more than one function to the filter, you can check which function is responsible for the increase of required space with the output of ```scorep-score```. The functions at the top of the table are most likely to be responsible. With ```scorep-score -f filter -r scorep-folder/profile.cubex``` you can see the effect of the adjusted filter on the profile without running the experiment.
@@ -125,22 +125,22 @@ However, there are some functions that still appear in the profile that do not a
         COM     20,184    841    0.00     0.0           4.98  COM
         SCOREP         41      1   57.83    89.3    57830258.74  SCOREP
 
-         OMP     14,280    168    0.00     0.0           0.52  ?$omp?parallel?@world.cpp:68
-         OMP     14,280    168    0.00     0.0           0.51  ?$omp?parallel?@world.cpp:78
-         OMP     14,280    168    0.00     0.0           0.56  ?$omp?parallel?@world.cpp:152
+         OMP     14,280    168    0.00     0.0           0.52  ?$omp?parallel?@model.cpp:68
+         OMP     14,280    168    0.00     0.0           0.51  ?$omp?parallel?@model.cpp:78
+         OMP     14,280    168    0.00     0.0           0.56  ?$omp?parallel?@model.cpp:152
          OMP      4,056    169    1.78     2.8       10549.08  ?$omp?for?@common_abm_loggers.h:175
          OMP      4,056    169    0.00     0.0           1.30  ?$omp?implicit?barrier?@common_abm_loggers.h:180
-         OMP      4,032    168    1.54     2.4        9152.87  ?$omp?for?@world.cpp:68
-         OMP      4,032    168    0.00     0.0           2.76  ?$omp?implicit?barrier?@world.cpp:73
-         OMP      4,032    168    1.61     2.5        9571.18  ?$omp?for?@world.cpp:78
-         OMP      4,032    168    0.00     0.0           2.75  ?$omp?implicit?barrier?@world.cpp:122
-         OMP      4,032    168    2.02     3.1       12038.27  ?$omp?for?@world.cpp:152
-         OMP      4,032    168    0.00     0.0           2.89  ?$omp?implicit?barrier?@world.cpp:156
-         COM      4,032    168    0.00     0.0           0.70  void?mio::abm::Simulation::evolve_world(mio::abm::TimePoint)
-         COM      4,032    168    0.00     0.0           2.66  void?mio::abm::World::evolve(mio::abm::TimePoint,?mio::abm::TimeSpan)
-         COM      4,032    168    0.00     0.0           7.73  void?mio::abm::World::begin_step(mio::abm::TimePoint,?mio::abm::TimeSpan)
-         COM      4,032    168    0.00     0.0           5.49  void?mio::abm::World::interaction(mio::abm::TimePoint,?mio::abm::TimeSpan)
-         COM      4,032    168    0.00     0.0           5.17  void?mio::abm::World::migration(mio::abm::TimePoint,?mio::abm::TimeSpan)
+         OMP      4,032    168    1.54     2.4        9152.87  ?$omp?for?@model.cpp:68
+         OMP      4,032    168    0.00     0.0           2.76  ?$omp?implicit?barrier?@model.cpp:73
+         OMP      4,032    168    1.61     2.5        9571.18  ?$omp?for?@model.cpp:78
+         OMP      4,032    168    0.00     0.0           2.75  ?$omp?implicit?barrier?@model.cpp:122
+         OMP      4,032    168    2.02     3.1       12038.27  ?$omp?for?@model.cpp:152
+         OMP      4,032    168    0.00     0.0           2.89  ?$omp?implicit?barrier?@model.cpp:156
+         COM      4,032    168    0.00     0.0           0.70  void?mio::abm::Simulation::evolve_model(mio::abm::TimePoint)
+         COM      4,032    168    0.00     0.0           2.66  void?mio::abm::Model::evolve(mio::abm::TimePoint,?mio::abm::TimeSpan)
+         COM      4,032    168    0.00     0.0           7.73  void?mio::abm::Model::begin_step(mio::abm::TimePoint,?mio::abm::TimeSpan)
+         COM      4,032    168    0.00     0.0           5.49  void?mio::abm::Model::interaction(mio::abm::TimePoint,?mio::abm::TimeSpan)
+         COM      4,032    168    0.00     0.0           5.17  void?mio::abm::Model::perform_mobility(mio::abm::TimePoint,?mio::abm::TimeSpan)
       SCOREP         41      1   57.83    89.3    57830258.74  abm_simulation
          COM         24      1    0.00     0.0         532.58  void?mio::abm::Simulation::advance(mio::abm::TimePoint,?History&?...)??with?History?=?{mio::History<mio::abm::TimeSeriesWriter,?mio::abm::LogInfectionState>}?
 

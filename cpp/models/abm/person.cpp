@@ -39,13 +39,13 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     , m_quarantine_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_age(age)
     , m_time_at_location(0)
-    , m_time_of_last_test(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_mask(Mask(MaskType::Community))
     , m_wears_mask(false)
     , m_mask_compliance((uint32_t)LocationType::Count, 0.)
     , m_person_id(person_id)
     , m_cells{0}
     , m_last_transport_mode(TransportMode::Unknown)
+    , m_test_results({TestType::Count}, TestResult())
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
     m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
@@ -154,8 +154,7 @@ void Person::remove_quarantine()
 
 bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const TestParameters& params)
 {
-    ScalarType random   = UniformDistribution<double>::get_instance()(rng);
-    m_time_of_last_test = t;
+    ScalarType random = UniformDistribution<double>::get_instance()(rng);
     if (is_infected(t)) {
         // true positive
         if (random < params.sensitivity) {
@@ -262,6 +261,17 @@ ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const 
     }
     return params.get<InfectionProtectionFactor>()[{latest_protection.first, m_age, virus}](
         t.days() - latest_protection.second.days());
+}
+
+void Person::add_test_result(TimePoint t, TestType type, bool result)
+{
+    // Remove outdated test results or replace the old result of the same type
+    m_test_results[{type}] = {t, result};
+}
+
+TestResult Person::get_test_result(TestType type) const
+{
+    return m_test_results[{type}];
 }
 
 } // namespace abm

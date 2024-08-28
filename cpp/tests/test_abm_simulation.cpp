@@ -24,20 +24,20 @@
 
 TEST(TestSimulation, advance_random)
 {
-    auto world     = mio::abm::World(num_age_groups);
-    auto location1 = world.add_location(mio::abm::LocationType::School);
-    auto location2 = world.add_location(mio::abm::LocationType::School);
-    auto p1        = world.add_person(location1, age_group_5_to_14);
-    auto p2        = world.add_person(location1, age_group_5_to_14);
-    auto p3        = world.add_person(location2, age_group_5_to_14);
-    auto p4        = world.add_person(location2, age_group_5_to_14);
+    auto model     = mio::abm::Model(num_age_groups);
+    auto location1 = model.add_location(mio::abm::LocationType::School);
+    auto location2 = model.add_location(mio::abm::LocationType::School);
+    auto p1        = model.add_person(location1, age_group_5_to_14);
+    auto p2        = model.add_person(location1, age_group_5_to_14);
+    auto p3        = model.add_person(location2, age_group_5_to_14);
+    auto p4        = model.add_person(location2, age_group_5_to_14);
 
-    world.assign_location(p1, location1);
-    world.assign_location(p2, location1);
-    world.assign_location(p3, location2);
-    world.assign_location(p4, location2);
+    model.assign_location(p1, location1);
+    model.assign_location(p2, location1);
+    model.assign_location(p3, location2);
+    model.assign_location(p4, location2);
 
-    auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
+    auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(model));
 
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
@@ -51,52 +51,52 @@ TEST(TestSimulation, advance_random)
     }
 }
 
-TEST(TestSimulation, getWorldAndTimeConst)
+TEST(TestSimulation, getModelAndTimeConst)
 {
 
     auto t     = mio::abm::TimePoint(0);
-    auto world = mio::abm::World(num_age_groups);
-    auto sim   = mio::abm::Simulation(t + mio::abm::days(7), std::move(world));
+    auto model = mio::abm::Model(num_age_groups);
+    auto sim   = mio::abm::Simulation(t + mio::abm::days(7), std::move(model));
 
     auto t_test = mio::abm::days(7);
     ASSERT_EQ(sim.get_time(), mio::abm::TimePoint(t_test.seconds()));
 
-    const mio::abm::World world_test{std::move(sim.get_world())};
-    EXPECT_EQ(world_test.get_locations().size(), 1);
+    const mio::abm::Model model_test{std::move(sim.get_model())};
+    EXPECT_EQ(model_test.get_locations().size(), 1);
 }
 
 TEST(TestSimulation, advanceWithCommonHistory)
 {
-    auto world       = mio::abm::World(num_age_groups);
-    auto home_id     = world.add_location(mio::abm::LocationType::Home);
-    auto work_id     = world.add_location(mio::abm::LocationType::Work);
-    auto icu_id      = world.add_location(mio::abm::LocationType::ICU);
-    auto hospital_id = world.add_location(mio::abm::LocationType::Hospital);
-    auto school_id   = world.add_location(mio::abm::LocationType::School);
-    auto social_id   = world.add_location(mio::abm::LocationType::SocialEvent);
-    auto basics_id   = world.add_location(mio::abm::LocationType::BasicsShop);
-    auto public_id   = world.add_location(mio::abm::LocationType::PublicTransport);
+    auto model       = mio::abm::Model(num_age_groups);
+    auto home_id     = model.add_location(mio::abm::LocationType::Home);
+    auto work_id     = model.add_location(mio::abm::LocationType::Work);
+    auto icu_id      = model.add_location(mio::abm::LocationType::ICU);
+    auto hospital_id = model.add_location(mio::abm::LocationType::Hospital);
+    auto school_id   = model.add_location(mio::abm::LocationType::School);
+    auto social_id   = model.add_location(mio::abm::LocationType::SocialEvent);
+    auto basics_id   = model.add_location(mio::abm::LocationType::BasicsShop);
+    auto public_id   = model.add_location(mio::abm::LocationType::PublicTransport);
 
-    auto person1 = add_test_person(world, home_id, age_group_5_to_14, mio::abm::InfectionState::Exposed);
-    auto person2 = add_test_person(world, home_id, age_group_15_to_34, mio::abm::InfectionState::Exposed);
-    auto person3 = add_test_person(world, home_id, age_group_35_to_59, mio::abm::InfectionState::Dead);
+    auto person1 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Exposed);
+    auto person2 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Exposed);
+    auto person3 = add_test_person(model, home_id, age_group_35_to_59, mio::abm::InfectionState::Dead);
 
-    world.assign_location(person1, home_id);
-    world.assign_location(person2, home_id);
-    world.assign_location(person3, home_id);
-    world.assign_location(person1, school_id);
-    world.assign_location(person2, work_id);
-    world.assign_location(person2, icu_id);
-    world.assign_location(person2, hospital_id);
-    world.assign_location(person1, social_id);
-    world.assign_location(person2, social_id);
-    world.assign_location(person3, social_id);
-    world.assign_location(person1, basics_id);
-    world.assign_location(person2, basics_id);
-    world.assign_location(person3, basics_id);
-    world.assign_location(person2, public_id);
+    model.assign_location(person1, home_id);
+    model.assign_location(person2, home_id);
+    model.assign_location(person3, home_id);
+    model.assign_location(person1, school_id);
+    model.assign_location(person2, work_id);
+    model.assign_location(person2, icu_id);
+    model.assign_location(person2, hospital_id);
+    model.assign_location(person1, social_id);
+    model.assign_location(person2, social_id);
+    model.assign_location(person3, social_id);
+    model.assign_location(person1, basics_id);
+    model.assign_location(person2, basics_id);
+    model.assign_location(person3, basics_id);
+    model.assign_location(person2, public_id);
 
-    mio::abm::TripList& trip_list = world.get_trip_list();
+    mio::abm::TripList& trip_list = model.get_trip_list();
 
     // We add trips for person two to test the history and if it is working correctly
     mio::abm::Trip trip1(person2, mio::abm::TimePoint(0) + mio::abm::hours(2), work_id);
@@ -116,32 +116,32 @@ TEST(TestSimulation, advanceWithCommonHistory)
     trip_list.add_trip(trip7);
 
     mio::History<mio::DataWriterToMemory, mio::abm::LogLocationInformation, mio::abm::LogPersonInformation,
-                 mio::abm::LogDataForMovement>
+                 mio::abm::LogDataForMobility>
         historyPersonInf;
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
-    mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMovement> historyPersonInfDelta;
-    auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
+    mio::History<mio::abm::DataWriterToMemoryDelta, mio::abm::LogDataForMobility> historyPersonInfDelta;
+    auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(model));
     sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(24), historyPersonInf, historyTimeSeries,
                 historyPersonInfDelta);
 
     auto logLocationInfo      = std::get<0>(historyPersonInf.get_log());
     auto logPersonInfo        = std::get<1>(historyPersonInf.get_log());
-    auto logMovementInfo      = std::get<2>(historyPersonInf.get_log());
+    auto logMobilityInfo      = std::get<2>(historyPersonInf.get_log());
     auto logTimeSeries        = std::get<0>(historyTimeSeries.get_log());
-    auto logMovementInfoDelta = std::get<0>(historyPersonInfDelta.get_log());
+    auto logMobilityInfoDelta = std::get<0>(historyPersonInfDelta.get_log());
 
     ASSERT_EQ(logLocationInfo[0].size(), 9); // Check if all locations are in the log, 9 locations
     ASSERT_EQ(logPersonInfo[0].size(), 3); // Check if all persons are in the log, 3 persons
     ASSERT_EQ(
-        logMovementInfo.size(),
-        25); // Check if for all time points Movement data is in the log, 25 time points (24 hours + 1 for the initial state)
+        logMobilityInfo.size(),
+        25); // Check if for all time points Mobility data is in the log, 25 time points (24 hours + 1 for the initial state)
     ASSERT_EQ(logTimeSeries.get_num_time_points(),
               25); // Check if all time points are in the log, 25 time points (24 hours + 1 for the initial state)
     ASSERT_EQ(
-        logMovementInfoDelta.size(),
-        26); // Check if for all time points Movement data is in the log, 26 time points (24 hours + 1 for the initial state + 1 helper entry for calculating the delta)
-    ASSERT_EQ(logMovementInfoDelta[0].size(),
-              3); // Check if all persons are in the delta-logger Movement helper entry 0, 3 persons
-    ASSERT_EQ(logMovementInfoDelta[1].size(), 3); // Check if all persons are in the delta-log first entry, 3 persons
+        logMobilityInfoDelta.size(),
+        26); // Check if for all time points Mobility data is in the log, 26 time points (24 hours + 1 for the initial state + 1 helper entry for calculating the delta)
+    ASSERT_EQ(logMobilityInfoDelta[0].size(),
+              3); // Check if all persons are in the delta-logger Mobility helper entry 0, 3 persons
+    ASSERT_EQ(logMobilityInfoDelta[1].size(), 3); // Check if all persons are in the delta-log first entry, 3 persons
 }

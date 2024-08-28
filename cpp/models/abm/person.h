@@ -29,9 +29,10 @@
 #include "abm/person_id.h"
 #include "abm/personal_rng.h"
 #include "abm/time.h"
+#include "abm/test_type.h"
 #include "abm/vaccine.h"
 #include "abm/mask.h"
-#include "abm/movement_data.h"
+#include "abm/mobility_data.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/random_number_generator.h"
 
@@ -40,8 +41,10 @@ namespace mio
 namespace abm
 {
 
+static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
+
 /**
- * @brief Agents in the simulated World that can carry and spread the Infection.
+ * @brief Agents in the simulated Model that can carry and spread the Infection.
  */
 class Person
 {
@@ -154,19 +157,10 @@ public:
     }
 
     /**
-     * @brief Get the TimePoint of the last negative test.
-     * @return TimePoint since the last test.
-     */
-    TimePoint get_time_of_last_test() const
-    {
-        return m_time_of_last_test;
-    }
-
-    /**
      * @brief Set an assigned Location of the Person.
      *
      * Important: Setting incorrect values will cause issues during simulation. It is preferable to use
-     *            World::assign_location with a valid LocationId, obtained e.g. through World::add_location.
+     *            Model::assign_location with a valid LocationId, obtained e.g. through Model::add_location.
      *
      * The assigned Location is saved by the index of its LocationId. Assume that a Person has at most one assigned
      * Location of a certain #LocationType.
@@ -197,7 +191,7 @@ public:
      * Every Person has a random number. Depending on this number and the time, the Person works from home in case of a
      * lockdown.
      * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
-     * @param[in] params Parameters that describe the migration between Location%s.
+     * @param[in] params Parameters that describe the mobility between Location%s.
      * @return True the Person works from home.
      */
     bool goes_to_work(TimePoint t, const Parameters& params) const;
@@ -206,7 +200,7 @@ public:
      * @brief Draw at what time the Person goes to work.
      * Every Person has a random number to determine what time to go to work.
      * Depending on this number Person decides what time has to go to work.
-     * @param[in] params Parameters that describe the migration between Location%s.
+     * @param[in] params Parameters that describe the mobility between Location%s.
      * @return The time of going to work.
      */
     TimeSpan get_go_to_work_time(const Parameters& params) const;
@@ -215,7 +209,7 @@ public:
      * @brief Draw if the Person goes to school or stays at home during lockdown.
      * Every Person has a random number that determines if they go to school in case of a lockdown.
      * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
-     * @param[in] params Parameters that describe the migration between Location%s.
+     * @param[in] params Parameters that describe the mobility between Location%s.
      * @return True if the Person goes to school.
      */
     bool goes_to_school(TimePoint t, const Parameters& params) const;
@@ -224,14 +218,14 @@ public:
      * @brief Draw at what time the Person goes to work.
      * Every Person has a random number to determine what time to go to school.
      * Depending on this number Person decides what time has to go to school.
-     * @param[in] params Parameters that describe the migration between Location%s.
+     * @param[in] params Parameters that describe the mobility between Location%s.
      * @return The time of going to school.
      */
     TimeSpan get_go_to_school_time(const Parameters& params) const;
 
     /**
      * @brief Answers the question if a Person is currently in quarantine.
-     * If a Person is in quarantine this Person cannot migrate to Location%s other than Home or the Hospital.
+     * If a Person is in quarantine this Person cannot change to Location%s other than Home or the Hospital.
      * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
      * @param[in] params Parameter that includes the length of a quarantine.
      * @return True if the Person is in quarantine.
@@ -259,7 +253,7 @@ public:
 
     /**
      * @brief Get the PersonId of the Person.
-     * The PersonId should correspond to the index in m_persons in world.
+     * The PersonId should correspond to the index in m_persons in the Model.
      * @return The PersonId.
      */
     PersonId get_id() const;
@@ -290,7 +284,7 @@ public:
      * @brief Get the protection of the Mask.
      * A value of 1 represents full protection and a value of 0 means no protection. This depends on the MaskType of the
      * Mask the Person is wearing.
-     * @param[in] params The parameters of the Infection that are the same everywhere within the World.
+     * @param[in] params The parameters of the Infection that are the same everywhere within the Model.
      * @return The reduction factor of getting an Infection when wearing the Mask.
      */
     ScalarType get_mask_protective_factor(const Parameters& params) const;
@@ -389,7 +383,7 @@ public:
     }
 
     /**
-     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person.
+     * @brief Get the latest #ExposureType and its initial TimePoint of the Person.
      */
     std::pair<ExposureType, TimePoint> get_latest_protection() const;
 
@@ -425,6 +419,22 @@ public:
             loc, age, id);
     }
 
+    /**
+     * @brief Add TestResult to the Person
+     * @param[in] t The TimePoint of the test.
+     * @param[in] type The TestType of the test.
+     * @param[in] result The result of the test.
+    */
+    void add_test_result(TimePoint t, TestType type, bool result);
+
+    /**
+     * @brief Get the most recent TestResult performed from the Person based on the TestType.
+     * If time_of_testing == TimePoint(std::numeric_limits<int>::min()), there is no previous TestResult.
+     * @param[in] type The TestType of the test.
+     * @return The latest TestResult of the given Type.
+    */
+    TestResult get_test_result(TestType type) const;
+
 private:
     LocationId m_location; ///< Current Location of the Person.
     LocationType m_location_type; ///< Type of the current Location.
@@ -439,14 +449,14 @@ private:
     double m_random_schoolgroup; ///< Value to determine if the Person goes to school or stays at home during lockdown.
     double m_random_goto_work_hour; ///< Value to determine at what time the Person goes to work.
     double m_random_goto_school_hour; ///< Value to determine at what time the Person goes to school.
-    TimePoint m_time_of_last_test; ///< TimePoint of the last negative test.
     Mask m_mask; ///< The Mask of the Person.
     bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
     PersonId m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
-    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
+    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
+    CustomIndexArray<TestResult, TestType> m_test_results; ///< CustomIndexArray for TestResults.
 };
 
 } // namespace abm
