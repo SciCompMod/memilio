@@ -1214,8 +1214,8 @@ public:
         , num_age_groups(6)
     {
     }
-    size_t num_age_groups;
     mio::osecir::Model<double> model;
+    size_t num_age_groups;
 
 protected:
     void SetUp() override
@@ -1337,7 +1337,7 @@ TEST_F(ModelTestOdeSecir, export_time_series_init_old_date)
     auto population_data = mio::osecir::details::read_population_data(path, region, false).value();
 
     // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
-    for (auto i = 0; i < num_age_groups; i++) {
+    for (size_t i = 0; i < num_age_groups; i++) {
         EXPECT_EQ(results_extrapolated(i * Eigen::Index(mio::osecir::InfectionState::Count)), population_data[0][i]);
     }
     // sum of all compartments should be equal to the population
@@ -1398,7 +1398,7 @@ TEST_F(ModelTestOdeSecir, model_initialization_old_date)
 
     auto results_extrapolated = model_vector[0].populations.array().cast<double>();
 
-    for (auto i = 0; i < num_age_groups; i++) {
+    for (size_t i = 0; i < num_age_groups; i++) {
         EXPECT_EQ(results_extrapolated(i * Eigen::Index(mio::osecir::InfectionState::Count)), population_data[0][i]);
     }
     // sum of all compartments should be equal to the population
