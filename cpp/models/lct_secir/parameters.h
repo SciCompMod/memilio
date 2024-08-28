@@ -24,7 +24,6 @@
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
-#include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/custom_index_array.h"
@@ -40,13 +39,13 @@ namespace lsecir
 **********************************************/
 
 /**
- * @brief Average Time spent in the Exposed compartment.
+ * @brief Average Time spent in the Exposed compartment for each group.
  */
 struct TimeExposed {
-    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
-    static Type get_default(AgeGroup size)
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return Type(size, 2.);
+        return Type::Constant(size, 1, 2.);
     }
     static std::string name()
     {
@@ -59,10 +58,10 @@ struct TimeExposed {
  *  Symptoms or recover in the SECIR model in day unit.
  */
 struct TimeInfectedNoSymptoms {
-    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
-    static Type get_default(AgeGroup size)
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return Type(size, 1.);
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -75,10 +74,10 @@ struct TimeInfectedNoSymptoms {
  *  or recover in the SECIR model in day unit.
  */
 struct TimeInfectedSymptoms {
-    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
-    static Type get_default(AgeGroup size)
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return Type(size, 1.5);
+        return Type::Constant(size, 1, 1.5);
     }
     static std::string name()
     {
@@ -91,10 +90,10 @@ struct TimeInfectedSymptoms {
  *  SECIR model in day unit.
  */
 struct TimeInfectedSevere {
-    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
-    static Type get_default(AgeGroup size)
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return Type(size, 1.);
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -106,10 +105,10 @@ struct TimeInfectedSevere {
  * @brief Average time treated by ICU before dead or recover in the SECIR model in day unit.
  */
 struct TimeInfectedCritical {
-    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
-    static Type get_default(AgeGroup size)
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return Type(size, 1.);
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -121,10 +120,10 @@ struct TimeInfectedCritical {
  * @brief Probability of getting infected from a contact.
  */
 struct TransmissionProbabilityOnContact {
-    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
-    static Type get_default(AgeGroup size)
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return Type(size, 1.);
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -138,9 +137,9 @@ struct TransmissionProbabilityOnContact {
 struct ContactPatterns {
     using Type = UncertainContactMatrix<ScalarType>;
 
-    static Type get_default(AgeGroup size)
+    static Type get_default(size_t size)
     {
-        return Type(10., static_cast<Eigen::Index>((size_t)size));
+        return Type(10., static_cast<Eigen::Index>(size));
     }
     static std::string name()
     {
@@ -152,10 +151,10 @@ struct ContactPatterns {
  * @brief The relative InfectedNoSymptoms infectability.
  */
 struct RelativeTransmissionNoSymptoms {
-    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
-    static Type get_default(AgeGroup size)
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return Type(size, 1.);
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -167,10 +166,10 @@ struct RelativeTransmissionNoSymptoms {
  * @brief The risk of infection from symptomatic cases in the SECIR model.
  */
 struct RiskOfInfectionFromSymptomatic {
-    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
-    static Type get_default(AgeGroup size)
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return Type(size, 1.);
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -182,10 +181,10 @@ struct RiskOfInfectionFromSymptomatic {
  * @brief The percentage of asymptomatic cases in the SECIR model.
  */
 struct RecoveredPerInfectedNoSymptoms {
-    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
-    static Type get_default(AgeGroup size)
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return Type(size, 0.5);
+        return Type::Constant(size, 1, 0.5);
     }
     static std::string name()
     {
@@ -197,10 +196,10 @@ struct RecoveredPerInfectedNoSymptoms {
  * @brief The percentage of hospitalized patients per infected patients in the SECIR model.
  */
 struct SeverePerInfectedSymptoms {
-    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
-    static Type get_default(AgeGroup size)
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return Type(size, 0.5);
+        return Type::Constant(size, 1, 0.5);
     }
     static std::string name()
     {
@@ -212,10 +211,10 @@ struct SeverePerInfectedSymptoms {
  * @brief The percentage of ICU patients per hospitalized patients in the SECIR model.
  */
 struct CriticalPerSevere {
-    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
-    static Type get_default(AgeGroup size)
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return Type(size, 0.5);
+        return Type::Constant(size, 1, 0.5);
     }
     static std::string name()
     {
@@ -227,10 +226,10 @@ struct CriticalPerSevere {
  * @brief The percentage of dead patients per ICU patients in the SECIR model.
  */
 struct DeathsPerCritical {
-    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
-    static Type get_default(AgeGroup size)
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return Type(size, 0.1);
+        return Type::Constant(size, 1, 0.1);
     }
     static std::string name()
     {
@@ -246,7 +245,7 @@ struct DeathsPerCritical {
  */
 struct StartDay {
     using Type = ScalarType;
-    static Type get_default(AgeGroup)
+    static Type get_default(size_t)
     {
         return 0.;
     }
@@ -263,7 +262,7 @@ struct StartDay {
  */
 struct Seasonality {
     using Type = ScalarType;
-    static Type get_default(AgeGroup)
+    static Type get_default(size_t)
     {
         return 0.;
     }
@@ -285,16 +284,14 @@ using ParametersBase =
 class Parameters : public ParametersBase
 {
 public:
-    /**
-     * @brief Default constructor.
-     */
-    Parameters(AgeGroup num_agegroups)
-        : ParametersBase(num_agegroups)
-        , m_num_groups{num_agegroups}
+    /// @brief Default constructor.
+    Parameters(size_t num_size_ts)
+        : ParametersBase(num_size_ts)
+        , m_num_groups{num_size_ts}
     {
     }
 
-    AgeGroup get_num_groups() const
+    size_t get_num_groups() const
     {
         return m_num_groups;
     }
@@ -310,7 +307,7 @@ public:
             return true;
         }
 
-        for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
+        for (auto i = size_t(0); i < size_t(m_num_groups); ++i) {
             if (this->get<TimeExposed>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeExposed is smaller than {:.4f}", 1.0);
                 return true;
@@ -390,7 +387,7 @@ private:
     {
     }
 
-    AgeGroup m_num_groups;
+    size_t m_num_groups;
 
 public:
     /**

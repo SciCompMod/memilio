@@ -22,8 +22,9 @@ The eight compartments
 
 are used to simulate the spread of the disease. 
 It is possible to include subcompartments for the five compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical.
+You can divide the population according to different groups, e.g. AgeGroups or gender and choose parameters according to groups.
 
-Below is an overview of the model architecture and its compartments.
+Below is an overview of the model architecture and its compartments without an stratification according to groups.
 
 ![tikzLCTSECIR](https://github.com/SciCompMod/memilio/assets/70579874/6a5d5a95-20f9-4176-8894-c091bd48bfb7)
 
@@ -50,7 +51,7 @@ Below is an overview of the model architecture and its compartments.
 | $\mu_{I_{Sev}}^{I_{Cr}}$              |   `CriticalPerSevere`              | Probability of transition from compartment InfectedSevere to InfectedCritical. |  
 | $\mu_{I_{Cr}}^{D}$              |   `DeathsPerCritical`              | Probability of dying when in compartment InfectedCritical. |   
 
-The notation of the compartments with indices here stands for subcompartments and not for age groups or similar, as in some ODE models. Accordingly, $I_{NS,n_{NS}}$, for example, stands for the number of people in the $n_{NS}$-th subcompartment of the InfectedNoSymptoms compartment.
+The notation of the compartments with indices here stands for subcompartments and not for age groups. Accordingly, $I_{NS,n_{NS}}$, for example, stands for the number of people in the $n_{NS}$-th subcompartment of the InfectedNoSymptoms compartment.
 
 
 ## Examples

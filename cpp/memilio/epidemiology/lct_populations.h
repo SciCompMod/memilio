@@ -35,17 +35,18 @@ namespace mio
  *
  * Populations can be split up into different Categories, e.g. by age group, yearly income group, gender etc. 
  * In LCT models, we want to use different number of subcompartments, i.e. different LctStates, 
- * for each element of a category.
- * (Therefore, we can't use the normal Populations class because it expects the same InfectionState for each element.)
+ * for each group of a category.
+ * (Therefore, we can't use the normal Populations class because it expects the same InfectionState for each group.)
  * 
- * This template must be instantiated with one LctState for each element of a category. 
- * The number of LctStates also determines the number of elements. 
+ * This template must be instantiated with one LctState for each group of a category. 
+ * The number of LctStates also determines the number of groups. 
  * If you want to use more than one category, e.g. age and gender, you have to define num_age_groups * num_genders 
  * LctStates, because the number of subcompartments can be different 
- * even for (female, 0-15) and (female, 80+) or (male, 0-15).
+ * even for (female, A05-A14) and (female, A80+) or (male, A05-A14).
  *
  * The class created from this template contains a "flat array" of compartment populations and some functions for 
- * retrieving or setting the populations.
+ * retrieving or setting the populations. The order in the flat array is: First, all (sub-)compartments of the 
+ * first group, afterwards all (sub-)compartments of the first group and so on.
  *
  */
 
@@ -53,12 +54,13 @@ template <typename FP = ScalarType, class... LctStates>
 class LctPopulations
 {
 public:
-    using Type              = UncertainValue<FP>;
-    using InternalArrayType = Eigen::Array<Type, Eigen::Dynamic, 1>;
-    using tupleLctStates    = std::tuple<LctStates...>;
+    using Type                       = UncertainValue<FP>;
+    using InternalArrayType          = Eigen::Array<Type, Eigen::Dynamic, 1>;
+    using tupleLctStates             = std::tuple<LctStates...>;
+    static size_t constexpr m_groups = sizeof...(LctStates); ///< Number of groups.
+    static_assert(m_groups >= 1, "The number of LctStates provided should be at least one.");
 
-    static size_t constexpr m_elements = sizeof...(LctStates);
-
+    /// @brief Default constructor.
     LctPopulations()
     {
         set_count();
@@ -66,11 +68,8 @@ public:
     }
 
     /**
-     * @brief get_num_compartments returns the number of compartments
-     *
-     * This corresponds to the product of the category sizes
-     *
-     * @return number of compartments
+     * @brief get_num_compartments returns the number of compartments.
+     * @return Number of compartments which equals the flat array size.
      */
     size_t get_num_compartments() const
     {
@@ -78,8 +77,8 @@ public:
     }
 
     /**
-     * @brief array returns a reference to the internally stored flat array.
-     * @return const reference to the CustomIndexArray::InternalArrayType instance
+     * @brief Returns a reference to the internally stored flat array.
+     * @return Const reference to the InternalArrayType instance.
      */
     auto const& array() const
     {
@@ -90,44 +89,58 @@ public:
         return m_y;
     }
 
+    /**
+     * @brief Returns the entry of the array given a flat index index.
+     * @param index A flat index.
+     * @return The value of the internal array at the index.
+     */
     Type& operator[](size_t index)
     {
         assert(index < m_count);
         return m_y[index];
     }
 
-    template <size_t element = 0, std::enable_if_t<(element < m_elements), bool> = true>
-    size_t get_first_index_element() const
+    /**
+     @brief Gets the first index of a group in the flat array.
+    * @tparam group The group for which the index should be returned.
+    * @return The index of the first entry of group in the flat array.
+    */
+    template <size_t group = 0, std::enable_if_t<(group < m_groups) && (group >= 0), bool> = true>
+    size_t get_first_index_group() const
     {
-        if constexpr (element == 0) {
+        if constexpr (group == 0) {
             return 0;
         }
-        if constexpr ((element < m_elements) && (element > 0)) {
-            return get_first_index_element<element - 1>() + std::tuple_element_t<element - 1, tupleLctStates>::Count;
+        else {
+            return get_first_index_group<group - 1>() + std::tuple_element_t<group - 1, tupleLctStates>::Count;
         }
-        return 0;
     }
     /**
-     * @brief get_compartments returns an Eigen copy of the vector of populations. This can be used
-     * as initial conditions for the ODE solver
-     * @return Eigen::VectorXd  of populations
+     * @brief Returns an Eigen copy of the vector of populations. 
+     * This can be used as initial conditions for the ODE solver.
+     * @return Eigen::VectorXd of populations.
      */
     inline Vector<FP> get_compartments() const
     {
         return m_y.array().template cast<FP>();
     }
 
-    template <size_t element>
+    /**
+     * @brief Returns the total population of a group.
+     * @tparam group The group for which the total population should be calculated.
+     * @return Total population of the group.
+     */
+    template <size_t group>
     ScalarType get_group_total() const
     {
         return m_y.array()
-            .segment(get_first_index_element<element>(), std::tuple_element_t<element, tupleLctStates>::Count)
+            .segment(get_first_index_group<group>(), std::tuple_element_t<group, tupleLctStates>::Count)
             .sum();
     }
 
     /**
-     * @brief get_total returns the total population of all compartments
-     * @return total population
+     * @brief Returns the total population of all compartments and groups.
+     * @return Total population.
      */
     ScalarType get_total() const
     {
@@ -177,22 +190,24 @@ public:
     }
 
 private:
-    template <size_t element = 0>
+    /**
+     * @brief Sets recursively the total number of (sub-)compartments in all groups. 
+     * The number also corresponds to the size of the internal vector.
+     */
+    template <size_t group = 0>
     void set_count()
     {
-        if constexpr (element == 0) {
+        if constexpr (group == 0) {
             m_count = 0;
         }
-        if constexpr (element < m_elements) {
-            m_count += std::tuple_element_t<element, tupleLctStates>::Count;
-            set_count<element + 1>();
+        if constexpr (group < m_groups) {
+            m_count += std::tuple_element_t<group, tupleLctStates>::Count;
+            set_count<group + 1>();
         }
     }
-    // Number of elements stored
-    size_t m_count;
 
-    // An array containing the elements
-    InternalArrayType m_y{};
+    size_t m_count; //< Number of groups stored.
+    InternalArrayType m_y{}; //< An array containing the number of people in the groups.
 };
 
 } // namespace mio

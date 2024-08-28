@@ -35,50 +35,59 @@ namespace mio
 {
 namespace lsecir
 {
+/* TODO:- Write test for agegroups: one comparing results of one agegroup with 3 and same parameters,
+* one checking get_derivatives and one checking calculate populations.
+* - Check the documentation of parameters class 
+* - adapt initializer flws and parameters_io+ tests. 
+*/
 
 /**
  * @brief Class that defines an LCT-SECIR model.
  *
- * @tparam NumExposed The number of subcompartents used for the Exposed compartment.
- * @tparam NumInfectedNoSymptoms The number of subcompartents used for the InfectedNoSymptoms compartment. 
- * @tparam NumInfectedSymptoms The number of subcompartents used for the InfectedSymptoms compartment.
- * @tparam NumInfectedSevere The number of subcompartents used for the InfectedSevere compartment.
- * @tparam NumInfectedCritical The number of subcompartents used for the InfectedCritical compartment.
+ * @tparam LctStates The LCT model can work with any number of LctStates, where each LctState corresponds to a group,
+ * e.g. one AgeGroup. If you do not want to divide the population into groups, just use one LctState.
+ * If you want to divide the population according to more than one category, e.g. sex and age, 
+ * you have to specify one LctState for each pair of groups, e.g. for (female, A00-A04), (female, A05-A14) etc. 
+ * This is because the number of subcompartments can be different for each group.
+ * Therefore, the number of LctStates also determines the number of groups. 
  */
-template <typename FP = ScalarType, class... LctStates>
+template <class... LctStates>
 class Model
     : public CompartmentalModel<ScalarType, InfectionState, LctPopulations<ScalarType, LctStates...>, Parameters>
-{ //TODO: Check constraints with check that num of subcompartments in S, R, D is one
+{
 public:
     using tupleLctStates = std::tuple<LctStates...>;
     using Base = CompartmentalModel<ScalarType, InfectionState, LctPopulations<ScalarType, LctStates...>, Parameters>;
     using typename Base::ParameterSet;
     using typename Base::Populations;
-    static size_t constexpr m_elements = sizeof...(LctStates);
-    assert(m_elements >= 1);
+    static size_t constexpr m_groups = sizeof...(LctStates);
+    static_assert(m_groups >= 1, "The number of LctStates provided should be at least one.");
 
     /// @brief Default constructor.
     Model()
-        : Base(Populations(), ParameterSet(m_elements))
+        : Base(Populations(), ParameterSet(m_groups))
     {
     }
 
-    /// @brief TODO
+    /** @brief Constructor using Populations and ParameterSet.
+     * @param[in] pop An instance of the Populations class.
+     * @param[in] params Parameters used to be used in the simulation.
+     */
     Model(const Populations& pop, const ParameterSet& params)
         : Base(pop, params)
     {
     }
 
     /**
-     * @brief Evaluates the right-hand-side f of the LCT dydt = f(y, t).
+     * @brief Evaluates the right-hand-side f of the ODE dydt = f(y, t).
      *
      * The LCT-SECIR model is defined through ordinary differential equations of the form dydt = f(y, t). 
-     * y is a vector containing number of individuals for each (sub-) compartment.
+     * y is a vector containing the number of individuals for each (sub-) compartment.
      * This function evaluates the right-hand-side f of the ODE and can be used in an ODE solver.
-     * @param[in] pop the current state of the population in the geographic unit we are considering
-     * @param[in] y the current state of the model (or a subpopulation) as a flat array
-     * @param[in] t the current time
-     * @param[out] dydt a reference to the calculated output
+     * @param[in] pop The current state of the population in the geographic unit we are considering.
+     * @param[in] y The current state of the model (or a subpopulation) as a flat array.
+     * @param[in] t The current time.
+     * @param[out] dydt A reference to the calculated output.
      */
     void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, ScalarType t,
                          Eigen::Ref<Eigen::VectorXd> dydt) const override
@@ -87,148 +96,6 @@ public:
         // afterwards all for AgeGroup 1 and so on.
         dydt.setZero();
         get_derivatives_impl(pop, y, t, dydt);
-    }
-    template <size_t element1, size_t element2 = 0>
-    ScalarType interact(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, ScalarType t,
-                        Eigen::Ref<Eigen::VectorXd> dydt)
-    {
-        if constexpr ((element1 != element2) && (element2 < m_elements)) {
-            size_t Si                       = this->populations.template get_first_index_element<element1>();
-            ScalarType infectedNoSymptoms_j = 0;
-            ScalarType infectedSymptoms_j   = 0;
-            auto params                     = this->parameters;
-
-            size_t elem2_first_index = this->populations.template get_first_index_element<element2>();
-
-            // Calculate sum of all subcompartments for InfectedNoSymptoms of AgeGroup j.
-            infectedNoSymptoms_j =
-                pop.segment(elem2_first_index +
-                                std::tuple_element_t<element2, tupleLctStates>::template get_first_index<
-                                    InfectionState::InfectedNoSymptoms>(),
-                            std::tuple_element_t<element2, tupleLctStates>::template get_num_subcompartments<
-                                InfectionState::InfectedNoSymptoms>())
-                    .sum();
-            // Calculate sum of all subcompartments for InfectedSymptoms of AgeGroup j.
-            infectedSymptoms_j =
-                pop.segment(elem2_first_index +
-                                std::tuple_element_t<element2, tupleLctStates>::template get_first_index<
-                                    InfectionState::InfectedSymptoms>(),
-                            std::tuple_element_t<element2, tupleLctStates>::template get_num_subcompartments<
-                                InfectionState::InfectedSymptoms>())
-                    .sum();
-            // Size of the Subpopulation without dead people.
-            double Nj = pop.segment(elem2_first_index, std::tuple_element_t<element2, tupleLctStates>::Count - 1).sum();
-            ScalarType season_val =
-                1 + params.template get<Seasonality>() *
-                        sin(3.141592653589793 * ((params.template get<StartDay>() + t) / 182.5 + 0.5));
-            dydt[Si] += -y[Si] / Nj * season_val * params.template get<TransmissionProbabilityOnContact>()[element1] *
-                        params.template get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(t)(
-                            static_cast<Eigen::Index>(element1), static_cast<Eigen::Index>(element2)) *
-                        (params.template get<RelativeTransmissionNoSymptoms>()[element2] * infectedNoSymptoms_j +
-                         params.template get<RiskOfInfectionFromSymptomatic>()[element2] * infectedSymptoms_j);
-
-            interact<element1, element2 + 1>(pop, y, t, dydt);
-        }
-    }
-    template <size_t element = 0>
-    void get_derivatives_impl(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, ScalarType t,
-                              Eigen::Ref<Eigen::VectorXd> dydt) const
-    {
-        if constexpr (element > 0 && element < m_elements) {
-            size_t first_index = this->populations.template get_first_index_element<element>();
-            auto params        = this->parameters;
-            ScalarType flow    = 0;
-
-            // Indizes of first subcompartment of the InfectionState for the AgeGroup in an Vector.
-
-            size_t Ei_first_index = this->populations.get_flat_index(
-                {i, Index<LctState>(LctState::template get_first_index<InfectionState::Exposed>())});
-            size_t INSi_first_index = this->populations.get_flat_index(
-                {i, Index<LctState>(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>())});
-            size_t ISyi_first_index = this->populations.get_flat_index(
-                {i, Index<LctState>(LctState::template get_first_index<InfectionState::InfectedSymptoms>())});
-            size_t ISevi_first_index = this->populations.get_flat_index(
-                {i, Index<LctState>(LctState::template get_first_index<InfectionState::InfectedSevere>())});
-            size_t ICri_first_index = this->populations.get_flat_index(
-                {i, Index<LctState>(LctState::template get_first_index<InfectionState::InfectedCritical>())});
-            size_t Ri = this->populations.get_flat_index(
-                {i, Index<LctState>(LctState::template get_first_index<InfectionState::Recovered>())});
-            size_t Di = this->populations.get_flat_index(
-                {i, Index<LctState>(LctState::template get_first_index<InfectionState::Dead>())});
-
-            // S'
-            // AgeGroup i interacts with AgeGroup j.
-            interact<element>();
-
-            // E'
-            dydt[Ei_first_index] = -dydt[Si];
-            for (size_t subcomp = 0; subcomp < LctState::template get_num_subcompartments<InfectionState::Exposed>();
-                 subcomp++) {
-                // variable flow stores the value of the flow from one subcompartment to the next one.
-                // Ei_first_index+subcomp is always the index of a (sub-)compartment of Exposed and Ei_first_index + subcomp+1 can also be the index of the first (sub-)compartment of InfectedNoSymptoms.
-                flow = (ScalarType)LctState::template get_num_subcompartments<InfectionState::Exposed>() *
-                       (1 / params.template get<TimeExposed>()[i]) * y[Ei_first_index + subcomp];
-                // Subtract flow from dydt[1 + i] and add to dydt[2 + i].
-                dydt[Ei_first_index + subcomp]     = dydt[Ei_first_index + subcomp] - flow;
-                dydt[Ei_first_index + subcomp + 1] = flow;
-            }
-
-            // C'
-            for (size_t subcomp = 0;
-                 subcomp < LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>();
-                 subcomp++) {
-                flow = (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>() *
-                       (1 / params.template get<TimeInfectedNoSymptoms>()[i]) * y[INSi_first_index + subcomp];
-                dydt[INSi_first_index + subcomp] -= flow;
-                dydt[INSi_first_index + subcomp + 1] = flow;
-            }
-
-            // I'
-            // Flow from last (sub-) compartment of C must be split between I_1 and R.
-            dydt[Ri] = dydt[ISyi_first_index] * params.template get<RecoveredPerInfectedNoSymptoms>()[i];
-            dydt[ISyi_first_index] =
-                dydt[ISyi_first_index] * (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]);
-
-            for (size_t subcomp = 0;
-                 subcomp < LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>(); subcomp++) {
-                flow = (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>() *
-                       (1 / params.template get<TimeInfectedSymptoms>()[i]) * y[ISyi_first_index + subcomp];
-                dydt[ISyi_first_index + subcomp] -= flow;
-                dydt[ISyi_first_index + subcomp + 1] = flow;
-            }
-
-            // H'
-            dydt[Ri] += dydt[ISevi_first_index] * (1 - params.template get<SeverePerInfectedSymptoms>()[i]);
-            dydt[ISevi_first_index] = dydt[ISevi_first_index] * params.template get<SeverePerInfectedSymptoms>()[i];
-            for (size_t subcomp = 0;
-                 subcomp < LctState::template get_num_subcompartments<InfectionState::InfectedSevere>(); subcomp++) {
-                flow = (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedSevere>() *
-                       (1 / params.template get<TimeInfectedSevere>()[i]) * y[ISevi_first_index + subcomp];
-                dydt[ISevi_first_index + subcomp] -= flow;
-                dydt[ISevi_first_index + subcomp + 1] = flow;
-            }
-
-            // U'
-            dydt[Ri] += dydt[ICri_first_index] * (1 - params.template get<CriticalPerSevere>()[i]);
-            dydt[ICri_first_index] = dydt[ICri_first_index] * params.template get<CriticalPerSevere>()[i];
-            for (size_t subcomp = 0;
-                 subcomp < LctState::template get_num_subcompartments<InfectionState::InfectedCritical>() - 1;
-                 subcomp++) {
-                flow = (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedCritical>() *
-                       (1 / params.template get<TimeInfectedCritical>()[i]) * y[ICri_first_index + subcomp];
-                dydt[ICri_first_index + subcomp] -= flow;
-                dydt[ICri_first_index + subcomp + 1] = flow;
-            }
-            // Last flow from U has to be divided between R and D.
-            // Must be calculated separately in order not to overwrite the already calculated values ​​for R.
-            flow = (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedCritical>() *
-                   (1 / params.template get<TimeInfectedCritical>()[i]) * y[Ri - 1];
-            dydt[Ri - 1] -= flow;
-            dydt[Ri] = dydt[Ri] + (1 - params.template get<DeathsPerCritical>()[i]) * flow;
-            dydt[Di] = params.template get<DeathsPerCritical>()[i] * flow;
-
-            get_derivatives_impl<element + 1>(pop, y, t, dydt)
-        } // end if
     }
 
     /**
@@ -243,85 +110,335 @@ public:
      * @return Result of the simulation divided in infection states without subcompartments. 
      *  Returns TimeSeries with values -1 if calculation is not possible.
      */
-    // TimeSeries<ScalarType> calculate_compartments(const TimeSeries<ScalarType>& subcompartments_ts) const
-    // {
-    //     Eigen::Index count_InfStates = (Eigen::Index)InfectionState::Count;
-    //     Eigen::Index num_compartments =
-    //         count_InfStates * static_cast<Eigen::Index>((size_t)this->parameters.get_num_groups());
-    //     TimeSeries<ScalarType> compartments_ts(num_compartments);
-    //     if (!(this->populations.get_num_compartments() == (size_t)subcompartments_ts.get_num_elements())) {
-    //         log_error("Result does not match infectionState of the Model.");
-    //         Eigen::VectorXd wrong_size = Eigen::VectorXd::Constant(num_compartments, -1);
-    //         compartments_ts.add_time_point(-1, wrong_size);
-    //         return compartments_ts;
-    //     }
-    //     Eigen::VectorXd compartments(num_compartments);
-    //     for (Eigen::Index timepoint = 0; timepoint < subcompartments_ts.get_num_time_points(); ++timepoint) {
-    //         for (auto agegroup = AgeGroup(0); agegroup < this->parameters.get_num_groups(); agegroup++) {
-    //             // Indizes of first subcompartment of the InfectionState for the AgeGroup in an Vector.
-    //             size_t S_agegroup = this->populations.get_flat_index(
-    //                 {agegroup, Index<LctState>(LctState::template get_first_index<InfectionState::Susceptible>())});
-    //             size_t E_agegroup_first_index = this->populations.get_flat_index(
-    //                 {agegroup, Index<LctState>(LctState::template get_first_index<InfectionState::Exposed>())});
-    //             size_t INS_agegroup_first_index = this->populations.get_flat_index(
-    //                 {agegroup,
-    //                  Index<LctState>(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>())});
-    //             size_t ISy_agegroup_first_index = this->populations.get_flat_index(
-    //                 {agegroup,
-    //                  Index<LctState>(LctState::template get_first_index<InfectionState::InfectedSymptoms>())});
-    //             size_t ISev_agegroup_first_index = this->populations.get_flat_index(
-    //                 {agegroup, Index<LctState>(LctState::template get_first_index<InfectionState::InfectedSevere>())});
-    //             size_t ICr_agegroup_first_index = this->populations.get_flat_index(
-    //                 {agegroup,
-    //                  Index<LctState>(LctState::template get_first_index<InfectionState::InfectedCritical>())});
-    //             size_t R_agegroup = this->populations.get_flat_index(
-    //                 {agegroup, Index<LctState>(LctState::template get_first_index<InfectionState::Recovered>())});
-    //             size_t D_agegroup = this->populations.get_flat_index(
-    //                 {agegroup, Index<LctState>(LctState::template get_first_index<InfectionState::Dead>())});
-    //             // Use segment of vector of the result with subcompartments of InfectionState with index j and sum up values of subcompartments.
-    //             compartments[count_InfStates * static_cast<Eigen::Index>((size_t)agegroup) +
-    //                          (Eigen::Index)InfectionState::Susceptible] = subcompartments_ts[timepoint][S_agegroup];
-    //             compartments[count_InfStates * static_cast<Eigen::Index>((size_t)agegroup) +
-    //                          (Eigen::Index)InfectionState::Exposed] =
-    //                 subcompartments_ts[timepoint]
-    //                     .segment(E_agegroup_first_index,
-    //                              LctState::template get_num_subcompartments<InfectionState::Exposed>())
-    //                     .sum();
-    //             compartments[count_InfStates * static_cast<Eigen::Index>((size_t)agegroup) +
-    //                          (Eigen::Index)InfectionState::InfectedNoSymptoms] =
-    //                 subcompartments_ts[timepoint]
-    //                     .segment(INS_agegroup_first_index,
-    //                              LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>())
-    //                     .sum();
-    //             compartments[count_InfStates * static_cast<Eigen::Index>((size_t)agegroup) +
-    //                          (Eigen::Index)InfectionState::InfectedSymptoms] =
-    //                 subcompartments_ts[timepoint]
-    //                     .segment(ISy_agegroup_first_index,
-    //                              LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>())
-    //                     .sum();
-    //             compartments[count_InfStates * static_cast<Eigen::Index>((size_t)agegroup) +
-    //                          (Eigen::Index)InfectionState::InfectedSevere] =
-    //                 subcompartments_ts[timepoint]
-    //                     .segment(ISev_agegroup_first_index,
-    //                              LctState::template get_num_subcompartments<InfectionState::InfectedSevere>())
-    //                     .sum();
-    //             compartments[count_InfStates * static_cast<Eigen::Index>((size_t)agegroup) +
-    //                          (Eigen::Index)InfectionState::InfectedCritical] =
-    //                 subcompartments_ts[timepoint]
-    //                     .segment(ICr_agegroup_first_index,
-    //                              LctState::template get_num_subcompartments<InfectionState::InfectedCritical>())
-    //                     .sum();
-    //             compartments[count_InfStates * static_cast<Eigen::Index>((size_t)agegroup) +
-    //                          (Eigen::Index)InfectionState::Recovered] = subcompartments_ts[timepoint][R_agegroup];
-    //             compartments[count_InfStates * static_cast<Eigen::Index>((size_t)agegroup) +
-    //                          (Eigen::Index)InfectionState::Dead]      = subcompartments_ts[timepoint][D_agegroup];
-    //         } // end for agegroup
+    TimeSeries<ScalarType> calculate_compartments(const TimeSeries<ScalarType>& subcompartments_ts) const
+    {
+        Eigen::Index count_InfStates  = (Eigen::Index)InfectionState::Count;
+        Eigen::Index num_compartments = count_InfStates * m_groups;
+        TimeSeries<ScalarType> compartments_ts(num_compartments);
+        if (!(this->populations.get_num_compartments() == (size_t)subcompartments_ts.get_num_elements())) {
+            log_error("Result does not match infectionState of the Model.");
+            Eigen::VectorXd wrong_size = Eigen::VectorXd::Constant(num_compartments, -1);
+            compartments_ts.add_time_point(-1, wrong_size);
+            return compartments_ts;
+        }
+        Eigen::VectorXd compartments(num_compartments);
+        for (Eigen::Index timepoint = 0; timepoint < subcompartments_ts.get_num_time_points(); ++timepoint) {
+            compress_vector(subcompartments_ts[timepoint], compartments);
+            compartments_ts.add_time_point(subcompartments_ts.get_time(timepoint), compartments);
+        }
 
-    //         compartments_ts.add_time_point(subcompartments_ts.get_time(timepoint), compartments);
-    //     } // end for timepoints
+        return compartments_ts;
+    }
 
-    //     return compartments_ts;
-    // }
+    /**
+     * @brief Checks that the model satisfies all constraints (e.g. parameter or population constraints).
+     * @return Returns true if one or more constraints are not satisfied, false otherwise.
+     */
+    bool check_constraints() const
+    {
+
+        return (check_constraints_impl() || this->parameters.check_constraints() ||
+                this->populations.check_constraints());
+    }
+
+private:
+    /**
+     * @brief Converts a vector with subcompartments in a vector without subcompartments 
+     * by summing up subcompartment values.
+     * This is done recusively for each group which corresponds to a slice of the vector.
+     *
+     * @tparam group The group specifying the slice of the vector being considered. 
+     * @param[in] subcompartments The vector that should be converted.
+     * @param[out] compartments Reference to the vector where the output is stored.
+     */
+    template <size_t group = 0, std::enable_if_t<(group < m_groups) && (group >= 0), bool> = true>
+    void compress_vector(const Eigen::VectorXd& subcompartments, Eigen::VectorXd& compartments) const
+    {
+        // Specify first indices of the vector slices considered.
+        Eigen::Index first_index_subcomps = this->populations.template get_first_index_group<group>();
+        Eigen::Index count_InfStates      = (Eigen::Index)InfectionState::Count;
+        Eigen::Index first_index_comps    = group * count_InfStates;
+
+        // Use segment of the vector subcompartments of each InfectionState and sum up the values of subcompartments.
+        compartments[first_index_comps + (Eigen::Index)InfectionState::Susceptible] =
+            subcompartments[first_index_subcomps];
+        compartments[first_index_comps + (Eigen::Index)InfectionState::Exposed] =
+            subcompartments
+                .segment(
+                    first_index_subcomps +
+                        std::tuple_element_t<group,
+                                             tupleLctStates>::template get_first_index<InfectionState::Exposed>(),
+                    std::tuple_element_t<group,
+                                         tupleLctStates>::template get_num_subcompartments<InfectionState::Exposed>())
+                .sum();
+        compartments[first_index_comps + (Eigen::Index)InfectionState::InfectedNoSymptoms] =
+            subcompartments
+                .segment(first_index_subcomps + std::tuple_element_t<group, tupleLctStates>::template get_first_index<
+                                                    InfectionState::InfectedNoSymptoms>(),
+                         std::tuple_element_t<group, tupleLctStates>::template get_num_subcompartments<
+                             InfectionState::InfectedNoSymptoms>())
+                .sum();
+        compartments[first_index_comps + (Eigen::Index)InfectionState::InfectedSymptoms] =
+            subcompartments
+                .segment(first_index_subcomps + std::tuple_element_t<group, tupleLctStates>::template get_first_index<
+                                                    InfectionState::InfectedSymptoms>(),
+                         std::tuple_element_t<group, tupleLctStates>::template get_num_subcompartments<
+                             InfectionState::InfectedSymptoms>())
+                .sum();
+        compartments[first_index_comps + (Eigen::Index)InfectionState::InfectedSevere] =
+            subcompartments
+                .segment(first_index_subcomps + std::tuple_element_t<group, tupleLctStates>::template get_first_index<
+                                                    InfectionState::InfectedSevere>(),
+                         std::tuple_element_t<group, tupleLctStates>::template get_num_subcompartments<
+                             InfectionState::InfectedSevere>())
+                .sum();
+        compartments[first_index_comps + (Eigen::Index)InfectionState::InfectedCritical] =
+            subcompartments
+                .segment(first_index_subcomps + std::tuple_element_t<group, tupleLctStates>::template get_first_index<
+                                                    InfectionState::InfectedCritical>(),
+                         std::tuple_element_t<group, tupleLctStates>::template get_num_subcompartments<
+                             InfectionState::InfectedCritical>())
+                .sum();
+        compartments[first_index_comps + (Eigen::Index)InfectionState::Recovered] =
+            subcompartments[first_index_subcomps + std::tuple_element_t<group, tupleLctStates>::
+                                                       template get_first_index<InfectionState::Recovered>()];
+        compartments[first_index_comps + (Eigen::Index)InfectionState::Dead] =
+            subcompartments[first_index_subcomps +
+                            std::tuple_element_t<group,
+                                                 tupleLctStates>::template get_first_index<InfectionState::Dead>()];
+        // Function call for next group if applicable.
+        if constexpr (group + 1 < m_groups) {
+            compress_vector<group + 1>(subcompartments, compartments);
+        }
+    }
+
+    /**
+     * @brief Evaluates the right-hand-side f of the ODE dydt = f(y, t) recusively for each group.
+     *
+     * See also the function get_derivative.
+     * For each group, one slice of the output vector is calculated.
+     * @tparam group The group specifying the slice of the vector being considered.  
+     * @param[in] pop The current state of the population in the geographic unit we are considering.
+     * @param[in] y The current state of the model (or a subpopulation) as a flat array.
+     * @param[in] t The current time.
+     * @param[out] dydt A reference to the calculated output.
+     */
+    template <size_t group = 0, std::enable_if_t<(group < m_groups) && (group >= 0), bool> = true>
+    void get_derivatives_impl(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, ScalarType t,
+                              Eigen::Ref<Eigen::VectorXd> dydt) const
+    {
+
+        size_t first_index = this->populations.template get_first_index_group<group>();
+        auto params        = this->parameters;
+        ScalarType flow    = 0;
+
+        // Indizes of first subcompartment of the InfectionState for the group in the vectors.
+        size_t Ei_first_index =
+            first_index +
+            std::tuple_element_t<group, tupleLctStates>::template get_first_index<InfectionState::Exposed>();
+        size_t INSi_first_index =
+            first_index +
+            std::tuple_element_t<group, tupleLctStates>::template get_first_index<InfectionState::InfectedNoSymptoms>();
+        size_t ISyi_first_index =
+            first_index +
+            std::tuple_element_t<group, tupleLctStates>::template get_first_index<InfectionState::InfectedSymptoms>();
+        size_t ISevi_first_index =
+            first_index +
+            std::tuple_element_t<group, tupleLctStates>::template get_first_index<InfectionState::InfectedSevere>();
+        size_t ICri_first_index =
+            first_index +
+            std::tuple_element_t<group, tupleLctStates>::template get_first_index<InfectionState::InfectedCritical>();
+        size_t Ri = first_index +
+                    std::tuple_element_t<group, tupleLctStates>::template get_first_index<InfectionState::Recovered>();
+        size_t Di =
+            first_index + std::tuple_element_t<group, tupleLctStates>::template get_first_index<InfectionState::Dead>();
+
+        // Calculate derivative of the Susceptible compartment.
+        interact<group>(pop, y, t, dydt);
+
+        // Calculate derivative of the Exposed compartment.
+        dydt[Ei_first_index] = -dydt[first_index];
+        for (size_t subcomp = 0;
+             subcomp <
+             std::tuple_element_t<group, tupleLctStates>::template get_num_subcompartments<InfectionState::Exposed>();
+             subcomp++) {
+            // Variable flow stores the value of the flow from one subcompartment to the next one.
+            // Ei_first_index+subcomp is always the index of a (sub-)compartment of Exposed and Ei_first_index
+            // + subcomp + 1 can also be the index of the first (sub-)compartment of InfectedNoSymptoms.
+            flow = (ScalarType)std::tuple_element_t<group, tupleLctStates>::template get_num_subcompartments<
+                       InfectionState::Exposed>() *
+                   (1 / params.template get<TimeExposed>()[group]) * y[Ei_first_index + subcomp];
+            // Subtract flow from dydt[Ei_first_index + subcomp] and add to next subcompartment.
+            dydt[Ei_first_index + subcomp]     = dydt[Ei_first_index + subcomp] - flow;
+            dydt[Ei_first_index + subcomp + 1] = flow;
+        }
+
+        // Calculate derivative of the InfectedNoSymptoms compartment.
+        for (size_t subcomp = 0;
+             subcomp < std::tuple_element_t<group, tupleLctStates>::template get_num_subcompartments<
+                           InfectionState::InfectedNoSymptoms>();
+             subcomp++) {
+            flow = (ScalarType)std::tuple_element_t<group, tupleLctStates>::template get_num_subcompartments<
+                       InfectionState::InfectedNoSymptoms>() *
+                   (1 / params.template get<TimeInfectedNoSymptoms>()[group]) * y[INSi_first_index + subcomp];
+            dydt[INSi_first_index + subcomp] -= flow;
+            dydt[INSi_first_index + subcomp + 1] = flow;
+        }
+
+        // Calculate derivative of the InfectedSymptoms compartment.
+        // Flow from last (sub-) compartment of C must be split between
+        // the first subcompartment of InfectedSymptoms and Recovered.
+        dydt[Ri] = dydt[ISyi_first_index] * params.template get<RecoveredPerInfectedNoSymptoms>()[group];
+        dydt[ISyi_first_index] =
+            dydt[ISyi_first_index] * (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[group]);
+        for (size_t subcomp = 0;
+             subcomp <
+             std::tuple_element_t<group,
+                                  tupleLctStates>::template get_num_subcompartments<InfectionState::InfectedSymptoms>();
+             subcomp++) {
+            flow = (ScalarType)std::tuple_element_t<group, tupleLctStates>::template get_num_subcompartments<
+                       InfectionState::InfectedSymptoms>() *
+                   (1 / params.template get<TimeInfectedSymptoms>()[group]) * y[ISyi_first_index + subcomp];
+            dydt[ISyi_first_index + subcomp] -= flow;
+            dydt[ISyi_first_index + subcomp + 1] = flow;
+        }
+
+        // Calculate derivative of the InfectedSevere compartment.
+        dydt[Ri] += dydt[ISevi_first_index] * (1 - params.template get<SeverePerInfectedSymptoms>()[group]);
+        dydt[ISevi_first_index] = dydt[ISevi_first_index] * params.template get<SeverePerInfectedSymptoms>()[group];
+        for (size_t subcomp = 0;
+             subcomp <
+             std::tuple_element_t<group,
+                                  tupleLctStates>::template get_num_subcompartments<InfectionState::InfectedSevere>();
+             subcomp++) {
+            flow = (ScalarType)std::tuple_element_t<group, tupleLctStates>::template get_num_subcompartments<
+                       InfectionState::InfectedSevere>() *
+                   (1 / params.template get<TimeInfectedSevere>()[group]) * y[ISevi_first_index + subcomp];
+            dydt[ISevi_first_index + subcomp] -= flow;
+            dydt[ISevi_first_index + subcomp + 1] = flow;
+        }
+
+        // Calculate derivative of the InfectedCritical compartment.
+        dydt[Ri] += dydt[ICri_first_index] * (1 - params.template get<CriticalPerSevere>()[group]);
+        dydt[ICri_first_index] = dydt[ICri_first_index] * params.template get<CriticalPerSevere>()[group];
+        for (size_t subcomp = 0;
+             subcomp < std::tuple_element_t<group, tupleLctStates>::template get_num_subcompartments<
+                           InfectionState::InfectedCritical>() -
+                           1;
+             subcomp++) {
+            flow = (ScalarType)std::tuple_element_t<group, tupleLctStates>::template get_num_subcompartments<
+                       InfectionState::InfectedCritical>() *
+                   (1 / params.template get<TimeInfectedCritical>()[group]) * y[ICri_first_index + subcomp];
+            dydt[ICri_first_index + subcomp] -= flow;
+            dydt[ICri_first_index + subcomp + 1] = flow;
+        }
+        // Last flow from InfectedCritical has to be divided between Recovered and Dead.
+        // Must be calculated separately in order not to overwrite the already calculated values ​​for Recovered.
+        flow = (ScalarType)std::tuple_element_t<group, tupleLctStates>::template get_num_subcompartments<
+                   InfectionState::InfectedCritical>() *
+               (1 / params.template get<TimeInfectedCritical>()[group]) * y[Ri - 1];
+        dydt[Ri - 1] -= flow;
+        dydt[Ri] = dydt[Ri] + (1 - params.template get<DeathsPerCritical>()[group]) * flow;
+        dydt[Di] = params.template get<DeathsPerCritical>()[group] * flow;
+
+        // Function call for next group if applicable.
+        if constexpr (group + 1 < m_groups) {
+            get_derivatives_impl<group + 1>(pop, y, t, dydt);
+        }
+    }
+
+    /**
+     * @brief Calculated the derivative of the Susceptible compartment for group1.
+     *
+     * This is done recursively by calculating the interaction terms with each group.
+     * @tparam group1 The group for which the derivative of the Susceptible compartment should be calculated. 
+     * @tparam group2 The group that group1 interacts with. 
+     * @param[in] pop The current state of the population in the geographic unit we are considering.
+     * @param[in] y The current state of the model (or a subpopulation) as a flat array.
+     * @param[in] t The current time.
+     * @param[out] dydt A reference to the calculated output.
+     */
+    template <
+        size_t group1, size_t group2 = 0,
+        std::enable_if_t<(group1 < m_groups) && (group1 >= 0) && (group2 < m_groups) && (group2 >= 0), bool> = true>
+    void interact(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, ScalarType t,
+                  Eigen::Ref<Eigen::VectorXd> dydt) const
+    {
+        size_t Si                       = this->populations.template get_first_index_group<group1>();
+        ScalarType infectedNoSymptoms_2 = 0;
+        ScalarType infectedSymptoms_2   = 0;
+        auto params                     = this->parameters;
+
+        size_t elem2_first_index = this->populations.template get_first_index_group<group2>();
+
+        // Calculate sum of all subcompartments for InfectedNoSymptoms of group2.
+        infectedNoSymptoms_2 =
+            pop.segment(elem2_first_index + std::tuple_element_t<group2, tupleLctStates>::template get_first_index<
+                                                InfectionState::InfectedNoSymptoms>(),
+                        std::tuple_element_t<group2, tupleLctStates>::template get_num_subcompartments<
+                            InfectionState::InfectedNoSymptoms>())
+                .sum();
+        // Calculate sum of all subcompartments for InfectedSymptoms of group2.
+        infectedSymptoms_2 =
+            pop.segment(elem2_first_index + std::tuple_element_t<group2, tupleLctStates>::template get_first_index<
+                                                InfectionState::InfectedSymptoms>(),
+                        std::tuple_element_t<group2, tupleLctStates>::template get_num_subcompartments<
+                            InfectionState::InfectedSymptoms>())
+                .sum();
+        // Size of the Subpopulation group2 without dead people.
+        double Nj = pop.segment(elem2_first_index, std::tuple_element_t<group2, tupleLctStates>::Count - 1).sum();
+        ScalarType season_val = 1 + params.template get<Seasonality>() *
+                                        sin(3.141592653589793 * ((params.template get<StartDay>() + t) / 182.5 + 0.5));
+        dydt[Si] += -y[Si] / Nj * season_val * params.template get<TransmissionProbabilityOnContact>()[group1] *
+                    params.template get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(t)(
+                        static_cast<Eigen::Index>(group1), static_cast<Eigen::Index>(group2)) *
+                    (params.template get<RelativeTransmissionNoSymptoms>()[group2] * infectedNoSymptoms_2 +
+                     params.template get<RiskOfInfectionFromSymptomatic>()[group2] * infectedSymptoms_2);
+        // Function call for next interacting group if applicable.
+        if constexpr (group2 + 1 < m_groups) {
+            interact<group1, group2 + 1>(pop, y, t, dydt);
+        }
+    }
+
+    /**
+     * @brief Checks whether LctState of a group satisfies all constraints. 
+     *  Recursively, it checks that all groups satisfy the constraints.
+     *
+     * @tparam group The group for which the constraints should be checked.
+     * @return Returns true if one or more constraints are not satisfied, false otherwise.
+     */
+    template <size_t group = 0, std::enable_if_t<(group < m_groups) && (group >= 0), bool> = true>
+    bool check_constraints_impl() const
+    {
+
+        if (std::tuple_element_t<group,
+                                 tupleLctStates>::template get_num_subcompartments<InfectionState::Susceptible>() !=
+            1) {
+            log_warning(
+                "Constraint check: The number of subcompartments for Susceptibles of group {} is should be one!",
+                group);
+            return true;
+        }
+        if (std::tuple_element_t<group,
+                                 tupleLctStates>::template get_num_subcompartments<InfectionState::Recovered>() != 1) {
+            log_warning("Constraint check: The number of subcompartments for Recovered of group {} is should be one!",
+                        group);
+            return true;
+        }
+        if (std::tuple_element_t<group, tupleLctStates>::template get_num_subcompartments<InfectionState::Dead>() !=
+            1) {
+            log_warning("Constraint check: The number of subcompartments for Dead of group {} is should be one!",
+                        group);
+            return true;
+        }
+
+        if constexpr (group == m_groups - 1) {
+            return false;
+        }
+        else {
+            return check_constraints_impl<group + 1>();
+        }
+    }
 };
 
 } // namespace lsecir
