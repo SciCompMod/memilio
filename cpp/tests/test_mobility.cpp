@@ -167,7 +167,7 @@ TEST(TestMobility, edgeApplyMobility)
     EXPECT_DOUBLE_EQ(node2.get_result().get_last_value().sum(), 1100);
 }
 
-TEST(TestMobility, condense_m_mobility)
+TEST(TestMobility, add_mobility_result_time_point)
 {
     using Model = mio::osecir::Model<double>;
 

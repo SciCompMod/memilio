@@ -129,8 +129,7 @@ public:
      */
     MobilityParameters(const MobilityCoefficientGroup& coeffs)
         : m_coefficients(coeffs)
-        , m_save_indices(0)
-
+        , m_saved_compartment_indices(0)
     {
     }
 
@@ -140,31 +139,38 @@ public:
      */
     MobilityParameters(const Eigen::VectorXd& coeffs)
         : m_coefficients({MobilityCoefficients(coeffs)})
-        , m_save_indices(0)
+        , m_saved_compartment_indices(0)
     {
     }
 
     /**
-    * @brief Constructor for a new MobilityParameters object.
-    *
-    * @param coeffs Mobility coefficients
-    * @param save_indices 2D vector of indices. Each inner vector represents a group of indices to be saved.
-    */
+     * @brief Constructor for initializing mobility parameters with coefficients from type MobilityCoefficientGroup and
+     * specific save indices.
+     *
+     * @param coeffs A group of mobility coefficients represented by a `MobilityCoefficientGroup` object, defining how 
+     * individuals move between nodes.
+     * @param save_indices A 2D vector of indices. Each inner vector represents a set of compartments whose data will be 
+     * saved in the member `m_mobility_results` of the `MobilityEdge` class during the simulation using the
+     * `add_mobility_result_time_point` function. 
+     */
     MobilityParameters(const MobilityCoefficientGroup& coeffs, const std::vector<std::vector<size_t>>& save_indices)
         : m_coefficients(coeffs)
-        , m_save_indices(save_indices)
+        , m_saved_compartment_indices(save_indices)
     {
     }
 
     /**
-    * @brief Constructor for a new MobilityParameters object.
-    *
-    * @param coeffs Mobility coefficients
-    * @param save_indices 2D vector of indices. Each inner vector represents a group of indices to be saved.
-    */
+     * @brief Constructor for initializing mobility parameters with coefficients from an Eigen Vector
+     * and specific save indices.
+     *
+     * @param coeffs A Eigen::VectorXd containing mobility coefficients.
+     * @param save_indices A 2D vector of indices. Each inner vector represents a set of compartments whose data will be 
+     * saved in the member `m_mobility_results` of the `MobilityEdge` class during the simulation using the
+     * `add_mobility_result_time_point` function. 
+     */
     MobilityParameters(const Eigen::VectorXd& coeffs, const std::vector<std::vector<size_t>>& save_indices)
         : m_coefficients({MobilityCoefficients(coeffs)})
-        , m_save_indices(save_indices)
+        , m_saved_compartment_indices(save_indices)
     {
     }
 
@@ -208,11 +214,18 @@ public:
     }
 
     /**
-     * @return the indices we want to save for the edge
-     */
+    * @brief Get the indices of compartments to be saved during mobility.
+    *
+    * This function returns a reference to the vector of `m_saved_compartment_indices`, which specify the groups of compartments 
+    * that are saved in the member `m_mobility_results` of the `MobilityEdge` class during the simulation using the
+    * `add_mobility_result_time_point` function.
+    *
+    * @return A reference to the 2D vector containing indices of compartments to be saved.
+    * Each inner vector represents a group of compartments defined by indices.
+    */
     const auto& get_save_indices() const
     {
-        return m_save_indices;
+        return m_saved_compartment_indices;
     }
 
     /**
@@ -275,7 +288,7 @@ public:
 private:
     MobilityCoefficientGroup m_coefficients; //one per group and compartment
     DynamicNPIs<FP> m_dynamic_npis;
-    std::vector<std::vector<size_t>> m_save_indices; // groups of indices from compartments to save
+    std::vector<std::vector<size_t>> m_saved_compartment_indices; // groups of indices from compartments to save
 };
 
 /** 
@@ -294,8 +307,8 @@ public:
         , m_mobile_population(params.get_coefficients().get_shape().rows())
         , m_return_times(0)
         , m_return_mobile_population(false)
-        , m_save_indices(params.get_save_indices())
-        , m_mobility_results(m_save_indices.size() + 1)
+        , m_saved_compartment_indices(params.get_save_indices())
+        , m_mobility_results(m_saved_compartment_indices.size() + 1)
     {
     }
 
@@ -308,8 +321,8 @@ public:
         , m_mobile_population(coeffs.rows())
         , m_return_times(0)
         , m_return_mobile_population(false)
-        , m_save_indices(0)
-        , m_mobility_results(m_save_indices.size() + 1)
+        , m_saved_compartment_indices(0)
+        , m_mobility_results(m_saved_compartment_indices.size() + 1)
     {
     }
 
@@ -323,8 +336,8 @@ public:
         , m_mobile_population(params.get_coefficients().get_shape().rows())
         , m_return_times(0)
         , m_return_mobile_population(false)
-        , m_save_indices(save_indices)
-        , m_mobility_results(m_save_indices.size() + 1)
+        , m_saved_compartment_indices(save_indices)
+        , m_mobility_results(m_saved_compartment_indices.size() + 1)
     {
     }
 
@@ -338,8 +351,8 @@ public:
         , m_mobile_population(coeffs.rows())
         , m_return_times(0)
         , m_return_mobile_population(false)
-        , m_save_indices(save_indices)
-        , m_mobility_results(m_save_indices.size() + 1)
+        , m_saved_compartment_indices(save_indices)
+        , m_mobility_results(m_saved_compartment_indices.size() + 1)
     {
     }
 
@@ -384,7 +397,7 @@ private:
     bool m_return_mobile_population;
     double m_t_last_dynamic_npi_check               = -std::numeric_limits<double>::infinity();
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
-    std::vector<std::vector<size_t>> m_save_indices; // groups of indices from compartments to save
+    std::vector<std::vector<size_t>> m_saved_compartment_indices; // groups of indices from compartments to save
     TimeSeries<double> m_mobility_results; // save results from edges + entry for the total number of commuters
 
     /**
@@ -393,21 +406,21 @@ private:
      * Additionally, the total number of commuters is stored in the last entry of m_mobility_results.
      * @param[in] t current time
      */
-    void condense_m_mobility(const double t);
+    void add_mobility_result_time_point(const double t);
 };
 
 template <typename FP>
-void MobilityEdge<FP>::condense_m_mobility(const double t)
+void MobilityEdge<FP>::add_mobility_result_time_point(const double t)
 {
-    const size_t save_indices_size = this->m_save_indices.size();
+    const size_t save_indices_size = this->m_saved_compartment_indices.size();
     if (save_indices_size > 0) {
 
         const auto& last_value           = m_mobile_population.get_last_value();
         Eigen::VectorXd condensed_values = Eigen::VectorXd::Zero(save_indices_size + 1);
 
-        // sum up the values of m_save_indices for each group (e.g. Age groups)
-        std::transform(this->m_save_indices.begin(), this->m_save_indices.end(), condensed_values.data(),
-                       [&last_value](const auto& indices) {
+        // sum up the values of m_saved_compartment_indices for each group (e.g. Age groups)
+        std::transform(this->m_saved_compartment_indices.begin(), this->m_saved_compartment_indices.end(),
+                       condensed_values.data(), [&last_value](const auto& indices) {
                            return std::accumulate(indices.begin(), indices.end(), 0.0,
                                                   [&last_value](double sum, auto i) {
                                                       return sum + last_value[i];
@@ -590,7 +603,7 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
             }
             node_from.get_result().get_last_value() += m_mobile_population[i];
             node_to.get_result().get_last_value() -= m_mobile_population[i];
-            condense_m_mobility(t);
+            add_mobility_result_time_point(t);
             m_mobile_population.remove_time_point(i);
             m_return_times.remove_time_point(i);
         }
@@ -609,7 +622,7 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
         node_to.get_result().get_last_value() += m_mobile_population.get_last_value();
         node_from.get_result().get_last_value() -= m_mobile_population.get_last_value();
 
-        condense_m_mobility(t);
+        add_mobility_result_time_point(t);
     }
     m_return_mobile_population = !m_return_mobile_population;
 }

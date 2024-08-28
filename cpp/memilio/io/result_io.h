@@ -122,29 +122,6 @@ IOResult<void> save_result_with_params(const std::vector<TimeSeries<double>>& re
 }
 
 /**
- * @brief Save the results of the edges for a single graph simulation run.
- * @param result Simulation results per edge of the graph.
- * @param ids Identifiers for the start and end node of the edges.
- * @param filename Name of file
- * @return Any io errors that occur during writing of the files. 
- */
-IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const std::vector<std::pair<int, int>>& ids,
-                          const std::string& filename);
-
-/**
- * Saves the results of a simulation for each edge in the graph.
- * @param ensemble_edges Simulation results for each run for each edge.
- * @param pairs_edges Identifiers for the start and end node of the edges.
- * @param result_dir Top level directory for all results of the parameter study.
- * @param save_single_runs [Default: true] Defines if single run results are written.
- * @param save_percentiles [Default: true] Defines if percentiles are written.
- * @return Any io errors that occur during writing of the files.
- */
-IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<double>>>& ensemble_edges,
-                          const std::vector<std::pair<int, int>>& pairs_edges, const fs::path& result_dir,
-                          bool save_single_runs = true, bool save_percentiles = true);
-
-/**
  * @brief Save the results of a parameter study.
  * Stores different percentiles (p5, p25, p50, p75, p90) and sums of the results and parameters. 
  * @param ensemble_results Result of each simulation run.
