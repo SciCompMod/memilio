@@ -773,7 +773,7 @@ def plot_positive_and_done_test(path):
 if __name__ == "__main__":
     # path = "/Users/david/Documents/HZI/memilio/data/results_last_run"
     path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/123/results_2024-08-25204206"
+    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/vorlaufige_ergebnisse/results_2024-08-28113051"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_last_run"
 
     if (len(sys.argv) > 1):
@@ -781,11 +781,11 @@ if __name__ == "__main__":
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    # plot_infection_states_results(path)
-    # plot_infections_loc_types_avarage(path)
+    plot_infection_states_results(path)
+    plot_infections_loc_types_avarage(path)
     plot_icu(path)
     plot_dead(path)
     plot_cumulative_detected_infections(path)
-    # plot_positive_and_done_test(path)
+    plot_positive_and_done_test(path)
 
     # plot_estimated_reproduction_number(path)

@@ -233,8 +233,8 @@ def plot_scenario(path, folder, folder_high, folder_enough):
 
 
 if __name__ == "__main__":
-    path_to_scenario_1 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/scenarios/results_2024-08-22225823" # more tesring 
-    path_to_scenario_2 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/scenarios/results_2024-08-22230155" # no lockdown but much testing
+    path_to_scenario_1 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/vorlaufige_ergebnisse/results_2024-08-28113737" # more tesring 
+    path_to_scenario_2 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/vorlaufige_ergebnisse/results_2024-08-28114331" # no lockdown but much testing
     path_to_scenario_3 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/"
     path_to_main_data = "0"
     path_to_high_testing_data = "1"

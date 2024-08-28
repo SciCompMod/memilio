@@ -107,7 +107,7 @@ if __name__ == "__main__":
     # values_2 = [40,30,20,10,1]
 
     path_data = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/par_var/memilio/data/results_2024-08-22225357"
-    variable_1 = "quarantine lenth"
+    variable_1 = "quarantine length"
     variable_2 = "quarantine efficiancy"
     values_1 = [1,4,7,10,13,16]
     values_2 = [0.0,0.25,0.5,0.75,1.0]
