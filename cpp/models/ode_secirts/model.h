@@ -599,7 +599,12 @@ public:
         // check if t is in the range of the interval [lb,ub]
         if (t >= lb) {
             for (AgeGroup age = AgeGroup(0); age < params.get_num_groups(); age++) {
-                const auto num_vaccinations_ub = daily_vaccinations[{age, SimulationDay(static_cast<size_t>(ub + 1))}] -
+                // if ub + 1 is out of bounds, we use the value at ub
+                auto ubp1 = static_cast<size_t>(ub + 1);
+                if (static_cast<size_t>(daily_vaccinations.size<SimulationDay>()) < ubp1) {
+                    ubp1 = static_cast<size_t>(ub);
+                }
+                const auto num_vaccinations_ub = daily_vaccinations[{age, SimulationDay(static_cast<size_t>(ubp1))}] -
                                                  daily_vaccinations[{age, SimulationDay(static_cast<size_t>(ub))}];
                 const auto num_vaccinations_lb = daily_vaccinations[{age, SimulationDay(static_cast<size_t>(lb + 1))}] -
                                                  daily_vaccinations[{age, SimulationDay(static_cast<size_t>(lb))}];
