@@ -8,13 +8,13 @@ import pickle
 import matplotlib.pyplot as plt
 
 from plots import *
-from prior import *
-from data_generation import *
+from prior import ModelPriorBuilder
+from sir import *
 
 import bayesflow.diagnostics as diag
 from bayesflow.amortizers import AmortizedPosterior
 from bayesflow.networks import InvertibleNetwork, SequenceNetwork
-from bayesflow.simulation import Prior, GenerativeModel, Simulator
+from bayesflow.simulation import GenerativeModel, Simulator
 from bayesflow.trainers import Trainer
 
 RNG = np.random.default_rng(2023)
@@ -44,9 +44,16 @@ if __name__ == "__main__":
     sir_builder = ModelPriorBuilder(SIRStrategy())
     sir_builder.add_base().add_intervention().add_observation()
 
-    fixed_parameters = {ParamNames.I0: 0, ParamNames.mu: 0.5}
+    fixed_parameters = {ParameterNamesSir.I0.value: 40,
+                        ParameterNamesSir.MU.value: 0.5}
     prior = sir_builder.set_fixed_parameters(fixed_parameters).build()
     prior_means, prior_stds = prior.estimate_means_and_stds()
+    for idx, prior_std in enumerate(prior_stds[0]):
+        if prior_std == 0:
+            prior_stds[0, idx] += 10 ** -14
+
+    stationary_SIR(prior(1)["prior_draws"][0], 80000, 81, True,
+                   param_names=prior.param_names, fixed_params=fixed_parameters)
 
     def configure_input(forward_dict):
         """Function to configure the simulated quantities (i.e., simulator outputs)
@@ -85,7 +92,7 @@ if __name__ == "__main__":
               "obs_data": load_data(T)}
 
     simulator = Simulator(simulator_fun=partial(
-        stationary_SIR, T=config["T"], N=config["N"], observation_model=config["observation_model"]))
+        stationary_SIR, T=config["T"], N=config["N"], observation_model=config["observation_model"], param_names=prior.param_names, fixed_params=fixed_parameters))
     model = GenerativeModel(prior, simulator, name="sir_covid_simulator")
 
     # params = model_prior()
@@ -101,7 +108,7 @@ if __name__ == "__main__":
     # f = plt.plot(result)
     # plt.savefig("results.png")
 
-    offline_data = model(100000)
+    offline_data = model(1000)
     with open('offline_obs_data.pkl', 'wb') as file:
         pickle.dump(offline_data, file)
 
