@@ -25,7 +25,7 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/math/eigen.h"
 #include "memilio/epidemiology/lct_infection_state.h"
-#include <type_traits>
+//#include <type_traits>
 
 namespace mio
 {
@@ -105,14 +105,14 @@ public:
     * @tparam group The group for which the index should be returned.
     * @return The index of the first entry of group in the flat array.
     */
-    template <size_t group = 0, std::enable_if_t<(group < m_groups) && (group >= 0), bool> = true>
+    template <size_t Group = 0, std::enable_if_t<(Group < m_groups) && (Group >= 0), bool> = true>
     size_t get_first_index_group() const
     {
-        if constexpr (group == 0) {
+        if constexpr (Group == 0) {
             return 0;
         }
         else {
-            return get_first_index_group<group - 1>() + std::tuple_element_t<group - 1, tupleLctStates>::Count;
+            return get_first_index_group<Group - 1>() + std::tuple_element_t<Group - 1, tupleLctStates>::Count;
         }
     }
     /**
@@ -179,12 +179,9 @@ public:
      */
     bool check_constraints() const
     {
-        for (int i = 0; i < m_y.array().size(); i++) {
-            FP value = m_y.array()[i];
-            if (value < 0.) {
-                log_error("Constraint check: Compartment size {} is {} and smaller {}", i, value, 0);
-                return true;
-            }
+        if ((m_y.array() < 0.).any()) {
+            log_error("Constraint check: At least one compartment size is smaller {}.", 0);
+            return true;
         }
         return false;
     }
@@ -194,15 +191,15 @@ private:
      * @brief Sets recursively the total number of (sub-)compartments in all groups. 
      * The number also corresponds to the size of the internal vector.
      */
-    template <size_t group = 0>
+    template <size_t Group = 0>
     void set_count()
     {
-        if constexpr (group == 0) {
+        if constexpr (Group == 0) {
             m_count = 0;
         }
-        if constexpr (group < m_groups) {
-            m_count += std::tuple_element_t<group, tupleLctStates>::Count;
-            set_count<group + 1>();
+        if constexpr (Group < m_groups) {
+            m_count += std::tuple_element_t<Group, tupleLctStates>::Count;
+            set_count<Group + 1>();
         }
     }
 

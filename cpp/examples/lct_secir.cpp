@@ -20,7 +20,7 @@
 
 #include "lct_secir/model.h"
 #include "lct_secir/infection_state.h"
-//#include "lct_secir/initializer_flows.h"
+#include "lct_secir/initializer_flows.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -47,7 +47,7 @@ int main()
 
     // Variable defines whether the class Initializer is used to define an initial vector from flows or whether a manually
     // defined initial vector is used to initialize the LCT model.
-    // bool use_initializer_flows = true;
+    bool use_initializer_flows = true;
 
     ScalarType tmax = 20;
 
@@ -72,13 +72,13 @@ int main()
     model.parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = 0.25;
     model.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
 
-    /*if (use_initializer_flows) {
+    if (use_initializer_flows) {
         // Example how to use the class Initializer for the definition of an initial vector for the LCT model.
 
-        ScalarType dt                    = 0.001;
-        ScalarType total_population      = 1000000;
-        ScalarType deaths                = 10;
-        ScalarType total_confirmed_cases = 16000;
+        ScalarType dt                         = 0.001;
+        Eigen::VectorXd total_population      = Eigen::VectorXd::Constant(1, 1000000.);
+        Eigen::VectorXd deaths                = Eigen::VectorXd::Constant(1, 10.);
+        Eigen::VectorXd total_confirmed_cases = Eigen::VectorXd::Constant(1, 16000.);
 
         // Create TimeSeries with num_transitions elements.
         int num_transitions = (int)mio::lsecir::InfectionTransition::Count;
@@ -111,44 +111,47 @@ int main()
             return 1;
         }
     }
-    else {*/
-    // Simple example how to initialize model without flows.
-    // Define the initial values with the distribution of the population into subcompartments.
-    // This method of defining the initial values using a vector of vectors is not necessary, but should remind you
-    // how the entries of the initial value vector relate to the defined template parameters of the model or the number
-    // of subcompartments. It is also possible to define the initial values directly.
-    std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
-                                                                {50},  {10, 10, 5, 3, 2}, {20},         {10}};
+    else {
+        // Simple example how to initialize model without flows.
+        // Define the initial values with the distribution of the population into subcompartments.
+        // This method of defining the initial values using a vector of vectors is not necessary, but should remind you
+        // how the entries of the initial value vector relate to the defined template parameters of the model or the number
+        // of subcompartments. It is also possible to define the initial values directly.
+        std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
+                                                                    {50},  {10, 10, 5, 3, 2}, {20},         {10}};
 
-    // Assert that initial_populations has the right shape.
-    if (initial_populations.size() != (size_t)InfState::Count) {
-        mio::log_error("The number of vectors in initial_populations does not match the number of InfectionStates.");
-        return 1;
-    }
-    if ((initial_populations[(size_t)InfState::Susceptible].size() !=
-         LctState::get_num_subcompartments<InfState::Susceptible>()) ||
-        (initial_populations[(size_t)InfState::Exposed].size() != NumExposed) ||
-        (initial_populations[(size_t)InfState::InfectedNoSymptoms].size() != NumInfectedNoSymptoms) ||
-        (initial_populations[(size_t)InfState::InfectedSymptoms].size() != NumInfectedSymptoms) ||
-        (initial_populations[(size_t)InfState::InfectedSevere].size() != NumInfectedSevere) ||
-        (initial_populations[(size_t)InfState::InfectedCritical].size() != NumInfectedCritical) ||
-        (initial_populations[(size_t)InfState::Recovered].size() !=
-         LctState::get_num_subcompartments<InfState::Recovered>()) ||
-        (initial_populations[(size_t)InfState::Dead].size() != LctState::get_num_subcompartments<InfState::Dead>())) {
-        mio::log_error("The length of at least one vector in initial_populations does not match the related number of "
-                       "subcompartments.");
-        return 1;
-    }
+        // Assert that initial_populations has the right shape.
+        if (initial_populations.size() != (size_t)InfState::Count) {
+            mio::log_error(
+                "The number of vectors in initial_populations does not match the number of InfectionStates.");
+            return 1;
+        }
+        if ((initial_populations[(size_t)InfState::Susceptible].size() !=
+             LctState::get_num_subcompartments<InfState::Susceptible>()) ||
+            (initial_populations[(size_t)InfState::Exposed].size() != NumExposed) ||
+            (initial_populations[(size_t)InfState::InfectedNoSymptoms].size() != NumInfectedNoSymptoms) ||
+            (initial_populations[(size_t)InfState::InfectedSymptoms].size() != NumInfectedSymptoms) ||
+            (initial_populations[(size_t)InfState::InfectedSevere].size() != NumInfectedSevere) ||
+            (initial_populations[(size_t)InfState::InfectedCritical].size() != NumInfectedCritical) ||
+            (initial_populations[(size_t)InfState::Recovered].size() !=
+             LctState::get_num_subcompartments<InfState::Recovered>()) ||
+            (initial_populations[(size_t)InfState::Dead].size() !=
+             LctState::get_num_subcompartments<InfState::Dead>())) {
+            mio::log_error(
+                "The length of at least one vector in initial_populations does not match the related number of "
+                "subcompartments.");
+            return 1;
+        }
 
-    // Transfer the initial values in initial_populations to the model.
-    std::vector<ScalarType> flat_initial_populations;
-    for (auto&& vec : initial_populations) {
-        flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
+        // Transfer the initial values in initial_populations to the model.
+        std::vector<ScalarType> flat_initial_populations;
+        for (auto&& vec : initial_populations) {
+            flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
+        }
+        for (size_t i = 0; i < LctState::Count; i++) {
+            model.populations[i] = flat_initial_populations[i];
+        }
     }
-    for (size_t i = 0; i < LctState::Count; i++) {
-        model.populations[i] = flat_initial_populations[i];
-    }
-    //}
 
     // Perform a simulation.
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, 0.5, model);

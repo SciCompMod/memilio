@@ -23,20 +23,20 @@
 #include "lct_secir/initializer_flows.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/epidemiology/uncertain_matrix.h"
+#include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/math/eigen.h"
 
-#include <vector>
 #include <gtest/gtest.h>
 
 // Test compares a calculation of an initial vector using data for flows with a previous result.
 TEST(TestInitializer, compareWithPrevious)
 {
     ScalarType dt = 0.5;
-
-    using Model    = mio::lsecir::Model<2, 3, 2, 3, 2>;
-    using LctState = Model::LctState;
+    // Use one group.
+    using InfState = mio::lsecir::InfectionState;
+    using LctState = mio::LctInfectionState<InfState, 1, 2, 3, 2, 3, 2, 1, 1>;
+    using Model    = mio::lsecir::Model<LctState>;
 
     // Previous result.
     Eigen::VectorXd compare(LctState::Count);
@@ -47,27 +47,28 @@ TEST(TestInitializer, compareWithPrevious)
     Model model;
 
     // Define parameters.
-    model.parameters.get<mio::lsecir::TimeExposed>()                      = 3.1;
-    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()           = 3.1;
-    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()             = 6.1;
-    model.parameters.get<mio::lsecir::TimeInfectedSevere>()               = 11.1;
-    model.parameters.get<mio::lsecir::TimeInfectedCritical>()             = 17.1;
-    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.01;
-    mio::ContactMatrixGroup contact_matrix                                = mio::ContactMatrixGroup(1, 1);
-    model.parameters.get<mio::lsecir::ContactPatterns>()                  = mio::UncertainContactMatrix(contact_matrix);
+    model.parameters.get<mio::lsecir::TimeExposed>()[0]                      = 3.1;
+    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0]           = 3.1;
+    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]             = 6.1;
+    model.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]               = 11.1;
+    model.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]             = 17.1;
+    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.01;
 
-    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 1;
-    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 1;
-    model.parameters.get<mio::lsecir::Seasonality>()                    = 0;
-    model.parameters.get<mio::lsecir::StartDay>()                       = 0;
-    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.1;
-    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.1;
-    model.parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.1;
-    model.parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.1;
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
+    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
 
-    ScalarType total_confirmed_cases = 341223;
-    ScalarType deaths                = 9710;
-    ScalarType total_population      = 83155031.0;
+    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 1;
+    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = 1;
+    model.parameters.get<mio::lsecir::Seasonality>()                       = 0;
+    model.parameters.get<mio::lsecir::StartDay>()                          = 0;
+    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 0.1;
+    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0]      = 0.1;
+    model.parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = 0.1;
+    model.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.1;
+
+    Eigen::VectorXd total_confirmed_cases = Eigen::VectorXd::Constant(1, 341223.);
+    Eigen::VectorXd deaths                = Eigen::VectorXd::Constant(1, 9710.);
+    Eigen::VectorXd total_population      = Eigen::VectorXd::Constant(1, 83155031.);
 
     // Add time points for initialization of transitions.
     mio::TimeSeries<ScalarType> init((int)mio::lsecir::InfectionTransition::Count);
@@ -96,19 +97,106 @@ TEST(TestInitializer, compareWithPrevious)
     }
 }
 
+/* Test compares a calculation of an initial vector using data for flows with a previous result.
+* Here, the population is divided into three identical groups with equal LctStates and parameters. 
+* The sum of the initial values should be the same as the result with one single group.
+*/
+TEST(TestInitializer, compareWithPreviousThreeGroups)
+{
+    ScalarType dt = 0.5;
+    // Use one group.
+    using InfState = mio::lsecir::InfectionState;
+    using LctState = mio::LctInfectionState<InfState, 1, 2, 3, 2, 3, 2, 1, 1>;
+    using Model    = mio::lsecir::Model<LctState, LctState, LctState>;
+
+    // Previous result.
+    Eigen::VectorXd compare(LctState::Count);
+    compare << 82810889.00545, 850.70432, 970.04980, 315.32890, 391.51799, 391.39351, 565.45854, 580.79267, 85.97421,
+        86.02738, 80.26791, 189.53449, 167.57963, 329757.36512, 9710;
+
+    // Initialize a model.
+    Model model;
+    size_t num_groups = model.m_groups;
+
+    //Define parameters.
+    for (size_t group = 0; group < num_groups; group++) {
+        model.parameters.get<mio::lsecir::TimeExposed>()[group]                      = 3.1;
+        model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[group]           = 3.1;
+        model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[group]             = 6.1;
+        model.parameters.get<mio::lsecir::TimeInfectedSevere>()[group]               = 11.1;
+        model.parameters.get<mio::lsecir::TimeInfectedCritical>()[group]             = 17.1;
+        model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[group] = 0.01;
+
+        model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[group] = 1;
+        model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[group] = 1;
+        model.parameters.get<mio::lsecir::Seasonality>()                           = 0;
+        model.parameters.get<mio::lsecir::StartDay>()                              = 0;
+        model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[group] = 0.1;
+        model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[group]      = 0.1;
+        model.parameters.get<mio::lsecir::CriticalPerSevere>()[group]              = 0.1;
+        model.parameters.get<mio::lsecir::DeathsPerCritical>()[group]              = 0.1;
+    }
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
+    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, 10));
+
+    Eigen::VectorXd total_confirmed_cases = Eigen::VectorXd::Constant(num_groups, 341223. / (ScalarType)num_groups);
+    Eigen::VectorXd deaths                = Eigen::VectorXd::Constant(num_groups, 9710. / (ScalarType)num_groups);
+    Eigen::VectorXd total_population      = Eigen::VectorXd::Constant(num_groups, 83155031. / (ScalarType)num_groups);
+
+    // Add time points for initialization of transitions.
+    mio::TimeSeries<ScalarType> init(num_groups * (size_t)mio::lsecir::InfectionTransition::Count);
+    mio::TimeSeries<ScalarType>::Vector vec_init = mio::TimeSeries<ScalarType>::Vector::Constant(
+        num_groups * (size_t)mio::lsecir::InfectionTransition::Count, 1. / (ScalarType)num_groups);
+    for (size_t group = 0; group < num_groups; group++) {
+        vec_init[group * (size_t)mio::lsecir::InfectionTransition::Count +
+                 (int)mio::lsecir::InfectionTransition::SusceptibleToExposed]        = 25. / (ScalarType)num_groups;
+        vec_init[group * (size_t)mio::lsecir::InfectionTransition::Count +
+                 (int)mio::lsecir::InfectionTransition::ExposedToInfectedNoSymptoms] = 15. / (ScalarType)num_groups;
+        vec_init[group * (size_t)mio::lsecir::InfectionTransition::Count +
+                 (int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] =
+            8. / (ScalarType)num_groups;
+        vec_init[group * (size_t)mio::lsecir::InfectionTransition::Count +
+                 (int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToRecovered] = 4. / (ScalarType)num_groups;
+        vec_init[group * (size_t)mio::lsecir::InfectionTransition::Count +
+                 (int)mio::lsecir::InfectionTransition::InfectedSymptomsToRecovered]   = 4. / (ScalarType)num_groups;
+    }
+    // Add initial time point to time series.
+    init.add_time_point(-130, vec_init);
+    // Add further time points until time 0.
+    while (init.get_last_time() < 0) {
+        vec_init *= 1.01;
+        init.add_time_point(init.get_last_time() + dt, vec_init);
+    }
+
+    // Calculate initial vector and compare with previous result.
+    mio::lsecir::Initializer<Model> initializer(std::move(init), model);
+    initializer.set_tol_for_support_max(1e-6);
+    initializer.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
+    ScalarType sum_groups = 0;
+    for (size_t i = 0; i < LctState::Count; i++) {
+        for (size_t group = 0; group < num_groups; group++) {
+            sum_groups += model.get_initial_values()[group * LctState::Count + i];
+        }
+        EXPECT_NEAR(sum_groups, compare[i], 1e-4) << "at subcompartment number " << i;
+        sum_groups = 0;
+    }
+}
+
 // Check if the constraints of the initializer are validated as expected.
 TEST(TestInitializer, testConstraints)
 {
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);
 
-    ScalarType dt                    = 0.5;
-    ScalarType total_confirmed_cases = 341223;
-    ScalarType deaths                = 9710;
-    ScalarType total_population      = 83155031.0;
-
-    using Model                   = mio::lsecir::Model<2, 3, 2, 3, 2>;
-    int infectionTransition_count = (int)mio::lsecir::InfectionTransition::Count;
+    ScalarType dt                         = 0.5;
+    Eigen::VectorXd total_confirmed_cases = Eigen::VectorXd::Constant(2, 341223.);
+    Eigen::VectorXd deaths                = Eigen::VectorXd::Constant(2, 9710.);
+    Eigen::VectorXd total_population      = Eigen::VectorXd::Constant(2, 83155031.);
+    // Use a model with two groups.
+    using InfState                = mio::lsecir::InfectionState;
+    using LctState                = mio::LctInfectionState<InfState, 1, 2, 3, 2, 3, 2, 1, 1>;
+    using Model                   = mio::lsecir::Model<LctState, LctState>;
+    int infectionTransition_count = 2 * (int)mio::lsecir::InfectionTransition::Count;
 
     // Initialize a model.
     Model model;
@@ -178,9 +266,10 @@ TEST(TestInitializer, testConstraints)
     status = initializer_init_short.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
     EXPECT_TRUE(status);
 
-    // Check with negative result for InfectedNoSymptoms.
+    // Check with negative result for InfectedNoSymptoms of the second group.
     mio::TimeSeries<ScalarType> init_negative_InfectedNoSymptoms(infectionTransition_count);
-    vec_init[(int)mio::lsecir::InfectionTransition::ExposedToInfectedNoSymptoms] = -30;
+    vec_init[(int)mio::lsecir::InfectionTransition::Count +
+             (int)mio::lsecir::InfectionTransition::ExposedToInfectedNoSymptoms] = -30;
     init_negative_InfectedNoSymptoms.add_time_point(-50., vec_init);
     while (init_negative_InfectedNoSymptoms.get_last_time() < 0) {
         init_negative_InfectedNoSymptoms.add_time_point(init_negative_InfectedNoSymptoms.get_last_time() + dt,
@@ -193,9 +282,10 @@ TEST(TestInitializer, testConstraints)
                                                                                    total_confirmed_cases);
     EXPECT_TRUE(status);
 
-    // Check with negative result for InfectedSymptoms.
+    // Check with negative result for InfectedSymptoms of the first goup.
     mio::TimeSeries<ScalarType> init_negative_InfectedSymptoms(infectionTransition_count);
-    vec_init[(int)mio::lsecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 1.;
+    vec_init[(int)mio::lsecir::InfectionTransition::Count +
+             (int)mio::lsecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 1.;
     vec_init[(int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = -30;
     init_negative_InfectedSymptoms.add_time_point(-50., vec_init);
     while (init_negative_InfectedSymptoms.get_last_time() < 0) {
@@ -208,10 +298,11 @@ TEST(TestInitializer, testConstraints)
                                                                                  total_confirmed_cases);
     EXPECT_TRUE(status);
 
-    // Check with negative result for InfectedSevere.
+    // Check with negative result for InfectedSevere of the second group.
     mio::TimeSeries<ScalarType> init_negative_InfectedSevere(infectionTransition_count);
     vec_init[(int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 1;
-    vec_init[(int)mio::lsecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = -30;
+    vec_init[(int)mio::lsecir::InfectionTransition::Count +
+             (int)mio::lsecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = -30;
     init_negative_InfectedSevere.add_time_point(-50., vec_init);
     while (init_negative_InfectedSevere.get_last_time() < 0) {
         init_negative_InfectedSevere.add_time_point(init_negative_InfectedSevere.get_last_time() + dt, vec_init);
@@ -222,9 +313,10 @@ TEST(TestInitializer, testConstraints)
                                                                                total_confirmed_cases);
     EXPECT_TRUE(status);
 
-    // Check with negative result for InfectedCritical.
+    // Check with negative result for InfectedCritical of the first group.
     mio::TimeSeries<ScalarType> init_negative_InfectedCritical(infectionTransition_count);
-    vec_init[(int)mio::lsecir::InfectionTransition::InfectedSymptomsToInfectedSevere] = 1;
+    vec_init[(int)mio::lsecir::InfectionTransition::Count +
+             (int)mio::lsecir::InfectionTransition::InfectedSymptomsToInfectedSevere] = 1;
     vec_init[(int)mio::lsecir::InfectionTransition::InfectedSevereToInfectedCritical] = -50;
     init_negative_InfectedCritical.add_time_point(-50., vec_init);
     while (init_negative_InfectedCritical.get_last_time() < 0) {
@@ -240,7 +332,7 @@ TEST(TestInitializer, testConstraints)
     // Check with negative result for deaths.
     mio::TimeSeries<ScalarType> init_negative_deaths(infectionTransition_count);
     vec_init[(int)mio::lsecir::InfectionTransition::InfectedSevereToInfectedCritical] = 1;
-    deaths                                                                            = -100;
+    deaths = Eigen::VectorXd::Constant(2, -100.);
     init_negative_deaths.add_time_point(-50., vec_init);
     while (init_negative_deaths.get_last_time() < 0) {
         init_negative_deaths.add_time_point(init_negative_deaths.get_last_time() + dt, vec_init);
@@ -251,7 +343,7 @@ TEST(TestInitializer, testConstraints)
     EXPECT_TRUE(status);
 
     // Check with correct initialization values.
-    deaths = 9710;
+    deaths = Eigen::VectorXd::Constant(2, 100.);
     mio::TimeSeries<ScalarType> init_right(infectionTransition_count);
     init_right.add_time_point(-50, vec_init);
     while (init_right.get_last_time() < 0) {

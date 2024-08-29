@@ -25,7 +25,7 @@
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
-#include "memilio/epidemiology/uncertain_matrix.h"
+#include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/math/eigen.h"
 #include "memilio/compartments/simulation.h"
@@ -376,8 +376,8 @@ TEST(TestLCTSecir, testConstraintsParameters)
     parameters_lct.get<mio::lsecir::TimeInfectedSevere>()[0]               = 11.1;
     parameters_lct.get<mio::lsecir::TimeInfectedCritical>()[0]             = 17.1;
     parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.01;
-    mio::ContactMatrixGroup contact_matrix                                 = mio::ContactMatrixGroup(1, 1);
-    parameters_lct.get<mio::lsecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    mio::ContactMatrixGroup& contact_matrix = parameters_lct.get<mio::lsecir::ContactPatterns>();
+    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
 
     parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 1;
     parameters_lct.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = 1;
