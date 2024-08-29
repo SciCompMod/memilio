@@ -1,0 +1,85 @@
+import numpy as np 
+import os 
+
+from memilio.epidata import transformMobilityData as tmd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.simulation.osecir import (ModelGraph, set_edges)
+
+
+def remove_confirmed_compartments(dataset_entries, num_groups):
+    """! The compartments which contain confirmed cases are not needed and are 
+        therefore omitted by summarizing the confirmed compartment with the 
+        original compartment. 
+    @param dataset_entries Array that contains the compartmental data with 
+            confirmed compartments. 
+    @param num_groups Number of age groups.
+    @return Array that contains the compartmental data without confirmed compartments. 
+   """
+    
+    new_dataset_entries = []
+    for i in dataset_entries : 
+      dataset_entries_reshaped  = i.reshape(
+          [num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups)]
+          )
+      sum_inf_no_symp = np.sum(dataset_entries_reshaped [:, [2, 3]], axis=1)
+      sum_inf_symp = np.sum(dataset_entries_reshaped [:, [4, 5]], axis=1)
+      dataset_entries_reshaped[:, 2] = sum_inf_no_symp
+      dataset_entries_reshaped[:, 4] = sum_inf_symp
+      new_dataset_entries.append(
+          np.delete(dataset_entries_reshaped , [3, 5], axis=1).flatten()
+          )
+    return new_dataset_entries
+
+def getBaselineMatrix():
+    """! loads the baselinematrix
+    """
+
+    baseline_contact_matrix0 = os.path.join(
+        "./data/contacts/baseline_home.txt")
+    baseline_contact_matrix1 = os.path.join(
+        "./data/contacts/baseline_school_pf_eig.txt")
+    baseline_contact_matrix2 = os.path.join(
+        "./data/contacts/baseline_work.txt")
+    baseline_contact_matrix3 = os.path.join(
+        "./data/contacts/baseline_other.txt")
+
+    baseline = np.loadtxt(baseline_contact_matrix0) \
+        + np.loadtxt(baseline_contact_matrix1) + \
+        np.loadtxt(baseline_contact_matrix2) + \
+        np.loadtxt(baseline_contact_matrix3)
+
+    return baseline
+
+def make_graph(directory, num_regions, countykey_list, models):
+    """! 
+    @param directory Directory with mobility data. 
+    @param num_regions Number (int) of counties that should be added to the 
+            grap-ODE model. Equals 400 for whole Germany. 
+    @param countykey_list List of keys/IDs for each county. 
+    @models models List of osecir Model with one model per population. 
+    @return graph Graph-ODE model. 
+   """
+    graph = ModelGraph()
+    for i in range(num_regions):
+        graph.add_node(int(countykey_list[i]), models[i])
+
+    num_locations = 4
+
+    set_edges(os.path.abspath(os.path.join(directory, os.pardir)), 
+                            graph, num_locations)
+    return graph
+    
+
+def transform_mobility_directory():
+    """! Transforms the mobility data by merging Eisenach and Wartburgkreis
+    """
+    # get mobility data directory
+    arg_dict = gd.cli("commuter_official")
+
+    directory = arg_dict['out_folder'].split('/pydata')[0]
+    directory = os.path.join(directory, 'mobility/')  
+
+    # Merge Eisenach and Wartbugkreis in Input Data 
+    tmd.updateMobility2022(directory, mobility_file='twitter_scaled_1252')
+    tmd.updateMobility2022(directory, mobility_file='commuter_migration_scaled')
+    
