@@ -2456,9 +2456,9 @@ int main(int argc, char** argv)
         // std::vector<int> points_per_dim = {6, 6, 6, 6, 6};
 
         // std::vector<double> grid_boundaries = {1.76, 3.7, 0.53, 0.035, 15.0};
-        // std::vector<double> grid_boundaries = {1.76, 3.7, 0.53, 0.03, 7.8};
-        std::vector<double> grid_boundaries = {1.88, 3.7, 0.35, 0.035, 12.6};
-        std::vector<int> points_per_dim     = {6, 6, 6, 6, 6};
+        std::vector<double> grid_boundaries = {1.76, 3.7, 0.53, 0.03, 7.8};
+        // std::vector<double> grid_boundaries = {1.88, 3.7, 0.35, 0.035, 12.6};
+        std::vector<int> points_per_dim = {6, 6, 6, 6, 6};
 
         // std::vector<std::pair<double, double>> grid_boundaries = {
         // {1.79, 1.83}, {3.28, 3.29}, {0.52, 0.56}, {0.03, 0.04}, {1.0, 15.0}};
