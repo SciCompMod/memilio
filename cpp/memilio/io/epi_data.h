@@ -457,8 +457,8 @@ class VaccinationDataEntry
 public:
     static std::vector<const char*> age_group_names;
 
-    double num_vaccinations_partial, num_vaccinations_completed, num_vaccinations_refreshed,
-        num_vaccinations_refreshed_2;
+    double num_vaccinations_partial, num_vaccinations_completed, num_vaccinations_refreshed_first,
+        num_vaccinations_refreshed_additional;
     Date date;
     AgeGroup age_group;
     boost::optional<regions::StateId> state_id;
@@ -468,16 +468,16 @@ public:
     template <class IoContext>
     static IOResult<VaccinationDataEntry> deserialize(IoContext& io)
     {
-        auto obj                          = io.expect_object("VaccinationDataEntry");
-        auto num_vaccinations_partial     = obj.expect_element("Vacc_partially", Tag<double>{});
-        auto num_vaccinations_completed   = obj.expect_element("Vacc_completed", Tag<double>{});
-        auto num_vaccinations_refreshed   = obj.expect_element("Vacc_refreshed", Tag<double>{});
-        auto num_vaccinations_refreshed_2 = obj.expect_element("Vacc_refreshed_2", Tag<double>{});
-        auto date                         = obj.expect_element("Date", Tag<StringDate>{});
-        auto age_group_str                = obj.expect_element("Age_RKI", Tag<std::string>{});
-        auto state_id                     = obj.expect_optional("ID_County", Tag<regions::StateId>{});
-        auto county_id                    = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
-        auto district_id                  = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
+        auto obj                                   = io.expect_object("VaccinationDataEntry");
+        auto num_vaccinations_partial              = obj.expect_element("Vacc_partially", Tag<double>{});
+        auto num_vaccinations_completed            = obj.expect_element("Vacc_completed", Tag<double>{});
+        auto num_vaccinations_refreshed_first      = obj.expect_element("Vacc_refreshed", Tag<double>{});
+        auto num_vaccinations_refreshed_additional = obj.expect_element("Vacc_refreshed_2", Tag<double>{});
+        auto date                                  = obj.expect_element("Date", Tag<StringDate>{});
+        auto age_group_str                         = obj.expect_element("Age_RKI", Tag<std::string>{});
+        auto state_id                              = obj.expect_optional("ID_County", Tag<regions::StateId>{});
+        auto county_id                             = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
+        auto district_id                           = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
         return mio::apply(
             io,
             [](auto np, auto nc, auto n_refreshed_1, auto n_refreshed_2, auto d, auto&& a_str, auto sid, auto cid,
@@ -492,8 +492,8 @@ public:
                 }
                 return success(VaccinationDataEntry{np, nc, n_refreshed_1, n_refreshed_2, d, a, sid, cid, did});
             },
-            num_vaccinations_partial, num_vaccinations_completed, num_vaccinations_refreshed,
-            num_vaccinations_refreshed_2, date, age_group_str, state_id, county_id, district_id);
+            num_vaccinations_partial, num_vaccinations_completed, num_vaccinations_refreshed_first,
+            num_vaccinations_refreshed_additional, date, age_group_str, state_id, county_id, district_id);
     }
 };
 

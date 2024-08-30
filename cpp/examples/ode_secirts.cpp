@@ -25,6 +25,9 @@
 
 int main()
 {
+    // This example demonstrates how to simulate a SECIRTS model.
+    // The SECIRTS model is an extension of the SECIRVVS model that includes waning and  temporary immunity.
+    // After the simulation, the aggregated size of the temporary immunity states are printed.
     mio::set_log_level(mio::LogLevel::debug);
 
     double t0   = 0;

@@ -652,7 +652,8 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
                     if (date_df == offset_booster_date) {
                         model[region_idx]
                             .parameters.template get<DailyBoosterVaccinations<FP>>()[{age, SimulationDay(d)}] =
-                            vacc_data_entry.num_vaccinations_refreshed + vacc_data_entry.num_vaccinations_refreshed_2;
+                            vacc_data_entry.num_vaccinations_refreshed_first +
+                            vacc_data_entry.num_vaccinations_refreshed_additional;
                     }
                 }
                 else {

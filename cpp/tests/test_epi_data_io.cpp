@@ -371,8 +371,8 @@ TEST(TestEpiDataIO, read_vaccination_data)
     ASSERT_EQ(vacc_data[0].district_id, mio::regions::DistrictId(1234));
     ASSERT_EQ(vacc_data[0].num_vaccinations_partial, 0.0);
     ASSERT_EQ(vacc_data[0].num_vaccinations_completed, 5.0);
-    ASSERT_EQ(vacc_data[0].num_vaccinations_refreshed, 2.0);
-    ASSERT_EQ(vacc_data[0].num_vaccinations_refreshed_2, 1.0);
+    ASSERT_EQ(vacc_data[0].num_vaccinations_refreshed_first, 2.0);
+    ASSERT_EQ(vacc_data[0].num_vaccinations_refreshed_additional, 1.0);
 
     ASSERT_EQ(vacc_data[1].date, mio::Date(2022, 4, 15));
     ASSERT_EQ(vacc_data[1].age_group, mio::AgeGroup(2));
@@ -380,8 +380,8 @@ TEST(TestEpiDataIO, read_vaccination_data)
     ASSERT_EQ(vacc_data[1].district_id, mio::regions::DistrictId(1235));
     ASSERT_EQ(vacc_data[1].num_vaccinations_partial, 1.0);
     ASSERT_EQ(vacc_data[1].num_vaccinations_completed, 1.0);
-    ASSERT_EQ(vacc_data[1].num_vaccinations_refreshed, 4.0);
-    ASSERT_EQ(vacc_data[1].num_vaccinations_refreshed_2, 3.0);
+    ASSERT_EQ(vacc_data[1].num_vaccinations_refreshed_first, 4.0);
+    ASSERT_EQ(vacc_data[1].num_vaccinations_refreshed_additional, 3.0);
 }
 
 TEST(TestEpiData, set_vaccination_data)
