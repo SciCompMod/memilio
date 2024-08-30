@@ -35,12 +35,8 @@ namespace mio
 {
 namespace lsecir
 {
-/* TODO:- Write test for agegroups: one comparing results of one agegroup with 3 and same parameters,
-* one checking get_derivatives and one checking calculate populations.
-* - Check the documentation of parameters class 
+/* TODO:
 * - adapt  parameters_io+ tests. 
-* - test with age for initializer flwos
-* - parameters cck constraints für contactmatrix
 */
 
 /**
@@ -256,7 +252,7 @@ private:
             first_index + std::tuple_element_t<Group, tupleLctStates>::template get_first_index<InfectionState::Dead>();
 
         // Calculate derivative of the Susceptible compartment.
-        interact<Group>(pop, y, t, dydt);
+        interact<Group, 0>(pop, y, t, dydt);
 
         // Calculate derivative of the Exposed compartment.
         dydt[Ei_first_index] = -dydt[first_index];

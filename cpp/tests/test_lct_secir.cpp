@@ -26,12 +26,12 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
 #include "memilio/epidemiology/contact_matrix.h"
-#include "memilio/epidemiology/age_group.h"
 #include "memilio/math/eigen.h"
 #include "memilio/compartments/simulation.h"
 #include "load_test_data.h"
 
 #include <iostream>
+#include <vector>
 
 #include <gtest/gtest.h>
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
@@ -212,7 +212,7 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     for (auto&& vec : initial_populations) {
         flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
     }
-    for (size_t i = 0; i < LctState::Count; i++) {
+    for (size_t i = 0; i < (size_t)LctState::Count; i++) {
         model.populations[i] = flat_initial_populations[i];
     }
 
@@ -248,6 +248,175 @@ TEST(TestLCTSecir, testEvalRightHandSide)
 
     for (size_t i = 0; i < num_subcompartments; i++) {
         EXPECT_NEAR(compare[i], dydt[i], 1e-3) << " at index " << i << ".\n";
+    }
+}
+
+// Test if the function get_derivatives() is working with different groups using a hand calculated result.
+TEST(TestLCTSecir, testEvalRightHandSideGroups)
+{
+    // Define model.
+    // Chose more than one subcompartment for all compartments except S, R, D so that the function is correct for all selections.
+    using InfState  = mio::lsecir::InfectionState;
+    using LctState1 = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
+    using LctState2 = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model     = mio::lsecir::Model<LctState1, LctState2>;
+    Model model;
+    size_t num_groups          = model.m_groups;
+    size_t num_subcompartments = model.populations.get_num_compartments();
+
+    // Define initial population distribution in infection states, one entry per subcompartment.
+    std::vector<std::vector<ScalarType>> initial_populations1 = {{750},    {30, 20}, {20, 10, 10}, {30, 20},
+                                                                 {40, 10}, {10, 20}, {20},         {10}};
+    std::vector<std::vector<ScalarType>> initial_populations2 = {{750}, {10}, {50}, {1}, {9}, {0}, {30}, {100}};
+
+    // Transfer the initial values in initial_populations to the model.
+    std::vector<ScalarType> flat_initial_populations;
+    for (auto&& vec : initial_populations1) {
+        flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
+    }
+    for (auto&& vec : initial_populations2) {
+        flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
+    }
+    for (size_t i = 0; i < num_subcompartments; i++) {
+        model.populations[i] = flat_initial_populations[i];
+    }
+
+    // Set parameters.
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
+    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, 10));
+    // Group 1.
+    model.parameters.get<mio::lsecir::TimeExposed>()[0]                      = 5.;
+    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0]           = 5.;
+    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]             = 5.;
+    model.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]               = 5.;
+    model.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]             = 5.;
+    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.1;
+    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0]   = 1.;
+    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0]   = 1.;
+    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0]   = 0.1;
+    model.parameters.set<mio::lsecir::Seasonality>(0.);
+    model.parameters.set<mio::lsecir::StartDay>(0);
+    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0] = 0.1;
+    model.parameters.get<mio::lsecir::CriticalPerSevere>()[0]         = 0.1;
+    model.parameters.get<mio::lsecir::DeathsPerCritical>()[0]         = 0.1;
+    // Group 2.
+    model.parameters.get<mio::lsecir::TimeExposed>()[1]                      = 2.;
+    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[1]           = 2.;
+    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[1]             = 2.;
+    model.parameters.get<mio::lsecir::TimeInfectedSevere>()[1]               = 2.;
+    model.parameters.get<mio::lsecir::TimeInfectedCritical>()[1]             = 2.;
+    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[1] = 0.1;
+    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[1]   = 0.5;
+    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[1]   = 0.5;
+    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[1]   = 0.5;
+    model.parameters.set<mio::lsecir::Seasonality>(0.);
+    model.parameters.set<mio::lsecir::StartDay>(0);
+    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[1] = 0.5;
+    model.parameters.get<mio::lsecir::CriticalPerSevere>()[1]         = 0.5;
+    model.parameters.get<mio::lsecir::DeathsPerCritical>()[1]         = 0.5;
+
+    // Compare the result of get_derivatives() with a hand calculated result.
+    Eigen::VectorXd dydt(num_subcompartments);
+    model.get_derivatives(model.get_initial_values(), model.get_initial_values(), 0, dydt);
+
+    Eigen::VectorXd compare(num_subcompartments);
+    compare << -90.6818, 78.6818, 4, -4, 6, 0, -6.6, 4, -15.2, 12, -3.6, -4, 18.6, 0.8, -90.6818, 85.6818, -20, 12,
+        -4.25, 2.25, 15, 0;
+
+    for (size_t i = 0; i < num_subcompartments; i++) {
+        EXPECT_NEAR(compare[i], dydt[i], 1e-3) << " at index " << i << ".\n";
+    }
+    // Also test function compute_compartments with this setup.
+    mio::TimeSeries<ScalarType> result(num_subcompartments);
+    // Define TimeSeries as input for the function.
+    result.add_time_point(0, model.get_initial_values());
+    result.add_time_point(1, model.get_initial_values() + dydt);
+    mio::TimeSeries<ScalarType> population = model.calculate_compartments(result);
+    // Sum of subcompartments in initial_population.
+    Eigen::VectorXd compare_population0(2 * (size_t)InfState::Count);
+    compare_population0 << 750, 50, 40, 50, 50, 30, 20, 10, 750, 10, 50, 1, 9, 0, 30, 100;
+    ASSERT_EQ(compare_population0.size(), static_cast<size_t>(population.get_num_elements()));
+    EXPECT_NEAR(result.get_time(0), population.get_time(0), 1e-7);
+    for (size_t i = 0; i < 2 * (size_t)InfState::Count; i++) {
+        EXPECT_NEAR(compare_population0[i], population.get_value(0)[i], 1e-3) << " at index " << i << ".\n";
+    }
+    // Sum of subcompartments in compare vector.
+    Eigen::VectorXd compare_population1(2 * (size_t)InfState::Count);
+    compare_population1 << -90.6818, 82.6818, 2, -2.6, -3.2, -7.6, 18.6, 0.8, -90.6818, 85.6818, -20, 12, -4.25, 2.25,
+        15, 0;
+    compare_population1 = compare_population0 + compare_population1;
+    EXPECT_NEAR(result.get_time(1), population.get_time(1), 1e-7);
+    for (size_t i = 0; i < 2 * (size_t)InfState::Count; i++) {
+        EXPECT_NEAR(compare_population1[i], population.get_value(1)[i], 1e-3) << " at index " << i << ".\n";
+    }
+}
+
+/* Test if the function get_derivatives() is working for more than one group. 
+ * The parameters and LctStates are chosen, such that the sum of the groups should produce the 
+ * same output as the function with one group. This is tested. */
+TEST(TestLCTSecir, testEvalRightHandSideThreeGroupsEqual)
+{
+    // Define model.
+    // Chose more than one subcompartment for all compartments except S, R, D so that the function is correct for all selections.
+    using InfState = mio::lsecir::InfectionState;
+    using LctState = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
+    using Model    = mio::lsecir::Model<LctState, LctState, LctState>;
+    Model model;
+    size_t num_groups          = model.m_groups;
+    size_t num_subcompartments = LctState::Count;
+
+    // Define initial population distribution in infection states, one entry per subcompartment.
+    std::vector<std::vector<ScalarType>> initial_populations = {{750},    {30, 20}, {20, 10, 10}, {30, 20},
+                                                                {40, 10}, {10, 20}, {20},         {10}};
+
+    // Transfer the initial values in initial_populations to the model.
+    std::vector<ScalarType> flat_initial_populations;
+    for (auto&& vec : initial_populations) {
+        flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
+    }
+    for (size_t group = 0; group < num_groups; group++) {
+        for (size_t i = 0; i < num_subcompartments; i++) {
+            model.populations[num_subcompartments * group + i] = flat_initial_populations[i] / (ScalarType)num_groups;
+        }
+    }
+    // Set parameters.
+    for (size_t group = 0; group < num_groups; group++) {
+        model.parameters.get<mio::lsecir::TimeExposed>()[group]                      = 3.2;
+        model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[group]           = 2;
+        model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[group]             = 5.8;
+        model.parameters.get<mio::lsecir::TimeInfectedSevere>()[group]               = 9.5;
+        model.parameters.get<mio::lsecir::TimeInfectedCritical>()[group]             = 7.1;
+        model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[group] = 0.05;
+
+        model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[group] = 0.7;
+        model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[group] = 0.25;
+        model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[group] = 0.09;
+        model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[group]      = 0.2;
+        model.parameters.get<mio::lsecir::CriticalPerSevere>()[group]              = 0.25;
+        model.parameters.get<mio::lsecir::DeathsPerCritical>()[group]              = 0.3;
+    }
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
+    contact_matrix[0] =
+        mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, 10. / (ScalarType)num_groups));
+    model.parameters.set<mio::lsecir::Seasonality>(0.);
+    model.parameters.set<mio::lsecir::StartDay>(0);
+
+    // Compare the result of get_derivatives() with a hand calculated result.
+
+    Eigen::VectorXd dydt(num_groups * num_subcompartments);
+
+    model.get_derivatives(model.get_initial_values(), model.get_initial_values(), 0, dydt);
+
+    Eigen::VectorXd compare(num_subcompartments);
+    compare << -15.3409, -3.4091, 6.25, -17.5, 15, 0, 3.3052, 3.4483, -7.0417, 6.3158, -2.2906, -2.8169, 12.3899,
+        1.6901;
+    ScalarType sum_groups = 0;
+    for (size_t i = 0; i < num_subcompartments; i++) {
+        for (size_t group = 0; group < num_groups; group++) {
+            sum_groups += dydt[group * num_subcompartments + i];
+        }
+        EXPECT_NEAR(sum_groups, compare[i], 1e-4) << "at subcompartment number " << i;
+        sum_groups = 0;
     }
 }
 
@@ -304,7 +473,7 @@ public:
     Model* model = nullptr;
 };
 
-// Test compares a simulation with the result of a previous run stored in a .csv file.
+// Test compares a simulation with the result of a previous run stored in a.csv file.
 TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
 {
     ScalarType tmax                    = 3;
@@ -339,6 +508,90 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
     }
 }
 
+/* Test compares a simulation with the result of a previous run stored in a .csv file.
+ * Here, three groups with the same parametrization as the one used for the previous result is used. 
+ * It is tested, if the sum of the results of the groups is equal to the result with one group.
+ */
+TEST(TestLCTSecir, compareWithPreviousRunThreeGroups)
+{
+    using InfState = mio::lsecir::InfectionState;
+    using LctState = mio::LctInfectionState<InfState, 1, 2, 3, 1, 1, 5, 1, 1>;
+    using Model    = mio::lsecir::Model<LctState, LctState, LctState>;
+
+    // Initialize a model.
+    Model model;
+    size_t num_groups          = model.m_groups;
+    size_t num_subcompartments = (size_t)LctState::Count;
+
+    // Define initial distribution of the population in the subcompartments.
+    std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
+                                                                {50},  {10, 10, 5, 3, 2}, {20},         {10}};
+    // Transfer the initial values in initial_populations to the model.
+    std::vector<ScalarType> flat_initial_populations;
+    for (auto&& vec : initial_populations) {
+        flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
+    }
+    for (size_t group = 0; group < num_groups; group++) {
+        for (size_t i = 0; i < LctState::Count; i++) {
+            model.populations[num_subcompartments * group + i] = flat_initial_populations[i] / (ScalarType)num_groups;
+        }
+    }
+    // Set parameters.
+    for (size_t group = 0; group < num_groups; group++) {
+        model.parameters.get<mio::lsecir::TimeExposed>()[group]                      = 3.2;
+        model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[group]           = 2;
+        model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[group]             = 5.8;
+        model.parameters.get<mio::lsecir::TimeInfectedSevere>()[group]               = 9.5;
+        model.parameters.get<mio::lsecir::TimeInfectedCritical>()[group]             = 7.1;
+        model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[group] = 0.05;
+
+        model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[group] = 0.7;
+        model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[group] = 0.25;
+        model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[group] = 0.09;
+        model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[group]      = 0.2;
+        model.parameters.get<mio::lsecir::CriticalPerSevere>()[group]              = 0.25;
+        model.parameters.get<mio::lsecir::DeathsPerCritical>()[group]              = 0.3;
+    }
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
+    contact_matrix[0] =
+        mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, 10. / (ScalarType)num_groups));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime(2.));
+
+    // Compare just one step as the adaptive methods does not necessarily produce the same step sizes.
+    auto compare    = load_test_data_csv<ScalarType>("lct-secir-subcompartments-compare.csv");
+    ScalarType dt   = compare[1][0] - compare[0][0];
+    ScalarType tmax = 2 * dt;
+    auto integrator =
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
+    // Choose dt_min = dt_max so that we have a fixed time step and can compare to the result with one group.
+    integrator->set_dt_min(dt);
+    integrator->set_dt_max(dt);
+    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
+
+    // Compare subcompartments.
+    EXPECT_NEAR(result.get_time(1), compare[1][0], 1e-7);
+    ScalarType sum_groups = 0;
+    for (size_t j = 1; j < compare[1].size(); j++) {
+        for (size_t group = 0; group < num_groups; group++) {
+            sum_groups += result.get_value(1)[group * num_subcompartments + j - 1];
+        }
+        EXPECT_NEAR(sum_groups, compare[1][j], 1e-4) << "at subcompartment number " << j;
+        sum_groups = 0;
+    }
+
+    // Compare InfectionState compartments.
+    mio::TimeSeries<ScalarType> population = model.calculate_compartments(result);
+    auto compare_population                = load_test_data_csv<ScalarType>("lct-secir-compartments-compare.csv");
+    EXPECT_NEAR(population.get_time(1), compare_population[1][0], 1e-7);
+    for (size_t j = 1; j < compare_population[1].size(); j++) {
+        for (size_t group = 0; group < num_groups; group++) {
+            sum_groups += population.get_value(1)[group * (size_t)InfState::Count + j - 1];
+        }
+        EXPECT_NEAR(sum_groups, compare_population[1][j], 1e-4) << "at compartment number " << j;
+        sum_groups = 0;
+    }
+}
+
 // Test calculate_compartments with a TimeSeries that has an incorrect number of elements.
 TEST_F(ModelTestLCTSecir, testCalculatePopWrongSize)
 {
@@ -362,7 +615,7 @@ TEST_F(ModelTestLCTSecir, testCalculatePopWrongSize)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-// Check constraints of Parameters class.
+//Check constraints of Parameters class.
 TEST(TestLCTSecir, testConstraintsParameters)
 {
     // Deactivate temporarily log output for next tests.

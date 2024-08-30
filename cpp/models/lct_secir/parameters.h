@@ -26,7 +26,6 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/utils/logging.h"
-#include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/uncertain_value.h"
 
 namespace mio
@@ -55,7 +54,7 @@ struct TimeExposed {
 
 /**
  * @brief Average time spent in the TimeInfectedNoSymptoms before developing 
- *  Symptoms or recover in the SECIR model in day unit.
+ *  Symptoms or recover for each group in the SECIR model in day unit.
  */
 struct TimeInfectedNoSymptoms {
     using Type = Vector<UncertainValue<ScalarType>>;
@@ -71,7 +70,7 @@ struct TimeInfectedNoSymptoms {
 
 /**
  * @brief Average time spent in the TimeInfectedSymptoms before going to Hospital 
- *  or recover in the SECIR model in day unit.
+ *  or recover for each group in the SECIR model in day unit.
  */
 struct TimeInfectedSymptoms {
     using Type = Vector<UncertainValue<ScalarType>>;
@@ -86,7 +85,7 @@ struct TimeInfectedSymptoms {
 };
 
 /**
- * @brief Average time being in the Hospital before treated by ICU or recover in the 
+ * @brief Average time being in the Hospital before treated by ICU or recover for each group in the 
  *  SECIR model in day unit.
  */
 struct TimeInfectedSevere {
@@ -102,7 +101,7 @@ struct TimeInfectedSevere {
 };
 
 /**
- * @brief Average time treated by ICU before dead or recover in the SECIR model in day unit.
+ * @brief Average time treated by ICU before dead or recover for each group in the SECIR model in day unit.
  */
 struct TimeInfectedCritical {
     using Type = Vector<UncertainValue<ScalarType>>;
@@ -117,7 +116,7 @@ struct TimeInfectedCritical {
 };
 
 /**
- * @brief Probability of getting infected from a contact.
+ * @brief Probability of getting infected from a contact for each group.
  */
 struct TransmissionProbabilityOnContact {
     using Type = Vector<UncertainValue<ScalarType>>;
@@ -148,7 +147,7 @@ struct ContactPatterns {
 };
 
 /**
- * @brief The relative InfectedNoSymptoms infectability.
+ * @brief The relative InfectedNoSymptoms infectability for each group.
  */
 struct RelativeTransmissionNoSymptoms {
     using Type = Vector<UncertainValue<ScalarType>>;
@@ -163,7 +162,7 @@ struct RelativeTransmissionNoSymptoms {
 };
 
 /**
- * @brief The risk of infection from symptomatic cases in the SECIR model.
+ * @brief The risk of infection from symptomatic cases for each group in the SECIR model.
  */
 struct RiskOfInfectionFromSymptomatic {
     using Type = Vector<UncertainValue<ScalarType>>;
@@ -178,7 +177,7 @@ struct RiskOfInfectionFromSymptomatic {
 };
 
 /**
- * @brief The percentage of asymptomatic cases in the SECIR model.
+ * @brief The percentage of asymptomatic cases for each group in the SECIR model.
  */
 struct RecoveredPerInfectedNoSymptoms {
     using Type = Vector<UncertainValue<ScalarType>>;
@@ -193,7 +192,7 @@ struct RecoveredPerInfectedNoSymptoms {
 };
 
 /**
- * @brief The percentage of hospitalized patients per infected patients in the SECIR model.
+ * @brief The percentage of hospitalized patients per infected patients for each group in the SECIR model.
  */
 struct SeverePerInfectedSymptoms {
     using Type = Vector<UncertainValue<ScalarType>>;
@@ -208,7 +207,7 @@ struct SeverePerInfectedSymptoms {
 };
 
 /**
- * @brief The percentage of ICU patients per hospitalized patients in the SECIR model.
+ * @brief The percentage of ICU patients per hospitalized patients for each group in the SECIR model.
  */
 struct CriticalPerSevere {
     using Type = Vector<UncertainValue<ScalarType>>;
@@ -223,7 +222,7 @@ struct CriticalPerSevere {
 };
 
 /**
- * @brief The percentage of dead patients per ICU patients in the SECIR model.
+ * @brief The percentage of dead patients per ICU patients for each group in the SECIR model.
  */
 struct DeathsPerCritical {
     using Type = Vector<UncertainValue<ScalarType>>;
@@ -284,10 +283,13 @@ using ParametersBase =
 class Parameters : public ParametersBase
 {
 public:
-    /// @brief Default constructor.
-    Parameters(size_t num_size_ts)
-        : ParametersBase(num_size_ts)
-        , m_num_groups{num_size_ts}
+    /**
+     * @brief Constructor.
+     * @param num_groups The number of groups considered in the LCT model.
+     */
+    Parameters(size_t num_groups)
+        : ParametersBase(num_groups)
+        , m_num_groups{num_groups}
     {
     }
 
@@ -297,7 +299,7 @@ public:
     }
 
     /**
-     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not.
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not.
      * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
      */
     bool check_constraints() const
