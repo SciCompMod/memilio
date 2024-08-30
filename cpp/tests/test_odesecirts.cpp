@@ -93,17 +93,17 @@ const mio::osecirts::Model<double>& osecirts_testing_model()
     model.parameters.get<mio::osecirts::TestAndTraceCapacity<double>>() = 1.0;
     const size_t daily_vaccinations                                     = 1;
     const size_t num_days                                               = 5;
-    model.parameters.get<mio::osecirts::DailyPartialVaccination<double>>().resize(mio::SimulationDay(num_days));
-    model.parameters.get<mio::osecirts::DailyFullVaccination<double>>().resize(mio::SimulationDay(num_days));
-    model.parameters.get<mio::osecirts::DailyBoosterVaccination<double>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().resize(mio::SimulationDay(num_days));
     for (size_t i = 0; i < num_days; ++i) {
         for (mio::AgeGroup j = 0; j < nb_groups; ++j) {
             auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
-            model.parameters.get<mio::osecirts::DailyPartialVaccination<double>>()[{j, mio::SimulationDay(i)}] =
+            model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>()[{j, mio::SimulationDay(i)}] =
                 num_vaccinations;
-            model.parameters.get<mio::osecirts::DailyFullVaccination<double>>()[{j, mio::SimulationDay(i)}] =
+            model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>()[{j, mio::SimulationDay(i)}] =
                 num_vaccinations;
-            model.parameters.get<mio::osecirts::DailyBoosterVaccination<double>>()[{j, mio::SimulationDay(i)}] =
+            model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>()[{j, mio::SimulationDay(i)}] =
                 num_vaccinations;
         }
     }
@@ -401,12 +401,12 @@ TEST(TestOdeSECIRTS, simulateDefault)
     model.populations.set_total(10);
     model.populations.set_difference_from_total({(mio::AgeGroup)0, mio::osecirts::InfectionState::SusceptibleNaive},
                                                 10);
-    model.parameters.get<mio::osecirts::DailyPartialVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirts::DailyPartialVaccination<double>>().array().setConstant(0);
-    model.parameters.get<mio::osecirts::DailyFullVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirts::DailyFullVaccination<double>>().array().setConstant(0);
-    model.parameters.get<mio::osecirts::DailyBoosterVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirts::DailyBoosterVaccination<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().array().setConstant(0);
     auto result = mio::simulate<double, mio::osecirts::Model<double>>(t0, tmax, dt, model);
 
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
@@ -427,21 +427,22 @@ TEST(TestOdeSECIRTS, overflow_vaccinations)
 
     // set vaccination rates higher than total population for each layer
     const size_t daily_vaccinations = 100;
-    model.parameters.get<mio::osecirts::DailyPartialVaccination<double>>().resize(
+    model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().resize(
         mio::SimulationDay(static_cast<size_t>(tmax + 1)));
-    model.parameters.get<mio::osecirts::DailyFullVaccination<double>>().resize(
+    model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>().resize(
         mio::SimulationDay(static_cast<size_t>(tmax + 1)));
-    model.parameters.get<mio::osecirts::DailyBoosterVaccination<double>>().resize(
+    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().resize(
         mio::SimulationDay(static_cast<size_t>(tmax + 1)));
     for (size_t i = 0; i <= tmax; ++i) {
         auto num_vaccinations = static_cast<double>((i + 1) * daily_vaccinations);
         model.parameters
-            .get<mio::osecirts::DailyPartialVaccination<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
-            num_vaccinations;
-        model.parameters.get<mio::osecirts::DailyFullVaccination<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
+            .get<mio::osecirts::DailyPartialVaccinations<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
             num_vaccinations;
         model.parameters
-            .get<mio::osecirts::DailyBoosterVaccination<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
+            .get<mio::osecirts::DailyFullVaccinations<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
+            num_vaccinations;
+        model.parameters
+            .get<mio::osecirts::DailyBoosterVaccinations<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
             num_vaccinations;
     }
 
@@ -479,7 +480,7 @@ TEST(TestOdeSECIRTS, smooth_vaccination_rate)
 
     // init simple model
     mio::osecirts::Model model(1);
-    auto& daily_vaccinations = model.parameters.get<mio::osecirts::DailyPartialVaccination<double>>();
+    auto& daily_vaccinations = model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>();
     daily_vaccinations.resize(mio::SimulationDay(static_cast<size_t>(tmax + 1)));
 
     daily_vaccinations[{mio::AgeGroup(0), mio::SimulationDay(0)}] = 0;
@@ -623,12 +624,12 @@ void set_demographic_parameters(mio::osecirts::Model<double>::ParameterSet& para
                                 set_invalid_initial_value);
     assign_uniform_distribution(parameters.get<mio::osecirts::TestAndTraceCapacity<double>>(), 100, 200,
                                 set_invalid_initial_value);
-    parameters.get<mio::osecirts::DailyPartialVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    parameters.get<mio::osecirts::DailyPartialVaccination<double>>().array().setConstant(5);
-    parameters.get<mio::osecirts::DailyFullVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    parameters.get<mio::osecirts::DailyFullVaccination<double>>().array().setConstant(3);
-    parameters.get<mio::osecirts::DailyBoosterVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    parameters.get<mio::osecirts::DailyBoosterVaccination<double>>().array().setConstant(3);
+    parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().array().setConstant(5);
+    parameters.get<mio::osecirts::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    parameters.get<mio::osecirts::DailyFullVaccinations<double>>().array().setConstant(3);
+    parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().array().setConstant(3);
 }
 
 void set_contact_parameters(mio::osecirts::Model<double>::ParameterSet& parameters, bool set_invalid_initial_value)

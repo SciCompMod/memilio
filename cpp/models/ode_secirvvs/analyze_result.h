@@ -42,7 +42,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
     auto num_nodes  = ensemble_params[0].size();
     auto num_groups = (size_t)ensemble_params[0][0].parameters.get_num_groups();
     auto num_days   = ensemble_params[0][0]
-                        .parameters.template get<DailyPartialVaccination<double>>()
+                        .parameters.template get<DailyPartialVaccinations<double>>()
                         .template size<mio::SimulationDay>();
 
     std::vector<double> single_element_ensemble(num_runs);
@@ -61,8 +61,8 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
     };
 
     for (size_t node = 0; node < num_nodes; node++) {
-        percentile[node].parameters.template get<DailyPartialVaccination<double>>().resize(num_days);
-        percentile[node].parameters.template get<DailyFullVaccination<double>>().resize(num_days);
+        percentile[node].parameters.template get<DailyPartialVaccinations<double>>().resize(num_days);
+        percentile[node].parameters.template get<DailyFullVaccinations<double>>().resize(num_days);
 
         for (auto i = AgeGroup(0); i < AgeGroup(num_groups); i++) {
             //Population
@@ -169,11 +169,11 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             for (auto day = SimulationDay(0); day < num_days; ++day) {
                 param_percentil(
                     node, [ i, day ](auto&& model) -> auto& {
-                        return model.parameters.template get<DailyPartialVaccination<double>>()[{i, day}];
+                        return model.parameters.template get<DailyPartialVaccinations<double>>()[{i, day}];
                     });
                 param_percentil(
                     node, [ i, day ](auto&& model) -> auto& {
-                        return model.parameters.template get<DailyFullVaccination<double>>()[{i, day}];
+                        return model.parameters.template get<DailyFullVaccinations<double>>()[{i, day}];
                     });
             }
             //virus variants

@@ -142,9 +142,9 @@ public:
         }
 
         // get vaccinations
-        auto const partial_vaccination = vaccinations_at(t, params.template get<DailyPartialVaccination<FP>>());
-        auto const full_vaccination    = vaccinations_at(t, params.template get<DailyFullVaccination<FP>>());
-        auto const booster_vaccination = vaccinations_at(t, params.template get<DailyBoosterVaccination<FP>>());
+        auto const partial_vaccination = vaccinations_at(t, params.template get<DailyPartialVaccinations<FP>>());
+        auto const full_vaccination    = vaccinations_at(t, params.template get<DailyFullVaccinations<FP>>());
+        auto const booster_vaccination = vaccinations_at(t, params.template get<DailyBoosterVaccinations<FP>>());
 
         for (auto i = AgeGroup(0); i < n_agegroups; i++) {
 

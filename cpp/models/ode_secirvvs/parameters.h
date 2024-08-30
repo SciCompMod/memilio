@@ -447,7 +447,7 @@ struct DaysUntilEffectiveImprovedImmunity {
 * @brief Total number of first vaccinations up to the given day.
 */
 template <typename FP = double>
-struct DailyPartialVaccination {
+struct DailyPartialVaccinations {
     using Type = CustomIndexArray<FP, AgeGroup, SimulationDay>;
     static Type get_default(AgeGroup size)
     {
@@ -455,7 +455,7 @@ struct DailyPartialVaccination {
     }
     static std::string name()
     {
-        return "DailyPartialVaccination";
+        return "DailyPartialVaccinations";
     }
 };
 
@@ -463,7 +463,7 @@ struct DailyPartialVaccination {
 * @brief Total number of full vaccinations up to the given day.
 */
 template <typename FP = double>
-struct DailyFullVaccination {
+struct DailyFullVaccinations {
     using Type = CustomIndexArray<FP, AgeGroup, SimulationDay>;
     static Type get_default(AgeGroup size)
     {
@@ -471,7 +471,7 @@ struct DailyFullVaccination {
     }
     static std::string name()
     {
-        return "DailyFullVaccination";
+        return "DailyFullVaccinations";
     }
 };
 
@@ -612,7 +612,7 @@ using ParametersBase = ParameterSet<
     TransmissionProbabilityOnContact<FP>, RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>,
     RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>,
     CriticalPerSevere<FP>, DeathsPerCritical<FP>, VaccinationGap<FP>, DaysUntilEffectivePartialImmunity<FP>,
-    DaysUntilEffectiveImprovedImmunity<FP>, DailyFullVaccination<FP>, DailyPartialVaccination<FP>,
+    DaysUntilEffectiveImprovedImmunity<FP>, DailyFullVaccinations<FP>, DailyPartialVaccinations<FP>,
     ReducExposedPartialImmunity<FP>, ReducExposedImprovedImmunity<FP>, ReducInfectedSymptomsPartialImmunity<FP>,
     ReducInfectedSymptomsImprovedImmunity<FP>, ReducInfectedSevereCriticalDeadPartialImmunity<FP>,
     ReducInfectedSevereCriticalDeadImprovedImmunity<FP>, ReducTimeInfectedMild<FP>, InfectiousnessNewVariant<FP>,

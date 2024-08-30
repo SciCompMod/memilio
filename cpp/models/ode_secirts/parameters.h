@@ -500,7 +500,7 @@ struct DaysUntilEffectiveBoosterImmunity {
 * @brief Total number of first vaccinations up to the given day.
 */
 template <typename FP = double>
-struct DailyPartialVaccination {
+struct DailyPartialVaccinations {
     using Type = CustomIndexArray<FP, AgeGroup, SimulationDay>;
     static Type get_default(AgeGroup size)
     {
@@ -508,7 +508,7 @@ struct DailyPartialVaccination {
     }
     static std::string name()
     {
-        return "DailyPartialVaccination";
+        return "DailyPartialVaccinations";
     }
 };
 
@@ -516,7 +516,7 @@ struct DailyPartialVaccination {
 * @brief Total number of full vaccinations up to the given day.
 */
 template <typename FP = double>
-struct DailyFullVaccination {
+struct DailyFullVaccinations {
     using Type = CustomIndexArray<FP, AgeGroup, SimulationDay>;
     static Type get_default(AgeGroup size)
     {
@@ -524,7 +524,7 @@ struct DailyFullVaccination {
     }
     static std::string name()
     {
-        return "DailyFullVaccination";
+        return "DailyFullVaccinations";
     }
 };
 
@@ -532,7 +532,7 @@ struct DailyFullVaccination {
 * @brief Total number of booster vaccinations up to the given day.
 */
 template <typename FP = double>
-struct DailyBoosterVaccination {
+struct DailyBoosterVaccinations {
     using Type = CustomIndexArray<FP, AgeGroup, SimulationDay>;
     static Type get_default(AgeGroup size)
     {
@@ -540,7 +540,7 @@ struct DailyBoosterVaccination {
     }
     static std::string name()
     {
-        return "DailyBoosterVaccination";
+        return "DailyBoosterVaccinations";
     }
 };
 
@@ -682,8 +682,8 @@ using ParametersBase = ParameterSet<
     RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
     MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>,
     VaccinationGap<FP>, DaysUntilEffectivePartialVaccination<FP>, DaysUntilEffectiveImprovedVaccination<FP>,
-    DaysUntilEffectiveBoosterImmunity<FP>, DailyFullVaccination<FP>, DailyPartialVaccination<FP>,
-    DailyBoosterVaccination<FP>, ReducExposedPartialImmunity<FP>, ReducExposedImprovedImmunity<FP>,
+    DaysUntilEffectiveBoosterImmunity<FP>, DailyFullVaccinations<FP>, DailyPartialVaccinations<FP>,
+    DailyBoosterVaccinations<FP>, ReducExposedPartialImmunity<FP>, ReducExposedImprovedImmunity<FP>,
     ReducInfectedSymptomsPartialImmunity<FP>, ReducInfectedSymptomsImprovedImmunity<FP>,
     ReducInfectedSevereCriticalDeadPartialImmunity<FP>, ReducInfectedSevereCriticalDeadImprovedImmunity<FP>,
     ReducTimeInfectedMild<FP>, InfectiousnessNewVariant<FP>, StartDayNewVariant>;

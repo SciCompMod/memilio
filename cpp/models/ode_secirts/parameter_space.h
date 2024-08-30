@@ -230,16 +230,16 @@ Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityPa
         auto local_icu_capacity = node_model.parameters.template get<ICUCapacity<FP>>();
         auto local_tnt_capacity = node_model.parameters.template get<TestAndTraceCapacity<FP>>();
         auto local_holidays     = node_model.parameters.template get<ContactPatterns<FP>>().get_school_holidays();
-        auto local_daily_v1     = node_model.parameters.template get<DailyPartialVaccination<FP>>();
-        auto local_daily_v2     = node_model.parameters.template get<DailyFullVaccination<FP>>();
-        auto local_daily_v3     = node_model.parameters.template get<DailyBoosterVaccination<FP>>();
+        auto local_daily_v1     = node_model.parameters.template get<DailyPartialVaccinations<FP>>();
+        auto local_daily_v2     = node_model.parameters.template get<DailyFullVaccinations<FP>>();
+        auto local_daily_v3     = node_model.parameters.template get<DailyBoosterVaccinations<FP>>();
         node_model.parameters   = shared_params_model.parameters;
         node_model.parameters.template get<ICUCapacity<FP>>()                           = local_icu_capacity;
         node_model.parameters.template get<TestAndTraceCapacity<FP>>()                  = local_tnt_capacity;
         node_model.parameters.template get<ContactPatterns<FP>>().get_school_holidays() = local_holidays;
-        node_model.parameters.template get<DailyPartialVaccination<FP>>()               = local_daily_v1;
-        node_model.parameters.template get<DailyFullVaccination<FP>>()                  = local_daily_v2;
-        node_model.parameters.template get<DailyBoosterVaccination<FP>>()               = local_daily_v3;
+        node_model.parameters.template get<DailyPartialVaccinations<FP>>()              = local_daily_v1;
+        node_model.parameters.template get<DailyFullVaccinations<FP>>()                 = local_daily_v2;
+        node_model.parameters.template get<DailyBoosterVaccinations<FP>>()              = local_daily_v3;
 
         node_model.parameters.template get<ContactPatterns<FP>>().make_matrix();
         node_model.apply_constraints();

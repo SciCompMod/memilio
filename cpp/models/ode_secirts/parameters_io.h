@@ -581,13 +581,13 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
         // iterate over age groups in region
         for (auto g = AgeGroup(0); g < num_groups; ++g) {
 
-            model[i].parameters.template get<DailyPartialVaccination<FP>>().resize(SimulationDay(num_days + 1));
-            model[i].parameters.template get<DailyFullVaccination<FP>>().resize(SimulationDay(num_days + 1));
-            model[i].parameters.template get<DailyBoosterVaccination<FP>>().resize(SimulationDay(num_days + 1));
+            model[i].parameters.template get<DailyPartialVaccinations<FP>>().resize(SimulationDay(num_days + 1));
+            model[i].parameters.template get<DailyFullVaccinations<FP>>().resize(SimulationDay(num_days + 1));
+            model[i].parameters.template get<DailyBoosterVaccinations<FP>>().resize(SimulationDay(num_days + 1));
             for (auto d = SimulationDay(0); d < SimulationDay(num_days + 1); ++d) {
-                model[i].parameters.template get<DailyPartialVaccination<FP>>()[{g, d}] = 0.0;
-                model[i].parameters.template get<DailyFullVaccination<FP>>()[{g, d}]    = 0.0;
-                model[i].parameters.template get<DailyBoosterVaccination<FP>>()[{g, d}] = 0.0;
+                model[i].parameters.template get<DailyPartialVaccinations<FP>>()[{g, d}] = 0.0;
+                model[i].parameters.template get<DailyFullVaccinations<FP>>()[{g, d}]    = 0.0;
+                model[i].parameters.template get<DailyBoosterVaccinations<FP>>()[{g, d}] = 0.0;
             }
         }
     }
@@ -621,28 +621,29 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
                 if (max_date >= offset_first_date) {
                     if (date_df == offset_first_date) {
                         model[region_idx]
-                            .parameters.template get<DailyPartialVaccination<FP>>()[{age, SimulationDay(d)}] =
+                            .parameters.template get<DailyPartialVaccinations<FP>>()[{age, SimulationDay(d)}] =
                             vacc_data_entry.num_vaccinations_partial;
                     }
                 }
                 else {
                     if (date_df == offset_first_date) {
                         model[region_idx]
-                            .parameters.template get<DailyPartialVaccination<FP>>()[{age, SimulationDay(d)}] = 0;
+                            .parameters.template get<DailyPartialVaccinations<FP>>()[{age, SimulationDay(d)}] = 0;
                     }
                 }
 
                 auto offset_full_date = offset_date_by_days(date, (int)d - days_until_effective_pi);
                 if (max_date >= offset_full_date) {
                     if (date_df == offset_full_date) {
-                        model[region_idx].parameters.template get<DailyFullVaccination<FP>>()[{age, SimulationDay(d)}] =
+                        model[region_idx]
+                            .parameters.template get<DailyFullVaccinations<FP>>()[{age, SimulationDay(d)}] =
                             vacc_data_entry.num_vaccinations_completed;
                     }
                 }
                 else {
                     if (date_df == offset_first_date) {
-                        model[region_idx].parameters.template get<DailyFullVaccination<FP>>()[{age, SimulationDay(d)}] =
-                            0;
+                        model[region_idx]
+                            .parameters.template get<DailyFullVaccinations<FP>>()[{age, SimulationDay(d)}] = 0;
                     }
                 }
 
@@ -650,14 +651,14 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
                 if (max_date >= offset_booster_date) {
                     if (date_df == offset_booster_date) {
                         model[region_idx]
-                            .parameters.template get<DailyBoosterVaccination<FP>>()[{age, SimulationDay(d)}] =
+                            .parameters.template get<DailyBoosterVaccinations<FP>>()[{age, SimulationDay(d)}] =
                             vacc_data_entry.num_vaccinations_refreshed + vacc_data_entry.num_vaccinations_refreshed_2;
                     }
                 }
                 else {
                     if (date_df == offset_first_date) {
                         model[region_idx]
-                            .parameters.template get<DailyBoosterVaccination<FP>>()[{age, SimulationDay(d)}] = 0;
+                            .parameters.template get<DailyBoosterVaccinations<FP>>()[{age, SimulationDay(d)}] = 0;
                     }
                 }
             }

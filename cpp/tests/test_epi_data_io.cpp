@@ -411,13 +411,13 @@ TEST(TestEpiData, set_vaccination_data)
         (Eigen::ArrayXd(num_age_groups * (num_days + 1)) << 5, 7, 9, 11, 13, 9, 7, 5, 5, 0).finished();
 
     ASSERT_THAT(
-        print_wrap(model_vector[0].parameters.template get<mio::osecirts::DailyPartialVaccination<double>>().array()),
+        print_wrap(model_vector[0].parameters.template get<mio::osecirts::DailyPartialVaccinations<double>>().array()),
         MatrixNear(print_wrap(expected_values_PI), 1e-8, 1e-8));
     ASSERT_THAT(
-        print_wrap(model_vector[0].parameters.template get<mio::osecirts::DailyFullVaccination<double>>().array()),
+        print_wrap(model_vector[0].parameters.template get<mio::osecirts::DailyFullVaccinations<double>>().array()),
         MatrixNear(print_wrap(expected_values_II), 1e-8, 1e-8));
     ASSERT_THAT(
-        print_wrap(model_vector[0].parameters.template get<mio::osecirts::DailyBoosterVaccination<double>>().array()),
+        print_wrap(model_vector[0].parameters.template get<mio::osecirts::DailyBoosterVaccinations<double>>().array()),
         MatrixNear(print_wrap(expected_values_B), 1e-8, 1e-8));
 }
 
