@@ -1073,8 +1073,8 @@ std::vector<std::vector<double>> grid_points(const std::vector<double>& paramete
     std::vector<std::vector<double>> grid;
     for (size_t i = 0; i < parameter_points.size(); i++) {
         std::vector<double> temp;
-        double min_value = parameter_points[i] * 0.9;
-        double max_value = parameter_points[i] * 1.1;
+        double min_value = parameter_points[i] * 0.95;
+        double max_value = parameter_points[i] * 1.05;
         double step      = (max_value - min_value) / (number_of_points.at(i) - 1);
         if (number_of_points.at(i) == 1) {
             step = 0;
