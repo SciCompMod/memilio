@@ -4,7 +4,7 @@ add_library(lct_secir
     model.cpp
     parameters.h
     initializer_flows.h
-    #parameters_io.h
+    parameters_io.h
 )
 target_link_libraries(lct_secir PUBLIC memilio)
 target_include_directories(lct_secir PUBLIC
