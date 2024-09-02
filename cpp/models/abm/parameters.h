@@ -338,7 +338,7 @@ struct InfectionRateFromViralShed {
     using Type = CustomIndexArray<ScalarType, VirusVariant>;
     static Type get_default(AgeGroup /*size*/)
     {
-        return Type({VirusVariant::Count}, 0.2); //Julia
+        return Type({VirusVariant::Count}, 0.4); //Julia
     }
     static std::string name()
     {

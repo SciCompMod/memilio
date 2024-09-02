@@ -20,7 +20,10 @@
 
 #include "abm/infection.h"
 #include <algorithm>
+#include <cstddef>
+#include <cstdlib>
 #include <math.h>
+#include <stdexcept>
 
 namespace mio
 {
@@ -44,20 +47,30 @@ Infection::Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, Age
     }
     m_viral_load.peak = vl_params.viral_load_peak.get_distribution_instance()(rng, vl_params.viral_load_peak.params) *
                         high_viral_load_factor;
-    m_viral_load.incline =
-        vl_params.viral_load_incline.get_distribution_instance()(rng, vl_params.viral_load_incline.params);
-    m_viral_load.decline =
-        vl_params.viral_load_decline.get_distribution_instance()(rng, vl_params.viral_load_decline.params);
-    m_viral_load.end_date =
-        m_viral_load.start_date +
-        days(int(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline));
+    m_time_is_infected = m_infection_course.back().first - m_infection_course[0].first;
+    // the third entry in the infection course is the time an agents switches to InfectedSymptoms or recovers after non-symptomatic
+    TimePoint t_peak      = m_infection_course[2].first;
+    m_viral_load.incline  = std::abs(m_viral_load.peak / (t_peak - m_infection_course[0].first).days());
+    m_viral_load.end_date = m_viral_load.start_date + m_time_is_infected;
+    if (m_infection_course.size() < 4) {
+        t_peak            = m_viral_load.start_date + TimeSpan(int(0.65 * m_time_is_infected.seconds()));
+        m_viral_load.peak = m_viral_load.incline * (t_peak - m_viral_load.start_date).days();
+    }
+    m_viral_load.decline = -m_viral_load.peak / (m_viral_load.end_date - t_peak).days();
 
     auto inf_params = params.get<InfectivityDistributions>()[{virus, age}];
     m_log_norm_alpha =
         inf_params.infectivity_alpha.get_distribution_instance()(rng, inf_params.infectivity_alpha.params);
     m_log_norm_beta = inf_params.infectivity_beta.get_distribution_instance()(rng, inf_params.infectivity_beta.params);
 
-    m_time_is_infected = m_infection_course.back().first - m_infection_course[0].first;
+    // // print infection course
+    // for (size_t i = size_t(0); i < m_infection_course.size(); ++i) {
+    //     std::cout << static_cast<int>(m_infection_course[i].second) << ": " << m_infection_course[i].first.days();
+    // }
+    // std::cout << "\n";
+    // for (auto t = m_viral_load.start_date; t <= m_viral_load.end_date + days(3); t += days(1)) {
+    //     std::cout << "t: " << t.days() << " i(t): " << get_infectivity(t) << std::endl;
+    // }
 }
 
 ScalarType Infection::get_viral_load(TimePoint t) const
@@ -81,18 +94,12 @@ ScalarType Infection::get_infectivity(TimePoint t) const
     auto time_shift = (m_infection_course[1].first - m_infection_course[0].first) - minutes(1872);
     if (m_viral_load.start_date + time_shift >= t)
         return 0;
-    ScalarType scaling_factor =
-        double((m_viral_load.end_date - m_viral_load.start_date).seconds()) / double(m_time_is_infected.seconds());
-    auto scaled_time       = TimePoint(0) + seconds(int(scaling_factor * (t.seconds() - time_shift.seconds()) -
-                                                  (scaling_factor - 1) * m_viral_load.start_date.seconds()));
-    ScalarType infectivity = 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(scaled_time))));
+    ScalarType infectivity = 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t - time_shift))));
+    if ((infectivity < 0) ||
+        (infectivity > (1.0 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * m_viral_load.peak)))))) {
+        log_error("Error: Infectivity smaller zero or above peak value.");
+    }
     return 0.75 * infectivity;
-    // if (m_infection_course.size() > 3 && m_infection_course[3].second == InfectionState::InfectedSevere) {
-    //     return infectivity;
-    // }
-    // else {
-    //     return 0.75 * infectivity;
-    // }
 }
 
 VirusVariant Infection::get_virus_variant() const

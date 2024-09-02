@@ -684,9 +684,9 @@ def write_infection_paths_to_file(path, world, tmax):
     with open(path, 'w') as f:
         f.write("Agent_id S E I_ns I_sy I_sev I_cri R D\n")
         for person in world.persons:
-            line = str(id) + " "
+            line = str(int(person.id)) + " "
             if person.infection_state(tmax) == abm.InfectionState.Susceptible:
-                line += str(tmax.hours) + " "
+                line += str(int(tmax.hours)) + " "
                 for i in range(int(abm.InfectionState.Count)-1):
                     line += "0 "
             else:
@@ -702,8 +702,8 @@ def write_infection_paths_to_file(path, world, tmax):
                     abm.InfectionState.InfectedSevere)
                 time_ICri = person.infection.get_time_in_state(
                     abm.InfectionState.InfectedCritical)
-                time_R = 0
-                time_D = 0
+                time_R = abm.TimePoint(0)
+                time_D = abm.TimePoint(0)
                 if (person.infection_state(tmax) == abm.InfectionState.Recovered):
                     time_infected = time_E + time_INS + time_ISy + time_ISev + time_ICri
                     if (time_S.hours == 0):
@@ -720,9 +720,12 @@ def write_infection_paths_to_file(path, world, tmax):
                              (person.infection.get_infection_start() - abm.TimePoint(0)))
                     else:
                         time_R = tmax - time_S - time_infected
-                line += str(time_S.hours) + " " + str(time_E.hours) + " " + str(time_INS.hours) + " " + str(time_ISy) + " " \
-                    + str(time_ISev) + " " + str(time_ICri) + \
-                    " " + str(time_R) + " " + str(time_D)
+                line += str(int(time_S.hours)) + " " + str(int(time_E.hours)) + " " + str(int(time_INS.hours)) + " " + str(int(time_ISy.hours)) + " " \
+                    + str(int(time_ISev.hours)) + " " + str(int(time_ICri.hours)) + \
+                    " " + str(int(time_R.hours)) + " " + \
+                    str(int(time_D.hours)) + " "
+            f.write(line)
+            f.write('\n')
     f.close()
 
 
@@ -753,10 +756,10 @@ def write_age_and_hh(world, path):
         f.close()
 
 
-def run_abm_simulation():
+def run_abm_simulation(sim_num):
     mio.set_log_level(mio.LogLevel.Warning)
     input_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/'
-    output_path = 'H:/Documents/INSIDeDemonstrator/share_with_julia/memilio_output/20240828/'
+    output_path = 'H:/Documents/INSIDeDemonstrator/share_with_julia/memilio_output/20240831/'
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(0)
     # starting time point
@@ -792,12 +795,13 @@ def run_abm_simulation():
     log = history.log
     # write infection paths per agent to file
     write_infection_paths_to_file(os.path.join(
-        output_path, 'infection_paths.txt'), sim.world, tmax)
+        output_path, str(sim_num) + '_infection_paths.txt'), sim.world, tmax)
     # write simulation results to txt file
-    write_results_to_file(os.path.join(output_path, 'output.txt'), log)
+    write_results_to_file(os.path.join(
+        output_path, str(sim_num) + '_output.txt'), log)
     # write location mapping to txt file
     write_location_mapping_to_file(
-        os.path.join(output_path, 'location_mapping.txt'), mapping)
+        os.path.join(output_path, str(sim_num) + '_location_mapping.txt'), mapping)
 
     print('done')
 
@@ -809,4 +813,5 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     # set LogLevel
     mio.set_log_level(mio.LogLevel.Warning)
-    run_abm_simulation(**args.__dict__)
+    for i in range(250):
+        run_abm_simulation(i, **args.__dict__)
