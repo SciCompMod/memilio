@@ -2,7 +2,6 @@ import copy
 import os
 import pickle
 import random
-import json
 import numpy as np
 from datetime import date
 
@@ -24,8 +23,8 @@ def run_secir_groups_simulation(days, populations, dampings):
         with 6 different age groups. The model is not stratified by region. 
         Virus-specific parameters are fixed and initial number of persons 
         in the particular infection states are chosen randomly from defined ranges.
-    @param Days Describes how many days we simulate within a single run.
-    @param damping_day The day when damping is applied.
+    @param days (int) Describes how many days we simulate within a single run.
+    @param damping_day (int) The day when damping is applied.
     @param populations List containing the population in each age group.
     @return List containing the populations in each compartment 
             used to initialize the run.
@@ -60,6 +59,7 @@ def run_secir_groups_simulation(days, populations, dampings):
             model.parameters.TimeInfectedCritical[AgeGroup(i)] = 8.
 
             # Initial number of people in each compartment with random numbers
+            # Numbers are chosen heuristically based on experience
             model.populations[AgeGroup(i), Index_InfectionState(
                 InfectionState.Exposed)] = random.uniform(
                 0.00025, 0.005) * populations[region][i]
@@ -155,12 +155,12 @@ def generate_dampings_withshadowdamp(number_of_dampings, days, min_distance, min
     """! Draw damping days while keeping a minimum distance between the 
         damping days. This method aims to create a uniform ditribution of 
         drawn damping days. 
-   @param num_of_dampings Number of dampings that have to be drawn.
-   @param days Number of days which are simulated (label_width).
-   @param min_distance The minimum number of days between two dampings. 
-   @param min_damping_day The earliest day of the simualtion where a damping 
+   @param num_of_dampings (int) Number of dampings that have to be drawn.
+   @param days (int) Number of days which are simulated (label_width).
+   @param min_distance (int) The minimum number of days between two dampings. 
+   @param min_damping_day (int) The earliest day of the simualtion where a damping 
         can take place.   
-   @param n_runs Number of simulation runs. 
+   @param n_runs 8int) Number of simulation runs. 
    """
 
     all_dampings = []
@@ -207,9 +207,7 @@ def generate_dampings_withshadowdamp(number_of_dampings, days, min_distance, min
         count_shadow += 1
         # select first or last five dampings
         if len(dampings) >= number_of_dampings:
-            # dampings = random.sample(dampings, 5)
             all_dampings.append(sorted(dampings))
-        #     if count_runs % 2 == 0:
 
     return np.asarray(all_dampings)
 
@@ -221,6 +219,7 @@ def generate_data(
    @param path Path, where the datasets are stored.
    @param input_width Number of time steps used for model input.
    @param label_width Number of time steps (days) used as model output/label.  
+   @param number_of_dampings (int) The number of contact change points applied to the simulation. 
    @param save_data Option to deactivate the save of the dataset. Per default true.
    """
     population = get_population()
@@ -268,6 +267,11 @@ def generate_data(
     bar.finish()
 
     if save_data:
+
+        # we use a logistic transformer to reduce the
+        # influence of ouliers and to correct the skewness of out dataset
+        # as a result we obtaina dataset which is handled better by the NN
+
         num_groups = int(np.asarray(data['inputs']).shape[2]/8)
         transformer = FunctionTransformer(np.log1p, validate=True)
 
