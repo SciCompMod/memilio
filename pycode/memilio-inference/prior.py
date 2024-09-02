@@ -1,26 +1,85 @@
 import operator
+from typing import Self, Any
+from collections.abc import Callable
+from inspect import isclass
 
+import numpy as np
 from bayesflow.simulation import Prior
 
 
-class BoundParameter():
-    def __init__(self, distribution, name, lower_bound=None, upper_bound=None, lower_bound_included=True, upper_bound_included=True):
+class PriorScaler():
+
+    def fit(self: Self, prior: Prior) -> Self:
+        prior_means, prior_stds = prior.estimate_means_and_stds()
+        for idx, prior_std in enumerate(prior_stds[0]):
+            if prior_std == 0:
+                prior_stds[0, idx] += 10 ** -14
+        self.prior_means = prior_means
+        self.prior_stds = prior_stds
+        return self
+
+    def transform(self: Self, data: Any) -> Any:
+        # z-standardize with previously computed means and stds
+        # Make this use different scalers
+        self._check_is_fitted()
+        return (data - self.prior_means) / self.prior_stds
+
+    def inverse_transform(self: Self, data: Any) -> Any:
+        self._check_is_fitted()
+        return self.prior_means + data * self.prior_stds
+
+    def _check_is_fitted(self: Self):
+        if isclass(self):
+            raise TypeError(
+                f"{self} is a class, not an instance.")
+        msg = (
+            "This %(name)s instance is not fitted yet. Call 'fit' with "
+            "appropriate arguments before using this estimator."
+        )
+        for attribute in ["prior_means", "prior_stds"]:
+            if not hasattr(self, attribute):
+                raise AttributeError(msg % {"name": type(self).__name__})
+
+
+class UnboundParameter():
+    def __init__(self: Self, distribution: Callable[[], float], name: str) -> None:
         self.distribution = distribution
         self.name = name
+
+    def get_draw(self: Self) -> Callable[[], float]:
+        def draw() -> float:
+            return self.distribution()
+        return draw
+
+
+class FixedParameter(UnboundParameter):
+    def __init__(self: Self, value, name: str) -> None:
+        super().__init__(value, name)
+
+    def get_draw(self: Self) -> Callable[[], float]:
+        def draw() -> float:
+            return self.distribution
+        return draw
+
+
+class BoundParameter(UnboundParameter):
+    def __init__(self: Self, distribution: Callable[[], float], name: str, lower_bound: float = None,
+                 upper_bound: float = None, lower_bound_included: bool = True, upper_bound_included: bool = True) -> None:
+        super().__init__(distribution, name)
 
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
         self.lower_bound_operator = operator.le if lower_bound_included else operator.lt
-        self.upper_bound_operator = operator.le if upper_bound_included else operator.lt
+        self.upper_bound_operator = operator.ge if upper_bound_included else operator.gt
 
-    def check(self, value):
+    def check(self: Self, value) -> bool:
         if self.lower_bound is not None and not self.lower_bound_operator(self.lower_bound, value):
             return False
         if self.upper_bound is not None and not self.upper_bound_operator(self.upper_bound, value):
             return False
         return True
 
-    def get_draw(self):
+    def get_draw(self: Self) -> Callable[[], float]:
         def draw():
             while True:  # somehow check that we dont get into softlock
                 value = self.distribution()
@@ -29,59 +88,35 @@ class BoundParameter():
         return draw
 
 
-class UnboundParameter():
-    def __init__(self, distribution, name):
-        self.distribution = distribution
-        self.name = name
-
-    def get_draw(self):
-        def draw():
-            return self.distribution()
-        return draw
-
-
-class FixedParameter():
-    def __init__(self, value, name):
-        self.value = value
-        self.name = name
-
-    def get_draw(self):
-        def draw():
-            return self.value
-        return draw
-
-
 class LambdaParameter(BoundParameter):
-    def __init__(self, distribution, name):
+    def __init__(self: Self, distribution: Callable[[], float], name: str) -> None:
         # check 1 >= lambd >= 0
         super().__init__(distribution, name, lower_bound=0, upper_bound=1,
                          lower_bound_included=True, upper_bound_included=True)
 
 
 class InterventionChangePointParameter(BoundParameter):
-    def __init__(self, distribution, name):
+    def __init__(self: Self, distribution: Callable[[], float], name: str) -> None:
         # ckeck change_point >= 0
         super().__init__(distribution, name, lower_bound=0, lower_bound_included=True)
-        self.distribution = distribution
-        self.name = name
 
 
 class DelayParameter(BoundParameter):
-    def __init__(self, distribution, name, sim_diff):
+    def __init__(self: Self, distribution: Callable[[], float], name: str, sim_diff: int) -> None:
         # check ((sim_diff - 1) > int(round(delay))), thus -1.5
         super().__init__(distribution, name,
                          upper_bound=sim_diff - 1.5, upper_bound_included=False)
 
 
 class WeeklyModulationAmplitudeParameter(BoundParameter):
-    def __init__(self, distribution, name,):
+    def __init__(self: Self, distribution: Callable[[], float], name: str) -> None:
         # check 1 >= f_i >= 0
         super().__init__(distribution, name, lower_bound=0, upper_bound=1,
                          lower_bound_included=True, upper_bound_included=True)
 
 
 class ScaleMultiplicativeReportingNoiseParameter(BoundParameter):
-    def __init__(self, distribution, name,):
+    def __init__(self: Self, distribution: Callable[[], float], name: str) -> None:
         # check scale_I > 0
         super().__init__(distribution, name, lower_bound=0, lower_bound_included=False)
 
@@ -90,60 +125,68 @@ class ModelStrategy:
     """Abstract base class for different model strategies."""
 
     @staticmethod
-    def add_base(prior_array):
+    def add_base(prior_array: list[UnboundParameter]) -> None:
         raise NotImplementedError
 
     @staticmethod
-    def add_intervention(prior_array):
+    def add_intervention(prior_array: list[UnboundParameter]) -> None:
         raise NotImplementedError
 
     @staticmethod
-    def add_observation(prior_array, sim_diff):
+    def add_observation(prior_array: list[UnboundParameter], sim_diff: int) -> None:
         raise NotImplementedError
 
 
 class ModelPriorBuilder:
-    def __init__(self, strategy, sim_diff=16):
+    def __init__(self: Self, strategy: ModelStrategy, sim_diff: int = 16):
         self.strategy = strategy
         self.sim_diff = sim_diff
         self.components = []
         self.fixed_parameters = []
 
-    def add_base(self):
+    def add_base(self: Self) -> Self:
         self.strategy.add_base(self.components)
         return self
 
-    def add_intervention(self):
+    def add_intervention(self: Self) -> Self:
         self.strategy.add_intervention(self.components)
         return self
 
-    def add_observation(self):
+    def add_observation(self: Self) -> Self:
         self.strategy.add_observation(self.components, self.sim_diff)
         return self
 
-    def set_fixed_parameters(self, fixed_params=None):
-        self.fixed_parameters = []
+    def add_dummy(self: Self) -> Self:
+        self.components.append(UnboundParameter(
+            distribution=np.random.uniform, name=r'Dummy'))
+        return self
+
+    def set_fixed_parameters(self: Self, fixed_params: dict[str, float] = None) -> Self:
+        self.fixed_parameters = []  # maybe delete fixed params and just save names
         for param_name, value in fixed_params.items():
             self.fixed_parameters.append(
                 FixedParameter(value=value, name=param_name))
         return self
 
-    def build(self):
+    def build(self: Self) -> Prior:
         parameter_priors = []
         param_names = []
 
         # get components
         for component in self.components:
+            #   skip fixed params
+            if any(component.name == fixed_param.name for fixed_param in self.fixed_parameters):
+                continue
             parameter_priors.append(component.get_draw())
             param_names.append(component.name)
 
-        # redefine components with scalar value
-        for fixed_param in self.fixed_parameters:
-            param_name = fixed_param.name
-            idx = param_names.index(param_name)
-            parameter_priors[idx] = fixed_param.get_draw()
+        # # redefine components with scalar value
+        # for fixed_param in self.fixed_parameters:
+        #     param_name = fixed_param.name
+        #     idx = param_names.index(param_name)
+        #     parameter_priors[idx] = fixed_param.get_draw()
 
-        def model_prior():
+        def model_prior() -> list[float]:
             parameter_draws = []
             for prior in parameter_priors:
                 parameter_draws.append(prior())

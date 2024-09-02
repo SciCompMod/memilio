@@ -18,12 +18,7 @@ def plot_ppc(config, post_samples, ode_model, logscale=True, color="#8f2727", du
     sims = []
     for i in range(samples.shape[0]):
         # Note - simulator returns 2D arrays of shape (T, 1), so we remove trailing dim
-        if "observation_model" in config:
-            sim_cases = ode_model(
-                samples[i], config["N"], config["T"], observation_model=config["observation_model"])[:, 0]
-        else:
-            sim_cases = ode_model(samples[i], config["N"], config["T"])[:, 0]
-        sims.append(sim_cases)
+        sims.append(ode_model(samples[i])[:, 0])
     sims = np.array(sims)
 
     # Compute quantiles for each t = 1,...,T

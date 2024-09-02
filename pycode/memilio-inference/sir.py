@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.typing as npt
 from scipy import stats
 from enum import Enum
 from functools import partial
@@ -35,7 +36,8 @@ class ParameterNamesSir(Enum):
 
 class SIRStrategy(ModelStrategy):
     @staticmethod
-    def add_base(prior_array):  # Possible option to draw without redraw
+    # Possible option to draw without redraw
+    def add_base(prior_array: list[UnboundParameter]) -> None:
         prior_array.append(LambdaParameter(distribution=partial(
             np.random.lognormal, mean=np.log(1.2), sigma=0.5), name=ParameterNamesSir.LAMBDA_0.value))
         prior_array.append(UnboundParameter(distribution=partial(
@@ -44,7 +46,8 @@ class SIRStrategy(ModelStrategy):
             np.random.gamma, shape=2, scale=30), name=ParameterNamesSir.I0.value))
 
     @staticmethod
-    def add_intervention(prior_array):  # Possible option to draw without redraw
+    # Possible option to draw without redraw
+    def add_intervention(prior_array: list[UnboundParameter]) -> None:
         prior_array.append(InterventionChangePointParameter(distribution=partial(
             np.random.normal, loc=8, scale=3), name=ParameterNamesSir.T1.value))
         prior_array.append(InterventionChangePointParameter(distribution=partial(
@@ -64,7 +67,7 @@ class SIRStrategy(ModelStrategy):
 
     @staticmethod
     # Possible option to draw without redraw
-    def add_observation(prior_array, sim_diff):
+    def add_observation(prior_array: list[UnboundParameter], sim_diff: int) -> None:
         prior_array.append(WeeklyModulationAmplitudeParameter(distribution=partial(
             np.random.beta, a=alpha_f, b=beta_f), name=ParameterNamesSir.F_I.value))
         prior_array.append(UnboundParameter(
@@ -75,7 +78,7 @@ class SIRStrategy(ModelStrategy):
             np.random.gamma, shape=1, scale=5), name=ParameterNamesSir.PSI.value))
 
 
-def stationary_SIR(params, N, T, intervention_model, observation_model, param_names, fixed_params, sim_diff=16):
+def stationary_SIR(params: list[float], N: int, T: int, intervention_model: bool, observation_model: bool, param_names: list[str], fixed_params: dict[str, float], sim_diff: int = 16) -> npt.NDArray[np.float64]:
     """Performs a forward simulation from the stationary SIR model given a random draw from the prior."""
 
     # Convert params array to a dictionary using param_names
@@ -85,35 +88,34 @@ def stationary_SIR(params, N, T, intervention_model, observation_model, param_na
     combined_params = {**dynamic_params, **fixed_params}
 
     # Extract parameters using the Enum
-    lambd0 = combined_params.get(ParameterNamesSir.LAMBDA_0.value, None)
-    mu = combined_params.get(ParameterNamesSir.MU.value, None)
-    I0 = combined_params.get(ParameterNamesSir.I0.value, None)
-
-    t1 = combined_params.get(
-        ParameterNamesSir.T1.value, None)
-    t2 = combined_params.get(
-        ParameterNamesSir.T2.value, None)
-    t3 = combined_params.get(
-        ParameterNamesSir.T3.value, None)
-    t4 = combined_params.get(
-        ParameterNamesSir.T4.value, None)
-
-    lambd1 = combined_params.get(ParameterNamesSir.LAMBDA_1.value, None)
-    lambd2 = combined_params.get(ParameterNamesSir.LAMBDA_2.value, None)
-    lambd3 = combined_params.get(ParameterNamesSir.LAMBDA_3.value, None)
-    lambd4 = combined_params.get(ParameterNamesSir.LAMBDA_4.value, None)
-
-    f_i = combined_params.get(ParameterNamesSir.F_I.value, None)
-    phi_i = combined_params.get(ParameterNamesSir.PHI_I.value, None)
-    D_i = combined_params.get(ParameterNamesSir.D_I.value, None)
-    scale_I = combined_params.get(ParameterNamesSir.PSI.value, None)
-
-    # Maybe check for missing parameter
-
+    lambd0 = combined_params[ParameterNamesSir.LAMBDA_0.value]
+    mu = combined_params[ParameterNamesSir.MU.value]
+    I0 = combined_params[ParameterNamesSir.I0.value]
     # Should IO also be a constraint instead of set to bouandry?
     I0 = max(1, np.round(I0))
+
+    if intervention_model:
+        t1 = combined_params[ParameterNamesSir.T1.value]
+        t2 = combined_params[ParameterNamesSir.T2.value]
+        t3 = combined_params[ParameterNamesSir.T3.value]
+        t4 = combined_params[ParameterNamesSir.T4.value]
+        # Round integer parameters
+        t1, t2, t3, t4 = int(round(t1)), int(
+            round(t2)), int(round(t3)), int(round(t4))
+
+        lambd1 = combined_params[ParameterNamesSir.LAMBDA_1.value]
+        lambd2 = combined_params[ParameterNamesSir.LAMBDA_2.value]
+        lambd3 = combined_params[ParameterNamesSir.LAMBDA_3.value]
+        lambd4 = combined_params[ParameterNamesSir.LAMBDA_4.value]
+
     if observation_model:
+        f_i = combined_params[ParameterNamesSir.F_I.value]
+        phi_i = combined_params[ParameterNamesSir.PHI_I.value]
+        D_i = combined_params[ParameterNamesSir.D_I.value]
+        scale_I = combined_params[ParameterNamesSir.PSI.value]
         D_i = int(round(D_i))
+
+    # Maybe check for missing parameter
 
     # Configure model
     num_groups = 1
@@ -137,7 +139,7 @@ def stationary_SIR(params, N, T, intervention_model, observation_model, param_na
     # Very weird way of setting dampings and differnt from paper, because of no time till NPIs fully take effect
     # Also damping could increase the beta value, should that be possible?
 
-    def calc_damping_value_from_lambda(_lambdt, _lambd0=1, _baseline=1, _minimum=0):
+    def calc_damping_value_from_lambda(_lambdt: float, _lambd0: float = 1, _baseline: float = 1, _minimum: float = 0) -> float:
         # cf = bl - (dampingvalue * (bl - min))
         # -> bl - cf = (dampingvalue * (bl - min)
         # -> (bl - cf) / (bl - min) = dampingvalue
@@ -153,9 +155,6 @@ def stationary_SIR(params, N, T, intervention_model, observation_model, param_na
         coeffs=np.ones((num_groups, num_groups)) * calc_damping_value_from_lambda(lambd0), t=0, level=0, type=0))
 
     if intervention_model:
-        # Round integer parameters
-        t1, t2, t3, t4 = int(round(t1)), int(
-            round(t2)), int(round(t3)), int(round(t4))
         # delta_t1, delta_t2, delta_t3, delta_t4 = int(round(delta_t1)), int(round(delta_t2)), int(round(delta_t3)), int(round(delta_t4))
         sir_model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
             coeffs=np.ones((num_groups, num_groups)) * calc_damping_value_from_lambda(lambd1), t=t1+sim_lag, level=0, type=0))
@@ -206,11 +205,10 @@ def stationary_SIR(params, N, T, intervention_model, observation_model, param_na
 
         # Add noise
         I_data = stats.t(df=4, loc=I_data, scale=np.sqrt(I_data)*scale_I).rvs()
-
-        # bound all negative values to 0
-        I_data = np.clip(I_data, 10 ** -14, N)
     else:
         I_data = np.diff(flows.as_ndarray()[1, :T+1])
+    # bound all negative values to 0
+    I_data = np.clip(I_data, 10 ** -14, N)
     return np.stack((I_data, )).T
     # at this point code example uses cum sum instead of new
     # return np.stack((flows[:,0], )).T # np.stack((result[:,1])).T also wrong because its not cumsum
