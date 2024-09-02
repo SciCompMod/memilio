@@ -14,8 +14,8 @@ from memilio.simulation.osecir import (Index_InfectionState, interpolate_simulat
                                        InfectionState, Model, interpolate_simulation_result)
 from memilio.epidata import geoModificationGermany as geoger
 import memilio.epidata.getPopulationData as gpd
-from memilio.epidata import modifyDataframeSeries as mdfs
-from .GNN_utils import getBaselineMatrix, transform_mobility_directory, make_graph, remove_confirmed_compartments
+from .GNN_utils import (getBaselineMatrix, transform_mobility_directory,
+                        make_graph, remove_confirmed_compartments, get_population)
 
 
 def run_secir_groups_simulation(days, populations):
@@ -145,17 +145,7 @@ def generate_data(
    @param save_data Option to deactivate the save of the dataset. Per default true.
    """
 
-    df_population = pd.read_json(
-        'data/pydata/Germany/county_population.json')
-    age_groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80-130']
-
-    df_population_agegroups = pd.DataFrame(
-        columns=[df_population.columns[0]] + age_groups)
-    for region_id in df_population.iloc[:, 0]:
-        df_population_agegroups.loc[len(df_population_agegroups.index), :] = [int(region_id)] + list(
-            mdfs.fit_age_group_intervals(df_population[df_population.iloc[:, 0] == int(region_id)].iloc[:, 2:], age_groups))
-
-    population = df_population_agegroups.values.tolist
+    population = get_population()
     days_sum = days + input_width - 1
 
     data = {"inputs": [],
