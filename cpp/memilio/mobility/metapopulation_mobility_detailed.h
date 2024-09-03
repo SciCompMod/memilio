@@ -625,6 +625,27 @@ public:
             for (auto& n : this->m_graph.nodes()) {
                 n.property.mobility_sim.get_result().get_last_value().setZero();
             }
+
+            // to save memory, we interpolate each time series after every day if t > 20
+            if (this->m_t > 20) {
+                for (auto& n : this->m_graph.nodes()) {
+                    // base sim
+                    auto& result_node_local          = n.property.base_sim.get_result();
+                    auto interpolated_result         = interpolate_simulation_result(result_node_local);
+                    auto& flow_node_local            = n.property.base_sim.get_flows();
+                    auto interpolated_flows          = interpolate_simulation_result(flow_node_local);
+                    n.property.base_sim.get_result() = interpolated_result;
+                    n.property.base_sim.get_flows()  = interpolated_flows;
+
+                    // mobility sim
+                    auto& result_node_mobility           = n.property.mobility_sim.get_result();
+                    interpolated_result                  = interpolate_simulation_result(result_node_mobility);
+                    auto& flow_node_mobility             = n.property.mobility_sim.get_flows();
+                    interpolated_flows                   = interpolate_simulation_result(flow_node_mobility);
+                    n.property.mobility_sim.get_result() = interpolated_result;
+                    n.property.mobility_sim.get_flows()  = interpolated_flows;
+                }
+            }
         }
     }
 
