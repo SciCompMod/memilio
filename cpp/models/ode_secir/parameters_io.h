@@ -49,7 +49,7 @@ void interpolate_ages(const std::vector<double>& age_ranges, std::vector<std::ve
 /**
      * @brief reads populations data from RKI.
      * @param[in] rki_data Vector of ConfirmedCasesDataEntry%s.
-     * @param[in] region Vector of keys of the region of interest.
+     * @param[in] vregion Vector of keys of the region of interest.
      * @param[in] year Specifies year at which the data is read.
      * @param[in] month Specifies month at which the data is read.
      * @param[in] day Specifies day at which the data is read.
