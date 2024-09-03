@@ -220,7 +220,7 @@ private:
             }
         }
         // Function call for next group if applicable.
-        if constexpr (Group + 1 < m_model.m_groups) {
+        if constexpr (Group + 1 < Model::m_groups) {
             return compute_initialization_vector_impl<Group + 1>(init, total_population, deaths, total_confirmed_cases);
         }
         else {
@@ -234,7 +234,7 @@ private:
      */
     bool check_constraints() const
     {
-        if (!((Eigen::Index)InfectionTransition::Count * m_model.m_groups == m_flows.get_num_elements())) {
+        if (!((Eigen::Index)InfectionTransition::Count * Model::m_groups == m_flows.get_num_elements())) {
             log_error("Initial condition size does not match subcompartments.");
             return true;
         }

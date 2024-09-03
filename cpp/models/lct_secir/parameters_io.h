@@ -695,17 +695,19 @@ IOResult<void> set_initial_data_from_confirmed_cases_ageres(Model& model,
     for (size_t i = 0; i < LctState::Count; i++) {
         model.populations[first_index + i] = init[i];
     }
-    if constexpr (Group + 1 < model.m_groups) {
+    if constexpr (Group + 1 < Model::m_groups) {
         return set_initial_data_from_confirmed_cases_ageres<Model, Group + 1>(model, rki_data, date, total_population,
                                                                               scale_confirmed_cases);
     }
-    if (model.check_constraints()) {
-        return failure(StatusCode::InvalidValue,
-                       "One or more constraint(s) of the model are not fulfilled. Please check the model setup. "
-                       "Otherwise, the data are not fitting the input variables.");
-    }
     else {
-        return mio::success();
+        if (model.check_constraints()) {
+            return failure(StatusCode::InvalidValue,
+                           "One or more constraint(s) of the model are not fulfilled. Please check the model setup. "
+                           "Otherwise, the data are not fitting the input variables.");
+        }
+        else {
+            return mio::success();
+        }
     }
 }
 
@@ -741,10 +743,10 @@ IOResult<void> set_initial_data_from_confirmed_cases(Model& model, const std::st
                                                      const std::vector<ScalarType>& scale_confirmed_cases)
 {
 
-    assert(total_population.size() == model.m_groups);
-    assert(scale_confirmed_cases.size() == model.m_groups);
-    if (model.m_groups > 1) {
-        assert(ConfirmedCasesDataEntry::age_group_names.size() == model.m_groups);
+    assert(total_population.size() == Model::m_groups);
+    assert(scale_confirmed_cases.size() == Model::m_groups);
+    if (Model::m_groups > 1) {
+        assert(ConfirmedCasesDataEntry::age_group_names.size() == Model::m_groups);
         BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(path));
         return set_initial_data_from_confirmed_cases_ageres<Model>(model, rki_data, date, total_population,
                                                                    scale_confirmed_cases);
