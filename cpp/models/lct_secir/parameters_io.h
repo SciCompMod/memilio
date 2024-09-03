@@ -745,7 +745,7 @@ IOResult<void> set_initial_data_from_confirmed_cases(Model& model, const std::st
 
     assert(total_population.size() == Model::m_groups);
     assert(scale_confirmed_cases.size() == Model::m_groups);
-    if (Model::m_groups > 1) {
+    if constexpr (Model::m_groups > 1) {
         assert(ConfirmedCasesDataEntry::age_group_names.size() == Model::m_groups);
         BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(path));
         return set_initial_data_from_confirmed_cases_ageres<Model>(model, rki_data, date, total_population,
