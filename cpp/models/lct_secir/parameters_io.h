@@ -22,6 +22,7 @@
 #define LCTSECIR_PARAMETERS_IO_H
 
 #include "memilio/config.h"
+#include "ode_secir/infection_state.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -39,6 +40,284 @@ namespace mio
 {
 namespace lsecir
 {
+
+namespace details
+{ // Use namespace to hide functions that are not intended to be used outside this file.
+
+/**
+* @brief Processes one entry of an RKI data set for the definition of an initial value vector for an LCT model.
+*   
+* Takes one entry of an RKI data vector and changes the value of an initial value vector accordingly.
+* @param[in, out] init The initial value vector (updated according to the data entry).
+* @param[in] entry The entry of the RKI data set.
+* @param[in] offset The offset between the date of the entry and the date for which the 
+*   initial value vector is calculated.
+* @param[in] staytimes A vector of the average time spent in each compartment defined in InfectionState,
+*    as given by the model (for the group under consideration) for which the initial value vector is calculated.
+* @param[in] inv_prob_SymptomsPerNoSymptoms The inverse of the probability InfectedSymptomsPerInfectedNoSymptoms as
+*   given by the model (for the group under consideration) for which the initial value vector is calculated.
+* @param[in] severePerInfectedSymptoms Probability as given by the model (for the group under consideration)
+*    for which the initial value vector is calculated.
+* @param[in] criticalPerSevere Probability as given by the model (for the group under consideration)
+*    for which the initial value vector is calculated.
+* @param[in] scale_confirmed_cases Factor by which to scale the confirmed cases of rki data to consider unreported cases.
+* @tparam LctState The LctState of the group under consideration.
+* @tparam EntryType The type of the data entry of the RKI data.
+*/
+template <class LctState, class EntryType>
+void process_entry(Eigen::VectorXd& init, const EntryType& entry, int offset, const std::vector<ScalarType> staytimes,
+                   ScalarType inv_prob_SymptomsPerNoSymptoms, ScalarType severePerInfectedSymptoms,
+                   ScalarType criticalPerSevere, ScalarType scale_confirmed_cases)
+{
+
+    // Add confirmed cases at date to compartment Recovered.
+    if (offset == 0) {
+        init[LctState::template get_first_index<InfectionState::Recovered>()] +=
+            scale_confirmed_cases * entry.num_confirmed;
+    }
+
+    // Compute initial values for compartment InfectedNoSymptoms.
+    if (offset >= 0 && offset <= std::ceil(staytimes[(size_t)InfectionState::InfectedNoSymptoms])) {
+        // Mean stay time in each subcompartment.
+        ScalarType time_INS_per_subcomp =
+            staytimes[(size_t)InfectionState::InfectedNoSymptoms] /
+            (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>();
+        // Index of the last subcompartment of InfectedNoSymptoms.
+        size_t last_index_INS = LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() +
+                                LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>() - 1;
+        for (int i = 0; i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>();
+             i++) {
+            if (offset == std::floor(i * time_INS_per_subcomp)) {
+                init[last_index_INS - i] -= (1 - (i * time_INS_per_subcomp - std::floor(i * time_INS_per_subcomp))) *
+                                            inv_prob_SymptomsPerNoSymptoms * scale_confirmed_cases *
+                                            entry.num_confirmed;
+            }
+            if (offset == std::ceil(i * time_INS_per_subcomp)) {
+                init[last_index_INS - i] -= (i * time_INS_per_subcomp - std::floor(i * time_INS_per_subcomp)) *
+                                            inv_prob_SymptomsPerNoSymptoms * scale_confirmed_cases *
+                                            entry.num_confirmed;
+            }
+            if (offset == std::floor((i + 1) * time_INS_per_subcomp)) {
+                init[last_index_INS - i] +=
+                    (1 - ((i + 1) * time_INS_per_subcomp - std::floor((i + 1) * time_INS_per_subcomp))) *
+                    inv_prob_SymptomsPerNoSymptoms * scale_confirmed_cases * entry.num_confirmed;
+            }
+            if (offset == std::ceil((i + 1) * time_INS_per_subcomp)) {
+                init[last_index_INS - i] +=
+                    ((i + 1) * time_INS_per_subcomp - std::floor((i + 1) * time_INS_per_subcomp)) *
+                    inv_prob_SymptomsPerNoSymptoms * scale_confirmed_cases * entry.num_confirmed;
+            }
+        }
+    }
+
+    // Compute initial values for compartment Exposed.
+    if (offset >= std::floor(staytimes[(size_t)InfectionState::InfectedNoSymptoms]) &&
+        offset <= std::ceil(staytimes[(size_t)InfectionState::Exposed] +
+                            staytimes[(size_t)InfectionState::InfectedNoSymptoms])) {
+        // Mean stay time in each subcompartment.
+        ScalarType time_Exposed_per_subcomp =
+            staytimes[(size_t)InfectionState::Exposed] /
+            (ScalarType)LctState::template get_num_subcompartments<InfectionState::Exposed>();
+        // Index of the last subcompartment of Exposed.
+        size_t last_index_Exposed = LctState::template get_first_index<InfectionState::Exposed>() +
+                                    LctState::template get_num_subcompartments<InfectionState::Exposed>() - 1;
+        for (int i = 0; i < (int)LctState::template get_num_subcompartments<InfectionState::Exposed>(); i++) {
+            if (offset ==
+                std::floor(staytimes[(size_t)InfectionState::InfectedNoSymptoms] + i * time_Exposed_per_subcomp)) {
+                init[last_index_Exposed - i] -=
+                    (1 - (staytimes[(size_t)InfectionState::InfectedNoSymptoms] + i * time_Exposed_per_subcomp -
+                          std::floor(staytimes[(size_t)InfectionState::InfectedNoSymptoms] +
+                                     i * time_Exposed_per_subcomp))) *
+                    inv_prob_SymptomsPerNoSymptoms * scale_confirmed_cases * entry.num_confirmed;
+            }
+            if (offset ==
+                std::ceil(staytimes[(size_t)InfectionState::InfectedNoSymptoms] + i * time_Exposed_per_subcomp)) {
+                init[last_index_Exposed - i] -=
+                    (staytimes[(size_t)InfectionState::InfectedNoSymptoms] + i * time_Exposed_per_subcomp -
+                     std::floor(staytimes[(size_t)InfectionState::InfectedNoSymptoms] + i * time_Exposed_per_subcomp)) *
+                    inv_prob_SymptomsPerNoSymptoms * scale_confirmed_cases * entry.num_confirmed;
+            }
+            if (offset == std::floor(staytimes[(size_t)InfectionState::InfectedNoSymptoms] +
+                                     (i + 1) * time_Exposed_per_subcomp)) {
+                init[last_index_Exposed - i] +=
+                    (1 - (staytimes[(size_t)InfectionState::InfectedNoSymptoms] + (i + 1) * time_Exposed_per_subcomp -
+                          std::floor(staytimes[(size_t)InfectionState::InfectedNoSymptoms] +
+                                     (i + 1) * time_Exposed_per_subcomp))) *
+                    inv_prob_SymptomsPerNoSymptoms * scale_confirmed_cases * entry.num_confirmed;
+            }
+            if (offset ==
+                std::ceil(staytimes[(size_t)InfectionState::InfectedNoSymptoms] + (i + 1) * time_Exposed_per_subcomp)) {
+                init[last_index_Exposed - i] +=
+                    (staytimes[(size_t)InfectionState::InfectedNoSymptoms] + (i + 1) * time_Exposed_per_subcomp -
+                     std::floor(staytimes[(size_t)InfectionState::InfectedNoSymptoms] +
+                                (i + 1) * time_Exposed_per_subcomp)) *
+                    inv_prob_SymptomsPerNoSymptoms * scale_confirmed_cases * entry.num_confirmed;
+            }
+        }
+    }
+
+    // Compute initial values for compartment InfectedSymptoms.
+    if (offset >= std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms]) && offset <= 0) {
+        // Mean stay time in each subcompartment.
+        ScalarType time_IS_per_subcomp =
+            staytimes[(size_t)InfectionState::InfectedSymptoms] /
+            (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>();
+        // Index of the first subcompartment of InfectedSymptoms.
+        size_t first_index_IS = LctState::template get_first_index<InfectionState::InfectedSymptoms>();
+        for (int i = 0; i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>(); i++) {
+            if (offset == std::floor(-time_IS_per_subcomp * (i + 1))) {
+                init[first_index_IS + i] -=
+                    (1 - (-(i + 1.) * time_IS_per_subcomp - std::floor(-(i + 1) * time_IS_per_subcomp))) *
+                    scale_confirmed_cases * entry.num_confirmed;
+            }
+            if (offset == std::ceil(-time_IS_per_subcomp * (i + 1))) {
+                init[first_index_IS + i] -=
+                    (-(i + 1) * time_IS_per_subcomp - std::floor(-(i + 1) * time_IS_per_subcomp)) *
+                    scale_confirmed_cases * entry.num_confirmed;
+            }
+            if (offset == std::floor(-time_IS_per_subcomp * i)) {
+                init[first_index_IS + i] += (1 - (-i * time_IS_per_subcomp - std::floor(-i * time_IS_per_subcomp))) *
+                                            scale_confirmed_cases * entry.num_confirmed;
+            }
+            if (offset == std::ceil(-time_IS_per_subcomp * i)) {
+                init[first_index_IS + i] += (-i * time_IS_per_subcomp - std::floor(-i * time_IS_per_subcomp)) *
+                                            scale_confirmed_cases * entry.num_confirmed;
+            }
+        }
+    }
+
+    // Compute initial values for compartment InfectedSevere.
+    if (offset >= std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                             staytimes[(size_t)InfectionState::InfectedSevere]) &&
+        offset <= std::ceil(-staytimes[(size_t)InfectionState::InfectedSymptoms])) {
+        // Mean stay time in each subcompartment.
+        ScalarType time_ISev_per_subcomp =
+            staytimes[(size_t)InfectionState::InfectedSevere] /
+            (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedSevere>();
+        // Index of the first subcompartment of InfectedSevere.
+        size_t first_index_ISev = LctState::template get_first_index<InfectionState::InfectedSevere>();
+        for (int i = 0; i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedSevere>(); i++) {
+            if (offset ==
+                std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] - time_ISev_per_subcomp * (i + 1))) {
+                init[first_index_ISev + i] -=
+                    severePerInfectedSymptoms *
+                    (1 - (-staytimes[(size_t)InfectionState::InfectedSymptoms] - (i + 1) * time_ISev_per_subcomp -
+                          std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                                     (i + 1) * time_ISev_per_subcomp))) *
+                    scale_confirmed_cases * entry.num_confirmed;
+            }
+            if (offset ==
+                std::ceil(-staytimes[(size_t)InfectionState::InfectedSymptoms] - time_ISev_per_subcomp * (i + 1))) {
+                init[first_index_ISev + i] -=
+                    severePerInfectedSymptoms *
+                    (-staytimes[(size_t)InfectionState::InfectedSymptoms] - (i + 1) * time_ISev_per_subcomp -
+                     std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                                (i + 1) * time_ISev_per_subcomp)) *
+                    scale_confirmed_cases * entry.num_confirmed;
+            }
+            if (offset ==
+                std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] - time_ISev_per_subcomp * i)) {
+                init[first_index_ISev + i] +=
+                    severePerInfectedSymptoms *
+                    (1 -
+                     (-staytimes[(size_t)InfectionState::InfectedSymptoms] - i * time_ISev_per_subcomp -
+                      std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] - i * time_ISev_per_subcomp))) *
+                    scale_confirmed_cases * entry.num_confirmed;
+            }
+            if (offset == std::ceil(-staytimes[(size_t)InfectionState::InfectedSymptoms] - time_ISev_per_subcomp * i)) {
+                init[first_index_ISev + i] +=
+                    severePerInfectedSymptoms *
+                    (-staytimes[(size_t)InfectionState::InfectedSymptoms] - i * time_ISev_per_subcomp -
+                     std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] - i * time_ISev_per_subcomp)) *
+                    scale_confirmed_cases * entry.num_confirmed;
+            }
+        }
+    }
+
+    // Compute initial values for compartment InfectedCritical.
+    if (offset >= std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                             staytimes[(size_t)InfectionState::InfectedSevere] -
+                             staytimes[(size_t)InfectionState::InfectedCritical]) &&
+        offset <= std::ceil(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                            staytimes[(size_t)InfectionState::InfectedSevere])) {
+        // Mean stay time in each subcompartment.
+        ScalarType time_ICri_per_subcomp =
+            staytimes[(size_t)InfectionState::InfectedCritical] /
+            (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedCritical>();
+        // Index of the first subcompartment of InfectedCritical.
+        size_t first_index_ICri = LctState::template get_first_index<InfectionState::InfectedCritical>();
+        for (int i = 0; i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedCritical>(); i++) {
+            if (offset ==
+                std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                           staytimes[(size_t)InfectionState::InfectedSevere] - time_ICri_per_subcomp * (i + 1))) {
+                init[first_index_ICri + i] -=
+                    severePerInfectedSymptoms * criticalPerSevere *
+                    (1 - (-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                          staytimes[(size_t)InfectionState::InfectedSevere] - (i + 1) * time_ICri_per_subcomp -
+                          std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                                     staytimes[(size_t)InfectionState::InfectedSevere] -
+                                     (i + 1) * time_ICri_per_subcomp))) *
+                    scale_confirmed_cases * entry.num_confirmed;
+            }
+            if (offset ==
+                std::ceil(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                          staytimes[(size_t)InfectionState::InfectedSevere] - time_ICri_per_subcomp * (i + 1))) {
+                init[first_index_ICri + i] -=
+                    severePerInfectedSymptoms * criticalPerSevere *
+                    (-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                     staytimes[(size_t)InfectionState::InfectedSevere] - (i + 1) * time_ICri_per_subcomp -
+                     std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                                staytimes[(size_t)InfectionState::InfectedSevere] - (i + 1) * time_ICri_per_subcomp)) *
+                    scale_confirmed_cases * entry.num_confirmed;
+            }
+            if (offset == std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                                     staytimes[(size_t)InfectionState::InfectedSevere] - time_ICri_per_subcomp * i)) {
+                init[first_index_ICri + i] +=
+                    severePerInfectedSymptoms * criticalPerSevere *
+                    (1 - (-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                          staytimes[(size_t)InfectionState::InfectedSevere] - i * time_ICri_per_subcomp -
+                          std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                                     staytimes[(size_t)InfectionState::InfectedSevere] - i * time_ICri_per_subcomp))) *
+                    scale_confirmed_cases * entry.num_confirmed;
+            }
+            if (offset == std::ceil(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                                    staytimes[(size_t)InfectionState::InfectedSevere] - time_ICri_per_subcomp * i)) {
+                init[first_index_ICri + i] +=
+                    severePerInfectedSymptoms * criticalPerSevere *
+                    (-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                     staytimes[(size_t)InfectionState::InfectedSevere] - i * time_ICri_per_subcomp -
+                     std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                                staytimes[(size_t)InfectionState::InfectedSevere] - i * time_ICri_per_subcomp)) *
+                    scale_confirmed_cases * entry.num_confirmed;
+            }
+        }
+    }
+
+    // Compute Dead.
+    if (offset == std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                             staytimes[(size_t)InfectionState::InfectedSevere] -
+                             staytimes[(size_t)InfectionState::InfectedCritical])) {
+        init[LctState::template get_first_index<InfectionState::Dead>()] +=
+            (1 -
+             (-staytimes[(size_t)InfectionState::InfectedSymptoms] - staytimes[(size_t)InfectionState::InfectedSevere] -
+              staytimes[(size_t)InfectionState::InfectedCritical] -
+              std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                         staytimes[(size_t)InfectionState::InfectedSevere] -
+                         staytimes[(size_t)InfectionState::InfectedCritical]))) *
+            entry.num_deaths;
+    }
+    if (offset == std::ceil(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                            staytimes[(size_t)InfectionState::InfectedSevere] -
+                            staytimes[(size_t)InfectionState::InfectedCritical])) {
+        init[LctState::template get_first_index<InfectionState::Dead>()] +=
+            (-staytimes[(size_t)InfectionState::InfectedSymptoms] - staytimes[(size_t)InfectionState::InfectedSevere] -
+             staytimes[(size_t)InfectionState::InfectedCritical] -
+             std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                        staytimes[(size_t)InfectionState::InfectedSevere] -
+                        staytimes[(size_t)InfectionState::InfectedCritical])) *
+            entry.num_deaths;
+    }
+}
 
 /**
 * @brief Computes an initialization vector for an LCT model with case data from RKI without age groups.
@@ -86,17 +365,24 @@ IOResult<void> set_initial_data_from_confirmed_cases_notageres(Model& model, con
     }
     // Compute initial values for all subcompartments.
     Eigen::VectorXd init = Eigen::VectorXd::Zero(LctState::Count);
-    // Define variables for parameters that are often needed.
 
-    ScalarType timeExposed            = model.parameters.template get<TimeExposed>()[0];
-    ScalarType timeInfectedNoSymptoms = model.parameters.template get<TimeInfectedNoSymptoms>()[0];
-    ScalarType timeInfectedSymptoms   = model.parameters.template get<TimeInfectedSymptoms>()[0];
-    ScalarType timeInfectedSevere     = model.parameters.template get<TimeInfectedSevere>()[0];
-    ScalarType timeInfectedCritical   = model.parameters.template get<TimeInfectedCritical>()[0];
-    ScalarType scale_asymptomatic     = 1 / (1 - model.parameters.template get<RecoveredPerInfectedNoSymptoms>()[0]);
+    // Define variables for parameters.
+    std::vector<ScalarType> staytimes((size_t)InfectionState::Count, -1.);
+    staytimes[(size_t)InfectionState::Exposed]            = model.parameters.template get<TimeExposed>()[0];
+    staytimes[(size_t)InfectionState::InfectedNoSymptoms] = model.parameters.template get<TimeInfectedNoSymptoms>()[0];
+    staytimes[(size_t)InfectionState::InfectedSymptoms]   = model.parameters.template get<TimeInfectedSymptoms>()[0];
+    staytimes[(size_t)InfectionState::InfectedSevere]     = model.parameters.template get<TimeInfectedSevere>()[0];
+    staytimes[(size_t)InfectionState::InfectedCritical]   = model.parameters.template get<TimeInfectedCritical>()[0];
+    ScalarType inv_prob_SymptomsPerNoSymptoms =
+        1 / (1 - model.parameters.template get<RecoveredPerInfectedNoSymptoms>()[0]);
+    ScalarType prob_SeverePerInfectedSymptoms = model.parameters.template get<SeverePerInfectedSymptoms>()[0];
+    ScalarType prob_CriticalPerSevere         = model.parameters.template get<CriticalPerSevere>()[0];
 
-    ScalarType min_offset_needed = std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical);
-    ScalarType max_offset_needed = std::ceil(timeExposed + timeInfectedNoSymptoms);
+    ScalarType min_offset_needed = std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                                              staytimes[(size_t)InfectionState::InfectedSevere] -
+                                              staytimes[(size_t)InfectionState::InfectedCritical]);
+    ScalarType max_offset_needed =
+        std::ceil(staytimes[(size_t)InfectionState::Exposed] + staytimes[(size_t)InfectionState::InfectedNoSymptoms]);
 
     bool min_offset_needed_avail = false;
     bool max_offset_needed_avail = false;
@@ -105,228 +391,15 @@ IOResult<void> set_initial_data_from_confirmed_cases_notageres(Model& model, con
     for (auto&& entry : rki_data) {
         int offset = get_offset_in_days(entry.date, date);
         if ((offset >= min_offset_needed) && (offset <= max_offset_needed)) {
-            // Add confirmed cases at date to compartment Recovered.
-            if (offset == 0) {
-                init[LctState::template get_first_index<InfectionState::Recovered>()] +=
-                    scale_confirmed_cases * entry.num_confirmed;
-            }
-
-            // Compute initial values for compartment InfectedNoSymptoms.
-            if (offset >= 0 && offset <= std::ceil(timeInfectedNoSymptoms)) {
-                // Mean stay time in each subcompartment.
-                ScalarType timeInfectedNoSymptoms_i =
-                    timeInfectedNoSymptoms /
-                    (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>();
-                // Index of the last subcompartment of InfectedNoSymptoms.
-                size_t idxInfectedNoSymptoms_last =
-                    LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() +
-                    LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>() - 1;
-                for (int i = 0;
-                     i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>(); i++) {
-                    if (offset == std::floor(i * timeInfectedNoSymptoms_i)) {
-                        init[idxInfectedNoSymptoms_last - i] -=
-                            (1 - (i * timeInfectedNoSymptoms_i - std::floor(i * timeInfectedNoSymptoms_i))) *
-                            scale_asymptomatic * scale_confirmed_cases * entry.num_confirmed;
-                    }
-                    if (offset == std::ceil(i * timeInfectedNoSymptoms_i)) {
-                        init[idxInfectedNoSymptoms_last - i] -=
-                            (i * timeInfectedNoSymptoms_i - std::floor(i * timeInfectedNoSymptoms_i)) *
-                            scale_asymptomatic * scale_confirmed_cases * entry.num_confirmed;
-                    }
-                    if (offset == std::floor((i + 1) * timeInfectedNoSymptoms_i)) {
-                        init[idxInfectedNoSymptoms_last - i] +=
-                            (1 -
-                             ((i + 1) * timeInfectedNoSymptoms_i - std::floor((i + 1) * timeInfectedNoSymptoms_i))) *
-                            scale_asymptomatic * scale_confirmed_cases * entry.num_confirmed;
-                    }
-                    if (offset == std::ceil((i + 1) * timeInfectedNoSymptoms_i)) {
-                        init[idxInfectedNoSymptoms_last - i] +=
-                            ((i + 1) * timeInfectedNoSymptoms_i - std::floor((i + 1) * timeInfectedNoSymptoms_i)) *
-                            scale_asymptomatic * scale_confirmed_cases * entry.num_confirmed;
-                    }
-                }
-            }
-
-            // Compute initial values for compartment Exposed.
-            if (offset >= std::floor(timeInfectedNoSymptoms) && offset <= max_offset_needed) {
-                // Mean stay time in each subcompartment.
-                ScalarType timeExposed_i =
-                    timeExposed / (ScalarType)LctState::template get_num_subcompartments<InfectionState::Exposed>();
-                // Index of the last subcompartment of Exposed.
-                size_t idxExposed_last = LctState::template get_first_index<InfectionState::Exposed>() +
-                                         LctState::template get_num_subcompartments<InfectionState::Exposed>() - 1;
-                for (int i = 0; i < (int)LctState::template get_num_subcompartments<InfectionState::Exposed>(); i++) {
-                    if (offset == std::floor(timeInfectedNoSymptoms + i * timeExposed_i)) {
-                        init[idxExposed_last - i] -= (1 - (timeInfectedNoSymptoms + i * timeExposed_i -
-                                                           std::floor(timeInfectedNoSymptoms + i * timeExposed_i))) *
-                                                     scale_asymptomatic * scale_confirmed_cases * entry.num_confirmed;
-                    }
-                    if (offset == std::ceil(timeInfectedNoSymptoms + i * timeExposed_i)) {
-                        init[idxExposed_last - i] -= (timeInfectedNoSymptoms + i * timeExposed_i -
-                                                      std::floor(timeInfectedNoSymptoms + i * timeExposed_i)) *
-                                                     scale_asymptomatic * scale_confirmed_cases * entry.num_confirmed;
-                    }
-                    if (offset == std::floor(timeInfectedNoSymptoms + (i + 1) * timeExposed_i)) {
-                        init[idxExposed_last - i] +=
-                            (1 - (timeInfectedNoSymptoms + (i + 1) * timeExposed_i -
-                                  std::floor(timeInfectedNoSymptoms + (i + 1) * timeExposed_i))) *
-                            scale_asymptomatic * scale_confirmed_cases * entry.num_confirmed;
-                    }
-                    if (offset == std::ceil(timeInfectedNoSymptoms + (i + 1) * timeExposed_i)) {
-                        init[idxExposed_last - i] += (timeInfectedNoSymptoms + (i + 1) * timeExposed_i -
-                                                      std::floor(timeInfectedNoSymptoms + (i + 1) * timeExposed_i)) *
-                                                     scale_asymptomatic * scale_confirmed_cases * entry.num_confirmed;
-                    }
-                }
-            }
-
-            // Compute initial values for compartment InfectedSymptoms.
-            if (offset >= std::floor(-timeInfectedSymptoms) && offset <= 0) {
-                // Mean stay time in each subcompartment.
-                ScalarType timeInfectedSymptoms_i =
-                    timeInfectedSymptoms /
-                    (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>();
-                // Index of the first subcompartment of InfectedSymptoms.
-                size_t idxInfectedSymptoms_first =
-                    LctState::template get_first_index<InfectionState::InfectedSymptoms>();
-                for (int i = 0; i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>();
-                     i++) {
-                    if (offset == std::floor(-timeInfectedSymptoms_i * (i + 1))) {
-                        init[idxInfectedSymptoms_first + i] -=
-                            (1 - (-(i + 1.) * timeInfectedSymptoms_i - std::floor(-(i + 1) * timeInfectedSymptoms_i))) *
-                            scale_confirmed_cases * entry.num_confirmed;
-                    }
-                    if (offset == std::ceil(-timeInfectedSymptoms_i * (i + 1))) {
-                        init[idxInfectedSymptoms_first + i] -=
-                            (-(i + 1) * timeInfectedSymptoms_i - std::floor(-(i + 1) * timeInfectedSymptoms_i)) *
-                            scale_confirmed_cases * entry.num_confirmed;
-                    }
-                    if (offset == std::floor(-timeInfectedSymptoms_i * i)) {
-                        init[idxInfectedSymptoms_first + i] +=
-                            (1 - (-i * timeInfectedSymptoms_i - std::floor(-i * timeInfectedSymptoms_i))) *
-                            scale_confirmed_cases * entry.num_confirmed;
-                    }
-                    if (offset == std::ceil(-timeInfectedSymptoms_i * i)) {
-                        init[idxInfectedSymptoms_first + i] +=
-                            (-i * timeInfectedSymptoms_i - std::floor(-i * timeInfectedSymptoms_i)) *
-                            scale_confirmed_cases * entry.num_confirmed;
-                    }
-                }
-            }
-
-            // Compute initial values for compartment InfectedSevere.
-            if (offset >= std::floor(-timeInfectedSymptoms - timeInfectedSevere) &&
-                offset <= std::ceil(-timeInfectedSymptoms)) {
-                // Mean stay time in each subcompartment.
-                ScalarType timeInfectedSevere_i =
-                    timeInfectedSevere /
-                    (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedSevere>();
-                // Transmission probability.
-                ScalarType prob_SeverePerInfectedSymptoms =
-                    model.parameters.template get<SeverePerInfectedSymptoms>()[0];
-                // Index of the first subcompartment of InfectedSevere.
-                size_t idxInfectedSevere_first = LctState::template get_first_index<InfectionState::InfectedSevere>();
-                for (int i = 0; i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedSevere>();
-                     i++) {
-                    if (offset == std::floor(-timeInfectedSymptoms - timeInfectedSevere_i * (i + 1))) {
-                        init[idxInfectedSevere_first + i] -=
-                            prob_SeverePerInfectedSymptoms *
-                            (1 - (-timeInfectedSymptoms - (i + 1) * timeInfectedSevere_i -
-                                  std::floor(-timeInfectedSymptoms - (i + 1) * timeInfectedSevere_i))) *
-                            scale_confirmed_cases * entry.num_confirmed;
-                    }
-                    if (offset == std::ceil(-timeInfectedSymptoms - timeInfectedSevere_i * (i + 1))) {
-                        init[idxInfectedSevere_first + i] -=
-                            prob_SeverePerInfectedSymptoms *
-                            (-timeInfectedSymptoms - (i + 1) * timeInfectedSevere_i -
-                             std::floor(-timeInfectedSymptoms - (i + 1) * timeInfectedSevere_i)) *
-                            scale_confirmed_cases * entry.num_confirmed;
-                    }
-                    if (offset == std::floor(-timeInfectedSymptoms - timeInfectedSevere_i * i)) {
-                        init[idxInfectedSevere_first + i] +=
-                            prob_SeverePerInfectedSymptoms *
-                            (1 - (-timeInfectedSymptoms - i * timeInfectedSevere_i -
-                                  std::floor(-timeInfectedSymptoms - i * timeInfectedSevere_i))) *
-                            scale_confirmed_cases * entry.num_confirmed;
-                    }
-                    if (offset == std::ceil(-timeInfectedSymptoms - timeInfectedSevere_i * i)) {
-                        init[idxInfectedSevere_first + i] +=
-                            prob_SeverePerInfectedSymptoms *
-                            (-timeInfectedSymptoms - i * timeInfectedSevere_i -
-                             std::floor(-timeInfectedSymptoms - i * timeInfectedSevere_i)) *
-                            scale_confirmed_cases * entry.num_confirmed;
-                    }
-                }
-            }
-
-            // Compute initial values for compartment InfectedCritical.
-            if (offset >= min_offset_needed && offset <= std::ceil(-timeInfectedSymptoms - timeInfectedSevere)) {
-                // Mean stay time in each subcompartment.
-                ScalarType timeInfectedCritical_i =
-                    timeInfectedCritical /
-                    (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedCritical>();
-                // Transmission probabilities.
-                ScalarType prob_SeverePerInfectedSymptoms =
-                    model.parameters.template get<SeverePerInfectedSymptoms>()[0];
-                ScalarType prob_CriticalPerSevere = model.parameters.template get<CriticalPerSevere>()[0];
-                // Index of the first subcompartment of InfectedCritical.
-                size_t idxInfectedCritical_first =
-                    LctState::template get_first_index<InfectionState::InfectedCritical>();
-                for (int i = 0; i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedCritical>();
-                     i++) {
-                    if (offset ==
-                        std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical_i * (i + 1))) {
-                        init[idxInfectedCritical_first + i] -=
-                            prob_SeverePerInfectedSymptoms * prob_CriticalPerSevere *
-                            (1 - (-timeInfectedSymptoms - timeInfectedSevere - (i + 1) * timeInfectedCritical_i -
-                                  std::floor(-timeInfectedSymptoms - timeInfectedSevere -
-                                             (i + 1) * timeInfectedCritical_i))) *
-                            scale_confirmed_cases * entry.num_confirmed;
-                    }
-                    if (offset ==
-                        std::ceil(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical_i * (i + 1))) {
-                        init[idxInfectedCritical_first + i] -=
-                            prob_SeverePerInfectedSymptoms * prob_CriticalPerSevere *
-                            (-timeInfectedSymptoms - timeInfectedSevere - (i + 1) * timeInfectedCritical_i -
-                             std::floor(-timeInfectedSymptoms - timeInfectedSevere -
-                                        (i + 1) * timeInfectedCritical_i)) *
-                            scale_confirmed_cases * entry.num_confirmed;
-                    }
-                    if (offset == std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical_i * i)) {
-                        init[idxInfectedCritical_first + i] +=
-                            prob_SeverePerInfectedSymptoms * prob_CriticalPerSevere *
-                            (1 -
-                             (-timeInfectedSymptoms - timeInfectedSevere - i * timeInfectedCritical_i -
-                              std::floor(-timeInfectedSymptoms - timeInfectedSevere - i * timeInfectedCritical_i))) *
-                            scale_confirmed_cases * entry.num_confirmed;
-                    }
-                    if (offset == std::ceil(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical_i * i)) {
-                        init[idxInfectedCritical_first + i] +=
-                            prob_SeverePerInfectedSymptoms * prob_CriticalPerSevere *
-                            (-timeInfectedSymptoms - timeInfectedSevere - i * timeInfectedCritical_i -
-                             std::floor(-timeInfectedSymptoms - timeInfectedSevere - i * timeInfectedCritical_i)) *
-                            scale_confirmed_cases * entry.num_confirmed;
-                    }
-                }
-            }
-
-            // Compute Dead.
-            if (offset == min_offset_needed) {
-                min_offset_needed_avail = true;
-                init[LctState::template get_first_index<InfectionState::Dead>()] +=
-                    (1 - (-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical -
-                          std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical))) *
-                    entry.num_deaths;
-            }
-            if (offset == std::ceil(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical)) {
-                init[LctState::template get_first_index<InfectionState::Dead>()] +=
-                    (-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical -
-                     std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical)) *
-                    entry.num_deaths;
-            }
             if (offset == max_offset_needed) {
                 max_offset_needed_avail = true;
             }
+            if (offset == min_offset_needed) {
+                min_offset_needed_avail = true;
+            }
+            process_entry<LctState, ConfirmedCasesNoAgeEntry>(
+                init, entry, offset, staytimes, inv_prob_SymptomsPerNoSymptoms, prob_SeverePerInfectedSymptoms,
+                prob_CriticalPerSevere, scale_confirmed_cases);
         }
     }
 
@@ -414,16 +487,25 @@ IOResult<void> set_initial_data_from_confirmed_cases_ageres(Model& model,
 
     // Compute initial values for all subcompartments of the group.
     Eigen::VectorXd init = Eigen::VectorXd::Zero(LctState::Count);
-    // Define variables for parameters that are often needed.
-    ScalarType timeExposed            = model.parameters.template get<TimeExposed>()[Group];
-    ScalarType timeInfectedNoSymptoms = model.parameters.template get<TimeInfectedNoSymptoms>()[Group];
-    ScalarType timeInfectedSymptoms   = model.parameters.template get<TimeInfectedSymptoms>()[Group];
-    ScalarType timeInfectedSevere     = model.parameters.template get<TimeInfectedSevere>()[Group];
-    ScalarType timeInfectedCritical   = model.parameters.template get<TimeInfectedCritical>()[Group];
-    ScalarType scale_asymptomatic = 1 / (1 - model.parameters.template get<RecoveredPerInfectedNoSymptoms>()[Group]);
 
-    ScalarType min_offset_needed = std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical);
-    ScalarType max_offset_needed = std::ceil(timeExposed + timeInfectedNoSymptoms);
+    // Define variables for parameters.
+    std::vector<ScalarType> staytimes((size_t)InfectionState::Count, -1.);
+    staytimes[(size_t)InfectionState::Exposed] = model.parameters.template get<TimeExposed>()[Group];
+    staytimes[(size_t)InfectionState::InfectedNoSymptoms] =
+        model.parameters.template get<TimeInfectedNoSymptoms>()[Group];
+    staytimes[(size_t)InfectionState::InfectedSymptoms] = model.parameters.template get<TimeInfectedSymptoms>()[Group];
+    staytimes[(size_t)InfectionState::InfectedSevere]   = model.parameters.template get<TimeInfectedSevere>()[Group];
+    staytimes[(size_t)InfectionState::InfectedCritical] = model.parameters.template get<TimeInfectedCritical>()[Group];
+    ScalarType inv_prob_SymptomsPerNoSymptoms =
+        1 / (1 - model.parameters.template get<RecoveredPerInfectedNoSymptoms>()[Group]);
+    ScalarType prob_SeverePerInfectedSymptoms = model.parameters.template get<SeverePerInfectedSymptoms>()[Group];
+    ScalarType prob_CriticalPerSevere         = model.parameters.template get<CriticalPerSevere>()[Group];
+
+    ScalarType min_offset_needed = std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
+                                              staytimes[(size_t)InfectionState::InfectedSevere] -
+                                              staytimes[(size_t)InfectionState::InfectedCritical]);
+    ScalarType max_offset_needed =
+        std::ceil(staytimes[(size_t)InfectionState::Exposed] + staytimes[(size_t)InfectionState::InfectedNoSymptoms]);
 
     bool min_offset_needed_avail = false;
     bool max_offset_needed_avail = false;
@@ -434,237 +516,15 @@ IOResult<void> set_initial_data_from_confirmed_cases_ageres(Model& model,
         if ((size_t)entry.age_group == Group) {
             int offset = get_offset_in_days(entry.date, date);
             if ((offset >= min_offset_needed) && (offset <= max_offset_needed)) {
-                // Add confirmed cases at date to compartment Recovered.
-                if (offset == 0) {
-                    init[LctState::template get_first_index<InfectionState::Recovered>()] +=
-                        scale_confirmed_cases[Group] * entry.num_confirmed;
-                }
-
-                // Compute initial values for compartment InfectedNoSymptoms.
-                if (offset >= 0 && offset <= std::ceil(timeInfectedNoSymptoms)) {
-                    // Mean stay time in each subcompartment.
-                    ScalarType timeInfectedNoSymptoms_i =
-                        timeInfectedNoSymptoms /
-                        (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>();
-                    // Index of the last subcompartment of InfectedNoSymptoms.
-                    size_t idxInfectedNoSymptoms_last =
-                        LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() +
-                        LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>() - 1;
-                    for (int i = 0;
-                         i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>();
-                         i++) {
-                        if (offset == std::floor(i * timeInfectedNoSymptoms_i)) {
-                            init[idxInfectedNoSymptoms_last - i] -=
-                                (1 - (i * timeInfectedNoSymptoms_i - std::floor(i * timeInfectedNoSymptoms_i))) *
-                                scale_asymptomatic * scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                        if (offset == std::ceil(i * timeInfectedNoSymptoms_i)) {
-                            init[idxInfectedNoSymptoms_last - i] -=
-                                (i * timeInfectedNoSymptoms_i - std::floor(i * timeInfectedNoSymptoms_i)) *
-                                scale_asymptomatic * scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                        if (offset == std::floor((i + 1) * timeInfectedNoSymptoms_i)) {
-                            init[idxInfectedNoSymptoms_last - i] +=
-                                (1 - ((i + 1) * timeInfectedNoSymptoms_i -
-                                      std::floor((i + 1) * timeInfectedNoSymptoms_i))) *
-                                scale_asymptomatic * scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                        if (offset == std::ceil((i + 1) * timeInfectedNoSymptoms_i)) {
-                            init[idxInfectedNoSymptoms_last - i] +=
-                                ((i + 1) * timeInfectedNoSymptoms_i - std::floor((i + 1) * timeInfectedNoSymptoms_i)) *
-                                scale_asymptomatic * scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                    }
-                }
-
-                // Compute initial values for compartment Exposed.
-                if (offset >= std::floor(timeInfectedNoSymptoms) && offset <= max_offset_needed) {
-                    // Mean stay time in each subcompartment.
-                    ScalarType timeExposed_i =
-                        timeExposed / (ScalarType)LctState::template get_num_subcompartments<InfectionState::Exposed>();
-                    // Index of the last subcompartment of Exposed.
-                    size_t idxExposed_last = LctState::template get_first_index<InfectionState::Exposed>() +
-                                             LctState::template get_num_subcompartments<InfectionState::Exposed>() - 1;
-                    for (int i = 0; i < (int)LctState::template get_num_subcompartments<InfectionState::Exposed>();
-                         i++) {
-                        if (offset == std::floor(timeInfectedNoSymptoms + i * timeExposed_i)) {
-                            init[idxExposed_last - i] -=
-                                (1 - (timeInfectedNoSymptoms + i * timeExposed_i -
-                                      std::floor(timeInfectedNoSymptoms + i * timeExposed_i))) *
-                                scale_asymptomatic * scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                        if (offset == std::ceil(timeInfectedNoSymptoms + i * timeExposed_i)) {
-                            init[idxExposed_last - i] -= (timeInfectedNoSymptoms + i * timeExposed_i -
-                                                          std::floor(timeInfectedNoSymptoms + i * timeExposed_i)) *
-                                                         scale_asymptomatic * scale_confirmed_cases[Group] *
-                                                         entry.num_confirmed;
-                        }
-                        if (offset == std::floor(timeInfectedNoSymptoms + (i + 1) * timeExposed_i)) {
-                            init[idxExposed_last - i] +=
-                                (1 - (timeInfectedNoSymptoms + (i + 1) * timeExposed_i -
-                                      std::floor(timeInfectedNoSymptoms + (i + 1) * timeExposed_i))) *
-                                scale_asymptomatic * scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                        if (offset == std::ceil(timeInfectedNoSymptoms + (i + 1) * timeExposed_i)) {
-                            init[idxExposed_last - i] +=
-                                (timeInfectedNoSymptoms + (i + 1) * timeExposed_i -
-                                 std::floor(timeInfectedNoSymptoms + (i + 1) * timeExposed_i)) *
-                                scale_asymptomatic * scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                    }
-                }
-
-                // Compute initial values for compartment InfectedSymptoms.
-                if (offset >= std::floor(-timeInfectedSymptoms) && offset <= 0) {
-                    // Mean stay time in each subcompartment.
-                    ScalarType timeInfectedSymptoms_i =
-                        timeInfectedSymptoms /
-                        (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>();
-                    // Index of the first subcompartment of InfectedSymptoms.
-                    size_t idxInfectedSymptoms_first =
-                        LctState::template get_first_index<InfectionState::InfectedSymptoms>();
-                    for (int i = 0;
-                         i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>(); i++) {
-                        if (offset == std::floor(-timeInfectedSymptoms_i * (i + 1))) {
-                            init[idxInfectedSymptoms_first + i] -=
-                                (1 -
-                                 (-(i + 1.) * timeInfectedSymptoms_i - std::floor(-(i + 1) * timeInfectedSymptoms_i))) *
-                                scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                        if (offset == std::ceil(-timeInfectedSymptoms_i * (i + 1))) {
-                            init[idxInfectedSymptoms_first + i] -=
-                                (-(i + 1) * timeInfectedSymptoms_i - std::floor(-(i + 1) * timeInfectedSymptoms_i)) *
-                                scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                        if (offset == std::floor(-timeInfectedSymptoms_i * i)) {
-                            init[idxInfectedSymptoms_first + i] +=
-                                (1 - (-i * timeInfectedSymptoms_i - std::floor(-i * timeInfectedSymptoms_i))) *
-                                scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                        if (offset == std::ceil(-timeInfectedSymptoms_i * i)) {
-                            init[idxInfectedSymptoms_first + i] +=
-                                (-i * timeInfectedSymptoms_i - std::floor(-i * timeInfectedSymptoms_i)) *
-                                scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                    }
-                }
-
-                // Compute initial values for compartment InfectedSevere.
-                if (offset >= std::floor(-timeInfectedSymptoms - timeInfectedSevere) &&
-                    offset <= std::ceil(-timeInfectedSymptoms)) {
-                    // Mean stay time in each subcompartment.
-                    ScalarType timeInfectedSevere_i =
-                        timeInfectedSevere /
-                        (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedSevere>();
-                    // Transmission probability.
-                    ScalarType prob_SeverePerInfectedSymptoms =
-                        model.parameters.template get<SeverePerInfectedSymptoms>()[Group];
-                    // Index of the first subcompartment of InfectedSevere.
-                    size_t idxInfectedSevere_first =
-                        LctState::template get_first_index<InfectionState::InfectedSevere>();
-                    for (int i = 0;
-                         i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedSevere>(); i++) {
-                        if (offset == std::floor(-timeInfectedSymptoms - timeInfectedSevere_i * (i + 1))) {
-                            init[idxInfectedSevere_first + i] -=
-                                prob_SeverePerInfectedSymptoms *
-                                (1 - (-timeInfectedSymptoms - (i + 1) * timeInfectedSevere_i -
-                                      std::floor(-timeInfectedSymptoms - (i + 1) * timeInfectedSevere_i))) *
-                                scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                        if (offset == std::ceil(-timeInfectedSymptoms - timeInfectedSevere_i * (i + 1))) {
-                            init[idxInfectedSevere_first + i] -=
-                                prob_SeverePerInfectedSymptoms *
-                                (-timeInfectedSymptoms - (i + 1) * timeInfectedSevere_i -
-                                 std::floor(-timeInfectedSymptoms - (i + 1) * timeInfectedSevere_i)) *
-                                scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                        if (offset == std::floor(-timeInfectedSymptoms - timeInfectedSevere_i * i)) {
-                            init[idxInfectedSevere_first + i] +=
-                                prob_SeverePerInfectedSymptoms *
-                                (1 - (-timeInfectedSymptoms - i * timeInfectedSevere_i -
-                                      std::floor(-timeInfectedSymptoms - i * timeInfectedSevere_i))) *
-                                scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                        if (offset == std::ceil(-timeInfectedSymptoms - timeInfectedSevere_i * i)) {
-                            init[idxInfectedSevere_first + i] +=
-                                prob_SeverePerInfectedSymptoms *
-                                (-timeInfectedSymptoms - i * timeInfectedSevere_i -
-                                 std::floor(-timeInfectedSymptoms - i * timeInfectedSevere_i)) *
-                                scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                    }
-                }
-
-                // Compute initial values for compartment InfectedCritical.
-                if (offset >= min_offset_needed && offset <= std::ceil(-timeInfectedSymptoms - timeInfectedSevere)) {
-                    // Mean stay time in each subcompartment.
-                    ScalarType timeInfectedCritical_i =
-                        timeInfectedCritical /
-                        (ScalarType)LctState::template get_num_subcompartments<InfectionState::InfectedCritical>();
-                    // Transmission probabilities.
-                    ScalarType prob_SeverePerInfectedSymptoms =
-                        model.parameters.template get<SeverePerInfectedSymptoms>()[Group];
-                    ScalarType prob_CriticalPerSevere = model.parameters.template get<CriticalPerSevere>()[Group];
-                    // Index of the first subcompartment of InfectedCritical.
-                    size_t idxInfectedCritical_first =
-                        LctState::template get_first_index<InfectionState::InfectedCritical>();
-                    for (int i = 0;
-                         i < (int)LctState::template get_num_subcompartments<InfectionState::InfectedCritical>(); i++) {
-                        if (offset ==
-                            std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical_i * (i + 1))) {
-                            init[idxInfectedCritical_first + i] -=
-                                prob_SeverePerInfectedSymptoms * prob_CriticalPerSevere *
-                                (1 - (-timeInfectedSymptoms - timeInfectedSevere - (i + 1) * timeInfectedCritical_i -
-                                      std::floor(-timeInfectedSymptoms - timeInfectedSevere -
-                                                 (i + 1) * timeInfectedCritical_i))) *
-                                scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                        if (offset ==
-                            std::ceil(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical_i * (i + 1))) {
-                            init[idxInfectedCritical_first + i] -=
-                                prob_SeverePerInfectedSymptoms * prob_CriticalPerSevere *
-                                (-timeInfectedSymptoms - timeInfectedSevere - (i + 1) * timeInfectedCritical_i -
-                                 std::floor(-timeInfectedSymptoms - timeInfectedSevere -
-                                            (i + 1) * timeInfectedCritical_i)) *
-                                scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                        if (offset ==
-                            std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical_i * i)) {
-                            init[idxInfectedCritical_first + i] +=
-                                prob_SeverePerInfectedSymptoms * prob_CriticalPerSevere *
-                                (1 - (-timeInfectedSymptoms - timeInfectedSevere - i * timeInfectedCritical_i -
-                                      std::floor(-timeInfectedSymptoms - timeInfectedSevere -
-                                                 i * timeInfectedCritical_i))) *
-                                scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                        if (offset ==
-                            std::ceil(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical_i * i)) {
-                            init[idxInfectedCritical_first + i] +=
-                                prob_SeverePerInfectedSymptoms * prob_CriticalPerSevere *
-                                (-timeInfectedSymptoms - timeInfectedSevere - i * timeInfectedCritical_i -
-                                 std::floor(-timeInfectedSymptoms - timeInfectedSevere - i * timeInfectedCritical_i)) *
-                                scale_confirmed_cases[Group] * entry.num_confirmed;
-                        }
-                    }
-                }
-
-                // Compute Dead.
-                if (offset == min_offset_needed) {
-                    min_offset_needed_avail = true;
-                    init[LctState::template get_first_index<InfectionState::Dead>()] +=
-                        (1 - (-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical -
-                              std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical))) *
-                        entry.num_deaths;
-                }
-                if (offset == std::ceil(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical)) {
-                    init[LctState::template get_first_index<InfectionState::Dead>()] +=
-                        (-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical -
-                         std::floor(-timeInfectedSymptoms - timeInfectedSevere - timeInfectedCritical)) *
-                        entry.num_deaths;
-                }
                 if (offset == max_offset_needed) {
                     max_offset_needed_avail = true;
                 }
+                if (offset == min_offset_needed) {
+                    min_offset_needed_avail = true;
+                }
+                process_entry<LctState, ConfirmedCasesDataEntry>(
+                    init, entry, offset, staytimes, inv_prob_SymptomsPerNoSymptoms, prob_SeverePerInfectedSymptoms,
+                    prob_CriticalPerSevere, scale_confirmed_cases[Group]);
             }
         }
     }
@@ -710,6 +570,7 @@ IOResult<void> set_initial_data_from_confirmed_cases_ageres(Model& model,
         }
     }
 }
+} // namespace details
 
 /**
 * @brief Computes an initialization vector for an LCT model with case data from RKI.
@@ -748,12 +609,12 @@ IOResult<void> set_initial_data_from_confirmed_cases(Model& model, const std::st
     if constexpr (Model::m_groups > 1) {
         assert(ConfirmedCasesDataEntry::age_group_names.size() == Model::m_groups);
         BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(path));
-        return set_initial_data_from_confirmed_cases_ageres<Model>(model, rki_data, date, total_population,
-                                                                   scale_confirmed_cases);
+        return details::set_initial_data_from_confirmed_cases_ageres<Model>(model, rki_data, date, total_population,
+                                                                            scale_confirmed_cases);
     }
     else {
-        return set_initial_data_from_confirmed_cases_notageres<Model>(model, path, date, total_population[0],
-                                                                      scale_confirmed_cases[0]);
+        return details::set_initial_data_from_confirmed_cases_notageres<Model>(model, path, date, total_population[0],
+                                                                               scale_confirmed_cases[0]);
     }
 }
 

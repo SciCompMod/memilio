@@ -35,10 +35,6 @@ namespace mio
 {
 namespace lsecir
 {
-/* TODO:
-* - adapt  parameters_io+ tests. 
-*/
-
 /**
  * @brief Class that defines an LCT-SECIR model.
  *
