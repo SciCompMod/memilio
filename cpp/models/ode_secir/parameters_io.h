@@ -153,9 +153,9 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
  * @tparam FP Floating point data type, e.g., double.
  * @param[in, out] Vector of models for which the confirmed cases data will be set.
  * @param[in] path Path to the confirmed cases data file.
- * @param[in] region Vector of keys of the region of interest
- * @param[in] date Date at which the data is read
- * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data
+ * @param[in] region Vector of keys of the region of interest.
+ * @param[in] date Date at which the data is read.
+ * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.
  */
 template <typename FP = double>
 IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std::string& path,
@@ -169,11 +169,9 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
 
 /**
      * @brief Reads number of ICU patients from DIVI register into Parameters.
-     * @param[out] path Path to DIVI file.
-     * @param vregion Keys of the region of interest.
-     * @param year Specifies year at which the data is read.
-     * @param month Specifies month at which the data is read.
-     * @param day Specifies day at which the data is read.
+     * @param[in] path Path to DIVI file.
+     * @param[in] vregion Keys of the region of interest.
+     * @param date Date for which we initialize.
      * @param vnum_icu Number of ICU patients.
      */
 IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
@@ -186,7 +184,7 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
      * @param[in] path Path to DIVI file.
      * @param[in] vregion Vector of keys of the regions of interest.
      * @param[in] date Date for which the arrays are initialized.
-     * @param[in]scaling_factor_icu factor by which to scale the icu cases of divi data.
+     * @param[in] scaling_factor_icu factor by which to scale the icu cases of divi data.
      */
 template <typename FP = double>
 IOResult<void> set_divi_data(std::vector<Model<FP>>& model, const std::string& path, const std::vector<int>& vregion,
