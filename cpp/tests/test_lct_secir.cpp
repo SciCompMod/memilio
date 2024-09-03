@@ -723,3 +723,44 @@ TEST(TestLCTSecir, testConstraintsParameters)
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
 }
+
+// Check constraints of the Model setup.
+TEST(TestLCTSecir, testConstraintsModel)
+{
+    // Deactivate temporarily log output for next tests.
+    mio::set_log_level(mio::LogLevel::off);
+
+    using InfState  = mio::lsecir::InfectionState;
+    using LctState1 = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+
+    // Check for improper number of subcompartments for Susceptible.
+    using LctStatewrongSusceptibles = mio::LctInfectionState<InfState, 3, 1, 1, 1, 1, 1, 1, 1>;
+    using ModelwrongSusceptibles    = mio::lsecir::Model<LctState1, LctStatewrongSusceptibles>;
+    ModelwrongSusceptibles modelwrongSusceptibles;
+    bool constraint_check = modelwrongSusceptibles.check_constraints();
+    EXPECT_TRUE(constraint_check);
+
+    // Check for improper number of subcompartments for Recovered.
+    using LctStatewrongRecovered = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 10, 1>;
+    using ModelwrongRecovered    = mio::lsecir::Model<LctState1, LctStatewrongRecovered>;
+    ModelwrongRecovered modelwrongRecovered;
+    constraint_check = modelwrongRecovered.check_constraints();
+    EXPECT_TRUE(constraint_check);
+
+    // Check for improper number of subcompartments for Dead.
+    using LctStatewrongDead = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 2>;
+    using ModelwrongDead    = mio::lsecir::Model<LctState1, LctStatewrongDead>;
+    ModelwrongDead modelwrongDead;
+    constraint_check = modelwrongDead.check_constraints();
+    EXPECT_TRUE(constraint_check);
+
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
+
+    // Check for valid Setup.
+    using LctStatevalid = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
+    using Model         = mio::lsecir::Model<LctState1, LctStatevalid>;
+    Model model;
+    constraint_check = model.check_constraints();
+    EXPECT_FALSE(constraint_check);
+}
