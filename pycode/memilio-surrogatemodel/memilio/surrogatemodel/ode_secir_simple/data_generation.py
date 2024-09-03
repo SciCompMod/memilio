@@ -31,9 +31,9 @@ from sklearn.preprocessing import FunctionTransformer
 
 from memilio.simulation import (AgeGroup, ContactMatrix, Damping, LogLevel,
                                 UncertainContactMatrix, set_log_level)
-from memilio.simulation.secir import (Index_InfectionState,
-                                      InfectionState, Model, Simulation,
-                                      interpolate_simulation_result, simulate)
+from memilio.simulation.osecir import (Index_InfectionState,
+                                       InfectionState, Model, Simulation,
+                                       interpolate_simulation_result, simulate)
 
 
 def remove_confirmed_compartments(result_array):
