@@ -261,7 +261,7 @@ TEST(TestLCTSecir, testEvalRightHandSideGroups)
     using LctState2 = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
     using Model     = mio::lsecir::Model<LctState1, LctState2>;
     Model model;
-    size_t num_groups          = model.m_groups;
+    size_t num_groups          = Model::m_groups;
     size_t num_subcompartments = model.populations.get_num_compartments();
 
     // Define initial population distribution in infection states, one entry per subcompartment.
@@ -362,7 +362,7 @@ TEST(TestLCTSecir, testEvalRightHandSideThreeGroupsEqual)
     using LctState = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
     using Model    = mio::lsecir::Model<LctState, LctState, LctState>;
     Model model;
-    size_t num_groups          = model.m_groups;
+    size_t num_groups          = Model::m_groups;
     size_t num_subcompartments = LctState::Count;
 
     // Define initial population distribution in infection states, one entry per subcompartment.
@@ -520,7 +520,7 @@ TEST(TestLCTSecir, compareWithPreviousRunThreeGroups)
 
     // Initialize a model.
     Model model;
-    size_t num_groups          = model.m_groups;
+    size_t num_groups          = Model::m_groups;
     size_t num_subcompartments = (size_t)LctState::Count;
 
     // Define initial distribution of the population in the subcompartments.

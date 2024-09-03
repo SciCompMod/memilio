@@ -116,7 +116,7 @@ TEST(TestInitializer, compareWithPreviousThreeGroups)
 
     // Initialize a model.
     Model model;
-    size_t num_groups = model.m_groups;
+    size_t num_groups = Model::m_groups;
 
     //Define parameters.
     for (size_t group = 0; group < num_groups; group++) {
