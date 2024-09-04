@@ -288,7 +288,7 @@ std::vector<std::vector<double>> get_initial_deaths(const fs::path& data_dir, mi
  * @param data_dir data directory.
  * @returns created graph or any io errors that happen during reading of the files.
  */
-mio::IOResult<mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>>>
+mio::IOResult<mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>>
 get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir)
 {
     // global parameters
@@ -302,34 +302,34 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir)
 
     // graph of counties with populations and local parameters
     // and mobility between counties
-    mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>> params_graph;
+    mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph;
     const auto& read_function_nodes = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<double>>;
     const auto& read_function_edges = mio::read_mobility_plain;
     const auto& node_id_function    = mio::get_node_ids;
 
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
     auto scaling_factor_icu      = 1.0;
-    auto migrating_compartments  = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                    mio::osecirvvs::InfectionState::ExposedNaive,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
+    auto mobile_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
+                                mio::osecirvvs::InfectionState::ExposedNaive,
+                                mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
     auto tnt_capacity_factor     = 0.;
 
     const auto& set_node_function =
         mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
-                       mio::osecirvvs::Model<double>, mio::MigrationParameters<double>,
+                       mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
                        mio::osecirvvs::Parameters<double>, decltype(read_function_nodes), decltype(node_id_function)>;
     const auto& set_edge_function =
-        mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>, mio::MigrationParameters<double>,
-                       mio::MigrationCoefficientGroup, mio::osecirvvs::InfectionState, decltype(read_function_edges)>;
+        mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
+                       mio::MobilityCoefficientGroup, mio::osecirvvs::InfectionState, decltype(read_function_edges)>;
 
     auto population_data_path =
         mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json");
@@ -337,7 +337,7 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir)
     BOOST_OUTCOME_TRY(set_node_function(params, start_date, end_date, data_dir, population_data_path, true,
                                         params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
                                         scaling_factor_icu, tnt_capacity_factor, num_days, false, true));
-    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
+    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, mobile_compartments, contact_locations.size(),
                                         read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 
     // add initial deaths to the DeadNaive compartment
@@ -358,7 +358,7 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std:
                         const std::string& result_dir, bool save_single_runs, const int num_runs)
 {
     //create or load graph
-    mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>> params_graph;
+    mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph;
     BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, num_days_sim, data_dir));
     params_graph = created;
 
@@ -389,7 +389,7 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std:
             auto params              = std::vector<mio::osecirvvs::Model<double>>();
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                                         [](auto&& node) {
+                           [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 
