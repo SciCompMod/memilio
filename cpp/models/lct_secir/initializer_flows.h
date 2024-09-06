@@ -36,7 +36,8 @@ namespace lsecir
 {
 
 /**
- * @brief Class that can be used to compute an initialization vector out of flows for a LCT Model.
+ * @brief Class that can be used to compute an initialization vector out of flows for an LCT Model 
+ *  with division in groups.
  * 
  *  The initialization method is based on the fact that the LCT model is a special case of an IDE model with special 
  *  choices of stay time distributions (so-called Erlang distributions). Accordingly, the method for calculating 
@@ -51,17 +52,16 @@ template <typename Model>
 class Initializer
 {
 public:
-    using LctState       = typename Model::LctState;
-    using InfectionState = typename LctState::InfectionState;
+    using tupleLctStates = typename Model::tupleLctStates;
 
     /**
      * @brief Constructs a new Initializer object.
      *
      * @param[in] flows Initalizing TimeSeries with flows fitting to these defined in InfectionTransition. 
+     *      For each group of m_model, InfectionTransition::Count entries are required.
      *      Timesteps should be equidistant and the values should be non-negative. 
      *      The time history has to be long enough so that it is possible to calculate the initial vector. 
      *      The length of the required time history depends on the Erlang densities used to compute the initial vector.
-     *      An error is thrown if this condition is violated.
      * @param[in, out] model The LCT-SECIR model for which the initialization should be performed.
      */
     Initializer(TimeSeries<ScalarType>&& flows, Model& model)
@@ -74,121 +74,30 @@ public:
     /**
      * @brief Core function of Initializer.
      *
-     * Computes a vector that can be used for the initalization of an LCT model with the number of persons for each subcompartment.
+     * Computes a vector that can be used for the initalization of an LCT model stratified by groups with the number 
+     * of persons for each subcompartment.
      * The initial value vector is updated in the model.
      *
      * @param[in] total_population The total size of the considered population.
      * @param[in] deaths Number of deceased people from the disease at time 0.
      * @param[in] total_confirmed_cases Total number of confirmed cases at time 0.
-     * @return Returns true if one (or more) constraint(s) of the model or the initial flows are not satisfied, otherwise false. 
+     * @return Returns true if one (or more) constraint(s) of the model, the initial flows 
+     *      or the computed initial value vector are not satisfied, otherwise false. 
      */
-    bool compute_initialization_vector(ScalarType total_population, ScalarType deaths, ScalarType total_confirmed_cases)
+    bool compute_initialization_vector(Eigen::VectorXd const& total_population, Eigen::VectorXd const& deaths,
+                                       Eigen::VectorXd const& total_confirmed_cases)
     {
 
-        Eigen::VectorXd init(LctState::Count);
+        Eigen::VectorXd init(m_model.populations.get_compartments());
 
-        // Exposed.
-        init.segment(LctState::template get_first_index<InfectionState::Exposed>(),
-                     LctState::template get_num_subcompartments<InfectionState::Exposed>()) =
-            compute_compartment<InfectionState::Exposed>((Eigen::Index)InfectionTransition::SusceptibleToExposed,
-                                                         1 / m_model.parameters.template get<TimeExposed>());
-
-        if ((init.segment(LctState::template get_first_index<InfectionState::Exposed>(),
-                          LctState::template get_num_subcompartments<InfectionState::Exposed>())
-                 .array() < 0)
-                .any()) {
-            // Something went wrong while calculating the initial values for the subcompartments.
-            // See the compute_compartment() function for details.
+        bool error = compute_initialization_vector_impl(init, total_population, deaths, total_confirmed_cases);
+        if (error) {
             return true;
-        }
-        // InfectedNoSymptoms.
-        init.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
-                     LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>()) =
-            compute_compartment<InfectionState::InfectedNoSymptoms>(
-                (Eigen::Index)InfectionTransition::ExposedToInfectedNoSymptoms,
-                1 / m_model.parameters.template get<TimeInfectedNoSymptoms>());
-
-        if ((init.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
-                          LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>())
-                 .array() < 0)
-                .any()) {
-            // Something went wrong while calculating the initial values for the subcompartments.
-            // See the compute_compartment() function for details.
-            return true;
-        }
-        // InfectedSymptoms.
-        init.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
-                     LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>()) =
-            compute_compartment<InfectionState::InfectedSymptoms>(
-                (Eigen::Index)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms,
-                1 / m_model.parameters.template get<TimeInfectedSymptoms>());
-
-        if ((init.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
-                          LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>())
-                 .array() < 0)
-                .any()) {
-            // Something went wrong while calculating the initial values for the subcompartments.
-            // See the compute_compartment() function for details.
-            return true;
-        }
-        // InfectedSevere.
-        init.segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
-                     LctState::template get_num_subcompartments<InfectionState::InfectedSevere>()) =
-            compute_compartment<InfectionState::InfectedSevere>(
-                (Eigen::Index)InfectionTransition::InfectedSymptomsToInfectedSevere,
-                1 / m_model.parameters.template get<TimeInfectedSevere>());
-
-        if ((init.segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
-                          LctState::template get_num_subcompartments<InfectionState::InfectedSevere>())
-                 .array() < 0)
-                .any()) {
-            // Something went wrong while calculating the initial values for the subcompartments.
-            // See the compute_compartment() function for details.
-            return true;
-        }
-        // InfectedCritical.
-        init.segment(LctState::template get_first_index<InfectionState::InfectedCritical>(),
-                     LctState::template get_num_subcompartments<InfectionState::InfectedCritical>()) =
-            compute_compartment<InfectionState::InfectedCritical>(
-                (Eigen::Index)InfectionTransition::InfectedSevereToInfectedCritical,
-                1 / m_model.parameters.template get<TimeInfectedCritical>());
-
-        if ((init.segment(LctState::template get_first_index<InfectionState::InfectedCritical>(),
-                          LctState::template get_num_subcompartments<InfectionState::InfectedCritical>())
-                 .array() < 0)
-                .any()) {
-            // Something went wrong while calculating the initial values for the subcompartments.
-            // See the compute_compartment() function for details.
-            return true;
-        }
-        // Recovered.
-        // Number of recovered is equal to the cumulative number of confirmed cases minus the number of people who are infected at the moment.
-        init[LctState::Count - 2] =
-            total_confirmed_cases -
-            init.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
-                         LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>() +
-                             LctState::template get_num_subcompartments<InfectionState::InfectedSevere>() +
-                             LctState::template get_num_subcompartments<InfectionState::InfectedCritical>())
-                .sum() -
-            deaths;
-
-        // Susceptibles.
-        init[0] = total_population - init.segment(1, LctState::Count - 2).sum() - deaths;
-
-        // Dead.
-        init[LctState::Count - 1] = deaths;
-
-        for (size_t i : {(size_t)0, LctState::Count - 2, LctState::Count - 1}) {
-            if (init[i] < 0) {
-                log_error("Initialization failed. Values of total_confirmed_cases, deaths and total_population do not "
-                          "match the specified values for the transitions, leading to at least one negative result.");
-                return true;
-            }
         }
 
         // Update initial value vector of the model.
-        for (size_t i = 0; i < LctState::Count; i++) {
-            m_model.populations[mio::Index<LctState>(i)] = init[i];
+        for (size_t i = 0; i < m_model.populations.get_num_compartments(); i++) {
+            m_model.populations[i] = init[i];
         }
 
         // Check if constraints are fulfilled.
@@ -207,12 +116,125 @@ public:
 
 private:
     /**
+     * @brief Implementation of the calcultion of the initial value vector slice that corresponds to a specified group.
+     *
+     * Computes a vector that can be used for the initalization of an LCT model stratified by groups with the number 
+     * of persons for each subcompartment. The groups are calculated recursively.
+     *
+     * @tparam Group The group for wich the corresponding slice of the initial value vector is calculated.
+     * @param[out] init The initial value vector under consideration.
+     * @param[in] total_population The total size of the considered population.
+     * @param[in] deaths Number of deceased people from the disease at time 0.
+     * @param[in] total_confirmed_cases Total number of confirmed cases at time 0.
+     * @return Returns true if one (or more) constraint(s) of the computed initial value vector are not satisfied,
+     *       otherwise false. 
+     */
+    template <size_t Group = 0, std::enable_if_t<(Group < Model::m_groups) && (Group >= 0), bool> = true>
+    bool compute_initialization_vector_impl(Eigen::VectorXd& init, Eigen::VectorXd const& total_population,
+                                            Eigen::VectorXd const& deaths, Eigen::VectorXd const& total_confirmed_cases)
+    {
+        Eigen::Index first_index       = m_model.populations.template get_first_index_group<Group>();
+        Eigen::Index first_index_flows = Group * (Eigen::Index)InfectionTransition::Count;
+
+        // Exposed.
+        bool error = compute_compartment<InfectionState::Exposed, Group>(
+            init, first_index_flows + (Eigen::Index)InfectionTransition::SusceptibleToExposed,
+            1 / m_model.parameters.template get<TimeExposed>()[Group]);
+        if (error) {
+            return true;
+        }
+
+        // InfectedNoSymptoms.
+        error = compute_compartment<InfectionState::InfectedNoSymptoms, Group>(
+            init, first_index_flows + (Eigen::Index)InfectionTransition::ExposedToInfectedNoSymptoms,
+            1 / m_model.parameters.template get<TimeInfectedNoSymptoms>()[Group]);
+        if (error) {
+            return true;
+        }
+
+        // InfectedSymptoms.
+        error = compute_compartment<InfectionState::InfectedSymptoms, Group>(
+            init, first_index_flows + (Eigen::Index)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms,
+            1 / m_model.parameters.template get<TimeInfectedSymptoms>()[Group]);
+
+        if (error) {
+            return true;
+        }
+        // InfectedSevere.
+        error = compute_compartment<InfectionState::InfectedSevere, Group>(
+            init, first_index_flows + (Eigen::Index)InfectionTransition::InfectedSymptomsToInfectedSevere,
+            1 / m_model.parameters.template get<TimeInfectedSevere>()[Group]);
+
+        if (error) {
+            return true;
+        }
+        // InfectedCritical.
+        error = compute_compartment<InfectionState::InfectedCritical, Group>(
+            init, first_index_flows + (Eigen::Index)InfectionTransition::InfectedSevereToInfectedCritical,
+            1 / m_model.parameters.template get<TimeInfectedCritical>()[Group]);
+
+        if (error) {
+            return true;
+        }
+        // Recovered.
+        // Number of recovered is equal to the cumulative number of confirmed cases minus the number of people
+        // in the group who are infected at the moment.
+        init[first_index +
+             std::tuple_element_t<Group, tupleLctStates>::template get_first_index<InfectionState::Recovered>()] =
+            total_confirmed_cases[Group] -
+            init.segment(first_index + std::tuple_element_t<Group, tupleLctStates>::template get_first_index<
+                                           InfectionState::InfectedSymptoms>(),
+                         std::tuple_element_t<Group, tupleLctStates>::template get_num_subcompartments<
+                             InfectionState::InfectedSymptoms>() +
+                             std::tuple_element_t<Group, tupleLctStates>::template get_num_subcompartments<
+                                 InfectionState::InfectedSevere>() +
+                             std::tuple_element_t<Group, tupleLctStates>::template get_num_subcompartments<
+                                 InfectionState::InfectedCritical>())
+                .sum() -
+            deaths[Group];
+
+        // Susceptibles.
+        init[first_index +
+             std::tuple_element_t<Group, tupleLctStates>::template get_first_index<InfectionState::Susceptible>()] =
+            total_population[Group] -
+            init.segment(first_index +
+                             std::tuple_element_t<Group,
+                                                  tupleLctStates>::template get_first_index<InfectionState::Exposed>(),
+                         std::tuple_element_t<Group, tupleLctStates>::Count - 2)
+                .sum() -
+            deaths[Group];
+
+        // Dead.
+        init[first_index +
+             std::tuple_element_t<Group, tupleLctStates>::template get_first_index<InfectionState::Dead>()] =
+            deaths[Group];
+
+        for (size_t state_idx :
+             {std::tuple_element_t<Group, tupleLctStates>::template get_first_index<InfectionState::Susceptible>(),
+              std::tuple_element_t<Group, tupleLctStates>::template get_first_index<InfectionState::Recovered>(),
+              std::tuple_element_t<Group, tupleLctStates>::template get_first_index<InfectionState::Dead>()}) {
+            if (floating_point_less(init[first_index + state_idx], 0.0, 1e-8)) {
+                log_error("Initialization failed. Values of total_confirmed_cases, deaths and total_population do not "
+                          "match the specified values for the transitions, leading to at least one negative result.");
+                return true;
+            }
+        }
+        // Function call for next group if applicable.
+        if constexpr (Group + 1 < Model::m_groups) {
+            return compute_initialization_vector_impl<Group + 1>(init, total_population, deaths, total_confirmed_cases);
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
      * @brief Checks constraints of the Initializer including checks for the model.
      * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
      */
     bool check_constraints() const
     {
-        if (!((Eigen::Index)InfectionTransition::Count == m_flows.get_num_elements())) {
+        if (!((Eigen::Index)InfectionTransition::Count * Model::m_groups == m_flows.get_num_elements())) {
             log_error("Initial condition size does not match subcompartments.");
             return true;
         }
@@ -239,21 +261,28 @@ private:
     }
 
     /**
-     * @brief Computes a vector with the number of people in each subcompartment for one InfectionState.
+     * @brief Computes a slice of the initial value vector for each subcompartment of one InfectionState 
+     *  for a specified group.
      *
-     * This function is used in compute_initialization_vector.
-     *
-     * @param[in] idx_incoming_flow Index of the flow which is relevant for the calculation, so the flow to the InfectionState.
-     * @param[in] transition_rate Specifies the transition rate of the InfectionState. Is equal to 1 / (expected Time in the InfectionState).
-     * @tparam State The InfectionState for which the partial result should be calculated.
-     * @return Vector with a possible initialization for the subcompartments of the InfectionState State. 
-     *      Subcompartment is set to -1 if calculation was not possible.
+     * @tparam Group The group for wich the corresponding slice of the initial value vector is calculated.
+     * @tparam State The InfectionState for wich the corresponding slice of the initial value vector is calculated
+     * @param[out] init The initial value vector under consideration.
+     * @param[in] idx_incoming_flow Index of the flow which is relevant for the calculation, so the flow 
+     *      to the InfectionState.
+     * @param[in] transition_rate Specifies the transition rate of the InfectionState. 
+     *      'This is equal to 1 / (expected Time in the InfectionState).
+     
+     * @return Returns true if one (or more) constraint(s) of the computed slice of the initial value vector
+     *      are not satisfied, otherwise false. 
      */
-    template <InfectionState State>
-    Eigen::VectorXd compute_compartment(Eigen::Index idx_incoming_flow, ScalarType transition_rate) const
+    template <InfectionState State, size_t Group>
+    bool compute_compartment(Eigen::VectorXd& init, Eigen::Index idx_incoming_flow, ScalarType transition_rate) const
     {
-        size_t num_subcompartments = LctState::template get_num_subcompartments<State>();
-        Eigen::VectorXd subcompartments(num_subcompartments);
+        size_t first_index = m_model.populations.template get_first_index_group<Group>() +
+                             std::tuple_element_t<Group, tupleLctStates>::template get_first_index<State>();
+        size_t num_subcompartments =
+            std::tuple_element_t<Group, tupleLctStates>::template get_num_subcompartments<State>();
+
         // Initialize relevant density for the InfectionState.
         // For the first subcompartment a shape parameter of one is needed.
         ErlangDensity erlang(1, 1. / (num_subcompartments * transition_rate));
@@ -278,8 +307,7 @@ private:
                 log_error("Initialization failed. Not enough time points for the transitions are given. More than {} "
                           "are needed but just {} are given.",
                           calc_time_index, num_time_points);
-                subcompartments[j] = -1.;
-                return subcompartments;
+                return true;
             }
             else {
                 // Approximate integral with non-standard scheme.
@@ -287,18 +315,17 @@ private:
                     state_age = (num_time_points - i) * m_dt;
                     sum += erlang.eval(state_age) * m_flows[i][idx_incoming_flow];
                 }
-                subcompartments[j] = 1. / (num_subcompartments * transition_rate) * sum;
-                if (subcompartments[j] < 0) {
+                init[first_index + j] = 1. / (num_subcompartments * transition_rate) * sum;
+                if (init[first_index + j] < 0) {
                     log_error(
                         "Initialization failed. Result for at least one subcompartment is less than zero. Please check "
                         "the input values.");
-                    subcompartments[j] = -1.;
-                    return subcompartments;
+                    return true;
                 }
             }
             sum = 0;
         }
-        return subcompartments;
+        return false;
     }
 
     TimeSeries<ScalarType> m_flows; ///< TimeSeries with the flows which are used to calculate the initial vector.
