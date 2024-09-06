@@ -53,7 +53,7 @@ Infection::Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, Age
     m_viral_load.incline  = std::abs(m_viral_load.peak / (t_peak - m_infection_course[0].first).days());
     m_viral_load.end_date = m_viral_load.start_date + m_time_is_infected;
     if (m_infection_course.size() < 4) {
-        t_peak            = m_viral_load.start_date + TimeSpan(int(0.65 * m_time_is_infected.seconds()));
+        t_peak            = m_viral_load.start_date + TimeSpan(int(0.5 * m_time_is_infected.seconds()));
         m_viral_load.peak = m_viral_load.incline * (t_peak - m_viral_load.start_date).days();
     }
     m_viral_load.decline = -m_viral_load.peak / (m_viral_load.end_date - t_peak).days();
@@ -91,7 +91,7 @@ ScalarType Infection::get_viral_load(TimePoint t) const
 
 ScalarType Infection::get_infectivity(TimePoint t) const
 {
-    auto time_shift = (m_infection_course[1].first - m_infection_course[0].first) - minutes(1872);
+    auto time_shift = TimeSpan(int(0.6 * (m_infection_course[1].first - m_infection_course[0].first).seconds()));
     if (m_viral_load.start_date + time_shift >= t)
         return 0;
     ScalarType infectivity = 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t - time_shift))));
