@@ -6,6 +6,7 @@ import json
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
 from keras.layers import Dense
 from keras.losses import MeanAbsolutePercentageError
@@ -21,10 +22,11 @@ from spektral.utils.convolution import normalized_laplacian, rescale_laplacian
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(
     os.path.dirname(
-        os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    'data_GNN_with_1_dampings')
+       os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+    'data_GNN_with_5_dampings')
 
 file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
+#file  = open('/localdata1/schm_a45/code/data/data_GNN_with_2_dampings/data_secir_age_groups.pickle', 'rb')
 data_secir = pickle.load(file)
 
 len_dataset = data_secir['inputs'].shape[0]
@@ -104,12 +106,12 @@ def train_and_evaluate_model(
     class Net(Model):
         def __init__(self):
             super().__init__()
-            self.conv1 = layer(channels, activation='elu')
+            self.conv1 = layer(channels, order=2, iterations=2,
+                               share_weights=True,  activation='elu')
             self.dense = Dense(data.n_labels, activation="linear")
 
         def call(self, inputs):
             x, a = inputs
-
             a = np.asarray(a)
             x = self.conv1([x, a])
             output = self.dense(x)
@@ -288,8 +290,8 @@ def train_and_evaluate_model(
 
 start_hyper = time.perf_counter()
 epochs = 1500
-filename = '/GNN_paper_onedamp.csv'  # name for df
-save_name = 'GNN_paper_onedamp'  # name for model
+filename = '/GNN_paper_5damp.csv'  # name for df
+save_name = 'GNN_paper_5damp'  # name for model
 # for param in parameters:
 train_and_evaluate_model(epochs, 0.001, parameters, save_name, filename)
 
