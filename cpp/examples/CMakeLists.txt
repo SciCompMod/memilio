@@ -115,6 +115,10 @@ add_executable(lct_secir_example lct_secir.cpp)
 target_link_libraries(lct_secir_example PRIVATE memilio lct_secir)
 target_compile_options(lct_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(lct_fictional lct_fictional_example.cpp)
+target_link_libraries(lct_fictional PRIVATE memilio lct_secir)
+target_compile_options(lct_fictional PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(history_example history.cpp)
 target_link_libraries(history_example PRIVATE memilio)
 target_compile_options(history_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
