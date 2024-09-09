@@ -587,6 +587,36 @@ struct GotoWorkTimeMaximum {
 };
 
 /**
+ * @brief Earliest time that a Person can return from work.
+ */
+struct ReturnFromWorkTimeMinimum {
+    using Type = CustomIndexArray<TimeSpan, AgeGroup>;
+    static auto get_default(AgeGroup size)
+    {
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(15));
+    }
+    static std::string name()
+    {
+        return "ReturnFromWorkTimeMinimum";
+    }
+};
+
+/**
+ * @brief Latest time that a Person can return from work.
+ */
+struct ReturnFromWorkTimeMaximum {
+    using Type = CustomIndexArray<TimeSpan, AgeGroup>;
+    static auto get_default(AgeGroup size)
+    {
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(18));
+    }
+    static std::string name()
+    {
+        return "ReturnFromWorkTimeMaximum";
+    }
+};
+
+/**
  * @brief Earliest time that a Person can go to school.
  */
 struct GotoSchoolTimeMinimum {
@@ -613,6 +643,36 @@ struct GotoSchoolTimeMaximum {
     static std::string name()
     {
         return "GotoSchoolTimeMaximum";
+    }
+};
+
+/**
+ * @brief Earliest time that a Person can return from school.
+ */
+struct ReturnFromSchoolTimeMinimum {
+    using Type = CustomIndexArray<TimeSpan, AgeGroup>;
+    static auto get_default(AgeGroup size)
+    {
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(14));
+    }
+    static std::string name()
+    {
+        return "ReturnFromSchoolTimeMinimum";
+    }
+};
+
+/**
+ * @brief Latest time that a Person can return from school.
+ */
+struct ReturnFromSchoolTimeMaximum {
+    using Type = CustomIndexArray<TimeSpan, AgeGroup>;
+    static auto get_default(AgeGroup size)
+    {
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(17));
+    }
+    static std::string name()
+    {
+        return "ReturnFromSchoolTimeMaximum";
     }
 };
 
@@ -674,7 +734,8 @@ using ParametersBase =
                  DeathsPerInfectedCritical, ViralLoadDistributions, InfectivityDistributions, VirusShedFactor,
                  DetectInfection, MaskProtection, InfectionRateFromViralShed, AerosolTransmissionRates, LockdownDate,
                  QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
-                 GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
+                 GotoWorkTimeMaximum, ReturnFromWorkTimeMinimum, ReturnFromWorkTimeMaximum GotoSchoolTimeMinimum,
+                 GotoSchoolTimeMaximum, ReturnFromSchoolTimeMinimum, ReturnFromSchoolTimeMaximum, AgeGroupGotoSchool,
                  AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor,
                  LogAgentIds>;
 
@@ -881,6 +942,25 @@ public:
                 return true;
             }
 
+            if (this->get<ReturnFromWorkTimeMinimum>()[i].seconds() < 0.0 ||
+                this->get<ReturnFromWorkTimeMinimum>()[i].seconds() >
+                    this->get<ReturnFromWorkTimeMaximum>()[i].seconds()) {
+                log_error("Constraint check: Parameter ReturnFromWorkTimeMinimum of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, this->get<ReturnFromWorkTimeMaximum>()[i].seconds());
+                return true;
+            }
+
+            if (this->get<ReturnFromWorkTimeMaximum>()[i].seconds() <
+                    this->get<ReturnFromWorkTimeMinimum>()[i].seconds() ||
+                this->get<ReturnFromWorkTimeMaximum>()[i] > days(1)) {
+                log_error(
+                    "Constraint check: Parameter ReturnFromWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
+                    "than one day time span",
+                    (size_t)i, this->get<ReturnFromWorkTimeMinimum>()[i].seconds());
+                return true;
+            }
+
             if (this->get<GotoSchoolTimeMinimum>()[i].seconds() < 0.0 ||
                 this->get<GotoSchoolTimeMinimum>()[i].seconds() > this->get<GotoSchoolTimeMaximum>()[i].seconds()) {
                 log_error("Constraint check: Parameter GotoSchoolTimeMinimum of age group {:.0f} smaller {:d} or "
@@ -894,6 +974,24 @@ public:
                 log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
                           "than one day time span",
                           (size_t)i, this->get<GotoSchoolTimeMinimum>()[i].seconds());
+                return true;
+            }
+            if (this->get<ReturnFromSchoolTimeMinimum>()[i].seconds() < 0.0 ||
+                this->get<ReturnFromSchoolTimeMinimum>()[i].seconds() >
+                    this->get<ReturnFromSchoolTimeMaximum>()[i].seconds()) {
+                log_error("Constraint check: Parameter ReturnFromSchoolTimeMinimum of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, this->get<ReturnFromWorkTimeMaximum>()[i].seconds());
+                return true;
+            }
+
+            if (this->get<ReturnFromSchoolTimeMaximum>()[i].seconds() <
+                    this->get<ReturnFromSchoolTimeMinimum>()[i].seconds() ||
+                this->get<ReturnFromSchoolTimeMaximum>()[i] > days(1)) {
+                log_error(
+                    "Constraint check: Parameter ReturnFromWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
+                    "than one day time span",
+                    (size_t)i, this->get<ReturnFromSchoolTimeMinimum>()[i].seconds());
                 return true;
             }
         }

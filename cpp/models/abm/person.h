@@ -301,6 +301,15 @@ public:
     TimeSpan get_go_to_work_time(const Parameters& params) const;
 
     /**
+     * @brief Draw at what time the Person returns from work.
+     * Every Person has a random number to determine what time to return from work.
+     * Depending on this number Person decides what time it has to return from work.
+     * @param[in] params Parameters that describe the migration between Location%s.
+     * @return The time of returning from work.
+     */
+    TimeSpan get_return_from_work_time(const Parameters& params) const;
+
+    /**
      * @brief Draw if the Person goes to school or stays at home during lockdown.
      * Every Person has a random number that determines if they go to school in case of a lockdown.
      * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
@@ -310,13 +319,22 @@ public:
     bool goes_to_school(TimePoint t, const Parameters& params) const;
 
     /**
-     * @brief Draw at what time the Person goes to work.
+     * @brief Draw at what time the Person goes to school.
      * Every Person has a random number to determine what time to go to school.
      * Depending on this number Person decides what time has to go to school.
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return The time of going to school.
      */
     TimeSpan get_go_to_school_time(const Parameters& params) const;
+
+    /**
+     * @brief Draw at what time the Person return from school.
+     * Every Person has a random number to determine what time to return from school.
+     * Depending on this number Person decides what time it has to return from school.
+     * @param[in] params Parameters that describe the migration between Location%s.
+     * @return The time of returning from school.
+     */
+    TimeSpan get_return_from_school_time(const Parameters& params) const;
 
     /**
      * @brief Answers the question if a Person is currently in quarantine.
@@ -329,7 +347,7 @@ public:
     {
         return t < m_quarantine_start + params.get<mio::abm::QuarantineDuration>();
     }
-    
+
     /**
      * @brief Removes the quarantine status of the Person.
      */
@@ -450,7 +468,7 @@ public:
         m_vaccinations.push_back(Vaccination(v, t));
     }
 
-  /**
+    /**
      * @brief Get the transport mode the Person used to get to its current Location.
      * @return TransportMode the Person used to get to its current Location.
     */
@@ -526,7 +544,9 @@ private:
     double m_random_workgroup; ///< Value to determine if the Person goes to work or works from home during lockdown.
     double m_random_schoolgroup; ///< Value to determine if the Person goes to school or stays at home during lockdown.
     double m_random_goto_work_hour; ///< Value to determine at what time the Person goes to work.
+    double m_random_return_from_work_hour; ///< Value to determine at what time the Person returns from work.
     double m_random_goto_school_hour; ///< Value to determine at what time the Person goes to school.
+    double m_random_return_from_school_hour; ///< Value to determine at what time the Person returns from school.
     TimePoint m_time_of_last_test; ///< TimePoint of the last negative test.
     Mask m_mask; ///< The Mask of the Person.
     bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.

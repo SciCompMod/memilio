@@ -759,7 +759,7 @@ def write_age_and_hh(world, path):
 def run_abm_simulation(sim_num):
     mio.set_log_level(mio.LogLevel.Warning)
     input_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/'
-    output_path = 'H:/Documents/INSIDeDemonstrator/share_with_julia/memilio_output/20240831/'
+    output_path = 'H:/Documents/INSIDeDemonstrator/share_with_julia/memilio_output/20240902/'
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(0)
     # starting time point
@@ -813,5 +813,5 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     # set LogLevel
     mio.set_log_level(mio.LogLevel.Warning)
-    for i in range(250):
+    for i in range(10):
         run_abm_simulation(i, **args.__dict__)

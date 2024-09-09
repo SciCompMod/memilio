@@ -61,7 +61,8 @@ LocationType go_to_school(Person::RandomNumberGenerator& /*rng*/, const Person& 
         return LocationType::School;
     }
     //return home
-    if (current_loc == LocationType::School && t.hour_of_day() >= 15) {
+    if (current_loc == LocationType::School && person.get_return_from_school_time(params) >= t.time_since_midnight() &&
+        person.get_return_from_school_time(params) < t.time_since_midnight() + dt) {
         return LocationType::Home;
     }
     return current_loc;
@@ -80,7 +81,8 @@ LocationType go_to_work(Person::RandomNumberGenerator& /*rng*/, const Person& pe
         return LocationType::Work;
     }
     //return home
-    if (current_loc == LocationType::Work && t.hour_of_day() >= 17) {
+    if (current_loc == LocationType::Work && t.time_since_midnight() <= person.get_return_from_work_time(params) &&
+        t.time_since_midnight() + dt > person.get_return_from_work_time(params)) {
         return LocationType::Home;
     }
     return current_loc;

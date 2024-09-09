@@ -47,10 +47,12 @@ Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age
     , m_cells{0}
     , m_last_transport_mode(TransportMode::Unknown)
 {
-    m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
-    m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
-    m_random_goto_work_hour   = UniformDistribution<double>::get_instance()(rng);
-    m_random_goto_school_hour = UniformDistribution<double>::get_instance()(rng);
+    m_random_workgroup               = UniformDistribution<double>::get_instance()(rng);
+    m_random_schoolgroup             = UniformDistribution<double>::get_instance()(rng);
+    m_random_goto_work_hour          = UniformDistribution<double>::get_instance()(rng);
+    m_random_return_from_work_hour   = UniformDistribution<double>::get_instance()(rng);
+    m_random_goto_school_hour        = UniformDistribution<double>::get_instance()(rng);
+    m_random_return_from_school_hour = UniformDistribution<double>::get_instance()(rng);
 }
 
 Person Person::copy_person(Location& location)
@@ -191,6 +193,15 @@ TimeSpan Person::get_go_to_work_time(const Parameters& params) const
     return minimum_goto_work_time + seconds(seconds_after_minimum);
 }
 
+TimeSpan Person::get_return_from_work_time(const Parameters& params) const
+{
+    TimeSpan minimum_return_from_work_time = params.get<ReturnFromWorkTimeMinimum>()[m_age];
+    TimeSpan maximum_return_from_work_time = params.get<ReturnFromWorkTimeMaximum>()[m_age];
+    int timeSlots             = (maximum_return_from_work_time.seconds() - minimum_return_from_work_time.seconds());
+    int seconds_after_minimum = int(timeSlots * m_random_return_from_work_hour);
+    return minimum_return_from_work_time + seconds(seconds_after_minimum);
+}
+
 TimeSpan Person::get_go_to_school_time(const Parameters& params) const
 {
     TimeSpan minimum_goto_school_time = params.get<GotoSchoolTimeMinimum>()[m_age];
@@ -198,6 +209,15 @@ TimeSpan Person::get_go_to_school_time(const Parameters& params) const
     int timeSlots                     = (maximum_goto_school_time.seconds() - minimum_goto_school_time.seconds());
     int seconds_after_minimum         = int(timeSlots * m_random_goto_school_hour);
     return minimum_goto_school_time + seconds(seconds_after_minimum);
+}
+
+TimeSpan Person::get_return_from_school_time(const Parameters& params) const
+{
+    TimeSpan minimum_return_from_school_time = params.get<ReturnFromSchoolTimeMinimum>()[m_age];
+    TimeSpan maximum_return_from_school_time = params.get<ReturnFromSchoolTimeMaximum>()[m_age];
+    int timeSlots             = (maximum_return_from_school_time.seconds() - minimum_return_from_school_time.seconds());
+    int seconds_after_minimum = int(timeSlots * m_random_return_from_school_hour);
+    return minimum_return_from_school_time + seconds(seconds_after_minimum);
 }
 
 bool Person::goes_to_school(TimePoint t, const Parameters& params) const
