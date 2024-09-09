@@ -234,6 +234,18 @@ public:
     }
 
     /**
+     * @brief Setter for the vector m_support_max_vector that contains the support_max for all TransitionDistributions.
+     *
+     * This determines how many summands are required when calculating flows, the force of infection or compartments.
+     *
+     * @param[in] dt Time step size.
+     * 
+     * @return Vector containing the support_max for all transitions.
+     *
+     */
+    std::vector<ScalarType> set_support_max_vector(ScalarType dt);
+
+    /**
      * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.
      *
      * This determines how many inital values we need for the flows.
@@ -304,7 +316,8 @@ private:
     ScalarType m_N{0}; ///< Total population size of the considered region.
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
     int m_initialization_method{0}; ///< Gives the index of the method used for the initialization of the model.
-        //See also get_initialization_method_compartments() for the number code.
+    //See also get_initialization_method_compartments() for the number code.
+    std::vector<ScalarType> m_support_max_vector{std::vector<ScalarType>((int)InfectionTransition::Count, 0.)};
 };
 
 } // namespace isecir

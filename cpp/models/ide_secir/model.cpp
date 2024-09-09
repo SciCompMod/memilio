@@ -22,7 +22,6 @@
 #include "infection_state.h"
 #include "memilio/config.h"
 #include "memilio/utils/logging.h"
-#include "memilio/math/eigen.h"
 
 #include "vector"
 
@@ -64,12 +63,11 @@ void Model::compute_compartment_from_flows(ScalarType dt, Eigen::Index idx_Infec
     ScalarType calc_time = 0;
     // Determine relevant calculation area and corresponding index.
     if ((1 - parameters.get<TransitionProbabilities>()[idx_TransitionDistribution1]) > 0) {
-        calc_time =
-            std::max(parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].get_support_max(dt, m_tol),
-                     parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].get_support_max(dt, m_tol));
+        calc_time = std::max(m_support_max_vector[idx_TransitionDistribution1],
+                             m_support_max_vector[idx_TransitionDistribution2]);
     }
     else {
-        calc_time = parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].get_support_max(dt, m_tol);
+        calc_time = m_support_max_vector[idx_TransitionDistribution1];
     }
 
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
@@ -243,8 +241,7 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
     Hence calc_time_index goes until std::ceil(support_max/dt) since for std::ceil(support_max/dt)+1 all terms are already zero. 
     This needs to be adjusted if we are changing the finite difference scheme */
 
-    Eigen::Index calc_time_index = (Eigen::Index)std::ceil(
-        parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_support_max(dt, m_tol) / dt);
+    Eigen::Index calc_time_index = (Eigen::Index)std::ceil(m_support_max_vector[idx_InfectionTransitions] / dt);
 
     for (Eigen::Index i = current_time_index - calc_time_index; i < current_time_index; i++) {
         // (current_time_index - i) * dt is the time the individuals have already spent in this state.
@@ -360,15 +357,11 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
     m_forceofinfection = 0;
 
     // Determine the relevant calculation area = union of the supports of the relevant transition distributions.
-    ScalarType calc_time = std::max(
-        {parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-             .get_support_max(dt, m_tol),
-         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-             .get_support_max(dt, m_tol),
-         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-             .get_support_max(dt, m_tol),
-         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-             .get_support_max(dt, m_tol)});
+    ScalarType calc_time =
+        std::max({m_support_max_vector[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms],
+                  m_support_max_vector[(int)InfectionTransition::InfectedNoSymptomsToRecovered],
+                  m_support_max_vector[(int)InfectionTransition::InfectedSymptomsToInfectedSevere],
+                  m_support_max_vector[(int)InfectionTransition::InfectedSymptomsToRecovered]});
 
     // Corresponding index.
     // Need calc_time_index timesteps in sum,
@@ -425,6 +418,39 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
                  parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age));
     }
     m_forceofinfection = 1 / (m_N - deaths) * m_forceofinfection;
+}
+
+std::vector<ScalarType> Model::set_support_max_vector(ScalarType dt)
+{
+    m_support_max_vector[(int)InfectionTransition::ExposedToInfectedNoSymptoms] =
+        parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
+            .get_support_max(dt, m_tol);
+    m_support_max_vector[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] =
+        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
+            .get_support_max(dt, m_tol);
+    m_support_max_vector[(int)InfectionTransition::InfectedNoSymptomsToRecovered] =
+        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
+            .get_support_max(dt, m_tol);
+    m_support_max_vector[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] =
+        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
+            .get_support_max(dt, m_tol);
+    m_support_max_vector[(int)InfectionTransition::InfectedSymptomsToRecovered] =
+        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
+            .get_support_max(dt, m_tol);
+    m_support_max_vector[(int)InfectionTransition::InfectedSevereToInfectedCritical] =
+        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
+            .get_support_max(dt, m_tol);
+    m_support_max_vector[(int)InfectionTransition::InfectedSevereToRecovered] =
+        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered].get_support_max(
+            dt, m_tol);
+    m_support_max_vector[(int)InfectionTransition::InfectedCriticalToDead] =
+        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead].get_support_max(
+            dt, m_tol);
+    m_support_max_vector[(int)InfectionTransition::InfectedCriticalToRecovered] =
+        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
+            .get_support_max(dt, m_tol);
+
+    return m_support_max_vector;
 }
 
 ScalarType Model::get_global_support_max(ScalarType dt) const
