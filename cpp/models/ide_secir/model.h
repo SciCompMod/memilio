@@ -260,6 +260,18 @@ public:
     std::vector<std::vector<ScalarType>> set_derivative_vector(ScalarType dt);
 
     /**
+     * @brief Setter for the vector m_forceofinfection_contribution that contains the contribution of the survival functions and 
+     * transition probabilities with respect to InfectionState InfectedNoSymptoms and InfectedSymptoms, respectively,
+     * for all necessary time points. 
+     *
+     * @param[in] dt Time step size.
+     * 
+     * @return Vector containing the approximated derivative for all transitions for all necessary time points.
+     *
+     */
+    std::vector<std::vector<ScalarType>> set_forceofinfection_contribution(ScalarType dt);
+
+    /**
      * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.
      *
      * This determines how many inital values we need for the flows.
@@ -338,6 +350,8 @@ private:
         std::vector<ScalarType>(
             1,
             0.))}; ///< Vector containing the approximated derivative for all transitions for all necessary time points.
+    std::vector<std::vector<ScalarType>> m_forceofinfection_contribution{
+        std::vector<std::vector<ScalarType>>(2, std::vector<ScalarType>(1, 0.))};
 };
 
 } // namespace isecir

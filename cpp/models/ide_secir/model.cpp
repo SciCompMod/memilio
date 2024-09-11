@@ -387,30 +387,19 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
     }
 
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
-
-        ScalarType state_age = (num_time_points - 1 - i) * dt;
+        Eigen::Index state_age_index = num_time_points - 1 - i;
+        ScalarType state_age         = state_age_index * dt;
         ScalarType season_val =
             1 + parameters.get<Seasonality>() *
                     sin(3.141592653589793 * ((parameters.get<StartDay>() + current_time) / 182.5 + 0.5));
+
         m_forceofinfection +=
             season_val * parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) *
-            ((parameters
-                      .get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
-                  parameters
-                      .get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-                      .eval(state_age) +
-              parameters.get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered] *
-                  parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-                      .eval(state_age)) *
+            (m_forceofinfection_contribution[0][num_time_points - i - 1] *
                  m_transitions[i + 1][Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] *
                  parameters.get<RelativeTransmissionNoSymptoms>().eval(state_age) +
-             (parameters.get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] *
-                  parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-                      .eval(state_age) +
-              parameters.get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToRecovered] *
-                  parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered].eval(
-                      state_age)) *
+             m_forceofinfection_contribution[1][num_time_points - i - 1] *
                  m_transitions[i + 1][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] *
                  parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age));
     }
@@ -471,6 +460,44 @@ std::vector<std::vector<ScalarType>> Model::set_derivative_vector(ScalarType dt)
     }
 
     return m_derivative_vector;
+}
+
+std::vector<std::vector<ScalarType>> Model::set_forceofinfection_contribution(ScalarType dt)
+{
+    // Relevant transitions for force of infection term.
+    std::vector<std::vector<int>> relevant_transitions = {
+        {(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms,
+         (int)InfectionTransition::InfectedNoSymptomsToRecovered},
+        {(int)InfectionTransition::InfectedSymptomsToInfectedSevere,
+         (int)InfectionTransition::InfectedSymptomsToRecovered}};
+
+    // Determine the relevant calculation area = union of the supports of the relevant transition distributions.
+    ScalarType calc_time =
+        std::max({m_support_max_vector[relevant_transitions[0][0]], m_support_max_vector[relevant_transitions[0][1]],
+                  m_support_max_vector[relevant_transitions[1][0]], m_support_max_vector[relevant_transitions[1][1]]});
+
+    // Corresponding index.
+    // Need to evaluate survival functions at t_1, ..., t_{calc_time_index} for computation of force of infection,
+    // subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of support_max).
+    Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
+
+    for (int contribution = 0; contribution < 2; contribution++) {
+        std::vector<ScalarType> vec_tmp(calc_time_index + 1, 0.);
+
+        for (int i = 0; i < calc_time_index + 1; i++) {
+            // Compute state_age for all indices from t_0, ..., t_{calc_time_index}.
+            ScalarType state_age = i * dt;
+            // Compute contributions from survival function and transition probabilities on force of infection term.
+            vec_tmp[i] =
+                parameters.get<TransitionProbabilities>()[relevant_transitions[contribution][0]] *
+                    parameters.get<TransitionDistributions>()[relevant_transitions[contribution][0]].eval(state_age) +
+                parameters.get<TransitionProbabilities>()[relevant_transitions[contribution][1]] *
+                    parameters.get<TransitionDistributions>()[relevant_transitions[contribution][1]].eval(state_age);
+        }
+        m_forceofinfection_contribution[contribution] = vec_tmp;
+    }
+
+    return m_forceofinfection_contribution;
 }
 
 ScalarType Model::get_global_support_max(ScalarType dt) const
