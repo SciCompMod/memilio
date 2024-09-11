@@ -246,6 +246,20 @@ public:
     std::vector<ScalarType> set_support_max_vector(ScalarType dt);
 
     /**
+     * @brief Setter for the vector m_derivative_vector that contains the approximated derivative for all TransitionDistributions
+     * for all necessary time points.
+     *
+     * The derivative is approximated using a backwards difference scheme.
+     * The number of necessary time points for each TransitionDistribution is determined using m_support_max_vector.
+     *
+     * @param[in] dt Time step size.
+     * 
+     * @return Vector containing the approximated derivative for all transitions for all necessary time points.
+     *
+     */
+    std::vector<std::vector<ScalarType>> set_derivative_vector(ScalarType dt);
+
+    /**
      * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.
      *
      * This determines how many inital values we need for the flows.
@@ -317,7 +331,13 @@ private:
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
     int m_initialization_method{0}; ///< Gives the index of the method used for the initialization of the model.
     //See also get_initialization_method_compartments() for the number code.
-    std::vector<ScalarType> m_support_max_vector{std::vector<ScalarType>((int)InfectionTransition::Count, 0.)};
+    std::vector<ScalarType> m_support_max_vector{std::vector<ScalarType>(
+        (int)InfectionTransition::Count, 0.)}; ///< Vector containing the support_max for all transitions.
+    std::vector<std::vector<ScalarType>> m_derivative_vector{std::vector<std::vector<ScalarType>>(
+        (int)InfectionTransition::Count,
+        std::vector<ScalarType>(
+            1,
+            0.))}; ///< Vector containing the approximated derivative for all transitions for all necessary time points.
 };
 
 } // namespace isecir

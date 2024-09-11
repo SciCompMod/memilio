@@ -207,8 +207,9 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     }
 
     //--- Calculate the flows "after" InfectedNoSymptomsToInfectedSymptoms. ---
-    // Set support_max_vector in the model which is needed for the following computations.
+    // Set m_support_max_vector and m_derivative_vector in the model which is needed for the following computations.
     model.set_support_max_vector(dt);
+    model.set_derivative_vector(dt);
     // Compute flow InfectedSymptomsToInfectedSevere for -3 * global_support_max, ..., 0.
     for (Eigen::Index i = -3 * global_support_max_index; i <= 0; i++) {
         model.compute_flow(Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere),

@@ -244,13 +244,10 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(m_support_max_vector[idx_InfectionTransitions] / dt);
 
     for (Eigen::Index i = current_time_index - calc_time_index; i < current_time_index; i++) {
-        // (current_time_index - i) * dt is the time the individuals have already spent in this state.
-        ScalarType state_age = (current_time_index - i) * dt;
-
-        // Use backward difference scheme to approximate first derivative.
-        sum += (parameters.get<TransitionDistributions>()[idx_InfectionTransitions].eval(state_age) -
-                parameters.get<TransitionDistributions>()[idx_InfectionTransitions].eval(state_age - dt)) /
-               dt * m_transitions[i + 1][idx_IncomingFlow];
+        // (current_time_index - i - 1)  is the index corresponding to time the individuals have already spent in this state.
+        // We substract 1 because we start with t_1 (and not t_0) in m_derivative vector.
+        sum += m_derivative_vector[idx_InfectionTransitions][current_time_index - i - 1] *
+               m_transitions[i + 1][idx_IncomingFlow];
     }
 
     m_transitions.get_value(current_time_index)[Eigen::Index(idx_InfectionTransitions)] =
@@ -451,6 +448,29 @@ std::vector<ScalarType> Model::set_support_max_vector(ScalarType dt)
             .get_support_max(dt, m_tol);
 
     return m_support_max_vector;
+}
+
+std::vector<std::vector<ScalarType>> Model::set_derivative_vector(ScalarType dt)
+{
+    // We do not consider the transition SusceptibleToExposed as it is not needed in the computations.
+    for (int transition = 1; transition < (int)InfectionTransition::Count; transition++) {
+        Eigen::Index support_max_index = (Eigen::Index)std::ceil(m_support_max_vector[transition] / dt);
+        // Create vec_tmp that contains the value of the approximated derivative for all necessary time points.
+        // The necessary time points are t_1, ..., t_{support_max_index}.
+        std::vector<ScalarType> vec_tmp(support_max_index, 0.);
+
+        for (int i = 0; i < support_max_index; i++) {
+            // Compute state_age for all necessary indices. Note that we start with t_1 and not with t_0.
+            ScalarType state_age = (i + 1) * dt;
+            // Compute derivative.
+            vec_tmp[i] = (parameters.get<TransitionDistributions>()[transition].eval(state_age) -
+                          parameters.get<TransitionDistributions>()[transition].eval(state_age - dt)) /
+                         dt;
+        }
+        m_derivative_vector[transition] = vec_tmp;
+    }
+
+    return m_derivative_vector;
 }
 
 ScalarType Model::get_global_support_max(ScalarType dt) const
