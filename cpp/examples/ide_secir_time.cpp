@@ -42,7 +42,7 @@ int main()
 
     ScalarType start_time = clock();
 
-    for (int i = 0; i <= 10; i++) {
+    for (int i = 0; i < 10; i++) {
 
         // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
         mio::TimeSeries<ScalarType> init(num_transitions);
