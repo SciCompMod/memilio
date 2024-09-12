@@ -40,6 +40,7 @@ class PylintCommand(Command):
             lint.Run(options, reporter=self.reporter(
                 report_file), do_exit=False)
 
+
 setup(
     packages=find_packages(where=os.path.dirname(os.path.abspath(__file__))),
     test_suite='memilio.epidata_test',
