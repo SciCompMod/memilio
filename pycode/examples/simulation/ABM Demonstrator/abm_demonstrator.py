@@ -720,10 +720,10 @@ def write_infection_paths_to_file(path, world, tmax):
                              (person.infection.get_infection_start() - abm.TimePoint(0)))
                     else:
                         time_R = tmax - time_S - time_infected
-                line += str(int(time_S.hours)) + " " + str(int(time_E.hours)) + " " + str(int(time_INS.hours)) + " " + str(int(time_ISy.hours)) + " " \
-                    + str(int(time_ISev.hours)) + " " + str(int(time_ICri.hours)) + \
-                    " " + str(int(time_R.hours)) + " " + \
-                    str(int(time_D.hours)) + " "
+                line += str(time_S.hours) + " " + str(time_E.hours) + " " + str(time_INS.hours) + " " + str(time_ISy.hours) + " " \
+                    + str(time_ISev.hours) + " " + str(time_ICri.hours) + \
+                    " " + str(time_R.hours) + " " + \
+                    str(time_D.hours) + " "
             f.write(line)
             f.write('\n')
     f.close()
@@ -775,6 +775,8 @@ def run_abm_simulation(sim_num):
         input_path, 'parameter_table.csv'), index_col=0)
     # create simulation with starting timepoint and number of age groups
     sim = abm.Simulation(t0, num_age_groups)
+    # set seeds for simulation
+    abm.set_seeds(sim.world, 18)
     # set infection parameters
     sim.world.parameters = set_infection_parameters(parameters)
     # as input areas do not fit one-to-one to abm location types, there has to be a mapping
@@ -813,5 +815,5 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     # set LogLevel
     mio.set_log_level(mio.LogLevel.Warning)
-    for i in range(10):
+    for i in range(1):
         run_abm_simulation(i, **args.__dict__)
