@@ -756,6 +756,10 @@ def write_age_and_hh(world, path):
         f.close()
 
 
+def write_compartments_to_file(world, path, timepoints):
+    print('test')
+
+
 def run_abm_simulation(sim_num):
     mio.set_log_level(mio.LogLevel.Warning)
     input_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/'
@@ -798,6 +802,9 @@ def run_abm_simulation(sim_num):
     # write infection paths per agent to file
     write_infection_paths_to_file(os.path.join(
         output_path, str(sim_num) + '_infection_paths.txt'), sim.world, tmax)
+    # write compartment size per time step to file
+    write_compartments_to_file(sim.world, os.path.join(
+        output_path, str(sim_num) + '_comps.csv'), log[0])
     # write simulation results to txt file
     write_results_to_file(os.path.join(
         output_path, str(sim_num) + '_output.txt'), log)
