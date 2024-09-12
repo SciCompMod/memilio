@@ -757,7 +757,9 @@ def write_age_and_hh(world, path):
 
 
 def write_compartments_to_file(world, path, timepoints):
-    print('test')
+    with open(path, 'w') as f:
+        f.write("t S E Ins Isy Isev Icri R D\n")
+        f.close()
 
 
 def run_abm_simulation(sim_num):
