@@ -50,7 +50,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     def test_export_population_data(self):
 
         result_df = gpd.export_population_dataframe(
-            self.df_pop, self.path, 'json', True)
+            self.df_pop, self.path, 'json', True, 'newest')
         # check if one file is written
         self.assertEqual(len(os.listdir(self.path)), 1)
 
