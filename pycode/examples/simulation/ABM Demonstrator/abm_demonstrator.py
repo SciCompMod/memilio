@@ -761,6 +761,7 @@ def write_compartments_to_file(world, path, timepoints):
         f.write("t S E Ins Isy Isev Icri R D\n")
         for t in range(len(timepoints)):
             tp = abm.TimePoint(0) + abm.hours(t)
+            line = str(timepoints[t]) + " "
         f.close()
 
 
