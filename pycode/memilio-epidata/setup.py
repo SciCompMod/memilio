@@ -1,5 +1,4 @@
 import os
-import sys
 
 from setuptools import Command, find_packages, setup
 
@@ -41,37 +40,9 @@ class PylintCommand(Command):
             lint.Run(options, reporter=self.reporter(
                 report_file), do_exit=False)
 
-
-# Python-magic needs DLLs for libmagic. They have to be installed only on windows.
-def get_pymagic():
-    if sys.platform == 'win32':
-        return 'python-magic-bin'
-    else:
-        return 'python-magic'
-
 setup(
     packages=find_packages(where=os.path.dirname(os.path.abspath(__file__))),
     test_suite='memilio.epidata_test',
-    dependencies=[
-        # pandas 2.0 is minimum for CoW
-        'pandas>=2.0.0',
-        # FutureWarning of pandas that pyarrow will be required in a future release
-        'pyarrow',
-        'matplotlib',
-        'tables',
-        # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
-        'numpy>=1.22,<1.25',
-        'openpyxl',
-        'xlrd',
-        'xlsxwriter',
-        'requests',
-        'pyxlsb',
-        'wget',
-        'twill==3.1',
-        'PyQt6',
-        'python-calamine',
-        get_pymagic()
-    ],
     cmdclass={
         'pylint': PylintCommand
     },

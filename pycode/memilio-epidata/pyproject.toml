@@ -10,7 +10,27 @@ authors = [{name = "DLR-SC", email = "daniel.abele@dlr.de"}]
 maintainers = [{email = "martin.kuehn@dlr.de"}]
 description = "Part of MEmilio project, reads epidemiological data from different official and unofficial sources."
 requires-python = ">=3.8"
-dynamic = ["dependencies"]
+dependencies = [
+     # pandas 2.0 is minimum for CoW
+    "pandas>=2.0.0",
+    # FutureWarning of pandas that pyarrow will be required in a future release
+    "pyarrow",
+    "matplotlib",
+    "tables",
+    # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
+    "numpy>=1.22,<1.25",
+    "openpyxl",
+    "xlrd",
+    "xlsxwriter",
+    "requests",
+    "pyxlsb",
+    "wget",
+    "twill==3.1",
+    "PyQt6",
+    "python-calamine",
+    "python-magic-bin; sys_platform == 'win32'",
+    "python-magic; sys_platform != 'win32'"
+]
 
 [project.optional-dependencies]
 dev = [
