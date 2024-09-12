@@ -106,6 +106,12 @@ public:
     TimePoint get_infection_start() const;
 
     /**
+     * @brief Get the end time  of the Infection.
+     * @return End time point of the Infection i.e. time point of recovery or death.
+     */
+    TimePoint get_infection_end() const;
+
+    /**
      * @brief Set the Infection to detected.
      */
     void set_detected();

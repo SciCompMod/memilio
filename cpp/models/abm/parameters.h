@@ -734,7 +734,7 @@ using ParametersBase =
                  DeathsPerInfectedCritical, ViralLoadDistributions, InfectivityDistributions, VirusShedFactor,
                  DetectInfection, MaskProtection, InfectionRateFromViralShed, AerosolTransmissionRates, LockdownDate,
                  QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
-                 GotoWorkTimeMaximum, ReturnFromWorkTimeMinimum, ReturnFromWorkTimeMaximum GotoSchoolTimeMinimum,
+                 GotoWorkTimeMaximum, ReturnFromWorkTimeMinimum, ReturnFromWorkTimeMaximum, GotoSchoolTimeMinimum,
                  GotoSchoolTimeMaximum, ReturnFromSchoolTimeMinimum, ReturnFromSchoolTimeMaximum, AgeGroupGotoSchool,
                  AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor,
                  LogAgentIds>;

@@ -65,12 +65,11 @@ Person Person::copy_person(Location& location)
 
 void Person::interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const Parameters& params)
 {
-    auto old_infection_state = get_infection_state(t);
     if (get_infection_state(t) == InfectionState::Susceptible) { // Susceptible
         m_location->interact(rng, *this, t, dt, params);
     }
     m_time_at_location += dt;
-    change_time_since_transmission(old_infection_state, get_infection_state(t + dt), dt, t);
+    change_time_since_transmission(dt, t);
 }
 
 void Person::migrate_to(Location& loc_new, mio::abm::TransportMode transport_mode, const std::vector<uint32_t>& cells)
@@ -114,29 +113,13 @@ void Person::add_new_infection(Infection&& inf, TimePoint current_time)
     m_infections.push_back(std::move(inf));
 }
 
-void Person::change_time_since_transmission(const InfectionState curr_inf_state, const InfectionState new_inf_state,
-                                            const TimeSpan dt, TimePoint t)
+void Person::change_time_since_transmission(const TimeSpan dt, TimePoint t)
 {
-    if (new_inf_state == InfectionState::Recovered || new_inf_state == InfectionState::Dead) {
-        m_time_since_transmission = mio::abm::TimeSpan(std::numeric_limits<int>::max() / 2);
-    }
-    else if (curr_inf_state != new_inf_state) {
-        if (new_inf_state == InfectionState::Exposed) {
-            m_time_since_transmission = mio::abm::TimeSpan(0);
-        }
-        else {
-            m_time_since_transmission += dt;
-        }
+    if (is_infected(t + dt)) {
+        m_time_since_transmission = ((t + dt) - m_infections.back().get_infection_start());
     }
     else {
-        if (is_infected(t)) {
-            if (m_time_since_transmission > mio::abm::TimeSpan(std::numeric_limits<int>::max() / 4)) {
-                m_time_since_transmission = mio::abm::TimeSpan(0);
-            }
-            else {
-                m_time_since_transmission += dt;
-            }
-        }
+        m_time_since_transmission = mio::abm::TimeSpan(std::numeric_limits<int>::max() / 2);
     }
 }
 

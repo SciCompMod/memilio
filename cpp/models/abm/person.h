@@ -529,8 +529,7 @@ public:
     };
 
 private:
-    void change_time_since_transmission(const InfectionState curr_inf_state, const InfectionState new_inf_state,
-                                        const TimeSpan dt, TimePoint t);
+    void change_time_since_transmission(const TimeSpan dt, TimePoint t);
 
     observer_ptr<Location> m_location; ///< Current Location of the Person.
     std::vector<uint32_t> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 

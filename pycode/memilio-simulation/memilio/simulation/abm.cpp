@@ -31,6 +31,8 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/operators.h"
 #include "utils/logging.h"
+#include <cstddef>
+#include <cstdint>
 #include <type_traits>
 
 namespace py = pybind11;
@@ -420,6 +422,15 @@ PYBIND11_MODULE(_simulation_abm, m)
            double max_alpha, double min_beta, double max_beta) {
             infection_params.get<mio::abm::InfectivityDistributions>()[{variant, age}] =
                 mio::abm::InfectivityDistributionsParameters{{min_alpha, max_alpha}, {min_beta, max_beta}};
+        },
+        py::return_value_policy::reference_internal);
+
+    m.def(
+        "set_seeds",
+        [](mio::abm::World& world, int seed) {
+            auto rng = mio::RandomNumberGenerator();
+            rng.seed({static_cast<uint32_t>(seed)});
+            world.get_rng() = rng;
         },
         py::return_value_policy::reference_internal);
 

@@ -128,6 +128,15 @@ TimePoint Infection::get_infection_start() const
         .first;
 }
 
+TimePoint Infection::get_infection_end() const
+{
+    return (*std::find_if(m_infection_course.begin(), m_infection_course.end(),
+                          [](const std::pair<TimePoint, InfectionState>& inf) {
+                              return (inf.second == InfectionState::Recovered || inf.second == InfectionState::Dead);
+                          }))
+        .first;
+}
+
 void Infection::set_detected()
 {
     m_detected = true;
