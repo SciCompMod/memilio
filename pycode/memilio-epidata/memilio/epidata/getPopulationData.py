@@ -49,7 +49,8 @@ def read_population_data(ref_year):
     if ref_year == 'newest':
         download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv'
     else:
-        download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv&zeiten=' + str(ref_year)
+        download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv&zeiten=' + \
+            str(ref_year)
     req = requests.get(download_url)
     df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=6)
 
@@ -121,8 +122,7 @@ def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_forma
         filename = 'county_' + str(ref_year) + '_population'
 
     if len(df_pop_export) == 401:
-        filename =  filename + '_dim401'
-    
+        filename = filename + '_dim401'
 
     # Merge Eisenach and Wartburgkreis
     df_pop_export = geoger.merge_df_counties_all(
@@ -216,12 +216,13 @@ def test_total_population(df_pop, age_cols):
         raise gd.DataError('Unexpected dtypes in Population Data.')
     # check if total population is +-5% accurate to 2024 population
     if (total_sum > 1.05*total_sum_expect) or (total_sum < 0.96*total_sum_expect):
-        gd.default_print('Warning', 'Total Population does not match expectation.')
+        gd.default_print(
+            'Warning', 'Total Population does not match expectation.')
 
 
 def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
                           out_folder: str = dd.defaultDict['out_folder'],
-                          ref_year = 'newest',
+                          ref_year='newest',
                           **kwargs
                           ) -> pd.DataFrame:
     """! Downloads or reads the population data.
@@ -314,7 +315,7 @@ def write_population_data(df_pop: pd.DataFrame,
                           out_folder: str = dd.defaultDict['out_folder'],
                           file_format: str = dd.defaultDict['file_format'],
                           merge_eisenach: bool = True,
-                          ref_year = 'newest'
+                          ref_year='newest'
                           ) -> None or pd.DataFrame:
     """! Write the population data into json files
     Three kinds of structuring of the data are done.
@@ -342,7 +343,7 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
                         file_format: str = dd.defaultDict['file_format'],
                         out_folder: str = dd.defaultDict['out_folder'],
                         merge_eisenach: bool = True,
-                        ref_year = 'newest',
+                        ref_year='newest',
                         **kwargs
                         ):
     """! Download age-stratified population data for the German counties.
