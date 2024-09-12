@@ -763,6 +763,8 @@ def write_compartments_to_file(world, path, timepoints):
             tp = abm.TimePoint(0) + abm.hours(t)
             line = str(timepoints[t]) + " "
             comps = np.zeros(int(abm.InfectionState.Count))
+            for person in world.persons:
+                state = person.infection_state(tp)
             f.write(line)
             f.write('\n')
         f.close()
