@@ -759,6 +759,8 @@ def write_age_and_hh(world, path):
 def write_compartments_to_file(world, path, timepoints):
     with open(path, 'w') as f:
         f.write("t S E Ins Isy Isev Icri R D\n")
+        for t in range(len(timepoints)):
+            tp = abm.TimePoint(0) + abm.hours(t)
         f.close()
 
 
