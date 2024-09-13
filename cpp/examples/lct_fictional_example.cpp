@@ -55,7 +55,7 @@ const ScalarType TransmissionProbabilityOnContact[] = {0.03, 0.06, 0.06, 0.06, 0
 const ScalarType TimeExposed[]            = {3.335, 3.335, 3.335, 3.335, 3.335, 3.335};
 const ScalarType TimeInfectedNoSymptoms[] = {2.74, 2.74, 2.565, 2.565, 2.565, 2.565};
 const ScalarType TimeInfectedSymptoms[]   = {7.02625, 7.02625, 7.0665, 6.9385, 6.835, 6.775};
-const ScalarType TimeInfectedSevere[]     = {5, 5, 5.925, 7.55, 8.5, 11};
+const ScalarType TimeInfectedSevere[]     = {5., 5., 5.925, 7.55, 8.5, 11.};
 const ScalarType TimeInfectedCritical[]   = {6.95, 6.95, 6.86, 17.36, 17.1, 11.6};
 
 const ScalarType RecoveredPerInfectedNoSymptoms[] = {1 - 0.75, 1 - 0.75, 1 - 0.8, 1 - 0.8, 1 - 0.8, 1 - 0.8};
@@ -91,10 +91,10 @@ mio::UncertainContactMatrix<ScalarType> get_contact_matrix(ScalarType R0)
     using namespace params; // Contacts for R=1 for every age group:
     ScalarType contacts_R1[6];
     for (size_t group = 0; group < num_groups; group++) {
-        contacts_R1[group] = 1 / (num_groups * TransmissionProbabilityOnContact[group] *
-                                  (TimeInfectedNoSymptoms[group] * RelativeTransmissionNoSymptoms +
-                                   (1 - RecoveredPerInfectedNoSymptoms[group]) * TimeInfectedSymptoms[group] *
-                                       RiskOfInfectionFromSymptomatic));
+        contacts_R1[group] = 1. / (num_groups * TransmissionProbabilityOnContact[group] *
+                                   (TimeInfectedNoSymptoms[group] * RelativeTransmissionNoSymptoms +
+                                    (1 - RecoveredPerInfectedNoSymptoms[group]) * TimeInfectedSymptoms[group] *
+                                        RiskOfInfectionFromSymptomatic));
     }
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, num_groups);
     ScalarType scale                       = 1.;
@@ -104,7 +104,8 @@ mio::UncertainContactMatrix<ScalarType> get_contact_matrix(ScalarType R0)
     Eigen::MatrixXd a = Eigen::MatrixXd::Zero(num_groups, num_groups);
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, scale * contacts_R1[0]));
     for (size_t group = 0; group < num_groups; group++) {
-        a.row(group) = Eigen::MatrixXd::Constant(1, num_groups, scale * contacts_R1[group]);
+        //a.row(group) = Eigen::MatrixXd::Constant(1, num_groups, scale * contacts_R1[group]);
+        a(group, group) = scale * contacts_R1[group] * num_groups;
     }
     contact_matrix[0] = mio::ContactMatrix(a);
 
@@ -119,7 +120,6 @@ mio::UncertainContactMatrix<ScalarType> get_contact_matrix(ScalarType R0)
         contact_matrix[0].add_damping(1 - 1. / R0, mio::SimulationTime(1.9));
         contact_matrix[0].add_damping(0., mio::SimulationTime(2.));
     }
-
     return mio::UncertainContactMatrix<ScalarType>(contact_matrix);
 }
 
@@ -197,8 +197,10 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::stri
     age_group_sizes << 3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434;
     Eigen::VectorXd total_confirmed_cases(num_groups);
     total_confirmed_cases << 6820., 19164., 122877., 145125., 53235., 26468.;
+    total_confirmed_cases = total_confirmed_cases * 0.2;
     Eigen::VectorXd deaths(num_groups);
-    deaths << 2., 1., 25., 528., 3459., 6625.;
+    deaths << 0., 0., 0., 0., 0., 0.;
+    // deaths << 2., 1., 25., 528., 3459., 6625.;
 
     std::cout << "Simulation with LCT model and " << num_subcompartments << " subcompartments." << std::endl;
     // Initialize model.
