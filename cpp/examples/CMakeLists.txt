@@ -119,6 +119,10 @@ if(MEMILIO_HAS_HDF5)
 add_executable(lct_fictional lct_fictional_example.cpp)
 target_link_libraries(lct_fictional PRIVATE memilio lct_secir)
 target_compile_options(lct_fictional PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(lct_fictional_noage lct_fictional_noage.cpp)
+target_link_libraries(lct_fictional_noage PRIVATE memilio lct_secir)
+target_compile_options(lct_fictional_noage PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
 add_executable(history_example history.cpp)
