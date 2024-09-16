@@ -71,4 +71,4 @@ sugestion-mode = true
 exit-zero = true #Always return a non-error status code
 
 [tool.pylint.reports]
-output-format = "json2"
+output-format = "extendedjson"
