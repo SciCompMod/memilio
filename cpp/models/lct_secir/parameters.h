@@ -138,9 +138,8 @@ struct ContactPatterns {
 
     static Type get_default(size_t size)
     {
-        Eigen::Index size_idx = (Eigen::Index)size;
-        mio::ContactMatrixGroup contact_matrix(1, size_idx);
-        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(size_idx, size_idx, 10.));
+        mio::ContactMatrixGroup contact_matrix(1, (Eigen::Index)size);
+        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((Eigen::Index)size, (Eigen::Index)size, 10.));
         return Type(contact_matrix);
     }
     static std::string name()
@@ -312,7 +311,7 @@ public:
             return true;
         }
 
-        for (auto i = size_t(0); i < size_t(m_num_groups); ++i) {
+        for (size_t i = 0; i < m_num_groups; ++i) {
             if (this->get<TimeExposed>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeExposed is smaller than {:.4f}", 1.0);
                 return true;

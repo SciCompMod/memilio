@@ -251,7 +251,7 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     }
 }
 
-// Test if the function get_derivatives() is working with different groups using a hand calculated result.
+// Test if the function get_derivatives() is working with different groups using a result calculated by hand.
 TEST(TestLCTSecir, testEvalRightHandSideGroups)
 {
     // Define model.

@@ -137,7 +137,7 @@ TEST(TestInitializer, compareWithPreviousThreeGroups)
         model.parameters.get<mio::lsecir::DeathsPerCritical>()[group]              = 0.1;
     }
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, 10.));
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, 10.));
 
     Eigen::VectorXd total_confirmed_cases = Eigen::VectorXd::Constant(num_groups, 341223. / (ScalarType)num_groups);
     Eigen::VectorXd deaths                = Eigen::VectorXd::Constant(num_groups, 9710. / (ScalarType)num_groups);
@@ -282,7 +282,7 @@ TEST(TestInitializer, testConstraints)
                                                                                    total_confirmed_cases);
     EXPECT_TRUE(status);
 
-    // Check with negative result for InfectedSymptoms of the first goup.
+    // Check with negative result for InfectedSymptoms of the first group.
     mio::TimeSeries<ScalarType> init_negative_InfectedSymptoms(infectionTransition_count);
     vec_init[(int)mio::lsecir::InfectionTransition::Count +
              (int)mio::lsecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 1.;

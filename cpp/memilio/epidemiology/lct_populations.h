@@ -25,7 +25,6 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/math/eigen.h"
 #include "memilio/epidemiology/lct_infection_state.h"
-//#include <type_traits>
 
 namespace mio
 {
@@ -39,6 +38,7 @@ namespace mio
  * (Therefore, we can't use the normal Populations class because it expects the same InfectionStates for each group.)
  * 
  * This template must be instantiated with one LctState for each group of a category. 
+ * The purpose of the LctStates is to define the number of subcompartments for each InfectionState.
  * The number of LctStates also determines the number of groups. 
  * If you want to use more than one category, e.g. age and gender, you have to define num_age_groups * num_genders 
  * LctStates, because the number of subcompartments can be different 
@@ -131,9 +131,10 @@ public:
      * @return Total population of the group.
      */
     template <size_t group>
-    ScalarType get_group_total() const
+    FP get_group_total() const
     {
         return m_y.array()
+            .template cast<FP>()
             .segment(get_first_index_group<group>(), std::tuple_element_t<group, tupleLctStates>::Count)
             .sum();
     }
@@ -142,15 +143,15 @@ public:
      * @brief Returns the total population of all compartments and groups.
      * @return Total population.
      */
-    ScalarType get_total() const
+    FP get_total() const
     {
-        return m_y.array().template cast<ScalarType>().sum();
+        return m_y.array().template cast<FP>().sum();
     }
 
     /**
      * @brief Checks whether all compartments have non-negative values. 
-     * This function can be used to prevent slighly negative function values in compartment sizes that came out
-     * due to roundoff errors if, e.g., population sizes were computed in a complex way.
+     * This function can be used to prevent slightly negative function values in compartment sizes that are produced 
+     * due to rounding errors if, e.g., population sizes were computed in a complex way.
      *
      * Attention: This function should be used with care. It can not and will not set model parameters and 
      *            compartments to meaningful values. In most cases it is preferable to use check_constraints,
@@ -188,7 +189,7 @@ public:
 
 private:
     /**
-     * @brief Sets recursively the total number of (sub-)compartments in all groups. 
+     * @brief Sets recursively the total number of (sub-)compartments over all groups.
      * The number also corresponds to the size of the internal vector.
      */
     template <size_t Group = 0>

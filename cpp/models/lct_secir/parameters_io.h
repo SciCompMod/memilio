@@ -22,7 +22,6 @@
 #define LCTSECIR_PARAMETERS_IO_H
 
 #include "memilio/config.h"
-#include "ode_secir/infection_state.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -460,7 +459,7 @@ IOResult<void> set_initial_data_from_confirmed_cases_notageres(Model& model, con
 * @param[in] scale_confirmed_cases Factor for each age group by which to scale the confirmed cases of the rki data to consider 
 *       unreported cases.
 * @tparam Model is expected to be an LCT-SECIR model defined in models/lct_secir/model.h.
-* @tparam Group The age group for which the initial values should be calculted. The function is called recursively 
+* @tparam Group The age group for which the initial values should be calculated. The function is called recursively 
 *   such that the initial values are calculated for every age group if Group is zero at the beginning.
 * @returns Any io errors that happen during reading of the files and the calculation.
 */

@@ -57,7 +57,7 @@ public:
     /**
      * @brief Constructs a new Initializer object.
      *
-     * @param[in] flows Initalizing TimeSeries with flows fitting to these defined in InfectionTransition. 
+     * @param[in] flows Initializing TimeSeries with flows fitting to these defined in InfectionTransition. 
      *      For each group of m_model, InfectionTransition::Count entries are required.
      *      Timesteps should be equidistant and the values should be non-negative. 
      *      The time history has to be long enough so that it is possible to calculate the initial vector. 
@@ -74,7 +74,7 @@ public:
     /**
      * @brief Core function of Initializer.
      *
-     * Computes a vector that can be used for the initalization of an LCT model stratified by groups with the number 
+     * Computes a vector that can be used for the initialization of an LCT model stratified by groups with the number 
      * of persons for each subcompartment for each group.
      * The initial value vector is updated in the model.
      *
@@ -118,7 +118,7 @@ private:
     /**
      * @brief Implementation of the calculation of the initial value vector slice that corresponds to a specified group.
      *
-     * Computes a vector that can be used for the initalization of an LCT model stratified by groups with the number 
+     * Computes a vector that can be used for the initialization of an LCT model stratified by groups with the number 
      * of persons for each subcompartment. The groups are calculated recursively.
      *
      * @tparam Group The group for which the corresponding slice of the initial value vector is calculated.
@@ -264,8 +264,8 @@ private:
      * @brief Computes a slice of the initial value vector for each subcompartment of one InfectionState 
      *  for a specified group.
      *
-     * @tparam Group The group for wich the corresponding slice of the initial value vector is calculated.
-     * @tparam State The InfectionState for wich the corresponding slice of the initial value vector is calculated
+     * @tparam Group The group for which the corresponding slice of the initial value vector is calculated.
+     * @tparam State The InfectionState for which the corresponding slice of the initial value vector is calculated
      * @param[out] init The initial value vector under consideration.
      * @param[in] idx_incoming_flow Index of the flow which is relevant for the calculation, so the flow 
      *      to the InfectionState.
