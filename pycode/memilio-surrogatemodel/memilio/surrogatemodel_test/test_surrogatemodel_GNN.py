@@ -19,10 +19,11 @@
 #############################################################################
 from pyfakefs import fake_filesystem_unittest
 
-from memilio.surrogatemodel.GNN import (data_generation_nodamp, data_generation_withdamp)
+from memilio.surrogatemodel.GNN import (
+    data_generation_nodamp, data_generation_withdamp)
 import memilio.simulation as mio
 import memilio.simulation.osecir as osecir
-                                                
+
 from unittest.mock import patch
 import os
 import unittest
@@ -32,14 +33,15 @@ import logging
 import json
 # suppress all autograph warnings from tensorflow
 
-#logging.getLogger("tensorflow").setLevel(logging.ERROR)
+# logging.getLogger("tensorflow").setLevel(logging.ERROR)
 import tensorflow as tf
 tf.get_logger().setLevel('ERROR')
+
 
 class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
 
     path = '/home/'
-    
+
     num_groups = 6
     model = osecir.Model(num_groups)
     graph = osecir.ModelGraph()
@@ -55,16 +57,14 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
-        
+
 #### test simulation no damp ####
 
     @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.getBaselineMatrix',
            return_value=0.6 * np.ones((6, 6)))
-    
-    # create mock graph 
-    @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.make_graph', 
-           return_value= graph)
-    
+    # create mock graph
+    @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.make_graph',
+           return_value=graph)
     def test_simulation_run_nodamp(self, mock_baseline, mockgraph):
         days_1 = 10
         days_2 = 30
@@ -91,14 +91,11 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.getBaselineMatrix',
            return_value=0.6 * np.ones((6, 6)))
-    
-    # create mock graph 
-    @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.make_graph', 
-           return_value= graph)
-        
+    # create mock graph
+    @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.make_graph',
+           return_value=graph)
     @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.get_population',
-           return_value= np.random.randint(0, 700001, size=(400, 6)))
-    
+           return_value=np.random.randint(0, 700001, size=(400, 6)))
     def test_data_generation_runs_nodamp(
             self, mock_population,  mock_baseline, mock_graph):
 
@@ -132,17 +129,15 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(data_2['labels'][0]), label_width_2)
         self.assertEqual(len(data_2['labels'][0][0]), 48)
 
-
-
     # @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.getBaselineMatrix',
     #        return_value=0.6 * np.ones((6, 6)))
-     
+
     # @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.get_population',
     #        return_value= np.random.randint(0, 700001, size=(400, 6)))
-    # # create mock graph 
-    # @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.make_graph', 
+    # # create mock graph
+    # @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.make_graph',
     #        return_value= graph)
-    
+
     # def test_data_generation_save_nodamp(
     #         self, mock_population, mock_baseline, mock_graph):
 
@@ -155,28 +150,24 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
     #     self.assertEqual(len(os.listdir(self.path)), 1)
 
     #     self.assertEqual(os.listdir(self.path),
-    #                      ['data_secir_groups.pickle']) 
+    #                      ['data_secir_groups.pickle'])
 
-
-        
     @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.getMinimumMatrix',
            return_value=0 * np.ones((6, 6)))
     @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.getBaselineMatrix',
            return_value=0.6 * np.ones((6, 6)))
-    # create mock graph 
-    @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.make_graph', 
-           return_value= graph)
-    
+    # create mock graph
+    @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.make_graph',
+           return_value=graph)
     def test_simulation_run_withdamp(self, mock_baseline, mock_minimum, mock_graph):
-   
+
         days_1 = 10
         days_2 = 30
         days_3 = 50
 
         dampings1 = [5]
-        dampings2 = [6, 15] 
+        dampings2 = [6, 15]
         dampings3 = [8, 18, 35]
-
 
         population = [[5256.0, 10551, 32368.5,
                       43637.833333333336, 22874.066666666666, 8473.6],
@@ -195,75 +186,66 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(dataset_entry2[0]), days_2+1)
         self.assertEqual(len(dataset_entry3[0]), days_3+1)
 
-
         baseline = data_generation_withdamp.getBaselineMatrix()
-        #damping factor
+        # damping factor
         self.assertEqual(damped_matrices1[0].all(),
-           (baseline * damping_coeff1[0]).all())
+                         (baseline * damping_coeff1[0]).all())
         self.assertEqual(
             damped_matrices2[1].all(),
             (baseline * damping_coeff2[1]).all())
         self.assertEqual(
             damped_matrices3[2].all(),
             (baseline * damping_coeff3[2]).all())
-        
+
         # number of dampings length
         self.assertEqual(len(damping_coeff1), len(dampings1))
         self.assertEqual(len(damping_coeff2), len(dampings2))
         self.assertEqual(len(damping_coeff3), len(dampings3))
-    
 
-            
     @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.getMinimumMatrix',
            return_value=0 * np.ones((6, 6)))
     @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.getBaselineMatrix',
            return_value=0.6 * np.ones((6, 6)))
-    # create mock graph 
-    @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.make_graph', 
-           return_value= graph)    
+    # create mock graph
+    @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.make_graph',
+           return_value=graph)
     @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.get_population',
-           return_value= np.random.randint(0, 700001, size=(400, 6)))
-    
+           return_value=np.random.randint(0, 700001, size=(400, 6)))
     def test_data_generation_runs_withdamp(
-                self, mock_population, mock_baseline, mock_minimum, mock_graph):
+            self, mock_population, mock_baseline, mock_minimum, mock_graph):
 
-            input_width_1 = 1
-            input_width_2 = 5
+        input_width_1 = 1
+        input_width_2 = 5
 
-            label_width_1 = 10
-            label_width_2 = 30
+        label_width_1 = 10
+        label_width_2 = 30
 
-            num_runs_1 = 1
-            num_runs_2 = 2
+        num_runs_1 = 1
+        num_runs_2 = 2
 
-            damping1 = 1
-            damping2 = 2
-       
-            data_1 = data_generation_withdamp.generate_data(
-                num_runs_1, self.path, input_width_1, label_width_1, 
-                damping1, save_data=False)
-            self.assertEqual(len(data_1['inputs']), num_runs_1)
-            self.assertEqual(len(data_1['inputs'][0]), input_width_1)
-            self.assertEqual(len(data_1['inputs'][0][0]), 48)
-            self.assertEqual(len(data_1['labels']), num_runs_1)
-            self.assertEqual(len(data_1['labels'][0]), label_width_1)
-            self.assertEqual(len(data_1['labels'][0][0]), 48)
+        damping1 = 1
+        damping2 = 2
 
-            data_2 = data_generation_withdamp.generate_data(
-                num_runs_2, self.path, input_width_2, label_width_2,
-                damping2, save_data=False)
-            self.assertEqual(len(data_2['inputs']), num_runs_2)
-            self.assertEqual(len(data_2['inputs'][0]), input_width_2)
-            self.assertEqual(len(data_2['inputs'][0][0]), 48)
-            self.assertEqual(len(data_2['labels']), num_runs_2)
-            self.assertEqual(len(data_2['labels'][0]), label_width_2)
-            self.assertEqual(len(data_2['labels'][0][0]), 48)
+        data_1 = data_generation_withdamp.generate_data(
+            num_runs_1, self.path, input_width_1, label_width_1,
+            damping1, save_data=False)
+        self.assertEqual(len(data_1['inputs']), num_runs_1)
+        self.assertEqual(len(data_1['inputs'][0]), input_width_1)
+        self.assertEqual(len(data_1['inputs'][0][0]), 48)
+        self.assertEqual(len(data_1['labels']), num_runs_1)
+        self.assertEqual(len(data_1['labels'][0]), label_width_1)
+        self.assertEqual(len(data_1['labels'][0][0]), 48)
 
+        data_2 = data_generation_withdamp.generate_data(
+            num_runs_2, self.path, input_width_2, label_width_2,
+            damping2, save_data=False)
+        self.assertEqual(len(data_2['inputs']), num_runs_2)
+        self.assertEqual(len(data_2['inputs'][0]), input_width_2)
+        self.assertEqual(len(data_2['inputs'][0][0]), 48)
+        self.assertEqual(len(data_2['labels']), num_runs_2)
+        self.assertEqual(len(data_2['labels'][0]), label_width_2)
+        self.assertEqual(len(data_2['labels'][0][0]), 48)
 
-
-
-
-        
     # def test_data_generation_save_withdamp(
     #         self, mock_population, mock_baseline, mock_minimum):
 
@@ -271,14 +253,10 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
     #     label_width = 3
     #     num_runs = 1
     #     dampings = 3
-
     #     data_generation_withdamp.generate_data(num_runs, self.path, "", input_width,
     #                                   label_width)
     #     self.assertEqual(len(os.listdir(self.path)), 1)
-
     #     self.assertEqual(os.listdir(self.path),
     #                      ['data_secir_groups.pickle'])
-
-    
 if __name__ == '__main__':
     unittest.main()
