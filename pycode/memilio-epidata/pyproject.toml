@@ -59,3 +59,9 @@ cleandata = "memilio.epidata.cleanData:main"
 getcommutermobility = "memilio.epidata.getCommuterMobility:main"
 getvaccinationdata = "memilio.epidata.getVaccinationData:main"
 gethospitalizationdata = "memilio.epidata.getHospitalizationData:main"
+
+[tool.pylint]
+max-line-length = 120
+source-roots = "memilio/"
+output-format = "colorized"
+sugestion-mode = true
