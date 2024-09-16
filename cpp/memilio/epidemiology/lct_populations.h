@@ -33,10 +33,10 @@ namespace mio
 /**
  * @brief A class template for compartment populations of LCT models.
  *
- * Populations can be split up into different Categories, e.g. by age group, yearly income group, gender etc. 
- * In LCT models, we want to use different number of subcompartments, i.e. different LctStates, 
+ * Populations can be split up into different categories, e.g. by age group, yearly income group, gender etc. 
+ * In LCT models, we want to use different numbers of subcompartments, i.e. different LctStates, 
  * for each group of a category.
- * (Therefore, we can't use the normal Populations class because it expects the same InfectionState for each group.)
+ * (Therefore, we can't use the normal Populations class because it expects the same InfectionStates for each group.)
  * 
  * This template must be instantiated with one LctState for each group of a category. 
  * The number of LctStates also determines the number of groups. 
@@ -46,7 +46,7 @@ namespace mio
  *
  * The class created from this template contains a "flat array" of compartment populations and some functions for 
  * retrieving or setting the populations. The order in the flat array is: First, all (sub-)compartments of the 
- * first group, afterwards all (sub-)compartments of the first group and so on.
+ * first group, afterwards all (sub-)compartments of the second group and so on.
  *
  */
 
@@ -68,7 +68,7 @@ public:
     }
 
     /**
-     * @brief get_num_compartments returns the number of compartments.
+     * @brief get_num_compartments Returns the number of compartments.
      * @return Number of compartments which equals the flat array size.
      */
     size_t get_num_compartments() const
@@ -90,7 +90,7 @@ public:
     }
 
     /**
-     * @brief Returns the entry of the array given a flat index index.
+     * @brief Returns the entry of the array given a flat index.
      * @param index A flat index.
      * @return The value of the internal array at the index.
      */
@@ -166,7 +166,7 @@ public:
             if (m_y.array()[i] < 0) {
                 log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, m_y.array()[i],
                             0);
-                m_y.array()[i] = 0;
+                m_y.array()[i] = 0.;
                 corrected      = true;
             }
         }

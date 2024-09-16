@@ -60,7 +60,7 @@ namespace details
 *    for which the initial value vector is calculated.
 * @param[in] criticalPerSevere Probability as given by the model (for the group under consideration)
 *    for which the initial value vector is calculated.
-* @param[in] scale_confirmed_cases Factor by which to scale the confirmed cases of rki data to consider unreported cases.
+* @param[in] scale_confirmed_cases Factor by which to scale the confirmed cases of RKI data to consider unreported cases.
 * @tparam LctState The LctState of the group under consideration.
 * @tparam EntryType The type of the data entry of the RKI data.
 */
@@ -444,7 +444,7 @@ IOResult<void> set_initial_data_from_confirmed_cases_notageres(Model& model, con
 * Please use the set_initial_data_from_confirmed_cases() function, which calls this function automatically!
 * Calculates an initial value vector for an LCT model and updates the initial value vector in the model.
 * The number of groups in the LCT model has to be the same as the number of RKI age groups. 
-* For the computation expected stay times in the subcompartments are used. To calculate the initial values, 
+* For the computation, expected stay times in the subcompartments are used. To calculate the initial values, 
 * we assume for simplicity that individuals stay in the subcompartment for exactly the expected time.
 * The RKI data are linearly interpolated within one day to match the expected stay time in a subcompartment.
 * The RKI data should contain data for each required day with division in age groups, the completeness 

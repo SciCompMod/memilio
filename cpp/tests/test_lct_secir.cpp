@@ -255,7 +255,7 @@ TEST(TestLCTSecir, testEvalRightHandSide)
 TEST(TestLCTSecir, testEvalRightHandSideGroups)
 {
     // Define model.
-    // Chose more than one subcompartment for all compartments except S, R, D so that the function is correct for all selections.
+    // Choose more than one subcompartment for all compartments except S, R, D so that the function is correct for all selections.
     using InfState  = mio::lsecir::InfectionState;
     using LctState1 = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
     using LctState2 = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;

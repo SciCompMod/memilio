@@ -75,7 +75,7 @@ public:
      * @brief Core function of Initializer.
      *
      * Computes a vector that can be used for the initalization of an LCT model stratified by groups with the number 
-     * of persons for each subcompartment.
+     * of persons for each subcompartment for each group.
      * The initial value vector is updated in the model.
      *
      * @param[in] total_population The total size of the considered population.
@@ -116,12 +116,12 @@ public:
 
 private:
     /**
-     * @brief Implementation of the calcultion of the initial value vector slice that corresponds to a specified group.
+     * @brief Implementation of the calculation of the initial value vector slice that corresponds to a specified group.
      *
      * Computes a vector that can be used for the initalization of an LCT model stratified by groups with the number 
      * of persons for each subcompartment. The groups are calculated recursively.
      *
-     * @tparam Group The group for wich the corresponding slice of the initial value vector is calculated.
+     * @tparam Group The group for which the corresponding slice of the initial value vector is calculated.
      * @param[out] init The initial value vector under consideration.
      * @param[in] total_population The total size of the considered population.
      * @param[in] deaths Number of deceased people from the disease at time 0.
@@ -270,7 +270,7 @@ private:
      * @param[in] idx_incoming_flow Index of the flow which is relevant for the calculation, so the flow 
      *      to the InfectionState.
      * @param[in] transition_rate Specifies the transition rate of the InfectionState. 
-     *      'This is equal to 1 / (expected Time in the InfectionState).
+     *      'This is equal to 1 / (expected time in the InfectionState).
      
      * @return Returns true if one (or more) constraint(s) of the computed slice of the initial value vector
      *      are not satisfied, otherwise false. 

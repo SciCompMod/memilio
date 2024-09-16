@@ -127,17 +127,17 @@ TEST(TestInitializer, compareWithPreviousThreeGroups)
         model.parameters.get<mio::lsecir::TimeInfectedCritical>()[group]             = 17.1;
         model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[group] = 0.01;
 
-        model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[group] = 1;
-        model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[group] = 1;
-        model.parameters.get<mio::lsecir::Seasonality>()                           = 0;
-        model.parameters.get<mio::lsecir::StartDay>()                              = 0;
+        model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[group] = 1.;
+        model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[group] = 1.;
+        model.parameters.get<mio::lsecir::Seasonality>()                           = 0.;
+        model.parameters.get<mio::lsecir::StartDay>()                              = 0.;
         model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[group] = 0.1;
         model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[group]      = 0.1;
         model.parameters.get<mio::lsecir::CriticalPerSevere>()[group]              = 0.1;
         model.parameters.get<mio::lsecir::DeathsPerCritical>()[group]              = 0.1;
     }
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, 10));
+    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, 10.));
 
     Eigen::VectorXd total_confirmed_cases = Eigen::VectorXd::Constant(num_groups, 341223. / (ScalarType)num_groups);
     Eigen::VectorXd deaths                = Eigen::VectorXd::Constant(num_groups, 9710. / (ScalarType)num_groups);

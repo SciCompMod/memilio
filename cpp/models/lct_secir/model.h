@@ -139,7 +139,7 @@ private:
     /**
      * @brief Converts a vector with subcompartments in a vector without subcompartments 
      * by summing up subcompartment values.
-     * This is done recusively for each group which corresponds to a slice of the vector.
+     * This is done recursively for each group which corresponds to a slice of the vector.
      *
      * @tparam group The group specifying the slice of the vector being considered. 
      * @param[in] subcompartments The vector that should be converted.
@@ -201,7 +201,7 @@ private:
     }
 
     /**
-     * @brief Evaluates the right-hand-side f of the ODE dydt = f(y, t) recusively for each group.
+     * @brief Evaluates the right-hand-side f of the ODE dydt = f(y, t) recursively for each group.
      *
      * See also the function get_derivative.
      * For each group, one slice of the output vector is calculated.
@@ -244,7 +244,7 @@ private:
             flow = (ScalarType)LctState::template get_num_subcompartments<InfectionState::Exposed>() *
                    (1 / params.template get<TimeExposed>()[Group]) * y[Ei_first_index + subcomp];
             // Subtract flow from dydt[Ei_first_index + subcomp] and add to next subcompartment.
-            dydt[Ei_first_index + subcomp]     = dydt[Ei_first_index + subcomp] - flow;
+            dydt[Ei_first_index + subcomp]     -= flow;
             dydt[Ei_first_index + subcomp + 1] = flow;
         }
 
@@ -313,7 +313,7 @@ private:
     }
 
     /**
-     * @brief Calculated the derivative of the Susceptible compartment for Group1.
+     * @brief Calculates the derivative of the Susceptible compartment for Group1.
      *
      * This is done recursively by calculating the interaction terms with each group.
      * @tparam Group1 The group for which the derivative of the Susceptible compartment should be calculated. 
