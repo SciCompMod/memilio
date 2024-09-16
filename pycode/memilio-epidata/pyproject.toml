@@ -69,3 +69,6 @@ source-roots = "memilio/"
 output-format = "colorized"
 sugestion-mode = true
 exit-zero = true #Always return a non-error status code
+
+[tool.pylint.reports]
+output-format = "json2"
