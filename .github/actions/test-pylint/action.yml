@@ -27,9 +27,7 @@ runs:
       shell: bash
       run: |
         cd pycode/memilio-${{ inputs.package }}
-        mkdir -p build_pylint
-        python setup.py pylint
-        pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
+        pylint memilio/
     - name: Upload Pylint Report
       uses: actions/upload-artifact@v4
       with:
