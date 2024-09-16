@@ -23,11 +23,11 @@
 
 #include "memilio/config.h"
 #include "memilio/epidemiology/contact_matrix.h"
-#include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/lct_infection_state.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/logging.h"
+#include "memilio/utils/time_series.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/data/analyze_result.h"
 #include "memilio/io/result_io.h"
@@ -41,7 +41,7 @@
 namespace params
 {
 // Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
-constexpr int num_subcompartments = 3;
+constexpr int num_subcompartments = 1;
 constexpr size_t num_groups       = 6;
 
 // Parameters
@@ -205,10 +205,10 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::stri
         0, tmax, dt, model,
         std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
             1e-10, 1e-5, 0, dt));
-    // Calculate result without division in subcompartments.
+    // Calculate result.
     mio::TimeSeries<ScalarType> populations = model.calculate_compartments(result);
 
-    if (!save_dir.empty()) {
+    if (save_dir.empty()) {
         std::string R0string = std::to_string(R0);
         std::string filename = save_dir + "fictional_lct_" + R0string.substr(0, R0string.find(".") + 2) + "_" +
                                std::to_string(num_subcompartments);
@@ -218,14 +218,24 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::stri
         filename                               = filename + ".h5";
         mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename);
     }
-
+    std::cout << populations.get_value(populations.get_num_time_points() - 2)[0] -
+                     populations.get_value(populations.get_num_time_points() - 1)[0]
+              << std::endl;
+    std::cout << "Final size: " << std::fixed << std::setprecision(6)
+              << total_population - populations.get_last_value()[0] << std::endl;
+    std::cout << std::endl;
+    //const ScalarType erg[] = {66187839.9905, 66177693.6578, 66173548.3156, 66172611.5577};//R=2
+    const ScalarType erg[] = {81489331.8278, 81487771.4486, 81487273.3112, 81487185.6561}; //R=4
+    for (int i = 0; i < 4; i++) {
+        std::cout << "i= " << i << ": " << (erg[i] - erg[0]) / erg[0] << std::endl;
+    }
     return mio::success();
 }
 
 int main()
 {
     std::string save_dir = "../../data/simulation_lct_noage/riseR0long/";
-    auto result          = simulate_lct_model(4.0, 70, save_dir);
+    auto result          = simulate_lct_model(2.0, 250, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
