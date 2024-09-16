@@ -20,10 +20,10 @@ runs:
       run: |
         cd pycode/memilio-${{ inputs.package }}/
         /opt/python/cp38-cp38/bin/python -m pip install build
-        /opt/python/cp38-cp38/bin/python -m build --wheel
+        /opt/python/cp38-cp38/bin/python -m build --wheel --outdir dist
 
         /opt/python/cp311-cp311/bin/python -m pip install build
-        /opt/python/cp311-cp311/bin/python -m build --wheel
+        /opt/python/cp311-cp311/bin/python -m build --wheel --outdir dist
         # Exclude memilio-generation, because its a pure python package, cmake is only used in the build process to retrieve data from cpp
         if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
           # includes native dependencies in the wheel
