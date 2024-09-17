@@ -42,7 +42,7 @@ namespace mio
 template <typename X, typename V>
 auto linear_interpolation(const X& x_eval, const X& x_1, const X& x_2, const V& y1, const V& y2)
 {
-    auto weight = (x_eval - x_1) / (x_2 - x_1);
+    const auto weight = (x_eval == x_1 && x_1 == x_2) ? X{0} : (x_eval - x_1) / (x_2 - x_1);
     return y1 + weight * (y2 - y1);
 }
 
@@ -56,26 +56,21 @@ auto linear_interpolation(const X& x_eval, const X& x_1, const X& x_2, const V& 
  * @return Interpolation result.
  */
 template <class FP>
-typename TimeSeries<FP>::Vector linear_interpolation(FP time, const TimeSeries<FP>& data)
+auto linear_interpolation(FP time, const TimeSeries<FP>& data)
 {
     assert(data.get_num_time_points() > 0 && "Interpolation requires at least one time point.");
-    auto tp_range = data.get_times();
+    const auto tp_range = data.get_times();
     // find next time point in data (strictly) after time
-    const auto next_tp = std::upper_bound(tp_range.begin(), tp_range.end(), time, [](auto&& t, auto&& tp) {
-        return t < tp;
-    });
-    // interpolate in between values if possible, otherwise return first/last value
-    if (next_tp == tp_range.begin()) { // time is before first data point
-        return data.get_value(0);
-    }
-    else if (next_tp == tp_range.end()) { // time is past last data point
-        return data.get_last_value();
-    }
-    else { // time is in between data points
-        const auto i = next_tp - tp_range.begin();
-        return linear_interpolation(time, data.get_time(i - 1), data.get_time(i), data.get_value(i - 1),
-                                    data.get_value(i));
-    }
+    const auto next_tp = std::upper_bound(tp_range.begin(), tp_range.end(), time);
+    const auto delta   = (Eigen::Index)(next_tp - tp_range.begin()); // aka the index of the upper bound
+    // set lower and upper time point index
+    // mind the cases where where either next_tp==tp_range.begin() or next_tp==tp_range.end()
+    // (both cannot be true at the same time, by the assertion that data.get_num_time_points() > 0)
+    const auto lower = std::max(delta - 1, (Eigen::Index)0);
+    const auto upper = std::min(delta, data.get_num_time_points() - 1);
+    // interpolate between time points. if lower==upper this will return either the first or last value
+    return linear_interpolation(std::clamp(time, data.get_time(lower), data.get_time(upper)), data.get_time(lower),
+                                data.get_time(upper), data.get_value(lower), data.get_value(upper));
 }
 
 /**

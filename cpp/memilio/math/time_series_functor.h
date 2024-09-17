@@ -98,7 +98,7 @@ public:
     {
         switch (m_type) {
         case TimeSeriesFunctorType::LinearInterpolation:
-            return linear_interpolation(time, m_data)[0];
+            return linear_interpolation(time, m_data).coeff(0);
         default:
             assert(false && "Unhandled TimeSeriesFunctorType!");
             return FP();
