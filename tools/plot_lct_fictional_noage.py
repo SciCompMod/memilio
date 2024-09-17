@@ -29,6 +29,7 @@ Data could be generated eg by executing the file ./cpp/examples/lct_secir_fictio
 
 import h5py
 import os
+import math
 import matplotlib.pyplot as plt
 
 import memilio.epidata.getDataIntoPandasDataFrame as gd
@@ -115,7 +116,7 @@ def compare_single_compartment(files, legendplot,  compartment_idx=1, filename_p
     plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
 
 
-def compare_all_compartments(files, legendplot, filename_plot="compare_compartments"):
+def compare_all_compartments(files, legendplot,  filename_plot="compare_compartments", compartment_indices=range(8)):
     """ Creates a 4x2 Plot with one subplot per compartment and one line per result one wants to compare.
 
     @param[in] files: paths of the files (without file extension .h5) with the simulation results
@@ -126,8 +127,9 @@ def compare_all_compartments(files, legendplot, filename_plot="compare_compartme
     @param[in] legendplot: list with names for the results that should be used for the legend of the plot.
     @param[in] filename_plot: name to use as the file name for the saved plot.
     """
+
     fig, axs = plt.subplots(
-        4, 2, sharex='all', num=filename_plot, tight_layout=True)
+        math.ceil(len(compartment_indices)/2), 2, sharex='all', num=filename_plot, tight_layout=True)
 
     # Add simulation results to plot.
     for file in range(len(files)):
@@ -146,22 +148,32 @@ def compare_all_compartments(files, legendplot, filename_plot="compare_compartme
         if (total.shape[1] != 8):
             raise gd.DataError("Expected a different number of compartments.")
         # Plot result.
+        left_right = 0
+        index = 0
         if legendplot[file] in linestyle_dict:
-            for i in range(8):
-                axs[int(i/2), i % 2].plot(dates,
-                                          total[:, i], label=legendplot[file], linewidth=1.2,
-                                          linestyle=linestyle_dict[legendplot[file]],
-                                          color=color_dict[legendplot[file]])
+            for i in compartment_indices:
+                axs[int(index/2), left_right % 2].plot(dates,
+                                                       total[:, i], label=legendplot[file], linewidth=1.2,
+                                                       linestyle=linestyle_dict[legendplot[file]],
+                                                       color=color_dict[legendplot[file]])
+                axs[int(index/2), left_right %
+                    2].set_title(secir_dict[i], fontsize=8)
+                left_right += 1
+                index += 1
         else:
-            for i in range(8):
-                axs[int(i/2), i % 2].plot(dates,
-                                          total[:, i], label=legendplot[file], linewidth=1.2)
+            for i in compartment_indices:
+                axs[int(index/2), left_right % 2].plot(dates,
+                                                       total[:, i], label=legendplot[file], linewidth=1.2)
+                axs[int(index/2), left_right %
+                    2].set_title(secir_dict[i], fontsize=8)
+                left_right += 1
+                index += 1
         h5file.close()
 
     # Define some characteristics of the plot.
-    for i in range(8):
-        axs[int(i/2), i % 2].set_title(secir_dict[i], fontsize=8)
+    for i in range(math.ceil(len(compartment_indices)/2)*2):
         axs[int(i/2), i % 2].set_xlim(left=0, right=dates[-1])
+        axs[int(i/2), i % 2].set_ylim(bottom=0)
         axs[int(i/2), i % 2].grid(True, linestyle='--')
         axs[int(i/2), i % 2].tick_params(axis='y', labelsize=7)
         axs[int(i/2), i % 2].tick_params(axis='x', labelsize=7)
@@ -184,12 +196,12 @@ def compare_all_compartments(files, legendplot, filename_plot="compare_compartme
 
 
 def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infections"):
-    """ Single plot to compare the incidence of different results. Incidence means the number of people leaving the 
+    """ Single plot to compare the incidence of different results. Incidence means the number of people leaving the
         susceptible class per day.
 
     @param[in] files: paths of the files (without file extension .h5) with the simulation results
          that should be compared.
-        Results should contain exactly 8 compartments (so use accumulated numbers for LCT models). 
+        Results should contain exactly 8 compartments (so use accumulated numbers for LCT models).
         Names can be given in form of a list.
         One could compare results with eg different parameters or different models.
     @param[in] ylim: upper limit for the y-axis of the plot.
@@ -252,7 +264,7 @@ if __name__ == '__main__':
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "data", "simulation_lct_noage")
 
-    case = 1
+    case = 3
     if case == 0:
         # rise R0 short
         plot_new_infections([os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_1"),
@@ -341,7 +353,7 @@ if __name__ == '__main__':
                                   ],
                                  legendplot=list(
                                      ["ODE", "LCT3", "LCT10", "LCT20"]),
-                                 filename_plot="compartments_lct_rise2.0_long")
+                                 filename_plot="compartments_lct_rise2.0_long", compartment_indices=[1, 2, 3, 4, 5, 7])
     elif case == 3:
         # rise r0 4.0 long
         plot_new_infections([os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_1_long"),
@@ -364,4 +376,17 @@ if __name__ == '__main__':
                                   ],
                                  legendplot=list(
                                      ["ODE", "LCT3", "LCT10", "LCT20"]),
-                                 filename_plot="compartments_lct_rise4.0_long")
+                                 filename_plot="compartments_lct_rise4.0_long", compartment_indices=[1, 2, 3, 4, 5, 7])
+    elif case == 4:
+        data_dir = os.path.join(os.path.dirname(
+            __file__), "..", "data", "simulation_lct_agevsnoage")
+        # youngvsold
+        compare_all_compartments([os.path.join(data_dir, "young", "fictional_lct_ageres_3_young"),
+                                  os.path.join(data_dir, "young",
+                                               "fictional_lct_notageres_3_young"),
+                                  os.path.join(data_dir, "old",
+                                               "fictional_lct_ageres_3_old"),
+                                  ],
+                                 legendplot=list(
+                                     ["young-age", "noage", "old-age"]),
+                                 filename_plot="compartments_agevsnoage", compartment_indices=[1, 2, 3, 4, 5, 7])

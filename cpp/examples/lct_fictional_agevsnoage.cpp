@@ -35,14 +35,9 @@
 #include "memilio/io/mobility_io.h"
 
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
-#include "boost/filesystem.hpp"
-#include "boost/outcome/try.hpp"
 #include <string>
 #include <iostream>
 #include <vector>
-
-namespace fs = boost::filesystem;
-
 namespace params
 {
 // Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
@@ -94,12 +89,12 @@ mio::TimeSeries<ScalarType> add_age_groups(mio::TimeSeries<ScalarType> ageres)
 * Contacts are defined such that R0 equals 1 at the beginning of the simulation and jumps to R0 in 
 * the time interval [1.9,2.0].
 */
-mio::UncertainContactMatrix<ScalarType> get_contact_matrix(bool age = true)
+mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(bool age = true)
 {
     using namespace params;
-    const fs::path data_dir("../../data");
+    std::string contact_data_dir          = "../../data/contacts/";
     const std::string contact_locations[] = {"home", "school_pf_eig", "work", "other"};
-    const size_t num_locations            = 1;
+    const size_t num_locations            = 4;
     size_t mat_size                       = num_groups;
     if (!age) {
         mat_size = 1;
@@ -107,14 +102,12 @@ mio::UncertainContactMatrix<ScalarType> get_contact_matrix(bool age = true)
     auto contact_matrices = mio::ContactMatrixGroup(num_locations, mat_size);
     // Load and set baseline contacts for each contact location.
     for (size_t location = 0; location < num_locations; location++) {
-        BOOST_OUTCOME_TRY(auto&& baseline,
-                          mio::read_mobility_plain(
-                              (data_dir / "contacts" / ("baseline_" + contact_locations[location] + ".txt")).string()));
+        BOOST_OUTCOME_TRY(auto&& baseline, mio::read_mobility_plain(contact_data_dir + "baseline_" +
+                                                                    contact_locations[location] + ".txt"));
         if (!age) {
-            ScalarType base = 0;
-            ScalarType min  = 0;
-            for (int i = 0; i < num_groups; i++) {
-                for (int j = 0; j < num_groups; j++) {
+            ScalarType base = 0.;
+            for (size_t i = 0; i < num_groups; i++) {
+                for (size_t j = 0; j < num_groups; j++) {
                     // Calculate a weighted average according to the age group sizes of the total contacts.
                     base += age_group_sizes[i] / total_population * baseline(i, j);
                 }
@@ -127,28 +120,48 @@ mio::UncertainContactMatrix<ScalarType> get_contact_matrix(bool age = true)
             contact_matrices[location].get_minimum()  = Eigen::MatrixXd::Zero(num_groups, num_groups);
         }
     }
-    return mio::UncertainContactMatrix<ScalarType>(contact_matrices);
+    return mio::success(mio::UncertainContactMatrix<ScalarType>(contact_matrices));
+}
+
+std::vector<std::vector<ScalarType>> get_initialization(bool young, bool age = true)
+{
+    using namespace params;
+    ScalarType num_exposed = 100.;
+    std::vector<std::vector<ScalarType>> init;
+    if (age) {
+        for (size_t group = 0; group < num_groups; group++) {
+            if (young && group == 1) {
+                init.push_back({total_population - num_exposed, num_exposed, 0., 0., 0., 0., 0., 0.});
+            }
+            else if (!young && group == num_groups - 1) {
+                init.push_back({total_population - num_exposed, num_exposed, 0., 0., 0., 0., 0., 0.});
+            }
+            else {
+                init.push_back({total_population, 0., 0., 0., 0., 0., 0., 0.});
+            }
+        }
+    }
+    else {
+        init.push_back({total_population - num_exposed, num_exposed, 0., 0., 0., 0., 0., 0.});
+    }
+    return init;
 }
 
 /** 
 * @brief Perform a fictive simulation with realistic parameters and contacts, such that the reproduction number 
-*   is approximately 1 at the beginning and rising or dropping at simulationtime 2.
+*   is approximately 1 at the beginning and rising or dropping at simulation time 2.
 *   
 *   This scenario should enable a comparison of the qualitative behavior of different LCT models.
 *   
-* @param[in] R0 Define R0 from simulationtime 2 on. Please use a number > 0.
 * @param[in] tmax End time of the simulation.
 * @param[in] save_dir Specifies the directory where the results should be stored. Provide an empty string if results should not be saved.
 * @returns Any io errors that happen during saving the results.
 */
-mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::string save_dir = "")
+mio::IOResult<void> simulate_ageres_model(bool young, ScalarType tmax, std::string save_dir = "")
 {
-    mio::unused(R0);
-    mio::unused(tmax);
-    mio::unused(save_dir);
     using namespace params;
-    std::cout << "Simulation with LCT model and " << num_subcompartments << " subcompartments." << std::endl;
-    // Initialize model.
+    std::cout << "Simulation with " << num_subcompartments << " subcompartments." << std::endl;
+    // ----- Initialize age resolved model. -----
     using InfState = mio::lsecir::InfectionState;
     using LctState = mio::LctInfectionState<InfState, 1, num_subcompartments, num_subcompartments, num_subcompartments,
                                             num_subcompartments, num_subcompartments, 1, 1>;
@@ -174,47 +187,145 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::stri
         model.parameters.get<mio::lsecir::CriticalPerSevere>()[group]         = CriticalPerSevere[group];
         model.parameters.get<mio::lsecir::DeathsPerCritical>()[group]         = DeathsPerCritical[group];
     }
+    BOOST_OUTCOME_TRY(auto&& contact_matrix, get_contact_matrix());
+    model.parameters.get<mio::lsecir::ContactPatterns>() = contact_matrix;
+    model.parameters.get<mio::lsecir::Seasonality>()     = seasonality;
 
-    model.parameters.get<mio::lsecir::ContactPatterns>() = get_contact_matrix();
-    std::cout << get_contact_matrix() << std::endl;
-    model.parameters.get<mio::lsecir::Seasonality>() = seasonality;
+    auto init_vector = get_initialization(young);
+    for (size_t group = 0; group < num_groups; group++) {
+        model.populations[group * LctState::Count + 0]                   = init_vector[group][0]; //S
+        model.populations[group * LctState::Count + LctState::Count - 2] = init_vector[group][6]; //R
+        model.populations[group * LctState::Count + LctState::Count - 1] = init_vector[group][7]; //D
+        for (size_t i = 1; i < (size_t)InfState::Count - 2; i++) {
+            for (size_t subcomp = 0; subcomp < num_subcompartments; subcomp++) {
+                model.populations[group * LctState::Count + (i - 1) * num_subcompartments + 1 + subcomp] =
+                    init_vector[group][i] / num_subcompartments;
+            }
+        }
+    }
 
-    // // Get initialization vector for LCT model with num_subcompartments subcompartments.
-    // mio::lsecir::Initializer<Model> initializer(std::move(get_initial_flows()), model);
-    // initializer.set_tol_for_support_max(1e-6);
+    // Perform simulation.
+    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(
+        0, tmax, dt, model,
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+            1e-10, 1e-5, 0, dt));
+    // Calculate result without division in subcompartments.
+    mio::TimeSeries<ScalarType> populations = add_age_groups(model.calculate_compartments(result));
 
-    // auto status = initializer.compute_initialization_vector(age_group_sizes, deaths, total_confirmed_cases);
-    // if (status) {
-    //     return mio::failure(mio::StatusCode::InvalidValue,
-    //                         "One of the model constraints are not fulfilled using the initialization method.");
-    // }
+    if (!save_dir.empty()) {
+        std::string filename = save_dir + "fictional_lct_ageres_" + std::to_string(num_subcompartments);
+        if (young) {
+            filename = filename + "_young";
+        }
+        else {
+            filename = filename + "_old";
+        }
+        filename                               = filename + ".h5";
+        mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename);
+    }
 
-    // // Perform simulation.
-    // mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(
-    //     0, tmax, dt, model,
-    //     std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-    //         1e-10, 1e-5, 0, dt));
-    // // Calculate result without division in subcompartments.
-    // mio::TimeSeries<ScalarType> populations = add_age_groups(model.calculate_compartments(result));
+    return mio::success();
+}
 
-    // if (!save_dir.empty()) {
-    //     std::string R0string = std::to_string(R0);
-    //     std::string filename = save_dir + "fictional_lct_" + R0string.substr(0, R0string.find(".") + 2) + "_" +
-    //                            std::to_string(num_subcompartments);
-    //     if (tmax > 50) {
-    //         filename = filename + "_long";
-    //     }
-    //     filename                               = filename + ".h5";
-    //     mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename);
-    // }
+mio::IOResult<void> simulate_notageres_model(bool young, ScalarType tmax, std::string save_dir = "")
+{
+    using namespace params;
+    std::cout << "Simulation with " << num_subcompartments << " subcompartments." << std::endl;
+    // ----- Initialize age resolved model. -----
+    using InfState = mio::lsecir::InfectionState;
+    using LctState = mio::LctInfectionState<InfState, 1, num_subcompartments, num_subcompartments, num_subcompartments,
+                                            num_subcompartments, num_subcompartments, 1, 1>;
+    using Model    = mio::lsecir::Model<LctState>;
+    Model model;
+
+    // Define parameters used for simulation and initialization.
+    ScalarType TimeExposed_noage                      = 0;
+    ScalarType TimeInfectedNoSymptoms_noage           = 0;
+    ScalarType TimeInfectedSymptoms_noage             = 0;
+    ScalarType TimeInfectedSevere_noage               = 0;
+    ScalarType TimeInfectedCritical_noage             = 0;
+    ScalarType TransmissionProbabilityOnContact_noage = 0;
+    ScalarType RecoveredPerInfectedNoSymptoms_noage   = 0;
+    ScalarType SeverePerInfectedSymptoms_noage        = 0;
+    ScalarType CriticalPerSevere_noage                = 0;
+    ScalarType DeathsPerCritical_noage                = 0;
+    for (size_t group = 0; group < num_groups; group++) {
+        TimeExposed_noage += age_group_sizes[group] * TimeExposed[group] / total_population;
+        TimeInfectedNoSymptoms_noage += age_group_sizes[group] * TimeInfectedNoSymptoms[group] / total_population;
+        TimeInfectedSymptoms_noage += age_group_sizes[group] * TimeInfectedSymptoms[group] / total_population;
+        TimeInfectedSevere_noage += age_group_sizes[group] * TimeInfectedSevere[group] / total_population;
+        TimeInfectedCritical_noage += age_group_sizes[group] * TimeInfectedCritical[group] / total_population;
+        TransmissionProbabilityOnContact_noage +=
+            age_group_sizes[group] * TransmissionProbabilityOnContact[group] / total_population;
+        RecoveredPerInfectedNoSymptoms_noage +=
+            age_group_sizes[group] * RecoveredPerInfectedNoSymptoms[group] / total_population;
+        SeverePerInfectedSymptoms_noage += age_group_sizes[group] * SeverePerInfectedSymptoms[group] / total_population;
+        CriticalPerSevere_noage += age_group_sizes[group] * CriticalPerSevere[group] / total_population;
+        DeathsPerCritical_noage += age_group_sizes[group] * DeathsPerCritical[group] / total_population;
+    }
+
+    model.parameters.get<mio::lsecir::TimeExposed>()[0]                      = TimeExposed_noage;
+    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0]           = TimeInfectedNoSymptoms_noage;
+    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]             = TimeInfectedSymptoms_noage;
+    model.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]               = TimeInfectedSevere_noage;
+    model.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]             = TimeInfectedCritical_noage;
+    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = TransmissionProbabilityOnContact_noage;
+
+    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = RelativeTransmissionNoSymptoms;
+    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = RiskOfInfectionFromSymptomatic;
+
+    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = RecoveredPerInfectedNoSymptoms_noage;
+    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0]      = SeverePerInfectedSymptoms_noage;
+    model.parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = CriticalPerSevere_noage;
+    model.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = DeathsPerCritical_noage;
+
+    BOOST_OUTCOME_TRY(auto&& contact_matrix, get_contact_matrix(false));
+    model.parameters.get<mio::lsecir::ContactPatterns>() = contact_matrix;
+    model.parameters.get<mio::lsecir::Seasonality>()     = seasonality;
+
+    auto init_vector                       = get_initialization(young, false);
+    model.populations[0]                   = init_vector[0][0]; //S
+    model.populations[LctState::Count - 2] = init_vector[0][6]; //R
+    model.populations[LctState::Count - 1] = init_vector[0][7]; //D
+    for (size_t i = 1; i < (size_t)InfState::Count - 2; i++) {
+        for (size_t subcomp = 0; subcomp < num_subcompartments; subcomp++) {
+            model.populations[(i - 1) * num_subcompartments + 1 + subcomp] = init_vector[0][i] / num_subcompartments;
+        }
+    }
+
+    // Perform simulation.
+    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(
+        0, tmax, dt, model,
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+            1e-10, 1e-5, 0, dt));
+    // Calculate result without division in subcompartments.
+    mio::TimeSeries<ScalarType> populations = model.calculate_compartments(result);
+
+    if (!save_dir.empty()) {
+        std::string filename = save_dir + "fictional_lct_notageres_" + std::to_string(num_subcompartments);
+        if (young) {
+            filename = filename + "_young";
+        }
+        else {
+            filename = filename + "_old";
+        }
+        filename                               = filename + ".h5";
+        mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename);
+    }
 
     return mio::success();
 }
 
 int main()
 {
-    std::string save_dir = "../../data/simulation_lct/dropR0/";
-    auto result          = simulate_lct_model(0.5, 12, save_dir);
+    std::string save_dir = "../../data/simulation_lct_agevsnoage/old/";
+    bool young           = false;
+    auto result          = simulate_ageres_model(young, 40, save_dir);
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+        return -1;
+    }
+    result = simulate_notageres_model(young, 40, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;

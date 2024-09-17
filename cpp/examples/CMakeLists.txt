@@ -123,9 +123,11 @@ target_compile_options(lct_fictional PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_
 add_executable(lct_fictional_noage lct_fictional_noage.cpp)
 target_link_libraries(lct_fictional_noage PRIVATE memilio lct_secir)
 target_compile_options(lct_fictional_noage PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+endif()
 
+if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
 add_executable(lct_fictional_agevsnoage lct_fictional_agevsnoage.cpp)
-target_link_libraries(lct_fictional_agevsnoage PRIVATE memilio lct_secir)
+target_link_libraries(lct_fictional_agevsnoage PRIVATE memilio lct_secir Boost::filesystem)
 target_compile_options(lct_fictional_agevsnoage PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
