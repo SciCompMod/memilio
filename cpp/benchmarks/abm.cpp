@@ -169,20 +169,16 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
 //have to be adjusted to get the benchmark back to normal.
 //For small sizes (e.g. 10k) extreme cases are too likely, i.e. infections die out
 //or overwhelm everything, so we don't benchmark these. Results should be mostly transferrable.
-// BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_25k_pt, 25000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
-// BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_50k_pt, 50000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
-// BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_100k_pt, 100000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
-// BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_200k_pt, 200000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
-// BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_400k_pt, 400000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
-// BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_800k_pt, 800000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
-// BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_1600k_pt, 1600000, {14159265u, 35897932u})
-//     ->Unit(benchmark::kMillisecond);
-// BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_3200k_pt, 3200000, {14159265u, 35897932u})
-//     ->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_25000k_pt, 25000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_50000k_pt, 50000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_100000k_pt, 100000, {14159265u, 35897932u})
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_25k_pt, 25000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_50k_pt, 50000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_100k_pt, 100000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_200k_pt, 200000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_400k_pt, 400000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_800k_pt, 800000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_1600k_pt, 1600000, {14159265u, 35897932u})
     ->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_100000k_pt, 1000000, {14159265u, 35897932u})
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_3200k_pt, 3200000, {14159265u, 35897932u})
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_3200k_pt, 6400000, {14159265u, 35897932u})
     ->Unit(benchmark::kMillisecond);
 BENCHMARK_MAIN();
