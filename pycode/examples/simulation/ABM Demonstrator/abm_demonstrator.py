@@ -431,8 +431,6 @@ def insert_locations_to_map(mapping, inputId, locationIds):
 
 
 def create_locations_from_input(world, input_areas, household_distribution):
-    # set seeds to have fixed locations for given input
-    np.random.seed(0)
     # map input area ids to corresponding abm location ids
     mapping = []
     # bools to make sure the world has a school and a hospital
@@ -778,7 +776,7 @@ def run_abm_simulation(sim_num):
     input_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/'
     output_path = 'H:/Documents/INSIDeDemonstrator/share_with_julia/memilio_output/20240902/'
     # set seed for fixed model initialization (locations and initial infection states)
-    np.random.seed(0)
+    np.random.seed(sim_num)
     # starting time point
     t0 = abm.TimePoint(0)
     # end time point: simulation will run 14 days
@@ -793,15 +791,15 @@ def run_abm_simulation(sim_num):
     # create simulation with starting timepoint and number of age groups
     sim = abm.Simulation(t0, num_age_groups)
     # set seeds for simulation
-    abm.set_seeds(sim.world, 18)
+    abm.set_seeds(sim.world, sim_num)
     # set infection parameters
     sim.world.parameters = set_infection_parameters(parameters)
     # as input areas do not fit one-to-one to abm location types, there has to be a mapping
     mapping = create_locations_from_input(
         sim.world, areas, household_distribution)
     # assign initial infection states according to distribution
-    assign_infection_states(sim.world, t0, 0.005, 0.001,
-                            0.001, 0.0001, 0.0, 0.0)
+    assign_infection_states(sim.world, t0, 0.002, 0.005,
+                            0.0029, 0.0001, 0.0, 0.0)
     # assign locations to agents
     assign_locations(sim.world)
     # output object
