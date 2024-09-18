@@ -62,19 +62,27 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.getBaselineMatrix',
            return_value=0.6 * np.ones((6, 6)))
-    # create mock graph
     @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.make_graph',
            return_value=graph)
-    def test_simulation_run_nodamp(self, mock_baseline, mockgraph):
+    @patch('memilio.epidata.transformMobilityData.updateMobility2022')
+    @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.transform_mobility_directory',
+           autospec=True)
+    def test_simulation_run_nodamp(self, mock_transform_mobility,
+                                   mock_update_mobility, mock_baseline, mock_graph):
+        # Mock the behavior of the mobility transformation function,
+        # but it doesn't return anything.
+        # So, we just need it to be called without side effects.
+        mock_transform_mobility.side_effect = lambda: None
+        mock_update_mobility.side_effect = lambda directory, mobility_file: None
+
         days_1 = 10
         days_2 = 30
         days_3 = 50
 
-        population = [[5256.0, 10551, 32368.5,
-                      43637.833333333336, 22874.066666666666, 8473.6],
-                      [4000, 8000, 40000,
-                      28000, 15000, 6000]]
+        population = [[5256.0, 10551, 32368.5, 43637.833333333336, 22874.066666666666, 8473.6],
+                      [4000, 8000, 40000, 28000, 15000, 6000]]
 
+        # Call the actual function being tested
         simulation_1 = data_generation_nodamp.run_secir_groups_simulation(
             days_1, population)
         simulation_2 = data_generation_nodamp.run_secir_groups_simulation(
@@ -82,22 +90,32 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         simulation_3 = data_generation_nodamp.run_secir_groups_simulation(
             days_3, population)
 
-        # result length
-        self.assertEqual(len(simulation_1[0]), days_1+1)
-        self.assertEqual(len(simulation_2[0]), days_2+1)
-        self.assertEqual(len(simulation_3[0]), days_3+1)
+        # Ensure that the results are of the correct length.
+        self.assertEqual(len(simulation_1[0]), days_1 + 1)
+        self.assertEqual(len(simulation_2[0]), days_2 + 1)
+        self.assertEqual(len(simulation_3[0]), days_3 + 1)
+
 
 #### test data genertion no damp ####
 
     @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.getBaselineMatrix',
            return_value=0.6 * np.ones((6, 6)))
-    # create mock graph
     @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.make_graph',
            return_value=graph)
     @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.get_population',
            return_value=np.random.randint(0, 700001, size=(400, 6)))
+    @patch('memilio.epidata.transformMobilityData.updateMobility2022')
+    @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.transform_mobility_directory',
+           autospec=True)
     def test_data_generation_runs_nodamp(
-            self, mock_population,  mock_baseline, mock_graph):
+        self, mock_transform_mobility, mock_update_mobility,
+            mock_baseline, mock_graph, mock_population):
+
+       # Mock the behavior of the mobility transformation function,
+        # but it doesn't return anything.
+        # So, we just need it to be called without side effects.
+        mock_transform_mobility.side_effect = lambda: None
+        mock_update_mobility.side_effect = lambda directory, mobility_file: None
 
         input_width_1 = 1
         input_width_2 = 5
@@ -108,7 +126,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         num_runs_1 = 1
         num_runs_2 = 2
 
-        # test data generation without damping
+        # test data generation without dampings
         data_1 = data_generation_nodamp.generate_data(
             num_runs_1, self.path, input_width_1, label_width_1,
             save_data=False)
@@ -159,7 +177,15 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
     # create mock graph
     @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.make_graph',
            return_value=graph)
-    def test_simulation_run_withdamp(self, mock_baseline, mock_minimum, mock_graph):
+    @patch('memilio.epidata.transformMobilityData.updateMobility2022')
+    @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.transform_mobility_directory',
+           autospec=True)
+    def test_simulation_run_withdamp(self, mock_transform_mobility, mock_update_mobility,
+                                     mock_minimum, mock_baseline, mock_graph):
+        # Mock the behavior of the mobility transformation function, but it doesn't return anything.
+        # So, we just need it to be called without side effects.
+        mock_transform_mobility.side_effect = lambda: None
+        mock_update_mobility.side_effect = lambda directory, mobility_file: None
 
         days_1 = 10
         days_2 = 30
@@ -211,8 +237,15 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
            return_value=graph)
     @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.get_population',
            return_value=np.random.randint(0, 700001, size=(400, 6)))
+    # mock transform directory function
+    @patch('memilio.epidata.transformMobilityData.updateMobility2022')
+    @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.transform_mobility_directory', autospec=True)
     def test_data_generation_runs_withdamp(
-            self, mock_population, mock_baseline, mock_minimum, mock_graph):
+            self, mock_transform_mobility, mock_update_mobility,
+            mock_minimum, mock_baseline, mock_graph, mock_population):
+
+        mock_transform_mobility.side_effect = lambda: None
+        mock_update_mobility.side_effect = lambda directory, mobility_file: None
 
         input_width_1 = 1
         input_width_2 = 5
@@ -246,9 +279,9 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(data_2['labels'][0]), label_width_2)
         self.assertEqual(len(data_2['labels'][0][0]), 48)
 
+
     # def test_data_generation_save_withdamp(
     #         self, mock_population, mock_baseline, mock_minimum):
-
     #     input_width = 2
     #     label_width = 3
     #     num_runs = 1
