@@ -39,7 +39,7 @@ IOResult<int> count_lines(const std::string& filename)
 
 IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename)
 {
-    BOOST_OUTCOME_TRY(num_lines, count_lines(filename));
+    BOOST_OUTCOME_TRY(auto&& num_lines, count_lines(filename));
 
     if (num_lines == 0) {
         return success(Eigen::MatrixXd(0, 0));
@@ -80,7 +80,7 @@ IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename)
     std::vector<int>::iterator iter = std::unique(ids.begin(), ids.end());
     ids.resize(std::distance(ids.begin(), iter));
 
-    Eigen::MatrixXd migration = Eigen::MatrixXd::Zero(ids.size(), ids.size());
+    Eigen::MatrixXd mobility = Eigen::MatrixXd::Zero(ids.size(), ids.size());
 
     for (int k = 0; k < num_lines - 1; k++) {
         int row_ind = 0;
@@ -91,15 +91,15 @@ IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename)
         while (txt_matrix(k, 1) != ids[col_ind]) {
             col_ind++;
         }
-        migration(row_ind, col_ind) = txt_matrix(k, 2);
+        mobility(row_ind, col_ind) = txt_matrix(k, 2);
     }
 
-    return success(migration);
+    return success(mobility);
 }
 
 IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
 {
-    BOOST_OUTCOME_TRY(num_lines, count_lines(filename));
+    BOOST_OUTCOME_TRY(auto&& num_lines, count_lines(filename));
 
     if (num_lines == 0) {
         return success(Eigen::MatrixXd(0, 0));
@@ -111,7 +111,7 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
         return failure(StatusCode::FileNotFound, filename);
     }
 
-    Eigen::MatrixXd migration(num_lines, num_lines);
+    Eigen::MatrixXd mobility(num_lines, num_lines);
 
     try {
         std::string tp;
@@ -123,7 +123,7 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
             }
             Eigen::Index i = static_cast<Eigen::Index>(linenumber);
             for (Eigen::Index j = 0; j < static_cast<Eigen::Index>(line.size()); j++) {
-                migration(i, j) = std::stod(line[j]);
+                mobility(i, j) = std::stod(line[j]);
             }
             linenumber++;
         }
@@ -132,7 +132,7 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
         return failure(StatusCode::InvalidFileFormat, filename + ": " + ex.what());
     }
 
-    return success(migration);
+    return success(mobility);
 }
 
 } // namespace mio

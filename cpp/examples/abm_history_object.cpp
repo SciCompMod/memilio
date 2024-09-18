@@ -17,16 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/abm.h"
 #include "abm/household.h"
-#include <cstdio>
-#include "abm/world.h"
-#include "memilio/io/io.h"
+#include "abm/lockdown_rules.h"
+#include "abm/simulation.h"
+#include "abm/model.h"
 #include "abm/location_type.h"
+#include "memilio/io/history.h"
+
 #include <fstream>
 #include <string>
-#include <iostream>
-#include "memilio/io/history.h"
 
 std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
 {
@@ -67,11 +66,16 @@ int main()
     const auto age_group_15_to_34 = mio::AgeGroup(2);
     const auto age_group_35_to_59 = mio::AgeGroup(3);
 
-    // Create the world with 4 age groups.
-    auto world = mio::abm::World(num_age_groups);
+    // Create the model with 4 age groups.
+    auto model = mio::abm::Model(num_age_groups);
 
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
+    model.parameters.get<mio::abm::IncubationPeriod>() = 4.;
+
+    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
+    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
+    model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
 
     // There are 3 households for each household group.
     int n_households = 3;
@@ -91,7 +95,7 @@ int main()
     twoPersonHousehold_full.add_members(child, 1);
     twoPersonHousehold_full.add_members(parent, 1);
     twoPersonHousehold_group.add_households(twoPersonHousehold_full, n_households);
-    add_household_group_to_world(world, twoPersonHousehold_group);
+    add_household_group_to_model(model, twoPersonHousehold_group);
 
     // Three-person household with two parent and one child.
     auto threePersonHousehold_group = mio::abm::HouseholdGroup();
@@ -99,74 +103,76 @@ int main()
     threePersonHousehold_full.add_members(child, 1);
     threePersonHousehold_full.add_members(parent, 2);
     threePersonHousehold_group.add_households(threePersonHousehold_full, n_households);
-    add_household_group_to_world(world, threePersonHousehold_group);
+    add_household_group_to_model(model, threePersonHousehold_group);
 
     // Add one social event with 5 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
-    auto event = world.add_location(mio::abm::LocationType::SocialEvent);
-    world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    auto event = model.add_location(mio::abm::LocationType::SocialEvent);
+    model.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     // Add hospital and ICU with 5 maximum contacs.
-    auto hospital = world.add_location(mio::abm::LocationType::Hospital);
-    world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    auto icu = world.add_location(mio::abm::LocationType::ICU);
-    world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    auto hospital = model.add_location(mio::abm::LocationType::Hospital);
+    model.get_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    auto icu = model.add_location(mio::abm::LocationType::ICU);
+    model.get_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     // Add one supermarket, maximum constacts are assumed to be 20.
-    auto shop = world.add_location(mio::abm::LocationType::BasicsShop);
-    world.get_individualized_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    auto shop = model.add_location(mio::abm::LocationType::BasicsShop);
+    model.get_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
     // At every school, the maximum contacts are 20.
-    auto school = world.add_location(mio::abm::LocationType::School);
-    world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    auto school = model.add_location(mio::abm::LocationType::School);
+    model.get_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
     // At every workplace, maximum contacts are 10.
-    auto work = world.add_location(mio::abm::LocationType::Work);
-    world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    auto work = model.add_location(mio::abm::LocationType::Work);
+    model.get_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
 
     // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 30.
-    auto testing_min_time      = mio::abm::days(1);
+    auto validity_period       = mio::abm::days(1);
     auto probability           = 0.5;
     auto start_date            = mio::abm::TimePoint(0);
     auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(30);
-    auto test_type             = mio::abm::AntigenTest();
+    auto test_type             = mio::abm::TestType::Antigen;
+    auto test_parameters       = model.parameters.get<mio::abm::TestData>()[test_type];
     auto testing_criteria_work = mio::abm::TestingCriteria();
-    auto testing_scheme_work =
-        mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
-    world.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
+    auto testing_scheme_work   = mio::abm::TestingScheme(testing_criteria_work, validity_period, start_date, end_date,
+                                                         test_parameters, probability);
+    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.
     // The infection states are chosen randomly.
-    auto persons = world.get_persons();
+    auto persons = model.get_persons();
     for (auto& person : persons) {
-        auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), person);
+        auto rng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         world.parameters, start_date, infection_state));
+                                                         model.parameters, start_date, infection_state));
     }
 
     // Assign locations to the people
-    for (auto& person : persons) {
+    for (auto& person : model.get_persons()) {
+        const auto pid = person.get_id();
         //assign shop and event
-        person.set_assigned_location(event);
-        person.set_assigned_location(shop);
+        model.assign_location(pid, event);
+        model.assign_location(pid, shop);
         //assign hospital and ICU
-        person.set_assigned_location(hospital);
-        person.set_assigned_location(icu);
+        model.assign_location(pid, hospital);
+        model.assign_location(pid, icu);
         //assign work/school to people depending on their age
         if (person.get_age() == age_group_5_to_14) {
-            person.set_assigned_location(school);
+            model.assign_location(pid, school);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            person.set_assigned_location(work);
+            model.assign_location(pid, work);
         }
     }
 
     // During the lockdown, social events are closed for 90% of people.
     auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(10);
-    mio::abm::close_social_events(t_lockdown, 0.9, world.parameters);
+    mio::abm::close_social_events(t_lockdown, 0.9, model.parameters);
 
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
-    auto sim  = mio::abm::Simulation(t0, std::move(world));
+    auto sim  = mio::abm::Simulation(t0, std::move(model));
 
     struct LogTimePoint : mio::LogAlways {
         using Type = double;
@@ -180,8 +186,8 @@ int main()
         static Type log(const mio::abm::Simulation& sim)
         {
             Type location_ids{};
-            for (auto& location : sim.get_world().get_locations()) {
-                location_ids.push_back(std::make_tuple(location.get_type(), location.get_index()));
+            for (auto& location : sim.get_model().get_locations()) {
+                location_ids.push_back(std::make_tuple(location.get_type(), location.get_id().get()));
             }
             return location_ids;
         }

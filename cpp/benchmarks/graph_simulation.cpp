@@ -22,13 +22,14 @@
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "benchmark/benchmark.h"
 #include "ode_secirvvs/model.h"
+#include "memilio/math/adapt_rk.h"
 #include <string>
 
 const std::string config_path = "../../benchmarks/graph_simulation.config";
 
-mio::osecirvvs::Model create_model(size_t num_agegroups, const ScalarType tmax)
+mio::osecirvvs::Model<ScalarType> create_model(size_t num_agegroups, const ScalarType tmax)
 {
-    mio::osecirvvs::Model model(num_agegroups);
+    mio::osecirvvs::Model<ScalarType> model(num_agegroups);
     const size_t pop_total = 10000;
     const size_t init_val  = 20;
     for (mio::AgeGroup i = 0; i < (mio::AgeGroup)num_agegroups; i++) {
@@ -64,16 +65,16 @@ mio::osecirvvs::Model create_model(size_t num_agegroups, const ScalarType tmax)
             {i, mio::osecirvvs::InfectionState::SusceptibleNaive}, pop_total);
     }
 
-    const size_t vacc_first                                      = 5;
-    const size_t vacc_full                                       = 5;
-    model.parameters.get<mio::osecirvvs::ICUCapacity>()          = 100;
-    model.parameters.get<mio::osecirvvs::TestAndTraceCapacity>() = 0.0143;
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(tmax));
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(vacc_first);
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(tmax));
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(vacc_full);
+    const size_t vacc_first                                                  = 5;
+    const size_t vacc_full                                                   = 5;
+    model.parameters.get<mio::osecirvvs::ICUCapacity<ScalarType>>()          = 100;
+    model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<ScalarType>>() = 0.0143;
+    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<ScalarType>>().resize(mio::SimulationDay(tmax));
+    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<ScalarType>>().array().setConstant(vacc_first);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccination<ScalarType>>().resize(mio::SimulationDay(tmax));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccination<ScalarType>>().array().setConstant(vacc_full);
 
-    auto& contacts       = model.parameters.get<mio::osecirvvs::ContactPatterns>();
+    auto& contacts       = model.parameters.get<mio::osecirvvs::ContactPatterns<ScalarType>>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
@@ -81,31 +82,31 @@ mio::osecirvvs::Model create_model(size_t num_agegroups, const ScalarType tmax)
 
     for (mio::AgeGroup i = 0; i < (mio::AgeGroup)num_agegroups; i++) {
         //times
-        model.parameters.get<mio::osecirvvs::IncubationTime>()[i]       = 5.2;
-        model.parameters.get<mio::osecirvvs::SerialInterval>()[i]       = 0.5 * 3.33 + 0.5 * 5.2;
-        model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[i] = 7;
-        model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[i]   = 6;
-        model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[i] = 7;
+        model.parameters.get<mio::osecirvvs::TimeExposed<ScalarType>>()[i]            = 3.33;
+        model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] = 1.87;
+        model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms<ScalarType>>()[i]   = 7;
+        model.parameters.get<mio::osecirvvs::TimeInfectedSevere<ScalarType>>()[i]     = 6;
+        model.parameters.get<mio::osecirvvs::TimeInfectedCritical<ScalarType>>()[i]   = 7;
 
         //probabilities
-        model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[i]  = 0.15;
-        model.parameters.get<mio::osecirvvs::RelativeTransmissionNoSymptoms>()[i]    = 0.5;
-        model.parameters.get<mio::osecirvvs::RiskOfInfectionFromSymptomatic>()[i]    = 0.0;
-        model.parameters.get<mio::osecirvvs::MaxRiskOfInfectionFromSymptomatic>()[i] = 0.4;
-        model.parameters.get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>()[i]    = 0.2;
-        model.parameters.get<mio::osecirvvs::SeverePerInfectedSymptoms>()[i]         = 0.1;
-        model.parameters.get<mio::osecirvvs::CriticalPerSevere>()[i]                 = 0.1;
-        model.parameters.get<mio::osecirvvs::DeathsPerCritical>()[i]                 = 0.1;
+        model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<ScalarType>>()[i]  = 0.15;
+        model.parameters.get<mio::osecirvvs::RelativeTransmissionNoSymptoms<ScalarType>>()[i]    = 0.5;
+        model.parameters.get<mio::osecirvvs::RiskOfInfectionFromSymptomatic<ScalarType>>()[i]    = 0.0;
+        model.parameters.get<mio::osecirvvs::MaxRiskOfInfectionFromSymptomatic<ScalarType>>()[i] = 0.4;
+        model.parameters.get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i]    = 0.2;
+        model.parameters.get<mio::osecirvvs::SeverePerInfectedSymptoms<ScalarType>>()[i]         = 0.1;
+        model.parameters.get<mio::osecirvvs::CriticalPerSevere<ScalarType>>()[i]                 = 0.1;
+        model.parameters.get<mio::osecirvvs::DeathsPerCritical<ScalarType>>()[i]                 = 0.1;
 
-        model.parameters.get<mio::osecirvvs::ReducExposedPartialImmunity>()[i]                     = 0.8;
-        model.parameters.get<mio::osecirvvs::ReducExposedImprovedImmunity>()[i]                    = 0.331;
-        model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity>()[i]            = 0.65;
-        model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity>()[i]           = 0.243;
-        model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>()[i]  = 0.1;
-        model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] = 0.091;
-        model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild>()[i]                           = 0.9;
+        model.parameters.get<mio::osecirvvs::ReducExposedPartialImmunity<ScalarType>>()[i]                     = 0.8;
+        model.parameters.get<mio::osecirvvs::ReducExposedImprovedImmunity<ScalarType>>()[i]                    = 0.331;
+        model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<ScalarType>>()[i]            = 0.65;
+        model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<ScalarType>>()[i]           = 0.243;
+        model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<ScalarType>>()[i]  = 0.1;
+        model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<ScalarType>>()[i] = 0.091;
+        model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild<ScalarType>>()[i]                           = 0.9;
     }
-    model.parameters.get<mio::osecirvvs::Seasonality>() = 0.2;
+    model.parameters.get<mio::osecirvvs::Seasonality<ScalarType>>() = 0.2;
     return model;
 }
 
@@ -116,7 +117,9 @@ auto create_simulation()
 
     mio::osecirvvs::Model model = create_model(cfg.num_agegroups, cfg.t_max);
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<mio::osecirvvs::Model>>, mio::MigrationEdge> g;
+    mio::Graph<mio::SimulationNode<mio::Simulation<ScalarType, mio::osecirvvs::Model<ScalarType>>>,
+               mio::MobilityEdge<ScalarType>>
+        g;
     for (size_t county_id = 0; county_id < cfg.num_regions; county_id++) {
         g.add_node(county_id, model, cfg.t0);
         g.nodes()[county_id].property.get_simulation().set_integrator(std::make_shared<Integrator>());
@@ -133,7 +136,7 @@ auto create_simulation()
         }
     }
 
-    return mio::make_migration_sim(cfg.t0, cfg.dt, std::move(g));
+    return mio::make_mobility_sim(cfg.t0, cfg.dt, std::move(g));
 }
 
 template <class Integrator>
@@ -160,18 +163,21 @@ void graph_sim_secirvvs(::benchmark::State& state)
 
 // register functions as a benchmarks and set a name
 // mitigate influence of cpu scaling
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Dummy 1/3");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Dummy 2/3");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Dummy 3/3");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<ScalarType>)->Name("Dummy 1/3");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<ScalarType>)->Name("Dummy 2/3");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<ScalarType>)->Name("Dummy 3/3");
 // register functions as a benchmarks and set a name
-BENCHMARK_TEMPLATE(init_benchmark, mio::RKIntegratorCore)->Name("Initialize Graph without simulation");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::EulerIntegratorCore)->Name("Graph Simulation - simple explicit euler");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Graph Simulation - adapt_rk");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>)
+BENCHMARK_TEMPLATE(init_benchmark, mio::RKIntegratorCore<ScalarType>)->Name("Initialize Graph without simulation");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::EulerIntegratorCore<ScalarType>)
+    ->Name("Graph Simulation - simple explicit euler");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<ScalarType>)->Name("Graph Simulation - adapt_rk");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs,
+                   mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>)
     ->Name("Graph Simulation - rk_ck54 (boost)");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>)
-    ->Name("Graph Simulation - rk_dopri5 (boost)");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_fehlberg78>)
+// BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>)
+// ->Name("Graph Simulation - rk_dopri5 (boost)"); // TODO: reenable once boost bug is fixed
+BENCHMARK_TEMPLATE(graph_sim_secirvvs,
+                   mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>)
     ->Name("Graph Simulation - rkf78 (boost)");
 // run all benchmarks
 BENCHMARK_MAIN();

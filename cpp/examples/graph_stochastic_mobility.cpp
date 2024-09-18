@@ -38,7 +38,7 @@ int main(int /*argc*/, char** /*argv*/)
            num_dead = 0;
 
     //model with 3 age groups
-    mio::osecir::Model model(3);
+    mio::osecir::Model<double> model(3);
 
     auto& params = model.parameters;
 
@@ -47,11 +47,11 @@ int main(int /*argc*/, char** /*argv*/)
 
     //set initialization and model parameters
     for (auto i = mio::AgeGroup(0); i < num_age_groups; i++) {
-        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
-        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 6.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
-        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 12;
-        params.get<mio::osecir::TimeInfectedCritical>()[i] = 8;
+        params.get<mio::osecir::TimeExposed<double>>()[i]            = 3.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[i] = 2.;
+        params.get<mio::osecir::TimeInfectedSymptoms<double>>()[i]   = 6.;
+        params.get<mio::osecir::TimeInfectedSevere<double>>()[i]     = 12.;
+        params.get<mio::osecir::TimeInfectedCritical<double>>()[i]   = 8.;
 
         //initial populations is equally distributed among age groups
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp;
@@ -64,17 +64,17 @@ int main(int /*argc*/, char** /*argv*/)
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * num_total);
 
-        params.get<mio::osecir::TransmissionProbabilityOnContact>()[i] = 0.05;
-        params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
-        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
-        params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
-        params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = 0.2;
-        params.get<mio::osecir::CriticalPerSevere>()[i]                = 0.25;
-        params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
+        params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[i] = 0.05;
+        params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[i]   = 0.67;
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[i]   = 0.09;
+        params.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[i]   = 0.25;
+        params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i]        = 0.2;
+        params.get<mio::osecir::CriticalPerSevere<double>>()[i]                = 0.25;
+        params.get<mio::osecir::DeathsPerCritical<double>>()[i]                = 0.3;
     }
 
     //add contact pattern and contact damping
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0] =
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_age_groups, (size_t)num_age_groups, fact * 10));
     contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)num_age_groups, (size_t)num_age_groups, 0.6),
@@ -94,11 +94,12 @@ int main(int /*argc*/, char** /*argv*/)
                                                                           fact * num_total);
     }
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<mio::osecir::Model>>, mio::MigrationEdgeStochastic> graph;
+    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MobilityEdgeStochastic>
+        graph;
     graph.add_node(1001, model, t0);
     graph.add_node(1002, model2, t0);
 
-    auto transition_rates = mio::MigrationCoefficients(model.populations.numel());
+    auto transition_rates = mio::MobilityCoefficients(model.populations.numel());
     ScalarType kappa      = 0.01;
 
     for (auto age = mio::AgeGroup(0); age < num_age_groups; age++) {
@@ -133,7 +134,7 @@ int main(int /*argc*/, char** /*argv*/)
     graph.add_edge(0, 1, std::move(transition_rates));
     graph.add_edge(1, 0, std::move(transition_rates));
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(graph));
+    auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
 
     sim.advance(tmax);
 

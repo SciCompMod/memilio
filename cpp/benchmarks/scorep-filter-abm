@@ -1,0 +1,13 @@
+SCOREP_FILE_NAMES_BEGIN
+    EXCLUDE *
+    INCLUDE */models/abm/*
+    INCLUDE */simulations/abm*
+SCOREP_FILE_NAMES_END
+
+SCOREP_REGION_NAMES_BEGIN
+    EXCLUDE *
+    INCLUDE *Model::begin_step* *Model::interaction* *Model::perform_mobility*
+    INCLUDE *Model::evolve*
+    INCLUDE *Simulation::evolve_model*
+    INCLUDE *Simulation::advance*
+SCOREP_REGION_NAMES_END

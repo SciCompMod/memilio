@@ -1,13 +1,32 @@
+#############################################################################
+# Copyright (C) 2020-2024 MEmilio
+#
+# Authors: Henrik Zunker
+#
+# Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#############################################################################
 import numpy as np
 import datetime
 import os
 import memilio.simulation as mio
-import memilio.simulation.secir as secir
+import memilio.simulation.osecir as osecir
 import memilio.plot.createGIF as mp
 
 from enum import Enum
-from memilio.simulation.secir import (Model, Simulation,
-                                      interpolate_simulation_result)
+from memilio.simulation.osecir import (Model, Simulation,
+                                       interpolate_simulation_result)
 
 
 class Location(Enum):
@@ -61,9 +80,10 @@ class Simulation:
                 param[mio.AgeGroup(i)].set_distribution(
                     mio.ParameterDistributionUniform(min[i], max[i]))
 
-        t_incubation = 5.2
-        t_serial_interval_min = 0.5 * 2.67 + 0.5 * 5.2
-        t_serial_interval_max = 0.5 * 4.00 + 0.5 * 5.2
+        timeExposedMin = 2.67
+        timeExposedMax = 4.
+        timeInfectedNoSymptomsMin = 1.2
+        timeInfectedNoSymptomsMax = 2.53
         timeInfectedSymptomsMin = [
             5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465]
         timeInfectedSymptomsMax = [8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085]
@@ -73,11 +93,11 @@ class Simulation:
         timeInfectedCriticalMax = [8.95, 8.95, 8.86, 20.58, 19.8, 13.2]
 
         array_assign_uniform_distribution(
-            model.parameters.IncubationTime, t_incubation, t_incubation)
+            model.parameters.TimeExposed, timeExposedMin, timeExposedMax)
 
         array_assign_uniform_distribution(
-            model.parameters.SerialInterval, t_serial_interval_min,
-            t_serial_interval_max)
+            model.parameters.TimeInfectedNoSymptoms, timeInfectedNoSymptomsMin,
+            timeInfectedNoSymptomsMax)
 
         array_assign_uniform_distribution(
             model.parameters.TimeInfectedSymptoms, timeInfectedSymptomsMin,
@@ -176,8 +196,8 @@ class Simulation:
             minimum_file = os.path.join(
                 self.data_dir, "contacts", "minimum_" + location + ".txt")
             contact_matrices[i] = mio.ContactMatrix(
-                mio.secir.read_mobility_plain(baseline_file),
-                mio.secir.read_mobility_plain(minimum_file)
+                mio.read_mobility_plain(baseline_file),
+                mio.read_mobility_plain(minimum_file)
             )
         model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
 
@@ -202,7 +222,7 @@ class Simulation:
 
         typ_home = Intervention.Home.value
         typ_school = Intervention.SchoolClosure.value
-        typ_home = Intervention.HomeOffice.value
+        typ_homeoffice = Intervention.HomeOffice.value
         typ_gathering = Intervention.GatheringBanFacilitiesClosure.value
         typ_distance = Intervention.PhysicalDistanceAndMasks.value
         typ_senior = Intervention.SeniorAwareness.value
@@ -230,7 +250,7 @@ class Simulation:
 
         def home_office(t, min, max):
             return damping_helper(
-                t, min, max, lvl_main, typ_home, [loc_work])
+                t, min, max, lvl_main, typ_homeoffice, [loc_work])
 
         def social_events(t, min, max):
             return damping_helper(
@@ -403,7 +423,7 @@ class Simulation:
         self.set_contact_matrices(model)
         self.set_npis(model.parameters, end_date)
 
-        graph = secir.ModelGraph()
+        graph = osecir.ModelGraph()
 
         scaling_factor_infected = [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
         scaling_factor_icu = 1.0
@@ -413,7 +433,7 @@ class Simulation:
             self.data_dir, "pydata", "Germany",
             "county_current_population.json")
 
-        mio.secir.set_nodes(
+        mio.osecir.set_nodes(
             model.parameters,
             mio.Date(self.start_date.year,
                      self.start_date.month, self.start_date.day),
@@ -422,7 +442,7 @@ class Simulation:
             path_population_data, True, graph, scaling_factor_infected,
             scaling_factor_icu, tnt_capacity_factor, 0, False)
 
-        mio.secir.set_edges(
+        mio.osecir.set_edges(
             self.data_dir, graph, len(Location))
 
         return graph
@@ -437,9 +457,9 @@ class Simulation:
             path_graph = os.path.join(self.results_dir, "graph")
             if not os.path.exists(path_graph):
                 os.makedirs(path_graph)
-            secir.write_graph(graph, path_graph)
+            osecir.write_graph(graph, path_graph)
 
-        study = secir.ParameterStudy(
+        study = osecir.ParameterStudy(
             graph, 0., num_days_sim, 0.5, num_runs)
         ensemble = study.run()
 
@@ -457,7 +477,7 @@ class Simulation:
         save_percentiles = True
         save_single_runs = False
 
-        secir.save_results(
+        osecir.save_results(
             ensemble_results, ensemble_params, node_ids, self.results_dir,
             save_single_runs, save_percentiles)
         if create_gif:
@@ -473,6 +493,6 @@ if __name__ == "__main__":
     sim = Simulation(
         data_dir=os.path.join(file_path, "../../../data"),
         start_date=datetime.date(year=2020, month=12, day=12),
-        results_dir=os.path.join(file_path, "../../../results_secir"))
+        results_dir=os.path.join(file_path, "../../../results_osecir"))
     num_days_sim = 50
     sim.run(num_days_sim, num_runs=2)

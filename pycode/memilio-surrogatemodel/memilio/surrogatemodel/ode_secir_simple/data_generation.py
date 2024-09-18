@@ -31,9 +31,9 @@ from sklearn.preprocessing import FunctionTransformer
 
 from memilio.simulation import (AgeGroup, ContactMatrix, Damping, LogLevel,
                                 UncertainContactMatrix, set_log_level)
-from memilio.simulation.secir import (Index_InfectionState,
-                                      InfectionState, Model, Simulation,
-                                      interpolate_simulation_result, simulate)
+from memilio.simulation.osecir import (Index_InfectionState,
+                                       InfectionState, Model, Simulation,
+                                       interpolate_simulation_result, simulate)
 
 
 def remove_confirmed_compartments(result_array):
@@ -67,9 +67,9 @@ def run_secir_simple_simulation(days):
 
     # Set parameters
     # Compartment transition duration
-    model.parameters.IncubationTime[A0] = 5.2
+    model.parameters.TimeExposed[A0] = 3.2
+    model.parameters.TimeInfectedNoSymptoms[A0] = 2.
     model.parameters.TimeInfectedSymptoms[A0] = 6.
-    model.parameters.SerialInterval[A0] = 4.2
     model.parameters.TimeInfectedSevere[A0] = 12.
     model.parameters.TimeInfectedCritical[A0] = 8.
 

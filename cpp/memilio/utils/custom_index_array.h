@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -20,15 +20,9 @@
 #ifndef CUSTOMINDEXARRAY_H
 #define CUSTOMINDEXARRAY_H
 
-#include "memilio/config.h"
-#include "memilio/math/eigen.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/utils/index.h"
 #include "memilio/utils/stl_util.h"
-
-#include <vector>
-#include <array>
-#include <numeric>
 
 namespace
 {
@@ -164,6 +158,14 @@ public:
     using Type              = Typ;
     using Index             = ::mio::Index<Tags...>;
     using InternalArrayType = Eigen::Array<Type, Eigen::Dynamic, 1>;
+
+    /// @brief Create an empty CustomIndexArray with size 0. Use the resize member function to add entries.
+    explicit CustomIndexArray()
+        : m_dimensions(Index::Zero())
+        , m_numel(0)
+        , m_y()
+    {
+    }
 
     /**
      * @brief CustomIndexArray constructor, that initializes the array
@@ -321,6 +323,18 @@ public:
     size_t get_flat_index(Index const& index) const
     {
         return (Eigen::Index)flatten_index(index, m_dimensions);
+    }
+
+    /**
+     * @brief Set multiple entries to the same value.
+     * @param indices A list of indices to be set to the same value.
+     * @param value The value to set.
+     */
+    void set_multiple(const std::vector<typename CustomIndexArray<Typ, Tags...>::Index>& indices, const Typ& value)
+    {
+        for (const auto& index : indices) {
+            m_y[get_flat_index(index)] = value;
+        }
     }
 
 private:

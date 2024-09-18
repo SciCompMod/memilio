@@ -42,7 +42,7 @@ TEST(RandomNumberGenerator, subsequences)
 TEST(TestDiscreteDistribution, generate)
 {
     auto distribution = mio::DiscreteDistributionInPlace<size_t>();
-    auto rng = mio::RandomNumberGenerator();
+    auto rng          = mio::RandomNumberGenerator();
 
     std::vector<double> weights;
     for (size_t i = 0; i < 50; i++) {

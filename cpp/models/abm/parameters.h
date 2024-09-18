@@ -17,22 +17,21 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_PARAMETERS_H
-#define EPI_ABM_PARAMETERS_H
+#ifndef MIO_ABM_PARAMETERS_H
+#define MIO_ABM_PARAMETERS_H
 
 #include "abm/mask_type.h"
 #include "abm/time.h"
 #include "abm/virus_variant.h"
 #include "abm/vaccine.h"
+#include "abm/test_type.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/uncertain_value.h"
-#include "memilio/math/eigen.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include <limits>
-#include <set>
 
 namespace mio
 {
@@ -43,7 +42,7 @@ namespace abm
  * @brief Time that a Person is infected but not yet infectious.
  */
 struct IncubationPeriod {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -55,7 +54,7 @@ struct IncubationPeriod {
 };
 
 struct InfectedNoSymptomsToSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -67,7 +66,7 @@ struct InfectedNoSymptomsToSymptoms {
 };
 
 struct InfectedNoSymptomsToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -79,7 +78,7 @@ struct InfectedNoSymptomsToRecovered {
 };
 
 struct InfectedSymptomsToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -91,7 +90,7 @@ struct InfectedSymptomsToRecovered {
 };
 
 struct InfectedSymptomsToSevere {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -103,7 +102,7 @@ struct InfectedSymptomsToSevere {
 };
 
 struct SevereToCritical {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -115,7 +114,7 @@ struct SevereToCritical {
 };
 
 struct SevereToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -127,7 +126,7 @@ struct SevereToRecovered {
 };
 
 struct CriticalToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -139,7 +138,7 @@ struct CriticalToRecovered {
 };
 
 struct CriticalToDead {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -151,7 +150,7 @@ struct CriticalToDead {
 };
 
 struct RecoveredToSusceptible {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -212,7 +211,7 @@ struct InfectivityDistributions {
  * @brief Probability that an Infection is detected.
  */
 struct DetectInfection {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -227,7 +226,7 @@ struct DetectInfection {
  * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
  */
 struct MaskProtection {
-    using Type = CustomIndexArray<UncertainValue, MaskType>;
+    using Type = CustomIndexArray<UncertainValue<>, MaskType>;
     static Type get_default(AgeGroup /*size*/)
     {
         return Type({MaskType::Count}, 1.);
@@ -312,49 +311,58 @@ struct HighViralLoadProtectionFactor {
  * @brief Parameters that describe the reliability of a test.
  */
 struct TestParameters {
-    UncertainValue sensitivity;
-    UncertainValue specificity;
-};
+    UncertainValue<> sensitivity;
+    UncertainValue<> specificity;
+    TimeSpan required_time;
+    TestType type;
 
-struct GenericTest {
-    using Type = TestParameters;
-    static Type get_default()
+    /**
+      * serialize this. 
+      * @see mio::serialize
+      */
+    template <class IOContext>
+    void serialize(IOContext& io) const
     {
-        return Type{0.9, 0.99};
+        auto obj = io.create_object("TestParameters");
+        obj.add_element("Sensitivity", sensitivity);
+        obj.add_element("Specificity", specificity);
     }
-    static std::string name()
+
+    /**
+      * deserialize an object of this class.
+      * @see mio::deserialize
+      */
+    template <class IOContext>
+    static IOResult<TestParameters> deserialize(IOContext& io)
     {
-        return "GenericTest";
+        auto obj  = io.expect_object("TestParameters");
+        auto sens = obj.expect_element("Sensitivity", mio::Tag<UncertainValue<>>{});
+        auto spec = obj.expect_element("Specificity", mio::Tag<UncertainValue<>>{});
+        return apply(
+            io,
+            [](auto&& sens_, auto&& spec_) {
+                return TestParameters{sens_, spec_};
+            },
+            sens, spec);
     }
 };
 
 /**
- * @brief Reliability of an AntigenTest.
+ * @brief Store a map from the TestTypes to their TestParameters.
  */
-struct AntigenTest : public GenericTest {
-    using Type = TestParameters;
-    static Type get_default()
+struct TestData {
+    using Type = CustomIndexArray<TestParameters, TestType>;
+    static auto get_default(AgeGroup /*size*/)
     {
-        return Type{0.8, 0.88};
+        Type default_val                 = Type({TestType::Count});
+        default_val[{TestType::Generic}] = TestParameters{0.9, 0.99, hours(48), TestType::Generic};
+        default_val[{TestType::Antigen}] = TestParameters{0.8, 0.88, minutes(30), TestType::Antigen};
+        default_val[{TestType::PCR}]     = TestParameters{0.9, 0.99, hours(48), TestType::PCR};
+        return default_val;
     }
     static std::string name()
     {
-        return "AntigenTest";
-    }
-};
-
-/**
- * @brief Reliability of a PCRTest.
- */
-struct PCRTest : public GenericTest {
-    using Type = TestParameters;
-    static Type get_default()
-    {
-        return Type{0.9, 0.99};
-    }
-    static std::string name()
-    {
-        return "PCRTest";
+        return "TestData";
     }
 };
 
@@ -374,10 +382,25 @@ struct LockdownDate {
 };
 
 /**
+ * @brief Duration of quarantine.
+ */
+struct QuarantineDuration {
+    using Type = TimeSpan;
+    static auto get_default(AgeGroup /*size*/)
+    {
+        return days(10);
+    }
+    static std::string name()
+    {
+        return "QuarantineDuration";
+    }
+};
+
+/**
  * @brief Parameter for the exponential distribution to decide if a Person goes shopping.
  */
 struct BasicShoppingRate {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, AgeGroup>;
     static auto get_default(AgeGroup size)
     {
         return Type({size}, 1.0);
@@ -500,9 +523,7 @@ struct AgeGroupGotoSchool {
     using Type = CustomIndexArray<bool, AgeGroup>;
     static Type get_default(AgeGroup num_agegroups)
     {
-        auto a = Type(num_agegroups, false);
-        a[AgeGroup(1)] = true;
-        return a;
+        return Type(num_agegroups, false);
     }
     static std::string name()
     {
@@ -517,10 +538,7 @@ struct AgeGroupGotoWork {
     using Type = CustomIndexArray<bool, AgeGroup>;
     static Type get_default(AgeGroup num_agegroups)
     {
-        auto a = Type(num_agegroups, false);
-        a[AgeGroup(2)] = true;
-        a[AgeGroup(3)] = true;
-        return a;
+        return Type(num_agegroups, false);
     }
     static std::string name()
     {
@@ -533,9 +551,10 @@ using ParametersBase =
                  InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
                  CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
                  InfectivityDistributions, DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate,
-                 SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
-                 GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
-                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
+                 QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
+                 GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
+                 AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor,
+                 TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
@@ -568,13 +587,26 @@ struct ContactRates {
     }
 };
 
+// If true, consider the capacity of the Cell%s of this Location for the computation of relative transmission risk.
+struct UseLocationCapacityForTransmissions {
+    using Type = bool;
+    static Type get_default(AgeGroup)
+    {
+        return false;
+    }
+    static std::string name()
+    {
+        return "UseLocationCapacityForTransmissions";
+    }
+};
+
 /**
  * @brief Parameters of the Infection that depend on the Location.
  */
-using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates>;
+using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates, UseLocationCapacityForTransmissions>;
 
 /**
- * @brief Parameters of the simulation that are the same everywhere within the World.
+ * @brief Parameters of the simulation that are the same everywhere within the Model.
  */
 class Parameters : public ParametersBase
 {
@@ -609,16 +641,16 @@ public:
             }
 
             if (this->get<InfectedNoSymptomsToSymptoms>()[{VirusVariant::Wildtype, i}] < 0.0) {
-                log_error(
-                    "Constraint check: Parameter InfectedNoSymptomsToSymptoms of age group {:.0f} smaller than {:d}",
-                    (size_t)i, 0);
+                log_error("Constraint check: Parameter InfectedNoSymptomsToSymptoms of age group {:.0f} smaller "
+                          "than {:d}",
+                          (size_t)i, 0);
                 return true;
             }
 
             if (this->get<InfectedNoSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
-                log_error(
-                    "Constraint check: Parameter InfectedNoSymptomsToRecovered of age group {:.0f} smaller than {:d}",
-                    (size_t)i, 0);
+                log_error("Constraint check: Parameter InfectedNoSymptomsToRecovered of age group {:.0f} smaller "
+                          "than {:d}",
+                          (size_t)i, 0);
                 return true;
             }
 

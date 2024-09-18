@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef EPI_ABM_MASK_TYPE_H
-#define EPI_ABM_MASK_TYPE_H
+#ifndef MIO_ABM_MASK_TYPE_H
+#define MIO_ABM_MASK_TYPE_H
 
 #include <cstdint>
 

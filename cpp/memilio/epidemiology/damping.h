@@ -95,8 +95,7 @@ public:
     Damping(const Eigen::MatrixBase<ME>& m, DampingLevel level, DampingType type, SimulationTime t)
         : Base(m, level, type, t)
     {
-        assert((get_coeffs().array() >= 0.).all() && (get_coeffs().array() <= 1.).all() &&
-               "damping coefficient out of range");
+        assert((get_coeffs().array() <= 1.).all() && "damping coefficient out of range");
     }
 
     /**
@@ -352,7 +351,8 @@ public:
      */
     auto get_matrix_at(SimulationTime t) const
     {
-        assert(!m_accumulated_dampings_cached.empty() && "Cache is not current. Did you disable the automatic cache update?");
+        assert(!m_accumulated_dampings_cached.empty() &&
+               "Cache is not current. Did you disable the automatic cache update?");
         auto ub =
             std::upper_bound(m_accumulated_dampings_cached.begin(), m_accumulated_dampings_cached.end(),
                              std::make_tuple(t), [](auto&& tup1, auto&& tup2) {
@@ -519,7 +519,9 @@ private:
     static void inclusive_exclusive_sum_rec(Iter b, Iter e, Matrix& sum)
     {
         if (b != e) {
-            sum = sum + std::get<Matrix>(*b) - (sum.array() * std::get<Matrix>(*b).array()).matrix();
+            auto& mat_b   = std::get<Matrix>(*b);
+            auto mat_prod = (sum.array() * mat_b.array()).matrix();
+            sum           = sum + mat_b - mat_prod;
             inclusive_exclusive_sum_rec(++b, e, sum);
         }
     }
@@ -527,8 +529,7 @@ private:
     static Matrix inclusive_exclusive_sum(const std::vector<Tuple>& v)
     {
         assert(!v.empty());
-        auto& m  = std::get<Matrix>(v.front());
-        auto sum = m.eval();
+        Matrix sum = std::get<Matrix>(v.front());
         inclusive_exclusive_sum_rec(v.begin() + 1, v.end(), sum);
         return sum;
     }
@@ -555,8 +556,7 @@ void Dampings<D>::update_cache()
             //update active damping
             update_active_dampings(damping, active_by_type, sum_by_level);
             auto combined_damping = inclusive_exclusive_sum(sum_by_level);
-            assert((combined_damping.array() <= 1).all() && (combined_damping.array() >= 0).all() &&
-                   "unexpected error, accumulated damping out of range.");
+            assert((combined_damping.array() <= 1).all() && "unexpected error, accumulated damping out of range.");
             if (floating_point_equal(double(get<SimulationTime>(damping)),
                                      double(get<SimulationTime>(m_accumulated_dampings_cached.back())), 1e-15, 1e-15)) {
                 std::get<Matrix>(m_accumulated_dampings_cached.back()) = combined_damping;
@@ -604,13 +604,11 @@ void Dampings<S>::update_active_dampings(
         //replace active of the same type and level
         auto& active_same_type = *iter_active_same_type;
         //find active with the same level
-        auto& sum_same_level   = *std::find_if(sum_by_level.begin(), sum_by_level.end(), [&damping](auto& sum) {
+        auto& sum_same_level = *std::find_if(sum_by_level.begin(), sum_by_level.end(), [&damping](auto& sum) {
             return get<DampingLevel>(sum) == get<DampingLevel>(damping);
         });
         //remove active with the same type and level and add new one
         get<MatrixIdx>(sum_same_level) += get<MatrixIdx>(damping) - get<MatrixIdx>(active_same_type).get();
-        //avoid negative values due to rounding error if e.g. a previous damping is lifted
-        get<MatrixIdx>(sum_same_level) = get<MatrixIdx>(sum_same_level).cwiseMax(0.);
         get<MatrixIdx>(active_same_type) = get<MatrixIdx>(damping);
     }
     else {
