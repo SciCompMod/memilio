@@ -174,7 +174,7 @@ public:
      * @param[in] age AgeGroup of the person.
      * @return Reference to the newly created Person.
      */
-    Person& add_person(const LocationId id, AgeGroup age);
+    Person& add_person(const LocationId id, AgeGroup age, uint32_t counter = 0);
 
     /**
      * @brief Get a range of all Location%s in the World.

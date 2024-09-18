@@ -381,7 +381,8 @@ mio::AgeGroup determine_age_group(uint32_t age)
     }
 }
 
-void create_world_from_data(mio::abm::World& world, const std::string& filename, const int max_number_persons)
+void create_world_from_data(mio::abm::World& world, const std::string& filename, const int max_number_persons,
+                            const int run_number)
 {
 
     // Open File; we use the cleaned up version of https://zenodo.org/records/13318436
@@ -525,7 +526,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename,
         auto it_person       = persons.find(person_id);
         if (it_person == persons.end()) {
             auto home    = locations.find(home_id)->second;
-            auto& person = world.add_person(home, determine_age_group(age));
+            auto& person = world.add_person(home, determine_age_group(age), run_number * 1000000);
             person.set_mask_preferences({0.0, -0.1, -0.1, -0.3, -0.2, -0.0, -0.0, -0.0, -0.0, -0.0, 0.0, -0.0});
             person.set_assigned_location(home);
             person.set_assigned_location(hospital);
@@ -1235,7 +1236,7 @@ void create_sampled_world(
     mio::abm::World& world, const fs::path& input_dir, const mio::abm::TimePoint& t0, int max_num_persons,
     mio::Date start_date_sim, double perc_easter_event,
     mio::CustomIndexArray<double, mio::AgeGroup, mio::osecir::InfectionState> initial_infection_distribution,
-    std::map<mio::Date, std::vector<std::pair<uint32_t, uint32_t>>> vacc_map)
+    std::map<mio::Date, std::vector<std::pair<uint32_t, uint32_t>>> vacc_map, uint32_t run_number)
 {
     mio::unused(start_date_sim);
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
@@ -1246,7 +1247,7 @@ void create_sampled_world(
 
     // Create the world object from statistical data.
     create_world_from_data(world, (input_dir / "mobility/braunschweig_result_ffa8_modified2.csv").generic_string(),
-                           max_num_persons);
+                           max_num_persons, run_number);
     world.use_migration_rules(false);
     restart_timer(timer, "time taken for braunschweig trip input");
 
@@ -1808,7 +1809,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
             world.get_rng() = rng;
 
             create_sampled_world(world, input_dir, t0, max_num_persons, start_date, perc_easter_event,
-                                 initial_infection, vacc_map);
+                                 initial_infection, vacc_map, j);
 
             restart_timer(timer, "time taken for create sampled world");
             auto sim = mio::abm::Simulation(t0, std::move(world));
@@ -2075,7 +2076,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
             world.get_rng() = rng;
 
             create_sampled_world(world, input_dir, t0, max_num_persons, start_date, perc_easter_event,
-                                 initial_infection, vacc_map);
+                                 initial_infection, vacc_map, (uint32_t)run_idx);
 
             restart_timer(timer, "time taken for create sampled world");
             auto sim = mio::abm::Simulation(t0, std::move(world));
@@ -2453,11 +2454,11 @@ int main(int argc, char** argv)
         // 3: testing prob symptomatic
         // 4: perc have to test if npi active
 
-        // std::vector<std::pair<double, double>> grid_boundaries = {
-        //     {1.4, 2.0}, {2.5, 5.5}, {0.35, 0.8}, {0.02, 0.045}, {3, 15}};
+        std::vector<std::pair<double, double>> grid_boundaries = {
+            {1.4, 2.0}, {2.5, 5.5}, {0.35, 0.8}, {0.02, 0.045}, {3, 15}};
         // std::vector<int> points_per_dim = {6, 6, 6, 6, 6};
 
-        std::vector<double> grid_boundaries = {1.76, 3.7, 0.53, 0.035, 15.0};
+        // std::vector<double> grid_boundaries = {1.76, 3.7, 0.53, 0.035, 15.0};
         // std::vector<double> grid_boundaries = {1.76, 3.7, 0.53, 0.03, 7.8};
         // std::vector<double> grid_boundaries = {1.88, 3.7, 0.35, 0.035, 12.6};
         std::vector<int> points_per_dim = {6, 6, 6, 6, 6};

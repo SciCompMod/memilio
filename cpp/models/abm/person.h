@@ -128,7 +128,7 @@ public:
      * @param[in] age The AgeGroup of the Person.
      * @param[in] person_id Index of the Person.
      */
-    explicit Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age,
+    explicit Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age, uint32_t counter = 0,
                     uint32_t person_id = INVALID_PERSON_ID);
 
     /**
@@ -553,7 +553,7 @@ private:
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
-    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
+    Counter<uint32_t> m_rng_counter; ///< counter for RandomNumberGenerator.
     bool m_should_be_logged     = true; ///< Flag to determine if the Person should be logged.
     bool m_goes_to_easter_event = false; ///< Flag to determine if the Person goes to an Easter event.
 };
