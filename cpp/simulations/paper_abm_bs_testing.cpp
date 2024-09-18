@@ -1008,17 +1008,17 @@ double calculate_rmse_from_results(const fs::path& data_dir, mio::TimeSeries<Sca
     // for (auto& entry : sim_data_vec_icu) {
     //     std::cout << entry << " ";
     // }
-    std::cout << std::endl;
-    std::cout << "Real data conf: ";
-    for (auto& entry : real_data_conf_vec) {
-        std::cout << entry << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "Simulated data conf: ";
-    for (auto& entry : sim_data_vec_conf) {
-        std::cout << entry << " ";
-    }
-    std::cout << std::endl;
+    // std::cout << std::endl;
+    // std::cout << "Real data conf: ";
+    // for (auto& entry : real_data_conf_vec) {
+    //     std::cout << entry << " ";
+    // }
+    // std::cout << std::endl;
+    // std::cout << "Simulated data conf: ";
+    // for (auto& entry : sim_data_vec_conf) {
+    //     std::cout << entry << " ";
+    // }
+    // std::cout << std::endl;
     // now we calculate the RMSE
     double rmse_dead = 0;
     double rmse_icu  = 0;
@@ -1589,11 +1589,13 @@ void add_npi_testing_strategies_to_world(mio::abm::Simulation& sim, mio::abm::Ti
     auto antigen_test = mio::abm::TestType::Antigen;
     auto antigen_test_parameters =
         sim.get_world().parameters.get<mio::abm::TestData>()[antigen_test]; // Test parameters
-    auto testing_min_time    = mio::abm::days(3);
-    auto vector_sympt_states = std::vector<mio::abm::InfectionState>{mio::abm::InfectionState::InfectedSymptoms};
-    auto vector_asympt_states =
-        std::vector<mio::abm::InfectionState>{mio::abm::InfectionState::InfectedNoSymptoms,
-                                              mio::abm::InfectionState::Exposed, mio::abm::InfectionState::Susceptible};
+    auto testing_min_time     = mio::abm::days(3);
+    auto vector_sympt_states  = std::vector<mio::abm::InfectionState>{mio::abm::InfectionState::InfectedSymptoms,
+                                                                      mio::abm::InfectionState::InfectedSevere,
+                                                                      mio::abm::InfectionState::InfectedCritical};
+    auto vector_asympt_states = std::vector<mio::abm::InfectionState>{
+        mio::abm::InfectionState::InfectedNoSymptoms, mio::abm::InfectionState::Exposed,
+        mio::abm::InfectionState::Susceptible, mio::abm::InfectionState::Recovered};
 
     auto testing_criteria_asympt = mio::abm::TestingCriteria({}, vector_asympt_states);
     auto testing_criteria_sympt  = mio::abm::TestingCriteria({}, vector_sympt_states);
@@ -2401,8 +2403,8 @@ int main(int argc, char** argv)
     rng.seed(seeds);
     rng.synchronize();
 
-    std::string input_dir = "/p/project1/loki/memilio/memilio/data";
-    // std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
+    // std::string input_dir = "/p/project1/loki/memilio/memilio/data";
+    std::string input_dir = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data";
     // std::string input_dir = "/Users/david/Documents/HZI/memilio/data";
     // std::string input_dir       = "C:/Users/korf_sa/Documents/rep/data";
 
