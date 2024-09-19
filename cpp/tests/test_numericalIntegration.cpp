@@ -96,8 +96,6 @@ TYPED_TEST(TestVerifyExplicitNumericalIntegrator, sine)
 
         stepper.step(f, this->y[i], t, this->dt, this->y[i + 1]);
 
-        // printf("\n %.8f\t %.8f ", y[i + 1][0], sol[i + 1][0]);
-
         this->err += std::pow(std::abs(this->y[i + 1][0] - this->sol[i + 1][0]), 2.0);
     }
 
