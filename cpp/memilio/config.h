@@ -31,19 +31,30 @@
 using ScalarType = double;
 
 template <typename FP>
-struct ZeroTolFP {
-    static_assert(std::is_floating_point<FP>::value, "ZeroTolFP is only valid for floating point types.");
-    static constexpr FP value = FP(1e-6);
+struct Limits {
+    static constexpr FP zero_tolerance()
+    {
+        // The following expression is always false. It is used to ensure the compiler checks all specializations.
+        static_assert(!std::is_same_v<std::void_t<FP>, void>,
+                      "No tolerance available for this type. Please add a specialization in config.h");
+        return FP(0);
+    }
 };
 
 template <>
-struct ZeroTolFP<float> {
-    static constexpr float value = 1e-6f;
+struct Limits<float> {
+    static constexpr float zero_tolerance()
+    {
+        return 1e-6f;
+    }
 };
 
 template <>
-struct ZeroTolFP<double> {
-    static constexpr double value = 1e-12;
+struct Limits<double> {
+    static constexpr double zero_tolerance()
+    {
+        return 1e-12;
+    }
 };
 
 #endif
