@@ -29,11 +29,7 @@ import os
 import unittest
 
 import numpy as np
-import logging
-import json
-# suppress all autograph warnings from tensorflow
 
-# logging.getLogger("tensorflow").setLevel(logging.ERROR)
 import tensorflow as tf
 tf.get_logger().setLevel('ERROR')
 
@@ -69,9 +65,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
            autospec=True)
     def test_simulation_run_nodamp(self, mock_transform_mobility,
                                    mock_update_mobility, mock_baseline, mock_graph):
-        # Mock the behavior of the mobility transformation function,
-        # but it doesn't return anything.
-        # So, we just need it to be called without side effects.
+
         mock_transform_mobility.side_effect = lambda: None
         mock_update_mobility.side_effect = lambda directory, mobility_file: None
 
@@ -112,9 +106,6 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         self, mock_transform_mobility, mock_update_mobility,
             mock_baseline, mock_graph, mock_population):
 
-       # Mock the behavior of the mobility transformation function,
-        # but it doesn't return anything.
-        # So, we just need it to be called without side effects.
         mock_transform_mobility.side_effect = lambda: None
         mock_update_mobility.side_effect = lambda directory, mobility_file: None
 
@@ -199,8 +190,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
            autospec=True)
     def test_simulation_run_withdamp(self, mock_transform_mobility, mock_update_mobility,
                                      mock_minimum, mock_baseline, mock_graph):
-        # Mock the behavior of the mobility transformation function, but it doesn't return anything.
-        # So, we just need it to be called without side effects.
+
         mock_transform_mobility.side_effect = lambda: None
         mock_update_mobility.side_effect = lambda directory, mobility_file: None
 
@@ -310,8 +300,6 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
            return_value=np.random.randint(0, 700001, size=(400, 6)))
     @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.scale_data',
            autospec=True)
-    # @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.generate_dampings_withshadowdamp',
-    #       return_value=[4, 6])
     @patch('memilio.epidata.transformMobilityData.updateMobility2022')
     @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.transform_mobility_directory',
            autospec=True)
