@@ -98,6 +98,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
 
 #### test data genertion no damp ####
 
+
     @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.getBaselineMatrix',
            return_value=0.6 * np.ones((6, 6)))
     @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.make_graph',
@@ -147,28 +148,44 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(data_2['labels'][0]), label_width_2)
         self.assertEqual(len(data_2['labels'][0][0]), 48)
 
-    # @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.getBaselineMatrix',
-    #        return_value=0.6 * np.ones((6, 6)))
+    @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.getBaselineMatrix',
+           return_value=0.6 * np.ones((6, 6)))
+    @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.get_population',
+           return_value=np.random.randint(0, 700001, size=(400, 6)))
+    # create mock graph
+    @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.make_graph',
+           return_value=graph)
+    @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.scale_data',
+           autospec=True)
+    @patch('memilio.epidata.transformMobilityData.updateMobility2022')
+    @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.transform_mobility_directory',
+           autospec=True)
+    def test_data_generation_save_nodamp(
+            self, mock_transform_mobility, mock_update_mobility, mock_scale_data,
+            mock_population, mock_baseline, mock_graph):
 
-    # @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.get_population',
-    #        return_value= np.random.randint(0, 700001, size=(400, 6)))
-    # # create mock graph
-    # @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.make_graph',
-    #        return_value= graph)
+        mock_transform_mobility.side_effect = lambda: None
+        mock_update_mobility.side_effect = lambda directory, mobility_file: None
 
-    # def test_data_generation_save_nodamp(
-    #         self, mock_population, mock_baseline, mock_graph):
+        # Mock the return value of scale_data with dummy inputs and labels
+        # Assuming scaled inputs and labels are 4D arrays based on the original function's output
+        mock_scale_data.return_value = (np.random.rand(
+            10, 8, 10, 6), np.random.rand(10, 8, 10, 6))
 
-    #     input_width = 2
-    #     label_width = 3
-    #     num_runs = 1
+        input_width = 2
+        label_width = 3
+        num_runs = 1
 
-    #     data_generation_nodamp.generate_data(num_runs, self.path, input_width,
-    #                                  label_width)
-    #     self.assertEqual(len(os.listdir(self.path)), 1)
+        # Call the function being tested
+        data_generation_nodamp.generate_data(num_runs, self.path, input_width,
+                                             label_width)
 
-    #     self.assertEqual(os.listdir(self.path),
-    #                      ['data_secir_groups.pickle'])
+        # Check the number of generated files
+        self.assertEqual(len(os.listdir(self.path)), 1)
+
+        # Check the contents of the directory
+        self.assertEqual(os.listdir(self.path),
+                         ['data_secir_age_groups.pickle'])
 
     @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.getMinimumMatrix',
            return_value=0 * np.ones((6, 6)))
@@ -178,7 +195,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
     @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.make_graph',
            return_value=graph)
     @patch('memilio.epidata.transformMobilityData.updateMobility2022')
-    @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.transform_mobility_directory',
+    @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.transform_mobility_directory',
            autospec=True)
     def test_simulation_run_withdamp(self, mock_transform_mobility, mock_update_mobility,
                                      mock_minimum, mock_baseline, mock_graph):
@@ -228,6 +245,8 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(damping_coeff2), len(dampings2))
         self.assertEqual(len(damping_coeff3), len(dampings3))
 
+# test data generation with dampings
+
     @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.getMinimumMatrix',
            return_value=0 * np.ones((6, 6)))
     @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.getBaselineMatrix',
@@ -239,7 +258,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
            return_value=np.random.randint(0, 700001, size=(400, 6)))
     # mock transform directory function
     @patch('memilio.epidata.transformMobilityData.updateMobility2022')
-    @patch('memilio.surrogatemodel.GNN.data_generation_nodamp.transform_mobility_directory', autospec=True)
+    @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.transform_mobility_directory', autospec=True)
     def test_data_generation_runs_withdamp(
             self, mock_transform_mobility, mock_update_mobility,
             mock_minimum, mock_baseline, mock_graph, mock_population):
@@ -279,17 +298,44 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(data_2['labels'][0]), label_width_2)
         self.assertEqual(len(data_2['labels'][0][0]), 48)
 
+ # test saving for model with dampings
+    @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.getMinimumMatrix',
+           return_value=0 * np.ones((6, 6)))
+    @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.getBaselineMatrix',
+           return_value=0.6 * np.ones((6, 6)))
+    # create mock graph
+    @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.make_graph',
+           return_value=graph)
+    @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.get_population',
+           return_value=np.random.randint(0, 700001, size=(400, 6)))
+    @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.scale_data',
+           autospec=True)
+    # @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.generate_dampings_withshadowdamp',
+    #       return_value=[4, 6])
+    @patch('memilio.epidata.transformMobilityData.updateMobility2022')
+    @patch('memilio.surrogatemodel.GNN.data_generation_withdamp.transform_mobility_directory',
+           autospec=True)
+    def test_data_generation_save_withdamp(
+            self, mock_transform_mobility, mock_update_mobility, mock_scale_data,
+            mock_population, mock_baseline, mcok_minimum, mock_graph):
 
-    # def test_data_generation_save_withdamp(
-    #         self, mock_population, mock_baseline, mock_minimum):
-    #     input_width = 2
-    #     label_width = 3
-    #     num_runs = 1
-    #     dampings = 3
-    #     data_generation_withdamp.generate_data(num_runs, self.path, "", input_width,
-    #                                   label_width)
-    #     self.assertEqual(len(os.listdir(self.path)), 1)
-    #     self.assertEqual(os.listdir(self.path),
-    #                      ['data_secir_groups.pickle'])
+        mock_transform_mobility.side_effect = lambda: None
+        mock_update_mobility.side_effect = lambda directory, mobility_file: None
+
+        mock_scale_data.return_value = (np.random.rand(
+            10, 8, 10, 6), np.random.rand(10, 8, 10, 6))
+
+        input_width = 5
+        label_width = 20
+        num_runs = 2
+        num_dampings = 2
+        data = data_generation_withdamp.generate_data(num_runs, self.path, input_width,
+                                                      label_width, num_dampings, save_data=True)
+
+        self.assertEqual(len(os.listdir(self.path)), 1)
+        self.assertEqual(os.listdir(self.path),
+                         ['data_secir_age_groups.pickle'])
+
+
 if __name__ == '__main__':
     unittest.main()
