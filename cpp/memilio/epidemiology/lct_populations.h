@@ -101,7 +101,7 @@ public:
     }
 
     /**
-     @brief Gets the first index of a group in the flat array.
+    * @brief Gets the first index of a group in the flat array.
     * @tparam group The group for which the index should be returned.
     * @return The index of the first entry of group in the flat array.
     */
