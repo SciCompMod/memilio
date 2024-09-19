@@ -152,47 +152,56 @@ private:
         using LctState = typename std::tuple_element_t<Group, tupleLctStates>;
 
         // Specify first indices of the vector slices considered.
-        Eigen::Index first_index_group = this->populations.template get_first_index_group<Group>();
-        Eigen::Index count_InfStates   = (Eigen::Index)InfectionState::Count;
-        Eigen::Index first_index_comps = Group * count_InfStates;
+        // First index of the group Group in an vector including all subcompartments.
+        Eigen::Index first_index_group_subcomps = this->populations.template get_first_index_group<Group>();
+        Eigen::Index count_InfStates            = (Eigen::Index)InfectionState::Count;
+        // First index of the group Group in an vector including all compartments without a resolution
+        // in subcompartments.
+        Eigen::Index first_index_group_comps = Group * count_InfStates;
 
         // Use segment of the vector subcompartments of each InfectionState and sum up the values of subcompartments.
-        compartments[first_index_comps + (Eigen::Index)InfectionState::Susceptible] =
-            subcompartments[first_index_group];
-        compartments[first_index_comps + (Eigen::Index)InfectionState::Exposed] =
+        compartments[first_index_group_comps + (Eigen::Index)InfectionState::Susceptible] =
+            subcompartments[first_index_group_subcomps];
+        compartments[first_index_group_comps + (Eigen::Index)InfectionState::Exposed] =
             subcompartments
                 .segment(
-                    first_index_group +
+                    first_index_group_subcomps +
                         std::tuple_element_t<Group,
                                              tupleLctStates>::template get_first_index<InfectionState::Exposed>(),
                     std::tuple_element_t<Group,
                                          tupleLctStates>::template get_num_subcompartments<InfectionState::Exposed>())
                 .sum();
-        compartments[first_index_comps + (Eigen::Index)InfectionState::InfectedNoSymptoms] =
+        compartments[first_index_group_comps + (Eigen::Index)InfectionState::InfectedNoSymptoms] =
             subcompartments
-                .segment(first_index_group + LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
+                .segment(first_index_group_subcomps +
+                             LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
                          LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>())
                 .sum();
-        compartments[first_index_comps + (Eigen::Index)InfectionState::InfectedSymptoms] =
+        compartments[first_index_group_comps + (Eigen::Index)InfectionState::InfectedSymptoms] =
             subcompartments
-                .segment(first_index_group + LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
+                .segment(first_index_group_subcomps +
+                             LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
                          LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>())
                 .sum();
-        compartments[first_index_comps + (Eigen::Index)InfectionState::InfectedSevere] =
+        compartments[first_index_group_comps + (Eigen::Index)InfectionState::InfectedSevere] =
             subcompartments
-                .segment(first_index_group + LctState::template get_first_index<InfectionState::InfectedSevere>(),
+                .segment(first_index_group_subcomps +
+                             LctState::template get_first_index<InfectionState::InfectedSevere>(),
                          LctState::template get_num_subcompartments<InfectionState::InfectedSevere>())
                 .sum();
-        compartments[first_index_comps + (Eigen::Index)InfectionState::InfectedCritical] =
+        compartments[first_index_group_comps + (Eigen::Index)InfectionState::InfectedCritical] =
             subcompartments
-                .segment(first_index_group + LctState::template get_first_index<InfectionState::InfectedCritical>(),
+                .segment(first_index_group_subcomps +
+                             LctState::template get_first_index<InfectionState::InfectedCritical>(),
                          LctState::template get_num_subcompartments<InfectionState::InfectedCritical>())
                 .sum();
-        compartments[first_index_comps + (Eigen::Index)InfectionState::Recovered] =
-            subcompartments[first_index_group + LctState::template get_first_index<InfectionState::Recovered>()];
-        compartments[first_index_comps + (Eigen::Index)InfectionState::Dead] =
-            subcompartments[first_index_group + std::tuple_element_t<Group, tupleLctStates>::template get_first_index<
-                                                    InfectionState::Dead>()];
+        compartments[first_index_group_comps + (Eigen::Index)InfectionState::Recovered] =
+            subcompartments[first_index_group_subcomps +
+                            LctState::template get_first_index<InfectionState::Recovered>()];
+        compartments[first_index_group_comps + (Eigen::Index)InfectionState::Dead] =
+            subcompartments[first_index_group_subcomps +
+                            std::tuple_element_t<Group,
+                                                 tupleLctStates>::template get_first_index<InfectionState::Dead>()];
         // Function call for next group if applicable.
         if constexpr (Group + 1 < m_groups) {
             compress_vector<Group + 1>(subcompartments, compartments);
