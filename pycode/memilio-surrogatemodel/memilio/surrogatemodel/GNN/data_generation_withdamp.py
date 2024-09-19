@@ -14,8 +14,8 @@ from memilio.simulation.osecir import (Index_InfectionState, interpolate_simulat
                                        interpolate_simulation_result)
 from memilio.epidata import geoModificationGermany as geoger
 
-from .GNN_utils import (transform_mobility_directory,
-                        make_graph, scale_data)
+from memilio.surrogatemodel.GNN.GNN_utils import (transform_mobility_directory,
+                                                  make_graph, scale_data)
 from memilio.surrogatemodel.utils_surrogatemodel import (
     getBaselineMatrix, remove_confirmed_compartments, get_population, getMinimumMatrix)
 
@@ -292,9 +292,9 @@ def generate_data(
 if __name__ == "__main__":
 
     input_width = 5
-    label_width = 100
-    number_of_dampings = 3
-    num_runs = 1000
+    label_width = 30
+    number_of_dampings = 1
+    num_runs = 2
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(
         os.path.dirname(
@@ -302,4 +302,4 @@ if __name__ == "__main__":
         'data_GNN_with_'+str(number_of_dampings)+'_dampings_test')
 
     generate_data(num_runs, path_data, input_width,
-                  label_width, number_of_dampings)
+                  label_width, number_of_dampings, save_data=False)

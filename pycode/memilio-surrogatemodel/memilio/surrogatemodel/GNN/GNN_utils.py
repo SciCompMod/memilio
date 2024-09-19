@@ -43,6 +43,8 @@ def transform_mobility_directory():
     tmd.updateMobility2022(
         directory, mobility_file='commuter_migration_scaled')
 
+    return directory
+
 
 def scale_data(data):
     num_groups = int(np.asarray(data['inputs']).shape[2] / 8)

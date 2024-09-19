@@ -3,7 +3,6 @@ import os
 import pickle
 import random
 import numpy as np
-import pandas as pd
 
 from progress.bar import Bar
 
@@ -13,9 +12,8 @@ from memilio.simulation import (AgeGroup, LogLevel, set_log_level)
 from memilio.simulation.osecir import (Index_InfectionState, interpolate_simulation_result, ParameterStudy,
                                        InfectionState, Model, interpolate_simulation_result)
 from memilio.epidata import geoModificationGermany as geoger
-import memilio.epidata.getPopulationData as gpd
-from .GNN_utils import (transform_mobility_directory,
-                        make_graph, scale_data)
+from memilio.surrogatemodel.GNN.GNN_utils import (transform_mobility_directory,
+                                                  make_graph, scale_data)
 from memilio.surrogatemodel.utils_surrogatemodel import (
     getBaselineMatrix, remove_confirmed_compartments, get_population)
 
@@ -202,7 +200,7 @@ if __name__ == "__main__":
 
     input_width = 5
     days = 30
-    num_runs = 1000
+    num_runs = 10000
 
     generate_data(num_runs, path_data, input_width,
-                  days)
+                  days, save_data=True)
