@@ -78,7 +78,7 @@ public:
                 size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
                 const ScalarType Nj    = pop[Sj] + pop[Ij] + pop[Rj];
-                const ScalarType divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+                const ScalarType divNj = (Nj < ZeroTolFP<double>::value) ? 0.0 : 1.0 / Nj;
 
                 ScalarType coeffStoI = contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                        static_cast<Eigen::Index>((size_t)j)) *

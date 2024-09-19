@@ -242,7 +242,7 @@ public:
                         pop[ISyNCj] + pop[SPIj] + pop[EPIj] + pop[INSPIj] + pop[ISyPIj] + pop[ISevPIj] + pop[ICrPIj] +
                         pop[INSPICj] + pop[ISyPICj] + pop[SIIj] + pop[EIIj] + pop[INSIIj] + pop[ISyIIj] + pop[ISevIIj] +
                         pop[ICrIIj] + pop[INSIICj] + pop[ISyIICj];
-                const FP divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+                const FP divNj = (Nj < ZeroTolFP<double>::value) ? 0.0 : 1.0 / Nj;
 
                 FP ext_inf_force_dummy = cont_freq_eff * divNj *
                                          params.template get<TransmissionProbabilityOnContact<FP>>()[(AgeGroup)i] *

@@ -86,7 +86,7 @@ public:
                 const size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
                 const ScalarType Nj    = pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj];
-                const ScalarType divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+                const ScalarType divNj = (Nj < ZeroTolFP<double>::value) ? 0.0 : 1.0 / Nj;
                 const ScalarType coeffStoE =
                     params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(i.get(), j.get()) *
                     params.template get<TransmissionProbabilityOnContact<FP>>()[i] * divNj;

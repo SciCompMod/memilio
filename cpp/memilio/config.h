@@ -26,7 +26,24 @@
 #define MIO_CONFIG_H
 
 #include "memilio/config_internal.h"
+#include <type_traits>
 
 using ScalarType = double;
+
+template <typename FP>
+struct ZeroTolFP {
+    static_assert(std::is_floating_point<FP>::value, "ZeroTolFP is only valid for floating point types.");
+    static constexpr FP value = FP(1e-6);
+};
+
+template <>
+struct ZeroTolFP<float> {
+    static constexpr float value = 1e-6f;
+};
+
+template <>
+struct ZeroTolFP<double> {
+    static constexpr double value = 1e-12;
+};
 
 #endif

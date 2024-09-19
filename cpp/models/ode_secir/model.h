@@ -130,7 +130,7 @@ public:
                                                                  static_cast<Eigen::Index>((size_t)j));
                 ScalarType Nj =
                     pop[Sj] + pop[Ej] + pop[INSj] + pop[ISyj] + pop[ISevj] + pop[ICrj] + pop[Rj]; // without died people
-                const ScalarType divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+                const ScalarType divNj = (Nj < ZeroTolFP<double>::value) ? 0.0 : 1.0 / Nj;
                 ScalarType dummy_S     = y[Si] * cont_freq_eff * divNj *
                                      params.template get<TransmissionProbabilityOnContact<FP>>()[i] *
                                      (params.template get<RelativeTransmissionNoSymptoms<FP>>()[j] * pop[INSj] +
