@@ -2456,7 +2456,7 @@ int main(int argc, char** argv)
         // 5: odds ratio for asymptomatic to symptomatic
 
         std::vector<std::pair<double, double>> grid_boundaries = {
-            {1.4, 2.0}, {2.5, 5.5}, {0.35, 0.7}, {0.01, 0.045}, {2, 15}};
+            {1.4, 2.0}, {2.5, 5.5}, {0.35, 0.85}, {0.01, 0.045}, {2, 15}};
         // std::vector<int> points_per_dim = {6, 6, 6, 6, 6};
 
         // std::vector<double> grid_boundaries = {1.76, 3.7, 0.53, 0.035, 15.0};
