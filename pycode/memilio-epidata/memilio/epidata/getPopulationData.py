@@ -52,8 +52,9 @@ def read_population_data(ref_year):
                 str(ref_year)
             req = requests.get(download_url)
             df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=6)
-        except pd.errors.ParserError:     
-            gd.default_print('Warning', 'Data for '+str(ref_year)+ 'is not available; downloading newest data instead.')       
+        except pd.errors.ParserError:
+            gd.default_print('Warning', 'Data for '+str(ref_year) +
+                             'is not available; downloading newest data instead.')
             ref_year = None
     if ref_year is None:
         download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv'
