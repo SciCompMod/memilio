@@ -32,6 +32,7 @@
 #include "memilio/io/io.h"
 #include "memilio/utils/date.h"
 #include "memilio/utils/logging.h"
+#include "memilio/utils/metaprogramming.h"
 #include "memilio/math/eigen.h"
 
 #include <string>
@@ -64,9 +65,9 @@ namespace details
 * @tparam EntryType The type of the data entry of the RKI data.
 */
 template <class LctState, class EntryType>
-void process_entry(Eigen::VectorXd& init, const EntryType& entry, int offset, const std::vector<ScalarType> staytimes,
-                   ScalarType inv_prob_SymptomsPerNoSymptoms, ScalarType severePerInfectedSymptoms,
-                   ScalarType criticalPerSevere, ScalarType scale_confirmed_cases)
+void process_entry(Vector<ScalarType>& init, const EntryType& entry, int offset,
+                   const std::vector<ScalarType> staytimes, ScalarType inv_prob_SymptomsPerNoSymptoms,
+                   ScalarType severePerInfectedSymptoms, ScalarType criticalPerSevere, ScalarType scale_confirmed_cases)
 {
 
     // Add confirmed cases at date to compartment Recovered.
@@ -346,7 +347,7 @@ IOResult<void> set_initial_data_from_confirmed_cases_notageres(Model& model, con
                                                                ScalarType total_population,
                                                                ScalarType scale_confirmed_cases)
 {
-    using LctState = typename std::tuple_element_t<0, typename Model::tupleLctStates>;
+    using LctStateGroup = type_at_index_t<0, typename Model::LctStatesGroups>;
 
     // Try to get rki data from path.
     BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_noage(path));
@@ -363,7 +364,7 @@ IOResult<void> set_initial_data_from_confirmed_cases_notageres(Model& model, con
         return failure(StatusCode::OutOfRange, path + ", specified date does not exist in RKI data.");
     }
     // Compute initial values for all subcompartments.
-    Eigen::VectorXd init = Eigen::VectorXd::Zero(LctState::Count);
+    Vector<ScalarType> init = Vector<ScalarType>::Zero(LctStateGroup::Count);
 
     // Define variables for parameters.
     std::vector<ScalarType> staytimes((size_t)InfectionState::Count, -1.);
@@ -396,25 +397,25 @@ IOResult<void> set_initial_data_from_confirmed_cases_notageres(Model& model, con
             if (offset == min_offset_needed) {
                 min_offset_needed_avail = true;
             }
-            process_entry<LctState, ConfirmedCasesNoAgeEntry>(
+            process_entry<LctStateGroup, ConfirmedCasesNoAgeEntry>(
                 init, entry, offset, staytimes, inv_prob_SymptomsPerNoSymptoms, prob_SeverePerInfectedSymptoms,
                 prob_CriticalPerSevere, scale_confirmed_cases);
         }
     }
 
     // Compute Recovered.
-    init[LctState::template get_first_index<InfectionState::Recovered>()] -=
-        init.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
-                     LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>() +
-                         LctState::template get_num_subcompartments<InfectionState::InfectedSevere>() +
-                         LctState::template get_num_subcompartments<InfectionState::InfectedCritical>())
+    init[LctStateGroup::template get_first_index<InfectionState::Recovered>()] -=
+        init.segment(LctStateGroup::template get_first_index<InfectionState::InfectedSymptoms>(),
+                     LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSymptoms>() +
+                         LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSevere>() +
+                         LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>())
             .sum();
-    init[LctState::template get_first_index<InfectionState::Recovered>()] -=
-        init[LctState::template get_first_index<InfectionState::Dead>()];
+    init[LctStateGroup::template get_first_index<InfectionState::Recovered>()] -=
+        init[LctStateGroup::template get_first_index<InfectionState::Dead>()];
 
     // Compute Susceptibles.
-    init[LctState::template get_first_index<InfectionState::Susceptible>()] =
-        total_population - init.segment(1, LctState::Count - 1).sum();
+    init[LctStateGroup::template get_first_index<InfectionState::Susceptible>()] =
+        total_population - init.segment(1, LctStateGroup::Count - 1).sum();
 
     // Check whether all necessary dates are available.
     if (!max_offset_needed_avail || !min_offset_needed_avail) {
@@ -423,7 +424,7 @@ IOResult<void> set_initial_data_from_confirmed_cases_notageres(Model& model, con
     }
 
     // Set computed initial value vector.
-    for (size_t i = 0; i < LctState::Count; i++) {
+    for (size_t i = 0; i < LctStateGroup::Count; i++) {
         model.populations[i] = init[i];
     }
 
@@ -463,13 +464,14 @@ IOResult<void> set_initial_data_from_confirmed_cases_notageres(Model& model, con
 *   such that the initial values are calculated for every age group if Group is zero at the beginning.
 * @returns Any io errors that happen during reading of the files and the calculation.
 */
-template <class Model, size_t Group = 0, std::enable_if_t<(Group < Model::m_groups) && (Group >= 0), bool> = true>
+template <class Model, size_t Group = 0>
 IOResult<void> set_initial_data_from_confirmed_cases_ageres(Model& model,
                                                             const std::vector<ConfirmedCasesDataEntry>& rki_data,
                                                             Date date, const std::vector<ScalarType>& total_population,
                                                             const std::vector<ScalarType>& scale_confirmed_cases)
 {
-    using LctState = typename std::tuple_element_t<Group, typename Model::tupleLctStates>;
+    static_assert((Group < Model::num_groups) && (Group >= 0), "The template parameter Group should be valid.");
+    using LctStateGroup = type_at_index_t<Group, typename Model::LctStatesGroups>;
 
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -485,7 +487,7 @@ IOResult<void> set_initial_data_from_confirmed_cases_ageres(Model& model,
     }
 
     // Compute initial values for all subcompartments of the group.
-    Eigen::VectorXd init = Eigen::VectorXd::Zero(LctState::Count);
+    Vector<ScalarType> init = Vector<ScalarType>::Zero(LctStateGroup::Count);
 
     // Define variables for parameters.
     std::vector<ScalarType> staytimes((size_t)InfectionState::Count, -1.);
@@ -521,7 +523,7 @@ IOResult<void> set_initial_data_from_confirmed_cases_ageres(Model& model,
                 if (offset == min_offset_needed) {
                     min_offset_needed_avail = true;
                 }
-                process_entry<LctState, ConfirmedCasesDataEntry>(
+                process_entry<LctStateGroup, ConfirmedCasesDataEntry>(
                     init, entry, offset, staytimes, inv_prob_SymptomsPerNoSymptoms, prob_SeverePerInfectedSymptoms,
                     prob_CriticalPerSevere, scale_confirmed_cases[Group]);
             }
@@ -529,18 +531,18 @@ IOResult<void> set_initial_data_from_confirmed_cases_ageres(Model& model,
     }
 
     // Compute Recovered.
-    init[LctState::template get_first_index<InfectionState::Recovered>()] -=
-        init.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
-                     LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>() +
-                         LctState::template get_num_subcompartments<InfectionState::InfectedSevere>() +
-                         LctState::template get_num_subcompartments<InfectionState::InfectedCritical>())
+    init[LctStateGroup::template get_first_index<InfectionState::Recovered>()] -=
+        init.segment(LctStateGroup::template get_first_index<InfectionState::InfectedSymptoms>(),
+                     LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSymptoms>() +
+                         LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSevere>() +
+                         LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>())
             .sum();
-    init[LctState::template get_first_index<InfectionState::Recovered>()] -=
-        init[LctState::template get_first_index<InfectionState::Dead>()];
+    init[LctStateGroup::template get_first_index<InfectionState::Recovered>()] -=
+        init[LctStateGroup::template get_first_index<InfectionState::Dead>()];
 
     // Compute Susceptibles.
-    init[LctState::template get_first_index<InfectionState::Susceptible>()] =
-        total_population[Group] - init.segment(1, LctState::Count - 1).sum();
+    init[LctStateGroup::template get_first_index<InfectionState::Susceptible>()] =
+        total_population[Group] - init.segment(1, LctStateGroup::Count - 1).sum();
 
     // Check whether all necessary dates are available.
     if (!max_offset_needed_avail || !min_offset_needed_avail) {
@@ -550,11 +552,11 @@ IOResult<void> set_initial_data_from_confirmed_cases_ageres(Model& model,
     }
 
     // Set computed initial value vector.
-    size_t first_index = model.populations.template get_first_index_group<Group>();
-    for (size_t i = 0; i < LctState::Count; i++) {
+    size_t first_index = model.populations.template get_first_index_of_group<Group>();
+    for (size_t i = 0; i < LctStateGroup::Count; i++) {
         model.populations[first_index + i] = init[i];
     }
-    if constexpr (Group + 1 < Model::m_groups) {
+    if constexpr (Group + 1 < Model::num_groups) {
         return set_initial_data_from_confirmed_cases_ageres<Model, Group + 1>(model, rki_data, date, total_population,
                                                                               scale_confirmed_cases);
     }
@@ -603,10 +605,10 @@ IOResult<void> set_initial_data_from_confirmed_cases(Model& model, const std::st
                                                      const std::vector<ScalarType>& scale_confirmed_cases)
 {
 
-    assert(total_population.size() == Model::m_groups);
-    assert(scale_confirmed_cases.size() == Model::m_groups);
-    if constexpr (Model::m_groups > 1) {
-        assert(ConfirmedCasesDataEntry::age_group_names.size() == Model::m_groups);
+    assert(total_population.size() == Model::num_groups);
+    assert(scale_confirmed_cases.size() == Model::num_groups);
+    if constexpr (Model::num_groups > 1) {
+        assert(ConfirmedCasesDataEntry::age_group_names.size() == Model::num_groups);
         BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(path));
         return details::set_initial_data_from_confirmed_cases_ageres<Model>(model, rki_data, date, total_population,
                                                                             scale_confirmed_cases);

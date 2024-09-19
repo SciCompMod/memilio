@@ -64,7 +64,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKI)
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
     // Result of a previous simulation.
-    Eigen::VectorXd compare((Eigen::Index)LctState::Count);
+    mio::Vector<ScalarType> compare((Eigen::Index)LctState::Count);
     compare << 863.05, 14.30625, 8.53125, 30.1125, 36.1875, 3.8125, 9.88, 3.52, 0.09, 0.25, 0.6888, 27.8712, 1.7;
 
     for (size_t i = 0; i < LctState::Count; i++) {
@@ -109,7 +109,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIAgeres)
 
     // Result of a previous simulation.
     size_t num_populations = (size_t)InfState::Count * num_agegroups;
-    Eigen::VectorXd compare(num_populations);
+    mio::Vector<ScalarType> compare(num_populations);
     compare << 977209.6429, 995.7143, 1372.2143, 793.8, 59.5086, 29.946, 19538.174, 1, 923916.3214, 3781.9821,
         5213.8393, 2969.4571, 226.3171, 114.4997, 63773.8974, 3.6857, 613901.8214, 15635.4821, 21071.8393, 11780.1143,
         882.3657, 447.9634, 336238.6423, 41.7714, 530413.3571, 21446.7321, 28762.9107, 15917.2857, 1185.8914, 596.4754,

@@ -25,6 +25,8 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/math/eigen.h"
 #include "memilio/epidemiology/lct_infection_state.h"
+#include "memilio/utils/type_list.h"
+#include "memilio/utils/metaprogramming.h"
 
 namespace mio
 {
@@ -54,11 +56,11 @@ template <typename FP = ScalarType, class... LctStates>
 class LctPopulations
 {
 public:
-    using Type                       = UncertainValue<FP>;
-    using InternalArrayType          = Eigen::Array<Type, Eigen::Dynamic, 1>;
-    using tupleLctStates             = std::tuple<LctStates...>;
-    static size_t constexpr m_groups = sizeof...(LctStates); ///< Number of groups.
-    static_assert(m_groups >= 1, "The number of LctStates provided should be at least one.");
+    using Type                         = UncertainValue<FP>;
+    using InternalArrayType            = Eigen::Array<Type, Eigen::Dynamic, 1>;
+    using LctStatesGroups              = TypeList<LctStates...>;
+    static size_t constexpr num_groups = sizeof...(LctStates); ///< Number of groups.
+    static_assert(num_groups >= 1, "The number of LctStates provided should be at least one.");
 
     /// @brief Default constructor.
     LctPopulations()
@@ -105,14 +107,15 @@ public:
     * @tparam group The group for which the index should be returned.
     * @return The index of the first entry of group in the flat array.
     */
-    template <size_t Group = 0, std::enable_if_t<(Group < m_groups) && (Group >= 0), bool> = true>
-    size_t get_first_index_group() const
+    template <size_t Group>
+    size_t get_first_index_of_group() const
     {
+        static_assert((Group < num_groups) && (Group >= 0), "The template parameter Group should be valid.");
         if constexpr (Group == 0) {
             return 0;
         }
         else {
-            return get_first_index_group<Group - 1>() + std::tuple_element_t<Group - 1, tupleLctStates>::Count;
+            return get_first_index_of_group<Group - 1>() + type_at_index_t<Group - 1, LctStatesGroups>::Count;
         }
     }
     /**
@@ -130,12 +133,12 @@ public:
      * @tparam group The group for which the total population should be calculated.
      * @return Total population of the group.
      */
-    template <size_t group>
+    template <size_t Group>
     FP get_group_total() const
     {
         return m_y.array()
             .template cast<FP>()
-            .segment(get_first_index_group<group>(), std::tuple_element_t<group, tupleLctStates>::Count)
+            .segment(get_first_index_of_group<Group>(), type_at_index_t<Group, LctStatesGroups>::Count)
             .sum();
     }
 
@@ -198,8 +201,8 @@ private:
         if constexpr (Group == 0) {
             m_count = 0;
         }
-        if constexpr (Group < m_groups) {
-            m_count += std::tuple_element_t<Group, tupleLctStates>::Count;
+        if constexpr (Group < num_groups) {
+            m_count += type_at_index_t<Group, LctStatesGroups>::Count;
             set_count<Group + 1>();
         }
     }
