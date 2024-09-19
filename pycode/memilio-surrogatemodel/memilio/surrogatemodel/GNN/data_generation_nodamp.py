@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from progress.bar import Bar
-from sklearn.preprocessing import FunctionTransformer
+
 from datetime import date
 
 from memilio.simulation import (AgeGroup, LogLevel, set_log_level)
@@ -14,8 +14,10 @@ from memilio.simulation.osecir import (Index_InfectionState, interpolate_simulat
                                        InfectionState, Model, interpolate_simulation_result)
 from memilio.epidata import geoModificationGermany as geoger
 import memilio.epidata.getPopulationData as gpd
-from .GNN_utils import (getBaselineMatrix, transform_mobility_directory,
-                        make_graph, remove_confirmed_compartments, get_population)
+from .GNN_utils import (transform_mobility_directory,
+                        make_graph, scale_data)
+from memilio.surrogatemodel.utils_surrogatemodel import (
+    getBaselineMatrix, remove_confirmed_compartments, get_population)
 
 
 def run_secir_groups_simulation(days, populations):
@@ -173,44 +175,7 @@ def generate_data(
 
     if save_data:
 
-        # we use a logistic transformer to reduce the
-        # influence of ouliers and to correct the skewness of out dataset
-        # as a result we obtaina dataset which is handled better by the NN
-
-        num_groups = int(np.asarray(data['inputs']).shape[2] / 8)
-        transformer = FunctionTransformer(np.log1p, validate=True)
-
-        # Scale inputs
-        inputs = np.asarray(
-            data['inputs']).transpose(2, 0, 1, 3).reshape(num_groups * 8, -1)
-        scaled_inputs = transformer.transform(inputs)
-        original_shape_input = np.asarray(data['inputs']).shape
-
-        # Reverse the reshape
-        reshaped_back = scaled_inputs.reshape(original_shape_input[2],
-                                              original_shape_input[0],
-                                              original_shape_input[1],
-                                              original_shape_input[3])
-
-        # Reverse the transpose
-        original_inputs = reshaped_back.transpose(1, 2, 0, 3)
-        scaled_inputs = original_inputs.transpose(0, 3, 1, 2)
-
-        # Scale labels
-        labels = np.asarray(
-            data['labels']).transpose(2, 0, 1, 3).reshape(num_groups * 8, -1)
-        scaled_labels = transformer.transform(labels)
-        original_shape_labels = np.asarray(data['labels']).shape
-
-        # Reverse the reshape
-        reshaped_back = scaled_labels.reshape(original_shape_labels[2],
-                                              original_shape_labels[0],
-                                              original_shape_labels[1],
-                                              original_shape_labels[3])
-
-        # Reverse the transpose
-        original_labels = reshaped_back.transpose(1, 2, 0, 3)
-        scaled_labels = original_labels.transpose(0, 3, 1, 2)
+        scaled_inputs, scaled_labels = scale_data(data)
 
         all_data = {"inputs": scaled_inputs,
                     "labels": scaled_labels,
