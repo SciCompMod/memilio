@@ -1,29 +1,34 @@
 from matplotlib.ticker import ScalarFormatter, LogLocator
-
+import numpy as np
 import matplotlib.pyplot as plt
 from decimal import Decimal
-fontsize = 18
+fontsize = 24
 
 # First plot: Runtime vs. Number of Processors on
 # processors = [1, 2, 4, 8]  # Number of processors
-# runtime = [[0.6, 0.8, 1.1, 2.2],  # 0.025 mio agents per processor
-#                 [1.4, 1.8, 2.5, 4.5],  # 0.05 mio agents per processor
-#                 [3.3, 4.8, 6.4, 9.5]]  # 0.1 mio agents per processor
-# processors = [1, 2, 4, 8, 16, 32]  # Number of processors
-# runtime = [ [02.0, 02.9, 04.5, 05.3, 06.1, 08.2],  # 0.025 mio agents per processor
-#             [05.7, 06.2, 08.9, 10.0, 12.1, 16.7],  # 0.05 mio agents per processor
-#             [11.2, 12.5, 16.8, 19.0, 24.3, 32.1],  # 0.1 mio agents per processor
-#             [23.6, 24.9, 32.1, 37.5, 47.9, 63.4]]   # 0.2 mio agents per processor
-# fig = plt.figure(figsize=(12, 9))
-# for i in range(len(runtime)):
-#     plt.plot(processors, runtime[i], marker='o', linewidth=3)
+# runtime = [[0.2, 0.3, 0.6, 1.1],  # 0.025 mio agents per processor
+#                 [0.6, 0.8, 1.2, 2.3],  # 0.05 mio agents per processor
+#                 [1.3, 1.7, 2.4, 4.9],  # 0.1 mio agents per processor
+#                 [2.7, 3.5, 5.3, 11]]  # 0.2 mio agents per processor
+processors = [1, 2, 4, 8, 16, 32]  # Number of processors
+runtime = [ [0.9, 1.3, 1.5, 1.9, 2.6, 3.9],  # 0.025 mio agents per processor
+            [2.5, 2.8, 3.0, 3.9, 5.4, 7.0],  # 0.05 mio agents per processor
+            [5.2, 5.8, 6.3, 7.9, 10.4, 14.7],  # 0.1 mio agents per processor
+            [10.6, 11.1, 12.8, 15.6, 21.1, 32.1]]   # 0.2 mio agents per processor
+runtime = np.array(runtime)  # Convert to seconds
+fig = plt.figure(figsize=(12, 9))
+for i in range(len(runtime)):
+    plt.plot(processors, runtime[i], marker='o', linewidth=3)
 
-# plt.legend(['25k agents per processor', '50k agents per processor', '100k agents per processor', '200k agents per processor'], fontsize=fontsize)
-# plt.xlabel('Number of Processors', fontsize=fontsize)
-# plt.ylabel('Runtime (seconds)', fontsize=fontsize)
-# plt.title('Node level weak scaling', fontsize=fontsize+4)
-# plt.grid(True)
-# plt.show()
+plt.legend(['25k agents per processor', '50k agents per processor', '100k agents per processor', '200k agents per processor'], fontsize=fontsize-4)
+plt.xlabel('Number of Processors', fontsize=fontsize)
+plt.ylabel('Runtime (seconds)', fontsize=fontsize)
+plt.title('Node level weak scaling', fontsize=fontsize+4)
+plt.yscale('log')
+plt.tick_params(axis='both', which='major', labelsize=fontsize-4)
+plt.tick_params(axis='both', which='minor', labelsize=fontsize-4)
+plt.grid(True)
+plt.show()
 
 # Second plot: Speedup vs. Number of Processors
 # time for 6400k agents on x processors
@@ -45,10 +50,12 @@ fontsize = 18
 
 
 
-# # Third plot: CPU Time vs. Population Size on 8 processors
+# Third plot: CPU Time vs. Population Size on 8 processors
 population_size = [25, 50, 100, 200, 400, 800, 1600, 3200, 6400]  # Population size in thousand
 population_size = [p * 1000 for p in population_size]
-cpu_time_real = [0.32, 0.84, 2.5, 5.3, 10.1, 19.2, 37.5, 72.9, 148]  # CPU time in seconds
+cpu_time_real = np.array([0.14, 0.36, 0.9, 1.8, 3.9, 7.92, 15.61, 31.2, 65.5])*(1/120.0)  # CPU time in seconds
+cpu_time_real_1core = np.array([0.9, 2.51, 5.1, 10.4, 21.1, 42.5, 85.2, 173.2, 349.2])*(1/120.0)  # CPU time in seconds
+
 # we also need the average number of seconds per 1000 agents
 cpu_time_per_1000 = [t / p for t, p in zip(cpu_time_real, population_size)]
 average_cpu_time_per_1000 = sum(cpu_time_per_1000) / len(cpu_time_per_1000)
@@ -56,55 +63,55 @@ average_cpu_time_per_1000 = sum(cpu_time_per_1000) / len(cpu_time_per_1000)
 cpu_time_av = [p * average_cpu_time_per_1000 for p in population_size]
 
 # Fourth plot: Memory Usage vs. Population Size
-population_size_memory = [25, 50, 100, 200, 400, 800, 1600, 3200]  # Population size in thousand
+population_size_memory = [25, 50, 100, 200, 400, 800, 1600, 3200, 6400]  # Population size in thousand
 population_size_memory = [p * 1000 for p in population_size_memory]
-memory_usage = [10, 22, 50, 111, 228, 455, 900, 1777]  # Memory usage in MB
-average_memory_usage = sum(memory_usage) / len(memory_usage) * 1e-6
+memory_usage = [10, 22, 50, 111, 228, 455, 984, 1910, 3780]  # Memory usage in MB
+# we also need the average memory usage per 1000 agents
+average_memory_time_per_1000 = [m / p for m, p in zip(memory_usage, population_size_memory)]
+average_memory_usage = sum(average_memory_time_per_1000) / len(average_memory_time_per_1000)
 mem_av = [p * average_memory_usage for p in population_size_memory]
 
 
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 9))
-
 # Plot for CPU Time vs. Population Size
-
-ax1.plot(population_size, cpu_time_real, marker='o', linewidth=3)
-ax1.plot(population_size, cpu_time_av, linewidth=3, linestyle='dashed', color='black', label='Average CPU time')
-ax1.set_yscale('log')
-ax1.set_xscale('log')
-ax1.legend(['Runtime Simulation', 'Linear Scaling:' +'%.2E' % Decimal(average_cpu_time_per_1000)+' Seconds / Agent'], fontsize=fontsize)
-ax1.set_xlabel('Population Size',fontsize=fontsize)
-ax1.set_ylabel('Runtime (seconds)',fontsize=fontsize)
-ax1.tick_params(axis='both', which='major', labelsize=fontsize-4)
-ax1.yaxis.set_major_formatter(ScalarFormatter())
-ax1.yaxis.set_minor_formatter(ScalarFormatter())
-ax1.yaxis.set_major_locator(LogLocator(base=10.0, numticks=15))
-ax1.yaxis.set_minor_locator(LogLocator(base=10.0, numticks=15))
-# x ticks should be from 10000 to 10000000
-ax1.set_xticks([10000, 100000, 1000000, 10000000])
-ax1.get_xaxis().set_major_locator(LogLocator(base=10.0, numticks=15))
-ax1.get_xaxis().set_minor_locator(LogLocator(base=10.0, numticks=15))
-ax1.set_title('Runtime Scaling',fontsize=fontsize+4)
-ax1.grid(True)
+plt.figure(figsize=(12, 9))
+plt.plot(population_size, cpu_time_real, marker='o', linewidth=3)
+plt.plot(population_size, cpu_time_av, linewidth=3, linestyle='dashed', color='black', label='Average CPU time')
+plt.yscale('log')
+plt.xscale('log')
+plt.legend(['Runtime Simulation', 'Linear Scaling: ' +'%.2E' % Decimal(average_cpu_time_per_1000)+' Seconds / Agent'], fontsize=fontsize)
+plt.xlabel('Population Size', fontsize=fontsize)
+plt.ylabel('Runtime (seconds)', fontsize=fontsize)
+plt.tick_params(axis='both', which='major', labelsize=fontsize-4)
+plt.gca().yaxis.set_major_formatter(ScalarFormatter())
+plt.gca().yaxis.set_minor_formatter(ScalarFormatter())
+plt.gca().yaxis.set_major_locator(LogLocator(base=10.0, numticks=15))
+plt.gca().yaxis.set_minor_locator(LogLocator(base=10.0, numticks=15))
+plt.xticks([10000, 100000, 1000000, 10000000])
+plt.gca().get_xaxis().set_major_locator(LogLocator(base=10.0, numticks=15))
+plt.gca().get_xaxis().set_minor_locator(LogLocator(base=10.0, numticks=15))
+plt.title('Runtime Scaling', fontsize=fontsize+4)
+plt.grid(True)
+plt.tight_layout()
+plt.show()
 
 # Plot for Memory Usage vs. Population Size
-ax2.plot(population_size_memory, memory_usage, marker='o', linewidth=3)
-ax2.plot(population_size_memory, mem_av, linewidth=3, linestyle='dashed', color='black', label='Average Memory Usage')
-ax2.legend(['Memory Usage Simulation', 'Linear Scaling:' + '%.2E' % Decimal(average_memory_usage)+' MB / Agent'], fontsize=fontsize)
-ax2.set_xscale('log')
-ax2.set_yscale('log')
-ax2.set_xlabel('Population Size',fontsize=fontsize)
-ax2.set_ylabel('Memory Usage (MB)',fontsize=fontsize)
-ax2.set_title('Memory Usage Scaling',fontsize=fontsize+4)
-ax2.tick_params(axis='both', which='major', labelsize=fontsize-4)
-ax2.yaxis.set_major_formatter(ScalarFormatter())
-ax2.yaxis.set_minor_formatter(ScalarFormatter())
-ax2.yaxis.set_major_locator(LogLocator(base=10.0, numticks=15))
-ax2.yaxis.set_minor_locator(LogLocator(base=10.0, numticks=15))
-# x ticks should be from 10000 to 10000000
-ax2.set_xticks([10000, 100000, 1000000, 10000000])
-ax2.get_xaxis().set_major_locator(LogLocator(base=10.0, numticks=15))
-ax2.get_xaxis().set_minor_locator(LogLocator(base=10.0, numticks=15))
-ax2.grid(True)
-
+plt.figure(figsize=(12, 9))
+plt.plot(population_size_memory, memory_usage, marker='o', linewidth=3)
+plt.plot(population_size_memory, mem_av, linewidth=3, linestyle='dashed', color='black', label='Average Memory Usage')
+plt.legend(['Memory Usage Simulation', 'Linear Scaling: ' + '%.2E' % Decimal(average_memory_usage)+' MB / Agent'], fontsize=fontsize)
+plt.xscale('log')
+plt.yscale('log')
+plt.xlabel('Population Size', fontsize=fontsize)
+plt.ylabel('Memory Usage (MB)', fontsize=fontsize)
+plt.title('Memory Usage Scaling', fontsize=fontsize+4)
+plt.tick_params(axis='both', which='major', labelsize=fontsize-4)
+plt.gca().yaxis.set_major_formatter(ScalarFormatter())
+plt.gca().yaxis.set_minor_formatter(ScalarFormatter())
+plt.gca().yaxis.set_major_locator(LogLocator(base=10.0, numticks=15))
+plt.gca().yaxis.set_minor_locator(LogLocator(base=10.0, numticks=15))
+plt.xticks([10000, 100000, 1000000, 10000000])
+plt.gca().get_xaxis().set_major_locator(LogLocator(base=10.0, numticks=15))
+plt.gca().get_xaxis().set_minor_locator(LogLocator(base=10.0, numticks=15))
+plt.grid(True)
 plt.tight_layout()
 plt.show()
