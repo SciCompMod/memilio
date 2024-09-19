@@ -11,7 +11,8 @@ requires = [
     "setuptools>=61.0",
     "scikit-build>=0.13",
     "cmake>=3.18",
-    "ninja"
+    "ninja",
+    "pandas>=2.0.0"
 ]
 build-backend = "setuptools.build_meta"
 

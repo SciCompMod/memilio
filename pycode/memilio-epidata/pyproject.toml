@@ -66,9 +66,8 @@ gethospitalizationdata = "memilio.epidata.getHospitalizationData:main"
 [tool.pylint]
 max-line-length = 120
 source-roots = "memilio/"
-output-format = "colorized"
 sugestion-mode = true
 exit-zero = true #Always return a non-error status code
 
 [tool.pylint.reports]
-output-format = "extendedjson"
+output-format = "json"
