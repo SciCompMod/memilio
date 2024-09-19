@@ -82,5 +82,6 @@ def get_population():
         df_population_agegroups.loc[len(df_population_agegroups.index), :] = [int(region_id)] + list(
             mdfs.fit_age_group_intervals(df_population[df_population.iloc[:, 0] == int(region_id)].iloc[:, 2:], age_groups))
 
-    population = df_population_agegroups.values.tolist
+    population = df_population_agegroups.values.tolist()
+
     return population
