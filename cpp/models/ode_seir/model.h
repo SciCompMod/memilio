@@ -85,9 +85,9 @@ public:
                 const size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
                 const size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
-                const double Nj    = pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj];
-                const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
-                const double coeffStoE =
+                const ScalarType Nj    = pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj];
+                const ScalarType divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+                const ScalarType coeffStoE =
                     params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(i.get(), j.get()) *
                     params.template get<TransmissionProbabilityOnContact<FP>>()[i] * divNj;
 
@@ -128,16 +128,16 @@ public:
             size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
             for (auto j = AgeGroup(0); j < AgeGroup(num_groups); j++) {
 
-                const double Nj    = this->populations.get_group_total(j);
-                const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+                const ScalarType Nj    = this->populations.get_group_total(j);
+                const ScalarType divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
 
-                double coeffStoE = contact_matrix.get_matrix_at(y.get_time(t_idx))(i.get(), j.get()) *
-                                   params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i] * divNj;
+                ScalarType coeffStoE = contact_matrix.get_matrix_at(y.get_time(t_idx))(i.get(), j.get()) *
+                                       params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i] * divNj;
                 F((size_t)i, (size_t)j + num_groups) = coeffStoE * y.get_value(t_idx)[Si];
             }
 
-            double T_Ei                          = params.template get<mio::oseir::TimeExposed<ScalarType>>()[i];
-            double T_Ii                          = params.template get<mio::oseir::TimeInfected<ScalarType>>()[i];
+            ScalarType T_Ei                      = params.template get<mio::oseir::TimeExposed<ScalarType>>()[i];
+            ScalarType T_Ii                      = params.template get<mio::oseir::TimeInfected<ScalarType>>()[i];
             V((size_t)i, (size_t)i)              = 1.0 / T_Ei;
             V((size_t)i + num_groups, (size_t)i) = -1.0 / T_Ei;
             V((size_t)i + num_groups, (size_t)i + num_groups) = 1.0 / T_Ii;

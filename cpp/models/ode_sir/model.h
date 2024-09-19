@@ -77,12 +77,12 @@ public:
                 size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
                 size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
-                const double Nj    = pop[Sj] + pop[Ij] + pop[Rj];
-                const double divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
+                const ScalarType Nj    = pop[Sj] + pop[Ij] + pop[Rj];
+                const ScalarType divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
 
-                double coeffStoI = contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
-                                                                   static_cast<Eigen::Index>((size_t)j)) *
-                                   params.template get<TransmissionProbabilityOnContact<FP>>()[i] * divNj;
+                ScalarType coeffStoI = contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
+                                                                       static_cast<Eigen::Index>((size_t)j)) *
+                                       params.template get<TransmissionProbabilityOnContact<FP>>()[i] * divNj;
 
                 dydt[Si] += -coeffStoI * y[Si] * pop[Ij];
                 dydt[Ii] += coeffStoI * y[Si] * pop[Ij];
