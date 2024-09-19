@@ -2451,11 +2451,12 @@ int main(int argc, char** argv)
         // grid search for parameters:
         // 1: Viral Shed
         // 2: Dark figure
-        // 3: testing prob symptomatic
-        // 4: perc have to test if npi active
+        // 3: Contact reduction lockdown
+        // 4: testing prob symptomatic
+        // 5: odds ratio for asymptomatic to symptomatic
 
         std::vector<std::pair<double, double>> grid_boundaries = {
-            {1.4, 2.0}, {2.5, 5.5}, {0.35, 0.8}, {0.02, 0.045}, {3, 15}};
+            {1.4, 2.0}, {2.5, 5.5}, {0.35, 0.7}, {0.01, 0.045}, {2, 15}};
         // std::vector<int> points_per_dim = {6, 6, 6, 6, 6};
 
         // std::vector<double> grid_boundaries = {1.76, 3.7, 0.53, 0.035, 15.0};
@@ -2478,7 +2479,7 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        std::vector<std::vector<double>> parameters = {{1.76}, {3.7}, {0.53}, {0.035}, {15.0}, {10.0}, {0.5}};
+        std::vector<std::vector<double>> parameters = {{1.52}, {4.9}, {0.71}, {0.02}, {3.0}, {10.0}, {0.5}};
         // std::vector<std::vector<double>> parameters = {
         //     {1.76}, {3.7}, {0.53}, {0.035}, {15.0}, {2, 5, 8, 11, 14}, {0.0, 0.25, 0.5, 0.75, 1.0}};
         auto every_combination = every_combination_of_parameters(parameters);
