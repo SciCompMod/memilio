@@ -79,8 +79,7 @@ mio::IOResult<void> preprocess(const std::string& filename, mio::oseirmobility::
             }
             std::sort(mobility_paths[i][j].begin(), mobility_paths[i][j].end());
             std::vector<int> intersection_int;
-            std::vector<mio::oseirmobility::Region> intersection_region(intersection_int.size(),
-                                                                        mio::oseirmobility::Region(0));
+            std::vector<mio::oseirmobility::Region> intersection_region;
             for (size_t k = 0; k < n_regions; k++) {
                 if (k == i || k == j) {
                     continue;
@@ -141,8 +140,8 @@ int main()
     mio::set_log_level(mio::LogLevel::debug);
 
     ScalarType t0   = 0.;
-    ScalarType tmax = 10.;
-    ScalarType dt   = 1;
+    ScalarType tmax = 15.;
+    ScalarType dt   = 0.5;
 
     std::vector<int> region_ids  = {1001, 1002};
     ScalarType number_regions    = region_ids.size();
@@ -163,6 +162,8 @@ int main()
     model.populations[{mio::oseirmobility::Region(1), mio::AgeGroup(0),
                        mio::oseirmobility::InfectionState::Susceptible}] = 10000;
 
+    // auto result_preprocess = set_mobility_weights(mobility_data, trip_chain_data, model, number_regions);
+
     model.parameters.set<mio::oseirmobility::TransmissionProbabilityOnContact<>>(1.);
 
     model.parameters.set<mio::oseirmobility::TimeExposed<>>(3.);
@@ -175,7 +176,7 @@ int main()
     // contact_matrix[0].add_damping(0.5, mio::SimulationTime(5));
 
     model.parameters.get<mio::oseirmobility::CommutingRatio>().push_back(
-        {mio::oseirmobility::Region(0), mio::oseirmobility::Region(1), 0.01});
+        {mio::oseirmobility::Region(0), mio::oseirmobility::Region(1), 0.05});
     model.parameters.get<mio::oseirmobility::CommutingRatio>().push_back(
         {mio::oseirmobility::Region(1), mio::oseirmobility::Region(0), 0.01});
 
@@ -189,7 +190,7 @@ int main()
     auto result_from_sim = simulate(t0, tmax, dt, model, integrator);
 
     auto save_result_status =
-        mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result.h5");
+        mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result_standard.h5");
 
     // bool print_to_terminal = true;
 

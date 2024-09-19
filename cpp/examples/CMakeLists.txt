@@ -38,6 +38,14 @@ add_executable(ode_seir_mobility_example ode_seir_mobility.cpp)
 target_link_libraries(ode_seir_mobility_example PRIVATE memilio ode_seir_mobility)
 target_compile_options(ode_seir_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+# add_executable(ode_seir_mobility_example_massaction ode_seir_mobility_massaction.cpp)
+# target_link_libraries(ode_seir_mobility_example_massaction PRIVATE memilio ode_seir_mobility_massaction)
+# target_compile_options(ode_seir_mobility_example_massaction PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_seir_mobility_example_improved ode_seir_mobility_improved.cpp)
+target_link_libraries(ode_seir_mobility_example_improved PRIVATE memilio ode_seir_mobility_improved)
+target_compile_options(ode_seir_mobility_example_improved PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(sde_sirs_example sde_sirs.cpp)
 target_link_libraries(sde_sirs_example PRIVATE memilio sde_sirs)
 target_compile_options(sde_sirs_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
