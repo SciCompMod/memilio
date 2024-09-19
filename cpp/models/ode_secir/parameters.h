@@ -466,6 +466,30 @@ struct StateID {
     }
 };
 
+struct CountyID {
+    using Type = size_t;
+    static Type get_default(AgeGroup)
+    {
+        return 1;
+    }
+    static std::string name()
+    {
+        return "CountyID";
+    }
+};
+
+struct ConnectedCountyIDs {
+    using Type = std::vector<size_t>;
+    static Type get_default(AgeGroup)
+    {
+        return {};
+    }
+    static std::string name()
+    {
+        return "ConnectedCountyIDs";
+    }
+};
+
 using ParametersBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
                  TimeExposed, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere, TimeInfectedCritical,
@@ -473,7 +497,7 @@ using ParametersBase =
                  RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms,
                  CriticalPerSevere, DeathsPerCritical, ICUOccupancyLocal, alphaGammaContacts, betaGammaContacts,
                  CutOffGamma, ContactReductionMax, ContactReductionMin, EpsilonContacts, BlendingFactorLocal,
-                 BlendingFactorRegional, StateID>;
+                 BlendingFactorRegional, StateID, CountyID, ConnectedCountyIDs>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.

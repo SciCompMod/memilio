@@ -181,8 +181,8 @@ public:
 
                     //perform transition
                     Base::m_edge_func(event_edge.property, flat_index,
-                                Base::m_graph.nodes()[event_edge.start_node_idx].property,
-                                Base::m_graph.nodes()[event_edge.end_node_idx].property);
+                                      Base::m_graph.nodes()[event_edge.start_node_idx].property,
+                                      Base::m_graph.nodes()[event_edge.end_node_idx].property);
 
                     //calculate new cumulative rate
                     cumulative_rate = get_cumulative_transition_rate();

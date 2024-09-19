@@ -20,15 +20,15 @@ import h5py
 
 import seaborn as sns
 
-sns.set_style("darkgrid")
+# sns.set_style("darkgrid")
 
 start_date = "2020-10-01"
 total_pop = 83278910.0
 opacity = 0.15
-lineWidth = 2
+lineWidth = 3
 fontsize = 28
 legendsize = 15
-ticks = 15
+ticks = 18
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 colors_state_risk = sns.color_palette("tab20")
 color_map = 'viridis'
@@ -751,6 +751,354 @@ def get_risk_total(path):
     return risk_total
 
 
+def plot_peak_values_splitted(path_results, path_plots, modes, target_indx, percentile="p50", flows=True, plot_type='kmin', title='Peak Value', vertical=False, dir_value='kmin'):
+    if len(modes) > 1:
+        print("Only one mode is allowed for the grid peak plot.")
+        return
+
+    plot_dir = os.path.join(path_plots, "peaks", title)
+    create_folder_if_not_exists(plot_dir)
+
+    allowed_kmax = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+    kmin_dirs = get_dirs_starting_with_x(dir_value, path_results)
+    all_kmins = 0
+    if dir_value == 'kmin':
+        all_kmins = sorted(set(float(d.split("_")[1]) for d in kmin_dirs))
+    else:
+        all_kmins = sorted(set(float(d.split("_")[-1]) for d in kmin_dirs))
+
+    num_days = 0
+
+    for index, kmin in enumerate(all_kmins):
+        fig_index = 0
+        if dir_value == 'fixed':
+            if kmin > all_kmins[0]:
+                continue
+
+        num_subplots = round(11 - index)
+        if dir_value == 'fixed':
+            num_subplots = 11
+        subplot_width = 8  # Breite eines einzelnen Subplots
+        subplot_height = 3  # Höhe eines einzelnen Subplots
+
+        num_rows = 5
+        num_cols = 2
+        subplot_width = 8
+        subplot_height = 3
+
+        fig_width = num_cols * subplot_width
+        fig_height = num_rows * subplot_height
+        fig = plt.figure(figsize=(fig_width, fig_height))
+        gs = GridSpec(num_rows, num_cols, figure=fig)
+
+        # if vertical:
+        #     fig_height = num_subplots * subplot_height
+        #     fig_width = subplot_width
+        #     fig = plt.figure(figsize=(fig_width, fig_height))
+        #     gs = GridSpec(num_subplots, 1, figure=fig)
+        # else:
+        #     fig_width = num_subplots * subplot_width
+        #     fig_height = subplot_height
+        #     fig = plt.figure(figsize=(fig_width, fig_height))
+        #     gs = GridSpec(1, num_subplots, figure=fig)
+
+        all_peaks = []
+        all_risks = []
+
+        for run in kmin_dirs:
+            if dir_value == 'kmin':
+                if kmin != float(run.split("_")[1]):
+                    continue
+            kmax = float(run.split("_")[3])
+            if kmax not in allowed_kmax:
+                continue
+
+            path = os.path.join(path_results, run,
+                                modes[0], "flows" if flows else "")
+            df = read_data(path, target_indx, percentile, flows)
+
+            if num_days == 0:
+                num_days = df.shape[0]
+
+            # smooth the data from the df and find the peaks
+            def get_peak(df):
+                smoothed = df.rolling(window=7, min_periods=1).mean()
+                # iterate over each column and find the peaks
+                num_counties_no_peak = 0
+                peaks = []
+                for col in smoothed.columns:
+                    peak_indices = find_peaks(
+                        smoothed[col].values, prominence=1, distance=21)[0]
+                    if len(peak_indices) == 0:
+                        peak_indices = find_peaks(
+                            smoothed[col].values, prominence=0, distance=21)[0]
+                    peak_values = smoothed[col].values[peak_indices]
+                    if len(peak_indices) == 0:
+                        num_counties_no_peak += 1
+                        continue
+
+                    peaks.append((peak_indices, peak_values))
+                if num_counties_no_peak > 0:
+                    print("Number of counties without peak: ",
+                          num_counties_no_peak)
+                return peaks
+
+            # peaks contains the peak indices and the peak values for each county
+            peaks = get_peak(df)
+
+            if plot_type == 'kmin':
+                # peaks = np.bincount(df.idxmax().values, minlength=df.shape[0])
+                # calculate the peaks per day out of peaks
+                peaks_each_day = np.zeros(num_days)
+                for peak_indices, _ in peaks:
+                    for peak_index in peak_indices:
+                        peaks_each_day[peak_index] += 1
+                all_peaks.append(peaks_each_day)
+                row = fig_index % num_rows
+                col = fig_index // num_rows
+                ax = fig.add_subplot(gs[row, col])
+                # if vertical:
+                #     ax = fig.add_subplot(gs[len(all_peaks) - 1, 0])
+                # else:
+                #     ax = fig.add_subplot(gs[0, len(all_peaks) - 1])
+                ax.plot(peaks_each_day, color=colors[0], linewidth=lineWidth)
+                if row == 2 and col == 0:
+                    ax.set_ylabel('Number of Peaks', fontsize=fontsize)
+
+            else:
+                peak_indices = df.idxmax().values
+                # iterate over peaks and scale the peak_value
+                for _, p_values in peaks:
+                    for i in range(len(p_values)):
+                        p_values[i] = p_values[i] / \
+                            get_pop()['Population'].values[i] * 100_000
+
+                # create a  empty dict with the peak values for each day
+                peak_values = {i: [] for i in range(df.shape[0])}
+                for idx, val in peaks:
+                    for i, v in zip(idx, val):
+                        peak_values[i].append(v)
+
+                # convert the dict to a dict to use sns.boxplot
+                df_long = pd.DataFrame(
+                    [{'Day': day, 'Peak Value': val} for day, vals in peak_values.items() for val in vals])
+                all_peaks.extend(peak_values.values())
+                all_days = pd.DataFrame({'Day': range(num_days)})
+                df_long = pd.merge(all_days, df_long, on='Day', how='left')
+                row = fig_index % num_rows
+                col = fig_index // num_rows
+                ax = fig.add_subplot(gs[row, col])
+                # if vertical:
+                #     ax = fig.add_subplot(gs[len(all_peaks) // len(df) - 1, 0])
+                # else:
+                #     ax = fig.add_subplot(gs[0, len(all_peaks) // len(df) - 1])
+                sns.boxplot(x='Day', y='Peak Value', data=df_long, ax=ax)
+                ax.set_xlabel('')
+                ax.set_ylabel('')
+                if row == 2 and col == 0:
+                    ax.set_ylabel(title + ' per 100,000k', fontsize=fontsize)
+
+                if row == 4:
+                    ax.set_xlabel('Days', fontsize=fontsize)
+
+            fig_index += 1
+
+            if modes[0] == 'FeedbackDamping':
+                risk = get_risk_total(os.path.join(
+                    path_results, run, "FeedbackDamping", "risk", percentile, "Results.h5"))
+                all_risks.append(risk)
+
+            kmax = float(run.split("_")[3])
+            ax.set_title(
+                rf'$\psi_{{min}}$: {kmin}, $\psi_{{max}}$: {kmax:.1f}', fontsize=fontsize)
+
+            if dir_value == 'fixed':
+                ax.set_title(
+                    f'kmin: { float(run.split("_")[-1])}', fontsize=fontsize)
+        global_min = 0
+        global_max = 0
+        if plot_type == 'kmin':
+            global_min = min(min(peaks) for peaks in all_peaks if peaks.size)
+            global_max = max(max(peaks)
+                             for peaks in all_peaks if peaks.size) + 10
+        else:
+            global_min = min(min(peaks) for peaks in all_peaks if peaks)
+            global_max = max(max(peaks)
+                             for peaks in all_peaks if peaks) + 10
+
+        count_ax = 0
+        for ax in fig.get_axes():
+            if count_ax > num_subplots:
+                break
+            # grid
+            ax.grid()
+            # log scale
+            ax.set_yscale('symlog')
+            ax.set_ylim(global_min, global_max)
+            ax.set_xticks(range(0, num_days, 50))
+            ax.tick_params(axis='x', labelsize=ticks)
+            ax.tick_params(axis='y', labelsize=ticks)
+            if not vertical:
+                ax.set_xlabel('')
+                # if ax != fig.get_axes()[0]:
+                #     ax.set_yticklabels([])
+                #     ax.set_ylabel('')
+                # if ax == fig.get_axes()[len(fig.get_axes()) // 2]:
+                #     ax.set_xlabel('Days', fontsize=fontsize)
+            else:
+                # ax.set_xlabel('')
+                # ax.set_ylabel('')
+                if ax == fig.get_axes()[4] or ax == fig.get_axes()[9]:
+                    ax.set_xlabel('Days', fontsize=fontsize)
+
+            count_ax += 1
+
+        plot_and_save(
+            fig, plot_dir, f'splitted_peaks_grid_{plot_type}_{dir_value}_{kmin}.pdf')
+
+    # if len(modes) > 1:
+    #     print("Only one mode is allowed for the grid peak plot.")
+    #     return
+
+    # plot_dir = os.path.join(path_plots, "peaks", title)
+    # create_folder_if_not_exists(plot_dir)
+
+    # allowed_kmax = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+    # kmin_dirs = get_dirs_starting_with_x(dir_value, path_results)
+    # all_kmins = 0
+    # if dir_value == 'kmin':
+    #     all_kmins = sorted(set(float(d.split("_")[1]) for d in kmin_dirs))
+    # else:
+    #     all_kmins = sorted(set(float(d.split("_")[-1]) for d in kmin_dirs))
+
+    # num_days = 0
+
+    # # Set the grid for 2 rows and 5 columns, handling the case where there are 10 plots.
+    # num_rows = 5
+    # num_cols = 2
+    # subplot_width = 8
+    # subplot_height = 3
+
+    # fig_width = num_cols * subplot_width
+    # fig_height = num_rows * subplot_height
+    # fig = plt.figure(figsize=(fig_width, fig_height))
+    # gs = GridSpec(num_rows, num_cols, figure=fig)
+
+    # all_peaks = []
+    # all_risks = []
+
+    # fig_index = 0
+
+    # for index, kmin in enumerate(all_kmins):
+    #     if dir_value == 'fixed' and kmin > all_kmins[0]:
+    #         continue
+
+    #     for run in kmin_dirs:
+    #         if dir_value == 'kmin' and kmin != float(run.split("_")[1]):
+    #             continue
+    #         kmax = float(run.split("_")[3])
+    #         if kmax not in allowed_kmax:
+    #             continue
+
+    #         path = os.path.join(path_results, run,
+    #                             modes[0], "flows" if flows else "")
+    #         df = read_data(path, target_indx, percentile, flows)
+
+    #         if num_days == 0:
+    #             num_days = df.shape[0]
+
+    #         # smooth the data from the df and find the peaks
+    #         def get_peak(df):
+    #             smoothed = df.rolling(window=7, min_periods=1).mean()
+    #             # iterate over each column and find the peaks
+    #             num_counties_no_peak = 0
+    #             peaks = []
+    #             for col in smoothed.columns:
+    #                 peak_indices = find_peaks(
+    #                     smoothed[col].values, prominence=1, distance=21)[0]
+    #                 if len(peak_indices) == 0:
+    #                     peak_indices = find_peaks(
+    #                         smoothed[col].values, prominence=0, distance=21)[0]
+    #                 peak_values = smoothed[col].values[peak_indices]
+    #                 if len(peak_indices) == 0:
+    #                     num_counties_no_peak += 1
+    #                     continue
+    #                 peaks.append((peak_indices, peak_values))
+    #             if num_counties_no_peak > 0:
+    #                 print("Number of counties without peak: ",
+    #                       num_counties_no_peak)
+    #             return peaks
+
+    #         peaks = get_peak(df)
+
+    #         if plot_type == 'kmin':
+    #             # Calculate peaks per day
+    #             peaks_each_day = np.zeros(num_days)
+    #             for peak_indices, _ in peaks:
+    #                 for peak_index in peak_indices:
+    #                     peaks_each_day[peak_index] += 1
+    #             all_peaks.append(peaks_each_day)
+
+    #             # Plot in the grid
+    #             row = fig_index % num_rows
+    #             col = fig_index // num_rows
+    #             ax = fig.add_subplot(gs[row, col])
+    #             ax.plot(peaks_each_day, color=colors[0], linewidth=lineWidth)
+    #             ax.set_title(
+    #                 rf'$\psi_{{min}}$: {kmin}, $\psi_{{max}}$: {kmax:.1f}', fontsize=fontsize)
+
+    #             if row == 2 and col == 0:
+    #                 ax.set_ylabel('Number of Peaks', fontsize=fontsize)
+    #         else:
+    #             # Process peak values for each day
+    #             for _, p_values in peaks:
+    #                 for i in range(len(p_values)):
+    #                     p_values[i] = p_values[i] / \
+    #                         get_pop()['Population'].values[i] * 100_000
+
+    #             # create an empty dict with the peak values for each day
+    #             peak_values = {i: [] for i in range(df.shape[0])}
+    #             for idx, val in peaks:
+    #                 for i, v in zip(idx, val):
+    #                     peak_values[i].append(v)
+
+    #             # convert the dict to a format for sns.boxplot
+    #             df_long = pd.DataFrame([{'Day': day, 'Peak Value': val}
+    #                                    for day, vals in peak_values.items() for val in vals])
+    #             all_days = pd.DataFrame({'Day': range(num_days)})
+    #             df_long = pd.merge(all_days, df_long, on='Day', how='left')
+
+    #             # Plot in the grid
+    #             row = fig_index % num_rows
+    #             col = fig_index // num_rows
+    #             ax = fig.add_subplot(gs[row, col])
+    #             sns.boxplot(x='Day', y='Peak Value', data=df_long, ax=ax)
+    #             ax.set_ylabel(title + ' per 100,000k')
+
+    #             if row == 2 and col == 0:
+    #                 ax.set_ylabel('Peak Value per 100,000k', fontsize=fontsize)
+
+    #         fig_index += 1
+
+    # # Set the same axis limits for all plots
+    # global_min = min(min(peaks) for peaks in all_peaks if len(peaks) > 0)
+    # global_max = max(max(peaks) for peaks in all_peaks if len(peaks) > 0) + 10
+
+    # for ax in fig.get_axes():
+    #     ax.grid()
+    #     ax.set_yscale('symlog')
+    #     ax.set_ylim(global_min, global_max)
+    #     ax.set_xticks(range(0, num_days, 50))
+    #     ax.tick_params(axis='x', labelsize=ticks)
+    #     ax.tick_params(axis='y', labelsize=ticks)
+
+    # # Save the figure
+    # plot_and_save(
+    #     fig, plot_dir, f'splitted_peaks_grid_{plot_type}_{dir_value}_{kmin}.pdf')
+
+
 def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p50", flows=True, plot_type='kmin', title='Peak Value', vertical=False, dir_value='kmin'):
     if len(modes) > 1:
         print("Only one mode is allowed for the grid peak plot.")
@@ -758,6 +1106,8 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
 
     plot_dir = os.path.join(path_plots, "peaks", title)
     create_folder_if_not_exists(plot_dir)
+
+    allowed_kmax = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
     kmin_dirs = get_dirs_starting_with_x(dir_value, path_results)
     all_kmins = 0
@@ -797,6 +1147,9 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
             if dir_value == 'kmin':
                 if kmin != float(run.split("_")[1]):
                     continue
+            kmax = float(run.split("_")[3])
+            if kmax not in allowed_kmax:
+                continue
 
             path = os.path.join(path_results, run,
                                 modes[0], "flows" if flows else "")
@@ -843,7 +1196,7 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
                     ax = fig.add_subplot(gs[len(all_peaks) - 1, 0])
                 else:
                     ax = fig.add_subplot(gs[0, len(all_peaks) - 1])
-                ax.plot(peaks_each_day)
+                ax.plot(peaks_each_day, color=colors[0], linewidth=lineWidth)
                 if len(all_peaks) == 1:
                     ax.set_ylabel('Number of Peaks')
             else:
@@ -879,11 +1232,12 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
                 all_risks.append(risk)
 
             kmax = float(run.split("_")[3])
-            ax.set_title(f'kmin: {kmin}\nkmax: {kmax:.1f}', fontsize=12)
+            ax.set_title(
+                rf'$\psi_{{min}}$: {kmin}, $\psi_{{max}}$: {kmax:.1f}', fontsize=fontsize)
 
             if dir_value == 'fixed':
                 ax.set_title(
-                    f'kmin: { float(run.split("_")[-1])}', fontsize=12)
+                    f'kmin: { float(run.split("_")[-1])}', fontsize=fontsize)
         global_min = 0
         global_max = 0
         if plot_type == 'kmin':
@@ -899,70 +1253,33 @@ def plot_peak_values(path_results, path_plots, modes, target_indx, percentile="p
         for ax in fig.get_axes():
             if count_ax > num_subplots:
                 break
+            # grid
+            ax.grid()
+            # log scale
+            ax.set_yscale('symlog')
             ax.set_ylim(global_min, global_max)
             ax.set_xticks(range(0, num_days, 50))
+            ax.tick_params(axis='x', labelsize=ticks)
+            ax.tick_params(axis='y', labelsize=ticks)
             if not vertical:
                 ax.set_xlabel('')
                 if ax != fig.get_axes()[0]:
                     ax.set_yticklabels([])
                     ax.set_ylabel('')
                 if ax == fig.get_axes()[len(fig.get_axes()) // 2]:
-                    ax.set_xlabel('Days', fontsize=16)
+                    ax.set_xlabel('Days', fontsize=fontsize)
             else:
                 ax.set_xlabel('')
                 ax.set_ylabel('')
                 if ax == fig.get_axes()[len(fig.get_axes()) // 2]:
-                    ax.set_ylabel(title + ' per 100,000k')
+                    ax.set_ylabel(title + ' per 100,000k', fontsize=fontsize)
                 if ax == fig.get_axes()[len(fig.get_axes()) - 1]:
-                    ax.set_xlabel('Days', fontsize=16)
-
-            if modes[0] == 'FeedbackDamping':
-                risk = all_risks[count_ax]
-                ax2 = ax.twinx()
-                ax2.plot(risk, color='red')
-                ax2.set_ylabel('Risk')
-                ax2.yaxis.label.set_color('red')
-                ax2.tick_params(axis='y', colors='red')
+                    ax.set_xlabel('Days', fontsize=fontsize)
 
             count_ax += 1
 
         plot_and_save(
-            fig, plot_dir, f'peaks_grid_{plot_type}_{dir_value}_{kmin}.png')
-
-        # count_ax = 0
-        # for ax in fig.get_axes():
-        #     if count_ax >= num_subplots:
-        #         break
-        #     ax.set_yscale('symlog')
-        #     ax.set_ylim(global_min, global_max)
-        #     ax.set_xticks(range(0, num_days, 50))
-        #     if not vertical:
-        #         ax.set_xlabel('')
-        #         if ax != fig.get_axes()[0]:
-        #             ax.set_yticklabels([])
-        #             ax.set_ylabel('')
-        #         if ax == fig.get_axes()[len(fig.get_axes()) // 2]:
-        #             ax.set_xlabel('Days', fontsize=16)
-        #     else:
-        #         ax.set_xlabel('')
-        #         ax.set_ylabel('')
-        #         if ax == fig.get_axes()[len(fig.get_axes()) // 2]:
-        #             ax.set_ylabel(title + ' per 100,000k')
-        #         if ax == fig.get_axes()[len(fig.get_axes()) - 1]:
-        #             ax.set_xlabel('Days', fontsize=16)
-
-        #     if modes[0] == 'FeedbackDamping':
-        #         risk = all_risks[count_ax]
-        #         ax2 = ax.twinx()
-        #         ax2.plot(risk, color='red')
-        #         ax2.set_ylabel('Risk')
-        #         ax2.yaxis.label.set_color('red')
-        #         ax2.tick_params(axis='y', colors='red')
-
-        #     count_ax += 1
-
-        # plot_and_save(
-        #     fig, plot_dir, f'peaks_grid_{plot_type}_{dir_value}_{kmin}_log.png')
+            fig, plot_dir, f'peaks_grid_{plot_type}_{dir_value}_{kmin}.pdf')
 
 
 def get_peak_data(path_results, blending_fact, modes, target_indx, percentile="p50", flows=True, title='Peak Value', dir_type='kmin'):
@@ -1114,134 +1431,133 @@ def plot_peak_time_kmax(path_results, path_plots, blending_fact, modes, target_i
         plt.close()
 
 
-def plot_peak_time_kmax_variance(path_results, path_plots, blending_fact, modes, target_indx, percentile="p50", flows=True, title='Peak Value', dir_type='kmin', log_scale=True):
-    data = get_peak_data(path_results, blending_fact,
-                         modes, target_indx, percentile, flows, title, dir_type)
+def plot_peak_time_kmax_variance(path_results, path_plots, blending_fact, modes, target_indx, percentile="p50", flows=True, title='Peak Value', log_scale=True):
+    # Get data for both 'kmin' and 'val' types
+    data_kmin = get_peak_data(path_results, blending_fact,
+                              modes, target_indx, percentile, flows, title, 'kmin')
+    data_val = get_peak_data(path_results, blending_fact,
+                             modes, target_indx, percentile, flows, title, 'val')
 
-    # get all distinct values in b_fact and kmax
-    all_b_fact = data['b_fact'].unique()
-    all_kmax = data['kmax'].unique()
+    allowed_kmax = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
-    # create dict with b_fact, kmax and variance
-    data_variance = {'b_fact': [], 'kmax': [], 'mean': [], 'variance': []}
-    for b_fact in all_b_fact:
-        for kmax in all_kmax:
-            peak_data = data[(data['b_fact'] == b_fact) & (
-                data['kmax'] == kmax)]
+    # Process data for 'kmin'
+    all_b_fact_kmin = data_kmin['b_fact'].unique()
+    all_kmax_kmin = data_kmin['kmax'].unique()
+    data_variance_kmin = {'b_fact': [], 'kmax': [],
+                          'mean': [], 'std': [], 'variance': []}
 
-            mean_peak = 0
-            var_peak = 0
+    for b_fact in all_b_fact_kmin:
+        # if b_fact not in blending_fact:
+        #     continue
+        for kmax in all_kmax_kmin:
+            # if kmax not in allowed_kmax:
+            #     continue
+            peak_data = data_kmin[(data_kmin['b_fact'] == b_fact) & (
+                data_kmin['kmax'] == kmax)]
+            peak_data = peak_data[peak_data['peak_value']
+                                  > 0].reset_index(drop=True)
+            peak_days = peak_data['day'].values
+            mean_peak = peak_days.mean()
+            std_peak = peak_days.std()
 
-            # Explode the peak_value list if necessary
-            if dir_type == 'val':
-                # delete all entries with empty list
-                peak_data = peak_data[peak_data['peak_value'].apply(
-                    lambda x: len(x) > 0)].reset_index(drop=True)
-                peak_data = peak_data.explode('peak_value')
-                peak_data['peak_value'] = peak_data['peak_value'].astype(float)
-                # Calculate the mean of the peak values for each (kmax, day) combination
-                for day in peak_data['day'].unique():
-                    mean_peak += peak_data[peak_data['day']
-                                           == day]['peak_value'].values.mean() * day
-                mean_peak /= peak_data['peak_value'].values.sum()
+            data_variance_kmin['b_fact'].append(b_fact)
+            data_variance_kmin['kmax'].append(kmax)
+            data_variance_kmin['mean'].append(mean_peak)
+            data_variance_kmin['std'].append(std_peak)
+            data_variance_kmin['variance'].append(peak_days.var())
 
-                # same for the variance
-                for day in peak_data['day'].unique():
-                    var_peak += peak_data[peak_data['day']
-                                          == day]['peak_value'].values.var() * day
-                var_peak /= peak_data['peak_value'].values.sum()
+    # Process data for 'val'
+    all_b_fact_val = data_val['b_fact'].unique()
+    all_kmax_val = data_val['kmax'].unique()
+    data_variance_val = {'b_fact': [], 'kmax': [],
+                         'mean': [], 'std': [], 'variance': []}
 
-            else:
-                # Delete all entries with peak_value == 0
-                peak_data = peak_data[peak_data['peak_value']
-                                      > 0].reset_index(drop=True)
-                peak_days = peak_data['day'].values
-                # calculate the mean and the variance for peak_days
-                mean_peak = peak_days.mean()
-                var_peak = peak_days.var()
+    for b_fact in all_b_fact_val:
+        # if b_fact not in blending_fact:
+        #     continue
+        for kmax in all_kmax_val:
+            # if kmax not in allowed_kmax:
+            #     continue
+            peak_data = data_val[(data_val['b_fact'] == b_fact)
+                                 & (data_val['kmax'] == kmax)]
+            peak_data = peak_data[peak_data['peak_value'].apply(
+                lambda x: len(x) > 0)].reset_index(drop=True)
+            peak_data = peak_data.explode('peak_value')
+            peak_data['peak_value'] = peak_data['peak_value'].astype(float)
 
-            data_variance['b_fact'].append(b_fact)
-            data_variance['kmax'].append(kmax)
-            data_variance['mean'].append(mean_peak)
-            data_variance['variance'].append(var_peak)
+            mean_peak = sum(peak_data[peak_data['day'] == day]['peak_value'].values.mean(
+            ) * day for day in peak_data['day'].unique()) / peak_data['peak_value'].values.sum()
 
-    # plot
-    statistical_measures = ['mean', 'variance']
+            std_peak = sum(peak_data[peak_data['day'] == day]['peak_value'].values.std(
+            ) * day for day in peak_data['day'].unique()) / peak_data['peak_value'].values.sum()
+
+            var_peak = sum(peak_data[peak_data['day'] == day]['peak_value'].values.var(
+            ) * day for day in peak_data['day'].unique()) / peak_data['peak_value'].values.sum()
+
+            data_variance_val['b_fact'].append(b_fact)
+            data_variance_val['kmax'].append(kmax)
+            data_variance_val['mean'].append(mean_peak)
+            data_variance_val['std'].append(var_peak)
+            data_variance_val['variance'].append(var_peak)
+
+    # Plot and save each heatmap separately
+    statistical_measures = ['mean', 'std', 'variance']
     for measure in statistical_measures:
-        results_df = pd.DataFrame(data_variance)
-        heatmap_data = results_df.pivot_table(
+        # Plot for 'kmin'
+        fig_kmin, ax_kmin = plt.subplots(figsize=(15, 10))
+        results_df_kmin = pd.DataFrame(data_variance_kmin)
+        heatmap_data_kmin = results_df_kmin.pivot_table(
             values=measure, index='kmax', columns='b_fact', aggfunc=lambda x: x)
-
-        # plot the heatmap
-        plt.figure(figsize=(20, 10))
-        if log_scale:
-            sns.heatmap(heatmap_data, cmap=color_map,
-                        norm=SymLogNorm(linthresh=1), fmt=".2f")
-        else:
-            sns.heatmap(heatmap_data, cmap=color_map, fmt=".2f")
-        plt.xlabel('Blending Factor Regional', fontsize=fontsize)
-        plt.ylabel('kmax', fontsize=fontsize)
-        plt.xticks(fontsize=ticks)
-        plt.yticks(fontsize=ticks)
-        plt.ylim(0, len(heatmap_data.index))
-        fn = 'peaks_' + measure + '_heatmap_' + dir_type
-        if log_scale:
-            fn += '_log'
-        plt.savefig(os.path.join(path_plots, fn + '.png'))
+        # invert the y-axis
+        heatmap_data_kmin = heatmap_data_kmin.iloc[::-1]
+        sns.heatmap(heatmap_data_kmin, cmap='viridis', ax=ax_kmin, norm=SymLogNorm(
+            linthresh=1) if log_scale else None, cbar=True)
+        # ax_kmin.set_title(f'{measure} for kmin')
+        ax_kmin.set_xlabel('Blending Factor Regional', fontsize=fontsize)
+        ax_kmin.set_ylabel(rf'$\psi_{{max}}$', fontsize=fontsize)
+        plt.savefig(os.path.join(
+            path_plots, f'peaks_{measure}_heatmap_kmin.pdf'))
         plt.clf()
-        plt.close()
+        plt.close(fig_kmin)
 
-        # plot bar chart for each b_fact
-        colors = plt.cm.viridis(np.linspace(0, 1, len(all_b_fact)))
-        for i, b_fact in enumerate(all_b_fact):
-            data_b_fact = results_df[results_df['b_fact'] == b_fact]
-            plt.figure(figsize=(20, 10))
-
-            # Berechnen der Positionen der Balken
-            bar_width = 0.4
-            positions = np.arange(len(data_b_fact['kmax']))
-
-            plt.bar(positions, data_b_fact[measure],
-                    width=bar_width, color=colors[i], edgecolor='black')
-            plt.xlabel('kmax', fontsize=fontsize)
-            if dir_type == 'kmin':
-                plt.ylabel(measure + ' peak days', fontsize=fontsize)
-            else:
-                plt.ylabel(measure + ' peak value', fontsize=fontsize)
-            plt.xticks(positions, data_b_fact['kmax'], fontsize=ticks)
-            plt.yticks(fontsize=ticks)
-            plt.title(f'{measure} for b_fact {b_fact}', fontsize=fontsize)
-            plt.grid(axis='y', linestyle='--', alpha=0.7)
-
-            # if kmin and mean, fix y axis to interval 0- 150
-            if measure == 'mean' and dir_type == 'kmin':
-                plt.ylim(0, 150)
-            if measure == 'variance' and dir_type == 'kmin':
-                plt.ylim(0, 350)
-
-            plt.savefig(os.path.join(
-                path_plots, f'{measure}_bar_chart_{b_fact}_{dir_type}.png'))
-            plt.clf()
-            plt.close()
+        # Plot for 'val'
+        fig_val, ax_val = plt.subplots(figsize=(15, 10))
+        results_df_val = pd.DataFrame(data_variance_val)
+        heatmap_data_val = results_df_val.pivot_table(
+            values=measure, index='kmax', columns='b_fact', aggfunc=lambda x: x)
+        # invert the y-axis
+        heatmap_data_val = heatmap_data_val.iloc[::-1]
+        sns.heatmap(heatmap_data_val, cmap='viridis', ax=ax_val, norm=SymLogNorm(
+            linthresh=1) if log_scale else None, cbar=True)
+        # ax_val.set_title(f'{measure} for val')
+        ax_val.set_xlabel('Blending Factor Regional', fontsize=fontsize)
+        ax_val.set_ylabel(rf'$\psi_{{max}}$', fontsize=fontsize)
+        plt.savefig(os.path.join(
+            path_plots, f'peaks_{measure}_heatmap_val.pdf'))
+        plt.clf()
+        plt.close(fig_val)
 
     return 0
 
 
 def plot_peaks_all_blending_factors(path_results, path_plots, blending_fact):
     for b_fact in blending_fact:
+        b_fact_add = str(b_fact) + "00000"
+        if len(b_fact_add) == 9:
+            b_fact_add = b_fact_add[:8]
         path_blended = os.path.join(
-            path_results, "BlendingFactorRegional_" + str(b_fact) + "00000")
+            path_results, "BlendingFactorRegional_" + b_fact_add)
         path_plot_b_fact = os.path.join(
-            path_plots, "BlendingFactorRegional_" + str(b_fact) + "00000")
+            path_plots, "BlendingFactorRegional_" + b_fact_add)
         create_folder_if_not_exists(path_plot_b_fact)
-        plot_peak_values(path_blended, path_plot_b_fact, [
+        plot_peak_values_splitted(path_blended, path_plot_b_fact, [
             "FeedbackDamping"], icu_compartment, plot_type='kmin', title='ICU Occupancy', flows=False, vertical=True)
-        plot_peak_values(path_blended, path_plot_b_fact, [
+        plot_peak_values_splitted(path_blended, path_plot_b_fact, [
             "FeedbackDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True)
-        plot_peak_values(path_results, path_plot_b_fact, [
-                         "FeedbackDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True)
-        plot_peak_values(path_results, path_plot_b_fact, [
-                         "FeedbackDamping"], flow_se, plot_type='val', title='Daily Infections', flows=True, vertical=True)
+        plot_peak_values_splitted(path_blended, path_plot_b_fact, [
+            "FeedbackDamping"], flow_se, plot_type='kmin', title='Daily Infections', vertical=True)
+        plot_peak_values_splitted(path_blended, path_plot_b_fact, [
+            "FeedbackDamping"], flow_se, plot_type='val', title='Daily Infections', flows=True, vertical=True)
 
 
 def get_all_blending_factors(path_results):
@@ -1265,36 +1581,111 @@ def get_all_kmaxs(path_results):
     return kmaxs
 
 
-def violin_plot_all_kmax(path_results, path_plots, modes, blending_fact, kmaxs, target_indx, percentile="p50", flows=False, title='Peak Value', dir_type='kmin', log_scale=True):
+def violin_plot_all_kmax(path_results, path_plots, modes, blending_fact, kmaxs, target_indx, percentile="p50", flows=False, title='Peak Value', dir_type='kmin', log_scale=True, rho=1.0):
+    # Retrieve peak data using the get_peak_data function
     data = get_peak_data(path_results, blending_fact,
                          modes, target_indx, percentile, flows, title, dir_type)
 
-    # delete all rows where b_fact is not in blending_fact
+    # Filter data for specific blending factors and kmax values
     data = data[data['b_fact'].isin(blending_fact)]
-    # same for kmax
     data = data[data['kmax'].isin(kmaxs)]
 
     for b_fact in blending_fact:
         peak_data = data[data['b_fact'] == b_fact]
-        # Reduce dimension peak_value
-        # i) delete all rows with peak_value = 0
+
+        # Reduce the dimension of peak_value
         peak_data = peak_data[peak_data['peak_value']
                               > 0.0].reset_index(drop=True)
-        # ii) explode the peak_value list
-        peak_data = peak_data.loc[peak_data.index.repeat(peak_data['peak_value'])].copy().reset_index(
-            drop=True)
-        # iii) delete the peak_value column
+        peak_data = peak_data.loc[peak_data.index.repeat(
+            peak_data['peak_value'])].copy().reset_index(drop=True)
         peak_data.drop(columns=['peak_value'], inplace=True)
+
+        # gehe durch alle Einträge und gucke ob ein eintrag mit day kleiner 10 existiert, derren peak_value > 0 ist. Setze diesen auf 0
+        # for i in range(len(peak_data)):
+        #     if peak_data.loc[i, 'day'] < 10:
+        #         peak_data.loc[i, 'day'] = 0
 
         plt.figure(figsize=(10, 6))
         sns.violinplot(x='kmax', y='day', data=peak_data,
                        inner="box", linewidth=2, palette='Blues')
 
-        # Set the labels and title
-        plt.xlabel('kmax', fontsize=fontsize)
-        plt.ylabel('Day', fontsize=fontsize)
-        plt.ylim(60, 200)
-        plt.savefig(os.path.join(path_plots, f'violin_plot_{b_fact}.png'))
+        # Increase tick size
+        plt.xticks(fontsize=24)
+        plt.yticks(fontsize=24)
+
+        # Set labels and title
+        plt.xlabel(r'$\psi_{\max}$', fontsize=24)  # Using raw string for latex
+        plt.ylabel('Day', fontsize=24)
+        plt.title(f'Blending Factor regional: {b_fact}', fontsize=18)
+
+        # grid
+        plt.grid(axis='y', linestyle='--', alpha=0.6)
+
+        # Adjust layout to prevent cutting off
+        plt.tight_layout()
+
+        # set ylim between 50 und 190
+        plt.ylim(0, 230)
+        # y axis log scale
+        # plt.yscale('log')
+
+        # Save the plot as a PDF with tight bounding box
+        pdf_filename = os.path.join(
+            path_plots, f'violin_plot_{b_fact}_rho_{rho}.pdf')
+        plt.savefig(pdf_filename, format='pdf', bbox_inches='tight')
+
+        # Clear the plot after saving to avoid overlap when looping
+        plt.close()
+
+
+def plot_kmax_diff_rhos(path_results, path_plots, modes, blending_fact, kmaxs, target_indx, percentile="p50", flows=False, title='Peak Value', dir_type='kmin', log_scale=True):
+    # list all dirs in path_results
+    rho_dirs = [d for d in os.listdir(path_results) if os.path.isdir(
+        os.path.join(path_results, d)) and d.startswith("rho")]
+
+    # dirs sind in der Form "rho_0.60000"
+    rhos = [float(r.split("_")[1]) for r in rho_dirs]
+
+    kmax_peak = []
+    indx_dir = 0
+    for r in rhos:
+        path_rho = os.path.join(path_results, rho_dirs[indx_dir])
+        data = get_peak_data(path_rho, blending_fact,
+                             modes, target_indx, percentile, flows, title, dir_type)
+        # delete all rows where b_fact is not in blending_fact
+        data = data[data['b_fact'].isin(blending_fact)]
+        # same for kmax
+        data = data[data['kmax'].isin(kmaxs)]
+
+        for b_fact in blending_fact:
+            peak_data = data[data['b_fact'] == b_fact]
+            # Reduce dimension peak_value
+            # i) delete all rows with peak_value = 0
+            peak_data = peak_data[peak_data['peak_value']
+                                  > 0.0].reset_index(drop=True)
+            # get the mean peak value for each kmax
+            all_kmax = peak_data['kmax'].unique()
+            median_peaks = []
+            for kmax in all_kmax:
+                peak_data_kmax = peak_data[peak_data['kmax'] == kmax]
+                expanded_days = np.repeat(
+                    peak_data_kmax['day'], peak_data_kmax['peak_value']).values
+                # Calculate the median of the expanded days
+                median_peak_day = np.median(expanded_days)
+                mean_peak_day = np.mean(expanded_days)
+                median_peaks.append(mean_peak_day)
+            indx_max = np.argmax(median_peaks)
+            kmax_peak.append(all_kmax[indx_max])
+        indx_dir += 1
+
+    # Plot the kmax values
+    plt.figure(figsize=(10, 6))
+    plt.bar(rhos, kmax_peak, width=0.3)
+    plt.xlabel('rho', fontsize=12)
+    plt.ylabel('kmax', fontsize=12)
+    plt.grid(axis='y', linestyle='--', alpha=0.6)
+    plt.savefig(os.path.join(path_plots, 'kmax_diff_rho_bar.png'))
+    plt.show()
 
 
 if __name__ == '__main__':
@@ -1302,17 +1693,20 @@ if __name__ == '__main__':
     icu_cap = [6, 9, 12, 15]
     cap_indx = 1
     path_results = os.path.join(
-        path_cwd, "results", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000")
+        path_cwd, "results", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000/rho_1.080000")
     path_plots = os.path.join(
         path_cwd, "plots", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000")
     path_icu_data = os.path.join(
         path_cwd, "data/pydata/Germany/germany_divi_ma7.json")
 
-    blending_fact = get_all_blending_factors(path_results)
-    all_kmax = get_all_kmaxs(os.path.join(
-        path_results, "BlendingFactorRegional_0.000000"))
+    # get_all_blending_factors(path_results)
+    blending_fact = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+    # [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]  # [0.3]  #
+    # blending_fact = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+    # all_kmax = get_all_kmaxs(os.path.join(
+    #     path_results, "BlendingFactorRegional_0.000000"))
     # blending_fact = [0.00, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70]
-    all_kmax = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+    all_kmax = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
     modes = ["FeedbackDamping"]  # "ClassicDamping",
 
@@ -1341,14 +1735,28 @@ if __name__ == '__main__':
     # plot_r0_all_scenarios(os.path.join(
     #     path_cwd, "results", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000"), path_plots, modes)
 
-    violin_plot_all_kmax(path_results, path_plots, modes, blending_fact, all_kmax, icu_compartment,
-                         flows=False, title='Peak Value', dir_type='kmin', log_scale=True)
+    # rhos = [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2,
+    #         1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2]
+    # rhos = [0.9,  0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99,
+    #         1.0, 1.01, 1.02, 1.03, 1.04, 1.05, 1.06, 1.07, 1.08, 1.09, 1.1]
+    # rhos = [0.4, 0.5, 0.6, 0.7, 0.8, 0.9,  0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99,
+    #         1.0, 1.01, 1.02, 1.03, 1.04, 1.05, 1.06, 1.07, 1.08, 1.09, 1.1, 1.2,
+    #         1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2]
+    # rhos = [0.92, 1.0, 1.08]
+    # for rho in rhos:
+    #     # rho mit 6 Nachkommastellen
+    #     path_rho = os.path.join(
+    #         path_results, f"rho_{rho:.6f}")
+    #     violin_plot_all_kmax(path_rho, path_plots, modes, blending_fact, all_kmax, icu_compartment,
+    #                          flows=False, title='Peak Value', dir_type='kmin', log_scale=True, rho=rho)
 
     # plot_peak_time_kmax(path_results, path_plots, blending_fact, modes,
     #                     icu_compartment, flows=False, dir_type='kmin', log_scale=True)
 
+    # plot_peaks_all_blending_factors(path_results, path_plots, blending_fact)
+
     plot_peak_time_kmax_variance(path_results, path_plots, blending_fact, modes,
-                                 icu_compartment, flows=False, dir_type='kmin', log_scale=False)
+                                 icu_compartment, flows=False, log_scale=False)
 
     # plot_icu_all_scenarios(path_results, path_plots, modes, log_scale=True)
     # plot_peaks(path_results, path_plots, modes, flow_se)
@@ -1358,9 +1766,10 @@ if __name__ == '__main__':
     # plot_icu_comp_all_dirs(path_results, path_plots, modes,
     #                        path_icu_data, plot_percentiles=True)
 
-    # plot_peaks_all_blending_factors(path_results, path_plots, blending_fact)
-
     # plot_peak_values(path_results, path_plots, [
     #     "ClassicDamping"], icu_compartment, plot_type='val', title='ICU Occupancy', flows=False, vertical=True, dir_value='fixed')
     # plot_peak_values(path_results, path_plots, [
     #     "ClassicDamping"], flow_se, plot_type='val', title='Daily Infections', vertical=True, dir_value='fixed')
+
+    # plot_kmax_diff_rhos(path_results, path_plots, modes, blending_fact, all_kmax, icu_compartment,
+    #                     flows=False, title='Peak Value', dir_type='kmin', log_scale=True)

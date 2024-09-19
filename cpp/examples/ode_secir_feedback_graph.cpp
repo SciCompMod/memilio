@@ -106,7 +106,7 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
+mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params, ScalarType fact_rho)
 {
     //times
     // TimeExposed and TimeInfectedNoSymptoms are calculated as described in
@@ -141,7 +141,7 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
                                       timeInfectedCriticalMin);
 
     //probabilities
-    double fact = 0.8;
+    double fact = fact_rho * 0.8;
     // const double transmissionProbabilityOnContactMin[] = {fact * 0.02, fact * 0.05, fact * 0.05,
     //                                                       fact * 0.05, fact * 0.08, fact * 0.15};
     const double transmissionProbabilityOnContactMax[] = {fact * 0.04, fact * 0.07, fact * 0.07,
@@ -267,6 +267,44 @@ void set_state_ids(mio::Graph<mio::osecir::Model, mio::MigrationParameters>& gra
     }
 }
 
+auto read_regional_counties(const std::string& path)
+{
+    std::unordered_map<size_t, std::vector<size_t>> county_in_radius;
+    std::ifstream infile(path);
+    std::string line;
+
+    // Read the file line by line
+    while (std::getline(infile, line)) {
+        std::istringstream iss(line);
+        std::string key;
+        std::string value;
+
+        // Get the county ID (key)
+        if (std::getline(iss, key, ':')) {
+            size_t county_id = std::stoi(key);
+
+            // Get the list of counties within the radius
+            std::vector<size_t> counties;
+            while (std::getline(iss, value, ',')) {
+                counties.push_back(std::stoi(value));
+            }
+
+            // Store in the unordered_map
+            county_in_radius[county_id] = counties;
+        }
+    }
+    return county_in_radius;
+}
+
+void set_countyid_and_regionals(mio::Graph<mio::osecir::Model, mio::MigrationParameters>& graph,
+                                std::unordered_map<size_t, std::vector<size_t>> county_in_radius)
+{
+    for (auto& node : graph.nodes()) {
+        node.property.parameters.get<mio::osecir::CountyID>()           = node.id;
+        node.property.parameters.get<mio::osecir::ConnectedCountyIDs>() = county_in_radius[node.id];
+    }
+}
+
 /**
  * Set NPIs.
  * @param start_date start date of the simulation.
@@ -309,15 +347,18 @@ mio::IOResult<void> set_npis(mio::osecir::Parameters& params, const std::string&
  */
 mio::IOResult<mio::Graph<mio::osecir::Model, mio::MigrationParameters>>
 get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, const std::string& mode, ScalarType kmin,
-          ScalarType kmax, ScalarType icu_capacity, ScalarType fact_regional)
+          ScalarType kmax, ScalarType icu_capacity, ScalarType fact_regional, ScalarType fact_rho)
 {
     const auto start_day = mio::get_day_in_year(start_date);
+
+    auto regional_counties =
+        read_regional_counties((data_dir / "pydata" / "Germany" / "counties_in_radius_103.txt").string());
 
     // global parameters
     const int num_age_groups = 6;
     mio::osecir::Parameters params(num_age_groups);
     params.get<mio::osecir::StartDay>() = start_day;
-    BOOST_OUTCOME_TRY(set_covid_parameters(params));
+    BOOST_OUTCOME_TRY(set_covid_parameters(params, fact_rho));
     if (std::strcmp(mode.c_str(), "FeedbackDamping") == 0) {
         BOOST_OUTCOME_TRY(set_feedback_parameters(params, kmin, kmax, icu_capacity, fact_regional));
     }
@@ -355,6 +396,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, co
                                         read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 
     set_state_ids(params_graph);
+    set_countyid_and_regionals(params_graph, regional_counties);
     return mio::success(params_graph);
 }
 
@@ -527,12 +569,12 @@ mio::IOResult<void> run_parameter_study(ParameterStudy parameter_study, std::vec
         }
         BOOST_OUTCOME_TRY(save_results(ensemble_r0, ensemble_params, county_ids, result_dir_r0, false));
 
-        auto result_dir_contacts = result_dir / "contacts";
-        if (mio::mpi::is_root()) {
-            boost::filesystem::create_directories(result_dir_contacts);
-            printf("Saving Contact results to \"%s\".\n", result_dir_contacts.c_str());
-        }
-        BOOST_OUTCOME_TRY(save_results(ensemble_contacts, ensemble_params, county_ids, result_dir_contacts, false));
+        // auto result_dir_contacts = result_dir / "contacts";
+        // if (mio::mpi::is_root()) {
+        //     boost::filesystem::create_directories(result_dir_contacts);
+        //     printf("Saving Contact results to \"%s\".\n", result_dir_contacts.c_str());
+        // }
+        // BOOST_OUTCOME_TRY(save_results(ensemble_contacts, ensemble_params, county_ids, result_dir_contacts, false));
     }
 
     return mio::success();
@@ -558,72 +600,80 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
     const auto num_runs     = 1;
 
-    auto const modes = {"FeedbackDamping", "ClassicDamping"}; //, "FeedbackDamping"};
+    auto const modes = {"FeedbackDamping"}; //, "FeedbackDamping"};
 
     auto min_values = std::vector<ScalarType>{0.0};
 
-    // auto max_values = std::vector<ScalarType>{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
-    auto max_values = std::vector<ScalarType>{0.02, 0.04, 0.06, 0.08, 0.12, 0.14, 0.16, 0.18, 0.22, 0.24,
-                                              0.26, 0.28, 0.32, 0.34, 0.36, 0.38, 0.42, 0.44, 0.46, 0.48};
+    auto max_values = std::vector<ScalarType>{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    // auto max_values = std::vector<ScalarType>{0.02, 0.04, 0.06, 0.08, 0.12, 0.14, 0.16, 0.18, 0.22, 0.24,
+    //                                           0.26, 0.28, 0.32, 0.34, 0.36, 0.38, 0.42, 0.44, 0.46, 0.48};
 
     auto icu_capacities = std::vector<ScalarType>{9.0};
 
-    // auto fact_regional = std::vector<ScalarType>{0.6, 0.7};
-    auto fact_regional = std::vector<ScalarType>{0.02, 0.04, 0.06, 0.08, 0.12, 0.14, 0.16, 0.18,
-                                                 0.22, 0.24, 0.26, 0.28, 0.32, 0.34, 0.36, 0.38};
+    auto fact_regional = std::vector<ScalarType>{0.0, 0.1, 0.2, 0.4, 0.5, 0.6, 0.7};
+    // auto fact_regional = std::vector<ScalarType>{0.02, 0.04, 0.06, 0.08, 0.12, 0.14, 0.16, 0.18,
+    //                                              0.22, 0.24, 0.26, 0.28, 0.32, 0.34, 0.36, 0.38};
     // const size_t county_id_infected = 3241;
+
+    auto fact_rhos = std::vector<ScalarType>{0.92, 1.0, 1.08};
+    // 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.01,1.02, 1.03, 1.04, 1.05, 1.06, 1.07, 1.08, 1.09};
 
     //create or load graph
     for (auto icu_cap : icu_capacities) {
-        for (auto fact_r : fact_regional) {
-            for (auto mode : modes) {
-                for (size_t min_indx = 0; min_indx < min_values.size(); min_indx++) {
-                    for (size_t max_indx = min_indx; max_indx < max_values.size(); max_indx++) {
-                        if (std::strcmp(mode, "ClassicDamping") == 0 && min_values[min_indx] != max_values[max_indx]) {
-                            continue;
-                        }
-                        auto& kmin = min_values[min_indx];
-                        auto& kmax = max_values[max_indx];
+        for (auto fact_rho : fact_rhos) {
+            for (auto fact_r : fact_regional) {
+                for (auto mode : modes) {
+                    for (size_t min_indx = 0; min_indx < min_values.size(); min_indx++) {
+                        for (size_t max_indx = min_indx; max_indx < max_values.size(); max_indx++) {
+                            if (std::strcmp(mode, "ClassicDamping") == 0 &&
+                                min_values[min_indx] != max_values[max_indx]) {
+                                continue;
+                            }
+                            auto& kmin = min_values[min_indx];
+                            auto& kmax = max_values[max_indx];
 
-                        mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
-                        auto result_dir_mode = result_dir / ("ICUCap_" + std::to_string(icu_cap)) /
-                                               ("BlendingFactorRegional_" + std::to_string(fact_r)) /
-                                               ("kmin_" + std::to_string(kmin) + "_kmax_" + std::to_string(kmax)) /
-                                               boost::filesystem::path(mode);
-                        if (std::strcmp(mode, "ClassicDamping") == 0) {
-                            result_dir_mode = result_dir / ("ICUCap_" + std::to_string(icu_cap)) /
-                                              ("BlendingFactorRegional_" + std::to_string(fact_r)) /
-                                              ("fixed_damping_kmin_" + std::to_string(kmin)) / "ClassicDamping";
-                        }
-                        // create directory for results
-                        if (mio::mpi::is_root()) {
-                            boost::filesystem::create_directories(result_dir_mode);
-                        }
+                            mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
+                            auto result_dir_mode = result_dir / ("ICUCap_" + std::to_string(icu_cap)) /
+                                                   ("rho_" + std::to_string(fact_rho)) /
+                                                   ("BlendingFactorRegional_" + std::to_string(fact_r)) /
+                                                   ("kmin_" + std::to_string(kmin) + "_kmax_" + std::to_string(kmax)) /
+                                                   boost::filesystem::path(mode);
+                            if (std::strcmp(mode, "ClassicDamping") == 0) {
+                                result_dir_mode = result_dir / ("ICUCap_" + std::to_string(icu_cap)) /
+                                                  ("rho_" + std::to_string(fact_rho)) /
+                                                  ("BlendingFactorRegional_" + std::to_string(fact_r)) /
+                                                  ("fixed_damping_kmin_" + std::to_string(kmin)) / "ClassicDamping";
+                            }
+                            // create directory for results
+                            if (mio::mpi::is_root()) {
+                                boost::filesystem::create_directories(result_dir_mode);
+                            }
 
-                        BOOST_OUTCOME_TRY(auto&& created,
-                                          get_graph(start_date, end_date, data_dir, mode, kmin, kmax, icu_cap, fact_r));
-                        params_graph = created;
+                            BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, end_date, data_dir, mode, kmin,
+                                                                        kmax, icu_cap, fact_r, fact_rho));
+                            params_graph = created;
 
-                        std::vector<int> county_ids(params_graph.nodes().size());
-                        std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(),
-                                       [](auto& n) {
-                                           return n.id;
-                                       });
+                            std::vector<int> county_ids(params_graph.nodes().size());
+                            std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(),
+                                           [](auto& n) {
+                                               return n.id;
+                                           });
 
-                        //run parameter study
-                        if (std::strcmp(mode, "ClassicDamping") == 0) {
-                            auto parameter_study_sim =
-                                mio::ParameterStudy<mio::osecir::Simulation<mio::FlowSimulation<mio::osecir::Model>>>{
+                            //run parameter study
+                            if (std::strcmp(mode, "ClassicDamping") == 0) {
+                                auto parameter_study_sim = mio::ParameterStudy<
+                                    mio::osecir::Simulation<mio::FlowSimulation<mio::osecir::Model>>>{
                                     params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
-                            BOOST_OUTCOME_TRY(run_parameter_study(parameter_study_sim, county_ids, result_dir_mode,
-                                                                  num_days_sim, mode));
-                        }
-                        else {
-                            auto parameter_study_feedback_sim = mio::ParameterStudy<
-                                mio::osecir::FeedbackSimulation<mio::FlowSimulation<mio::osecir::Model>>>{
-                                params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
-                            BOOST_OUTCOME_TRY(run_parameter_study(parameter_study_feedback_sim, county_ids,
-                                                                  result_dir_mode, num_days_sim, mode));
+                                BOOST_OUTCOME_TRY(run_parameter_study(parameter_study_sim, county_ids, result_dir_mode,
+                                                                      num_days_sim, mode));
+                            }
+                            else {
+                                auto parameter_study_feedback_sim = mio::ParameterStudy<
+                                    mio::osecir::FeedbackSimulation<mio::FlowSimulation<mio::osecir::Model>>>{
+                                    params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+                                BOOST_OUTCOME_TRY(run_parameter_study(parameter_study_feedback_sim, county_ids,
+                                                                      result_dir_mode, num_days_sim, mode));
+                            }
                         }
                     }
                 }
@@ -632,13 +682,14 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
     }
     return mio::success();
 }
+
 int main()
 {
     mio::set_log_level(mio::LogLevel::err);
     mio::mpi::init();
 
     std::string data_dir   = "/localdata1/code_2024/memilio/data";
-    std::string result_dir = "/localdata1/code_2024/memilio/results";
+    std::string result_dir = "/localdata1/code_2024/memilio/results/new_regional_def";
 
     auto result = run(data_dir, result_dir);
     if (!result) {

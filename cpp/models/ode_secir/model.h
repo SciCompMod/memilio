@@ -482,22 +482,61 @@ public:
         return global_icu_occupancy;
     }
 
+    // /**
+    //  * @brief Calculates the regional ICU occupancy for the same state ID as the current model.
+    //  *
+    //  * @return The regional ICU occupancy data.
+    //  */
+    // Eigen::MatrixXd calculate_regional_icu_occupancy()
+    // {
+    //     const auto state_id          = m_model_ptr->parameters.template get<StateID>();
+    //     const size_t num_groups      = static_cast<size_t>(m_model_ptr->parameters.get_num_groups());
+    //     const size_t num_time_points = m_model_ptr->parameters.template get<ICUOccupancyLocal>().get_num_time_points();
+    //     Eigen::MatrixXd regional_icu_occupancy = Eigen::MatrixXd::Zero(num_time_points, num_groups);
+    //     // We need the total population per region to calculate the regional ICU occupancy as weights for the local ICU occupancy
+    //     ScalarType regional_population = 0.0;
+
+    //     for (const auto& model : m_models) {
+    //         if (model->parameters.get<StateID>() == state_id) {
+    //             const auto& icu_occupancy_local = model->parameters.template get<ICUOccupancyLocal>();
+    //             const auto total_population     = model->populations.get_total();
+    //             regional_population += total_population;
+    //             for (size_t t = 0; t < num_time_points; ++t) {
+    //                 for (size_t age = 0; age < num_groups; ++age) {
+    //                     regional_icu_occupancy(t, age) += total_population * icu_occupancy_local.get_value(t)(age);
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     // Normalize the regional ICU occupancy by the total regional population
+    //     regional_icu_occupancy /= regional_population;
+
+    //     return regional_icu_occupancy;
+    // }
+
     /**
-     * @brief Calculates the regional ICU occupancy for the same state ID as the current model.
+     * @brief Calculates the regional ICU occupancy where regional means a predefined radius around the county.
      * 
      * @return The regional ICU occupancy data.
      */
     Eigen::MatrixXd calculate_regional_icu_occupancy()
     {
-        const auto state_id          = m_model_ptr->parameters.template get<StateID>();
+        const auto county_id         = m_model_ptr->parameters.template get<CountyID>();
         const size_t num_groups      = static_cast<size_t>(m_model_ptr->parameters.get_num_groups());
         const size_t num_time_points = m_model_ptr->parameters.template get<ICUOccupancyLocal>().get_num_time_points();
         Eigen::MatrixXd regional_icu_occupancy = Eigen::MatrixXd::Zero(num_time_points, num_groups);
-        // We need the total population per region to calculate the regional ICU occupancy as weights for the local ICU occupancy
-        ScalarType regional_population = 0.0;
+        ScalarType regional_population         = 0.0;
+
+        auto regions = m_model_ptr->parameters.template get<ConnectedCountyIDs>();
 
         for (const auto& model : m_models) {
-            if (model->parameters.get<StateID>() == state_id) {
+            auto m_id = model->parameters.template get<CountyID>();
+            if (m_id == county_id) {
+                continue;
+            }
+            // Check if the id is in regions
+            if (std::find(regions.begin(), regions.end(), m_id) != regions.end()) {
                 const auto& icu_occupancy_local = model->parameters.template get<ICUOccupancyLocal>();
                 const auto total_population     = model->populations.get_total();
                 regional_population += total_population;

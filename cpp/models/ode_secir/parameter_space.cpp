@@ -179,12 +179,16 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
         auto local_holidays      = node_model.parameters.template get<ContactPatterns>().get_school_holidays();
         auto local_icu_occupancy = node_model.parameters.get<ICUOccupancyLocal>();
         auto state_id            = node_model.parameters.get<StateID>();
+        auto county_id           = node_model.parameters.get<CountyID>();
+        auto connected_counties  = node_model.parameters.get<ConnectedCountyIDs>();
         node_model.parameters    = shared_params_model.parameters;
         node_model.parameters.template get<ICUCapacity>()                           = local_icu_capacity;
         node_model.parameters.template get<TestAndTraceCapacity>()                  = local_tnt_capacity;
         node_model.parameters.template get<ContactPatterns>().get_school_holidays() = local_holidays;
         node_model.parameters.template get<ICUOccupancyLocal>()                     = local_icu_occupancy;
         node_model.parameters.template get<StateID>()                               = state_id;
+        node_model.parameters.template get<CountyID>()                              = county_id;
+        node_model.parameters.template get<ConnectedCountyIDs>()                    = connected_counties;
 
         node_model.parameters.template get<ContactPatterns>().make_matrix();
         node_model.apply_constraints();
