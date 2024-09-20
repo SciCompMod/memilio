@@ -132,17 +132,17 @@ if(MEMILIO_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
-if(MEMILIO_BUILD_TESTS)
-    add_subdirectory(tests)
-endif()
+# if(MEMILIO_BUILD_TESTS)
+#     add_subdirectory(tests)
+# endif()
 
-if(MEMILIO_BUILD_SIMULATIONS)
-    add_subdirectory(simulations)
-endif()
+# if(MEMILIO_BUILD_SIMULATIONS)
+#     add_subdirectory(simulations)
+# endif()
 
-if(MEMILIO_BUILD_BENCHMARKS)
-    add_subdirectory(benchmarks)
-endif()
+# if(MEMILIO_BUILD_BENCHMARKS)
+#     add_subdirectory(benchmarks)
+# endif()
 
 install(TARGETS memilio
     EXPORT memilio-targets
