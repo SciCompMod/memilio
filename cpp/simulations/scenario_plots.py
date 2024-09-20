@@ -87,9 +87,9 @@ def plot_scenario(path, folder, folder_high, folder_enough):
             path+"/infection_state_per_age_group/"+folder+"/p25/Results.h5", 'r')
         deaths_p75_normal = h5py.File(
             path+"/infection_state_per_age_group/"+folder+"/p75/Results.h5", 'r')
-        p50_bs_deaths_normal = deaths_p50_normal['0']['Total'][()][:, 7][::24][0:90]
-        p25_bs_deaths_normal = deaths_p25_normal['0']['Total'][()][:, 7][::24][0:90]
-        p75_bs_deaths_normal = deaths_p75_normal['0']['Total'][()][:, 7][::24][0:90]
+        p50_bs_deaths_normal = deaths_p50_normal['0']['Total'][()][:, 7][::24][0:90]-deaths_p50_normal['0']['Total'][()][:, 7][::24][0]
+        p25_bs_deaths_normal = deaths_p25_normal['0']['Total'][()][:, 7][::24][0:90]-deaths_p25_normal['0']['Total'][()][:, 7][::24][0]
+        p75_bs_deaths_normal = deaths_p75_normal['0']['Total'][()][:, 7][::24][0:90]-deaths_p75_normal['0']['Total'][()][:, 7][::24][0]
 
         reproduction_p50_normal = h5py.File(
             path+"/estimated_reproduction_number/"+folder+"/p50/Results.h5", 'r')
