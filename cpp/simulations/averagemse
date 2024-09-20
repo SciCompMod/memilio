@@ -1,0 +1,29 @@
+import re
+
+def extract_rmse(filename):
+    with open(filename, 'r') as file:
+        content = file.read()
+    
+    # Find all RMSE values using regex
+    rmse_values = re.findall(r'RMSE:\s*(\d+\.\d+)', content)
+    
+    # Convert the extracted values to floats
+    rmse_values = [float(value) for value in rmse_values]
+    
+    if not rmse_values:
+        return None, None
+    
+    # Calculate the average RMSE
+    average_rmse = sum(rmse_values) / len(rmse_values)
+    
+    return rmse_values, average_rmse
+
+# Example usage
+filename = '/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/final_results/results_2024-09-20192904/mpi-out.13147295.txt'
+rmse_values, average_rmse = extract_rmse(filename)
+
+if rmse_values is not None:
+    print(f"Extracted RMSE values: {rmse_values}")
+    print(f"Average RMSE: {average_rmse}")
+else:
+    print("No RMSE values found in the file.")

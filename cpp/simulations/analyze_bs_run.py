@@ -274,7 +274,7 @@ def plot_dead(path):
 
     # we need the real data json file cases_all_county_age
     df_abb = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county_age_ma1.json")
+        path+"/../../../pydata/Germany/cases_all_county_age_ma1.json")
 
     # we just need the columns cases and date
     # we need to offset the dates by 19 day
@@ -365,7 +365,7 @@ def plot_dead(path):
    
 def plot_icu(path):
     
-    df_abb = pd.read_json(path+"/../pydata/Germany/county_divi.json")
+    df_abb = pd.read_json(path+"/../../../pydata/Germany/county_divi.json")
 
     perc_of_critical_in_icu_age = [0.55,0.55,0.55,0.56,0.54,0.46]
     perc_of_critical_in_icu=0.55
@@ -625,7 +625,7 @@ def plot_estimated_reproduction_number(path):
 def plot_cumulative_detected_infections(path):
 
     df_abb = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county_repdate_ma1.json")
+        path+"/../../../pydata/Germany/cases_all_county_repdate_ma1.json")
     # we need the 
     df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
     df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') & (df_abb['Date'] <= '2021-06-01')]
@@ -841,13 +841,13 @@ def plot_fitting_plots(path):
     # We want to have the fitting for the four things we fittet against: Cumulative deaths, ICU, Cumulative detected infections and new detected infections
     # readin of the data
     db_abb_deaths = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county_age_ma1.json")
+        path+"/../../../pydata/Germany/cases_all_county_age_ma1.json")
 
     db_abb_icu = pd.read_json(
-        path+"/../pydata/Germany/county_divi.json")
+        path+"/../../../pydata/Germany/county_divi.json")
 
     db_abb_detected = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county_repdate_ma1.json")
+        path+"/../../../pydata/Germany/cases_all_county_repdate_ma1.json")
 
     # we want to plot the plots in a 4x1 grid and we want to have the same x axis for all of them
     # the first plot has also the legend
@@ -864,12 +864,15 @@ def plot_fitting_plots(path):
     df_total_dead = df_total_dead[df_total_dead['ID_County'] == 3101]
     df_total_dead = df_total_dead.groupby('Date').sum()[0:90]
     deaths_real = df_total_dead['Deaths'].to_numpy()
+    mse_death = deaths_real
     deaths_real = deaths_real[0:90] - deaths_real[0]
+    
 
     # simulation deaths and confidence intervals
     f_p50_deaths = h5py.File(
         path+"/infection_state_per_age_group/0/p50/Results.h5", 'r')
     total_50_deaths = f_p50_deaths['0']['Total'][()][:, 7][::24][0:90]  
+    mse_sim_dead = total_50_deaths
     total_50_deaths = total_50_deaths - total_50_deaths[0]
 
     f_p75_deaths = h5py.File(
@@ -1081,6 +1084,16 @@ def plot_fitting_plots(path):
     axs[1,1].tick_params(axis='both', which='minor', labelsize=fontsize-4)
     axs[1,1].legend(fontsize=fontsize-4)
 
+    # we also need to calculate the MSE for the fitting
+    mse_deaths = ((mse_death - mse_sim_dead)**2).mean()
+    mse_icu = ((ICU_real[0:90] - ICU_Simulation[0:90])**2).mean()
+    mse_detected = ((df_total_detected[0:89] - total_50_detected)**2).mean()
+
+    mse_final = mse_deaths + mse_icu*0.1 + mse_detected*0.01*0.01*3
+    print('MSE Deaths: ', mse_deaths)
+    print('MSE ICU: ', mse_icu) 
+    print('MSE Detected: ', mse_detected)
+    print('MSE Final: ', mse_final)
 
 
    
@@ -1091,8 +1104,8 @@ def plot_fitting_plots(path):
 
 if __name__ == "__main__":
     # path = "/Users/david/Documents/HZI/memilio/data/results_last_run"
-    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/vorlaufige_ergebnisse/results_2024-08-28113051"
+    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
+    path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/final_results/results_2024-09-20192904_best"
     # path = r"C:\Users\korf_sa\Documents\rep\data\results_last_run"
 
     if (len(sys.argv) > 1):
@@ -1100,12 +1113,12 @@ if __name__ == "__main__":
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    # plot_infection_states_results(path)
-    # plot_infections_loc_types_avarage(path)
-    # plot_icu(path)
-    # plot_dead(path)
-    # plot_cumulative_detected_infections(path)
-    # plot_positive_and_done_test(path)
+    plot_infection_states_results(path)
+    plot_infections_loc_types_avarage(path)
+    plot_icu(path)
+    plot_dead(path)
+    plot_cumulative_detected_infections(path)
+    plot_positive_and_done_test(path)
 
     # plot_estimated_reproduction_number(path)
     plot_fitting_plots(path)

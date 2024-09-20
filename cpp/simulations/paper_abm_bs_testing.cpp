@@ -2482,13 +2482,22 @@ int main(int argc, char** argv)
         auto result = run_with_grid_search(input_dir, result_dir, num_runs, grid, rng);
     }
     else {
-        // std::vector<std::vector<double>> parameters = {{1.52}, {4.9}, {0.71}, {0.02}, {3.0}, {10.0}, {0.5}};
-        // std::vector<std::vector<double>> parameters = {
-        //     {1.76}, {3.7}, {0.53}, {0.035}, {15.0}, {2, 5, 8, 11, 14}, {0.0, 0.25, 0.5, 0.75, 1.0}};
         // std::vector<std::vector<double>> parameters = {{1.596}, {4.171}, {0.7275}, {0.02472}, {4.83}, {10.0}, {0.5}};
         // std::vector<std::vector<double>> parameters = {{1.52}, {4.3}, {0.85}, {0.024}, {4.6}, {10.0}, {0.5}};
-        std::vector<std::vector<double>> parameters = {{1.596}, {4.171}, {0.7125}, {0.02472}, {4.83}, {10.0}, {0.5}};
-        auto every_combination                      = every_combination_of_parameters(parameters);
+
+        // std::vector<std::vector<double>> parameters = {{1.596}, {4.171}, {0.7125}, {0.02472}, {4.83}, {10.0}, {0.5}};
+
+        // std::vector<std::vector<double>> parameters = {{1.76}, {3.7},  {0.53}, {0.035, 0.07, 0.105},
+        //                                                {15.0}, {10.0}, {0.5}};
+
+        std::vector<std::vector<double>> parameters = {
+            {1.596}, {4.171}, {0.7125}, {0.012, 0.024, 0.036, 0.048, 0.06}, {2.0, 5.0, 8.0, 11.0, 14.0}, {10.0}, {0.5}};
+        // std::vector<std::vector<double>> parameters = {
+        //     {1.596}, {4.171}, {0.7125},{0.012, 0.024, 0.036, 0.048, 0.06}, {4.83}, {2, 5, 8, 11, 14}, {0.5}};
+        // std::vector<std::vector<double>> parameters = {
+        //     {1.596}, {4.171}, {0.7125}, {0.02472}, {4.83}, {2, 5, 8, 11, 14}, {0.0, 0.25, 0.5, 0.75, 1.0}};
+
+        auto every_combination = every_combination_of_parameters(parameters);
         if (rank == 0) {
             auto created = create_result_folders(result_dir, every_combination.size(), run_grid_search);
             if (!created) {
