@@ -30,13 +30,16 @@
 
 using ScalarType = double;
 
+template <class...>
+struct False : std::bool_constant<false> {
+};
+
 template <typename FP>
 struct Limits {
     static constexpr FP zero_tolerance()
     {
         // The following expression is always false. It is used to ensure the compiler checks all specializations.
-        static_assert(!std::is_same_v<std::void_t<FP>, void>,
-                      "No tolerance available for this type. Please add a specialization in config.h");
+        static_assert(False<FP>{}, "No tolerance available for this type. Please add a specialization in config.h");
         return FP(0);
     }
 };
