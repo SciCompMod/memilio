@@ -2256,7 +2256,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         }
 
         rmse_results_per_grid_point.at(par_i) /= num_runs;
-        printf("RMSE: %f\n, par_i: %d\n", rmse_results_per_grid_point.at(par_i), par_i);
+        printf("RMSE: %f\n, par_i: %ld\n", rmse_results_per_grid_point.at(par_i), par_i);
 
 #ifdef MEMILIO_ENABLE_MPI
 
