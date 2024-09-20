@@ -217,8 +217,8 @@ def plot_scenario(path, folder, folder_high, folder_enough):
     axs[1, 0].tick_params(axis='both', which='major', labelsize=fontsize-4)
     axs[1, 0].tick_params(axis='both', which='minor', labelsize=fontsize-4)
 
-    axs[1, 1].set_title('Daily Positive Tests', fontsize=fontsize+5)
-    axs[1, 1].set_ylabel('Number of positive tests', fontsize=fontsize-2)
+    axs[1, 1].set_title('Daily New Detected Infections', fontsize=fontsize+5)
+    axs[1, 1].set_ylabel('Number of infections', fontsize=fontsize-2)
     axs[1, 1].tick_params(axis='both', which='major', labelsize=fontsize-4)
     axs[1, 1].tick_params(axis='both', which='minor', labelsize=fontsize-4)
 
@@ -254,6 +254,6 @@ if __name__ == "__main__":
     path_to_high_testing_data = "1"
     path_to_enough_testing_data = "2"
 
-    plot_scenario(path_to_scenario_1, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)
-    # plot_scenario(path_to_scenario_2, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)
+    # plot_scenario(path_to_scenario_1, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)
+    plot_scenario(path_to_scenario_2, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)
     # plot_scenario(path_to_scenario_3, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)
