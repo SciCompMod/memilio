@@ -61,7 +61,7 @@ plt.setp(plt.gca().get_xticklabels(), fontsize=fontsize-8)
 plt.setp(plt.gca().get_yticklabels(), fontsize=fontsize-8)
 
 # we need to save the figure with high resolution and jpeg format
-plt.savefig('/Users/saschakorf/Downloads/viral_shedding.jpg', dpi=300)
+plt.savefig('viral_shedding.jpg', dpi=300)
 
 
 # we do the same for viral load
