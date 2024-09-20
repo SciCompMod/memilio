@@ -30,18 +30,20 @@
 
 using ScalarType = double;
 
-template <class...>
-struct False : std::bool_constant<false> {
-};
-
+namespace mio
+{
+/**
+ * @brief Type specific limits for floating-points.
+ *
+ * Specializations are provided for `float` and `double` types. In order to add 
+ * new floating-point types, a specialization is required.
+ * 
+ * Trying to use `zero_tolerance()` without providing a valid specialization
+ * will result in a compile-time error because of the `= delete` specifier.
+ */
 template <typename FP>
 struct Limits {
-    static constexpr FP zero_tolerance()
-    {
-        // The following expression is always false. It is used to ensure the compiler checks all specializations.
-        static_assert(False<FP>{}, "No tolerance available for this type. Please add a specialization in config.h");
-        return FP(0);
-    }
+    static constexpr FP zero_tolerance() = delete;
 };
 
 template <>
@@ -60,4 +62,5 @@ struct Limits<double> {
     }
 };
 
+} // namespace mio
 #endif
