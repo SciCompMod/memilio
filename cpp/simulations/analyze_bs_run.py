@@ -625,7 +625,7 @@ def plot_estimated_reproduction_number(path):
 def plot_cumulative_detected_infections(path):
 
     df_abb = pd.read_json(
-        path+"/../pydata/Germany/cases_all_county_repdate.json")
+        path+"/../pydata/Germany/cases_all_county_repdate_ma1.json")
     # we need the 
     df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
     df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') & (df_abb['Date'] <= '2021-06-01')]

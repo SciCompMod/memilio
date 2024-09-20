@@ -2455,13 +2455,13 @@ int main(int argc, char** argv)
         // 4: testing prob symptomatic
         // 5: odds ratio for asymptomatic to symptomatic
 
-        std::vector<std::pair<double, double>> grid_boundaries = {
-            {1.4, 2.0}, {2.5, 5.5}, {0.35, 0.85}, {0.01, 0.045}, {2, 15}};
+        // std::vector<std::pair<double, double>> grid_boundaries = {
+        //     {1.4, 2.0}, {2.5, 5.5}, {0.35, 0.85}, {0.01, 0.045}, {2, 15}};
         // std::vector<int> points_per_dim = {6, 6, 6, 6, 6};
 
-        // std::vector<double> grid_boundaries = {1.76, 3.7, 0.53, 0.035, 15.0};
-        // std::vector<double> grid_boundaries = {1.76, 3.7, 0.53, 0.03, 7.8};
-        // std::vector<double> grid_boundaries = {1.88, 3.7, 0.35, 0.035, 12.6};
+        std::vector<double> grid_boundaries = {1.52 4.3 0.85 0.024 4.6};
+        // std::vector<double> grid_boundaries = {1.52 4.3 0.75 0.024 4.6};
+        // std::vector<double> grid_boundaries = {11.64 4.3 0.55 0.038 12.4};
         std::vector<int> points_per_dim = {6, 6, 6, 6, 6};
 
         // std::vector<std::pair<double, double>> grid_boundaries = {
