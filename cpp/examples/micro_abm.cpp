@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 #include "abm/common_abm_loggers.h"
+#include "abm/location.h"
 #include "abm/location_type.h"
 #include "abm/person.h"
 #include "abm/simulation.h"
@@ -38,7 +39,7 @@ struct LocationPerPersonLogger : public mio::LogAlways {
 void write_contacts(std::ostream& out, const mio::abm::World& world,
                     const std::vector<LocationPerPersonLogger::Type>& loclog)
 {
-    out << "# Time, ID, Contact1, Intensity1, Contact2, Intensity2, ...\n";
+    out << "# Hour, PersonId, ContactId1, Intensity1, ContactId2, Intensity2, ...\n";
     // std::cout << loclog.size() << "\n";
     // std::vector<std::pair<int, uint32_t>> stays(world.get_persons().size(), {0, 0}); // t0, loc
     // for (size_t p = 0; p < stays.size(); p++) {
@@ -68,6 +69,30 @@ void write_contacts(std::ostream& out, const mio::abm::World& world,
 
             if (preamble.empty()) {
                 out << "\n";
+            }
+        }
+    }
+}
+
+void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
+                         const std::vector<LocationPerPersonLogger::Type>& loclog)
+{
+    out << "# Hour, PersonId1, PersonId2, Intensity\n";
+    for (size_t t = 1; t < loclog.size(); t++) {
+        for (size_t p = 0; p < loclog[t].second.size(); p++) {
+            // write contacts
+            assert(loclog[t].second[p] != mio::abm::INVALID_LOCATION_INDEX);
+            const auto& loc = world.get_locations()[loclog[t].second[p]];
+            for (size_t contact = 0; contact < loc.get_assigned_persons().size(); contact++) {
+                auto p_loc = std::find(loc.get_assigned_persons().begin(), loc.get_assigned_persons().end(), p);
+                const auto& matrices = loc.get_contact_matrices();
+                const auto& t_matrix = matrices[loclog[t].first.hour_of_day()];
+                assert(p_loc != loc.get_assigned_persons().end());
+                const auto intensity = t_matrix(p_loc - loc.get_assigned_persons().begin(), contact);
+                if (intensity > 0) {
+                    out << loclog[t].first.hours() << ", " << p << ", " << loc.get_assigned_persons()[contact] << ", "
+                        << intensity << "\n";
+                }
             }
         }
     }
@@ -141,6 +166,78 @@ void assign_contact_matrix(mio::abm::World& world, mio::abm::LocationId location
     world.get_individualized_location(location).assign_contact_matrices(res.value(), assigned_persons_for_location);
 }
 
+const static Eigen::MatrixXd& full_home_contact_matrix()
+{
+    // data used for abm paper
+    // age groups (paper): 0_to_4, 5_to_14, 15_to_34, 35_to_59, 60_to_79, 80_plus
+    const static Eigen::MatrixXd contact_weights = []() {
+        Eigen::MatrixXd m(6, 6);
+        m << 0.4413, 0.4504, 1.2383, 0.8033, 0.0494, 0.0017, //
+            0.0485, 0.7616, 0.6532, 1.1614, 0.0256, 0.0013, //
+            0.1800, 0.1795, 0.8806, 0.6413, 0.0429, 0.0032, //
+            0.0495, 0.2639, 0.5189, 0.8277, 0.0679, 0.0014, //
+            0.0087, 0.0394, 0.1417, 0.3834, 0.7064, 0.0447, //
+            0.0292, 0.0648, 0.1248, 0.4179, 0.3497, 0.1544;
+        return m;
+    }();
+
+    // age weights translate from paper age groups to the ones we use here
+    // we want to sum over contact weights proportional to age range overlap
+    // age groups: 0_to_4, 5_to_24, 25_to_64, 65_plus
+    const static Eigen::MatrixXd age_weights = []() {
+        Eigen::MatrixXd m(4, 6);
+        m << 1, 0, 0, 0, 0, 0, //
+            0, 1, 0.5, 0, 0, 0, //
+            0, 0, 0.5, 1, 0.25, 0, //
+            0, 0, 0, 0, 0.75, 1;
+        return m;
+    }();
+
+    // translate from paper age groups to the ones we use here
+    const static Eigen::MatrixXd full_contact_matrix = []() {
+        Eigen::MatrixXd m = age_weights * contact_weights * age_weights.transpose();
+        // normalize so the weights can be used as proportions of an hour
+        m.array() /= m.maxCoeff();
+        return m;
+    }();
+
+    return full_contact_matrix;
+}
+
+void assign_home_contact_matrix(mio::abm::World& world, mio::abm::Location& home)
+{
+    // find out who lives here
+    std::vector<uint32_t> assigned_persons;
+    for (auto& person : world.get_persons()) {
+        if (person.get_assigned_locations()[(uint32_t)home.get_type()] == home.get_index()) {
+            assigned_persons.push_back(person.get_person_id());
+        }
+    }
+
+    const auto noise = []() {
+        return 1; // no noise
+        // return mio::UniformDistribution<double>::get_instance()(mio::thread_local_rng(), 0.8, 1.0);
+    };
+
+    // create contact matrix for the location
+    Eigen::MatrixXd home_contact_matrix(assigned_persons.size(), assigned_persons.size());
+    for (Eigen::Index i = 0; i < home_contact_matrix.rows(); i++) {
+        for (Eigen::Index j = 0; j < home_contact_matrix.cols(); j++) {
+            const auto age_i          = (size_t)world.get_persons()[assigned_persons[i]].get_age();
+            const auto age_j          = (size_t)world.get_persons()[assigned_persons[j]].get_age();
+            home_contact_matrix(i, j) = noise() * full_home_contact_matrix()(age_i, age_j);
+        }
+    }
+
+    // set a contact matrix for every hour
+    mio::abm::HourlyContactMatrix hcm;
+    for (auto& matrix : hcm) {
+        matrix = home_contact_matrix;
+    }
+    // add it to the location
+    home.assign_contact_matrices(hcm, assigned_persons);
+}
+
 int main()
 {
     size_t num_age_groups         = 4;
@@ -148,6 +245,8 @@ int main()
     const auto age_group_5_to_24  = mio::AgeGroup(1);
     const auto age_group_25_to_64 = mio::AgeGroup(2);
     const auto age_group_65_plus  = mio::AgeGroup(3);
+
+    std::cout << "Base home contact matrix:\n" << full_home_contact_matrix() << "\n";
 
     // Create the world with 4 age groups.
     auto world = mio::abm::World(num_age_groups);
@@ -351,6 +450,12 @@ int main()
     std::string contacts_path =
         "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/contacts/microcontacts/24h_networks_csv";
 
+    for (auto& location : world.get_locations()) {
+        if (location.get_type() == mio::abm::LocationType::Home) {
+            assign_home_contact_matrix(world, location);
+        }
+    }
+
     assign_contact_matrix(world, work1, mio::path_join(contacts_path, "office_20_20.csv"));
     assign_contact_matrix(world, work2, mio::path_join(contacts_path, "office_15_15.csv"));
     assign_contact_matrix(world, work3, mio::path_join(contacts_path, "office_5_5.csv"));
@@ -374,13 +479,16 @@ int main()
     // Run the simulation until tmax with the history object.
     sim.advance(tmax, historyTimeSeries, loclog);
 
-    std::ofstream contactfile("micro_abm_contacts.csv");
-    write_contacts(contactfile, sim.get_world(), std::get<0>(loclog.get_log()));
+    {
+        std::ofstream contactfile("micro_abm_contacts.csv");
+        write_contacts_flat(contactfile, sim.get_world(), std::get<0>(loclog.get_log()));
+    }
 
-    std::ofstream outfile("micro_abm.txt");
-    std::get<0>(historyTimeSeries.get_log())
-        .print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
-    std::cout << "Results written to micro_abm.txt" << std::endl;
-
+    {
+        std::ofstream outfile("micro_abm.txt");
+        std::get<0>(historyTimeSeries.get_log())
+            .print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
+        std::cout << "Results written to micro_abm.txt" << std::endl;
+    }
     return 0;
 }
