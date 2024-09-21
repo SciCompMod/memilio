@@ -1764,7 +1764,7 @@ mio::IOResult<void> run_with_grid_search(const fs::path& input_dir, const fs::pa
         const double viral_shedding_rate        = params[0];
         const double dark_figure                = params[1];
         const double contact_red_lockdown       = params[2];
-        const double damping_community_lockdown = 0.8;
+        const double damping_community_lockdown = 0.5;
         // const double testing_probability_sympt  = 0.037;
         // const double ratio_asympt_to_sympt      = 20.0;
         const double testing_probability_sympt = params[3];
@@ -1998,18 +1998,18 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         const double viral_shedding_rate        = params[0];
         const double dark_figure                = params[1];
         const double contact_red_lockdown       = params[2];
-        const double damping_community_lockdown = 0.8;
+        const double damping_community_lockdown = 0.5;
         // const double testing_probability_sympt  = 0.036;
         const double testing_probability_sympt = params[3];
 
-        const double lockdown_test_prob       = 1.0;
+        const double lockdown_test_prob       = 1.2;
         const double after_lockdown_test_prob = 1.0;
 
         const auto seasonality_april = 0.95;
         const auto seasonality_may   = 0.85;
 
         const double masks                            = 0.25;
-        const double after_lockdown_contact_reduction = 1.0;
+        const double after_lockdown_contact_reduction = 0.50;
         // const double ratio_asympt_to_sympt            = 20.0;
         const double ratio_asympt_to_sympt = params[4];
         const double perc_easter_event     = 0.2;
@@ -2125,7 +2125,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                         location.add_damping(mio::abm::TimePoint(mio::abm::days(0).seconds()), 0.5); // from 2021-03-01
                         location.get_infection_parameters().get<mio::abm::ContactRates>().array() *= (0.5);
                         location.add_damping(mio::abm::TimePoint(mio::abm::days(date_of_lockdown).seconds()),
-                                             0.5); // from 2021-03-15
+                                             0.00); // from 2021-03-15
                         location.add_damping(mio::abm::TimePoint(mio::abm::days(end_date_of_lockdown).seconds()),
                                              0.5); // from 2021-04-12 till 2021-05-30
                     }
@@ -2149,7 +2149,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
                         location.add_damping(mio::abm::TimePoint(mio::abm::days(0).seconds()), 0.75); // from 2021-03-15
                         // location.get_infection_parameters().get<mio::abm::ContactRates>().array() *= (0.75 * 0.75);
                         location.add_damping(mio::abm::TimePoint(mio::abm::days(date_of_lockdown).seconds()),
-                                             0.75); // from 2021-03-15
+                                             0.7); // from 2021-03-15
                         location.add_damping(mio::abm::TimePoint(mio::abm::days(end_date_of_lockdown).seconds()),
                                              0.75); // from 2021-03-15
                     }
@@ -2487,7 +2487,7 @@ int main(int argc, char** argv)
 
         // std::vector<std::vector<double>> parameters = {{1.596}, {4.171}, {0.7125}, {0.02472}, {4.83}, {10.0}, {0.5}};
 
-        std::vector<std::vector<double>> parameters = {{1.596}, {4.171}, {0.7125}, {0.02472, 0.07416, 0.1236},
+        std::vector<std::vector<double>> parameters = {{1.596}, {4.171}, {0.7125}, {0.02472, 0.04944, 0.07416},
                                                        {4.83},  {10.0},  {0.5}};
 
         // std::vector<std::vector<double>> parameters = {
