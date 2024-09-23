@@ -20,6 +20,7 @@
 import argparse
 import numpy as np
 import os
+import sys
 
 import memilio.simulation as mio
 from memilio.simulation import abm
@@ -29,6 +30,7 @@ from memilio.simulation.abm import History
 from memilio.simulation.abm import Infection
 
 import pandas as pd
+
 # class used to map input areas to abm locations
 
 
@@ -773,8 +775,8 @@ def write_compartments_to_file(world, path, timepoints):
 
 def run_abm_simulation(sim_num):
     mio.set_log_level(mio.LogLevel.Warning)
-    input_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/'
-    output_path = 'H:/Documents/INSIDeDemonstrator/share_with_julia/memilio_output/20240902/'
+    input_path = sys.path[0] + '/input/'
+    output_path = sys.path[0] + '/output/'
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(sim_num)
     # starting time point
@@ -785,7 +787,7 @@ def run_abm_simulation(sim_num):
     household_distribution = [0.4084, 0.3375, 0.1199, 0.0965, 0.0377]
     # read txt file with inputs
     areas = read_txt(os.path.join(
-        input_path, 'INSIDe_Demonstrator_AreaList_modified.txt'))
+        input_path, 'INSIDe_Demonstrator_AreaList.txt'))
     parameters = pd.read_csv(os.path.join(
         input_path, 'parameter_table.csv'), index_col=0)
     # create simulation with starting timepoint and number of age groups
