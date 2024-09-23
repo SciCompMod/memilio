@@ -57,7 +57,7 @@ void bind_damping_members(DampingClass& damping_class)
         .def_property(
             "time",
             [](const Damping& self) {
-                return self.get_time();
+                return double(self.get_time());
             },
             [](Damping& self, double v) {
                 self.get_time() = mio::SimulationTime(v);
@@ -66,7 +66,7 @@ void bind_damping_members(DampingClass& damping_class)
         .def_property(
             "type",
             [](const Damping& self) {
-                return self.get_type();
+                return int(self.get_type());
             },
             [](Damping& self, int v) {
                 self.get_type() = mio::DampingType(v);
@@ -75,7 +75,7 @@ void bind_damping_members(DampingClass& damping_class)
         .def_property(
             "level",
             [](const Damping& self) {
-                return self.get_level();
+                return int(self.get_level());
             },
             [](Damping& self, int v) {
                 self.get_level() = mio::DampingLevel(v);

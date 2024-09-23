@@ -70,7 +70,8 @@ void bind_MultiIndex(pybind11::module_& m, std::string const& name)
 {
     using C          = mio::Index<Tags...>;
     decltype(auto) c = bind_class<C, EnablePickling::Required>(m, name.c_str());
-    c.def(pybind11::init<mio::Index<Tags> const&...>()).def(pybind11::init([](pybind11::tuple t) {
+    c.def(pybind11::init<mio::Index<Tags> const&...>())
+        .def(pybind11::init([](pybind11::tuple t) {
         return C(extract_index<Tags, C>(t)...);
     }));
 
