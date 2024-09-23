@@ -206,10 +206,13 @@ def test_total_population(df_pop, age_cols):
     total_sum_2020 = 83155031
     total_sum_2021 = 83237124
     total_sum_2022 = 84358845
+    total_sum_2023 = 84669326
     total_sum = df_pop[age_cols].sum().sum()
 
-    if total_sum == total_sum_2022:
+    if total_sum == total_sum_2023:
         pass
+    elif total_sum == total_sum_2022:
+        warnings.warn('Using data of 2022. Newer data is available.')
     elif total_sum == total_sum_2021:
         warnings.warn('Using data of 2021. Newer data is available.')
     elif total_sum == total_sum_2020:
