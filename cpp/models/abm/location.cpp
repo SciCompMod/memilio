@@ -128,6 +128,9 @@ void Location::interact_micro(Person::RandomNumberGenerator& rng, Person& person
             int my_row_in_micro_matrix        = std::distance(m_assigned_persons.begin(), my_row_in_micro_matrix_it);
             Eigen::VectorXd viral_shed_others = Eigen::VectorXd::Zero(m_assigned_persons.size());
             for (int i = 0; i < (int)m_assigned_persons.size(); i++) {
+                if (m_assigned_persons[i] == INVALID_PERSON_ID) {
+                    continue;
+                }
                 if (i != my_row_in_micro_matrix) {
                     auto person_it = std::find(m_persons.begin(), m_persons.end(), m_assigned_persons[i]);
                     if (person_it != m_persons.end()) {
