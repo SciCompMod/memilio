@@ -64,7 +64,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
                                                        '50-64 years', '65-74 years', '>74 years'])
 
     @patch('memilio.epidata.getPopulationData.read_population_data',
-           return_value=df_pop_raw)
+           return_value=(df_pop_raw, None))
     @patch('memilio.epidata.getPopulationData.assign_population_data', return_value=df_pop)
     @patch('memilio.epidata.getPopulationData.test_total_population')
     def test_get_population_data_full(self, mock_test, mock_assign, mock_download):
