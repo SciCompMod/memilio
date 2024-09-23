@@ -66,13 +66,14 @@ int main()
 
     model.parameters.get<mio::osecirvvs::ICUCapacity<double>>()          = 100;
     model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<double>>() = 0.0143;
-    const size_t daily_vaccinations = 10;
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().resize(mio::SimulationDay((size_t)tmax + 1));
+    const size_t daily_vaccinations                                      = 10;
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccination<double>>().resize(
+        mio::SimulationDay((size_t)tmax + 1));
     model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().resize(mio::SimulationDay((size_t)tmax + 1));
     for (size_t i = 0; i < tmax + 1; ++i) {
         auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
         model.parameters
-            .get<mio::osecirvvs::DailyFirstVaccination<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
+            .get<mio::osecirvvs::DailyPartialVaccination<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
             num_vaccinations;
         model.parameters
             .get<mio::osecirvvs::DailyFullVaccination<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =

@@ -486,13 +486,15 @@ public:
             double first_vacc;
             double full_vacc;
             if (t_idx == SimulationDay(0)) {
-                first_vacc = params.template get<osecirvvs::DailyFirstVaccination<ScalarType>>()[{(AgeGroup)i, t_idx}];
-                full_vacc  = params.template get<osecirvvs::DailyFullVaccination<ScalarType>>()[{(AgeGroup)i, t_idx}];
+                first_vacc =
+                    params.template get<osecirvvs::DailyPartialVaccination<ScalarType>>()[{(AgeGroup)i, t_idx}];
+                full_vacc = params.template get<osecirvvs::DailyFullVaccination<ScalarType>>()[{(AgeGroup)i, t_idx}];
             }
             else {
-                first_vacc = params.template get<osecirvvs::DailyFirstVaccination<ScalarType>>()[{(AgeGroup)i, t_idx}] -
-                             params.template get<osecirvvs::DailyFirstVaccination<ScalarType>>()[{
-                                 (AgeGroup)i, t_idx - SimulationDay(1)}];
+                first_vacc =
+                    params.template get<osecirvvs::DailyPartialVaccination<ScalarType>>()[{(AgeGroup)i, t_idx}] -
+                    params.template get<osecirvvs::DailyPartialVaccination<ScalarType>>()[{(AgeGroup)i,
+                                                                                           t_idx - SimulationDay(1)}];
                 full_vacc = params.template get<osecirvvs::DailyFullVaccination<ScalarType>>()[{(AgeGroup)i, t_idx}] -
                             params.template get<osecirvvs::DailyFullVaccination<ScalarType>>()[{
                                 (AgeGroup)i, t_idx - SimulationDay(1)}];
@@ -665,8 +667,8 @@ void setup_model(Model& model)
 
     model.parameters.template get<osecirvvs::ICUCapacity<ScalarType>>()          = 100;
     model.parameters.template get<osecirvvs::TestAndTraceCapacity<ScalarType>>() = 0.0143;
-    model.parameters.template get<osecirvvs::DailyFirstVaccination<ScalarType>>().resize(SimulationDay(size_t(1000)));
-    model.parameters.template get<osecirvvs::DailyFirstVaccination<ScalarType>>().array().setConstant(5);
+    model.parameters.template get<osecirvvs::DailyPartialVaccination<ScalarType>>().resize(SimulationDay(size_t(1000)));
+    model.parameters.template get<osecirvvs::DailyPartialVaccination<ScalarType>>().array().setConstant(5);
     model.parameters.template get<osecirvvs::DailyFullVaccination<ScalarType>>().resize(SimulationDay(size_t(1000)));
     model.parameters.template get<osecirvvs::DailyFullVaccination<ScalarType>>().array().setConstant(3);
 

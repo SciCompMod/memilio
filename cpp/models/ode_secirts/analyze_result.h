@@ -17,15 +17,19 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRVVS_ANALYZE_RESULT_H
-#define ODESECIRVVS_ANALYZE_RESULT_H
+#ifndef ODESECIRTS_ANALYZE_RESULT_H
+#define ODESECIRTS_ANALYZE_RESULT_H
 
-#include "ode_secirvvs/infection_state.h"
-#include "ode_secirvvs/parameters.h"
+#include "ode_secirts/model.h"
+#include "memilio/data/analyze_result.h"
+#include "ode_secirts/parameters.h"
+
+#include <functional>
+#include <vector>
 
 namespace mio
 {
-namespace osecirvvs
+namespace osecirts
 {
 /**
     * @brief computes the p percentile of the parameters for each node.
@@ -63,6 +67,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
     for (size_t node = 0; node < num_nodes; node++) {
         percentile[node].parameters.template get<DailyPartialVaccination<double>>().resize(num_days);
         percentile[node].parameters.template get<DailyFullVaccination<double>>().resize(num_days);
+        percentile[node].parameters.template get<DailyBoosterVaccination<double>>().resize(num_days);
 
         for (auto i = AgeGroup(0); i < AgeGroup(num_groups); i++) {
             //Population
@@ -159,11 +164,11 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<DaysUntilEffectivePartialImmunity<double>>()[i];
+                    return model.parameters.template get<DaysUntilEffectivePartialVaccination<double>>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<DaysUntilEffectiveImprovedImmunity<double>>()[i];
+                    return model.parameters.template get<DaysUntilEffectiveImprovedVaccination<double>>()[i];
                 });
 
             for (auto day = SimulationDay(0); day < num_days; ++day) {
@@ -174,6 +179,10 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                 param_percentil(
                     node, [ i, day ](auto&& model) -> auto& {
                         return model.parameters.template get<DailyFullVaccination<double>>()[{i, day}];
+                    });
+                param_percentil(
+                    node, [ i, day ](auto&& model) -> auto& {
+                        return model.parameters.template get<DailyBoosterVaccination<double>>()[{i, day}];
                     });
             }
             //virus variants
@@ -203,7 +212,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
     return percentile;
 }
 
-} // namespace osecirvvs
+} // namespace osecirts
 } // namespace mio
 
-#endif //ODESECIRVVS
+#endif //ODESECIRTS

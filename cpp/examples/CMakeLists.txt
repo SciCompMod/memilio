@@ -80,6 +80,10 @@ add_executable(ode_seir_detailed_mobility ode_seir_detailed_mobility.cpp)
 target_link_libraries(ode_seir_detailed_mobility PRIVATE memilio ode_seir)
 target_compile_options(ode_seir_detailed_mobility PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ode_secirts_example ode_secirts.cpp)
+target_link_libraries(ode_secirts_example PRIVATE memilio ode_secirts)
+target_compile_options(ode_secirts_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_secir_ageres_example ode_secir_ageres.cpp)
 target_link_libraries(ode_secir_ageres_example PRIVATE memilio ode_secir)
 target_compile_options(ode_secir_ageres_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -105,7 +109,6 @@ add_executable(twitter_mobility_example twitter_mobility.cpp)
 target_link_libraries(twitter_mobility_example PRIVATE memilio ode_secir)
 
 target_compile_options(twitter_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-
 
 add_executable(ide_seir_example ide_seir.cpp)
 target_link_libraries(ide_seir_example PRIVATE memilio ide_seir)
@@ -155,7 +158,7 @@ if(MEMILIO_HAS_HDF5)
 endif()
 
 if(MEMILIO_HAS_JSONCPP)
-  add_executable(ide_initialization_example ide_initialization.cpp)
-  target_link_libraries(ide_initialization_example PRIVATE memilio ide_secir)
-  target_compile_options(ide_initialization_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    add_executable(ide_initialization_example ide_initialization.cpp)
+    target_link_libraries(ide_initialization_example PRIVATE memilio ide_secir)
+    target_compile_options(ide_initialization_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()

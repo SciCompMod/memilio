@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
+* Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,24 +17,28 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRVVS_PARAMETERS_H
-#define ODESECIRVVS_PARAMETERS_H
+#ifndef ODESECIRTS_PARAMETERS_H
+#define ODESECIRTS_PARAMETERS_H
 
+#include "memilio/math/eigen.h"
+#include "memilio/utils/uncertain_value.h"
+#include "memilio/math/adapt_rk.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/epidemiology/dynamic_npis.h"
 #include "memilio/epidemiology/simulation_day.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
-#include "memilio/utils/custom_index_array.h"
+#include "memilio/epidemiology/dynamic_npis.h"
 #include "memilio/utils/parameter_set.h"
-#include "memilio/utils/uncertain_value.h"
+#include "memilio/utils/custom_index_array.h"
+
+#include <vector>
 
 namespace mio
 {
-namespace osecirvvs
+namespace osecirts
 {
 
 /**
-* @brief the start day in the SECIRVVS model
+* @brief the start day in the SECIRS-type model
 * The start day defines in which season the simulation can be started
 * If the start day is 180 and simulation takes place from t0=0 to
 * tmax=100 the days 180 to 280 of the year are simulated
@@ -52,7 +56,7 @@ struct StartDay {
 };
 
 /**
-* @brief the start day of a new variant in the SECIRVVS model
+* @brief the start day of a new variant in the SECIRS-type model
 * The start day of the new variant defines in which day of the simulation the new variant is introduced.
 * Starting on this day, the new variant will impact the transmission probability depending on the
 * infectiousness of the new variant in the parameter InfectiousnessNewVariant.
@@ -70,7 +74,7 @@ struct StartDayNewVariant {
 };
 
 /**
-* @brief the seasonality in the SECIR model
+* @brief the seasonality in the SECIRS-type model
 * the seasonality is given as (1+k*sin()) where the sine
 * curve is below one in summer and above one in winter
 */
@@ -116,38 +120,6 @@ struct TestAndTraceCapacity {
     static std::string name()
     {
         return "TestAndTraceCapacity";
-    }
-};
-
-/**
- * @brief Multiplier for the test and trace capacity to determine when it is considered overloaded from cases without symptoms.
- */
-template <typename FP = double>
-struct TestAndTraceCapacityMaxRiskNoSymptoms {
-    using Type = UncertainValue<FP>;
-    static Type get_default(AgeGroup)
-    {
-        return Type(2.0);
-    }
-    static std::string name()
-    {
-        return "TestAndTraceCapacityMaxRiskNoSymptoms";
-    }
-};
-
-/**
- * @brief Multiplier for the test and trace capacity to determine when it is considered overloaded by symptomatic cases.
- */
-template <typename FP = double>
-struct TestAndTraceCapacityMaxRiskSymptoms {
-    using Type = UncertainValue<FP>;
-    static Type get_default(AgeGroup)
-    {
-        return Type(15.0);
-    }
-    static std::string name()
-    {
-        return "TestAndTraceCapacityMaxRiskSymptoms";
     }
 };
 
@@ -267,6 +239,71 @@ struct TimeInfectedCritical {
     }
 };
 
+/** 
+ * @brief Time in days to describe waning immunity to get person from S_PI -> S
+ */
+template <typename FP = double>
+struct TimeWaningPartialImmunity {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 90.0);
+    }
+    static std::string name()
+    {
+        return "TimeWaningPartialImmunity";
+    }
+};
+
+/** 
+ * @brief Time in days to describe waning immunity to get person from SII -> SPI
+ */
+template <typename FP = double>
+struct TimeWaningImprovedImmunity {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 90.0);
+    }
+    static std::string name()
+    {
+        return "TimeWaningImprovedImmunity";
+    }
+};
+
+/**
+ * @brief the time people stays immune after infection or vaccination located in S
+         in the model in day unit
+ */
+template <typename FP = double>
+struct TimeTemporaryImmunityPI {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeTemporaryImmunityPI";
+    }
+};
+
+/**
+ * @brief the time people stays immune after infection or vaccination located in S_PI or S_II
+        in the model in day unit
+ */
+template <typename FP = double>
+struct TimeTemporaryImmunityII {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeTemporaryImmunityII";
+    }
+};
 /**
 * @brief probability of getting infected from a contact
 */
@@ -415,7 +452,7 @@ struct VaccinationGap {
  * @brief Time in days until first vaccine dose takes full effect.
  */
 template <typename FP = double>
-struct DaysUntilEffectivePartialImmunity {
+struct DaysUntilEffectivePartialVaccination {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -423,7 +460,7 @@ struct DaysUntilEffectivePartialImmunity {
     }
     static std::string name()
     {
-        return "DaysUntilEffectivePartialImmunity";
+        return "DaysUntilEffectivePartialVaccination";
     }
 };
 
@@ -431,7 +468,7 @@ struct DaysUntilEffectivePartialImmunity {
  * @brief Time in days until second vaccine dose takes full effect.
  */
 template <typename FP = double>
-struct DaysUntilEffectiveImprovedImmunity {
+struct DaysUntilEffectiveImprovedVaccination {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -439,7 +476,23 @@ struct DaysUntilEffectiveImprovedImmunity {
     }
     static std::string name()
     {
-        return "DaysUntilEffectiveImprovedImmunity";
+        return "DaysUntilEffectiveImprovedVaccination";
+    }
+};
+
+/**
+ * @brief Time in days until booster vaccine dose takes full effect.
+ */
+template <typename FP = double>
+struct DaysUntilEffectiveBoosterImmunity {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 7.0);
+    }
+    static std::string name()
+    {
+        return "DaysUntilEffectiveBoosterImmunity";
     }
 };
 
@@ -472,6 +525,22 @@ struct DailyFullVaccination {
     static std::string name()
     {
         return "DailyFullVaccination";
+    }
+};
+
+/**
+* @brief Total number of booster vaccinations up to the given day.
+*/
+template <typename FP = double>
+struct DailyBoosterVaccination {
+    using Type = CustomIndexArray<FP, AgeGroup, SimulationDay>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type({size, SimulationDay(0)});
+    }
+    static std::string name()
+    {
+        return "DailyBoosterVaccination";
     }
 };
 
@@ -606,20 +675,22 @@ struct InfectiousnessNewVariant {
 
 template <typename FP = double>
 using ParametersBase = ParameterSet<
-    StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, TestAndTraceCapacityMaxRiskNoSymptoms<FP>,
-    TestAndTraceCapacityMaxRiskSymptoms<FP>, ContactPatterns<FP>, DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>,
-    TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>, TimeInfectedSevere<FP>, TimeInfectedCritical<FP>,
-    TransmissionProbabilityOnContact<FP>, RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>,
-    RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>,
-    CriticalPerSevere<FP>, DeathsPerCritical<FP>, VaccinationGap<FP>, DaysUntilEffectivePartialImmunity<FP>,
-    DaysUntilEffectiveImprovedImmunity<FP>, DailyFullVaccination<FP>, DailyPartialVaccination<FP>,
-    ReducExposedPartialImmunity<FP>, ReducExposedImprovedImmunity<FP>, ReducInfectedSymptomsPartialImmunity<FP>,
-    ReducInfectedSymptomsImprovedImmunity<FP>, ReducInfectedSevereCriticalDeadPartialImmunity<FP>,
-    ReducInfectedSevereCriticalDeadImprovedImmunity<FP>, ReducTimeInfectedMild<FP>, InfectiousnessNewVariant<FP>,
-    StartDayNewVariant>;
+    StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, ContactPatterns<FP>,
+    DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>, TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>,
+    TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TimeWaningPartialImmunity<FP>, TimeWaningImprovedImmunity<FP>,
+    TimeTemporaryImmunityPI<FP>, TimeTemporaryImmunityII<FP>, TransmissionProbabilityOnContact<FP>,
+    RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
+    MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>,
+    VaccinationGap<FP>, DaysUntilEffectivePartialVaccination<FP>, DaysUntilEffectiveImprovedVaccination<FP>,
+    DaysUntilEffectiveBoosterImmunity<FP>, DailyFullVaccination<FP>, DailyPartialVaccination<FP>,
+    DailyBoosterVaccination<FP>, ReducExposedPartialImmunity<FP>, ReducExposedImprovedImmunity<FP>,
+    ReducInfectedSymptomsPartialImmunity<FP>, ReducInfectedSymptomsImprovedImmunity<FP>,
+    ReducInfectedSevereCriticalDeadPartialImmunity<FP>, ReducInfectedSevereCriticalDeadImprovedImmunity<FP>,
+    ReducTimeInfectedMild<FP>, InfectiousnessNewVariant<FP>, StartDayNewVariant>;
 
 /**
- * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.
+ * @brief Parameters of the age-resolved SECIRS-type model with high temporary immunity upon immunization and waning immunity over
+time.
  */
 template <typename FP = double>
 class Parameters : public ParametersBase<FP>
@@ -716,30 +787,10 @@ public:
             corrected = true;
         }
 
-        if (this->template get<TestAndTraceCapacity<FP>>() < 0.0) {
-            log_warning("Constraint check: Parameter TestAndTraceCapacity changed from {} to {}",
-                        this->template get<TestAndTraceCapacity<FP>>(), 0);
-            this->template set<TestAndTraceCapacity<FP>>(0);
-            corrected = true;
-        }
-
-        if (this->template get<TestAndTraceCapacityMaxRiskSymptoms<FP>>() < 0.0) {
-            log_warning("Constraint check: Parameter TestAndTraceCapacityMaxRiskSymptoms changed from {} to {}",
-                        this->template get<TestAndTraceCapacityMaxRiskSymptoms<FP>>(), 0);
-            this->template set<TestAndTraceCapacityMaxRiskSymptoms<FP>>(0);
-            corrected = true;
-        }
-
-        if (this->template get<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>() < 0.0) {
-            log_warning("Constraint check: Parameter TestAndTraceCapacityMaxRiskNoSymptoms changed from {} to {}",
-                        this->template get<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(), 0);
-            this->template set<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(0);
-            corrected = true;
-        }
-
         const double tol_times = 1e-1; // accepted tolerance for compartment stays
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
+
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
                 log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please "
                             "note that unreasonably small compartment stays lead to massively increased run time. "
@@ -783,6 +834,42 @@ public:
                             this->template get<TimeInfectedCritical<FP>>()[i], tol_times);
                 this->template get<TimeInfectedCritical<FP>>()[i] = tol_times;
                 corrected                                         = true;
+            }
+
+            if (this->template get<TimeTemporaryImmunityPI<FP>>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeTemporaryImmunityPI changed from {} to {}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->template get<TimeTemporaryImmunityPI<FP>>()[i], tol_times);
+                this->template get<TimeTemporaryImmunityPI<FP>>()[i] = tol_times;
+                corrected                                            = true;
+            }
+
+            if (this->template get<TimeTemporaryImmunityII<FP>>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeTemporaryImmunityII changed from {} to {}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->template get<TimeTemporaryImmunityII<FP>>()[i], tol_times);
+                this->template get<TimeTemporaryImmunityII<FP>>()[i] = tol_times;
+                corrected                                            = true;
+            }
+
+            if (this->template get<TimeWaningPartialImmunity<FP>>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeWaningPartialImmunity changed from {} to {}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->template get<TimeWaningPartialImmunity<FP>>()[i], tol_times);
+                this->template get<TimeWaningPartialImmunity<FP>>()[i] = tol_times;
+                corrected                                              = true;
+            }
+
+            if (this->template get<TimeWaningImprovedImmunity<FP>>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeWaningImprovedImmunity changed from {} to {}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->template get<TimeWaningImprovedImmunity<FP>>()[i], tol_times);
+                this->template get<TimeWaningImprovedImmunity<FP>>()[i] = tol_times;
+                corrected                                               = true;
             }
 
             if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
@@ -840,17 +927,25 @@ public:
                 corrected                                      = true;
             }
 
-            if (this->template get<DaysUntilEffectivePartialImmunity<FP>>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter DaysUntilEffectivePartialImmunity changed from {} to {}",
-                            this->template get<DaysUntilEffectivePartialImmunity<FP>>()[i], 0);
-                this->template get<DaysUntilEffectivePartialImmunity<FP>>()[i] = 0;
-                corrected                                                      = true;
+            if (this->template get<DaysUntilEffectivePartialVaccination<FP>>()[i] < 0.0) {
+                log_warning("Constraint check: Parameter DeathsPerCritical changed from {} to {}",
+                            this->template get<DaysUntilEffectivePartialVaccination<FP>>()[i], 0);
+                this->template get<DaysUntilEffectivePartialVaccination<FP>>()[i] = 0;
+                corrected                                                         = true;
             }
-            if (this->template get<DaysUntilEffectiveImprovedImmunity<FP>>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter DaysUntilEffectiveImprovedImmunity changed from {} to {}",
-                            this->template get<DaysUntilEffectiveImprovedImmunity<FP>>()[i], 0);
-                this->template get<DaysUntilEffectiveImprovedImmunity<FP>>()[i] = 0;
-                corrected                                                       = true;
+
+            if (this->template get<DaysUntilEffectiveImprovedVaccination<FP>>()[i] < 0.0) {
+                log_warning("Constraint check: Parameter DaysUntilEffectiveImprovedVaccination changed from {} to {}",
+                            this->template get<DaysUntilEffectiveImprovedVaccination<FP>>()[i], 0);
+                this->template get<DaysUntilEffectiveImprovedVaccination<FP>>()[i] = 0;
+                corrected                                                          = true;
+            }
+
+            if (this->template get<DaysUntilEffectiveBoosterImmunity<FP>>()[i] < 0.0) {
+                log_warning("Constraint check: Parameter DaysUntilEffectiveBoosterImmunity changed from {} to {}",
+                            this->template get<DaysUntilEffectiveBoosterImmunity<FP>>()[i], 0);
+                this->template get<DaysUntilEffectiveBoosterImmunity<FP>>()[i] = 0;
+                corrected                                                      = true;
             }
 
             if (this->template get<ReducExposedPartialImmunity<FP>>()[i] <= 0.0 ||
@@ -929,27 +1024,12 @@ public:
     {
         const double tol_times = 1e-1; // accepted tolerance for compartment stays
         if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
-            log_error("Constraint check: Parameter Seasonality smaller {} or larger {}", 0, 0.5);
+            log_error("Constraint check: Parameter m_seasonality smaller {} or larger {}", 0, 0.5);
             return true;
         }
 
         if (this->template get<ICUCapacity<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter ICUCapacity smaller {}", 0);
-            return true;
-        }
-
-        if (this->template get<TestAndTraceCapacity<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter TestAndTraceCapacity smaller {}", 0);
-            return true;
-        }
-
-        if (this->template get<TestAndTraceCapacityMaxRiskSymptoms<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter TestAndTraceCapacityMaxRiskSymptoms smaller {}", 0);
-            return true;
-        }
-
-        if (this->template get<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter TestAndTraceCapacityMaxRiskNoSymptoms smaller {}", 0);
+            log_error("Constraint check: Parameter m_icu_capacity smaller {}", 0);
             return true;
         }
 
@@ -992,6 +1072,38 @@ public:
                           "note that unreasonably small compartment stays lead to massively increased run time. "
                           "Consider to cancel and reset parameters.",
                           this->template get<TimeInfectedCritical<FP>>()[i], tol_times);
+                return true;
+            }
+
+            if (this->template get<TimeTemporaryImmunityPI<FP>>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeTemporaryImmunityPI {} smaller {}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->template get<TimeTemporaryImmunityPI<FP>>()[i], tol_times);
+                return true;
+            }
+
+            if (this->template get<TimeTemporaryImmunityII<FP>>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeTemporaryImmunityII {} smaller {}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->template get<TimeTemporaryImmunityII<FP>>()[i], tol_times);
+                return true;
+            }
+
+            if (this->template get<TimeWaningPartialImmunity<FP>>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeWaningPartialImmunity {} smaller {}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->template get<TimeWaningPartialImmunity<FP>>()[i], tol_times);
+                return true;
+            }
+
+            if (this->template get<TimeWaningImprovedImmunity<FP>>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeWaningImprovedImmunity {} smaller {}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->template get<TimeWaningImprovedImmunity<FP>>()[i], tol_times);
                 return true;
             }
 
@@ -1041,12 +1153,18 @@ public:
                 return true;
             }
 
-            if (this->template get<DaysUntilEffectivePartialImmunity<FP>>()[i] < 0.0) {
-                log_error("Constraint check: Parameter DaysUntilEffectivePartialImmunity smaller {}", 0);
+            if (this->template get<DaysUntilEffectivePartialVaccination<FP>>()[i] < 0.0) {
+                log_error("Constraint check: Parameter DaysUntilEffectivePartialVaccination smaller {}", 0);
                 return true;
             }
-            if (this->template get<DaysUntilEffectiveImprovedImmunity<FP>>()[i] < 0.0) {
-                log_error("Constraint check: Parameter DaysUntilEffectiveImprovedImmunity smaller {}", 0);
+
+            if (this->template get<DaysUntilEffectiveImprovedVaccination<FP>>()[i] < 0.0) {
+                log_error("Constraint check: Parameter DaysUntilEffectiveImprovedVaccination smaller {}", 0);
+                return true;
+            }
+
+            if (this->template get<DaysUntilEffectiveBoosterImmunity<FP>>()[i] < 0.0) {
+                log_error("Constraint check: Parameter DaysUntilEffectiveImprovedVaccination smaller {}", 0);
                 return true;
             }
 
@@ -1095,6 +1213,15 @@ public:
                 log_error("Constraint check: Parameter InfectiousnessNewVariant smaller {}", 0);
                 return true;
             }
+
+            if (this->template get<TimeTemporaryImmunityPI<FP>>()[i] < 0.0) {
+                log_error("Constraint check: Parameter TimeTemporaryImmunityPI smaller {:d}", 0);
+                return true;
+            }
+            if (this->template get<TimeTemporaryImmunityII<FP>>()[i] < 0.0) {
+                log_error("Constraint check: Parameter TimeTemporaryImmunityII smaller {:d}", 0);
+                return true;
+            }
         }
         return false;
     }
@@ -1126,7 +1253,7 @@ private:
     double m_end_dynamic_npis         = 0.0;
 };
 
-} // namespace osecirvvs
+} // namespace osecirts
 } // namespace mio
 
-#endif // ODESECIRVVS_PARAMETERS_H
+#endif // ODESECIRTS_PARAMETERS_H
