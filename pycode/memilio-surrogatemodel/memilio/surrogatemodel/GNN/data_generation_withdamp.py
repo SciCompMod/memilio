@@ -20,7 +20,7 @@ from memilio.surrogatemodel.utils_surrogatemodel import (
     getBaselineMatrix, remove_confirmed_compartments, get_population, getMinimumMatrix)
 
 
-def run_secir_groups_simulation(days, populations, dampings):
+def run_secir_groups_simulation(days, populations, dampings, countykey_list, directory, baseline):
     """! Uses an ODE SECIR model allowing for asymptomatic infection 
         with 6 different age groups. The model is not stratified by region. 
         Virus-specific parameters are fixed and initial number of persons 
@@ -37,9 +37,6 @@ def run_secir_groups_simulation(days, populations, dampings):
     start_month = 1
     start_year = 2019
     dt = 0.1
-
-    # get county ids
-    countykey_list = geoger.get_county_ids(merge_eisenach=True, zfill=True)
 
     # Define age Groups
     groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
@@ -107,12 +104,9 @@ def run_secir_groups_simulation(days, populations, dampings):
         model.parameters.StartDay = (
             date(start_year, start_month, start_day) - date(start_year, 1, 1)).days
 
-        # Load baseline and minimum contact matrix and assign them to the model
-        baseline = getBaselineMatrix()
-        minimum = getMinimumMatrix()
-
         model.parameters.ContactPatterns.cont_freq_mat[0].baseline = baseline
-        model.parameters.ContactPatterns.cont_freq_mat[0].minimum = minimum
+        model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
+            (num_groups, num_groups)) * 0
 
         # Generate a damping matrix and assign it to the model
         damped_matrices = []
@@ -135,7 +129,6 @@ def run_secir_groups_simulation(days, populations, dampings):
         model.apply_constraints()
         models.append(model)
 
-    directory = transform_mobility_directory()
     graph = make_graph(directory, num_regions, countykey_list, models)
 
     study = ParameterStudy(graph, 0, days, dt=dt, num_runs=1)
@@ -248,6 +241,13 @@ def generate_data(
             "damping_day": [],
             "damped_matrix": []}
 
+    # get county ids
+    countykey_list = geoger.get_county_ids(merge_eisenach=True, zfill=True)
+    directory = transform_mobility_directory()
+
+    # Load baseline matrix
+    baseline = getBaselineMatrix()
+
     # show progess in terminal for longer runs
     # Due to the random structure, theres currently no need to shuffle the data
     bar = Bar('Number of Runs done', max=num_runs)
@@ -255,7 +255,7 @@ def generate_data(
     for i in range(num_runs):
 
         data_run, damped_contact_matrix, damping_days_s, damping_factor = run_secir_groups_simulation(
-            days_sum,  population,  damping_days[i])
+            days_sum,  population,  damping_days[i], countykey_list, countykey_list, baseline)
 
         inputs = np.asarray(data_run).transpose(1, 2, 0)[:input_width]
         data["inputs"].append(inputs)

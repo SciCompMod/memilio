@@ -18,7 +18,7 @@ from memilio.surrogatemodel.utils_surrogatemodel import (
     getBaselineMatrix, remove_confirmed_compartments, get_population)
 
 
-def run_secir_groups_simulation(days, populations):
+def run_secir_groups_simulation(days, populations, countykey_list, directory, baseline):
     """! Uses an ODE SECIR model allowing for asymptomatic infection with 6 
         different age groups. The model is not stratified by region. 
         Virus-specific parameters are fixed and initial number of persons 
@@ -35,9 +35,6 @@ def run_secir_groups_simulation(days, populations):
     start_month = 1
     start_year = 2019
     dt = 0.1
-
-    # get county ids
-    countykey_list = geoger.get_county_ids(merge_eisenach=True, zfill=True)
 
     # Define age Groups
     groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
@@ -105,9 +102,6 @@ def run_secir_groups_simulation(days, populations):
         model.parameters.StartDay = (
             date(start_year, start_month, start_day) - date(start_year, 1, 1)).days
 
-        # Load baseline and minimum contact matrix and assign them to the model
-        baseline = getBaselineMatrix()
-
         model.parameters.ContactPatterns.cont_freq_mat[0].baseline = baseline
         model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
             (num_groups, num_groups)) * 0
@@ -116,7 +110,6 @@ def run_secir_groups_simulation(days, populations):
         model.apply_constraints()
         models.append(model)
 
-    directory = transform_mobility_directory()
     graph = make_graph(directory, num_regions, countykey_list, models)
 
     study = ParameterStudy(graph, 0, days, dt=dt, num_runs=1)
@@ -152,6 +145,13 @@ def generate_data(
             "labels": [],
             }
 
+    # get county ids
+    countykey_list = geoger.get_county_ids(merge_eisenach=True, zfill=True)
+    # Load baseline and minimum contact matrix and assign them to the model
+    baseline = getBaselineMatrix()
+    # transform directiry by merging Einsenach and Wartburgkreis
+    directory = transform_mobility_directory()
+
     # show progess in terminal for longer runs
     # Due to the random structure, theres currently no need to shuffle the data
     bar = Bar('Number of Runs done', max=num_runs)
@@ -159,7 +159,7 @@ def generate_data(
     for _ in range(num_runs):
 
         data_run = run_secir_groups_simulation(
-            days_sum, population)
+            days_sum, population, countykey_list, directory, baseline)
 
         inputs = np.asarray(data_run).transpose(1, 2, 0)[: input_width]
         data["inputs"].append(inputs)
@@ -196,11 +196,11 @@ if __name__ == "__main__":
     path_data = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'data_GNN_nodamp')
+        'data_GNN_nodamp_test')
 
     input_width = 5
-    days = 30
-    num_runs = 10000
+    days = 3
+    num_runs = 2
 
     generate_data(num_runs, path_data, input_width,
                   days, save_data=True)
