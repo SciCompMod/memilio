@@ -56,7 +56,9 @@ void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
             assert(p_loc != loc.get_assigned_persons().end());
             // write out all contacts with a positive intensity
             for (size_t contact = 0; contact < loc.get_assigned_persons().size(); contact++) {
-                if (loc.get_assigned_persons()[contact] == mio::abm::INVALID_PERSON_ID) {
+                if (loc.get_assigned_persons()[contact] == mio::abm::INVALID_PERSON_ID ||
+                    loc.get_assigned_persons()[contact] == p) {
+                    // skip loops (contact with oneself) and filler entries (invalid ids)
                     continue;
                 }
                 const auto& t_matrix = loc.get_contact_matrices()[loclog[t].first.hour_of_day()];
