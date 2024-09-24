@@ -255,7 +255,7 @@ def generate_data(
     for i in range(num_runs):
 
         data_run, damped_contact_matrix, damping_days_s, damping_factor = run_secir_groups_simulation(
-            days_sum,  population,  damping_days[i], countykey_list, countykey_list, baseline)
+            days_sum,  population,  damping_days[i], countykey_list, directory, baseline)
 
         inputs = np.asarray(data_run).transpose(1, 2, 0)[:input_width]
         data["inputs"].append(inputs)
