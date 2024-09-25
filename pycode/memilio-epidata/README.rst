@@ -115,9 +115,9 @@ See Installation on how to install all these dependencies automatically.
 Run pylint with the commands
 
 .. code:: sh
-
-    python setup.py pylint
-    pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
+    
+    pylint memilio/ > pylint.html
+    pylint-json2html -f jsonextended -o pylint.html < pylint_extended.json
 
 Pylint report for actual master:
 

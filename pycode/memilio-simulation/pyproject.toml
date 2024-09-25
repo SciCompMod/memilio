@@ -12,12 +12,10 @@ readme = "README.rst"
 authors = [{name = "DLR-SC", email = "daniel.abele@dlr.de"}]
 maintainers = [{email = "martin.kuehn@dlr.de"}]
 description = "Part of MEmilio project, python bindings to the C++ libraries that contain the models and simulations."
-dependencies = [
-    "pandas>=2.0.0"
-]
 
 [project.optional-dependencies]
-dev = ["numpy>=1.22,<1.25"]
+dev = ["numpy>=1.22,<1.25",
+    "pandas>=2.0.0"]
 
 [project.urls] 
 Repository = "https://github.com/SciCompMod/memilio"
