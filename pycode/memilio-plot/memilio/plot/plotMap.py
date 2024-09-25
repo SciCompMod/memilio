@@ -28,6 +28,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
 import matplotlib.colors as mcolors
+from matplotlib.colors import SymLogNorm, LinearSegmentedColormap
 
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
@@ -133,6 +134,9 @@ def extract_data(
             raise gd.DataError("Chose output form.")
 
     elif file_format == 'h5':
+        # check with os, if file exists
+        if not os.path.exists(input_file + '.' + file_format):
+            raise gd.DataError("File could not be found.")
         h5file = h5py.File(input_file + '.' + file_format, 'r')
         # For nested groups, extract the level where the regions to be read in
         # are stored.
@@ -266,10 +270,11 @@ def scale_dataframe_relative(df, age_groups, df_population):
             mdfs.fit_age_group_intervals(df_population[df_population.iloc[:, 0] == int(region_id)].iloc[:, 2:], age_groups))
 
     def scale_row(elem):
+        # Filter rows where 'ID_County' matches the integer value of elem[0]
         population_local_sum = df_population_agegroups[
-            df_population_agegroups['ID_County'] == int(elem[0])].iloc[
-                :, 1:].sum(axis=1)
-        return elem['Count'] / population_local_sum.values[0]
+            df_population_agegroups['ID_County'] == int(elem[0])
+        ].iloc[:, 1:].sum(axis=1)
+        return elem['Count'] / population_local_sum.iloc[0]
 
     df_population_agegroups.loc[:, age_groups].sum(axis=1)
 
@@ -291,7 +296,8 @@ def save_interactive(col, filename, map_data, scale_colors):
                      vmax=scale_colors[1]).save(filename)
 
 
-def plot_map(data: pd.DataFrame,
+def plot_map(norm: SymLogNorm,
+             data: pd.DataFrame,
              scale_colors: np.array([0, 1]),
              legend: list = [],
              title: str = '',
@@ -299,9 +305,8 @@ def plot_map(data: pd.DataFrame,
              output_path: str = '',
              fig_name: str = 'customPlot',
              dpi: int = 300,
-             outercolor='white',
-             log_scale=False):
-    """! Plots region-specific information onto a interactive html map and
+             outercolor='white'):
+    """! Plots region-specific information onto an interactive html map and
     returning svg and png image. Allows the comparisons of a variable list of
     data sets.
 
@@ -316,10 +321,12 @@ def plot_map(data: pd.DataFrame,
     @param[in] fig_name Name of the figure created.
     @param[in] dpi Dots-per-inch value for the exported figure.
     @param[in] outercolor Background color of the plot image.
-    @param[in] log_scale Defines if the colorbar is plotted in log scale.
     """
     region_classifier = data.columns[0]
     region_data = data[region_classifier].to_numpy().astype(int)
+
+    colors = ["green", "yellow", "red", "purple"]
+    color_map = LinearSegmentedColormap.from_list("my_colormap", colors)
 
     data_columns = data.columns[1:]
     # Read and filter map data.
@@ -343,7 +350,7 @@ def plot_map(data: pd.DataFrame,
     else:
         raise gd.DataError('Provide shape files regions to be plotted.')
 
-    # Remove regions that are not input data table.
+    # Remove regions that are not in the input data table.
     map_data = map_data[map_data.ARS.isin(data[region_classifier])]
 
     map_data[data_columns] = data.loc[:, data_columns]
@@ -356,48 +363,32 @@ def plot_map(data: pd.DataFrame,
         save_interactive(data[data_columns[i]], os.path.join(
             output_path, fname) + '.html', map_data, scale_colors)
 
-    fig = plt.figure(figsize=(4 * len(data_columns), 6), facecolor=outercolor)
-    # Use n+2 many columns (1: legend + 2: empty space + 3-n: data sets) and
-    # n+2 rows where the top row is used for a potential title, the second row
-    # for the content and all other rows have height zero.
-    height_ratios = [0.05, 1, 0]
-    if len(data_columns) > 1:
-        height_ratios = height_ratios + [
-            0.0 for i in range(len(data_columns)-1)]
+    # Adjust figure height to remove the extra space for the title.
+    fig = plt.figure(figsize=(4 * len(data_columns), 5), facecolor=outercolor)
+    # Use n+1 many columns (1: colorbar + 2-n: data sets) and adjust the height ratios.
     gs = GridSpec(
-        len(data_columns) + 2, len(data_columns) + 2, figure=fig, wspace=0.1,
-        width_ratios=[0.05, 0.05] + [1 for i in range(len(data_columns))],
-        height_ratios=height_ratios)
+        1, len(data_columns) + 1, figure=fig, wspace=0.1,
+        width_ratios=[0.05] + [1 for i in range(len(data_columns))],
+        height_ratios=[1])
 
-    # Use top row for title.
-    tax = fig.add_subplot(gs[0, :])
-    tax.set_axis_off()
-    tax.set_title(title, fontsize=16)
+    # If plot_colorbar is True, add a colorbar on the left.
     if plot_colorbar:
-        # Prepare colorbar.
-        cax = fig.add_subplot(gs[1, 0])
+        cax = fig.add_subplot(gs[0, 0])
+        # Adjust your colorbar setup here as needed.
+        # e.g., using ScalarMappable and colorbar settings
     else:
         cax = None
 
-    if log_scale:
-        norm = mcolors.LogNorm(vmin=scale_colors[0], vmax=scale_colors[1])
-
     for i in range(len(data_columns)):
+        ax = fig.add_subplot(gs[:, i+1])
+        map_data.plot(
+            data_columns[i], ax=ax,
+            cax=cax, legend=False, norm=norm, cmap=color_map,
+            edgecolor='black', linewidth=0.1)
 
-        ax = fig.add_subplot(gs[:, i+2])
-        if log_scale:
-            map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True,
-                          norm=norm)
-        elif cax is not None:
-            map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True,
-                          vmin=scale_colors[0], vmax=scale_colors[1])
-        else:
-            # Do not plot colorbar.
-            map_data.plot(data_columns[i], ax=ax, legend=False,
-                          vmin=scale_colors[0], vmax=scale_colors[1])
-
-        ax.set_title(legend[i], fontsize=12)
         ax.set_axis_off()
 
-    plt.subplots_adjust(bottom=0.1)
-    plt.savefig(os.path.join(output_path, fig_name + '.png'), dpi=dpi)
+    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+    plt.savefig(os.path.join(output_path, fig_name + '.png'),
+                dpi=dpi, bbox_inches='tight', pad_inches=0)
+    plt.close(fig)

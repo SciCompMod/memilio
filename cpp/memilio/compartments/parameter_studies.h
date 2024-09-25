@@ -204,10 +204,19 @@ public:
         //gather results
         if (rank == 0) {
             for (int src_rank = 1; src_rank < num_procs; ++src_rank) {
-                int bytes_size;
-                MPI_Recv(&bytes_size, 1, MPI_INT, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
+                MPI_Aint bytes_size;
+                MPI_Recv(&bytes_size, 1, MPI_AINT, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
+
                 ByteStream bytes(bytes_size);
-                MPI_Recv(bytes.data(), bytes.data_size(), MPI_BYTE, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
+
+                const MPI_Aint chunk_size = std::numeric_limits<int>::max();
+                MPI_Aint num_chunks       = (bytes_size + chunk_size - 1) / chunk_size;
+
+                for (MPI_Aint i = 0; i < num_chunks; ++i) {
+                    MPI_Aint current_chunk_size = std::min(chunk_size, bytes_size - i * chunk_size);
+                    MPI_Recv(bytes.data() + i * chunk_size, static_cast<int>(current_chunk_size), MPI_BYTE, src_rank, 0,
+                             mpi::get_world(), MPI_STATUS_IGNORE);
+                }
 
                 auto src_ensemble_results = deserialize_binary(bytes, Tag<decltype(ensemble_result)>{});
                 if (!src_ensemble_results) {
@@ -218,10 +227,24 @@ public:
             }
         }
         else {
-            auto bytes      = serialize_binary(ensemble_result);
-            auto bytes_size = int(bytes.data_size());
-            MPI_Send(&bytes_size, 1, MPI_INT, 0, 0, mpi::get_world());
-            MPI_Send(bytes.data(), bytes.data_size(), MPI_BYTE, 0, 0, mpi::get_world());
+            auto bytes          = serialize_binary(ensemble_result);
+            MPI_Aint bytes_size = static_cast<MPI_Aint>(bytes.data_size());
+            MPI_Send(&bytes_size, 1, MPI_AINT, 0, 0, mpi::get_world());
+            if (bytes_size > std::numeric_limits<int>::max()) {
+                // Split the data into chunks
+                const MPI_Aint chunk_size = std::numeric_limits<int>::max(); // Maximum chunk size
+                MPI_Aint num_chunks       = (bytes_size + chunk_size - 1) / chunk_size;
+
+                for (MPI_Aint i = 0; i < num_chunks; ++i) {
+                    MPI_Aint current_chunk_size = std::min(chunk_size, bytes_size - i * chunk_size);
+                    MPI_Send(bytes.data() + i * chunk_size, static_cast<int>(current_chunk_size), MPI_BYTE, 0, 0,
+                             mpi::get_world());
+                }
+            }
+            else {
+                // Send all data at once if within the limit
+                MPI_Send(bytes.data(), static_cast<int>(bytes_size), MPI_BYTE, 0, 0, mpi::get_world());
+            }
             ensemble_result.clear(); //only return root process
         }
 #endif

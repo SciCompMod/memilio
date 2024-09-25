@@ -599,7 +599,14 @@ public:
         // check if t is in the range of the interval [lb,ub]
         if (t >= lb) {
             for (AgeGroup age = AgeGroup(0); age < params.get_num_groups(); age++) {
-                const auto num_vaccinations_ub = daily_vaccinations[{age, SimulationDay(static_cast<size_t>(ub + 1))}] -
+                // if ub + 1 is out of bounds, we use the value at ub
+                auto ubp1                          = static_cast<size_t>(ub + 1);
+                const auto size_daily_vaccinations = static_cast<size_t>(daily_vaccinations.size<SimulationDay>());
+                if (size_daily_vaccinations < ubp1) {
+                    ubp1 = static_cast<size_t>(ub);
+                }
+
+                const auto num_vaccinations_ub = daily_vaccinations[{age, SimulationDay(static_cast<size_t>(ubp1))}] -
                                                  daily_vaccinations[{age, SimulationDay(static_cast<size_t>(ub))}];
                 const auto num_vaccinations_lb = daily_vaccinations[{age, SimulationDay(static_cast<size_t>(lb + 1))}] -
                                                  daily_vaccinations[{age, SimulationDay(static_cast<size_t>(lb))}];
@@ -954,6 +961,19 @@ auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> migrated, 
         migrated[ISyIIi] *= nondetection;
         migrated[INSIIi] *= nondetection;
     }
+}
+
+template <typename FP>
+auto get_contact_pattern(Model<FP>& model)
+{
+    auto& contact_pattern = model.parameters.template get<ContactPatterns<FP>>();
+    return contact_pattern;
+}
+
+template <typename FP, typename CP>
+void set_contact_pattern(Model<FP>& model, CP contact_pattern)
+{
+    model.parameters.template get<ContactPatterns<FP>>() = contact_pattern;
 }
 
 } // namespace osecirts

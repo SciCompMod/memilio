@@ -15,8 +15,8 @@ option(MEMILIO_SANITIZE_ADDRESS "Enable address sanitizer." OFF)
 option(MEMILIO_SANITIZE_UNDEFINED "Enable undefined behavior sanitizer." OFF)
 option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." ON)
 option(MEMILIO_BUILD_STATIC_LIBS "Build memilio as a static library." ON)
-option(MEMILIO_ENABLE_MPI "Build memilio with MPI." OFF)
-option(MEMILIO_ENABLE_OPENMP "Enable Multithreading with OpenMP." OFF)
+option(MEMILIO_ENABLE_MPI "Build memilio with MPI." ON)
+option(MEMILIO_ENABLE_OPENMP "Enable Multithreading with OpenMP." ON)
 option(MEMILIO_ENABLE_WARNINGS "Build memilio with warnings." ON)
 option(MEMILIO_ENABLE_WARNINGS_AS_ERRORS "Build memilio with warnings as errors." ON)
 option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler" OFF)
@@ -76,8 +76,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         message(STATUS "Coverage enabled")
         include(CodeCoverage)
         append_coverage_compiler_flags()
-        # In addition to standard flags, disable elision and inlining to prevent e.g. closing brackets being marked as uncovered.
 
+        # In addition to standard flags, disable elision and inlining to prevent e.g. closing brackets being marked as uncovered.
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-elide-constructors -fno-default-inline")
         setup_target_for_coverage_lcov(
             NAME coverage

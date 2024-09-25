@@ -548,8 +548,8 @@ set_nodes(const mio::osecirvvs::Parameters<FP>& params, mio::Date start_date, mi
         for (int t_idx = 0; t_idx < num_days; ++t_idx) {
             auto t = mio::SimulationDay((size_t)t_idx);
             for (auto j = mio::AgeGroup(0); j < params.get_num_groups(); j++) {
-                mobility_model.parameters.template get<mio::osecirvvs::DailyFirstVaccination<double>>()[{j, t}] = 0;
-                mobility_model.parameters.template get<mio::osecirvvs::DailyFullVaccination<double>>()[{j, t}]  = 0;
+                mobility_model.parameters.template get<mio::osecirvvs::DailyPartialVaccination<double>>()[{j, t}] = 0;
+                mobility_model.parameters.template get<mio::osecirvvs::DailyFullVaccination<double>>()[{j, t}]    = 0;
                 // mobility_model.parameters.template get<mio::osecirvvs::DailyBoosterVaccination>()[{j, t}] = 0;
             }
         }

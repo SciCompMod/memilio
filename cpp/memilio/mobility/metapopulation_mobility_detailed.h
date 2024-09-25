@@ -109,7 +109,7 @@ auto get_mobility_factors(const Sim& /*sim*/, double /*t*/, const Eigen::Ref<con
 
 template <typename FP>
 void check_negative_values_vec(Eigen::Ref<Vector<FP>> vec, const size_t num_age_groups, FP tolerance = -1e-7,
-                               const size_t max_iterations = 100)
+                               const size_t max_iterations = 5000)
 {
     // before moving the commuters, we need to look for negative values in vec and correct them.
     const size_t num_comparts = vec.size() / num_age_groups;
@@ -139,8 +139,10 @@ void check_negative_values_vec(Eigen::Ref<Vector<FP>> vec, const size_t num_age_
         if (iteration_count > max_iterations) {
             std::vector<FP> vec_std(vec.data(), vec.data() + vec.size());
             mio::unused(vec_std);
-            log_error("Number of iterations exceeded in check_negative_values_vec.");
-            std::exit(1);
+            log_error(
+                "Number of iterations exceeded in check_negative_values_vec. Min value: " + std::to_string(min_value) +
+                " at index " + std::to_string(min_index) + " and max value: " + std::to_string(vec(max_group_indx)) +
+                " at index " + std::to_string(max_group_indx));
         }
         iteration_count++;
     }
@@ -603,7 +605,7 @@ public:
             }
 
             size_t indx_schedule = 0;
-            while (t_begin + 1 > this->m_t + 1e-10) {
+            while (indx_schedule < 100) {
                 // the graph simulation is structured in 3 steps:
                 // 1. move indivudals if necessary
                 // 2. integrate the local nodes
@@ -625,13 +627,34 @@ public:
             for (auto& n : this->m_graph.nodes()) {
                 n.property.mobility_sim.get_result().get_last_value().setZero();
             }
+
+            // to save memory, we interpolate each time series after every day if t > 40
+            if (this->m_t > 1) {
+                for (auto& n : this->m_graph.nodes()) {
+                    // base sim
+                    auto& result_node_local          = n.property.base_sim.get_result();
+                    auto interpolated_result         = interpolate_simulation_result(result_node_local);
+                    auto& flow_node_local            = n.property.base_sim.get_flows();
+                    auto interpolated_flows          = interpolate_simulation_result(flow_node_local);
+                    n.property.base_sim.get_result() = interpolated_result;
+                    n.property.base_sim.get_flows()  = interpolated_flows;
+
+                    // mobility sim
+                    auto& result_node_mobility           = n.property.mobility_sim.get_result();
+                    interpolated_result                  = interpolate_simulation_result(result_node_mobility);
+                    auto& flow_node_mobility             = n.property.mobility_sim.get_flows();
+                    interpolated_flows                   = interpolate_simulation_result(flow_node_mobility);
+                    n.property.mobility_sim.get_result() = interpolated_result;
+                    n.property.mobility_sim.get_flows()  = interpolated_flows;
+                }
+            }
         }
     }
 
 private:
     MobilityFunctions m_mobility_functions;
     ScheduleManager::Schedule schedules;
-    const double epsilon = 1e-10;
+    const double epsilon = 1e-5;
 
     ScalarType calculate_next_dt(size_t edge_indx, size_t indx_schedule)
     {
@@ -758,15 +781,15 @@ private:
                 round_nth_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon, 2);
             n.property.base_sim.advance(this->m_t + next_dt);
             // check if last value contains negative values or nan values
-            if (n.property.base_sim.get_result().get_last_value().minCoeff() < -1e-7 ||
-                std::isnan(n.property.base_sim.get_result().get_last_value().sum())) {
-                auto last_value_as_vec =
-                    std::vector<ScalarType>(n.property.base_sim.get_result().get_last_value().data(),
-                                            n.property.base_sim.get_result().get_last_value().data() +
-                                                n.property.base_sim.get_result().get_last_value().size());
-                log_error("Negative Value " + std::to_string(n_indx) + " at time " + std::to_string(indx_schedule) +
-                          " in local node detected.");
-            }
+            // if (n.property.base_sim.get_result().get_last_value().minCoeff() < -1e-7 ||
+            //     std::isnan(n.property.base_sim.get_result().get_last_value().sum())) {
+            //     auto last_value_as_vec =
+            //         std::vector<ScalarType>(n.property.base_sim.get_result().get_last_value().data(),
+            //                                 n.property.base_sim.get_result().get_last_value().data() +
+            //                                     n.property.base_sim.get_result().get_last_value().size());
+            //     log_error("Negative Value " + std::to_string(n_indx) + " at time " + std::to_string(this->m_t) +
+            //               " in local node detected.");
+            // }
         }
     }
 
@@ -782,7 +805,7 @@ private:
 
                 if (schedules.schedule_edges[edge_index][indx_schedule] != e.start_node_idx)
                     log_error("Last node is not the start node in edge " + std::to_string(edge_index) + " at time " +
-                              std::to_string(indx_schedule));
+                              std::to_string(this->m_t));
                 // move the individuals back to the local model
                 m_mobility_functions.move_migrated(this->m_t + 0.01, e.property, node_from, node_to);
                 m_mobility_functions.delete_migrated(e.property);

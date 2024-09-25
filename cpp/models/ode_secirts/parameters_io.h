@@ -1276,7 +1276,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
                                       const std::string& dir, int num_days, bool export_time_series = false)
 {
     BOOST_OUTCOME_TRY(details::set_vaccination_data(
-        model, path_join(dir, "pydata/Germany", "all_county_ageinf_vacc_ma7.json"), date, county, num_days));
+        model, path_join(dir, "pydata/Germany", "vacc_county_ageinf_ma7.json"), date, county, num_days));
 
     // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
     // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
