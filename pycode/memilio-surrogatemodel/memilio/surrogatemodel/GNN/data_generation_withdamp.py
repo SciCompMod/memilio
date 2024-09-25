@@ -11,7 +11,7 @@ from sklearn.preprocessing import FunctionTransformer
 from memilio.simulation import (AgeGroup, LogLevel, set_log_level, Damping)
 from memilio.simulation.osecir import (Index_InfectionState, interpolate_simulation_result, ParameterStudy,
                                        InfectionState, Model,
-                                       interpolate_simulation_result)
+                                       interpolate_simulation_result, ModelGraph, set_edges)
 from memilio.epidata import geoModificationGermany as geoger
 
 from memilio.surrogatemodel.GNN.GNN_utils import (transform_mobility_directory,
@@ -20,7 +20,7 @@ from memilio.surrogatemodel.utils_surrogatemodel import (
     getBaselineMatrix, remove_confirmed_compartments, get_population, getMinimumMatrix)
 
 
-def run_secir_groups_simulation(days, populations, dampings, countykey_list, directory, baseline):
+def run_secir_groups_simulation(days, populations, dampings, countykey_list, directory, baseline, edges):
     """! Uses an ODE SECIR model allowing for asymptomatic infection 
         with 6 different age groups. The model is not stratified by region. 
         Virus-specific parameters are fixed and initial number of persons 
@@ -129,7 +129,7 @@ def run_secir_groups_simulation(days, populations, dampings, countykey_list, dir
         model.apply_constraints()
         models.append(model)
 
-    graph = make_graph(directory, num_regions, countykey_list, models)
+    graph = make_graph(directory, num_regions, countykey_list, models, edges)
 
     study = ParameterStudy(graph, 0, days, dt=dt, num_runs=1)
     study.run()
@@ -248,6 +248,15 @@ def generate_data(
     # Load baseline matrix
     baseline = getBaselineMatrix()
 
+    num_locations = 4
+    graph = ModelGraph()
+    for i in range(len(countykey_list)):
+        graph.add_node(int(countykey_list[i]), Model(6))
+
+    set_edges(os.path.abspath(os.path.join(directory, os.pardir)),
+              graph, num_locations)
+    edges = graph.edges()
+
     # show progess in terminal for longer runs
     # Due to the random structure, theres currently no need to shuffle the data
     bar = Bar('Number of Runs done', max=num_runs)
@@ -255,7 +264,7 @@ def generate_data(
     for i in range(num_runs):
 
         data_run, damped_contact_matrix, damping_days_s, damping_factor = run_secir_groups_simulation(
-            days_sum,  population,  damping_days[i], countykey_list, directory, baseline)
+            days_sum,  population,  damping_days[i], countykey_list, directory, baseline, edges)
 
         inputs = np.asarray(data_run).transpose(1, 2, 0)[:input_width]
         data["inputs"].append(inputs)
