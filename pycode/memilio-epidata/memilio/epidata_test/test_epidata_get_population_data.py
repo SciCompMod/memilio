@@ -18,12 +18,12 @@
 # limitations under the License.
 #############################################################################
 import os
+import io
 import unittest
-import configparser
 import json
 import pandas as pd
 
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import getPopulationData as gpd
@@ -70,6 +70,28 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     def test_get_population_data_full(self, mock_test, mock_assign, mock_download):
         # should not raise any errors
         gpd.get_population_data(out_folder=self.path)
+        # test ref_year
+        gpd.get_population_data(out_folder=self.path, ref_year=2013)
+
+    @patch('io.StringIO')
+    @patch('pandas.read_csv')
+    @patch('requests.get')
+    def test_read_population_data(self, mock_req, mock_pd, mock_io):
+        # Test a year that does not have population Data. Function should throw a
+        # warning, and download the newest data (ref_year = None)
+        test_year = 2000
+        # Create a mock response object for requests.get()
+        mock_response = Mock()
+        mock_response.text = "mocked csv data"
+        mock_req.return_value = mock_response
+        # Mock pandas.read_csv to raise a ParserError on the first call and return a DataFrame on the second
+        mock_pd.side_effect = [pd.errors.ParserError, pd.DataFrame()]
+        # Mock io.StringIO to return the StringIO object for pandas.read_csv
+        mock_io.return_value = io.StringIO("mocked csv data")
+        df, year = gpd.read_population_data(test_year)
+        # Test results, ref_year should now be None
+        self.assertTrue(df.empty)  # from mock
+        self.assertIsNone(year)
 
 
 if __name__ == '__main__':
