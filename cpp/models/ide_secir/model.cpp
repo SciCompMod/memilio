@@ -244,9 +244,9 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(m_support_max_vector[idx_InfectionTransitions] / dt);
 
     for (Eigen::Index i = current_time_index - calc_time_index; i < current_time_index; i++) {
-        // (current_time_index - i - 1)  is the index corresponding to time the individuals have already spent in this state.
-        // We substract 1 because we start with t_1 (and not t_0) in m_derivative vector.
-        sum += m_derivative_vector[idx_InfectionTransitions][current_time_index - i - 1] *
+        // (current_time_index - i)  is the index corresponding to time the individuals have already spent in this state.
+        // std::cout << "state age: " << current_time_index - i << std::endl;
+        sum += m_derivative_vector[idx_InfectionTransitions][current_time_index - i] *
                m_transitions[i + 1][idx_IncomingFlow];
     }
 
@@ -445,12 +445,12 @@ std::vector<std::vector<ScalarType>> Model::set_derivative_vector(ScalarType dt)
     for (int transition = 1; transition < (int)InfectionTransition::Count; transition++) {
         Eigen::Index support_max_index = (Eigen::Index)std::ceil(m_support_max_vector[transition] / dt);
         // Create vec_tmp that contains the value of the approximated derivative for all necessary time points.
-        // The necessary time points are t_1, ..., t_{support_max_index}.
-        std::vector<ScalarType> vec_tmp(support_max_index, 0.);
+        // Here, we evaluate the derivative at time points t_0, ..., t_{support_max_index}.
+        std::vector<ScalarType> vec_tmp(support_max_index + 1, 0.);
 
-        for (int i = 0; i < support_max_index; i++) {
-            // Compute state_age for all necessary indices. Note that we start with t_1 and not with t_0.
-            ScalarType state_age = (i + 1) * dt;
+        for (int i = 0; i <= support_max_index; i++) {
+            // Compute state_age for consiered indices.
+            ScalarType state_age = i * dt;
             // Compute derivative.
             vec_tmp[i] = (parameters.get<TransitionDistributions>()[transition].eval(state_age) -
                           parameters.get<TransitionDistributions>()[transition].eval(state_age - dt)) /
@@ -477,17 +477,17 @@ std::vector<std::vector<ScalarType>> Model::set_forceofinfection_contribution(Sc
                   m_support_max_vector[relevant_transitions[1][0]], m_support_max_vector[relevant_transitions[1][1]]});
 
     // Corresponding index.
-    // Need to evaluate survival functions at t_1, ..., t_{calc_time_index} for computation of force of infection,
+    // Need to evaluate survival functions at t_0, ..., t_{calc_time_index} for computation of force of infection,
     // subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of support_max).
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
 
+    // Compute contributions from survival function and transition probabilities from InfectedNoSymptoms and InfectedSymptoms,
+    // respectively, on force of infection term.
     for (int contribution = 0; contribution < 2; contribution++) {
         std::vector<ScalarType> vec_tmp(calc_time_index + 1, 0.);
-
-        for (int i = 0; i < calc_time_index + 1; i++) {
+        for (int i = 0; i <= calc_time_index; i++) {
             // Compute state_age for all indices from t_0, ..., t_{calc_time_index}.
             ScalarType state_age = i * dt;
-            // Compute contributions from survival function and transition probabilities on force of infection term.
             vec_tmp[i] =
                 parameters.get<TransitionProbabilities>()[relevant_transitions[contribution][0]] *
                     parameters.get<TransitionDistributions>()[relevant_transitions[contribution][0]].eval(state_age) +
