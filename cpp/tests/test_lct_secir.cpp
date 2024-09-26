@@ -754,13 +754,19 @@ TEST(TestLCTSecir, testConstraintsModel)
     constraint_check = modelwrongDead.check_constraints();
     EXPECT_TRUE(constraint_check);
 
+    // Check with a negative number in the initial population distribution.
+    using LctStatevalid = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
+    using Model         = mio::lsecir::Model<LctState1, LctStatevalid>;
+    Model model;
+    model.populations[0] = -1000;
+    constraint_check     = model.check_constraints();
+    EXPECT_TRUE(constraint_check);
+
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
 
     // Check for valid Setup.
-    using LctStatevalid = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
-    using Model         = mio::lsecir::Model<LctState1, LctStatevalid>;
-    Model model;
-    constraint_check = model.check_constraints();
+    model.populations[0] = 1000;
+    constraint_check     = model.check_constraints();
     EXPECT_FALSE(constraint_check);
 }
