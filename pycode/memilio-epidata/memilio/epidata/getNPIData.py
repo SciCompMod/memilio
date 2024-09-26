@@ -913,9 +913,12 @@ def get_npi_data(fine_resolution=2,
     # iterate over countyIDs
     counters = np.zeros(4)  # time counter for output only
     countyidx = 0
+    # set dtype of used/mentioned npis to int for further usage
+    df_npis_old.iloc[:, npi_start_col:] = df_npis_old.iloc[:,
+                                                           npi_start_col:].astype(int)
     # replace -99 ("not used anymore") by 0 ("not used")
     # replace 2,3,4,5 ("mentioned in ...") by 1 ("mentioned")
-    df_npis_old.astype(int, copy = False).replace([-99, 2, 3, 4, 5], [0, 1, 1, 1, 1], inplace=True)
+    df_npis_old.replace([-99, 2, 3, 4, 5], [0, 1, 1, 1, 1], inplace=True)
     counter_cases_start = 0
 
     # setup dataframe for each maingroup, same format as df_npi_combinations
