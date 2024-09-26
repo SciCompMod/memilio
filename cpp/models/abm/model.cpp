@@ -160,42 +160,37 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
     bool weekend     = t.is_weekend();
     size_t num_trips = m_trip_list.num_trips(weekend);
 
-    if (num_trips != 0) {
-        while (m_trip_list.get_current_index() < num_trips &&
-               m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
-            auto& trip        = m_trip_list.get_next_trip(weekend);
-            auto& person      = get_person(trip.person_id);
-            auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
-            // skip the trip if the person is in quarantine or is dead
-            if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
-                m_trip_list.increase_index();
-                continue;
+    for (; m_trip_list.get_current_index() < num_trips &&
+           m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds();
+         m_trip_list.increase_index()) {
+        auto& trip        = m_trip_list.get_next_trip(weekend);
+        auto& person      = get_person(trip.person_id);
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
+        // skip the trip if the person is in quarantine or is dead
+        if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
+            continue;
+        }
+        auto& target_location = get_location(trip.destination);
+        // skip the trip if the Person wears mask as required at targeted location
+        if (target_location.is_mask_required() && !person.is_compliant(personal_rng, InterventionType::Mask)) {
+            continue;
+        }
+        // skip the trip if the performed TestingStrategy is positive
+        if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+            continue;
+        }
+        // all requirements are met, move to target location
+        change_location(person.get_id(), target_location.get_id(), trip.trip_mode);
+        // update worn mask to target location's requirements
+        if (target_location.is_mask_required()) {
+            // if the current MaskProtection level is lower than required, the Person changes mask
+            if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
+                parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
+                person.set_mask(target_location.get_required_mask(), t);
             }
-            auto& target_location = get_location(trip.destination);
-            // skip the trip if the Person wears mask as required at targeted location
-            if (target_location.is_mask_required() && !person.is_compliant(personal_rng, InterventionType::Mask)) {
-                m_trip_list.increase_index();
-                continue;
-            }
-            // skip the trip if the performed TestingStrategy is positive
-            if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
-                m_trip_list.increase_index();
-                continue;
-            }
-            // all requirements are met, move to target location
-            change_location(person.get_id(), target_location.get_id(), trip.trip_mode);
-            // update worn mask to target location's requirements
-            if (target_location.is_mask_required()) {
-                // if the current MaskProtection level is lower than required, the Person changes mask
-                if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
-                    parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
-                    person.set_mask(target_location.get_required_mask(), t);
-                }
-            }
-            else {
-                person.set_mask(MaskType::None, t);
-            }
-            m_trip_list.increase_index();
+        }
+        else {
+            person.set_mask(MaskType::None, t);
         }
     }
     if (((t).days() < std::floor((t + dt).days()))) {
