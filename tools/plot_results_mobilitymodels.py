@@ -11,7 +11,8 @@ secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Infected', 3: 'Recovered'}
 color_dict = {0: '#1f77b4',
               1:'#2ca02c'
               }
-linestyle_dict = {"ODE": 'solid',
+linestyle_dict = {"ODE SI": 'dashed',
+                  "ODE Improved": 'dotted',
                   "Graph": 'dashdot'
                   }
 
@@ -156,9 +157,11 @@ def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infe
 
 if __name__ == '__main__':
     data_dir = os.path.join(os.path.dirname(__file__), "..", "cpp", "build")
-    plot_new_infections([os.path.join(data_dir, "ode_result"), 
+    plot_new_infections([os.path.join(data_dir, "ode_result_standard"),
+                         os.path.join(data_dir, "ode_result_improved"), 
                          os.path.join(data_dir, "graph_result")],
-                        2e3, legendplot=list(["ODE","Graph"]))
-    compare_all_compartments([os.path.join(data_dir, "ode_result"), 
+                        2e3, legendplot=list(["ODE SI", "ODE Improved","Graph"]))
+    compare_all_compartments([os.path.join(data_dir, "ode_result_standard"),
+                         os.path.join(data_dir, "ode_result_improved"), 
                          os.path.join(data_dir, "graph_result")],
-                            legendplot=list(["ODE", "Graph"]))
+                            legendplot=list(["ODE SI", "ODE Improved","Graph"]))
