@@ -298,6 +298,7 @@ def insert_column_by_map(df, col_to_map, new_col_name, map, new_col_dtype='objec
     @param col_to_map column containing values to be mapped
     @param new_col_name name of the new column containing the mapped values
     @param map List of tuples of values in the column to be added and values in the given column
+    @param new_col_dtype String of dtype [Default: 'object'] for the new generated column
     @return dataframe df with column of state names correspomding to state ids
     """
     df_new = df[:]

@@ -172,7 +172,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
                 "LandkreisId_Impfort": ['05754', '1', '2', '3', '4'],
                 "Altersgruppe": ["01-59", "01-59", "01-59", "01-59", "01-59"],
                 "Impfschutz": [1, 1, 2, 3, 1],
-                "Anzahl": [10000., 1, 2, 3, 4]})
+                "Anzahl": [10000., 1., 2., 3., 4.]})
         gvd.sanity_checks(df_no_errors)
 
     def test_sanitizing_based_on_regions(self):

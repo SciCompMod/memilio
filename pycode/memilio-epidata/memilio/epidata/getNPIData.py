@@ -915,7 +915,7 @@ def get_npi_data(fine_resolution=2,
     countyidx = 0
     # replace -99 ("not used anymore") by 0 ("not used")
     # replace 2,3,4,5 ("mentioned in ...") by 1 ("mentioned")
-    df_npis_old.replace([-99, 2, 3, 4, 5], [0, 1, 1, 1, 1], inplace=True)
+    df_npis_old.astype(int, copy = False).replace([-99, 2, 3, 4, 5], [0, 1, 1, 1, 1], inplace=True)
     counter_cases_start = 0
 
     # setup dataframe for each maingroup, same format as df_npi_combinations
@@ -1401,7 +1401,7 @@ def plot_interaction_matrix(filename, directory):
 
     # invert color map elements for tab20c such that subcolors are shown
     # from light to dark
-    cmap = copy.copy(mpl.cm.get_cmap('tab20b'))
+    cmap = copy.copy(plt.get_cmap('tab20b'))
     colors = [
         cmap(i)
         for i in np.array(
