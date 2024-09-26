@@ -34,6 +34,7 @@
 #include "memilio/utils/logging.h"
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/math/eigen.h"
+#include "memilio/math/floating_point.h"
 #include "memilio/epidemiology/lct_populations.h"
 
 #include <string>
@@ -45,34 +46,37 @@ namespace lsecir
 namespace details
 { // Use namespace to hide functions that are not intended to be used outside this file.
 
+/**
+ * @brief Check whether the EntryType is age resolved and has a member variable age_group_names.
+ * @tparam The type to check for the existence of the member variable age_group_names.
+ */
 template <class EntryType>
 using has_age_member_t = decltype(EntryType::age_group_names);
-/**
- * @brief Check whether a check_constraints function exists.
- * @tparam The type to check for the existence of the member function.
- */
+
 template <class EntryType>
 using is_age_resolved_entry_type = is_expression_valid<has_age_member_t, EntryType>;
 
 /**
-* @brief Processes one entry of an RKI data set for the definition of an initial value vector for an LCT model.
+* @brief Processes one entry of an RKI data set for the definition of an initial value vector for an LCT population.
 *   
-* Takes one entry of an RKI data vector and changes the value of an initial value vector accordingly.
-* @param[in, out] init The initial value vector (updated according to the data entry).
+* Takes one entry of an RKI data vector and changes the value in populations accordingly.
+* @param[out] populations The populations for which the inital data should be computed and set.
 * @param[in] entry The entry of the RKI data set.
 * @param[in] offset The offset between the date of the entry and the date for which the 
 *   initial value vector is calculated.
-* @param[in] staytimes A vector of the average time spent in each compartment defined in InfectionState,
-*    as given by the model (for the group under consideration) for which the initial value vector is calculated.
-* @param[in] inv_prob_SymptomsPerNoSymptoms The inverse of the probability InfectedSymptomsPerInfectedNoSymptoms as
-*   given by the model (for the group under consideration) for which the initial value vector is calculated.
-* @param[in] severePerInfectedSymptoms Probability as given by the model (for the group under consideration)
+* @param[in] staytimes A vector of the average time spent in each compartment defined in InfectionState
+*    (for the group under consideration) for which the initial value vector is calculated.
+* @param[in] inv_prob_SymptomsPerNoSymptoms The inverse of the probability InfectedSymptomsPerInfectedNoSymptoms
+*    (for the group under consideration) for which the initial value vector is calculated.
+* @param[in] severePerInfectedSymptoms Probability (for the group under consideration)
 *    for which the initial value vector is calculated.
-* @param[in] criticalPerSevere Probability as given by the model (for the group under consideration)
+* @param[in] criticalPerSevere Probability (for the group under consideration)
 *    for which the initial value vector is calculated.
 * @param[in] scale_confirmed_cases Factor by which to scale the confirmed cases of RKI data to consider unreported cases.
-* @tparam LctState The LctState of the group under consideration.
+* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations. 
+*   This defined the number of age groups and the number of subcompartments used.
 * @tparam EntryType The type of the data entry of the RKI data.
+* @tparam Group The age group of the entry the should be processed.
 */
 template <class Populations, class EntryType, size_t Group>
 void process_entry(Populations& populations, const EntryType& entry, int offset,
@@ -341,36 +345,36 @@ void process_entry(Populations& populations, const EntryType& entry, int offset,
 }
 
 /**
-* @brief Computes an initialization vector for an age-resolved LCT model with case data from RKI with age groups.
+* @brief Computes an initialization vector for an LCT population with case data from RKI recursively for each age group
+*    (or for one age group in the case without age resolution).
 *   
 * Please use the set_initial_data_from_confirmed_cases() function, which calls this function automatically!
-* Calculates an initial value vector for an LCT model and updates the initial value vector in the model.
-* The number of groups in the LCT model has to be the same as the number of RKI age groups. 
-* For the computation, expected stay times in the subcompartments are used. To calculate the initial values, 
-* we assume for simplicity that individuals stay in the subcompartment for exactly the expected time.
-* The RKI data are linearly interpolated within one day to match the expected stay time in a subcompartment.
-* The RKI data should contain data for each required day with division in age groups, the completeness 
-* of the dates is not verified.
-* Data can be downloaded e.g. with the file pycode/memilio-epidata/memilio/epidata/getCaseData.py, 
-* which creates a file named cases_all_age.json or a similar name. 
-* One should set impute_dates=True so that missing dates are imputed.
+* This function calculates a segment referring to the defined age group of the initial value vector with 
+*   subcompartments using the rki_data and the parameters.
+* The values for the whole initial value vector stored in populations are calculated recursively.
 *
-* @param[in, out] model The model for which the inital data should be computed and set.
 * @param[in] rki_data Vector with the RKI data.
+* @param[out] populations The populations for which the inital data should be computed and set.
+* @param[in] parameters The parameters that should be used to calculate the initial values. 
+*   Probabilities and mean stay times are used.
 * @param[in] date Date for which the initial values should be computed. date is the start date of the simulation.
-* @param[in] total_population Total size of the population for every age group. 
-* @param[in] scale_confirmed_cases Factor for each age group by which to scale the confirmed cases of the rki data to consider 
-*       unreported cases.
-* @tparam Model is expected to be an LCT-SECIR model defined in models/lct_secir/model.h.
+* @param[in] total_population Total size of the population of Germany or of every age group. 
+* @param[in] scale_confirmed_cases Factor(s for each age group) by which to scale the confirmed cases of the rki data 
+*   to consider unreported cases.
+* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations. 
+*   This defined the number of age groups and the number of subcompartments used.
+* @tparam EntryType is expected to be ConfirmedCasesNoAgeEntry for data that is not age resolved and 
+*   ConfirmedCasesDataEntry for age resolved data. See also epi_data.h.
 * @tparam Group The age group for which the initial values should be calculated. The function is called recursively 
 *   such that the initial values are calculated for every age group if Group is zero at the beginning.
-* @returns Any io errors that happen during reading of the files and the calculation.
+* @returns Any io errors that happen during data processing.
 */
 template <class Populations, class EntryType, size_t Group = 0>
-IOResult<void> set_initial_data_from_confirmed_cases(Populations& populations, const std::vector<EntryType>& rki_data,
-                                                     const Parameters& parameters, Date date,
-                                                     const std::vector<ScalarType>& total_population,
-                                                     const std::vector<ScalarType>& scale_confirmed_cases)
+IOResult<void> set_initial_data_from_confirmed_cases_impl(Populations& populations,
+                                                          const std::vector<EntryType>& rki_data,
+                                                          const Parameters& parameters, Date date,
+                                                          const std::vector<ScalarType>& total_population,
+                                                          const std::vector<ScalarType>& scale_confirmed_cases)
 {
     static_assert((Group < Populations::num_groups) && (Group >= 0), "The template parameter Group should be valid.");
     using LctStateGroup      = type_at_index_t<Group, typename Populations::LctStatesGroups>;
@@ -397,8 +401,9 @@ IOResult<void> set_initial_data_from_confirmed_cases(Populations& populations, c
     bool min_offset_needed_avail = false;
     bool max_offset_needed_avail = false;
 
-    // Go through the entries of rki_data and check if the entry has the age_group Group and if the date is
-    // needed for calculation. Confirmed cases are scaled by scale_confirmed_cases.
+    // Go through the entries of rki_data and check if the entry is age resolved and is referring to
+    // the age_group Group in the case with age resolution. If the date is
+    // needed for calculation, another function to handle the entry is called. Confirmed cases are scaled by scale_confirmed_cases.
     for (auto&& entry : rki_data) {
         if constexpr (is_age_resolved_entry_type<EntryType>::value) {
             if ((size_t)entry.age_group == Group) {
@@ -457,49 +462,66 @@ IOResult<void> set_initial_data_from_confirmed_cases(Populations& populations, c
                        "Necessary range of dates needed to compute initial values does not exist in RKI data.");
     }
 
+    // Check if all values for populations are valid.
+    for (size_t i = first_index_group; i < LctStateGroup::Count; i++) {
+        if (floating_point_less((ScalarType)populations[i], 0., 1e-14)) {
+            log_error("Something went wrong in the initialization of group {:d}. At least one entry is negative.",
+                      Group);
+            return failure(StatusCode::InvalidValue,
+                           "Something went wrong in the initialization as at least one entry is negative.");
+        }
+    }
+
     if constexpr (Group + 1 < Populations::num_groups) {
-        return set_initial_data_from_confirmed_cases<Populations, EntryType, Group + 1>(
+        return set_initial_data_from_confirmed_cases_impl<Populations, EntryType, Group + 1>(
             populations, rki_data, parameters, date, total_population, scale_confirmed_cases);
     }
     else {
         return mio::success();
     }
 }
-
 } // namespace details
 
 /**
-* @brief Computes an initialization vector for an LCT model with case data from RKI.
+* @brief Computes an initialization vector for an LCT population with case data from RKI.
 *   
-* Use just one group in the model definition to not divide between age groups.
+* Use just one group in the definition of the populations to not divide between age groups.
 * Otherwise, the number of groups has to match the number of RKI age groups.
-* The function calculates an initial value vector for an LCT model and updates the initial value vector in the model.
-* For the computation expected stay times in the subcompartments are used. To calculate the initial values, 
-* we assume for simplicity that individuals stay in the subcompartment for exactly the expected time.
+* The function calculates an initial value vector referring to an LCT population and updates the initial value vector
+* in the populations class.
+* For the computation expected stay times in the subcompartments defined in the parameters variable are used.
+* To calculate the initial values, we assume for simplicity that individuals stay in the subcompartment 
+* for exactly the expected time.
 * The RKI data are linearly interpolated within one day to match the expected stay time in a subcompartment.
 * The RKI data should contain data for each needed day with or without division of age groups, 
 *   the completeness of the dates is not verified.
 * Data can be downloaded e.g. with the file pycode/memilio-epidata/memilio/epidata/getCaseData.py, which creates files
 * named e.g. cases_all_germany.json for no groups or cases_all_age.json with division in age groups or similar names.
-* One should set impute_dates=True so that missing dates are imputed.
+* One should set impute_dates=True so that missing dates are imputed. 
+* To read the data into a vector, use the functionality from epi_data.h.
 * The data and the number of entries in the total_population and scale_confirmed_cases vectors have to match the 
-*   number of groups used in Model.
+*   number of groups used in Populations.
 *
-* @param[in, out] model The model for which the inital data should be computed and set.
-* @param[in] path Path to the RKI data file.
+* @param[in] rki_data Vector with the RKI data.
+* @param[out] populations The populations for which the inital data should be computed and set.
+* @param[in] parameters The parameters that should be used to calculate the initial values. 
+*   Probabilities and mean stay times are used.
 * @param[in] date Date for which the initial values should be computed. date is the start date of the simulation.
 * @param[in] total_population Total size of the population of Germany or of every age group. 
 * @param[in] scale_confirmed_cases Factor(s for each age group) by which to scale the confirmed cases of the rki data 
 *   to consider unreported cases.
-* @tparam Model is expected to be an LCT-SECIR model defined in models/lct_secir/model.h.
-* @returns Any io errors that happen during reading of the files.
+* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations. 
+*   This defined the number of age groups and the number of subcompartments used.
+* @tparam EntryType is expected to be ConfirmedCasesNoAgeEntry for data that is not age resolved and 
+*   ConfirmedCasesDataEntry for age resolved data. See also epi_data.h.
+* @returns Any io errors that happen during data processing.
 */
 template <class Populations, class EntryType>
 IOResult<void> set_initial_data_from_confirmed_cases(const std::vector<EntryType>& rki_data, Populations& populations,
                                                      const Parameters& parameters, const Date date,
                                                      const std::vector<ScalarType>& total_population,
                                                      const std::vector<ScalarType>& scale_confirmed_cases)
-{
+{ // Check if the inputs are matching.
     assert(total_population.size() == Populations::num_groups);
     assert(scale_confirmed_cases.size() == Populations::num_groups);
     if constexpr (Populations::num_groups > 1) {
@@ -518,7 +540,11 @@ IOResult<void> set_initial_data_from_confirmed_cases(const std::vector<EntryType
         log_error("Specified date does not exist in RKI data.");
         return failure(StatusCode::OutOfRange, "Specified date does not exist in RKI data.");
     }
-    return details::set_initial_data_from_confirmed_cases<Populations, EntryType>(
+    // Initially set populations to zero.
+    for (size_t i = 0; i < populations.get_num_compartments(); i++) {
+        populations[i] = 0;
+    }
+    return details::set_initial_data_from_confirmed_cases_impl<Populations, EntryType>(
         populations, rki_data, parameters, date, total_population, scale_confirmed_cases);
 }
 
