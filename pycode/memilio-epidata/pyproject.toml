@@ -2,9 +2,6 @@
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = [ "memilio.epidata", "memilio.epidata_test"]
-
 [project]
 name = "memilio-epidata"
 version = "1.0.0"
@@ -62,9 +59,4 @@ cleandata = "memilio.epidata.cleanData:main"
 getcommutermobility = "memilio.epidata.getCommuterMobility:main"
 getvaccinationdata = "memilio.epidata.getVaccinationData:main"
 gethospitalizationdata = "memilio.epidata.getHospitalizationData:main"
-
-[tool.pylint]
-max-line-length = 120
-source-roots = "memilio/"
-sugestion-mode = true
-exit-zero = true #Always return a non-error status code
+pylint = "memilio.custom_pylint:main"
