@@ -51,7 +51,8 @@ def compare_all_compartments(
                                 i % 2].plot(dates,
                                             total[:,
                                                   i],
-                                            label=legendplot[file] + " Region " + str(region),
+                                            label=legendplot[file] + 
+                                            " Region " + str(region),
                                             linewidth=1.2,
                                             linestyle=linestyle_dict[legendplot[file]],
                                             color=color_dict[region])
@@ -75,7 +76,8 @@ def compare_all_compartments(
                             i % 2].plot(dates,
                                         total[:,
                                               i],
-                                        label=legendplot[file] + " Region " + str(region),
+                                        label=legendplot[file] + 
+                                        " Region " + str(region),
                                         linewidth=1.2,
                                         linestyle=linestyle_dict[legendplot[file]],
                                         color=color_dict[region])
