@@ -122,19 +122,19 @@ public:
                                     params.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[j]);
 
                 // effective contact rate by contact rate between groups i and j and damping j
-                double season_val =
+                ScalarType season_val =
                     (1 + params.template get<Seasonality<FP>>() *
                              sin(3.141592653589793 * ((params.template get<StartDay>() + t) / 182.5 + 0.5)));
-                double cont_freq_eff =
+                ScalarType cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                  static_cast<Eigen::Index>((size_t)j));
-                double Nj =
+                ScalarType Nj =
                     pop[Sj] + pop[Ej] + pop[INSj] + pop[ISyj] + pop[ISevj] + pop[ICrj] + pop[Rj]; // without died people
-                double divNj   = 1.0 / Nj; // precompute 1.0/Nj
-                double dummy_S = y[Si] * cont_freq_eff * divNj *
-                                 params.template get<TransmissionProbabilityOnContact<FP>>()[i] *
-                                 (params.template get<RelativeTransmissionNoSymptoms<FP>>()[j] * pop[INSj] +
-                                  riskFromInfectedSymptomatic * pop[ISyj]);
+                const ScalarType divNj = (Nj < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / Nj;
+                ScalarType dummy_S     = y[Si] * cont_freq_eff * divNj *
+                                     params.template get<TransmissionProbabilityOnContact<FP>>()[i] *
+                                     (params.template get<RelativeTransmissionNoSymptoms<FP>>()[j] * pop[INSj] +
+                                      riskFromInfectedSymptomatic * pop[ISyj]);
 
                 // Susceptible -> Exposed
                 flows[this->template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>({i})] +=
@@ -142,11 +142,11 @@ public:
             }
 
             // ICU capacity shortage is close
-            double criticalPerSevereAdjusted = smoother_cosine(
+            ScalarType criticalPerSevereAdjusted = smoother_cosine(
                 icu_occupancy, 0.90 * params.template get<ICUCapacity<FP>>(), params.template get<ICUCapacity<FP>>(),
                 params.template get<CriticalPerSevere<FP>>()[i], 0);
 
-            double deathsPerSevereAdjusted =
+            ScalarType deathsPerSevereAdjusted =
                 params.template get<CriticalPerSevere<FP>>()[i] - criticalPerSevereAdjusted;
 
             // Exposed -> InfectedNoSymptoms
