@@ -27,12 +27,12 @@ runs:
     - name: Run pylint
       shell: bash
       run: |
-        cd pycode/memilio-${{ inputs.package }}
-        pylint
+        cd pycode/memilio-${{ inputs.package }}/memilio
+        python custom_pylint.py
         pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
     - name: Upload Pylint Report
       uses: actions/upload-artifact@v4
       with:
         name: pylint-report-${{ inputs.package }}
-        path: pycode/memilio-${{ inputs.package }}/pylint.html
+        path: pycode/memilio-${{ inputs.package }}/memilio/pylint.html
         retention-days: 7

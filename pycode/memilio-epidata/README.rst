@@ -116,7 +116,7 @@ Run pylint with the commands
 
 .. code:: sh
     
-    pylint memilio/ > pylint.html
+    memiliopylint
     pylint-json2html -f jsonextended -o pylint.html < pylint_extended.json
 
 Pylint report for actual master:
