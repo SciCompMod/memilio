@@ -3,6 +3,7 @@ import os
 
 __version__ = '1.0.0'
 
+
 class PylintCommand(Command):
     """
     Custom command to run pylint and get a report as html.
@@ -40,11 +41,13 @@ class PylintCommand(Command):
             lint.Run(options, reporter=self.reporter(
                 report_file), do_exit=False)
 
+
 def main():
     cmd = PylintCommand(dist=Distribution())
     cmd.initialize_options()
     cmd.finalize_options()
     cmd.run()
+
 
 if __name__ == "__main__":
     main()
