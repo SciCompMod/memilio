@@ -6,9 +6,12 @@ import spektral
 from spektral.utils.convolution import normalized_laplacian, rescale_laplacian
 from spektral.transforms.normalize_adj import NormalizeAdj
 from spektral.data import MixedLoader
+from spektral.layers import ARMAConv
+from keras.layers import Dense
+from keras.models import Model
 
 
-file = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/data_GNN_30days_nodamp/data_secir_age_groups.pickle', 'rb')
+file = open('/home/schm_a45/Documents/Code/memilio/memilio/pycode/memilio-surrogatemodel/memilio/data_GNN_nodamp_90days/data_secir_age_groups.pickle', 'rb')
 data_secir = pickle.load(file)
 
 len_dataset = data_secir['inputs'].shape[0]
@@ -24,6 +27,22 @@ sub_matrix = commuter_data.iloc[:number_of_nodes, 0:number_of_nodes]
 
 adjacency_matrix = np.asarray(sub_matrix)
 adjacency_matrix[adjacency_matrix > 0] = 1
+
+
+class Net(Model):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = ARMAConv(1024, order=2, iterations=2,
+                              share_weights=True,  activation='elu')
+        self.dense = Dense(data.n_labels, activation="linear")
+
+    def call(self, inputs):
+        x, a = inputs
+        a = np.asarray(a)
+        x = self.conv1([x, a])
+        output = self.dense(x)
+
+        return output
 
 
 shape_input_flat = np.asarray(
@@ -79,8 +98,12 @@ loader_te = MixedLoader(data_te, batch_size=data_te.n_graphs)
 
 inputs, target = loader_tr.__next__()
 
+model = Net()
+
+inputs, target = loader_te.__next__()
+
 # saving input and labels
-with open("inputs_30days_paper.pickle", 'wb') as f:
+with open("inputs_90days_paper_new.pickle", 'wb') as f:
     pickle.dump(inputs, f)
-with open("labels_30days_paper.pickle", 'wb') as f:
+with open("labels_90days_paper_new.pickle", 'wb') as f:
     pickle.dump(target, f)

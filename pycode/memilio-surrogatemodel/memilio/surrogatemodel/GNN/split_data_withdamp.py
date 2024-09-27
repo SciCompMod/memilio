@@ -99,25 +99,25 @@ class MyDataset(spektral.data.dataset.Dataset):
         super().__init__(**kwargs)
 
 
-# class Net(Model):
-#     def __init__(self):
-#         super().__init__()
-#         self.conv1 = ARMAConv(1024, order=2, iterations=2,
-#                               share_weights=True,  activation='elu')
-#         self.dense = Dense(data.n_labels, activation="linear")
+class Net(Model):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = ARMAConv(1024, order=2, iterations=2,
+                              share_weights=True,  activation='elu')
+        self.dense = Dense(data.n_labels, activation="linear")
 
-#     def call(self, inputs):
-#         x, a = inputs
-#         a = np.asarray(a)
-#         x = self.conv1([x, a])
-#         output = self.dense(x)
+    def call(self, inputs):
+        x, a = inputs
+        a = np.asarray(a)
+        x = self.conv1([x, a])
+        output = self.dense(x)
 
-#         return output
+        return output
 
 
 # data = MyDataset()
 data = MyDataset(transforms=NormalizeAdj())
-batch_size = 32
+batch_size = 1000
 
 
 idxs = np.arange(len(data))  # same for each run
@@ -137,11 +137,14 @@ loader_te = MixedLoader(data_te, batch_size=data_te.n_graphs)
 
 inputs, target = loader_tr.__next__()
 
-#model = Net()
+model = Net()
+
+inputs, target = loader_te.__next__()
+
+# model = Net()
 
 # saving input and labels
-with open("/hpc_data/schm_a45/GNN_data/paper/inputs_100days_5damp_paper.pickle", 'wb') as f:
+with open("/hpc_data/schm_a45/GNN_data/paper/inputs_100days_5damp_paper_new.pickle", 'wb') as f:
     pickle.dump(inputs, f)
-with open("/hpc_data/schm_a45/GNN_data/paper/labels_100days_5damp_paper.pickle", 'wb') as f:
+with open("/hpc_data/schm_a45/GNN_data/paper/labels_100days_5damp_paper_new.pickle", 'wb') as f:
     pickle.dump(target, f)
-
