@@ -41,7 +41,7 @@
 namespace params
 {
 // Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
-constexpr int num_subcompartments = 1;
+constexpr int num_subcompartments = 50;
 constexpr size_t num_groups       = 6;
 
 // Parameters
@@ -234,8 +234,8 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::stri
 
 int main()
 {
-    std::string save_dir = "../../data/simulation_lct_noage/riseR0long/";
-    auto result          = simulate_lct_model(4.0, 100, save_dir);
+    std::string save_dir = "../../data/simulation_lct_noage/dropR0/";
+    auto result          = simulate_lct_model(0.5, 12, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;

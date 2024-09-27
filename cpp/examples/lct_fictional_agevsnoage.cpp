@@ -120,6 +120,8 @@ mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(bool a
             contact_matrices[location].get_minimum()  = Eigen::MatrixXd::Zero(num_groups, num_groups);
         }
     }
+    std::cout << mio::UncertainContactMatrix<ScalarType>(contact_matrices).get_cont_freq_mat().get_matrix_at(0)
+              << std::endl;
     return mio::success(mio::UncertainContactMatrix<ScalarType>(contact_matrices));
 }
 

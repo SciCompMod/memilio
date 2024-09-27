@@ -43,19 +43,13 @@ color_dict = {'ODE': '#1f77b4',
               'LCT3': '#2ca02c',
               'LCT10': '#ff7f0e',
               'LCT20': '#9467bd',
-              'IDE3': '#e377c2',
-              'IDE10': '#17becf',
-              'GLCT3': '#bbf90f',
-              'GLCT10': '#ef4026'
+              'LCT50': '#e377c2',
               }
 linestyle_dict = {'ODE': 'solid',
                   'LCT3': 'solid',
                   'LCT10': 'solid',
                   'LCT20': 'solid',
-                  'IDE3': 'dashdot',
-                  'IDE10': 'dashdot',
-                  'GLCT3': 'solid',
-                  'GLCT10': 'solid'
+                  'LCT50': 'solid'
                   }
 
 
@@ -356,9 +350,11 @@ if __name__ == '__main__':
                              os.path.join(data_dir, "riseR0short",
                                           "fictional_lct_2.0_10"),
                              os.path.join(data_dir, "riseR0short",
-                                          "fictional_lct_2.0_20")
+                                          "fictional_lct_2.0_20"),
+                             os.path.join(data_dir, "riseR0short",
+                                          "fictional_lct_2.0_50")
                              ],
-                            20000, legendplot=list(["ODE", "LCT3", "LCT10", "LCT20"]),
+                            20000, legendplot=list(["ODE", "LCT3", "LCT10", "LCT20", "LCT50"]),
                             filename_plot="new_infections_lct_rise2.0")
         compare_all_compartments([os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_1"),
                                   os.path.join(data_dir, "riseR0short",
@@ -379,9 +375,11 @@ if __name__ == '__main__':
                              os.path.join(data_dir, "dropR0",
                                           "fictional_lct_0.5_10"),
                              os.path.join(data_dir, "dropR0",
-                                          "fictional_lct_0.5_20")
+                                          "fictional_lct_0.5_20"),
+                                          os.path.join(data_dir, "dropR0",
+                                          "fictional_lct_0.5_50")
                              ],
-                            4100, legendplot=list(["ODE", "LCT3", "LCT10", "LCT20"]),
+                            4100, legendplot=list(["ODE", "LCT3", "LCT10", "LCT20", "LCT50"]),
                             filename_plot="new_infections_lct_drop0.5")
         compare_all_compartments([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),
                                   os.path.join(data_dir, "dropR0",
@@ -400,31 +398,33 @@ if __name__ == '__main__':
                                          os.path.join(data_dir, "dropR0",
                                                       "fictional_lct_0.5_10"),
                                          os.path.join(data_dir, "dropR0",
-                                                      "fictional_lct_0.5_20")
+                                                      "fictional_lct_0.5_20"),
+                                                       os.path.join(data_dir, "dropR0",
+                                                      "fictional_lct_0.5_50")
                                          ],
                                         legendplot=list(
-            ["ODE", "LCT3", "LCT10", "LCT20"]),
+            ["ODE", "LCT3", "LCT10", "LCT20", "LCT50"]),
             filename_plot="compartments_carrier_infected_lct_drop0.5", compartment_indices=[1, 5, 2, 3])
-        compare_single_compartment([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),
-                                    os.path.join(data_dir, "dropR0",
-                                                 "fictional_lct_0.5_3"),
-                                    os.path.join(data_dir, "dropR0",
-                                                 "fictional_lct_0.5_10"),
-                                    os.path.join(data_dir, "dropR0",
-                                                 "fictional_lct_0.5_20")
-                                    ],
-                                   legendplot=list(
-            ["ODE", "LCT3", "LCT10", "LCT20"]),  compartment_idx=2, filename_plot="compare_carrier_compartment_lct_drop0.5")
-        compare_single_compartment([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),
-                                    os.path.join(data_dir, "dropR0",
-                                                 "fictional_lct_0.5_3"),
-                                    os.path.join(data_dir, "dropR0",
-                                                 "fictional_lct_0.5_10"),
-                                    os.path.join(data_dir, "dropR0",
-                                                 "fictional_lct_0.5_20")
-                                    ],
-                                   legendplot=list(
-            ["ODE", "LCT3", "LCT10", "LCT20"]),  compartment_idx=3, filename_plot="compare_infected_compartment_lct_drop0.5")
+        # compare_single_compartment([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),
+        #                             os.path.join(data_dir, "dropR0",
+        #                                          "fictional_lct_0.5_3"),
+        #                             os.path.join(data_dir, "dropR0",
+        #                                          "fictional_lct_0.5_10"),
+        #                             os.path.join(data_dir, "dropR0",
+        #                                          "fictional_lct_0.5_20")
+        #                             ],
+        #                            legendplot=list(
+        #     ["ODE", "LCT3", "LCT10", "LCT20"]),  compartment_idx=2, filename_plot="compare_carrier_compartment_lct_drop0.5")
+        # compare_single_compartment([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),
+        #                             os.path.join(data_dir, "dropR0",
+        #                                          "fictional_lct_0.5_3"),
+        #                             os.path.join(data_dir, "dropR0",
+        #                                          "fictional_lct_0.5_10"),
+        #                             os.path.join(data_dir, "dropR0",
+        #                                          "fictional_lct_0.5_20")
+        #                             ],
+        #                            legendplot=list(
+        #     ["ODE", "LCT3", "LCT10", "LCT20"]),  compartment_idx=3, filename_plot="compare_infected_compartment_lct_drop0.5")
     elif case == 2:
         # rise r0 2.0 long
         plot_new_infections([os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_1_long"),
