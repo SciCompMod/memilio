@@ -2008,7 +2008,7 @@ mio::IOResult<void> run(const fs::path& input_dir, const fs::path& result_dir, s
         const auto seasonality_april = 0.95;
         const auto seasonality_may   = 0.85;
 
-        const double masks                            = 0.25;
+        const double masks                            = params[7];
         const double after_lockdown_contact_reduction = 1.0;
         // const double ratio_asympt_to_sympt            = 20.0;
         const double ratio_asympt_to_sympt = params[4];
@@ -2487,8 +2487,8 @@ int main(int argc, char** argv)
 
         // std::vector<std::vector<double>> parameters = {{1.596}, {4.171}, {0.7125}, {0.02472}, {4.83}, {10.0}, {0.5}};
 
-        std::vector<std::vector<double>> parameters = {{1.596}, {4.171}, {1.0}, {0.02472, 0.07416, 0.1236},
-                                                       {4.83},  {10.0},  {0.5}};
+        // std::vector<std::vector<double>> parameters = {{1.596}, {4.171}, {1.0}, {0.02472, 0.07416, 0.1236},
+        //                                                {4.83},  {10.0},  {0.5}};
 
         // std::vector<std::vector<double>> parameters = {
         //     {1.596}, {4.171}, {0.7125}, {0.012, 0.024, 0.036, 0.048, 0.06}, {2.0, 5.0, 8.0, 11.0, 14.0}, {10.0}, {0.5}};
@@ -2496,6 +2496,8 @@ int main(int argc, char** argv)
         //     {1.596}, {4.171}, {0.7125}, {0.012, 0.024, 0.036, 0.048, 0.06}, {4.83}, {2, 5, 8, 11, 14}, {0.5}};
         // std::vector<std::vector<double>> parameters = {
         //     {1.596}, {4.171}, {0.7125}, {0.02472}, {4.83}, {2, 5, 8, 11, 14}, {0.0, 0.25, 0.5, 0.75, 1.0}};
+        std::vector<std::vector<double>> parameters = {
+            {1.596}, {4.171}, {0.7125}, {0.012, 0.024, 0.036, 0.048, 0.06}, {4.83}, {10.0}, {0.5},{0.15,0.2,0.25,0.3,0.35}};
 
         auto every_combination = every_combination_of_parameters(parameters);
         if (rank == 0) {
