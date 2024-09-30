@@ -13,7 +13,7 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-TEST(TestIDEAgeres, compareWithPreviousRun)
+TEST(TestIdeAgeres, compareWithPreviousRun)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
@@ -58,7 +58,7 @@ TEST(TestIDEAgeres, compareWithPreviousRun)
     // Initialize model.
     mio::isecir::Model model(std::move(init), N, deaths, num_agegroups);
 
-    //Set working parameters
+    // Set working parameters.
 
     // First AgeGroup for Transition Distributions.
     mio::SmootherCosine smoothcos1(2.0);
@@ -82,7 +82,7 @@ TEST(TestIDEAgeres, compareWithPreviousRun)
 
     model.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(1)] = vec_delaydistrib2;
 
-    // Seco AgeGroup for Transition Distributions.
+    // Third AgeGroup for Transition Distributions.
     mio::SmootherCosine smoothcos3(2.5);
     mio::StateAgeFunctionWrapper delaydistribution3(smoothcos3);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib3(num_transitions, delaydistribution3);

@@ -43,7 +43,7 @@ int main()
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
-    // Create TimeSeries with num_transitions * num_agegroup elements where transitions needed for simulation will be stored.
+    // Create TimeSeries with num_transitions * num_agegroups elements where transitions needed for simulation will be stored.
     mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
 
     // Add time points for initialization of transitions.
@@ -77,15 +77,15 @@ int main()
     model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] = 0;
 
     // Set working parameters.
-    mio::SmootherCosine smoothcos1(2.0);
-    mio::StateAgeFunctionWrapper delaydistribution1(smoothcos1);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib1(num_transitions, delaydistribution1);
+    mio::SmootherCosine smoothcos(2.0);
+    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     // TransitionDistribution is not used for SusceptibleToExposed. Therefore, the parameter can be set to any value.
-    vec_delaydistrib1[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_distribution_parameter(-1.);
-    vec_delaydistrib1[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_distribution_parameter(-1.);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
         .set_distribution_parameter(4.0);
 
-    model.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(0)] = vec_delaydistrib1;
+    model.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(0)] = vec_delaydistrib;
 
     std::vector<ScalarType> vec_prob(num_transitions, 0.5);
     // The following probabilities must be 1, as there is no other way to go.
@@ -116,7 +116,7 @@ int main()
 
     auto interpolated_results = mio::interpolate_simulation_result(sim.get_result(), dt / 2);
 
-    interpolated_results.print_table({"S1", "E1", "C1", "I1", "H1", "U1", "R1", "D1 "}, 16, 8);
+    interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
     // Uncomment this line to print the transitions.
     // sim.get_transitions().print_table(
     //     {"S->E 1", "E->C 1", "C->I 1", "C->R 1", "I->H 1", "I->R 1", "H->U 1", "H->R 1", "U->D 1", "U->R 1"}, 16, 8);

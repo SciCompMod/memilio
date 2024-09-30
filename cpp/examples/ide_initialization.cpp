@@ -60,11 +60,13 @@ int main(int argc, char** argv)
     // The default parameters of the IDE-SECIR model are used, so that the simulation results are not realistic and are for demonstration purpose only.
 
     // Initialize model.
-    ScalarType total_population = 80 * 1e6;
-    ScalarType deaths = 0; // The number of deaths will be overwritten if real data is used for initialization.
-    ScalarType dt     = 0.5;
+    int num_agegroups                        = 1;
+    std::vector<ScalarType> total_population = std::vector<ScalarType>(num_agegroups, 80 * 1e6);
+    std::vector<ScalarType> deaths           = std::vector<ScalarType>(
+        num_agegroups, 0); // The number of deaths will be overwritten if real data is used for initialization.
+    ScalarType dt = 0.5;
     mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count),
-                             total_population, deaths);
+                             total_population, deaths, num_agegroups);
 
     // Check provided parameters.
     std::string filename = setup(argc, argv);

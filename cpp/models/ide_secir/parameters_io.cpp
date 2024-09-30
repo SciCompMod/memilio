@@ -74,16 +74,18 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     if (model.m_populations.get_time(0) != 0) {
         model.m_populations.remove_last_time_point();
         model.m_populations.add_time_point<Eigen::VectorXd>(
-            0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState ::Count * num_age_groups, 0));
+            0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count * num_age_groups, 0));
     }
 
     // The first time we need is -4 * global_support_max.
     Eigen::Index start_shift = 4 * global_support_max_index;
     // The last time needed is dependent on the mean stay time in the Exposed compartment and
     // the mean stay time of asymptomatic individuals in InfectedNoSymptoms.
-    // The mean stay Time in a compartment may be dependent of the Age Group.
+    // The mean stay time in a compartment may be dependent on the Age Group.
     std::vector<ScalarType> mean_ExposedToInfectedNoSymptoms          = std::vector<ScalarType>(num_age_groups, 0.);
     std::vector<ScalarType> mean_InfectedNoSymptomsToInfectedSymptoms = std::vector<ScalarType>(num_age_groups, 0.);
+    Eigen::Index last_time_index_needed                               = 0;
+
     for (int group = 0; group < num_age_groups; group++) {
         mean_ExposedToInfectedNoSymptoms[group] =
             model.parameters
@@ -95,15 +97,18 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
                 .get<TransitionDistributions>()[AgeGroup(group)]
                                                [Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]
                 .get_mean(dt);
-        Eigen::Index last_time_index_needed = Eigen::Index(std::ceil(
-            (mean_ExposedToInfectedNoSymptoms[group] + mean_InfectedNoSymptomsToInfectedSymptoms[group]) / dt));
-        // Create TimeSeries with zeros. The index of time zero is start_shift.
-
-        for (Eigen::Index i = -start_shift; i <= last_time_index_needed; i++) {
-            // Add time point.
-            model.m_transitions.add_time_point(i * dt, TimeSeries<ScalarType>::Vector::Constant(
-                                                           (int)InfectionTransition::Count * (int)num_age_groups, 0.));
+        if (last_time_index_needed <
+            Eigen::Index(std::ceil(
+                (mean_ExposedToInfectedNoSymptoms[group] + mean_InfectedNoSymptomsToInfectedSymptoms[group]) / dt))) {
+            last_time_index_needed = Eigen::Index(std::ceil(
+                (mean_ExposedToInfectedNoSymptoms[group] + mean_InfectedNoSymptomsToInfectedSymptoms[group]) / dt));
         }
+    }
+    // Create TimeSeries with zeros. The index of time zero is start_shift.
+    for (Eigen::Index i = -start_shift; i <= last_time_index_needed; i++) {
+        // Add time point.
+        model.m_transitions.add_time_point(i * dt, TimeSeries<ScalarType>::Vector::Constant(
+                                                       (int)InfectionTransition::Count * (int)num_age_groups, 0.));
     }
 
     model.m_total_confirmed_cases = std::vector<ScalarType>(num_age_groups, 0.);

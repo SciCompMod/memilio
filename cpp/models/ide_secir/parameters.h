@@ -56,8 +56,9 @@ struct TransitionDistributions {
     {
         SmootherCosine smoothcos(2.0);
         StateAgeFunctionWrapper delaydistribution(smoothcos);
-        std::vector<StateAgeFunctionWrapper> state_age_vector((int)InfectionTransition::Count, delaydistribution);
-        return Type(size, state_age_vector);
+        std::vector<StateAgeFunctionWrapper> state_age_function_vector((int)InfectionTransition::Count,
+                                                                       delaydistribution);
+        return Type(size, state_age_function_vector);
     }
 
     static std::string name()

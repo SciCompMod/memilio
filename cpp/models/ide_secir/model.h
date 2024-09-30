@@ -52,39 +52,39 @@ public:
     *   A warning is displayed if the condition is violated.
     * @param[in] N_init A vector, containg the populations of the considered region, for every AgeGroup.
     * @param[in] deaths A vector, containg the total number of deaths at time t0, for every AgeGroup.
-    * @param[in] num_agegroups The number of Age Groups.
-    * @param[in] total_confirmed_cases A vector, containg the otal confirmed cases at time t0 can be set if it should be used for initialization, for every AgeGroup.
+    * @param[in] num_agegroups The number of AgeGroups.
+    * @param[in] total_confirmed_cases A vector, containing the total confirmed cases at time t0 can be set if it should be used for initialization, for every AgeGroup.
     */
     Model(TimeSeries<ScalarType>&& init, std::vector<ScalarType> N_init, std::vector<ScalarType> deaths,
-          int num_agegroups, std::vector<ScalarType> total_confirmed_cases = {});
+          size_t num_agegroups, std::vector<ScalarType> total_confirmed_cases = {});
 
     /**
-    * @brief Gives a flat index for the InfectionTransition TimeSeries.
+    * @brief Returns a flat index for the InfectionTransition TimeSeries.
     *
-    * In the Time Series we store a vector for each Time Point. In this vector we store the different Infection Transition for every Age Group.
-    * In order to get the right Index in this vector given a specific Age Group and Infection Transition we need this function.
+    * In the TimeSeries we store a vector for each time point. In this vector we store the different #InfectionTransition%s for every AgeGroup.
+    * This function is used to get the right index in this vector for a specific AgeGroup and InfectionTransition.
     *
-    * @param[in] Transition_idx A Index at which Infection Transition we want to evaluate.
+    * @param[in] Transition_idx Index determining which InfectionTransition we want to evaluate.
     * @param[in] agegroup The agegroup for which we want to evaluate.
     */
 
-    int get_transition_flat_index(Eigen::Index Transition_idx, int agegroup) const
+    int get_transition_flat_index(Eigen::Index transition_idx, size_t agegroup) const
     {
-        return (agegroup * Eigen::Index(InfectionTransition::Count) + Transition_idx);
+        return (agegroup * Eigen::Index(InfectionTransition::Count) + transition_idx);
     }
 
     /**
-    * @brief Gives a flat index for the InfectionState TimeSeries.
+    * @brief Returns a flat index for the InfectionState TimeSeries.
     *
-    * In the Time Series we store a vector for each Time Point. In this vector we store the different Infection States for every Age Group.
-    * In order to get the right Index in this vector given a specific Age Group and Infection State we need this function.
+    * In the TimeSeries we store a vector for each time point. In this vector we store the different InfectionStates for every AgeGroup.
+    * This function is used to get the right index in this vector for a specific AgeGroup and InfectionState.
     *
-    * @param[in] State_idx A Index at which Infection State we want to evaluate.
+    * @param[in] State_idx Index at which InfectionState we want to evaluate.
     * @param[in] agegroup The agegroup for which we want to evaluate.
     */
-    int get_state_flat_index(int State_idx, int agegroup) const
+    int get_state_flat_index(int state_idx, size_t agegroup) const
     {
-        return (agegroup * Eigen::Index(InfectionState::Count) + State_idx);
+        return (agegroup * Eigen::Index(InfectionState::Count) + state_idx);
     }
 
     // ---- Functionality to calculate the sizes of the compartments for time t0. ----
@@ -98,7 +98,7 @@ public:
      *
      * @param[in] dt Time discretization step size.
      * @param[in] idx_InfectionState Specifies the considered #InfectionState
-     * @param[in] group The Age Group for which we want to compute.
+     * @param[in] group The AgeGroup for which we want to compute.
      * @param[in] idx_IncomingFlow Specifies the index of the infoming flow to #InfectionState in m_transitions. 
      * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant TransitionDistribution, 
      *              related to a flow from the considered #InfectionState to any other #InfectionState.
@@ -228,13 +228,13 @@ public:
     bool check_constraints(ScalarType dt) const
     {
 
-        if (!((int)m_transitions.get_num_elements() == (int)InfectionTransition::Count * m_num_agegroups)) {
+        if (!((size_t)m_transitions.get_num_elements() == (size_t)InfectionTransition::Count * m_num_agegroups)) {
             log_error("A variable given for model construction is not valid. Number of elements in transition vector "
                       "does not match the required number.");
             return true;
         }
 
-        for (int group = 0; group < m_num_agegroups; ++group) {
+        for (size_t group = 0; group < m_num_agegroups; ++group) {
 
             for (int i = 0; i < (int)InfectionState::Count; i++) {
                 int index = get_state_flat_index(i, group);
@@ -252,7 +252,7 @@ public:
             return true;
         }
 
-        for (int group = 0; group < m_num_agegroups; ++group) {
+        for (size_t group = 0; group < m_num_agegroups; ++group) {
 
             for (int i = 0; i < m_transitions.get_num_time_points(); i++) {
                 for (int j = 0; j < (int)InfectionTransition::Count; j++) {
@@ -330,9 +330,9 @@ public:
     // Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the
     // initialization part.
     TimeSeries<ScalarType>
-        m_transitions; ///< TimeSeries containing points of time and the corresponding number of transitions of a specific Age Group.
+        m_transitions; ///< TimeSeries containing points of time and the corresponding number of transitions for every AgeGroup.
     TimeSeries<ScalarType> m_populations; ///< TimeSeries containing points of time and the corresponding number of
-        // people in defined #InfectionState%s in specific Age Groups.
+        // people in defined #InfectionState%s for every AgeGroup.
     std::vector<ScalarType> m_total_confirmed_cases{
         0}; ///< Vector that contains the total number of confirmed cases at time t0 for every AgeGroup.
 
@@ -355,7 +355,7 @@ private:
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
     int m_initialization_method{0}; ///< Gives the initialization of the model.
     //See also get_initialization_method_compartments() for the number code.
-    int m_num_agegroups; ///< Gives the number of Age Groups.
+    size_t m_num_agegroups; ///< Number of Age Groups.
 };
 
 } // namespace isecir

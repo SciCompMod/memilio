@@ -330,7 +330,6 @@ TEST(IdeSecir, checkInitializations)
     /* !! For the other tests, the contact rate is set to 0 so that the force of infection is zero.
      The forceofinfection initialization method is therefore not used for these tests.*/
 
-    //mio::isecir::Parameters parameters;   Auskommentiert weil geht so nicht mehr
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, num_agegroups);
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 0));
 
