@@ -484,6 +484,10 @@ void Model::set_transitiondistributions_in_forceofinfection(ScalarType dt)
 
 ScalarType Model::get_global_support_max(ScalarType dt) const
 {
+    // Note that this function computes the global_support_max via the get_support_max() method and does not make use
+    // of the vector m_transitiondistributions_support_max. This is because the global_support_max is already used in
+    // check_constraints and we cannot ensure that the vector has already been computed when checking for constraints
+    // (which ususally happens before setting the initial flows and simulating).
     return std::max(
         {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
              .get_support_max(dt, m_tol),
