@@ -28,7 +28,7 @@ int main()
 {
     const auto t0   = 0.;
     const auto tmax = 15.;
-    const auto dt   = 0.5; //time step of migration, daily migration every second step
+    const auto dt   = 0.5; //time step of mobility, daily mobility every second step
 
     mio::oseir::Model<> model(1);
 

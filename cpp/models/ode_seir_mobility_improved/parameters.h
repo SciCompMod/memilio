@@ -117,14 +117,14 @@ struct PathIntersections {
 };
 
 /**
-     * @brief The commuting weights are modelled using a SparseMatrix.
-     */
+ * @brief The contact patterns within different Region%s are modelled using a ContactMatrix.
+ */
 template <typename FP = ScalarType>
 struct CommutingStrengths {
-    using Type = Eigen::SparseMatrix<FP>;
+    using Type = UncertainContactMatrix<FP>;
     static Type get_default(Region size, AgeGroup)
     {
-        return Type(static_cast<Eigen::Index>((size_t)size), static_cast<Eigen::Index>((size_t)size));
+        return Type(1, static_cast<Eigen::Index>((size_t)size));
     }
     static std::string name()
     {

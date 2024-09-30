@@ -18,7 +18,7 @@ int main()
 
     ScalarType t0   = 0.;
     ScalarType tmax = 15.;
-    ScalarType dt   = 1;
+    ScalarType dt   = 0.5;
 
     std::vector<int> region_ids  = {1001, 1002};
     ScalarType number_regions    = region_ids.size();
@@ -48,31 +48,28 @@ int main()
     mio::ContactMatrixGroup& contact_matrix =
         model.parameters.get<mio::oseirmobilityimproved::ContactPatterns<>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(2.7);
-
     // contact_matrix[0].add_damping(0.5, mio::SimulationTime(5));
 
-    Eigen::SparseMatrix<ScalarType>& commuting_strengths =
-        model.parameters.get<mio::oseirmobilityimproved::CommutingStrengths<>>();
-    commuting_strengths.insert(0, 0) = 0.95;
-    commuting_strengths.insert(0, 1) = 0.05;
-    commuting_strengths.insert(1, 0) = 0.01;
-    commuting_strengths.insert(1, 1) = 0.99;
+    mio::ContactMatrixGroup& commuting_strengths =
+        model.parameters.get<mio::oseirmobilityimproved::CommutingStrengths<>>().get_cont_freq_mat();
+    Eigen::MatrixXd values(2, 2);
+    values(0, 0)                          = 0.95;
+    values(0, 1)                          = 0.05;
+    values(1, 0)                          = 0.01;
+    values(1, 1)                          = 0.99;
+    commuting_strengths[0].get_baseline() = values;
 
     auto& population = model.parameters.get<mio::oseirmobilityimproved::PopulationSizes<>>();
-    for (int n = 0; n < commuting_strengths.outerSize(); ++n) {
+    for (int n = 0; n < number_regions; ++n) {
         population[{mio::oseirmobilityimproved::Region(n)}] +=
             model.populations.get_group_total(mio::oseirmobilityimproved::Region(n));
-        auto x = population[{mio::oseirmobilityimproved::Region(0)}];
-        mio::unused(x);
-        for (Eigen::SparseMatrix<double>::InnerIterator it(commuting_strengths, n); it; ++it) {
-            auto start_population = model.populations.get_group_total(mio::oseirmobilityimproved::Region(it.row()));
-            population[{mio::oseirmobilityimproved::Region(it.row())}] -= it.value() * start_population;
-            x = population[{mio::oseirmobilityimproved::Region(0)}];
-            population[{mio::oseirmobilityimproved::Region(it.col())}] += it.value() * start_population;
-            x = population[{mio::oseirmobilityimproved::Region(0)}];
+        for (int m = 0; m < number_regions; ++m) {
+            population[{mio::oseirmobilityimproved::Region(n)}] -=
+                values(n, m) * model.populations.get_group_total(mio::oseirmobilityimproved::Region(n));
+            population[{mio::oseirmobilityimproved::Region(m)}] +=
+                values(n, m) * model.populations.get_group_total(mio::oseirmobilityimproved::Region(n));
         }
     }
-
     using DefaultIntegratorCore =
         mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>;
 
