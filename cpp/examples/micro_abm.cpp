@@ -14,6 +14,7 @@
 #include "abm/common_abm_loggers.h"
 #include "abm/location.h"
 #include "abm/location_type.h"
+#include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/simulation.h"
 #include "abm/time.h"
@@ -242,11 +243,16 @@ int main()
     world.parameters.get<mio::abm::AgeGroupGotoWork>()                      = false;
     world.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_25_to_64]  = true;
 
+    world.parameters.get<mio::abm::BasicShoppingRate>()[age_group_0_to_4]   = 0.1;
+    world.parameters.get<mio::abm::BasicShoppingRate>()[age_group_5_to_24]  = 0.5;
+    world.parameters.get<mio::abm::BasicShoppingRate>()[age_group_25_to_64] = 0.5;
+    world.parameters.get<mio::abm::BasicShoppingRate>()[age_group_65_plus]  = 0.3;
+
     // Setup the world
 
     //1. Households
     int n_households = 100; // we do 100 Households -> 50/30/15/5 split for 1/2/3/4 person households
-    auto child       = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
+    auto child       = mio::abm::HouseholdMember(num_age_groups); // A child is 25/75% 0-4 or 5-24.
     child.set_age_weight(age_group_0_to_4, 1);
     child.set_age_weight(age_group_5_to_24, 3);
 
@@ -267,7 +273,7 @@ int main()
     auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
     auto twoPersonHousehold_full  = mio::abm::Household();
     twoPersonHousehold_full.add_members(child, 1);
-    twoPersonHousehold_full.add_members(child, 1);
+    twoPersonHousehold_full.add_members(parent, 1);
     twoPersonHousehold_group.add_households(twoPersonHousehold_full, n_households * 0.3);
 
     // Three-person household with two parents and one child.
@@ -304,8 +310,9 @@ int main()
 
     //3. Workplaces
     std::vector<mio::abm::LocationId> works;
-    const std::vector<int> work_sizes{20, 20, 15, 15, 15, 5, 100};
-    std::vector<std::string> work_files{"office_20_20.csv", "office_20_20.csv", "office_15_15.csv",  "office_15_15.csv",
+    const std::vector<int> work_sizes{20, 20, 15, 15, 15, 15, 15, 5, 100};
+    std::vector<std::string> work_files{"office_20_20.csv", "office_20_20.csv", "office_15_15.csv",
+                                        "office_15_15.csv", "office_15_15.csv", "office_15_15.csv",
                                         "office_15_15.csv", "office_5_5.csv",   "office_100_100.csv"};
     for (auto size : work_sizes) {
         works.push_back(world.add_location(mio::abm::LocationType::Work));
@@ -372,7 +379,7 @@ int main()
     for (auto& person : world.get_persons()) {
         //to the schools
         if (person.get_age() == age_group_5_to_24) {
-            if (std::accumulate(school_sizes.begin(), school_sizes.end(), 0) > 0) {
+            if (std::accumulate(school_dist.begin(), school_dist.end(), 0) > 0) {
                 auto school = mio::DiscreteDistribution<size_t>::get_instance()(rng, school_dist);
                 person.set_assigned_location(schools[school]);
                 --school_dist[school];
@@ -385,7 +392,7 @@ int main()
         }
         //to the workplaces
         if (person.get_age() == age_group_25_to_64) {
-            if (std::accumulate(work_sizes.begin(), work_sizes.end(), 0) > 0) {
+            if (std::accumulate(work_dist.begin(), work_dist.end(), 0) > 0) {
                 auto work = mio::DiscreteDistribution<size_t>::get_instance()(rng, work_dist);
                 person.set_assigned_location(works[work]);
                 --work_dist[work];
@@ -398,7 +405,7 @@ int main()
         }
 
         //to the shops
-        if (std::accumulate(shop_sizes.begin(), shop_sizes.end(), 0) > 0) {
+        if (std::accumulate(shop_dist.begin(), shop_dist.end(), 0) > 0) {
             auto shop = mio::DiscreteDistribution<size_t>::get_instance()(rng, shop_dist);
             person.set_assigned_location(shops[shop]);
             --shop_dist[shop];
@@ -415,7 +422,8 @@ int main()
 
     // Load contact matrices
     std::string contacts_path =
-        "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/contacts/microcontacts/24h_networks_csv";
+        // "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/contacts/microcontacts/24h_networks_csv";
+        "/home/schm_r6/Documents/24h_networks_csv";
 
     for (auto& location : world.get_locations()) {
         if (location.get_type() == mio::abm::LocationType::Home) {
