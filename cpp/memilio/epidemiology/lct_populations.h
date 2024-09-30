@@ -25,7 +25,8 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/math/eigen.h"
 #include "memilio/epidemiology/lct_infection_state.h"
-//#include <type_traits>
+#include "memilio/utils/type_list.h"
+#include "memilio/utils/metaprogramming.h"
 
 namespace mio
 {
@@ -33,12 +34,13 @@ namespace mio
 /**
  * @brief A class template for compartment populations of LCT models.
  *
- * Populations can be split up into different Categories, e.g. by age group, yearly income group, gender etc. 
- * In LCT models, we want to use different number of subcompartments, i.e. different LctStates, 
+ * Populations can be split up into different categories, e.g. by age group, yearly income group, gender etc. 
+ * In LCT models, we want to use different numbers of subcompartments, i.e. different LctStates, 
  * for each group of a category.
- * (Therefore, we can't use the normal Populations class because it expects the same InfectionState for each group.)
+ * (Therefore, we can't use the normal Populations class because it expects the same InfectionStates for each group.)
  * 
  * This template must be instantiated with one LctState for each group of a category. 
+ * The purpose of the LctStates is to define the number of subcompartments for each InfectionState.
  * The number of LctStates also determines the number of groups. 
  * If you want to use more than one category, e.g. age and gender, you have to define num_age_groups * num_genders 
  * LctStates, because the number of subcompartments can be different 
@@ -46,7 +48,7 @@ namespace mio
  *
  * The class created from this template contains a "flat array" of compartment populations and some functions for 
  * retrieving or setting the populations. The order in the flat array is: First, all (sub-)compartments of the 
- * first group, afterwards all (sub-)compartments of the first group and so on.
+ * first group, afterwards all (sub-)compartments of the second group and so on.
  *
  */
 
@@ -54,11 +56,11 @@ template <typename FP = ScalarType, class... LctStates>
 class LctPopulations
 {
 public:
-    using Type                       = UncertainValue<FP>;
-    using InternalArrayType          = Eigen::Array<Type, Eigen::Dynamic, 1>;
-    using tupleLctStates             = std::tuple<LctStates...>;
-    static size_t constexpr m_groups = sizeof...(LctStates); ///< Number of groups.
-    static_assert(m_groups >= 1, "The number of LctStates provided should be at least one.");
+    using Type                         = UncertainValue<FP>;
+    using InternalArrayType            = Eigen::Array<Type, Eigen::Dynamic, 1>;
+    using LctStatesGroups              = TypeList<LctStates...>;
+    static size_t constexpr num_groups = sizeof...(LctStates); ///< Number of groups.
+    static_assert(num_groups >= 1, "The number of LctStates provided should be at least one.");
 
     /// @brief Default constructor.
     LctPopulations()
@@ -68,7 +70,7 @@ public:
     }
 
     /**
-     * @brief get_num_compartments returns the number of compartments.
+     * @brief get_num_compartments Returns the number of compartments.
      * @return Number of compartments which equals the flat array size.
      */
     size_t get_num_compartments() const
@@ -90,7 +92,7 @@ public:
     }
 
     /**
-     * @brief Returns the entry of the array given a flat index index.
+     * @brief Returns the entry of the array given a flat index.
      * @param index A flat index.
      * @return The value of the internal array at the index.
      */
@@ -101,18 +103,19 @@ public:
     }
 
     /**
-     @brief Gets the first index of a group in the flat array.
+    * @brief Gets the first index of a group in the flat array.
     * @tparam group The group for which the index should be returned.
     * @return The index of the first entry of group in the flat array.
     */
-    template <size_t Group = 0, std::enable_if_t<(Group < m_groups) && (Group >= 0), bool> = true>
-    size_t get_first_index_group() const
+    template <size_t Group>
+    size_t get_first_index_of_group() const
     {
+        static_assert((Group < num_groups) && (Group >= 0), "The template parameter Group should be valid.");
         if constexpr (Group == 0) {
             return 0;
         }
         else {
-            return get_first_index_group<Group - 1>() + std::tuple_element_t<Group - 1, tupleLctStates>::Count;
+            return get_first_index_of_group<Group - 1>() + type_at_index_t<Group - 1, LctStatesGroups>::Count;
         }
     }
     /**
@@ -130,11 +133,12 @@ public:
      * @tparam group The group for which the total population should be calculated.
      * @return Total population of the group.
      */
-    template <size_t group>
-    ScalarType get_group_total() const
+    template <size_t Group>
+    FP get_group_total() const
     {
         return m_y.array()
-            .segment(get_first_index_group<group>(), std::tuple_element_t<group, tupleLctStates>::Count)
+            .template cast<FP>()
+            .segment(get_first_index_of_group<Group>(), type_at_index_t<Group, LctStatesGroups>::Count)
             .sum();
     }
 
@@ -142,15 +146,15 @@ public:
      * @brief Returns the total population of all compartments and groups.
      * @return Total population.
      */
-    ScalarType get_total() const
+    FP get_total() const
     {
-        return m_y.array().template cast<ScalarType>().sum();
+        return m_y.array().template cast<FP>().sum();
     }
 
     /**
      * @brief Checks whether all compartments have non-negative values. 
-     * This function can be used to prevent slighly negative function values in compartment sizes that came out
-     * due to roundoff errors if, e.g., population sizes were computed in a complex way.
+     * This function can be used to prevent slightly negative function values in compartment sizes that are produced 
+     * due to rounding errors if, e.g., population sizes were computed in a complex way.
      *
      * Attention: This function should be used with care. It can not and will not set model parameters and 
      *            compartments to meaningful values. In most cases it is preferable to use check_constraints,
@@ -166,7 +170,7 @@ public:
             if (m_y.array()[i] < 0) {
                 log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, m_y.array()[i],
                             0);
-                m_y.array()[i] = 0;
+                m_y.array()[i] = 0.;
                 corrected      = true;
             }
         }
@@ -188,7 +192,7 @@ public:
 
 private:
     /**
-     * @brief Sets recursively the total number of (sub-)compartments in all groups. 
+     * @brief Sets recursively the total number of (sub-)compartments over all groups.
      * The number also corresponds to the size of the internal vector.
      */
     template <size_t Group = 0>
@@ -197,8 +201,8 @@ private:
         if constexpr (Group == 0) {
             m_count = 0;
         }
-        if constexpr (Group < m_groups) {
-            m_count += std::tuple_element_t<Group, tupleLctStates>::Count;
+        if constexpr (Group < num_groups) {
+            m_count += type_at_index_t<Group, LctStatesGroups>::Count;
             set_count<Group + 1>();
         }
     }

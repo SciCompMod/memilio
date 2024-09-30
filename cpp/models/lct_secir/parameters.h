@@ -38,7 +38,7 @@ namespace lsecir
 **********************************************/
 
 /**
- * @brief Average Time spent in the Exposed compartment for each group.
+ * @brief Average time spent in the Exposed compartment for each group.
  */
 struct TimeExposed {
     using Type = Vector<UncertainValue<ScalarType>>;
@@ -54,7 +54,7 @@ struct TimeExposed {
 
 /**
  * @brief Average time spent in the TimeInfectedNoSymptoms before developing 
- *  Symptoms or recover for each group in the SECIR model in day unit.
+ *  symptoms or recover for each group in the SECIR model in day unit.
  */
 struct TimeInfectedNoSymptoms {
     using Type = Vector<UncertainValue<ScalarType>>;
@@ -69,7 +69,7 @@ struct TimeInfectedNoSymptoms {
 };
 
 /**
- * @brief Average time spent in the TimeInfectedSymptoms before going to Hospital 
+ * @brief Average time spent in the TimeInfectedSymptoms before going to hospital 
  *  or recover for each group in the SECIR model in day unit.
  */
 struct TimeInfectedSymptoms {
@@ -138,9 +138,8 @@ struct ContactPatterns {
 
     static Type get_default(size_t size)
     {
-        Eigen::Index size_idx = (Eigen::Index)size;
-        mio::ContactMatrixGroup contact_matrix(1, size_idx);
-        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(size_idx, size_idx, 10));
+        mio::ContactMatrixGroup contact_matrix(1, (Eigen::Index)size);
+        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((Eigen::Index)size, (Eigen::Index)size, 10.));
         return Type(contact_matrix);
     }
     static std::string name()
@@ -302,7 +301,7 @@ public:
     }
 
     /**
-     * @brief Checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not.
+     * @brief Checks whether all parameters satisfy their corresponding constraints and throws errors, if they do not.
      * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
      */
     bool check_constraints() const
@@ -312,7 +311,7 @@ public:
             return true;
         }
 
-        for (auto i = size_t(0); i < size_t(m_num_groups); ++i) {
+        for (size_t i = 0; i < m_num_groups; ++i) {
             if (this->get<TimeExposed>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeExposed is smaller than {:.4f}", 1.0);
                 return true;

@@ -36,7 +36,7 @@ namespace abm
 */
 enum class VirusVariant : std::uint32_t
 {
-    Wildtype = 0,
+    Wildtype,
 
     Count // last!!
 };
