@@ -39,7 +39,8 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType deaths
     , m_N{N_init}
 {
     if (m_transitions.get_num_time_points() > 0) {
-        // Add first time point in m_populations according to last time point in m_transitions which is where we start the simulation.
+        // Add first time point in m_populations according to last time point in m_transitions which is where we start
+        // the simulation.
         m_populations.add_time_point<Eigen::VectorXd>(
             m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0.));
     }
@@ -119,7 +120,8 @@ void Model::initial_compute_compartments_infection(ScalarType dt)
 void Model::initial_compute_compartments(ScalarType dt)
 {
     // The initialization method only affects the Susceptible and Recovered compartments.
-    // It is possible to calculate the sizes of the other compartments in advance because only the initial values of the flows are used.
+    // It is possible to calculate the sizes of the other compartments in advance because only the initial values of
+    // the flows are used.
     initial_compute_compartments_infection(dt);
 
     if (m_total_confirmed_cases > 1e-12) {
@@ -156,8 +158,8 @@ void Model::initial_compute_compartments(ScalarType dt)
             m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)];
     }
     else if (m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)] > 1e-12) {
-        // If value for Recovered is initialized and standard method is not applicable (i.e., no value for total infections
-        // or Susceptibles given directly), calculate Susceptibles via other compartments.
+        // If value for Recovered is initialized and standard method is not applicable (i.e., no value for total
+        // infections or Susceptibles given directly), calculate Susceptibles via other compartments.
         m_initialization_method = 3;
 
         m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] =
@@ -186,7 +188,8 @@ void Model::initial_compute_compartments(ScalarType dt)
                 m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] /
                 (dt * m_forceofinfection);
 
-            // Recovered; calculated as the difference between the total population and the sum of the other compartment sizes.
+            // Recovered; calculated as the difference between the total population and the sum of the other
+            // compartment sizes.
             m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)] =
                 m_N - m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] -
                 m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Exposed)] -
@@ -205,8 +208,10 @@ void Model::initial_compute_compartments(ScalarType dt)
     }
 
     // Verify that the initialization produces an appropriate result.
-    // Another check would be if the sum of the compartments is equal to N, but in all initialization methods one of the compartments is initialized via N - the others.
-    // This also means that if a compartment is greater than N, we will always have one or more compartments less than zero.
+    // Another check would be if the sum of the compartments is equal to N, but in all initialization methods one of
+    // the compartments is initialized via N - the others.
+    // This also means that if a compartment is greater than N, we will always have one or more compartments less than
+    // zero.
     // Check if all compartments are non negative.
     for (int i = 0; i < (int)InfectionState::Count; i++) {
         if (m_populations[0][i] < 0) {
@@ -234,11 +239,13 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
                          Eigen::Index current_time_index)
 {
     ScalarType sum = 0;
-    /* In order to satisfy TransitionDistribution(dt*i) = 0 for all i >= k, k is determined by the maximum support of the distribution.
+    /* In order to satisfy TransitionDistribution(dt*i) = 0 for all i >= k, k is determined by the maximum support of 
+    the distribution.
     Since we are using a backwards difference scheme to compute the derivative, we have that the
     derivative of TransitionDistribution(dt*i) = 0 for all i >= k+1.
 
-    Hence calc_time_index goes until std::ceil(support_max/dt) since for std::ceil(support_max/dt)+1 all terms are already zero. 
+    Hence calc_time_index goes until std::ceil(support_max/dt) since for std::ceil(support_max/dt)+1 all terms are 
+    already zero. 
     This needs to be adjusted if we are changing the finite difference scheme */
 
     Eigen::Index calc_time_index =
@@ -262,7 +269,8 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
 
 void Model::flows_current_timestep(ScalarType dt)
 {
-    // Calculate flow SusceptibleToExposed with force of infection from previous time step and Susceptibles from current time step.
+    // Calculate flow SusceptibleToExposed with force of infection from previous time step and Susceptibles from
+    // current time step.
     m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] =
         dt * m_forceofinfection * m_populations.get_last_value()[Eigen::Index(InfectionState::Susceptible)];
 
