@@ -144,14 +144,14 @@ public:
     }
 
     /**
-     * @brief Constructor for initializing mobility parameters with coefficients from type MobilityCoefficientGroup and
-     * specific save indices.
+     * @brief Constructor for initializing mobility parameters with coefficients from type `MobilityCoefficientGroup`
+     * and specific save indices.
      *
-     * @param coeffs A group of mobility coefficients represented by a `MobilityCoefficientGroup` object, defining how 
-     * individuals move between nodes.
-     * @param save_indices A 2D vector of indices. Each inner vector represents a set of compartments whose data will be 
-     * saved in the member `m_mobility_results` of the `MobilityEdge` class during the simulation using the
-     * `add_mobility_result_time_point` function. 
+     * @param[in] coeffs A group of mobility coefficients represented by a `MobilityCoefficientGroup` object, defining 
+     * how individuals move between nodes.
+     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments. 
+     * Each inner vector represents a set of compartments whose data will be saved in the member `m_mobility_results` 
+     * of the `MobilityEdge` class during the simulation using the `add_mobility_result_time_point` function.
      */
     MobilityParameters(const MobilityCoefficientGroup& coeffs, const std::vector<std::vector<size_t>>& save_indices)
         : m_coefficients(coeffs)
@@ -163,10 +163,10 @@ public:
      * @brief Constructor for initializing mobility parameters with coefficients from an Eigen Vector
      * and specific save indices.
      *
-     * @param coeffs A Eigen::VectorXd containing mobility coefficients.
-     * @param save_indices A 2D vector of indices. Each inner vector represents a set of compartments whose data will be 
-     * saved in the member `m_mobility_results` of the `MobilityEdge` class during the simulation using the
-     * `add_mobility_result_time_point` function. 
+     * @param[in] coeffs An `Eigen::VectorXd` containing mobility coefficients.
+     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments. 
+     * Each inner vector represents a set of compartments whose data will be saved in the member `m_mobility_results` 
+     * of the `MobilityEdge` class during the simulation using the `add_mobility_result_time_point` function.
      */
     MobilityParameters(const Eigen::VectorXd& coeffs, const std::vector<std::vector<size_t>>& save_indices)
         : m_coefficients({MobilityCoefficients(coeffs)})
@@ -214,15 +214,15 @@ public:
     }
 
     /**
-    * @brief Get the indices of compartments to be saved during mobility.
-    *
-    * This function returns a reference to the vector of `m_saved_compartment_indices`, which specify the groups of compartments 
-    * that are saved in the member `m_mobility_results` of the `MobilityEdge` class during the simulation using the
-    * `add_mobility_result_time_point` function.
-    *
-    * @return A reference to the 2D vector containing indices of compartments to be saved.
-    * Each inner vector represents a group of compartments defined by indices.
-    */
+     * @brief Get the indices of compartments to be saved during mobility.
+     *
+     * This function returns a reference to the vector of `m_saved_compartment_indices`, which specifies the groups of 
+     * compartments that are saved in the member `m_mobility_results` of the `MobilityEdge` class during the simulation 
+     * using the `add_mobility_result_time_point` function.
+     *
+     * @return A reference to the 2D vector containing indices of compartments to be saved. Each inner vector 
+     * represents a group of compartments defined by indices.
+     */
     const auto& get_save_indices() const
     {
         return m_saved_compartment_indices;
@@ -299,7 +299,7 @@ class MobilityEdge
 {
 public:
     /**
-     * create edge with coefficients.
+     * @brief Create edge with coefficients.
      * @param coeffs % of people in each group and compartment that change node in each time step.
      */
     MobilityEdge(const MobilityParameters<FP>& params)
@@ -313,8 +313,10 @@ public:
     }
 
     /**
-     * create edge with coefficients.
-     * @param coeffs % of people in each group and compartment that change node in each time step.
+     * @brief Create edge with coefficients.
+     * 
+     * @param[in] coeffs An `Eigen::VectorXd` representing the percentage of people in each group and compartment 
+     * that change nodes in each time step.
      */
     MobilityEdge(const Eigen::VectorXd& coeffs)
         : m_parameters(coeffs)
@@ -327,9 +329,12 @@ public:
     }
 
     /**
-     * create edge with coefficients as MobilityParameters object and a 2d vector of indices which determine which compartments we save.
-     * @param coeffs % of people in each group and compartment that migrate in each time step.
-     * @param save_indices 2D vector of indices. Each inner vector represents a group of indices to be saved.
+     * @brief Create edge with coefficients as MobilityParameters object and a 2D vector of indices which determine which compartments are saved.
+     *
+     * @param[in] params A `MobilityParameters` object representing the percentage of people in each group and compartment 
+     * that change nodes in each time step.
+     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments. 
+     * Each inner vector represents a group of indices to be saved.
      */
     MobilityEdge(const MobilityParameters<FP>& params, const std::vector<std::vector<size_t>>& save_indices)
         : m_parameters(params)
@@ -342,9 +347,12 @@ public:
     }
 
     /**
-     * create edge with coefficients and a 2d vector of indices which determine which compartments we save.
-     * @param coeffs % of people in each group and compartment that migrate in each time step.
-     * @param save_indices 2D vector of indices. Each inner vector represents a group of indices to be saved.
+     * @brief Create edge with coefficients and a 2D vector of indices which determine which compartments are saved.
+     *
+     * @param[in] coeffs An `Eigen::VectorXd` representing the percentage of people in each group and compartment that migrate 
+     * in each time step.
+     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments, while each 
+     * inner vector represents a group of indices for compartments to be saved.
      */
     MobilityEdge(const Eigen::VectorXd& coeffs, const std::vector<std::vector<size_t>>& save_indices)
         : m_parameters(coeffs)
@@ -365,9 +373,11 @@ public:
     }
 
     /**
-    * Retrieve the count of commuters in selected infection states, 
-    * along with the total number of commuter.
-    */
+     * @brief Get the count of commuters in selected compartments, along with the total number of commuters.
+     *
+     * @return A reference to the TimeSeries object representing the mobility results.
+     * @{
+     */
     TimeSeries<ScalarType>& get_mobility_results()
     {
         return m_mobility_results;
@@ -376,6 +386,7 @@ public:
     {
         return m_mobility_results;
     }
+    /** @} */
 
     /**
      * compute mobility from node_from to node_to.
@@ -401,10 +412,12 @@ private:
     TimeSeries<double> m_mobility_results; // save results from edges + entry for the total number of commuters
 
     /**
-     * Computes a condensed version of m_mobile_population and puts it in m_mobility_results.
-     * m_mobility_results then only contains commuters with infection states InfectedNoSymptoms and InfectedSymptoms.
-     * Additionally, the total number of commuters is stored in the last entry of m_mobility_results.
-     * @param[in] t current time
+     * @brief Computes a condensed version of `m_mobile_population` and stores it in `m_mobility_results`.
+     *
+     * The `m_mobility_results` then only contains commuters with infection states `InfectedNoSymptoms` and 
+     * `InfectedSymptoms`. Additionally, the total number of commuters is stored in the last entry of `m_mobility_results`.
+     *
+     * @param[in] t The current time.
      */
     void add_mobility_result_time_point(const double t);
 };

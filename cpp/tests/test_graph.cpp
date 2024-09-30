@@ -32,6 +32,7 @@
 #include "models/ode_secirvvs/model.h"
 #include "memilio/io/io.h"
 #include "matchers.h"
+#include "temp_file_register.h"
 #include "memilio/utils/stl_util.h"
 #include "gmock/gmock-matchers.h"
 #include <cstddef>
@@ -279,11 +280,12 @@ TEST(TestGraph, set_edges_saving_edges)
     mio::osecir::Model model(num_groups);
     model.populations[{mio::AgeGroup(3), mio::osecir::InfectionState::Exposed}] = 1;
     mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>> params_graph;
-    const fs::path& dir         = " ";
+    TempFileRegister file_register;
+    const auto dir = file_register.get_unique_path("TestGraph-%%%%-%%%%");
+
     auto mobile_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
-                                   mio::osecir::InfectionState::InfectedNoSymptoms,
-                                   mio::osecir::InfectionState::InfectedSymptoms,
-                                   mio::osecir::InfectionState::Recovered};
+                                mio::osecir::InfectionState::InfectedNoSymptoms,
+                                mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
 
     // get indices of INS and ISy compartments.
     std::vector<std::vector<size_t>> indices_save_edges(2);
@@ -315,7 +317,7 @@ TEST(TestGraph, set_edges_saving_edges)
         mio::set_edges<MockContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
                        mio::MobilityCoefficientGroup, mio::osecir::InfectionState, decltype(read_function_edges)>(
             dir, params_graph, mobile_compartments, size_t(2), read_function_edges,
-            std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.},  indices_save_edges);
+            std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}, indices_save_edges);
 
     EXPECT_EQ(params_graph.edges().size(), 2);
 
@@ -350,10 +352,10 @@ namespace
 
 struct MoveOnly {
     MoveOnly();
-    MoveOnly(const MoveOnly&)            = delete;
+    MoveOnly(const MoveOnly&) = delete;
     MoveOnly& operator=(const MoveOnly&) = delete;
     MoveOnly(MoveOnly&&)                 = default;
-    MoveOnly& operator=(MoveOnly&&)      = default;
+    MoveOnly& operator=(MoveOnly&&) = default;
 };
 using MoveOnlyGraph = mio::Graph<MoveOnly, MoveOnly>;
 

@@ -468,3 +468,37 @@ TEST(TestSaveResult, save_edges)
     EXPECT_EQ(result_from_file_group1.get_totals().get_value(1), Eigen::VectorXd::Constant(3, 4));
     EXPECT_EQ(result_from_file_group1.get_totals().get_value(2), Eigen::VectorXd::Constant(3, 7));
 }
+
+TEST(TestSaveEdges, save_edges_empty_ts)
+{
+    std::vector<mio::TimeSeries<double>> results;
+
+    const auto num_elements = 2;
+
+    // Add filled TimeSeries to the results vector
+    mio::TimeSeries<double> ts_1(num_elements);
+    ts_1.add_time_point(0.0, Eigen::VectorXd::Constant(num_elements, 1));
+    ts_1.add_time_point(1.0, Eigen::VectorXd::Constant(num_elements, 2));
+    results.push_back(ts_1);
+
+    // Add an empty TimeSeries and add it to the results vector
+    mio::TimeSeries<double> ts_2(num_elements);
+    results.push_back(ts_2);
+
+    const std::vector<std::pair<int, int>> pairs_edges = {{0, 1}, {0, 2}};
+
+    // Create a TempFile for HDF5 output
+    TempFileRegister file_register;
+    auto results_file_path = file_register.get_unique_path("TestEdges-%%%%-%%%%.h5");
+
+    // Call the save_edges function
+    auto save_result = save_edges(results, pairs_edges, results_file_path);
+    EXPECT_EQ(save_result, mio::success());
+
+    // Read the results back in and check that they are correct for the first TimeSeries.
+    auto results_from_file = mio::read_result(results_file_path);
+    ASSERT_TRUE(results_from_file);
+
+    auto result_from_file_group0 = results_from_file.value()[0];
+    EXPECT_EQ(result_from_file_group0.get_groups().get_num_time_points(), 2);
+}
