@@ -676,6 +676,20 @@ using UniformDistribution = DistributionAdapter<std::uniform_real_distribution<R
 template <class Int>
 using PoissonDistribution = DistributionAdapter<std::poisson_distribution<Int>>;
 
+/**
+ * adapted lognormal_distribution.
+ * @see DistributionAdapter
+ */
+template <class Real>
+using LogNormalDistribution = DistributionAdapter<std::lognormal_distribution<Real>>;
+
+/**
+ * adapted gamma_distribution.
+ * @see DistributionAdapter
+ */
+template <class Real>
+using GammaDistribution = DistributionAdapter<std::gamma_distribution<Real>>;
+
 } // namespace mio
 
 #endif
