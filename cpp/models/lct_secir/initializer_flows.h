@@ -140,17 +140,20 @@ private:
         Eigen::Index first_index       = m_model.populations.template get_first_index_of_group<Group>();
         Eigen::Index first_index_flows = Group * (Eigen::Index)InfectionTransition::Count;
 
-        bool error = // Exposed.
+        bool error =
+            // Exposed.
             (compute_compartment<InfectionState::Exposed, Group>(
                 init, first_index_flows + (Eigen::Index)InfectionTransition::SusceptibleToExposed,
                 1 / m_model.parameters.template get<TimeExposed>()[Group])) ||
             // InfectedNoSymptoms.
             (compute_compartment<InfectionState::InfectedNoSymptoms, Group>(
                 init, first_index_flows + (Eigen::Index)InfectionTransition::ExposedToInfectedNoSymptoms,
-                1 / m_model.parameters.template get<TimeInfectedNoSymptoms>()[Group])) || // InfectedSymptoms.
+                1 / m_model.parameters.template get<TimeInfectedNoSymptoms>()[Group])) ||
+            // InfectedSymptoms.
             (compute_compartment<InfectionState::InfectedSymptoms, Group>(
                 init, first_index_flows + (Eigen::Index)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms,
-                1 / m_model.parameters.template get<TimeInfectedSymptoms>()[Group])) || // InfectedSevere.
+                1 / m_model.parameters.template get<TimeInfectedSymptoms>()[Group])) ||
+            // InfectedSevere.
             (compute_compartment<InfectionState::InfectedSevere, Group>(
                 init, first_index_flows + (Eigen::Index)InfectionTransition::InfectedSymptomsToInfectedSevere,
                 1 / m_model.parameters.template get<TimeInfectedSevere>()[Group])) ||

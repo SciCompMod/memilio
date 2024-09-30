@@ -112,7 +112,7 @@ public:
         Eigen::Index num_compartments = count_InfStates * num_groups;
         TimeSeries<ScalarType> compartments_ts(num_compartments);
         if (!(this->populations.get_num_compartments() == (size_t)subcompartments_ts.get_num_elements())) {
-            log_error("Result does not match infectionState of the Model.");
+            log_error("Result does not match InfectionState of the Model.");
             Vector<ScalarType> wrong_size = Vector<ScalarType>::Constant(num_compartments, -1);
             compartments_ts.add_time_point(-1, wrong_size);
             return compartments_ts;
