@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [ "memilio", "memilio.plot", "memilio.plot_test"]
+
+[project]
+name = "memilio-plot"
+version = "1.0.0"
+readme = "README.md"
+authors = [{name = "DLR-SC", email = "martin.kuehn@dlr.de"}]
+maintainers = [{email = "martin.kuehn@dlr.de"}]
+description = "Part of MEmilio project, plots data to maps or visualizes simulation curves."
+requires-python = ">=3.8"
+dependencies = [
+    # smaller pandas versions contain a bug that sometimes prevents reading
+    # some excel files (e.g. population or twitter data)
+    "pandas>=1.2.2",
+    "matplotlib",
+    "tables",
+    # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
+    "numpy>=1.22,<1.25",
+    "openpyxl",
+    "xlrd",
+    "requests",
+    "pyxlsb",
+    "wget",
+    "folium",
+    "mapclassify",
+    "geopandas",
+    "h5py",
+    "imageio",
+    "datetime"
+]
+
+[project.optional-dependencies]
+dev = [
+            # first support of python 3.11 4.6
+            # 5.3.4 has conflicts with openpyxl
+            # 5.3.3 broken
+            "pyfakefs>=4.6,<5.3.3",
+            # coverage 7.0.0 can't find .whl files and breaks CI
+            "coverage>=7.0.1",
+            # pylint 2.16 creates problem with wrapt package version
+            "pylint>=2.13.0,<2.16",
+            "pylint_json2html==0.4.0",
+        ]
+
+[project.urls] 
+Repository = "https://github.com/SciCompMod/memilio"
+Issues = "https://github.com/SciCompMod/memilio/issues"
+
+[project.scripts]
+memiliopylint = "memilio.custom_pylint:main"
