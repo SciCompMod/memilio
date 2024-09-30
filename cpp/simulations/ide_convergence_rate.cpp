@@ -235,7 +235,7 @@ int main()
     ScalarType t0   = 0.;
     ScalarType tmax = 70.;
     // The ODE model is simulated using a fixed step size dt=10^{-ode_exponent}.
-    ScalarType ode_exponent = 4;
+    ScalarType ode_exponent = 1;
     ScalarType dt_ode       = pow(10, -ode_exponent);
     // The IDE model is simulated using a fixed step size dt=10^{-ide_exponent}.
     ScalarType ide_exponent = 1;

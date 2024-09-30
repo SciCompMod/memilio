@@ -1,3 +1,22 @@
+#############################################################################
+# Copyright (C) 2020-2024 German Aerospace Center (DLR-SC)
+#
+# Authors: Anna Wendler, Lena Ploetzke
+#
+# Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#############################################################################
 import h5py
 import os
 import math
@@ -7,19 +26,18 @@ import matplotlib.pyplot as plt
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
-# Define parameters used for simulation, used for plotting real data.
-# Probabilities from Assessment paper
+# Define parameters used for simulation, also used for plotting reported data.
 parameters = {
     'TimeExposed': 4.5,
-    'TimeInfectedNoSymptoms':  2.527617,  # Covasim: 3.18163, ## Assessment: 2.52762
-    'TimeInfectedSymptoms': 7.889900,  # 7.85313, ' 7.8899
-    'TimeInfectedSevere': 15.225278,  # 11.9713, # 15.2253
+    'TimeInfectedNoSymptoms':  2.527617,
+    'TimeInfectedSymptoms': 7.889900,
+    'TimeInfectedSevere': 15.225278,
     'TimeInfectedNoSymptomsToInfectedSymptoms': 1.1,
     'TimeInfectedSymptomsToInfectedSevere': 6.6,
     'TimeInfectedSymptomsToRecovered': 8.0,
     'TimeInfectedSevereToInfectedCritical': 1.5,
     'TimeInfectedCriticalToDead': 10.7,
-    'InfectedSymptomsPerInfectedNoSymptoms': 0.793099,  # 0.698315 #0.793099
+    'InfectedSymptomsPerInfectedNoSymptoms': 0.793099,
     'SeverePerInfectedSymptoms': 0.078643,
     'start_date': pd.Timestamp('2020.10.01') - pd.DateOffset(days=20),
     'end_date': pd.Timestamp('2020.10.01') + pd.DateOffset(days=30),
@@ -27,18 +45,18 @@ parameters = {
 }
 
 
-def set_parameters_U(parameters, T_UD, mu_IH):
+def set_parameters_U(parameters, T_UD=parameters["TimeInfectedCriticalToDead"], mu_IH=parameters["SeverePerInfectedSymptoms"]):
     parameters["TimeInfectedCriticalToDead"] = T_UD
     parameters["SeverePerInfectedSymptoms"] = mu_IH
     return parameters
 
 
-def load_data(file, start_date, simulation_time, T_UD, mu_IH):
+def load_data(file, start_date, simulation_time):
     """ Loads RKI data and computes 'InfectedSymptoms', 'Deaths' and 'NewInfectionsDay' using scales, dates etc from the dictionary parameters.
     Method matches the method for computing initial values for the LCT model. See also cpp/models/lct_secir/parameters_io.h.
     @param[in] file Path to the RKI data file for whole Germany. Can be downloaded eg via pycode/memilio-epidata/memilio/epidata/getCaseData.py.
     """
-    set_parameters_U(parameters, T_UD, mu_IH)
+    # set_parameters_U(parameters, T_UD, mu_IH)
     parameters['start_date'] = start_date - pd.DateOffset(days=0)
     parameters['end_date'] = start_date + pd.DateOffset(days=simulation_time)
     # Read data.
@@ -92,15 +110,11 @@ def load_data(file, start_date, simulation_time, T_UD, mu_IH):
     return df2
 
 
-def get_scale_contacts(files, start_date, simulation_time, T_UD, mu_IH):
+def get_scale_contacts(files, start_date, simulation_time):
 
     datafile = os.path.join(os.path.dirname(
         __file__), "..", "data", "pydata", "Germany", "cases_all_germany.json")
-    data_rki = load_data(datafile, start_date, simulation_time, T_UD, mu_IH)
-
-    # datafile_ma7 = os.path.join(os.path.dirname(
-    #     __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json")
-    # data_rki = load_data(datafile_ma7, start_date, simulation_time, T_UD)
+    data_rki = load_data(datafile, start_date, simulation_time)
 
     # Load IDE data.
     for file in range(len(files)):
@@ -175,22 +189,16 @@ def get_scale_confirmed_cases(files, start_date):
     return scale_confirmed_cases
 
 
-def plot_new_infections(files, start_date, simulation_time, T_UD, mu_IH, fileending="", save=True, save_dir='plots/'):
+def plot_new_infections(files, start_date, simulation_time, fileending="", save=True, save_dir='plots/'):
 
     datafile = os.path.join(os.path.dirname(
         __file__), "..", "data", "pydata", "Germany", "cases_all_germany.json")
-    data_rki = load_data(datafile, start_date, simulation_time, T_UD, mu_IH)
-
-    # datafile_ma7 = os.path.join(os.path.dirname(
-    #     __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json")
-    # data_rki_ma7 = load_data(datafile_ma7, start_date, simulation_time, T_UD)
+    data_rki = load_data(datafile, start_date, simulation_time)
 
     fig, ax = plt.subplots()
 
     ax.scatter(np.linspace(0, simulation_time, simulation_time + 1),
                data_rki["NewInfectionsDay"], marker="x",  s=20, color='gray', label="Extrapolated RKI data")
-    # ax.plot(np.linspace(0, simulation_time, simulation_time + 1),
-    #            data_rki_ma7["NewInfectionsDay"],  color='gray', label="Extrapolated RKI data MA7")
 
     legendplot = list(["ODE", "IDE"])
     # helmholtzdarkblue, helmholtzclaim
@@ -288,18 +296,16 @@ def plot_new_infections(files, start_date, simulation_time, T_UD, mu_IH, fileend
 
 
 def plot_infectedsymptoms_deaths(
-        files, start_date, simulation_time, T_UD, mu_IH, fileending="", save=True, save_dir='plots/'):
+        files, start_date, simulation_time, fileending="", save=True, save_dir='plots/'):
 
     datafile = os.path.join(os.path.dirname(
         __file__), "..", "data", "pydata", "Germany", "cases_all_germany.json")
-    data_rki = load_data(datafile, start_date, simulation_time, T_UD, mu_IH)
+    data_rki = load_data(datafile, start_date, simulation_time)
 
     datafile_ma7 = os.path.join(os.path.dirname(
         __file__), "..", "data", "pydata", "Germany", "cases_all_germany_ma7.json")
     data_rki_ma7 = load_data(datafile_ma7, start_date,
-                             simulation_time, T_UD, mu_IH)
-
-    # print("Infectedsymptoms from RKI (ma7)  on 1.10.2020: ", data_rki_ma7[data_rki_ma7["Date"]=="2020-10-01"]["InfectedSymptoms"].values[0])
+                             simulation_time)
 
     legendplot = list(["ODE", "IDE"])
     # helmholtzdarkblue, helmholtzclaim
@@ -387,8 +393,8 @@ def plot_infectedsymptoms_deaths(
 def plot_icu(
         files, start_date, simulation_time, fileending="", save=True, save_dir='plots/'):
 
-    datafile_icu_ma7 = os.path.join(os.path.dirname(
-        __file__), "..", "data", "pydata", "Germany", "germany_divi_ma7.json")
+    # datafile_icu_ma7 = os.path.join(os.path.dirname(
+    #     __file__), "..", "data", "pydata", "Germany", "germany_divi_ma7.json")
 
     datafile_icu = os.path.join(os.path.dirname(
         __file__), "..", "data", "pydata", "Germany", "germany_divi.json")
@@ -480,35 +486,23 @@ def plot_icu(
 if __name__ == '__main__':
     # Path to simulation results
     data_dir = os.path.join(os.path.dirname(
-        __file__), "..", "results/real/")  # different_UD/
+        __file__), "..", "results/real/")
 
     start_date = '2020-10-1'
     simulation_time = 45
-    timestep = "0.1000"
-    probs = "assessment_probs"
-    # probs = "covasim_probs"
-    # probs = "different_UD"
-
-    # if probs == "assessment_probs":
-    #     parameters = parameters_assessment_probs
-    # elif probs == "different_UD":
-    #     parameters = parameters_assessment_probs_differentUD
-    # else:
-    #     parameters = parameters_covasim_probs
-
-    T_UD = parameters["TimeInfectedCriticalToDead"]
+    timestep = "0.0100"
 
     plot_new_infections([os.path.join(data_dir, f"ode_{start_date}_{simulation_time}_{timestep}_flows"),
                         os.path.join(data_dir, f"ide_{start_date}_{simulation_time}_{timestep}_flows")],
-                        pd.Timestamp(start_date), simulation_time, T_UD,
-                        fileending=f"{start_date}_{simulation_time}_{timestep}", save=True, save_dir=f"plots/real/{start_date}/{simulation_time}/{probs}/")
+                        pd.Timestamp(start_date), simulation_time,
+                        fileending=f"{start_date}_{simulation_time}_{timestep}", save=True, save_dir=f"../plots/covid_scenario_no_contact_scaling/{start_date}/{simulation_time}/")
 
     plot_infectedsymptoms_deaths([os.path.join(data_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
                                   os.path.join(data_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
                                  pd.Timestamp(
-                                     start_date), simulation_time, T_UD,
-                                 fileending=f"{start_date}_{simulation_time}_{timestep}", save=True, save_dir=f"plots/real/{start_date}/{simulation_time}/{probs}/")
+                                     start_date), simulation_time,
+                                 fileending=f"{start_date}_{simulation_time}_{timestep}", save=True, save_dir=f"../plots/covid_scenario_no_contact_scaling/{start_date}/{simulation_time}/")
 
     plot_icu([os.path.join(data_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
               os.path.join(data_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
-             pd.Timestamp(start_date), simulation_time, fileending=f"{start_date}_{simulation_time}_{timestep}", save=True, save_dir=f'plots/real/{start_date}/{simulation_time}/{probs}/')
+             pd.Timestamp(start_date), simulation_time, fileending=f"{start_date}_{simulation_time}_{timestep}", save=True, save_dir=f'plots/covid_scenario_no_contact_scaling/{start_date}/{simulation_time}/')
