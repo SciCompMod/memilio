@@ -21,7 +21,6 @@
 #ifndef IDESECIR_MODEL_H
 #define IDESECIR_MODEL_H
 
-#include "abm/virus_variant.h"
 #include "ide_secir/parameters.h"
 #include "ide_secir/infection_state.h"
 #include "memilio/config.h"

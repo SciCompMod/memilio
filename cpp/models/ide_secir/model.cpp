@@ -408,33 +408,11 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
 
 void Model::set_transitiondistributions_support_max(ScalarType dt)
 {
-    m_transitiondistributions_support_max[(int)InfectionTransition::ExposedToInfectedNoSymptoms] =
-        parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
-            .get_support_max(dt, m_tol);
-    m_transitiondistributions_support_max[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] =
-        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-            .get_support_max(dt, m_tol);
-    m_transitiondistributions_support_max[(int)InfectionTransition::InfectedNoSymptomsToRecovered] =
-        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-            .get_support_max(dt, m_tol);
-    m_transitiondistributions_support_max[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] =
-        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-            .get_support_max(dt, m_tol);
-    m_transitiondistributions_support_max[(int)InfectionTransition::InfectedSymptomsToRecovered] =
-        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-            .get_support_max(dt, m_tol);
-    m_transitiondistributions_support_max[(int)InfectionTransition::InfectedSevereToInfectedCritical] =
-        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
-            .get_support_max(dt, m_tol);
-    m_transitiondistributions_support_max[(int)InfectionTransition::InfectedSevereToRecovered] =
-        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered].get_support_max(
-            dt, m_tol);
-    m_transitiondistributions_support_max[(int)InfectionTransition::InfectedCriticalToDead] =
-        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead].get_support_max(
-            dt, m_tol);
-    m_transitiondistributions_support_max[(int)InfectionTransition::InfectedCriticalToRecovered] =
-        parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
-            .get_support_max(dt, m_tol);
+    // We do not consider the transition SusceptibleToExposed as it is not needed in the computations.
+    for (int transition = 1; transition < (int)InfectionTransition::Count; transition++) {
+        m_transitiondistributions_support_max[transition] =
+            parameters.get<TransitionDistributions>()[transition].get_support_max(dt, m_tol);
+    }
 }
 
 void Model::set_transitiondistributions_derivative(ScalarType dt)
@@ -443,19 +421,19 @@ void Model::set_transitiondistributions_derivative(ScalarType dt)
     for (int transition = 1; transition < (int)InfectionTransition::Count; transition++) {
         Eigen::Index support_max_index =
             (Eigen::Index)std::ceil(m_transitiondistributions_support_max[transition] / dt);
-        // Create vec_tmp that contains the value of the approximated derivative for all necessary time points.
+        // Create vec_derivative that contains the value of the approximated derivative for all necessary time points.
         // Here, we evaluate the derivative at time points t_0, ..., t_{support_max_index}.
-        std::vector<ScalarType> vec_tmp(support_max_index + 1, 0.);
+        std::vector<ScalarType> vec_derivative(support_max_index + 1, 0.);
 
-        for (int i = 0; i <= support_max_index; i++) {
+        for (Eigen::Index i = 0; i <= support_max_index; i++) {
             // Compute state_age for considered index.
             ScalarType state_age = (ScalarType)i * dt;
             // Compute derivative.
-            vec_tmp[i] = (parameters.get<TransitionDistributions>()[transition].eval(state_age) -
-                          parameters.get<TransitionDistributions>()[transition].eval(state_age - dt)) /
-                         dt;
+            vec_derivative[i] = (parameters.get<TransitionDistributions>()[transition].eval(state_age) -
+                                 parameters.get<TransitionDistributions>()[transition].eval(state_age - dt)) /
+                                dt;
         }
-        m_transitiondistributions_derivative[transition] = vec_tmp;
+        m_transitiondistributions_derivative[transition] = vec_derivative;
     }
 }
 
@@ -479,20 +457,20 @@ void Model::set_transitiondistributions_in_forceofinfection(ScalarType dt)
     // subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of support_max).
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
 
-    // Compute contributions from survival function and transition probabilities from InfectedNoSymptoms and
+    // Compute contributions from survival functions and transition probabilities starting in InfectedNoSymptoms and
     // InfectedSymptoms, respectively, on force of infection term.
     for (int contribution = 0; contribution < 2; contribution++) {
-        std::vector<ScalarType> vec_tmp(calc_time_index + 1, 0.);
-        for (int i = 0; i <= calc_time_index; i++) {
+        std::vector<ScalarType> vec_contribution_to_foi(calc_time_index + 1, 0.);
+        for (Eigen::Index i = 0; i <= calc_time_index; i++) {
             // Compute state_age for all indices from t_0, ..., t_{calc_time_index}.
             ScalarType state_age = i * dt;
-            vec_tmp[i] =
+            vec_contribution_to_foi[i] =
                 parameters.get<TransitionProbabilities>()[relevant_transitions[contribution][0]] *
                     parameters.get<TransitionDistributions>()[relevant_transitions[contribution][0]].eval(state_age) +
                 parameters.get<TransitionProbabilities>()[relevant_transitions[contribution][1]] *
                     parameters.get<TransitionDistributions>()[relevant_transitions[contribution][1]].eval(state_age);
         }
-        m_transitiondistributions_in_forceofinfection[contribution] = vec_tmp;
+        m_transitiondistributions_in_forceofinfection[contribution] = vec_contribution_to_foi;
     }
 }
 
