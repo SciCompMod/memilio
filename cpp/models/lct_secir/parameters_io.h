@@ -47,16 +47,6 @@ namespace details
 { // Use namespace to hide functions that are not intended to be used outside this file.
 
 /**
- * @brief Check whether the EntryType is age resolved and has a member variable age_group_names.
- * @tparam The type to check for the existence of the member variable age_group_names.
- */
-template <class EntryType>
-using has_age_member_t = decltype(EntryType::age_group_names);
-
-template <class EntryType>
-using is_age_resolved_entry_type = is_expression_valid<has_age_member_t, EntryType>;
-
-/**
 * @brief Processes one entry of an RKI data set for the definition of an initial value vector for an LCT population.
 *   
 * Takes one entry of an RKI data vector and changes the value in populations accordingly.
@@ -405,35 +395,22 @@ IOResult<void> set_initial_data_from_confirmed_cases_impl(Populations& populatio
     // the age_group Group in the case with age resolution. If the date is
     // needed for calculation, another function to handle the entry is called. Confirmed cases are scaled by scale_confirmed_cases.
     for (auto&& entry : rki_data) {
-        if constexpr (is_age_resolved_entry_type<EntryType>::value) {
-            if ((size_t)entry.age_group == Group) {
-                int offset = get_offset_in_days(entry.date, date);
-                if ((offset >= min_offset_needed) && (offset <= max_offset_needed)) {
-                    if (offset == max_offset_needed) {
-                        max_offset_needed_avail = true;
-                    }
-                    if (offset == min_offset_needed) {
-                        min_offset_needed_avail = true;
-                    }
-                    process_entry<Populations, EntryType, Group>(
-                        populations, entry, offset, staytimes, inv_prob_SymptomsPerNoSymptoms,
-                        prob_SeverePerInfectedSymptoms, prob_CriticalPerSevere, scale_confirmed_cases[Group]);
-                }
+        if constexpr (std::is_same_v<EntryType, ConfirmedCasesDataEntry>) {
+            if (!((size_t)entry.age_group == Group)) {
+                continue;
             }
         }
-        else {
-            int offset = get_offset_in_days(entry.date, date);
-            if ((offset >= min_offset_needed) && (offset <= max_offset_needed)) {
-                if (offset == max_offset_needed) {
-                    max_offset_needed_avail = true;
-                }
-                if (offset == min_offset_needed) {
-                    min_offset_needed_avail = true;
-                }
-                process_entry<Populations, EntryType, Group>(
-                    populations, entry, offset, staytimes, inv_prob_SymptomsPerNoSymptoms,
-                    prob_SeverePerInfectedSymptoms, prob_CriticalPerSevere, scale_confirmed_cases[Group]);
+        int offset = get_offset_in_days(entry.date, date);
+        if ((offset >= min_offset_needed) && (offset <= max_offset_needed)) {
+            if (offset == max_offset_needed) {
+                max_offset_needed_avail = true;
             }
+            if (offset == min_offset_needed) {
+                min_offset_needed_avail = true;
+            }
+            process_entry<Populations, EntryType, Group>(populations, entry, offset, staytimes,
+                                                         inv_prob_SymptomsPerNoSymptoms, prob_SeverePerInfectedSymptoms,
+                                                         prob_CriticalPerSevere, scale_confirmed_cases[Group]);
         }
     }
 
@@ -525,9 +502,13 @@ IOResult<void> set_initial_data_from_confirmed_cases(const std::vector<EntryType
     assert(total_population.size() == Populations::num_groups);
     assert(scale_confirmed_cases.size() == Populations::num_groups);
     if constexpr (Populations::num_groups > 1) {
-        static_assert(details::is_age_resolved_entry_type<EntryType>::value);
+        static_assert(std::is_same_v<EntryType, ConfirmedCasesDataEntry>);
         assert(ConfirmedCasesDataEntry::age_group_names.size() == Populations::num_groups);
     }
+    else {
+        static_assert(std::is_same_v<EntryType, ConfirmedCasesNoAgeEntry>);
+    }
+    // Check if RKI data vector is valid.
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
     });
