@@ -245,7 +245,6 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
 
     for (Eigen::Index i = current_time_index - calc_time_index; i < current_time_index; i++) {
         // (current_time_index - i)  is the index corresponding to time the individuals have already spent in this state.
-        // std::cout << "state age: " << current_time_index - i << std::endl;
         sum += m_derivative_vector[idx_InfectionTransitions][current_time_index - i] *
                m_transitions[i + 1][idx_IncomingFlow];
     }
@@ -449,8 +448,8 @@ std::vector<std::vector<ScalarType>> Model::set_derivative_vector(ScalarType dt)
         std::vector<ScalarType> vec_tmp(support_max_index + 1, 0.);
 
         for (int i = 0; i <= support_max_index; i++) {
-            // Compute state_age for consiered indices.
-            ScalarType state_age = i * dt;
+            // Compute state_age for considered index.
+            ScalarType state_age =(ScalarType)i * dt;
             // Compute derivative.
             vec_tmp[i] = (parameters.get<TransitionDistributions>()[transition].eval(state_age) -
                           parameters.get<TransitionDistributions>()[transition].eval(state_age - dt)) /
