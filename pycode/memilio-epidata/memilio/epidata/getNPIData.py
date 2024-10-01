@@ -917,10 +917,15 @@ def get_npi_data(fine_resolution=2,
     df_npis_old.iloc[:, npi_start_col:] = df_npis_old.iloc[:,
                                                            npi_start_col:].astype(int)
     # surpress pandas future warning. Behaviour of this funtion didn't change
-    with pd.option_context('future.no_silent_downcasting', True):
-        # replace -99 ("not used anymore") by 0 ("not used")
-        # replace 2,3,4,5 ("mentioned in ...") by 1 ("mentioned")
+    if pd.__version__ >= '2.2':
+        with pd.option_context('future.no_silent_downcasting', True):
+            # replace -99 ("not used anymore") by 0 ("not used")
+            # replace 2,3,4,5 ("mentioned in ...") by 1 ("mentioned")
+            df_npis_old.replace([-99, 2, 3, 4, 5],
+                                [0, 1, 1, 1, 1], inplace=True)
+    else:
         df_npis_old.replace([-99, 2, 3, 4, 5], [0, 1, 1, 1, 1], inplace=True)
+
     counter_cases_start = 0
 
     # setup dataframe for each maingroup, same format as df_npi_combinations
