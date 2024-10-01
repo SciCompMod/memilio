@@ -244,8 +244,7 @@ public:
 
     /**
      * @brief Setter for the vector m_transitiondistributions_derivative that contains the approximated derivative for 
-     * all TransitionDistributions
-     * for all necessary time points.
+     * all TransitionDistributions for all necessary time points.
      *
      * The derivative is approximated using a backwards difference scheme.
      * The number of necessary time points for each TransitionDistribution is determined using 
@@ -260,7 +259,7 @@ public:
      *
      * When computing the force of infection, we evaluate the survival functions of the TransitionDistributions 
      * InfectedNoSymptomsToInfectedSymptoms, InfectedNoSymptomsToRecovered, InfectedSymptomsToInfectedSevere and 
-     * InfectedSymptomsToRecovered, weighted by the corresponding TransiitonProbabilities, at the same time points. 
+     * InfectedSymptomsToRecovered, weighted by the corresponding TransitionProbabilities, at the same time points. 
      * Here, we compute these contributions to the force of infection term and store them in the vector 
      * m_transitiondistributions_in_forceofinfection so that we can access this vector for all following computations. 
      *
