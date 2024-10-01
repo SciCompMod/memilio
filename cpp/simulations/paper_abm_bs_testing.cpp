@@ -2497,7 +2497,7 @@ int main(int argc, char** argv)
         // std::vector<std::vector<double>> parameters = {
         //     {1.596}, {4.171}, {0.7125}, {0.02472}, {4.83}, {2, 5, 8, 11, 14}, {0.0, 0.25, 0.5, 0.75, 1.0}};
         std::vector<std::vector<double>> parameters = {
-            {1.596}, {4.171}, {0.7125}, {0.012, 0.024, 0.036, 0.048, 0.06}, {4.83}, {10.0}, {0.5},{0.15,0.2,0.25,0.3,0.35}};
+            {1.596}, {4.171}, {0.7125}, {0.012, 0.024, 0.036, 0.048, 0.06}, {4.83}, {10.0}, {0.5},{0.2, 0.225, 0.25, 0.275, 3.0}};
 
         auto every_combination = every_combination_of_parameters(parameters);
         if (rank == 0) {
