@@ -22,7 +22,6 @@
 #define LCTSECIR_PARAMETERS_IO_H
 
 #include "memilio/config.h"
-#include "ode_secir/infection_state.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 

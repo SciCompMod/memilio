@@ -31,6 +31,10 @@ import h5py
 import os
 import math
 import matplotlib.pyplot as plt
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+from matplotlib.colors import Normalize
 
 import memilio.epidata.getDataIntoPandasDataFrame as gd
 
@@ -272,6 +276,184 @@ def compare_all_compartments(files, legendplot,  filename_plot="compare_compartm
                 bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=500)
 
 
+def plot_subcompartments3D(file, subcompartments, compartment_idx, first_time_idx, filename_plot="compare_new_infections"):
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    h5file = h5py.File(str(file) + '.h5', 'r')
+
+    if not ((compartment_idx > 0) and (compartment_idx < 7)):
+        raise Exception("Use valid compartment index.")
+    if (len(list(h5file.keys())) > 1):
+        raise gd.DataError("File should contain one dataset.")
+    if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
+        raise gd.DataError("Expected only one group.")
+
+    data = h5file[list(h5file.keys())[0]]
+    dates = data['Time'][:]
+    # As there should be only one Group, total is the simulation result.
+    total = data['Total'][:, :]
+    first_idx_comp = 1+(compartment_idx-1)*subcompartments
+
+    # Make data
+    x = [i-0.5 for i in range(1, subcompartments+1)]
+    x, y = np.meshgrid(x, dates[first_time_idx:]-0.5)
+    flat_x, flat_y = x.ravel(), y.ravel()
+    comp_total = 0
+    z = np.zeros(x.shape)
+    for i in range(x.shape[0]):
+        comp_total = np.sum(
+            total[first_time_idx+i, first_idx_comp:first_idx_comp+subcompartments])
+        for j in range(x.shape[1]):
+            z[i, j] = total[first_time_idx+i, first_idx_comp+j]
+    flat_z = z.ravel()
+    bottom = np.zeros_like(flat_x)
+
+    cmap = cm.get_cmap('plasma')
+    norm = Normalize(vmin=min(flat_z), vmax=max(flat_z))
+    colors = cmap(norm(flat_z))
+
+    ax.bar3d(flat_x, flat_y, 0, 1, 1, flat_z, shade=True, color=colors)
+
+    ax.set_xlabel('Index of Subcompartment', labelpad=-5, fontsize=9)
+    a = list(range(0, subcompartments+1, 5))
+    a[0] += 1
+    ax.set_xticks(a)
+    ax.set_xlim(left=0.5, right=subcompartments+0.5)
+    ax.tick_params(axis='x', pad=-5, labelsize=9.5)
+    ax.set_xticks(range(1, subcompartments), minor=True)
+
+    ax.set_ylabel('Simulation Time [days]', labelpad=-5, fontsize=9)
+    ax.set_ylim(bottom=first_time_idx-0.5, top=dates[-1]+0.5)
+    ax.set_yticks(range(int(dates[first_time_idx]),
+                  int(dates[-1])+1))
+    ax.set_yticklabels(range(int(dates[first_time_idx]),
+                             int(dates[-1])+1), ha='left', va='center')
+    ax.tick_params(axis='y', pad=-4, labelsize=9.5)
+
+    # ax.set_zlabel('Number of individuals')
+    ax.set_zlim(bottom=0)
+    ax.tick_params(axis='z', pad=0, labelsize=9.5)
+
+    sc = cm.ScalarMappable(cmap=cmap, norm=norm)
+    sc.set_array([])
+    cbar = plt.colorbar(sc, ax=ax)
+    # cbar.set_ticks(ax.get_zticks())
+
+    h5file.close()
+    if not os.path.isdir('Plots'):
+        os.makedirs('Plots')
+    plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
+
+
+# def plot_maxpeak_3d(func_get_file_name, R0s, subcomps, filename_plot="maxpeak_3d"):
+#     fig = plt.figure()
+#     ax = fig.add_subplot(projection='3d')
+
+#     # Make data
+#     R0m, subm = np.meshgrid(R0s, subcomps)
+#     maxpeak = np.zeros(R0m.shape)
+#     for sub in range(maxpeak.shape[0]):
+#         for R0 in range(maxpeak.shape[1]):
+#             maxpeak[sub, R0] = get_maxpeak_incidence(
+#                 func_get_file_name(R0=R0s[R0], subcompartment=subcomps[sub]))
+
+#     # Plot the surface
+#     ax.plot_surface(R0m, subm, maxpeak)
+
+#     # Set an equal aspect ratio
+#     # ax.set_aspect('equal')
+
+#     if not os.path.isdir('Plots'):
+#         os.makedirs('Plots')
+#     plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
+
+
+def plot_maxpeak_incidence(func_get_file_name, R0s, subcomps, filename_plot="maxpeak2d"):
+    fig = plt.figure()
+
+    for R0 in R0s:
+        y = np.zeros(len(subcomps))
+        for i in range(len(subcomps)):
+            y[i] = get_maxpeak_incidence(
+                func_get_file_name(R0=R0, subcompartment=subcomps[i]))
+        plt.plot(subcomps, y, 'o-', linewidth=1.2,
+                 label="$R_0\\approx$"+str(R0))
+
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=12)
+    # plt.xlim(left=0, right=30)
+    plt.ylim(bottom=0)
+    plt.xlabel('Number of Subcompartments', fontsize=13)
+    plt.ylabel('Peak Size', fontsize=14)
+    plt.grid(True, linestyle='--')
+    plt.tight_layout()
+
+    if not os.path.isdir('Plots'):
+        os.makedirs('Plots')
+    plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
+
+
+def get_maxpeak_incidence(file):
+    # Load data.
+    h5file = h5py.File(str(file) + '.h5', 'r')
+
+    if (len(list(h5file.keys())) > 1):
+        raise gd.DataError("File should contain one dataset.")
+    if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
+        raise gd.DataError("Expected only one group.")
+
+    data = h5file[list(h5file.keys())[0]]
+    dates = data['Time'][:]
+    # As there should be only one Group, total is the simulation result.
+    total = data['Total'][:, :]
+    incidence = (total[:-1, 0]-total[1:, 0])/(dates[1:]-dates[:-1])
+    max = np.max(incidence)
+    h5file.close()
+    return max
+
+
+def plot_day_peak_incidence(func_get_file_name, R0s, subcomps, filename_plot="maxpeak2d"):
+    fig = plt.figure()
+
+    for R0 in R0s:
+        y = np.zeros(len(subcomps))
+        for i in range(len(subcomps)):
+            y[i] = get_day_peak_incidence(
+                func_get_file_name(R0=R0, subcompartment=subcomps[i]))
+        plt.plot(subcomps, y, 'x-', linewidth=1.2,
+                 label="$R_0\\approx$"+str(R0))
+
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=12)
+    # plt.xlim(left=0, right=30)
+    plt.ylim(bottom=0)
+    plt.xlabel('Number of Subcompartments', fontsize=13)
+    plt.ylabel('Day of Peak Size', fontsize=14)
+    plt.grid(True, linestyle='--')
+    plt.tight_layout()
+
+    if not os.path.isdir('Plots'):
+        os.makedirs('Plots')
+    plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
+
+
+def get_day_peak_incidence(file):
+    # Load data.
+    h5file = h5py.File(str(file) + '.h5', 'r')
+
+    if (len(list(h5file.keys())) > 1):
+        raise gd.DataError("File should contain one dataset.")
+    if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
+        raise gd.DataError("Expected only one group.")
+
+    data = h5file[list(h5file.keys())[0]]
+    dates = data['Time'][:]
+    # As there should be only one Group, total is the simulation result.
+    total = data['Total'][:, :]
+    incidence = (total[:-1, 0]-total[1:, 0])/(dates[1:]-dates[:-1])
+    argmax = np.argmax(incidence)
+    h5file.close()
+    return dates[argmax]
+
+
 def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infections"):
     """ Single plot to compare the incidence of different results. Incidence means the number of people leaving the
         susceptible class per day.
@@ -341,7 +523,7 @@ if __name__ == '__main__':
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "data", "simulation_lct_noage")
 
-    case = 1
+    case = 0
     if case == 0:
         # rise R0 short
         plot_new_infections([os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_1"),
@@ -350,23 +532,10 @@ if __name__ == '__main__':
                              os.path.join(data_dir, "riseR0short",
                                           "fictional_lct_2.0_10"),
                              os.path.join(data_dir, "riseR0short",
-                                          "fictional_lct_2.0_20"),
-                             os.path.join(data_dir, "riseR0short",
                                           "fictional_lct_2.0_50")
                              ],
-                            20000, legendplot=list(["ODE", "LCT3", "LCT10", "LCT20", "LCT50"]),
+                            20000, legendplot=list(["ODE", "LCT3", "LCT10", "LCT50"]),
                             filename_plot="new_infections_lct_rise2.0")
-        compare_all_compartments([os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_1"),
-                                  os.path.join(data_dir, "riseR0short",
-                                               "fictional_lct_2.0_3"),
-                                  os.path.join(data_dir, "riseR0short",
-                                               "fictional_lct_2.0_10"),
-                                  os.path.join(data_dir, "riseR0short",
-                                               "fictional_lct_2.0_20")
-                                  ],
-                                 legendplot=list(
-                                     ["ODE", "LCT3", "LCT10", "LCT20"]),
-                                 filename_plot="compartments_lct_rise2.0")
     elif case == 1:
         # drop R0 short
         plot_new_infections([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),
@@ -376,22 +545,11 @@ if __name__ == '__main__':
                                           "fictional_lct_0.5_10"),
                              os.path.join(data_dir, "dropR0",
                                           "fictional_lct_0.5_20"),
-                                          os.path.join(data_dir, "dropR0",
+                             os.path.join(data_dir, "dropR0",
                                           "fictional_lct_0.5_50")
                              ],
                             4100, legendplot=list(["ODE", "LCT3", "LCT10", "LCT20", "LCT50"]),
                             filename_plot="new_infections_lct_drop0.5")
-        compare_all_compartments([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),
-                                  os.path.join(data_dir, "dropR0",
-                                               "fictional_lct_0.5_3"),
-                                  os.path.join(data_dir, "dropR0",
-                                               "fictional_lct_0.5_10"),
-                                  os.path.join(data_dir, "dropR0",
-                                               "fictional_lct_0.5_20")
-                                  ],
-                                 legendplot=list(
-                                     ["ODE", "LCT3", "LCT10", "LCT20"]),
-                                 filename_plot="compartments_lct_drop0.5")
         compare_compartments_horizontal([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),
                                          os.path.join(data_dir, "dropR0",
                                                       "fictional_lct_0.5_3"),
@@ -399,7 +557,7 @@ if __name__ == '__main__':
                                                       "fictional_lct_0.5_10"),
                                          os.path.join(data_dir, "dropR0",
                                                       "fictional_lct_0.5_20"),
-                                                       os.path.join(data_dir, "dropR0",
+                                         os.path.join(data_dir, "dropR0",
                                                       "fictional_lct_0.5_50")
                                          ],
                                         legendplot=list(
@@ -415,16 +573,6 @@ if __name__ == '__main__':
         #                             ],
         #                            legendplot=list(
         #     ["ODE", "LCT3", "LCT10", "LCT20"]),  compartment_idx=2, filename_plot="compare_carrier_compartment_lct_drop0.5")
-        # compare_single_compartment([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),
-        #                             os.path.join(data_dir, "dropR0",
-        #                                          "fictional_lct_0.5_3"),
-        #                             os.path.join(data_dir, "dropR0",
-        #                                          "fictional_lct_0.5_10"),
-        #                             os.path.join(data_dir, "dropR0",
-        #                                          "fictional_lct_0.5_20")
-        #                             ],
-        #                            legendplot=list(
-        #     ["ODE", "LCT3", "LCT10", "LCT20"]),  compartment_idx=3, filename_plot="compare_infected_compartment_lct_drop0.5")
     elif case == 2:
         # rise r0 2.0 long
         plot_new_infections([os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_1_long"),

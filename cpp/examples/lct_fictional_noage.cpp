@@ -41,7 +41,7 @@
 namespace params
 {
 // Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
-constexpr int num_subcompartments = 50;
+constexpr int num_subcompartments = 10;
 constexpr size_t num_groups       = 6;
 
 // Parameters
@@ -76,7 +76,8 @@ const ScalarType DeathsPerCritical_age[]              = {0.05, 0.05, 0.14, 0.14,
 * @param[in] save_dir Specifies the directory where the results should be stored. Provide an empty string if results should not be saved.
 * @returns Any io errors that happen during saving the results.
 */
-mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::string save_dir = "")
+mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, bool save_subcompartments,
+                                       std::string save_dir = "")
 {
     using namespace params;
     std::cout << "Simulation with LCT model and " << num_subcompartments << " subcompartments." << std::endl;
@@ -209,14 +210,19 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::stri
     mio::TimeSeries<ScalarType> populations = model.calculate_compartments(result);
 
     if (!save_dir.empty()) {
+
         std::string R0string = std::to_string(R0);
         std::string filename = save_dir + "fictional_lct_" + R0string.substr(0, R0string.find(".") + 2) + "_" +
                                std::to_string(num_subcompartments);
-        if (tmax > 50) {
-            filename = filename + "_long";
+        if (save_subcompartments) {
+            filename                               = filename + "_subcompartments.h5";
+            auto result_interpolated               = mio::interpolate_simulation_result(result);
+            mio::IOResult<void> save_result_status = mio::save_result({result_interpolated}, {0}, 1, filename);
         }
-        filename                               = filename + ".h5";
-        mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename);
+        else {
+            filename                               = filename + ".h5";
+            mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename);
+        }
     }
     // std::cout << populations.get_value(populations.get_num_time_points() - 2)[0] -
     //                  populations.get_value(populations.get_num_time_points() - 1)[0]
@@ -225,17 +231,28 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::stri
     //           << total_population - populations.get_last_value()[0] << std::endl;
     // std::cout << std::endl;
     // //const ScalarType erg[] = {66187839.9905, 66177693.6578, 66173548.3156, 66172611.5577};//R=2
-    // const ScalarType erg[] = {81489331.8278, 81487771.4486, 81487273.3112, 81487185.6561}; //R=4
+    // //const ScalarType erg[] = {81489331.8278, 81487771.4486, 81487273.3112, 81487185.6561}; //R=4
+    // const ScalarType erg[] = {83151138.088446, 83151130.435465, 83151128.866535, 83151128.639552}; //R=10
     // for (int i = 0; i < 4; i++) {
     //     std::cout << "i= " << i << ": " << (erg[i] - erg[0]) / erg[0] << std::endl;
     // }
     return mio::success();
 }
 
-int main()
+int main(int argc, char** argv)
 {
-    std::string save_dir = "../../data/simulation_lct_noage/dropR0/";
-    auto result          = simulate_lct_model(0.5, 12, save_dir);
+    std::string save_dir       = "../../data/simulation_lct_noage/riseR0short/";
+    ScalarType R0              = 2.;
+    bool save_subcompartments  = false;
+    ScalarType simulation_days = 12;
+    if (argc > 2) {
+        R0              = std::stod(argv[1]);
+        simulation_days = std::stod(argv[2]);
+    }
+    if (argc > 3) {
+        save_dir = argv[3];
+    }
+    auto result = simulate_lct_model(R0, simulation_days, save_subcompartments, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
