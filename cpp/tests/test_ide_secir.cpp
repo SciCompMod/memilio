@@ -746,6 +746,17 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     // between Recovered and Dead is expected.
     EXPECT_TRUE(secihurd_simulated[Eigen::Index(tmax / dt - 1)] == secihurd_simulated[Eigen::Index(tmax / dt - 2)]);
 
+    // Check if the compartments E, C, I, H and U are almost empty at the equilibrium.
+    EXPECT_NEAR(secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Exposed], 0, 1e-18);
+    EXPECT_NEAR(secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::InfectedNoSymptoms], 0,
+                1e-8);
+    EXPECT_NEAR(secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::InfectedSymptoms], 0,
+                1e-8);
+    EXPECT_NEAR(secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::InfectedSevere], 0,
+                1e-8);
+    EXPECT_NEAR(secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::InfectedCritical], 0,
+                1e-8);
+                
     // Check whether equilibrium has the right proportion between Recovered and Dead.
     EXPECT_NEAR((vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)] /
                  vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)]) *

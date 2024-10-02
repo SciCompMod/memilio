@@ -519,7 +519,9 @@ private:
     static void inclusive_exclusive_sum_rec(Iter b, Iter e, Matrix& sum)
     {
         if (b != e) {
-            sum = sum + std::get<Matrix>(*b) - (sum.array() * std::get<Matrix>(*b).array()).matrix();
+            auto& mat_b   = std::get<Matrix>(*b);
+            auto mat_prod = (sum.array() * mat_b.array()).matrix();
+            sum           = sum + mat_b - mat_prod;
             inclusive_exclusive_sum_rec(++b, e, sum);
         }
     }
@@ -527,8 +529,7 @@ private:
     static Matrix inclusive_exclusive_sum(const std::vector<Tuple>& v)
     {
         assert(!v.empty());
-        auto& m  = std::get<Matrix>(v.front());
-        auto sum = m.eval();
+        Matrix sum = std::get<Matrix>(v.front());
         inclusive_exclusive_sum_rec(v.begin() + 1, v.end(), sum);
         return sum;
     }
@@ -608,8 +609,6 @@ void Dampings<S>::update_active_dampings(
         });
         //remove active with the same type and level and add new one
         get<MatrixIdx>(sum_same_level) += get<MatrixIdx>(damping) - get<MatrixIdx>(active_same_type).get();
-        //avoid negative values due to rounding error if e.g. a previous damping is lifted
-        get<MatrixIdx>(sum_same_level)   = get<MatrixIdx>(sum_same_level).cwiseMax(0.);
         get<MatrixIdx>(active_same_type) = get<MatrixIdx>(damping);
     }
     else {

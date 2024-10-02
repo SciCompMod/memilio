@@ -58,6 +58,7 @@ void set_params_distributions_normal(Model<FP>& model, double t0, double tmax, d
     set_distribution(model.parameters.template get<Seasonality<FP>>(), 0.0);
     set_distribution(model.parameters.template get<ICUCapacity<FP>>());
     set_distribution(model.parameters.template get<TestAndTraceCapacity<FP>>());
+    set_distribution(model.parameters.template get<DynamicNPIsImplementationDelay<FP>>());
 
     // populations
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
@@ -192,9 +193,9 @@ void draw_sample(Model<FP>& model)
 }
 
 template <typename FP = double>
-Graph<Model<FP>, MigrationParameters<FP>> draw_sample(Graph<Model<FP>, MigrationParameters<FP>>& graph)
+Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityParameters<FP>>& graph)
 {
-    Graph<Model<FP>, MigrationParameters<FP>> sampled_graph;
+    Graph<Model<FP>, MobilityParameters<FP>> sampled_graph;
 
     //sample global parameters
     auto& shared_params_model = graph.nodes()[0].property;
@@ -203,6 +204,8 @@ Graph<Model<FP>, MigrationParameters<FP>> draw_sample(Graph<Model<FP>, Migration
     shared_contacts.draw_sample_dampings();
     auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
     shared_dynamic_npis.draw_sample();
+    auto& shared_dynamic_npis_delay = shared_params_model.parameters.template get<DynamicNPIsImplementationDelay<FP>>();
+    shared_dynamic_npis_delay.draw_sample();
 
     for (auto& params_node : graph.nodes()) {
         auto& node_model = params_node.property;
@@ -229,7 +232,7 @@ Graph<Model<FP>, MigrationParameters<FP>> draw_sample(Graph<Model<FP>, Migration
     for (auto& edge : graph.edges()) {
         auto edge_params = edge.property;
         apply_dampings(edge_params.get_coefficients(), shared_contacts.get_dampings(), [&edge_params](auto& v) {
-            return make_migration_damping_vector(edge_params.get_coefficients().get_shape(), v);
+            return make_mobility_damping_vector(edge_params.get_coefficients().get_shape(), v);
         });
         edge_params.set_dynamic_npis_infected(shared_dynamic_npis);
         sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge_params);

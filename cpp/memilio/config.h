@@ -26,7 +26,48 @@
 #define MIO_CONFIG_H
 
 #include "memilio/config_internal.h"
+#include <type_traits>
 
 using ScalarType = double;
 
+namespace mio
+{
+/**
+ * @brief Type specific limits for floating-points.
+ *
+ * Specializations are provided for `float` and `double` types. In order to use
+ * other floating point types, a new specialization for that type must be added.
+ * 
+ * Member functions of the unspecialized class are disabled. Using them results
+ * in compile time errors.
+ * @{
+ */
+/**
+ * @tparam FP A floating point type.
+ */
+template <typename FP>
+struct Limits {
+    static constexpr FP zero_tolerance() = delete;
+};
+
+template <>
+struct Limits<float> {
+    /// @brief Returns the limit under which a float may be rounded down to zero.
+    static constexpr float zero_tolerance()
+    {
+        return 1e-6f;
+    }
+};
+
+template <>
+struct Limits<double> {
+    /// @brief Returns the limit under which a double may be rounded down to zero.
+    static constexpr double zero_tolerance()
+    {
+        return 1e-12;
+    }
+};
+/** @} */
+
+} // namespace mio
 #endif

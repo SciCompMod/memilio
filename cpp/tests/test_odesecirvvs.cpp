@@ -45,7 +45,7 @@
 #include "ode_secirvvs/analyze_result.h"
 
 #include "gtest/gtest.h"
-#include "gmock/gmock-matchers.h"
+#include "gmock/gmock.h"
 #include <algorithm>
 #include <iterator>
 #include <limits>
@@ -295,6 +295,7 @@ void set_contact_parameters(mio::osecirvvs::Model<double>::ParameterSet& paramet
     npis.set_interval(mio::SimulationTime(3.0));
     npis.set_duration(mio::SimulationTime(14.0));
     parameters.get_end_dynamic_npis() = 10.0; //required for dynamic NPIs to have effect in this model
+    parameters.template get<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>() = 7;
 }
 
 void set_covid_parameters(mio::osecirvvs::Model<double>::ParameterSet& params, bool set_invalid_initial_value)
@@ -431,7 +432,7 @@ TEST(TestOdeSECIRVVS, draw_sample)
 {
     mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
-    mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>> graph;
+    mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> graph;
 
     auto num_age_groups = 6;
     //create model with invalid initials so the test fails if no sampling is done
@@ -743,7 +744,7 @@ TEST(TestOdeSECIRVVS, export_time_series_init)
                     std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 2,
                     mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
                     mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
-                    mio::path_join(TEST_DATA_DIR, "county_current_population.json"), true,
+                    mio::path_join(TEST_DATA_DIR, "county_current_population.json"),
                     mio::path_join(TEST_DATA_DIR, "vacc_county_ageinf_ma7.json")),
                 IsSuccess());
 
@@ -757,6 +758,53 @@ TEST(TestOdeSECIRVVS, export_time_series_init)
 
     ASSERT_THAT(print_wrap(data_extrapolated.value()[0].get_groups().matrix()),
                 MatrixNear(print_wrap(expected_results[0].get_groups().matrix()), 1e-5, 1e-5));
+}
+
+TEST(TestOdeSECIRVVS, export_time_series_init_old_date)
+{
+    mio::set_log_level(mio::LogLevel::off);
+    TempFileRegister temp_file_register;
+    auto tmp_results_dir = temp_file_register.get_unique_path();
+    ASSERT_THAT(mio::create_directory(tmp_results_dir), IsSuccess());
+
+    auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
+    auto model          = make_model(num_age_groups);
+
+    // set vaccinations to zero
+    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().array().setConstant(0);
+    // set all compartments to zero
+    model.populations.array().setConstant(0.0);
+
+    // Test exporting time series
+    ASSERT_THAT(mio::osecirvvs::export_input_data_county_timeseries(
+                    std::vector<mio::osecirvvs::Model<double>>{model}, tmp_results_dir, {0}, {20, 12, 01},
+                    std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 0,
+                    mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
+                    mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
+                    mio::path_join(TEST_DATA_DIR, "county_current_population.json"),
+                    mio::path_join(TEST_DATA_DIR, "vacc_county_ageinf_ma7.json")),
+                IsSuccess());
+
+    auto data_extrapolated = mio::read_result(mio::path_join(tmp_results_dir, "Results_rki.h5"));
+    ASSERT_THAT(data_extrapolated, IsSuccess());
+    auto results_extrapolated = data_extrapolated.value()[0].get_groups().get_value(0);
+
+    // if we enter an old date, the model only should be initialized with the population data.
+    // read population data
+    std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
+    const std::vector<int> region{0};
+    auto population_data = mio::osecirvvs::details::read_population_data(path, region).value();
+
+    // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
+    for (auto i = 0; i < num_age_groups; i++) {
+        EXPECT_NEAR(results_extrapolated(i * Eigen::Index(mio::osecirvvs::InfectionState::Count)),
+                    population_data[0][i], 1e-10);
+    }
+    // sum of all compartments should be equal to the population
+    EXPECT_NEAR(results_extrapolated.sum(), std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0),
+                1e-5);
+    mio::set_log_level(mio::LogLevel::warn);
 }
 
 // Model initialization should return same start values as export time series on that day
@@ -795,6 +843,148 @@ TEST(TestOdeSECIRVVS, model_initialization)
                 MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
 }
 
+TEST(TestOdeSECIRVVS, model_initialization_old_date)
+{
+    mio::set_log_level(mio::LogLevel::off);
+    constexpr auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
+    auto model                    = make_model(num_age_groups);
+    // set vaccinations to zero
+    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().array().setConstant(0);
+    // set all compartments to zero
+    model.populations.array().setConstant(0.0);
+
+    auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
+
+    ASSERT_THAT(mio::osecirvvs::read_input_data(model_vector, {100, 12, 01}, {0},
+                                                std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 0,
+                                                false),
+                IsSuccess());
+
+    // if we enter an old date, the model only should be initialized with the population data.
+    // read population data
+    std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
+    const std::vector<int> region{0};
+    auto population_data = mio::osecirvvs::details::read_population_data(path, region).value();
+
+    // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
+    for (auto i = 0; i < num_age_groups; i++) {
+        EXPECT_NEAR(
+            model_vector[0].populations.array().cast<double>()(i * Eigen::Index(mio::osecirvvs::InfectionState::Count)),
+            population_data[0][i], 1e-5);
+    }
+
+    // sum of all compartments should be equal to the population
+    EXPECT_NEAR(model_vector[0].populations.array().cast<double>().sum(),
+                std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0), 1e-5);
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
+TEST(TestOdeSECIRVVS, model_initialization_old_date_county)
+{
+    mio::set_log_level(mio::LogLevel::off);
+    constexpr auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
+    auto model                    = make_model(num_age_groups);
+    // set vaccinations to zero
+    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().array().setConstant(0);
+    // set all compartments to zero
+    model.populations.array().setConstant(0.0);
+
+    auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
+
+    ASSERT_THAT(mio::osecirvvs::read_input_data_county(model_vector, {100, 12, 01}, {0},
+                                                       std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                       TEST_DATA_DIR, 0, false),
+                IsSuccess());
+
+    // if we enter an old date, the model only should be initialized with the population data.
+    // read population data
+    std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
+    const std::vector<int> region{0};
+    auto population_data = mio::osecirvvs::details::read_population_data(path, region).value();
+
+    // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
+    for (auto i = 0; i < num_age_groups; i++) {
+        EXPECT_NEAR(
+            model_vector[0].populations.array().cast<double>()(i * Eigen::Index(mio::osecirvvs::InfectionState::Count)),
+            population_data[0][i], 1e-5);
+    }
+
+    // sum of all compartments should be equal to the population
+    EXPECT_NEAR(model_vector[0].populations.array().cast<double>().sum(),
+                std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0), 1e-5);
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
+TEST(TestOdeSECIRVVS, set_population_data_overflow_vacc)
+{
+    auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
+    auto model          = make_model(num_age_groups);
+    // set all compartments to zero
+    model.populations.array().setConstant(0.0);
+
+    model.parameters
+        .template get<mio::osecirvvs::DailyFirstVaccination<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] =
+        1e7 + 1;
+
+    model.parameters
+        .template get<mio::osecirvvs::DailyFullVaccination<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] = 1e7;
+
+    auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
+
+    std::string path_pop_data = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
+    const std::vector<int> region{0};
+    auto population_data = mio::osecirvvs::details::read_population_data(path_pop_data, region).value();
+
+    // we choose the date so that no case data is available
+    ASSERT_THAT(mio::osecirvvs::details::set_population_data(
+                    model_vector, path_pop_data, mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"), {0},
+                    {1000, 12, 01}),
+                IsSuccess());
+
+    EXPECT_NEAR(
+        double(model_vector[0].populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive}]), 0.0,
+        1e-10);
+    EXPECT_NEAR(double(model_vector[0].populations[{mio::AgeGroup(0),
+                                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity}]),
+                1, 1e-10);
+    EXPECT_NEAR(double(model_vector[0].populations[{mio::AgeGroup(0),
+                                                    mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}]),
+                population_data[0][0] - 1, 1e-10);
+
+    EXPECT_NEAR(model_vector[0].populations.get_group_total(mio::AgeGroup(0)), population_data[0][0], 1e-9);
+}
+
+TEST(TestOdeSECIRVVS, set_population_data_no_data_avail)
+{
+    auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
+    auto model          = make_model(num_age_groups);
+    // set all compartments to zero
+    model.populations.array().setConstant(0.0);
+
+    // if the number of vaccinated individuals is greater than the population, we must limit the number of vaccinated.
+    model.parameters
+        .template get<mio::osecirvvs::DailyFirstVaccination<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] = 0;
+
+    model.parameters
+        .template get<mio::osecirvvs::DailyFullVaccination<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] = 0;
+
+    auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
+
+    std::string path_pop_data = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
+    const std::vector<int> region{0};
+    auto population_data = mio::osecirvvs::details::read_population_data(path_pop_data, region).value();
+
+    // we choose the date so that no case data is available
+    ASSERT_THAT(mio::osecirvvs::details::set_population_data(
+                    model_vector, path_pop_data, mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"), {200},
+                    {1000, 12, 01}),
+                IsSuccess());
+
+    EXPECT_NEAR(model.populations.get_total(), 0.0, 1e-10);
+}
+
 TEST(TestOdeSECIRVVS, run_simulation)
 {
     auto num_age_groups = 3;
@@ -819,11 +1009,11 @@ TEST(TestOdeSECIRVVS, parameter_percentiles)
 
     //build small graph
     auto model = make_model(5);
-    auto graph = mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>>();
+    auto graph = mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>();
     graph.add_node(0, model);
 
     //sample a few times
-    auto sampled_graphs = std::vector<mio::Graph<mio::osecirvvs::Model<double>, mio::MigrationParameters<double>>>();
+    auto sampled_graphs = std::vector<mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>>();
     std::generate_n(std::back_inserter(sampled_graphs), 10, [&graph]() {
         return mio::osecirvvs::draw_sample(graph, true);
     });
@@ -875,204 +1065,248 @@ TEST(TestOdeSECIRVVS, get_infections_relative)
     ASSERT_DOUBLE_EQ(relative_infections, 105 / model.populations.get_total());
 }
 
-TEST(TestOdeSECIRVVS, get_migration_factors)
+TEST(TestOdeSECIRVVS, get_mobility_factors)
 {
     auto num_age_groups = 2;
     auto model          = make_model(num_age_groups);
     auto sim            = mio::osecirvvs::Simulation<>(model);
     auto y              = sim.get_result()[0];
 
-    auto migration_factors = mio::osecirvvs::get_migration_factors<double>(sim, 0.0, y);
+    auto mobility_factors = mio::osecirvvs::get_mobility_factors<double>(sim, 0.0, y);
 
     auto expected_values = (Eigen::VectorXd(Eigen::Index(mio::osecirvvs::InfectionState::Count) * num_age_groups) << 1,
                             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                             1, 1, 1, 1, 1, 1, 1, 1, 0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
                                .finished();
-    ASSERT_THAT(print_wrap(migration_factors), MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
+    ASSERT_THAT(print_wrap(mobility_factors), MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
 }
 
 TEST(TestOdeSECIRVVS, test_commuters)
 {
     auto model                                      = make_model(2);
-    auto migration_factor                           = 0.1;
+    auto mobility_factor                            = 0.1;
     auto non_detection_factor                       = 0.3;
     model.parameters.get_start_commuter_detection() = 0.0;
     model.parameters.get_end_commuter_detection()   = 20.0;
     model.parameters.get_commuter_nondetection()    = non_detection_factor;
     auto sim                                        = mio::osecirvvs::Simulation<>(model);
     auto before_testing                             = sim.get_result().get_last_value().eval();
-    auto migrated                                   = (sim.get_result().get_last_value() * migration_factor).eval();
-    auto migrated_tested                            = migrated.eval();
+    auto mobile_population                          = (sim.get_result().get_last_value() * mobility_factor).eval();
+    auto mobile_population_tested                   = mobile_population.eval();
 
-    mio::osecirvvs::test_commuters<double>(sim, migrated_tested, 0.0);
+    mio::osecirvvs::test_commuters<double>(sim, mobile_population_tested, 0.0);
 
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] * non_detection_factor,
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)],
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] *
+                    non_detection_factor,
                 1e-5);
     ASSERT_NEAR(
         sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed)] +
-            migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] * (1 - non_detection_factor),
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] *
+                (1 - non_detection_factor),
         1e-5);
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] *
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)],
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] *
                     non_detection_factor,
                 1e-5);
     ASSERT_NEAR(
         sim.get_result()
             .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed)] +
-            migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] *
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] *
                 (1 - non_detection_factor),
         1e-5);
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] *
-                    non_detection_factor,
-                1e-5);
+    ASSERT_NEAR(
+        mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)],
+        mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] *
+            non_detection_factor,
+        1e-5);
     ASSERT_NEAR(
         sim.get_result()
             .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed)] +
-            migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] *
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] *
                 (1 - non_detection_factor),
         1e-5);
 
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] * non_detection_factor,
+    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)],
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] *
+                    non_detection_factor,
                 1e-5);
     ASSERT_NEAR(sim.get_result()
                     .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed)],
                 before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed)] +
-                    migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] *
+                    mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] *
                         (1 - non_detection_factor),
                 1e-5);
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] *
-                    non_detection_factor,
-                1e-5);
+    ASSERT_NEAR(
+        mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)],
+        mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] *
+            non_detection_factor,
+        1e-5);
     ASSERT_NEAR(
         sim.get_result()
             .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed)] +
-            migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] *
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] *
                 (1 - non_detection_factor),
         1e-5);
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] *
-                    non_detection_factor,
-                1e-5);
+    ASSERT_NEAR(
+        mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)],
+        mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] *
+            non_detection_factor,
+        1e-5);
     ASSERT_NEAR(
         sim.get_result().get_last_value()[Eigen::Index(
             mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed)] +
-            migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] *
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] *
                 (1 - non_detection_factor),
         1e-5);
+}
+
+// Test model initialization with total population of 0 and ensure get_flows returns no NaN values
+TEST(TestOdeSECIRVVS, population_zero_no_nan)
+{
+    // initialize simple model with total population 0
+    mio::osecirvvs::Model<double> model(1);
+    model.populations.set_total(0.0);
+
+    // call the get_flows function
+    auto dydt_default = Eigen::VectorXd(45);
+    dydt_default.setZero();
+    auto y0 = model.get_initial_values();
+    model.get_flows(y0, y0, 0, dydt_default);
+
+    // check that there are now NaN values in dydt_default
+    for (int i = 0; i < dydt_default.size(); i++) {
+        EXPECT_FALSE(std::isnan(dydt_default[i]));
+    }
 }
 
 TEST(TestOdeSECIRVVS, check_constraints_parameters)
 {
     auto model = mio::osecirvvs::Model<double>(1);
-    ASSERT_EQ(model.parameters.check_constraints(), 0);
+    EXPECT_EQ(model.parameters.check_constraints(), 0);
 
     mio::set_log_level(mio::LogLevel::off);
     model.parameters.set<mio::osecirvvs::Seasonality<double>>(-0.2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::Seasonality<double>>(0.2);
     model.parameters.set<mio::osecirvvs::ICUCapacity<double>>(-2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ICUCapacity<double>>(2);
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacity<double>>(-1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacity<double>>(1);
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(-1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(1);
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskSymptoms<double>>(-1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskSymptoms<double>>(1);
     model.parameters.set<mio::osecirvvs::TimeExposed<double>>(-2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::TimeExposed<double>>(2);
     model.parameters.set<mio::osecirvvs::TimeInfectedNoSymptoms<double>>(0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::TimeInfectedNoSymptoms<double>>(5);
     model.parameters.set<mio::osecirvvs::TimeInfectedSymptoms<double>>(0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::TimeInfectedSymptoms<double>>(2);
     model.parameters.set<mio::osecirvvs::TimeInfectedSevere<double>>(-1);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::TimeInfectedSevere<double>>(2);
     model.parameters.set<mio::osecirvvs::TimeInfectedCritical<double>>(0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::TimeInfectedCritical<double>>(2);
     model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact<double>>(2.0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact<double>>(0.5);
     model.parameters.set<mio::osecirvvs::RelativeTransmissionNoSymptoms<double>>(-1.0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::RelativeTransmissionNoSymptoms<double>>(0.5);
     model.parameters.set<mio::osecirvvs::RecoveredPerInfectedNoSymptoms<double>>(3.0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::RecoveredPerInfectedNoSymptoms<double>>(0.5);
     model.parameters.set<mio::osecirvvs::RiskOfInfectionFromSymptomatic<double>>(-0.8);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::RiskOfInfectionFromSymptomatic<double>>(0.5);
     model.parameters.set<mio::osecirvvs::SeverePerInfectedSymptoms<double>>(-0.1);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::SeverePerInfectedSymptoms<double>>(0.5);
     model.parameters.set<mio::osecirvvs::CriticalPerSevere<double>>(-1.0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::CriticalPerSevere<double>>(0.5);
     model.parameters.set<mio::osecirvvs::DeathsPerCritical<double>>(1.1);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::DeathsPerCritical<double>>(0.5);
     model.parameters.set<mio::osecirvvs::VaccinationGap<double>>(0.2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::VaccinationGap<double>>(2);
     model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity<double>>(-2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity<double>>(30);
     model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity<double>>(-0.2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity<double>>(30);
     model.parameters.set<mio::osecirvvs::ReducExposedPartialImmunity<double>>(0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducExposedPartialImmunity<double>>(0.5);
     model.parameters.set<mio::osecirvvs::ReducExposedImprovedImmunity<double>>(-0.2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducExposedImprovedImmunity<double>>(0.5);
     model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<double>>(0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<double>>(0.5);
     model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<double>>(0.);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<double>>(0.5);
     model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<double>>(-4);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<double>>(0.5);
     model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>(-4);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>(0.5);
     model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild<double>>(-0);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild<double>>(1);
     model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant<double>>(-4);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant<double>>(1);
+    EXPECT_EQ(model.parameters.check_constraints(), 0);
+
+    model.parameters.set<mio::osecirvvs::InfectiousnessNewVariant<double>>(1);
+    model.parameters.set<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>(-4);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     mio::set_log_level(mio::LogLevel::warn);
@@ -1094,6 +1328,18 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
     model.parameters.set<mio::osecirvvs::ICUCapacity<double>>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::Seasonality<double>>(), 0);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacity<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<double>>(), 0);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(), 0);
+
+    model.parameters.set<mio::osecirvvs::TestAndTraceCapacityMaxRiskSymptoms<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TestAndTraceCapacityMaxRiskSymptoms<double>>(), 0);
 
     model.parameters.set<mio::osecirvvs::TimeExposed<double>>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
@@ -1192,6 +1438,11 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::InfectiousnessNewVariant<double>>()[indx_agegroup], 1);
 
+    model.parameters.set<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>(-4);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>(), 0);
+
+    EXPECT_EQ(model.parameters.apply_constraints(), 0);
     mio::set_log_level(mio::LogLevel::warn);
 }
 

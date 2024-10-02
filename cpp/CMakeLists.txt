@@ -20,6 +20,7 @@ option(MEMILIO_ENABLE_OPENMP "Enable Multithreading with OpenMP." OFF)
 option(MEMILIO_ENABLE_WARNINGS "Build memilio with warnings." ON)
 option(MEMILIO_ENABLE_WARNINGS_AS_ERRORS "Build memilio with warnings as errors." ON)
 option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler" OFF)
+option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio" OFF)
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
@@ -75,6 +76,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         message(STATUS "Coverage enabled")
         include(CodeCoverage)
         append_coverage_compiler_flags()
+        # In addition to standard flags, disable elision and inlining to prevent e.g. closing brackets being marked as uncovered.
+
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-elide-constructors -fno-default-inline")
         setup_target_for_coverage_lcov(
             NAME coverage
             EXECUTABLE memilio-test
@@ -149,6 +153,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/ode_sir)
     add_subdirectory(models/sde_sir)
     add_subdirectory(models/sde_sirs)
+    add_subdirectory(models/sde_seirvv)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)
