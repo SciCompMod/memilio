@@ -157,6 +157,7 @@ def run_secir_groups_simulation(days, graph, dampings, num_groups=6):
         model.apply_constraints()
 
         # Generate a damping matrix and assign it to the model
+        # TODO: This can be done outside and is (currently) static for all models
         damped_matrices = []
         damping_coeff = []
         for day in dampings:
@@ -177,6 +178,7 @@ def run_secir_groups_simulation(days, graph, dampings, num_groups=6):
         model.apply_constraints()
         # set model to graph
         graph.get_node(node_indx).property.populations = model.populations
+        graph.get_node(node_indx).property.parameters = model.parameters
 
     study = ParameterStudy(graph, 0, days, dt=0.5, num_runs=1)
     start_time = time.time()
@@ -298,13 +300,13 @@ def generate_data(
     # Due to the random structure, theres currently no need to shuffle the data
     bar = Bar('Number of Runs done', max=num_runs)
 
-    model_params = graph.get_node(0).property.parameters
+    model_params = copy.deepcopy(graph.get_node(0).property.parameters)
 
     for i in range(num_runs):
-
+        params_run = copy.deepcopy(model_params)
         # reset contact matrix in each node
         for node_indx in range(graph.num_nodes):
-            graph.get_node(node_indx).property.parameters = model_params
+            graph.get_node(node_indx).property.parameters = params_run
         data_run, damped_contact_matrix, damping_days_s, damping_factor = run_secir_groups_simulation(
             days_sum,  graph,  damping_days[i])
 
@@ -344,8 +346,8 @@ if __name__ == "__main__":
 
     input_width = 5
     label_width = 95
-    number_of_dampings = 1
-    num_runs = 1
+    number_of_dampings = 3
+    num_runs = 5
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(
         os.path.dirname(
