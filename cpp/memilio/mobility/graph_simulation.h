@@ -22,6 +22,7 @@
 
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/random_number_generator.h"
+#include <chrono>
 
 namespace mio
 {
@@ -60,7 +61,9 @@ public:
 
     void advance(double t_max = 1.0)
     {
-        auto dt = m_dt;
+        auto dt         = m_dt;
+        auto start_time = std::chrono::high_resolution_clock::now(); // Startzeit erfassen
+
         while (m_t < t_max) {
             if (m_t + dt > t_max) {
                 dt = t_max - m_t;
@@ -77,6 +80,12 @@ public:
                             m_graph.nodes()[e.end_node_idx].property);
             }
         }
+
+        auto end_time                                = std::chrono::high_resolution_clock::now(); // Endzeit erfassen
+        std::chrono::duration<double> execution_time = end_time - start_time; // Ausführungszeit berechnen
+
+        std::cout << "t = " << m_t << " execution time (Graph Simulation): " << execution_time.count() << "sec"
+                  << std::endl;
     }
 
     double get_t() const
