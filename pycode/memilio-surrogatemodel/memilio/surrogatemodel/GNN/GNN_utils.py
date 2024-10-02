@@ -76,7 +76,7 @@ def getMinimumMatrix():
     return minimum
 
 
-def make_graph(directory, num_regions, countykey_list, models, edges):
+def make_graph(directory, num_regions, countykey_list, models):
     """! 
     @param directory Directory with mobility data. 
     @param num_regions Number (int) of counties that should be added to the 
@@ -91,8 +91,8 @@ def make_graph(directory, num_regions, countykey_list, models, edges):
 
     num_locations = 4
 
-    # set_edges(os.path.abspath(os.path.join(directory, os.pardir)),
-    #          graph, num_locations)
+    set_edges(os.path.abspath(os.path.join(directory, os.pardir)),
+              graph, num_locations)
     return graph
 
 

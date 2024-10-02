@@ -2,6 +2,9 @@ import copy
 import os
 import pickle
 import random
+import time
+import memilio.simulation as mio
+import memilio.simulation.osecir as osecir
 import numpy as np
 
 from progress.bar import Bar
@@ -16,104 +19,147 @@ from memilio.surrogatemodel.GNN.GNN_utils import (transform_mobility_directory,
                                                   make_graph, scale_data)
 from memilio.surrogatemodel.utils_surrogatemodel import (
     getBaselineMatrix, remove_confirmed_compartments, get_population)
+from enum import Enum
 
 
-def run_secir_groups_simulation(days, populations, countykey_list, directory, baseline):
-    """! Uses an ODE SECIR model allowing for asymptomatic infection with 6 
-        different age groups. The model is not stratified by region. 
-        Virus-specific parameters are fixed and initial number of persons 
+class Location(Enum):
+    Home = 0
+    School = 1
+    Work = 2
+    Other = 3
+
+
+start_date = mio.Date(2019, 1, 1)
+end_date = mio.Date(2020, 12, 31)
+
+
+def set_covid_parameters(model, num_groups=6):
+    for i in range(num_groups):
+        # Compartment transition duration
+        model.parameters.TimeExposed[AgeGroup(i)] = 3.2
+        model.parameters.TimeInfectedNoSymptoms[AgeGroup(i)] = 2.
+        model.parameters.TimeInfectedSymptoms[AgeGroup(i)] = 6.
+        model.parameters.TimeInfectedSevere[AgeGroup(i)] = 12.
+        model.parameters.TimeInfectedCritical[AgeGroup(i)] = 8.
+
+        # Compartment transition propabilities
+        model.parameters.RelativeTransmissionNoSymptoms[AgeGroup(i)] = 0.5
+        model.parameters.TransmissionProbabilityOnContact[AgeGroup(
+            i)] = 0.1
+        model.parameters.RecoveredPerInfectedNoSymptoms[AgeGroup(i)] = 0.09
+        model.parameters.RiskOfInfectionFromSymptomatic[AgeGroup(i)] = 0.25
+        model.parameters.SeverePerInfectedSymptoms[AgeGroup(i)] = 0.2
+        model.parameters.CriticalPerSevere[AgeGroup(i)] = 0.25
+        model.parameters.DeathsPerCritical[AgeGroup(i)] = 0.3
+        model.parameters.MaxRiskOfInfectionFromSymptomatic[AgeGroup(
+            i)] = 0.5
+
+    # StartDay is the n-th day of the year
+    model.parameters.StartDay = start_date.day_in_year
+
+
+def set_contact_matrices(model, data_dir, num_groups=6):
+    contact_matrices = mio.ContactMatrixGroup(
+        len(list(Location)), num_groups)
+    locations = ["home", "school_pf_eig", "work", "other"]
+
+    for i, location in enumerate(locations):
+        baseline_file = os.path.join(
+            data_dir, "contacts", "baseline_" + location + ".txt")
+        minimum_file = os.path.join(
+            data_dir, "contacts", "minimum_" + location + ".txt")
+        contact_matrices[i] = mio.ContactMatrix(
+            mio.read_mobility_plain(baseline_file),
+            mio.read_mobility_plain(minimum_file)
+        )
+    model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
+
+
+def get_graph(num_groups, data_dir):
+    model = Model(num_groups)
+    set_covid_parameters(model)
+    set_contact_matrices(model, data_dir)
+
+    graph = osecir.ModelGraph()
+
+    scaling_factor_infected = [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
+    scaling_factor_icu = 1.0
+    tnt_capacity_factor = 7.5 / 100000.
+
+    path_population_data = os.path.join(
+        data_dir, "pydata", "Germany",
+        "county_current_population.json")
+
+    mio.osecir.set_nodes(
+        model.parameters,
+        mio.Date(start_date.year,
+                 start_date.month, start_date.day),
+        mio.Date(end_date.year,
+                 end_date.month, end_date.day), data_dir,
+        path_population_data, True, graph, scaling_factor_infected,
+        scaling_factor_icu, tnt_capacity_factor, 0, False)
+
+    mio.osecir.set_edges(
+        data_dir, graph, len(Location))
+
+    return graph
+
+
+def run_secir_groups_simulation(days, graph, num_groups=6):
+    """! Uses an ODE SECIR model allowing for asymptomatic infection with 6
+        different age groups. The model is not stratified by region.
+        Virus-specific parameters are fixed and initial number of persons
         in the particular infection states are chosen randomly from defined ranges.
     @param Days Describes how many days we simulate within a single run.
-    @param populations List containing the population in each age group.
-    @return List containing the populations in each compartment used to initialize 
+    @param Graph Graph initilized for the start_date with the population data which
+            is sampled during the run.
+    @return List containing the populations in each compartment used to initialize
             the run.
    """
-
-    set_log_level(LogLevel.Off)
-
-    start_day = 1
-    start_month = 1
-    start_year = 2019
-    dt = 0.1
-
-    # Define age Groups
-    groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
-    num_groups = len(groups)
-    num_regions = len(populations)
-    models = []
-
-    # Initialize Parameters
-    for region in range(num_regions):
-        model = Model(num_groups)
+    for node_indx in range(graph.num_nodes):
+        model = graph.get_node(node_indx).property
 
         # Set parameters
+        # TODO: Put This in the draw_sample function in the ParameterStudy
         for i in range(num_groups):
-            # Compartment transition duration
-            model.parameters.TimeExposed[AgeGroup(i)] = 3.2
-            model.parameters.TimeInfectedNoSymptoms[AgeGroup(i)] = 2.
-            model.parameters.TimeInfectedSymptoms[AgeGroup(i)] = 6.
-            model.parameters.TimeInfectedSevere[AgeGroup(i)] = 12.
-            model.parameters.TimeInfectedCritical[AgeGroup(i)] = 8.
+            age_group = AgeGroup(i)
+            pop_age_group = model.populations.get_group_total_AgeGroup(
+                age_group)
 
             # Initial number of people in each compartment with random numbers
             # Numbers are chosen heuristically based on experience
-            model.populations[AgeGroup(i), Index_InfectionState(
-                InfectionState.Exposed)] = random.uniform(
-                0.00025, 0.005) * populations[region][i]
-            model.populations[AgeGroup(i), Index_InfectionState(
-                InfectionState.InfectedNoSymptoms)] = random.uniform(
-                0.0001, 0.0035) * populations[region][i]
-            model.populations[AgeGroup(i), Index_InfectionState(
+            model.populations[age_group, Index_InfectionState(InfectionState.Exposed)] = random.uniform(
+                0.00025, 0.005) * pop_age_group
+            model.populations[age_group, Index_InfectionState(InfectionState.InfectedNoSymptoms)] = random.uniform(
+                0.0001, 0.0035) * pop_age_group
+            model.populations[age_group, Index_InfectionState(
                 InfectionState.InfectedNoSymptomsConfirmed)] = 0
-            model.populations[AgeGroup(i), Index_InfectionState(
-                InfectionState.InfectedSymptoms)] = random.uniform(
-                0.00007, 0.001) * populations[region][i]
-            model.populations[AgeGroup(i), Index_InfectionState(
+            model.populations[age_group, Index_InfectionState(InfectionState.InfectedSymptoms)] = random.uniform(
+                0.00007, 0.001) * pop_age_group
+            model.populations[age_group, Index_InfectionState(
                 InfectionState.InfectedSymptomsConfirmed)] = 0
-            model.populations[AgeGroup(i), Index_InfectionState(
-                InfectionState.InfectedSevere)] = random.uniform(
-                0.00003, 0.0006) * populations[region][i]
-            model.populations[AgeGroup(i), Index_InfectionState(
-                InfectionState.InfectedCritical)] = random.uniform(
-                0.00001, 0.0002) * populations[region][i]
-            model.populations[AgeGroup(i), Index_InfectionState(
-                InfectionState.Recovered)] = random.uniform(
-                0.002, 0.08) * populations[region][i]
-            model.populations[AgeGroup(i),
-                              Index_InfectionState(InfectionState.Dead)] = random.uniform(
-                0, 0.0003) * populations[region][i]
+            model.populations[age_group, Index_InfectionState(InfectionState.InfectedSevere)] = random.uniform(
+                0.00003, 0.0006) * pop_age_group
+            model.populations[age_group, Index_InfectionState(InfectionState.InfectedCritical)] = random.uniform(
+                0.00001, 0.0002) * pop_age_group
+            model.populations[age_group, Index_InfectionState(InfectionState.Recovered)] = random.uniform(
+                0.002, 0.08) * pop_age_group
+            model.populations[age_group, Index_InfectionState(InfectionState.Dead)] = random.uniform(
+                0, 0.0003) * pop_age_group
             model.populations.set_difference_from_group_total_AgeGroup(
-                (AgeGroup(i), Index_InfectionState(InfectionState.Susceptible)),
-                populations[region][i])
-
-            # Compartment transition propabilities
-            model.parameters.RelativeTransmissionNoSymptoms[AgeGroup(i)] = 0.5
-            model.parameters.TransmissionProbabilityOnContact[AgeGroup(
-                i)] = 0.1
-            model.parameters.RecoveredPerInfectedNoSymptoms[AgeGroup(i)] = 0.09
-            model.parameters.RiskOfInfectionFromSymptomatic[AgeGroup(i)] = 0.25
-            model.parameters.SeverePerInfectedSymptoms[AgeGroup(i)] = 0.2
-            model.parameters.CriticalPerSevere[AgeGroup(i)] = 0.25
-            model.parameters.DeathsPerCritical[AgeGroup(i)] = 0.3
-            model.parameters.MaxRiskOfInfectionFromSymptomatic[AgeGroup(
-                i)] = 0.5
-
-        # StartDay is the n-th day of the year
-        model.parameters.StartDay = (
-            date(start_year, start_month, start_day) - date(start_year, 1, 1)).days
-
-        model.parameters.ContactPatterns.cont_freq_mat[0].baseline = baseline
-        model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
-            (num_groups, num_groups)) * 0
+                (age_group, Index_InfectionState(InfectionState.Susceptible)),
+                pop_age_group)
 
         # Apply mathematical constraints to parameters
         model.apply_constraints()
-        models.append(model)
 
-    graph = make_graph(directory, num_regions, countykey_list, models)
+        # set model to graph
+        graph.get_node(node_indx).property.populations = model.populations
 
-    study = ParameterStudy(graph, 0, days, dt=dt, num_runs=1)
+    study = ParameterStudy(graph, 0, days, dt=0.5, num_runs=1)
+    start_time = time.time()
     study.run()
+    print("Simulation took: ", time.time() - start_time)
 
     graph_run = study.run()[0]
     results = interpolate_simulation_result(graph_run)
@@ -129,28 +175,24 @@ def run_secir_groups_simulation(days, populations, countykey_list, directory, ba
 
 
 def generate_data(
-        num_runs, path, input_width, days, save_data=True):
+        num_runs, data_dir, path, input_width, days, save_data=True):
     """! Generate dataset by calling run_secir_simulation (num_runs)-often
    @param num_runs Number of times, the function run_secir_simulation is called.
+   @param data_dir Directory with all data needed to initialize the models.
    @param path Path, where the datasets are stored.
    @param input_width number of time steps used for model input.
    @param label_width number of time steps (days) used as model output/label.  
    @param save_data Option to deactivate the save of the dataset. Per default true.
    """
-
-    population = get_population()
+    set_log_level(mio.LogLevel.Error)
     days_sum = days + input_width - 1
 
     data = {"inputs": [],
             "labels": [],
             }
 
-    # get county ids
-    countykey_list = geoger.get_county_ids(merge_eisenach=True, zfill=True)
-    # Load baseline and minimum contact matrix and assign them to the model
-    baseline = getBaselineMatrix()
-    # transform directiry by merging Einsenach and Wartburgkreis
-    directory = transform_mobility_directory()
+    num_groups = 6
+    graph = get_graph(num_groups, data_dir)
 
     # show progess in terminal for longer runs
     # Due to the random structure, theres currently no need to shuffle the data
@@ -159,7 +201,7 @@ def generate_data(
     for _ in range(num_runs):
 
         data_run = run_secir_groups_simulation(
-            days_sum, population, countykey_list, directory, baseline)
+            days_sum, graph)
 
         inputs = np.asarray(data_run).transpose(1, 2, 0)[: input_width]
         data["inputs"].append(inputs)
@@ -198,9 +240,11 @@ if __name__ == "__main__":
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
         'data_GNN_nodamp_test')
 
-    input_width = 5
-    days = 3
-    num_runs = 2
+    data_dir = os.path.join(os.getcwd(), 'data')
 
-    generate_data(num_runs, path_data, input_width,
+    input_width = 5
+    days = 30
+    num_runs = 1
+
+    generate_data(num_runs, data_dir,  path_data, input_width,
                   days, save_data=True)
