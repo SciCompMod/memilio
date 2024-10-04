@@ -76,6 +76,17 @@ ScalarType Infection::get_viral_shed(TimePoint t) const
     return m_individual_virus_shed_factor / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t))));
 }
 
+ScalarType Infection::get_viral_shed_constant(TimePoint t) const
+{
+    auto t_begin = m_infection_course.frost().first;
+    auto t_end =
+        m_infection_course.back().first; // take last value of infection course: this is either recovered or dead
+
+    return m_individual_virus_shed_factor * get_viral_shed_integral(t_begin, t_end) /
+           (t_end.days() - t_begin.days()); // average viral shed
+    // .days() because the incline and decline are measured in days, thus the shed and it's integral is normalized to days
+}
+
 ScalarType Infection::get_viral_shed_integral() const
 {
     ScalarType integral = std::log(std::exp(m_log_norm_alpha + m_log_norm_beta * m_viral_load.peak) + 1) /
@@ -340,13 +351,13 @@ TimePoint Infection::draw_infection_course_backward(Person::RandomNumberGenerato
                 time_period    = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
                 previous_state = InfectionState::InfectedNoSymptoms;
             }
-            else if (p > params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}] *
+            else if (p < params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}] *
                              (1 - params.get<SeverePerInfectedSymptoms>()[{m_virus_variant, age}]) / (1 - p_death)) {
                 time_in_state  = params.get<TimeInfectedSymptomsToRecovered>()[{m_virus_variant, age}];
                 time_period    = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
                 previous_state = InfectionState::InfectedSymptoms;
             }
-            else if (p > params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}] *
+            else if (p < params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}] *
                              params.get<SeverePerInfectedSymptoms>()[{m_virus_variant, age}] *
                              (1 - params.get<CriticalPerInfectedSevere>()[{m_virus_variant, age}]) / (1 - p_death)) {
                 time_in_state  = params.get<TimeInfectedSevereToRecovered>()[{m_virus_variant, age}];

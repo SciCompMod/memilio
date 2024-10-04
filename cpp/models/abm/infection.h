@@ -89,6 +89,8 @@ public:
      */
     ScalarType get_viral_shed(TimePoint t) const;
 
+    ScalarType get_viral_shed_constant(TimePoint t) const;
+
     /**
      * @brief Get total viral shed.
      */

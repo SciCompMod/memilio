@@ -452,7 +452,7 @@ struct TestParameters {
     TestParameters(UncertainValue value)
     {
         sensitivity = value;
-        sensitivity = value;
+        specificity = value;
     }
 };
 
