@@ -20,6 +20,8 @@
 #ifndef MIO_ABM_TIME_H
 #define MIO_ABM_TIME_H
 
+#include "memilio/io/default_serialize.h"
+
 namespace mio
 {
 namespace abm
@@ -142,6 +144,12 @@ public:
         return *this;
     }
     /**@}*/
+
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("TimeSpan").add("seconds", m_seconds);
+    }
 
 private:
     int m_seconds; ///< The duration of time in seconds.
@@ -282,6 +290,12 @@ public:
     TimeSpan operator-(const TimePoint& p2) const
     {
         return TimeSpan{m_seconds - p2.seconds()};
+    }
+
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("TimePoint").add("seconds", m_seconds);
     }
 
 private:

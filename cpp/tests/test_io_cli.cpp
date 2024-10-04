@@ -151,6 +151,8 @@ using Params = mio::ParameterSet<A, B, C, D>;
 // using BadParams = mio::ParameterSet<A, CollisionA>;
 TEST(TestCLI, test_option_verifier)
 {
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+
     EXPECT_DEBUG_DEATH(mio::details::cli::verify_options(mio::ParameterSet<A, NameCollision>()),
                        ".*Options may not have duplicate fields\\. \\(field required\\)");
     EXPECT_DEBUG_DEATH(mio::details::cli::verify_options(mio::ParameterSet<A, AliasCollision>()),
@@ -212,6 +214,8 @@ TEST(TestCLI, test_set_param)
 
 TEST(TestCLI, test_write_help)
 {
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+
     std::stringstream ss;
     const std::string help =
         "Usage: TestSuite <option> <value> ...\nValues must be entered as json values, i.e. the expression to the "
@@ -237,6 +241,8 @@ TEST(TestCLI, test_write_help)
 
 TEST(TestCLI, test_print_options)
 {
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+
     const std::vector<std::string> args{"", "--print_option", "a", "D"};
     const int argc = (int)args.size();
     char** argv    = make_argv(args);
