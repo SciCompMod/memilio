@@ -117,8 +117,16 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
         MEMILIO_H5_CHECK(
             H5Literate(region_h5group.id, H5_INDEX_NAME, H5_ITER_INC, NULL, &store_group_name, &h5dset_names),
             StatusCode::UnknownError, "Dataset names could not be read.");
-        auto num_groups = (Eigen::Index)std::count_if(h5dset_names.begin(), h5dset_names.end(), [](auto&& str) {
-            return str.find("Group") != std::string::npos;
+
+        std::string h5_key = std::any_of(h5dset_names.begin(), h5dset_names.end(),
+                                         [](const std::string& str) {
+                                             return str.find("Group") == 0;
+                                         })
+                                 ? "Group"
+                                 : "End";
+
+        auto num_groups = (Eigen::Index)std::count_if(h5dset_names.begin(), h5dset_names.end(), [&h5_key](auto&& str) {
+            return str.find(h5_key) != std::string::npos;
         });
 
         H5DataSet dataset_t{H5Dopen(region_h5group.id, "Time", H5P_DEFAULT)};
@@ -168,8 +176,17 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
         for (Eigen::Index t_idx = 0; t_idx < num_timepoints; ++t_idx) {
             groups.add_time_point(time[t_idx]);
         }
-        for (Eigen::Index group_idx = 0; group_idx < num_groups; ++group_idx) {
-            auto group_name = "/" + h5group_name + "/Group" + std::to_string(group_idx + 1);
+
+        std::vector<int> h5_key_indices;
+        // Extract group indices from h5dset_names
+        for (const auto& name : h5dset_names) {
+            if (name.find(h5_key) == 0) {
+                h5_key_indices.push_back(std::stoi(name.substr(h5_key.size())));
+            }
+        }
+
+        for (auto h5_key_indx = size_t(0); h5_key_indx < h5_key_indices.size(); h5_key_indx++) {
+            auto group_name = "/" + h5group_name + "/" + h5_key + std::to_string(h5_key_indices[h5_key_indx]);
             H5DataSet dataset_values{H5Dopen(file.id, group_name.c_str(), H5P_DEFAULT)};
             MEMILIO_H5_CHECK(dataset_values.id, StatusCode::UnknownError, "Values DataSet could not be read.");
 
@@ -194,7 +211,7 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
 
             for (Eigen::Index idx_t = 0; idx_t < num_timepoints; idx_t++) {
                 for (Eigen::Index idx_c = 0; idx_c < num_infectionstates; idx_c++) {
-                    groups[idx_t][num_infectionstates * group_idx + idx_c] = group_values(idx_t, idx_c);
+                    groups[idx_t][num_infectionstates * h5_key_indx + idx_c] = group_values(idx_t, idx_c);
                 }
             }
         }

@@ -22,6 +22,7 @@
 
 #include "memilio/io/json_serializer.h"
 #include "memilio/mobility/graph.h"
+#include "memilio/data/analyze_result.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 
 namespace mio
@@ -185,6 +186,31 @@ IOResult<Graph<Model, MobilityParameters<FP>>> read_graph(const std::string& dir
 }
 
 #endif //MEMILIO_HAS_JSONCPP
+#ifdef MEMILIO_HAS_HDF5
+/**
+ * @brief Save the results of the edges for a single graph simulation run.
+ * @param[in] results Simulation results per edge of the graph.
+ * @param[in] ids Identifiers for the start and end node of the edges.
+ * @param[in] filename Name of the file where the results will be saved.
+ * @return Any io errors that occur during writing of the files. 
+ */
+IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const std::vector<std::pair<int, int>>& ids,
+                          const std::string& filename);
+
+/**
+ * @brief Saves the results of a simulation for each edge in the graph.
+ * @param[in] ensemble_edges Simulation results for each run for each edge.
+ * @param[in] pairs_edges Identifiers for the start and end node of the edges.
+ * @param[in] result_dir Top level directory for all results of the parameter study.
+ * @param[in] save_single_runs [Default: true] Defines if single run results are written.
+ * @param[in] save_percentiles [Default: true] Defines if percentiles are written.
+ * @return Any io errors that occur during writing of the files.
+ */
+IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<double>>>& ensemble_edges,
+                          const std::vector<std::pair<int, int>>& pairs_edges, const fs::path& result_dir,
+                          bool save_single_runs = true, bool save_percentiles = true);
+
+#endif //MEMILIO_HAS_HDF5
 
 } // namespace mio
 

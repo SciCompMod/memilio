@@ -166,3 +166,71 @@ TEST(TestMobility, edgeApplyMobility)
     EXPECT_DOUBLE_EQ(node1.get_result().get_last_value().sum(), 900);
     EXPECT_DOUBLE_EQ(node2.get_result().get_last_value().sum(), 1100);
 }
+
+TEST(TestMobility, add_mobility_result_time_point)
+{
+    using Model = mio::osecir::Model<double>;
+
+    //setup nodes
+    const size_t num_groups = 1;
+    Model model(num_groups);
+    auto& params = model.parameters;
+    auto& cm     = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::osecir::ContactPatterns<double>>());
+    cm[0].get_baseline()(0, 0) = 5.0;
+
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}]          = 10;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]            = 20;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 1000);
+    params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[(mio::AgeGroup)0] = 1.;
+    params.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[(mio::AgeGroup)0]   = 1.;
+    params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[(mio::AgeGroup)0]   = 1.;
+    params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[(mio::AgeGroup)0]        = 0.5;
+    params.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]                      = 1.;
+    params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0]           = 1.;
+    params.apply_constraints();
+
+    // get indices of INS and ISy compartments.
+    std::vector<std::vector<size_t>> indices_save_edges(2);
+
+    // Reserve Space. The multiplication by 2 is necessary because we have the
+    // base and the confirmed compartments for each age group.
+    for (auto& vec : indices_save_edges) {
+        vec.reserve(2 * num_groups);
+    }
+
+    // get indices and write them to the vector
+    for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(num_groups); ++i) {
+        indices_save_edges[0].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptoms}));
+        indices_save_edges[0].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}));
+        indices_save_edges[1].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptoms}));
+        indices_save_edges[1].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}));
+    }
+
+    //setup different edges
+    double t = 0.;
+    mio::SimulationNode<mio::osecir::Simulation<>> node1(model, t);
+    mio::SimulationNode<mio::osecir::Simulation<>> node2(model, t);
+    mio::MobilityEdge edge1(Eigen::VectorXd::Constant(10, 0.1), indices_save_edges);
+    edge1.apply_mobility(t, 0.0, node1, node2);
+    auto mobility = edge1.get_mobility_results().get_last_value();
+    EXPECT_NEAR(mobility[0], 1.0, 1e-12);
+    EXPECT_NEAR(mobility[1], 2.0, 1e-12);
+    EXPECT_NEAR(mobility[2], 100.0, 1e-12);
+
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 100;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 30;
+    mio::SimulationNode<mio::osecir::Simulation<>> node3(model, t);
+    mio::SimulationNode<mio::osecir::Simulation<>> node4(model, t);
+    mio::MobilityEdge edge2(Eigen::VectorXd::Constant(10, 0.1), indices_save_edges);
+    edge2.apply_mobility(t, 0.5, node3, node4);
+    mobility = edge2.get_mobility_results().get_last_value();
+    EXPECT_NEAR(mobility[0], 11.0, 1e-12);
+    EXPECT_NEAR(mobility[1], 5.0, 1e-12);
+    EXPECT_NEAR(mobility[2], 113.0, 1e-12);
+}
