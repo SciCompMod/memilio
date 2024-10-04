@@ -103,7 +103,7 @@ def compare_single_compartment(files, legendplot,  compartment_idx=1, filename_p
     plt.ylabel('Number of ' +
                secir_dict[compartment_idx] + " Individuals", fontsize=14)
     # plt.ylim(bottom=0)
-    plt.xlim(left=2, right=dates[-1])
+    plt.xlim(left=0, right=dates[-1])
     plt.legend(legendplot, fontsize=14, framealpha=0.5)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
@@ -175,7 +175,7 @@ def compare_compartments_horizontal(files, legendplot,  filename_plot="compare_c
     # Define some characteristics of the plot.
     for i in range(math.ceil(len(compartment_indices)/2)*2):
         axs[i % 2, int(i/2)].set_xlim(left=0, right=dates[-1])
-        # axs[i % 2, int(i/2)].set_ylim(bottom=0)
+        axs[i % 2, int(i/2)].set_ylim(bottom=0)
         axs[i % 2, int(i/2)].grid(True, linestyle='--')
         axs[i % 2, int(i/2)].tick_params(axis='y', labelsize=7)
         axs[i % 2, int(i/2)].tick_params(axis='x', labelsize=7)
@@ -345,29 +345,6 @@ def plot_subcompartments3D(file, subcompartments, compartment_idx, first_time_id
     plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
 
 
-# def plot_maxpeak_3d(func_get_file_name, R0s, subcomps, filename_plot="maxpeak_3d"):
-#     fig = plt.figure()
-#     ax = fig.add_subplot(projection='3d')
-
-#     # Make data
-#     R0m, subm = np.meshgrid(R0s, subcomps)
-#     maxpeak = np.zeros(R0m.shape)
-#     for sub in range(maxpeak.shape[0]):
-#         for R0 in range(maxpeak.shape[1]):
-#             maxpeak[sub, R0] = get_maxpeak_incidence(
-#                 func_get_file_name(R0=R0s[R0], subcompartment=subcomps[sub]))
-
-#     # Plot the surface
-#     ax.plot_surface(R0m, subm, maxpeak)
-
-#     # Set an equal aspect ratio
-#     # ax.set_aspect('equal')
-
-#     if not os.path.isdir('Plots'):
-#         os.makedirs('Plots')
-#     plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
-
-
 def plot_maxpeak_incidence(func_get_file_name, R0s, subcomps, filename_plot="maxpeak2d"):
     fig = plt.figure()
 
@@ -454,7 +431,7 @@ def get_day_peak_incidence(file):
     return dates[argmax]
 
 
-def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infections"):
+def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infections", tmax=0):
     """ Single plot to compare the incidence of different results. Incidence means the number of people leaving the
         susceptible class per day.
 
@@ -483,16 +460,7 @@ def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infe
         dates = data['Time'][:]
         # As there should be only one Group, total is the simulation result.
         total = data['Total'][:, :]
-        # if (total.shape[1] != 8):
-        #     raise gd.DataError(
-        #         "Expected a different number of compartments.")
         incidence = (total[:-1, 0]-total[1:, 0])/(dates[1:]-dates[:-1])
-        if (file == 0):
-            incidence_ref = incidence
-            print("Relative deviation of the new infections at time " +
-                  str(dates[-1])+" from the results of "+legendplot[0])
-        deviation = (incidence[-1]-incidence_ref[-1])/incidence_ref[-1]
-        print(legendplot[file]+": "+str(deviation))
         # Plot result.
         if legendplot[file] in linestyle_dict:
             plt.plot(dates[1:], incidence, linewidth=1.2,
@@ -503,11 +471,13 @@ def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infe
         h5file.close()
 
     plt.xlabel('Simulation time [days]', fontsize=16)
-    # plt.xticks(np.arange(0, dates[-1]+1, 5))
     plt.yticks(fontsize=9)
     plt.ylabel('Daily new transmissions', fontsize=14)
     plt.ylim(bottom=0, top=ylim)
-    plt.xlim(left=0, right=dates[-1])
+    if tmax > 0:
+        plt.xlim(left=0, right=tmax)
+    else:
+        plt.xlim(left=0, right=dates[-1])
     plt.legend(legendplot, fontsize=14, framealpha=0.5)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
@@ -523,112 +493,99 @@ if __name__ == '__main__':
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "data", "simulation_lct_noage")
 
-    case = 0
+    case = 3
     if case == 0:
         # rise R0 short
-        plot_new_infections([os.path.join(data_dir, "riseR0short", "fictional_lct_2.0_1"),
-                             os.path.join(data_dir, "riseR0short",
-                                          "fictional_lct_2.0_3"),
-                             os.path.join(data_dir, "riseR0short",
-                                          "fictional_lct_2.0_10"),
-                             os.path.join(data_dir, "riseR0short",
-                                          "fictional_lct_2.0_50")
-                             ],
+        folder = os.path.join(data_dir, "riseR0shortswitchedTETC")
+        plot_new_infections([os.path.join(folder, "fictional_lct_2.0_1"), os.path.join(folder, "fictional_lct_2.0_3"),
+                             os.path.join(folder, "fictional_lct_2.0_10"),
+                             os.path.join(folder, "fictional_lct_2.0_50")],
                             20000, legendplot=list(["ODE", "LCT3", "LCT10", "LCT50"]),
-                            filename_plot="new_infections_lct_rise2.0")
+                            filename_plot="new_infections_lct_rise2.0switchedTETC")
     elif case == 1:
         # drop R0 short
-        plot_new_infections([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),
-                             os.path.join(data_dir, "dropR0",
-                                          "fictional_lct_0.5_3"),
-                             os.path.join(data_dir, "dropR0",
-                                          "fictional_lct_0.5_10"),
-                             os.path.join(data_dir, "dropR0",
-                                          "fictional_lct_0.5_20"),
-                             os.path.join(data_dir, "dropR0",
-                                          "fictional_lct_0.5_50")
-                             ],
-                            4100, legendplot=list(["ODE", "LCT3", "LCT10", "LCT20", "LCT50"]),
+        folder = os.path.join(data_dir, "dropR0")
+        plot_new_infections([os.path.join(folder, "fictional_lct_0.5_1"), os.path.join(folder, "fictional_lct_0.5_3"),
+                             os.path.join(folder, "fictional_lct_0.5_10"),
+                             os.path.join(folder, "fictional_lct_0.5_50")],
+                            4100, legendplot=list(["ODE", "LCT3", "LCT10", "LCT50"]),
                             filename_plot="new_infections_lct_drop0.5")
-        compare_compartments_horizontal([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),
-                                         os.path.join(data_dir, "dropR0",
-                                                      "fictional_lct_0.5_3"),
-                                         os.path.join(data_dir, "dropR0",
-                                                      "fictional_lct_0.5_10"),
-                                         os.path.join(data_dir, "dropR0",
-                                                      "fictional_lct_0.5_20"),
-                                         os.path.join(data_dir, "dropR0",
-                                                      "fictional_lct_0.5_50")
-                                         ],
-                                        legendplot=list(
-            ["ODE", "LCT3", "LCT10", "LCT20", "LCT50"]),
-            filename_plot="compartments_carrier_infected_lct_drop0.5", compartment_indices=[1, 5, 2, 3])
-        # compare_single_compartment([os.path.join(data_dir, "dropR0", "fictional_lct_0.5_1"),
-        #                             os.path.join(data_dir, "dropR0",
-        #                                          "fictional_lct_0.5_3"),
-        #                             os.path.join(data_dir, "dropR0",
-        #                                          "fictional_lct_0.5_10"),
-        #                             os.path.join(data_dir, "dropR0",
-        #                                          "fictional_lct_0.5_20")
-        #                             ],
-        #                            legendplot=list(
-        #     ["ODE", "LCT3", "LCT10", "LCT20"]),  compartment_idx=2, filename_plot="compare_carrier_compartment_lct_drop0.5")
+        compare_single_compartment([os.path.join(folder, "fictional_lct_0.5_1"),
+                                    os.path.join(
+                                        folder, "fictional_lct_0.5_3"),
+                                    os.path.join(
+                                        folder, "fictional_lct_0.5_10"),
+                                    os.path.join(folder, "fictional_lct_0.5_50")],
+                                   legendplot=list(
+            ["ODE", "LCT3", "LCT10", "LCT50"]),
+            compartment_idx=2, filename_plot="carrier_compartment_lct_drop0.5")
+        compare_single_compartment([os.path.join(folder, "fictional_lct_0.5_1"),
+                                    os.path.join(folder,
+                                                 "fictional_lct_0.5_3"),
+                                    os.path.join(folder,
+                                                 "fictional_lct_0.5_10"),
+                                    os.path.join(folder,
+                                                 "fictional_lct_0.5_50")
+                                    ],
+                                   legendplot=list(
+                                       ["ODE", "LCT3", "LCT10", "LCT50"]),
+                                   compartment_idx=3, filename_plot="infected_compartment_lct_drop0.5")
     elif case == 2:
         # rise r0 2.0 long
-        plot_new_infections([os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_1_long"),
-                             os.path.join(data_dir, "riseR0long",
-                                          "fictional_lct_2.0_3_long"),
-                             os.path.join(data_dir, "riseR0long",
-                                          "fictional_lct_2.0_10_long"),
-                             os.path.join(data_dir, "riseR0long",
-                                          "fictional_lct_2.0_20_long")
+        folder = os.path.join(data_dir, "riseR0long")
+        plot_new_infections([os.path.join(folder, "fictional_lct_2.0_1"),
+                             os.path.join(folder,
+                                          "fictional_lct_2.0_3"),
+                             os.path.join(folder,
+                                          "fictional_lct_2.0_10"),
+                             os.path.join(folder,
+                                          "fictional_lct_2.0_50")
                              ],
-                            2e6, legendplot=list(["ODE", "LCT3", "LCT10", "LCT20"]),
-                            filename_plot="new_infections_lct_rise2.0_long")
-        compare_compartments_horizontal([os.path.join(data_dir, "riseR0long", "fictional_lct_2.0_1_long"),
-                                         os.path.join(data_dir, "riseR0long",
-                                                      "fictional_lct_2.0_3_long"),
-                                         os.path.join(data_dir, "riseR0long",
-                                                      "fictional_lct_2.0_10_long"),
-                                         os.path.join(data_dir, "riseR0long",
-                                                      "fictional_lct_2.0_20_long")
+                            2.1e6, legendplot=list(["ODE", "LCT3", "LCT10", "LCT50"]),
+                            filename_plot="new_infections_lct_rise2.0_long", tmax=150)
+        compare_compartments_horizontal([os.path.join(folder, "fictional_lct_2.0_1"),
+                                         os.path.join(folder,
+                                                      "fictional_lct_2.0_3"),
+                                         os.path.join(folder,
+                                                      "fictional_lct_2.0_10"),
+                                         os.path.join(folder,
+                                                      "fictional_lct_2.0_50")
                                          ],
                                         legendplot=list(
-            ["ODE", "LCT3", "LCT10", "LCT20"]),
+            ["ODE", "LCT3", "LCT10", "LCT50"]),
             filename_plot="compartments_lct_rise2.0_long", compartment_indices=[1, 2, 3, 4, 5, 7])
     elif case == 3:
         # rise r0 4.0 long
-        plot_new_infections([os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_1_long"),
-                             os.path.join(data_dir, "riseR0long",
-                                          "fictional_lct_4.0_3_long"),
-                             os.path.join(data_dir, "riseR0long",
-                                          "fictional_lct_4.0_10_long"),
-                             os.path.join(data_dir, "riseR0long",
-                                          "fictional_lct_4.0_20_long")
+        folder = os.path.join(data_dir, "riseR0long")
+        plot_new_infections([os.path.join(folder, "fictional_lct_4.0_1"),
+                             os.path.join(folder,
+                                          "fictional_lct_4.0_3"),
+                             os.path.join(folder,
+                                          "fictional_lct_4.0_10"),
+                             os.path.join(folder,
+                                          "fictional_lct_4.0_50")
                              ],
-                            6e6, legendplot=list(["ODE", "LCT3", "LCT10", "LCT20"]),
-                            filename_plot="new_infections_lct_rise4.0_long")
-        compare_compartments_horizontal([os.path.join(data_dir, "riseR0long", "fictional_lct_4.0_1_long"),
-                                         os.path.join(data_dir, "riseR0long",
-                                                      "fictional_lct_4.0_3_long"),
-                                         os.path.join(data_dir, "riseR0long",
-                                                      "fictional_lct_4.0_10_long"),
-                                         os.path.join(data_dir, "riseR0long",
-                                                      "fictional_lct_4.0_20_long")
+                            6e6, legendplot=list(["ODE", "LCT3", "LCT10", "LCT50"]),
+                            filename_plot="new_infections_lct_rise4.0_long", tmax=70)
+        compare_compartments_horizontal([os.path.join(folder, "fictional_lct_4.0_1"),
+                                         os.path.join(folder,
+                                                      "fictional_lct_4.0_3"),
+                                         os.path.join(folder,
+                                                      "fictional_lct_4.0_10"),
+                                         os.path.join(folder,
+                                                      "fictional_lct_4.0_50")
                                          ],
                                         legendplot=list(
-            ["ODE", "LCT3", "LCT10", "LCT20"]),
+            ["ODE", "LCT3", "LCT10", "LCT50"]),
             filename_plot="compartments_lct_rise4.0_long", compartment_indices=[1, 2, 3, 4, 5, 7])
     elif case == 4:
         data_dir = os.path.join(os.path.dirname(
             __file__), "..", "data", "simulation_lct_agevsnoage")
         # youngvsold
-        compare_compartments_horizontal([os.path.join(data_dir, "young", "fictional_lct_ageres_3_young"),
-                                         os.path.join(data_dir, "young",
-                                                      "fictional_lct_notageres_3_young"),
-                                         os.path.join(data_dir, "old",
-                                                      "fictional_lct_ageres_3_old"),
-                                         ],
+        compare_compartments_horizontal([os.path.join(data_dir, "fictional_lct_ageres_10_agegroupinit_1"),
+                                         os.path.join(
+                                             data_dir, "fictional_lct_notageres_10"),
+                                         os.path.join(data_dir, "fictional_lct_ageres_10_agegroupinit_5")],
                                         legendplot=list(
-            ["young-age", "noage", "old-age"]),
+            ["School scenario", "Non age-resolved scenario", "Retirement home scenario"]),
             filename_plot="compartments_agevsnoage", compartment_indices=[1, 2, 3, 4, 5, 7])

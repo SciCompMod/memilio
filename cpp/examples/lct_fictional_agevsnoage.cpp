@@ -41,7 +41,7 @@
 namespace params
 {
 // Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
-constexpr int num_subcompartments = 3;
+constexpr int num_subcompartments = 10;
 constexpr size_t num_groups       = 6;
 
 // Parameters
@@ -120,27 +120,26 @@ mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(bool a
             contact_matrices[location].get_minimum()  = Eigen::MatrixXd::Zero(num_groups, num_groups);
         }
     }
+    std::cout << "Contact Pattern used:" << std::endl;
     std::cout << mio::UncertainContactMatrix<ScalarType>(contact_matrices).get_cont_freq_mat().get_matrix_at(0)
               << std::endl;
+    std::cout << std::endl;
     return mio::success(mio::UncertainContactMatrix<ScalarType>(contact_matrices));
 }
 
-std::vector<std::vector<ScalarType>> get_initialization(bool young, bool age = true)
+std::vector<std::vector<ScalarType>> get_initialization(bool age = false, size_t agegroup_init = 0)
 {
     using namespace params;
     ScalarType num_exposed = 100.;
     std::vector<std::vector<ScalarType>> init;
     if (age) {
         for (size_t group = 0; group < num_groups; group++) {
-            if (young && group == 1) {
-                init.push_back({total_population - num_exposed, num_exposed, 0., 0., 0., 0., 0., 0.});
+            std::vector<ScalarType> init_vector_group({total_population, 0., 0., 0., 0., 0., 0., 0.});
+            if (group == agegroup_init) {
+                init_vector_group[0] = total_population - num_exposed;
+                init_vector_group[1] = num_exposed;
             }
-            else if (!young && group == num_groups - 1) {
-                init.push_back({total_population - num_exposed, num_exposed, 0., 0., 0., 0., 0., 0.});
-            }
-            else {
-                init.push_back({total_population, 0., 0., 0., 0., 0., 0., 0.});
-            }
+            init.push_back(init_vector_group);
         }
     }
     else {
@@ -159,10 +158,12 @@ std::vector<std::vector<ScalarType>> get_initialization(bool young, bool age = t
 * @param[in] save_dir Specifies the directory where the results should be stored. Provide an empty string if results should not be saved.
 * @returns Any io errors that happen during saving the results.
 */
-mio::IOResult<void> simulate_ageres_model(bool young, ScalarType tmax, std::string save_dir = "")
+mio::IOResult<void> simulate_ageres_model(size_t agegroup_init, ScalarType tmax, std::string save_dir = "")
 {
     using namespace params;
-    std::cout << "Simulation with " << num_subcompartments << " subcompartments." << std::endl;
+    std::cout << "Simulation with " << num_subcompartments
+              << " subcompartments for the initial exposed population in age group " << agegroup_init << "."
+              << std::endl;
     // ----- Initialize age resolved model. -----
     using InfState = mio::lsecir::InfectionState;
     using LctState = mio::LctInfectionState<InfState, 1, num_subcompartments, num_subcompartments, num_subcompartments,
@@ -193,7 +194,7 @@ mio::IOResult<void> simulate_ageres_model(bool young, ScalarType tmax, std::stri
     model.parameters.get<mio::lsecir::ContactPatterns>() = contact_matrix;
     model.parameters.get<mio::lsecir::Seasonality>()     = seasonality;
 
-    auto init_vector = get_initialization(young);
+    auto init_vector = get_initialization(true, agegroup_init);
     for (size_t group = 0; group < num_groups; group++) {
         model.populations[group * LctState::Count + 0]                   = init_vector[group][0]; //S
         model.populations[group * LctState::Count + LctState::Count - 2] = init_vector[group][6]; //R
@@ -215,24 +216,18 @@ mio::IOResult<void> simulate_ageres_model(bool young, ScalarType tmax, std::stri
     mio::TimeSeries<ScalarType> populations = add_age_groups(model.calculate_compartments(result));
 
     if (!save_dir.empty()) {
-        std::string filename = save_dir + "fictional_lct_ageres_" + std::to_string(num_subcompartments);
-        if (young) {
-            filename = filename + "_young";
-        }
-        else {
-            filename = filename + "_old";
-        }
-        filename                               = filename + ".h5";
+        std::string filename = save_dir + "fictional_lct_ageres_" + std::to_string(num_subcompartments) +
+                               "_agegroupinit_" + std::to_string(agegroup_init) + ".h5";
         mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename);
     }
 
     return mio::success();
 }
 
-mio::IOResult<void> simulate_notageres_model(bool young, ScalarType tmax, std::string save_dir = "")
+mio::IOResult<void> simulate_notageres_model(ScalarType tmax, std::string save_dir = "")
 {
     using namespace params;
-    std::cout << "Simulation with " << num_subcompartments << " subcompartments." << std::endl;
+    std::cout << "Simulation with " << num_subcompartments << " subcompartments without age resolution." << std::endl;
     // ----- Initialize age resolved model. -----
     using InfState = mio::lsecir::InfectionState;
     using LctState = mio::LctInfectionState<InfState, 1, num_subcompartments, num_subcompartments, num_subcompartments,
@@ -285,7 +280,7 @@ mio::IOResult<void> simulate_notageres_model(bool young, ScalarType tmax, std::s
     model.parameters.get<mio::lsecir::ContactPatterns>() = contact_matrix;
     model.parameters.get<mio::lsecir::Seasonality>()     = seasonality;
 
-    auto init_vector                       = get_initialization(young, false);
+    auto init_vector                       = get_initialization(false);
     model.populations[0]                   = init_vector[0][0]; //S
     model.populations[LctState::Count - 2] = init_vector[0][6]; //R
     model.populations[LctState::Count - 1] = init_vector[0][7]; //D
@@ -304,14 +299,7 @@ mio::IOResult<void> simulate_notageres_model(bool young, ScalarType tmax, std::s
     mio::TimeSeries<ScalarType> populations = model.calculate_compartments(result);
 
     if (!save_dir.empty()) {
-        std::string filename = save_dir + "fictional_lct_notageres_" + std::to_string(num_subcompartments);
-        if (young) {
-            filename = filename + "_young";
-        }
-        else {
-            filename = filename + "_old";
-        }
-        filename                               = filename + ".h5";
+        std::string filename = save_dir + "fictional_lct_notageres_" + std::to_string(num_subcompartments) + ".h5";
         mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename);
     }
 
@@ -320,14 +308,22 @@ mio::IOResult<void> simulate_notageres_model(bool young, ScalarType tmax, std::s
 
 int main()
 {
-    std::string save_dir = "../../data/simulation_lct_agevsnoage/old/";
-    bool young           = false;
-    auto result          = simulate_ageres_model(young, 40, save_dir);
+    std::string save_dir = "../../data/simulation_lct_agevsnoage/";
+    ScalarType tmax      = 40;
+    // Simulation with initial exposed population in age group 1.
+    auto result = simulate_ageres_model(1, tmax, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
     }
-    result = simulate_notageres_model(young, 40, save_dir);
+    // Simulation with initial exposed population in age group 5.
+    result = simulate_ageres_model(5, tmax, save_dir);
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+        return -1;
+    }
+    // Simulation without age resolution.
+    result = simulate_notageres_model(tmax, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;

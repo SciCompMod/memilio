@@ -41,7 +41,7 @@
 namespace params
 {
 // Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
-constexpr int num_subcompartments = 10;
+constexpr int num_subcompartments = 50;
 constexpr size_t num_groups       = 6;
 
 // Parameters
@@ -224,15 +224,18 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, bool save
             mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename);
         }
     }
-    // std::cout << populations.get_value(populations.get_num_time_points() - 2)[0] -
-    //                  populations.get_value(populations.get_num_time_points() - 1)[0]
-    //           << std::endl;
     // std::cout << "Final size: " << std::fixed << std::setprecision(6)
     //           << total_population - populations.get_last_value()[0] << std::endl;
     // std::cout << std::endl;
-    // //const ScalarType erg[] = {66187839.9905, 66177693.6578, 66173548.3156, 66172611.5577};//R=2
-    // //const ScalarType erg[] = {81489331.8278, 81487771.4486, 81487273.3112, 81487185.6561}; //R=4
-    // const ScalarType erg[] = {83151138.088446, 83151130.435465, 83151128.866535, 83151128.639552}; //R=10
+    // order: number of subcompartments: 1,3,10,50
+    //const ScalarType erg[] = {66187880.970838, 66177693.857084, 66173548.328663, 66172040.662903}; //R=2
+    //const ScalarType erg[] = {81489438.000375, 81487771.513275, 81487273.311926, 81487137.403808}; //R=4
+    // const ScalarType erg[] = {83151138.102138, 83151130.435465, 83151128.866535, 83151128.512536}; //R=10
+    // std::cout << "Absolute deviation: " << std::endl;
+    // for (int i = 0; i < 4; i++) {
+    //     std::cout << "i= " << i << ": " << (erg[i] - erg[0]) << std::endl;
+    // }
+    // std::cout << "Relative deviation: " << std::endl;
     // for (int i = 0; i < 4; i++) {
     //     std::cout << "i= " << i << ": " << (erg[i] - erg[0]) / erg[0] << std::endl;
     // }
