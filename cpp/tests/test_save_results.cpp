@@ -471,6 +471,7 @@ TEST(TestSaveResult, save_edges)
 
 TEST(TestSaveEdges, save_edges_empty_ts)
 {
+    mio::set_log_level(mio::LogLevel::off);
     std::vector<mio::TimeSeries<double>> results;
 
     const auto num_elements = 2;
@@ -485,20 +486,12 @@ TEST(TestSaveEdges, save_edges_empty_ts)
     mio::TimeSeries<double> ts_2(num_elements);
     results.push_back(ts_2);
 
-    const std::vector<std::pair<int, int>> pairs_edges = {{0, 1}, {0, 2}};
+    const std::vector<std::pair<int, int>> pairs_edges = {{0, 1}, {1, 2}};
 
     // Create a TempFile for HDF5 output
     TempFileRegister file_register;
     auto results_file_path = file_register.get_unique_path("TestEdges-%%%%-%%%%.h5");
 
-    // Call the save_edges function
-    auto save_result = save_edges(results, pairs_edges, results_file_path);
-    EXPECT_EQ(save_result, mio::success());
-
-    // Read the results back in and check that they are correct for the first TimeSeries.
-    auto results_from_file = mio::read_result(results_file_path);
-    ASSERT_TRUE(results_from_file);
-
-    auto result_from_file_group0 = results_from_file.value()[0];
-    EXPECT_EQ(result_from_file_group0.get_groups().get_num_time_points(), 2);
+    // Call the save_edges function and check if it returns a failure
+    ASSERT_THAT(save_edges(results, pairs_edges, results_file_path), IsFailure(mio::StatusCode::InvalidValue));
 }

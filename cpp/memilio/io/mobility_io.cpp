@@ -276,7 +276,9 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
             }
         }
         else {
-            edge_indx++;
+            log_error("No time points in the TimeSeries for Edge combination " + std::to_string(ids[edge_indx].first) +
+                      " -> " + std::to_string(ids[edge_indx].second));
+            return failure(mio::StatusCode::InvalidValue);
         }
     }
     return success();

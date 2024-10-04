@@ -220,8 +220,8 @@ public:
      * compartments that are saved in the member `m_mobility_results` of the `MobilityEdge` class during the simulation 
      * using the `add_mobility_result_time_point` function.
      *
-     * @return A reference to the 2D vector containing indices of compartments to be saved. Each inner vector 
-     * represents a group of compartments defined by indices.
+     * @return A reference to the 2D vector containing indices of compartments to be saved. The outer vector represents different sets of compartments. 
+     * Each inner vector represents a group of compartments defined by indices.
      */
     const auto& get_save_indices() const
     {
