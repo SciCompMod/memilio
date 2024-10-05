@@ -17,7 +17,7 @@ from scipy.signal import savgol_filter
 
 fontsize = 18
 
-def plot_scenario(path, folder, folder_high, folder_enough):
+def  plot_scenario(path, folder, folder_high, folder_enough, folder_comp=0):
 
     # four plots with 3 lines for each scenario and another one for the real data
     # we do one plot with 3 subplots first two plots in upper left and right are 
@@ -47,7 +47,50 @@ def plot_scenario(path, folder, folder_high, folder_enough):
     xx = xx[1:][::24][:90]
 
     #label string for each folder
-    labels = ['Standart Testing', 'High Testing Scenario', 'Very High Testing Scenario']
+    labels = ['Standard Testing', 'High Testing Scenario', 'Very High Testing Scenario']
+
+    if folder_comp != 0:
+        inf_p50_normal_comp = h5py.File(
+            folder_comp+"/infection_per_location_type_per_age_group/"+"0"+"/p50/Results.h5", 'r')
+        p50_bs_normal_comp = inf_p50_normal_comp['0']['Total'][()]
+
+        tests_p50_normal_comp =  h5py.File(
+            folder_comp+"/test_per_location_type_per_age_group/"+"0"+"/p50/Results.h5", 'r')
+        p50_bs_tests_normal_comp = tests_p50_normal_comp['0']['Total'][()]
+
+        test_p_pos_p50_normal_comp = h5py.File(
+            folder_comp+"/new_detected_infections/"+"0"+"/p50/Results.h5", 'r')
+        p50_bs_test_p_pos_normal_comp = test_p_pos_p50_normal_comp['0']['Total'][()].flatten()
+
+        deaths_p50_normal_comp = h5py.File(
+            folder_comp+"/infection_state_per_age_group/"+"0"+"/p50/Results.h5", 'r')
+        p50_bs_deaths_normal_comp = deaths_p50_normal_comp['0']['Total'][()][:, 7][::24][0:90]-deaths_p50_normal_comp['0']['Total'][()][:, 7][::24][0]
+
+        reproduction_p50_normal_comp = h5py.File(
+            folder_comp+"/estimated_reproduction_number/"+"0"+"/p50/Results.h5", 'r')
+        p50_bs_reproduction_normal_comp = reproduction_p50_normal_comp['0']['Total'][()][::24][0:90].flatten()
+
+        p50_bs_normal_comp_all_locations = np.zeros(len(p50_bs_normal_comp))
+        for location in locations:
+            p50_bs_normal_comp_all_locations += p50_bs_normal_comp[:, location]
+        
+
+
+        cum_inf_normal_comp_50 = np.cumsum(p50_bs_normal_comp_all_locations)
+        cum_inf_normal_comp_50 = cum_inf_normal_comp_50[::24]
+        cum_inf_normal_comp_50 = cum_inf_normal_comp_50[:91]
+        new_inf_normal_comp_50 = np.diff(cum_inf_normal_comp_50)
+
+        total_50_positive_comp = np.cumsum(p50_bs_test_p_pos_normal_comp, axis=0)
+        total_50_positive_comp = total_50_positive_comp[0:91] # we still need to take the difference to get the daily amount
+        total_50_positive_comp = np.diff(total_50_positive_comp, axis=0).flatten()
+
+        total_50_done_comp = np.sum(p50_bs_tests_normal_comp, axis=1)
+        total_50_done_comp = np.cumsum(total_50_done_comp, axis=0)
+        total_50_done_comp = total_50_done_comp[::24]
+        total_50_done_comp = total_50_done_comp[0:91] # we still need to take the difference to get the daily amount
+        total_50_done_comp = np.diff(total_50_done_comp, axis=0).flatten()
+
 
     for folder in folders:
         inf_p50_normal = h5py.File(
@@ -173,6 +216,7 @@ def plot_scenario(path, folder, folder_high, folder_enough):
         # first plot
         axs[0, 0].plot(xx, new_inf_normal_50, label='Normal')
         axs[0, 0].fill_between(xx, new_inf_normal_25, new_inf_normal_75, alpha=0.5)
+       
         
         
         # second plot
@@ -198,7 +242,14 @@ def plot_scenario(path, folder, folder_high, folder_enough):
         axs[2, 1].fill_between(xx, p25_bs_reproduction_normal, p75_bs_reproduction_normal, alpha=0.5)
         axs[2, 1].set_ylim([0, max(p75_bs_reproduction_normal)*1.5])
 
-
+    if folder_comp != 0:
+        axs[0, 0].plot(xx, new_inf_normal_comp_50[0:90], label='Comparison', linestyle='dashed', color='black')
+        axs[0, 1].plot(xx, cum_inf_normal_comp_50[0:90], label='Lockdown Scenario Standard', linestyle='dashed', color='black')
+        axs[1, 0].plot(xx, total_50_done_comp, label='Comparison', linestyle='dashed', color='black')
+        axs[1, 1].plot(xx[:89], total_50_positive_comp, label='Comparison', linestyle='dashed', color='black')
+        axs[2, 0].plot(xx, p50_bs_deaths_normal_comp, label='Comparison', linestyle='dashed', color='black')
+        axs[2, 1].plot(xx, p50_bs_reproduction_normal_comp, label='Comparison', linestyle='dashed', color='black')
+        
     
   
 
@@ -247,13 +298,14 @@ def plot_scenario(path, folder, folder_high, folder_enough):
 
 
 if __name__ == "__main__":
-    path_to_scenario_1 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/vorlaufige_ergebnisse/results_2024-08-28211441" # more tesring 
-    path_to_scenario_2 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/vorlaufige_ergebnisse/results_2024-08-28113737" # no lockdown but much testing
-    path_to_scenario_3 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/"
+    path_to_scenario_1 = r"C:\Users\korf_sa\Documents\memilio\data\cluster_results\final_results\results_2024-09-21014651" # more tesring 
+    path_to_scenario_2 = r"C:\Users\korf_sa\Documents\memilio\data\cluster_results\final_results\results_2024-09-20233958" # more tesring 
+    # path_to_scenario_2 = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/vorlaufige_ergebnisse/results_2024-08-28113737" # no lockdown but much testing
+    # path_to_scenario_3 = r"C:\Users\korf_sa\Documents\memilio\data\cluster_results\vorlaufige_ergebnisse\results_2024-08-28211441"
     path_to_main_data = "0"
     path_to_high_testing_data = "1"
     path_to_enough_testing_data = "2"
 
-    # plot_scenario(path_to_scenario_1, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)
-    plot_scenario(path_to_scenario_2, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)
+    plot_scenario(path_to_scenario_1, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data,path_to_scenario_2)
+    # plot_scenario(path_to_scenario_2, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)
     # plot_scenario(path_to_scenario_3, path_to_main_data, path_to_high_testing_data, path_to_enough_testing_data)

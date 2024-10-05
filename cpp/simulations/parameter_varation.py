@@ -19,7 +19,7 @@ from scipy.signal import savgol_filter
 import seaborn as sns
 
 
-fontsize = 18
+fontsize = 20
 
 def plot_of_cumuative_infections(path, index=0):
     # plot cumulative infections
@@ -104,23 +104,30 @@ def get_maximum_daily_infections(path, index):
 if __name__ == "__main__":
     
     # path_data = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/vorlaufige_ergebnisse/results_2024-08-28120457"
+    # path_data = r"C:\Users\korf_sa\Documents\memilio\data\cluster_results\final_results\results_2024-09-20233035"
     # variable_1 = "Test likelihood with symptoms"
     # variable_2 = "Ratio for asymptomatic agents to test"
-    # values_1 = [0.0175,0.035,0.0525,0.07,0.0875]
-    # values_2 = ["1/5","1/8","1/11","1/14","1/17"]
+    # values_1 = [0.012, 0.024, 0.036, 0.048, 0.06]
+    # values_2 = ["1/2","1/5","1/8","1/11","1/14"]
 
     # path_data = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/vorlaufige_ergebnisse/results_2024-08-28120954"
+    # path_data = r"C:\Users\korf_sa\Documents\memilio\data\cluster_results\final_results\results_2024-09-20233103"
     # variable_1 = "Quarantine length (days)"
     # variable_2 = "Quarantine efficiency"
     # values_1 = [2,5,8,11,14]
     # values_2 = [0.0,0.25,0.5,0.75,1.0]
 
-    path_data = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/vorlaufige_ergebnisse/results_2024-08-28120655"
-    variable_1 = "Test likelihood with symptoms"
-    variable_2 = "Quarantine length (days)"
-    values_1 = [0.0175,0.035,0.0525,0.07,0.0875]
-    values_2 = [2,5,8,11,14]
+    # path_data = r"C:\Users\korf_sa\Documents\memilio\data\cluster_results\final_results\results_2024-09-29002004"
+    # variable_1 = "Test likelihood with symptoms"
+    # variable_2 = "Quarantine length (days)"
+    # values_1 = [0.012, 0.024, 0.036, 0.048, 0.06]
+    # values_2 = [2,5,8,11,14]
 
+    path_data = r"C:\Users\korf_sa\Documents\memilio\data\cluster_results\final_results\results_2024-10-01225821"
+    variable_1 = "Test likelihood with symptoms"
+    variable_2 = "Mask Efficiency"
+    values_1 = [0.012, 0.024, 0.036, 0.048, 0.06]
+    values_2 = [0.2, 0.225, 0.25, 0.275, 0.3]
 
     # we want to have a Grid Plot with the size of the values
     # in each grid we plot a certain plot which we can define
