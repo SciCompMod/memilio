@@ -58,7 +58,7 @@ int get_region_id(int id)
 }
 
 IOResult<void> read_confirmed_cases_data(
-    std::string const& path, std::vector<ConfirmedCasesDataEntry>& rki_data, std::vector<int> const& vregion, Date date,
+    std::vector<ConfirmedCasesDataEntry>& rki_data, std::vector<int> const& vregion, Date date,
     std::vector<std::vector<double>>& vnum_Exposed, std::vector<std::vector<double>>& vnum_InfectedNoSymptoms,
     std::vector<std::vector<double>>& vnum_InfectedSymptoms, std::vector<std::vector<double>>& vnum_InfectedSevere,
     std::vector<std::vector<double>>& vnum_icu, std::vector<std::vector<double>>& vnum_death,
@@ -74,12 +74,12 @@ IOResult<void> read_confirmed_cases_data(
     });
     if (max_date_entry == rki_data.end()) {
         log_error("RKI data file is empty.");
-        return failure(StatusCode::InvalidFileFormat, path + ", file is empty.");
+        return failure(StatusCode::InvalidFileFormat, "RKI file is empty.");
     }
     auto max_date = max_date_entry->date;
     if (max_date < date) {
         log_error("Specified date does not exist in RKI data");
-        return failure(StatusCode::OutOfRange, path + ", specified date does not exist in RKI data.");
+        return failure(StatusCode::OutOfRange, "Specified date does not exist in RKI data.");
     }
     auto days_surplus = std::min(get_offset_in_days(max_date, date) - 6, 0);
 

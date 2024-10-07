@@ -364,8 +364,6 @@ def cli(what):
     - verbose
     - skip_checks
     - no_raw
-    - username
-    - password
     - to_dataset
 
     @param what Defines what packages calls and thus what kind of command line arguments should be defined.
@@ -379,7 +377,7 @@ def cli(what):
 
     cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
                 "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date', 'files'],
-                "population": ['Download population data from official sources', 'username'],
+                "population": ['Download population data from official sources'],
                 "commuter_official": ['Download commuter data from official sources'],
                 "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'sanitize_data'],
                 "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
@@ -464,6 +462,11 @@ def cli(what):
         parser.add_argument(
             '--files', nargs="*", default='All'
         )
+    if 'ref_year' in what_list:
+        parser.add_argument(
+            '--ref-year', default='newest',
+            help='Considered year.'
+        )
 
     # add optional download options
     if '--no-progress-indicators' in sys.argv:
@@ -498,14 +501,6 @@ def cli(what):
             '--skip-checks', dest='run_checks', action='store_false',
             help='Skips sanity checks etc.')
 
-    if 'username' in what_list:
-        parser.add_argument(
-            '--username', type=str
-        )
-
-        parser.add_argument(
-            '--password', type=str
-        )
     if '--to-dataset' in sys.argv:
         parser.add_argument(
             '--to-dataset', dest='to_dataset',
