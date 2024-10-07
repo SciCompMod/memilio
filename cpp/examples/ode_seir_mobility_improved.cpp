@@ -53,10 +53,10 @@ int main()
     mio::ContactMatrixGroup& commuting_strengths =
         model.parameters.get<mio::oseirmobilityimproved::CommutingStrengths<>>().get_cont_freq_mat();
     Eigen::MatrixXd values(2, 2);
-    values(0, 0)                          = 0.95;
-    values(0, 1)                          = 0.05;
-    values(1, 0)                          = 0.01;
-    values(1, 1)                          = 0.99;
+    values(0, 0)                          = 0.975;
+    values(0, 1)                          = 0.025;
+    values(1, 0)                          = 0.005;
+    values(1, 1)                          = 0.995;
     commuting_strengths[0].get_baseline() = values;
 
     auto& population = model.parameters.get<mio::oseirmobilityimproved::PopulationSizes<>>();
@@ -79,8 +79,8 @@ int main()
 
     auto result_from_sim = simulate(t0, tmax, dt, model, integrator);
 
-    auto save_result_status =
-        mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result_improved.h5");
+    auto save_result_status = mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups,
+                                               "ode_result_improved_factor.h5");
 
     // bool print_to_terminal = true;
 

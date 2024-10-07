@@ -54,17 +54,10 @@ public:
             for (auto age_j : make_index_range(n_age_groups)) {
                 Eigen::VectorXd infectives_per_region = Eigen::VectorXd::Zero((size_t)n_regions);
                 for (auto region_n : make_index_range(n_regions)) {
-                    if (fmod(t, 1.) < 0.5) { // fmod = modulo for doubles
-                        infectives_per_region(region_n.get()) =
-                            commuting_strengths(region_n.get(), region_n.get()) *
-                            pop[population.get_flat_index({region_n, age_j, InfectionState::Infected})];
-                    }
-                    else {
-                        for (auto region_m : make_index_range(n_regions)) {
-                            infectives_per_region(region_n.get()) +=
-                                commuting_strengths(region_m.get(), region_n.get()) *
-                                pop[population.get_flat_index({region_m, age_j, InfectionState::Infected})];
-                        }
+                    for (auto region_m : make_index_range(n_regions)) {
+                        infectives_per_region(region_n.get()) +=
+                            commuting_strengths(region_m.get(), region_n.get()) *
+                            pop[population.get_flat_index({region_m, age_j, InfectionState::Infected})];
                     }
                 }
                 for (auto region_n : make_index_range(n_regions)) {
