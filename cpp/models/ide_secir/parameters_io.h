@@ -52,7 +52,8 @@ namespace isecir
 * The flow InfectedNoSymptomsToInfectedSymptoms is calculated with the standard formula from the IDE model
 * using the results for ExposedToInfectedNoSymptoms.
 *
-* The number of deaths used in the model is set to the number given in the RKI data.
+* The number of deaths used in the model is computed by shifting the reported RKI data according to the mean values of the transitions 
+* InfectedSymptomsToInfectedSevere, InfectedSevereToInfectedCritical and InfectedCriticalToDead.
 * We also set the number of total confirmed cases in the model. 
 * Therefore the initialization method using the total confirmed cases is used in the model. See also the documentation of the model class.
 * 
