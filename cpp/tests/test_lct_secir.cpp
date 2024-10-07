@@ -494,7 +494,7 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
     }
 
     // Compare InfectionState compartments.
-    mio::TimeSeries<ScalarType> population = LctState::calculate_compartments(result);
+    mio::TimeSeries<ScalarType> population = model->calculate_compartments(result);
     auto compare_population                = load_test_data_csv<ScalarType>("lct-secir-compartments-compare.csv");
 
     ASSERT_EQ(compare_population.size(), static_cast<size_t>(population.get_num_time_points()));

@@ -287,7 +287,7 @@ TEST_F(ModelTestGLCTSecir, compareWithPreviousRun)
         std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
     // Compare InfectionState compartments.
-    mio::TimeSeries<ScalarType> population = LctState::calculate_compartments(result);
+    mio::TimeSeries<ScalarType> population = model->calculate_compartments(result);
     auto compare_population                = load_test_data_csv<ScalarType>("lct-secir-compartments-compare.csv");
 
     ASSERT_EQ(compare_population.size(), static_cast<size_t>(population.get_num_time_points()));
@@ -445,7 +445,7 @@ TEST_F(ModelTestGLCTSecir, testConstraintsParameters)
     model->parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere>()[0] = 1.;
     model->parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere>()[1] = 0.;
 
-    // --- Check with invalid tranisition matrices. ---
+    // --- Check with invalid transition matrices. ---
     // ExposedToInfectedNoSymptoms.
     model->parameters.get<mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms>()(1, 0) = 10;
     constraint_check = model->parameters.check_constraints();
@@ -497,6 +497,29 @@ TEST_F(ModelTestGLCTSecir, testConstraintsParameters)
     constraint_check = model->parameters.check_constraints();
     EXPECT_FALSE(constraint_check);
 
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
+// Test calculate_compartments with a TimeSeries that has an incorrect number of elements.
+TEST_F(ModelTestGLCTSecir, testCalculatePopWrongSize)
+{
+    // Deactivate temporarily log output because an error is expected.
+    mio::set_log_level(mio::LogLevel::off);
+    // TimeSeries has to have LctState::Count elements.
+    size_t wrong_size = LctState::Count - 2;
+    // Define TimeSeries with wrong_size elements.
+    mio::TimeSeries<ScalarType> wrong_num_elements(wrong_size);
+    mio::Vector<ScalarType> vec_wrong_size = mio::Vector<ScalarType>::Ones(wrong_size);
+    wrong_num_elements.add_time_point(-10, vec_wrong_size);
+    wrong_num_elements.add_time_point(-9, vec_wrong_size);
+    // Call the calculate_compartments function with the TimeSeries with a wrong number of elements.
+    mio::TimeSeries<ScalarType> population = model->calculate_compartments(wrong_num_elements);
+    // A TimeSeries of the right size with values -1 is expected.
+    ASSERT_EQ(1, population.get_num_time_points());
+    for (int i = 0; i < population.get_num_elements(); i++) {
+        EXPECT_EQ(-1, population.get_last_value()[i]);
+    }
     // Reactive log output.
     mio::set_log_level(mio::LogLevel::warn);
 }

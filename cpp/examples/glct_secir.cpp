@@ -164,8 +164,8 @@ int main()
     // Perform a simulation.
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, 0.5, model);
     // The simulation result is divided by subcompartments as in the LCT model.
-    // We call the function calculate_comparttments to get a result according to the InfectionStates.
-    mio::TimeSeries<ScalarType> population_no_subcompartments = LctState::calculate_compartments(result);
+    // We call the function calculate_compartments to get a result according to the InfectionStates.
+    mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
     auto interpolated_result = mio::interpolate_simulation_result(population_no_subcompartments, 0.1);
     interpolated_result.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
 }

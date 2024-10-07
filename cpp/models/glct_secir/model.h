@@ -28,6 +28,7 @@
 #include "memilio/epidemiology/populations.h"
 #include "memilio/config.h"
 #include "memilio/utils/logging.h"
+#include "memilio/utils/time_series.h"
 #include "memilio/math/eigen.h"
 
 namespace mio
@@ -38,11 +39,11 @@ namespace glsecir
 /**
  * @brief Class that defines an GLCT-SECIR model.
  *
- * @tparam NumExposed The number of subcompartents used for the Exposed compartment.
- * @tparam NumInfectedNoSymptoms The number of subcompartents used for the InfectedNoSymptoms compartment. 
- * @tparam NumInfectedSymptoms The number of subcompartents used for the InfectedSymptoms compartment.
- * @tparam NumInfectedSevere The number of subcompartents used for the InfectedSevere compartment.
- * @tparam NumInfectedCritical The number of subcompartents used for the InfectedCritical compartment.
+ * @tparam NumExposed The number of subcompartments used for the Exposed compartment.
+ * @tparam NumInfectedNoSymptoms The number of subcompartments used for the InfectedNoSymptoms compartment. 
+ * @tparam NumInfectedSymptoms The number of subcompartments used for the InfectedSymptoms compartment.
+ * @tparam NumInfectedSevere The number of subcompartments used for the InfectedSevere compartment.
+ * @tparam NumInfectedCritical The number of subcompartments used for the InfectedCritical compartment.
  */
 template <size_t NumExposed, size_t NumInfectedNoSymptoms, size_t NumInfectedSymptoms, size_t NumInfectedSevere,
           size_t NumInfectedCritical>
@@ -324,6 +325,36 @@ public:
                  .transpose() *
             y.segment(LctState::template get_first_index<InfectionState::InfectedCritical>(),
                       dimensionInfectedCriticalToDead);
+    }
+
+    /**
+     * @brief Cumulates a simulation result with subcompartments to produce a result that divides the population only
+     *   into the infection states defined in InfectionState.
+     *
+     * If the model is used for simulation, we will get a result in form of a TimeSeries with infection states divided 
+     * in subcompartments.
+     * The function calculates a TimeSeries without subcompartments from another TimeSeries with subcompartments. 
+     * This is done by summing up the numbers in the subcompartments.
+     * @param[in] subcompartments_ts Result of a simulation with the model.
+     * @return Result of the simulation divided in infection states without subcompartments. 
+     *  Returns TimeSeries with values -1 if calculation is not possible.
+     */
+    TimeSeries<ScalarType> calculate_compartments(const TimeSeries<ScalarType>& subcompartments_ts) const
+    {
+        TimeSeries<ScalarType> compartments_ts((Eigen::Index)InfectionState::Count);
+        if (!(LctState::Count == subcompartments_ts.get_num_elements())) {
+            log_error("Result does not match infectionState of the Model.");
+            // Return a TimeSeries with values -1.
+            Eigen::VectorXd error_output = Eigen::VectorXd::Constant((Eigen::Index)InfectionState::Count, -1);
+            compartments_ts.add_time_point(-1, error_output);
+            return compartments_ts;
+        }
+        Eigen::VectorXd compartments((Eigen::Index)InfectionState::Count);
+        for (Eigen::Index i = 0; i < subcompartments_ts.get_num_time_points(); ++i) {
+            compartments_ts.add_time_point(subcompartments_ts.get_time(i),
+                                           LctState::calculate_compartments(subcompartments_ts[i]));
+        }
+        return compartments_ts;
     }
 };
 

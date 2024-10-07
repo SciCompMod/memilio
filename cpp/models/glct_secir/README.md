@@ -24,14 +24,14 @@ are used to simulate the spread of the disease.
 It is possible to include phase-type distributed stay times for the five compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical.
 
 ## Model equations
-Below is an overview of the model variables and the model equations are stated. For a simpler description let $\mathcal{Z}=\{{E,I_{NS},I_{Sy},I_{Sev},I_{Cr}}\}$ be the set of the compartments that can be diveded in subcompartments.
+Below is an overview of the model variables and the model equations are stated. For a simpler description let $\mathcal{Z}=\{{E,I_{NS},I_{Sy},I_{Sev},I_{Cr}}\}$ be the set of the compartments that can be divided in subcompartments.
 
 | Mathematical variable                   | C++ variable name | Description |
 |---------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
 | $\phi$                      |  `ContactPatterns`               | Average number of contacts of a person per day. |
 | $\rho$                      |  `TransmissionProbabilityOnContact`               | Transmission risk for people located in the susceptible compartments. |
 | $\xi_{I_{NS}}$               |  `RelativeTransmissionNoSymptoms`               | Proportion of nonsymptomatically infected people who are not isolated. |
-| $\xi_{I_{Sy}}$               | `RiskOfInfectionFromSymptomatic`                | Proportion of infected people with symptomps who are not isolated. |
+| $\xi_{I_{Sy}}$               | `RiskOfInfectionFromSymptomatic`                | Proportion of infected people with symptoms who are not isolated. |
 | $n_{z}$                         |  `Num(...)`  | Number of subcompartments of compartment $z\in\mathcal{Z}$. (...) refers to the C++-name of $z$ as stated above.|
 | $\boldsymbol{\alpha_{z}}$                    |  `StartingProbabilities(...)`               | Vector of size $n_{z}$ with the initial probability of starting in any of the subcompartments of compartment $z\in\mathcal{Z}$. The entries should sum to $1$. |
 | $\mathbf{A_{z}^{*}}$                    |  `TransitionMatrix(...z)To(...*)`               | Matrix describing the transitions in between of the subcompartments of $z\in\mathcal{Z}$ that describes the transition to the compartment $*$. |
