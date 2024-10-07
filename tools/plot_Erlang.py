@@ -71,12 +71,18 @@ def plot_contact_matrix():
                                  [0.1742, 0.8897, 3.3124, 4.5406, 0.4262, 0.0214],
                                  [0.0458, 0.1939, 0.5782, 1.3825, 1.473, 0.0704],
                                  [0.1083, 0.1448, 0.4728, 0.9767, 0.6266, 0.1724]])
-    plt.imshow(contact_pattern, cmap='plasma')
+    plt.imshow(contact_pattern, vmin=0, cmap='plasma')
     plt.colorbar()
     plt.xticks(ticks=range(6), labels=[
                '0–4', '5–14', '15–34', '35–59', '60–79', '80+'])
+    plt.gca().xaxis.set_ticks_position('top')
     plt.yticks(ticks=range(6), labels=[
                '0–4', '5–14', '15–34', '35–59', '60–79', '80+'])
+
+    for i in range(6):
+        for j in range(6):
+            plt.text(j, i, round(contact_pattern[i, j], 2),
+                     ha="center", va="center", color="w")
 
     if not os.path.isdir('Plots'):
         os.makedirs('Plots')
