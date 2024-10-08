@@ -10,7 +10,36 @@
 #include "models/ode_seir_mobility_improved/regions.h"
 #include "memilio/io/io.h"
 #include "memilio/io/result_io.h"
-#include "Eigen/Sparse"
+
+#include <chrono>
+
+template <typename FP = ScalarType>
+mio::IOResult<void> set_mobility_weights(const std::string& mobility_data, mio::oseirmobilityimproved::Model<FP>& model,
+                                         size_t number_regions)
+{
+    // mobility between nodes
+    BOOST_OUTCOME_TRY(auto&& mobility_data_commuter,
+                      mio::read_mobility_plain(mobility_data + "mobility/" + "commuter_migration_scaled.txt"));
+    if (mobility_data_commuter.rows() != Eigen::Index(number_regions) ||
+        mobility_data_commuter.cols() != Eigen::Index(number_regions)) {
+        return mio::failure(mio::StatusCode::InvalidValue,
+                            "Mobility matrices do not have the correct size. You may need to run "
+                            "transformMobilitydata.py from pycode memilio epidata package.");
+    }
+
+    for (auto age = mio::AgeGroup(0); age < model.parameters.get_num_agegroups(); age++) {
+        for (size_t county_idx_i = 0; county_idx_i < number_regions; ++county_idx_i) {
+            auto population_i = model.populations.get_group_total(mio::oseirmobilityimproved::Region(county_idx_i));
+            mobility_data_commuter.row(county_idx_i) /= 2 * population_i;
+            mobility_data_commuter(county_idx_i, county_idx_i) =
+                1 - mobility_data_commuter.rowwise().sum()(county_idx_i);
+        }
+        model.parameters.template get<mio::oseirmobilityimproved::CommutingStrengths<>>()
+            .get_cont_freq_mat()[0]
+            .get_baseline() = mobility_data_commuter;
+    }
+    return mio::success();
+}
 
 int main()
 {
@@ -20,24 +49,25 @@ int main()
     ScalarType tmax = 15.;
     ScalarType dt   = 0.5;
 
-    std::vector<int> region_ids  = {1001, 1002};
-    ScalarType number_regions    = region_ids.size();
+    // std::vector<int> region_ids  = {1001, 1002};
+    ScalarType number_regions    = 400;
     ScalarType number_age_groups = 1;
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    const std::string& mobility_data   = "";
-    const std::string& trip_chain_data = "";
+    const std::string& mobility_data = "";
 
     mio::oseirmobilityimproved::Model<ScalarType> model(number_regions, number_age_groups);
     model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
-                       mio::oseirmobilityimproved::InfectionState::Exposed}]     = 10;
+                       mio::oseirmobilityimproved::InfectionState::Exposed}]     = 100;
     model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
-                       mio::oseirmobilityimproved::InfectionState::Susceptible}] = 9990;
-    model.populations[{mio::oseirmobilityimproved::Region(1), mio::AgeGroup(0),
-                       mio::oseirmobilityimproved::InfectionState::Exposed}]     = 0;
-    model.populations[{mio::oseirmobilityimproved::Region(1), mio::AgeGroup(0),
-                       mio::oseirmobilityimproved::InfectionState::Susceptible}] = 10000;
+                       mio::oseirmobilityimproved::InfectionState::Susceptible}] = 99900;
+    for (int i = 1; i < number_regions; i++) {
+        model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(0),
+                           mio::oseirmobilityimproved::InfectionState::Exposed}]     = 0;
+        model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(0),
+                           mio::oseirmobilityimproved::InfectionState::Susceptible}] = 100000;
+    }
 
     model.parameters.set<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>(1.);
 
@@ -50,14 +80,9 @@ int main()
     contact_matrix[0].get_baseline().setConstant(2.7);
     // contact_matrix[0].add_damping(0.5, mio::SimulationTime(5));
 
+    auto result_preprocess = set_mobility_weights(mobility_data, model, number_regions);
     mio::ContactMatrixGroup& commuting_strengths =
         model.parameters.get<mio::oseirmobilityimproved::CommutingStrengths<>>().get_cont_freq_mat();
-    Eigen::MatrixXd values(2, 2);
-    values(0, 0)                          = 0.975;
-    values(0, 1)                          = 0.025;
-    values(1, 0)                          = 0.005;
-    values(1, 1)                          = 0.995;
-    commuting_strengths[0].get_baseline() = values;
 
     auto& population = model.parameters.get<mio::oseirmobilityimproved::PopulationSizes<>>();
     for (int n = 0; n < number_regions; ++n) {
@@ -65,22 +90,31 @@ int main()
             model.populations.get_group_total(mio::oseirmobilityimproved::Region(n));
         for (int m = 0; m < number_regions; ++m) {
             population[{mio::oseirmobilityimproved::Region(n)}] -=
-                values(n, m) * model.populations.get_group_total(mio::oseirmobilityimproved::Region(n));
+                commuting_strengths[0].get_baseline()(n, m) *
+                model.populations.get_group_total(mio::oseirmobilityimproved::Region(n));
             population[{mio::oseirmobilityimproved::Region(m)}] +=
-                values(n, m) * model.populations.get_group_total(mio::oseirmobilityimproved::Region(n));
+                commuting_strengths[0].get_baseline()(n, m) *
+                model.populations.get_group_total(mio::oseirmobilityimproved::Region(n));
         }
     }
-    using DefaultIntegratorCore =
-        mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>;
+    // using DefaultIntegratorCore =
+    //     mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>;
 
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator = std::make_shared<DefaultIntegratorCore>();
+    std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator = std::make_shared<mio::EulerIntegratorCore<>>();
 
     model.check_constraints();
 
+    printf("Start Simulation\n");
+    auto t1              = std::chrono::high_resolution_clock::now();
     auto result_from_sim = simulate(t0, tmax, dt, model, integrator);
+    auto t2              = std::chrono::high_resolution_clock::now();
 
-    auto save_result_status = mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups,
-                                               "ode_result_improved_factor.h5");
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+
+    printf("Runtime: %f\n", ms_double.count());
+
+    // auto save_result_status =
+    //     mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result_test.h5");
 
     // bool print_to_terminal = true;
 
