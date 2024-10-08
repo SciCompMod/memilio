@@ -19,7 +19,7 @@ mio::IOResult<void> set_mobility_weights(const std::string& mobility_data, mio::
 {
     // mobility between nodes
     BOOST_OUTCOME_TRY(auto&& mobility_data_commuter,
-                      mio::read_mobility_plain(mobility_data + "mobility/" + "commuter_migration_scaled.txt"));
+                      mio::read_mobility_plain(mobility_data + "/mobility" + "/commuter_migration_test.txt"));
     if (mobility_data_commuter.rows() != Eigen::Index(number_regions) ||
         mobility_data_commuter.cols() != Eigen::Index(number_regions)) {
         return mio::failure(mio::StatusCode::InvalidValue,
@@ -55,7 +55,7 @@ int main()
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    const std::string& mobility_data = "";
+    const std::string& mobility_data = "/home/gers_ca/code/memilio/data";
 
     mio::oseirmobilityimproved::Model<ScalarType> model(number_regions, number_age_groups);
     model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
@@ -86,15 +86,13 @@ int main()
 
     auto& population = model.parameters.get<mio::oseirmobilityimproved::PopulationSizes<>>();
     for (int n = 0; n < number_regions; ++n) {
-        population[{mio::oseirmobilityimproved::Region(n)}] +=
-            model.populations.get_group_total(mio::oseirmobilityimproved::Region(n));
+        auto population_n = model.populations.get_group_total(mio::oseirmobilityimproved::Region(n));
+        population[{mio::oseirmobilityimproved::Region(n)}] += population_n;
         for (int m = 0; m < number_regions; ++m) {
             population[{mio::oseirmobilityimproved::Region(n)}] -=
-                commuting_strengths[0].get_baseline()(n, m) *
-                model.populations.get_group_total(mio::oseirmobilityimproved::Region(n));
+                2 * commuting_strengths[0].get_baseline()(n, m) * population_n;
             population[{mio::oseirmobilityimproved::Region(m)}] +=
-                commuting_strengths[0].get_baseline()(n, m) *
-                model.populations.get_group_total(mio::oseirmobilityimproved::Region(n));
+                2 * commuting_strengths[0].get_baseline()(n, m) * population_n;
         }
     }
     // using DefaultIntegratorCore =

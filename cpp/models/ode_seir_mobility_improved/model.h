@@ -49,7 +49,6 @@ public:
             params.template get<CommutingStrengths<>>().get_cont_freq_mat().get_matrix_at(t);
         const Index<AgeGroup> n_age_groups = reduce_index<Index<AgeGroup>>(params.get_num_agegroups());
         const Index<Region> n_regions      = reduce_index<Index<Region>>(params.get_num_regions());
-
         for (auto age_i : make_index_range(n_age_groups)) {
             for (auto age_j : make_index_range(n_age_groups)) {
                 Eigen::VectorXd infectives_per_region = Eigen::VectorXd::Zero((size_t)n_regions);
@@ -61,9 +60,13 @@ public:
                     }
                 }
                 for (auto region_n : make_index_range(n_regions)) {
+                    flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(
+                        {region_n, age_i})] += 0.5 * commuting_strengths(region_n.get(), region_n.get()) *
+                                               infectives_per_region(region_n.get()) /
+                                               params.template get<PopulationSizes<FP>>()[region_n];
                     for (auto region_m : make_index_range(n_regions)) {
                         flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(
-                            {region_n, age_i})] += commuting_strengths(region_n.get(), region_m.get()) *
+                            {region_n, age_i})] += 0.5 * commuting_strengths(region_n.get(), region_m.get()) *
                                                    infectives_per_region(region_m.get()) /
                                                    params.template get<PopulationSizes<FP>>()[region_m];
                     }
