@@ -75,29 +75,33 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
             0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
     }
 
-    // The Dead compartment needs to be set to 0 so that RKI data can be added correctly.
+    // Set the Dead compartment to 0 so that RKI data can be added correctly.
     model.m_populations[0][Eigen::Index(InfectionState::Dead)] = 0;
 
-    // The first time we need is -4 * global_support_max.
-    Eigen::Index start_shift = 4 * global_support_max_index;
-    // The last time needed is dependent on the mean stay time in the Exposed compartment and
-    // the mean stay time of asymptomatic individuals in InfectedNoSymptoms.
+    // Define variables for the mean of transitions used.
     ScalarType mean_ExposedToInfectedNoSymptoms =
         model.parameters.get<TransitionDistributions>()[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)]
             .get_mean(dt);
     ScalarType mean_InfectedNoSymptomsToInfectedSymptoms =
         model.parameters
-            .get<TransitionDistributions>()[Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]
+            .get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
             .get_mean(dt);
     ScalarType mean_InfectedSymptomsToInfectedSevere =
-        model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
+        model.parameters
+            .get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedSymptomsToInfectedSevere]
             .get_mean();
     ScalarType mean_InfectedSevereToInfectedCritical =
-        model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
+        model.parameters
+            .get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedSevereToInfectedCritical]
             .get_mean();
     ScalarType mean_InfectedCriticalToDead =
-        model.parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead].get_mean();
+        model.parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedCriticalToDead]
+            .get_mean();
 
+    // The first time we need is -4 * global_support_max.
+    Eigen::Index start_shift = 4 * global_support_max_index;
+    // The last time needed is dependent on the mean stay time in the Exposed compartment and
+    // the mean stay time of asymptomatic individuals in InfectedNoSymptoms.
     Eigen::Index last_time_index_needed =
         Eigen::Index(std::ceil((mean_ExposedToInfectedNoSymptoms + mean_InfectedNoSymptomsToInfectedSymptoms) / dt));
     // Create TimeSeries with zeros. The index of time zero is start_shift.
@@ -115,8 +119,6 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
 
     bool min_offset_needed_avail = false;
     bool max_offset_needed_avail = false;
-    // Get first date that is needed to compute inital values.
-    mio::Date min_offset_date = offset_date_by_days(date, min_offset_needed);
 
     // Go through the entries of rki_data and check if date is needed for calculation. Confirmed cases are scaled.
     // Define dummy variables to store the first and the last index of the TimeSeries where the considered entry of rki_data is potentially needed.
@@ -160,6 +162,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
             }
 
             // Compute Dead by shifting RKI data according to mean stay times.
+            // This is done because the RKI reports death with the date of positive test instead of the date of deaths.
             if (offset == std::floor(-mean_InfectedSymptomsToInfectedSevere - mean_InfectedSevereToInfectedCritical -
                                      mean_InfectedCriticalToDead)) {
                 model.m_populations[0][Eigen::Index(InfectionState::Dead)] +=
@@ -193,6 +196,8 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     if (!min_offset_needed_avail) {
         std::string min_date_string =
             std::to_string(min_date.day) + "." + std::to_string(min_date.month) + "." + std::to_string(min_date.year);
+        // Get first date that is needed.
+        mio::Date min_offset_date          = offset_date_by_days(date, int(min_offset_needed));
         std::string min_offset_date_string = std::to_string(min_offset_date.day) + "." +
                                              std::to_string(min_offset_date.month) + "." +
                                              std::to_string(min_offset_date.year);
@@ -202,6 +207,9 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     }
 
     //--- Calculate the flows "after" InfectedNoSymptomsToInfectedSymptoms. ---
+    // Set m_support_max_vector and m_derivative_vector in the model which is needed for the following computations.
+    model.set_transitiondistributions_support_max(dt);
+    model.set_transitiondistributions_derivative(dt);
     // Compute flow InfectedSymptomsToInfectedSevere for -3 * global_support_max, ..., 0.
     for (Eigen::Index i = -3 * global_support_max_index; i <= 0; i++) {
         model.compute_flow(Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere),

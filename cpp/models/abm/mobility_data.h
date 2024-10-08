@@ -33,7 +33,7 @@ namespace abm
  */
 enum class TransportMode : uint32_t
 {
-    Bike = 0,
+    Bike,
     CarDriver,
     CarPassenger,
     PublicTransport,
@@ -47,7 +47,7 @@ enum class TransportMode : uint32_t
  */
 enum class ActivityType : uint32_t
 {
-    Workplace = 0,
+    Workplace,
     Education,
     Shopping,
     Leisure,

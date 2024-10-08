@@ -29,13 +29,13 @@ namespace pymio
 void bind_uncertain_value(py::module_& m, std::string const& name)
 {
     bind_class<mio::UncertainValue<double>, EnablePickling::Required>(m, name.c_str())
-        .def(py::init<ScalarType>(), py::arg("value") = 0.0)
+        .def(py::init<double>(), py::arg("value") = 0.0)
         .def_property(
             "value",
             [](mio::UncertainValue<double>& self) {
                 return ScalarType(self);
             },
-            [](mio::UncertainValue<double>& self, ScalarType v) {
+            [](mio::UncertainValue<double>& self, double v) {
                 self = v;
             })
         .def("set_distribution", //a property would be nicer but getter and setter use a different type
