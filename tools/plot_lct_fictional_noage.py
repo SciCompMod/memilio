@@ -563,7 +563,7 @@ if __name__ == '__main__':
                                              ],
                                             legendplot=list(
                 ["ODE", "LCT3", "LCT10", "LCT50"]),
-                filename_plot="compartments_rise2.0_long", compartment_indices=[1, 2, 3, 4, 5, 7])
+                filename_plot="compartments_rise2.0_long", compartment_indices=[0, 1, 2, 3, 4, 5, 6, 7])
         elif case == 3:
             # rise r0 4.0 long
             folder = os.path.join(data_dir, "riseR0long")
@@ -581,10 +581,10 @@ if __name__ == '__main__':
             data_dir = os.path.join(os.path.dirname(
                 __file__), "..", "data", "simulation_lct_agevsnoage")
             # youngvsold
-            compare_compartments_horizontal([os.path.join(data_dir, "fictional_lct_ageres_10_agegroupinit_1"),
+            compare_compartments_horizontal([os.path.join(data_dir, "fictional_lct_ageres_10_agegroupinit_2"),
                                             os.path.join(
                                                 data_dir, "fictional_lct_ageres_10_agegroupinit_5"),
                                             os.path.join(data_dir, "fictional_lct_notageres_10")],
                                             legendplot=list(
-                ["School scenario", "Retirement home scenario", "Non age-resolved scenario"]),
-                filename_plot="compartments_agevsnoage", compartment_indices=[1, 2, 3, 4, 5, 7])
+                ["University Scenario", "Retirement Home Scenario", "Non age-resolved Scenario"]),
+                filename_plot="compartments_agevsnoage", compartment_indices=[0, 1, 2, 3, 4, 5, 6, 7])

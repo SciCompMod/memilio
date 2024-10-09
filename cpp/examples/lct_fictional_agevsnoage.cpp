@@ -134,9 +134,9 @@ std::vector<std::vector<ScalarType>> get_initialization(bool age = false, size_t
     std::vector<std::vector<ScalarType>> init;
     if (age) {
         for (size_t group = 0; group < num_groups; group++) {
-            std::vector<ScalarType> init_vector_group({total_population, 0., 0., 0., 0., 0., 0., 0.});
+            std::vector<ScalarType> init_vector_group({age_group_sizes[group], 0., 0., 0., 0., 0., 0., 0.});
             if (group == agegroup_init) {
-                init_vector_group[0] = total_population - num_exposed;
+                init_vector_group[0] = age_group_sizes[group] - num_exposed;
                 init_vector_group[1] = num_exposed;
             }
             init.push_back(init_vector_group);
