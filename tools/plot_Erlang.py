@@ -26,7 +26,7 @@ def plot_erlang_survival(ns):
     plt.legend(fontsize=14)
     plt.xlim(left=0, right=30)
     plt.ylim(bottom=0)
-    plt.xlabel('Time $\\tau$ (in days)', fontsize=13)
+    plt.xlabel('Time $\\tau$ [days]', fontsize=13)
     plt.ylabel('$1-F_{n\\, /\\, T,n}(\\tau)$', fontsize=14)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
@@ -34,6 +34,7 @@ def plot_erlang_survival(ns):
     if not os.path.isdir('Plots'):
         os.makedirs('Plots')
     plt.savefig('Plots/survival.png', bbox_inches='tight', dpi=500)
+    plt.close()
 
 
 def plot_erlang_density(ns):
@@ -53,7 +54,7 @@ def plot_erlang_density(ns):
     plt.legend(fontsize=14)
     plt.xlim(left=0, right=30)
     plt.ylim(bottom=0)
-    plt.xlabel('Time $\\tau$ (in days)', fontsize=13)
+    plt.xlabel('Time $\\tau$ [days]', fontsize=13)
     plt.ylabel('$f_{n\\, /\\, T,n}(\\tau)$', fontsize=14)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
@@ -61,6 +62,7 @@ def plot_erlang_density(ns):
     if not os.path.isdir('Plots'):
         os.makedirs('Plots')
     plt.savefig('Plots/density.png', bbox_inches='tight', dpi=500)
+    plt.close()
 
 
 def plot_contact_matrix():
@@ -90,7 +92,7 @@ def plot_contact_matrix():
 
 
 if __name__ == '__main__':
-    # ns = list([1, 3, 5, 10, 20, 50, 150, 300])
-    # plot_erlang_survival(ns)
-    # plot_erlang_density(ns)
+    ns = list([1, 3, 5, 10, 20, 50, 150, 300])
+    plot_erlang_survival(ns)
+    plot_erlang_density(ns)
     plot_contact_matrix()

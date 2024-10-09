@@ -40,7 +40,7 @@
 
 namespace params
 {
-// Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
+// num_subcompartments is used as a template argument and has to be a constexpr.
 constexpr int num_subcompartments = 50;
 constexpr size_t num_groups       = 6;
 
