@@ -9,6 +9,7 @@ set(TESTSOURCES
     test_populations.cpp
     test_odeseir.cpp
     test_odesir.cpp
+    test_odesirmobility.cpp
     test_numericalIntegration.cpp
     test_smoother.cpp
     test_damping.cpp
