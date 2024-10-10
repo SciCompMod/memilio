@@ -19,16 +19,13 @@
 */
 #include "load_test_data.h"
 #include "memilio/compartments/compartmentalmodel.h"
-#include "memilio/utils/compiler_diagnostics.h"
-#include "memilio/utils/parameter_set.h"
-#include "ode_seir/model.h"
-#include "ode_seir/infection_state.h"
-#include "ode_seir/parameters.h"
-#include "memilio/utils/type_list.h"
-#include "memilio/compartments/simulation.h"
 #include "memilio/compartments/flow_simulation.h"
+#include "memilio/compartments/simulation.h"
+#include "ode_seir/infection_state.h"
+#include "ode_seir/model.h"
+#include "ode_seir/parameters.h"
+
 #include "gtest/gtest.h"
-#include "matchers.h"
 
 using I     = mio::oseir::InfectionState;
 using Flows = mio::TypeList<mio::Flow<I::Susceptible, I::Exposed>, mio::Flow<I::Exposed, I::Infected>,
@@ -53,9 +50,11 @@ struct CatC : public mio::Index<CatC> {
     }
 };
 
-class TestModel : public mio::FlowModel<I, mio::Populations<I, CatA, CatB, CatC>, mio::oseir::Parameters, Flows>
+class TestModel : public mio::FlowModel<double, I, mio::Populations<double, I, CatA, CatB, CatC>,
+                                        mio::oseir::Parameters<double>, Flows>
 {
-    using Base = FlowModel<I, mio::Populations<I, CatA, CatB, CatC>, mio::oseir::Parameters, Flows>;
+    using Base =
+        mio::FlowModel<double, I, mio::Populations<double, I, CatA, CatB, CatC>, mio::oseir::Parameters<double>, Flows>;
 
 public:
     TestModel(Populations::Index dimensions)
@@ -103,27 +102,26 @@ TEST(TestFlows, FlowSimulation)
     double tmax = 1;
     double dt   = 0.001;
 
-    mio::oseir::Model model(1);
+    mio::oseir::Model<double> model(1);
 
-    double total_population                                                                            = 10000;
+    double total_population                                                      = 10000;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]  = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}] = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] =
-        total_population -
-        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] -
+        total_population - model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] -
         model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}] -
         model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}];
     // suscetible now set with every other update
     // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
-    model.parameters.set<mio::oseir::TimeExposed>(5.2);
-    model.parameters.set<mio::oseir::TimeInfected>(6);
-    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat()[0].get_baseline().setConstant(10);
+    model.parameters.set<mio::oseir::TimeExposed<double>>(5.2);
+    model.parameters.set<mio::oseir::TimeInfected<double>>(6);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
+    model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat()[0].get_baseline().setConstant(10);
 
     model.check_constraints();
-    auto IC   = std::make_shared<mio::DefaultIntegratorCore>();
-    auto seir = simulate_flows(t0, tmax, dt, model, IC);
+    auto IC   = std::make_shared<mio::DefaultIntegratorCore<double>>();
+    auto seir = mio::simulate_flows<double, mio::oseir::Model<double>>(t0, tmax, dt, model, IC);
     // verify results (computed using flows)
     auto results = seir[0].get_last_value();
     EXPECT_NEAR(results[0], 9660.5835936179408, 1e-14);
@@ -145,23 +143,23 @@ TEST(TestFlows, CompareSimulations)
     double tmax = 1;
     double dt   = 0.001;
 
-    mio::oseir::Model model(1);
+    mio::oseir::Model<double> model(1);
 
-    double total_population                                                                            = 10000;
+    double total_population                                                      = 10000;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]  = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}] = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] =
-        total_population -
-        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] -
+        total_population - model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] -
         model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}] -
         model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}];
     // suscetible now set with every other update
     // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
-    model.parameters.set<mio::oseir::TimeExposed>(5.2);
-    model.parameters.set<mio::oseir::TimeInfected>(6);
-    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns>().get_cont_freq_mat();
+    model.parameters.set<mio::oseir::TimeExposed<double>>(5.2);
+    model.parameters.set<mio::oseir::TimeInfected<double>>(6);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
+    mio::ContactMatrixGroup& contact_matrix =
+        model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(10);
 
     model.check_constraints();
@@ -178,7 +176,7 @@ TEST(TestFlows, CompareSimulations)
 
 TEST(TestFlows, GetInitialFlows)
 {
-    mio::oseir::Model m(1);
+    mio::oseir::Model<double> m(1);
     EXPECT_EQ(m.get_initial_flows().size(), 3); // 3 == Flows().size()
     EXPECT_EQ(m.get_initial_flows().norm(), 0);
 }

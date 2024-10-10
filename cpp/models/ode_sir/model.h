@@ -34,25 +34,36 @@ namespace osir
 {
 
 /********************
-    * define the model *
-    ********************/
+ * define the model *
+ ********************/
 
-class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters>
+template <typename FP = ScalarType>
+class Model
+    : public mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters>;
+    using Base =
+        mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>>;
 
 public:
+    using typename Base::ParameterSet;
+    using typename Base::Populations;
+
+    Model(const Populations& pop, const ParameterSet& params)
+        : Base(pop, params)
+    {
+    }
+
     Model(int num_agegroups)
         : Base(Populations({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet(AgeGroup(num_agegroups)))
     {
     }
 
-    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                         Eigen::Ref<Eigen::VectorXd> dydt) const override
+    void get_derivatives(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
+                         Eigen::Ref<Vector<FP>> dydt) const override
     {
         auto params                              = this->parameters;
         AgeGroup n_agegroups                     = params.get_num_groups();
-        ContactMatrixGroup const& contact_matrix = params.get<ContactPatterns>();
+        ContactMatrixGroup const& contact_matrix = params.template get<ContactPatterns<FP>>();
 
         for (auto i = AgeGroup(0); i < n_agegroups; i++) {
 
@@ -66,19 +77,49 @@ public:
                 size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
                 size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
-                double Nj = pop[Sj] + pop[Ij] + pop[Rj];
+                const ScalarType Nj    = pop[Sj] + pop[Ij] + pop[Rj];
+                const ScalarType divNj = (Nj < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / Nj;
 
-                double coeffStoI = contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
-                                                                   static_cast<Eigen::Index>((size_t)j)) *
-                                   params.get<TransmissionProbabilityOnContact>()[i] / Nj;
+                ScalarType coeffStoI = contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
+                                                                       static_cast<Eigen::Index>((size_t)j)) *
+                                       params.template get<TransmissionProbabilityOnContact<FP>>()[i] * divNj;
 
                 dydt[Si] += -coeffStoI * y[Si] * pop[Ij];
                 dydt[Ii] += coeffStoI * y[Si] * pop[Ij];
             }
-            dydt[Ii] -= (1.0 / params.get<TimeInfected>()[i]) * y[Ii];
-            dydt[Ri] = (1.0 / params.get<TimeInfected>()[i]) * y[Ii];
-
+            dydt[Ii] -= (1.0 / params.template get<TimeInfected<FP>>()[i]) * y[Ii];
+            dydt[Ri] = (1.0 / params.template get<TimeInfected<FP>>()[i]) * y[Ii];
         }
+    }
+
+    /**
+     * serialize this. 
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Model");
+        obj.add_element("Parameters", this->parameters);
+        obj.add_element("Populations", this->populations);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Model> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("Model");
+        auto par = obj.expect_element("Parameters", Tag<ParameterSet>{});
+        auto pop = obj.expect_element("Populations", Tag<Populations>{});
+        return apply(
+            io,
+            [](auto&& par_, auto&& pop_) {
+                return Model{pop_, par_};
+            },
+            par, pop);
     }
 };
 

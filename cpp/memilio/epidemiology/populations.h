@@ -25,8 +25,6 @@
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/math/eigen.h"
 
-#include <vector>
-#include <array>
 #include <numeric>
 
 namespace mio
@@ -50,14 +48,15 @@ namespace mio
  *
  */
 
-template <class... Categories>
-class Populations : public CustomIndexArray<UncertainValue, Categories...>
+template <typename FP = ScalarType, class... Categories>
+class Populations : public CustomIndexArray<UncertainValue<FP>, Categories...>
 {
 public:
-    using Base  = CustomIndexArray<UncertainValue, Categories...>;
+    using Base  = CustomIndexArray<UncertainValue<FP>, Categories...>;
     using Index = typename Base::Index;
 
-    template <class... Ts, typename std::enable_if_t<std::is_constructible<UncertainValue, Ts...>::value>* = nullptr>
+    template <class... Ts,
+              typename std::enable_if_t<std::is_constructible<UncertainValue<FP>, Ts...>::value>* = nullptr>
     explicit Populations(Index const& sizes, Ts... args)
         : Base(sizes, args...)
     {
@@ -80,9 +79,9 @@ public:
      * as initial conditions for the ODE solver
      * @return Eigen::VectorXd  of populations
      */
-    inline Eigen::VectorXd get_compartments() const
+    inline Vector<FP> get_compartments() const
     {
-        return this->array().template cast<double>();
+        return this->array().template cast<FP>();
     }
 
     /**
@@ -229,34 +228,41 @@ public:
      * This function can be used to prevent slighly negative function values in compartment sizes that came out
      * due to roundoff errors if, e.g., population sizes were computed in a complex way.
      *
-     * Attention: This function should be used with care. It is necessary for some test problems to run through quickly,
-     *            but in a manual execution of an example, check_constraints() may be preferred. Note that the apply_constraints()
-     *            function can and will not set compartments to meaningful values in a sense of a particular scenario,
-     *            it only sets negative values to zero.
+     * Attention: This function should be used with care. It can not and will not set model parameters and 
+     *            compartments to meaningful values. In most cases it is preferable to use check_constraints,
+     *            and correct values manually before proceeding with the simulation.
+     *            The main usage for apply_constraints is in automated tests using random values for initialization.
      *
-     * @return Returns true if one ore more constraint were corrected, false otherwise.  
-     */
-    void apply_constraints()
+     * @return Returns true if one (or more) constraint(s) were corrected, otherwise false.
+    */
+    bool apply_constraints()
     {
+        bool corrected = false;
         for (int i = 0; i < this->array().size(); i++) {
             if (this->array()[i] < 0) {
                 log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, this->array()[i],
                             0);
                 this->array()[i] = 0;
+                corrected        = true;
             }
         }
+        return corrected;
     }
 
     /**
-     * @brief checks whether the population Parameters satisfy their corresponding constraints
+     * @brief Checks whether all compartments have non-negative values and logs an error if constraint is not satisfied.
+     * @return Returns true if one or more constraints are not satisfied, false otherwise.
      */
-    void check_constraints() const
+    bool check_constraints() const
     {
         for (int i = 0; i < this->array().size(); i++) {
-            if (this->array()[i] < 0) {
-                log_error("Constraint check: Compartment size {:d} is {:.4f} and smaller {:d}", i, this->array()[i], 0);
+            FP value = this->array()[i];
+            if (value < 0.) {
+                log_error("Constraint check: Compartment size {} is {} and smaller {}", i, value, 0);
+                return true;
             }
         }
+        return false;
     }
 
     /**

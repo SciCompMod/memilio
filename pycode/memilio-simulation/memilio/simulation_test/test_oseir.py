@@ -74,11 +74,11 @@ class Test_oseir_integration(unittest.TestCase):
         """
         Tests the correctness of the python bindings. The results of a simulation 
         in python get compared to the results of a cpp simulation. Cpp simulation 
-        results contained in the file seir-compare.csv. 
+        results contained in the file ode-seir-compare.csv. 
         If cpp model changes this test needs to be adjusted accordingly.
         """
         refData = pd.read_csv(
-            os.path.join(self.here + '/data/seir-compare.csv'),
+            os.path.join(self.here + '/data/ode-seir-compare.csv'),
             sep=r'(?<!#)\s+', engine='python')
         refData.columns = pd.Series(refData.columns.str.replace(
             r"#\s", "", regex=True))

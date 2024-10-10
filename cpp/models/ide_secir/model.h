@@ -117,8 +117,8 @@ public:
     /**
      * @brief Computes the values of the infection compartments subset at initialization.
      *
-     * The values for the compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical
-     * for time t_0 are calculated using the initial data in form of flows.
+     * The values for the compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and 
+     * InfectedCritical for time t_0 are calculated using the initial data in form of flows.
      * Calculated values are stored in m_populations.
      * 
      * @param[in] dt Time discretization step size.
@@ -282,6 +282,41 @@ public:
     }
 
     /**
+     * @brief Setter for the vector m_transitiondistributions_support_max that contains the support_max for all 
+     * TransitionDistributions.
+     *
+     * This determines how many summands are required when calculating flows, the force of infection or compartments.
+     *
+     * @param[in] dt Time step size.
+     */
+    void set_transitiondistributions_support_max(ScalarType dt);
+
+    /**
+     * @brief Setter for the vector m_transitiondistributions_derivative that contains the approximated derivative for 
+     * all TransitionDistributions for all necessary time points.
+     *
+     * The derivative is approximated using a backwards difference scheme.
+     * The number of necessary time points for each TransitionDistribution is determined using 
+     * m_transitiondistributions_support_max.
+     *
+     * @param[in] dt Time step size.
+     */
+    void set_transitiondistributions_derivative(ScalarType dt);
+
+    /**
+     * @brief Setter for the vector m_transitiondistributions_in_forceofinfection.
+     *
+     * When computing the force of infection, we evaluate the survival functions of the TransitionDistributions 
+     * InfectedNoSymptomsToInfectedSymptoms, InfectedNoSymptomsToRecovered, InfectedSymptomsToInfectedSevere and 
+     * InfectedSymptomsToRecovered, weighted by the corresponding TransitionProbabilities, at the same time points. 
+     * Here, we compute these contributions to the force of infection term and store them in the vector 
+     * m_transitiondistributions_in_forceofinfection so that we can access this vector for all following computations. 
+     *
+     * @param[in] dt Time step size.
+     */
+    void set_transitiondistributions_in_forceofinfection(ScalarType dt);
+
+    /**
      * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.
      *
      * This determines how many inital values we need for the flows.
@@ -291,7 +326,6 @@ public:
      * @param[in] dt Time step size.
      * 
      * @return Global support_max.
-     *
      */
     ScalarType get_global_support_max(ScalarType dt) const;
 
@@ -330,7 +364,8 @@ public:
     // Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the
     // initialization part.
     TimeSeries<ScalarType>
-        m_transitions; ///< TimeSeries containing points of time and the corresponding number of transitions for every AgeGroup.
+        m_transitions; ///< TimeSeries containing points of time and the corresponding number of transitions for every
+    // AgeGroup.
     TimeSeries<ScalarType> m_populations; ///< TimeSeries containing points of time and the corresponding number of
         // people in defined #InfectionState%s for every AgeGroup.
     std::vector<ScalarType> m_total_confirmed_cases{
@@ -353,9 +388,25 @@ private:
     std::vector<ScalarType> m_N{
         0}; ///< Vector containing the total population size of the considered region for every AgeGroup.
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
-    int m_initialization_method{0}; ///< Gives the initialization of the model.
-    //See also get_initialization_method_compartments() for the number code.
     size_t m_num_agegroups; ///< Number of Age Groups.
+    int m_initialization_method{0}; ///< Gives the index of the method used for the initialization of the model.
+    // See also get_initialization_method_compartments() for the number code.
+    std::vector<std::vector<ScalarType>> m_transitiondistributions_support_max{std::vector<std::vector<ScalarType>>(
+        m_num_agegroups,
+        std::vector<ScalarType>((int)InfectionTransition::Count, 0.))}; ///< Vector containing the support_max
+    // for all TransitionDistributions.
+    std::vector<std::vector<std::vector<ScalarType>>> m_transitiondistributions_derivative{
+        std::vector<std::vector<std::vector<ScalarType>>>(
+            m_num_agegroups,
+            std::vector<std::vector<ScalarType>>(
+                (int)InfectionTransition::Count,
+                std::vector<ScalarType>(
+                    1, 0.)))}; ///< Vector containing the approximated derivative for all TransitionDistributions for
+    // all necessary time points.
+    std::vector<std::vector<std::vector<ScalarType>>> m_transitiondistributions_in_forceofinfection{
+        std::vector<std::vector<std::vector<ScalarType>>>(
+            m_num_agegroups, std::vector<std::vector<ScalarType>>(2, std::vector<ScalarType>(1, 0.)))}; ///< Vector
+    // containing the weighted TransitionDistributions for all necessary time points in the force of infection term.
 };
 
 } // namespace isecir

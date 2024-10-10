@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_VACCINE_H
-#define EPI_ABM_VACCINE_H
+#ifndef MIO_ABM_VACCINE_H
+#define MIO_ABM_VACCINE_H
 
 #include "abm/time.h"
 
@@ -35,9 +35,9 @@ namespace abm
  */
 enum class ExposureType : std::uint32_t
 {
-    NoProtection     = 0,
-    NaturalInfection = 1,
-    GenericVaccine   = 2,
+    NoProtection,
+    NaturalInfection,
+    GenericVaccine,
     Count //last!!
 };
 

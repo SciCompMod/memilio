@@ -93,7 +93,7 @@ struct TransitionProbabilities {
  * @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
  */
 struct ContactPatterns {
-    using Type = UncertainContactMatrix;
+    using Type = UncertainContactMatrix<double>;
 
     static Type get_default(AgeGroup size)
     {
