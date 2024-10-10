@@ -60,13 +60,9 @@ public:
                     }
                 }
                 for (auto region_n : make_index_range(n_regions)) {
-                    flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(
-                        {region_n, age_i})] += 0.5 * commuting_strengths(region_n.get(), region_n.get()) *
-                                               infectives_per_region(region_n.get()) /
-                                               params.template get<PopulationSizes<FP>>()[region_n];
                     for (auto region_m : make_index_range(n_regions)) {
                         flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(
-                            {region_n, age_i})] += 0.5 * commuting_strengths(region_n.get(), region_m.get()) *
+                            {region_n, age_i})] += commuting_strengths(region_n.get(), region_m.get()) *
                                                    infectives_per_region(region_m.get()) /
                                                    params.template get<PopulationSizes<FP>>()[region_m];
                     }

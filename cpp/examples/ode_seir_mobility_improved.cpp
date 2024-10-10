@@ -90,9 +90,9 @@ int main()
         population[{mio::oseirmobilityimproved::Region(n)}] += population_n;
         for (int m = 0; m < number_regions; ++m) {
             population[{mio::oseirmobilityimproved::Region(n)}] -=
-                2 * commuting_strengths[0].get_baseline()(n, m) * population_n;
+                commuting_strengths[0].get_baseline()(n, m) * population_n;
             population[{mio::oseirmobilityimproved::Region(m)}] +=
-                2 * commuting_strengths[0].get_baseline()(n, m) * population_n;
+                commuting_strengths[0].get_baseline()(n, m) * population_n;
         }
     }
     // using DefaultIntegratorCore =
