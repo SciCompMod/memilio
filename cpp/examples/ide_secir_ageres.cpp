@@ -24,34 +24,26 @@ int main()
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
-    // Create TimeSeries with num_transitions * num_agegroups elements where transitions needed for simulation will be stored.
+    // Create TimeSeries with num_transitions * num_agegroups elements where transitions needed for simulation will be
+    // stored.
     mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
 
     // Add time points for initialization of transitions.
     Vec vec_init(num_transitions * num_agegroups);
-    // First AgeGroup.
-    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
-    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
-    //Second AgeGroup.
-    vec_init[num_transitions + (int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
-    vec_init[num_transitions + (int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
-    vec_init[num_transitions + (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
-    vec_init[num_transitions + (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
-    vec_init[num_transitions + (int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
-    vec_init[num_transitions + (int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
-    vec_init[num_transitions + (int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
-    vec_init[num_transitions + (int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
-    vec_init[num_transitions + (int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
-    vec_init[num_transitions + (int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
-    vec_init = vec_init * dt;
+    // Values for the Infectiontransitions are the same for all AgeGroups.
+    for (size_t group = 0; group < num_agegroups; ++group) {
+        vec_init[group + (int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
+        vec_init[group + (int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
+        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
+        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
+        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
+        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
+        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
+        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
+        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
+        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
+    }
+
     // Add initial time point to time series.
     init.add_time_point(-10, vec_init);
     // Add further time points until time 0.
@@ -87,7 +79,7 @@ int main()
 
     model.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(1)] = vec_delaydistrib2;
 
-    for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
+    for (mio::AgeGroup group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
         std::vector<ScalarType> vec_prob(num_transitions, 0.5);
         // The following probabilities must be 1, as there is no other way to go.
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
@@ -101,7 +93,7 @@ int main()
 
     mio::ExponentialSurvivalFunction exponential(0.5);
     mio::StateAgeFunctionWrapper prob(exponential);
-    for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
+    for (mio::AgeGroup group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
         model.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[group] = prob;
         model.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[group]   = prob;
         model.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[group]   = prob;

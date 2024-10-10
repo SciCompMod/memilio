@@ -813,7 +813,7 @@ protected:
 struct StateAgeFunctionWrapper {
 
     StateAgeFunctionWrapper()
-        : m_function(mio::ExponentialSurvivalFunction(2.0).clone())
+        : m_function(mio::SmootherCosine(1.0).clone())
     {
     }
     /**

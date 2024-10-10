@@ -61,7 +61,8 @@ public:
     /**
     * @brief Returns a flat index for the InfectionTransition TimeSeries.
     *
-    * In the TimeSeries we store a vector for each time point. In this vector we store the different #InfectionTransition%s for every AgeGroup.
+    * In the TimeSeries we store a vector for each time point. In this vector we store the different 
+    * #InfectionTransition%s for every AgeGroup.
     * This function is used to get the right index in this vector for a specific AgeGroup and InfectionTransition.
     *
     * @param[in] Transition_idx Index determining which InfectionTransition we want to evaluate.
@@ -76,7 +77,8 @@ public:
     /**
     * @brief Returns a flat index for the InfectionState TimeSeries.
     *
-    * In the TimeSeries we store a vector for each time point. In this vector we store the different InfectionStates for every AgeGroup.
+    * In the TimeSeries we store a vector for each time point. In this vector we store the different InfectionStates 
+    * for every AgeGroup.
     * This function is used to get the right index in this vector for a specific AgeGroup and InfectionState.
     *
     * @param[in] State_idx Index at which InfectionState we want to evaluate.

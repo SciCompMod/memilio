@@ -325,7 +325,7 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
     Eigen::Index calc_time_index =
         (Eigen::Index)std::ceil(m_transitiondistributions_support_max[size_t(group)][idx_InfectionTransitions] / dt);
 
-    int transition_idx = get_transition_flat_index(idx_InfectionTransitions, static_cast<Eigen::Index>((size_t)group));
+    int transition_idx = get_transition_flat_index(idx_InfectionTransitions, size_t(group));
     for (Eigen::Index i = current_time_index - calc_time_index; i < current_time_index; i++) {
         // (current_time_index - i)  is the index corresponding to time the individuals have already spent in this state.
         sum += m_transitiondistributions_derivative[size_t(group)][idx_InfectionTransitions][current_time_index - i] *
@@ -346,15 +346,14 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
 void Model::flows_current_timestep(ScalarType dt)
 {
     // Compute flows for every AgeGroup.
-    for (auto group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+    for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
         int SEi = get_transition_flat_index(Eigen::Index(InfectionTransition::SusceptibleToExposed),
                                             static_cast<Eigen::Index>((size_t)group));
-        int Si =
-            get_state_flat_index(Eigen::Index(InfectionState::Susceptible), static_cast<Eigen::Index>((size_t)group));
+        int Si  = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), size_t(group));
 
         // Calculate flow SusceptibleToExposed with force of infection from previous time step and Susceptibles from current time step.
         m_transitions.get_last_value()[SEi] =
-            dt * m_forceofinfection[static_cast<Eigen::Index>((size_t)group)] * m_populations.get_last_value()[Si];
+            dt * m_forceofinfection[size_t(group)] * m_populations.get_last_value()[Si];
 
         // Calculate all other flows with compute_flow.
         // Flow from Exposed to InfectedNoSymptoms
@@ -390,7 +389,7 @@ void Model::flows_current_timestep(ScalarType dt)
 void Model::update_compartments()
 {
     // Update compartments for every AgeGroup.
-    for (auto group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+    for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
         // Exposed
         update_compartment_from_flow(InfectionState::Exposed, {InfectionTransition::SusceptibleToExposed},
                                      {InfectionTransition::ExposedToInfectedNoSymptoms}, group);
@@ -439,16 +438,16 @@ void Model::update_compartment_from_flow(InfectionState infectionState,
                                          std::vector<InfectionTransition> const& IncomingFlows,
                                          std::vector<InfectionTransition> const& OutgoingFlows, AgeGroup group)
 {
-    int state_idx = get_state_flat_index(Eigen::Index(infectionState), static_cast<Eigen::Index>((size_t)group));
+    int state_idx = get_state_flat_index(Eigen::Index(infectionState), size_t(group));
 
     Eigen::Index num_time_points   = m_populations.get_num_time_points();
     ScalarType updated_compartment = m_populations[num_time_points - 2][state_idx];
     for (const InfectionTransition& inflow : IncomingFlows) {
-        int inflow_idx = get_transition_flat_index(Eigen::Index(inflow), static_cast<Eigen::Index>((size_t)group));
+        int inflow_idx = get_transition_flat_index(Eigen::Index(inflow), size_t(group));
         updated_compartment += m_transitions.get_last_value()[inflow_idx];
     }
     for (const InfectionTransition& outflow : OutgoingFlows) {
-        int outflow_idx = get_transition_flat_index(Eigen::Index(outflow), static_cast<Eigen::Index>((size_t)group));
+        int outflow_idx = get_transition_flat_index(Eigen::Index(outflow), size_t(group));
         updated_compartment -= m_transitions.get_last_value()[outflow_idx];
     }
     m_populations.get_last_value()[state_idx] = updated_compartment;
@@ -533,8 +532,10 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
                             m_transitions[l + 1][INStISyj] *
                             parameters.get<RiskOfInfectionFromSymptomatic>()[j].eval(state_age));
             }
-            m_forceofinfection[static_cast<Eigen::Index>((size_t)i)] +=
-                1 / (m_N[static_cast<Eigen::Index>((size_t)j)] - deaths_j) * sum;
+            const double divNj = (m_N[size_t(j)] - deaths_j < Limits<ScalarType>::zero_tolerance())
+                                     ? 0.0
+                                     : 1.0 / (m_N[size_t(j)] - deaths_j);
+            m_forceofinfection[static_cast<Eigen::Index>((size_t)i)] += divNj * sum;
         }
     }
 } // namespace mio

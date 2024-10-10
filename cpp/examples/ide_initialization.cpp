@@ -74,7 +74,7 @@ int main(int argc, char** argv)
         std::cout << "You did not provide a valid filename. A default initialization is used." << std::endl;
 
         using Vec = mio::TimeSeries<ScalarType>::Vector;
-        mio::TimeSeries<ScalarType> init((int)mio::isecir::InfectionTransition::Count);
+        mio::TimeSeries<ScalarType> init(num_agegroups * (int)mio::isecir::InfectionTransition::Count);
         init.add_time_point<Eigen::VectorXd>(-7., Vec::Constant((int)mio::isecir::InfectionTransition::Count, 1. * dt));
         while (init.get_last_time() < -dt / 2) {
             init.add_time_point(init.get_last_time() + dt,
