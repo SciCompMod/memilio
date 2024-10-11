@@ -1,5 +1,5 @@
 
-from plot_lct_fictional_noage import *
+from plot_lct_realistic_scenario import *
 import os
 
 
@@ -23,11 +23,10 @@ def main():
     folder = "../data/simulation_lct_real/"
     start_date = '2020-9-1'
     num_subcomp = 10
-    plot_new_infections([get_file_name(start_date, num_subcomp, folder)],
-                        20000, legendplot=list(["LCT10"]),
-                        filename_plot="real_new_infections_"+start_date)
+    plot_new_infections_real([get_file_name(start_date, num_subcomp, folder)],
+                             20000, legendplot=list(["LCT10"]),
+                             filename_plot="real_new_infections_"+start_date)
 
 
 if __name__ == "__main__":
-
     main()
