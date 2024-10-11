@@ -79,7 +79,7 @@ ScalarType Infection::get_viral_shed(TimePoint t) const
 ScalarType Infection::get_viral_shed_constant(TimePoint t) const
 {
     unused(t); // unused as assumed constant
-    auto t_begin = m_infection_course.frost().first;
+    auto t_begin = m_infection_course.front().first;
     auto t_end =
         m_infection_course.back().first; // take last value of infection course: this is either recovered or dead
 
