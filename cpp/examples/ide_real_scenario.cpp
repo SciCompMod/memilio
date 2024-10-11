@@ -716,7 +716,7 @@ int main(int argc, char** argv)
     boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directories(dir);
 
-    const fs::path data_dir = data_dir_tmp;
+    const boost::filesystem::path data_dir = data_dir_tmp;
 
     mio::ContactMatrixGroup contact_matrices =
         define_contact_matrices(data_dir, simulation_parameter, start_date, simulation_time).value();
