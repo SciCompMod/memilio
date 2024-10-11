@@ -17,6 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/config.h"
+#include "memilio/epidemiology/state_age_function.h"
+#include "memilio/io/result_io.h"
+#include "memilio/io/io.h"
+#include "memilio/utils/time_series.h"
+
 #include "ide_secir/model.h"
 #include "ide_secir/infection_state.h"
 #include "ide_secir/parameters.h"
@@ -28,12 +34,8 @@
 #include "ode_secir/infection_state.h"
 #include "ode_secir/parameters.h"
 
-#include "memilio/config.h"
-#include "memilio/epidemiology/state_age_function.h"
-#include "memilio/io/result_io.h"
-#include "memilio/io/io.h"
-#include "memilio/utils/time_series.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
+#include "boost/filesystem.hpp"
 #include <iomanip>
 #include <string>
 #include <map>

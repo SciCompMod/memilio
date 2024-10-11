@@ -17,20 +17,21 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "ode_secir/infection_state.h"
-#include "ode_secir/model.h"
-#include "memilio/compartments/simulation.h"
-
-#include "ide_secir/infection_state.h"
-#include "ide_secir/model.h"
-#include "ide_secir/simulation.h"
-
 #include "memilio/io/result_io.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/math/floating_point.h"
+#include "memilio/compartments/simulation.h"
+
+#include "ode_secir/infection_state.h"
+#include "ode_secir/model.h"
+
+#include "ide_secir/infection_state.h"
+#include "ide_secir/model.h"
+#include "ide_secir/simulation.h"
+
 #include <iostream>
 #include <string>
 

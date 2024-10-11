@@ -31,7 +31,7 @@ int main()
     // Age group sizes are calculated using table number 12411-04-02-4-B from www.regionalstatistik.de for the date 31.12.2020.
     const double age_group_sizes[] = {7752706.0, 7581868,  9483430, 10871964, 10070748,
                                       13304542,  10717241, 7436098, 5092743,  843691};
-    const int total                = 83155031.0;
+    const int total                = 83155031;
     const int numagegroups         = 10;
 
     // Calculate value for probability InfectedSymptomsPerInfectedNoSymptoms.
