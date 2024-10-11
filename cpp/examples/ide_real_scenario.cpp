@@ -363,7 +363,7 @@ void set_npi_october(mio::ContactMatrixGroup& contact_matrices, mio::Date start_
  *      Function uses the values to define start and end date, lockdown_hard and scale_contacts.
  * @returns Any io errors that happen during reading of the input files.
  */
-mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(const fs::path& data_dir,
+mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(const boost::filesystem::path& data_dir,
                                                                std::map<std::string, ScalarType> simulation_parameters,
                                                                mio::Date start_date, ScalarType simulation_time)
 {
@@ -442,7 +442,7 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices_simplified(mio::D
 
 mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>>
 simulate_ide_model(mio::Date start_date, ScalarType tmax, mio::ContactMatrixGroup contact_matrices,
-                   const fs::path& data_dir, std::string save_dir = "",
+                   const boost::filesystem::path& data_dir, std::string save_dir = "",
                    std::vector<ScalarType> lognormal_parameters_U = {0.42819924, 9.76267505, 0.33816427, 17.09411753})
 
 {
