@@ -32,6 +32,7 @@
 #include "memilio/io/io.h"
 #include "memilio/utils/time_series.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
+#include <boost/filesystem/path.hpp>
 #include "ode_secir/infection_state.h"
 #include <string>
 #include <map>
@@ -135,7 +136,7 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType R0, ScalarType tmax, b
                                                std::string save_dir = "")
 {
     // Initialize model.
-    mio::isecir::Model model_ide(std::move(get_initial_flows()), simulation_parameter["total_population"],
+    mio::isecir::Model model_ide(get_initial_flows(), simulation_parameter["total_population"],
                                  simulation_parameter["deaths"], simulation_parameter["total_confirmed_cases"]);
 
     // Set working parameters.

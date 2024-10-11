@@ -55,16 +55,16 @@ def run_scenario(data_dir, save_dir, plot_dir, start_date, simulation_time, time
     # First run the simulation with a contact scaling of 1.
     scale_contacts = 1.
     scale_confirmed_cases = 1.
-    run_real_scenario(data_dir, save_dir, start_date, simulation_time,
-                      timestep, mu_IH, mu_HU, mu_UD, T_UD, T_UR, std_UD, std_UR, scale_contacts, scale_confirmed_cases)
-    # Then determine contact scaling such that IDE results and RKI new infections match at first timestep.
-    scale_contacts = contact_scaling(
-        save_dir, start_date, simulation_time, timestep, T_UD, mu_IH)
-    # scale_confirmed_cases=confirmed_cases_scaling(save_dir, start_date, simulation_time, timestep)
-    print(scale_confirmed_cases)
-    # Run simulation with new contact scaling.
-    run_real_scenario(data_dir, save_dir, start_date, simulation_time,
-                      timestep, mu_IH, mu_HU, mu_UD, T_UD, T_UR, std_UD, std_UR, scale_contacts, scale_confirmed_cases)
+    # run_real_scenario(data_dir, save_dir, start_date, simulation_time,
+    #                   timestep, mu_IH, mu_HU, mu_UD, T_UD, T_UR, std_UD, std_UR, scale_contacts, scale_confirmed_cases)
+    # # Then determine contact scaling such that IDE results and RKI new infections match at first timestep.
+    # scale_contacts = contact_scaling(
+    #     save_dir, start_date, simulation_time, timestep, T_UD, mu_IH)
+    # # scale_confirmed_cases=confirmed_cases_scaling(save_dir, start_date, simulation_time, timestep)
+    # print(scale_confirmed_cases)
+    # # Run simulation with new contact scaling.
+    # run_real_scenario(data_dir, save_dir, start_date, simulation_time,
+    #                   timestep, mu_IH, mu_HU, mu_UD, T_UD, T_UR, std_UD, std_UR, scale_contacts, scale_confirmed_cases)
     plot_real_scenario(save_dir, plot_dir, start_date,
                        simulation_time, timestep, T_UD, mu_IH)
 

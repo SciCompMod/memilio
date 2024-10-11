@@ -34,7 +34,7 @@
 #include "memilio/io/io.h"
 #include "memilio/utils/time_series.h"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
-#include "ode_secir/infection_state.h"
+#include <boost/filesystem/path.hpp>
 #include <iomanip>
 #include <string>
 #include <map>
