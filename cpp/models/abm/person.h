@@ -31,6 +31,7 @@
 #include "abm/time.h"
 #include "abm/test_type.h"
 #include "abm/vaccine.h"
+#include "abm/intervention_type.h"
 #include "abm/mask.h"
 #include "abm/mobility_data.h"
 #include "memilio/epidemiology/age_group.h"
@@ -232,7 +233,7 @@ public:
      */
     bool is_in_quarantine(TimePoint t, const Parameters& params) const
     {
-        return t < m_quarantine_start + params.get<mio::abm::QuarantineDuration>();
+        return t < m_home_isolation_start + params.get<mio::abm::QuarantineDuration>();
     }
 
     /**
@@ -290,51 +291,41 @@ public:
     ScalarType get_mask_protective_factor(const Parameters& params) const;
 
     /**
-     * @brief For every #LocationType a Person has a compliance value between -1 and 1.
-     * -1 means that the Person never complies to any Mask duty at the given #LocationType.
-     * 1 means that the Person always wears a Mask a the #LocationType even if it is not required.
-     * @param[in] preferences The vector of Mask compliance values for all #LocationType%s.
+     * @brief For every #InterventionType a Person has a compliance value between 0 and 1.
+     * 0 means that the Person never complies to the Intervention.
+     * 1 means that the Person always complies to the Intervention.
+     * @param[in] intervention_type The #InterventionType.
+     * @param[in] value The compliance value.
      */
-    void set_mask_preferences(std::vector<ScalarType> preferences)
+    void set_compliance(InterventionType intervention_type, ScalarType value)
     {
-        m_mask_compliance = preferences;
+        m_compliance[static_cast<uint32_t>(intervention_type)] = value;
     }
 
     /**
-     * @brief Get the Mask compliance of the Person for the current Location.
-     * @param[in] location The current Location of the Person.
-     * @return The probability that the Person does not comply to any Mask duty/wears a Mask even if it is not required.
+     * @brief Get the compliance of the Person for an Intervention.
+     * @param[in] intervention_type The #InterventionType.
+     * @return The probability that the Person complies to an Intervention.
      */
-    ScalarType get_mask_compliance(LocationType location) const
+    ScalarType get_compliance(InterventionType intervention_type) const
     {
-        return m_mask_compliance[static_cast<int>(location)];
+        return m_compliance[static_cast<uint32_t>(intervention_type)];
     }
 
     /**
-     * @brief Checks whether the Person wears a Mask at the target Location.
-     * @param[inout] rng RandomNumberGenerator of the Person.
-     * @param[in] target The target Location.
-     * @return Whether a Person wears a Mask at the Location.
+     * @brief Checks whether the Person complies an Intervention.
+     * @param[inout] rng PersonalRandomNumberGenerator of the Person.
+     * @param[in] intervention The #InterventionType.
+     * @return Checks whether the Person complies an Intervention.
      */
-    bool apply_mask_intervention(PersonalRandomNumberGenerator& rng, const Location& target);
+    bool is_compliant(PersonalRandomNumberGenerator& rng, InterventionType intervention) const;
 
     /**
-     * @brief Decide if a Person is currently wearing a Mask.
-     * @param[in] wear_mask If true, the protection of the Mask is considered when computing the exposure rate.
+     * @brief Change the mask to new type.
+     * @param[in] type The required #MaskType.
+     * @param[in] t The TimePoint of mask change.
      */
-    void set_wear_mask(bool wear_mask)
-    {
-        m_wears_mask = wear_mask;
-    }
-
-    /**
-     * @brief Get the information if the Person is currently wearing a Mask.
-     * @return True if the Person is currently wearing a Mask.
-     */
-    bool get_wear_mask() const
-    {
-        return m_wears_mask;
-    }
+    void set_mask(MaskType type, TimePoint t);
 
     /**
      * @brief Get the multiplicative factor on how likely an #Infection is due to the immune system.
@@ -442,7 +433,7 @@ private:
     Person always visits the same Home or School etc. */
     std::vector<Vaccination> m_vaccinations; ///< Vector with all Vaccination%s the Person has received.
     std::vector<Infection> m_infections; ///< Vector with all Infection%s the Person had.
-    TimePoint m_quarantine_start; ///< TimePoint when the Person started quarantine.
+    TimePoint m_home_isolation_start; ///< TimePoint when the Person started isolation at home.
     AgeGroup m_age; ///< AgeGroup the Person belongs to.
     TimeSpan m_time_at_location; ///< Time the Person has spent at its current Location so far.
     double m_random_workgroup; ///< Value to determine if the Person goes to work or works from home during lockdown.
@@ -450,8 +441,8 @@ private:
     double m_random_goto_work_hour; ///< Value to determine at what time the Person goes to work.
     double m_random_goto_school_hour; ///< Value to determine at what time the Person goes to school.
     Mask m_mask; ///< The Mask of the Person.
-    bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.
-    std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
+    std::vector<ScalarType>
+        m_compliance; ///< Vector of compliance values for all #InterventionType%s. Values from 0 to 1.
     PersonId m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
