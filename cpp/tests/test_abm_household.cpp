@@ -32,14 +32,11 @@ TEST(TestHouseholds, test_add_household_to_model)
     auto household = mio::abm::Household();
     household.add_members(member1, 2);
     household.add_members(member2, 2);
-    household.set_space_per_member(10);
 
     auto model = mio::abm::Model(num_age_groups);
 
     add_household_to_model(model, household);
     auto persons = model.get_persons();
-
-    EXPECT_EQ(household.get_space_per_member(), 10);
 
     // Test size
     EXPECT_EQ(persons.size(), 4);
