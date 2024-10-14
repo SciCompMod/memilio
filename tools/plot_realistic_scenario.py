@@ -204,7 +204,7 @@ def compare_compartments_real(files, datafile, legendplot, deaths=False, filenam
     plt.yticks(fontsize=9)
     plt.xlim(left=0, right=num_days-1)
     # Define x-ticks.
-    datelist = np.array(pd.date_range(parameters["start_date"].date(),
+    datelist = np.array(pd.date_range(start_date.date(),
                                       periods=num_days, freq='D').strftime('%m-%d').tolist())
     tick_range = (np.arange(int((num_days-1) / 5) + 1) * 5)
     plt.xticks(tick_range, datelist[tick_range],
@@ -222,7 +222,7 @@ def compare_compartments_real(files, datafile, legendplot, deaths=False, filenam
                 bbox_inches='tight', dpi=500)
 
 
-def plot_new_infections_real(files, datafile, start_date, tmax, scaleConfirmed, legendplot, filename_plot="compare_new_infections_real"):
+def plot_new_infections_real(files, age_group, datafile, start_date, tmax, scaleConfirmed, legendplot, filename_plot="compare_new_infections_real"):
     """ Plots simulation results compared with real data for new infections within one day.
         The simulation results should consist of accumulated numbers for subcompartments in case of an LCT model.
 
@@ -236,10 +236,22 @@ def plot_new_infections_real(files, datafile, start_date, tmax, scaleConfirmed, 
     plt.figure(filename_plot)
 
     data_rki = load_data(datafile, start_date, tmax, scaleConfirmed)
-    num_days = data_rki.shape[0]
+    num_days = tmax+1
 
-    plt.plot(range(num_days), data_rki['DailyNewTransmissions'],
-             linestyle='None', color='grey', marker='x', markersize=10)
+    if (age_group == -1):
+        data_rki = data_rki.drop(columns=['Age_RKI'])
+        data_rki = data_rki.groupby(['Date']).sum()
+        plt.plot(range(num_days), data_rki['DailyNewTransmissions'],
+                 linestyle='None', color='grey', marker='x', markersize=5)
+        plt.title('All Age Groups')
+        print("Daily new transmissions at the first day of RKI data is: " +
+              f"{data_rki.loc[start_date]['DailyNewTransmissions']}")
+    else:
+        plt.plot(range(num_days), data_rki['DailyNewTransmissions'][(data_rki['Age_RKI'] == Age_RKI_names[age_group])],
+                 linestyle='None', color='grey', marker='x', markersize=5)
+        plt.title(Age_RKI_names[age_group])
+        print("Daily new transmissions at the first day of " +
+              Age_RKI_names[age_group]+" of the RKI data is: "+f"{data_rki['DailyNewTransmissions'][(data_rki['Age_RKI'] == Age_RKI_names[age_group]) & ( data_rki['Date'] == start_date )].iloc[0]}")
 
     # Add simulation results to plot.
     for file in range(len(files)):
@@ -255,7 +267,14 @@ def plot_new_infections_real(files, datafile, start_date, tmax, scaleConfirmed, 
         dates = data['Time'][:]
         # As there should be only one Group, total is the simulation result.
         total = data['Total'][:, :]
-        incidence = (total[:-1, 0]-total[1:, 0])/(dates[1:]-dates[:-1])
+        if age_group == -1:
+            incidence = (total[:-1, 0] -
+                         total[1:, 0])/(dates[1:]-dates[:-1])
+        else:
+            incidence = (total[:-1, len(secir_dict) * age_group] -
+                         total[1:, len(secir_dict) * age_group])/(dates[1:]-dates[:-1])
+        print("Daily new transmissions at the first day of the simulation " + legendplot[file+1]+" is: "
+              f"{incidence[0]}")
 
         # Plot result.
         if legendplot[file] in linestyle_dict:
@@ -265,16 +284,18 @@ def plot_new_infections_real(files, datafile, start_date, tmax, scaleConfirmed, 
             plt.plot(dates[1:], incidence, linewidth=1.2)
         h5file.close()
 
-    plt.xlabel('Date', fontsize=14)
     plt.ylabel('Daily new Transmissions', fontsize=14)
+    plt.ylim(bottom=0)
+    plt.xlabel('Date', fontsize=14)
     plt.xlim(left=0, right=num_days-1)
     # Define x-ticks.
-    datelist = np.array(pd.date_range(parameters["start_date"].date(),
+    datelist = np.array(pd.date_range(start_date.date(),
                                       periods=num_days, freq='D').strftime('%m-%d').tolist())
     tick_range = (np.arange(int((num_days - 1) / 5) + 1) * 5)
     plt.xticks(tick_range, datelist[tick_range],
                rotation=45, fontsize=12)
     plt.xticks(np.arange(num_days), minor=True)
+
     plt.legend(legendplot, fontsize=12, framealpha=0.5)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
@@ -284,6 +305,8 @@ def plot_new_infections_real(files, datafile, start_date, tmax, scaleConfirmed, 
         os.makedirs('Plots_real')
     plt.savefig('Plots_real/'+filename_plot+'.png',
                 bbox_inches='tight', dpi=500)
+    plt.close()
+    print(" ")
 
 
 def main():

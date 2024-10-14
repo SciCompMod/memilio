@@ -226,8 +226,8 @@ def plot_new_infections_ageres(files, ylim, legendplot, filename_plot="compare_n
         # As there should be only one Group, total is the simulation result.
         total = data['Total'][:, :]
         for age in range(6):
-            incidence = (total[:-1, 8*age] -
-                         total[1:, 8*age])/(dates[1:]-dates[:-1])
+            incidence = (total[:-1, len(secir_dict) * age] -
+                         total[1:, len(secir_dict) * age])/(dates[1:]-dates[:-1])
             # Plot result.
             if legendplot[file] in linestyle_dict:
                 plt.plot(dates[1:], incidence, linewidth=1.2,
