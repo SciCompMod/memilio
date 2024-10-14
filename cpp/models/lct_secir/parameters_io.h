@@ -308,7 +308,8 @@ void process_entry(Populations& populations, const EntryType& entry, int offset,
         }
     }
 
-    // Compute Dead.
+    // Compute Dead by shifting RKI data according to mean stay times.
+    // This is because the RKI reports deaths with the date of the positive test, not the date of death.
     if (offset == std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
                              staytimes[(size_t)InfectionState::InfectedSevere] -
                              staytimes[(size_t)InfectionState::InfectedCritical])) {

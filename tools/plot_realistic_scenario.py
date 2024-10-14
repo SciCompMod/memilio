@@ -37,18 +37,18 @@ import memilio.epidata.getDataIntoPandasDataFrame as gd
 # Define compartments.
 secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
               5: 'ICU', 6: 'Recovered', 7: 'Dead'}
-Age_RKI_names = {'A00-A04', 'A05-A14',
-                 'A15-A34',  'A35-A59',  'A60-A79', 'A80+ '}
+Age_RKI_names = {0: 'A00-A04', 1: 'A05-A14',
+                 2: 'A15-A34',  3: 'A35-A59', 4: 'A60-A79', 5: 'A80+'}
 
 # Define parameters used for simulation, used for plotting real data.
-TimeExposed = {3.335, 3.335, 3.335, 3.335, 3.335, 3.335}
-TimeInfectedNoSymptoms = {2.74, 2.74, 2.565, 2.565, 2.565, 2.565}
-TimeInfectedSymptoms = {7.02625, 7.02625, 7.0665, 6.9385, 6.835, 6.775}
-TimeInfectedSevere = {5., 5., 5.925, 7.55, 8.5, 11.}
-TimeInfectedCritical = {6.95, 6.95, 6.86, 17.36, 17.1, 11.6}
-RecoveredPerInfectedNoSymptoms = {
-    1 - 0.75, 1 - 0.75, 1 - 0.8, 1 - 0.8, 1 - 0.8, 1 - 0.8}
-age_group_sizes = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434}
+TimeExposed = [3.335, 3.335, 3.335, 3.335, 3.335, 3.335]
+TimeInfectedNoSymptoms = [2.74, 2.74, 2.565, 2.565, 2.565, 2.565]
+TimeInfectedSymptoms = [7.02625, 7.02625, 7.0665, 6.9385, 6.835, 6.775]
+TimeInfectedSevere = [5., 5., 5.925, 7.55, 8.5, 11.]
+TimeInfectedCritical = [6.95, 6.95, 6.86, 17.36, 17.1, 11.6]
+RecoveredPerInfectedNoSymptoms = [
+    1 - 0.75, 1 - 0.75, 1 - 0.8, 1 - 0.8, 1 - 0.8, 1 - 0.8]
+age_group_sizes = [3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434]
 
 # Define color and style to be used while plotting for different models to make plots consistent.
 color_dict = {'ODE': '#1f77b4',
@@ -66,11 +66,13 @@ linestyle_dict = {'ODE': 'solid',
 
 
 def load_data(file, start_date, tmax, scaleConfirmed):
-    """ Loads RKI data and computes 'InfectedSymptoms', 'Deaths' and 'NewInfectionsDay' using scales, dates etc from the dictionary parameters.
-    Method matches the method for computing initial values for the LCT model. See also cpp/models/lct_secir/parameters_io.h.
-    @param[in] file Path to the RKI data file for whole Germany. Can be downloaded eg via pycode/memilio-epidata/memilio/epidata/getCaseData.py.
+    """ Loads RKI data and computes 'InfectedSymptoms', 'Deaths' and 'DailyNewTransmissions' using scales, dates etc 
+    from the dictionary parameters. Method matches the method for computing initial values for the LCT model. 
+    See also cpp/models/lct_secir/parameters_io.h.
+    @param[in] file Path to the RKI data file for whole Germany. 
+        Can be downloaded eg via pycode/memilio-epidata/memilio/epidata/getCaseData.py.
     """
-    # TODO: ist nicht irgendwo bei den toten eine verschiebung notowendig?
+
     # Read data.
     df = pd.read_json(file)
     df = df.drop(columns=['Recovered'])
@@ -79,8 +81,8 @@ def load_data(file, start_date, tmax, scaleConfirmed):
 
     # Remove unnecessary dates.
     df = df[(df['Date'] >= start_date +
-             pd.DateOffset(days=-math.ceil(max(TimeInfectedSymptoms)+max(TimeInfectedSevere)+max(TimeInfectedCritical))))
-            & (df['Date'] <= end_date + pd.DateOffset(days=math.ceil(max(TimeExposed)+max(TimeInfectedNoSymptoms))))]
+             pd.DateOffset(days=-math.ceil(max(TimeInfectedSymptoms) + max(TimeInfectedSevere) + max(TimeInfectedCritical))))
+            & (df['Date'] <= end_date + pd.DateOffset(days=math.ceil(max(TimeExposed) + max(TimeInfectedNoSymptoms))))]
     # Scale confirmed cases because of undetected infections.
     df['Confirmed'] = scaleConfirmed * df['Confirmed']
     # As unknown age groups are omitted in the cpp epi_data used for initialization, we omit it here too.
@@ -91,37 +93,58 @@ def load_data(file, start_date, tmax, scaleConfirmed):
     df2 = df2[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
     df2 = df2.reset_index()
     df2 = df2.drop(columns=['index', 'Confirmed', 'Deaths'])
-    print(df2)
-    # Calculate individuals in compartment InfectedSymptoms.
+    df2['InfectedSymptoms'] = pd.Series(dtype='double')
+    df2['Deaths'] = pd.Series(dtype='double')
+    df2['DailyNewTransmissions'] = pd.Series(dtype='double')
+
     for age_group in range(len(Age_RKI_names)):
-        df_age_confirmed = df['Confirmed'][(
-            df['Age_RKI'] == Age_RKI_names(age_group))]
-        help_I = df['Confirmed'][(df['Age_RKI'] == Age_RKI_names(age_group)) & (
-            df['Date'] >= start_date) & (df['Date'] <= parameters['end_date'])].to_numpy()
-        help_I = help_I - (1-math.fmod(TimeInfectedNoSymptoms[age_group], 1))*df_age_confirmed[(df['Date'] >= start_date+pd.DateOffset(days=-math.floor(TimeInfectedSymptoms[age_group])))
-                                                                                               & (df['Date'] <= end_date + pd.DateOffset(days=-math.floor(TimeInfectedSymptoms[age_group])))].to_numpy()
-        help_I = help_I - math.fmod(TimeInfectedSymptoms[age_group], 1) * df['Confirmed'][(df['Date'] >= start_date+pd.DateOffset(days=-math.ceil(
-            TimeInfectedSymptoms[age_group]))) & (df['Date'] <= parameters['end_date']+pd.DateOffset(days=-math.ceil(TimeInfectedSymptoms[age_group])))].to_numpy()
-        df2['InfectedSymptoms'][(
-            df2['Age_RKI'] == Age_RKI_names(age_group))] = help_I
-    # # Calculate number of dead individuals.
-    # help_D = (1-(1-math.fmod(parameters['TimeInfectedSymptoms']+parameters['TimeInfectedSevere']+parameters['TimeInfectedCritical'], 1)))*df['Deaths'][(df['Date'] >= start_date+pd.DateOffset(days=-math.ceil(parameters['TimeInfectedSymptoms']+parameters['TimeInfectedSevere']+parameters['TimeInfectedCritical'])))
-    #                                                                                                                                                    & (df['Date'] <= parameters['end_date']+pd.DateOffset(days=-math.ceil(parameters['TimeInfectedSymptoms']+parameters['TimeInfectedSevere']+parameters['TimeInfectedCritical'])))].to_numpy()
-    # help_D = help_D + (1-math.fmod(parameters['TimeInfectedSymptoms']+parameters['TimeInfectedSevere']+parameters['TimeInfectedCritical'], 1))*df['Deaths'][(df['Date'] >= start_date+pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptoms']+parameters['TimeInfectedSevere']+parameters['TimeInfectedCritical'])))
-    #                                                                                                                                                         & (df['Date'] <= parameters['end_date']+pd.DateOffset(days=-math.floor(parameters['TimeInfectedSymptoms']+parameters['TimeInfectedSevere']+parameters['TimeInfectedCritical'])))].to_numpy()
-    # df2['Deaths'] = help_D
-    # # Calculate new infections per day.
-    # fmod = math.fmod(
-    #     parameters['TimeInfectedNoSymptoms']+parameters['TimeExposed'], 1)
-    # help_newE = fmod*df['Confirmed'][(df['Date'] >= start_date+pd.DateOffset(days=math.ceil(parameters['TimeInfectedNoSymptoms']+parameters['TimeExposed'])))
-    #                                  & (df['Date'] <= end_date+ pd.DateOffset(days=math.ceil(parameters['TimeInfectedNoSymptoms']+parameters['TimeExposed'])))].to_numpy()
-    # help_newE = help_newE+(1-2*fmod)*df['Confirmed'][(df['Date'] >= start_date+pd.DateOffset(days=math.floor(parameters['TimeInfectedNoSymptoms']+parameters['TimeExposed'])))
-    #                                                  & (df['Date'] <= end_date+ pd.DateOffset(days=math.floor(parameters['TimeInfectedNoSymptoms']+parameters['TimeExposed'])))].to_numpy()
-    # help_newE = help_newE-(1-fmod)*df['Confirmed'][(df['Date'] >= start_date+pd.DateOffset(days=math.floor(parameters['TimeInfectedNoSymptoms']+parameters['TimeExposed']-1)))
-    #                                                & (df['Date'] <= end_date+ pd.DateOffset(days=math.floor(parameters['TimeInfectedNoSymptoms']+parameters['TimeExposed']-1)))].to_numpy()
-    # df2['NewInfectionsDay'] = help_newE / \
-    #     (1-parameters['RecoveredPerInfectedNoSymptoms'])
-    # return df2
+        # Calculate individuals in compartment InfectedSymptoms using TimeInfectedSymptoms..
+        df_age = df[(df['Age_RKI'] == Age_RKI_names[age_group])]
+        help_I_age = df_age['Confirmed'][(df_age['Date'] >= start_date) & (
+            df_age['Date'] <= end_date)].to_numpy()
+
+        help_I_age = help_I_age - (1 - math.fmod(TimeInfectedSymptoms[age_group], 1)) * df_age['Confirmed'][(
+            df_age['Date'] >= start_date + pd.DateOffset(days=-math.floor(TimeInfectedSymptoms[age_group]))) & (
+                df_age['Date'] <= end_date + pd.DateOffset(days=-math.floor(TimeInfectedSymptoms[age_group])))].to_numpy()
+
+        help_I_age = help_I_age - math.fmod(TimeInfectedSymptoms[age_group], 1) * df_age['Confirmed'][(
+            df_age['Date'] >= start_date + pd.DateOffset(days=-math.ceil(TimeInfectedSymptoms[age_group]))) & (
+                df_age['Date'] <= end_date + pd.DateOffset(days=-math.ceil(TimeInfectedSymptoms[age_group])))].to_numpy()
+        df2.loc[(df2['Age_RKI'] == Age_RKI_names[age_group]),
+                "InfectedSymptoms"] = help_I_age
+
+        # Calculate number of dead individuals.
+        # Compute Dead by shifting RKI data according to mean stay times.
+        # This is done because the RKI reports death with the date of positive test instead of the date of deaths.
+        timeInfSym_Sev_Crit_age = TimeInfectedSymptoms[age_group] + \
+            TimeInfectedSevere[age_group] + TimeInfectedCritical[age_group]
+        help_D_age = (1 - (1 - math.fmod(timeInfSym_Sev_Crit_age, 1))) * df_age['Deaths'][(
+            df_age['Date'] >= start_date + pd.DateOffset(days=-math.ceil(timeInfSym_Sev_Crit_age)))
+            & (df_age['Date'] <= end_date + pd.DateOffset(
+                days=-math.ceil(timeInfSym_Sev_Crit_age)))].to_numpy()
+        help_D_age = help_D_age + (1 - math.fmod(timeInfSym_Sev_Crit_age, 1)) * df_age['Deaths'][
+            (df_age['Date'] >= start_date +
+             pd.DateOffset(days=-math.floor(timeInfSym_Sev_Crit_age)))
+            & (df_age['Date'] <= end_date + pd.DateOffset(days=-math.floor(timeInfSym_Sev_Crit_age)))].to_numpy()
+        df2.loc[(df2['Age_RKI'] == Age_RKI_names[age_group]),
+                'Deaths'] = help_D_age
+
+        # Calculate new infections per day.
+        timeE_INS_age = TimeInfectedNoSymptoms[age_group] + \
+            TimeExposed[age_group]
+        fmod = math.fmod(timeE_INS_age, 1)
+        help_newTrans_age = fmod * df_age['Confirmed'][(df_age['Date'] >= start_date + pd.DateOffset(days=math.ceil(
+            timeE_INS_age)))
+            & (df_age['Date'] <= end_date + pd.DateOffset(days=math.ceil(
+               timeE_INS_age)))].to_numpy()
+        help_newTrans_age = help_newTrans_age + (1 - 2 * fmod) * df_age['Confirmed'][(
+            df_age['Date'] >= start_date + pd.DateOffset(days=math.floor(timeE_INS_age)))
+            & (df_age['Date'] <= end_date + pd.DateOffset(days=math.floor(timeE_INS_age)))].to_numpy()
+        help_newTrans_age = help_newTrans_age-(1-fmod)*df_age['Confirmed'][(df_age['Date'] >= start_date + pd.DateOffset(days=math.floor(timeE_INS_age - 1)))
+                                                                           & (df_age['Date'] <= end_date + pd.DateOffset(days=math.floor(timeE_INS_age - 1)))].to_numpy()
+        df2.loc[(df2['Age_RKI'] == Age_RKI_names[age_group]),
+                'DailyNewTransmissions'] = help_newTrans_age / (1-RecoveredPerInfectedNoSymptoms[age_group])
+    return df2
 
 
 def compare_compartments_real(files, datafile, legendplot, deaths=False, filename_plot="compare_real"):
@@ -215,7 +238,7 @@ def plot_new_infections_real(files, datafile, start_date, tmax, scaleConfirmed, 
     data_rki = load_data(datafile, start_date, tmax, scaleConfirmed)
     num_days = data_rki.shape[0]
 
-    plt.plot(range(num_days), data_rki['NewInfectionsDay'],
+    plt.plot(range(num_days), data_rki['DailyNewTransmissions'],
              linestyle='None', color='grey', marker='x', markersize=10)
 
     # Add simulation results to plot.
