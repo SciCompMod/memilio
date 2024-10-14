@@ -153,13 +153,13 @@ private:
         static_assert((Group < num_groups) && (Group >= 0), "The template parameter Group should be valid.");
         using LctStateGroup = type_at_index_t<Group, LctStates...>;
 
-        // Define first index of the group Group in an vector including all compartments without a resolution
+        // Define first index of the group Group in a vector including all compartments without a resolution
         // in subcompartments.
         Eigen::Index count_InfStates         = (Eigen::Index)InfectionState::Count;
         Eigen::Index first_index_group_comps = Group * count_InfStates;
 
         // Use function from the LctState of the Group to calculate the vector without subcompartments
-        // using the corresponding vector with subcompartments .
+        // using the corresponding vector with subcompartments.
         compartments.segment(first_index_group_comps, count_InfStates) =
             LctStateGroup::calculate_compartments(subcompartments.segment(
                 this->populations.template get_first_index_of_group<Group>(), LctStateGroup::Count));

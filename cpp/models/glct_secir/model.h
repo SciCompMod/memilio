@@ -334,7 +334,7 @@ public:
      * If the model is used for simulation, we will get a result in form of a TimeSeries with infection states divided 
      * in subcompartments.
      * The function calculates a TimeSeries without subcompartments from another TimeSeries with subcompartments. 
-     * This is done by summing up the numbers in the subcompartments.
+     * This is done by summing up the corresponding subcompartments.
      * @param[in] subcompartments_ts Result of a simulation with the model.
      * @return Result of the simulation divided in infection states without subcompartments. 
      *  Returns TimeSeries with values -1 if calculation is not possible.
@@ -343,7 +343,7 @@ public:
     {
         TimeSeries<ScalarType> compartments_ts((Eigen::Index)InfectionState::Count);
         if (!(LctState::Count == subcompartments_ts.get_num_elements())) {
-            log_error("Result does not match infectionState of the Model.");
+            log_error("Result does not match InfectionStates of the model.");
             // Return a TimeSeries with values -1.
             Eigen::VectorXd error_output = Eigen::VectorXd::Constant((Eigen::Index)InfectionState::Count, -1);
             compartments_ts.add_time_point(-1, error_output);

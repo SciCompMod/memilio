@@ -306,7 +306,7 @@ struct TransitionMatrixInfectedCriticalToDead {
      * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedCritical compartment
      *   before death.
      * @param[in] dimension Number of rows/columns of the Transitionmatrix.
-     * @param[in] time Average time treated by ICU before dead in day unit.
+     * @param[in] time Average time treated by ICU before dying in day unit.
      */
     static Type get_default(size_t dimension, ScalarType time = 1.)
     {
@@ -513,7 +513,7 @@ public:
         if (this->get<StartingProbabilitiesExposed>().rows() !=
             this->get<TransitionMatrixExposedToInfectedNoSymptoms>().rows()) {
             log_error("Constraint check: Dimensions of StartingProbabilitiesExposed and "
-                      "TransitionMatrixExposedToInfectedNoSymptoms not matching.");
+                      "TransitionMatrixExposedToInfectedNoSymptoms are not matching.");
             return true;
         }
 
