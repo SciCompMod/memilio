@@ -383,8 +383,7 @@ TEST(TestModel, evolveMobility)
         // Make sure all persons will be InfectedSevere -> InfectedCritical -> Dead.
         ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
             mock_uniform_dist;
-        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-            .WillRepeatedly(testing::Return(1.0));
+        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).WillRepeatedly(testing::Return(1.0));
 
         // Create a person that is dead at time t
         add_test_person(model, icu_id, age_group_60_to_79, mio::abm::InfectionState::Dead, t);
@@ -818,10 +817,14 @@ TEST(TestModel, personCanDieInHospital)
     auto dt    = mio::abm::days(1);
     auto model = mio::abm::Model(num_age_groups);
 
-    // Time to go from infected with symptoms to severe infection is dt.
+    // Time to go from infected with symptoms to severe infection is 1 day(dt).
     model.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 1;
-    // Time to go from severe infection to dead is dt.
+    // Time to go from severe infection to critical is 1 day(dt).
+    model.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 1;
+    // Time to go from severe infection to dead is 1 day(dt).
     model.parameters.get<mio::abm::SevereToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 1;
+    // Time to go from critical infection to dead is 1 day(dt).
+    model.parameters.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 1;
 
     auto home_id     = model.add_location(mio::abm::LocationType::Home);
     auto work_id     = model.add_location(mio::abm::LocationType::Work);
@@ -829,44 +832,28 @@ TEST(TestModel, personCanDieInHospital)
     auto hospital_id = model.add_location(mio::abm::LocationType::Hospital);
 
     // Make sure all persons will be InfectedSevere before Dead.
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-        mock_uniform_dist;
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .WillRepeatedly(testing::Return(0.3));
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).WillRepeatedly(testing::Return(0.3));
 
-    // Create a person that has severe infection and move to hospital at time t. The person is dead at time t + dt
+    // Create a person that has InfectedSymptoms at time t - dt. The person is dead at time t + dt
     add_test_person(model, home_id, age_group_60_to_79, mio::abm::InfectionState::Dead, t + dt);
 
     auto& p_severe = model.get_persons()[0];
-
     p_severe.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id);
     p_severe.set_assigned_location(mio::abm::LocationType::ICU, icu_id);
     p_severe.set_assigned_location(mio::abm::LocationType::Home, home_id);
     p_severe.set_assigned_location(mio::abm::LocationType::Work, work_id);
 
-    // Check the case where mobility rules are applied
+    // Check the infection course goes from InfectedSymptoms to Severe to Dead and skips Critical
+    EXPECT_EQ(p_severe.get_infection_state(t - dt), mio::abm::InfectionState::InfectedSymptoms);
+    EXPECT_EQ(p_severe.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
+    EXPECT_EQ(p_severe.get_infection_state(t + dt), mio::abm::InfectionState::Dead);
+
     // Check the severely infected person go to hospital
     EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Home);
     model.evolve(t, dt);
-    EXPECT_EQ(p_severe.get_infection_state(t + dt / 2), mio::abm::InfectionState::InfectedSevere);
     EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Hospital);
-
     // Check the severely infected person dies and got burried
     model.evolve(t + dt, dt);
-    EXPECT_EQ(p_severe.get_infection_state(t + dt), mio::abm::InfectionState::Dead);
-    EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Cemetery);
-
-    // Check the case where mobility rules are not applied
-    p_severe.set_location(mio::abm::LocationType::Home, home_id);
-    model.use_mobility_rules(false); // Reset location of the person
-    // Check the severely infected person go to hospital
-    EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Home);
-    model.evolve(t, dt);
-    EXPECT_EQ(p_severe.get_infection_state(t + dt / 2), mio::abm::InfectionState::InfectedSevere);
-    EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Hospital);
-
-    // Check the severely infected person dies and got burried
-    model.evolve(t + dt, dt);
-    EXPECT_EQ(p_severe.get_infection_state(t + dt), mio::abm::InfectionState::Dead);
     EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Cemetery);
 }
