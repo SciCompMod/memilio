@@ -428,13 +428,13 @@ def insert_locations_to_map(mapping, inputId, locationIds):
         if int(id.index) < 10:
             index = "0" + index
         map.modelId.append(type+index)
-    mapping.append(map)
+    mapping[inputId] = map.modelId
     return mapping
 
 
 def create_locations_from_input(world, input_areas, household_distribution):
     # map input area ids to corresponding abm location ids
-    mapping = []
+    mapping = {}
     # bools to make sure the world has a school and a hospital
     has_school = False
     has_hospital = False
@@ -529,18 +529,27 @@ def create_locations_from_input(world, input_areas, household_distribution):
 
 
 def assign_infection_states(world, t0, exposed_pct, infected_no_symptoms_pct, infected_symptoms_pct,
-                            infected_severe_pct, infected_critical_pct, recovered_pct):
-    susceptible_pct = 1 - exposed_pct - infected_no_symptoms_pct - \
+                            infected_severe_pct, infected_critical_pct, recovered_pct, loc_list=[]):
+    susceptible_pct = 1.0 - exposed_pct - infected_no_symptoms_pct - \
         infected_symptoms_pct - infected_severe_pct - \
         infected_critical_pct - recovered_pct
+    # draw infection state from distribution for every agent
     for person in world.persons:
-        # draw infection state from distribution for every agent
-        infection_state = np.random.choice(np.arange(0, int(abm.InfectionState.Count)),
-                                           p=[susceptible_pct, exposed_pct, infected_no_symptoms_pct,
-                                               infected_symptoms_pct, infected_severe_pct, infected_critical_pct, recovered_pct, 0.0])
-        if (abm.InfectionState(infection_state) != abm.InfectionState.Susceptible):
-            person.add_new_infection(Infection(
-                world, person, VirusVariant.Wildtype, t0, abm.InfectionState(infection_state), False), t0)
+        if (len(loc_list) > 0):
+            if (person.assigned_location(abm.LocationType.Home) in [int(x) for x in loc_list]):
+                infection_state = np.random.choice(np.arange(0, int(abm.InfectionState.Count)),
+                                                   p=[susceptible_pct, exposed_pct, infected_no_symptoms_pct,
+                                                      infected_symptoms_pct, infected_severe_pct, infected_critical_pct, recovered_pct, 0.0])
+                if (abm.InfectionState(infection_state) != abm.InfectionState.Susceptible):
+                    person.add_new_infection(Infection(
+                        world, person, VirusVariant.Wildtype, t0, abm.InfectionState(infection_state), False), t0)
+        else:
+            infection_state = np.random.choice(np.arange(0, int(abm.InfectionState.Count)),
+                                               p=[susceptible_pct, exposed_pct, infected_no_symptoms_pct,
+                                                  infected_symptoms_pct, infected_severe_pct, infected_critical_pct, recovered_pct, 0.0])
+            if (abm.InfectionState(infection_state) != abm.InfectionState.Susceptible):
+                person.add_new_infection(Infection(
+                    world, person, VirusVariant.Wildtype, t0, abm.InfectionState(infection_state), False), t0)
 
 
 def find_all_locations_of_type(world, type):
@@ -731,9 +740,9 @@ def write_infection_paths_to_file(path, world, tmax):
 
 def write_location_mapping_to_file(path, mapping):
     with open(path, 'w') as f:
-        for id in mapping:
-            line = id.inputId + " "
-            for modelId in id.modelId:
+        for id in mapping.keys():
+            line = id + " "
+            for modelId in mapping[id]:
                 line += modelId + " "
             f.write(line)
             f.write('\n')
@@ -777,6 +786,7 @@ def run_abm_simulation(sim_num):
     mio.set_log_level(mio.LogLevel.Warning)
     input_path = sys.path[0] + '/input/'
     output_path = sys.path[0] + '/output/'
+    local_initial_outbreak = True
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(sim_num)
     # starting time point
@@ -799,9 +809,25 @@ def run_abm_simulation(sim_num):
     # as input areas do not fit one-to-one to abm location types, there has to be a mapping
     mapping = create_locations_from_input(
         sim.world, areas, household_distribution)
+    # write location mapping to txt file
+    write_location_mapping_to_file(
+        os.path.join(output_path, str(sim_num) + '_location_mapping.txt'), mapping)
+
+    start_locs = []
+    E_pct = 0.002
+    INS_pct = 0.005
+    ISY_pct = 0.0029
+    ISEV_pct = 0.0001
+    if (local_initial_outbreak):
+        E_pct = 0.03
+        INS_pct = 0.03
+        ISY_pct = 0.039
+        ISEV_pct = 0.001
+        start_locs = ["83", "84", "85"]
+
     # assign initial infection states according to distribution
-    assign_infection_states(sim.world, t0, 0.002, 0.005,
-                            0.0029, 0.0001, 0.0, 0.0)
+    assign_infection_states(sim.world, t0, E_pct, INS_pct,
+                            ISY_pct, ISEV_pct, 0.0, 0.0, [j for i in start_locs for j in mapping[i]])
     # assign locations to agents
     assign_locations(sim.world)
     # output object
@@ -821,9 +847,6 @@ def run_abm_simulation(sim_num):
     # write simulation results to txt file
     write_results_to_file(os.path.join(
         output_path, str(sim_num) + '_output.txt'), log)
-    # write location mapping to txt file
-    write_location_mapping_to_file(
-        os.path.join(output_path, str(sim_num) + '_location_mapping.txt'), mapping)
 
     print('done')
 
@@ -835,5 +858,5 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     # set LogLevel
     mio.set_log_level(mio.LogLevel.Warning)
-    for i in range(1):
+    for i in range(100):
         run_abm_simulation(i, **args.__dict__)
