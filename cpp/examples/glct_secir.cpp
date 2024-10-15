@@ -43,7 +43,9 @@ int main()
 
     Model model;
 
-    ScalarType tmax = 10;
+    ScalarType tmax    = 10;
+    ScalarType t0      = 0;
+    ScalarType dt_init = 10; ///< Initially used step size for adaptive method.
 
     // Define the initial values with the distribution of the population into subcompartments.
     // This method of defining the initial values using a vector of vectors is not necessary, but should remind you
@@ -98,8 +100,8 @@ int main()
         mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms().get_default(
             LctState::get_num_subcompartments<InfectionState::Exposed>(), 3.2);
     // InfectedNoSymptoms.
-    Eigen::VectorXd StartingProbabilitiesInfectedNoSymptoms =
-        Eigen::VectorXd::Zero(LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>());
+    mio::Vector<ScalarType> StartingProbabilitiesInfectedNoSymptoms =
+        mio::Vector<ScalarType>::Zero(LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>());
     StartingProbabilitiesInfectedNoSymptoms[0]                                         = 1 - 0.09;
     StartingProbabilitiesInfectedNoSymptoms[(Eigen::Index)(
         LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.)] = 0.09;
@@ -112,8 +114,8 @@ int main()
         mio::glsecir::TransitionMatrixInfectedNoSymptomsToRecovered().get_default(
             (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.), 2.);
     // InfectedSymptoms.
-    Eigen::VectorXd StartingProbabilitiesInfectedSymptoms =
-        Eigen::VectorXd::Zero(LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>());
+    mio::Vector<ScalarType> StartingProbabilitiesInfectedSymptoms =
+        mio::Vector<ScalarType>::Zero(LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>());
     StartingProbabilitiesInfectedSymptoms[0]                                         = 0.2;
     StartingProbabilitiesInfectedSymptoms[(Eigen::Index)(
         LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.)] = 1 - 0.2;
@@ -125,8 +127,8 @@ int main()
         mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered().get_default(
             (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.), 5.8);
     // InfectedSevere.
-    Eigen::VectorXd StartingProbabilitiesInfectedSevere =
-        Eigen::VectorXd::Zero(LctState::get_num_subcompartments<InfectionState::InfectedSevere>());
+    mio::Vector<ScalarType> StartingProbabilitiesInfectedSevere =
+        mio::Vector<ScalarType>::Zero(LctState::get_num_subcompartments<InfectionState::InfectedSevere>());
     StartingProbabilitiesInfectedSevere[0]                                         = 0.25;
     StartingProbabilitiesInfectedSevere[(Eigen::Index)(
         LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.)] = 1 - 0.25;
@@ -138,8 +140,8 @@ int main()
         mio::glsecir::TransitionMatrixInfectedSevereToRecovered().get_default(
             (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.), 9.5);
     // InfectedCritical.
-    Eigen::VectorXd StartingProbabilitiesInfectedCritical =
-        Eigen::VectorXd::Zero(LctState::get_num_subcompartments<InfectionState::InfectedCritical>());
+    mio::Vector<ScalarType> StartingProbabilitiesInfectedCritical =
+        mio::Vector<ScalarType>::Zero(LctState::get_num_subcompartments<InfectionState::InfectedCritical>());
     StartingProbabilitiesInfectedCritical[0]                                         = 0.3;
     StartingProbabilitiesInfectedCritical[(Eigen::Index)(
         LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.)] = 1 - 0.3;
@@ -162,7 +164,7 @@ int main()
     model.parameters.get<mio::glsecir::RiskOfInfectionFromSymptomatic>() = 0.25;
 
     // Perform a simulation.
-    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, 0.5, model);
+    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt_init, model);
     // The simulation result is divided by subcompartments as in the LCT model.
     // We call the function calculate_compartments to get a result according to the InfectionStates.
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);

@@ -134,8 +134,8 @@ public:
      * @param[in] t The current time.
      * @param[out] dydt A reference to the calculated output.
      */
-    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, ScalarType t,
-                         Eigen::Ref<Eigen::VectorXd> dydt) const override
+    void get_derivatives(Eigen::Ref<const Vector<ScalarType>> pop, Eigen::Ref<const Vector<ScalarType>> y, ScalarType t,
+                         Eigen::Ref<Vector<ScalarType>> dydt) const override
     {
         dydt.setZero();
 
@@ -176,7 +176,7 @@ public:
         dydt.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
                      LctState::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>()) =
             -(params.template get<TransitionMatrixExposedToInfectedNoSymptoms>() *
-              Eigen::VectorXd::Ones(LctState::template get_num_subcompartments<InfectionState::Exposed>()))
+              Vector<ScalarType>::Ones(LctState::template get_num_subcompartments<InfectionState::Exposed>()))
                  .transpose() *
             y.segment(LctState::template get_first_index<InfectionState::Exposed>(),
                       LctState::template get_num_subcompartments<InfectionState::Exposed>()) *
@@ -202,7 +202,7 @@ public:
         // Add flow directly to Recovered compartment.
         dydt[LctState::template get_first_index<InfectionState::Recovered>()] +=
             -(params.template get<TransitionMatrixInfectedNoSymptomsToRecovered>() *
-              Eigen::VectorXd::Ones(dimensionInfectedNoSymptomsToRecovered))
+              Vector<ScalarType>::Ones(dimensionInfectedNoSymptomsToRecovered))
                  .transpose() *
             y.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>() +
                           dimensionInfectedNoSymptomsToInfectedSymptoms,
@@ -214,7 +214,7 @@ public:
                      LctState::template get_num_subcompartments<InfectionState::InfectedSymptoms>()) =
             -params.template get<StartingProbabilitiesInfectedSymptoms>() *
             (params.template get<TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>() *
-             Eigen::VectorXd::Ones(dimensionInfectedNoSymptomsToInfectedSymptoms))
+             Vector<ScalarType>::Ones(dimensionInfectedNoSymptomsToInfectedSymptoms))
                 .transpose() *
             y.segment(LctState::template get_first_index<InfectionState::InfectedNoSymptoms>(),
                       dimensionInfectedNoSymptomsToInfectedSymptoms);
@@ -239,7 +239,7 @@ public:
         // Add flow directly to Recovered compartment.
         dydt[LctState::template get_first_index<InfectionState::Recovered>()] +=
             -(params.template get<TransitionMatrixInfectedSymptomsToRecovered>() *
-              Eigen::VectorXd::Ones(dimensionInfectedSymptomsToRecovered))
+              Vector<ScalarType>::Ones(dimensionInfectedSymptomsToRecovered))
                  .transpose() *
             y.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>() +
                           dimensionInfectedSymptomsToInfectedSevere,
@@ -251,7 +251,7 @@ public:
                      LctState::template get_num_subcompartments<InfectionState::InfectedSevere>()) =
             -params.template get<StartingProbabilitiesInfectedSevere>() *
             (params.template get<TransitionMatrixInfectedSymptomsToInfectedSevere>() *
-             Eigen::VectorXd::Ones(dimensionInfectedSymptomsToInfectedSevere))
+             Vector<ScalarType>::Ones(dimensionInfectedSymptomsToInfectedSevere))
                 .transpose() *
             y.segment(LctState::template get_first_index<InfectionState::InfectedSymptoms>(),
                       dimensionInfectedSymptomsToInfectedSevere);
@@ -276,7 +276,7 @@ public:
         // Add flow directly to Recovered compartment.
         dydt[LctState::template get_first_index<InfectionState::Recovered>()] +=
             -(params.template get<TransitionMatrixInfectedSevereToRecovered>() *
-              Eigen::VectorXd::Ones(dimensionInfectedSevereToRecovered))
+              Vector<ScalarType>::Ones(dimensionInfectedSevereToRecovered))
                  .transpose() *
             y.segment(LctState::template get_first_index<InfectionState::InfectedSevere>() +
                           dimensionInfectedSevereToInfectedCritical,
@@ -288,7 +288,7 @@ public:
                      LctState::template get_num_subcompartments<InfectionState::InfectedCritical>()) =
             -params.template get<StartingProbabilitiesInfectedCritical>() *
             (params.template get<TransitionMatrixInfectedSevereToInfectedCritical>() *
-             Eigen::VectorXd::Ones(dimensionInfectedSevereToInfectedCritical))
+             Vector<ScalarType>::Ones(dimensionInfectedSevereToInfectedCritical))
                 .transpose() *
             y.segment(LctState::template get_first_index<InfectionState::InfectedSevere>(),
                       dimensionInfectedSevereToInfectedCritical);
@@ -312,7 +312,7 @@ public:
         // Add flow directly to Recovered compartment.
         dydt[LctState::template get_first_index<InfectionState::Recovered>()] +=
             -(params.template get<TransitionMatrixInfectedCriticalToRecovered>() *
-              Eigen::VectorXd::Ones(dimensionInfectedCriticalToRecovered))
+              Vector<ScalarType>::Ones(dimensionInfectedCriticalToRecovered))
                  .transpose() *
             y.segment(LctState::template get_first_index<InfectionState::InfectedCritical>() +
                           dimensionInfectedCriticalToDead,
@@ -321,7 +321,7 @@ public:
         // --- Dead. ---
         dydt[LctState::template get_first_index<InfectionState::Dead>()] =
             -(params.template get<TransitionMatrixInfectedCriticalToDead>() *
-              Eigen::VectorXd::Ones(dimensionInfectedCriticalToDead))
+              Vector<ScalarType>::Ones(dimensionInfectedCriticalToDead))
                  .transpose() *
             y.segment(LctState::template get_first_index<InfectionState::InfectedCritical>(),
                       dimensionInfectedCriticalToDead);
@@ -345,11 +345,11 @@ public:
         if (!(LctState::Count == subcompartments_ts.get_num_elements())) {
             log_error("Result does not match InfectionStates of the model.");
             // Return a TimeSeries with values -1.
-            Eigen::VectorXd error_output = Eigen::VectorXd::Constant((Eigen::Index)InfectionState::Count, -1);
+            Vector<ScalarType> error_output = Vector<ScalarType>::Constant((Eigen::Index)InfectionState::Count, -1);
             compartments_ts.add_time_point(-1, error_output);
             return compartments_ts;
         }
-        Eigen::VectorXd compartments((Eigen::Index)InfectionState::Count);
+        Vector<ScalarType> compartments((Eigen::Index)InfectionState::Count);
         for (Eigen::Index i = 0; i < subcompartments_ts.get_num_time_points(); ++i) {
             compartments_ts.add_time_point(subcompartments_ts.get_time(i),
                                            LctState::calculate_compartments(subcompartments_ts[i]));

@@ -35,7 +35,8 @@
 TEST(TestGLCTSecir, testEvalRightHandSide)
 {
     // Define model.
-    // Chose more than one subcompartment for all compartments except S, R, D so that the function is correct for all selections.
+    // Choose more than one subcompartment for all compartments except S, R, D to check that the function
+    // eval_right_hand_side() is correct for all selections.
     using Model          = mio::glsecir::Model<2, 6, 4, 4, 4>;
     using LctState       = Model::LctState;
     using InfectionState = LctState::InfectionState;
@@ -51,8 +52,8 @@ TEST(TestGLCTSecir, testEvalRightHandSide)
         mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms().get_default(
             LctState::get_num_subcompartments<InfectionState::Exposed>(), 3.2);
     // InfectedNoSymptoms.
-    Eigen::VectorXd StartingProbabilitiesInfectedNoSymptoms =
-        Eigen::VectorXd::Zero((Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>());
+    mio::Vector<ScalarType> StartingProbabilitiesInfectedNoSymptoms = mio::Vector<ScalarType>::Zero(
+        (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>());
     StartingProbabilitiesInfectedNoSymptoms[0]                                         = 1 - 0.09;
     StartingProbabilitiesInfectedNoSymptoms[(Eigen::Index)(
         LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.)] = 0.09;
@@ -65,8 +66,8 @@ TEST(TestGLCTSecir, testEvalRightHandSide)
         mio::glsecir::TransitionMatrixInfectedNoSymptomsToRecovered().get_default(
             (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.), 2.);
     // InfectedSymptoms.
-    Eigen::VectorXd StartingProbabilitiesInfectedSymptoms =
-        Eigen::VectorXd::Zero((Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>());
+    mio::Vector<ScalarType> StartingProbabilitiesInfectedSymptoms = mio::Vector<ScalarType>::Zero(
+        (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>());
     StartingProbabilitiesInfectedSymptoms[0]                                         = 0.2;
     StartingProbabilitiesInfectedSymptoms[(Eigen::Index)(
         LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.)] = 1 - 0.2;
@@ -78,8 +79,8 @@ TEST(TestGLCTSecir, testEvalRightHandSide)
         mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered().get_default(
             (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.), 5.8);
     // InfectedSevere.
-    Eigen::VectorXd StartingProbabilitiesInfectedSevere =
-        Eigen::VectorXd::Zero((Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSevere>());
+    mio::Vector<ScalarType> StartingProbabilitiesInfectedSevere = mio::Vector<ScalarType>::Zero(
+        (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSevere>());
     StartingProbabilitiesInfectedSevere[0]                                         = 0.25;
     StartingProbabilitiesInfectedSevere[(Eigen::Index)(
         LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.)] = 1 - 0.25;
@@ -91,8 +92,8 @@ TEST(TestGLCTSecir, testEvalRightHandSide)
         mio::glsecir::TransitionMatrixInfectedSevereToRecovered().get_default(
             (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.), 9.5);
     // InfectedCritical.
-    Eigen::VectorXd StartingProbabilitiesInfectedCritical =
-        Eigen::VectorXd::Zero((Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedCritical>());
+    mio::Vector<ScalarType> StartingProbabilitiesInfectedCritical = mio::Vector<ScalarType>::Zero(
+        (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedCritical>());
     StartingProbabilitiesInfectedCritical[0]                                         = 0.3;
     StartingProbabilitiesInfectedCritical[(Eigen::Index)(
         LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.)] = 1 - 0.3;
@@ -133,16 +134,16 @@ TEST(TestGLCTSecir, testEvalRightHandSide)
     for (auto&& vec : initial_populations) {
         flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
     }
-    Eigen::VectorXd pop(LctState::Count);
+    mio::Vector<ScalarType> pop(LctState::Count);
     for (size_t i = 0; i < LctState::Count; i++) {
         pop[i] = flat_initial_populations[i];
     }
 
     // Compare the result of get_derivatives() with a hand calculated result.
-    Eigen::VectorXd dydt(LctState::Count);
+    mio::Vector<ScalarType> dydt(LctState::Count);
     model.get_derivatives(pop, pop, 0, dydt);
 
-    Eigen::VectorXd compare(LctState::Count);
+    mio::Vector<ScalarType> compare(LctState::Count);
     compare << -15.3409, -3.4091, 6.25, -17.5 * 0.91, 15 * 0.91, 0 * 0.91, -17.5 * 0.09, 15 * 0.09, 0 * 0.09,
         3.3052 * 0.2, 3.4483 * 0.2, 3.3052 * 0.8, 3.4483 * 0.8, -7.0417 * 0.25, 6.3158 * 0.25, -7.0417 * 0.75,
         6.3158 * 0.75, -2.2906 * 0.3, -2.8169 * 0.3, -2.2906 * 0.7, -2.8169 * 0.7, 12.3899, 1.6901;
@@ -173,7 +174,7 @@ protected:
             mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms().get_default(
                 LctState::get_num_subcompartments<InfectionState::Exposed>(), 3.2);
         // InfectedNoSymptoms.
-        Eigen::VectorXd StartingProbabilitiesInfectedNoSymptoms = Eigen::VectorXd::Zero(
+        mio::Vector<ScalarType> StartingProbabilitiesInfectedNoSymptoms = mio::Vector<ScalarType>::Zero(
             (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>());
         StartingProbabilitiesInfectedNoSymptoms[0]                                         = 1 - 0.09;
         StartingProbabilitiesInfectedNoSymptoms[(Eigen::Index)(
@@ -187,8 +188,8 @@ protected:
             mio::glsecir::TransitionMatrixInfectedNoSymptomsToRecovered().get_default(
                 (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.), 2.);
         // InfectedSymptoms.
-        Eigen::VectorXd StartingProbabilitiesInfectedSymptoms =
-            Eigen::VectorXd::Zero((Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>());
+        mio::Vector<ScalarType> StartingProbabilitiesInfectedSymptoms = mio::Vector<ScalarType>::Zero(
+            (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>());
         StartingProbabilitiesInfectedSymptoms[0]                                         = 0.2;
         StartingProbabilitiesInfectedSymptoms[(Eigen::Index)(
             LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.)] = 1 - 0.2;
@@ -201,8 +202,8 @@ protected:
             mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered().get_default(
                 (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.), 5.8);
         // InfectedSevere.
-        Eigen::VectorXd StartingProbabilitiesInfectedSevere =
-            Eigen::VectorXd::Zero((Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSevere>());
+        mio::Vector<ScalarType> StartingProbabilitiesInfectedSevere = mio::Vector<ScalarType>::Zero(
+            (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSevere>());
         StartingProbabilitiesInfectedSevere[0]                                         = 0.25;
         StartingProbabilitiesInfectedSevere[(Eigen::Index)(
             LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.)] = 1 - 0.25;
@@ -215,8 +216,8 @@ protected:
             mio::glsecir::TransitionMatrixInfectedSevereToRecovered().get_default(
                 (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.), 9.5);
         // InfectedCritical.
-        Eigen::VectorXd StartingProbabilitiesInfectedCritical =
-            Eigen::VectorXd::Zero((Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedCritical>());
+        mio::Vector<ScalarType> StartingProbabilitiesInfectedCritical = mio::Vector<ScalarType>::Zero(
+            (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedCritical>());
         StartingProbabilitiesInfectedCritical[0]                                         = 0.3;
         StartingProbabilitiesInfectedCritical[(Eigen::Index)(
             LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.)] = 1 - 0.3;
@@ -312,8 +313,8 @@ TEST_F(ModelTestGLCTSecir, testConstraintsModel)
     EXPECT_FALSE(constraint_check);
 
     // Check if the number of subcompartments does not match the dimension of the vector with StartingProbabilities.
-    Eigen::VectorXd wrong_size = Eigen::VectorXd::Zero(3);
-    wrong_size[0]              = 1;
+    mio::Vector<ScalarType> wrong_size = mio::Vector<ScalarType>::Zero(3);
+    wrong_size[0]                      = 1;
     // Exposed.
     model->parameters.get<mio::glsecir::StartingProbabilitiesExposed>() = wrong_size;
     constraint_check                                                    = model->check_constraints();
@@ -396,8 +397,8 @@ TEST_F(ModelTestGLCTSecir, testConstraintsParameters)
             (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.), 7.1);
 
     // Check non matching dimensions of TransitionMatrix and vector with StartingProbabilities.
-    Eigen::VectorXd wrong_size = Eigen::VectorXd::Zero(3);
-    wrong_size[0]              = 1;
+    mio::Vector<ScalarType> wrong_size = mio::Vector<ScalarType>::Zero(3);
+    wrong_size[0]                      = 1;
     // Exposed.
     model->parameters.get<mio::glsecir::StartingProbabilitiesExposed>() = wrong_size;
     constraint_check                                                    = model->parameters.check_constraints();
