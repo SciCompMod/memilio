@@ -20,6 +20,9 @@
 #ifndef MIO_EPI_LCT_INFECTION_STATE_H
 #define MIO_EPI_LCT_INFECTION_STATE_H
 
+#include "memilio/config.h"
+#include "memilio/math/eigen.h"
+
 #include <array>
 
 namespace mio
@@ -76,6 +79,53 @@ public:
             index = index + m_subcompartment_numbers[i];
         }
         return index;
+    }
+
+    /**
+     * @brief Cumulates a vector with the number of individuals in each subcompartment (with subcompartments 
+     *  according to the LctInfectionState) to produce a Vector that divides the population only into the infection 
+     *  states defined in InfectionStates.
+     *
+     * @param[in] subcompartments Vector with number of individuals in each subcompartment. 
+     *  The size of the vector has to match the LctInfectionState.
+     * @return Vector with accumulated values for the InfectionStates.
+     */
+    static Vector<ScalarType> calculate_compartments(const Vector<ScalarType>& subcompartments)
+    {
+        assert(subcompartments.rows() == Count);
+
+        Vector<ScalarType> compartments((Eigen::Index)InfectionState::Count);
+        // Use segment of the vector subcompartments of each InfectionState and sum up the values of subcompartments.
+        compartments[(Eigen::Index)InfectionState::Susceptible] = subcompartments[0];
+        compartments[(Eigen::Index)InfectionState::Exposed] =
+            subcompartments
+                .segment(get_first_index<InfectionState::Exposed>(), get_num_subcompartments<InfectionState::Exposed>())
+                .sum();
+        compartments[(Eigen::Index)InfectionState::InfectedNoSymptoms] =
+            subcompartments
+                .segment(get_first_index<InfectionState::InfectedNoSymptoms>(),
+                         get_num_subcompartments<InfectionState::InfectedNoSymptoms>())
+                .sum();
+        compartments[(Eigen::Index)InfectionState::InfectedSymptoms] =
+            subcompartments
+                .segment(get_first_index<InfectionState::InfectedSymptoms>(),
+                         get_num_subcompartments<InfectionState::InfectedSymptoms>())
+                .sum();
+        compartments[(Eigen::Index)InfectionState::InfectedSevere] =
+            subcompartments
+                .segment(get_first_index<InfectionState::InfectedSevere>(),
+                         get_num_subcompartments<InfectionState::InfectedSevere>())
+                .sum();
+        compartments[(Eigen::Index)InfectionState::InfectedCritical] =
+            subcompartments
+                .segment(get_first_index<InfectionState::InfectedCritical>(),
+                         get_num_subcompartments<InfectionState::InfectedCritical>())
+                .sum();
+        compartments[(Eigen::Index)InfectionState::Recovered] =
+            subcompartments[get_first_index<InfectionState::Recovered>()];
+        compartments[(Eigen::Index)InfectionState::Dead] = subcompartments[get_first_index<InfectionState::Dead>()];
+
+        return compartments;
     }
 
     static constexpr size_t Count{(... + Ns)};
