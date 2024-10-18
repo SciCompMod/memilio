@@ -43,6 +43,11 @@ Note that the notation $\mathbf{z}(t)$ for $z\in\mathcal{Z}$ stands for a vector
 For example, the order $\mathbf{I_{\text{NS}}}(t)=[\mathbf{I_{\text{NS}}^{\text{Sy}}}(t),\mathbf{I_{\text{NS}}^{\text{R}}}(t)]^{T}$ is used. Similar holds true for the other compartments $\mathcal{Z}$. 
 
 It is essential that the matrices and vectors are of the correct dimensions and satisfy some other conditions that are checked before a simulation.
+
+The compartment structure with subcompartments is the same as in the LCT-SECIR model. An overview of the model architecture can be found in the [README of the LCT model](../lct_secir/README.md). 
+For the GLCT model, some additional transitions are possible and we have more arrows in the model architecture. Below is an example for the Exposed compartment. Note that some Indices are omitted (e.g. $n$ instead of $n_E$) to keep the picture simple.
+
+![tikzGLCTSECIR](https://github.com/user-attachments/assets/fc075b7a-6cd2-4e70-bdd0-a2f4b9f2cf53)
 ## Examples
 
 A simple example can be found at [GLCT minimal example](../../examples/glct_secir.cpp).
