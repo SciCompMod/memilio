@@ -296,7 +296,7 @@ struct SeverityProtectionFactor {
 };
 
 /**
- * @brief Personal protective factor against high viral load, , which depends on #ExposureType,
+ * @brief Personal protective factor against high viral load, which depends on #ExposureType,
  * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
  */
 struct HighViralLoadProtectionFactor {
