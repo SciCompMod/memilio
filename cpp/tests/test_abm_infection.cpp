@@ -118,6 +118,15 @@ TEST(TestInfection, getInfectionState)
                                           mio::abm::InfectionState::InfectedCritical, {}, true);
     EXPECT_EQ(infection2.get_infection_state(t), mio::abm::InfectionState::InfectedCritical);
     EXPECT_EQ(infection2.get_infection_state(t + mio::abm::days(1)), mio::abm::InfectionState::Recovered);
+
+    params.get<mio::abm::SevereToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 1;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(0.2)); // Dead
+    auto infection3 = mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
+                                          mio::abm::InfectionState::InfectedSevere, {}, true);
+    EXPECT_EQ(infection3.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
+    EXPECT_EQ(infection3.get_infection_state(t + mio::abm::days(1)), mio::abm::InfectionState::Dead);
 }
 
 TEST(TestInfection, drawInfectionCourseBackward)
