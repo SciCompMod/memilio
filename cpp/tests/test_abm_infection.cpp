@@ -196,7 +196,8 @@ TEST(TestInfection, drawInfectionCourseBackward)
     auto infection4 = mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, age_group_60_to_79, params,
                                           mio::abm::TimePoint(t + dt), mio::abm::InfectionState::Recovered,
                                           {mio::abm::ExposureType::NoProtection, mio::abm::TimePoint(0)}, false);
-
+    
+    // Validate infection state progression backward.
     EXPECT_EQ(infection1.get_infection_state(t), mio::abm::InfectionState::InfectedNoSymptoms);
     EXPECT_EQ(infection2.get_infection_state(t), mio::abm::InfectionState::InfectedSymptoms);
     EXPECT_EQ(infection3.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
