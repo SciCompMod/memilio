@@ -38,26 +38,26 @@ Below is an overview of the model variables and the model equations are stated. 
 
 ![equations](https://github.com/SciCompMod/memilio/assets/70579874/e1da5e1d-e719-4c16-9f14-45374be7c353)
 
-
 Note that the notation $\mathbf{z}(t)$ for $z\in\mathcal{Z}$ stands for a vector. If several transitions are possible from a compartment, the vector is split in order to be able to select the stay times until the transitions in each case phase-type distributed. 
 For example, the order $\mathbf{I_{\text{NS}}}(t)=[\mathbf{I_{\text{NS}}^{\text{Sy}}}(t),\mathbf{I_{\text{NS}}^{\text{R}}}(t)]^{T}$ is used. Similar holds true for the other compartments $\mathcal{Z}$. 
 
 Implicitly, the matrices $\mathbf{A_{z}^{*}}$ for one $z\in\mathcal{Z}$ are a block of a big matrix $\mathbf{A_{z}}$ corresponding to the whole vector $\mathbf{z}(t)$. As we have no transitions in between the strains defined for different transition probabilities, we would have many zeros in the matrix. The matrix can be defined as
 
-$$
-\mathbf{A_{z}}=\left[
-\mathbf{A_{z}^{*_1}} \hspace{0.6cm}  \mathbf{0}\atop
-\mathbf{0} \hspace{0.6cm}  \mathbf{A_{z}^{*_2}}
-\right],
-$$
+```math
+\mathbf{A_{z}}=
+\begin{bmatrix}
+\mathbf{A_{z}^{*_1}} &  \mathbf{0} \\
+\mathbf{0} &  \mathbf{A_{z}^{*_2}}
+\end{bmatrix},
+```
 
- where $*_1$ is the compartment of the first transition, e.g. $I_{\text{Sy}}$ for $z=I_{\text{NS}}$ and $*_2$ the compartment of the second possible transition, e.g. $R$.
+where ${\*}\_{1}$ is the compartment of the first transition, e.g. $I_{\text{Sy}}$ for $z=I_{\text{NS}}$ and $*_2$ the compartment of the second possible transition, e.g. $R$.
 Therefore, we just store the non-zero blocks of the matrix.
 Using these parameters, the phase-type distribution that defines the stay time in compartment $z\in\mathcal{Z}$ has the probability density function
 
 $f(x)=\boldsymbol{\alpha_z}^T\hspace{3mu}e^{x\hspace{0.1em}\mathbf{A_z}}\hspace{3mu}(-\mathbf{A_z}\hspace{3mu}\boldsymbol{\Bbb{1}})$ for $x\in\mathbb{R}^{+}$
 
-and the cumulative distribution function 
+and the cumulative distribution function
 
 $F(x)=1-\boldsymbol{\alpha_z}^T\hspace{3mu}e^{x\hspace{0.1em}\mathbf{A_z}}\hspace{3mu}\boldsymbol{\Bbb{1}},$
 
