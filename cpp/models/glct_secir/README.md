@@ -42,7 +42,26 @@ Below is an overview of the model variables and the model equations are stated. 
 Note that the notation $\mathbf{z}(t)$ for $z\in\mathcal{Z}$ stands for a vector. If several transitions are possible from a compartment, the vector is split in order to be able to select the stay times until the transitions in each case phase-type distributed. 
 For example, the order $\mathbf{I_{\text{NS}}}(t)=[\mathbf{I_{\text{NS}}^{\text{Sy}}}(t),\mathbf{I_{\text{NS}}^{\text{R}}}(t)]^{T}$ is used. Similar holds true for the other compartments $\mathcal{Z}$. 
 
-It is essential that the matrices and vectors are of the correct dimensions and satisfy some other conditions that are checked before a simulation.
+Implicitly, the matrices $\mathbf{A_{z}^{*}}$ for one $z\in\mathcal{Z}$ are a block of a big matrix $\mathbf{A_{z}}$ corresponding to the whole vector $\mathbf{z}(t)$. As we have no transitions in between the strains defined for different transition probabilities, we would have many zeros in the matrix. The matrix can be defined as
+
+$\mathbf{A_{z}}=\begin{bmatrix}
+\mathbf{A_{z}^{*_1}} & \mathbf{0}\\
+\mathbf{0} & \mathbf{A_{z}^{*_2}}
+\end{bmatrix},$
+
+ where $*_1$ is the compartment of the first transition, e.g. $I_{\text{Sy}}$ for $z=I_{\text{NS}}$ and $*_2$ the compartment of the second possible transition, e.g. $R$.
+Therefore, we just store the non-zero blocks of the matrix.
+Using these parameters, the phase-type distribution that defines the stay time in compartment $z\in\mathcal{Z}$ has the probability density function
+
+$f(x)=\boldsymbol{\alpha_z}^T\,e^{x\hspace{0.1em}\mathbf{A_z}}\,(-\mathbf{A_z}\,\boldsymbol{\Bbb{1}})$ for $x\in\mathbb{R}^{+}$
+
+and the cumulative distribution function 
+
+$F(x)=1-\boldsymbol{\alpha_z}^T\,e^{x\hspace{0.1em}\mathbf{A_z}}\,\boldsymbol{\Bbb{1}},$
+
+where $e^{x\hspace{0.1em}\mathbf{A_z}}=\sum_{j=0}^{\infty}\frac{(x\,\mathbf{A_z})^j}{j!}$ is the matrix exponential and $\boldsymbol{\Bbb{1}}$ is the vector containing ones of the matching size. Therefore, via changing the vector $\boldsymbol{\alpha_z}$ and the matrices $\mathbf{A_{z}^{*}}$, one can choose the stay time distribution appropriately.
+
+It is important that the sizes of the vectors and matrices match each other and satisfy some other conditions that are checked before a simulation.
 
 The compartment structure with subcompartments is the same as in the LCT-SECIR model. An overview of the model architecture can be found in the [README of the LCT model](../lct_secir/README.md). 
 For the GLCT model, some additional transitions are possible and we have more arrows in the model architecture. Below is an example for the Exposed compartment. Note that some Indices are omitted (e.g. $n$ instead of $n_E$) to keep the picture simple.

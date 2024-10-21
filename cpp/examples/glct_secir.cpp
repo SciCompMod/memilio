@@ -33,7 +33,13 @@
 int main()
 {
     // Simple example to demonstrate how to run a simulation using an GLCT SECIR model.
+    // This example recreates the lct_secir.cpp example using the GLCT model.
+    // This means, that we use the corresponding initial numbers, parameters and numbers of subcompartments that are
+    // equivalent to the choices in the LCT example.
     // Parameters, initial values and the number of subcompartments are not meant to represent a realistic scenario.
+    // We need to double the choices of the number of subcompartments for some compartments,
+    // as we define different strains for different transition possibilities. For both strains, the same number of
+    // subcompartments is chosen. The transition probabilities are defined in the StartingProbabilities.
     constexpr size_t NumExposed = 2, NumInfectedNoSymptoms = 6, NumInfectedSymptoms = 2, NumInfectedSevere = 2,
                      NumInfectedCritical = 10;
     using Model    = mio::glsecir::Model<NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms, NumInfectedSevere,
@@ -43,21 +49,38 @@ int main()
 
     Model model;
 
-    ScalarType tmax    = 10;
-    ScalarType t0      = 0;
-    ScalarType dt_init = 10; ///< Initially used step size for adaptive method.
+    const ScalarType tmax    = 10;
+    const ScalarType t0      = 0;
+    const ScalarType dt_init = 10; ///< Initially used step size for adaptive method.
+
+    // Define some epidemiological parameters needed throughput the model definition and initialization.
+    const ScalarType TimeExposed                    = 3.2;
+    const ScalarType TimeInfectedNoSymptoms         = 2.;
+    const ScalarType TimeInfectedSymptoms           = 5.8;
+    const ScalarType TimeInfectedSevere             = 9.5;
+    const ScalarType TimeInfectedCritical           = 7.1;
+    const ScalarType RecoveredPerInfectedNoSymptoms = 0.09;
+    const ScalarType SeverePerInfectedSymptoms      = 0.2;
+    const ScalarType CriticalPerSevere              = 0.25;
+    const ScalarType DeathsPerCritical              = 0.3;
 
     // Define the initial values with the distribution of the population into subcompartments.
     // This method of defining the initial values using a vector of vectors is not necessary, but should remind you
     // how the entries of the initial value vector relate to the defined template parameters of the model or the number
     // of subcompartments. It is also possible to define the initial values directly.
+    // Split the initial population defined in the lct_secir.cpp example according to the transition probabilities in
+    // the two strains per compartment.
     std::vector<std::vector<ScalarType>> initial_populations = {
         {750},
         {30, 20},
-        {20 * 0.91, 10 * 0.91, 10 * 0.91, 20 * 0.09, 10 * 0.09, 10 * 0.09},
-        {50 * 0.2, 50 * 0.8},
-        {50 * 0.25, 50 * 0.75},
-        {10 * 0.3, 10 * 0.3, 5 * 0.3, 3 * 0.3, 2 * 0.3, 10 * 0.7, 10 * 0.7, 5 * 0.7, 3 * 0.7, 2 * 0.7},
+        {20 * (1 - RecoveredPerInfectedNoSymptoms), 10 * (1 - RecoveredPerInfectedNoSymptoms),
+         10 * (1 - RecoveredPerInfectedNoSymptoms), 20 * RecoveredPerInfectedNoSymptoms,
+         10 * RecoveredPerInfectedNoSymptoms, 10 * RecoveredPerInfectedNoSymptoms},
+        {50 * SeverePerInfectedSymptoms, 50 * (1 - SeverePerInfectedSymptoms)},
+        {50 * CriticalPerSevere, 50 * (1 - CriticalPerSevere)},
+        {10 * DeathsPerCritical, 10 * DeathsPerCritical, 5 * DeathsPerCritical, 3 * DeathsPerCritical,
+         2 * DeathsPerCritical, 10 * (1 - DeathsPerCritical), 10 * (1 - DeathsPerCritical), 5 * (1 - DeathsPerCritical),
+         3 * (1 - DeathsPerCritical), 2 * (1 - DeathsPerCritical)},
         {20},
         {10}};
 
@@ -91,67 +114,82 @@ int main()
         model.populations[mio::Index<LctState>(i)] = flat_initial_populations[i];
     }
 
-    // Set Parameters.
+    // Set Parameters according to the LCT model definitions, e.g. use Erlang-distributions.
     // Exposed.
+    // The get_default of the StartingProbabilities returns the first unit vector of the defined size.
+    // It is necessary to set it although the default method is used to define the length of the vector.
     model.parameters.get<mio::glsecir::StartingProbabilitiesExposed>() =
         mio::glsecir::StartingProbabilitiesExposed().get_default(
             LctState::get_num_subcompartments<InfectionState::Exposed>());
+    // The get_default function returns the TransitionMatrix that is required to have an Erlang-distributed
+    // stay time with an average of TimeExposed.
     model.parameters.get<mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms>() =
         mio::glsecir::TransitionMatrixExposedToInfectedNoSymptoms().get_default(
-            LctState::get_num_subcompartments<InfectionState::Exposed>(), 3.2);
+            LctState::get_num_subcompartments<InfectionState::Exposed>(), TimeExposed);
+    // This definition of the StartingProbability and the TransitionMatrix lead to an Erlang-distributed latent stage.
+
     // InfectedNoSymptoms.
+    // For InfectedNoSymptoms, two strains has to be defined, one for the Transition
+    // InfectedNoSymptomsToInfectedSymptoms and one for InfectedNoSymptomsToRecovered.
+    // The strains have a length of NumInfectedNoSymptoms/2. each.
+    // The transition probability is included in the StartingProbability vector.
     mio::Vector<ScalarType> StartingProbabilitiesInfectedNoSymptoms =
         mio::Vector<ScalarType>::Zero(LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>());
-    StartingProbabilitiesInfectedNoSymptoms[0]                                         = 1 - 0.09;
+    StartingProbabilitiesInfectedNoSymptoms[0] = 1 - RecoveredPerInfectedNoSymptoms;
     StartingProbabilitiesInfectedNoSymptoms[(Eigen::Index)(
-        LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.)] = 0.09;
+        LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.)] = RecoveredPerInfectedNoSymptoms;
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedNoSymptoms>() =
         StartingProbabilitiesInfectedNoSymptoms;
+    // Define equal TransitionMatrices for the strains.
+    // They follow the same Erlang-distribution such that we get the same result as with one strain in the LCT model.
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>() =
         mio::glsecir::TransitionMatrixInfectedNoSymptomsToInfectedSymptoms().get_default(
-            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.), 2.);
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.),
+            TimeInfectedNoSymptoms);
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptomsToRecovered>() =
         mio::glsecir::TransitionMatrixInfectedNoSymptomsToRecovered().get_default(
-            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.), 2.);
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.),
+            TimeInfectedNoSymptoms);
+    // Do the same for all compartments.
     // InfectedSymptoms.
     mio::Vector<ScalarType> StartingProbabilitiesInfectedSymptoms =
         mio::Vector<ScalarType>::Zero(LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>());
-    StartingProbabilitiesInfectedSymptoms[0]                                         = 0.2;
+    StartingProbabilitiesInfectedSymptoms[0]                                         = SeverePerInfectedSymptoms;
     StartingProbabilitiesInfectedSymptoms[(Eigen::Index)(
-        LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.)] = 1 - 0.2;
+        LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.)] = 1 - SeverePerInfectedSymptoms;
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSymptoms>() = StartingProbabilitiesInfectedSymptoms;
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedSymptomsToInfectedSevere>() =
         mio::glsecir::TransitionMatrixInfectedSymptomsToInfectedSevere().get_default(
-            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.), 5.8);
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.), TimeInfectedSymptoms);
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered>() =
         mio::glsecir::TransitionMatrixInfectedSymptomsToRecovered().get_default(
-            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.), 5.8);
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.), TimeInfectedSymptoms);
     // InfectedSevere.
     mio::Vector<ScalarType> StartingProbabilitiesInfectedSevere =
         mio::Vector<ScalarType>::Zero(LctState::get_num_subcompartments<InfectionState::InfectedSevere>());
-    StartingProbabilitiesInfectedSevere[0]                                         = 0.25;
+    StartingProbabilitiesInfectedSevere[0]                                         = CriticalPerSevere;
     StartingProbabilitiesInfectedSevere[(Eigen::Index)(
-        LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.)] = 1 - 0.25;
+        LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.)] = 1 - CriticalPerSevere;
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere>() = StartingProbabilitiesInfectedSevere;
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical>() =
         mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical().get_default(
-            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.), 9.5);
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.), TimeInfectedSevere);
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToRecovered>() =
         mio::glsecir::TransitionMatrixInfectedSevereToRecovered().get_default(
-            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.), 9.5);
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.), TimeInfectedSevere);
     // InfectedCritical.
     mio::Vector<ScalarType> StartingProbabilitiesInfectedCritical =
         mio::Vector<ScalarType>::Zero(LctState::get_num_subcompartments<InfectionState::InfectedCritical>());
-    StartingProbabilitiesInfectedCritical[0]                                         = 0.3;
+    StartingProbabilitiesInfectedCritical[0]                                         = DeathsPerCritical;
     StartingProbabilitiesInfectedCritical[(Eigen::Index)(
-        LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.)] = 1 - 0.3;
+        LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.)] = 1 - DeathsPerCritical;
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedCritical>() = StartingProbabilitiesInfectedCritical;
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedCriticalToDead>() =
         mio::glsecir::TransitionMatrixInfectedCriticalToDead().get_default(
-            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.), 7.1);
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.), TimeInfectedCritical);
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedCriticalToRecovered>() =
         mio::glsecir::TransitionMatrixInfectedCriticalToRecovered().get_default(
-            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.), 7.1);
+            (size_t)(LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.), TimeInfectedCritical);
 
     model.parameters.get<mio::glsecir::TransmissionProbabilityOnContact>() = 0.05;
 
@@ -169,5 +207,5 @@ int main()
     // We call the function calculate_compartments to get a result according to the InfectionStates.
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
     auto interpolated_result = mio::interpolate_simulation_result(population_no_subcompartments, 0.1);
-    interpolated_result.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
+    interpolated_result.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 10, 4);
 }

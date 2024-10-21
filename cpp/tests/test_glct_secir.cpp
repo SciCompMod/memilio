@@ -34,17 +34,18 @@
 // Test if the function eval_right_hand_side() is working using a hand calculated result.
 TEST(TestGLCTSecir, testEvalRightHandSide)
 {
-    // Define model.
-    // Choose more than one subcompartment for all compartments except S, R, D to check that the function
-    // eval_right_hand_side() is correct for all selections.
+    // Define initial values, parameters and numbers of subcompartments according to the choices of the
+    // testEvalRightHandSide of the LCT testing suite. For more details,
+    // we refer to the example glct_secir.cpp.
     using Model          = mio::glsecir::Model<2, 6, 4, 4, 4>;
     using LctState       = Model::LctState;
     using InfectionState = LctState::InfectionState;
 
     Model model;
 
-    // Set parameters.
+    // Set parameters such that the stay times are Erlang-distributed as in the corresponding LCT model.
     // Exposed.
+    // Default functions are used to set the parameters but the corresponding dimensions ave to be set manually.
     model.parameters.get<mio::glsecir::StartingProbabilitiesExposed>() =
         mio::glsecir::StartingProbabilitiesExposed().get_default(
             LctState::get_num_subcompartments<InfectionState::Exposed>());
@@ -142,7 +143,7 @@ TEST(TestGLCTSecir, testEvalRightHandSide)
     // Compare the result of get_derivatives() with a hand calculated result.
     mio::Vector<ScalarType> dydt(LctState::Count);
     model.get_derivatives(pop, pop, 0, dydt);
-
+    // This vector is the equivalent of the result defined in the test suite testEvalRightHandSide of the LCT model.
     mio::Vector<ScalarType> compare(LctState::Count);
     compare << -15.3409, -3.4091, 6.25, -17.5 * 0.91, 15 * 0.91, 0 * 0.91, -17.5 * 0.09, 15 * 0.09, 0 * 0.09,
         3.3052 * 0.2, 3.4483 * 0.2, 3.3052 * 0.8, 3.4483 * 0.8, -7.0417 * 0.25, 6.3158 * 0.25, -7.0417 * 0.75,

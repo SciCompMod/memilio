@@ -47,9 +47,9 @@ int main()
 
     // Variable defines whether the class Initializer is used to define an initial vector from flows or whether a manually
     // defined initial vector is used to initialize the LCT model.
-    bool use_initializer_flows = true;
+    bool use_initializer_flows = false;
 
-    ScalarType tmax = 20;
+    ScalarType tmax = 10;
 
     // Set Parameters.
     model.parameters.get<mio::lsecir::TimeExposed>()[0]            = 3.2;
@@ -155,10 +155,9 @@ int main()
 
     // Perform a simulation.
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, 0.5, model);
-    //result.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
     // The simulation result is divided by subcompartments.
     // We call the function calculate_compartments to get a result according to the InfectionStates.
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
     auto interpolated_results = mio::interpolate_simulation_result(population_no_subcompartments);
-    interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
+    interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 12, 4);
 }
