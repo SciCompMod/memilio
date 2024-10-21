@@ -43,7 +43,7 @@
 namespace params
 {
 // Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
-constexpr int num_subcompartments = 10;
+constexpr int num_subcompartments = 1;
 constexpr size_t num_groups       = 6;
 
 // Parameters
@@ -195,6 +195,13 @@ mio::IOResult<void> simulate(std::string const& dir_to_contact_data, std::string
     using LctState = mio::LctInfectionState<InfState, 1, num_subcompartments, num_subcompartments, num_subcompartments,
                                             num_subcompartments, num_subcompartments, 1, 1>;
     using Model    = mio::lsecir::Model<LctState, LctState, LctState, LctState, LctState, LctState>;
+    // using LctState0_14  = mio::LctInfectionState<InfState, 1, 3, 3, 7, 5, 7, 1, 1>;
+    // using LctState15_34 = mio::LctInfectionState<InfState, 1, 3, 3, 7, 6, 7, 1, 1>;
+    // using LctState35_59 = mio::LctInfectionState<InfState, 1, 3, 3, 7, 8, 17, 1, 1>;
+    // using LctState60_79 = mio::LctInfectionState<InfState, 1, 3, 3, 7, 9, 17, 1, 1>;
+    // using LctState80    = mio::LctInfectionState<InfState, 1, 3, 3, 7, 11, 12, 1, 1>;
+    // using Model =
+    //     mio::lsecir::Model<LctState0_14, LctState0_14, LctState15_34, LctState35_59, LctState60_79, LctState80>;
     Model model;
 
     // Define parameters used for simulation and initialization.

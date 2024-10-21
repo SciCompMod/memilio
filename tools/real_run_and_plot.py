@@ -31,8 +31,8 @@ def main():
     datafile = "../data/pydata/Germany/cases_all_age.json"
     start_date = '2020-10-1'
     start_date_timestamp = pd.Timestamp(start_date)
-    num_subcomp = 10
-    cases = [0, 1, 2]
+
+    cases = [1, 2]
     for case in cases:
 
         if case == 0:
@@ -45,15 +45,32 @@ def main():
             run_simulation(start_date_timestamp,
                            simulation_parameter, "../data")
         if case == 1:
-            plot_new_infections_real([get_file_name(start_date, num_subcomp, folder, False)], -1, datafile, start_date_timestamp, 45, 1.0,
+            plot_new_infections_real([get_file_name(start_date, 1, folder, False),
+                                      get_file_name(
+                                          start_date, 3, folder, False),
+                                      get_file_name(
+                                          start_date, 10, folder, False),
+                                      get_file_name(
+                                          start_date, 50, folder, False),
+                                      get_file_name(
+                                          start_date, 0, folder, False)],
+                                     -1, datafile, start_date_timestamp, 45, 1.0,
                                      legendplot=list(
-                ["Extrapolated RKI Data", "LCT10"]),
+                ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),
                 filename_plot="real_new_infections_"+start_date+"_allage")
         if case == 2:
             for age in range(6):
-                plot_new_infections_real([get_file_name(start_date, num_subcomp, folder, True)], age, datafile, start_date_timestamp, 45, 1.0,
+                plot_new_infections_real([get_file_name(start_date, 1, folder, True),
+                                          get_file_name(
+                                              start_date, 3, folder, True),
+                                          get_file_name(
+                                              start_date, 10, folder, True),
+                                          get_file_name(
+                                              start_date, 50, folder, True),
+                                          get_file_name(start_date, 0, folder, True)],
+                                         age, datafile, start_date_timestamp, 45, 1.0,
                                          legendplot=list(
-                    ["Extrapolated RKI Data", "LCT10"]),
+                    ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),
                     filename_plot="real_new_infections_"+start_date+"_age"+f"{age}")
 
 

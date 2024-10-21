@@ -19,7 +19,7 @@
 #############################################################################
 """@plot_results_lct_secir_real.py
 Functions to plot and compare results of simulations with different kind of models,
-eg LCT, IDE or ODE SECIR models without division in agegroups with real data.
+eg LCT, IDE or ODE SECIR models without division in age groups with real data.
 
 The data to be plotted should be stored in a '../data/simulation_lct/real' folder as .h5 files.
 Data could be generated eg by executing the file ./cpp/examples/lct_secir_real_senarios.cpp.
@@ -56,12 +56,14 @@ color_dict = {'ODE': '#1f77b4',
               'LCT10': '#ff7f0e',
               'LCT20': '#9467bd',
               'LCT50':  '#e377c2',
+              'LCTvar':  '#bbf90f',
               }
 linestyle_dict = {'ODE': 'solid',
                   'LCT3': 'solid',
                   'LCT10': 'solid',
                   'LCT20': 'solid',
-                  'LCT50': 'solid'
+                  'LCT50': 'solid',
+                  'LCTvar': 'solid'
                   }
 
 
