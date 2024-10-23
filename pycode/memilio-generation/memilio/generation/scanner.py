@@ -27,8 +27,11 @@ import os
 import subprocess
 import sys
 import tempfile
+import logging
+from graphviz import Digraph
 from typing import TYPE_CHECKING, Any, Callable
 from warnings import catch_warnings
+from memilio.generation import graph_visualization
 
 from clang.cindex import *
 from typing_extensions import Self
@@ -54,6 +57,8 @@ class Scanner:
         utility.try_set_libclang_path(
             self.config.optional.get("libclang_library_path"))
         self.ast = None
+        self.node_counter = 0
+        self.cursor_ids = []
         self.create_ast()
 
     def create_ast(self: Self) -> None:
@@ -73,22 +78,69 @@ class Scanner:
         for command in commands:
             for argument in command.arguments:
                 if (argument != '-Wno-unknown-warning' and
-                        argument != "--driver-mode=g++" and argument != "-O3"):
+                        argument != "--driver-mode=g++" and argument != "-O3" and argument != "-Werror" and argument != "-Wshadow"):
                     file_args.append(argument)
         file_args = file_args[1:-4]
+
+        # Removing only the first and last arguments could miss important flags.
+        # Safer approach is to include all relevant arguments except for optimization/debug flags
+        # file_args = file_args[1:-4] if len(file_args) > 5 else file_args
+
         clang_cmd = [
             "clang-14", self.config.source_file,
             "-std=c++17", '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
 
-        clang_cmd_result = subprocess.run(clang_cmd, stdout=subprocess.PIPE)
-        clang_cmd_result.check_returncode()
+        try:
+            clang_cmd_result = subprocess.run(
+                clang_cmd, stdout=subprocess.PIPE)
+            clang_cmd_result.check_returncode()
+        except subprocess.CalledProcessError as e:
+            # Capture standard error and output
+            logging.error(
+                f"Clang failed with return code {e.returncode}. Error: {clang_cmd_result.stderr.decode()}")
+            raise RuntimeError(
+                f"Clang AST generation failed. See error log for details.")
 
         # Since `clang.Index.read` expects a file path, write generated abstract syntax tree to a
         # temporary named file. This file will be automatically deleted when closed.
         with tempfile.NamedTemporaryFile() as ast_file:
             ast_file.write(clang_cmd_result.stdout)
             self.ast = idx.read(ast_file.name)
+
+        self.assing_ast_with_ids(self.ast.cursor)
+
+        logging.info("AST generation completed successfully.")
+
+    def assing_ast_with_ids(self, cursor: Cursor) -> None:
+        """
+        Traverse the AST and assign a unique ID to each node during traversal.
+
+        Parameters:
+        @cursor: The current node (Cursor) in the AST to traverse.
+        """
+
+        self.node_counter += 1  # Erhöhe den ID-Zähler
+        cursor_id = self.node_counter  # Weise dem Knoten die aktuelle ID zu
+
+        # Hier könntest du den Knoten nach Bedarf weiterverarbeiten.
+        # Zum Beispiel: Ausgabe des Knotens und seiner ID
+        logging.debug(
+            f"Node {cursor.spelling or cursor.kind} assigned ID {cursor_id}")
+
+        # Rekursiv durch die Kinderknoten traversieren und IDs zuweisen
+        for child in cursor.get_children():
+            self.assing_ast_with_ids(child)
+
+    def get_node_id(self, cursor: Cursor) -> int:
+        """
+        Gibt die ID des angegebenen Knotens zurück.
+        """
+
+        for c, id in self.cursor_ids:
+            if c == cursor:
+                return id
+        return 0
 
     def extract_results(self: Self) -> IntermediateRepresentation:
         """
@@ -98,7 +150,7 @@ class Scanner:
         @return Information extracted from the model saved as an IntermediateRepresentation. 
         """
         intermed_repr = IntermediateRepresentation()
-        utility.output_cursor_print(self.ast.cursor, 1)
+        graph_visualization._output_cursor_print(self.ast.cursor, 1)
         self.find_node(self.ast.cursor, intermed_repr)
         # self.output_ast_file()
         self.finalize(intermed_repr)
@@ -346,17 +398,3 @@ class Scanner:
 
         # check for missing data
         intermed_repr.check_complete_data(self.config.optional)
-
-    def output_ast(self: Self) -> None:
-        """
-        Output the abstract syntax tree to terminal.
-        """
-        utility.output_cursor_and_children(self.ast.cursor)
-
-    def output_ast_file(self: Self) -> None:
-        """
-        Output the abstract syntax tree to file.
-        """
-        with open('output_ast.txt', 'a') as f:
-            utility.output_cursor_and_children_file(self.ast.cursor, f)
-            print('AST written to ' + str(os.path.abspath(f.name)))
