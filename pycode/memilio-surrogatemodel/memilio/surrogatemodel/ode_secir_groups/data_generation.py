@@ -34,33 +34,8 @@ from memilio.simulation.osecir import (Index_InfectionState,
                                        InfectionState, Model,
                                        interpolate_simulation_result, simulate)
 
-
-def interpolate_age_groups(data_entry):
-    """! Interpolates the age groups from the population data into the age groups used in the simulation. 
-    We assume that the people in the age groups are uniformly distributed.
-    @param data_entry Data entry containing the population data.
-    @return List containing the population in each age group used in the simulation.
-    """
-    age_groups = {
-        "A00-A04": data_entry['<3 years'] + data_entry['3-5 years'] * 2 / 3,
-        "A05-A14": data_entry['3-5 years'] * 1 / 3 + data_entry['6-14 years'],
-        "A15-A34": data_entry['15-17 years'] + data_entry['18-24 years'] + data_entry['25-29 years'] + data_entry['30-39 years'] * 1 / 2,
-        "A35-A59": data_entry['30-39 years'] * 1 / 2 + data_entry['40-49 years'] + data_entry['50-64 years'] * 2 / 3,
-        "A60-A79": data_entry['50-64 years'] * 1 / 3 + data_entry['65-74 years'] + data_entry['>74 years'] * 1 / 5,
-        "A80+": data_entry['>74 years'] * 4 / 5
-    }
-    return [age_groups[key] for key in age_groups]
-
-
-def remove_confirmed_compartments(result_array):
-    """! Removes the confirmed compartments which are not used in the data generation.
-    @param result_array Array containing the simulation results.
-    @return Array containing the simulation results without the confirmed compartments.
-    """
-    num_groups = int(result_array.shape[1] / 10)
-    delete_indices = [index for i in range(
-        num_groups) for index in (3+10*i, 5+10*i)]
-    return np.delete(result_array, delete_indices, axis=1)
+from memilio.surrogatemodel.utils_surrogatemodel import (
+    remove_confirmed_compartments, get_population, getBaselineMatrix)
 
 
 def transform_data(data, transformer, num_runs):
@@ -76,8 +51,10 @@ def transform_data(data, transformer, num_runs):
 
 
 def run_secir_groups_simulation(days, damping_day, populations):
-    """! Uses an ODE SECIR model allowing for asymptomatic infection with 6 different age groups. The model is not stratified by region. 
-    Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
+    """! Uses an ODE SECIR model allowing for asymptomatic infection with 6 different age groups. 
+    The model is not stratified by region. 
+    Virus-specific parameters are fixed and initial number of persons in the particular 
+    infection states are chosen randomly from defined ranges.
     @param Days Describes how many days we simulate within a single run.
     @param damping_day The day when damping is applied.
     @param populations List containing the population in each age group.
@@ -93,55 +70,70 @@ def run_secir_groups_simulation(days, damping_day, populations):
     # Define age Groups
     groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
     num_groups = len(groups)
+    groups_id = np.arange(num_groups)
+
+    # age specific parameters
+    TransmissionProbabilityOnContact = [0.03, 0.06, 0.06, 0.06, 0.09, 0.175]
+    RecoveredPerInfectedNoSymptoms = [0.25, 0.25, 0.2, 0.2, 0.2, 0.2]
+    SeverePerInfectedSymptoms = [0.0075, 0.0075, 0.019, 0.0615, 0.165, 0.225]
+    CriticalPerSevere = [0.075, 0.075, 0.075, 0.15, 0.3, 0.4]
+    DeathsPerCritical = [0.05, 0.05, 0.14, 0.14, 0.4, 0.6]
+
+    TimeInfectedNoSymptoms = [2.74, 2.74, 2.565, 2.565, 2.565, 2.565]
+    TimeInfectedSymptoms = [7.02625, 7.02625,
+                            7.0665, 6.9385, 6.9385, 6.835, 6.775]
+    TimeInfectedSevere = [5, 5, 5.925, 7.55, 8.5, 11]
+    TimeInfectedCritical = [6.95, 6.95, 6.86, 17.36, 17.1, 11.6]
 
     # Initialize Parameters
     model = Model(num_groups)
 
     # Set parameters
-    for i in range(num_groups):
+    for i, rho, muCR, muHI, muUH, muDU, tc, ti, th, tu in zip(groups_id, TransmissionProbabilityOnContact, RecoveredPerInfectedNoSymptoms, SeverePerInfectedSymptoms, CriticalPerSevere, DeathsPerCritical, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere, TimeInfectedCritical):
         # Compartment transition duration
-        model.parameters.TimeExposed[AgeGroup(i)] = 3.2
-        model.parameters.TimeInfectedNoSymptoms[AgeGroup(i)] = 2.
-        model.parameters.TimeInfectedSymptoms[AgeGroup(i)] = 6.
-        model.parameters.TimeInfectedSevere[AgeGroup(i)] = 12.
-        model.parameters.TimeInfectedCritical[AgeGroup(i)] = 8.
+        model.parameters.TimeExposed[AgeGroup(i)] = 3.335
+        model.parameters.TimeInfectedNoSymptoms[AgeGroup(i)] = tc
+        model.parameters.TimeInfectedSymptoms[AgeGroup(i)] = ti
+        model.parameters.TimeInfectedSevere[AgeGroup(i)] = th
+        model.parameters.TimeInfectedCritical[AgeGroup(i)] = tu
 
         # Initial number of people in each compartment with random numbers
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.Exposed)] = random.uniform(
-            0.00025, 0.0005) * populations[i]
+            0.00025, 0.005) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedNoSymptoms)] = random.uniform(
-            0.0001, 0.00035) * populations[i]
+            0.0001, 0.0035) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedNoSymptomsConfirmed)] = 0
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSymptoms)] = random.uniform(
-            0.00007, 0.0001) * populations[i]
+            0.00007, 0.001) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSymptomsConfirmed)] = 0
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSevere)] = random.uniform(
-            0.00003, 0.00006) * populations[i]
+            0.00003, 0.0006) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedCritical)] = random.uniform(
-            0.00001, 0.00002) * populations[i]
+            0.00001, 0.0002) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.Recovered)] = random.uniform(
-            0.002, 0.008) * populations[i]
+            0.002, 0.08) * populations[i]
         model.populations[AgeGroup(i),
-                          Index_InfectionState(InfectionState.Dead)] = 0
+                          Index_InfectionState(InfectionState.Dead)] = random.uniform(
+            0, 0.0003) * populations[i]
         model.populations.set_difference_from_group_total_AgeGroup(
             (AgeGroup(i), Index_InfectionState(InfectionState.Susceptible)), populations[i])
 
         # Compartment transition propabilities
-        model.parameters.RelativeTransmissionNoSymptoms[AgeGroup(i)] = 0.5
-        model.parameters.TransmissionProbabilityOnContact[AgeGroup(i)] = 0.1
-        model.parameters.RecoveredPerInfectedNoSymptoms[AgeGroup(i)] = 0.09
+        model.parameters.RelativeTransmissionNoSymptoms[AgeGroup(i)] = 1
+        model.parameters.TransmissionProbabilityOnContact[AgeGroup(i)] = rho
+        model.parameters.RecoveredPerInfectedNoSymptoms[AgeGroup(i)] = muCR
         model.parameters.RiskOfInfectionFromSymptomatic[AgeGroup(i)] = 0.25
-        model.parameters.SeverePerInfectedSymptoms[AgeGroup(i)] = 0.2
-        model.parameters.CriticalPerSevere[AgeGroup(i)] = 0.25
-        model.parameters.DeathsPerCritical[AgeGroup(i)] = 0.3
+        model.parameters.SeverePerInfectedSymptoms[AgeGroup(i)] = muHI
+        model.parameters.CriticalPerSevere[AgeGroup(i)] = muUH
+        model.parameters.DeathsPerCritical[AgeGroup(i)] = muDU
         # twice the value of RiskOfInfectionFromSymptomatic
         model.parameters.MaxRiskOfInfectionFromSymptomatic[AgeGroup(i)] = 0.5
 
@@ -151,10 +143,8 @@ def run_secir_groups_simulation(days, damping_day, populations):
 
     # Load baseline and minimum contact matrix and assign them to the model
     baseline = getBaselineMatrix()
-    minimum = getMinimumMatrix()
 
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = baseline
-    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = minimum
 
     # Generate a damping matrix and assign it to the model
     damping = np.ones((num_groups, num_groups)
@@ -181,7 +171,7 @@ def run_secir_groups_simulation(days, damping_day, populations):
     # Omit first column, as the time points are not of interest here.
     dataset_entries = copy.deepcopy(result_array)
 
-    return dataset_entries.tolist(), damped_contact_matrix
+    return dataset_entries.tolist(), damped_contact_matrix, damping
 
 
 def generate_data(
@@ -206,7 +196,8 @@ def generate_data(
         "inputs": [],
         "labels": [],
         "contact_matrix": [],
-        "damping_day": []
+        "damping_day": [],
+        "damping_coeff": []
     }
 
     # The number of days is the same as the sum of input and label width.
@@ -225,12 +216,13 @@ def generate_data(
         damping_day = random.randrange(
             input_width, input_width+label_width)
 
-        data_run, damped_contact_matrix = run_secir_groups_simulation(
+        data_run, damped_contact_matrix, damping_coeff = run_secir_groups_simulation(
             days, damping_day, population[random.randint(0, len(population) - 1)])
         data['inputs'].append(data_run[:input_width])
         data['labels'].append(data_run[input_width:])
         data['contact_matrix'].append(np.array(damped_contact_matrix))
         data['damping_day'].append(damping_day)
+        data['damping_coeff'].append(damping_coeff)
         bar.next()
     bar.finish()
 
@@ -251,77 +243,22 @@ def generate_data(
             os.mkdir(path_out)
 
         # save dict to json file
-        with open(os.path.join(path_out, 'data_secir_groups.pickle'), 'wb') as f:
+        with open(os.path.join(path_out, 'data_secir_groups_30days_100k.pickle'), 'wb') as f:
             pickle.dump(data, f)
     return data
-
-
-def getBaselineMatrix():
-    """! loads the baselinematrix
-    """
-
-    baseline_contact_matrix0 = os.path.join(
-        "./data/contacts/baseline_home.txt")
-    baseline_contact_matrix1 = os.path.join(
-        "./data/contacts/baseline_school_pf_eig.txt")
-    baseline_contact_matrix2 = os.path.join(
-        "./data/contacts/baseline_work.txt")
-    baseline_contact_matrix3 = os.path.join(
-        "./data/contacts/baseline_other.txt")
-
-    baseline = np.loadtxt(baseline_contact_matrix0) \
-        + np.loadtxt(baseline_contact_matrix1) + \
-        np.loadtxt(baseline_contact_matrix2) + \
-        np.loadtxt(baseline_contact_matrix3)
-
-    return baseline
-
-
-def getMinimumMatrix():
-    """! loads the minimum matrix
-    """
-
-    minimum_contact_matrix0 = os.path.join(
-        "./data/contacts/minimum_home.txt")
-    minimum_contact_matrix1 = os.path.join(
-        "./data/contacts/minimum_school_pf_eig.txt")
-    minimum_contact_matrix2 = os.path.join(
-        "./data/contacts/minimum_work.txt")
-    minimum_contact_matrix3 = os.path.join(
-        "./data/contacts/minimum_other.txt")
-
-    minimum = np.loadtxt(minimum_contact_matrix0) \
-        + np.loadtxt(minimum_contact_matrix1) + \
-        np.loadtxt(minimum_contact_matrix2) + \
-        np.loadtxt(minimum_contact_matrix3)
-
-    return minimum
-
-
-def get_population(path):
-    """! read population data in list from dataset
-    @param path Path to the dataset containing the population data
-    """
-
-    with open(path) as f:
-        data = json.load(f)
-    population = []
-    for data_entry in data:
-        population.append(interpolate_age_groups(data_entry))
-    return population
 
 
 if __name__ == "__main__":
     # Store data relative to current file two levels higher.
     path = os.path.dirname(os.path.realpath(__file__))
     path_output = os.path.join(os.path.dirname(os.path.realpath(
-        os.path.dirname(os.path.realpath(path)))), 'data')
+        os.path.dirname(os.path.realpath(path)))), 'data_paper')
 
     path_population = os.path.abspath(
-        r"data//pydata//Germany//county_population.json")
+        r"memilio//data//pydata//Germany//county_current_population.json")
 
     input_width = 5
     label_width = 30
-    num_runs = 10000
+    num_runs = 100000
     data = generate_data(num_runs, path_output, path_population, input_width,
                          label_width)

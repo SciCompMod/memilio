@@ -35,14 +35,32 @@ from memilio.simulation.osecir import (Index_InfectionState,
                                        InfectionState, Model, Simulation,
                                        interpolate_simulation_result, simulate)
 
+#from memilio.surrogatemodel.utils_surrogatemodel import remove_confirmed_compartments
 
-def remove_confirmed_compartments(result_array):
-    sum_inf_no_symp = np.sum(result_array[:, [2, 3]], axis=1)
-    sum_inf_symp = np.sum(result_array[:, [2, 3]], axis=1)
-    result_array[:, 2] = sum_inf_no_symp
-    result_array[:, 4] = sum_inf_symp
-    return np.delete(result_array, [3, 5], axis=1)
 
+def remove_confirmed_compartments(dataset_entries, num_groups):
+    """! The compartments which contain confirmed cases are not needed and are 
+        therefore omitted by summarizing the confirmed compartment with the 
+        original compartment. 
+    @param dataset_entries Array that contains the compartmental data with 
+            confirmed compartments. 
+    @param num_groups Number of age groups.
+    @return Array that contains the compartmental data without confirmed compartments. 
+   """
+
+    new_dataset_entries = []
+    for i in dataset_entries:
+        dataset_entries_reshaped = i.reshape(
+            [num_groups, int(np.asarray(dataset_entries).shape[1]/num_groups)]
+        )
+        sum_inf_no_symp = np.sum(dataset_entries_reshaped[:, [2, 3]], axis=1)
+        sum_inf_symp = np.sum(dataset_entries_reshaped[:, [4, 5]], axis=1)
+        dataset_entries_reshaped[:, 2] = sum_inf_no_symp
+        dataset_entries_reshaped[:, 4] = sum_inf_symp
+        new_dataset_entries.append(
+            np.delete(dataset_entries_reshaped, [3, 5], axis=1).flatten()
+        )
+    return new_dataset_entries
 
 def run_secir_simple_simulation(days):
     """! Uses an ODE SECIR model allowing for asymptomatic infection. The model is not stratified by region or demographic properties such as age.
@@ -53,7 +71,7 @@ def run_secir_simple_simulation(days):
    """
     set_log_level(LogLevel.Off)
 
-    populations = [50_000]
+    populations = 82700000
     start_day = 1
     start_month = 1
     start_year = 2019
@@ -67,37 +85,37 @@ def run_secir_simple_simulation(days):
 
     # Set parameters
     # Compartment transition duration
-    model.parameters.TimeExposed[A0] = 3.2
-    model.parameters.TimeInfectedNoSymptoms[A0] = 2.
-    model.parameters.TimeInfectedSymptoms[A0] = 6.
-    model.parameters.TimeInfectedSevere[A0] = 12.
-    model.parameters.TimeInfectedCritical[A0] = 8.
+    model.parameters.TimeExposed[A0] = 3.335
+    model.parameters.TimeInfectedNoSymptoms[A0] = 2.58916
+    model.parameters.TimeInfectedSymptoms[A0] = 6.94547
+    model.parameters.TimeInfectedSevere[A0] = 7.28196
+    model.parameters.TimeInfectedCritical[A0] = 13.066
 
     # Initial number of people in each compartment with random numbers
     model.populations[A0, Index_InfectionState(
-        InfectionState.Exposed)] = 60 * random.uniform(0.2, 1)
+        InfectionState.Exposed)] = populations*random.uniform(0.00025,0.005)
     model.populations[A0, Index_InfectionState(
-        InfectionState.InfectedNoSymptoms)] = 55 * random.uniform(0.2, 1)
+        InfectionState.InfectedNoSymptoms)] = populations * random.uniform(0.0001,0.0035)
     model.populations[A0, Index_InfectionState(
-        InfectionState.InfectedSymptoms)] = 50 * random.uniform(0.2, 1)
+        InfectionState.InfectedSymptoms)] = populations * random.uniform(0.00007,0.001)
     model.populations[A0, Index_InfectionState(
-        InfectionState.InfectedSevere)] = 12 * random.uniform(0.2, 1)
+        InfectionState.InfectedSevere)] = populations * random.uniform(0.00003,0.0006)
     model.populations[A0, Index_InfectionState(
-        InfectionState.InfectedCritical)] = 3 * random.uniform(0.2, 1)
+        InfectionState.InfectedCritical)] = populations * random.uniform(0.00001,0.0002)
     model.populations[A0, Index_InfectionState(
-        InfectionState.Recovered)] = 50 * random.random()
-    model.populations[A0, Index_InfectionState(InfectionState.Dead)] = 0
+        InfectionState.Recovered)] = populations * random.uniform(0.002,0.08)
+    model.populations[A0, Index_InfectionState(InfectionState.Dead)] = populations * random.uniform(0,0.0003)
     model.populations.set_difference_from_total(
-        (A0, Index_InfectionState(InfectionState.Susceptible)), populations[0])
+        (A0, Index_InfectionState(InfectionState.Susceptible)), populations)
 
     # Compartment transition propabilities
-    model.parameters.RelativeTransmissionNoSymptoms[A0] = 0.5
-    model.parameters.TransmissionProbabilityOnContact[A0] = 0.1
-    model.parameters.RecoveredPerInfectedNoSymptoms[A0] = 0.09
+    model.parameters.RelativeTransmissionNoSymptoms[A0] = 1
+    model.parameters.TransmissionProbabilityOnContact[A0] = 0.07333
+    model.parameters.RecoveredPerInfectedNoSymptoms[A0] = (1-0.79310)
     model.parameters.RiskOfInfectionFromSymptomatic[A0] = 0.25
-    model.parameters.SeverePerInfectedSymptoms[A0] = 0.2
-    model.parameters.CriticalPerSevere[A0] = 0.25
-    model.parameters.DeathsPerCritical[A0] = 0.3
+    model.parameters.SeverePerInfectedSymptoms[A0] = 0.07864
+    model.parameters.CriticalPerSevere[A0] = 0.17319
+    model.parameters.DeathsPerCritical[A0] = 0.21718
     # twice the value of RiskOfInfectionFromSymptomatic
     model.parameters.MaxRiskOfInfectionFromSymptomatic[A0] = 0.5
 
@@ -121,13 +139,11 @@ def run_secir_simple_simulation(days):
     result_array = result.as_ndarray()
 
     result_array = remove_confirmed_compartments(
-        result_array[1:, :].transpose())
-
-    dataset = []
+        result_array[1:, :].transpose(), 1)
 
     dataset_entries = copy.deepcopy(result_array)
 
-    return dataset_entries.tolist()
+    return dataset_entries
 
 
 def generate_data(
@@ -192,7 +208,7 @@ def generate_data(
             os.mkdir(path)
 
         # save dict to json file
-        with open(os.path.join(path, 'data_secir_simple.pickle'), 'wb') as f:
+        with open(os.path.join(path, 'data_secir_simple_90days_100k.pickle'), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -201,10 +217,10 @@ if __name__ == "__main__":
     # Store data relative to current file two levels higher.
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
-        os.path.dirname(os.path.realpath(path)))), 'data')
+        os.path.dirname(os.path.realpath(path)))), 'data_paper')
 
     input_width = 5
-    label_width = 30
-    num_runs = 1000
+    label_width = 90
+    num_runs = 100000
     data = generate_data(num_runs, path_data, input_width,
-                         label_width)
+                         label_width, save_data=True)
