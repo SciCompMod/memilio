@@ -59,6 +59,7 @@ class Scanner:
         self.ast = None
         self.node_counter = 0
         self.cursor_ids = []
+        self.cursor_nodes = []
         self.create_ast()
 
     def create_ast(self: Self) -> None:
@@ -123,6 +124,9 @@ class Scanner:
         self.node_counter += 1  # Erhöhe den ID-Zähler
         cursor_id = self.node_counter  # Weise dem Knoten die aktuelle ID zu
 
+        self.cursor_ids.append((cursor, cursor_id))
+        self.cursor_nodes.append(cursor)
+
         # Hier könntest du den Knoten nach Bedarf weiterverarbeiten.
         # Zum Beispiel: Ausgabe des Knotens und seiner ID
         logging.debug(
@@ -141,6 +145,15 @@ class Scanner:
             if c == cursor:
                 return id
         return 0
+
+    def get_node_by_index(self, index: int) -> Cursor:
+        """
+        Gibt den Knoten an der angegebenen Indexposition zurück.
+        Wenn der Index außerhalb der Grenzen liegt, wird None zurückgegeben.
+        """
+        if 0 <= index < len(self.cursor_nodes):
+            return self.cursor_nodes[index]
+        return None
 
     def extract_results(self: Self) -> IntermediateRepresentation:
         """

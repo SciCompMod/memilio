@@ -48,7 +48,7 @@ class ASTViz:
         """
         with open('output_ast.txt', 'a') as f:
             _output_cursor_and_children_file(ast_cursor, f)
-            print('AST written to ' + str(os.path.abspath(f.name)))
+            print('AST-file written to ' + str(os.path.abspath(f.name)))
 
     # def output_ast_png_all(self, ast_cursor: Cursor) -> None:
     #     """
@@ -81,7 +81,7 @@ class ASTViz:
         graph.render(output_file, view=False)
 
         output_path = os.path.abspath(f"{output_file}.png")
-        print(f'AST png written to {output_path}')
+        print(f'AST-png written to {output_path}')
 
     # def output_ast_digraph(self, ast_cursor: Cursor) -> None:
     #     """
@@ -247,21 +247,22 @@ def _output_cursor_and_children_print(cursor: Cursor, spaces: int = 0) -> None:
     @param cursor Represents the current node of the AST as an Cursor object from libclang.
     @param spaces [Default = 0] Number of spaces.
     """
+
     _output_cursor_print(cursor, spaces)
     if cursor.kind.is_reference():
-        print(indent(spaces) + 'reference to:')
+        print(indent2(spaces) + 'reference to:')
         _output_cursor_print(cursor.referenced, spaces+1)
 
     # Recurse for children of this cursor
     has_children = False
     for c in cursor.get_children():
         if not has_children:
-            print(indent(spaces) + '{')
+            print(indent2(spaces) + '{')
             has_children = True
         _output_cursor_and_children_print(c, spaces+1)
 
     if has_children:
-        print(indent(spaces) + '}')
+        print(indent2(spaces) + '}')
 
 
 def _output_cursor_print(cursor: Cursor, spaces: int) -> None:
