@@ -215,6 +215,7 @@ def generate_data(
 
     # Load population data
     population = get_population(path_population)
+    population = np.asarray(population).sum(axis=0)
 
     # show progess in terminal for longer runs
     # Due to the random structure, there's currently no need to shuffle the data
@@ -226,7 +227,7 @@ def generate_data(
             input_width, input_width+label_width)
 
         data_run, damped_contact_matrix, damping_coeff = run_secir_groups_simulation(
-            days, damping_day, population[random.randint(0, len(population) - 1)])
+            days, damping_day, population)
         data['inputs'].append(data_run[:input_width])
         data['labels'].append(data_run[input_width:])
         data['contact_matrix'].append(np.array(damped_contact_matrix))
@@ -252,7 +253,7 @@ def generate_data(
             os.mkdir(path_out)
 
         # save dict to json file
-        with open(os.path.join(path_out, 'data_secir_groups_30days_I_based_10k.pickle'), 'wb') as f:
+        with open(os.path.join(path_out, 'data_secir_groups_30days_I_based_Germany_10k.pickle'), 'wb') as f:
             pickle.dump(data, f)
     return data
 
