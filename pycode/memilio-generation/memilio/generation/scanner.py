@@ -143,7 +143,7 @@ class Scanner:
         for c, id in Scanner.cursor_ids:
             if c == cursor:
                 return id
-        return 0
+        raise IndexError(f"Cursor {cursor} is out of bounds.")
 
     def get_node_by_index(self, index: int) -> Cursor:
         """
@@ -152,7 +152,8 @@ class Scanner:
         """
         if 0 <= index < len(self.cursor_nodes):
             return self.cursor_nodes[index]
-        return None
+        raise IndexError(
+            f"Index {index} is out of bounds (0 to {len(self.cursor_nodes) - 1}).")
 
     def extract_results(self: Self) -> IntermediateRepresentation:
         """
