@@ -31,7 +31,7 @@ import logging
 from graphviz import Digraph
 from typing import TYPE_CHECKING, Any, Callable
 from warnings import catch_warnings
-from memilio.generation import graph_visualization
+
 
 from clang.cindex import *
 from typing_extensions import Self
@@ -46,6 +46,7 @@ class Scanner:
     """
     Analyze the model and extract the needed information.
     """
+    cursor_ids = []
 
     def __init__(self: Self, conf: ScannerConfig) -> None:
         """
@@ -58,7 +59,7 @@ class Scanner:
             self.config.optional.get("libclang_library_path"))
         self.ast = None
         self.node_counter = 0
-        self.cursor_ids = []
+
         self.cursor_nodes = []
         self.create_ast()
 
@@ -121,35 +122,33 @@ class Scanner:
         @cursor: The current node (Cursor) in the AST to traverse.
         """
 
-        self.node_counter += 1  # Erhöhe den ID-Zähler
-        cursor_id = self.node_counter  # Weise dem Knoten die aktuelle ID zu
+        self.node_counter += 1
+        cursor_id = self.node_counter
 
         self.cursor_ids.append((cursor, cursor_id))
         self.cursor_nodes.append(cursor)
 
-        # Hier könntest du den Knoten nach Bedarf weiterverarbeiten.
-        # Zum Beispiel: Ausgabe des Knotens und seiner ID
         logging.debug(
             f"Node {cursor.spelling or cursor.kind} assigned ID {cursor_id}")
 
-        # Rekursiv durch die Kinderknoten traversieren und IDs zuweisen
         for child in cursor.get_children():
             self.assing_ast_with_ids(child)
 
-    def get_node_id(self, cursor: Cursor) -> int:
+    @staticmethod
+    def get_node_id(cursor: Cursor) -> int:
         """
-        Gibt die ID des angegebenen Knotens zurück.
+        Returns the id of the current node.
         """
 
-        for c, id in self.cursor_ids:
+        for c, id in Scanner.cursor_ids:
             if c == cursor:
                 return id
         return 0
 
     def get_node_by_index(self, index: int) -> Cursor:
         """
-        Gibt den Knoten an der angegebenen Indexposition zurück.
-        Wenn der Index außerhalb der Grenzen liegt, wird None zurückgegeben.
+        Returns the node at the specified index position.
+        If the index is out of bounds, None is returned.
         """
         if 0 <= index < len(self.cursor_nodes):
             return self.cursor_nodes[index]
@@ -163,7 +162,7 @@ class Scanner:
         @return Information extracted from the model saved as an IntermediateRepresentation. 
         """
         intermed_repr = IntermediateRepresentation()
-        graph_visualization._output_cursor_print(self.ast.cursor, 1)
+        # graph_visualization._output_cursor_print(self.ast.cursor, 1)
         self.find_node(self.ast.cursor, intermed_repr)
         # self.output_ast_file()
         self.finalize(intermed_repr)
