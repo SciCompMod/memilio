@@ -13,8 +13,8 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
     os.path.dirname(os.path.realpath(path)))), 'data_paper')
 
-filename = "data_secir_groups_30days_I_based_Germany_100k.pickle"
-filename_df = "dataframe_withgroups_30days_Germany_I_based_10k_nodamp"
+filename = "data_secir_groups_30days_Germany_10k.pickle"
+filename_df = "dataframe_withgroups_30days_Germany_10k_nodamp_new.csv"
 
 label_width = 30
 early_stop = 100

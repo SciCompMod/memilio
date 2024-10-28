@@ -1,6 +1,6 @@
-#from memilio.surrogatemodel.ode_secir_simple import network_architectures
-#from memilio.surrogatemodel.ode_secir_simple.model import split_data, get_test_statistic
-import os 
+# from memilio.surrogatemodel.ode_secir_simple import network_architectures
+# from memilio.surrogatemodel.ode_secir_simple.model import split_data, get_test_statistic
+import os
 import tensorflow as tf
 import pickle
 import pandas as pd
@@ -9,15 +9,14 @@ from sklearn.model_selection import KFold
 import numpy as np
 
 
-
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
-        os.path.dirname(os.path.realpath(path)))), 'data_paper')
-    
-filename = "data_secir_simple_100k.pickle"
-filename_df = "dataframe_30days_100k_nodamp"
+    os.path.dirname(os.path.realpath(path)))), 'data_paper')
 
-label_width = 30 
+filename = "data_secir_simple_100k.pickle"
+filename_df = "dataframe_30days_100k_nodamp.csv"
+
+label_width = 30
 early_stop = 100
 
 # Define grid search parameters
@@ -25,12 +24,13 @@ hidden_layers = [0, 1, 2, 3, 4]
 neurons_in_hidden_layer = [32, 64, 128, 512, 1024]
 models = ["Dense", "CNN", "LSTM"]
 
-parameters = [(layer, neuron_number, modelname) for layer in hidden_layers for neuron_number in neurons_in_hidden_layer for modelname in models]
+parameters = [(layer, neuron_number, modelname)
+              for layer in hidden_layers for neuron_number in neurons_in_hidden_layer for modelname in models]
 
 # Create a DataFrame to store the results
-df_results  = pd.DataFrame(columns=['model', 'number_of_hidden_layers', 'number_of_neurons',
-                                    'mean_test_MAPE', 'kfold_train', 'kfold_val',
-                                    'kfold_test', 'training_time', 'train_losses', 'val_losses'])            
+df_results = pd.DataFrame(columns=['model', 'number_of_hidden_layers', 'number_of_neurons',
+                                   'mean_test_MAPE', 'kfold_train', 'kfold_val',
+                                   'kfold_test', 'training_time', 'train_losses', 'val_losses'])
 
 
 if not os.path.isfile(os.path.join(path_data, filename)):
@@ -46,6 +46,8 @@ inputs_withhold = data['inputs'][int((0.8 * len(data['inputs']))):]
 labels_withhold = data['labels'][int((0.8 * len(data['labels']))):]
 
 # Function to train and evaluate the model using cross-validation
+
+
 def train_and_evaluate_model(param, max_epochs):
     layer, neuron_number, modelname = param
 
@@ -67,7 +69,8 @@ def train_and_evaluate_model(param, max_epochs):
             model = tf.keras.Sequential([tf.keras.layers.Flatten(),
                                          tf.keras.layers.Dense(units=neuron_number, activation='relu')])
             for _ in range(layer):
-                model.add(tf.keras.layers.Dense(units=neuron_number, activation='relu'))
+                model.add(tf.keras.layers.Dense(
+                    units=neuron_number, activation='relu'))
             model.add(tf.keras.layers.Dense(units=label_width * 8))
             model.add(tf.keras.layers.Reshape([label_width, 8]))
 
@@ -77,16 +80,21 @@ def train_and_evaluate_model(param, max_epochs):
             model = tf.keras.Sequential([tf.keras.layers.Lambda(lambda x: x[:, -conv_size:, :]),
                                          tf.keras.layers.Conv1D(neuron_number, activation='relu', kernel_size=(conv_size))])
             for _ in range(layer):
-                model.add(tf.keras.layers.Dense(units=neuron_number, activation='relu'))
-            model.add(tf.keras.layers.Dense(label_width * num_outputs, kernel_initializer=tf.initializers.zeros()))
+                model.add(tf.keras.layers.Dense(
+                    units=neuron_number, activation='relu'))
+            model.add(tf.keras.layers.Dense(label_width * num_outputs,
+                      kernel_initializer=tf.initializers.zeros()))
             model.add(tf.keras.layers.Reshape([label_width, num_outputs]))
 
         elif modelname == "LSTM":
             num_outputs = 8
-            model = tf.keras.Sequential([tf.keras.layers.LSTM(neuron_number, return_sequences=False)])
+            model = tf.keras.Sequential(
+                [tf.keras.layers.LSTM(neuron_number, return_sequences=False)])
             for _ in range(layer):
-                model.add(tf.keras.layers.Dense(units=neuron_number, activation='relu'))
-            model.add(tf.keras.layers.Dense(label_width * num_outputs, kernel_initializer=tf.initializers.zeros()))
+                model.add(tf.keras.layers.Dense(
+                    units=neuron_number, activation='relu'))
+            model.add(tf.keras.layers.Dense(label_width * num_outputs,
+                      kernel_initializer=tf.initializers.zeros()))
             model.add(tf.keras.layers.Reshape([label_width, num_outputs]))
 
         # Gather training and validation data based on the fold
@@ -112,7 +120,6 @@ def train_and_evaluate_model(param, max_epochs):
 
     elapsed = time.perf_counter() - start
 
- 
     # Print out the results
     elapsed = time.perf_counter() - start
     print(f"Best train losses: {train_losses}")
@@ -133,7 +140,7 @@ def train_and_evaluate_model(param, max_epochs):
         [losses_history_all],
         [val_losses_history_all]
     ]
-    
+
     path = os.path.dirname(os.path.realpath(__file__))
     file_path = os.path.join(
         os.path.dirname(
@@ -141,16 +148,15 @@ def train_and_evaluate_model(param, max_epochs):
         'secir_simple_grid_search_paper')
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
-    file_path = os.path.join(file_path,filename_df)
+    file_path = os.path.join(file_path, filename_df)
     df_results.to_csv(file_path)
-
 
 
 start_hyper = time.perf_counter()
 max_epochs = 1500
 
 for param in parameters:
-     train_and_evaluate_model(param, max_epochs)
+    train_and_evaluate_model(param, max_epochs)
 
 elapsed_hyper = time.perf_counter() - start_hyper
 print(
@@ -159,12 +165,3 @@ print(
 print(
     "Time for hyperparameter testing: {:.4f} hours".format(
         elapsed_hyper / 60 / 60))
-
-
-
-    
-   
- 
-      
-        
-     
