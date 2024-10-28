@@ -81,7 +81,7 @@ def run_secir_groups_simulation(days, damping_day, populations):
 
     TimeInfectedNoSymptoms = [2.74, 2.74, 2.565, 2.565, 2.565, 2.565]
     TimeInfectedSymptoms = [7.02625, 7.02625,
-                            7.0665, 6.9385, 6.9385, 6.835, 6.775]
+                            7.0665, 6.9385, 6.835, 6.775]
     TimeInfectedSevere = [5, 5, 5.925, 7.55, 8.5, 11]
     TimeInfectedCritical = [6.95, 6.95, 6.86, 17.36, 17.1, 11.6]
 
@@ -244,7 +244,7 @@ def generate_data(
             os.mkdir(path_out)
 
         # save dict to json file
-        with open(os.path.join(path_out, 'data_secir_groups_30days_Germany_10k.pickle'), 'wb') as f:
+        with open(os.path.join(path_out, 'data_secir_groups_30days_Germany_100k.pickle'), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -260,6 +260,6 @@ if __name__ == "__main__":
 
     input_width = 5
     label_width = 30
-    num_runs = 10000
+    num_runs = 100000
     data = generate_data(num_runs, path_output, path_population, input_width,
                          label_width)

@@ -81,7 +81,7 @@ def run_secir_groups_simulation(days, damping_day, populations):
 
     TimeInfectedNoSymptoms = [2.74, 2.74, 2.565, 2.565, 2.565, 2.565]
     TimeInfectedSymptoms = [7.02625, 7.02625,
-                            7.0665, 6.9385, 6.9385, 6.835, 6.775]
+                            7.0665, 6.9385, 6.835, 6.775]
     TimeInfectedSevere = [5, 5, 5.925, 7.55, 8.5, 11]
     TimeInfectedCritical = [6.95, 6.95, 6.86, 17.36, 17.1, 11.6]
 
