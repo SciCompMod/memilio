@@ -132,8 +132,8 @@ def run_secir_groups_simulation(days, damping_day, populations):
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.Recovered)] = random.uniform(0, (populations[i]-subtotal))
 
-        model.populations.set_difference_from_total(
-            (AgeGroup(i), Index_InfectionState(InfectionState.Susceptible)), populations[i])
+        model.populations[AgeGroup(i), InfectionState.Susceptible].value = populations[i] - \
+            model.populations.get_group_total_AgeGroup(AgeGroup(i))
 
         # Compartment transition propabilities
         model.parameters.RelativeTransmissionNoSymptoms[AgeGroup(i)] = 1
