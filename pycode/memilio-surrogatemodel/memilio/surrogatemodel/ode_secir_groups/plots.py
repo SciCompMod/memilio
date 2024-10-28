@@ -7,7 +7,7 @@ import matplotlib.gridspec as gridspec
 from memilio.simulation.osecir import InfectionState
 import seaborn as sns
 
-filename = 'data_secir_groups_90days_Germany_10k.pickle'
+filename = 'data_secir_groups_30days_Germany_10k.pickle'
 
 # import data
 path = os.path.dirname(os.path.realpath(__file__))
@@ -101,12 +101,57 @@ def SINGLE_lineplot_compartments_log_and_nolog_agegroups(inputs_reversed, labels
             0.5, 0.08), ncol=4, title="Compartments")
 
         # Save the figure
-        plt.savefig("/localdata1/gnn_paper_2024/images/lineplots_compartments/with_agegroups_90days_2plt/compartment_lines_withagegroups_90days_2plt_10k_paper_no" + str(i) + ".png")
+        plt.savefig("/localdata1/gnn_paper_2024/images/lineplots_compartments/with_agegroups_30days_2plt/compartment_lines_withagegroups_30days_2plt_10k_paper_no" + str(i) + ".png")
         print(f'Plot No. {i} done.')
 
 
-SINGLE_lineplot_compartments_log_and_nolog_agegroups(
-    data['inputs'], data['labels'], 100, input_width=5, label_width=90)
+def boxplot_inputs_single(file_path, savename):
 
-# plt.savefig("/localdata1/gnn_paper_2024/images/no_agegroups/compartment_lines_noagegroups_30days_10k_paper_no" +
-# str(i) + ".png")
+    file = open(file_path, 'rb')
+    data = pickle.load(file)
+    data = np.expm1(data['inputs'])
+
+    reshaped_array_input = data.reshape(10000, 5, 6, 8)
+    reshaped_array_input = reshaped_array_input.transpose(2, 0, 1, 3)
+
+    # compartment_array = []
+    # for compartment in InfectionState.values():
+    #        compartment_array.append(compartment)
+    # infectionstates = [str(compartment).split('.')[1] for compartment in compartment_array]
+    agegroups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
+    for group_input, agegroup in zip(reshaped_array_input, agegroups):
+
+        infectionstates = ['Susceptible', 'Exposed', 'InfectedNoSymptoms',
+                           'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
+
+        fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6), (ax7, ax8)) = plt.subplots(
+            nrows=4, ncols=2, sharey=False, figsize=(8, 10))
+        axes = [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8]
+
+        for ax, compartment, d in zip(axes, infectionstates, np.asarray(group_input).transpose()):
+
+            d_df = pd.DataFrame(data=d)
+            d_df = pd.melt(d_df.transpose(), var_name="Day")
+            d_df['type'] = 'b'
+
+            sns.boxplot(ax=ax, x='Day', y='value', data=d_df,
+                        hue='type', palette='Set1', width=0.8, legend='auto')
+            ax.set_title(compartment, fontsize=10)
+            ax.legend().set_visible(False)
+
+            handles, labels = ax.get_legend_handles_labels()
+            fig.legend(handles, labels, loc='upper right', ncol=3,
+                       bbox_to_anchor=(0.7, 1), frameon=False)
+        plt.tight_layout()
+
+        plt.savefig(
+            savename+agegroup+".png")
+
+
+SINGLE_lineplot_compartments_log_and_nolog_agegroups(
+    data['inputs'], data['labels'], 100, input_width=5, label_width=30)
+
+
+file_path = '/home/schm_a45/Documents/Code/memilio_test/memilio/pycode/memilio-surrogatemodel/memilio/data_paper/data_secir_groups_30days_I_based_Germany_10k.pickle'
+savename = 'boxplot_withagegroups_I_based_10k_'
+boxplot_inputs_single(file_path, savename)
