@@ -914,7 +914,7 @@ def get_npi_data(fine_resolution=2,
     counters = np.zeros(4)  # time counter for output only
     countyidx = 0
 
-    # set dtype of used/mentioned npis to int for further usage
+    # Infer type of columns to be able to use replace with ints without downcasting.
     df_npis_old = df_npis_old.infer_objects()
     df_npis_old.replace([-99, 2, 3, 4, 5],
                         [0, 1, 1, 1, 1], inplace=True)
