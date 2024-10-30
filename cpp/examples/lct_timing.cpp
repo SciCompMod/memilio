@@ -22,8 +22,17 @@
 
 int main()
 {
-    // Simulation with initial exposed population in age group 1.
     simulate<1>();
-   
+    simulate<2>();
+    simulate<3>();
+    simulate<4>();
+    simulate<5>();
+    simulate<6>();
+    simulate<7>();
+    simulate<8>();
+    simulate<9>();
+    simulate<10>();
+    simulate<50>();
+
     return 0;
 }
