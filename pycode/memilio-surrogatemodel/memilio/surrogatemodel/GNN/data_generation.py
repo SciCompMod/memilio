@@ -16,9 +16,9 @@ from memilio.simulation.osecir import (Index_InfectionState, interpolate_simulat
                                        InfectionState, Model, interpolate_simulation_result)
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.surrogatemodel.GNN.GNN_utils import (transform_mobility_directory,
-                                                  make_graph, scale_data)
+                                                  make_graph, scale_data, getBaselineMatrix, remove_confirmed_compartments)
 from memilio.surrogatemodel.utils_surrogatemodel import (
-    getBaselineMatrix, remove_confirmed_compartments, get_population)
+    get_population)
 from enum import Enum
 
 
@@ -89,7 +89,7 @@ def set_contact_matrices(model, data_dir, num_groups=6):
     model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
 
 
-def get_graph(num_groups, data_dir):
+def get_graph(num_groups, data_dir, mobility_directory):
     model = Model(num_groups)
     set_covid_parameters(model)
     set_contact_matrices(model, data_dir)
@@ -114,7 +114,8 @@ def get_graph(num_groups, data_dir):
         scaling_factor_icu, tnt_capacity_factor, 0, False)
 
     mio.osecir.set_edges(
-        data_dir, graph, len(Location))
+        os.path.dirname(os.path.realpath(
+            (mobility_directory))), graph, len(Location))
 
     return graph
 
@@ -144,23 +145,23 @@ def run_secir_groups_simulation(days, graph, num_groups=6):
                 InfectionState.InfectedSymptoms)] = pop_age_group * random.uniform(0.0001, 0.05)
 
             model.populations[age_group, Index_InfectionState(
-                InfectionState.Exposed)] = model.populations[pop_age_group,
+                InfectionState.Exposed)] = model.populations[age_group,
                                                              InfectionState.InfectedSymptoms].value * random.uniform(0.1, 5)
 
             model.populations[age_group, Index_InfectionState(
-                InfectionState.InfectedNoSymptoms)] = model.populations[pop_age_group,
+                InfectionState.InfectedNoSymptoms)] = model.populations[age_group,
                                                                         InfectionState.InfectedSymptoms].value * random.uniform(0.1, 5)
 
             model.populations[age_group, Index_InfectionState(
-                InfectionState.InfectedSevere)] = model.populations[pop_age_group,
+                InfectionState.InfectedSevere)] = model.populations[age_group,
                                                                     InfectionState.InfectedSymptoms].value * random.uniform(0.001, 1)
 
             model.populations[age_group, Index_InfectionState(
-                InfectionState.InfectedCritical)] = model.populations[pop_age_group,
+                InfectionState.InfectedCritical)] = model.populations[age_group,
                                                                       InfectionState.InfectedSevere].value * random.uniform(0.001, 1)
 
             model.populations[age_group, Index_InfectionState(
-                InfectionState.Dead)] = model.populations[pop_age_group,
+                InfectionState.Dead)] = model.populations[age_group,
                                                           InfectionState.InfectedCritical].value * random.uniform(0.001, 1)
 
             subtotal = (model.populations[age_group, InfectionState.InfectedSymptoms].value
@@ -212,7 +213,7 @@ def generate_data(
    @param data_dir Directory with all data needed to initialize the models.
    @param path Path, where the datasets are stored.
    @param input_width number of time steps used for model input.
-   @param label_width number of time steps (days) used as model output/label.  
+   @param label_width number of time steps (days) used as model output/label.
    @param save_data Option to deactivate the save of the dataset. Per default true.
    """
     set_log_level(mio.LogLevel.Error)
@@ -223,7 +224,8 @@ def generate_data(
             }
 
     num_groups = 6
-    graph = get_graph(num_groups, data_dir)
+    mobility_dir = transform_mobility_directory()
+    graph = get_graph(num_groups, data_dir, mobility_dir)
 
     # show progess in terminal for longer runs
     # Due to the random structure, theres currently no need to shuffle the data
