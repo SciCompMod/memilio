@@ -43,7 +43,7 @@
 namespace params
 {
 // Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
-constexpr int num_subcompartments = 1;
+constexpr int num_subcompartments = 3;
 constexpr size_t num_groups       = 6;
 
 // Parameters
@@ -123,7 +123,19 @@ void set_npi_october(mio::ContactMatrixGroup& contact_matrices)
 {
     using namespace params;
     // ---------------------24/10/2020--------------------------------
-    auto offset_npi = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 10, 24), start_date));
+    auto offset_npi = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 10, 25), start_date));
+    ScalarType contact_reduction_all_locations = simulation_parameter["lockdown_hard"];
+    for (auto&& contact_location : contact_locations) {
+        contact_matrices[size_t(contact_location.first)].add_damping(
+            Eigen::MatrixXd::Constant(num_groups, num_groups, contact_reduction_all_locations), offset_npi);
+    }
+}
+
+void set_npi_july(mio::ContactMatrixGroup& contact_matrices)
+{
+    using namespace params;
+    // -----------------------------------------------------
+    auto offset_npi = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 07, 07), start_date));
     ScalarType contact_reduction_all_locations = simulation_parameter["lockdown_hard"];
     for (auto&& contact_location : contact_locations) {
         contact_matrices[size_t(contact_location.first)].add_damping(
@@ -160,10 +172,14 @@ mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(const 
     }
 
     // ----- Add NPIs to the contact matrices. -----
-    mio::Date end_date = mio::offset_date_by_days(start_date, simulation_parameter["tmax"]);
+    mio::Date end_date  = mio::offset_date_by_days(start_date, simulation_parameter["tmax"]);
+    auto start_npi_july = mio::Date(2020, 7, 7);
+    if ((start_npi_july < end_date) & (start_date < start_npi_july)) {
+        set_npi_july(contact_matrices);
+    }
     // Set of NPIs for October.
-    auto start_npi_october = mio::Date(2020, 10, 1);
-    if (start_npi_october < end_date) {
+    auto start_npi_october = mio::Date(2020, 10, 25);
+    if ((start_npi_october < end_date) & (start_date < start_npi_october)) {
         set_npi_october(contact_matrices);
     }
     return mio::success(mio::UncertainContactMatrix<ScalarType>(contact_matrices));
