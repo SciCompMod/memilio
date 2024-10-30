@@ -37,6 +37,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <omp.h>
 
 namespace params
 {
@@ -123,8 +124,8 @@ mio::UncertainContactMatrix<ScalarType> get_contact_matrix(ScalarType R0)
     return mio::UncertainContactMatrix<ScalarType>(contact_matrix);
 }
 
-/** @brief Returns transitions that can be used to inizialize an IDE model or 
-*    to calcuate initial values for a LCT model.
+/** @brief Returns transitions that can be used to initialize an IDE model or 
+*    to calculate initial values for a LCT model.
 */
 mio::TimeSeries<ScalarType> get_initial_flows()
 {
@@ -137,7 +138,7 @@ mio::TimeSeries<ScalarType> get_initial_flows()
 
     // Add time points for initialization of transitions.
     /* For this example, the intention is to create nearly constant values for SusceptiblesToExposed flow
-    at the beginning of the simulation. Therefore we initalize the flows accordingly constant for
+    at the beginning of the simulation. Therefore we initialize the flows accordingly constant for
     SusceptiblesToExposed and derive matching values for the other flows.*/
     const ScalarType SusceptibleToExposed_dayinit[] = {199.471, 633.29, 3779.09, 4140.7, 1385.04, 479.161};
     Eigen::VectorXd init_transitions(num_transitions * num_groups);
@@ -181,11 +182,11 @@ mio::TimeSeries<ScalarType> get_initial_flows()
 
 /** 
 * @brief Perform a fictive simulation with realistic parameters and contacts, such that the reproduction number 
-*   is approximately 1 at the beginning and rising or dropping at simulationtime 2.
+*   is approximately 1 at the beginning and rising or dropping at simulation time 2.
 *   
 *   This scenario should enable a comparison of the qualitative behavior of different LCT models.
 *   
-* @param[in] R0 Define R0 from simulationtime 2 on. Please use a number > 0.
+* @param[in] R0 Define R0 from simulation time 2 on. Please use a number > 0.
 * @param[in] tmax End time of the simulation.
 * @param[in] save_dir Specifies the directory where the results should be stored. Provide an empty string if results should not be saved.
 * @returns Any io errors that happen during saving the results.

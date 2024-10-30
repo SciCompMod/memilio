@@ -115,6 +115,18 @@ add_executable(lct_secir_example lct_secir.cpp)
 target_link_libraries(lct_secir_example PRIVATE memilio lct_secir)
 target_compile_options(lct_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+if (MEMILIO_ENABLE_OPENMP)
+    add_library(lct_time_h
+       lct_timing.h
+    )
+    target_link_libraries(lct_time_h PUBLIC memilio lct_secir)
+    target_include_directories(lct_time_h PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_compile_options(lct_time_h PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    add_executable(lct_timing lct_timing.cpp)
+    target_link_libraries(lct_timing PRIVATE memilio lct_secir lct_time_h )
+    target_compile_options(lct_timing PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+endif()
+
 if(MEMILIO_HAS_HDF5)
 add_executable(lct_fictional lct_fictional_example.cpp)
 target_link_libraries(lct_fictional PRIVATE memilio lct_secir)
