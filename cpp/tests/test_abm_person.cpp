@@ -28,6 +28,9 @@
 
 #include <gtest/gtest.h>
 
+/**
+ * @brief Test the initialization of a Person object with default properties.
+ */
 TEST(TestPerson, init)
 {
     auto rng = mio::RandomNumberGenerator();
@@ -36,11 +39,15 @@ TEST(TestPerson, init)
     auto t      = mio::abm::TimePoint(0);
     auto person = mio::abm::Person(rng, location.get_type(), location.get_id(), age_group_60_to_79);
 
+    // Verify default state and location assignments.
     EXPECT_EQ(person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
     EXPECT_EQ(person.get_location(), location.get_id());
     EXPECT_EQ(person.get_id(), mio::abm::PersonId::invalid_id());
 }
 
+/**
+ * @brief Test that a Person's location can be changed correctly.
+ */
 TEST(TestPerson, change_location)
 {
     auto rng = mio::RandomNumberGenerator();
@@ -51,13 +58,13 @@ TEST(TestPerson, change_location)
     mio::abm::Location loc3(mio::abm::LocationType::PublicTransport, 3, 6, 2);
     auto person = make_test_person(home, age_group_0_to_4, mio::abm::InfectionState::Recovered);
 
-    // check that a person does not change location to its current location
+    // Check that a person does not change location to its current location
     person.add_time_at_location(mio::abm::hours(1));
     EXPECT_FALSE(mio::abm::change_location(person, home));
     EXPECT_EQ(person.get_time_at_location(), mio::abm::hours(1));
     EXPECT_EQ(person.get_location(), home.get_id());
 
-    // change the location of the person a couple of times
+    // Change the location of the person a couple of times
     EXPECT_TRUE(mio::abm::change_location(person, loc1, mio::abm::TransportMode::Unknown, {0}));
     EXPECT_EQ(person.get_time_at_location(), mio::abm::TimeSpan(0));
     EXPECT_EQ(person.get_location(), loc1.get_id());
@@ -68,6 +75,7 @@ TEST(TestPerson, change_location)
     EXPECT_EQ(person.get_location(), loc2.get_id());
     EXPECT_EQ(person.get_last_transport_mode(), mio::abm::TransportMode::Walking);
 
+    // Test changing location with cell indices.
     EXPECT_TRUE(mio::abm::change_location(person, loc3, mio::abm::TransportMode::Bike, {0, 1}));
     EXPECT_EQ(person.get_time_at_location(), mio::abm::TimeSpan(0));
     EXPECT_EQ(person.get_location(), loc3.get_id());
@@ -77,18 +85,39 @@ TEST(TestPerson, change_location)
     EXPECT_EQ(person.get_cells()[1], 1u);
 }
 
+/**
+ * @brief Test setting and retrieving assigned locations for a Person.
+ */
 TEST(TestPerson, setGetAssignedLocation)
 {
     auto rng = mio::RandomNumberGenerator();
     mio::abm::Location location(mio::abm::LocationType::Work, 2, num_age_groups);
     auto person = mio::abm::Person(rng, location.get_type(), location.get_id(), age_group_35_to_59);
+    // Assign and verify a location for the person.
     person.set_assigned_location(location.get_type(), location.get_id());
     EXPECT_EQ(person.get_assigned_location(mio::abm::LocationType::Work), mio::abm::LocationId(2));
-
+    // Change the assigned location and verify.
     person.set_assigned_location(mio::abm::LocationType::Work, mio::abm::LocationId(4));
     EXPECT_EQ(person.get_assigned_location(mio::abm::LocationType::Work), mio::abm::LocationId(4));
+
+    // Fuzzing: assign random valid LocationId values and verify correctness.
+    for (int i = 0; i < 100; ++i) {
+        auto random_id = mio::UniformIntDistribution<int>::get_instance()(rng, 0, 1000);
+        person.set_assigned_location(mio::abm::LocationType::Work, mio::abm::LocationId(random_id));
+        EXPECT_EQ(person.get_assigned_location(mio::abm::LocationType::Work), mio::abm::LocationId(random_id));
+    }
+
+    // Boundary test cases: test with boundary LocationIds.
+    person.set_assigned_location(mio::abm::LocationType::Work, mio::abm::LocationId(0));
+    EXPECT_EQ(person.get_assigned_location(mio::abm::LocationType::Work), mio::abm::LocationId(0));
+
+    person.set_assigned_location(mio::abm::LocationType::Work, mio::abm::LocationId(std::numeric_limits<int>::max()));
+    EXPECT_EQ(person.get_assigned_location(mio::abm::LocationType::Work), mio::abm::LocationId(std::numeric_limits<int>::max()));
 }
 
+/**
+ * @brief Test quarantine behavior and removal of isolation for a Person.
+ */
 TEST(TestPerson, quarantine)
 {
     using testing::Return;
@@ -100,7 +129,7 @@ TEST(TestPerson, quarantine)
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location work(mio::abm::LocationType::Work, 1, num_age_groups);
 
-    //setup rng mock so the person has a state transition to Recovered
+    // Setup rng mock so the person has a state transition to Recovered
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(4))
@@ -122,17 +151,22 @@ TEST(TestPerson, quarantine)
                                        infection_parameters);
     auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
 
+    // Test quarantine when a person is tested and positive.
     person.get_tested(rng_person, t_morning, test_params);
-
     EXPECT_EQ(person.get_infection_state(t_morning), mio::abm::InfectionState::InfectedSymptoms);
     EXPECT_EQ(mio::abm::go_to_work(rng_person, person, t_morning, dt, infection_parameters),
               mio::abm::LocationType::Home);
     EXPECT_EQ(person.get_infection_state(t_morning + dt), mio::abm::InfectionState::Recovered);
+
+    // Test removal from quarantine.
     person.remove_quarantine();
     EXPECT_EQ(mio::abm::go_to_work(rng_person, person, t_morning, dt, infection_parameters),
               mio::abm::LocationType::Work);
 }
 
+/**
+ * @brief Test the get_tested function for both infected and susceptible individuals.
+ */
 TEST(TestPerson, get_tested)
 {
     using testing::Return;
@@ -159,13 +193,21 @@ TEST(TestPerson, get_tested)
         .WillOnce(Return(0.6)) // Draw for agent's test true negative
         .WillOnce(Return(0.999)) // Draw for agent's test false negative
         .WillOnce(Return(0.8)); // Draw for is_compliant() return true
+
+    // Verify that the infected person tests positive and is quarantined.
     EXPECT_EQ(infected.get_tested(rng_infected, t, pcr_parameters), true);
     EXPECT_EQ(infected.is_in_quarantine(t, params), true);
+
+    // Verify that the infected person get test false negative and is not quarantined.
     infected.remove_quarantine();
     EXPECT_EQ(infected.get_tested(rng_infected, t, pcr_parameters), false);
     EXPECT_EQ(infected.is_in_quarantine(t, params), false);
+
+    // Verify that the susceptible person tests true negative and is not quarantined.
     EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_parameters), false);
     EXPECT_EQ(susceptible.is_in_quarantine(t, params), false);
+
+    // Verify that the susceptible person tests false negative and is quarantined.
     EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, pcr_parameters), true);
     EXPECT_EQ(susceptible.is_in_quarantine(t, params), true);
 
@@ -180,46 +222,65 @@ TEST(TestPerson, get_tested)
         .WillOnce(Return(0.6)) // Draw for agent's test true negative
         .WillOnce(Return(0.999)) // Draw for agent's test false negative
         .WillOnce(Return(0.8)); // Draw for is_compliant() return true
+
+    // Verify that the infected and susceptible persons get the according results.
     EXPECT_EQ(infected.get_tested(rng_infected, t, antigen_parameters), true);
     EXPECT_EQ(infected.get_tested(rng_infected, t, antigen_parameters), false);
     EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_parameters), false);
     EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_parameters), true);
 }
 
+/**
+ * @brief Test that a Person can change locations and correctly update cell indices.
+ */
 TEST(TestPerson, getCells)
 {
+    // Initialize home and target locations with designated cells.
     mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 1);
     mio::abm::Location location(mio::abm::LocationType::PublicTransport, 1, 6, 7);
+    // Create a test person at the home location.
     auto person = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
 
+    // Move the person to a new location with specified cells (3, 5).
     EXPECT_TRUE(mio::abm::change_location(person, location, mio::abm::TransportMode::Unknown, {3, 5}));
 
-    ASSERT_EQ(person.get_cells().size(), 2);
+    // Check that the person's cell indices have been updated correctly.
+    EXPECT_EQ(person.get_cells().size(), 2);
     EXPECT_EQ(person.get_cells()[0], 3u);
     EXPECT_EQ(person.get_cells()[1], 5u);
 }
 
+/**
+ * @brief Test the interaction of a Person at a location to ensure they accumulate time correctly.
+ */
 TEST(TestPerson, interact)
 {
     auto rng = mio::RandomNumberGenerator();
 
     // Location.interact is tested seperately in the location
     auto infection_parameters = mio::abm::Parameters(num_age_groups);
+    // Create a location and parameters for interaction testing.
     mio::abm::Location loc(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::TimePoint t(0);
+    // Create a person and set up a random number generator specific to that person.
     auto person     = mio::abm::Person(rng, loc.get_type(), loc.get_id(), age_group_15_to_34);
     auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
     auto dt         = mio::abm::seconds(8640); //0.1 days
+    // Simulate interaction and check that the person accumulates time at the location.
     interact_testing(rng_person, person, loc, {person}, t, dt, infection_parameters);
     EXPECT_EQ(person.get_time_at_location(), dt);
 }
 
+/**
+ * @brief Test that a Person can set and verify their mask type.
+ */
 TEST(TestPerson, setWearMask)
 {
     auto t = mio::abm::TimePoint(0);
     mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
     auto person = make_test_person(location);
 
+    // Test setting and verifying different mask types.
     person.set_mask(mio::abm::MaskType::None, t);
     EXPECT_EQ(person.get_mask().get_type(), mio::abm::MaskType::None);
 
@@ -227,6 +288,9 @@ TEST(TestPerson, setWearMask)
     EXPECT_NE(person.get_mask().get_type(), mio::abm::MaskType::None);
 }
 
+/**
+ * @brief Test the mask protective factor retrieval based on model parameters.
+ */
 TEST(TestPerson, getMaskProtectiveFactor)
 {
     auto t = mio::abm::TimePoint(0);
@@ -245,12 +309,16 @@ TEST(TestPerson, getMaskProtectiveFactor)
     params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Surgical}]  = 0.8;
     params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::FFP2}]      = 0.9;
 
+    // Verify that the correct mask protection factor is returned.
     EXPECT_EQ(person_community.get_mask_protective_factor(params), 0.5);
     EXPECT_EQ(person_surgical.get_mask_protective_factor(params), 0.8);
     EXPECT_EQ(person_ffp2.get_mask_protective_factor(params), 0.9);
     EXPECT_EQ(person_without.get_mask_protective_factor(params), 0.);
 }
 
+/**
+ * @brief Test retrieval of the most recent protection event for a Person.
+ */
 TEST(TestPerson, getLatestProtection)
 {
     auto rng                    = mio::RandomNumberGenerator();
@@ -261,6 +329,7 @@ TEST(TestPerson, getLatestProtection)
 
     auto t = mio::abm::TimePoint(0);
     person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, t);
+    // Verify that the latest protection is a vaccination.
     auto latest_protection = person.get_latest_protection();
     EXPECT_EQ(latest_protection.first, mio::abm::ExposureType::GenericVaccine);
     EXPECT_EQ(latest_protection.second.days(), t.days());
@@ -269,10 +338,14 @@ TEST(TestPerson, getLatestProtection)
     person.add_new_infection(mio::abm::Infection(prng, static_cast<mio::abm::VirusVariant>(0), age_group_15_to_34,
                                                  params, t, mio::abm::InfectionState::Exposed));
     latest_protection = person.get_latest_protection();
+    // Verify that the latest protection is a natural infection.
     EXPECT_EQ(latest_protection.first, mio::abm::ExposureType::NaturalInfection);
     EXPECT_EQ(latest_protection.second.days(), t.days());
 }
 
+/**
+ * @brief Test that a person's RNG counter increments correctly.
+ */
 TEST(Person, rng)
 {
     auto rng = mio::RandomNumberGenerator();
@@ -280,6 +353,7 @@ TEST(Person, rng)
 
     EXPECT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(0));
 
+    // Verify RNG counter increments.
     auto p_rng = mio::abm::PersonalRandomNumberGenerator(rng, p);
     EXPECT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{0}));
 
@@ -288,6 +362,9 @@ TEST(Person, rng)
     EXPECT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{1}));
 }
 
+/**
+ * @brief Test adding and retrieving test results for a Person.
+ */
 TEST(Person, addAndGetTestResult)
 {
     mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
@@ -308,6 +385,9 @@ TEST(Person, addAndGetTestResult)
     EXPECT_TRUE(person.get_test_result(mio::abm::TestType::Generic).result);
 }
 
+/**
+ * @brief Test if a Person complies with an intervention based on their compliance level.
+ */
 TEST(TestPerson, isCompliant)
 {
     using testing::Return;

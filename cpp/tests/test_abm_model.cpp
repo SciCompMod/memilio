@@ -21,15 +21,24 @@
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
 
+/**
+ * @brief Test initialization of Model class.
+ */
 TEST(TestModel, init)
 {
     auto model = mio::abm::Model(num_age_groups);
 
+    // Verify that the model starts with exactly one location of type Cemetery.
     EXPECT_EQ(model.get_locations().size(), 1);
     EXPECT_EQ(model.get_locations()[0].get_type(), mio::abm::LocationType::Cemetery);
+
+    // Verify that no persons are initialized in the model.
     EXPECT_THAT(model.get_persons(), testing::ElementsAre());
 }
 
+/**
+ * @brief Test adding locations to the Model class.
+ */
 TEST(TestModel, addLocation)
 {
     auto model      = mio::abm::Model(num_age_groups);
@@ -38,14 +47,17 @@ TEST(TestModel, addLocation)
     auto work_id    = model.add_location(mio::abm::LocationType::Work);
     auto home_id    = model.add_location(mio::abm::LocationType::Home);
 
+    // Verify the unique IDs of added locations.
     ASSERT_EQ(school_id1.get(), 1u);
     ASSERT_EQ(school_id2.get(), 2u);
 
+    // Retrieve added locations by their IDs and verify their types.
     auto& school1 = model.get_location(school_id1);
     auto& school2 = model.get_location(school_id2);
     auto& work    = model.get_location(work_id);
     auto& home    = model.get_location(home_id);
 
+    // Count the number of School-type locations and verify.
     size_t count_schools = 0;
     for (auto& loc : model.get_locations()) {
         if (loc.get_type() == mio::abm::LocationType::School) {
@@ -54,12 +66,16 @@ TEST(TestModel, addLocation)
     }
     ASSERT_EQ(count_schools, 2);
 
+    // Verify the location order within the model's internal list of locations.
     ASSERT_EQ(model.get_locations()[1], school1);
     ASSERT_EQ(model.get_locations()[2], school2);
     ASSERT_EQ(model.get_locations()[3], work);
     ASSERT_EQ(model.get_locations()[4], home);
 }
 
+/**
+ * @brief Test adding persons to a specific location in the Model class.
+ */
 TEST(TestModel, addPerson)
 {
     auto model    = mio::abm::Model(num_age_groups);
@@ -68,11 +84,16 @@ TEST(TestModel, addPerson)
     model.add_person(location, age_group_15_to_34);
     model.add_person(location, age_group_35_to_59);
 
+    // Verify the number of persons in the model and their respective age groups.
     ASSERT_EQ(model.get_persons().size(), 2);
     ASSERT_EQ(model.get_person(0).get_age(), age_group_15_to_34);
     ASSERT_EQ(model.get_person(1).get_age(), age_group_35_to_59);
 }
 
+
+/**
+ * @brief Test combined subpopulation count by location type in the Model class.
+ */
 TEST(TestModel, getSubpopulationCombined)
 {
     auto t       = mio::abm::TimePoint(0);
@@ -81,6 +102,8 @@ TEST(TestModel, getSubpopulationCombined)
     auto school2 = model.add_location(mio::abm::LocationType::School);
     auto school3 = model.add_location(mio::abm::LocationType::School);
     auto home1   = model.add_location(mio::abm::LocationType::Home);
+
+    // Add persons to these locations with various infection states.
     add_test_person(model, school1, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
     add_test_person(model, school1, age_group_15_to_34, mio::abm::InfectionState::Susceptible);
     add_test_person(model, school2, age_group_15_to_34, mio::abm::InfectionState::Susceptible);
@@ -88,38 +111,51 @@ TEST(TestModel, getSubpopulationCombined)
     add_test_person(model, school3, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
     add_test_person(model, home1, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
 
+    // Verify the count of susceptible persons across all School locations.
     ASSERT_EQ(model.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::Susceptible,
                                                                  mio::abm::LocationType::School),
               3);
+    // Verify the count of persons with no symptoms across all School locations.
     ASSERT_EQ(model.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::InfectedNoSymptoms,
                                                                  mio::abm::LocationType::School),
               2);
+    // Verify the total count of persons with no symptoms across all locations.
     ASSERT_EQ(model.get_subpopulation_combined(t, mio::abm::InfectionState::InfectedNoSymptoms), 3);
 }
 
+/**
+ * @brief Test finding a location assigned to a person in the Model class.
+ */
 TEST(TestModel, findLocation)
 {
+    // Create a model and add different location types.
     auto model     = mio::abm::Model(num_age_groups);
     auto home_id   = model.add_location(mio::abm::LocationType::Home);
     auto school_id = model.add_location(mio::abm::LocationType::School);
     auto work_id   = model.add_location(mio::abm::LocationType::Work);
+
+    // Add a person to the model and assign them to multiple locations.
     auto person_id = add_test_person(model, home_id);
     auto& person   = model.get_person(person_id);
-
     person.set_assigned_location(mio::abm::LocationType::Home, home_id);
     person.set_assigned_location(mio::abm::LocationType::Work, work_id);
     person.set_assigned_location(mio::abm::LocationType::School, school_id);
 
+    // Verify that the find_location method correctly identifies each assigned location.
     EXPECT_EQ(model.find_location(mio::abm::LocationType::Work, person_id), work_id);
     EXPECT_EQ(model.find_location(mio::abm::LocationType::School, person_id), school_id);
     EXPECT_EQ(model.find_location(mio::abm::LocationType::Home, person_id), home_id);
 
+    // Check that the method also works with a constant reference to the model.
     auto&& model_test = std::as_const(model);
     EXPECT_EQ(model_test.find_location(mio::abm::LocationType::Work, person_id), work_id);
     EXPECT_EQ(model_test.find_location(mio::abm::LocationType::School, person_id), school_id);
     EXPECT_EQ(model_test.find_location(mio::abm::LocationType::Home, person_id), home_id);
 }
 
+/**
+ * @brief Test state transitions during a time step in the Model class.
+ */
 TEST(TestModel, evolveStateTransition)
 {
     using testing::Return;
@@ -128,7 +164,7 @@ TEST(TestModel, evolveStateTransition)
     auto dt    = mio::abm::hours(1);
     auto model = mio::abm::Model(num_age_groups);
 
-    //setup so p1 and p3 don't transition
+    // Setup incubation and infection period parameters to prevent state transitions within one hour. p1 and p3 don't transition.
     model.parameters.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
     model.parameters
@@ -143,9 +179,9 @@ TEST(TestModel, evolveStateTransition)
         .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
 
+     // Add locations and persons to the model with different initial infection states.
     auto location1 = model.add_location(mio::abm::LocationType::School);
     auto location2 = model.add_location(mio::abm::LocationType::Work);
-
     add_test_person(model, location1, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
     add_test_person(model, location1, age_group_15_to_34, mio::abm::InfectionState::Susceptible);
     add_test_person(model, location2, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
@@ -154,22 +190,27 @@ TEST(TestModel, evolveStateTransition)
     auto& p2 = model.get_persons()[1];
     auto& p3 = model.get_persons()[2];
 
+    // Assign persons to their respective locations.
     p1.set_assigned_location(mio::abm::LocationType::School, location1);
     p2.set_assigned_location(mio::abm::LocationType::School, location1);
     p3.set_assigned_location(mio::abm::LocationType::Work, location2);
 
-    //setup mock so p2 becomes infected
+    // Setup mock so p2 becomes infected
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.0));
 
     model.evolve(t, dt);
 
+    // Verify the state transitions.
     EXPECT_EQ(p1.get_infection_state(t + dt), mio::abm::InfectionState::InfectedNoSymptoms);
     EXPECT_EQ(p2.get_infection_state(t + dt), mio::abm::InfectionState::Exposed);
     EXPECT_EQ(p3.get_infection_state(t + dt), mio::abm::InfectionState::InfectedSymptoms);
 }
 
+/**
+ * @brief Test mobility rule-based transitions during a time step in the Model class.
+ */
 TEST(TestModel, evolveMobilityRules)
 {
     using testing::Return;
@@ -177,7 +218,7 @@ TEST(TestModel, evolveMobilityRules)
     auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
     auto dt    = mio::abm::hours(1);
     auto model = mio::abm::Model(num_age_groups);
-    //setup so p1 doesn't do transition
+    // Setup infection period parameters to prevent state transitions within one hour. p1 doesn't transition.
     model.parameters
         .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
@@ -221,22 +262,28 @@ TEST(TestModel, evolveMobilityRules)
         mock_exponential_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
 
+    // Evolve the model over one time step and verify the location transitions.
     model.evolve(t, dt);
-
     EXPECT_EQ(p1.get_location(), work_id);
     EXPECT_EQ(p2.get_location(), school_id);
+
+    // Verify the number of persons at each location.
     EXPECT_EQ(model.get_number_persons(school_id), 1);
     EXPECT_EQ(model.get_number_persons(work_id), 1);
 }
 
+/**
+ * @brief Test the evolution of mobility trips within the Model class.
+ */
 TEST(TestModel, evolveMobilityTrips)
 {
     using testing::Return;
 
+    // Initialize model, time, and step size for simulation.
     auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
     auto dt    = mio::abm::hours(2);
     auto model = mio::abm::Model(num_age_groups);
-    //setup so p1-p5 don't do transition
+    // Setup so p1-p5 don't do transition
     model.parameters
         .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
@@ -248,11 +295,13 @@ TEST(TestModel, evolveMobilityTrips)
     model.parameters.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
 
+    // Add different location types to the model.
     auto home_id     = model.add_location(mio::abm::LocationType::Home);
     auto event_id    = model.add_location(mio::abm::LocationType::SocialEvent);
     auto work_id     = model.add_location(mio::abm::LocationType::Work);
     auto hospital_id = model.add_location(mio::abm::LocationType::Hospital);
 
+    // Mock the random distribution to control random behavior.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(8))
@@ -266,12 +315,14 @@ TEST(TestModel, evolveMobilityTrips)
         .WillOnce(testing::Return(0.8)) // draw random school hour
         .WillRepeatedly(testing::Return(1.0)); // this forces p1 and p3 to recover
 
+    // Create persons with various infection states and assign them to multiple locations.
     auto pid1 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
     auto pid2 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t);
     auto pid3 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedSevere, t);
     auto pid4 = add_test_person(model, hospital_id, age_group_5_to_14, mio::abm::InfectionState::Recovered, t);
     auto pid5 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t);
 
+    // Assign persons to locations for trips.
     auto& p1 = model.get_person(pid1);
     auto& p2 = model.get_person(pid2);
     auto& p3 = model.get_person(pid3);
@@ -292,6 +343,7 @@ TEST(TestModel, evolveMobilityTrips)
     p5.set_assigned_location(mio::abm::LocationType::Work, work_id);
     p5.set_assigned_location(mio::abm::LocationType::Home, home_id);
 
+    // Set trips for persons between assigned locations.
     mio::abm::TripList& data = model.get_trip_list();
     mio::abm::Trip trip1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id);
     mio::abm::Trip trip2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id);
@@ -300,14 +352,17 @@ TEST(TestModel, evolveMobilityTrips)
     data.add_trip(trip2);
     data.add_trip(trip3);
 
+    // Set trips to use weekday trips on weekends.
     data.use_weekday_trips_on_weekend();
 
+    // Mock the distribution to prevent infections or state transitions in the test.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
-    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no infections
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.));
 
     model.evolve(t, dt);
 
+    // Verify all the mobility transitions are correct.
     EXPECT_EQ(p1.get_location(), work_id);
     EXPECT_EQ(p2.get_location(), event_id);
     EXPECT_EQ(p3.get_location(), hospital_id);
@@ -318,13 +373,17 @@ TEST(TestModel, evolveMobilityTrips)
     EXPECT_EQ(model.get_number_persons(home_id), 1);
     EXPECT_EQ(model.get_number_persons(hospital_id), 1);
 
+    // Move all persons back to their home location to prepare for weekend trips.
+    model.change_location(p1.get_id(), home_id);
     model.change_location(p1.get_id(), home_id);
     model.change_location(p2.get_id(), home_id);
     model.change_location(p5.get_id(), home_id);
 
+    // Update the time to the weekend and reset the trip index.
     t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
     model.get_trip_list().reset_index();
 
+    // Evolve the model again to verify the weekend behavior.
     model.evolve(t, dt);
 
     EXPECT_EQ(p1.get_location(), work_id);
@@ -336,6 +395,7 @@ TEST(TestModel, evolveMobilityTrips)
     EXPECT_EQ(model.get_number_persons(work_id), 1);
     EXPECT_EQ(model.get_number_persons(home_id), 2);
 
+    // Add additional weekend trips for further verification.
     bool weekend = true;
     mio::abm::Trip tripweekend1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10),
                                 event_id);
@@ -345,6 +405,7 @@ TEST(TestModel, evolveMobilityTrips)
     data.add_trip(tripweekend2, weekend);
     data.add_trip(tripweekend3, weekend);
 
+    // Advance time and evolve the model to check location transitions during the weekend.
     t += mio::abm::hours(1);
 
     model.evolve(t, dt);
@@ -359,6 +420,9 @@ TEST(TestModel, evolveMobilityTrips)
     EXPECT_EQ(model.get_number_persons(home_id), 3);
 }
 
+/**
+ * @brief Test that dead persons remain in the cemetery and can't be moved by scheduled trips.
+ */
 TEST(TestModel, checkMobilityOfDeadPerson)
 {
     using testing::Return;
@@ -412,12 +476,15 @@ TEST(TestModel, checkMobilityOfDeadPerson)
     EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Cemetery);
 }
 
+/**
+ * @brief Test the adding, updating, and running of testing schemes within the model.
+ */
 TEST(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 {
     auto rng = mio::RandomNumberGenerator();
 
     auto model = mio::abm::Model(num_age_groups);
-    // make sure the infected person stay in Infected long enough
+    // Make sure the infected person stay in Infected long enough
     model.parameters.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant(0), age_group_15_to_34}] =
         100;
     model.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant(0), age_group_15_to_34}] = 100;
@@ -429,6 +496,7 @@ TEST(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto current_time = mio::abm::TimePoint(0);
 
     auto test_time = mio::abm::minutes(30);
+    // Add a person to the model with an infection state that requires testing.
     // Since tests are performed before current_time, the InfectionState of the Person has to take into account test_time
     auto pid        = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms,
                                       current_time - test_time);
@@ -451,30 +519,35 @@ TEST(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         mio::abm::TestingScheme(testing_criteria, validity_period, start_date, end_date, test_params_pcr, probability);
 
     model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
-    ASSERT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
+    EXPECT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
               true); // no active testing scheme -> person can enter
     current_time = mio::abm::TimePoint(30);
     model.get_testing_strategy().update_activity_status(current_time);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(2))
-        .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.4));
-    ASSERT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time), false);
+        .WillOnce(testing::Return(0.7)) // Draw for testing compliance
+        .WillOnce(testing::Return(0.4)); // Draw for testing result (positive)
+    EXPECT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time), false); // Testing scheme active and restricts entry
 
+    // Try to re-add the same testing scheme and confirm it doesn't duplicate, then remove it.
     model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work,
                                                     testing_scheme); //doesn't get added because of == operator
     model.get_testing_strategy().remove_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
-    ASSERT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
+    EXPECT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
               true); // no more testing_schemes
 }
 
+/**
+ * @brief Test to validate the parameter constraints within the model.
+ */
 TEST(TestModel, checkParameterConstraints)
 {
-    mio::set_log_level(mio::LogLevel::critical); //errors inevitable as these are wanted
+    mio::set_log_level(mio::LogLevel::critical); // Suppress logging of errors since they are expected here
     auto model  = mio::abm::Model(num_age_groups);
     auto params = model.parameters;
 
+    // Set valid values for various transition times, infection detection, and mask protection parameters.
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]              = 1.;
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 2.;
     params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 3.;
@@ -494,69 +567,73 @@ TEST(TestModel, checkParameterConstraints)
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 0.6;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical]  = 0.7;
     params.get<mio::abm::LockdownDate>()                                  = mio::abm::TimePoint(0);
-    ASSERT_EQ(params.check_constraints(), false);
+   // Check that the parameter values are within their constraints (should pass).
+    EXPECT_FALSE(params.check_constraints());
 
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -1.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]             = 1.;
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -2.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 2.;
     params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -3.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 3.;
     params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = -4.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 4.;
     params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]    = -5.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 5.;
     params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]         = -6.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 6.;
     params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -7.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 7.;
     params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]    = -8.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]      = 8.;
     params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -9.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]    = 9.;
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -10.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 10.;
     params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]        = 1.1;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.3;
 
     params.get<mio::abm::GotoWorkTimeMinimum>()[age_group_35_to_59] = mio::abm::hours(30);
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::GotoWorkTimeMinimum>()[age_group_35_to_59] = mio::abm::hours(4);
     params.get<mio::abm::GotoWorkTimeMaximum>()[age_group_35_to_59] = mio::abm::hours(30);
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::GotoWorkTimeMaximum>()[age_group_35_to_59] = mio::abm::hours(8);
     params.get<mio::abm::GotoSchoolTimeMinimum>()[age_group_0_to_4] = mio::abm::hours(30);
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::GotoSchoolTimeMinimum>()[age_group_0_to_4] = mio::abm::hours(3);
     params.get<mio::abm::GotoSchoolTimeMaximum>()[age_group_0_to_4] = mio::abm::hours(30);
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::GotoSchoolTimeMaximum>()[age_group_0_to_4] = mio::abm::hours(6);
 
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 1.2;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 0.5;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 1.2;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]     = 0.6;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 1.2;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 0.7;
 
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(-2);
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_TRUE(params.check_constraints());
 }
 
+/**
+ * @brief Test the enforcement of NPIs (Non-Pharmaceutical Interventions) on mobility rules.
+ */
 TEST(TestModel, mobilityRulesWithAppliedNPIs)
 {
     using testing::Return;
@@ -669,6 +746,9 @@ TEST(TestModel, mobilityRulesWithAppliedNPIs)
     EXPECT_FALSE(p_no_isolation.is_in_quarantine(t, model.parameters));
 }
 
+/**
+ * @brief Test the enforcement of NPIs (Non-Pharmaceutical Interventions) on trips.
+ */
 TEST(TestModel, mobilityTripWithAppliedNPIs)
 {
     using testing::Return;
