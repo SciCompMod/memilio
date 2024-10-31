@@ -179,7 +179,7 @@ def run_secir_groups_simulation(days, graph, num_groups=6):
             model.populations[age_group, Index_InfectionState(
                 InfectionState.Recovered)] = random.uniform(0, (pop_age_group-subtotal))
 
-            model.populations[age_group, InfectionState.Susceptible].value = pop_age_group - \
+            model.populations[age_group, InfectionState.Susceptible] = pop_age_group - \
                 model.populations.get_group_total_AgeGroup(age_group)
 
         # Apply mathematical constraints to parameters
@@ -236,11 +236,11 @@ def generate_data(
         data_run = run_secir_groups_simulation(
             days_sum, graph)
 
-        inputs = np.asarray(data_run).transpose(1, 2, 0)[: input_width]
+        inputs = np.asarray(data_run).transpose(1, 0, 2)[: input_width]
         data["inputs"].append(inputs)
 
         data["labels"].append(np.asarray(
-            data_run).transpose(1, 2, 0)[input_width:])
+            data_run).transpose(1, 0, 2)[input_width:])
 
         bar.next()
 
@@ -259,7 +259,7 @@ def generate_data(
             os.mkdir(path)
 
         # save dict to json file
-        with open(os.path.join(path, 'data_secir_age_groups.pickle'), 'wb') as f:
+        with open(os.path.join(path, 'GNN_data_30days_1k.pickle'), 'wb') as f:
             pickle.dump(all_data, f)
 
     return data
@@ -271,13 +271,13 @@ if __name__ == "__main__":
     path_data = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'data_GNN_nodamp_test')
+        'data_GNN_paper')
 
     data_dir = os.path.join(os.getcwd(), 'memilio/data')
 
     input_width = 5
     days = 30
-    num_runs = 1
+    num_runs = 2
 
     generate_data(num_runs, data_dir,  path_data, input_width,
                   days, save_data=True)
