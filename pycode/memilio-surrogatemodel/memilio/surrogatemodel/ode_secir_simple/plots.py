@@ -320,12 +320,32 @@ def heatmap_gridsearch_results(df_gridsearch, savename):
     #    data['inputs'], data['labels'], 100, 95)
 
 
-filename = 'dataframe_30days_I_based_10k_nodamp'
+def plot_optimizer():
+    df = pd.read_csv(
+        '/home/schm_a45/Documents/Code/memilio_test/memilio/pycode/memilio-surrogatemodel/memilio/secir_simple_grid_search_paper/dataframe_optimizer_paper.csv')
+    df_plot = df[['optimizer', 'kfold_val']]
+    fig, ax = plt.subplots()
+    ax.bar(df_plot['optimizer'], df_plot['kfold_val'])
+    ax.set_ylabel('Validation MAPE')
+    ax.set_xlabel('Optimizer')
+    ax.set_title('Validation MAPE depending on optimizer ')
+    ax.bar_label(ax.containers[0], label_type='edge')
+    # pad the spacing between the number and the edge of the figure
+    ax.margins(y=0.1)
+
+    plt.show()
+    plt.savefig("secir_simple_optimizer.png")
+
+
+filename = 'dataframe_withgroups_30days_Germany_10k_nodamp_new'
 
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
-    os.path.dirname(os.path.realpath(path)))), 'secir_simple_grid_search_paper')
+    os.path.dirname(os.path.realpath(path)))), 'secir_groups_grid_search_paper')
 filepath = os.path.join(path_data, filename)
 df = pd.DataFrame(data=pd.read_csv(filepath))
-savename = "heatmap_secir_simple_noagegroups_30days_I_based_10k_paper.png"
+savename = "heatmap_secir_simple_withagegroups_30days_10k_paper.png"
 heatmap_gridsearch_results(df, savename)
+
+
+plot_optimizer()
