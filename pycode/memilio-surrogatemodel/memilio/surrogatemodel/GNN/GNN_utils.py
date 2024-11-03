@@ -55,27 +55,6 @@ def getBaselineMatrix():
     return baseline
 
 
-def getMinimumMatrix():
-    """! loads the minimum matrix
-    """
-
-    minimum_contact_matrix0 = os.path.join(
-        "./data/contacts/minimum_home.txt")
-    minimum_contact_matrix1 = os.path.join(
-        "./data/contacts/minimum_school_pf_eig.txt")
-    minimum_contact_matrix2 = os.path.join(
-        "./data/contacts/minimum_work.txt")
-    minimum_contact_matrix3 = os.path.join(
-        "./data/contacts/minimum_other.txt")
-
-    minimum = np.loadtxt(minimum_contact_matrix0) \
-        + np.loadtxt(minimum_contact_matrix1) + \
-        np.loadtxt(minimum_contact_matrix2) + \
-        np.loadtxt(minimum_contact_matrix3)
-
-    return minimum
-
-
 def make_graph(directory, num_regions, countykey_list, models):
     """! 
     @param directory Directory with mobility data. 
@@ -108,7 +87,7 @@ def transform_mobility_directory():
     # Merge Eisenach and Wartbugkreis in Input Data
     tmd.updateMobility2022(directory, mobility_file='twitter_scaled_1252')
     tmd.updateMobility2022(
-        directory, mobility_file='commuter_migration_scaled')
+        directory, mobility_file='commuter_mobility')
     return directory
 
 
