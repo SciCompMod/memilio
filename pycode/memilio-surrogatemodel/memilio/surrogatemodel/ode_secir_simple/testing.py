@@ -29,7 +29,7 @@ from memilio.simulation.osecir import InfectionState
 from memilio.surrogatemodel.ode_secir_simple import network_architectures
 
 
-def network_fit(path_data, model, savename, filename_df,  max_epochs=30, early_stop=500, plot=True):
+def network_fit(path_data, model, savename, filename_df,  max_epochs=30, early_stop=100, plot=True):
     """! Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
 
     @param path path of the dataset. 
@@ -165,13 +165,13 @@ if __name__ == "__main__":
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data_paper')
 
-    dataset_name = 'data_secir_simple_30_days_10k.pickle'
+    dataset_name = 'data_secir_simple_90days_I_based_10k.pickle'
     path_data = os.path.join(path_data, dataset_name)
     max_epochs = 1500
 
-    model = network_architectures.lstm_multi_input_multi_output(30)
-    savename = 'LSTM_30days_secirsimple_10k.h5'
-    filename_df = 'LSTM_30days_secirsimple_10k.csv'
+    model = network_architectures.lstm_multi_input_multi_output(90)
+    savename = 'LSTM_90days_secirsimple_I_based_10k.h5'
+    filename_df = 'LSTM_90days_secirsimple_I_based_10k.csv'
     model_output = network_fit(
         path_data, model=model, savename=savename, filename_df=filename_df,
         max_epochs=max_epochs)
