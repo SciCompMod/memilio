@@ -21,7 +21,6 @@
 @file ast.py
 @brief Create the ast and assign ids. Get ids and nodes. 
 """
-import os
 import subprocess
 import tempfile
 import logging
