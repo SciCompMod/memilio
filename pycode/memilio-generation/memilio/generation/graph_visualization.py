@@ -17,12 +17,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-
+"""
+@file graph_visualization.py
+@brief Class for plotting the abstract-syntax-tree in different formats. 
+"""
 import os
 from typing import TextIO
 from graphviz import Digraph
 from clang.cindex import Cursor
-from .ast_handler import AST
+from .ast import AST
 
 
 class Visualization:
@@ -94,10 +97,11 @@ def newline() -> str:
 
 def _output_cursor_and_children_text(cursor: Cursor, ast: AST, f: TextIO, level: int = 0) -> int:
     """
-    Output of the cursor and its children in text format, with highlighting for folder, spelling and child type.
+    Output of the cursor and its children in text format,
+    with highlighting for folder, spelling and child type.
 
     @param cursor: The current node of the AST as a cursor object from libclang.
-    @param ast: AST from ast_handler.py
+    @param ast: ast object from AST class.
     @param f: Open file object for output.
     @param level: The current depth in the AST for indentation purposes.
     @param cursor_id: A unique ID to identify each cursor.
@@ -113,7 +117,7 @@ def _output_cursor_and_children_text(cursor: Cursor, ast: AST, f: TextIO, level:
                         f'{cursor_kind}   '
                         f'{file_path}')
     else:
-        cursor_label = f'ID:{cursor_id} {cursor_kind} [{file_path}]'
+        cursor_label = f'ID:{cursor_id} {cursor_kind} {file_path}'
 
     f.write(indent(level) + cursor_label + newline())
 
@@ -124,11 +128,11 @@ def _output_cursor_and_children_text(cursor: Cursor, ast: AST, f: TextIO, level:
 
 def _output_cursor_and_children_print(cursor: Cursor, ast: AST, level: int = 0) -> None:
     """
-    Prints the current cursor and its child elements in text format,
-    with highlighting for folder, case and node type.
+    Prints the current cursor and its child elements in text format into the terminal,
+    with highlighting for folder, spelling and child type.
 
     @param cursor: The current node of the AST as a libclang cursor object.
-    @param ast: AST from ast_handler.py
+    @param ast: ast object from AST class.
     @param f: Open file object for output.
     @param level: The current depth in the AST for indentation purposes.
     @return: The current cursor ID for subsequent nodes.
@@ -144,7 +148,7 @@ def _output_cursor_and_children_print(cursor: Cursor, ast: AST, level: int = 0) 
                         f'{cursor_kind}   '
                         f'{file_path}')
     else:
-        cursor_label = f'ID:{cursor_id} {cursor_kind} [{file_path}]'
+        cursor_label = f'ID:{cursor_id} {cursor_kind} {file_path}'
 
     print(indent(level) + cursor_label)
 

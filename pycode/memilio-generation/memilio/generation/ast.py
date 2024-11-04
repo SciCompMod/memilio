@@ -17,7 +17,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-
+"""
+@file ast.py
+@brief Create the ast and assign ids. Get ids and nodes. 
+"""
 import os
 import subprocess
 import tempfile
@@ -34,6 +37,10 @@ from typing_extensions import Self
 
 
 class AST:
+    """
+    Create the ast and assign ids.
+    Functions for getting nodes and node ids.
+    """
 
     def __init__(self: Self, conf: "ScannerConfig") -> None:
         self.config = conf
