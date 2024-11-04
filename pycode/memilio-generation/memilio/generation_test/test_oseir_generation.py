@@ -24,7 +24,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from memilio.generation import Generator, Scanner, ScannerConfig, ast
+from memilio.generation import Generator, Scanner, ScannerConfig, AST
 
 
 class TestOseirGeneration(unittest.TestCase):
@@ -71,7 +71,7 @@ class TestOseirGeneration(unittest.TestCase):
 
         conf = ScannerConfig.from_dict(config_json)
         self.scanner = Scanner(conf)
-        self.ast = ast.AST(conf)
+        self.ast = AST(conf)
 
     def test_clean_oseir(self):
         irdata = self.scanner.extract_results(self.ast.root_cursor)

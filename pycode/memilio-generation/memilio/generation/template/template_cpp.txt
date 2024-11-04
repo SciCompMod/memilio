@@ -51,9 +51,5 @@ PYBIND11_MODULE(_simulation_${python_module_name}, m)
     
     ${simulation_graph}
 
-
-
-
-
     m.attr("__version__") = "dev";
 }
