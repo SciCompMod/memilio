@@ -176,11 +176,21 @@ def run_secir_groups_simulation(days, graph, num_groups=6):
                         + model.populations[age_group,
                                             InfectionState.Dead].value
                         )
+
+            if subtotal > pop_age_group:
+                print('Subtotal is larger than population!')
+            # print('The remaining population before Recovered is: '+ str(pop_age_group-subtotal))
             model.populations[age_group, Index_InfectionState(
                 InfectionState.Recovered)] = random.uniform(0, (pop_age_group-subtotal))
 
+            if (subtotal+model.populations[age_group, InfectionState.Recovered].value) >= pop_age_group:
+                print('Subtotal is larger or equal than population!')
+
             model.populations[age_group, InfectionState.Susceptible] = pop_age_group - \
                 model.populations.get_group_total_AgeGroup(age_group)
+
+            print('Susceptible is set to: ' + str(model.populations[age_group,
+                                                                    InfectionState.Susceptible].value))
 
         # Apply mathematical constraints to parameters
         model.apply_constraints()
@@ -198,9 +208,8 @@ def run_secir_groups_simulation(days, graph, num_groups=6):
 
     for result_indx in range(len(results)):
         results[result_indx] = remove_confirmed_compartments(
-            np.transpose(results[result_indx].as_ndarray()[1:, :]), num_groups)
+            np.asarray(results[result_indx]), num_groups)
 
-    # Omit first column, as the time points are not of interest here.
     dataset_entry = copy.deepcopy(results)
 
     return dataset_entry
