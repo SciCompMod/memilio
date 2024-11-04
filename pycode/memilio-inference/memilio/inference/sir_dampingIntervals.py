@@ -8,9 +8,9 @@ import memilio.simulation as mio
 from memilio.simulation import AgeGroup, Damping, RungeKuttaCashKarp54IntegratorCore, RKIntegratorCore
 from memilio.simulation.osir import (InfectionState, Model, interpolate_simulation_result,
                                      simulate_flows)
-from prior import (UnboundParameter, LambdaParameter, DelayParameter,
-                   InterventionChangePointParameter, WeeklyModulationAmplitudeParameter,
-                   ScaleMultiplicativeReportingNoiseParameter, ModelStrategy)
+from memilio.inference.prior import (UnboundParameter, LambdaParameter, DelayParameter,
+                                     InterventionChangePointParameter, WeeklyModulationAmplitudeParameter,
+                                     ScaleMultiplicativeReportingNoiseParameter, ModelStrategy)
 
 import matplotlib.pyplot as plt
 
@@ -23,14 +23,12 @@ class ParameterNamesSir(Enum):
     LAMBDA_0 = r'$\lambda_0$'
     MU = r'$\mu$'
     I0 = r'$I_0$'
-    T1 = r'$t_1$'
-    T2 = r'$t_2$'
-    T3 = r'$t_3$'
-    T4 = r'$t_4$'
     LAMBDA_1 = r'$\lambda_1$'
     LAMBDA_2 = r'$\lambda_2$'
     LAMBDA_3 = r'$\lambda_3$'
     LAMBDA_4 = r'$\lambda_4$'
+    LAMBDA_5 = r'$\lambda_5$'
+    LAMBDA_6 = r'$\lambda_6$'
     F_I = r'$f_i$'
     PHI_I = r'$\phi_i$'
     D_I = r'$D_i$'
@@ -51,14 +49,6 @@ class SIRStrategy(ModelStrategy):
     @staticmethod
     # Possible option to draw without redraw
     def add_intervention(prior_array: list[UnboundParameter]) -> None:
-        prior_array.append(InterventionChangePointParameter(distribution=partial(
-            np.random.uniform, low=0, high=180), name=ParameterNamesSir.T1.value))
-        prior_array.append(InterventionChangePointParameter(distribution=partial(
-            np.random.uniform, low=0, high=180), name=ParameterNamesSir.T2.value))
-        prior_array.append(InterventionChangePointParameter(distribution=partial(
-            np.random.uniform, low=0, high=180), name=ParameterNamesSir.T3.value))
-        prior_array.append(InterventionChangePointParameter(distribution=partial(
-            np.random.uniform, low=0, high=180), name=ParameterNamesSir.T4.value))
         prior_array.append(LambdaParameter(distribution=partial(
             np.random.lognormal, mean=np.log(0.6), sigma=0.5), name=ParameterNamesSir.LAMBDA_1.value))
         prior_array.append(LambdaParameter(distribution=partial(
@@ -67,21 +57,25 @@ class SIRStrategy(ModelStrategy):
             np.random.lognormal, mean=np.log(0.6), sigma=0.5), name=ParameterNamesSir.LAMBDA_3.value))
         prior_array.append(LambdaParameter(distribution=partial(
             np.random.lognormal, mean=np.log(0.6), sigma=0.5), name=ParameterNamesSir.LAMBDA_4.value))
+        prior_array.append(LambdaParameter(distribution=partial(
+            np.random.lognormal, mean=np.log(0.6), sigma=0.5), name=ParameterNamesSir.LAMBDA_5.value))
+        prior_array.append(LambdaParameter(distribution=partial(
+            np.random.lognormal, mean=np.log(0.6), sigma=0.5), name=ParameterNamesSir.LAMBDA_6.value))
 
     @staticmethod
     # Possible option to draw without redraw
-    def add_observation(prior_array: list[UnboundParameter], sim_diff: int) -> None:
+    def add_observation(prior_array: list[UnboundParameter], sim_lag: int) -> None:
         prior_array.append(WeeklyModulationAmplitudeParameter(distribution=partial(
             np.random.beta, a=alpha_f, b=beta_f), name=ParameterNamesSir.F_I.value))
         prior_array.append(UnboundParameter(
             distribution=stats.vonmises(kappa=0.01).rvs, name=ParameterNamesSir.PHI_I.value))
         prior_array.append(DelayParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(8), sigma=0.2), name=ParameterNamesSir.D_I.value, sim_diff=sim_diff))
+            np.random.lognormal, mean=np.log(8), sigma=0.2), name=ParameterNamesSir.D_I.value, sim_lag=sim_lag))
         prior_array.append(ScaleMultiplicativeReportingNoiseParameter(distribution=partial(
             np.random.gamma, shape=1, scale=5), name=ParameterNamesSir.PSI.value))
 
 
-def simulator_SIR(params: list[float], T: int, N: int, intervention_model: bool, observation_model: bool, param_names: list[str], fixed_params: dict[str, float] = dict(), sim_diff: int = 16) -> npt.NDArray[np.float64]:
+def simulator_SIR(params: list[float], T: int, N: int, intervention_model: bool, observation_model: bool, param_names: list[str], fixed_params: dict[str, float] = dict(), sim_lag: int = 15) -> npt.NDArray[np.float64]:
     """Performs a forward simulation from the stationary SIR model given a random draw from the prior."""
 
     # Convert params array to a dictionary using param_names
@@ -97,19 +91,20 @@ def simulator_SIR(params: list[float], T: int, N: int, intervention_model: bool,
     # Should IO also be a constraint instead of set to bouandry?
     I0 = max(1, np.round(I0))
 
+    lambda_dampings = list()
     if intervention_model:
-        t1 = combined_params[ParameterNamesSir.T1.value]
-        t2 = combined_params[ParameterNamesSir.T2.value]
-        t3 = combined_params[ParameterNamesSir.T3.value]
-        t4 = combined_params[ParameterNamesSir.T4.value]
-        # Round integer parameters
-        t1, t2, t3, t4 = int(round(t1)), int(
-            round(t2)), int(round(t3)), int(round(t4))
-
-        lambd1 = combined_params[ParameterNamesSir.LAMBDA_1.value]
-        lambd2 = combined_params[ParameterNamesSir.LAMBDA_2.value]
-        lambd3 = combined_params[ParameterNamesSir.LAMBDA_3.value]
-        lambd4 = combined_params[ParameterNamesSir.LAMBDA_4.value]
+        lambda_dampings.append(
+            combined_params[ParameterNamesSir.LAMBDA_1.value])
+        lambda_dampings.append(
+            combined_params[ParameterNamesSir.LAMBDA_2.value])
+        lambda_dampings.append(
+            combined_params[ParameterNamesSir.LAMBDA_3.value])
+        lambda_dampings.append(
+            combined_params[ParameterNamesSir.LAMBDA_4.value])
+        lambda_dampings.append(
+            combined_params[ParameterNamesSir.LAMBDA_5.value])
+        lambda_dampings.append(
+            combined_params[ParameterNamesSir.LAMBDA_6.value])
 
     if observation_model:
         f_i = combined_params[ParameterNamesSir.F_I.value]
@@ -128,7 +123,7 @@ def simulator_SIR(params: list[float], T: int, N: int, intervention_model: bool,
     # Calculate lambda arrays
     # Lambda0 is the initial contact rate which will be consecutively
     # reduced via the government measures
-    sim_lag = sim_diff - 1
+    t_max = T + sim_lag
 
     # Initial conditions
     sir_model.populations[A0, InfectionState.Infected] = I0
@@ -159,14 +154,10 @@ def simulator_SIR(params: list[float], T: int, N: int, intervention_model: bool,
 
     if intervention_model:
         # delta_t1, delta_t2, delta_t3, delta_t4 = int(round(delta_t1)), int(round(delta_t2)), int(round(delta_t3)), int(round(delta_t4))
-        sir_model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
-            coeffs=np.ones((num_groups, num_groups)) * calc_damping_value_from_lambda(lambd1), t=t1+sim_lag, level=0, type=0))
-        sir_model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
-            coeffs=np.ones((num_groups, num_groups)) * calc_damping_value_from_lambda(lambd2), t=t2+sim_lag, level=0, type=0))
-        sir_model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
-            coeffs=np.ones((num_groups, num_groups)) * calc_damping_value_from_lambda(lambd3), t=t3+sim_lag, level=0, type=0))
-        sir_model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
-            coeffs=np.ones((num_groups, num_groups)) * calc_damping_value_from_lambda(lambd4), t=t4+sim_lag, level=0, type=0))
+        t_delta = 14
+        for idx, lambd in enumerate(lambda_dampings):
+            sir_model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
+                coeffs=np.ones((num_groups, num_groups)) * calc_damping_value_from_lambda(lambd), t=t_delta*(idx+1)+sim_lag, level=0, type=0))
 
     # Check logical constraints to parameters, should we really use apply_constraints?!
     sir_model.apply_constraints()
@@ -179,12 +170,17 @@ def simulator_SIR(params: list[float], T: int, N: int, intervention_model: bool,
     integrator = RKIntegratorCore(dt_max=1)
 
     (result, flows) = simulate_flows(
-        0, T + sim_lag - 1, 1, sir_model, integrator)
+        0, t_max, 1, sir_model, integrator)
 
-    # (result, flows) = simulate_flows(
-    #     0, T + sim_lag - 1, 1, sir_model)
     # interpolate results
     flows = interpolate_simulation_result(flows)
+
+    # consistency check, None values get deleted in configure input
+    try:
+        assert flows.get_last_time() == t_max
+    except AssertionError as e:
+        print('Invalid value simulated...return nan')
+        return np.stack(([np.nan] * T, )).T
 
     if observation_model:
 
@@ -192,13 +188,14 @@ def simulator_SIR(params: list[float], T: int, N: int, intervention_model: bool,
 
         # Adding new cases with delay D
         # Note, we assume the same delay
+        shifted_t0 = sim_lag-D_i+1
         I_data = np.diff(flows.as_ndarray()[
-                         1, (sim_lag-D_i-1):(sim_lag-D_i)+T])
+                         1, shifted_t0:shifted_t0+T+1])
         I_data = np.clip(I_data, 10 ** -14, N)
 
         # Compute lags
         fs_i = (1-f_i)*(1 -
-                        np.abs(np.sin((np.pi/7) * np.arange(0, timepoints-sim_lag, 1) - 0.5*phi_i)))
+                        np.abs(np.sin((np.pi/7) * np.arange(0, timepoints-sim_lag-1, 1) - 0.5*phi_i)))
 
         # Compute weekly modulation
         I_data = (1-fs_i) * I_data
@@ -209,7 +206,7 @@ def simulator_SIR(params: list[float], T: int, N: int, intervention_model: bool,
             assert np.all(scale >= 0)
         except AssertionError as e:
             print('Invalid value simulated...return nan')
-            return np.stack(([np.nan] * 81, )).T
+            return np.stack(([np.nan] * T, )).T
 
         # Add noise
         I_data = stats.t(df=4, loc=I_data, scale=np.sqrt(I_data)*scale_I).rvs()

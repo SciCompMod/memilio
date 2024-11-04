@@ -6,7 +6,7 @@ import pandas as pd
 import pickle
 import logging
 
-from prior import PriorScaler
+from memilio.inference.prior import PriorScaler
 
 from bayesflow.simulation import GenerativeModel
 

@@ -1,20 +1,19 @@
-from bayesflow.trainers import Trainer
-from bayesflow.simulation import GenerativeModel, Simulator
-from bayesflow.networks import InvertibleNetwork, SequenceNetwork
-from bayesflow.amortizers import AmortizedPosterior
 import datetime
 from functools import partial
 import os
 from typing import Callable, Any
 import numpy as np
-import pandas as pd
 
-from plotting import Plotting
-from prior import ModelPriorBuilder, PriorScaler
-from sir import ParameterNamesSir, SIRStrategy, simulator_SIR
-from config import InferenceConfig, TrainerParameters
-from utils import generate_offline_data, configure_input, start_training, load_data_rki_sir
+from memilio.inference.plotting import Plotting
+from memilio.inference.prior import ModelPriorBuilder, PriorScaler
+from memilio.inference.sir_dampingIntervals import ParameterNamesSir, SIRStrategy, simulator_SIR
+from memilio.inference.config import InferenceConfig, TrainerParameters
+from memilio.inference.utils import generate_offline_data, configure_input, load_data_rki_sir, start_training
 
+from bayesflow.amortizers import AmortizedPosterior
+from bayesflow.networks import InvertibleNetwork, SequenceNetwork
+from bayesflow.simulation import GenerativeModel, Simulator, ContextGenerator
+from bayesflow.trainers import Trainer
 
 RNG = np.random.default_rng(2023)
 FILE_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -56,14 +55,14 @@ def run_inference(output_folder_path: os.PathLike, config: InferenceConfig) -> N
 
     # Create GenerativeModel
     simulator_function = partial(
-        simulator_SIR, N=config["N"], T=config["T"], intervention_model=config["intervention_model"],
+        simulator_SIR, T=config["T"], N=config["N"], intervention_model=config["intervention_model"],
         observation_model=config["observation_model"], param_names=prior.param_names)
     simulator = Simulator(simulator_fun=simulator_function)
     generative_model = GenerativeModel(
         prior, simulator, name="sir_covid_simulator")
 
     offline_data = generate_offline_data(
-        output_folder_path, generative_model, 100000)
+        output_folder_path, generative_model, 1000000)
 
     # Create Trainer
     amortizer = build_amortizer(config.trainer_parameters, prior)
@@ -81,16 +80,15 @@ def run_inference(output_folder_path: os.PathLike, config: InferenceConfig) -> N
     config["obs_data"] = load_data_rki_sir(datetime.date(2020, 3, 1), config.T, os.path.join(os.path.dirname(os.path.abspath(
         __file__)), "../../data/pydata/Germany/cases_infected_repdate.json"))
 
-    # history = trainer.loss_history
     Plotting(output_folder_path).plot_all(history, config, prior, prior_scaler,
                                           simulator_function, generative_model, trainer, amortizer)
 
 
 if __name__ == "__main__":
-    trainer_parameters = TrainerParameters(epochs=20,
+    trainer_parameters = TrainerParameters(epochs=2,
                                            summary_dim=16, num_coupling_layers=8)
     config = InferenceConfig(T=81, N=83e6, intervention_model=True,
                              observation_model=True, trainer_parameters=trainer_parameters)
 
     run_inference(output_folder_path=os.path.join(
-        FILE_PATH, "output/test_T_1Damping"), config=config)
+        FILE_PATH, "output/dynamicDamping4"), config=config)

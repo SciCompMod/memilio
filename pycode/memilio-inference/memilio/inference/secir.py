@@ -7,9 +7,9 @@ from functools import partial
 from memilio.simulation import AgeGroup, Damping, RungeKuttaCashKarp54IntegratorCore, RKIntegratorCore
 from memilio.simulation.osir import (InfectionState, Model, interpolate_simulation_result,
                                      simulate_flows)
-from prior import (UnboundParameter, LambdaParameter, DelayParameter,
-                   InterventionChangePointParameter, WeeklyModulationAmplitudeParameter,
-                   ScaleMultiplicativeReportingNoiseParameter, ModelStrategy)
+from memilio.inference.prior import (UnboundParameter, LambdaParameter, DelayParameter,
+                                     InterventionChangePointParameter, WeeklyModulationAmplitudeParameter,
+                                     ScaleMultiplicativeReportingNoiseParameter, ModelStrategy)
 
 import matplotlib.pyplot as plt
 

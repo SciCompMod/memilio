@@ -4,11 +4,11 @@ from typing import Callable
 from functools import partial
 import re
 
-from utils import generate_offline_data, configure_input
-from sir import ParameterNamesSir, SIRStrategy, simulator_SIR
-from plotting import Plotting
-from prior import ModelPriorBuilder, PriorScaler
-from config import InferenceConfig
+from memilio.inference.utils import generate_offline_data, configure_input
+from memilio.inference.sir import ParameterNamesSir, SIRStrategy, simulator_SIR
+from memilio.inference.plotting import Plotting
+from memilio.inference.prior import ModelPriorBuilder, PriorScaler
+from memilio.inference.config import InferenceConfig
 
 import bayesflow.diagnostics as diag
 from bayesflow.amortizers import AmortizedPosterior

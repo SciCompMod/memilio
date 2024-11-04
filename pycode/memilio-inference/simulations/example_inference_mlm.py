@@ -5,11 +5,11 @@ from typing import Callable, Any
 import numpy as np
 import pandas as pd
 
-from plotting import Plotting
-from prior import ModelPriorBuilder, PriorScaler
-from sir_mlm import HyperparameterNamesSir, ParameterNamesSir, SIRStrategy, simulator_SIR
-from config import InferenceConfig, TrainerParameters
-from utils import generate_offline_data, configure_input, start_training, load_data_rki_sir
+from memilio.inference.plotting import Plotting
+from memilio.inference.prior import ModelPriorBuilder, PriorScaler
+from memilio.inference.sir_mlm import HyperparameterNamesSir, ParameterNamesSir, SIRStrategy, simulator_SIR
+from memilio.inference.config import InferenceConfig, TrainerParameters
+from memilio.inference.utils import generate_offline_data, configure_input, start_training, load_data_rki_sir
 
 from bayesflow.amortizers import AmortizedPosterior
 from bayesflow.networks import InvertibleNetwork, SequenceNetwork
