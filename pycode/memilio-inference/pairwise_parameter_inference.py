@@ -5,8 +5,8 @@ from functools import partial
 import re
 
 from utils import generate_offline_data, configure_input
-from sir import ParameterNamesSir, SIRStrategy, stationary_SIR
-from plots import *
+from sir import ParameterNamesSir, SIRStrategy, simulator_SIR
+from plotting import Plotting
 from prior import ModelPriorBuilder, PriorScaler
 from config import InferenceConfig
 
@@ -28,62 +28,7 @@ def load_data_synthetic(simulator_fun: Callable[[list[float]], np.ndarray], para
     return new_cases_obs
 
 
-def plot_all(single_output_folder_path, history, config, prior, prior_scaler, simulator_function, generative_model, trainer, amortizer):
-    f = prior.plot_prior2d()
-    plt.savefig(os.path.join(single_output_folder_path, "prior2D.png"))
-
-    f = trainer.diagnose_latent2d()
-    plt.savefig(os.path.join(single_output_folder_path, "latent2d.png"))
-
-    f = diag.plot_losses(history["train_losses"],
-                         history["val_losses"], moving_average=True)
-    plt.savefig(os.path.join(single_output_folder_path, "losses.png"))
-
-    f = trainer.diagnose_sbc_histograms()
-    plt.savefig(os.path.join(single_output_folder_path, "sbc_histograms.png"))
-
-    # Generate some validation data
-    validation_sims = trainer.configurator(generative_model(batch_size=300))
-
-    # Generate posterior draws for all simulations
-    post_samples = amortizer.sample(validation_sims, n_samples=100)
-
-    # Create ECDF plot
-    f = diag.plot_sbc_ecdf(
-        post_samples, validation_sims["parameters"], param_names=prior.param_names)
-    plt.savefig(os.path.join(single_output_folder_path, "sbc_ecdf.png"))
-
-    f = diag.plot_sbc_ecdf(
-        post_samples, validation_sims["parameters"], stacked=True, difference=True, legend_fontsize=12, fig_size=(6, 5)
-    )
-    plt.savefig(os.path.join(
-        single_output_folder_path, "sbc_ecdf_stacked.png"))
-
-    f = diag.plot_sbc_histograms(
-        post_samples, validation_sims["parameters"], param_names=prior.param_names)
-    plt.savefig(os.path.join(
-        single_output_folder_path, "sbc_ecdf_histograms.png"))
-
-    # Format data into a 3D array of shape (1, n_time_steps, 1) and perform log transform
-    obs_data = np.log1p(config["obs_data"])[
-        np.newaxis, :, np.newaxis].astype(np.float32)
-    # Obtain 500 posterior draws given real data
-    post_samples = amortizer.sample({"summary_conditions": obs_data}, 5000)
-    # Undo standardization to get parameters on their original (unstandardized) scales
-    post_samples = prior_scaler.inverse_transform(post_samples)
-
-    f = diag.plot_posterior_2d(post_samples, param_names=prior.param_names)
-    plt.savefig(os.path.join(single_output_folder_path, "posterior_2d.png"))
-
-    f = diag.plot_posterior_2d(post_samples, prior=prior)
-    plt.savefig(os.path.join(single_output_folder_path,
-                "posterior_2d_with_prior.png"))
-
-    f = plot_ppc(config, post_samples, simulator_function)
-    plt.savefig(os.path.join(single_output_folder_path, "ppc.png"))
-
-
-def single_inference_run(single_output_folder_path, config, fixed_parameter_values, learnable_parameters_list):
+def single_inference_run(single_output_folder_path, config, fixed_parameter_values, learnable_parameters_list, add_dummy):
 
     fixed_parameters_list = {k: fixed_parameter_values[k]
                              for k in fixed_parameter_values.keys() - list(learnable_parameters_list)}
@@ -95,13 +40,15 @@ def single_inference_run(single_output_folder_path, config, fixed_parameter_valu
         prior_builder.add_intervention()
     if config["observation_model"]:
         prior_builder.add_observation()
+    if add_dummy:
+        prior_builder.add_dummy()
     prior = prior_builder.set_fixed_parameters(
         fixed_parameters_list).build()
     prior_scaler = PriorScaler().fit(prior)
 
     # Create GenerativeModel
     simulator_function = partial(
-        stationary_SIR, N=config["N"], T=config["T"], intervention_model=config["intervention_model"],
+        simulator_SIR, N=config["N"], T=config["T"], intervention_model=config["intervention_model"],
         observation_model=config["observation_model"], param_names=prior.param_names, fixed_params=fixed_parameters_list)
     simulator = Simulator(simulator_fun=simulator_function)
     generative_model = GenerativeModel(
@@ -125,16 +72,21 @@ def single_inference_run(single_output_folder_path, config, fixed_parameter_valu
 
     # Train
     history = trainer.train_offline(
-        offline_data, epochs=20, batch_size=3200, validation_sims=200)
+        offline_data, epochs=10, batch_size=320, validation_sims=200)  # big batches run into performance problems when plotting
+
+    synthetic_case_parameter_values = [
+        fixed_parameter_values[learnable_parameter] for learnable_parameter in learnable_parameters_list]
+    if add_dummy:
+        synthetic_case_parameter_values.append(1.0)
 
     config["obs_data"] = load_data_synthetic(
-        simulator_function, [fixed_parameter_values[learnable_parameter] for learnable_parameter in learnable_parameters_list])
+        simulator_function, synthetic_case_parameter_values)
 
-    plot_all(single_output_folder_path, history, config, prior, prior_scaler,
-             simulator_function, generative_model, trainer, amortizer)
+    Plotting(single_output_folder_path).plot_all(history, config, prior, prior_scaler,
+                                                 simulator_function, generative_model, trainer, amortizer)
 
 
-def run_pairwise_parameter_inference(output_folder_path, config, fixed_parameter_values):
+def run_pairwise_parameter_inference(output_folder_path: os.PathLike, config: InferenceConfig, fixed_parameter_values: dict[str, float], add_dummy: bool = False):
 
     # create dir if it does not exist
     if not os.path.exists(output_folder_path):
@@ -144,19 +96,21 @@ def run_pairwise_parameter_inference(output_folder_path, config, fixed_parameter
         print(fixed_parameter_values, file=file)
         print(config, file=file)
 
-    # for fixed_parameter_pair in list(map(dict, itertools.combinations(
-    #         fixed_parameter_values.items(), 2))):
     for learnable_parameter_pair in itertools.combinations(
             fixed_parameter_values, 2):
 
         single_output_folder_path = os.path.join(
             output_folder_path, "output_" + re.sub(r'\\|\$', '', '_'.join(learnable_parameter_pair)))
+
+        if add_dummy:
+            single_output_folder_path += "_dummy"
+
         # create dir if it does not exist
         if not os.path.exists(single_output_folder_path):
             os.makedirs(single_output_folder_path)
 
         single_inference_run(single_output_folder_path, config,
-                             fixed_parameter_values, learnable_parameter_pair)
+                             fixed_parameter_values, learnable_parameter_pair, add_dummy)
 
 
 if __name__ == "__main__":
@@ -168,5 +122,5 @@ if __name__ == "__main__":
                              observation_model=False)
 
     run_pairwise_parameter_inference(
-        output_folder_path=os.path.join(FILE_PATH, "output_pairwise"),
-        config=config, fixed_parameter_values=fixed_parameter_values)
+        output_folder_path=os.path.join(FILE_PATH, "output_pairwise_dummy"),
+        config=config, fixed_parameter_values=fixed_parameter_values, add_dummy=True)

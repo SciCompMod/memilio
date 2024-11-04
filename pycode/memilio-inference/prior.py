@@ -102,10 +102,10 @@ class InterventionChangePointParameter(BoundParameter):
 
 
 class DelayParameter(BoundParameter):
-    def __init__(self: Self, distribution: Callable[[], float], name: str, sim_diff: int) -> None:
-        # check ((sim_diff - 1) > int(round(delay))), thus -1.5
-        super().__init__(distribution, name,
-                         upper_bound=sim_diff - 1.5, upper_bound_included=False)
+    def __init__(self: Self, distribution: Callable[[], float], name: str, sim_lag: int) -> None:
+        # check ((sim_lag) => int(round(delay))), thus + 0.5
+        super().__init__(distribution, name, lower_bound=0,
+                         upper_bound=sim_lag + 0.5, lower_bound_included=True, upper_bound_included=False)
 
 
 class WeeklyModulationAmplitudeParameter(BoundParameter):
@@ -133,14 +133,14 @@ class ModelStrategy:
         raise NotImplementedError
 
     @staticmethod
-    def add_observation(prior_array: list[UnboundParameter], sim_diff: int) -> None:
+    def add_observation(prior_array: list[UnboundParameter], sim_lag: int) -> None:
         raise NotImplementedError
 
 
 class ModelPriorBuilder:
-    def __init__(self: Self, strategy: ModelStrategy, sim_diff: int = 16):
+    def __init__(self: Self, strategy: ModelStrategy, sim_lag: int = 15):
         self.strategy = strategy
-        self.sim_diff = sim_diff
+        self.sim_lag = sim_lag
         self.components = []
         self.fixed_parameters = []
 
@@ -153,7 +153,7 @@ class ModelPriorBuilder:
         return self
 
     def add_observation(self: Self) -> Self:
-        self.strategy.add_observation(self.components, self.sim_diff)
+        self.strategy.add_observation(self.components, self.sim_lag)
         return self
 
     def add_dummy(self: Self) -> Self:
@@ -273,7 +273,7 @@ class ModelPriorBuilder:
 #                         lambd1, lambd2, lambd3, lambd4]
 
 #     @staticmethod
-#     def generate_observation(sim_diff):
+#     def generate_observation(sim_lag):
 #         """Generates a random draw from the joint prior."""
 
 #         def check_if_parameter_constraints_satisfied(params):
@@ -283,7 +283,7 @@ class ModelPriorBuilder:
 #             # Impose constraints
 #             try:
 #                 # need simdiff as context
-#                 assert (sim_diff - 1) > int(round(D_i))
+#                 assert (sim_lag - 1) > int(round(D_i))
 #                 # Check for f_i, phi_i, scale_I
 #                 assert scale_I > 0
 #                 assert 1 >= f_i >= 0
@@ -303,9 +303,9 @@ class ModelPriorBuilder:
 
 
 # class ModelPriorBuilder:
-#     def __init__(self, strategy, sim_diff=16):
+#     def __init__(self, strategy, sim_lag=16):
 #         self.strategy = strategy
-#         self.sim_diff = sim_diff
+#         self.sim_lag = sim_lag
 #         self.components = []
 #         self.param_names = []
 #         self.fixed_parameters = {}
@@ -324,7 +324,7 @@ class ModelPriorBuilder:
 
 #     def add_observation(self):
 #         self.components.append(
-#             partial(self.strategy.generate_observation, self.sim_diff))
+#             partial(self.strategy.generate_observation, self.sim_lag))
 #         self.param_names.extend(self.strategy.param_names_observation)
 #         # set_param_enum(self.param_names)
 #         return self
