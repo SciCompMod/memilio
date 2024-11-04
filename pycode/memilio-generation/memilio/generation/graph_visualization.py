@@ -22,36 +22,41 @@ import os
 from typing import TextIO
 from graphviz import Digraph
 from clang.cindex import Cursor
-from memilio.generation import Scanner
+from .ast_handler import AST
 
 
-class ASTViz:
+class Visualization:
     """
-    Class for plotting the abstract-syntax-tree in different formats
+    Class for plotting the abstract-syntax-tree in different formats.
     """
-
     @staticmethod
-    def output_ast_terminal(ast_cursor: Cursor) -> None:
+    def output_ast_terminal(ast: AST, cursor: Cursor) -> None:
         """
-        Output the abstract syntax tree to terminal. Not formatted.
+        Output the abstract syntax tree to terminal.
+
+        @param ast: ast object from AST class.
+        @param cursor: The current node of the AST as a cursor object from libclang.
         """
 
-        _output_cursor_and_children_print(ast_cursor)
+        _output_cursor_and_children_print(cursor, ast)
 
         print(f'AST-terminal written.')
 
     @staticmethod
-    def output_ast_png(ast_cursor: Cursor, max_depth: int, ) -> None:
+    def output_ast_png(cursor: Cursor, max_depth: int, ) -> None:
         """
         Output the abstract syntax tree to a .png. Set the starting node and the max depth.
+
+        @param cursor: The current node of the AST as a cursor object from libclang.
+        @param max_depth: Maximal depth the graph displays.
         """
 
         graph = Digraph(format='png')
 
         _output_cursor_and_children_graphviz_digraph(
-            ast_cursor, graph, max_depth, 0)
+            cursor, graph, max_depth, 0)
 
-        output_file = 'ast_graph_png_limit'
+        output_file = 'ast_graph'
 
         graph.render(output_file, view=False)
 
@@ -59,80 +64,93 @@ class ASTViz:
         print(f'AST-png written to {output_path}')
 
     @staticmethod
-    def output_ast_formatted(ast_cursor: Cursor) -> None:
+    def output_ast_formatted(ast: AST, cursor: Cursor) -> None:
         """
-        Output the abstract syntax tree to a file. Formatted.
+        Output the abstract syntax tree to a file.
+
+        @param ast: ast object from AST class.
+        @param cursor: The current node of the AST as a cursor object from libclang.
         """
 
-        with open('output_ast_format.txt', 'w') as f:
-            _output_cursor_and_children_text(ast_cursor, f)
+        with open('ast_formated.txt', 'w') as f:
+            _output_cursor_and_children_text(cursor, ast,  f)
 
-        print("AST-format written to " + str(os.path.abspath(f.name)))
+        print("AST-formated written to " + str(os.path.abspath(f.name)))
 
 
-def indent2(level: int) -> str:
+def indent(level: int) -> str:
     """
     Create an indentation based on the level.
     """
     return '│   ' * level + '├── '
 
 
-def _output_cursor_and_children_text(cursor: Cursor, f: TextIO, level: int = 0, cursor_id: int = 0) -> int:
+def newline() -> str:
+    """
+    Create a new line.
+    """
+    return '\n'
+
+
+def _output_cursor_and_children_text(cursor: Cursor, ast: AST, f: TextIO, level: int = 0) -> int:
     """
     Output of the cursor and its children in text format, with highlighting for folder, spelling and child type.
 
     @param cursor: The current node of the AST as a cursor object from libclang.
+    @param ast: AST from ast_handler.py
     @param f: Open file object for output.
     @param level: The current depth in the AST for indentation purposes.
     @param cursor_id: A unique ID to identify each cursor.
     """
+
+    cursor_id = ast.get_node_id(cursor)
 
     cursor_kind = f"<CursorKind.{cursor.kind.name}>"
     file_path = cursor.location.file.name if cursor.location.file else ""
 
     if cursor.spelling:
-        cursor_label = (f'ID={cursor_id} {cursor.spelling} '
+        cursor_label = (f'ID:{cursor_id} {cursor.spelling} '
                         f'{cursor_kind}   '
                         f'{file_path}')
     else:
-        cursor_label = f'ID={cursor_id} {cursor_kind} [{file_path}]'
+        cursor_label = f'ID:{cursor_id} {cursor_kind} [{file_path}]'
 
-    f.write(indent2(level) + cursor_label + '\n')
+    f.write(indent(level) + cursor_label + newline())
 
     for child in cursor.get_children():
-        cursor_id = _output_cursor_and_children_text(
-            child, f, level + 1, cursor_id + 1)
-    return cursor_id
+        _output_cursor_and_children_text(
+            child, ast, f, level + 1)
 
 
-def _output_cursor_and_children_print(cursor: Cursor, level: int = 0, cursor_id: int = 0) -> int:
+def _output_cursor_and_children_print(cursor: Cursor, ast: AST, level: int = 0) -> None:
     """
     Prints the current cursor and its child elements in text format,
     with highlighting for folder, case and node type.
 
     @param cursor: The current node of the AST as a libclang cursor object.
+    @param ast: AST from ast_handler.py
     @param f: Open file object for output.
     @param level: The current depth in the AST for indentation purposes.
-    @param cursor_id: A unique ID to identify each cursor.
     @return: The current cursor ID for subsequent nodes.
     """
 
-    cursor_id = Scanner.get_node_id(cursor) - 1
+    cursor_id = ast.get_node_id(cursor)
 
     cursor_kind = f"<CursorKind.{cursor.kind.name}>"
     file_path = cursor.location.file.name if cursor.location.file else ""
-    cursor_label = (
-        f'ID={cursor_id} {cursor.spelling} {cursor_kind} {file_path}'
-        if cursor.spelling else
-        f'ID={cursor_id} {cursor_kind} {file_path}'
-    )
 
-    print(indent2(level) + cursor_label)
+    if cursor.spelling:
+        cursor_label = (f'ID:{cursor_id} {cursor.spelling} '
+                        f'{cursor_kind}   '
+                        f'{file_path}')
+    else:
+        cursor_label = f'ID:{cursor_id} {cursor_kind} [{file_path}]'
+
+    print(indent(level) + cursor_label)
 
     for child in cursor.get_children():
-        cursor_id = _output_cursor_and_children_print(
-            child, level + 1, cursor_id + 1)
-    return cursor_id
+        _output_cursor_and_children_print(
+            child, ast, level + 1)
 
 
 def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph, max_d: int, current_d: int, parent_node: str = None) -> None:
@@ -141,12 +159,15 @@ def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph,
 
     @param cursor: The current node of the AST as a Cursor object from libclang.
     @param graph: Graphviz Digraph object where the nodes and edges will be added.
+    @param max_d: Maximal depth.
+    @param current_d: Current depth.
     @param parent_node: Name of the parent node in the graph (None for the root node).
     """
+
     if current_d > max_d:
         return
 
-    node_label = f"{cursor.kind.name}\n({cursor.spelling})" if cursor.spelling else cursor.kind.name
+    node_label = f"{cursor.kind.name}{newline()}({cursor.spelling})" if cursor.spelling else cursor.kind.name
 
     current_node = f"{cursor.kind.name}_{cursor.hash}"
 
@@ -156,7 +177,7 @@ def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph,
         graph.edge(parent_node, current_node)
 
     if cursor.kind.is_reference():
-        referenced_label = f"ref_to_{cursor.referenced.kind.name}\n({cursor.referenced.spelling})"
+        referenced_label = f"ref_to_{cursor.referenced.kind.name}{newline()}({cursor.referenced.spelling})"
         referenced_node = f"ref_{cursor.referenced.hash}"
         graph.node(referenced_node, label=referenced_label)
         graph.edge(current_node, referenced_node)

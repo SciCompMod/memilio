@@ -38,6 +38,7 @@ from typing_extensions import Self
 
 from memilio.generation import IntermediateRepresentation, utility
 
+
 if TYPE_CHECKING:
     from memilio.generation import ScannerConfig
 
@@ -46,7 +47,6 @@ class Scanner:
     """
     Analyze the model and extract the needed information.
     """
-    cursor_ids = []
 
     def __init__(self: Self, conf: ScannerConfig) -> None:
         """
@@ -57,105 +57,9 @@ class Scanner:
         self.config = conf
         utility.try_set_libclang_path(
             self.config.optional.get("libclang_library_path"))
-        self.ast = None
         self.node_counter = 0
 
-        self.cursor_nodes = []
-        self.create_ast()
-
-    def create_ast(self: Self) -> None:
-        """
-        Create an abstract syntax tree for the main model.cpp file with a corresponding CompilationDatabase. 
-        A compile_commands.json is required (automatically generated in the build process).
-        """
-        idx = Index.create()
-
-        # Create the cmd arguments
-        file_args = []
-
-        dirname = utility.try_get_compilation_database_path(
-            self.config.skbuild_path_to_database)
-        compdb = CompilationDatabase.fromDirectory(dirname)
-        commands = compdb.getCompileCommands(self.config.source_file)
-        for command in commands:
-            for argument in command.arguments:
-                if (argument != '-Wno-unknown-warning' and
-                        argument != "--driver-mode=g++" and argument != "-O3" and argument != "-Werror" and argument != "-Wshadow"):
-                    file_args.append(argument)
-        file_args = file_args[1:-4]
-
-        # Removing only the first and last arguments could miss important flags.
-        # Safer approach is to include all relevant arguments except for optimization/debug flags
-        # file_args = file_args[1:-4] if len(file_args) > 5 else file_args
-
-        clang_cmd = [
-            "clang-14", self.config.source_file,
-            "-std=c++17", '-emit-ast', '-o', '-']
-        clang_cmd.extend(file_args)
-
-        try:
-            clang_cmd_result = subprocess.run(
-                clang_cmd, stdout=subprocess.PIPE)
-            clang_cmd_result.check_returncode()
-        except subprocess.CalledProcessError as e:
-            # Capture standard error and output
-            logging.error(
-                f"Clang failed with return code {e.returncode}. Error: {clang_cmd_result.stderr.decode()}")
-            raise RuntimeError(
-                f"Clang AST generation failed. See error log for details.")
-
-        # Since `clang.Index.read` expects a file path, write generated abstract syntax tree to a
-        # temporary named file. This file will be automatically deleted when closed.
-        with tempfile.NamedTemporaryFile() as ast_file:
-            ast_file.write(clang_cmd_result.stdout)
-            self.ast = idx.read(ast_file.name)
-
-        self.assing_ast_with_ids(self.ast.cursor)
-
-        logging.info("AST generation completed successfully.")
-
-    def assing_ast_with_ids(self, cursor: Cursor) -> None:
-        """
-        Traverse the AST and assign a unique ID to each node during traversal.
-
-        Parameters:
-        @cursor: The current node (Cursor) in the AST to traverse.
-        """
-
-        self.node_counter += 1
-        cursor_id = self.node_counter
-
-        self.cursor_ids.append((cursor, cursor_id))
-        self.cursor_nodes.append(cursor)
-
-        logging.debug(
-            f"Node {cursor.spelling or cursor.kind} assigned ID {cursor_id}")
-
-        for child in cursor.get_children():
-            self.assing_ast_with_ids(child)
-
-    @staticmethod
-    def get_node_id(cursor: Cursor) -> int:
-        """
-        Returns the id of the current node.
-        """
-
-        for c, id in Scanner.cursor_ids:
-            if c == cursor:
-                return id
-        raise IndexError(f"Cursor {cursor} is out of bounds.")
-
-    def get_node_by_index(self, index: int) -> Cursor:
-        """
-        Returns the node at the specified index position.
-        If the index is out of bounds, None is returned.
-        """
-        if 0 <= index < len(self.cursor_nodes):
-            return self.cursor_nodes[index]
-        raise IndexError(
-            f"Index {index} is out of bounds (0 to {len(self.cursor_nodes) - 1}).")
-
-    def extract_results(self: Self) -> IntermediateRepresentation:
+    def extract_results(self: Self, root_cursor: Cursor) -> IntermediateRepresentation:
         """
         Extract the information of the abstract syntax tree and save them in the dataclass intermed_repr.
         Call find_node to visit all nodes of abstract syntax tree and finalize to finish the extraction.
@@ -163,9 +67,7 @@ class Scanner:
         @return Information extracted from the model saved as an IntermediateRepresentation. 
         """
         intermed_repr = IntermediateRepresentation()
-        # graph_visualization._output_cursor_print(self.ast.cursor, 1)
-        self.find_node(self.ast.cursor, intermed_repr)
-        # self.output_ast_file()
+        self.find_node(root_cursor, intermed_repr)
         self.finalize(intermed_repr)
         return intermed_repr
 
