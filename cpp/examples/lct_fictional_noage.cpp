@@ -41,7 +41,7 @@
 namespace params
 {
 // num_subcompartments is used as a template argument and has to be a constexpr.
-constexpr int num_subcompartments = 3;
+constexpr int num_subcompartments = NUM_SUBCOMPARTMENTS;
 constexpr size_t num_groups       = 6;
 
 // Parameters
@@ -108,11 +108,13 @@ std::vector<ScalarType> get_initial_values(size_t num_subcomp)
 * @param[in] save_dir Specifies the directory where the results should be stored. Provide an empty string if results should not be saved.
 * @returns Any io errors that happen during saving the results.
 */
-mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, bool save_subcompartments,
-                                       std::string save_dir = "")
+mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::string save_dir = "",
+                                       bool save_subcompartments = false, bool swapped_TETC = false,
+                                       bool final_size = false)
 {
     using namespace params;
-    std::cout << "Simulation with LCT model and " << num_subcompartments << " subcompartments." << std::endl;
+    std::cout << "Simulation with " << num_subcompartments << " subcompartments and reproduction number " << R0 << "."
+              << std::endl;
 
     // Initialize model.
     using InfState = mio::lsecir::InfectionState;
@@ -150,7 +152,11 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, bool save
         CriticalPerSevere += age_group_sizes[group] * CriticalPerSevere_age[group] / total_population;
         DeathsPerCritical += age_group_sizes[group] * DeathsPerCritical_age[group] / total_population;
     }
-
+    if (swapped_TETC) {
+        ScalarType dummy       = TimeExposed;
+        TimeExposed            = TimeInfectedNoSymptoms;
+        TimeInfectedNoSymptoms = dummy;
+    }
     model.parameters.get<mio::lsecir::TimeExposed>()[0]                      = TimeExposed;
     model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0]           = TimeInfectedNoSymptoms;
     model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]             = TimeInfectedSymptoms;
@@ -201,18 +207,16 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, bool save
     integrator->set_dt_min(dt);
     integrator->set_dt_max(dt);
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
-    std::cout << result[0] << std::endl;
     // Calculate result.
     mio::TimeSeries<ScalarType> populations = model.calculate_compartments(result);
 
     if (!save_dir.empty()) {
-
         std::string R0string = std::to_string(R0);
         std::string filename = save_dir + "fictional_lct_" + R0string.substr(0, R0string.find(".") + 2) + "_" +
                                std::to_string(num_subcompartments);
         if (save_subcompartments) {
             filename                               = filename + "_subcompartments.h5";
-            auto result_interpolated               = mio::interpolate_simulation_result(result);
+            auto result_interpolated               = mio::interpolate_simulation_result(result, dt / 2);
             mio::IOResult<void> save_result_status = mio::save_result({result_interpolated}, {0}, 1, filename);
         }
         else {
@@ -220,30 +224,23 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, bool save
             mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename);
         }
     }
-    // std::cout << "Final size: " << std::fixed << std::setprecision(6)
-    //           << total_population - populations.get_last_value()[0] << std::endl;
-    // std::cout << std::endl;
-    // order: number of subcompartments: 1,3,10,50
-    //const ScalarType erg[] = {66187880.970838, 66177693.857084, 66173548.328663, 66172040.662903}; //R=2
-    //const ScalarType erg[] = {81489438.000375, 81487771.513275, 81487273.311926, 81487137.403808}; //R=4
-    // const ScalarType erg[] = {83151138.102138, 83151130.435465, 83151128.866535, 83151128.512536}; //R=10
-    // std::cout << "Absolute deviation: " << std::endl;
-    // for (int i = 0; i < 4; i++) {
-    //     std::cout << "i= " << i << ": " << (erg[i] - erg[0]) << std::endl;
-    // }
-    // std::cout << "Relative deviation: " << std::endl;
-    // for (int i = 0; i < 4; i++) {
-    //     std::cout << "i= " << i << ": " << (erg[i] - erg[0]) / erg[0] << std::endl;
-    // }
+    if (final_size) {
+        std::cout << "Final size: " << std::fixed << std::setprecision(6)
+                  << total_population - populations.get_last_value()[0] << std::endl;
+        std::cout << std::endl;
+    }
     return mio::success();
 }
 
 int main(int argc, char** argv)
 {
-    std::string save_dir       = "../../data/simulation_lct_noage/riseR0short/";
-    ScalarType R0              = 2.;
-    bool save_subcompartments  = false;
+    ScalarType R0              = 1.;
     ScalarType simulation_days = 12;
+    std::string save_dir       = "";
+    bool save_subcompartments  = false;
+    bool swapped_TETC          = false;
+    bool final_size            = false;
+
     if (argc > 2) {
         R0              = std::stod(argv[1]);
         simulation_days = std::stod(argv[2]);
@@ -251,7 +248,16 @@ int main(int argc, char** argv)
     if (argc > 3) {
         save_dir = argv[3];
     }
-    auto result = simulate_lct_model(R0, simulation_days, save_subcompartments, save_dir);
+    if (argc > 4) {
+        save_subcompartments = std::stoi(argv[4]);
+    }
+    if (argc > 5) {
+        swapped_TETC = std::stoi(argv[5]);
+    }
+    if (argc > 6) {
+        final_size = std::stoi(argv[6]);
+    }
+    auto result = simulate_lct_model(R0, simulation_days, save_dir, save_subcompartments, swapped_TETC, final_size);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
