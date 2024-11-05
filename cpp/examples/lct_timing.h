@@ -33,13 +33,11 @@
 #include <vector>
 #include <omp.h>
 
-namespace params
+namespace params_1
 {
 // Define epidemiological parameters and parameters needed for the simulation.
-constexpr size_t num_groups = 6;
-size_t num_runs             = 100;
+constexpr size_t num_groups = 1;
 
-const ScalarType tmax              = 100;
 const ScalarType dt                = 0.01;
 const ScalarType age_group_sizes[] = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
 const ScalarType total_population  = 83155031.0;
@@ -60,16 +58,16 @@ const ScalarType SeverePerInfectedSymptoms[]      = {0.0075, 0.0075, 0.019, 0.06
 const ScalarType CriticalPerSevere[]              = {0.075, 0.075, 0.075, 0.15, 0.3, 0.4};
 const ScalarType DeathsPerCritical[]              = {0.05, 0.05, 0.14, 0.14, 0.4, 0.6};
 
-} // namespace params
+} // namespace params_1
 
 /** @brief Initial value vector for the simulation.
 *   It is assumed that all age groups use equal LctStates.
 * @tparam LctStates LctState of all the age groups.
 */
 template <class LctStates>
-std::vector<ScalarType> get_initial_values()
+std::vector<ScalarType> get_initial_values_1()
 {
-    using namespace params;
+    using namespace params_1;
     using InfState = typename LctStates::InfectionState;
     // Vector is a "random vector" taken from another example. Just need some realistic values.
     const std::vector<std::vector<ScalarType>> init_compartments = {
@@ -116,17 +114,17 @@ std::vector<ScalarType> get_initial_values()
  * @brief Performs multiple simulations with one model to get an average run time.
  * @tparam num_subcompartments number of subcompartments used for all compartments and all age groups.
  */
-template <size_t num_subcompartments>
-void simulate()
+template <size_t num_subcompartments = 1>
+void simulate_1(size_t num_warm_up_runs, size_t num_runs, ScalarType tmax)
 {
-    using namespace params;
-    std::cout << "Simulation with " << num_subcompartments << " subcompartments per age group and with " << num_groups
-              << " age groups." << std::endl;
+    using namespace params_1;
+    std::cout << "{ \"Agegroups\": " << num_groups << ",\n\"Subcompartments\": " << num_subcompartments << ", "
+              << std::endl;
     // ----- Initialize age resolved model. -----
     using InfState = mio::lsecir::InfectionState;
     using LctState = mio::LctInfectionState<InfState, 1, num_subcompartments, num_subcompartments, num_subcompartments,
                                             num_subcompartments, num_subcompartments, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState, LctState, LctState, LctState, LctState, LctState>;
+    using Model    = mio::lsecir::Model<LctState>;
     Model model;
 
     // Define epidemiological parameters.
@@ -163,7 +161,7 @@ void simulate()
     model.parameters.template get<mio::lsecir::Seasonality>()     = seasonality;
 
     // Set initial values;
-    auto initial_values = get_initial_values<LctState>();
+    auto initial_values = get_initial_values_1<LctState>();
     for (size_t i = 0; i < model.populations.get_num_compartments(); i++) {
         model.populations[i] = initial_values[i];
     }
@@ -174,8 +172,8 @@ void simulate()
     integrator->set_dt_min(dt);
     integrator->set_dt_max(dt);
 
-    // Ten warm up runs.
-    for (size_t i = 0; i < 10; i++) {
+    // Warm up runs.
+    for (size_t i = 0; i < num_warm_up_runs; i++) {
         mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
     }
 
@@ -186,5 +184,5 @@ void simulate()
         mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
         total += omp_get_wtime();
     }
-    std::cout << "Simulation took " << total / num_runs << " seconds in average!" << std::endl;
+    std::cout << "\"Time\": " << total / num_runs << "\n}," << std::endl;
 }
