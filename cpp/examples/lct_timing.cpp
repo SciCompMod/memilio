@@ -17,13 +17,20 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
+#include "memilio/config.h"
 #include "lct_timing.h"
+#include <iostream>
 
-int main()
+int main(int argc, char** argv)
 {
-    // Simulation with initial exposed population in age group 1.
-    simulate<1>();
-   
+    const ScalarType tmax = 20;
+    size_t warm_up        = 10;
+    size_t num_runs       = 100;
+    if (argc > 2) {
+        warm_up  = std::stod(argv[1]);
+        num_runs = std::stod(argv[2]);
+    }
+    constexpr size_t num_subcompartments = MY_COMPILE_TIME_VALUE;
+    simulate_1<num_subcompartments>(warm_up, num_runs, tmax);
     return 0;
 }

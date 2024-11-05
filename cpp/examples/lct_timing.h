@@ -20,39 +20,31 @@
 
 #include "lct_secir/model.h"
 #include "lct_secir/infection_state.h"
-#include "lct_secir/parameters.h"
-#include "lct_secir/initializer_flows.h"
 
 #include "memilio/config.h"
-#include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/lct_infection_state.h"
 #include "memilio/math/eigen.h"
-#include "memilio/utils/logging.h"
 #include "memilio/compartments/simulation.h"
-#include "memilio/data/analyze_result.h"
 
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
-#include <string>
 #include <iostream>
 #include <vector>
 #include <omp.h>
 
-namespace params
+namespace params_1
 {
-constexpr size_t num_groups = 6;
-
-// Parameters
-const ScalarType seasonality                    = 0.;
-const ScalarType RelativeTransmissionNoSymptoms = 1.;
-const ScalarType RiskOfInfectionFromSymptomatic = 0.3;
-const ScalarType tmax                           = 100;
+// Define epidemiological parameters and parameters needed for the simulation.
+constexpr size_t num_groups = 1;
 
 const ScalarType dt                = 0.01;
 const ScalarType age_group_sizes[] = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
 const ScalarType total_population  = 83155031.0;
 
+const ScalarType seasonality                        = 0.;
+const ScalarType RelativeTransmissionNoSymptoms     = 1.;
+const ScalarType RiskOfInfectionFromSymptomatic     = 0.3;
 const ScalarType TransmissionProbabilityOnContact[] = {0.03, 0.06, 0.06, 0.06, 0.09, 0.175};
 
 const ScalarType TimeExposed[]            = {3.335, 3.335, 3.335, 3.335, 3.335, 3.335};
@@ -66,81 +58,76 @@ const ScalarType SeverePerInfectedSymptoms[]      = {0.0075, 0.0075, 0.019, 0.06
 const ScalarType CriticalPerSevere[]              = {0.075, 0.075, 0.075, 0.15, 0.3, 0.4};
 const ScalarType DeathsPerCritical[]              = {0.05, 0.05, 0.14, 0.14, 0.4, 0.6};
 
-} // namespace params
+} // namespace params_1
 
-/** @brief Returns transitions that can be used to initialize an IDE model or 
-*    to calculate initial values for a LCT model.
+/** @brief Initial value vector for the simulation.
+*   It is assumed that all age groups use equal LctStates.
+* @tparam LctStates LctState of all the age groups.
 */
-mio::TimeSeries<ScalarType> get_initial_flows()
+template <class LctStates>
+std::vector<ScalarType> get_initial_values_1()
 {
-    using namespace params;
-    // The initialization vector for the LCT model is calculated by defining transitions.
-    // Create TimeSeries with num_transitions elements for each group.
-    using InfTransition = mio::lsecir::InfectionTransition;
-    int num_transitions = (int)InfTransition::Count;
-    mio::TimeSeries<ScalarType> init(num_transitions * num_groups);
+    using namespace params_1;
+    using InfState = typename LctStates::InfectionState;
+    // Vector is a "random vector" taken from another example. Just need some realistic values.
+    const std::vector<std::vector<ScalarType>> init_compartments = {
+        {3966564.2110, 664.2367, 545.5523, 1050.3946, 5.6045, 0.5844, 307.4165, 0.},
+        {7500988.3044, 2108.8502, 1732.0453, 3334.8427, 17.7934, 1.8555, 478.3085, 0.},
+        {18874457.8051, 12584.3371, 9674.4579, 21348.6877, 340.0557, 29.5323, 2857.1243, 0.},
+        {28612752.3265, 13788.4953, 10600.1783, 22967.4792, 1537.0744, 530.3313, 3990.1151, 0.},
+        {8134534.1310, 4612.1712, 3545.6978, 7567.8082, 1553.0877, 937.6034, 588.5007, 0.},
+        {928318.1474, 1595.6020, 1226.6506, 2595.1188, 948.2972, 400.0181, 1350.1658, 0.}};
+    std::vector<ScalarType> initial_value_vector;
+    for (size_t age = 0; age < num_groups; age++) {
+        std::vector<ScalarType> init_age;
+        init_age.push_back(init_compartments[age][(int)InfState::Susceptible]);
+        // Distribute value equally to the subcompartments.
+        size_t num_subcomp = LctStates::template get_num_subcompartments<InfState::Exposed>();
+        for (size_t i = 0; i < num_subcomp; i++) {
+            init_age.push_back(init_compartments[age][(int)InfState::Exposed] / num_subcomp);
+        }
+        num_subcomp = LctStates::template get_num_subcompartments<InfState::InfectedNoSymptoms>();
+        for (size_t i = 0; i < num_subcomp; i++) {
+            init_age.push_back(init_compartments[age][(int)InfState::InfectedNoSymptoms] / num_subcomp);
+        }
+        num_subcomp = LctStates::template get_num_subcompartments<InfState::InfectedSymptoms>();
+        for (size_t i = 0; i < num_subcomp; i++) {
+            init_age.push_back(init_compartments[age][(int)InfState::InfectedSymptoms] / num_subcomp);
+        }
+        num_subcomp = LctStates::template get_num_subcompartments<InfState::InfectedSevere>();
+        for (size_t i = 0; i < num_subcomp; i++) {
+            init_age.push_back(init_compartments[age][(int)InfState::InfectedSevere] / num_subcomp);
+        }
+        num_subcomp = LctStates::template get_num_subcompartments<InfState::InfectedCritical>();
+        for (size_t i = 0; i < num_subcomp; i++) {
+            init_age.push_back(init_compartments[age][(int)InfState::InfectedCritical] / num_subcomp);
+        }
+        init_age.push_back(init_compartments[age][(int)InfState::Recovered]);
+        init_age.push_back(init_compartments[age][(int)InfState::Dead]);
 
-    // Add time points for initialization of transitions.
-    /* For this example, the intention is to create nearly constant values for SusceptiblesToExposed flow
-    at the beginning of the simulation. Therefore we initialize the flows accordingly constant for
-    SusceptiblesToExposed and derive matching values for the other flows.*/
-    const ScalarType SusceptibleToExposed_dayinit[] = {199.471, 633.29, 3779.09, 4140.7, 1385.04, 479.161};
-    Eigen::VectorXd init_transitions(num_transitions * num_groups);
-    for (size_t group = 0; group < num_groups; group++) {
-        init_transitions[(int)InfTransition::SusceptibleToExposed + group * num_transitions] =
-            SusceptibleToExposed_dayinit[group];
-        init_transitions[(int)InfTransition::ExposedToInfectedNoSymptoms + group * num_transitions] =
-            SusceptibleToExposed_dayinit[group];
-        init_transitions[(int)InfTransition::InfectedNoSymptomsToInfectedSymptoms + group * num_transitions] =
-            SusceptibleToExposed_dayinit[group] * (1 - RecoveredPerInfectedNoSymptoms[group]);
-        init_transitions[(int)InfTransition::InfectedNoSymptomsToRecovered + group * num_transitions] =
-            SusceptibleToExposed_dayinit[group] * RecoveredPerInfectedNoSymptoms[group];
-        init_transitions[(int)InfTransition::InfectedSymptomsToInfectedSevere + group * num_transitions] =
-            init_transitions[(int)InfTransition::InfectedNoSymptomsToInfectedSymptoms + group * num_transitions] *
-            SeverePerInfectedSymptoms[group];
-        init_transitions[(int)InfTransition::InfectedSymptomsToRecovered + group * num_transitions] =
-            init_transitions[(int)InfTransition::InfectedNoSymptomsToInfectedSymptoms + group * num_transitions] *
-            (1 - SeverePerInfectedSymptoms[group]);
-        init_transitions[(int)InfTransition::InfectedSevereToInfectedCritical + group * num_transitions] =
-            init_transitions[(int)InfTransition::InfectedSymptomsToInfectedSevere + group * num_transitions] *
-            CriticalPerSevere[group];
-        init_transitions[(int)InfTransition::InfectedSevereToRecovered + group * num_transitions] =
-            init_transitions[(int)InfTransition::InfectedSymptomsToInfectedSevere + group * num_transitions] *
-            (1 - CriticalPerSevere[group]);
-        init_transitions[(int)InfTransition::InfectedCriticalToDead + group * num_transitions] =
-            init_transitions[(int)InfTransition::InfectedSevereToInfectedCritical + group * num_transitions] *
-            DeathsPerCritical[group];
-        init_transitions[(int)InfTransition::InfectedCriticalToRecovered + group * num_transitions] =
-            init_transitions[(int)InfTransition::InfectedSevereToInfectedCritical + group * num_transitions] *
-            (1 - DeathsPerCritical[group]);
+        initial_value_vector.insert(initial_value_vector.end(), init_age.begin(), init_age.end());
     }
-    init_transitions = init_transitions * dt;
-    // Add initial time point to time series.
-    init.add_time_point(-350, init_transitions);
-    // Add further time points until time 0 with constant values.
-    while (init.get_last_time() < -dt + 1e-10) {
-        init.add_time_point(init.get_last_time() + dt, init_transitions);
-    }
-    return init;
+    return initial_value_vector;
 }
 
 /**
- * @brief Performs a simulation of a real scenario with an LCT and an ODE model.
- *
+ * @brief Performs multiple simulations with one model to get an average run time.
+ * @tparam num_subcompartments number of subcompartments used for all compartments and all age groups.
  */
-template <size_t num_subcompartments>
-void simulate()
+template <size_t num_subcompartments = 1>
+void simulate_1(size_t num_warm_up_runs, size_t num_runs, ScalarType tmax)
 {
-    using namespace params;
+    using namespace params_1;
+    std::cout << "{ \"Agegroups\": " << num_groups << ",\n\"Subcompartments\": " << num_subcompartments << ", "
+              << std::endl;
     // ----- Initialize age resolved model. -----
     using InfState = mio::lsecir::InfectionState;
     using LctState = mio::LctInfectionState<InfState, 1, num_subcompartments, num_subcompartments, num_subcompartments,
                                             num_subcompartments, num_subcompartments, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState, LctState, LctState, LctState, LctState, LctState>;
+    using Model    = mio::lsecir::Model<LctState>;
     Model model;
-    std::cout << num_subcompartments << std::endl;
 
-    // Define parameters used for simulation and initialization.
+    // Define epidemiological parameters.
     for (size_t group = 0; group < num_groups; group++) {
         model.parameters.template get<mio::lsecir::TimeExposed>()[group]            = TimeExposed[group];
         model.parameters.template get<mio::lsecir::TimeInfectedNoSymptoms>()[group] = TimeInfectedNoSymptoms[group];
@@ -162,42 +149,40 @@ void simulate()
         model.parameters.template get<mio::lsecir::CriticalPerSevere>()[group] = CriticalPerSevere[group];
         model.parameters.template get<mio::lsecir::DeathsPerCritical>()[group] = DeathsPerCritical[group];
     }
+    // Realistic contacts.
     mio::ContactMatrixGroup& contact_matrix = model.parameters.template get<mio::lsecir::ContactPatterns>();
-    /**3.9547 1.1002 2.9472   2.05 0.3733 0.0445
-    0.3327 3.5892  1.236 1.9208 0.2681 0.0161
-    0.246 0.7124 5.6518 3.2939 0.2043 0.0109
-    0.1742 0.8897 3.3124 4.5406 0.4262 0.0214
-    0.0458 0.1939 0.5782 1.3825  1.473 0.0704
-    0.1083 0.1448 0.4728 0.9767 0.6266 0.1724 */
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, 3.5));
+    Eigen::MatrixXd contact_matrix_eigen(6, 6);
+    contact_matrix_eigen << 3.9547, 1.1002, 2.9472, 2.05, 0.3733, 0.0445, 0.3327, 3.5892, 1.236, 1.9208, 0.2681, 0.0161,
+        0.246, 0.7124, 5.6518, 3.2939, 0.2043, 0.0109, 0.1742, 0.8897, 3.3124, 4.5406, 0.4262, 0.0214, 0.0458, 0.1939,
+        0.5782, 1.3825, 1.473, 0.0704, 0.1083, 0.1448, 0.4728, 0.9767, 0.6266, 0.1724;
+    contact_matrix[0] = mio::ContactMatrix(contact_matrix_eigen.block(0, 0, (size_t)num_groups, (size_t)num_groups));
 
     model.parameters.template get<mio::lsecir::ContactPatterns>() = contact_matrix;
     model.parameters.template get<mio::lsecir::Seasonality>()     = seasonality;
 
-    mio::Vector<ScalarType> total_confirmed_cases(num_groups);
-    total_confirmed_cases << 6820., 19164., 122877., 145125., 53235., 26468.;
-    total_confirmed_cases = total_confirmed_cases * 0.2;
-    mio::Vector<ScalarType> deaths(num_groups);
-    deaths << 0., 0., 0., 0., 0., 0.;
-    Eigen::VectorXd age_group_sizes_eig(num_groups);
-    age_group_sizes_eig << 3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434;
-    mio::lsecir::Initializer<Model> initializer(std::move(get_initial_flows()), model);
-    initializer.set_tol_for_support_max(1e-6);
-    initializer.compute_initialization_vector(age_group_sizes_eig, deaths, total_confirmed_cases);
-
-    // Perform simulation.
+    // Set initial values;
+    auto initial_values = get_initial_values_1<LctState>();
+    for (size_t i = 0; i < model.populations.get_num_compartments(); i++) {
+        model.populations[i] = initial_values[i];
+    }
+    // Integrator.
     auto integrator =
         std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
-    // Choose dt_min = dt_max so that we have a fixed time step and can compare to the result with one group.
+    // Choose dt_min = dt_max so that we have a fixed time step.
     integrator->set_dt_min(dt);
     integrator->set_dt_max(dt);
-    double total = 0;
 
-    total -= omp_get_wtime();
-    mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
-    total += omp_get_wtime();
+    // Warm up runs.
+    for (size_t i = 0; i < num_warm_up_runs; i++) {
+        mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
+    }
 
-    std::cout << "Simulation took " << total << " seconds in average!" << std::endl;
-    // TODO: Add initialization with vector !!
-    // TODO: Add realistic contacts.
+    // Runs with timing.
+    ScalarType total = 0;
+    for (size_t i = 0; i < num_runs; i++) {
+        total -= omp_get_wtime();
+        mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
+        total += omp_get_wtime();
+    }
+    std::cout << "\"Time\": " << total / num_runs << "\n}," << std::endl;
 }

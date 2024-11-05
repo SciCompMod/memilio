@@ -116,6 +116,10 @@ target_link_libraries(lct_secir_example PRIVATE memilio lct_secir)
 target_compile_options(lct_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 if (MEMILIO_ENABLE_OPENMP)
+    if(NOT DEFINED MY_COMPILE_TIME_VALUE)
+        set(MY_COMPILE_TIME_VALUE "42")
+    endif()
+    add_definitions(-DMY_COMPILE_TIME_VALUE=${MY_COMPILE_TIME_VALUE})
     add_library(lct_time_h
        lct_timing.h
     )
@@ -128,10 +132,10 @@ if (MEMILIO_ENABLE_OPENMP)
 endif()
 
 if(MEMILIO_HAS_HDF5)
-add_executable(lct_fictional lct_fictional_example.cpp)
-target_link_libraries(lct_fictional PRIVATE memilio lct_secir)
-target_compile_options(lct_fictional PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-
+if(NOT DEFINED NUM_SUBCOMPARTMENTS)
+        set(NUM_SUBCOMPARTMENTS "42")
+    endif()
+add_definitions(-DNUM_SUBCOMPARTMENTS=${NUM_SUBCOMPARTMENTS})
 add_executable(lct_fictional_noage lct_fictional_noage.cpp)
 target_link_libraries(lct_fictional_noage PRIVATE memilio lct_secir)
 target_compile_options(lct_fictional_noage PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

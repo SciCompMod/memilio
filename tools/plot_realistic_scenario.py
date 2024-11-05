@@ -180,7 +180,7 @@ def compare_compartments_real(files, age_group, datafile, start_date, tmax, scal
             plt.plot(range(num_days), data_rki['InfectedSymptoms'],
                      linestyle='dashed', color='grey', linewidth=1.2)
             compartment_idx = 3
-            labely = "Number of people in I"
+            labely = "Number of people in Infected compartment"
     else:
         plt.title(Age_RKI_names[age_group])
         if (deaths):
@@ -192,7 +192,7 @@ def compare_compartments_real(files, age_group, datafile, start_date, tmax, scal
             plt.plot(range(num_days), data_rki['InfectedSymptoms'][(data_rki['Age_RKI'] == Age_RKI_names[age_group])],
                      linestyle='dashed', color='grey', linewidth=1.2)
             compartment_idx = 3
-            labely = "Number of people in I"
+            labely = "Number of people in Infected compartment"
 
     # Add simulation results to plot.
     for file in range(len(files)):
@@ -270,7 +270,6 @@ def plot_new_infections_real(files, age_group, datafile, start_date, tmax, scale
         data_rki = data_rki.groupby(['Date']).sum()
         plt.plot(range(num_days), data_rki['DailyNewTransmissions'],
                  linestyle='None', color='grey', marker='x', markersize=5)
-        plt.title('All Age Groups')
         print("Daily new transmissions at the first day of RKI data is: " +
               f"{data_rki.loc[start_date]['DailyNewTransmissions']}")
     else:
@@ -311,7 +310,7 @@ def plot_new_infections_real(files, age_group, datafile, start_date, tmax, scale
             plt.plot(dates[1:], incidence, linewidth=1.2)
         h5file.close()
 
-    plt.ylabel('Daily new Transmissions', fontsize=14)
+    plt.ylabel('Daily new transmissions', fontsize=14)
     plt.ylim(bottom=0)
     plt.xlabel('Date', fontsize=14)
     plt.xlim(left=0, right=num_days-1)

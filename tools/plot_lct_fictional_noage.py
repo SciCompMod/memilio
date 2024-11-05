@@ -57,63 +57,6 @@ linestyle_dict = {'ODE': 'solid',
                   }
 
 
-def compare_single_compartment(files, legendplot,  compartment_idx=1, filename_plot="compare_single_compartment"):
-    """ Plots the result of a simulation in a single Plot for specified compartments.
-        The result should consist of accumulated numbers for subcompartments.
-
-    @param[in] files: paths of the files (without file extension .h5) with the simulation results that should be compared.
-        Results should contain exactly 8 compartments (so use accumulated numbers for LCT models). Names can be given in form of a list.
-        One could compare results with eg different parameters or different models.
-    @param[in] legendplot: list with names for the results that should be used for the legend of the plot.
-    @param[in] compartment_idx: index of the compartment one wants to compare.
-    @param[in] filename_plot: name to use as the file name for the saved plot.
-    """
-    # define plot
-    plt.figure(filename_plot)
-
-    # Add simulation results to plot.
-    for file in range(len(files)):
-        # Load data.
-        h5file = h5py.File(str(files[file]) + '.h5', 'r')
-
-        if (len(list(h5file.keys())) > 1):
-            raise gd.DataError("File should contain one dataset.")
-        if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
-            raise gd.DataError("Expected only one group.")
-
-        data = h5file[list(h5file.keys())[0]]
-        dates = data['Time'][:]
-        # As there should be only one Group, total is the simulation result.
-        total = data['Total'][:, :]
-        if (total.shape[1] != 8):
-            raise gd.DataError(
-                "Expected a different number of compartments.")
-
-        # Plot result.
-        if legendplot[file] in linestyle_dict:
-            plt.plot(dates, total[:, compartment_idx], linewidth=1.2,
-                     linestyle=linestyle_dict[legendplot[file]], color=color_dict[legendplot[file]])
-        else:
-            plt.plot(dates, total[:, compartment_idx], linewidth=1.2)
-
-        h5file.close()
-
-    plt.xlabel('Simulation Time [days]', fontsize=16)
-    plt.yticks(fontsize=9)
-    plt.ylabel('Number of ' +
-               secir_dict[compartment_idx] + " Individuals", fontsize=14)
-    # plt.ylim(bottom=0)
-    plt.xlim(left=0, right=dates[-1])
-    plt.legend(legendplot, fontsize=14, framealpha=0.5)
-    plt.grid(True, linestyle='--')
-    plt.tight_layout()
-
-    # Save result.
-    if not os.path.isdir('Plots'):
-        os.makedirs('Plots')
-    plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
-
-
 def compare_compartments_horizontal(files, legendplot,  filename_plot="compare_compartments", compartment_indices=range(8)):
     """ Creates a Plot with one subplot per compartment and one line per result one wants to compare.
 
@@ -175,7 +118,7 @@ def compare_compartments_horizontal(files, legendplot,  filename_plot="compare_c
         axs[i % 2, int(i/2)].tick_params(axis='y', labelsize=7)
         axs[i % 2, int(i/2)].tick_params(axis='x', labelsize=7)
 
-    fig.supxlabel('Simulation Time [days]', fontsize=9)
+    fig.supxlabel('Simulation time [days]', fontsize=9)
 
     lines, labels = axs[0, 0].get_legend_handles_labels()
     lgd = fig.legend(lines, labels, ncol=len(legendplot),  loc='outside lower center',
@@ -185,26 +128,25 @@ def compare_compartments_horizontal(files, legendplot,  filename_plot="compare_c
     fig.subplots_adjust(bottom=0.09)
 
     # Save result.
-    if not os.path.isdir('Plots'):
-        os.makedirs('Plots')
+    if not os.path.isdir('Plots_fictional'):
+        os.makedirs('Plots_fictional')
     fig.savefig('Plots/'+filename_plot+'.png',
                 bbox_extra_artists=(lgd,),  bbox_inches='tight', dpi=500)
 
 
-def compare_all_compartments(files, legendplot,  filename_plot="compare_compartments", compartment_indices=range(8)):
-    """ Creates a 4x2 Plot with one subplot per compartment and one line per result one wants to compare.
+def compare_single_compartment(files, legendplot,  compartment_idx=1, filename_plot="compare_single_compartment"):
+    """ Plots the result of a simulation in a single Plot for specified compartments.
+        The result should consist of accumulated numbers for subcompartments.
 
-    @param[in] files: paths of the files (without file extension .h5) with the simulation results
-        that should be compared.
-        Results should contain exactly 8 compartments (so use accumulated numbers for LCT models).
-        Names can be given in form of a list.
+    @param[in] files: paths of the files (without file extension .h5) with the simulation results that should be compared.
+        Results should contain exactly 8 compartments (so use accumulated numbers for LCT models). Names can be given in form of a list.
         One could compare results with eg different parameters or different models.
     @param[in] legendplot: list with names for the results that should be used for the legend of the plot.
+    @param[in] compartment_idx: index of the compartment one wants to compare.
     @param[in] filename_plot: name to use as the file name for the saved plot.
     """
-
-    fig, axs = plt.subplots(
-        math.ceil(len(compartment_indices)/2), 2, sharex='all', num=filename_plot, tight_layout=True)
+    # define plot
+    plt.figure(filename_plot)
 
     # Add simulation results to plot.
     for file in range(len(files)):
@@ -221,53 +163,33 @@ def compare_all_compartments(files, legendplot,  filename_plot="compare_compartm
         # As there should be only one Group, total is the simulation result.
         total = data['Total'][:, :]
         if (total.shape[1] != 8):
-            raise gd.DataError("Expected a different number of compartments.")
+            raise gd.DataError(
+                "Expected a different number of compartments.")
+
         # Plot result.
-        left_right = 0
-        index = 0
         if legendplot[file] in linestyle_dict:
-            for i in compartment_indices:
-                axs[int(index/2), left_right % 2].plot(dates,
-                                                       total[:, i], label=legendplot[file], linewidth=1.2,
-                                                       linestyle=linestyle_dict[legendplot[file]],
-                                                       color=color_dict[legendplot[file]])
-                axs[int(index/2), left_right %
-                    2].set_title(secir_dict[i], fontsize=8)
-                left_right += 1
-                index += 1
+            plt.plot(dates, total[:, compartment_idx], linewidth=1.2,
+                     linestyle=linestyle_dict[legendplot[file]], color=color_dict[legendplot[file]])
         else:
-            for i in compartment_indices:
-                axs[int(index/2), left_right % 2].plot(dates,
-                                                       total[:, i], label=legendplot[file], linewidth=1.2)
-                axs[int(index/2), left_right %
-                    2].set_title(secir_dict[i], fontsize=8)
-                left_right += 1
-                index += 1
+            plt.plot(dates, total[:, compartment_idx], linewidth=1.2)
+
         h5file.close()
 
-    # Define some characteristics of the plot.
-    for i in range(math.ceil(len(compartment_indices)/2)*2):
-        axs[int(i/2), i % 2].set_xlim(left=0, right=dates[-1])
-        axs[int(i/2), i % 2].set_ylim(bottom=0)
-        axs[int(i/2), i % 2].grid(True, linestyle='--')
-        axs[int(i/2), i % 2].tick_params(axis='y', labelsize=7)
-        axs[int(i/2), i % 2].tick_params(axis='x', labelsize=7)
-        # axs[int(i/2), i % 2].xaxis.set_ticks(np.arange(0, dates[-1]+1, 5))
-
-    fig.supxlabel('Simulation Time [days]', fontsize=9)
-
-    lines, labels = axs[0, 0].get_legend_handles_labels()
-    lgd = fig.legend(lines, labels, ncol=len(legendplot),  loc='outside lower center',
-                     fontsize=10, bbox_to_anchor=(0.5, - 0.06), bbox_transform=fig.transFigure)
-
-    plt.tight_layout(pad=0, w_pad=0.5, h_pad=0.1)
-    plt.subplots_adjust(bottom=0.09)
+    plt.xlabel('Simulation time [days]', fontsize=16)
+    plt.yticks(fontsize=9)
+    plt.ylabel('Number of ' +
+               secir_dict[compartment_idx] + " individuals", fontsize=14)
+    # plt.ylim(bottom=0)
+    plt.xlim(left=0, right=dates[-1])
+    plt.legend(legendplot, fontsize=14, framealpha=0.5)
+    plt.grid(True, linestyle='--')
+    plt.tight_layout()
 
     # Save result.
-    if not os.path.isdir('Plots'):
-        os.makedirs('Plots')
-    fig.savefig('Plots/'+filename_plot+'.png',
-                bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=500)
+    if not os.path.isdir('Plots_fictional'):
+        os.makedirs('Plots_fictional')
+    plt.savefig('Plots_fictional/'+filename_plot +
+                '.png', bbox_inches='tight', dpi=500)
 
 
 def plot_subcompartments3D(file, subcompartments, compartment_idx, first_time_idx, filename_plot="compare_new_infections"):
@@ -302,13 +224,13 @@ def plot_subcompartments3D(file, subcompartments, compartment_idx, first_time_id
     flat_z = z.ravel()
     bottom = np.zeros_like(flat_x)
 
-    cmap = cm.get_cmap('plasma')
+    cmap = plt.get_cmap('plasma')
     norm = Normalize(vmin=min(flat_z), vmax=max(flat_z))
     colors = cmap(norm(flat_z))
 
     ax.bar3d(flat_x, flat_y, 0, 1, 1, flat_z, shade=True, color=colors)
 
-    ax.set_xlabel('Index of Subcompartment', labelpad=-5, fontsize=9)
+    ax.set_xlabel('Index of subcompartment', labelpad=-5, fontsize=9)
     a = list(range(0, subcompartments+1, 5))
     a[0] += 1
     ax.set_xticks(a)
@@ -316,7 +238,7 @@ def plot_subcompartments3D(file, subcompartments, compartment_idx, first_time_id
     ax.tick_params(axis='x', pad=-5, labelsize=9)
     ax.set_xticks(range(1, subcompartments), minor=True)
 
-    ax.set_ylabel('Simulation Time [days]', labelpad=-5, fontsize=9)
+    ax.set_ylabel('Simulation time [days]', labelpad=-5, fontsize=9)
     ax.set_ylim(bottom=first_time_idx-0.5, top=dates[-1]+0.5)
     ax.set_yticks(range(int(dates[first_time_idx]),
                   int(dates[-1])+1, 2))
@@ -334,9 +256,10 @@ def plot_subcompartments3D(file, subcompartments, compartment_idx, first_time_id
     cbar = plt.colorbar(sc, ax=ax, shrink=0.75)
 
     h5file.close()
-    if not os.path.isdir('Plots'):
-        os.makedirs('Plots')
-    plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
+    if not os.path.isdir('Plots_fictional'):
+        os.makedirs('Plots_fictional')
+    plt.savefig('Plots_fictional/'+filename_plot +
+                '.png', bbox_inches='tight', dpi=500)
 
 
 def plot_maxpeak_incidence(func_get_file_name, R0s, subcomps, filename_plot="maxpeak2d"):
@@ -353,14 +276,15 @@ def plot_maxpeak_incidence(func_get_file_name, R0s, subcomps, filename_plot="max
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10,
                title="$\\mathcal{R}_{\\text{eff}}\\approx$", title_fontsize=14)
     plt.ylim(bottom=0)
-    plt.xlabel('Number of Subcompartments', fontsize=13)
-    plt.ylabel('Maximum daily new Transmissions', fontsize=13)
+    plt.xlabel('Number of subcompartments', fontsize=13)
+    plt.ylabel('Maximum daily new transmissions', fontsize=13)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
-    if not os.path.isdir('Plots'):
-        os.makedirs('Plots')
-    plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
+    if not os.path.isdir('Plots_fictional'):
+        os.makedirs('Plots_fictional')
+    plt.savefig('Plots_fictional/'+filename_plot +
+                '.png', bbox_inches='tight', dpi=500)
 
 
 def get_maxpeak_incidence(file):
@@ -396,14 +320,15 @@ def plot_day_peak_incidence(func_get_file_name, R0s, subcomps, filename_plot="ma
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10,
                title="$\\mathcal{R}_{\\text{eff}}\\approx$", title_fontsize=14)
     plt.ylim(bottom=0)
-    plt.xlabel('Number of Subcompartments', fontsize=13)
-    plt.ylabel('Simulation Day of Peak [days]', fontsize=13)
+    plt.xlabel('Number of subcompartments', fontsize=13)
+    plt.ylabel('Simulation day of peak [days]', fontsize=13)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
-    if not os.path.isdir('Plots'):
-        os.makedirs('Plots')
-    plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
+    if not os.path.isdir('Plots_fictional'):
+        os.makedirs('Plots_fictional')
+    plt.savefig('Plots_fictional/'+filename_plot +
+                '.png', bbox_inches='tight', dpi=500)
 
 
 def get_day_peak_incidence(file):
@@ -464,9 +389,9 @@ def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infe
 
         h5file.close()
 
-    plt.xlabel('Simulation Time [days]', fontsize=16)
+    plt.xlabel('Simulation time [days]', fontsize=16)
     plt.yticks(fontsize=9)
-    plt.ylabel('Daily new Transmissions', fontsize=14)
+    plt.ylabel('Daily new transmissions', fontsize=14)
     plt.ylim(bottom=0, top=ylim)
     if tmax > 0:
         plt.xlim(left=0, right=tmax)
@@ -477,17 +402,26 @@ def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infe
     plt.tight_layout()
 
     # Save result.
-    if not os.path.isdir('Plots'):
-        os.makedirs('Plots')
-    plt.savefig('Plots/'+filename_plot+'.png', bbox_inches='tight', dpi=500)
+    if not os.path.isdir('Plots_fictional'):
+        os.makedirs('Plots_fictional')
+    plt.savefig('Plots_fictional/'+filename_plot +
+                '.png', bbox_inches='tight', dpi=500)
+
+
+def get_file_name(R0, subcompartment, data_dir, boolsubcomp=False):
+    filename = "fictional_lct_" + f"{int(R0)}"+".0_" + f"{subcompartment}"
+    if boolsubcomp:
+        filename += "_subcompartments"
+    return os.path.join(data_dir, filename)
 
 
 if __name__ == '__main__':
     # simulation results should be stored in this folder.
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "data", "simulation_lct_noage")
-
-    cases = [0, 1, 2, 3, 4]
+    R0s = list([2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
+    #cases = [-1, -2, -3, 0, 1, 2, 3, 4]
+    cases=[-2]
     for case in cases:
         if case == 0:
             # rise R0 short
@@ -588,3 +522,30 @@ if __name__ == '__main__':
                                             legendplot=list(
                 ["University Scenario", "Retirement Home Scenario", "Non age-resolved Scenario"]),
                 filename_plot="compartments_agevsnoage", compartment_indices=[0, 1, 2, 3, 4, 5, 6, 7])
+        elif case == -1:
+            # Plots to compare time and size of epidemic peaks.
+            data_dir_other = "../data/simulation_lct_noage/riseR0long/"
+            plot_maxpeak_incidence(lambda R0, subcompartment: get_file_name(R0, subcompartment, data_dir=data_dir_other),
+                                   R0s, list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), filename_plot="compare_peak_size")
+            plot_day_peak_incidence(lambda R0, subcompartment: get_file_name(R0, subcompartment, data_dir=data_dir_other),
+                                    R0s, list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), filename_plot="compare_peak_days")
+        elif case == -2:
+            # All 3d Plots for normal parameters.
+            folder = "../data/simulation_lct_noage/riseR0short/"
+            nums_subcomp = [10, 50]
+            for num_subcomp in nums_subcomp:
+                plot_subcompartments3D(get_file_name(
+                    2, num_subcomp, folder, True), num_subcomp, 1, 1, filename_plot="subcompartments"+f"{num_subcomp}"+"_exposed")
+                plot_subcompartments3D(get_file_name(
+                    2, num_subcomp, folder, True), num_subcomp, 2, 1, filename_plot="subcompartments"+f"{num_subcomp}"+"_carrier")
+                plot_subcompartments3D(get_file_name(
+                    2, num_subcomp, folder, True), num_subcomp, 3, 1, filename_plot="subcompartments"+f"{num_subcomp}"+"_infected")
+        elif case == -3:
+            # All 3d Plots for swapped values TE and TC.
+            folder = "../data/simulation_lct_noage/riseR0shortswappedTETC/"
+            num_subcomp = 50
+            plot_subcompartments3D(get_file_name(
+                2, num_subcomp, folder, True), num_subcomp, 2, 1, filename_plot="subcompartments"+f"{num_subcomp}"+"_carrier_swappedTETC")
+            plot_new_infections([get_file_name(2, 1, folder), get_file_name(2, 3, folder), get_file_name(2, 10, folder), get_file_name(2, 50, folder)],
+                                20000, legendplot=list(["ODE", "LCT3", "LCT10", "LCT50"]),
+                                filename_plot="new_infections_rise2.0_swappedTETC")

@@ -118,8 +118,8 @@ private:
 };
 
 /**
- * Integrate initial value problems (IVP) of ordinary differential equations (ODE) of the form y' = f(y, t), y(t0) = y0.
- * tparam FP a floating point type accepted by Eigen
+ * @brief Integrate initial value problems (IVP) of ordinary differential equations (ODE) of the form y' = f(y, t), y(t0) = y0.
+ * @tparam FP a floating point type accepted by Eigen.
  */
 template <typename FP = double>
 class OdeIntegrator
@@ -141,7 +141,7 @@ public:
      * @param[in] tmax Time end point. Must be greater than results.get_last_time().
      * @param[in, out] dt Initial integration step size. May be changed by the IntegratorCore.
      * @param[in, out] results List of results. Must contain at least one time point. The last entry is used as
-     * intitial time and value. A new entry is added for each integration step.
+     * initial time and value. A new entry is added for each integration step.
      * @return A reference to the last value in the results time series.
      */
 
@@ -168,7 +168,7 @@ public:
         FP t              = t0;
 
         for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t) / (tmax - t0)) > 1e-10; ++i) {
-            //we don't make timesteps too small as the error estimator of an adaptive integrator
+            //we don't make time steps too small as the error estimator of an adaptive integrator
             //may not be able to handle it. this is very conservative and maybe unnecessary,
             //but also unlikely to happen. may need to be reevaluated
 
@@ -187,8 +187,8 @@ public:
             step_okay &= m_core->step(f, results[i], t, dt, results[i + 1]);
             results.get_last_time() = t;
 
-            // if dt has been changed (even slighly) by step, register the current m_core as adaptive
-            m_is_adaptive |= !floating_point_equal(dt, dt_copy);
+            // if dt has been changed (even slightly) by step, register the current m_core as adaptive
+            m_is_adaptive |= !floating_point_equal(dt, dt_copy, (FP)1e-8);
         }
         m_core->get_dt_min() = dt_min_restore; // restore dt_min
         // if dt was decreased to reach tmax in the last time iteration,
