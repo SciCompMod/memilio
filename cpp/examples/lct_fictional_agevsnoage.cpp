@@ -27,6 +27,7 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/lct_infection_state.h"
 #include "memilio/math/eigen.h"
+#include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/logging.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/data/analyze_result.h"
@@ -208,10 +209,12 @@ mio::IOResult<void> simulate_ageres_model(size_t agegroup_init, ScalarType tmax,
     }
 
     // Perform simulation.
-    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(
-        0, tmax, dt, model,
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            1e-10, 1e-5, 0, dt));
+    auto integrator =
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
+    // Choose dt_min = dt_max so that we have a fixed time step and can compare to the result with one group.
+    integrator->set_dt_min(dt);
+    integrator->set_dt_max(dt);
+    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
     // Calculate result without division in subcompartments.
     mio::TimeSeries<ScalarType> populations = add_age_groups(model.calculate_compartments(result));
 
@@ -291,10 +294,12 @@ mio::IOResult<void> simulate_notageres_model(ScalarType tmax, std::string save_d
     }
 
     // Perform simulation.
-    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(
-        0, tmax, dt, model,
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            1e-10, 1e-5, 0, dt));
+    auto integrator =
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
+    // Choose dt_min = dt_max so that we have a fixed time step and can compare to the result with one group.
+    integrator->set_dt_min(dt);
+    integrator->set_dt_max(dt);
+    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
     // Calculate result without division in subcompartments.
     mio::TimeSeries<ScalarType> populations = model.calculate_compartments(result);
 
