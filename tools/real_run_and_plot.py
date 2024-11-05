@@ -93,6 +93,27 @@ def main_october():
                                          legendplot=list(
                     ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),
                     filename_plot="real_new_infections_"+start_date+"_age"+f"{age}")
+                compare_compartments_real([get_file_name(start_date, 1, folder, True),
+                                           get_file_name(
+                                          start_date, 3, folder, True),
+                    get_file_name(
+                    start_date, 10, folder, True),
+                    get_file_name(
+                    start_date, 50, folder, True),
+                    get_file_name(
+                    start_date,  0, folder, True)], age, datafile, start_date_timestamp, 45, 1.0, list(
+                    ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=False, filename_plot="real_infected_"+start_date+"_age"+f"{age}")
+
+                compare_compartments_real([get_file_name(start_date, 1, folder, True),
+                                           get_file_name(
+                                          start_date, 3, folder, True),
+                    get_file_name(
+                    start_date, 10, folder, True),
+                    get_file_name(
+                    start_date, 50, folder, True),
+                    get_file_name(
+                    start_date, 0, folder, True)], age, datafile, start_date_timestamp, 45, 1.0, list(
+                    ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=True, filename_plot="real_deaths_"+start_date+"_age"+f"{age}")
 
 
 def main_july():
