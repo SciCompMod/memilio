@@ -53,7 +53,8 @@ public:
     * @param[in] N_init A vector, containg the populations of the considered region, for every AgeGroup.
     * @param[in] deaths A vector, containg the total number of deaths at time t0, for every AgeGroup.
     * @param[in] num_agegroups The number of AgeGroups.
-    * @param[in] total_confirmed_cases A vector, containing the total confirmed cases at time t0 can be set if it should be used for initialization, for every AgeGroup.
+    * @param[in] total_confirmed_cases A vector, containing the total confirmed cases at time t0 can be set if it 
+    *   should be used for initialization, for every AgeGroup.
     */
     Model(TimeSeries<ScalarType>&& init, std::vector<ScalarType> N_init, std::vector<ScalarType> deaths,
           size_t num_agegroups, std::vector<ScalarType> total_confirmed_cases = {});
