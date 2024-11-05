@@ -87,12 +87,13 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     // The last time needed is dependent on the mean stay time in the Exposed compartment and
     // the mean stay time of asymptomatic individuals in InfectedNoSymptoms.
     // The mean stay time in a compartment may be dependent on the Age Group.
-    std::vector<ScalarType> mean_ExposedToInfectedNoSymptoms          = std::vector<ScalarType>(num_age_groups, 0.);
-    std::vector<ScalarType> mean_InfectedNoSymptomsToInfectedSymptoms = std::vector<ScalarType>(num_age_groups, 0.);
-    std::vector<ScalarType> mean_InfectedSymptomsToInfectedSevere     = std::vector<ScalarType>(num_age_groups, 0.);
-    std::vector<ScalarType> mean_InfectedSevereToInfectedCritical     = std::vector<ScalarType>(num_age_groups, 0.);
-    std::vector<ScalarType> mean_InfectedCriticalToDead               = std::vector<ScalarType>(num_age_groups, 0.);
-    Eigen::Index last_time_index_needed                               = 0;
+    std::vector<ScalarType> mean_ExposedToInfectedNoSymptoms = std::vector<ScalarType>(int(num_age_groups), 0.);
+    std::vector<ScalarType> mean_InfectedNoSymptomsToInfectedSymptoms =
+        std::vector<ScalarType>(int(num_age_groups), 0.);
+    std::vector<ScalarType> mean_InfectedSymptomsToInfectedSevere = std::vector<ScalarType>(int(num_age_groups), 0.);
+    std::vector<ScalarType> mean_InfectedSevereToInfectedCritical = std::vector<ScalarType>(int(num_age_groups), 0.);
+    std::vector<ScalarType> mean_InfectedCriticalToDead           = std::vector<ScalarType>(int(num_age_groups), 0.);
+    Eigen::Index last_time_index_needed                           = 0;
 
     for (size_t group = 0; group < num_age_groups; group++) {
         // Set the Dead compartment to 0 so that RKI data can be added correctly.

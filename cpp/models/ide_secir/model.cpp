@@ -49,13 +49,13 @@ Model::Model(TimeSeries<ScalarType>&& init, std::vector<ScalarType> N_init, std:
         // the simulation.
         m_populations.add_time_point<Eigen::VectorXd>(
             m_transitions.get_last_time(),
-            TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count * m_num_agegroups, 0.));
+            TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count * (int)m_num_agegroups, 0.));
     }
     else {
         // Initialize m_populations with zero as the first point of time if no data is provided for the transitions.
         // This can happen for example in the case of initialization with real data.
         m_populations.add_time_point<Eigen::VectorXd>(
-            0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count * m_num_agegroups, 0));
+            0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count * (int)m_num_agegroups, 0));
     }
 
     // Set deaths at simulation start time t0.
@@ -258,7 +258,8 @@ void Model::initial_compute_compartments(ScalarType dt)
                 m_populations[Eigen::Index(0)][Si] =
                     m_transitions.get_last_value()[StEi] / (dt * m_forceofinfection[group]);
 
-                // Recovered; calculated as the difference between the total population and the sum of the other compartment sizes.
+                // Recovered; calculated as the difference between the total population and the sum of the other
+                // scompartment sizes.
                 m_populations[Eigen::Index(0)][Ri] =
                     m_N[int(group)] - m_populations[Eigen::Index(0)][Si] - m_populations[Eigen::Index(0)][Ei] -
                     m_populations[Eigen::Index(0)][INSi] - m_populations[Eigen::Index(0)][ISyi] -

@@ -365,7 +365,7 @@ private:
 private:
     AgeGroup m_num_groups;
 };
-}; // namespace isecir
+} // namespace isecir
 
 } // namespace mio
 

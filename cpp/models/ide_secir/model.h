@@ -363,7 +363,7 @@ public:
     }
 
     // ---- Public parameters. ----
-    ParameterSet parameters{AgeGroup(m_num_agegroups)}; ///< ParameterSet of Model Parameters.
+    ParameterSet parameters{AgeGroup(int(m_num_agegroups))}; ///< ParameterSet of Model Parameters.
     // Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the
     // initialization part.
     TimeSeries<ScalarType>
@@ -395,12 +395,12 @@ private:
     int m_initialization_method{0}; ///< Gives the index of the method used for the initialization of the model.
     // See also get_initialization_method_compartments() for the number code.
     std::vector<std::vector<ScalarType>> m_transitiondistributions_support_max{std::vector<std::vector<ScalarType>>(
-        m_num_agegroups,
+        int(m_num_agegroups),
         std::vector<ScalarType>((int)InfectionTransition::Count, 0.))}; ///< Vector containing the support_max
     // for all TransitionDistributions.
     std::vector<std::vector<std::vector<ScalarType>>> m_transitiondistributions_derivative{
         std::vector<std::vector<std::vector<ScalarType>>>(
-            m_num_agegroups,
+            int(m_num_agegroups),
             std::vector<std::vector<ScalarType>>(
                 (int)InfectionTransition::Count,
                 std::vector<ScalarType>(
@@ -408,7 +408,7 @@ private:
     // all necessary time points.
     std::vector<std::vector<std::vector<ScalarType>>> m_transitiondistributions_in_forceofinfection{
         std::vector<std::vector<std::vector<ScalarType>>>(
-            m_num_agegroups, std::vector<std::vector<ScalarType>>(2, std::vector<ScalarType>(1, 0.)))}; ///< Vector
+            int(m_num_agegroups), std::vector<std::vector<ScalarType>>(2, std::vector<ScalarType>(1, 0.)))}; ///< Vector
     // containing the weighted TransitionDistributions for all necessary time points in the force of infection term.
 };
 
