@@ -56,7 +56,7 @@ def main_october():
                                           start_date, 0, folder, False)],
                                      -1, datafile, start_date_timestamp, 45, 1.0,
                                      legendplot=list(
-                ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),
+                ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),
                 filename_plot="real_new_infections_"+start_date+"_allage")
         if case == 2:
             for age in range(6):
@@ -70,7 +70,7 @@ def main_october():
                                           get_file_name(start_date, 0, folder, True)],
                                          age, datafile, start_date_timestamp, 45, 1.0,
                                          legendplot=list(
-                    ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),
+                    ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),
                     filename_plot="real_new_infections_"+start_date+"_age"+f"{age}")
 
 
@@ -99,7 +99,7 @@ def main_july():
                 start_date, 50, folder, False)],
                 -1, datafile, start_date_timestamp, 45, 1.0,
                 legendplot=list(
-                ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50"]),
+                ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50"]),
                 filename_plot="real_new_infections_"+start_date+"_allage")
         if case == 2:
             for age in range(6):
@@ -113,7 +113,7 @@ def main_july():
                                           ],
                                          age, datafile, start_date_timestamp, 45, 1.0,
                                          legendplot=list(
-                    ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50"]),
+                    ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50"]),
                     filename_plot="real_new_infections_"+start_date+"_age"+f"{age}")
 
 
