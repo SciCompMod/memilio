@@ -100,7 +100,7 @@ def load_data(file, start_date, tmax, scaleConfirmed):
     df2['DailyNewTransmissions'] = pd.Series(dtype='double')
 
     for age_group in range(len(Age_RKI_names)):
-        # Calculate individuals in compartment InfectedSymptoms using TimeInfectedSymptoms..
+        # Calculate individuals in compartment InfectedSymptoms using TimeInfectedSymptoms.
         df_age = df[(df['Age_RKI'] == Age_RKI_names[age_group])]
         help_I_age = df_age['Confirmed'][(df_age['Date'] >= start_date) & (
             df_age['Date'] <= end_date)].to_numpy()
@@ -149,7 +149,7 @@ def load_data(file, start_date, tmax, scaleConfirmed):
     return df2
 
 
-def compare_compartments_real(files, datafile, legendplot, deaths=False, filename_plot="compare_real"):
+def compare_compartments_real(files, age_group, datafile, start_date, tmax, scaleConfirmed, legendplot, deaths=False, filename_plot="compare_real"):
     """ Plots simulation results compared with real data for the compartments Deaths and InfectedSymptoms.
         The simulation results should consist of accumulated numbers for subcompartments in case of an LCT model.
 
@@ -164,19 +164,35 @@ def compare_compartments_real(files, datafile, legendplot, deaths=False, filenam
     # Define plot.
     plt.figure(filename_plot)
 
-    data_rki_ma = load_data(datafile)
-    num_days = data_rki_ma.shape[0]
+    data_rki = load_data(datafile, start_date, tmax, scaleConfirmed)
+    num_days = tmax + 1
 
-    if (deaths):
-        plt.plot(range(num_days), data_rki_ma['Deaths'],
-                 linestyle='dashed',  color='grey', linewidth=1.2)
-        compartment_idx = 7
-        labely = "Deaths"
+    if (age_group == -1):
+        data_rki = data_rki.drop(columns=['Age_RKI'])
+        data_rki = data_rki.groupby(['Date']).sum()
+        plt.title('All Age Groups')
+        if (deaths):
+            plt.plot(range(num_days), data_rki['Deaths'],
+                     linestyle='dashed',  color='grey', linewidth=1.2)
+            compartment_idx = 7
+            labely = "Deaths"
+        else:
+            plt.plot(range(num_days), data_rki['InfectedSymptoms'],
+                     linestyle='dashed', color='grey', linewidth=1.2)
+            compartment_idx = 3
+            labely = "Number of people in I"
     else:
-        plt.plot(range(num_days), data_rki_ma['InfectedSymptoms'],
-                 linestyle='dashed', color='grey', linewidth=1.2)
-        compartment_idx = 3
-        labely = "Number of people in I"
+        plt.title(Age_RKI_names[age_group])
+        if (deaths):
+            plt.plot(range(num_days), data_rki['Deaths'][(data_rki['Age_RKI'] == Age_RKI_names[age_group])],
+                     linestyle='dashed',  color='grey', linewidth=1.2)
+            compartment_idx = 7
+            labely = "Deaths"
+        else:
+            plt.plot(range(num_days), data_rki['InfectedSymptoms'][(data_rki['Age_RKI'] == Age_RKI_names[age_group])],
+                     linestyle='dashed', color='grey', linewidth=1.2)
+            compartment_idx = 3
+            labely = "Number of people in I"
 
     # Add simulation results to plot.
     for file in range(len(files)):
@@ -192,13 +208,22 @@ def compare_compartments_real(files, datafile, legendplot, deaths=False, filenam
         dates = data['Time'][:]
         # As there should be only one Group, total is the simulation result.
         total = data['Total'][:, :]
-        if (total.shape[1] != 8):
-            raise gd.DataError(
-                "Expected a different number of compartments.")
 
-        # Plot result.
-        plt.plot(dates, total[:, compartment_idx],
-                 linewidth=1.2, linestyle=linestyle_dict[legendplot[1+file]], color=color_dict[legendplot[1+file]])
+        if age_group == -1:
+            if (total.shape[1] != 8):
+                raise gd.DataError(
+                    "Expected a different number of compartments.")
+            # Plot result.
+            plt.plot(dates, total[:, compartment_idx],
+                     linewidth=1.2, linestyle=linestyle_dict[legendplot[1+file]], color=color_dict[legendplot[1+file]])
+        else:
+            if (total.shape[1] != 8*len(Age_RKI_names)):
+                raise gd.DataError(
+                    "Expected a different number of compartments.")
+            # Plot result.
+            plt.plot(dates, total[:, len(secir_dict) * age_group + compartment_idx],
+                     linewidth=1.2, linestyle=linestyle_dict[legendplot[1+file]], color=color_dict[legendplot[1+file]])
+
         h5file.close()
 
     plt.xlabel('Date', fontsize=16)
