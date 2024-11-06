@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2024 MEmilio
 #
-# Authors: Daniel Richter
+# Authors: Maximilian Betz, Daniel Richter
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -36,8 +36,7 @@ from typing_extensions import Self
 
 
 class AST:
-    """
-    Create the ast and assign ids.
+    """! Create the ast and assign ids.
     Functions for getting nodes and node ids.
     """
 
@@ -50,14 +49,20 @@ class AST:
         self.translation_unit = self.create_ast()
 
     def create_ast(self: Self) -> TranslationUnit:
-        """
-        Create an abstract syntax tree for the main model.cpp file with a corresponding CompilationDatabase.
+        """! Create an abstract syntax tree for the main model.cpp file with a corresponding CompilationDatabase.
         A compile_commands.json is required (automatically generated in the build process).
         """
+        self.cursor_id = -1
+        self.id_to_val.clear()
+        self.val_to_id.clear()
+
         idx = Index.create()
 
-        # Create the cmd arguments
         file_args = []
+
+        unwanted_arguments = [
+            '-Wno-unknown-warning', "--driver-mode=g++", "-O3", "-Werror", "-Wshadow"
+        ]
 
         dirname = utility.try_get_compilation_database_path(
             self.config.skbuild_path_to_database)
@@ -65,14 +70,9 @@ class AST:
         commands = compdb.getCompileCommands(self.config.source_file)
         for command in commands:
             for argument in command.arguments:
-                if (argument != '-Wno-unknown-warning' and
-                        argument != "--driver-mode=g++" and argument != "-O3" and argument != "-Werror" and argument != "-Wshadow"):
+                if argument not in unwanted_arguments:
                     file_args.append(argument)
         file_args = file_args[1:-4]
-
-        # Removing only the first and last arguments could miss important flags.
-        # Safer approach is to include all relevant arguments except for optimization/debug flags
-        # file_args = file_args[1:-4] if len(file_args) > 5 else file_args
 
         clang_cmd = [
             "clang-14", self.config.source_file,
@@ -96,15 +96,14 @@ class AST:
             ast_file.write(clang_cmd_result.stdout)
             translation_unit = idx.read(ast_file.name)
 
-        self.assing_ast_with_ids(translation_unit.cursor)
+        self._assing_ast_with_ids(translation_unit.cursor)
 
         logging.info("AST generation completed successfully.")
 
         return translation_unit
 
-    def assing_ast_with_ids(self, cursor: Cursor) -> None:
-        """
-        Traverse the AST and assign a unique ID to each node during traversal.
+    def _assing_ast_with_ids(self, cursor: Cursor) -> None:
+        """! Traverse the AST and assign a unique ID to each node during traversal.
 
         @param cursor: The current node (Cursor) in the AST to traverse.
         """
@@ -122,15 +121,15 @@ class AST:
             f"Node {cursor.spelling or cursor.kind} assigned ID {id}")
 
         for child in cursor.get_children():
-            self.assing_ast_with_ids(child)
+            self._assing_ast_with_ids(child)
 
     @property
     def root_cursor(self):
         return self.translation_unit.cursor
 
     def get_node_id(self, cursor: Cursor) -> int:
-        """
-        Returns the id of the current node.
+        """! Returns the id of the current node.
+
         Extracs the key from the current cursor from the dictonary id_to_val
 
         @param cursor: The current node of the AST as a cursor object from libclang.
@@ -143,8 +142,7 @@ class AST:
         raise IndexError(f"Cursor {cursor} is out of bounds.")
 
     def get_node_by_index(self, index: int) -> Cursor:
-        """
-        Returns the node at the specified index position.
+        """! Returns the node at the specified index position.
 
         @param index: Node_id from the ast.
         """

@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2024 MEmilio
 #
-# Authors: Daniel Richter
+# Authors: Maximilian Betz, Daniel Richter
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -17,38 +17,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-"""
-@file graph_visualization.py
-@brief Class for plotting the abstract-syntax-tree in different formats. 
-"""
+
 import os
-from typing import TextIO
+import logging
+from typing import Callable
 from graphviz import Digraph
 from clang.cindex import Cursor
-from .ast import AST
+from memilio.generation.ast import AST
 
 
 class Visualization:
-    """
-    Class for plotting the abstract-syntax-tree in different formats.
+    """! Class for plotting the abstract syntax tree in different formats.
     """
     @staticmethod
     def output_ast_terminal(ast: AST, cursor: Cursor) -> None:
-        """
-        Output the abstract syntax tree to terminal.
+        """! Output the abstract syntax tree to terminal.
 
         @param ast: ast object from AST class.
         @param cursor: The current node of the AST as a cursor object from libclang.
         """
 
-        _output_cursor_and_children_print(cursor, ast)
+        def terminal_writer(level: int, cursor_label: str) -> None:
+            print(indent(level) + cursor_label)
 
-        print(f'AST-terminal written.')
+        _output_cursor_and_children(cursor, ast, terminal_writer)
+
+        logging.info("AST-Terminal written.")
 
     @staticmethod
-    def output_ast_png(cursor: Cursor, max_depth: int, ) -> None:
-        """
-        Output the abstract syntax tree to a .png. Set the starting node and the max depth.
+    def output_ast_png(cursor: Cursor, max_depth: int, output_file_name: str = 'ast_graph') -> None:
+        """! Output the abstract syntax tree to a .png. Set the starting node and the max depth.
+
+        To save the abstract syntax tree as an png with a starting node and a depth u cann use the following command
+
+        Example command: aviz.output_ast_png(ast.get_node_by_index(1), 2)
+
+        aviz -> instance of the Visualization class.
+
+        ast -> instance of the AST class.
+
+        .get_node_by_index -> get a specific node by id (use .output_ast_formatted to see node ids)
+
+        The number 2 is a example for the depth the graph will show
 
         @param cursor: The current node of the AST as a cursor object from libclang.
         @param max_depth: Maximal depth the graph displays.
@@ -59,83 +69,47 @@ class Visualization:
         _output_cursor_and_children_graphviz_digraph(
             cursor, graph, max_depth, 0)
 
-        output_file = 'ast_graph'
+        graph.render(filename=output_file_name, view=False)
 
-        graph.render(output_file, view=False)
-
-        output_path = os.path.abspath(f"{output_file}.png")
-        print(f'AST-png written to {output_path}')
+        output_path = os.path.abspath(f"{output_file_name}.png")
+        logging.info(f"AST-png written to {output_path}")
 
     @staticmethod
-    def output_ast_formatted(ast: AST, cursor: Cursor) -> None:
-        """
-        Output the abstract syntax tree to a file.
+    def output_ast_formatted(ast: AST, cursor: Cursor, output_file_name: str = 'ast_formated.txt') -> None:
+        """!Output the abstract syntax tree to a file.
 
         @param ast: ast object from AST class.
         @param cursor: The current node of the AST as a cursor object from libclang.
         """
 
-        with open('ast_formated.txt', 'w') as f:
-            _output_cursor_and_children_text(cursor, ast,  f)
+        with open(output_file_name, 'w') as f:
+            def file_writer(level: int, cursor_label: str) -> None:
+                f.write(indent(level) + cursor_label + newline())
+            _output_cursor_and_children(cursor, ast,  file_writer)
 
-        print("AST-formated written to " + str(os.path.abspath(f.name)))
+        output_path = os.path.abspath(f"{output_file_name}")
+        logging.info(f"AST-formated written to {output_path}")
 
 
 def indent(level: int) -> str:
-    """
-    Create an indentation based on the level.
+    """! Create an indentation based on the level.
     """
     return '│   ' * level + '├── '
 
 
 def newline() -> str:
-    """
-    Create a new line.
+    """! Create a new line.
     """
     return '\n'
 
 
-def _output_cursor_and_children_text(cursor: Cursor, ast: AST, f: TextIO, level: int = 0) -> int:
-    """
-    Output of the cursor and its children in text format,
-    with highlighting for folder, spelling and child type.
-
-    @param cursor: The current node of the AST as a cursor object from libclang.
-    @param ast: ast object from AST class.
-    @param f: Open file object for output.
-    @param level: The current depth in the AST for indentation purposes.
-    @param cursor_id: A unique ID to identify each cursor.
-    """
-
-    cursor_id = ast.get_node_id(cursor)
-
-    cursor_kind = f"<CursorKind.{cursor.kind.name}>"
-    file_path = cursor.location.file.name if cursor.location.file else ""
-
-    if cursor.spelling:
-        cursor_label = (f'ID:{cursor_id} {cursor.spelling} '
-                        f'{cursor_kind}   '
-                        f'{file_path}')
-    else:
-        cursor_label = f'ID:{cursor_id} {cursor_kind} {file_path}'
-
-    f.write(indent(level) + cursor_label + newline())
-
-    for child in cursor.get_children():
-        _output_cursor_and_children_text(
-            child, ast, f, level + 1)
-
-
-def _output_cursor_and_children_print(cursor: Cursor, ast: AST, level: int = 0) -> None:
-    """
-    Prints the current cursor and its child elements in text format into the terminal,
-    with highlighting for folder, spelling and child type.
+def _output_cursor_and_children(cursor: Cursor, ast: AST, writer: Callable[[int, str], None], level: int = 0) -> None:
+    """!Generic function to output the cursor and its children with a specified writer.
 
     @param cursor: The current node of the AST as a libclang cursor object.
-    @param ast: ast object from AST class.
-    @param f: Open file object for output.
+    @param ast: AST object from the AST class.
+    @param writer: Function that takes `level` and `cursor_label` and handles output.
     @param level: The current depth in the AST for indentation purposes.
-    @return: The current cursor ID for subsequent nodes.
     """
 
     cursor_id = ast.get_node_id(cursor)
@@ -150,16 +124,15 @@ def _output_cursor_and_children_print(cursor: Cursor, ast: AST, level: int = 0) 
     else:
         cursor_label = f'ID:{cursor_id} {cursor_kind} {file_path}'
 
-    print(indent(level) + cursor_label)
+    writer(level, cursor_label)
 
     for child in cursor.get_children():
-        _output_cursor_and_children_print(
-            child, ast, level + 1)
+        _output_cursor_and_children(
+            child, ast, writer, level + 1)
 
 
 def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph, max_d: int, current_d: int, parent_node: str = None) -> None:
-    """
-    Output the cursor and its children as a graph using Graphviz.
+    """! Output the cursor and its children as a graph using Graphviz.
 
     @param cursor: The current node of the AST as a Cursor object from libclang.
     @param graph: Graphviz Digraph object where the nodes and edges will be added.
