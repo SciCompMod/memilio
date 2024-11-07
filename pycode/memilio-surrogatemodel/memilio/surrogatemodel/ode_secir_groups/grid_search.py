@@ -13,8 +13,8 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
     os.path.dirname(os.path.realpath(path)))), 'data_paper')
 
-filename = "data_secir_groups_30days_Germany_10k.pickle"
-filename_df = "dataframe_withgroups_30days_Germany_10k_nodamp_new.csv"
+filename = "data_secir_groups_30days_I_based_Germany_10k_nodamp.pickle"
+filename_df = "gridserach_secir_groups_30days_I_based_Germany_10k_nodamp.csv"
 
 label_width = 30
 early_stop = 100
@@ -58,13 +58,21 @@ def train_and_evaluate_model(param, max_epochs):
     kf = KFold(n_splits=5)
     train_losses = []
     val_losses = []
+    rescaled_mape_scores = []  # New list to store rescaled MAPE for each fold
 
     losses_history_all = []
     val_losses_history_all = []
 
     start = time.perf_counter()
 
+    # Custom metric for MAPE on rescaled data
+    def rescaled_mape(y_true, y_pred):
+        y_true_rescaled = np.expm1(y_true)
+        y_pred_rescaled = np.expm1(y_pred)
+        return 100 * np.mean(np.abs((y_true_rescaled - y_pred_rescaled) / y_true_rescaled))
+
     for train_idx, val_idx in kf.split(inputs_grid_search):
+        # Model creation based on `modelname`
         if modelname == 'Dense':
             model = tf.keras.Sequential([tf.keras.layers.Flatten(),
                                          tf.keras.layers.Dense(units=neuron_number, activation='relu')])
@@ -114,34 +122,43 @@ def train_and_evaluate_model(param, max_epochs):
                             validation_data=(valid_inputs, valid_labels),
                             callbacks=[early_stopping])
 
+        # Append minimum loss values
         train_losses.append(np.min(history.history['loss']))
         val_losses.append(np.min(history.history['val_loss']))
         losses_history_all.append(history.history['loss'])
         val_losses_history_all.append(history.history['val_loss'])
 
+        # Calculate and store the rescaled MAPE for validation set
+        val_pred = model.predict(valid_inputs)
+        fold_rescaled_mape = rescaled_mape(valid_labels, val_pred)
+        # Save each fold's rescaled MAPE
+        rescaled_mape_scores.append(fold_rescaled_mape)
+
     elapsed = time.perf_counter() - start
 
     # Print out the results
-    elapsed = time.perf_counter() - start
     print(f"Best train losses: {train_losses}")
     print(f"Best validation losses: {val_losses}")
+    print(f"Rescaled MAPE for each fold: {rescaled_mape_scores}")
     print("--------------------------------------------")
     print(f"K-Fold Train Score: {np.mean(train_losses)}")
     print(f"K-Fold Validation Score: {np.mean(val_losses)}")
+    print(f"K-Fold Rescaled MAPE: {np.mean(rescaled_mape_scores)}")
     print(f"Time for training: {elapsed:.4f} seconds")
     print(f"Time for training: {elapsed / 60:.4f} minutes")
 
-    # After cross-validation, we can test on the withhold dataset (outside of the loop)
+    # After cross-validation, save results to df_results
     df_results.loc[len(df_results.index)] = [
         modelname, layer, neuron_number, np.nan,  # Placeholder for test score
         np.mean(train_losses),
         np.mean(val_losses),
-        np.nan,  # Placeholder for final test score
+        np.mean(rescaled_mape_scores),  # Store the mean rescaled MAPE
         elapsed / 60,
         [losses_history_all],
         [val_losses_history_all]
     ]
 
+    # Save df_results to CSV
     path = os.path.dirname(os.path.realpath(__file__))
     file_path = os.path.join(
         os.path.dirname(
@@ -150,6 +167,7 @@ def train_and_evaluate_model(param, max_epochs):
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
     file_path = os.path.join(file_path, filename_df)
+    #file_path = os.path.join('/localdata1/schm_a45/data_paper_November/')
     df_results.to_csv(file_path)
 
 
