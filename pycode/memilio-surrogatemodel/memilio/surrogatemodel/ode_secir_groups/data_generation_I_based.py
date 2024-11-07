@@ -129,11 +129,14 @@ def run_secir_groups_simulation(days, damping_day, populations):
                     + model.populations[AgeGroup(i), InfectionState.InfectedCritical].value
                     + model.populations[AgeGroup(i), InfectionState.Dead].value
                     )
+
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.Recovered)] = random.uniform(0, (populations[i]-subtotal))
 
-        model.populations[AgeGroup(i), InfectionState.Susceptible].value = populations[i] - \
-            model.populations.get_group_total_AgeGroup(AgeGroup(i))
+        # print('get_population_ageGroups: ' +
+        #      str(model.populations.get_group_total_AgeGroup(AgeGroup(i))))
+        model.populations.set_difference_from_group_total_AgeGroup(
+            (AgeGroup(i), Index_InfectionState(InfectionState.Susceptible)), populations[i])
 
         # Compartment transition propabilities
         model.parameters.RelativeTransmissionNoSymptoms[AgeGroup(i)] = 1
@@ -253,7 +256,7 @@ def generate_data(
             os.mkdir(path_out)
 
         # save dict to json file
-        with open(os.path.join(path_out, 'data_secir_groups_30days_I_based_Germany_10k.pickle'), 'wb') as f:
+        with open(os.path.join(path_out, 'data_secir_groups_30days_I_based_Germany_10k_new.pickle'), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -269,6 +272,6 @@ if __name__ == "__main__":
 
     input_width = 5
     label_width = 30
-    num_runs = 10000
+    num_runs = 100
     data = generate_data(num_runs, path_output, path_population, input_width,
                          label_width)
