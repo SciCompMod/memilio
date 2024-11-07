@@ -253,7 +253,12 @@ struct MaskProtection {
     using Type = CustomIndexArray<UncertainValue<>, MaskType>;
     static Type get_default(AgeGroup /*size*/)
     {
-        return Type({MaskType::Count}, 1.);
+        Type defaut_value                 = Type(MaskType::Count, 0.0);
+        // Initial values according to http://dx.doi.org/10.15585/mmwr.mm7106e1
+        defaut_value[MaskType::FFP2]      = 0.83;
+        defaut_value[MaskType::Surgical]  = 0.66;
+        defaut_value[MaskType::Community] = 0.56;
+        return defaut_value;
     }
     static std::string name()
     {

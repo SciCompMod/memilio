@@ -17,11 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_ABM_TEST_TYPE_H
-#define MIO_ABM_TEST_TYPE_H
 
-#include "abm/time.h"
-#include "memilio/io/default_serialize.h"
+#ifndef MIO_ABM_INTERVENTION_TYPE_H
+#define MIO_ABM_INTERVENTION_TYPE_H
 
 #include <cstdint>
 
@@ -31,31 +29,16 @@ namespace abm
 {
 
 /**
- * @brief Type of a Test.
+ * @brief Type of an Intervention.
  */
-enum class TestType : std::uint32_t
+enum class InterventionType : std::uint32_t
 {
-    Generic,
-    Antigen,
-    PCR,
+    Mask,
+    Testing,
+    Isolation,
 
     Count
 };
-
-/**
-* @brief The TestResult of a Person.
-*/
-struct TestResult {
-    TimePoint time_of_testing{std::numeric_limits<int>::min()}; ///< The TimePoint when the Person performs the test.
-    bool result{false}; ///< The test result.
-
-    /// This method is used by the default serialization feature.
-    auto default_serialize()
-    {
-        return Members("TestResult").add("time_of_testing", time_of_testing).add("result", result);
-    }
-};
-
 } // namespace abm
 } // namespace mio
 

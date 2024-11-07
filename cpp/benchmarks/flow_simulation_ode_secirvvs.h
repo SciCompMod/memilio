@@ -203,7 +203,7 @@ public:
                             pop[ICrPIj] + pop[INSPICj] + pop[ISyPICj] + pop[SIIj] + pop[EIIj] + pop[INSIIj] +
                             pop[ISyIIj] + pop[ISevIIj] + pop[ICrIIj] + pop[INSIICj] + pop[ISyIICj];
 
-                double divNj = 1.0 / Nj; // precompute 1.0/Nj
+                const double divNj = (Nj < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / Nj;
 
                 double ext_inf_force_dummy =
                     cont_freq_eff * divNj *

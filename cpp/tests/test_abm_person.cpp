@@ -152,11 +152,13 @@ TEST(TestPerson, get_tested)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
         mock_uniform_dist_pcr;
     EXPECT_CALL(mock_uniform_dist_pcr.get_mock(), invoke)
-        .Times(4)
-        .WillOnce(Return(0.4))
-        .WillOnce(Return(0.95))
-        .WillOnce(Return(0.6))
-        .WillOnce(Return(0.999));
+        .Times(6)
+        .WillOnce(Return(0.4)) // Draw for agent's test true positive
+        .WillOnce(Return(0.8)) // Draw for is_compliant() return true
+        .WillOnce(Return(0.95)) // Draw for agent's test false negative
+        .WillOnce(Return(0.6)) // Draw for agent's test true negative
+        .WillOnce(Return(0.999)) // Draw for agent's test false negative
+        .WillOnce(Return(0.8)); // Draw for is_compliant() return true
     EXPECT_EQ(infected.get_tested(rng_infected, t, pcr_parameters), true);
     EXPECT_EQ(infected.is_in_quarantine(t, params), true);
     infected.remove_quarantine();
@@ -171,11 +173,13 @@ TEST(TestPerson, get_tested)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
         mock_uniform_dist_antigen;
     EXPECT_CALL(mock_uniform_dist_antigen.get_mock(), invoke)
-        .Times(4)
-        .WillOnce(Return(0.4))
-        .WillOnce(Return(0.95))
-        .WillOnce(Return(0.6))
-        .WillOnce(Return(0.999));
+        .Times(6)
+        .WillOnce(Return(0.4)) // Draw for agent's test true positive
+        .WillOnce(Return(0.8)) // Draw for is_compliant() return true
+        .WillOnce(Return(0.95)) // Draw for agent's test false negative
+        .WillOnce(Return(0.6)) // Draw for agent's test true negative
+        .WillOnce(Return(0.999)) // Draw for agent's test false negative
+        .WillOnce(Return(0.8)); // Draw for is_compliant() return true
     EXPECT_EQ(infected.get_tested(rng_infected, t, antigen_parameters), true);
     EXPECT_EQ(infected.get_tested(rng_infected, t, antigen_parameters), false);
     EXPECT_EQ(susceptible.get_tested(rng_suscetible, t, antigen_parameters), false);
@@ -210,78 +214,41 @@ TEST(TestPerson, interact)
     EXPECT_EQ(person.get_time_at_location(), dt);
 }
 
-TEST(TestPerson, applyMaskIntervention)
-{
-    auto rng = mio::RandomNumberGenerator();
-
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    mio::abm::Location target(mio::abm::LocationType::Work, 0, num_age_groups);
-    auto person = make_test_person(home);
-    person.get_mask().change_mask(mio::abm::MaskType::Community);
-    auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
-
-    target.set_npi_active(false);
-    person.apply_mask_intervention(rng_person, target);
-    ASSERT_FALSE(person.get_wear_mask());
-
-    auto preferences = std::vector<double>((uint32_t)mio::abm::LocationType::Count, 1.);
-    person.set_mask_preferences(preferences);
-    person.apply_mask_intervention(rng_person, target);
-
-    ASSERT_TRUE(person.get_wear_mask());
-
-    target.set_npi_active(true);
-    target.set_required_mask(mio::abm::MaskType::Surgical);
-    preferences = std::vector<double>((uint32_t)mio::abm::LocationType::Count, 0.);
-    person.set_mask_preferences(preferences);
-    person.apply_mask_intervention(rng_person, target);
-
-    ASSERT_EQ(person.get_mask().get_type(), mio::abm::MaskType::Surgical);
-    ASSERT_TRUE(person.get_wear_mask());
-
-    preferences = std::vector<double>((uint32_t)mio::abm::LocationType::Count, -1.);
-    person.set_mask_preferences(preferences);
-    person.apply_mask_intervention(rng_person, target);
-
-    ASSERT_FALSE(person.get_wear_mask());
-}
-
 TEST(TestPerson, setWearMask)
 {
+    auto t = mio::abm::TimePoint(0);
     mio::abm::Location location(mio::abm::LocationType::School, 0, num_age_groups);
     auto person = make_test_person(location);
 
-    person.set_wear_mask(false);
-    ASSERT_FALSE(person.get_wear_mask());
+    person.set_mask(mio::abm::MaskType::None, t);
+    EXPECT_EQ(person.get_mask().get_type(), mio::abm::MaskType::None);
 
-    person.set_wear_mask(true);
-    ASSERT_TRUE(person.get_wear_mask());
+    person.set_mask(mio::abm::MaskType::Community, t);
+    EXPECT_NE(person.get_mask().get_type(), mio::abm::MaskType::None);
 }
 
 TEST(TestPerson, getMaskProtectiveFactor)
 {
+    auto t = mio::abm::TimePoint(0);
     mio::abm::Location location(mio::abm::LocationType::School, 0, 6);
     auto person_community = make_test_person(location);
-    person_community.get_mask().change_mask(mio::abm::MaskType::Community);
-    person_community.set_wear_mask(true);
+    person_community.set_mask(mio::abm::MaskType::Community, t);
     auto person_surgical = make_test_person(location);
-    person_surgical.get_mask().change_mask(mio::abm::MaskType::Surgical);
-    person_surgical.set_wear_mask(true);
+    person_surgical.set_mask(mio::abm::MaskType::Surgical, t);
     auto person_ffp2 = make_test_person(location);
-    person_ffp2.get_mask().change_mask(mio::abm::MaskType::FFP2);
-    person_ffp2.set_wear_mask(true);
+    person_ffp2.set_mask(mio::abm::MaskType::FFP2, t);
     auto person_without = make_test_person(location);
-    person_without.set_wear_mask(false);
+    person_without.set_mask(mio::abm::MaskType::None, t);
 
     mio::abm::Parameters params                                             = mio::abm::Parameters(num_age_groups);
     params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Community}] = 0.5;
     params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Surgical}]  = 0.8;
     params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::FFP2}]      = 0.9;
 
-    ASSERT_EQ(person_community.get_mask_protective_factor(params), 0.5);
-    ASSERT_EQ(person_surgical.get_mask_protective_factor(params), 0.8);
-    ASSERT_EQ(person_ffp2.get_mask_protective_factor(params), 0.9);
-    ASSERT_EQ(person_without.get_mask_protective_factor(params), 0.);
+    EXPECT_EQ(person_community.get_mask_protective_factor(params), 0.5);
+    EXPECT_EQ(person_surgical.get_mask_protective_factor(params), 0.8);
+    EXPECT_EQ(person_ffp2.get_mask_protective_factor(params), 0.9);
+    EXPECT_EQ(person_without.get_mask_protective_factor(params), 0.);
 }
 
 TEST(TestPerson, getLatestProtection)
@@ -295,15 +262,15 @@ TEST(TestPerson, getLatestProtection)
     auto t = mio::abm::TimePoint(0);
     person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, t);
     auto latest_protection = person.get_latest_protection();
-    ASSERT_EQ(latest_protection.first, mio::abm::ExposureType::GenericVaccine);
-    ASSERT_EQ(latest_protection.second.days(), t.days());
+    EXPECT_EQ(latest_protection.first, mio::abm::ExposureType::GenericVaccine);
+    EXPECT_EQ(latest_protection.second.days(), t.days());
 
     t = mio::abm::TimePoint(40 * 24 * 60 * 60);
     person.add_new_infection(mio::abm::Infection(prng, static_cast<mio::abm::VirusVariant>(0), age_group_15_to_34,
                                                  params, t, mio::abm::InfectionState::Exposed));
     latest_protection = person.get_latest_protection();
-    ASSERT_EQ(latest_protection.first, mio::abm::ExposureType::NaturalInfection);
-    ASSERT_EQ(latest_protection.second.days(), t.days());
+    EXPECT_EQ(latest_protection.first, mio::abm::ExposureType::NaturalInfection);
+    EXPECT_EQ(latest_protection.second.days(), t.days());
 }
 
 TEST(Person, rng)
@@ -339,4 +306,50 @@ TEST(Person, addAndGetTestResult)
     // Test if m_test_results updated
     person.add_test_result(t, mio::abm::TestType::Generic, true);
     EXPECT_TRUE(person.get_test_result(mio::abm::TestType::Generic).result);
+}
+
+TEST(TestPerson, isCompliant)
+{
+    using testing::Return;
+
+    // Initialize the random number generator
+    auto rng = mio::RandomNumberGenerator();
+
+    // Create locations
+    mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
+
+    // Create test person and associated random number generator
+    auto person     = make_test_person(home);
+    auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
+
+    // Test cases with a complete truth table for compliance levels
+    struct TestCase {
+        mio::abm::InterventionType intervention_type;
+        double compliance_level;
+        bool expected_compliance;
+    };
+
+    std::vector<TestCase> test_cases = {
+        {mio::abm::InterventionType::Mask, 1.0, true},       {mio::abm::InterventionType::Mask, 0.4, false},
+        {mio::abm::InterventionType::Mask, 0.2, false},      {mio::abm::InterventionType::Mask, 0.9, true},
+        {mio::abm::InterventionType::Mask, 0.5, false},      {mio::abm::InterventionType::Mask, 0.1, false},
+        {mio::abm::InterventionType::Testing, 1.0, true},    {mio::abm::InterventionType::Testing, 0.4, false},
+        {mio::abm::InterventionType::Testing, 0.2, false},   {mio::abm::InterventionType::Testing, 0.9, true},
+        {mio::abm::InterventionType::Testing, 0.5, false},   {mio::abm::InterventionType::Testing, 0.1, false},
+        {mio::abm::InterventionType::Isolation, 1.0, true},  {mio::abm::InterventionType::Isolation, 0.4, false},
+        {mio::abm::InterventionType::Isolation, 0.2, false}, {mio::abm::InterventionType::Isolation, 0.9, true},
+        {mio::abm::InterventionType::Isolation, 0.5, false}, {mio::abm::InterventionType::Isolation, 0.1, false},
+    };
+
+    // Return mock values for all tests.
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(18).WillRepeatedly(Return(0.8));
+
+    for (const auto& test_case : test_cases) {
+        // Set the compliance level for the person
+        person.set_compliance(test_case.intervention_type, test_case.compliance_level);
+
+        // Check if the person is compliant
+        EXPECT_EQ(person.is_compliant(rng_person, test_case.intervention_type), test_case.expected_compliance);
+    }
 }

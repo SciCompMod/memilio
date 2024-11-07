@@ -36,9 +36,9 @@ namespace abm
  */
 enum class ExposureType : std::uint32_t
 {
-    NoProtection     = 0,
-    NaturalInfection = 1,
-    GenericVaccine   = 2,
+    NoProtection,
+    NaturalInfection,
+    GenericVaccine,
     Count //last!!
 };
 

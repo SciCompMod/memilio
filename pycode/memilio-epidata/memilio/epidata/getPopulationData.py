@@ -39,21 +39,32 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 pd.options.mode.copy_on_write = True
 
 
-def read_population_data():
+def read_population_data(ref_year):
     """! Reads Population data from regionalstatistik.de
 
     A request is made to regionalstatistik.de and the StringIO is read in as a csv into the dataframe format.
+    @param ref_year [Default: None] or year (jjjj) convertible to str. Reference year.
     @return DataFrame
     """
+    if ref_year is not None:
+        try:
+            download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv&zeiten=' + \
+                str(ref_year)
+            req = requests.get(download_url)
+            df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=6)
+        except pd.errors.ParserError:
+            gd.default_print('Warning', 'Data for year '+str(ref_year) +
+                             ' is not available; downloading newest data instead.')
+            ref_year = None
+    if ref_year is None:
+        download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv'
+        req = requests.get(download_url)
+        df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=6)
 
-    download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv'
-    req = requests.get(download_url)
-    df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=6)
-
-    return df_pop_raw
+    return df_pop_raw, ref_year
 
 
-def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_format: str, merge_eisenach: bool):
+def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_format: str, merge_eisenach: bool, ref_year):
     """! Writes population dataframe into directory with new column names and age groups
 
     @param df_pop Population data DataFrame to be exported
@@ -62,6 +73,7 @@ def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_forma
     @param merge_eisenach Defines whether the counties 'Wartburgkreis'
         and 'Eisenach' are listed separately or
         combined as one entity 'Wartburgkreis'.
+    @param ref_year None or year (jjjj) convertible to str. Reference year.
     @return exported DataFrame
     """
 
@@ -111,19 +123,20 @@ def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_forma
 
     gd.check_dir(directory)
 
-    if len(df_pop_export) == 401:
-        filename = 'county_current_population_dim401'
-        gd.write_dataframe(df_pop_export, directory, filename, file_format)
-
-    if len(df_pop_export) == 400 or merge_eisenach:
+    if ref_year is None:
         filename = 'county_current_population'
+    else:
+        filename = 'county_' + str(ref_year) + '_population'
 
-        # Merge Eisenach and Wartburgkreis
-        df_pop_export = geoger.merge_df_counties_all(
-            df_pop_export, sorting=[dd.EngEng["idCounty"]],
-            columns=dd.EngEng["idCounty"])
+    if len(df_pop_export) == 401:
+        filename = filename + '_dim401'
 
-        gd.write_dataframe(df_pop_export, directory, filename, file_format)
+    # Merge Eisenach and Wartburgkreis
+    df_pop_export = geoger.merge_df_counties_all(
+        df_pop_export, sorting=[dd.EngEng["idCounty"]],
+        columns=dd.EngEng["idCounty"])
+
+    gd.write_dataframe(df_pop_export, directory, filename, file_format)
 
     return df_pop_export
 
@@ -203,23 +216,20 @@ def test_total_population(df_pop, age_cols):
     @param df_pop Population Dataframe with all counties
     @param age_cols All age groups in DataFrame"""
 
-    total_sum_2020 = 83155031
-    total_sum_2021 = 83237124
-    total_sum_2022 = 84358845
+    total_sum_expect = 84e6
     total_sum = df_pop[age_cols].sum().sum()
 
-    if total_sum == total_sum_2022:
-        pass
-    elif total_sum == total_sum_2021:
-        warnings.warn('Using data of 2021. Newer data is available.')
-    elif total_sum == total_sum_2020:
-        warnings.warn('Using data of 2020. Newer data is available.')
-    else:
-        raise gd.DataError('Total Population does not match expectation.')
+    if not isinstance(total_sum, (int, np.integer)):
+        raise gd.DataError('Unexpected dtypes in Population Data.')
+    # check if total population is +-5% accurate to 2024 population
+    if (total_sum > 1.05*total_sum_expect) or (total_sum < 0.95*total_sum_expect):
+        gd.default_print(
+            'Warning', 'Total Population does not match expectation.')
 
 
 def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
                           out_folder: str = dd.defaultDict['out_folder'],
+                          ref_year=None,
                           **kwargs
                           ) -> pd.DataFrame:
     """! Downloads or reads the population data.
@@ -232,6 +242,7 @@ def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
         downloaded. Default defined in defaultDict.
     @param out_folder Path to folder where data is written in folder
         out_folder/Germany. Default defined in defaultDict.
+    @param ref_year [Default: None] or year (jjjj) convertible to str. Reference year.
     @return DataFrame with adjusted population data for all ages to current level.
     """
     conf = gd.Conf(out_folder, **kwargs)
@@ -245,9 +256,9 @@ def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
     directory = os.path.join(out_folder, 'Germany')
     gd.check_dir(directory)
 
-    df_pop_raw = read_population_data()
+    df_pop_raw, ref_year = read_population_data(ref_year)
 
-    return df_pop_raw
+    return df_pop_raw, ref_year
 
 
 def preprocess_population_data(df_pop_raw: pd.DataFrame,
@@ -310,7 +321,8 @@ def preprocess_population_data(df_pop_raw: pd.DataFrame,
 def write_population_data(df_pop: pd.DataFrame,
                           out_folder: str = dd.defaultDict['out_folder'],
                           file_format: str = dd.defaultDict['file_format'],
-                          merge_eisenach: bool = True
+                          merge_eisenach: bool = True,
+                          ref_year=None
                           ) -> None or pd.DataFrame:
     """! Write the population data into json files
     Three kinds of structuring of the data are done.
@@ -324,12 +336,13 @@ def write_population_data(df_pop: pd.DataFrame,
     @param merge_eisenach [Default: True] or False. Defines whether the
         counties 'Wartburgkreis' and 'Eisenach' are listed separately or
         combined as one entity 'Wartburgkreis'.
+    @param ref_year [Default: None] or year (jjjj) convertible to str. Reference year.
 
     @return None
     """
     directory = os.path.join(out_folder, 'Germany')
     df_pop_export = export_population_dataframe(
-        df_pop, directory, file_format, merge_eisenach)
+        df_pop, directory, file_format, merge_eisenach, ref_year)
     return df_pop_export
 
 
@@ -337,6 +350,7 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
                         file_format: str = dd.defaultDict['file_format'],
                         out_folder: str = dd.defaultDict['out_folder'],
                         merge_eisenach: bool = True,
+                        ref_year=None,
                         **kwargs
                         ):
     """! Download age-stratified population data for the German counties.
@@ -369,14 +383,16 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
     @param merge_eisenach [Default: True] or False. Defines whether the
         counties 'Wartburgkreis' and 'Eisenach' are listed separately or
         combined as one entity 'Wartburgkreis'.
+    @param ref_year [Default: None] or year (jjjj) convertible to str. Reference year.
     @param username str. Username to sign in at regionalstatistik.de.
     @param password str. Password to sign in at regionalstatistik.de.
     @return DataFrame with adjusted population data for all ages to current level.
     """
-    raw_df = fetch_population_data(
+    raw_df, ref_year = fetch_population_data(
         read_data=read_data,
         out_folder=out_folder,
         file_format=file_format,
+        ref_year=ref_year,
         **kwargs
     )
     preprocess_df = preprocess_population_data(
@@ -387,7 +403,8 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
         df_pop=preprocess_df,
         file_format=file_format,
         out_folder=out_folder,
-        merge_eisenach=True
+        merge_eisenach=True,
+        ref_year=ref_year
     )
     return df_pop_export
 

@@ -20,6 +20,7 @@
 #include "abm/model.h"
 #include "abm/location_id.h"
 #include "abm/location_type.h"
+#include "abm/intervention_type.h"
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/mobility_rules.h"
@@ -98,25 +99,42 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
         auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
 
         auto try_mobility_rule = [&](auto rule) -> bool {
-            //run mobility rule and check if change of location can actually happen
+            // run mobility rule and check if change of location can actually happen
             auto target_type                  = rule(personal_rng, person, t, dt, parameters);
             const Location& target_location   = get_location(find_location(target_type, person_id));
             const LocationId current_location = person.get_location();
-            if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
-                if (target_location.get_id() != current_location &&
-                    get_number_persons(target_location.get_id()) < target_location.get_capacity().persons) {
-                    bool wears_mask = person.apply_mask_intervention(personal_rng, target_location);
-                    if (wears_mask) {
-                        change_location(person_id, target_location.get_id());
-                    }
-                    return true;
+
+            // the Person cannot move if they do not wear mask as required at targeted location
+            if (target_location.is_mask_required() && !person.is_compliant(personal_rng, InterventionType::Mask)) {
+                return false;
+            }
+            // the Person cannot move if the capacity of targeted Location is reached
+            if (target_location.get_id() == current_location ||
+                get_number_persons(target_location.get_id()) >= target_location.get_capacity().persons) {
+                return false;
+            }
+            // the Person cannot move if the performed TestingStrategy is positive
+            if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                return false;
+            }
+            // update worn mask to target location's requirements
+            if (target_location.is_mask_required()) {
+                // if the current MaskProtection level is lower than required, the Person changes mask
+                if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
+                    parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
+                    person.set_mask(target_location.get_required_mask(), t);
                 }
             }
-            return false;
+            else {
+                person.set_mask(MaskType::None, t);
+            }
+            // all requirements are met, move to target location
+            change_location(person_id, target_location.get_id());
+            return true;
         };
 
-        //run mobility rules one after the other if the corresponding location type exists
-        //shortcutting of bool operators ensures the rules stop after the first rule is applied
+        // run mobility rules one after the other if the corresponding location type exists
+        // shortcutting of bool operators ensures the rules stop after the first rule is applied
         if (m_use_mobility_rules) {
             (has_locations({LocationType::Cemetery}) && try_mobility_rule(&get_buried)) ||
                 (has_locations({LocationType::Home}) && try_mobility_rule(&return_home_when_recovered)) ||
@@ -129,7 +147,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                 (has_locations({LocationType::Home}) && try_mobility_rule(&go_to_quarantine));
         }
         else {
-            //no daily routine mobility, just infection related
+            // no daily routine mobility, just infection related
             (has_locations({LocationType::Cemetery}) && try_mobility_rule(&get_buried)) ||
                 (has_locations({LocationType::Home}) && try_mobility_rule(&return_home_when_recovered)) ||
                 (has_locations({LocationType::Hospital}) && try_mobility_rule(&go_to_hospital)) ||
@@ -142,20 +160,37 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
     bool weekend     = t.is_weekend();
     size_t num_trips = m_trip_list.num_trips(weekend);
 
-    if (num_trips != 0) {
-        while (m_trip_list.get_current_index() < num_trips &&
-               m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
-            auto& trip        = m_trip_list.get_next_trip(weekend);
-            auto& person      = get_person(trip.person_id);
-            auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
-            if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
-                auto& target_location = get_location(trip.destination);
-                if (m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
-                    person.apply_mask_intervention(personal_rng, target_location);
-                    change_location(person.get_id(), target_location.get_id(), trip.trip_mode);
-                }
+    for (; m_trip_list.get_current_index() < num_trips &&
+           m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds();
+         m_trip_list.increase_index()) {
+        auto& trip        = m_trip_list.get_next_trip(weekend);
+        auto& person      = get_person(trip.person_id);
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
+        // skip the trip if the person is in quarantine or is dead
+        if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
+            continue;
+        }
+        auto& target_location = get_location(trip.destination);
+        // skip the trip if the Person wears mask as required at targeted location
+        if (target_location.is_mask_required() && !person.is_compliant(personal_rng, InterventionType::Mask)) {
+            continue;
+        }
+        // skip the trip if the performed TestingStrategy is positive
+        if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+            continue;
+        }
+        // all requirements are met, move to target location
+        change_location(person.get_id(), target_location.get_id(), trip.trip_mode);
+        // update worn mask to target location's requirements
+        if (target_location.is_mask_required()) {
+            // if the current MaskProtection level is lower than required, the Person changes mask
+            if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
+                parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
+                person.set_mask(target_location.get_required_mask(), t);
             }
-            m_trip_list.increase_index();
+        }
+        else {
+            person.set_mask(MaskType::None, t);
         }
     }
     if (((t).days() < std::floor((t + dt).days()))) {

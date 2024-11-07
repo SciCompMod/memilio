@@ -1091,18 +1091,20 @@ TEST(TestOdeSECIRVVS, test_commuters)
     model.parameters.get_commuter_nondetection()    = non_detection_factor;
     auto sim                                        = mio::osecirvvs::Simulation<>(model);
     auto before_testing                             = sim.get_result().get_last_value().eval();
-    auto mobile_population                                      = (sim.get_result().get_last_value() * mobility_factor).eval();
-    auto mobile_population_tested                               = mobile_population.eval();
+    auto mobile_population                          = (sim.get_result().get_last_value() * mobility_factor).eval();
+    auto mobile_population_tested                   = mobile_population.eval();
 
     mio::osecirvvs::test_commuters<double>(sim, mobile_population_tested, 0.0);
 
     ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)],
-                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] * non_detection_factor,
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] *
+                    non_detection_factor,
                 1e-5);
     ASSERT_NEAR(
         sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed)],
         before_testing[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed)] +
-            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] * (1 - non_detection_factor),
+            mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] *
+                (1 - non_detection_factor),
         1e-5);
     ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)],
                 mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] *
@@ -1115,10 +1117,11 @@ TEST(TestOdeSECIRVVS, test_commuters)
             mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] *
                 (1 - non_detection_factor),
         1e-5);
-    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)],
-                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] *
-                    non_detection_factor,
-                1e-5);
+    ASSERT_NEAR(
+        mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)],
+        mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] *
+            non_detection_factor,
+        1e-5);
     ASSERT_NEAR(
         sim.get_result()
             .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed)],
@@ -1128,7 +1131,8 @@ TEST(TestOdeSECIRVVS, test_commuters)
         1e-5);
 
     ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)],
-                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] * non_detection_factor,
+                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] *
+                    non_detection_factor,
                 1e-5);
     ASSERT_NEAR(sim.get_result()
                     .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed)],
@@ -1136,10 +1140,11 @@ TEST(TestOdeSECIRVVS, test_commuters)
                     mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] *
                         (1 - non_detection_factor),
                 1e-5);
-    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)],
-                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] *
-                    non_detection_factor,
-                1e-5);
+    ASSERT_NEAR(
+        mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)],
+        mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] *
+            non_detection_factor,
+        1e-5);
     ASSERT_NEAR(
         sim.get_result()
             .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed)],
@@ -1147,10 +1152,11 @@ TEST(TestOdeSECIRVVS, test_commuters)
             mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] *
                 (1 - non_detection_factor),
         1e-5);
-    ASSERT_NEAR(mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)],
-                mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] *
-                    non_detection_factor,
-                1e-5);
+    ASSERT_NEAR(
+        mobile_population_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)],
+        mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] *
+            non_detection_factor,
+        1e-5);
     ASSERT_NEAR(
         sim.get_result().get_last_value()[Eigen::Index(
             mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed)],
@@ -1158,6 +1164,25 @@ TEST(TestOdeSECIRVVS, test_commuters)
             mobile_population[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] *
                 (1 - non_detection_factor),
         1e-5);
+}
+
+// Test model initialization with total population of 0 and ensure get_flows returns no NaN values
+TEST(TestOdeSECIRVVS, population_zero_no_nan)
+{
+    // initialize simple model with total population 0
+    mio::osecirvvs::Model<double> model(1);
+    model.populations.set_total(0.0);
+
+    // call the get_flows function
+    auto dydt_default = Eigen::VectorXd(45);
+    dydt_default.setZero();
+    auto y0 = model.get_initial_values();
+    model.get_flows(y0, y0, 0, dydt_default);
+
+    // check that there are now NaN values in dydt_default
+    for (int i = 0; i < dydt_default.size(); i++) {
+        EXPECT_FALSE(std::isnan(dydt_default[i]));
+    }
 }
 
 TEST(TestOdeSECIRVVS, check_constraints_parameters)
