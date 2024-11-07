@@ -85,55 +85,24 @@ struct ContactPatterns {
 };
 
 /**
- * @brief The mean number of people migrating from one Region to another during a TimeStep.
+ * @brief The contact patterns between different Region%s are modelled using a ContactMatrix.
  */
-struct CommutingRatio {
-    using Type = std::vector<std::tuple<Region, Region, double>>;
-    static Type get_default(Region, AgeGroup)
-    {
-        return Type({{Region(0), Region(0), 0.}});
-    }
-    static std::string name()
-    {
-        return "CommutingRatio";
-    }
-};
-
-/**
- * @brief The ratio that regulates the infections during commuting.
-*/
 template <typename FP = ScalarType>
-struct ImpactTransmissionDuringCommuting {
-    using Type = UncertainValue<FP>;
-    static Type get_default(Region, AgeGroup)
-    {
-        return Type(0.);
-    }
-    static std::string name()
-    {
-        return "ImpactTransmissionDuringCommuting";
-    }
-};
-
-/**
- * @brief The Region%s that a person crosses when travelling from one Region to another. 
-*/
-struct PathIntersections {
-    using Type = CustomIndexArray<std::vector<Region>, Region, Region>;
+struct CommutingStrengths {
+    using Type = UncertainContactMatrix<FP>;
     static Type get_default(Region size, AgeGroup)
     {
-        return Type({size, size});
+        return Type(1, static_cast<Eigen::Index>((size_t)size));
     }
     static std::string name()
     {
-        return "PathIntersections";
+        return "CommutingStrengths";
     }
 };
 
 template <typename FP = ScalarType>
-using ParametersBase =
-    ParameterSet<TransmissionProbabilityOnContact<FP>, TimeExposed<FP>, TimeInfected<FP>, ContactPatterns<FP>,
-                 CommutingRatio, ImpactTransmissionDuringCommuting<FP>, PathIntersections>;
+using ParametersBase = ParameterSet<TransmissionProbabilityOnContact<FP>, TimeExposed<FP>, TimeInfected<FP>,
+                                    ContactPatterns<FP>, CommutingStrengths<FP>>;
 
 /**
  * @brief Parameters of SEIR model.
@@ -206,30 +175,6 @@ public:
                 corrected                                                  = true;
             }
         }
-        if (this->template get<ImpactTransmissionDuringCommuting<FP>>() < 0.0 ||
-            this->template get<ImpactTransmissionDuringCommuting<FP>>() > 1.0) {
-            log_warning("Constraint check: Parameter ImpactTransmissionDuringCommuting changed from {:.4f} to {:.4f}.",
-                        this->template get<ImpactTransmissionDuringCommuting<FP>>(), 0.0);
-            this->template get<ImpactTransmissionDuringCommuting<FP>>() = 0.0;
-            corrected                                                   = true;
-        }
-        for (auto& i : this->template get<CommutingRatio>()) {
-            if (std::get<double>(i) < 0.0 || std::get<double>(i) > 1.0) {
-                log_warning("Constraint check: Parameter CommutingRatio changed from {:.4f} to {:.4f}.",
-                            std::get<double>(i), 0.0);
-                std::get<double>(i) = 0.0;
-                corrected           = true;
-            }
-            if (std::get<0>(i) < Region(0) || std::get<1>(i) < Region(0) || std::get<0>(i) >= m_num_regions ||
-                std::get<1>(i) >= m_num_regions) {
-                log_warning(
-                    "Constraint check: Removed entry of Parameter CommutingRatio because of non-existing Regions.");
-                auto it = std::find(this->template get<CommutingRatio>().begin(),
-                                    this->template get<CommutingRatio>().end(), i);
-                this->template get<CommutingRatio>().erase(it);
-                corrected = true;
-            }
-        }
         return corrected;
     }
 
@@ -264,26 +209,6 @@ public:
                 log_error("Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or "
                           "greater {:.4f}",
                           this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0, 1.0);
-                return true;
-            }
-        }
-        if (this->template get<ImpactTransmissionDuringCommuting<FP>>() < 0.0 ||
-            this->template get<ImpactTransmissionDuringCommuting<FP>>() > 1.0) {
-            log_error(
-                "Constraint check: Parameter ImpactTransmissionDuringCommuting {:.4f} smaller {:.4f} or greater {:.4f}",
-                this->template get<ImpactTransmissionDuringCommuting<FP>>(), 0.0, 1.0);
-            return true;
-        }
-        for (auto i : this->template get<CommutingRatio>()) {
-            if (std::get<double>(i) < 0.0 || std::get<double>(i) > 1.0) {
-                log_error("Constraint check: Parameter CommutingRatio entry {:.4f} smaller {:.4f} or greater {:.4f}",
-                          std::get<double>(i), 0.0, 1.0);
-                return true;
-            }
-            if (std::get<0>(i) < Region(0) || std::get<1>(i) < Region(0) || std::get<0>(i) > m_num_regions ||
-                std::get<1>(i) > m_num_regions) {
-                log_error("Constraint check: Parameter CommutingRatio has an entry with start or end Region "
-                          "that does not appear in the model.");
                 return true;
             }
         }
