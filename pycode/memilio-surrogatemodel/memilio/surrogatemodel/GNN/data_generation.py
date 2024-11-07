@@ -177,20 +177,25 @@ def run_secir_groups_simulation(days, graph, num_groups=6):
                                             InfectionState.Dead].value
                         )
 
-            if subtotal > pop_age_group:
-                print('Subtotal is larger than population!')
+            # if subtotal > pop_age_group:
+            #    print('Subtotal is larger than population!')
             # print('The remaining population before Recovered is: '+ str(pop_age_group-subtotal))
             model.populations[age_group, Index_InfectionState(
                 InfectionState.Recovered)] = random.uniform(0, (pop_age_group-subtotal))
 
-            if (subtotal+model.populations[age_group, InfectionState.Recovered].value) >= pop_age_group:
-                print('Subtotal is larger or equal than population!')
+            # if (subtotal+model.populations[age_group, InfectionState.Recovered].value) >= pop_age_group:
+            #    print('Subtotal is larger or equal than population!')
+            # print(': ' +
+            #      str(model.populations.get_group_total_AgeGroup(age_group)))
+            # model.populations[age_group, InfectionState.Susceptible] = pop_age_group - (
+            #    subtotal + model.populations[age_group, InfectionState.Recovered].value)
+            model.populations.set_difference_from_group_total_AgeGroup((
+                age_group, InfectionState.Susceptible), pop_age_group)
 
-            model.populations[age_group, InfectionState.Susceptible] = pop_age_group - \
-                model.populations.get_group_total_AgeGroup(age_group)
+            # model.populations.get_group_total_AgeGroup(age_group))
 
-            print('Susceptible is set to: ' + str(model.populations[age_group,
-                                                                    InfectionState.Susceptible].value))
+            # print('Susceptible is set to: ' + str(model.populations[age_group,
+            #                                                        InfectionState.Susceptible].value))
 
         # Apply mathematical constraints to parameters
         model.apply_constraints()
@@ -268,7 +273,7 @@ def generate_data(
             os.mkdir(path)
 
         # save dict to json file
-        with open(os.path.join(path, 'GNN_data_30days_1k.pickle'), 'wb') as f:
+        with open(os.path.join(path, 'GNN_data_30days_10k.pickle'), 'wb') as f:
             pickle.dump(all_data, f)
 
     return data
@@ -281,12 +286,13 @@ if __name__ == "__main__":
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
         'data_GNN_paper')
-
+    path_output = '/localdata1/gnn_paper_2024/data_Iteration2/GNNs'
     data_dir = os.path.join(os.getcwd(), 'memilio/data')
 
     input_width = 5
     days = 30
-    num_runs = 2
+    num_runs = 10000
 
-    generate_data(num_runs, data_dir,  path_data, input_width,
+    generate_data(num_runs, data_dir,  path_output, input_width,
                   days, save_data=True)
+
