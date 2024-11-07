@@ -72,7 +72,7 @@ public:
 
     int get_transition_flat_index(Eigen::Index transition_idx, size_t agegroup) const
     {
-        return (agegroup * Eigen::Index(InfectionTransition::Count) + transition_idx);
+        return (int(agegroup) * Eigen::Index(InfectionTransition::Count) + transition_idx);
     }
 
     /**
@@ -87,7 +87,7 @@ public:
     */
     int get_state_flat_index(int state_idx, size_t agegroup) const
     {
-        return (agegroup * Eigen::Index(InfectionState::Count) + state_idx);
+        return (int(agegroup) * Eigen::Index(InfectionState::Count) + state_idx);
     }
 
     // ---- Functionality to calculate the sizes of the compartments for time t0. ----

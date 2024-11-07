@@ -87,9 +87,9 @@ void Model::compute_compartment_from_flows(ScalarType dt, Eigen::Index idx_Infec
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
 
     // Index referring to m_transitions.
-    int flow_index = get_transition_flat_index(idx_IncomingFlow, static_cast<Eigen::Index>((size_t)group));
+    int flow_index = get_transition_flat_index(idx_IncomingFlow, (size_t)group);
     // Index referring to m_populations.
-    int state_index = get_state_flat_index(idx_InfectionState, static_cast<Eigen::Index>((size_t)group));
+    int state_index = get_state_flat_index(idx_InfectionState, (size_t)group);
 
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
 
