@@ -28,24 +28,43 @@ file = open(os.path.join(path_data, 'GNN_data_30days_1k.pickle'), 'rb')
 data_secir = pickle.load(file)
 
 len_dataset = data_secir['inputs'].shape[0]
-number_of_nodes = data_secir['inputs'].shape[1]
+number_of_nodes = data_secir['inputs'].shape[3]
 
-shape_input_flat = np.asarray(
-    data_secir['inputs']).shape[2]*np.asarray(data_secir['inputs']).shape[3]
-shape_labels_flat = np.asarray(
-    data_secir['labels']).shape[2]*np.asarray(data_secir['labels']).shape[3]
+# transpose to num_runs, num_nodes, input_days, (num_compartments*num_age_groups) e.g. 1000,400,5,48
+data_secir['inputs'] = data_secir['inputs'].transpose(0, 3, 2, 1)
+data_secir['labels'] = data_secir['labels'].transpose(0, 3, 2, 1)
 
 n_input_days = data_secir['inputs'].shape[2]
 n_label_days = data_secir['labels'].shape[2]
-
 n_age_groups = 6
 n_compartments = 8
 
-new_inputs = np.asarray(
-    data_secir['inputs']).reshape(
-    len_dataset, number_of_nodes, n_input_days*n_age_groups*n_compartments)
-new_labels = np.asarray(data_secir['labels']).reshape(
-    len_dataset, number_of_nodes, n_label_days*n_age_groups*n_compartments)
+# our dataset only contain 1000 samples. The variance in these datasets is relatively high
+# variance. We want to augment the trainig dataset by copying the data (first without any changes)
+test_inputs = data_secir['inputs'][int(0.8*len(data_secir['inputs'])):]
+test_labels = data_secir['labels'][int(0.8*len(data_secir['labels'])):]
+
+# Repeat along the first axis 5 times
+train_inputs = np.tile(data_secir['inputs'][:int(
+    0.8*len(data_secir['inputs']))], (5, 1, 1, 1))
+train_labels = np.tile(data_secir['labels'][:int(
+    0.8*len(data_secir['labels']))], (5, 1, 1, 1))
+
+new_inputs_train = train_inputs.reshape(
+    len(train_inputs), number_of_nodes, n_input_days*n_age_groups*n_compartments)
+new_labels_train = train_labels.reshape(
+    len(train_labels), number_of_nodes, n_label_days*n_age_groups*n_compartments)
+
+new_inputs_test = test_inputs.reshape(
+    len(test_inputs), number_of_nodes, n_input_days*n_age_groups*n_compartments)
+new_labels_test = test_labels.reshape(
+    len(test_labels), number_of_nodes, n_label_days*n_age_groups*n_compartments)
+
+# new_inputs = np.asarray(
+#     data_secir['inputs']).reshape(
+#     len_dataset, number_of_nodes, n_input_days*n_age_groups*n_compartments)
+# new_labels = np.asarray(data_secir['labels']).reshape(
+#     len_dataset, number_of_nodes, n_label_days*n_age_groups*n_compartments)
 
 
 ######## open commuter data #########
@@ -59,12 +78,15 @@ sub_matrix = commuter_data.iloc[:number_of_nodes, 0:number_of_nodes]
 
 adjacency_matrix = np.asarray(sub_matrix)
 adjacency_matrix[adjacency_matrix > 0] = 1
-node_features = new_inputs
 
-node_labels = new_labels
+node_features_train = new_inputs_train
+node_labels_train = new_labels_train
+
+node_features_test = new_inputs_test
+node_labels_test = new_labels_test
 
 layer = ARMAConv
-number_of_layers = 1
+number_of_layers = 2
 number_of_channels = 1024
 parameters = [layer, number_of_layers, number_of_channels]
 
@@ -84,12 +106,24 @@ def train_and_evaluate_model(
 
             self.a = rescale_laplacian(normalized_laplacian(adjacency_matrix))
 
-            return [spektral.data.Graph(x=x, y=y) for x, y in zip(node_features, node_labels)]
+            return [spektral.data.Graph(x=x, y=y) for x, y in zip(node_features_train, node_labels_train)]
 
             super().__init__(**kwargs)
 
     # data = MyDataset()
-    data = MyDataset(transforms=NormalizeAdj())
+    data_train = MyDataset(transforms=NormalizeAdj())
+
+    class MyDataset(spektral.data.dataset.Dataset):
+        def read(self):
+
+            self.a = rescale_laplacian(normalized_laplacian(adjacency_matrix))
+
+            return [spektral.data.Graph(x=x, y=y) for x, y in zip(node_features_test, node_labels_test)]
+
+            super().__init__(**kwargs)
+
+    data_test = MyDataset(transforms=NormalizeAdj())
+
     batch_size = 32
     epochs = epochs
     es_patience = 100  # Patience for early stopping
@@ -99,12 +133,16 @@ def train_and_evaluate_model(
             super().__init__()
             self.conv1 = layer(channels, order=2, iterations=2,
                                share_weights=True,  activation='elu')
-            self.dense = Dense(data.n_labels, activation="linear")
+            self.conv2 = layer(channels, order=2, iterations=2,
+                               share_weights=True,  activation='elu')
+            # not important if data_train or data_test, as we only need label size
+            self.dense = Dense(data_train.n_labels, activation="linear")
 
         def call(self, inputs):
             x, a = inputs
             a = np.asarray(a)
             x = self.conv1([x, a])
+            x = self.conv2([x, a])
             output = self.dense(x)
 
             return output
@@ -150,14 +188,15 @@ def train_and_evaluate_model(
     start = time.perf_counter()
 
     model = Net()
-    # idxs = np.random.permutation(len(data)) #random
-    idxs = np.arange(len(data))  # same for each run
-    split_va, split_te = int(0.8 * len(data)), int(0.9 * len(data))
-    idx_tr, idx_va, idx_te = np.split(idxs, [split_va, split_te])
 
-    data_tr = data[idx_tr]
-    data_va = data[idx_va]
-    data_te = data[idx_te]
+    # 80% for training --> 20% if that for validation
+    idxs = np.arange(len(data_train))
+    split_va = int(0.8 * len(data_train))
+    idx_tr, idx_va = np.split(idxs, [split_va])
+
+    data_tr = data_train[idx_tr]
+    data_va = data_train[idx_va]
+    data_te = data_test
 
     # Data loaders
     loader_tr = MixedLoader(
@@ -279,8 +318,8 @@ def train_and_evaluate_model(
 
 start_hyper = time.perf_counter()
 epochs = 1500
-filename = '/GNN_data_30days_1k.csv'  # name for df
-save_name = 'GNN_data_30days_1k'  # name for model
+filename = '/GNN_data_30days_1k_dataaug.csv'  # name for df
+save_name = 'GNN_data_30days_1k_dataaug'  # name for model
 # for param in parameters:
 train_and_evaluate_model(epochs, 0.001, parameters, save_name, filename)
 
