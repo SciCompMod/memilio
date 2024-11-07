@@ -59,6 +59,7 @@ add_library(memilio
     math/interpolation.h
     math/interpolation.cpp
     math/time_series_functor.h
+    math/time_series_functor.cpp
     mobility/metapopulation_mobility_instant.h
     mobility/metapopulation_mobility_instant.cpp
     mobility/metapopulation_mobility_stochastic.h
