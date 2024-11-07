@@ -30,7 +30,6 @@
 #include "memilio/utils/uncertain_value.h"
 #include "models/abm/location.h"
 #include "models/abm/person.h"
-#include "models/abm/time.h"
 #include "models/abm/trip_list.h"
 #include "models/abm/model.h"
 
@@ -71,7 +70,7 @@ void test_json_serialization(const Json::Value& reference_json)
 
 TEST(TestAbmSerialization, Trip)
 {
-    // See test_json_serialization_full for info on this test.
+    // See test_json_serialization for info on this test.
 
     unsigned i = 1; // counter s.t. members have different values
 
@@ -121,7 +120,7 @@ TEST(TestAbmSerialization, Infection)
 
 TEST(TestAbmSerialization, TestingScheme)
 {
-    // See test_json_serialization_full for info on this test.
+    // See test_json_serialization for info on this test.
 
     unsigned i = 1; // counter s.t. members have different values
 

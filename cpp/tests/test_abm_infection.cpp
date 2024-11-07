@@ -193,7 +193,7 @@ TEST(TestInfection, getPersonalProtectiveFactor)
                                                        mio::abm::VirusVariant::Wildtype}] =
         mio::TimeSeriesFunctor<ScalarType>{mio::TimeSeriesFunctorType::LinearInterpolation, {{2, 0.91}}};
     auto t = mio::abm::TimePoint(6 * 24 * 60 * 60);
-    // TODO: Discuss: Assumption of interpolation in TDPF is that the function is constant with value at front/back entry outside of [front, back] time range. This works with one node as well and prints no errors
+
     EXPECT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.91, eps);
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, person.get_age(),
                                                        mio::abm::VirusVariant::Wildtype}] =
@@ -223,10 +223,8 @@ TEST(TestInfection, getPersonalProtectiveFactor)
     infection_protection_factor = params.get<mio::abm::InfectionProtectionFactor>()[{
         latest_protection.first, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
         t.days() - latest_protection.second.days());
-    EXPECT_NEAR(infection_protection_factor, 0.81,
-                eps); // TODO: why was this 0? should there be an instant falloff after last data point?
-    EXPECT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.81,
-                eps); // TODO: why was this 0? should there be an instant falloff after last data point?
+    EXPECT_NEAR(infection_protection_factor, 0.81, eps);
+    EXPECT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.81, eps);
 
     // Test Parameter SeverityProtectionFactor
     t                               = mio::abm::TimePoint(0) + mio::abm::days(2);
@@ -245,8 +243,7 @@ TEST(TestInfection, getPersonalProtectiveFactor)
     severity_protection_factor = params.get<mio::abm::SeverityProtectionFactor>()[{
         latest_protection.first, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
         t.days() - latest_protection.second.days());
-    EXPECT_NEAR(severity_protection_factor, 0.81,
-                eps); // TODO: why was this 0? should there be an instant falloff after last data point?
+    EXPECT_NEAR(severity_protection_factor, 0.81, eps);
 
     // Test Parameter HighViralLoadProtectionFactor
     t = mio::abm::TimePoint(0) + mio::abm::days(2);
@@ -254,6 +251,5 @@ TEST(TestInfection, getPersonalProtectiveFactor)
     t = mio::abm::TimePoint(0) + mio::abm::days(15);
     EXPECT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0.8635, eps);
     t = mio::abm::TimePoint(0) + mio::abm::days(40);
-    EXPECT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0.81,
-                eps); // TODO: why was this 0? should there be an instant falloff after last data point?
+    EXPECT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0.81, eps);
 }

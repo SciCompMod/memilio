@@ -119,7 +119,7 @@ public:
                            }) &&
                "All table entries must have the same size.");
         // resize data. note that the table entries contain both time and values
-        m_data.resize(table.front().size(), 0); // set colums first so reserve allocates correctly
+        m_data.resize(table.front().size(), 0); // set columns first so reserve allocates correctly
         reserve(table.size()); // reserve needs to happen before setting the number of rows
         m_data.resize(Eigen::NoChange, table.size()); // finalize resize by setting the rows
         // sort table by time

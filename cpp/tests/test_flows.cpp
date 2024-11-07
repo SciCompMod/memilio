@@ -117,7 +117,7 @@ TEST(TestFlows, FlowSimulation)
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
     model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat()[0].get_baseline().setConstant(10);
 
-    mio::set_log_level(mio::LogLevel::off);
+    mio::set_log_level(mio::LogLevel::off); // Suppress log output of check_constraints and the Simulation.
     model.check_constraints();
     auto IC   = std::make_shared<mio::DefaultIntegratorCore<double>>();
     auto seir = mio::simulate_flows<double, mio::oseir::Model<double>>(t0, tmax, dt, model, IC);
@@ -161,7 +161,7 @@ TEST(TestFlows, CompareSimulations)
         model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(10);
 
-    mio::set_log_level(mio::LogLevel::off);
+    mio::set_log_level(mio::LogLevel::off); // Suppress log output of check_constraints and the Simulation.
     model.check_constraints();
     auto seir_sim_flows = simulate_flows(t0, tmax, dt, model);
     auto seir_sim       = simulate(t0, tmax, dt, model);
