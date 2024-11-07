@@ -10,8 +10,8 @@ namespace oseirmobilityimproved
 {
 
 /**
- * @brief The AgeGroup struct is used as a dynamically
- * sized tag for all age dependent categories
+ * @brief The Region struct is used as a dynamically
+ * sized tag for all region dependent categories
  */
 struct Region : public Index<Region> {
     Region(size_t val)

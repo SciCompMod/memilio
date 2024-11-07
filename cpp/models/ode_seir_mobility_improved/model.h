@@ -37,6 +37,8 @@ public:
     Model(int num_regions, int num_agegroups)
         : Base(Populations({Region(num_regions), AgeGroup(num_agegroups), InfectionState::Count}),
                ParameterSet(Region(num_regions), AgeGroup(num_agegroups)))
+        , m_population_after_commuting(
+              mio::Populations<FP, Region, AgeGroup>({Region(num_regions), AgeGroup(num_agegroups)}))
     {
     }
 
@@ -60,31 +62,43 @@ public:
                     }
                 }
                 for (auto region_n : make_index_range(n_regions)) {
-                    for (auto region_m : make_index_range(n_regions)) {
-                        flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(
-                            {region_n, age_i})] += commuting_strengths(region_n.get(), region_m.get()) *
-                                                   infectives_per_region(region_m.get()) /
-                                                   params.template get<PopulationSizes<FP>>()[region_m];
-                    }
-                }
+                    FP flow_SE_helper = 0;
+                    const size_t Sj   = population.get_flat_index({region_n, age_j, InfectionState::Susceptible});
+                    const size_t Ej   = population.get_flat_index({region_n, age_j, InfectionState::Exposed});
+                    const size_t Ij   = population.get_flat_index({region_n, age_j, InfectionState::Infected});
+                    const size_t Rj   = population.get_flat_index({region_n, age_j, InfectionState::Recovered});
 
-                double coeffStoI = params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(
-                                       age_i.get(), age_j.get()) *
-                                   params.template get<TransmissionProbabilityOnContact<FP>>()[age_i];
-                for (auto region : make_index_range(n_regions)) {
+                    const double Nj_inv = 1.0 / (pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj]);
+                    double coeffStoI    = 0.5 *
+                                       params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(
+                                           age_i.get(), age_j.get()) *
+                                       params.template get<TransmissionProbabilityOnContact<FP>>()[age_i];
+
+                    flow_SE_helper +=
+                        pop[population.get_flat_index({region_n, age_j, InfectionState::Infected})] * Nj_inv;
+                    for (auto region_m : make_index_range(n_regions)) {
+                        flow_SE_helper += commuting_strengths(region_n.get(), region_m.get()) *
+                                          infectives_per_region(region_m.get()) /
+                                          m_population_after_commuting[{region_n, age_j}];
+                    }
                     flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(
-                        {region, age_i})] *=
-                        coeffStoI * y[population.get_flat_index({region, age_j, InfectionState::Susceptible})];
-                    flows[Base::template get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>(
-                        {region, age_i})] = (1.0 / params.template get<TimeExposed<FP>>()[age_i]) *
-                                            y[population.get_flat_index({region, age_i, InfectionState::Exposed})];
-                    flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>(
-                        {region, age_i})] = (1.0 / params.template get<TimeInfected<FP>>()[age_i]) *
-                                            y[population.get_flat_index({region, age_i, InfectionState::Infected})];
+                        {region_n, age_i})] +=
+                        flow_SE_helper * coeffStoI *
+                        y[population.get_flat_index({region_n, age_j, InfectionState::Susceptible})];
                 }
+            }
+            for (auto region : make_index_range(n_regions)) {
+                flows[Base::template get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>(
+                    {region, age_i})] = (1.0 / params.template get<TimeExposed<FP>>()[age_i]) *
+                                        y[population.get_flat_index({region, age_i, InfectionState::Exposed})];
+                flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>(
+                    {region, age_i})] = (1.0 / params.template get<TimeInfected<FP>>()[age_i]) *
+                                        y[population.get_flat_index({region, age_i, InfectionState::Infected})];
             }
         }
     }
+
+    mio::Populations<FP, Region, AgeGroup> m_population_after_commuting;
 }; // namespace oseirmobilityimproved
 
 } // namespace oseirmobilityimproved

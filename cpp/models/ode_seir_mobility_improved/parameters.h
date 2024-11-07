@@ -86,38 +86,7 @@ struct ContactPatterns {
 };
 
 /**
- * @brief The ratio that regulates the infections during commuting.
-*/
-template <typename FP = ScalarType>
-struct ImpactTransmissionDuringCommuting {
-    using Type = UncertainValue<FP>;
-    static Type get_default(Region, AgeGroup)
-    {
-        return Type(0.);
-    }
-    static std::string name()
-    {
-        return "ImpactTransmissionDuringCommuting";
-    }
-};
-
-/**
- * @brief The Region%s that a person crosses when travelling from one Region to another. 
-*/
-struct PathIntersections {
-    using Type = CustomIndexArray<std::vector<Region>, Region, Region>;
-    static Type get_default(Region, AgeGroup)
-    {
-        return Type({Region(0), Region(0)});
-    }
-    static std::string name()
-    {
-        return "PathIntersections";
-    }
-};
-
-/**
- * @brief The contact patterns within different Region%s are modelled using a ContactMatrix.
+ * @brief The contact patterns between different Region%s are modelled using a ContactMatrix.
  */
 template <typename FP = ScalarType>
 struct CommutingStrengths {
@@ -133,7 +102,7 @@ struct CommutingStrengths {
 };
 
 /**
- * @brief The Region%s that a person crosses when travelling from one Region to another.
+ * @brief The sizes of the populations after commuting.
  */
 template <typename FP = ScalarType>
 struct PopulationSizes {
@@ -149,9 +118,8 @@ struct PopulationSizes {
 };
 
 template <typename FP = ScalarType>
-using ParametersBase =
-    ParameterSet<TransmissionProbabilityOnContact<FP>, TimeExposed<FP>, TimeInfected<FP>, ContactPatterns<FP>,
-                 ImpactTransmissionDuringCommuting<FP>, PathIntersections, CommutingStrengths<FP>, PopulationSizes<FP>>;
+using ParametersBase = ParameterSet<TransmissionProbabilityOnContact<FP>, TimeExposed<FP>, TimeInfected<FP>,
+                                    ContactPatterns<FP>, CommutingStrengths<FP>, PopulationSizes<FP>>;
 
 /**
  * @brief Parameters of SEIR model.
@@ -224,13 +192,6 @@ public:
                 corrected                                                  = true;
             }
         }
-        if (this->template get<ImpactTransmissionDuringCommuting<FP>>() < 0.0 ||
-            this->template get<ImpactTransmissionDuringCommuting<FP>>() > 1.0) {
-            log_warning("Constraint check: Parameter ImpactTransmissionDuringCommuting changed from {:.4f} to {:.4f}.",
-                        this->template get<ImpactTransmissionDuringCommuting<FP>>(), 0.0);
-            this->template get<ImpactTransmissionDuringCommuting<FP>>() = 0.0;
-            corrected                                                   = true;
-        }
         return corrected;
     }
 
@@ -267,13 +228,6 @@ public:
                           this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0, 1.0);
                 return true;
             }
-        }
-        if (this->template get<ImpactTransmissionDuringCommuting<FP>>() < 0.0 ||
-            this->template get<ImpactTransmissionDuringCommuting<FP>>() > 1.0) {
-            log_error(
-                "Constraint check: Parameter ImpactTransmissionDuringCommuting {:.4f} smaller {:.4f} or greater {:.4f}",
-                this->template get<ImpactTransmissionDuringCommuting<FP>>(), 0.0, 1.0);
-            return true;
         }
         return false;
     }
