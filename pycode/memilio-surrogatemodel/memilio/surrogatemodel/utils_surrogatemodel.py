@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import json
 from memilio.epidata import modifyDataframeSeries as mdfs
+import random
 
 
 def remove_confirmed_compartments(result_array):
@@ -14,6 +15,7 @@ def remove_confirmed_compartments(result_array):
     delete_indices = [index for i in range(
         num_groups) for index in (3+10*i, 5+10*i)]
     return np.delete(result_array, delete_indices, axis=1)
+
 
 def remove_confirmed_compartments_groups(dataset_entries, num_groups):
     """! The compartments which contain confirmed cases are not needed and are 
@@ -75,6 +77,7 @@ def getBaselineMatrix():
 
 #     return population
 
+
 def interpolate_age_groups(data_entry):
     """! Interpolates the age groups from the population data into the age groups used in the simulation. 
     We assume that the people in the age groups are uniformly distributed.
@@ -104,3 +107,60 @@ def get_population(path):
         population.append(interpolate_age_groups(data_entry))
     return population
 
+
+def generate_dampings_withshadowdamp(number_of_dampings, days, min_distance, min_damping_day, n_runs):
+
+    number_of_dampings = number_of_dampings
+    days = days
+    min_distance = min_distance
+    min_damping_day = min_damping_day
+    number_of_runs = n_runs
+
+    all_dampings = []
+    count_runs = 0
+    count_shadow = 0
+    while len(all_dampings) < number_of_runs:
+
+        days_list = list(range((min_damping_day), days))
+        dampings = []
+        if count_shadow < 2:
+            for i in range(number_of_dampings):
+                damp = random.choice(days_list)
+                days_before = list(range(damp-(min_distance), damp))
+                days_after = list(range(damp, damp+(min_distance+1)))
+                dampings.append(damp)
+                days_list = [ele for ele in days_list if ele not in (
+                    days_before+days_after)]
+        else:
+            # chose a forbidden damping
+            damp = random.choice(
+                list(range((0-min_distance), 0)) + list(range(days+1, (days+min_distance+1))))
+
+            days_before = list(range(damp-(min_distance), damp))
+            days_after = list(range(damp, damp+(min_distance+1)))
+            days_list = [ele for ele in days_list if ele not in (
+                days_before+days_after)]
+            dampings.append(damp)
+            for i in range(number_of_dampings):
+
+                damp = random.choice(days_list)
+                days_before = list(range(damp-(min_distance), damp))
+                days_after = list(range(damp, damp+(min_distance+1)))
+                dampings.append(damp)
+                days_list = [ele for ele in days_list if ele not in (
+                    days_before+days_after)]
+                count_shadow = 0
+
+        forbidden_damping_values = list(
+            range((0-min_distance), 0)) + list(range(days+1, (days+min_distance+1)))
+        dampings = [
+            ele for ele in dampings if ele not in forbidden_damping_values]
+        count_runs += 1
+        count_shadow += 1
+        # select first or last five dampings
+        if len(dampings) >= number_of_dampings:
+            # dampings = random.sample(dampings, 5)
+            all_dampings.append(sorted(dampings))
+        #     if count_runs % 2 == 0:
+
+    return np.asarray(all_dampings)
