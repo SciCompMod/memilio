@@ -263,11 +263,11 @@ public:
     auto default_serialize()
     {
         return Members("Location")
+            .add("type", m_type)
             .add("id", m_id)
             .add("parameters", m_parameters)
             .add("cells", m_cells)
             .add("required_mask", m_required_mask)
-            .add("npi_active", m_npi_active)
             .add("geographical_location", m_geographical_location);
     }
 

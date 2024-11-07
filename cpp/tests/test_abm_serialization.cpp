@@ -195,27 +195,24 @@ TEST(TestAbmSerialization, Person)
     reference_json["age_group"]           = Json::UInt(i++);
     reference_json["assigned_locations"]  = json_uint_array({i++, i++, i++, i++, i++, i++, i++, i++, i++, i++, i++});
     reference_json["cells"]               = json_uint_array({i++});
+    reference_json["compliance"]          = json_double_array({(double)i++, (double)i++, (double)i++});
     reference_json["id"]                  = Json::UInt(i++);
     reference_json["infections"]          = Json::Value(Json::arrayValue);
     reference_json["last_transport_mode"] = Json::UInt(i++);
     reference_json["location"]            = Json::UInt(i++);
     reference_json["location_type"]       = Json::UInt(0);
     reference_json["mask"]["mask_type"]   = Json::UInt(0);
-    reference_json["mask"]["time_used"]["seconds"] = Json::Int(i++);
-    reference_json["mask_compliance"] =
-        json_double_array({(double)i++, (double)i++, (double)i++, (double)i++, (double)i++, (double)i++, (double)i++,
-                           (double)i++, (double)i++, (double)i++, (double)i++});
-    reference_json["quarantine_start"]["seconds"] = Json::Int(i++);
-    reference_json["rnd_go_to_school_hour"]       = Json::Value((double)i++);
-    reference_json["rnd_go_to_work_hour"]         = Json::Value((double)i++);
-    reference_json["rnd_schoolgroup"]             = Json::Value((double)i++);
-    reference_json["rnd_workgroup"]               = Json::Value((double)i++);
-    reference_json["rng_counter"]                 = Json::UInt(i++);
+    reference_json["mask"]["time_first_used"]["seconds"] = Json::Int(i++);
+    reference_json["home_isolation_start"]["seconds"]    = Json::Int(i++);
+    reference_json["rnd_go_to_school_hour"]              = Json::Value((double)i++);
+    reference_json["rnd_go_to_work_hour"]                = Json::Value((double)i++);
+    reference_json["rnd_schoolgroup"]                    = Json::Value((double)i++);
+    reference_json["rnd_workgroup"]                      = Json::Value((double)i++);
+    reference_json["rng_counter"]                        = Json::UInt(i++);
     reference_json["test_results"] =
         mio::serialize_json(mio::CustomIndexArray<mio::abm::TestResult, mio::abm::TestType>{}).value();
     reference_json["time_at_location"]["seconds"] = Json::Int(i++);
     reference_json["vaccinations"]                = Json::Value(Json::arrayValue);
-    reference_json["wears_mask"]                  = Json::Value(false);
 
     test_json_serialization<mio::abm::Person>(reference_json);
 }
@@ -234,11 +231,11 @@ TEST(TestAbmSerialization, Location)
     reference_json["geographical_location"]["latitude"]                 = Json::Value((double)i++);
     reference_json["geographical_location"]["longitude"]                = Json::Value((double)i++);
     reference_json["id"]                                                = Json::UInt(i++);
-    reference_json["npi_active"]                                        = Json::Value(false);
     reference_json["parameters"]["ContactRates"]                        = contact_rates;
     reference_json["parameters"]["MaximumContacts"]                     = Json::Value((double)i++);
     reference_json["parameters"]["UseLocationCapacityForTransmissions"] = Json::Value(false);
     reference_json["required_mask"]                                     = Json::UInt(0);
+    reference_json["type"]                                              = Json::UInt(0);
 
     test_json_serialization<mio::abm::Location>(reference_json);
 }

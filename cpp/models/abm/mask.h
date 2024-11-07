@@ -67,7 +67,7 @@ public:
     /// This method is used by the default serialization feature.
     auto default_serialize()
     {
-        return Members("Mask").add("mask_type", m_type).add("time_used", m_time_used);
+        return Members("Mask").add("mask_type", m_type).add("time_first_used", m_time_first_usage);
     }
 
 private:
@@ -81,7 +81,7 @@ template <>
 struct DefaultFactory<abm::Mask> {
     static abm::Mask create()
     {
-        return abm::Mask(abm::MaskType::Count);
+        return abm::Mask(abm::MaskType::Count, abm::TimePoint());
     }
 };
 
