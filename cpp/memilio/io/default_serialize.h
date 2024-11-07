@@ -102,8 +102,10 @@ IOResult<DefaultSerializable> default_deserialize_impl(IOContext& io, DefaultSer
 
     return apply(
         io,
-        [&a, &named_refs...](const Members&... values) {
-            ((named_refs.value = values), ...);
+        [&a, &named_refs...](const Members&... result_values) {
+            // if all results are successfully deserialized, they are unpacked into result_values
+            // then all class variables are overwritten (via the named_refs) with these values
+            ((named_refs.value = result_values), ...);
             return a;
         },
         results);
@@ -115,7 +117,8 @@ IOResult<DefaultSerializable> default_deserialize_impl(IOContext& io, DefaultSer
  * @brief List of a class's members.
  * 
  * Used for default (de)serialization.
- * Holds a char pointer to the class name as well as a tuple of NamedRefs with all added class members. 
+ * Holds a char pointer to the class name as well as a tuple of NamedRefs with all added class members.
+ * Initially, the template parameter pack should be left empty. It will be filled by calling Members::add.
  * @tparam ValueTypes The (non-cv, non-reference) types of member variables.
  */
 template <class... ValueTypes>
@@ -125,7 +128,7 @@ struct Members {
     friend struct Members;
 
     /**
-     * @brief Initialize with a class name. Use `add` to specify its member variables.
+     * @brief Initialize Members with a class name. Use the member function `add` to specify the class's variables.
      * @param[in] class_name Name of a class.
      */
     Members(const char* class_name)
@@ -136,7 +139,13 @@ struct Members {
 
     /**
      * @brief Add a class member.
-     * @param[in] member_name
+     *
+     * Use this function consecutively for all members, e.g. `Members("class").add("a", a).add("b", b).add...`.
+     *
+     * @param[in] member_name The name used for serialization. Should be the same as or similar to the class member.
+     * For example, a good option a private class member `m_time` is simply `"time"`.
+     * @param[in] member A class member. Always pass this variable directly, do not use getters or accessors.
+     * @return A Members object with all previous class members and the newly added one.  
      */
     template <class T>
     [[nodiscard]] Members<ValueTypes..., T> add(const char* member_name, T& member)
@@ -144,8 +153,8 @@ struct Members {
         return Members<ValueTypes..., T>{name, std::tuple_cat(named_refs, std::tuple(NamedRef{member_name, member}))};
     }
 
-    const char* name;
-    std::tuple<NamedRef<ValueTypes>...> named_refs;
+    const char* name; ///< Name of the class.
+    std::tuple<NamedRef<ValueTypes>...> named_refs; ///<  Names and references to members of the class.
 
 private:
     /**
