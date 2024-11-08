@@ -48,8 +48,8 @@ struct Foo {
 The default serialization is less flexible than the serialize and deserialize functions and has additional 
 requirements:
 - The class must be default constructible.
-  - A *private* default constructor can be used by marking the struct `DefaultFactory` as a friend.
-    For the example above, the line `friend DefaultFactory<Foo>;` would be added to the class definition.
+  - If there is a default constructor that is *private*, it can still be used by marking the struct `DefaultFactory` as
+    a friend. For the example above, the line `friend DefaultFactory<Foo>;` would be added to the class definition.
   - Alternatively, you may provide a specialization of the struct `DefaultFactory`. For more details,
     view the struct's documentation.
 - Every class member must be added to `Members` exactly once, and the provided names must be unique.

@@ -48,9 +48,10 @@ auto linear_interpolation(const X& x_eval, const X& x_1, const X& x_2, const V& 
 
 /**
  * @brief Linear interpolation of a TimeSeries.
- * Assumes that the time points are monotonic increasing. If the time series is strictly monotonic, this function is
- * continuous in time.
- * If time is outside of the provided time points, this function has a constant value of the first/last time point.
+ * Assumes that the times in the time series are monotonic increasing. If the times are *strictly* monotonic,
+ * this function is continuous in time.
+ * If the given interpolation time is outside of the provided time points, this function assumes a constant value of
+ * the first/last time point.
  * @param[in] time The time at which to evaluate.
  * @param[in] data Time points to interpolate. At least one is required.
  * @return Interpolation result.

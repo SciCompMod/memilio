@@ -49,7 +49,7 @@ TEST_F(TestMathTimeSeriesFunctor, linearInterpolation)
 
     // continuous function that is constant 1 for t<0, linear in [0, 1] with slope 2, and constant 3 for t>1
     const auto pcw_lin_fct = [&](double t) {
-        return 1 + 2 * std::clamp(t, 0.0, 1.0); // .../```
+        return 1 + 2 * std::clamp(t, 0.0, 1.0); // this looks like .../```
     };
 
     mio::TimeSeriesFunctor<double> tsf(mio::TimeSeriesFunctorType::LinearInterpolation, {{0., 1.}, {1., 3.}});
