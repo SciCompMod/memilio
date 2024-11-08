@@ -50,6 +50,7 @@ const ScalarType seasonality                    = 0.;
 const ScalarType RelativeTransmissionNoSymptoms = 1.;
 const ScalarType RiskOfInfectionFromSymptomatic = 0.3;
 const ScalarType age_group_sizes[]              = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
+const ScalarType total_population               = 83155031.0;
 
 const ScalarType TransmissionProbabilityOnContact_age[] = {0.03, 0.06, 0.06, 0.06, 0.09, 0.175};
 
@@ -63,12 +64,41 @@ const ScalarType RecoveredPerInfectedNoSymptoms_age[] = {1 - 0.75, 1 - 0.75, 1 -
 const ScalarType SeverePerInfectedSymptoms_age[]      = {0.0075, 0.0075, 0.019, 0.0615, 0.165, 0.225};
 const ScalarType CriticalPerSevere_age[]              = {0.075, 0.075, 0.075, 0.15, 0.3, 0.4};
 const ScalarType DeathsPerCritical_age[]              = {0.05, 0.05, 0.14, 0.14, 0.4, 0.6};
+ScalarType TimeExposed                                = 0;
+ScalarType TimeInfectedNoSymptoms                     = 0;
+ScalarType TimeInfectedSymptoms                       = 0;
+ScalarType TimeInfectedSevere                         = 0;
+ScalarType TimeInfectedCritical                       = 0;
+ScalarType TransmissionProbabilityOnContact           = 0;
+ScalarType RecoveredPerInfectedNoSymptoms             = 0;
+ScalarType SeverePerInfectedSymptoms                  = 0;
+ScalarType CriticalPerSevere                          = 0;
+ScalarType DeathsPerCritical                          = 0;
 } // namespace params
 
 std::vector<ScalarType> get_initial_values(size_t num_subcomp)
 {
-    const std::vector<ScalarType> init_compartments = {8.28311e+07, 13489.3, 10468,  22297.6,
-                                                       1838.56,     571.463, 275292, 0};
+    using namespace params;
+    std::vector<ScalarType> init_compartments((size_t)mio::lsecir::InfectionState::Count);
+    const ScalarType SusceptibleToExposed_dayinit                = (34.1 / 7) * total_population / 100000;
+    init_compartments[(int)mio::lsecir::InfectionState::Exposed] = TimeExposed * SusceptibleToExposed_dayinit;
+    init_compartments[(int)mio::lsecir::InfectionState::InfectedNoSymptoms] =
+        TimeInfectedNoSymptoms * SusceptibleToExposed_dayinit;
+    init_compartments[(int)mio::lsecir::InfectionState::InfectedSymptoms] =
+        (1 - RecoveredPerInfectedNoSymptoms) * TimeInfectedSymptoms * SusceptibleToExposed_dayinit;
+    init_compartments[(int)mio::lsecir::InfectionState::InfectedSevere] =
+        (1 - RecoveredPerInfectedNoSymptoms) * SeverePerInfectedSymptoms * TimeInfectedSevere *
+        SusceptibleToExposed_dayinit;
+    init_compartments[(int)mio::lsecir::InfectionState::InfectedCritical] =
+        (1 - RecoveredPerInfectedNoSymptoms) * SeverePerInfectedSymptoms * CriticalPerSevere * TimeInfectedCritical *
+        SusceptibleToExposed_dayinit;
+    init_compartments[(int)mio::lsecir::InfectionState::Recovered]   = 275292;
+    init_compartments[(int)mio::lsecir::InfectionState::Dead]        = 0;
+    init_compartments[(int)mio::lsecir::InfectionState::Susceptible] = total_population;
+    for (size_t i = (size_t)mio::lsecir::InfectionState::Exposed; i < (size_t)mio::lsecir::InfectionState::Count; i++) {
+        init_compartments[(int)mio::lsecir::InfectionState::Susceptible] -= init_compartments[i];
+    }
+
     std::vector<ScalarType> initial_value_vector;
     initial_value_vector.push_back(init_compartments[(int)mio::lsecir::InfectionState::Susceptible]);
     // Distribute value equally to the subcompartments.
@@ -124,20 +154,6 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::stri
     Model model;
 
     // Define parameters used for simulation and initialization.
-    ScalarType total_population = 0;
-    for (size_t group = 0; group < num_groups; group++) {
-        total_population += age_group_sizes[group];
-    }
-    ScalarType TimeExposed                      = 0;
-    ScalarType TimeInfectedNoSymptoms           = 0;
-    ScalarType TimeInfectedSymptoms             = 0;
-    ScalarType TimeInfectedSevere               = 0;
-    ScalarType TimeInfectedCritical             = 0;
-    ScalarType TransmissionProbabilityOnContact = 0;
-    ScalarType RecoveredPerInfectedNoSymptoms   = 0;
-    ScalarType SeverePerInfectedSymptoms        = 0;
-    ScalarType CriticalPerSevere                = 0;
-    ScalarType DeathsPerCritical                = 0;
     for (size_t group = 0; group < num_groups; group++) {
         TimeExposed += age_group_sizes[group] * TimeExposed_age[group] / total_population;
         TimeInfectedNoSymptoms += age_group_sizes[group] * TimeInfectedNoSymptoms_age[group] / total_population;
@@ -235,7 +251,7 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::stri
 int main(int argc, char** argv)
 {
     ScalarType R0              = 1.;
-    ScalarType simulation_days = 12;
+    ScalarType simulation_days = 40;
     std::string save_dir       = "";
     bool save_subcompartments  = false;
     bool swapped_TETC          = false;

@@ -130,7 +130,7 @@ def compare_compartments_horizontal(files, legendplot,  filename_plot="compare_c
     # Save result.
     if not os.path.isdir('Plots_fictional'):
         os.makedirs('Plots_fictional')
-    fig.savefig('Plots/'+filename_plot+'.png',
+    fig.savefig('Plots_fictional/'+filename_plot+'.png',
                 bbox_extra_artists=(lgd,),  bbox_inches='tight', dpi=500)
 
 
@@ -420,8 +420,8 @@ if __name__ == '__main__':
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "data", "simulation_lct_noage")
     R0s = list([2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
-    #cases = [-1, -2, -3, 0, 1, 2, 3, 4]
-    cases=[-2]
+    cases = [-1, -2, -3, 0, 1, 2, 3, 4]
+    # cases=[-2]
     for case in cases:
         if case == 0:
             # rise R0 short

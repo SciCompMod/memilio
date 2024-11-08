@@ -31,10 +31,10 @@ do
     cmake -DNUM_SUBCOMPARTMENTS=$num_subcomp .
     cmake --build . --target lct_fictional_noage
 
-    # # First case: drop R0.
-    # R0=0.5
-    # simulation_days=12
-    # ./bin/lct_fictional_noage $R0 $simulation_days $subdir_dropR0
+    # First case: drop R0.
+    R0=0.5
+    simulation_days=12
+    ./bin/lct_fictional_noage $R0 $simulation_days $subdir_dropR0
 
     # Second case: rise R0 short 2.
     R0=2.
@@ -52,22 +52,23 @@ do
     fi
     ./bin/lct_fictional_noage $R0 $simulation_days $subdir_riseR0shortswapped 0 1
 
-    # # Fourth case: Print final sizes.
-    # simulation_days=500
-    # ./bin/lct_fictional_noage 2 $simulation_days "" 0 0 1
-    # ./bin/lct_fictional_noage 4 $simulation_days "" 0 0 1
-    # ./bin/lct_fictional_noage 10 $simulation_days "" 0 0 1
+    # Fourth case: Print final sizes.
+    simulation_days=500
+    ./bin/lct_fictional_noage 2 $simulation_days "" 0 0 1
+    ./bin/lct_fictional_noage 4 $simulation_days "" 0 0 1
+    ./bin/lct_fictional_noage 10 $simulation_days "" 0 0 1
 done
 
 # Fourth case: rise R0 to different R0 values and simulate for a long time period.
-# simulationdays=(140 100 90 80 60 60 60 60 60)
-# R0s=(2 3 4 5 6 7 8 9 10)
-# for num_subcomp in 1 2 3 4 5 6 7 8 9 10 50
-# do
-#     cmake -DNUM_SUBCOMPARTMENTS=$num_subcomp .
-#     cmake --build . --target lct_fictional_noage
-#     for index in {0..8}
-#     do
-#         ./bin/lct_fictional_noage ${R0s[index]} ${simulationdays[index]} $subdir_riseR0long
-#     done
-# done
+simulationdays=(140 100 90 80 60 60 60 60 60)
+R0s=(2 3 4 5 6 7 8 9 10)
+for num_subcomp in 1 2 3 4 5 6 7 8 9 10 50
+do
+    cmake -DNUM_SUBCOMPARTMENTS=$num_subcomp .
+    cmake --build . --target lct_fictional_noage
+    for index in {0..8}
+    do
+        ./bin/lct_fictional_noage ${R0s[index]} ${simulationdays[index]} $subdir_riseR0long
+    done
+done
+

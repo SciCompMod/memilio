@@ -117,9 +117,10 @@ def plot_runtime_2d(name=''):
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
-    if not os.path.isdir('Plots'):
-        os.makedirs('Plots')
-    plt.savefig('Plots/run_time_lct'+name+'.png', bbox_inches='tight', dpi=500)
+    if not os.path.isdir('Plots_time'):
+        os.makedirs('Plots_time')
+    plt.savefig('Plots_time/run_time_lct'+name +
+                '.png', bbox_inches='tight', dpi=500)
 
 
 def plot_runtime_2d_noage(jsonfilename, name=''):
@@ -143,14 +144,25 @@ def plot_runtime_2d_noage(jsonfilename, name=''):
     plt.savefig('Plots/run_time_lct'+name+'.png', bbox_inches='tight', dpi=500)
 
 
-def plot_cachemisses(jsonfilename, savename=''):
+def plot_cachemisses(jsonfilename, cachelevel=1, savename=''):
     fig = plt.figure()
     df = pd.read_json(jsonfilename)
+    if (cachelevel == 1):
+        plt.plot(df["Subcompartments"], df["D1_misses"],
+                 linestyle='--', marker='o', linewidth=1.2)
+        plt.title(
+            'L1 cache miss total with one age group')
+    elif (cachelevel == 0):
+        plt.plot(df["Subcompartments"], df["refs"],
+                 linestyle='--', marker='o', linewidth=1.2)
+        plt.title(
+            'Refs total with one age group')
+    else:
+        plt.plot(df["Subcompartments"], df["LLd_misses"],
+                 linestyle='--', marker='o', linewidth=1.2)  # /df["refs"]*100
+        plt.title(
+            'LL cache miss total with one age group')
 
-    plt.plot(df["Subcompartments"], df["LLd_misses"]/df["refs"]*100,
-             linestyle='--', marker='o', linewidth=1.2)
-    plt.title(
-        'LL cache miss rate with one age group for ten simulation days')
     plt.ylim(bottom=0.)
     plt.xlim(left=0., right=51)
     plt.xlabel('Number of subcompartments', fontsize=13)
@@ -165,14 +177,14 @@ def plot_cachemisses(jsonfilename, savename=''):
 
 def main():
     # run times
-    jsonfilenameruntimes = 'runtimes/lct_runtimes_20day_onegroup.json'
+    # jsonfilenameruntimes = 'runtimes/lct_runtimes_20day_onegroup.json'
     # extract_json_segments('runtimes/times_20days.txt', jsonfilenameruntimes)
-    plot_runtime_2d_noage(jsonfilenameruntimes, '20days_onegroup')
+    # plot_runtime_2d_noage(jsonfilenameruntimes, '20days_onegroup')
 
     # Cache
     jsonfilenamecache = 'runtimes/valgrind_20day_onegroup.json'
-    # parse_valgrind_output('runtimes/valgrind_20days.txt',jsonfilenamecache)
-    # plot_cachemisses(jsonfilenamecache, 'LLcachemissrate')
+    # parse_valgrind_output('runtimes/valgrind_20days.txt', jsonfilenamecache)
+    plot_cachemisses(jsonfilenamecache, 0, 'Refstotal_20days')
 
 
 if __name__ == "__main__":
