@@ -21,8 +21,8 @@
 #include "abm/common_abm_loggers.h"
 #include "abm/household.h"
 #include "abm/lockdown_rules.h"
+#include "memilio/config.h"
 #include "memilio/io/result_io.h"
-#include "memilio/math/interpolation.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
 
@@ -469,10 +469,9 @@ void set_parameters(mio::abm::Parameters params)
     params.set<mio::abm::IncubationPeriod>({{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, 4.});
 
     // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
-    params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
-            {{0, 0.863}, {1, 0.969}, {7, 0.029}, {10, 0.002}, {14, 0.0014}, {21, 0}}, days);
-    };
+    params.get<mio::abm::HighViralLoadProtectionFactor>() = {
+        mio::TimeSeriesFunctorType::LinearInterpolation,
+        {{0, 0.863}, {1, 0.969}, {7, 0.029}, {10, 0.002}, {14, 0.0014}, {21, 0}}};
 
     //0-4
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 0.276;

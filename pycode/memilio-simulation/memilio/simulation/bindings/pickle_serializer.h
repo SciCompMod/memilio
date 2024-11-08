@@ -52,14 +52,10 @@ struct PickleType<bool> : std::true_type {
 
 template <class T>
 using is_small_integral = std::integral_constant<bool, (std::is_integral<T>::value && sizeof(T) <= 4)>;
-//signed small ints
-template <class T>
-struct PickleType<T, std::enable_if_t<std::is_arithmetic<T>::value>> : std::true_type {
-};
 
-//unsigned small ints
+//small ints
 template <class T>
-struct PickleType<T, std::enable_if_t<conjunction_v<is_small_integral<T>, std::is_unsigned<T>>>> : std::true_type {
+struct PickleType<T, std::enable_if_t<is_small_integral<T>::value>> : std::true_type {
 };
 
 //signed big ints
