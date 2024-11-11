@@ -71,8 +71,12 @@ def load_data(file, start_date, tmax, scaleConfirmed):
     """ Loads RKI data and computes 'InfectedSymptoms', 'Deaths' and 'DailyNewTransmissions' using scales, dates etc 
     from the dictionary parameters. Method matches the method for computing initial values for the LCT model. 
     See also cpp/models/lct_secir/parameters_io.h.
+
     @param[in] file Path to the RKI data file for whole Germany. 
         Can be downloaded eg via pycode/memilio-epidata/memilio/epidata/getCaseData.py.
+    @param[in] start_date: Start date of the simulation.
+    @param[in] tmax: Duration of the simulation in days. 
+    @param[in] scaleConfirmed: Scaling factor regarding the number of confirmed cases.
     """
 
     # Read data.
@@ -149,6 +153,25 @@ def load_data(file, start_date, tmax, scaleConfirmed):
     return df2
 
 
+def load_data_icu(file, start_date, tmax):
+    """ Loads DIVI data.
+
+    @param[in] file Path to the DIVI data file for whole Germany. 
+        Can be downloaded eg via pycode/memilio-epidata/memilio/epidata/getDIVIData.py.
+    @param[in] start_date: Start date of the simulation.
+    @param[in] tmax: Duration of the simulation in days. 
+    """
+
+    df = pd.read_json(file)
+
+    end_date = start_date+pd.DateOffset(days=tmax)
+
+    # Remove unnecessary dates.
+    df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
+
+    return df
+
+
 def compare_compartments_real(files, age_group, datafile, start_date, tmax, scaleConfirmed, legendplot, deaths=False, filename_plot="compare_real"):
     """ Plots simulation results compared with real data for the compartments Deaths and InfectedSymptoms.
         The simulation results should consist of accumulated numbers for subcompartments in case of an LCT model.
@@ -156,7 +179,11 @@ def compare_compartments_real(files, age_group, datafile, start_date, tmax, scal
     @param[in] files: Paths of the hdf5-files (without file extension .h5) with the simulation results that should be compared.
         Results should contain exactly 8 compartments (so use accumulated numbers for LCT models). Names can be given in form of a list.
         One could compare results with eg different parameters or different models.
+    @param[in] age_group: Index of considered age group.
     @param[in] datafile: Path to the RKI data file for whole Germany. Can be downloaded eg via pycode/memilio-epidata/memilio/epidata/getCaseData.py.
+    @param[in] start_date: Start date of the simulation.
+    @param[in] tmax: Duration of the simulation in days. 
+    @param[in] scaleConfirmed: Scaling factor regarding the number of confirmed cases.
     @param[in] legendplot: list with names for the results that should be used for the legend of the plot.
     @param[in] deaths: If False, InfectedSymptoms compartment is plotted, if True, deaths are plotted.
     @param[in] filename_plot: Name to use as the file name for the saved plot.
@@ -173,24 +200,24 @@ def compare_compartments_real(files, age_group, datafile, start_date, tmax, scal
         plt.title('All Age Groups')
         if (deaths):
             plt.plot(range(num_days), data_rki['Deaths'],
-                     linestyle='dashed',  color='grey', linewidth=1.2)
+                     linestyle='None', color='grey', marker='x', markersize=5)
             compartment_idx = 7
             labely = "Deaths"
         else:
             plt.plot(range(num_days), data_rki['InfectedSymptoms'],
-                     linestyle='dashed', color='grey', linewidth=1.2)
+                     linestyle='None', color='grey', marker='x', markersize=5)
             compartment_idx = 3
             labely = "Number of people in Infected compartment"
     else:
         plt.title(Age_RKI_names[age_group])
         if (deaths):
             plt.plot(range(num_days), data_rki['Deaths'][(data_rki['Age_RKI'] == Age_RKI_names[age_group])],
-                     linestyle='dashed',  color='grey', linewidth=1.2)
+                     linestyle='None', color='grey', marker='x', markersize=5)
             compartment_idx = 7
             labely = "Deaths"
         else:
             plt.plot(range(num_days), data_rki['InfectedSymptoms'][(data_rki['Age_RKI'] == Age_RKI_names[age_group])],
-                     linestyle='dashed', color='grey', linewidth=1.2)
+                     linestyle='None', color='grey', marker='x', markersize=5)
             compartment_idx = 3
             labely = "Number of people in Infected compartment"
 
@@ -249,6 +276,82 @@ def compare_compartments_real(files, age_group, datafile, start_date, tmax, scal
                 bbox_inches='tight', dpi=500)
 
 
+def plot_icu_real(
+        files, datafile, start_date, tmax, legendplot, filename_plot="compare_real"):
+    """ Plots simulation results with accumulated age groups compared with real data for the compartment ICU.
+        The simulation results should consist of accumulated numbers for subcompartments in case of an LCT model.
+
+    @param[in] files: Paths of the hdf5-files (without file extension .h5) with the simulation results that should be compared.
+        Results should contain exactly 8 compartments (so use accumulated numbers for LCT models). Names can be given in form of a list.
+        One could compare results with eg different parameters or different models.
+    @param[in] datafile: Path to the ICU data file for whole Germany. Can be downloaded eg via pycode/memilio-epidata/memilio/epidata/getDIVIData.py.
+    @param[in] start_date: Start date of the simulation.
+    @param[in] tmax: Duration of the simulation in days. 
+    @param[in] legendplot: list with names for the results that should be used for the legend of the plot.
+    @param[in] filename_plot: Name to use as the file name for the saved plot.
+    """
+
+    # Define plot.
+    plt.figure(filename_plot)
+
+    data_icu = load_data_icu(datafile, start_date, tmax)
+    num_days = tmax + 1
+
+    # Plot ICU data.
+    plt.title('All Age Groups')
+    plt.plot(range(num_days), data_icu['ICU'],
+             linestyle='None', color='grey', marker='x', markersize=5)
+    labely = "ICU patients"
+
+    # Set index of ICU compartment in simulation results.
+    compartment_idx = 5
+
+    # Add simulation results to plot.
+    for file in range(len(files)):
+        # Load data.
+        h5file = h5py.File(str(files[file]) + '.h5', 'r')
+
+        if (len(list(h5file.keys())) > 1):
+            raise gd.DataError("File should contain one dataset.")
+        if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
+            raise gd.DataError("Expected only one group.")
+
+        data = h5file[list(h5file.keys())[0]]
+        dates = data['Time'][:]
+        # As there should be only one Group, total is the simulation result.
+        total = data['Total'][:, :]
+
+        if (total.shape[1] != 8):
+            raise gd.DataError(
+                "Expected a different number of compartments.")
+        # Plot result.
+        plt.plot(dates, total[:, compartment_idx],
+                 linewidth=1.2, linestyle=linestyle_dict[legendplot[1+file]], color=color_dict[legendplot[1+file]])
+        h5file.close()
+
+    plt.xlabel('Date', fontsize=16)
+    plt.ylabel(labely, fontsize=16)
+    plt.yticks(fontsize=9)
+    plt.xlim(left=0, right=num_days-1)
+    # Define x-ticks.
+    datelist = np.array(pd.date_range(start_date.date(),
+                                      periods=num_days, freq='D').strftime('%m-%d').tolist())
+    tick_range = (np.arange(int((num_days-1) / 5) + 1) * 5)
+    plt.xticks(tick_range, datelist[tick_range],
+               rotation=45, fontsize=12)
+    plt.xticks(np.arange(num_days), minor=True)
+
+    plt.legend(legendplot, fontsize=12, framealpha=0.5)
+    plt.grid(True, linestyle='--')
+    plt.tight_layout()
+
+    # Save result.
+    if not os.path.isdir('Plots_real'):
+        os.makedirs('Plots_real')
+    plt.savefig('Plots_real/'+filename_plot+'.png',
+                bbox_inches='tight', dpi=500)
+
+
 def plot_new_infections_real(files, age_group, datafile, start_date, tmax, scaleConfirmed, legendplot, filename_plot="compare_new_infections_real"):
     """ Plots simulation results compared with real data for new infections within one day.
         The simulation results should consist of accumulated numbers for subcompartments in case of an LCT model.
@@ -256,7 +359,11 @@ def plot_new_infections_real(files, age_group, datafile, start_date, tmax, scale
     @param[in] files: paths of the hdf5-files (without file extension .h5) with the simulation results that should be compared.
         Results should contain exactly 8 compartments (so use accumulated numbers for LCT models). Names can be given in form of a list.
         One could compare results with eg different parameters or different models.
+    @param[in] age_group: Index of considered age group.
     @param[in] datafile: Path to the RKI data file for whole Germany. Can be downloaded eg via pycode/memilio-epidata/memilio/epidata/getCaseData.py.
+    @param[in] start_date: Start date of the simulation.
+    @param[in] tmax: Duration of the simulation in days. 
+    @param[in] scaleConfirmed: Scaling factor regarding the number of confirmed cases. 
     @param[in] legendplot: list with names for the results that should be used for the legend of the plot.
     @param[in] filename_plot: name to use as the file name for the saved plot.
     """

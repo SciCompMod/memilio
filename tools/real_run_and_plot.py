@@ -27,11 +27,12 @@ def get_file_name(start_date, subcompartment, data_dir, boolagedistributed=False
 
 def main_october():
     folder = "../data/simulation_lct_real/"
-    datafile = "../data/pydata/Germany/cases_all_age_all_dates.json"
+    datafile_rki = "../data/pydata/Germany/cases_all_age_all_dates.json"
+    datafile_icu = "../data/pydata/Germany/germany_divi.json"
     start_date = '2020-10-1'
     start_date_timestamp = pd.Timestamp(start_date)
 
-    cases = [0, 1, 2]
+    cases = [1, 2]
     for case in cases:
 
         if case == 0:
@@ -53,7 +54,7 @@ def main_october():
                                           start_date, 50, folder, False),
                                       get_file_name(
                                           start_date, 0, folder, False)],
-                                     -1, datafile, start_date_timestamp, 45, 1.0,
+                                     -1, datafile_rki, start_date_timestamp, 45, 1.0,
                                      legendplot=list(
                 ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),
                 filename_plot="real_new_infections_"+start_date+"_allage")
@@ -66,7 +67,7 @@ def main_october():
                                       get_file_name(
                                           start_date, 50, folder, False),
                                       get_file_name(
-                                          start_date,  0, folder, False)], -1, datafile, start_date_timestamp, 45, 1.0, list(
+                                          start_date,  0, folder, False)], -1, datafile_rki, start_date_timestamp, 45, 1.0, list(
                 ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=False, filename_plot="real_infected_"+start_date+"_allage")
 
             compare_compartments_real([get_file_name(start_date, 1, folder, False),
@@ -77,8 +78,19 @@ def main_october():
                                       get_file_name(
                                           start_date, 50, folder, False),
                                       get_file_name(
-                                          start_date, 0, folder, False)], -1, datafile, start_date_timestamp, 45, 1.0, list(
+                                          start_date, 0, folder, False)], -1, datafile_rki, start_date_timestamp, 45, 1.0, list(
                 ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=True, filename_plot="real_deaths_"+start_date+"_allage")
+            plot_icu_real(
+                [get_file_name(start_date, 1, folder, False),
+                 get_file_name(
+                    start_date, 3, folder, False),
+                 get_file_name(
+                    start_date, 10, folder, False),
+                 get_file_name(
+                    start_date, 50, folder, False),
+                 get_file_name(
+                    start_date, 0, folder, False)], datafile_icu, start_date_timestamp, 45,  list(
+                    ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),  filename_plot="real_icu_"+start_date+"_allage")
         if case == 2:
             for age in range(6):
                 plot_new_infections_real([get_file_name(start_date, 1, folder, True),
@@ -89,7 +101,7 @@ def main_october():
                                           get_file_name(
                                               start_date, 50, folder, True),
                                           get_file_name(start_date, 0, folder, True)],
-                                         age, datafile, start_date_timestamp, 45, 1.0,
+                                         age, datafile_rki, start_date_timestamp, 45, 1.0,
                                          legendplot=list(
                     ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),
                     filename_plot="real_new_infections_"+start_date+"_age"+f"{age}")
@@ -101,7 +113,7 @@ def main_october():
                     get_file_name(
                     start_date, 50, folder, True),
                     get_file_name(
-                    start_date,  0, folder, True)], age, datafile, start_date_timestamp, 45, 1.0, list(
+                    start_date,  0, folder, True)], age, datafile_rki, start_date_timestamp, 45, 1.0, list(
                     ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=False, filename_plot="real_infected_"+start_date+"_age"+f"{age}")
 
                 compare_compartments_real([get_file_name(start_date, 1, folder, True),
@@ -112,13 +124,14 @@ def main_october():
                     get_file_name(
                     start_date, 50, folder, True),
                     get_file_name(
-                    start_date, 0, folder, True)], age, datafile, start_date_timestamp, 45, 1.0, list(
+                    start_date, 0, folder, True)], age, datafile_rki, start_date_timestamp, 45, 1.0, list(
                     ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=True, filename_plot="real_deaths_"+start_date+"_age"+f"{age}")
 
 
 def main_july():
     folder = "../data/simulation_lct_real/"
-    datafile = "../data/pydata/Germany/cases_all_age.json"
+    datafile_rki = "../data/pydata/Germany/cases_all_age_all_dates.json"
+    datafile_icu = "../data/pydata/Germany/germany_divi.json"
     start_date = '2020-7-1'
     start_date_timestamp = pd.Timestamp(start_date)
 
@@ -139,10 +152,42 @@ def main_july():
                 start_date, 3, folder, False), get_file_name(
                 start_date, 10, folder, False), get_file_name(
                 start_date, 50, folder, False)],
-                -1, datafile, start_date_timestamp, 45, 1.0,
+                -1, datafile_rki, start_date_timestamp, 45, 1.0,
                 legendplot=list(
                 ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50"]),
                 filename_plot="real_new_infections_"+start_date+"_allage")
+            compare_compartments_real([get_file_name(start_date, 1, folder, False),
+                                      get_file_name(
+                                          start_date, 3, folder, False),
+                                      get_file_name(
+                                          start_date, 10, folder, False),
+                                      get_file_name(
+                                          start_date, 50, folder, False),
+                                      get_file_name(
+                                          start_date,  0, folder, False)], -1, datafile_rki, start_date_timestamp, 45, 1.0, list(
+                ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=False, filename_plot="real_infected_"+start_date+"_allage")
+
+            compare_compartments_real([get_file_name(start_date, 1, folder, False),
+                                      get_file_name(
+                                          start_date, 3, folder, False),
+                                      get_file_name(
+                                          start_date, 10, folder, False),
+                                      get_file_name(
+                                          start_date, 50, folder, False),
+                                      get_file_name(
+                                          start_date, 0, folder, False)], -1, datafile_rki, start_date_timestamp, 45, 1.0, list(
+                ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=True, filename_plot="real_deaths_"+start_date+"_allage")
+            plot_icu_real(
+                [get_file_name(start_date, 1, folder, False),
+                 get_file_name(
+                    start_date, 3, folder, False),
+                 get_file_name(
+                    start_date, 10, folder, False),
+                 get_file_name(
+                    start_date, 50, folder, False),
+                 get_file_name(
+                    start_date, 0, folder, False)], datafile_icu, start_date_timestamp, 45,  list(
+                    ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),  filename_plot="real_icu_"+start_date+"_allage")
         if case == 2:
             for age in range(6):
                 plot_new_infections_real([get_file_name(start_date, 1, folder, True),
@@ -153,7 +198,7 @@ def main_july():
                                           get_file_name(
                                               start_date, 50, folder, True)
                                           ],
-                                         age, datafile, start_date_timestamp, 45, 1.0,
+                                         age, datafile_rki, start_date_timestamp, 45, 1.0,
                                          legendplot=list(
                     ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50"]),
                     filename_plot="real_new_infections_"+start_date+"_age"+f"{age}")
@@ -165,7 +210,7 @@ def main_july():
                     get_file_name(
                     start_date, 50, folder, True),
                     get_file_name(
-                    start_date,  0, folder, True)], age, datafile, start_date_timestamp, 45, 1.0, list(
+                    start_date,  0, folder, True)], age, datafile_rki, start_date_timestamp, 45, 1.0, list(
                     ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=False, filename_plot="real_infected_"+start_date+"_age"+f"{age}")
 
                 compare_compartments_real([get_file_name(start_date, 1, folder, True),
@@ -176,7 +221,7 @@ def main_july():
                     get_file_name(
                     start_date, 50, folder, True),
                     get_file_name(
-                    start_date, 0, folder, True)], age, datafile, start_date_timestamp, 45, 1.0, list(
+                    start_date, 0, folder, True)], age, datafile_rki, start_date_timestamp, 45, 1.0, list(
                     ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=True, filename_plot="real_deaths_"+start_date+"_age"+f"{age}")
 
 
