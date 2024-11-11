@@ -10,8 +10,8 @@ fi
 
 # Define some parameters
 year=2020
-RelativeTransmissionNoSymptoms_oct=1.
-RiskOfInfectionFromSymptomatic_oct=0.3
+RelativeTransmissionNoSymptoms=1.
+RiskOfInfectionFromSymptomatic=0.3
 # For October:
 month_oct=10
 day_oct=1
