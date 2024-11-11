@@ -371,24 +371,29 @@ mio::IOResult<void> simulate(std::string const& dir_to_contact_data, std::string
 
 int main(int argc, char** argv)
 {
-    std::string dir_to_data    = "../../data";
+    std::string dir_to_data = "../../data";
+    std::string save_folder = "/simulation_lct_real/";
+
     bool other_subcompartments = false;
     if (argc > 1) {
         other_subcompartments = std::stoi(argv[1]);
     }
-    if (argc > 5) {
+    if (argc > 6) {
         params::start_date = mio::Date(std::stod(argv[2]), std::stod(argv[3]), std::stod(argv[4]));
         dir_to_data        = argv[5];
+        save_folder        = argv[6];
     }
 
-    if (argc > 9) {
-        params::simulation_parameter["RelativeTransmissionNoSymptoms"] = std::stod(argv[6]);
-        params::simulation_parameter["RiskOfInfectionFromSymptomatic"] = std::stod(argv[7]);
-        params::simulation_parameter["scale_contacts"]                 = std::stod(argv[8]);
-        params::simulation_parameter["npi_size"]                       = std::stod(argv[9]);
+    if (argc > 10) {
+        params::simulation_parameter["RelativeTransmissionNoSymptoms"] = std::stod(argv[7]);
+        params::simulation_parameter["RiskOfInfectionFromSymptomatic"] = std::stod(argv[8]);
+        params::simulation_parameter["scale_contacts"]                 = std::stod(argv[9]);
+        params::simulation_parameter["npi_size"]                       = std::stod(argv[10]);
     }
-    std::string save_dir           = dir_to_data + "/simulation_lct_real/";
+
+    std::string save_dir           = dir_to_data + save_folder;
     std::string infection_data_dir = dir_to_data + "/pydata/Germany/cases_all_age_ma7.json";
+
     if (other_subcompartments) {
         auto result = simulate_other_subcompartments(dir_to_data, infection_data_dir, save_dir);
         if (!result) {
