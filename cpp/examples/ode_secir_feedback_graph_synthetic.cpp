@@ -111,67 +111,76 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
     // TimeExposed and TimeInfectedNoSymptoms are calculated as described in
     // Khailaie et al. (https://doi.org/10.1186/s12916-020-01884-4)
     // given SI_min = 3.935, SI_max = 4.6, INC = 5.2
-    const double timeExposedMin            = 2.67;
-    const double timeExposedMax            = 4.;
+    const double timeExposedMin = 2.67;
+    // const double timeExposedMax            = 4.;
     const double timeInfectedNoSymptomsMin = 1.2;
-    const double timeInfectedNoSymptomsMax = 2.53;
+    // const double timeInfectedNoSymptomsMax = 2.53;
 
     const double timeInfectedSymptomsMin[] = {5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465};
-    const double timeInfectedSymptomsMax[] = {8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085};
-    const double timeInfectedSevereMin[]   = {3.925, 3.925, 4.85, 6.4, 7.2, 9.};
-    const double timeInfectedSevereMax[]   = {6.075, 6.075, 7., 8.7, 9.8, 13.};
+    // const double timeInfectedSymptomsMax[] = {8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085};
+    const double reduc_time_severe = 0.5;
+    double timeInfectedSevereMin[] = {3.925, 3.925, 4.85, 6.4, 7.2, 9.};
+    // double timeInfectedSevereMax[]         = {6.075, 6.075, 7., 8.7, 9.8, 13.};
+    // multiply timeInfectedSevereMin and timeInfectedSevereMax by reduc_time_severe
+    for (size_t i = 0; i < 6; i++) {
+        timeInfectedSevereMin[i] *= reduc_time_severe;
+        // timeInfectedSevereMax[i] *= reduc_time_severe;
+    }
     const double timeInfectedCriticalMin[] = {4.95, 4.95, 4.86, 14.14, 14.4, 10.};
-    const double timeInfectedCriticalMax[] = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
+    // const double timeInfectedCriticalMax[] = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
 
-    array_assign_uniform_distribution(params.get<mio::osecir::TimeExposed>(), timeExposedMin, timeExposedMax);
+    array_assign_uniform_distribution(params.get<mio::osecir::TimeExposed>(), timeExposedMin, timeExposedMin);
     array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedNoSymptoms>(), timeInfectedNoSymptomsMin,
-                                      timeInfectedNoSymptomsMax);
+                                      timeInfectedNoSymptomsMin);
     array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedSymptoms>(), timeInfectedSymptomsMin,
-                                      timeInfectedSymptomsMax);
+                                      timeInfectedSymptomsMin);
     array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedSevere>(), timeInfectedSevereMin,
-                                      timeInfectedSevereMax);
+                                      timeInfectedSevereMin);
     array_assign_uniform_distribution(params.get<mio::osecir::TimeInfectedCritical>(), timeInfectedCriticalMin,
-                                      timeInfectedCriticalMax);
+                                      timeInfectedCriticalMin);
 
     //probabilities
-    double fact                                        = 1.;
-    const double transmissionProbabilityOnContactMin[] = {fact * 0.02, fact * 0.05, fact * 0.05,
-                                                          fact * 0.05, fact * 0.08, fact * 0.15};
+    double fact = 0.8;
+    // const double transmissionProbabilityOnContactMin[] = {fact * 0.02, fact * 0.05, fact * 0.05,
+    //                                                       fact * 0.05, fact * 0.08, fact * 0.15};
     const double transmissionProbabilityOnContactMax[] = {fact * 0.04, fact * 0.07, fact * 0.07,
                                                           fact * 0.07, fact * 0.10, fact * 0.20};
     const double relativeTransmissionNoSymptomsMin     = 1;
-    const double relativeTransmissionNoSymptomsMax     = 1;
+    // const double relativeTransmissionNoSymptomsMax     = 1;
     // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
     // depends on incidence and test and trace capacity
-    const double riskOfInfectionFromSymptomaticMin    = 0.1;
-    const double riskOfInfectionFromSymptomaticMax    = 0.3;
-    const double maxRiskOfInfectionFromSymptomaticMin = 0.3;
+    // const double riskOfInfectionFromSymptomaticMin = 0.1;
+    const double riskOfInfectionFromSymptomaticMax = 0.3;
+    // const double maxRiskOfInfectionFromSymptomaticMin = 0.3;
     const double maxRiskOfInfectionFromSymptomaticMax = 0.5;
-    const double recoveredPerInfectedNoSymptomsMin[]  = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15};
-    const double recoveredPerInfectedNoSymptomsMax[]  = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
-    const double severePerInfectedSymptomsMin[]       = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20};
-    const double severePerInfectedSymptomsMax[]       = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
-    const double criticalPerSevereMin[]               = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35};
-    const double criticalPerSevereMax[]               = {0.10, 0.10, 0.10, 0.20, 0.35, 0.45};
-    const double deathsPerCriticalMin[]               = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5};
-    const double deathsPerCriticalMax[]               = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
+    // const double recoveredPerInfectedNoSymptomsMin[] = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15};
+    const double recoveredPerInfectedNoSymptomsMax[] = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
+    // const double severePerInfectedSymptomsMin[] = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20};
+    const double severePerInfectedSymptomsMax[] = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
+    const double fact_severe                    = 1.5;
+    // const double criticalPerSevereMin[] = {fact_severe * 0.05, fact_severe * 0.05, fact_severe * 0.05,
+    //                                        fact_severe * 0.10, fact_severe * 0.25, fact_severe * 0.35};
+    const double criticalPerSevereMax[] = {fact_severe * 0.10, fact_severe * 0.10, fact_severe * 0.10,
+                                           fact_severe * 0.20, fact_severe * 0.35, fact_severe * 0.45};
+    const double deathsPerCriticalMin[] = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5};
+    // const double deathsPerCriticalMax[]               = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
 
     array_assign_uniform_distribution(params.get<mio::osecir::TransmissionProbabilityOnContact>(),
-                                      transmissionProbabilityOnContactMin, transmissionProbabilityOnContactMax);
+                                      transmissionProbabilityOnContactMax, transmissionProbabilityOnContactMax);
     array_assign_uniform_distribution(params.get<mio::osecir::RelativeTransmissionNoSymptoms>(),
-                                      relativeTransmissionNoSymptomsMin, relativeTransmissionNoSymptomsMax);
+                                      relativeTransmissionNoSymptomsMin, relativeTransmissionNoSymptomsMin);
     array_assign_uniform_distribution(params.get<mio::osecir::RiskOfInfectionFromSymptomatic>(),
-                                      riskOfInfectionFromSymptomaticMin, riskOfInfectionFromSymptomaticMax);
+                                      riskOfInfectionFromSymptomaticMax, riskOfInfectionFromSymptomaticMax);
     array_assign_uniform_distribution(params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>(),
-                                      maxRiskOfInfectionFromSymptomaticMin, maxRiskOfInfectionFromSymptomaticMax);
+                                      maxRiskOfInfectionFromSymptomaticMax, maxRiskOfInfectionFromSymptomaticMax);
     array_assign_uniform_distribution(params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>(),
-                                      recoveredPerInfectedNoSymptomsMin, recoveredPerInfectedNoSymptomsMax);
+                                      recoveredPerInfectedNoSymptomsMax, recoveredPerInfectedNoSymptomsMax);
     array_assign_uniform_distribution(params.get<mio::osecir::SeverePerInfectedSymptoms>(),
-                                      severePerInfectedSymptomsMin, severePerInfectedSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecir::CriticalPerSevere>(), criticalPerSevereMin,
+                                      severePerInfectedSymptomsMax, severePerInfectedSymptomsMax);
+    array_assign_uniform_distribution(params.get<mio::osecir::CriticalPerSevere>(), criticalPerSevereMax,
                                       criticalPerSevereMax);
     array_assign_uniform_distribution(params.get<mio::osecir::DeathsPerCritical>(), deathsPerCriticalMin,
-                                      deathsPerCriticalMax);
+                                      deathsPerCriticalMin);
 
     //sasonality
     // const double seasonality_min = 0.1;
@@ -180,6 +189,44 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters& params)
     // assign_uniform_distribution(params.get<mio::osecir::Seasonality>(), seasonality_min, seasonality_max);
 
     return mio::success();
+}
+
+auto read_regional_counties(const std::string& path)
+{
+    std::unordered_map<size_t, std::vector<size_t>> county_in_radius;
+    std::ifstream infile(path);
+    std::string line;
+
+    // Read the file line by line
+    while (std::getline(infile, line)) {
+        std::istringstream iss(line);
+        std::string key;
+        std::string value;
+
+        // Get the county ID (key)
+        if (std::getline(iss, key, ':')) {
+            size_t county_id = std::stoi(key);
+
+            // Get the list of counties within the radius
+            std::vector<size_t> counties;
+            while (std::getline(iss, value, ',')) {
+                counties.push_back(std::stoi(value));
+            }
+
+            // Store in the unordered_map
+            county_in_radius[county_id] = counties;
+        }
+    }
+    return county_in_radius;
+}
+
+void set_countyid_and_regionals(mio::Graph<mio::osecir::Model, mio::MigrationParameters>& graph,
+                                std::unordered_map<size_t, std::vector<size_t>> county_in_radius)
+{
+    for (auto& node : graph.nodes()) {
+        node.property.parameters.get<mio::osecir::CountyID>()           = node.id;
+        node.property.parameters.get<mio::osecir::ConnectedCountyIDs>() = county_in_radius[node.id];
+    }
 }
 
 /**
@@ -325,6 +372,8 @@ get_graph(mio::Date start_date, const fs::path& data_dir, const std::string& mod
 
     // global parameters
     const int num_age_groups = 6;
+    auto regional_counties =
+        read_regional_counties((data_dir / "pydata" / "Germany" / "counties_in_radius_103.txt").string());
     mio::osecir::Parameters params(num_age_groups);
     params.get<mio::osecir::StartDay>() = mio::get_day_in_year(start_date);
     ;
@@ -366,6 +415,7 @@ get_graph(mio::Date start_date, const fs::path& data_dir, const std::string& mod
                                         read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 
     set_state_ids(params_graph);
+    set_countyid_and_regionals(params_graph, regional_counties);
     return mio::success(params_graph);
 }
 
@@ -640,20 +690,20 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
     const auto start_date = mio::Date(2020, 12, 1);
 
     const auto num_days_sim = 200.0;
-    const auto num_runs     = 100;
+    const auto num_runs     = 1;
 
     // auto const modes = {"ClassicDamping", "FeedbackDamping"};
 
-    auto const modes = {"ClassicDamping"};
+    auto const modes = {"FeedbackDamping"};
 
     const double initially_infected_per_100k = 500;
     const double initially_icu_per_100k      = 2.0;
 
-    const size_t state_id_infected = 3;
+    const size_t state_id_infected = 4;
 
-    auto min_values = std::vector<ScalarType>{1.0}; //0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
+    auto min_values = std::vector<ScalarType>{0.0}; //0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
 
-    auto max_values = std::vector<ScalarType>{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    auto max_values = std::vector<ScalarType>{0.1};
     // const size_t county_id_infected = 3241;
 
     //create or load graph
@@ -720,7 +770,7 @@ int main()
     mio::mpi::init();
 
     std::string data_dir   = "/localdata1/code_2024/memilio/data";
-    std::string result_dir = "/localdata1/code_2024/memilio/results";
+    std::string result_dir = "/localdata1/code_2024/memilio/results/bremen";
 
     auto result = run(data_dir, result_dir);
     if (!result) {

@@ -76,6 +76,8 @@ public:
                 m_edge_func(m_t, dt, e.property, m_graph.nodes()[e.start_node_idx].property,
                             m_graph.nodes()[e.end_node_idx].property);
             }
+
+            std::cout << "t = " << m_t << std::endl;
         }
     }
 

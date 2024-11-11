@@ -546,28 +546,30 @@ mio::IOResult<void> run_parameter_study(ParameterStudy parameter_study, std::vec
         }
         BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, false));
 
-        auto result_dir_run_flows = result_dir / "flows";
-        if (mio::mpi::is_root()) {
-            boost::filesystem::create_directories(result_dir_run_flows);
-            printf("Saving Flow results to \"%s\".\n", result_dir_run_flows.c_str());
-        }
-        BOOST_OUTCOME_TRY(save_results(ensemble_flows, ensemble_params, county_ids, result_dir_run_flows, false));
+        printf("Saving results to \"%s\".\n", result_dir.c_str());
 
-        if (std::strcmp(mode.c_str(), "FeedbackDamping") == 0) {
-            auto result_dir_risk = result_dir / "risk";
-            if (mio::mpi::is_root()) {
-                boost::filesystem::create_directories(result_dir_risk);
-                printf("Saving Risk results to \"%s\".\n", result_dir_risk.c_str());
-            }
-            BOOST_OUTCOME_TRY(save_results(ensemble_risks, ensemble_params, county_ids, result_dir_risk, false));
-        }
+        // auto result_dir_run_flows = result_dir / "flows";
+        // if (mio::mpi::is_root()) {
+        //     boost::filesystem::create_directories(result_dir_run_flows);
+        //     printf("Saving Flow results to \"%s\".\n", result_dir_run_flows.c_str());
+        // }
+        // BOOST_OUTCOME_TRY(save_results(ensemble_flows, ensemble_params, county_ids, result_dir_run_flows, false));
 
-        auto result_dir_r0 = result_dir / "r0";
-        if (mio::mpi::is_root()) {
-            boost::filesystem::create_directories(result_dir_r0);
-            printf("Saving R0 results to \"%s\".\n", result_dir_r0.c_str());
-        }
-        BOOST_OUTCOME_TRY(save_results(ensemble_r0, ensemble_params, county_ids, result_dir_r0, false));
+        // if (std::strcmp(mode.c_str(), "FeedbackDamping") == 0) {
+        //     auto result_dir_risk = result_dir / "risk";
+        //     if (mio::mpi::is_root()) {
+        //         boost::filesystem::create_directories(result_dir_risk);
+        //         printf("Saving Risk results to \"%s\".\n", result_dir_risk.c_str());
+        //     }
+        //     BOOST_OUTCOME_TRY(save_results(ensemble_risks, ensemble_params, county_ids, result_dir_risk, false));
+        // }
+
+        // auto result_dir_r0 = result_dir / "r0";
+        // if (mio::mpi::is_root()) {
+        //     boost::filesystem::create_directories(result_dir_r0);
+        //     printf("Saving R0 results to \"%s\".\n", result_dir_r0.c_str());
+        // }
+        // BOOST_OUTCOME_TRY(save_results(ensemble_r0, ensemble_params, county_ids, result_dir_r0, false));
 
         // auto result_dir_contacts = result_dir / "contacts";
         // if (mio::mpi::is_root()) {
@@ -604,18 +606,32 @@ mio::IOResult<void> run(const fs::path& data_dir, const fs::path& result_dir)
 
     auto min_values = std::vector<ScalarType>{0.0};
 
-    auto max_values = std::vector<ScalarType>{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    auto max_values = std::vector<ScalarType>{
+        0.0,  0.02, 0.04, 0.06, 0.08, 0.1,  0.12, 0.14, 0.16, 0.18, 0.2,  0.22, 0.24, 0.26, 0.28, 0.3,  0.32,
+        0.34, 0.36, 0.38, 0.4,  0.42, 0.44, 0.46, 0.48, 0.5,  0.52, 0.54, 0.56, 0.58, 0.60, 0.62, 0.64, 0.66,
+        0.68, 0.70, 0.72, 0.74, 0.76, 0.78, 0.80, 0.82, 0.84, 0.86, 0.88, 0.90, 0.92, 0.94, 0.96, 0.98, 1.0};
+
+    // max values from 0.52 to 1.0 in steps of 0.02
+    // auto max_values =
+    //     std::vector<ScalarType>{0.52, 0.54, 0.56, 0.58, 0.60, 0.62, 0.64, 0.66, 0.68, 0.70, 0.72, 0.74, 0.76,
+    //                             0.78, 0.80, 0.82, 0.84, 0.86, 0.88, 0.90, 0.92, 0.94, 0.96, 0.98, 1.0};
+
     // auto max_values = std::vector<ScalarType>{0.02, 0.04, 0.06, 0.08, 0.12, 0.14, 0.16, 0.18, 0.22, 0.24,
     //                                           0.26, 0.28, 0.32, 0.34, 0.36, 0.38, 0.42, 0.44, 0.46, 0.48};
 
     auto icu_capacities = std::vector<ScalarType>{9.0};
 
-    auto fact_regional = std::vector<ScalarType>{0.0, 0.1, 0.2, 0.4, 0.5, 0.6, 0.7};
-    // auto fact_regional = std::vector<ScalarType>{0.02, 0.04, 0.06, 0.08, 0.12, 0.14, 0.16, 0.18,
-    //                                              0.22, 0.24, 0.26, 0.28, 0.32, 0.34, 0.36, 0.38};
+    // // auto fact_regional = std::vector<ScalarType>{0.3};
+    // auto fact_regional = std::vector<ScalarType>{0.0,  0.02, 0.04, 0.06, 0.08, 0.1,  0.12, 0.14, 0.16, 0.18, 0.2,
+    //                                              0.22, 0.24, 0.26, 0.28, 0.3,  0.32, 0.34, 0.36, 0.38, 0.4};
+    // fact regional von 0.42 bis 0.7
+    auto fact_regional = std::vector<ScalarType>{0.62, 0.64, 0.66, 0.68}; //, 0.48, 0.50, 0.52, 0.54, 0.56,
+        //0.58, 0.60, 0.62, 0.64, 0.66, 0.68, 0.70};
+    // auto fact_regional = std::vector<ScalarType>{0.66, 0.68};
+
     // const size_t county_id_infected = 3241;
 
-    auto fact_rhos = std::vector<ScalarType>{0.92, 1.0, 1.08};
+    auto fact_rhos = std::vector<ScalarType>{1.0};
     // 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.01,1.02, 1.03, 1.04, 1.05, 1.06, 1.07, 1.08, 1.09};
 
     //create or load graph

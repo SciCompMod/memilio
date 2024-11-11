@@ -156,74 +156,74 @@ IOResult<void> save_results(const std::vector<std::vector<TimeSeries<double>>>& 
         auto result_dir_p50 = result_dir / "p50";
         auto result_dir_p75 = result_dir / "p75";
         auto result_dir_p95 = result_dir / "p95";
-        BOOST_OUTCOME_TRY(create_directory(result_dir_p05.string()));
-        BOOST_OUTCOME_TRY(create_directory(result_dir_p25.string()));
+        // BOOST_OUTCOME_TRY(create_directory(result_dir_p05.string()));
+        // BOOST_OUTCOME_TRY(create_directory(result_dir_p25.string()));
         BOOST_OUTCOME_TRY(create_directory(result_dir_p50.string()));
-        BOOST_OUTCOME_TRY(create_directory(result_dir_p75.string()));
-        BOOST_OUTCOME_TRY(create_directory(result_dir_p95.string()));
+        // BOOST_OUTCOME_TRY(create_directory(result_dir_p75.string()));
+        // BOOST_OUTCOME_TRY(create_directory(result_dir_p95.string()));
 
         // save percentiles of results, summed over nodes
         {
-            auto ensemble_results_sum_p05 = ensemble_percentile(ensemble_result_sum, 0.05);
-            auto ensemble_results_sum_p25 = ensemble_percentile(ensemble_result_sum, 0.25);
+            // auto ensemble_results_sum_p05 = ensemble_percentile(ensemble_result_sum, 0.05);
+            // auto ensemble_results_sum_p25 = ensemble_percentile(ensemble_result_sum, 0.25);
             auto ensemble_results_sum_p50 = ensemble_percentile(ensemble_result_sum, 0.50);
-            auto ensemble_results_sum_p75 = ensemble_percentile(ensemble_result_sum, 0.75);
-            auto ensemble_results_sum_p95 = ensemble_percentile(ensemble_result_sum, 0.95);
+            // auto ensemble_results_sum_p75 = ensemble_percentile(ensemble_result_sum, 0.75);
+            // auto ensemble_results_sum_p95 = ensemble_percentile(ensemble_result_sum, 0.95);
 
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_sum_p05, {0}, num_groups, (result_dir_p05 / "Results_sum.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_sum_p25, {0}, num_groups, (result_dir_p25 / "Results_sum.h5").string()));
+            // BOOST_OUTCOME_TRY(
+            //     save_result(ensemble_results_sum_p05, {0}, num_groups, (result_dir_p05 / "Results_sum.h5").string()));
+            // BOOST_OUTCOME_TRY(
+            //     save_result(ensemble_results_sum_p25, {0}, num_groups, (result_dir_p25 / "Results_sum.h5").string()));
             BOOST_OUTCOME_TRY(
                 save_result(ensemble_results_sum_p50, {0}, num_groups, (result_dir_p50 / "Results_sum.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_sum_p75, {0}, num_groups, (result_dir_p75 / "Results_sum.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_sum_p95, {0}, num_groups, (result_dir_p95 / "Results_sum.h5").string()));
+            // BOOST_OUTCOME_TRY(
+            //     save_result(ensemble_results_sum_p75, {0}, num_groups, (result_dir_p75 / "Results_sum.h5").string()));
+            // BOOST_OUTCOME_TRY(
+            //     save_result(ensemble_results_sum_p95, {0}, num_groups, (result_dir_p95 / "Results_sum.h5").string()));
         }
 
         // save percentiles of results
         {
-            auto ensemble_results_p05 = ensemble_percentile(ensemble_results, 0.05);
-            auto ensemble_results_p25 = ensemble_percentile(ensemble_results, 0.25);
+            // auto ensemble_results_p05 = ensemble_percentile(ensemble_results, 0.05);
+            // auto ensemble_results_p25 = ensemble_percentile(ensemble_results, 0.25);
             auto ensemble_results_p50 = ensemble_percentile(ensemble_results, 0.50);
-            auto ensemble_results_p75 = ensemble_percentile(ensemble_results, 0.75);
-            auto ensemble_results_p95 = ensemble_percentile(ensemble_results, 0.95);
+            // auto ensemble_results_p75 = ensemble_percentile(ensemble_results, 0.75);
+            // auto ensemble_results_p95 = ensemble_percentile(ensemble_results, 0.95);
 
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_p05, county_ids, num_groups, (result_dir_p05 / "Results.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_p25, county_ids, num_groups, (result_dir_p25 / "Results.h5").string()));
+            // BOOST_OUTCOME_TRY(
+            //     save_result(ensemble_results_p05, county_ids, num_groups, (result_dir_p05 / "Results.h5").string()));
+            // BOOST_OUTCOME_TRY(
+            //     save_result(ensemble_results_p25, county_ids, num_groups, (result_dir_p25 / "Results.h5").string()));
             BOOST_OUTCOME_TRY(
                 save_result(ensemble_results_p50, county_ids, num_groups, (result_dir_p50 / "Results.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_p75, county_ids, num_groups, (result_dir_p75 / "Results.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_p95, county_ids, num_groups, (result_dir_p95 / "Results.h5").string()));
+            // BOOST_OUTCOME_TRY(
+            //     save_result(ensemble_results_p75, county_ids, num_groups, (result_dir_p75 / "Results.h5").string()));
+            // BOOST_OUTCOME_TRY(
+            //     save_result(ensemble_results_p95, county_ids, num_groups, (result_dir_p95 / "Results.h5").string()));
         }
 
-        // save percentiles of parameters
-        {
-            auto ensemble_params_p05 = ensemble_params_percentile(ensemble_params, 0.05);
-            auto ensemble_params_p25 = ensemble_params_percentile(ensemble_params, 0.25);
-            auto ensemble_params_p50 = ensemble_params_percentile(ensemble_params, 0.50);
-            auto ensemble_params_p75 = ensemble_params_percentile(ensemble_params, 0.75);
-            auto ensemble_params_p95 = ensemble_params_percentile(ensemble_params, 0.95);
+        // // save percentiles of parameters
+        // {
+        //     auto ensemble_params_p05 = ensemble_params_percentile(ensemble_params, 0.05);
+        //     auto ensemble_params_p25 = ensemble_params_percentile(ensemble_params, 0.25);
+        //     auto ensemble_params_p50 = ensemble_params_percentile(ensemble_params, 0.50);
+        //     auto ensemble_params_p75 = ensemble_params_percentile(ensemble_params, 0.75);
+        //     auto ensemble_params_p95 = ensemble_params_percentile(ensemble_params, 0.95);
 
-            auto make_graph = [&county_ids](auto&& params) {
-                return create_graph_without_edges<Model, MigrationParameters>(params, county_ids);
-            };
-            BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), IOF_OmitDistributions));
-            BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p25), result_dir_p25.string(), IOF_OmitDistributions));
-            BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p50), result_dir_p50.string(), IOF_OmitDistributions));
-            BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p75), result_dir_p75.string(), IOF_OmitDistributions));
-            BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p95), result_dir_p95.string(), IOF_OmitDistributions));
-        }
+        //     auto make_graph = [&county_ids](auto&& params) {
+        //         return create_graph_without_edges<Model, MigrationParameters>(params, county_ids);
+        //     };
+        //     BOOST_OUTCOME_TRY(
+        //         write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), IOF_OmitDistributions));
+        //     BOOST_OUTCOME_TRY(
+        //         write_graph(make_graph(ensemble_params_p25), result_dir_p25.string(), IOF_OmitDistributions));
+        //     BOOST_OUTCOME_TRY(
+        //         write_graph(make_graph(ensemble_params_p50), result_dir_p50.string(), IOF_OmitDistributions));
+        //     BOOST_OUTCOME_TRY(
+        //         write_graph(make_graph(ensemble_params_p75), result_dir_p75.string(), IOF_OmitDistributions));
+        //     BOOST_OUTCOME_TRY(
+        //         write_graph(make_graph(ensemble_params_p95), result_dir_p95.string(), IOF_OmitDistributions));
+        // }
     }
     return success();
 }

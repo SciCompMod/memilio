@@ -482,11 +482,11 @@ public:
         return global_icu_occupancy;
     }
 
-    // /**
-    //  * @brief Calculates the regional ICU occupancy for the same state ID as the current model.
-    //  *
-    //  * @return The regional ICU occupancy data.
-    //  */
+    /**
+     * @brief Calculates the regional ICU occupancy for the same state ID as the current model.
+     *
+     * @return The regional ICU occupancy data.
+     */
     // Eigen::MatrixXd calculate_regional_icu_occupancy()
     // {
     //     const auto state_id          = m_model_ptr->parameters.template get<StateID>();

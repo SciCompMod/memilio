@@ -217,7 +217,54 @@ def plot_random_counties(radius):
         plt.close()
 
 
+def list_border_counties():
+    map_data = geopandas.read_file(
+        os.path.join(
+            os.getcwd(),
+            'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_KRS.shp'))
+    county_names_ids = geoger.get_county_names_and_ids()
+
+    border_counties = []
+
+    neighbors = {}
+    for index, row in map_data.iterrows():
+        # Finden Sie alle Landkreise, die an den aktuellen Landkreis angrenzen
+        benachbarte_ids = map_data[map_data.touches(
+            row['geometry'])]['ARS'].tolist()
+
+        # Speichern Sie die benachbarten Landkreis-IDs
+        neighbors[row['ARS']] = benachbarte_ids
+
+    county_to_state_map = geoger.get_countyid_to_stateid_map(
+        merge_berlin=True)
+
+    for n in neighbors:
+        list_neighbors = [int(neighbor) for neighbor in neighbors[n]]
+        # transform each id in list_neighbors to the state_id using county_to_state_map
+        list_neighbors = [county_to_state_map[neighbor]
+                          for neighbor in list_neighbors]
+
+        # if number of unique value in neighbors is greater than 1, then the county is a border county
+        if len(set(list_neighbors)) > 1:
+            border_counties.append(n)
+
+    # write results to txt file
+    with open(os.path.join(os.path.dirname(__file__), f'border_counties.txt'), 'w') as f:
+        for county in border_counties:
+            f.write(f"{int(county)}\n")
+
+    # plot a map and highlight the border counties
+    fig, ax = plt.subplots(figsize=(10, 10))
+    map_data.plot(ax=ax, color='lightgrey', edgecolor='black')
+    map_data[map_data['ARS'].isin(border_counties)].plot(ax=ax, color='red')
+    plt.axis('off')
+    plt.tight_layout()
+    plt.savefig(os.path.join(os.path.dirname(
+        __file__), f'border_counties.png'))
+
+
 if __name__ == '__main__':
     # plot_mean_distances()
     # plot_county_in_distances(radius=73.5)
-    plot_random_counties(radius=103)
+    # plot_random_counties(radius=103)
+    list_border_counties()
