@@ -20,6 +20,7 @@
 #ifndef INTEGRATOR_H
 #define INTEGRATOR_H
 
+#include "memilio/config.h"
 #include "memilio/math/floating_point.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
@@ -188,7 +189,7 @@ public:
             results.get_last_time() = t;
 
             // if dt has been changed (even slightly) by step, register the current m_core as adaptive
-            m_is_adaptive |= !floating_point_equal(dt, dt_copy, (FP)1e-8);
+            m_is_adaptive |= !floating_point_equal<FP>(dt, dt_copy, Limits<FP>::zero_tolerance());
         }
         m_core->get_dt_min() = dt_min_restore; // restore dt_min
         // if dt was decreased to reach tmax in the last time iteration,

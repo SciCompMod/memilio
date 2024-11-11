@@ -43,7 +43,7 @@
 namespace params
 {
 // Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
-constexpr int num_subcompartments = 3;
+constexpr int num_subcompartments = NUM_SUBCOMPARTMENTS;
 constexpr size_t num_groups       = 6;
 
 // Parameters
@@ -52,9 +52,9 @@ std::map<std::string, ScalarType> simulation_parameter = {{"RelativeTransmission
                                                           {"Seasonality", 0.},
                                                           {"scale_confirmed_cases", 1.},
                                                           {"scale_contacts", 1.},
-                                                          {"lockdown_hard", 371 * 14 / (45 * 401.)},
+                                                          {"npi_size", 371 * 14 / (45 * 401.)},
                                                           {"tmax", 45}};
-mio::Date start_date(2020, 10, 01);
+mio::Date start_date(2021, 01, 01);
 const ScalarType dt                = 0.01;
 const ScalarType age_group_sizes[] = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
 const ScalarType total_population  = 83155031.0;
@@ -124,7 +124,7 @@ void set_npi_october(mio::ContactMatrixGroup& contact_matrices)
     using namespace params;
     // ---------------------24/10/2020--------------------------------
     auto offset_npi = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 10, 25), start_date));
-    ScalarType contact_reduction_all_locations = simulation_parameter["lockdown_hard"];
+    ScalarType contact_reduction_all_locations = simulation_parameter["npi_size"];
     for (auto&& contact_location : contact_locations) {
         contact_matrices[size_t(contact_location.first)].add_damping(
             Eigen::MatrixXd::Constant(num_groups, num_groups, contact_reduction_all_locations), offset_npi);
@@ -136,7 +136,7 @@ void set_npi_july(mio::ContactMatrixGroup& contact_matrices)
     using namespace params;
     // -----------------------------------------------------
     auto offset_npi = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 07, 07), start_date));
-    ScalarType contact_reduction_all_locations = simulation_parameter["lockdown_hard"];
+    ScalarType contact_reduction_all_locations = simulation_parameter["npi_size"];
     for (auto&& contact_location : contact_locations) {
         contact_matrices[size_t(contact_location.first)].add_damping(
             Eigen::MatrixXd::Constant(num_groups, num_groups, contact_reduction_all_locations), offset_npi);
@@ -150,9 +150,6 @@ void set_npi_july(mio::ContactMatrixGroup& contact_matrices)
  * Also set Non-pharmaceutical Interventions influencing the ContactPatterns used for simulation in the period from start_date to end_date.
  * 
  * @param[in] data_dir Directory to files with minimum and baseline contact matrices.
- * @param[in] parameters Object that the contact pattern will be added to.
- * @param[in] simulation_parameters Map with parameters necessary for the calculation of contacts an NPIs which can be different for different start dates.
- *      Function uses the values to define start and end date, lockdown_hard and scale_contacts.
  * @returns Any io errors that happen during reading of the input files.
  */
 mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(const fs::path& contact_data_dir)
@@ -191,14 +188,99 @@ mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(const 
  * @brief Performs a simulation of a real scenario with an LCT and an ODE model.
  *
  * @param[in] path Path of the RKI file that should be used to compute initial values for simulations.
- * @param[in] simulation_parameters Map with parameters necessary for the simulation which can be different for different start dates.
- *        Provide the parameters "start_month", "start_day","seasonality" (parameter k for the seasonality of the models), 
- *        "RelativeTransmissionNoSymptoms", "RiskOfInfectionFromSymptomatic", "scale_confirmed_cases" (to scale the RKI data while computing an initialization vector),
- *        "lockdown_hard" (Proportion of counties for which a hard lockdown is implemented) and 
- *        "scale_contacts" (scales contacts per hand to match the new infections in the RKI data).
- *        The assumption regarding the number of subcompartments of the LCT model can be controlled via the parameter "num_subcompartments".
  * @param[in] save_dir Specifies the directory where the results should be stored. Provide an empty string if results should not be saved.
- * @param[in] print_result Specifies if the results should be printed.
+ * @returns Any io errors that happen during reading of the RKI file or files for contact matrices or saving the results.
+ */
+mio::IOResult<void> simulate_other_subcompartments(std::string const& dir_to_contact_data,
+                                                   std::string const& infection_data_dir, std::string save_dir = "")
+{
+    using namespace params;
+    std::cout << "Realistic scenario with number of subcompartments is approximately the mean stay time." << std::endl;
+    // ----- Initialize age resolved model. -----
+    using InfState      = mio::lsecir::InfectionState;
+    using LctState0_14  = mio::LctInfectionState<InfState, 1, 3, 3, 7, 5, 7, 1, 1>;
+    using LctState15_34 = mio::LctInfectionState<InfState, 1, 3, 3, 7, 6, 7, 1, 1>;
+    using LctState35_59 = mio::LctInfectionState<InfState, 1, 3, 3, 7, 8, 17, 1, 1>;
+    using LctState60_79 = mio::LctInfectionState<InfState, 1, 3, 3, 7, 9, 17, 1, 1>;
+    using LctState80    = mio::LctInfectionState<InfState, 1, 3, 3, 7, 11, 12, 1, 1>;
+    using Model =
+        mio::lsecir::Model<LctState0_14, LctState0_14, LctState15_34, LctState35_59, LctState60_79, LctState80>;
+    Model model;
+
+    // Define parameters used for simulation and initialization.
+    for (size_t group = 0; group < num_groups; group++) {
+        model.parameters.get<mio::lsecir::TimeExposed>()[group]            = TimeExposed[group];
+        model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[group] = TimeInfectedNoSymptoms[group];
+        model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[group]   = TimeInfectedSymptoms[group];
+        model.parameters.get<mio::lsecir::TimeInfectedSevere>()[group]     = TimeInfectedSevere[group];
+        model.parameters.get<mio::lsecir::TimeInfectedCritical>()[group]   = TimeInfectedCritical[group];
+        model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[group] =
+            TransmissionProbabilityOnContact[group];
+
+        model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[group] =
+            simulation_parameter["RelativeTransmissionNoSymptoms"];
+        model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[group] =
+            simulation_parameter["RiskOfInfectionFromSymptomatic"];
+
+        model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[group] =
+            RecoveredPerInfectedNoSymptoms[group];
+        model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[group] = SeverePerInfectedSymptoms[group];
+        model.parameters.get<mio::lsecir::CriticalPerSevere>()[group]         = CriticalPerSevere[group];
+        model.parameters.get<mio::lsecir::DeathsPerCritical>()[group]         = DeathsPerCritical[group];
+    }
+
+    BOOST_OUTCOME_TRY(auto&& contact_matrix, get_contact_matrix(dir_to_contact_data));
+
+    model.parameters.get<mio::lsecir::ContactPatterns>() = contact_matrix;
+    model.parameters.get<mio::lsecir::Seasonality>()     = simulation_parameter["Seasonality"];
+    model.parameters.get<mio::lsecir::StartDay>()        = mio::get_day_in_year(start_date);
+
+    BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(infection_data_dir));
+    auto init = mio::lsecir::set_initial_data_from_confirmed_cases<Model::Populations, mio::ConfirmedCasesDataEntry>(
+        rki_data, model.populations, model.parameters, start_date,
+        std::vector<ScalarType>(age_group_sizes, age_group_sizes + num_groups),
+        std::vector<ScalarType>(num_groups, simulation_parameter["scale_confirmed_cases"]));
+    if (!init) {
+        printf("%s\n", init.error().formatted_message().c_str());
+        return init;
+    }
+
+    // Perform simulation.
+    auto integrator =
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
+    // Choose dt_min = dt_max so that we have a fixed time step and can compare to the result with one group.
+    integrator->set_dt_min(dt);
+    integrator->set_dt_max(dt);
+    mio::TimeSeries<ScalarType> result =
+        mio::simulate<ScalarType, Model>(0, simulation_parameter["tmax"], dt, model, integrator);
+
+    // Calculate result without division in subcompartments.
+    mio::TimeSeries<ScalarType> populations                 = model.calculate_compartments(result);
+    mio::TimeSeries<ScalarType> populations_accumulated_age = add_age_groups(populations);
+
+    if (!save_dir.empty()) {
+        std::string filename = save_dir + "real_" + std::to_string(start_date.year) + "-" +
+                               std::to_string(start_date.month) + "-" + std::to_string(start_date.day) + "_var";
+        // Age-resolved.
+        mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename + "_ageres.h5");
+        // Not resolved by age.
+        save_result_status = mio::save_result({populations_accumulated_age}, {0}, 1, filename + "_accumulated.h5");
+    }
+    // Print commands to get the number of new infections on the first day of simulation. Could be used to scale the contacts.
+    std::cout << "Number of new infections on the first day of simulation: " << std::endl;
+    std::cout << std::fixed << std::setprecision(1)
+              << (populations_accumulated_age[0][0] - populations_accumulated_age[1][0]) /
+                     (populations.get_time(1) - populations.get_time(0))
+              << std::endl;
+
+    return mio::success();
+}
+
+/**
+ * @brief Performs a simulation of a real scenario with an LCT and an ODE model.
+ *
+ * @param[in] path Path of the RKI file that should be used to compute initial values for simulations.
+ * @param[in] save_dir Specifies the directory where the results should be stored. Provide an empty string if results should not be saved.
  * @returns Any io errors that happen during reading of the RKI file or files for contact matrices or saving the results.
  */
 mio::IOResult<void> simulate(std::string const& dir_to_contact_data, std::string const& infection_data_dir,
@@ -211,13 +293,6 @@ mio::IOResult<void> simulate(std::string const& dir_to_contact_data, std::string
     using LctState = mio::LctInfectionState<InfState, 1, num_subcompartments, num_subcompartments, num_subcompartments,
                                             num_subcompartments, num_subcompartments, 1, 1>;
     using Model    = mio::lsecir::Model<LctState, LctState, LctState, LctState, LctState, LctState>;
-    // using LctState0_14  = mio::LctInfectionState<InfState, 1, 3, 3, 7, 5, 7, 1, 1>;
-    // using LctState15_34 = mio::LctInfectionState<InfState, 1, 3, 3, 7, 6, 7, 1, 1>;
-    // using LctState35_59 = mio::LctInfectionState<InfState, 1, 3, 3, 7, 8, 17, 1, 1>;
-    // using LctState60_79 = mio::LctInfectionState<InfState, 1, 3, 3, 7, 9, 17, 1, 1>;
-    // using LctState80    = mio::LctInfectionState<InfState, 1, 3, 3, 7, 11, 12, 1, 1>;
-    // using Model =
-    //     mio::lsecir::Model<LctState0_14, LctState0_14, LctState15_34, LctState35_59, LctState60_79, LctState80>;
     Model model;
 
     // Define parameters used for simulation and initialization.
@@ -296,35 +371,37 @@ mio::IOResult<void> simulate(std::string const& dir_to_contact_data, std::string
 
 int main(int argc, char** argv)
 {
-    std::string dir_to_data = "../../data";
-
-    /* Values for "RelativeTransmissionNoSymptoms", "RelativeTransmissionNoSymptoms" and "seasonality" are suitable values based on doi: 10.1016/j.mbs.2021.108648.
-    "scale_confirmed_cases" are values directly from this paper. 
-    "lockdown_hard" is based on the number of beginnings of a strict lockdown for 14 days of the 45 days simulation period in the lockdown. Value is not used for 01/06/2020 and 
-    scaled in october to assume that in the beginning of the period are less counties in lockdown and more in the second half. 
-    "lockdown_hard" should give the average percentage of counties that are in a hard lockdown on a simulation day. 
-    "scale_contacts" is used to match the predicted number of new infections on the first simulation day to the RKI data. */
-
-    // Paths are valid if file is executed eg in memilio/build/bin
-    // Simulation with start date 01.06.2020 with 1 subcompartment.
-    if (argc >= 4) {
-        params::start_date = mio::Date(std::stod(argv[1]), std::stod(argv[2]), std::stod(argv[3]));
-        dir_to_data        = argv[4];
+    std::string dir_to_data    = "../../data";
+    bool other_subcompartments = false;
+    if (argc > 1) {
+        other_subcompartments = std::stoi(argv[1]);
+    }
+    if (argc > 5) {
+        params::start_date = mio::Date(std::stod(argv[2]), std::stod(argv[3]), std::stod(argv[4]));
+        dir_to_data        = argv[5];
     }
 
-    if (argc >= 9) {
-        params::simulation_parameter["RelativeTransmissionNoSymptoms"] = std::stod(argv[5]);
-        params::simulation_parameter["RiskOfInfectionFromSymptomatic"] = std::stod(argv[6]);
-        params::simulation_parameter["scale_confirmed_cases"]          = std::stod(argv[7]);
+    if (argc > 9) {
+        params::simulation_parameter["RelativeTransmissionNoSymptoms"] = std::stod(argv[6]);
+        params::simulation_parameter["RiskOfInfectionFromSymptomatic"] = std::stod(argv[7]);
         params::simulation_parameter["scale_contacts"]                 = std::stod(argv[8]);
-        params::simulation_parameter["lockdown_hard"]                  = std::stod(argv[9]);
+        params::simulation_parameter["npi_size"]                       = std::stod(argv[9]);
     }
     std::string save_dir           = dir_to_data + "/simulation_lct_real/";
     std::string infection_data_dir = dir_to_data + "/pydata/Germany/cases_all_age_ma7.json";
-    auto result                    = simulate(dir_to_data, infection_data_dir, save_dir);
-    if (!result) {
-        printf("%s\n", result.error().formatted_message().c_str());
-        return -1;
+    if (other_subcompartments) {
+        auto result = simulate_other_subcompartments(dir_to_data, infection_data_dir, save_dir);
+        if (!result) {
+            printf("%s\n", result.error().formatted_message().c_str());
+            return -1;
+        }
+    }
+    else {
+        auto result = simulate(dir_to_data, infection_data_dir, save_dir);
+        if (!result) {
+            printf("%s\n", result.error().formatted_message().c_str());
+            return -1;
+        }
     }
 
     return 0;
