@@ -101,11 +101,11 @@ def extract_json_segments(input_file, output_file):
         json.dump(json_data, json_file, indent=4)
 
 
-def plot_runtime_2d(name=''):
+def plot_runtime_ageresolved(jsonfilename, name=''):
     fig = plt.figure()
-    df = pd.read_json("lct_runtimes_1day.json")
+    df = pd.read_json(jsonfilename)
 
-    for agegroup in [1]:
+    for agegroup in [1, 2, 3, 4, 5, 6]:
         df_age = df[(df["Agegroups"] == agegroup)]
         plt.plot(df_age["Subcompartments"], df_age["Time"], linestyle='--', marker='o', linewidth=1.2,
                  label=str(agegroup), color=colors[agegroup-1])
@@ -123,7 +123,7 @@ def plot_runtime_2d(name=''):
                 '.png', bbox_inches='tight', dpi=500)
 
 
-def plot_runtime_2d_noage(jsonfilename, name=''):
+def plot_runtime_noage(jsonfilename, name=''):
     fig = plt.figure()
     df = pd.read_json(jsonfilename)
 
@@ -131,60 +131,84 @@ def plot_runtime_2d_noage(jsonfilename, name=''):
     plt.plot(df_age["Subcompartments"], df_age["Time"],
              linestyle='--', marker='o', linewidth=1.2)
     plt.title(
-        'Run time and cache miss rate with one age group for 20 simulation days')
+        'Run time for one age group')
     plt.ylim(bottom=0.)
-    plt.xlim(left=0., right=51)
+    plt.xlim(left=0., right=df_age["Subcompartments"].max()+1)
     plt.xlabel('Number of subcompartments', fontsize=13)
     plt.ylabel('Run time [seconds]', fontsize=13)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
-    if not os.path.isdir('Plots'):
-        os.makedirs('Plots')
-    plt.savefig('Plots/run_time_lct'+name+'.png', bbox_inches='tight', dpi=500)
+    if not os.path.isdir('Plots_time'):
+        os.makedirs('Plots_time')
+    plt.savefig('Plots_time/run_time_lct'+name +
+                '.png', bbox_inches='tight', dpi=500)
 
 
-def plot_cachemisses(jsonfilename, cachelevel=1, savename=''):
+def plot_cachemisses(jsonfilename, cachelevel=1, savename='', rate=False):
     fig = plt.figure()
     df = pd.read_json(jsonfilename)
-    if (cachelevel == 1):
-        plt.plot(df["Subcompartments"], df["D1_misses"],
-                 linestyle='--', marker='o', linewidth=1.2)
-        plt.title(
-            'L1 cache miss total with one age group')
-    elif (cachelevel == 0):
+    if (cachelevel == 0):
         plt.plot(df["Subcompartments"], df["refs"],
                  linestyle='--', marker='o', linewidth=1.2)
         plt.title(
-            'Refs total with one age group')
+            'Refs with one age group')
+        plt.ylabel('Refs', fontsize=13)
+    elif (cachelevel == 1):
+        if (rate):
+            plt.plot(df["Subcompartments"], df["D1_misses"]/df["refs"]*100,
+                     linestyle='--', marker='o', linewidth=1.2)
+            plt.title(
+                'L1 cache miss rate with one age group')
+            plt.ylabel('Cache misses [%]', fontsize=13)
+        else:
+            plt.plot(df["Subcompartments"], df["D1_misses"],
+                     linestyle='--', marker='o', linewidth=1.2)
+            plt.title(
+                'L1 cache misses with one age group')
+            plt.ylabel('Cache misses', fontsize=13)
     else:
-        plt.plot(df["Subcompartments"], df["LLd_misses"],
-                 linestyle='--', marker='o', linewidth=1.2)  # /df["refs"]*100
-        plt.title(
-            'LL cache miss total with one age group')
+        if (rate):
+            plt.plot(df["Subcompartments"], df["LLd_misses"]/df["refs"]*100,
+                     linestyle='--', marker='o', linewidth=1.2)
+            plt.title(
+                'LL cache miss rate with one age group')
+            plt.ylabel('Cache misses [%]', fontsize=13)
+        else:
+            plt.plot(df["Subcompartments"], df["LLd_misses"],
+                     linestyle='--', marker='o', linewidth=1.2)
+            plt.title(
+                'LL cache misses with one age group')
+            plt.ylabel('Cache misses', fontsize=13)
 
     plt.ylim(bottom=0.)
-    plt.xlim(left=0., right=51)
+    plt.xlim(left=0., right=df["Subcompartments"].max()+1)
     plt.xlabel('Number of subcompartments', fontsize=13)
-    plt.ylabel('Cache misses [%]', fontsize=13)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
-    if not os.path.isdir('Plots'):
-        os.makedirs('Plots')
-    plt.savefig('Plots/'+savename+'.png', bbox_inches='tight', dpi=500)
+    if not os.path.isdir('Plots_time'):
+        os.makedirs('Plots_time')
+    plt.savefig('Plots_time/'+savename+'.png', bbox_inches='tight', dpi=500)
 
 
 def main():
     # run times
-    # jsonfilenameruntimes = 'runtimes/lct_runtimes_20day_onegroup.json'
+    jsonfilenameruntimes = 'runtimes/lct_runtimes_20day_onegroup.json'
     # extract_json_segments('runtimes/times_20days.txt', jsonfilenameruntimes)
-    # plot_runtime_2d_noage(jsonfilenameruntimes, '20days_onegroup')
+    plot_runtime_noage(jsonfilenameruntimes, '20days_onegroup')
 
     # Cache
     jsonfilenamecache = 'runtimes/valgrind_20day_onegroup.json'
-    # parse_valgrind_output('runtimes/valgrind_20days.txt', jsonfilenamecache)
     plot_cachemisses(jsonfilenamecache, 0, 'Refstotal_20days')
+    plot_cachemisses(jsonfilenamecache, 1, 'L1cachemisstotal_20days')
+    plot_cachemisses(jsonfilenamecache, 3, 'LLcachemisstotal_20days')
+    plot_cachemisses(jsonfilenamecache, 1, 'L1cachemissrate_20days', True)
+    plot_cachemisses(jsonfilenamecache, 3, 'LLcachemissrate_20days', True)
+    # jsonfilenamecache = 'runtimes/valgrind_85_sub_20days.json'
+    # parse_valgrind_output(
+    #     'runtimes/valgrind_85_sub_20days.txt', jsonfilenamecache)
+    # plot_cachemisses(jsonfilenamecache, 0, 'Refstotal_85sub_20days')
 
 
 if __name__ == "__main__":
