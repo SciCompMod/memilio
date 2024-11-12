@@ -27,7 +27,7 @@ npi_size_jul=-0.3
 # Compile with the different numbers of subcompartments and run with different setups.
 for num_subcomp in 1 3 10 50
 do
-    cmake -DNUM_SUBCOMPARTMENTS=$num_subcomp .
+    cmake -DNUM_SUBCOMPARTMENTS=$num_subcomp -DCMAKE_BUILD_TYPE="Release" .
     cmake --build . --target lct_realistic_scenario
 
     # First case: 01/10/2020.

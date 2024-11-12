@@ -28,7 +28,7 @@ fi
 # Compile with the different numbers of subcompartments and run with different setups.
 for num_subcomp in 1 3 10 50
 do
-    cmake -DNUM_SUBCOMPARTMENTS=$num_subcomp .
+    cmake -DNUM_SUBCOMPARTMENTS=$num_subcomp -DCMAKE_BUILD_TYPE="Release" .
     cmake --build . --target lct_fictional_noage
 
     # First case: drop R0.
@@ -64,7 +64,7 @@ simulationdays=(140 100 90 80 60 60 60 60 60)
 R0s=(2 3 4 5 6 7 8 9 10)
 for num_subcomp in 1 2 3 4 5 6 7 8 9 10 50
 do
-    cmake -DNUM_SUBCOMPARTMENTS=$num_subcomp .
+    cmake -DNUM_SUBCOMPARTMENTS=$num_subcomp -DCMAKE_BUILD_TYPE="Release" .
     cmake --build . --target lct_fictional_noage
     for index in {0..8}
     do

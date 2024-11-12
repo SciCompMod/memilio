@@ -15,7 +15,7 @@ echo Running $1 on node $SLURM_JOB_NODELIST with $warm_up_runs warm up runs and 
 cd ../build
 for i in {1..50}
 do
-    cmake -DNUM_SUBCOMPARTMENTS=$i .
+    cmake -DNUM_SUBCOMPARTMENTS=$i -DCMAKE_BUILD_TYPE="RelWithDebInfo" .
     cmake --build . --target lct_timing
     srun --cpu-bind=core valgrind --tool=callgrind --simulate-cache=yes ./$1  $warm_up_runs $runs
 done

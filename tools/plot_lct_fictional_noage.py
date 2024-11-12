@@ -49,12 +49,8 @@ color_dict = {'ODE': '#1f77b4',
               'LCT20': '#9467bd',
               'LCT50':  '#e377c2',
               }
-linestyle_dict = {'ODE': 'solid',
-                  'LCT3': 'solid',
-                  'LCT10': 'solid',
-                  'LCT20': 'solid',
-                  'LCT50': 'solid'
-                  }
+fontsize_labels = 14
+fontsize_legends = 14
 
 
 def compare_compartments_horizontal(files, legendplot,  filename_plot="compare_compartments", compartment_indices=range(8)):
@@ -92,10 +88,10 @@ def compare_compartments_horizontal(files, legendplot,  filename_plot="compare_c
         left_right = 0
         up_down = 0
         for i in compartment_indices:
-            if legendplot[file] in linestyle_dict:
+            if legendplot[file] in color_dict:
                 axs[up_down, left_right].plot(dates,
                                               total[:, i], label=legendplot[file], linewidth=1.2,
-                                              linestyle=linestyle_dict[legendplot[file]],
+                                              linestyle="solid",
                                               color=color_dict[legendplot[file]])
             else:
                 axs[up_down, left_right].plot(dates,
@@ -167,21 +163,21 @@ def compare_single_compartment(files, legendplot,  compartment_idx=1, filename_p
                 "Expected a different number of compartments.")
 
         # Plot result.
-        if legendplot[file] in linestyle_dict:
+        if legendplot[file] in color_dict:
             plt.plot(dates, total[:, compartment_idx], linewidth=1.2,
-                     linestyle=linestyle_dict[legendplot[file]], color=color_dict[legendplot[file]])
+                     linestyle="solid", color=color_dict[legendplot[file]])
         else:
             plt.plot(dates, total[:, compartment_idx], linewidth=1.2)
 
         h5file.close()
 
-    plt.xlabel('Simulation time [days]', fontsize=16)
+    plt.xlabel('Simulation time [days]', fontsize=fontsize_labels)
     plt.yticks(fontsize=9)
     plt.ylabel('Number of ' +
-               secir_dict[compartment_idx] + " individuals", fontsize=14)
+               secir_dict[compartment_idx] + " individuals", fontsize=fontsize_labels)
     # plt.ylim(bottom=0)
     plt.xlim(left=0, right=dates[-1])
-    plt.legend(legendplot, fontsize=14, framealpha=0.5)
+    plt.legend(legendplot, fontsize=fontsize_legends, framealpha=0.5)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
@@ -276,8 +272,8 @@ def plot_maxpeak_incidence(func_get_file_name, R0s, subcomps, filename_plot="max
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10,
                title="$\\mathcal{R}_{\\text{eff}}\\approx$", title_fontsize=14)
     plt.ylim(bottom=0)
-    plt.xlabel('Number of subcompartments', fontsize=13)
-    plt.ylabel('Maximum daily new transmissions', fontsize=13)
+    plt.xlabel('Number of subcompartments', fontsize=fontsize_labels)
+    plt.ylabel('Maximum daily new transmissions', fontsize=fontsize_labels)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
@@ -320,8 +316,8 @@ def plot_day_peak_incidence(func_get_file_name, R0s, subcomps, filename_plot="ma
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10,
                title="$\\mathcal{R}_{\\text{eff}}\\approx$", title_fontsize=14)
     plt.ylim(bottom=0)
-    plt.xlabel('Number of subcompartments', fontsize=13)
-    plt.ylabel('Simulation day of peak [days]', fontsize=13)
+    plt.xlabel('Number of subcompartments', fontsize=fontsize_labels)
+    plt.ylabel('Simulation day of peak [days]', fontsize=fontsize_labels)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
@@ -381,23 +377,23 @@ def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infe
         total = data['Total'][:, :]
         incidence = (total[:-1, 0]-total[1:, 0])/(dates[1:]-dates[:-1])
         # Plot result.
-        if legendplot[file] in linestyle_dict:
+        if legendplot[file] in color_dict:
             plt.plot(dates[1:], incidence, linewidth=1.2,
-                     linestyle=linestyle_dict[legendplot[file]], color=color_dict[legendplot[file]])
+                     linestyle="solid", color=color_dict[legendplot[file]])
         else:
             plt.plot(dates[1:], incidence, linewidth=1.2)
 
         h5file.close()
 
-    plt.xlabel('Simulation time [days]', fontsize=16)
+    plt.xlabel('Simulation time [days]', fontsize=fontsize_labels)
     plt.yticks(fontsize=9)
-    plt.ylabel('Daily new transmissions', fontsize=14)
+    plt.ylabel('Daily new transmissions', fontsize=fontsize_labels)
     plt.ylim(bottom=0, top=ylim)
     if tmax > 0:
         plt.xlim(left=0, right=tmax)
     else:
         plt.xlim(left=0, right=dates[-1])
-    plt.legend(legendplot, fontsize=14, framealpha=0.5)
+    plt.legend(legendplot, fontsize=fontsize_legends, framealpha=0.5)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 

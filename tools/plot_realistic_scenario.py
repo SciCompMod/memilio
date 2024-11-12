@@ -58,16 +58,11 @@ color_dict = {'ODE': '#1f77b4',
               'LCT50':  '#e377c2',
               'LCTvar':  '#bbf90f',
               }
-linestyle_dict = {'ODE': 'solid',
-                  'LCT3': 'solid',
-                  'LCT10': 'solid',
-                  'LCT20': 'solid',
-                  'LCT50': 'solid',
-                  'LCTvar': 'solid'
-                  }
+fontsize_labels = 14
+fontsize_legends = 11
 
 
-def load_data(file, start_date, tmax, scaleConfirmed):
+def load_data(file, start_date, tmax, scaleConfirmed=1):
     """ Loads RKI data and computes 'InfectedSymptoms', 'Deaths' and 'DailyNewTransmissions' using scales, dates etc 
     from the dictionary parameters. Method matches the method for computing initial values for the LCT model. 
     See also cpp/models/lct_secir/parameters_io.h.
@@ -197,29 +192,30 @@ def compare_compartments_real(files, age_group, datafile, start_date, tmax, scal
     if (age_group == -1):
         data_rki = data_rki.drop(columns=['Age_RKI'])
         data_rki = data_rki.groupby(['Date']).sum()
-        plt.title('All Age Groups')
         if (deaths):
             plt.plot(range(num_days), data_rki['Deaths'],
                      linestyle='None', color='grey', marker='x', markersize=5)
             compartment_idx = 7
-            labely = "Deaths"
+            plt.ylabel("Deaths", fontsize=fontsize_labels)
         else:
             plt.plot(range(num_days), data_rki['InfectedSymptoms'],
                      linestyle='None', color='grey', marker='x', markersize=5)
             compartment_idx = 3
-            labely = "People in Infected compartment"
+            plt.ylabel("Mildly symptomatic individuals",
+                       fontsize=fontsize_labels)
     else:
         plt.title(Age_RKI_names[age_group])
         if (deaths):
             plt.plot(range(num_days), data_rki['Deaths'][(data_rki['Age_RKI'] == Age_RKI_names[age_group])],
                      linestyle='None', color='grey', marker='x', markersize=5)
             compartment_idx = 7
-            labely = "Deaths"
+            plt.ylabel("Deaths", fontsize=fontsize_labels)
         else:
             plt.plot(range(num_days), data_rki['InfectedSymptoms'][(data_rki['Age_RKI'] == Age_RKI_names[age_group])],
                      linestyle='None', color='grey', marker='x', markersize=5)
             compartment_idx = 3
-            labely = "Number of people in Infected compartment"
+            plt.ylabel("Mildly symptomatic individuals",
+                       fontsize=fontsize_labels)
 
     # Add simulation results to plot.
     for file in range(len(files)):
@@ -242,19 +238,18 @@ def compare_compartments_real(files, age_group, datafile, start_date, tmax, scal
                     "Expected a different number of compartments.")
             # Plot result.
             plt.plot(dates, total[:, compartment_idx],
-                     linewidth=1.2, linestyle=linestyle_dict[legendplot[1+file]], color=color_dict[legendplot[1+file]])
+                     linewidth=1.2, linestyle="solid", color=color_dict[legendplot[1+file]])
         else:
             if (total.shape[1] != 8*len(Age_RKI_names)):
                 raise gd.DataError(
                     "Expected a different number of compartments.")
             # Plot result.
             plt.plot(dates, total[:, len(secir_dict) * age_group + compartment_idx],
-                     linewidth=1.2, linestyle=linestyle_dict[legendplot[1+file]], color=color_dict[legendplot[1+file]])
+                     linewidth=1.2, linestyle="solid", color=color_dict[legendplot[1+file]])
 
         h5file.close()
 
-    plt.xlabel('Date', fontsize=16)
-    plt.ylabel(labely, fontsize=16)
+    plt.xlabel('Date', fontsize=fontsize_labels)
     plt.yticks(fontsize=9)
     plt.xlim(left=0, right=num_days-1)
     # Define x-ticks.
@@ -265,7 +260,7 @@ def compare_compartments_real(files, age_group, datafile, start_date, tmax, scal
                rotation=45, fontsize=12)
     plt.xticks(np.arange(num_days), minor=True)
 
-    plt.legend(legendplot, fontsize=12, framealpha=0.5)
+    plt.legend(legendplot, fontsize=fontsize_legends, framealpha=0.5)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
@@ -290,7 +285,6 @@ def plot_icu_real(
     @param[in] legendplot: list with names for the results that should be used for the legend of the plot.
     @param[in] filename_plot: Name to use as the file name for the saved plot.
     """
-
     # Define plot.
     plt.figure(filename_plot)
 
@@ -298,10 +292,8 @@ def plot_icu_real(
     num_days = tmax + 1
 
     # Plot ICU data.
-    plt.title('All Age Groups')
     plt.plot(range(num_days), data_icu['ICU'],
              linestyle='None', color='grey', marker='x', markersize=5)
-    labely = "ICU patients"
 
     # Set index of ICU compartment in simulation results.
     compartment_idx = 5
@@ -326,11 +318,11 @@ def plot_icu_real(
                 "Expected a different number of compartments.")
         # Plot result.
         plt.plot(dates, total[:, compartment_idx],
-                 linewidth=1.2, linestyle=linestyle_dict[legendplot[1+file]], color=color_dict[legendplot[1+file]])
+                 linewidth=1.2, linestyle="solid", color=color_dict[legendplot[1+file]])
         h5file.close()
 
-    plt.xlabel('Date', fontsize=16)
-    plt.ylabel(labely, fontsize=16)
+    plt.xlabel('Date', fontsize=fontsize_labels)
+    plt.ylabel("ICU patients", fontsize=fontsize_labels)
     plt.yticks(fontsize=9)
     plt.xlim(left=0, right=num_days-1)
     # Define x-ticks.
@@ -410,16 +402,16 @@ def plot_new_infections_real(files, age_group, datafile, start_date, tmax, scale
               f"{incidence[0]}")
 
         # Plot result.
-        if legendplot[file] in linestyle_dict:
+        if legendplot[file] in color_dict:
             plt.plot(dates[1:], incidence, linewidth=1.2,
-                     linestyle=linestyle_dict[legendplot[1+file]], color=color_dict[legendplot[1+file]])
+                     linestyle="solid", color=color_dict[legendplot[1+file]])
         else:
             plt.plot(dates[1:], incidence, linewidth=1.2)
         h5file.close()
 
-    plt.ylabel('Daily new transmissions', fontsize=14)
+    plt.ylabel('Daily new transmissions', fontsize=fontsize_labels)
     plt.ylim(bottom=0)
-    plt.xlabel('Date', fontsize=14)
+    plt.xlabel('Date', fontsize=fontsize_labels)
     plt.xlim(left=0, right=num_days-1)
     # Define x-ticks.
     datelist = np.array(pd.date_range(start_date.date(),
@@ -429,7 +421,7 @@ def plot_new_infections_real(files, age_group, datafile, start_date, tmax, scale
                rotation=45, fontsize=12)
     plt.xticks(np.arange(num_days), minor=True)
 
-    plt.legend(legendplot, fontsize=12, framealpha=0.5)
+    plt.legend(legendplot, fontsize=fontsize_legends, framealpha=0.5)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
@@ -482,7 +474,7 @@ def main():
                                           start_date, 50, folder, False),
                                       get_file_name(
                                           start_date,  "var", folder, False)], -1, datafile_rki, start_date_timestamp, 45, 1.0, list(
-                ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=False, filename_plot="real_infected_"+start_date+"_allage")
+                ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=False, filename_plot="real_infected_"+start_date+"_allage")
 
             compare_compartments_real([get_file_name(start_date, 1, folder, False),
                                       get_file_name(
@@ -493,7 +485,7 @@ def main():
                                           start_date, 50, folder, False),
                                       get_file_name(
                                           start_date, "var", folder, False)], -1, datafile_rki, start_date_timestamp, 45, 1.0, list(
-                ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=True, filename_plot="real_deaths_"+start_date+"_allage")
+                ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=True, filename_plot="real_deaths_"+start_date+"_allage")
             plot_icu_real(
                 [get_file_name(start_date, 1, folder, False),
                  get_file_name(
@@ -504,7 +496,7 @@ def main():
                     start_date, 50, folder, False),
                  get_file_name(
                     start_date, "var", folder, False)], datafile_icu, start_date_timestamp, 45,  list(
-                    ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),  filename_plot="real_icu_"+start_date+"_allage")
+                    ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),  filename_plot="real_icu_"+start_date+"_allage")
         elif case == 2:
             # Start date october.
             start_date = '2020-10-1'
@@ -532,7 +524,7 @@ def main():
                                           start_date, 50, folder, False),
                                       get_file_name(
                                           start_date,  "var", folder, False)], -1, datafile_rki, start_date_timestamp, 45, 1.0, list(
-                ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=False, filename_plot="real_infected_"+start_date+"_allage")
+                ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=False, filename_plot="real_infected_"+start_date+"_allage")
 
             compare_compartments_real([get_file_name(start_date, 1, folder, False),
                                       get_file_name(
@@ -543,7 +535,7 @@ def main():
                                           start_date, 50, folder, False),
                                       get_file_name(
                                           start_date, "var", folder, False)], -1, datafile_rki, start_date_timestamp, 45, 1.0, list(
-                ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=True, filename_plot="real_deaths_"+start_date+"_allage")
+                ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=True, filename_plot="real_deaths_"+start_date+"_allage")
             plot_icu_real(
                 [get_file_name(start_date, 1, folder, False),
                  get_file_name(
@@ -554,7 +546,7 @@ def main():
                     start_date, 50, folder, False),
                  get_file_name(
                     start_date, "var", folder, False)], datafile_icu, start_date_timestamp, 45,  list(
-                    ["Extrapolated RKI Data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),  filename_plot="real_icu_"+start_date+"_allage")
+                    ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),  filename_plot="real_icu_"+start_date+"_allage")
 
 
 if __name__ == "__main__":

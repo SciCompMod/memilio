@@ -28,6 +28,8 @@ import json
 
 colors = ["tab:blue", "tab:orange", "tab:green",
           "tab:red", "tab:purple", "tab:brown"]
+fontsize_labels = 14
+fontsize_legends = 12
 
 
 def parse_valgrind_output(input_file, output_file):
@@ -110,10 +112,10 @@ def plot_runtime_ageresolved(jsonfilename, name=''):
         plt.plot(df_age["Subcompartments"], df_age["Time"], linestyle='--', marker='o', linewidth=1.2,
                  label=str(agegroup), color=colors[agegroup-1])
     plt.ylim(bottom=0.)
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=13,
-               title="Number of \nage groups:", title_fontsize=13)
-    plt.xlabel('Number of subcompartments', fontsize=13)
-    plt.ylabel('Run time [seconds]', fontsize=13)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=fontsize_legends,
+               title="Number of \nage groups:", title_fontsize=fontsize_legends)
+    plt.xlabel('Number of subcompartments', fontsize=fontsize_labels)
+    plt.ylabel('Run time [seconds]', fontsize=fontsize_labels)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
@@ -134,8 +136,8 @@ def plot_runtime_noage(jsonfilename, name=''):
         'Run time for one age group')
     plt.ylim(bottom=0.)
     plt.xlim(left=0., right=df_age["Subcompartments"].max()+1)
-    plt.xlabel('Number of subcompartments', fontsize=13)
-    plt.ylabel('Run time [seconds]', fontsize=13)
+    plt.xlabel('Number of subcompartments', fontsize=fontsize_labels)
+    plt.ylabel('Run time [seconds]', fontsize=fontsize_labels)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
@@ -153,37 +155,37 @@ def plot_cachemisses(jsonfilename, cachelevel=1, savename='', rate=False):
                  linestyle='--', marker='o', linewidth=1.2)
         plt.title(
             'Refs with one age group')
-        plt.ylabel('Refs', fontsize=13)
+        plt.ylabel('Refs', fontsize=fontsize_labels)
     elif (cachelevel == 1):
         if (rate):
             plt.plot(df["Subcompartments"], df["D1_misses"]/df["refs"]*100,
                      linestyle='--', marker='o', linewidth=1.2)
             plt.title(
                 'L1 cache miss rate with one age group')
-            plt.ylabel('Cache misses [%]', fontsize=13)
+            plt.ylabel('Cache misses [%]', fontsize=fontsize_labels)
         else:
             plt.plot(df["Subcompartments"], df["D1_misses"],
                      linestyle='--', marker='o', linewidth=1.2)
             plt.title(
                 'L1 cache misses with one age group')
-            plt.ylabel('Cache misses', fontsize=13)
+            plt.ylabel('Cache misses', fontsize=fontsize_labels)
     else:
         if (rate):
             plt.plot(df["Subcompartments"], df["LLd_misses"]/df["refs"]*100,
                      linestyle='--', marker='o', linewidth=1.2)
             plt.title(
                 'LL cache miss rate with one age group')
-            plt.ylabel('Cache misses [%]', fontsize=13)
+            plt.ylabel('Cache misses [%]', fontsize=fontsize_labels)
         else:
             plt.plot(df["Subcompartments"], df["LLd_misses"],
                      linestyle='--', marker='o', linewidth=1.2)
             plt.title(
                 'LL cache misses with one age group')
-            plt.ylabel('Cache misses', fontsize=13)
+            plt.ylabel('Cache misses', fontsize=fontsize_labels)
 
     plt.ylim(bottom=0.)
     plt.xlim(left=0., right=df["Subcompartments"].max()+1)
-    plt.xlabel('Number of subcompartments', fontsize=13)
+    plt.xlabel('Number of subcompartments', fontsize=fontsize_labels)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
@@ -194,17 +196,18 @@ def plot_cachemisses(jsonfilename, cachelevel=1, savename='', rate=False):
 
 def main():
     # run times
-    jsonfilenameruntimes = 'runtimes/lct_runtimes_20day_onegroup.json'
-    # extract_json_segments('runtimes/times_20days.txt', jsonfilenameruntimes)
-    plot_runtime_noage(jsonfilenameruntimes, '20days_onegroup')
+    jsonfilenameruntimes = 'runtimes/lct_runtimes_85sub_20days.json'
+    extract_json_segments(
+        'runtimes/lct_runtimes_85sub_20days.txt', jsonfilenameruntimes)
+    plot_runtime_noage(jsonfilenameruntimes, '_85sub_20days')
 
     # Cache
-    jsonfilenamecache = 'runtimes/valgrind_20day_onegroup.json'
-    plot_cachemisses(jsonfilenamecache, 0, 'Refstotal_20days')
-    plot_cachemisses(jsonfilenamecache, 1, 'L1cachemisstotal_20days')
-    plot_cachemisses(jsonfilenamecache, 3, 'LLcachemisstotal_20days')
-    plot_cachemisses(jsonfilenamecache, 1, 'L1cachemissrate_20days', True)
-    plot_cachemisses(jsonfilenamecache, 3, 'LLcachemissrate_20days', True)
+    # jsonfilenamecache = 'runtimes/valgrind_20day_onegroup.json'
+    # plot_cachemisses(jsonfilenamecache, 0, 'Refstotal_20days')
+    # plot_cachemisses(jsonfilenamecache, 1, 'L1cachemisstotal_20days')
+    # plot_cachemisses(jsonfilenamecache, 3, 'LLcachemisstotal_20days')
+    # plot_cachemisses(jsonfilenamecache, 1, 'L1cachemissrate_20days', True)
+    # plot_cachemisses(jsonfilenamecache, 3, 'LLcachemissrate_20days', True)
     # jsonfilenamecache = 'runtimes/valgrind_85_sub_20days.json'
     # parse_valgrind_output(
     #     'runtimes/valgrind_85_sub_20days.txt', jsonfilenamecache)
