@@ -125,231 +125,18 @@ TEST(TestOdeSECIRTS, get_flows)
 
     model.get_flows(y, y, 0.0, flows);
 
-    // // check flows individually
+    std::vector<double> expected_values = {0.09375,  0.90625,  1,   0.5, 0.5, 0.5, 0.5,      0.5,      0.5, 0.5, 0.5,
+                                           0.5,      0.5,      0,   0.5, 0.5, 1,   0.046875, 0.953125, 1,   0.5, 0.5,
+                                           0.5,      0.5,      0.5, 0.5, 0.5, 0.5, 0.5,      0.5,      0,   0.5, 0.5,
+                                           0.046875, 0.953125, 1,   0.5, 0.5, 0.5, 0.5,      0.5,      0.5, 0.5, 0.5,
+                                           0.5,      0.5,      0,   0.5, 0.5, 0,   1,        1,        1};
+
     EXPECT_EQ(flows.size(), 53);
 
-    // Check each flow individually
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::SusceptibleNaive,
-                                               mio::osecirts::InfectionState::ExposedNaive>({mio::AgeGroup(0)})]),
-              0.09375);
-
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::SusceptibleNaive,
-                                               mio::osecirts::InfectionState::TemporaryImmunPartialImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.90625);
-    EXPECT_EQ(
-        (flows[model.get_flat_flow_index<mio::osecirts::InfectionState::ExposedNaive,
-                                         mio::osecirts::InfectionState::InfectedNoSymptomsNaive>({mio::AgeGroup(0)})]),
-        1.0);
-    EXPECT_EQ(
-        (flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedNoSymptomsNaive,
-                                         mio::osecirts::InfectionState::InfectedSymptomsNaive>({mio::AgeGroup(0)})]),
-        0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedNoSymptomsNaive,
-                                               mio::osecirts::InfectionState::TemporaryImmunPartialImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedNoSymptomsNaiveConfirmed,
-                                               mio::osecirts::InfectionState::InfectedSymptomsNaiveConfirmed>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedNoSymptomsNaiveConfirmed,
-                                               mio::osecirts::InfectionState::TemporaryImmunPartialImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ(
-        (flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSymptomsNaive,
-                                         mio::osecirts::InfectionState::InfectedSevereNaive>({mio::AgeGroup(0)})]),
-        0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSymptomsNaive,
-                                               mio::osecirts::InfectionState::TemporaryImmunPartialImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ(
-        (flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSymptomsNaiveConfirmed,
-                                         mio::osecirts::InfectionState::InfectedSevereNaive>({mio::AgeGroup(0)})]),
-        0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSymptomsNaiveConfirmed,
-                                               mio::osecirts::InfectionState::TemporaryImmunPartialImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ(
-        (flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSevereNaive,
-                                         mio::osecirts::InfectionState::InfectedCriticalNaive>({mio::AgeGroup(0)})]),
-        0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSevereNaive,
-                                               mio::osecirts::InfectionState::TemporaryImmunPartialImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSevereNaive,
-                                               mio::osecirts::InfectionState::DeadNaive>({mio::AgeGroup(0)})]),
-              0.0);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedCriticalNaive,
-                                               mio::osecirts::InfectionState::DeadNaive>({mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedCriticalNaive,
-                                               mio::osecirts::InfectionState::TemporaryImmunPartialImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::TemporaryImmunPartialImmunity,
-                                               mio::osecirts::InfectionState::SusceptiblePartialImmunity>(
-                  {mio::AgeGroup(0)})]),
-              1.0);
-
-    // Add more EXPECT_EQ statements for the remaining flow entries
-
-    // Partial immunity flows
-    EXPECT_EQ(
-        (flows[model.get_flat_flow_index<mio::osecirts::InfectionState::SusceptiblePartialImmunity,
-                                         mio::osecirts::InfectionState::ExposedPartialImmunity>({mio::AgeGroup(0)})]),
-        0.046875);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::SusceptiblePartialImmunity,
-                                               mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.953125);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::ExposedPartialImmunity,
-                                               mio::osecirts::InfectionState::InfectedNoSymptomsPartialImmunity>(
-                  {mio::AgeGroup(0)})]),
-              1.0);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                               mio::osecirts::InfectionState::InfectedSymptomsPartialImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                               mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ(
-        (flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed,
-                                         mio::osecirts::InfectionState::InfectedSymptomsPartialImmunityConfirmed>(
-            {mio::AgeGroup(0)})]),
-        0.5);
-    EXPECT_EQ(
-        (flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed,
-                                         mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>(
-            {mio::AgeGroup(0)})]),
-        0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSymptomsPartialImmunity,
-                                               mio::osecirts::InfectionState::InfectedSeverePartialImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSymptomsPartialImmunity,
-                                               mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSymptomsPartialImmunityConfirmed,
-                                               mio::osecirts::InfectionState::InfectedSeverePartialImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSymptomsPartialImmunityConfirmed,
-                                               mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSeverePartialImmunity,
-                                               mio::osecirts::InfectionState::InfectedCriticalPartialImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSeverePartialImmunity,
-                                               mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ(
-        (flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSeverePartialImmunity,
-                                         mio::osecirts::InfectionState::DeadPartialImmunity>({mio::AgeGroup(0)})]),
-        0.0);
-    EXPECT_EQ(
-        (flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedCriticalPartialImmunity,
-                                         mio::osecirts::InfectionState::DeadPartialImmunity>({mio::AgeGroup(0)})]),
-        0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedCriticalPartialImmunity,
-                                               mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-
-    // Improved immunity flows
-    EXPECT_EQ(
-        (flows[model.get_flat_flow_index<mio::osecirts::InfectionState::SusceptibleImprovedImmunity,
-                                         mio::osecirts::InfectionState::ExposedImprovedImmunity>({mio::AgeGroup(0)})]),
-        0.046875);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::SusceptibleImprovedImmunity,
-                                               mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.953125);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::ExposedImprovedImmunity,
-                                               mio::osecirts::InfectionState::InfectedNoSymptomsImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              1.0);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                               mio::osecirts::InfectionState::InfectedSymptomsImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                               mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ(
-        (flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed,
-                                         mio::osecirts::InfectionState::InfectedSymptomsImprovedImmunityConfirmed>(
-            {mio::AgeGroup(0)})]),
-        0.5);
-    EXPECT_EQ(
-        (flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed,
-                                         mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>(
-            {mio::AgeGroup(0)})]),
-        0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSymptomsImprovedImmunity,
-                                               mio::osecirts::InfectionState::InfectedSevereImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSymptomsImprovedImmunity,
-                                               mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSymptomsImprovedImmunityConfirmed,
-                                               mio::osecirts::InfectionState::InfectedSevereImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSymptomsImprovedImmunityConfirmed,
-                                               mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSevereImprovedImmunity,
-                                               mio::osecirts::InfectionState::InfectedCriticalImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSevereImprovedImmunity,
-                                               mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-    EXPECT_EQ(
-        (flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedSevereImprovedImmunity,
-                                         mio::osecirts::InfectionState::DeadImprovedImmunity>({mio::AgeGroup(0)})]),
-        0.0);
-    EXPECT_EQ(
-        (flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedCriticalImprovedImmunity,
-                                         mio::osecirts::InfectionState::DeadImprovedImmunity>({mio::AgeGroup(0)})]),
-        0.5);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::InfectedCriticalImprovedImmunity,
-                                               mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              0.5);
-
-    // Waning immunity flows
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::TemporaryImmunPartialImmunity,
-                                               mio::osecirts::InfectionState::SusceptiblePartialImmunity>(
-                  {mio::AgeGroup(0)})]),
-              1.0);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity,
-                                               mio::osecirts::InfectionState::SusceptibleImprovedImmunity>(
-                  {mio::AgeGroup(0)})]),
-              1.0);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::SusceptibleImprovedImmunity,
-                                               mio::osecirts::InfectionState::SusceptiblePartialImmunity>(
-                  {mio::AgeGroup(0)})]),
-              1.0);
-    EXPECT_EQ((flows[model.get_flat_flow_index<mio::osecirts::InfectionState::SusceptiblePartialImmunity,
-                                               mio::osecirts::InfectionState::SusceptibleNaive>({mio::AgeGroup(0)})]),
-              1.0);
+    // Compare expected with actual values
+    for (size_t i = 0; i < expected_values.size(); i++) {
+        EXPECT_NEAR(flows(i), expected_values[i], 1e-10);
+    }
 }
 
 TEST(TestOdeSECIRTS, Simulation)
@@ -897,18 +684,8 @@ TEST(TestOdeSECIRTS, read_confirmed_cases)
 {
     auto num_age_groups = 6; //reading data requires RKI data age groups
     auto model          = std::vector<mio::osecirts::Model<double>>({make_model(num_age_groups)});
-    std::vector<int> region{1002};
+    const std::vector<int> region{1002};
     auto path = mio::path_join(TEST_DATA_DIR, "pydata/Germany/cases_all_county_age_ma7.json");
-    std::vector<std::vector<int>> t_Exposed(1);
-    std::vector<std::vector<int>> t_InfectedNoSymptoms(1);
-    std::vector<std::vector<int>> t_InfectedSymptoms(1);
-    std::vector<std::vector<int>> t_InfectedSevere(1);
-    std::vector<std::vector<int>> t_InfectedCritical(1);
-    std::vector<std::vector<int>> t_imm_interval1(1);
-
-    std::vector<std::vector<double>> mu_C_R(1);
-    std::vector<std::vector<double>> mu_I_H(1);
-    std::vector<std::vector<double>> mu_H_U(1);
 
     std::vector<std::vector<double>> num_InfectedSymptoms(1);
     std::vector<std::vector<double>> num_death(1);
@@ -925,33 +702,10 @@ TEST(TestOdeSECIRTS, read_confirmed_cases)
     num_InfectedNoSymptoms[0] = std::vector<double>(num_age_groups, 0.0);
     num_InfectedSevere[0]     = std::vector<double>(num_age_groups, 0.0);
     num_icu[0]                = std::vector<double>(num_age_groups, 0.0);
-    for (size_t group = 0; group < static_cast<size_t>(num_age_groups); group++) {
-
-        t_Exposed[0].push_back(static_cast<int>(
-            std::round(model[0].parameters.template get<mio::osecirts::TimeExposed<double>>()[(mio::AgeGroup)group])));
-        t_InfectedNoSymptoms[0].push_back(static_cast<int>(std::round(
-            model[0].parameters.template get<mio::osecirts::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)group])));
-        t_InfectedSymptoms[0].push_back(static_cast<int>(std::round(
-            model[0].parameters.template get<mio::osecirts::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)group])));
-        t_InfectedSevere[0].push_back(static_cast<int>(std::round(
-            model[0].parameters.template get<mio::osecirts::TimeInfectedSevere<double>>()[(mio::AgeGroup)group])));
-        t_InfectedCritical[0].push_back(static_cast<int>(std::round(
-            model[0].parameters.template get<mio::osecirts::TimeInfectedCritical<double>>()[(mio::AgeGroup)group])));
-        t_imm_interval1[0].push_back(static_cast<int>(std::round(
-            model[0].parameters.template get<mio::osecirts::TimeTemporaryImmunityPI<double>>()[(mio::AgeGroup)group])));
-
-        mu_C_R[0].push_back(model[0].parameters.template get<mio::osecirts::RecoveredPerInfectedNoSymptoms<double>>()[(
-            mio::AgeGroup)group]);
-        mu_I_H[0].push_back(
-            model[0].parameters.template get<mio::osecirts::SeverePerInfectedSymptoms<double>>()[(mio::AgeGroup)group]);
-        mu_H_U[0].push_back(
-            model[0].parameters.template get<mio::osecirts::CriticalPerSevere<double>>()[(mio::AgeGroup)group]);
-    }
 
     auto read = mio::osecirts::details::read_confirmed_cases_data(
         path, region, {2020, 12, 01}, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere,
-        num_icu, num_death, num_timm, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
-        t_InfectedCritical, t_imm_interval1, mu_C_R, mu_I_H, mu_H_U, std::vector<double>(size_t(num_age_groups), 1.0));
+        num_icu, num_death, num_timm, model, std::vector<double>(size_t(num_age_groups), 1.0), 0);
 
     ASSERT_THAT(read, IsSuccess());
 }
@@ -963,15 +717,21 @@ TEST(TestOdeSECIRTS, read_data)
     auto model2         = std::vector<mio::osecirts::Model<double>>({make_model(num_age_groups)});
     auto model3         = std::vector<mio::osecirts::Model<double>>({make_model(num_age_groups)});
 
-    auto read_result1 = mio::osecirts::read_input_data_county(
-        model1, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 10);
+    const std::vector<std::vector<double>> immunity_population = {{0.04, 0.04, 0.075, 0.08, 0.035, 0.01},
+                                                                  {0.61, 0.61, 0.62, 0.62, 0.58, 0.41},
+                                                                  {0.35, 0.35, 0.305, 0.3, 0.385, 0.58}};
 
-    auto read_result2 = mio::osecirts::read_input_data(
-        model2, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 10);
+    auto read_result1 = mio::osecirts::read_input_data_county(model1, {2020, 12, 01}, {1002},
+                                                              std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                              TEST_DATA_DIR, 10, immunity_population);
+
+    auto read_result2 =
+        mio::osecirts::read_input_data(model2, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0),
+                                       1.0, TEST_DATA_DIR, 10, immunity_population);
 
     auto read_result_district =
         mio::osecirts::read_input_data(model3, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0),
-                                       1.0, mio::path_join(TEST_DATA_DIR, "pydata/District"), 10);
+                                       1.0, mio::path_join(TEST_DATA_DIR, "pydata/District"), 10, immunity_population);
 
     ASSERT_THAT(read_result1, IsSuccess());
     ASSERT_THAT(read_result2, IsSuccess());
@@ -979,19 +739,19 @@ TEST(TestOdeSECIRTS, read_data)
 
     // values were generated by the tested function; can only check stability of the implementation, not correctness
     auto expected_values =
-        (Eigen::ArrayXd(num_age_groups * Eigen::Index(mio::osecirts::InfectionState::Count)) << 410.72, 3630.45,
+        (Eigen::ArrayXd(num_age_groups * Eigen::Index(mio::osecirts::InfectionState::Count)) << 411.933, 6282.58,
          0.213004, 3.19834, 0.840323, 0.0946686, 1.42149, 0.373477, 0, 0, 0, 0.558774, 4.4528, 0.955134, 0, 0, 0,
-         0.0103231, 0.00287609, 0.00365536, 0.0297471, 3.5, 4, 2893.07, 0, 0, 0, 2652.78, 714.319, 763.188, 8032.87,
+         0.0103231, 0.00287609, 0.00365536, 0.0297471, 3.5, 4, 3606.1, 0, 0, 0, 0.649663, 0.0771142, 766.409, 11687.7,
          0.49701, 7.4628, 1.96075, 0.319507, 4.79751, 1.26048, 0, 0, 0, 0.93129, 8.36257, 1.79379, 0, 0, 0, 0.0132265,
-         0.00302746, 0.00384774, 0.0297471, 3.5, 4, 5916.15, 0, 0, 0, 3658.05, 799.805, 5554.16, 43483, 5.32163,
+         0.00302746, 0.00384774, 0.0297471, 3.5, 4, 6712.35, 0, 0, 0, 3.24832, 0.385571, 5568.96, 46059.3, 5.32163,
          43.3153, 9.75737, 2.7505, 22.3877, 5.04313, 0, 0, 0, 8.84909, 39.8328, 7.32558, 0, 0, 0, 0.56467, 0.071343,
-         0.0777408, 0.0753594, 3.5, 4, 21861.8, 0, 0, 0, 2589.83, 845.38, 6617.66, 48070, 5.33096, 40.6794, 9.01336,
+         0.0777408, 0.0753594, 3.5, 4, 22691, 0, 0, 0, 13.4975, 1.37363, 6631.47, 51423.9, 5.33096, 40.6794, 9.01336,
          2.83472, 21.6311, 4.79282, 0, 0, 0, 8.55241, 37.2832, 6.74428, 0, 0, 0, 1.78101, 0.218787, 0.234499, 0.487853,
-         3.5, 4, 24154, 0, 0, 0, 3367.68, 774.244, 1528.03, 21414.7, 0.528786, 8.62793, 2.62254, 0.329244, 5.37211,
-         1.6329, 0, 0, 0, 0.939561, 8.52246, 2.1149, 0, 0, 0, 0.856992, 0.223414, 0.328498, 2.61775, 3.5, 4, 16069.9, 0,
-         0, 0, 4038.53, 836.776, 144.225, 1979.35, 0.22575, 9.11334, 5.90344, 0.0707574, 2.85642, 1.85033, 0, 0, 0,
-         0.0889777, 2.09765, 1.10935, 0, 0, 0, 0.0681386, 0.046887, 0.146922, 4.75954, 3.5, 4, 8288.72, 0, 0, 0,
-         4447.91, 823.157)
+         3.5, 4, 24913, 0, 0, 0, 13.8504, 1.38643, 1532.28, 25449.8, 0.528786, 8.62793, 2.62254, 0.329244, 5.37211,
+         1.6329, 0, 0, 0, 0.939561, 8.52246, 2.1149, 0, 0, 0, 0.856992, 0.223414, 0.328498, 2.61775, 3.5, 4, 16901.9, 0,
+         0, 0, 3.38605, 0.46498, 151.979, 6426.73, 0.22575, 9.11334, 5.90344, 0.0707574, 2.85642, 1.85033, 0, 0, 0,
+         0.0889777, 2.09765, 1.10935, 0, 0, 0, 0.0681386, 0.046887, 0.146922, 4.75954, 3.5, 4, 9103.97, 0, 0, 0,
+         0.530478, 0.155246)
             .finished();
 
     ASSERT_THAT(print_wrap(model1[0].populations.array().cast<double>()),
@@ -999,7 +759,6 @@ TEST(TestOdeSECIRTS, read_data)
 
     ASSERT_THAT(print_wrap(model1[0].populations.array().cast<double>()),
                 MatrixNear(print_wrap(model3[0].populations.array().cast<double>()), 1e-5, 1e-5));
-
     ASSERT_THAT(print_wrap(model1[0].populations.array().cast<double>()),
                 MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
     ASSERT_THAT(print_wrap(model2[0].populations.array().cast<double>()),
@@ -1118,15 +877,18 @@ TEST(TestOdeSECIRTS, export_time_series_init)
     auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
     auto model          = make_model(num_age_groups);
 
+    const std::vector<std::vector<double>> immunity_population = {{0.04, 0.04, 0.075, 0.08, 0.035, 0.01},
+                                                                  {0.61, 0.61, 0.62, 0.62, 0.58, 0.41},
+                                                                  {0.35, 0.35, 0.305, 0.3, 0.385, 0.58}};
+
     // Test exporting time series
     ASSERT_THAT(mio::osecirts::export_input_data_county_timeseries(
                     std::vector<mio::osecirts::Model<double>>{model}, tmp_results_dir, {0}, {2020, 12, 01},
                     std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 2,
                     mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
                     mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
-                    mio::path_join(TEST_DATA_DIR, "county_current_population.json"), true,
-                    mio::path_join(TEST_DATA_DIR, "vacc_county_ageinf_ma7.json"),
-                    mio::path_join(TEST_DATA_DIR, "immunity_population.txt")),
+                    mio::path_join(TEST_DATA_DIR, "county_current_population.json"), immunity_population,
+                    mio::path_join(TEST_DATA_DIR, "vacc_county_ageinf_ma7.json")),
                 IsSuccess());
 
     auto data_extrapolated = mio::read_result(mio::path_join(tmp_results_dir, "Results_rki.h5"));
@@ -1149,27 +911,31 @@ TEST(TestOdeSECIRTS, model_initialization)
     // Vector assignment necessary as read_input_data_county changes model
     auto model_vector = std::vector<mio::osecirts::Model<double>>{model};
 
+    const std::vector<std::vector<double>> immunity_population = {{0.04, 0.04, 0.075, 0.08, 0.035, 0.01},
+                                                                  {0.61, 0.61, 0.62, 0.62, 0.58, 0.41},
+                                                                  {0.35, 0.35, 0.305, 0.3, 0.385, 0.58}};
+
     ASSERT_THAT(mio::osecirts::read_input_data_county(model_vector, {2020, 12, 01}, {0},
                                                       std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                      TEST_DATA_DIR, 2, false),
+                                                      TEST_DATA_DIR, 2, immunity_population, false),
                 IsSuccess());
 
     // Values from data/export_time_series_init_osecirts.h5, for reading in comparison
     // operator for return of mio::read_result and model population needed.
     auto expected_values =
-        (Eigen::ArrayXd(num_age_groups * Eigen::Index(mio::osecirts::InfectionState::Count)) << 138748, 2.11327e+06,
+        (Eigen::ArrayXd(num_age_groups * Eigen::Index(mio::osecirts::InfectionState::Count)) << 138749, 2.11592e+06,
          0.213004, 3.19834, 0.840323, 0.0946686, 1.42149, 0.373477, 0, 0, 0, 0.558774, 4.4528, 0.955134, 0, 0, 0,
-         0.0103231, 0.00287609, 0.00365536, 0.0297471, 3.5, 4, 1.21334e+06, 0, 0, 0, 2652.78, 714.319, 309974,
-         4.7235e+06, 0.49701, 7.4628, 1.96075, 0.319507, 4.79751, 1.26048, 0, 0, 0, 0.93129, 8.36257, 1.79379, 0, 0, 0,
-         0.0132265, 0.00302746, 0.00384774, 0.0297471, 3.5, 4, 2.71151e+06, 0, 0, 0, 3658.05, 799.805, 1.44128e+06,
-         1.19121e+07, 5.32163, 43.3153, 9.75737, 2.7505, 22.3877, 5.04313, 0, 0, 0, 8.84909, 39.8328, 7.32558, 0, 0, 0,
-         0.56467, 0.071343, 0.0777408, 0.0753594, 3.5, 4, 5.86047e+06, 0, 0, 0, 2589.83, 845.38, 2.40269e+06,
-         1.86176e+07, 5.33096, 40.6794, 9.01336, 2.83472, 21.6311, 4.79282, 0, 0, 0, 8.55241, 37.2832, 6.74428, 0, 0, 0,
-         1.78101, 0.218787, 0.234499, 0.487853, 3.5, 4, 9.00942e+06, 0, 0, 0, 3367.68, 774.244, 578004, 9.57445e+06,
-         0.528786, 8.62793, 2.62254, 0.329244, 5.37211, 1.6329, 0, 0, 0, 0.939561, 8.52246, 2.1149, 0, 0, 0, 0.856992,
-         0.223414, 0.328498, 2.61775, 3.5, 4, 6.35731e+06, 0, 0, 0, 4038.53, 836.776, 61810.3, 2.53029e+06, 0.22575,
-         9.11334, 5.90344, 0.0707574, 2.85642, 1.85033, 0, 0, 0, 0.0889777, 2.09765, 1.10935, 0, 0, 0, 0.0681386,
-         0.046887, 0.146922, 4.75954, 3.5, 4, 3.58492e+06, 0, 0, 0, 4447.91, 823.157)
+         0.0103231, 0.00287609, 0.00365536, 0.0297471, 3.5, 4, 1.21406e+06, 0, 0, 0, 0.649663, 0.0771142, 309977,
+         4.72715e+06, 0.49701, 7.4628, 1.96075, 0.319507, 4.79751, 1.26048, 0, 0, 0, 0.93129, 8.36257, 1.79379, 0, 0, 0,
+         0.0132265, 0.00302746, 0.00384774, 0.0297471, 3.5, 4, 2.71231e+06, 0, 0, 0, 3.24832, 0.385571, 1.44129e+06,
+         1.19147e+07, 5.32163, 43.3153, 9.75737, 2.7505, 22.3877, 5.04313, 0, 0, 0, 8.84909, 39.8328, 7.32558, 0, 0, 0,
+         0.56467, 0.071343, 0.0777408, 0.0753594, 3.5, 4, 5.8613e+06, 0, 0, 0, 13.4975, 1.37363, 2.4027e+06, 1.8621e+07,
+         5.33096, 40.6794, 9.01336, 2.83472, 21.6311, 4.79282, 0, 0, 0, 8.55241, 37.2832, 6.74428, 0, 0, 0, 1.78101,
+         0.218787, 0.234499, 0.487853, 3.5, 4, 9.01018e+06, 0, 0, 0, 13.8504, 1.38643, 578008, 9.57848e+06, 0.528786,
+         8.62793, 2.62254, 0.329244, 5.37211, 1.6329, 0, 0, 0, 0.939561, 8.52246, 2.1149, 0, 0, 0, 0.856992, 0.223414,
+         0.328498, 2.61775, 3.5, 4, 6.35814e+06, 0, 0, 0, 3.38605, 0.46498, 61818.1, 2.53474e+06, 0.22575, 9.11334,
+         5.90344, 0.0707574, 2.85642, 1.85033, 0, 0, 0, 0.0889777, 2.09765, 1.10935, 0, 0, 0, 0.0681386, 0.046887,
+         0.146922, 4.75954, 3.5, 4, 3.58574e+06, 0, 0, 0, 0.530478, 0.155246)
             .finished();
 
     ASSERT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
