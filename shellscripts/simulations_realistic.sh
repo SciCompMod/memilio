@@ -3,7 +3,8 @@
 cd ../build
 # Define and construct all relevant folders.
 data_dir="../data"
-result_dir="$data_dir/simulation_lct_real"
+result_folder="/simulation_lct_real/"
+result_dir="$data_dir$result_folder"
 if [ ! -d "$result_dir" ]; then
     mkdir "$result_dir"
 fi
@@ -30,12 +31,12 @@ do
     cmake --build . --target lct_realistic_scenario
 
     # First case: 01/10/2020.
-    ./bin/lct_realistic_scenario 0 $year $month_oct $day_oct $data_dir $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_oct $npi_size_oct
+    ./bin/lct_realistic_scenario 0 $year $month_oct $day_oct $data_dir $result_folder $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_oct $npi_size_oct
 
     # Second case: 01/07/2020.
-    ./bin/lct_realistic_scenario 0 $year $month_jul $day_jul $data_dir $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_jul $npi_size_jul
+    ./bin/lct_realistic_scenario 0 $year $month_jul $day_jul $data_dir $result_folder $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_jul $npi_size_jul
 
 done
 
-./bin/lct_realistic_scenario 1 $year $month_oct $day_oct $data_dir $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_oct $npi_size_oct
-./bin/lct_realistic_scenario 1 $year $month_jul $day_jul $data_dir $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_jul $npi_size_jul
+./bin/lct_realistic_scenario 1 $year $month_oct $day_oct $data_dir $result_folder $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_oct $npi_size_oct
+./bin/lct_realistic_scenario 1 $year $month_jul $day_jul $data_dir $result_folder $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_jul $npi_size_jul
