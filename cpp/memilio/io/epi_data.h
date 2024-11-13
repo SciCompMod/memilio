@@ -471,8 +471,8 @@ public:
         auto obj                                   = io.expect_object("VaccinationDataEntry");
         auto num_vaccinations_partial              = obj.expect_element("Vacc_partially", Tag<double>{});
         auto num_vaccinations_completed            = obj.expect_element("Vacc_completed", Tag<double>{});
-        auto num_vaccinations_refreshed_first      = obj.expect_element("Vacc_refreshed", Tag<double>{});
-        auto num_vaccinations_refreshed_additional = obj.expect_element("Vacc_refreshed_2", Tag<double>{});
+        auto num_vaccinations_refreshed_first      = obj.expect_optional("Vacc_refreshed", Tag<double>{});
+        auto num_vaccinations_refreshed_additional = obj.expect_optional("Vacc_refreshed_2", Tag<double>{});
         auto date                                  = obj.expect_element("Date", Tag<StringDate>{});
         auto age_group_str                         = obj.expect_element("Age_RKI", Tag<std::string>{});
         auto state_id                              = obj.expect_optional("ID_County", Tag<regions::StateId>{});
@@ -490,7 +490,11 @@ public:
                 else {
                     return failure(StatusCode::InvalidValue, "Invalid vaccination data age group.");
                 }
-                return success(VaccinationDataEntry{np, nc, n_refreshed_1, n_refreshed_2, d, a, sid, cid, did});
+                // Optional values are 0 if they do not exist.
+                auto n_refreshed_1_value = n_refreshed_1.value_or(0.0);
+                auto n_refreshed_2_value = n_refreshed_2.value_or(0.0);
+                return success(
+                    VaccinationDataEntry{np, nc, n_refreshed_1_value, n_refreshed_2_value, d, a, sid, cid, did});
             },
             num_vaccinations_partial, num_vaccinations_completed, num_vaccinations_refreshed_first,
             num_vaccinations_refreshed_additional, date, age_group_str, state_id, county_id, district_id);
