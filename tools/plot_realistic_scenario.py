@@ -295,6 +295,9 @@ def plot_icu_real(
     plt.plot(range(num_days), data_icu['ICU'],
              linestyle='None', color='grey', marker='x', markersize=5)
 
+    print("ICU patients at the first day of DIVI data is: " +
+          f"{data_icu[data_icu['Date']==start_date]['ICU'].iloc[0]}")
+
     # Set index of ICU compartment in simulation results.
     compartment_idx = 5
 
@@ -319,6 +322,8 @@ def plot_icu_real(
         # Plot result.
         plt.plot(dates, total[:, compartment_idx],
                  linewidth=1.2, linestyle="solid", color=color_dict[legendplot[1+file]])
+        print("ICU patients at the first day of the simulation " + legendplot[file+1]+" is: "
+              f"{total[:, compartment_idx][0]}")
         h5file.close()
 
     plt.xlabel('Date', fontsize=fontsize_labels)
@@ -446,7 +451,7 @@ def get_file_name(start_date, subcompartment, data_dir, boolagedistributed=False
 
 
 def main():
-    folder = "../data/simulation_lct_real/"
+    folder = "../data/simulation_lct_real_init_icu/"
     datafile_rki = "../data/pydata/Germany/cases_all_age_all_dates.json"
     datafile_icu = "../data/pydata/Germany/germany_divi_all_dates.json"
 
