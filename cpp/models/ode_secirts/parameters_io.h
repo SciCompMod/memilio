@@ -138,14 +138,15 @@ IOResult<void> compute_confirmed_cases_data(
             // (rounded) transition times
             auto t_exposed = std::round(params_region.template get<TimeExposed<FP>>()[entry.age_group]);
             auto t_InfectedNoSymptoms =
-                std::round(params_region.template get<TimeInfectedNoSymptoms<FP>>()[entry.age_group]);
+                int(std::round(params_region.template get<TimeInfectedNoSymptoms<FP>>()[entry.age_group]));
             auto t_InfectedSymptoms =
-                std::round(params_region.template get<TimeInfectedSymptoms<FP>>()[entry.age_group]);
-            auto t_InfectedSevere = std::round(params_region.template get<TimeInfectedSevere<FP>>()[entry.age_group]);
+                int(std::round(params_region.template get<TimeInfectedSymptoms<FP>>()[entry.age_group]));
+            auto t_InfectedSevere =
+                int(std::round(params_region.template get<TimeInfectedSevere<FP>>()[entry.age_group]));
             auto t_InfectedCritical =
-                std::round(params_region.template get<TimeInfectedCritical<FP>>()[entry.age_group]);
+                int(std::round(params_region.template get<TimeInfectedCritical<FP>>()[entry.age_group]));
             auto t_imm_interval_i =
-                std::round(params_region.template get<TimeTemporaryImmunityPI<FP>>()[entry.age_group]);
+                int(std::round(params_region.template get<TimeTemporaryImmunityPI<FP>>()[entry.age_group]));
 
             // transition probabilities
             FP recoveredPerInfectedNoSymptoms =
