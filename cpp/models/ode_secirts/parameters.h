@@ -38,10 +38,10 @@ namespace osecirts
 {
 
 /**
-* @brief the start day in the SECIRS-type model
+* @brief The start day in the SECIRTS-type model.
 * The start day defines in which season the simulation can be started
 * If the start day is 180 and simulation takes place from t0=0 to
-* tmax=100 the days 180 to 280 of the year are simulated
+* tmax=100 the days 180 to 280 of the year are simulated.
 */
 struct StartDay {
     using Type = double;
@@ -56,7 +56,7 @@ struct StartDay {
 };
 
 /**
-* @brief the start day of a new variant in the SECIRS-type model
+* @brief The start day of a new variant in the SECIRTS-type model.
 * The start day of the new variant defines in which day of the simulation the new variant is introduced.
 * Starting on this day, the new variant will impact the transmission probability depending on the
 * infectiousness of the new variant in the parameter InfectiousnessNewVariant.
@@ -74,9 +74,10 @@ struct StartDayNewVariant {
 };
 
 /**
-* @brief the seasonality in the SECIRS-type model
+* @brief The seasonality in the SECIRTS-type model.
 * the seasonality is given as (1+k*sin()) where the sine
-* curve is below one in summer and above one in winter
+* curve is below one in summer and above one in winter.
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct Seasonality {
@@ -92,7 +93,8 @@ struct Seasonality {
 };
 
 /**
-* @brief the icu capacity in the SECIR model
+* @brief Represents the icu capacity in the SECIRTS model.
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct ICUCapacity {
@@ -108,7 +110,8 @@ struct ICUCapacity {
 };
 
 /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief The Capacity to test and trace contacts of infected for quarantine per day.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct TestAndTraceCapacity {
@@ -124,7 +127,8 @@ struct TestAndTraceCapacity {
 };
 
 /**
- * @brief the contact patterns within the society are modelled using an UncertainContactMatrix
+ * @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct ContactPatterns {
@@ -140,7 +144,8 @@ struct ContactPatterns {
 };
 
 /**
- * @brief the NPIs that are enacted if certain infection thresholds are exceeded.
+ * @brief The NPIs that are enacted if certain infection thresholds are exceeded.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct DynamicNPIsInfectedSymptoms {
@@ -156,7 +161,8 @@ struct DynamicNPIsInfectedSymptoms {
 };
 
 /**
- * @brief the (mean) latent time in day unit
+ * @brief Represents the mean latent time in days for different age groups.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct TimeExposed {
@@ -172,8 +178,9 @@ struct TimeExposed {
 };
 
 /**
- * @brief the (mean) time in day unit for asymptomatic cases that are infected but
+ * @brief The (mean) time in day unit for asymptomatic cases that are infected but
  *        have not yet developed symptoms.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct TimeInfectedNoSymptoms {
@@ -189,8 +196,9 @@ struct TimeInfectedNoSymptoms {
 };
 
 /**
-* @brief the infectious time for symptomatic cases that are infected but
-*        who do not need to be hsopitalized in the SECIR model in day unit
+* @brief The infectious time for symptomatic cases that are infected but
+*        who do not need to be hospitalized in the SECIRTS model in day unit.
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct TimeInfectedSymptoms {
@@ -206,8 +214,9 @@ struct TimeInfectedSymptoms {
 };
 
 /**
- * @brief the time people are 'simply' hospitalized before returning home in the SECIR model
- *        in day unit
+ * @brief The time people are 'simply' hospitalized before returning home in the SECIRTS model
+ *        in day unit.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct TimeInfectedSevere {
@@ -223,8 +232,9 @@ struct TimeInfectedSevere {
 };
 
 /**
- * @brief the time people are treated by ICU before returning home in the SECIR model
- *        in day unit
+ * @brief The time people are treated by ICU before returning home in the SECIRTS model
+ *        in day unit.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct TimeInfectedCritical {
@@ -240,7 +250,8 @@ struct TimeInfectedCritical {
 };
 
 /** 
- * @brief Time in days to describe waning immunity to get person from S_PI -> S
+ * @brief Time in days to describe waning immunity to get susceptible from partial to naive immunity layer.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct TimeWaningPartialImmunity {
@@ -256,7 +267,8 @@ struct TimeWaningPartialImmunity {
 };
 
 /** 
- * @brief Time in days to describe waning immunity to get person from SII -> SPI
+ * @brief Time in days to describe waning immunity to get susceptible from improved to partial immunity layer.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct TimeWaningImprovedImmunity {
@@ -272,8 +284,9 @@ struct TimeWaningImprovedImmunity {
 };
 
 /**
- * @brief the time people stays immune after infection or vaccination located in S
-         in the model in day unit
+ * @brief The time people stays immune after infection or vaccination located in naive immunity layer 
+ * in day unit.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct TimeTemporaryImmunityPI {
@@ -289,8 +302,9 @@ struct TimeTemporaryImmunityPI {
 };
 
 /**
- * @brief the time people stays immune after infection or vaccination located in S_PI or S_II
-        in the model in day unit
+ * @brief The time people stays immune after infection or vaccination located in the partial or improved immunity layer
+ *  in day unit
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct TimeTemporaryImmunityII {
@@ -305,7 +319,8 @@ struct TimeTemporaryImmunityII {
     }
 };
 /**
-* @brief probability of getting infected from a contact
+* @brief The probability of getting infected from a single contact.
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct TransmissionProbabilityOnContact {
@@ -321,7 +336,8 @@ struct TransmissionProbabilityOnContact {
 };
 
 /**
-* @brief the relative InfectedNoSymptoms infectability
+* @brief The relative infectability from individuals located in the InfectedNoSymptoms infection state.
+* @tparam FP The floating-point type (default: double). 
 */
 template <typename FP = double>
 struct RelativeTransmissionNoSymptoms {
@@ -337,7 +353,8 @@ struct RelativeTransmissionNoSymptoms {
 };
 
 /**
-* @brief the percentage of asymptomatic cases in the SECIR model
+* @brief The percentage of asymptomatic cases in the SECIRTS model.
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct RecoveredPerInfectedNoSymptoms {
@@ -353,7 +370,8 @@ struct RecoveredPerInfectedNoSymptoms {
 };
 
 /**
-* @brief the risk of infection from symptomatic cases in the SECIR model
+* @brief The risk of infection from symptomatic cases in the SECIRTS model.
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct RiskOfInfectionFromSymptomatic {
@@ -369,7 +387,8 @@ struct RiskOfInfectionFromSymptomatic {
 };
 
 /**
-* @brief risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
+* @brief Risk of infection from symptomatic cases increases if test and trace capacity is exceeded.
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct MaxRiskOfInfectionFromSymptomatic {
@@ -385,7 +404,8 @@ struct MaxRiskOfInfectionFromSymptomatic {
 };
 
 /**
-* @brief the percentage of hospitalized patients per infected patients in the SECIR model
+* @brief The percentage of hospitalized patients per infected patients in the SECIRTS model.
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct SeverePerInfectedSymptoms {
@@ -401,7 +421,8 @@ struct SeverePerInfectedSymptoms {
 };
 
 /**
-* @brief the percentage of ICU patients per hospitalized patients in the SECIR model
+* @brief The percentage of ICU patients per hospitalized patients in the SECIRTS model.
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct CriticalPerSevere {
@@ -417,7 +438,8 @@ struct CriticalPerSevere {
 };
 
 /**
-* @brief the percentage of dead patients per ICU patients in the SECIR model
+* @brief The percentage of dead patients per ICU patients in the SECIRTS model.
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct DeathsPerCritical {
@@ -433,23 +455,8 @@ struct DeathsPerCritical {
 };
 
 /**
- * @brief Time in days between first and second vaccine dose.
- */
-template <typename FP = double>
-struct VaccinationGap {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 49.0);
-    }
-    static std::string name()
-    {
-        return "VaccinationGap";
-    }
-};
-
-/**
  * @brief Time in days until first vaccine dose takes full effect.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct DaysUntilEffectivePartialVaccination {
@@ -466,6 +473,7 @@ struct DaysUntilEffectivePartialVaccination {
 
 /**
  * @brief Time in days until second vaccine dose takes full effect.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct DaysUntilEffectiveImprovedVaccination {
@@ -482,6 +490,7 @@ struct DaysUntilEffectiveImprovedVaccination {
 
 /**
  * @brief Time in days until booster vaccine dose takes full effect.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct DaysUntilEffectiveBoosterImmunity {
@@ -498,6 +507,7 @@ struct DaysUntilEffectiveBoosterImmunity {
 
 /**
 * @brief Total number of first vaccinations up to the given day.
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct DailyPartialVaccinations {
@@ -514,6 +524,7 @@ struct DailyPartialVaccinations {
 
 /**
 * @brief Total number of full vaccinations up to the given day.
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct DailyFullVaccinations {
@@ -530,6 +541,7 @@ struct DailyFullVaccinations {
 
 /**
 * @brief Total number of booster vaccinations up to the given day.
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct DailyBoosterVaccinations {
@@ -546,6 +558,7 @@ struct DailyBoosterVaccinations {
 
 /**
  * @brief Factor to reduce infection risk for persons with partial immunity.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct ReducExposedPartialImmunity {
@@ -562,6 +575,7 @@ struct ReducExposedPartialImmunity {
 
 /**
  * @brief Factor to reduce infection risk for persons with improved immunity.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct ReducExposedImprovedImmunity {
@@ -578,6 +592,7 @@ struct ReducExposedImprovedImmunity {
 
 /**
  * @brief Factor to reduce risk of developing symptoms for persons with partial immunity.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct ReducInfectedSymptomsPartialImmunity {
@@ -594,6 +609,7 @@ struct ReducInfectedSymptomsPartialImmunity {
 
 /**
  * @brief Factor to reduce risk of developing symptoms for persons with improved immunity.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct ReducInfectedSymptomsImprovedImmunity {
@@ -611,6 +627,7 @@ struct ReducInfectedSymptomsImprovedImmunity {
 /**
  * @brief Factor to reduce risk of hospitalization for persons with partial immunity.
  * Also applies to ICU and Death risk.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct ReducInfectedSevereCriticalDeadPartialImmunity {
@@ -627,6 +644,7 @@ struct ReducInfectedSevereCriticalDeadPartialImmunity {
 
 /**
  * @brief Factor to reduce risk of hospitalization for persons with improved immunity.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct ReducInfectedSevereCriticalDeadImprovedImmunity {
@@ -643,6 +661,7 @@ struct ReducInfectedSevereCriticalDeadImprovedImmunity {
 
 /**
  * @brief Factor to reduce infectious time of persons with partial or improved immunity.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct ReducTimeInfectedMild {
@@ -659,6 +678,7 @@ struct ReducTimeInfectedMild {
 
 /**
  * @brief Represents the relative infectiousness of a new variant.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct InfectiousnessNewVariant {
@@ -681,7 +701,7 @@ using ParametersBase = ParameterSet<
     TimeTemporaryImmunityPI<FP>, TimeTemporaryImmunityII<FP>, TransmissionProbabilityOnContact<FP>,
     RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
     MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>,
-    VaccinationGap<FP>, DaysUntilEffectivePartialVaccination<FP>, DaysUntilEffectiveImprovedVaccination<FP>,
+    DaysUntilEffectivePartialVaccination<FP>, DaysUntilEffectiveImprovedVaccination<FP>,
     DaysUntilEffectiveBoosterImmunity<FP>, DailyFullVaccinations<FP>, DailyPartialVaccinations<FP>,
     DailyBoosterVaccinations<FP>, ReducExposedPartialImmunity<FP>, ReducExposedImprovedImmunity<FP>,
     ReducInfectedSymptomsPartialImmunity<FP>, ReducInfectedSymptomsImprovedImmunity<FP>,
@@ -1005,12 +1025,6 @@ public:
                 this->template get<InfectiousnessNewVariant<FP>>()[i] = 1.0;
                 corrected                                             = true;
             }
-            if (this->template get<VaccinationGap<FP>>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter VaccinationGap changed from {} to {}",
-                            this->template get<VaccinationGap<FP>>()[i], 0);
-                this->template get<VaccinationGap<FP>>()[i] = 0;
-                corrected                                   = true;
-            }
         }
         return corrected;
     }
@@ -1145,11 +1159,6 @@ public:
             if (this->template get<DeathsPerCritical<FP>>()[i] < 0.0 ||
                 this->template get<DeathsPerCritical<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter DeathsPerCritical smaller {} or larger {}", 0, 1);
-                return true;
-            }
-
-            if (this->template get<VaccinationGap<FP>>()[i] < 1) {
-                log_error("Constraint check: Parameter VaccinationGap smaller {}", 1);
                 return true;
             }
 

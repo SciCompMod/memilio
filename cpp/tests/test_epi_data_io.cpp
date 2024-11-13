@@ -391,7 +391,6 @@ TEST(TestEpiData, set_vaccination_data)
 
     std::vector<int> county_ids = {1001};
     mio::osecirts::Model<double> model(num_age_groups);
-    model.parameters.set<mio::osecirts::VaccinationGap<double>>(3);
     model.parameters.set<mio::osecirts::DaysUntilEffectivePartialVaccination<double>>(1);
     model.parameters.set<mio::osecirts::DaysUntilEffectiveImprovedVaccination<double>>(2);
     model.parameters.set<mio::osecirts::DaysUntilEffectiveBoosterImmunity<double>>(1);

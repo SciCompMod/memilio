@@ -1178,10 +1178,6 @@ TEST(TestOdeSECIRTS, check_constraints_parameters)
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirts::DeathsPerCritical<double>>(0.5);
-    model.parameters.set<mio::osecirts::VaccinationGap<double>>(0.2);
-    ASSERT_EQ(model.parameters.check_constraints(), 1);
-
-    model.parameters.set<mio::osecirts::VaccinationGap<double>>(2);
     model.parameters.set<mio::osecirts::DaysUntilEffectivePartialVaccination<double>>(-2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
@@ -1309,10 +1305,6 @@ TEST(TestOdeSECIRTS, apply_constraints_parameters)
     model.parameters.set<mio::osecirts::DeathsPerCritical<double>>(1.1);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirts::DeathsPerCritical<double>>()[indx_agegroup], 0);
-
-    model.parameters.set<mio::osecirts::VaccinationGap<double>>(-0.2);
-    EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirts::VaccinationGap<double>>()[indx_agegroup], 0);
 
     model.parameters.set<mio::osecirts::DaysUntilEffectivePartialVaccination<double>>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
