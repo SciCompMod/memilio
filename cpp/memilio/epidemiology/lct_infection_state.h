@@ -26,10 +26,13 @@ namespace mio
 {
 /**
  * @brief Provides the functionality to be able to work with subcompartments in an LCT model.
+
+ * This class just stores the number of subcompartments for each InfectionState and not the number of individuals in
+ * each subcompartment. 
  *
  * @tparam InfectionStates An enum class that defines the basic infection states.
  * @tparam Ns Number of subcompartments for each infection state defined in InfectionState. 
- *      The number of given template arguments must be equal to the entry Count from InfectionState.
+ *      The number of given template arguments must be equal to the entry Count from InfectionStates.
  */
 template <class InfectionStates, size_t... Ns>
 class LctInfectionState

@@ -19,6 +19,7 @@
 #############################################################################
 import json
 import os
+import io
 import unittest
 from datetime import date, datetime
 from unittest.mock import patch
@@ -322,8 +323,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         self.assertEqual(df_state.shape[0], 286)
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file',
-           return_value=pd.read_json(
-               test_string_all_federal_states_and_counties_read).copy())
+           return_value=pd.read_json(io.StringIO(
+               test_string_all_federal_states_and_counties_read)).copy())
     def test_get_case_data_moving_average(self, mock_file):
 
         read_data = True
@@ -470,8 +471,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             1.0)
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file',
-           return_value=pd.read_json(
-               test_string_all_federal_states_and_counties_read).copy())
+           return_value=pd.read_json(io.StringIO(
+               test_string_all_federal_states_and_counties_read)).copy())
     def test_get_case_data_impute_dates(self, mock_file):
         read_data = True
         file_format = 'json_timeasstring'
@@ -554,8 +555,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             25)
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file',
-           return_value=pd.read_json(
-               test_string_all_federal_states_and_counties_read).copy())
+           return_value=pd.read_json(io.StringIO(test_string_all_federal_states_and_counties_read)).copy())
     def test_get_case_data_moving_average_and_split_berlin(self, mock_file):
         # test if split_berlin and moving_average = True are working together
 
@@ -659,8 +659,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
-        mock_file.return_value = pd.read_json(
-            self.test_string_all_federal_states_and_counties_github)
+        mock_file.return_value = pd.read_json(io.StringIO(
+            self.test_string_all_federal_states_and_counties_github))
 
         gcd.get_case_data(
             read_data=read_data, file_format=file_format,
@@ -716,8 +716,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file')
     def test_rep_date(self, mock_file):
 
-        mock_file.return_value = pd.read_json(
-            self.test_string_all_federal_states_and_counties_github)
+        mock_file.return_value = pd.read_json(io.StringIO(
+            self.test_string_all_federal_states_and_counties_github))
 
         read_data = False
         file_format = 'json_timeasstring'

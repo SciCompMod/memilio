@@ -31,7 +31,8 @@ else:
     # For older python versions
     import importlib_resources
 
-from memilio.generation import Generator, Scanner, ScannerConfig
+from memilio.generation import Generator, Scanner, ScannerConfig, AST
+from memilio.generation.graph_visualization import Visualization
 
 
 def run_memilio_generation(print_ast=False):
@@ -41,9 +42,11 @@ def run_memilio_generation(print_ast=False):
         with open(path) as file:
             conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
     scanner = Scanner(conf)
+    ast = AST(conf)
+    aviz = Visualization()
 
     # Extract results of Scanner into a intermed_repr
-    intermed_repr = scanner.extract_results()
+    intermed_repr = scanner.extract_results(ast.root_cursor)
 
     # Generate code
     generator = Generator()
@@ -52,7 +55,7 @@ def run_memilio_generation(print_ast=False):
 
     # Print the abstract syntax tree to a file
     if (print_ast):
-        scanner.output_ast_file()
+        aviz.output_ast_formatted(ast, ast.get_node_by_index(0))
 
 
 if __name__ == "__main__":

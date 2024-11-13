@@ -189,18 +189,18 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             node, [](auto&& model) -> auto& { return model.parameters.template get<TestAndTraceCapacity<double>>(); });
         param_percentil(
             node, [](auto&& model) -> auto& { return model.parameters.template get<ICUCapacity<double>>(); });
+        param_percentil(
+            node, [](auto&& model) -> auto& {
+                return model.parameters.template get<DynamicNPIsImplementationDelay<double>>();
+            });
 
-        for (size_t run = 0; run < num_runs; run++) {
-
-            auto const& params = ensemble_params[run][node];
-            single_element_ensemble[run] =
-                params.parameters.template get<ICUCapacity<double>>() * params.populations.get_total();
-        }
-        std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
-        percentile[node].parameters.template set<ICUCapacity<double>>(
-            single_element_ensemble[static_cast<size_t>(num_runs * p)]);
+        single_element_ensemble[run] =
+            params.parameters.template get<ICUCapacity<double>>() * params.populations.get_total();
     }
-    return percentile;
+    std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
+            single_element_ensemble[static_cast<size_t>(num_runs * p)]);
+}
+return percentile;
 }
 
 } // namespace osecirvvs

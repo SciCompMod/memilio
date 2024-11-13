@@ -203,7 +203,7 @@ public:
                             pop[ICrPIj] + pop[INSPICj] + pop[ISyPICj] + pop[SIIj] + pop[EIIj] + pop[INSIIj] +
                             pop[ISyIIj] + pop[ISevIIj] + pop[ICrIIj] + pop[INSIICj] + pop[ISyIICj];
 
-                double divNj = 1.0 / Nj; // precompute 1.0/Nj
+                const double divNj = (Nj < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / Nj;
 
                 double ext_inf_force_dummy =
                     cont_freq_eff * divNj *
@@ -540,7 +540,7 @@ public:
         auto base_infectiousness =
             this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact<ScalarType>>();
 
-        double delay_lockdown;
+        double delay_npi_implementation;
         auto t        = Base::get_result().get_last_time();
         const auto dt = dyn_npis.get_interval().get();
         while (t < tmax) {
@@ -561,10 +561,10 @@ public:
             }
 
             if (t > 0) {
-                delay_lockdown = 7;
+                delay_npi_implementation = 7;
             }
             else {
-                delay_lockdown = 0;
+                delay_npi_implementation = 0;
             }
             t = t + dt_eff;
 
@@ -578,7 +578,7 @@ public:
                             (exceeded_threshold->first > m_dynamic_npi.first ||
                              t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
 
-                            auto t_start = SimulationTime(t + delay_lockdown);
+                            auto t_start = SimulationTime(t + delay_npi_implementation);
                             auto t_end   = t_start + SimulationTime(dyn_npis.get_duration());
                             this->get_model().parameters.get_start_commuter_detection() = (double)t_start;
                             this->get_model().parameters.get_end_commuter_detection()   = (double)t_end;

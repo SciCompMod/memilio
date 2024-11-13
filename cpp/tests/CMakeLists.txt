@@ -38,9 +38,11 @@ set(TESTSOURCES
     test_abm_mobility_rules.cpp
     test_abm_person.cpp
     test_abm_simulation.cpp
+    test_abm_serialization.cpp
     test_abm_testing_strategy.cpp
     test_abm_model.cpp
     test_math_floating_point.cpp
+    test_math_time_series_functor.cpp
     test_analyze_result.cpp
     test_contact_matrix.cpp
     test_type_safe.cpp
@@ -60,20 +62,22 @@ set(TESTSOURCES
     test_metaprogramming.cpp
     test_history.cpp
     test_utils.cpp
-    abm_helpers.h
-    abm_helpers.cpp
     test_ide_seir.cpp
     test_ide_secir.cpp
     test_state_age_function.cpp
-    distributions_helpers.h
-    distributions_helpers.cpp
-    actions.h
-    matchers.h
-    temp_file_register.h
-    sanitizers.cpp
     test_lct_secir.cpp
     test_lct_initializer_flows.cpp
     test_ad.cpp
+    abm_helpers.h
+    abm_helpers.cpp
+    actions.h
+    distributions_helpers.h
+    distributions_helpers.cpp
+    matchers.cpp
+    matchers.h
+    random_number_test.h
+    sanitizers.cpp
+    temp_file_register.h
 )
 
 if(MEMILIO_HAS_JSONCPP)

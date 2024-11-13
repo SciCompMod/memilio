@@ -34,6 +34,7 @@ namespace pymio
 template <class Simulation>
 void bind_Simulation(pybind11::module_& m, std::string const& name)
 {
+
     bind_class<Simulation, EnablePickling::IfAvailable>(m, name.c_str())
         .def(pybind11::init<const typename Simulation::Model&, double, double>(), pybind11::arg("model"),
              pybind11::arg("t0") = 0, pybind11::arg("dt") = 0.1)
@@ -41,7 +42,12 @@ void bind_Simulation(pybind11::module_& m, std::string const& name)
                                pybind11::return_value_policy::reference_internal)
         .def_property_readonly("model", pybind11::overload_cast<>(&Simulation::get_model, pybind11::const_),
                                pybind11::return_value_policy::reference_internal)
-        .def("advance", &Simulation::advance, pybind11::arg("tmax"));
+        .def_property_readonly("dt", pybind11::overload_cast<>(&Simulation::get_dt, pybind11::const_),
+                               pybind11::return_value_policy::reference_internal)
+        .def_property("integrator", pybind11::overload_cast<>(&Simulation::get_integrator, pybind11::const_),
+                               &Simulation::set_integrator, pybind11::return_value_policy::reference_internal)
+        .def("advance", &Simulation::advance, pybind11::arg("tmax"))
+        .doc() = "A class for the simulation of a compartment model.";
 }
 
 } // namespace pymio
