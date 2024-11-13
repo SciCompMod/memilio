@@ -629,7 +629,7 @@ using ParametersBase = ParameterSet<
     RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
     MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>,
     VaccinationGap<FP>, DaysUntilEffectivePartialImmunity<FP>, DaysUntilEffectiveImprovedImmunity<FP>,
-    DailyFullVaccination<FP>, DailyPartialVaccination<FP>, ReducExposedPartialImmunity<FP>,
+    DailyFullVaccinations<FP>, DailyPartialVaccinations<FP>, ReducExposedPartialImmunity<FP>,
     ReducExposedImprovedImmunity<FP>, ReducInfectedSymptomsPartialImmunity<FP>,
     ReducInfectedSymptomsImprovedImmunity<FP>, ReducInfectedSevereCriticalDeadPartialImmunity<FP>,
     ReducInfectedSevereCriticalDeadImprovedImmunity<FP>, ReducTimeInfectedMild<FP>, InfectiousnessNewVariant<FP>,

@@ -476,7 +476,7 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::vector<
             for (auto i = AgeGroup(0); i < num_groups; i++) {
 
                 double S_v = std::min(
-                    model[region].parameters.template get<DailyFullVaccination<double>>()[{i, SimulationDay(0)}] +
+                    model[region].parameters.template get<DailyFullVaccinations<double>>()[{i, SimulationDay(0)}] +
                         vnum_rec[region][size_t(i)],
                     num_population[region][size_t(i)]);
                 double S_pv = std::max(
