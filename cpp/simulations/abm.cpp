@@ -21,8 +21,8 @@
 #include "abm/common_abm_loggers.h"
 #include "abm/household.h"
 #include "abm/lockdown_rules.h"
+#include "memilio/config.h"
 #include "memilio/io/result_io.h"
-#include "memilio/math/interpolation.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
 
