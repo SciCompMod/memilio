@@ -85,7 +85,7 @@ public:
     * @param[in] State_idx Index at which InfectionState we want to evaluate.
     * @param[in] agegroup The agegroup for which we want to evaluate.
     */
-    int get_state_flat_index(int state_idx, size_t agegroup) const
+    int get_state_flat_index(Eigen::Index state_idx, size_t agegroup) const
     {
         return (int(agegroup) * int(InfectionState::Count) + int(state_idx));
     }
