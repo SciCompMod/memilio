@@ -390,7 +390,7 @@ void Model::flows_current_timestep(ScalarType dt)
 void Model::update_compartments()
 {
     // Update compartments for every AgeGroup.
-    for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+    for (size_t group = 0; group < m_num_agegroups; ++group) {
         // Exposed
         update_compartment_from_flow(InfectionState::Exposed, {InfectionTransition::SusceptibleToExposed},
                                      {InfectionTransition::ExposedToInfectedNoSymptoms}, group);
@@ -437,18 +437,18 @@ void Model::update_compartments()
 
 void Model::update_compartment_from_flow(InfectionState infectionState,
                                          std::vector<InfectionTransition> const& IncomingFlows,
-                                         std::vector<InfectionTransition> const& OutgoingFlows, AgeGroup group)
+                                         std::vector<InfectionTransition> const& OutgoingFlows, size_t group)
 {
-    int state_idx = get_state_flat_index(Eigen::Index(infectionState), size_t(group));
+    int state_idx = get_state_flat_index(Eigen::Index(infectionState), group);
 
     Eigen::Index num_time_points   = m_populations.get_num_time_points();
     ScalarType updated_compartment = m_populations[num_time_points - 2][state_idx];
     for (const InfectionTransition& inflow : IncomingFlows) {
-        int inflow_idx = get_transition_flat_index(Eigen::Index(inflow), size_t(group));
+        int inflow_idx = get_transition_flat_index(Eigen::Index(inflow), group);
         updated_compartment += m_transitions.get_last_value()[inflow_idx];
     }
     for (const InfectionTransition& outflow : OutgoingFlows) {
-        int outflow_idx = get_transition_flat_index(Eigen::Index(outflow), size_t(group));
+        int outflow_idx = get_transition_flat_index(Eigen::Index(outflow), group);
         updated_compartment -= m_transitions.get_last_value()[outflow_idx];
     }
     m_populations.get_last_value()[state_idx] = updated_compartment;

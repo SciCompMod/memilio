@@ -73,9 +73,9 @@ int main()
 
     // Uncomment one of the two lines to use a different method to initialize the model using the TimeSeries init.
     // Initialization method with Susceptibles.
-    model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
-    // Initialization mehtod with Recovered.
-    model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] = 0;
+    // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
+    // Initialization method with Recovered.
+    // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] = 0;
 
     // Set working parameters.
     mio::SmootherCosine smoothcos(2.0);

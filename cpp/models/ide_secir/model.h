@@ -384,7 +384,7 @@ private:
      */
     void update_compartment_from_flow(InfectionState infectionState,
                                       std::vector<InfectionTransition> const& IncomingFlows,
-                                      std::vector<InfectionTransition> const& OutgoingFlows, AgeGroup group);
+                                      std::vector<InfectionTransition> const& OutgoingFlows, size_t group);
 
     // ---- Private parameters. ----
     std::vector<ScalarType> m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.

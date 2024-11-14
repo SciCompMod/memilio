@@ -18,7 +18,7 @@ int main()
     size_t num_agegroups = 2;
 
     ScalarType tmax                = 5;
-    std::vector<ScalarType> N      = std::vector<ScalarType>(num_agegroups, 5000.);
+    std::vector<ScalarType> N      = std::vector<ScalarType>(num_agegroups, 10000.);
     std::vector<ScalarType> deaths = std::vector<ScalarType>(num_agegroups, 6.);
     ScalarType dt                  = 1.;
 
@@ -32,16 +32,19 @@ int main()
     Vec vec_init(num_transitions * num_agegroups);
     // Values for the Infectiontransitions are the same for all AgeGroups.
     for (size_t group = 0; group < num_agegroups; ++group) {
-        vec_init[group + (int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
-        vec_init[group + (int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
-        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
-        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
-        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
-        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
-        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
-        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
-        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
-        vec_init[group + (int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
+        vec_init[group * num_transitions + (int)mio::isecir::InfectionTransition::SusceptibleToExposed]          = 25.0;
+        vec_init[group * num_transitions + (int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]   = 15.0;
+        vec_init[group * num_transitions +
+                 (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]                    = 8.0;
+        vec_init[group * num_transitions + (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered] = 4.0;
+        vec_init[group * num_transitions + (int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] =
+            1.0;
+        vec_init[group * num_transitions + (int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered] = 4.0;
+        vec_init[group * num_transitions + (int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical] =
+            1.0;
+        vec_init[group * num_transitions + (int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]   = 1.0;
+        vec_init[group * num_transitions + (int)mio::isecir::InfectionTransition::InfectedCriticalToDead]      = 1.0;
+        vec_init[group * num_transitions + (int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered] = 1.0;
     }
 
     // Add initial time point to time series.
@@ -52,15 +55,15 @@ int main()
     }
 
     // Initialize model.
-    mio::isecir::Model model(std::move(init), N, deaths, num_agegroups, std::vector<ScalarType>(num_agegroups, 100.));
+    mio::isecir::Model model(std::move(init), N, deaths, num_agegroups);
 
     // Uncomment these lines to use a different method to initialize the model using the TimeSeries init.
     // Initialization method with Susceptibles.
-    //model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
+    // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Count +
     //                                      (Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
     // Initialization method with Recovered.
-    //model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] = 0;
+    // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] = 0;
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Count +
     //                                      (Eigen::Index)mio::isecir::InfectionState::Recovered] = 0;
 
@@ -69,6 +72,8 @@ int main()
     mio::SmootherCosine smoothcos1(2.0);
     mio::StateAgeFunctionWrapper delaydistribution1(smoothcos1);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib1(num_transitions, delaydistribution1);
+    // TransitionDistribution is not used for SusceptibleToExposed. Therefore, the parameter can be set to any value.
+    vec_delaydistrib1[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_distribution_parameter(-1.);
 
     model.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(0)] = vec_delaydistrib1;
 
@@ -76,6 +81,8 @@ int main()
     mio::SmootherCosine smoothcos2(3.0);
     mio::StateAgeFunctionWrapper delaydistribution2(smoothcos2);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib2(num_transitions, delaydistribution2);
+    // TransitionDistribution is not used for SusceptibleToExposed. Therefore, the parameter can be set to any value.
+    vec_delaydistrib2[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_distribution_parameter(-1.);
 
     model.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(1)] = vec_delaydistrib2;
 
@@ -113,8 +120,8 @@ int main()
     interpolated_results.print_table(
         {"S1", "E1", "C1", "I1", "H1", "U1", "R1", "D1 ", "S2", "E2", "C2", "I2", "H2", "U2", "R2", "D2 "}, 16, 8);
     // Uncomment this line to print the transitions.
-    // sim.get_transitions().print_table({"S->E 1", "E->C 1", "C->I 1", "C->R 1", "I->H 1", "I->R 1", "H->U 1",
-    //                                    "H->R 1", "U->D 1", "U->R 1", "S->E 2", "E->C 2", "C->I 2", "C->R 2",
-    //                                    "I->H 2", "I->R 2", "H->U 2", "H->R 2", "U->D 2", "U->R 2"},
-    //                                   16, 8);
+    sim.get_transitions().print_table({"S->E 1", "E->C 1", "C->I 1", "C->R 1", "I->H 1", "I->R 1", "H->U 1",
+                                       "H->R 1", "U->D 1", "U->R 1", "S->E 2", "E->C 2", "C->I 2", "C->R 2",
+                                       "I->H 2", "I->R 2", "H->U 2", "H->R 2", "U->D 2", "U->R 2"},
+                                      16, 8);
 }
