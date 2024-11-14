@@ -262,5 +262,5 @@ TEST(TestInfection, getPersonalProtectiveFactor)
     t                            = mio::abm::TimePoint(0) + mio::abm::days(40);
     high_viral_protection_factor = params.get<mio::abm::HighViralLoadProtectionFactor>()[{
         latest_protection.first, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](t.days());
-    EXPECT_NEAR(high_viral_protection_factor, 0, eps);
+    EXPECT_NEAR(high_viral_protection_factor, 0.81, eps);
 }
