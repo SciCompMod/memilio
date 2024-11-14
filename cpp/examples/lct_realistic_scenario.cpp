@@ -390,11 +390,13 @@ int main(int argc, char** argv)
         save_folder        = argv[6];
     }
 
-    if (argc > 10) {
+    if (argc > 12) {
         params::simulation_parameter["RelativeTransmissionNoSymptoms"] = std::stod(argv[7]);
         params::simulation_parameter["RiskOfInfectionFromSymptomatic"] = std::stod(argv[8]);
         params::simulation_parameter["scale_contacts"]                 = std::stod(argv[9]);
         params::simulation_parameter["npi_size"]                       = std::stod(argv[10]);
+        params::simulation_parameter["scale_confirmed_cases"]          = std::stod(argv[11]);
+        params::simulation_parameter["scale_icu"]                      = std::stod(argv[12]);
     }
 
     std::string save_dir           = dir_to_data + save_folder;

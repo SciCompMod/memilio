@@ -62,7 +62,7 @@ fontsize_labels = 14
 fontsize_legends = 11
 
 
-def load_data(file, start_date, tmax, scaleConfirmed=1):
+def load_data(file, start_date, tmax, scaleConfirmed=1.):
     """ Loads RKI data and computes 'InfectedSymptoms', 'Deaths' and 'DailyNewTransmissions' using scales, dates etc 
     from the dictionary parameters. Method matches the method for computing initial values for the LCT model. 
     See also cpp/models/lct_secir/parameters_io.h.
@@ -451,9 +451,11 @@ def get_file_name(start_date, subcompartment, data_dir, boolagedistributed=False
 
 
 def main():
-    folder = "../data/simulation_lct_real_init_icu/"
+    folder = "../data/simulation_lct_real/"
     datafile_rki = "../data/pydata/Germany/cases_all_age_all_dates.json"
     datafile_icu = "../data/pydata/Germany/germany_divi_all_dates.json"
+
+    scaleConfirmed = 1.
 
     cases = [1, 2]
     for case in cases:
@@ -466,7 +468,7 @@ def main():
                 start_date, 10, folder, False), get_file_name(
                 start_date, 50, folder, False), get_file_name(
                 start_date, "var", folder, False)],
-                -1, datafile_rki, start_date_timestamp, 45, 1.0,
+                -1, datafile_rki, start_date_timestamp, 45, scaleConfirmed,
                 legendplot=list(
                 ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),
                 filename_plot="real_new_infections_"+start_date+"_allage")
@@ -478,7 +480,7 @@ def main():
                                       get_file_name(
                                           start_date, 50, folder, False),
                                       get_file_name(
-                                          start_date,  "var", folder, False)], -1, datafile_rki, start_date_timestamp, 45, 1.0, list(
+                                          start_date,  "var", folder, False)], -1, datafile_rki, start_date_timestamp, 45, scaleConfirmed, list(
                 ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=False, filename_plot="real_infected_"+start_date+"_allage")
 
             compare_compartments_real([get_file_name(start_date, 1, folder, False),
@@ -489,7 +491,7 @@ def main():
                                       get_file_name(
                                           start_date, 50, folder, False),
                                       get_file_name(
-                                          start_date, "var", folder, False)], -1, datafile_rki, start_date_timestamp, 45, 1.0, list(
+                                          start_date, "var", folder, False)], -1, datafile_rki, start_date_timestamp, 45, scaleConfirmed, list(
                 ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=True, filename_plot="real_deaths_"+start_date+"_allage")
             plot_icu_real(
                 [get_file_name(start_date, 1, folder, False),
@@ -515,7 +517,7 @@ def main():
                                           start_date, 50, folder, False),
                                       get_file_name(
                                           start_date, "var", folder, False)],
-                                     -1, datafile_rki, start_date_timestamp, 45, 1.0,
+                                     -1, datafile_rki, start_date_timestamp, 45, scaleConfirmed,
                                      legendplot=list(
                 ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),
                 filename_plot="real_new_infections_"+start_date+"_allage")
@@ -528,7 +530,7 @@ def main():
                                       get_file_name(
                                           start_date, 50, folder, False),
                                       get_file_name(
-                                          start_date,  "var", folder, False)], -1, datafile_rki, start_date_timestamp, 45, 1.0, list(
+                                          start_date,  "var", folder, False)], -1, datafile_rki, start_date_timestamp, 45, scaleConfirmed, list(
                 ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=False, filename_plot="real_infected_"+start_date+"_allage")
 
             compare_compartments_real([get_file_name(start_date, 1, folder, False),
@@ -539,7 +541,7 @@ def main():
                                       get_file_name(
                                           start_date, 50, folder, False),
                                       get_file_name(
-                                          start_date, "var", folder, False)], -1, datafile_rki, start_date_timestamp, 45, 1.0, list(
+                                          start_date, "var", folder, False)], -1, datafile_rki, start_date_timestamp, 45, scaleConfirmed, list(
                 ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=True, filename_plot="real_deaths_"+start_date+"_allage")
             plot_icu_real(
                 [get_file_name(start_date, 1, folder, False),
