@@ -322,7 +322,6 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
     Hence calc_time_index goes until std::ceil(support_max/dt) since for std::ceil(support_max/dt)+1 all terms are 
     already zero. 
     This needs to be adjusted if we are changing the finite difference scheme */
-
     Eigen::Index calc_time_index =
         (Eigen::Index)std::ceil(m_transitiondistributions_support_max[size_t(group)][idx_InfectionTransitions] / dt);
 
