@@ -300,12 +300,10 @@ struct SeverityProtectionFactor {
  * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
  */
 struct HighViralLoadProtectionFactor {
-    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<TimeSeriesFunctor<ScalarType>, ExposureType, AgeGroup, VirusVariant>;
     static auto get_default(AgeGroup size)
     {
-        return Type({ExposureType::Count, size, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
-            return 0;
-        });
+        return Type({ExposureType::Count, size, VirusVariant::Count}, TimeSeriesFunctor<ScalarType>());
     }
     static std::string name()
     {
