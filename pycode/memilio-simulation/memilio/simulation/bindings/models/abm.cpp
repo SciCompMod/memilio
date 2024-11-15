@@ -48,10 +48,10 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Recovered", mio::abm::InfectionState::Recovered)
         .value("Dead", mio::abm::InfectionState::Dead);
 
-    pymio::iterable_enum<mio::abm::ExposureType>(m, "ExposureType")
-        .value("NoProtection", mio::abm::ExposureType::NoProtection)
-        .value("NaturalInfection", mio::abm::ExposureType::NaturalInfection)
-        .value("GenericVaccine", mio::abm::ExposureType::GenericVaccine);
+    pymio::iterable_enum<mio::abm::ProtectionType>(m, "ProtectionType")
+        .value("NoProtection", mio::abm::ProtectionType::NoProtection)
+        .value("NaturalInfection", mio::abm::ProtectionType::NaturalInfection)
+        .value("GenericVaccine", mio::abm::ProtectionType::GenericVaccine);
 
     pymio::iterable_enum<mio::abm::VirusVariant>(m, "VirusVariant").value("Wildtype", mio::abm::VirusVariant::Wildtype);
 
@@ -128,7 +128,7 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::abm::VirusVariant, mio::AgeGroup>(
         m, "_AgeParameterArray");
     pymio::bind_CustomIndexArray<mio::abm::TestParameters, mio::abm::TestType>(m, "_TestData");
-    pymio::bind_Index<mio::abm::ExposureType>(m, "ExposureTypeIndex");
+    pymio::bind_Index<mio::abm::ProtectionType>(m, "ProtectionTypeIndex");
     pymio::bind_ParameterSet<mio::abm::ParametersBase, pymio::EnablePickling::Never>(m, "ParametersBase");
     pymio::bind_class<mio::abm::Parameters, pymio::EnablePickling::Never, mio::abm::ParametersBase>(m, "Parameters")
         .def(py::init<int>())
@@ -164,10 +164,10 @@ PYBIND11_MODULE(_simulation_abm, m)
              py::arg("end_date"), py::arg("test_parameters"), py::arg("probability"))
         .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
 
-    pymio::bind_class<mio::abm::ExposureEvent, pymio::EnablePickling::Never>(m, "ExposureEvent")
-        .def(py::init<mio::abm::ExposureType, mio::abm::TimePoint>(), py::arg("exposure_type"), py::arg("time"))
-        .def_readwrite("exposure_type", &mio::abm::ExposureEvent::exposure_type)
-        .def_readwrite("time", &mio::abm::ExposureEvent::time);
+    pymio::bind_class<mio::abm::ProtectionEvent, pymio::EnablePickling::Never>(m, "ProtectionEvent")
+        .def(py::init<mio::abm::ProtectionType, mio::abm::TimePoint>(), py::arg("exposure_type"), py::arg("time"))
+        .def_readwrite("exposure_type", &mio::abm::ProtectionEvent::type)
+        .def_readwrite("time", &mio::abm::ProtectionEvent::time);
 
     pymio::bind_class<mio::abm::TestingStrategy, pymio::EnablePickling::Never>(m, "TestingStrategy")
         .def(py::init<const std::vector<mio::abm::TestingStrategy::LocalStrategy>&>());

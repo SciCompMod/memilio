@@ -23,7 +23,7 @@
 #include "abm/mask_type.h"
 #include "abm/time.h"
 #include "abm/virus_variant.h"
-#include "abm/exposure_event.h"
+#include "abm/protection_event.h"
 #include "abm/test_type.h"
 #include "memilio/config.h"
 #include "memilio/io/default_serialize.h"
@@ -282,14 +282,14 @@ struct AerosolTransmissionRates {
 };
 
 /**
- * @brief Personal protection factor against #Infection% after #Infection and vaccination, which depends on #ExposureType,
+ * @brief Personal protection factor against #Infection% after #Infection and vaccination, which depends on #ProtectionType,
  * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
  */
 struct InfectionProtectionFactor {
-    using Type = CustomIndexArray<TimeSeriesFunctor<ScalarType>, ExposureType, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<TimeSeriesFunctor<ScalarType>, ProtectionType, AgeGroup, VirusVariant>;
     static auto get_default(AgeGroup size)
     {
-        return Type({ExposureType::Count, size, VirusVariant::Count}, TimeSeriesFunctor<ScalarType>());
+        return Type({ProtectionType::Count, size, VirusVariant::Count}, TimeSeriesFunctor<ScalarType>());
     }
     static std::string name()
     {
@@ -298,14 +298,14 @@ struct InfectionProtectionFactor {
 };
 
 /**
- * @brief Personal protective factor against severe symptoms after #Infection and vaccination, which depends on #ExposureType,
+ * @brief Personal protective factor against severe symptoms after #Infection and vaccination, which depends on #ProtectionType,
  * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
  */
 struct SeverityProtectionFactor {
-    using Type = CustomIndexArray<TimeSeriesFunctor<ScalarType>, ExposureType, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<TimeSeriesFunctor<ScalarType>, ProtectionType, AgeGroup, VirusVariant>;
     static auto get_default(AgeGroup size)
     {
-        return Type({ExposureType::Count, size, VirusVariant::Count}, TimeSeriesFunctor<ScalarType>());
+        return Type({ProtectionType::Count, size, VirusVariant::Count}, TimeSeriesFunctor<ScalarType>());
     }
     static std::string name()
     {
@@ -314,14 +314,14 @@ struct SeverityProtectionFactor {
 };
 
 /**
- * @brief Personal protective factor against high viral load, which depends on #ExposureType,
+ * @brief Personal protective factor against high viral load, which depends on #ProtectionType,
  * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
  */
 struct HighViralLoadProtectionFactor {
-    using Type = CustomIndexArray<TimeSeriesFunctor<ScalarType>, ExposureType, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<TimeSeriesFunctor<ScalarType>, ProtectionType, AgeGroup, VirusVariant>;
     static auto get_default(AgeGroup size)
     {
-        return Type({ExposureType::Count, size, VirusVariant::Count}, TimeSeriesFunctor<ScalarType>());
+        return Type({ProtectionType::Count, size, VirusVariant::Count}, TimeSeriesFunctor<ScalarType>());
     }
     static std::string name()
     {

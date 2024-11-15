@@ -23,7 +23,7 @@
 #include "abm/parameters.h"
 #include "abm/test_type.h"
 #include "abm/testing_strategy.h"
-#include "abm/exposure_event.h"
+#include "abm/protection_event.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/custom_index_array.h"
@@ -91,7 +91,7 @@ TEST(TestAbmSerialization, Vaccination)
     reference_json["exposure_type"]   = Json::UInt(1);
     reference_json["time"]["seconds"] = Json::Int(2);
 
-    test_json_serialization<mio::abm::ExposureEvent>(reference_json);
+    test_json_serialization<mio::abm::ProtectionEvent>(reference_json);
 }
 
 TEST(TestAbmSerialization, Infection)
