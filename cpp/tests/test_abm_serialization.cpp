@@ -23,7 +23,7 @@
 #include "abm/parameters.h"
 #include "abm/test_type.h"
 #include "abm/testing_strategy.h"
-#include "abm/vaccine.h"
+#include "abm/exposure_event.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/custom_index_array.h"
