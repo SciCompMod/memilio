@@ -377,7 +377,7 @@ public:
     /**
      * @brief Get the latest #ExposureType and its initial TimePoint of the Person.
      */
-    ExposureEvent get_latest_protection() const;
+    ExposureEvent get_latest_exposure() const;
 
     /// This method is used by the default serialization feature.
     auto default_serialize()

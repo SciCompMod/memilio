@@ -261,16 +261,16 @@ TEST(TestPerson, getLatestProtection)
 
     auto t = mio::abm::TimePoint(0);
     person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, t);
-    auto latest_protection = person.get_latest_protection();
-    EXPECT_EQ(latest_protection.first, mio::abm::ExposureType::GenericVaccine);
-    EXPECT_EQ(latest_protection.second.days(), t.days());
+    auto latest_exposure = person.get_latest_exposure();
+    EXPECT_EQ(latest_exposure.exposure_type, mio::abm::ExposureType::GenericVaccine);
+    EXPECT_EQ(latest_exposure.time.days(), t.days());
 
     t = mio::abm::TimePoint(40 * 24 * 60 * 60);
     person.add_new_infection(mio::abm::Infection(prng, static_cast<mio::abm::VirusVariant>(0), age_group_15_to_34,
                                                  params, t, mio::abm::InfectionState::Exposed));
-    latest_protection = person.get_latest_protection();
-    EXPECT_EQ(latest_protection.first, mio::abm::ExposureType::NaturalInfection);
-    EXPECT_EQ(latest_protection.second.days(), t.days());
+    latest_exposure = person.get_latest_exposure();
+    EXPECT_EQ(latest_exposure.exposure_type, mio::abm::ExposureType::NaturalInfection);
+    EXPECT_EQ(latest_exposure.time.days(), t.days());
 }
 
 TEST(Person, rng)

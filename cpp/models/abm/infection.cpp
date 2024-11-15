@@ -114,11 +114,11 @@ TimePoint Infection::get_start_date() const
 
 TimePoint Infection::draw_infection_course(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
                                            TimePoint init_date, InfectionState init_state,
-                                           ExposureEvent latest_protection)
+                                           ExposureEvent latest_exposure)
 {
     assert(age.get() < params.get_num_groups());
     TimePoint start_date = draw_infection_course_backward(rng, age, params, init_date, init_state);
-    draw_infection_course_forward(rng, age, params, init_date, init_state, latest_protection);
+    draw_infection_course_forward(rng, age, params, init_date, init_state, latest_exposure);
     return start_date;
 }
 

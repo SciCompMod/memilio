@@ -153,8 +153,7 @@ private:
      * @return The starting date of the Infection.
      */
     TimePoint draw_infection_course(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
-                                    TimePoint init_date, InfectionState start_state,
-                                    ExposureEvent latest_protection);
+                                    TimePoint init_date, InfectionState start_state, ExposureEvent latest_exposure);
 
     /**
      * @brief Determine ViralLoad course and Infection course prior to the given start_state.
@@ -165,8 +164,7 @@ private:
      * @param[in] init_state #InfectionState at time of initializing the Infection.
      */
     void draw_infection_course_forward(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
-                                       TimePoint init_date, InfectionState start_state,
-                                       ExposureEvent latest_protection);
+                                       TimePoint init_date, InfectionState start_state, ExposureEvent latest_exposure);
 
     /**
      * @brief Determine ViralLoad course and Infection course subsequent to the given start_state.

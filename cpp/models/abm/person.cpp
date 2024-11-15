@@ -211,7 +211,7 @@ bool Person::is_compliant(PersonalRandomNumberGenerator& rng, InterventionType i
     return compliance_check <= get_compliance(intervention);
 }
 
-ExposureEvent Person::get_latest_protection() const
+ExposureEvent Person::get_latest_exposure() const
 {
     ExposureType latest_exposure_type = ExposureType::NoProtection;
     TimePoint infection_time          = TimePoint(0);
@@ -228,13 +228,13 @@ ExposureEvent Person::get_latest_protection() const
 
 ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const Parameters& params) const
 {
-    auto latest_protection = get_latest_protection();
+    auto latest_exposure = get_latest_exposure();
     // If there is no previous protection or vaccination, return 0.
-    if (latest_protection.first == ExposureType::NoProtection) {
+    if (latest_exposure.exposure_type == ExposureType::NoProtection) {
         return 0;
     }
-    return params.get<InfectionProtectionFactor>()[{latest_protection.first, m_age, virus}](
-        t.days() - latest_protection.second.days());
+    return params.get<InfectionProtectionFactor>()[{latest_exposure.exposure_type, m_age, virus}](
+        t.days() - latest_exposure.time.days());
 }
 
 void Person::set_mask(MaskType type, TimePoint t)
