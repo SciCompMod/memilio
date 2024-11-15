@@ -165,7 +165,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
 
     pymio::bind_class<mio::abm::ProtectionEvent, pymio::EnablePickling::Never>(m, "ProtectionEvent")
-        .def(py::init<mio::abm::ProtectionType, mio::abm::TimePoint>(), py::arg("exposure_type"), py::arg("time"))
+        .def(py::init<mio::abm::ProtectionType, mio::abm::TimePoint>(), py::arg("type"), py::arg("time"))
         .def_readwrite("exposure_type", &mio::abm::ProtectionEvent::type)
         .def_readwrite("time", &mio::abm::ProtectionEvent::time);
 

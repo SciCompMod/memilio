@@ -83,12 +83,12 @@ TEST(TestAbmSerialization, Trip)
     test_json_serialization<mio::abm::Trip>(reference_json);
 }
 
-TEST(TestAbmSerialization, Vaccination)
+TEST(TestAbmSerialization, ProtectionEvent)
 {
     // See test_json_serialization for info on this test.
 
     Json::Value reference_json;
-    reference_json["exposure_type"]   = Json::UInt(1);
+    reference_json["type"]            = Json::UInt(1);
     reference_json["time"]["seconds"] = Json::Int(2);
 
     test_json_serialization<mio::abm::ProtectionEvent>(reference_json);
