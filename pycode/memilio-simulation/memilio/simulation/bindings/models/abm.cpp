@@ -164,10 +164,10 @@ PYBIND11_MODULE(_simulation_abm, m)
              py::arg("end_date"), py::arg("test_parameters"), py::arg("probability"))
         .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
 
-    pymio::bind_class<mio::abm::Vaccination, pymio::EnablePickling::Never>(m, "Vaccination")
+    pymio::bind_class<mio::abm::ExposureEvent, pymio::EnablePickling::Never>(m, "ExposureEvent")
         .def(py::init<mio::abm::ExposureType, mio::abm::TimePoint>(), py::arg("exposure_type"), py::arg("time"))
-        .def_readwrite("exposure_type", &mio::abm::Vaccination::exposure_type)
-        .def_readwrite("time", &mio::abm::Vaccination::time);
+        .def_readwrite("exposure_type", &mio::abm::ExposureEvent::exposure_type)
+        .def_readwrite("time", &mio::abm::ExposureEvent::time);
 
     pymio::bind_class<mio::abm::TestingStrategy, pymio::EnablePickling::Never>(m, "TestingStrategy")
         .def(py::init<const std::vector<mio::abm::TestingStrategy::LocalStrategy>&>());

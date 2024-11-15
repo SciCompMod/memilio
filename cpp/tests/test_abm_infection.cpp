@@ -66,7 +66,8 @@ TEST(TestInfection, init)
         .WillRepeatedly(testing::Return(1.0));
 
     auto infection = mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params,
-                                         mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed, {}, true);
+                                         mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed,
+                                         {mio::abm::ExposureType::NoProtection, mio::abm::TimePoint(0)}, true);
 
     EXPECT_EQ(infection.get_virus_variant(), mio::abm::VirusVariant::Wildtype);
     EXPECT_EQ(infection.is_detected(), true);
@@ -103,7 +104,8 @@ TEST(TestInfection, getInfectionState)
     auto params     = mio::abm::Parameters(num_age_groups);
     auto t          = mio::abm::TimePoint(0);
     auto infection1 = mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
-                                          mio::abm::InfectionState::Exposed, {}, true);
+                                          mio::abm::InfectionState::Exposed,
+                                          {mio::abm::ExposureType::NoProtection, mio::abm::TimePoint(0)}, true);
     EXPECT_EQ(infection1.get_infection_state(t), mio::abm::InfectionState::Exposed);
     EXPECT_EQ(infection1.get_infection_state(t - mio::abm::TimeSpan(1)), mio::abm::InfectionState::Susceptible);
 
@@ -113,7 +115,8 @@ TEST(TestInfection, getInfectionState)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(0.8)); // Recovered
     auto infection2 = mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
-                                          mio::abm::InfectionState::InfectedCritical, {}, true);
+                                          mio::abm::InfectionState::InfectedCritical,
+                                          {mio::abm::ExposureType::NoProtection, mio::abm::TimePoint(0)}, true);
     EXPECT_EQ(infection2.get_infection_state(t), mio::abm::InfectionState::InfectedCritical);
     EXPECT_EQ(infection2.get_infection_state(t + mio::abm::days(1)), mio::abm::InfectionState::Recovered);
 }
