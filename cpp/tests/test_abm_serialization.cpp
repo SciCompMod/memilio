@@ -91,7 +91,7 @@ TEST(TestAbmSerialization, Vaccination)
     reference_json["exposure_type"]   = Json::UInt(1);
     reference_json["time"]["seconds"] = Json::Int(2);
 
-    test_json_serialization<mio::abm::Vaccination>(reference_json);
+    test_json_serialization<mio::abm::ExposureEvent>(reference_json);
 }
 
 TEST(TestAbmSerialization, Infection)
