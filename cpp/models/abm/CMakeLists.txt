@@ -30,7 +30,7 @@ add_library(abm
     infection.h
     infection_state.h
     virus_variant.h
-    vaccine.h
+    exposure_event.h
     mask.h
     mask.cpp
     common_abm_loggers.h

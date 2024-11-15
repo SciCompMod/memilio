@@ -75,7 +75,7 @@ public:
      */
     Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
               TimePoint start_date, InfectionState start_state = InfectionState::Exposed,
-              std::pair<ExposureType, TimePoint> latest_exposure = {ExposureType::NoProtection, TimePoint(0)},
+              ExposureEvent latest_exposure = {ExposureType::NoProtection, TimePoint(0)},
               bool detected                                      = false);
 
     /**
@@ -154,7 +154,7 @@ private:
      */
     TimePoint draw_infection_course(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
                                     TimePoint init_date, InfectionState start_state,
-                                    std::pair<ExposureType, TimePoint> latest_protection);
+                                    ExposureEvent latest_protection);
 
     /**
      * @brief Determine ViralLoad course and Infection course prior to the given start_state.
@@ -166,7 +166,7 @@ private:
      */
     void draw_infection_course_forward(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
                                        TimePoint init_date, InfectionState start_state,
-                                       std::pair<ExposureType, TimePoint> latest_protection);
+                                       ExposureEvent latest_protection);
 
     /**
      * @brief Determine ViralLoad course and Infection course subsequent to the given start_state.

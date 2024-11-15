@@ -43,11 +43,11 @@ enum class ExposureType : std::uint32_t
 };
 
 /**
- * @brief A tuple of #TimePoint and #ExposureType (i.e. type of the Vaccine).
- * The #TimePoint describes the time of administration of the Vaccine.
+ * @brief A tuple of #ExposureType and #TimePoint.
+ * The #TimePoint describes the time of exposure and, in case of a vaccine, the time of administration of the vaccine.
  */
-struct Vaccination {
-    Vaccination(ExposureType exposure, TimePoint t)
+struct ExposureEvent {
+    ExposureEvent(ExposureType exposure, TimePoint t)
         : exposure_type(exposure)
         , time(t)
     {
@@ -56,7 +56,7 @@ struct Vaccination {
     /// This method is used by the default serialization feature.
     auto default_serialize()
     {
-        return Members("Vaccination").add("exposure_type", exposure_type).add("time", time);
+        return Members("ExposureEvent").add("exposure_type", exposure_type).add("time", time);
     }
 
     ExposureType exposure_type;
@@ -65,12 +65,12 @@ struct Vaccination {
 
 } // namespace abm
 
-/// @brief Creates an instance of abm::Vaccination for default serialization.
+/// @brief Creates an instance of abm::ExposureEvent for default serialization.
 template <>
-struct DefaultFactory<abm::Vaccination> {
-    static abm::Vaccination create()
+struct DefaultFactory<abm::ExposureEvent> {
+    static abm::ExposureEvent create()
     {
-        return abm::Vaccination(abm::ExposureType::Count, abm::TimePoint());
+        return abm::ExposureEvent(abm::ExposureType::Count, abm::TimePoint());
     }
 };
 

@@ -23,7 +23,7 @@
 #include "abm/mask_type.h"
 #include "abm/time.h"
 #include "abm/virus_variant.h"
-#include "abm/vaccine.h"
+#include "abm/exposure_event.h"
 #include "abm/test_type.h"
 #include "memilio/config.h"
 #include "memilio/io/default_serialize.h"
@@ -282,7 +282,7 @@ struct AerosolTransmissionRates {
 };
 
 /**
- * @brief Personal protection factor against #Infection% after #Infection and #Vaccination, which depends on #ExposureType,
+ * @brief Personal protection factor against #Infection% after #Infection and vaccination, which depends on #ExposureType,
  * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
  */
 struct InfectionProtectionFactor {
@@ -298,7 +298,7 @@ struct InfectionProtectionFactor {
 };
 
 /**
- * @brief Personal protective factor against severe symptoms after #Infection and #Vaccination, which depends on #ExposureType,
+ * @brief Personal protective factor against severe symptoms after #Infection and vaccination, which depends on #ExposureType,
  * #AgeGroup and #VirusVariant. Its value is between 0 and 1.
  */
 struct SeverityProtectionFactor {

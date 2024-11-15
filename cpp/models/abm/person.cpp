@@ -211,7 +211,7 @@ bool Person::is_compliant(PersonalRandomNumberGenerator& rng, InterventionType i
     return compliance_check <= get_compliance(intervention);
 }
 
-std::pair<ExposureType, TimePoint> Person::get_latest_protection() const
+ExposureEvent Person::get_latest_protection() const
 {
     ExposureType latest_exposure_type = ExposureType::NoProtection;
     TimePoint infection_time          = TimePoint(0);
@@ -223,7 +223,7 @@ std::pair<ExposureType, TimePoint> Person::get_latest_protection() const
         latest_exposure_type = m_vaccinations.back().exposure_type;
         infection_time       = m_vaccinations.back().time;
     }
-    return std::make_pair(latest_exposure_type, infection_time);
+    return ExposureEvent{latest_exposure_type, infection_time};
 }
 
 ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const Parameters& params) const
