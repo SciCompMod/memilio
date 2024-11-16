@@ -26,6 +26,22 @@ add_executable(ode_sir_example ode_sir.cpp)
 target_link_libraries(ode_sir_example PRIVATE memilio ode_sir)
 target_compile_options(ode_sir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ode_ui_example ode_ui.cpp)
+target_link_libraries(ode_ui_example PRIVATE memilio ode_ui)
+target_compile_options(ode_ui_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_ui_example2 ode_ui2.cpp)
+target_link_libraries(ode_ui_example2 PRIVATE memilio ode_ui)
+target_compile_options(ode_ui_example2 PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_ui_example10 ode_ui10.cpp)
+target_link_libraries(ode_ui_example10 PRIVATE memilio ode_ui10)
+target_compile_options(ode_ui_example10 PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_ui_example10_2 ode_ui10_2.cpp)
+target_link_libraries(ode_ui_example10_2 PRIVATE memilio ode_ui10)
+target_compile_options(ode_ui_example10 PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(sde_sir_example sde_sir.cpp)
 target_link_libraries(sde_sir_example PRIVATE memilio sde_sir)
 target_compile_options(sde_sir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
