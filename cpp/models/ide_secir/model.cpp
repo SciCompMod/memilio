@@ -456,28 +456,11 @@ void Model::update_compartment_from_flow(InfectionState infectionState,
 void Model::compute_forceofinfection(ScalarType dt, bool initialization)
 {
 
-    m_forceofinfection   = std::vector<ScalarType>(m_num_agegroups, 0);
-    ScalarType calc_time = 0;
-    ScalarType help      = 0;
+    m_forceofinfection = std::vector<ScalarType>(m_num_agegroups, 0);
     // We compute the force of infection for every AgeGroup.
+
     for (auto i = AgeGroup(0); i < AgeGroup(m_num_agegroups); ++i) {
-        // Determine the relevant calculation area = union of the supports of the relevant transition distributions.
-        help = std::max(
-            {m_transitiondistributions_support_max[size_t(i)]
-                                                  [(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms],
-             m_transitiondistributions_support_max[size_t(i)][(int)InfectionTransition::InfectedNoSymptomsToRecovered],
-             m_transitiondistributions_support_max[size_t(i)]
-                                                  [(int)InfectionTransition::InfectedSymptomsToInfectedSevere],
-             m_transitiondistributions_support_max[size_t(i)][(int)InfectionTransition::InfectedSymptomsToRecovered]});
-        if (help > calc_time) {
-            calc_time = help;
-        }
-    }
-    for (auto i = AgeGroup(0); i < AgeGroup(m_num_agegroups); ++i) {
-        // Corresponding index.
-        // Need calc_time_index timesteps in sum,
-        // subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of support_max).
-        Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
+
         Eigen::Index num_time_points;
         ScalarType current_time;
 
@@ -499,6 +482,20 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
                 sin(3.141592653589793 * (std::fmod((parameters.get<StartDay>() + current_time), 365.0) / 182.5 + 0.5));
         // To include contacts between all age groups we sum over all age groups.
         for (auto j = AgeGroup(0); j < AgeGroup(m_num_agegroups); ++j) {
+            // Determine the relevant calculation area = union of the supports of the relevant transition distributions.
+            ScalarType calc_time = std::max(
+                {m_transitiondistributions_support_max[size_t(j)]
+                                                      [(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms],
+                 m_transitiondistributions_support_max[size_t(j)]
+                                                      [(int)InfectionTransition::InfectedNoSymptomsToRecovered],
+                 m_transitiondistributions_support_max[size_t(j)]
+                                                      [(int)InfectionTransition::InfectedSymptomsToInfectedSevere],
+                 m_transitiondistributions_support_max[size_t(j)]
+                                                      [(int)InfectionTransition::InfectedSymptomsToRecovered]});
+            // Corresponding index.
+            // Need calc_time_index timesteps in sum,
+            // subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of support_max).
+            Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
 
             int Dj     = get_state_flat_index(Eigen::Index(InfectionState::Dead), static_cast<Eigen::Index>((size_t)j));
             int ICrtDj = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToDead),
@@ -592,19 +589,12 @@ void Model::set_transitiondistributions_in_forceofinfection(ScalarType dt)
          (int)InfectionTransition::InfectedSymptomsToRecovered}};
 
     // Determine the relevant calculation area = union of the supports of the relevant transition distributions.
-    ScalarType calc_time = 0.;
-    ScalarType help      = 0.;
-    for (size_t group = 0; group < m_num_agegroups; ++group) {
-        help = std::max({m_transitiondistributions_support_max[group][relevant_transitions[0][0]],
-                         m_transitiondistributions_support_max[group][relevant_transitions[0][1]],
-                         m_transitiondistributions_support_max[group][relevant_transitions[1][0]],
-                         m_transitiondistributions_support_max[group][relevant_transitions[1][1]]});
-        if (help > calc_time) {
-            calc_time = help;
-        }
-    }
 
     for (size_t group = 0; group < m_num_agegroups; ++group) {
+        ScalarType calc_time = std::max({m_transitiondistributions_support_max[group][relevant_transitions[0][0]],
+                                         m_transitiondistributions_support_max[group][relevant_transitions[0][1]],
+                                         m_transitiondistributions_support_max[group][relevant_transitions[1][0]],
+                                         m_transitiondistributions_support_max[group][relevant_transitions[1][1]]});
         // Corresponding index.
         // Need to evaluate survival functions at t_0, ..., t_{calc_time_index} for computation of force of infection,
         // subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of support_max).
