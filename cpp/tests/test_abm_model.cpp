@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "abm/person.h"
+#include "abm/model.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
 
@@ -38,8 +39,8 @@ TEST(TestModel, addLocation)
     auto work_id    = model.add_location(mio::abm::LocationType::Work);
     auto home_id    = model.add_location(mio::abm::LocationType::Home);
 
-    ASSERT_EQ(school_id1.get(), 1u);
-    ASSERT_EQ(school_id2.get(), 2u);
+    EXPECT_EQ(school_id1.get(), 1u);
+    EXPECT_EQ(school_id2.get(), 2u);
 
     auto& school1 = model.get_location(school_id1);
     auto& school2 = model.get_location(school_id2);
@@ -52,12 +53,12 @@ TEST(TestModel, addLocation)
             count_schools++;
         }
     }
-    ASSERT_EQ(count_schools, 2);
+    EXPECT_EQ(count_schools, 2);
 
-    ASSERT_EQ(model.get_locations()[1], school1);
-    ASSERT_EQ(model.get_locations()[2], school2);
-    ASSERT_EQ(model.get_locations()[3], work);
-    ASSERT_EQ(model.get_locations()[4], home);
+    EXPECT_EQ(model.get_locations()[1], school1);
+    EXPECT_EQ(model.get_locations()[2], school2);
+    EXPECT_EQ(model.get_locations()[3], work);
+    EXPECT_EQ(model.get_locations()[4], home);
 }
 
 TEST(TestModel, addPerson)
@@ -68,9 +69,9 @@ TEST(TestModel, addPerson)
     model.add_person(location, age_group_15_to_34);
     model.add_person(location, age_group_35_to_59);
 
-    ASSERT_EQ(model.get_persons().size(), 2);
-    ASSERT_EQ(model.get_person(0).get_age(), age_group_15_to_34);
-    ASSERT_EQ(model.get_person(1).get_age(), age_group_35_to_59);
+    EXPECT_EQ(model.get_persons().size(), 2);
+    EXPECT_EQ(model.get_person(0).get_age(), age_group_15_to_34);
+    EXPECT_EQ(model.get_person(1).get_age(), age_group_35_to_59);
 }
 
 TEST(TestModel, getSubpopulationCombined)
@@ -88,13 +89,13 @@ TEST(TestModel, getSubpopulationCombined)
     add_test_person(model, school3, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
     add_test_person(model, home1, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
 
-    ASSERT_EQ(model.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::Susceptible,
+    EXPECT_EQ(model.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::Susceptible,
                                                                  mio::abm::LocationType::School),
               3);
-    ASSERT_EQ(model.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::InfectedNoSymptoms,
+    EXPECT_EQ(model.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::InfectedNoSymptoms,
                                                                  mio::abm::LocationType::School),
               2);
-    ASSERT_EQ(model.get_subpopulation_combined(t, mio::abm::InfectionState::InfectedNoSymptoms), 3);
+    EXPECT_EQ(model.get_subpopulation_combined(t, mio::abm::InfectionState::InfectedNoSymptoms), 3);
 }
 
 TEST(TestModel, findLocation)
@@ -462,7 +463,7 @@ TEST(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         mio::abm::TestingScheme(testing_criteria, validity_period, start_date, end_date, test_params_pcr, probability);
 
     model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
-    ASSERT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
+    EXPECT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
               true); // no active testing scheme -> person can enter
     current_time = mio::abm::TimePoint(30);
     model.get_testing_strategy().update_activity_status(current_time);
@@ -471,12 +472,12 @@ TEST(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         .Times(testing::AtLeast(2))
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.4));
-    ASSERT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time), false);
+    EXPECT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time), false);
 
     model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work,
                                                     testing_scheme); //doesn't get added because of == operator
     model.get_testing_strategy().remove_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
-    ASSERT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
+    EXPECT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
               true); // no more testing_schemes
 }
 
@@ -506,70 +507,71 @@ TEST(TestModel, checkParameterConstraints)
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 0.6;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical]  = 0.7;
     params.get<mio::abm::LockdownDate>()                                  = mio::abm::TimePoint(0);
-    ASSERT_EQ(params.check_constraints(), false);
+    EXPECT_EQ(params.check_constraints(), false);
 
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -1.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]             = 1.;
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -2.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 2.;
     params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -3.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 3.;
     params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = -4.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 4.;
     params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]    = -5.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 5.;
     params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]         = -6.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 6.;
     params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -7.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 7.;
     params.get<mio::abm::SevereToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]      = -8.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::SevereToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 8.;
     params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -9.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]      = 9.;
     params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -10.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]    = 10.;
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -11.;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 11.;
     params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]        = 1.1;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.3;
 
     params.get<mio::abm::GotoWorkTimeMinimum>()[age_group_35_to_59] = mio::abm::hours(30);
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::GotoWorkTimeMinimum>()[age_group_35_to_59] = mio::abm::hours(4);
     params.get<mio::abm::GotoWorkTimeMaximum>()[age_group_35_to_59] = mio::abm::hours(30);
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::GotoWorkTimeMaximum>()[age_group_35_to_59] = mio::abm::hours(8);
     params.get<mio::abm::GotoSchoolTimeMinimum>()[age_group_0_to_4] = mio::abm::hours(30);
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::GotoSchoolTimeMinimum>()[age_group_0_to_4] = mio::abm::hours(3);
     params.get<mio::abm::GotoSchoolTimeMaximum>()[age_group_0_to_4] = mio::abm::hours(30);
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::GotoSchoolTimeMaximum>()[age_group_0_to_4] = mio::abm::hours(6);
 
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 1.2;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 0.5;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 1.2;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]     = 0.6;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 1.2;
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 0.7;
 
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(-2);
-    ASSERT_EQ(params.check_constraints(), true);
+    EXPECT_EQ(params.check_constraints(), true);
+    mio::set_log_level(mio::LogLevel::warn);
 }
 
 TEST(TestModel, mobilityRulesWithAppliedNPIs)
