@@ -643,7 +643,7 @@ public:
     bool check_constraints() const
     {
         for (auto age_group : make_index_range(AgeGroup{m_num_groups})) {
-            for (auto virus_variant : make_index_range(Index<VirusVariant>{VirusVariant::Count})) {
+            for (auto virus_variant : enum_members<VirusVariant>()) {
 
                 if (this->get<IncubationPeriod>()[{virus_variant, age_group}] < 0) {
                     log_error("Constraint check: Parameter IncubationPeriod of age group {:.0f} smaller than {:.4f}",
