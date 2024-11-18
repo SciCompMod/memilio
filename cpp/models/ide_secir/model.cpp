@@ -472,7 +472,7 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
         // Need calc_time_index timesteps in sum,
         // subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of support_max).
         Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
-
+        std::cout << "calc_time_index force of infection: " << calc_time_index << "\n";
         Eigen::Index num_time_points;
         ScalarType current_time;
 
@@ -525,11 +525,11 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
                 sum += season_val * parameters.get<TransmissionProbabilityOnContact>()[i].eval(state_age) *
                        parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(
                            static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j)) *
-                       (m_transitiondistributions_in_forceofinfection[static_cast<Eigen::Index>((size_t)j)][0]
+                       (m_transitiondistributions_in_forceofinfection[static_cast<int>((size_t)j)][0]
                                                                      [num_time_points - l - 1] *
                             m_transitions[l + 1][EtINSj] *
                             parameters.get<RelativeTransmissionNoSymptoms>()[j].eval(state_age) +
-                        m_transitiondistributions_in_forceofinfection[static_cast<Eigen::Index>((size_t)j)][1]
+                        m_transitiondistributions_in_forceofinfection[static_cast<int>((size_t)j)][1]
                                                                      [num_time_points - l - 1] *
                             m_transitions[l + 1][INStISyj] *
                             parameters.get<RiskOfInfectionFromSymptomatic>()[j].eval(state_age));
@@ -595,6 +595,7 @@ void Model::set_transitiondistributions_in_forceofinfection(ScalarType dt)
                                          m_transitiondistributions_support_max[group][relevant_transitions[1][0]],
                                          m_transitiondistributions_support_max[group][relevant_transitions[1][1]]});
 
+        std::cout << "calc_time trans distribution: " << calc_time << "\n";
         // Corresponding index.
         // Need to evaluate survival functions at t_0, ..., t_{calc_time_index} for computation of force of infection,
         // subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of support_max).
