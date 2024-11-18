@@ -32,6 +32,7 @@
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/parameter_set.h"
+#include "memilio/utils/index_range.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/contact_matrix.h"

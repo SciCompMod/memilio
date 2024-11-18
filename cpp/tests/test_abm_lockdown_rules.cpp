@@ -71,9 +71,9 @@ TEST(TestLockdownRules, school_closure)
 
     // Test that p1 stays home and p2 goes to school
     auto p1_rng = mio::abm::PersonalRandomNumberGenerator(rng, p1);
-    ASSERT_EQ(mio::abm::go_to_school(p1_rng, p1, t_morning, dt, params), mio::abm::LocationType::Home);
+    EXPECT_EQ(mio::abm::go_to_school(p1_rng, p1, t_morning, dt, params), mio::abm::LocationType::Home);
     auto p2_rng = mio::abm::PersonalRandomNumberGenerator(rng, p2);
-    ASSERT_EQ(mio::abm::go_to_school(p2_rng, p2, t_morning, dt, params), mio::abm::LocationType::School);
+    EXPECT_EQ(mio::abm::go_to_school(p2_rng, p2, t_morning, dt, params), mio::abm::LocationType::School);
 }
 
 /**
@@ -120,7 +120,7 @@ TEST(TestLockdownRules, school_opening)
 
     // Test that after reopening, the person goes to school
     auto p_rng = mio::abm::PersonalRandomNumberGenerator(rng, p);
-    ASSERT_EQ(mio::abm::go_to_school(p_rng, p, t_morning, dt, params), mio::abm::LocationType::School);
+    EXPECT_EQ(mio::abm::go_to_school(p_rng, p, t_morning, dt, params), mio::abm::LocationType::School);
 }
 
 /**
@@ -167,9 +167,9 @@ TEST(TestLockdownRules, home_office)
 
     // Check that person1 goes to work and person2 stays at home.
     auto p1_rng = mio::abm::PersonalRandomNumberGenerator(rng, person1);
-    ASSERT_EQ(mio::abm::go_to_work(p1_rng, person1, t_morning, dt, params), mio::abm::LocationType::Work);
+    EXPECT_EQ(mio::abm::go_to_work(p1_rng, person1, t_morning, dt, params), mio::abm::LocationType::Work);
     auto p2_rng = mio::abm::PersonalRandomNumberGenerator(rng, person2);
-    ASSERT_EQ(mio::abm::go_to_work(p2_rng, person2, t_morning, dt, params), mio::abm::LocationType::Home);
+    EXPECT_EQ(mio::abm::go_to_work(p2_rng, person2, t_morning, dt, params), mio::abm::LocationType::Home);
 }
 
 /**
@@ -213,7 +213,7 @@ TEST(TestLockdownRules, no_home_office)
 
     // Test that after removing the home office rules, p goes back to the office.
     auto p_rng = mio::abm::PersonalRandomNumberGenerator(rng, p);
-    ASSERT_EQ(mio::abm::go_to_work(p_rng, p, t_morning, dt, params), mio::abm::LocationType::Work);
+    EXPECT_EQ(mio::abm::go_to_work(p_rng, p, t_morning, dt, params), mio::abm::LocationType::Work);
 }
 
 /**
@@ -238,7 +238,7 @@ TEST(TestLockdownRules, social_event_closure)
 
     // Checks that p stays home instead of attending social events during a closure.
     auto p_rng = mio::abm::PersonalRandomNumberGenerator(rng, p);
-    ASSERT_EQ(mio::abm::go_to_event(p_rng, p, t_evening, dt, params), mio::abm::LocationType::Home);
+    EXPECT_EQ(mio::abm::go_to_event(p_rng, p, t_evening, dt, params), mio::abm::LocationType::Home);
 }
 
 /**
@@ -269,5 +269,5 @@ TEST(TestLockdownRules, social_events_opening)
 
     // Test that after reopening, p attends social events again.
     auto p_rng = mio::abm::PersonalRandomNumberGenerator(rng, p);
-    ASSERT_EQ(mio::abm::go_to_event(p_rng, p, t_evening, dt, params), mio::abm::LocationType::SocialEvent);
+    EXPECT_EQ(mio::abm::go_to_event(p_rng, p, t_evening, dt, params), mio::abm::LocationType::SocialEvent);
 }

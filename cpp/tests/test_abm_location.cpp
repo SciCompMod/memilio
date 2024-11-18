@@ -44,7 +44,7 @@ TEST(TestLocation, getId)
     // Create a location of type Home with an ID of 0.
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
     // Verify that the location's ID is correctly set to 0.
-    ASSERT_EQ(location.get_id(), mio::abm::LocationId(0));
+    EXPECT_EQ(location.get_id(), mio::abm::LocationId(0));
 }
 
 /**
@@ -105,10 +105,10 @@ TEST(TestLocation, reachCapacity)
     model.evolve(t, dt);
 
     // Verify that only one person is at the school, while the other remains at home due to capacity constraints.
-    ASSERT_EQ(model.get_person(p1).get_location(), school_id);
-    ASSERT_EQ(model.get_person(p2).get_location(), home_id); // p2 should not be able to enter the school
-    ASSERT_EQ(model.get_number_persons(school_id), 1);
-    ASSERT_EQ(model.get_number_persons(home_id), 1);
+    EXPECT_EQ(model.get_person(p1).get_location(), school_id);
+    EXPECT_EQ(model.get_person(p2).get_location(), home_id); // p2 should not be able to enter the school
+    EXPECT_EQ(model.get_number_persons(school_id), 1);
+    EXPECT_EQ(model.get_number_persons(home_id), 1);
 }
 
 /**
