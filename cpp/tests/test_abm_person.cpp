@@ -25,6 +25,7 @@
 #include "abm/time.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
+#include "random_number_test.h"
 
 #include <gtest/gtest.h>
 
@@ -85,10 +86,11 @@ TEST(TestPerson, change_location)
     EXPECT_EQ(person.get_cells()[1], 1u);
 }
 
+using TestPerson = RandomNumberTest;
 /**
  * @brief Test setting and retrieving assigned locations for a Person.
  */
-TEST(TestPerson, setGetAssignedLocation)
+TEST_F(TestPerson, setGetAssignedLocation)
 {
     auto rng = mio::RandomNumberGenerator();
     mio::abm::Location location(mio::abm::LocationType::Work, 2, num_age_groups);
@@ -102,7 +104,7 @@ TEST(TestPerson, setGetAssignedLocation)
 
     // Fuzzing: assign random valid LocationId values and verify correctness.
     for (int i = 0; i < 100; ++i) {
-        auto random_id = mio::UniformIntDistribution<int>::get_instance()(rng, 0, 1000);
+        auto random_id = this->random_number(0, std::numeric_limits<int>::max());
         person.set_assigned_location(mio::abm::LocationType::Work, mio::abm::LocationId(random_id));
         EXPECT_EQ(person.get_assigned_location(mio::abm::LocationType::Work), mio::abm::LocationId(random_id));
     }
