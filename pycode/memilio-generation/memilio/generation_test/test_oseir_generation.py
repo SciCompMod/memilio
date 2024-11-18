@@ -24,7 +24,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from memilio.generation import Generator, Scanner, ScannerConfig
+from memilio.generation import Generator, Scanner, ScannerConfig, AST
 
 
 class TestOseirGeneration(unittest.TestCase):
@@ -71,9 +71,10 @@ class TestOseirGeneration(unittest.TestCase):
 
         conf = ScannerConfig.from_dict(config_json)
         self.scanner = Scanner(conf)
+        self.ast = AST(conf)
 
     def test_clean_oseir(self):
-        irdata = self.scanner.extract_results()
+        irdata = self.scanner.extract_results(self.ast.root_cursor)
 
         generator = Generator()
         generator.create_substitutions(irdata)
@@ -87,7 +88,7 @@ class TestOseirGeneration(unittest.TestCase):
     def test_wrong_model_name(self):
         self.scanner.config.model_class = "wrong_name"
         with self.assertRaises(AssertionError) as error:
-            self.scanner.extract_results()
+            self.scanner.extract_results(self.ast.root_cursor)
 
         error_message = "set a model name"
         self.assertEqual(str(error.exception), error_message)

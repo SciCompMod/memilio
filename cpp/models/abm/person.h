@@ -28,6 +28,7 @@
 #include "abm/parameters.h"
 #include "abm/person_id.h"
 #include "abm/personal_rng.h"
+#include "memilio/io/default_serialize.h"
 #include "abm/time.h"
 #include "abm/test_type.h"
 #include "abm/vaccine.h"
@@ -378,36 +379,29 @@ public:
      */
     std::pair<ExposureType, TimePoint> get_latest_protection() const;
 
-    /**
-     * serialize this.
-     * @see mio::serialize
-     */
-    template <class IOContext>
-    void serialize(IOContext& io) const
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
-        auto obj = io.create_object("Person");
-        obj.add_element("Location", m_location);
-        obj.add_element("age", m_age);
-        obj.add_element("id", m_person_id);
-    }
-
-    /**
-     * deserialize an object of this class.
-     * @see mio::deserialize
-     */
-    template <class IOContext>
-    static IOResult<Person> deserialize(IOContext& io)
-    {
-        auto obj = io.expect_object("Person");
-        auto loc = obj.expect_element("Location", mio::Tag<LocationId>{});
-        auto age = obj.expect_element("age", Tag<uint32_t>{});
-        auto id  = obj.expect_element("id", Tag<PersonId>{});
-        return apply(
-            io,
-            [](auto&& loc_, auto&& age_, auto&& id_) {
-                return Person{mio::RandomNumberGenerator(), loc_, AgeGroup(age_), id_};
-            },
-            loc, age, id);
+        return Members("Person")
+            .add("location", m_location)
+            .add("location_type", m_location_type)
+            .add("assigned_locations", m_assigned_locations)
+            .add("vaccinations", m_vaccinations)
+            .add("infections", m_infections)
+            .add("home_isolation_start", m_home_isolation_start)
+            .add("age_group", m_age)
+            .add("time_at_location", m_time_at_location)
+            .add("rnd_workgroup", m_random_workgroup)
+            .add("rnd_schoolgroup", m_random_schoolgroup)
+            .add("rnd_go_to_work_hour", m_random_goto_work_hour)
+            .add("rnd_go_to_school_hour", m_random_goto_school_hour)
+            .add("mask", m_mask)
+            .add("compliance", m_compliance)
+            .add("id", m_person_id)
+            .add("cells", m_cells)
+            .add("last_transport_mode", m_last_transport_mode)
+            .add("rng_counter", m_rng_counter)
+            .add("test_results", m_test_results);
     }
 
     /**
@@ -451,6 +445,17 @@ private:
 };
 
 } // namespace abm
+
+/// @brief Creates an instance of abm::Person for default serialization.
+template <>
+struct DefaultFactory<abm::Person> {
+    static abm::Person create()
+    {
+        return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::LocationId(), AgeGroup(0),
+                           abm::PersonId());
+    }
+};
+
 } // namespace mio
 
 #endif

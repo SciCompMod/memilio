@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Rene Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,8 +17,4 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/mobility/metapopulation_mobility_instant.h"
-
-namespace mio
-{
-} // namespace mio
+#include "memilio/math/time_series_functor.h"
