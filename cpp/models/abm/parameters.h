@@ -637,10 +637,8 @@ public:
      */
     bool check_constraints() const
     {
-        for (auto age_group = AgeGroup(0); age_group < AgeGroup(m_num_groups); ++age_group) {
-            for (std::uint32_t variant_count = 0; variant_count < static_cast<std::uint32_t>(VirusVariant::Count); ++variant_count) {
-
-                auto virus_variant = static_cast<mio::abm::VirusVariant>(variant_count);
+        for (auto age_group : make_index_range(AgeGroup{m_num_groups})) {
+            for (auto virus_variant : make_index_range(Index<VirusVariant>{VirusVariant::Count})) {
 
                 if (this->get<IncubationPeriod>()[{virus_variant, age_group}] < 0) {
                     log_error("Constraint check: Parameter IncubationPeriod of age group {:.0f} smaller than {:.4f}",
