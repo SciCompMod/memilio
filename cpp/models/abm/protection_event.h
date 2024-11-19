@@ -31,10 +31,10 @@ namespace abm
 {
 
 /** 
- * @brief #ExposureType in ABM.
+ * @brief #ProtectionType in ABM.
  * can be used as 0-based index
  */
-enum class ExposureType : std::uint32_t
+enum class ProtectionType : std::uint32_t
 {
     NoProtection,
     NaturalInfection,
@@ -43,12 +43,12 @@ enum class ExposureType : std::uint32_t
 };
 
 /**
- * @brief A tuple of #TimePoint and #ExposureType (i.e. type of the Vaccine).
- * The #TimePoint describes the time of administration of the Vaccine.
+ * @brief A tuple of #ProtectionType and #TimePoint.
+ * The #TimePoint describes the time of exposure and, in case of a vaccine, the time of administration of the vaccine.
  */
-struct Vaccination {
-    Vaccination(ExposureType exposure, TimePoint t)
-        : exposure_type(exposure)
+struct ProtectionEvent {
+    ProtectionEvent(ProtectionType exposure, TimePoint t)
+        : type(exposure)
         , time(t)
     {
     }
@@ -56,21 +56,21 @@ struct Vaccination {
     /// This method is used by the default serialization feature.
     auto default_serialize()
     {
-        return Members("Vaccination").add("exposure_type", exposure_type).add("time", time);
+        return Members("ProtectionEvent").add("type", type).add("time", time);
     }
 
-    ExposureType exposure_type;
+    ProtectionType type;
     TimePoint time;
 };
 
 } // namespace abm
 
-/// @brief Creates an instance of abm::Vaccination for default serialization.
+/// @brief Creates an instance of abm::ProtectionEvent for default serialization.
 template <>
-struct DefaultFactory<abm::Vaccination> {
-    static abm::Vaccination create()
+struct DefaultFactory<abm::ProtectionEvent> {
+    static abm::ProtectionEvent create()
     {
-        return abm::Vaccination(abm::ExposureType::Count, abm::TimePoint());
+        return abm::ProtectionEvent(abm::ProtectionType::Count, abm::TimePoint());
     }
 };
 

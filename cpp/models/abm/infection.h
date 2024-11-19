@@ -70,13 +70,12 @@ public:
      * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state [Default: InfectionState::Exposed] #InfectionState at time of initializing the Infection.
-     * @param[in] latest_exposure [Default: {ExposureType::NoProtection, TimePoint(0)}] The pair value of last ExposureType (previous Infection/Vaccination) and TimePoint of that protection.
+     * @param[in] latest_protection [Default: {ProtectionType::NoProtection, TimePoint(0)}] The pair value of last ProtectionType (previous Infection/Vaccination) and TimePoint of that protection.
      * @param[in] detected [Default: false] If the Infection is detected.     
      */
     Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
               TimePoint start_date, InfectionState start_state = InfectionState::Exposed,
-              std::pair<ExposureType, TimePoint> latest_exposure = {ExposureType::NoProtection, TimePoint(0)},
-              bool detected                                      = false);
+              ProtectionEvent latest_protection = {ProtectionType::NoProtection, TimePoint(0)}, bool detected = false);
 
     /**
      * @brief Gets the ViralLoad of the Infection at a given TimePoint.
@@ -153,8 +152,7 @@ private:
      * @return The starting date of the Infection.
      */
     TimePoint draw_infection_course(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
-                                    TimePoint init_date, InfectionState start_state,
-                                    std::pair<ExposureType, TimePoint> latest_protection);
+                                    TimePoint init_date, InfectionState start_state, ProtectionEvent latest_protection);
 
     /**
      * @brief Determine ViralLoad course and Infection course prior to the given start_state.
@@ -166,7 +164,7 @@ private:
      */
     void draw_infection_course_forward(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
                                        TimePoint init_date, InfectionState start_state,
-                                       std::pair<ExposureType, TimePoint> latest_protection);
+                                       ProtectionEvent latest_protection);
 
     /**
      * @brief Determine ViralLoad course and Infection course subsequent to the given start_state.
