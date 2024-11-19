@@ -53,7 +53,6 @@ TEST(TestSimulation, advance_random)
 
 TEST(TestSimulation, getModelAndTimeConst)
 {
-
     auto t     = mio::abm::TimePoint(0);
     auto model = mio::abm::Model(num_age_groups);
     auto sim   = mio::abm::Simulation(t + mio::abm::days(7), std::move(model));

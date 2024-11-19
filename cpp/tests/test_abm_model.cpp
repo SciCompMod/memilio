@@ -20,7 +20,9 @@
 #include "abm/person.h"
 #include "abm/model.h"
 #include "abm_helpers.h"
-#include "memilio/utils/random_number_generator.h"
+#include "random_number_test.h"
+
+using TestModel = RandomNumberTest;
 
 /**
  * @brief Test initialization of Model class.
@@ -127,10 +129,12 @@ TEST(TestModel, getSubpopulationCombined)
 /**
  * @brief Test finding a location assigned to a person in the Model class.
  */
-TEST(TestModel, findLocation)
+TEST_F(TestModel, findLocation)
 {
     // Create a model and add different location types.
     auto model     = mio::abm::Model(num_age_groups);
+    model.get_rng() = this->get_rng();
+
     auto home_id   = model.add_location(mio::abm::LocationType::Home);
     auto school_id = model.add_location(mio::abm::LocationType::School);
     auto work_id   = model.add_location(mio::abm::LocationType::Work);
@@ -157,13 +161,14 @@ TEST(TestModel, findLocation)
 /**
  * @brief Test state transitions during a time step in the Model class.
  */
-TEST(TestModel, evolveStateTransition)
+TEST_F(TestModel, evolveStateTransition)
 {
     using testing::Return;
 
     auto t     = mio::abm::TimePoint(0);
     auto dt    = mio::abm::hours(1);
     auto model = mio::abm::Model(num_age_groups);
+    model.get_rng() = this->get_rng();
 
     // Setup incubation and infection period parameters to prevent state transitions within one hour. p1 and p3 don't transition.
     model.parameters.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
@@ -212,13 +217,15 @@ TEST(TestModel, evolveStateTransition)
 /**
  * @brief Test mobility rule-based transitions during a time step in the Model class.
  */
-TEST(TestModel, evolveMobilityRules)
+TEST_F(TestModel, evolveMobilityRules)
 {
     using testing::Return;
 
     auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
     auto dt    = mio::abm::hours(1);
     auto model = mio::abm::Model(num_age_groups);
+    model.get_rng() = this->get_rng();
+
     // Setup infection period parameters to prevent state transitions within one hour. p1 doesn't transition.
     model.parameters
         .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
@@ -276,7 +283,7 @@ TEST(TestModel, evolveMobilityRules)
 /**
  * @brief Test the evolution of mobility trips within the Model class.
  */
-TEST(TestModel, evolveMobilityTrips)
+TEST_F(TestModel, evolveMobilityTrips)
 {
     using testing::Return;
 
@@ -284,6 +291,8 @@ TEST(TestModel, evolveMobilityTrips)
     auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
     auto dt    = mio::abm::hours(2);
     auto model = mio::abm::Model(num_age_groups);
+    model.get_rng() = this->get_rng();
+
     // Setup so p1-p5 don't do transition
     model.parameters
         .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
@@ -422,9 +431,60 @@ TEST(TestModel, evolveMobilityTrips)
 }
 
 /**
+ * @brief Test that a location correctly enforces its capacity constraint.
+ */
+TEST_F(TestModel, reachCapacity)
+{
+    using testing::Return;
+
+    // Initialize time and model.
+    auto t     = mio::abm::TimePoint{mio::abm::hours(8).seconds()};
+    auto dt    = mio::abm::hours(1);
+    auto model = mio::abm::Model(num_age_groups);
+    model.get_rng() = this->get_rng();
+
+    auto home_id   = model.add_location(mio::abm::LocationType::Home);
+    auto school_id = model.add_location(mio::abm::LocationType::School);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(8))
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillRepeatedly(testing::Return(1.0));
+
+    // Create two persons with different infection states.
+    auto p1 = add_test_person(model, home_id, age_group_5_to_14);
+    auto p2 = add_test_person(model, home_id, age_group_5_to_14);
+
+    // Assign both persons to School and Home.
+    model.get_person(p1).set_assigned_location(mio::abm::LocationType::School, school_id);
+    model.get_person(p2).set_assigned_location(mio::abm::LocationType::School, school_id);
+    model.get_person(p1).set_assigned_location(mio::abm::LocationType::Home, home_id);
+    model.get_person(p2).set_assigned_location(mio::abm::LocationType::Home, home_id);
+
+    // Set the capacity of the school to 1 person with a distance requirement of 66.
+    model.get_location(school_id).set_capacity(1, 66);
+
+    model.evolve(t, dt);
+
+    // Verify that only one person is at the school, while the other remains at home due to capacity constraints.
+    EXPECT_EQ(model.get_person(p1).get_location(), school_id);
+    EXPECT_EQ(model.get_person(p2).get_location(), home_id); // p2 should not be able to enter the school
+    EXPECT_EQ(model.get_number_persons(school_id), 1);
+    EXPECT_EQ(model.get_number_persons(home_id), 1);
+}
+
+/**
  * @brief Test that dead persons remain in the cemetery and can't be moved by scheduled trips.
  */
-TEST(TestModel, checkMobilityOfDeadPerson)
+TEST_F(TestModel, checkMobilityOfDeadPerson)
 {
     using testing::Return;
     auto t     = mio::abm::TimePoint(0);
@@ -477,14 +537,15 @@ TEST(TestModel, checkMobilityOfDeadPerson)
     EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Cemetery);
 }
 
+using TestModelTestingCriteria = RandomNumberTest;
+
 /**
  * @brief Test the adding, updating, and running of testing schemes within the model.
  */
-TEST(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
+TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 {
-    auto rng = mio::RandomNumberGenerator();
-
     auto model = mio::abm::Model(num_age_groups);
+    model.get_rng() = this->get_rng();
     // Make sure the infected person stay in Infected long enough
     model.parameters.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant(0), age_group_15_to_34}] =
         100;
@@ -502,7 +563,7 @@ TEST(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto pid        = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms,
                                       current_time - test_time);
     auto& person    = model.get_person(pid);
-    auto rng_person = mio::abm::PersonalRandomNumberGenerator(rng, person);
+    auto rng_person = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
     person.set_assigned_location(mio::abm::LocationType::Home, home_id);
     person.set_assigned_location(mio::abm::LocationType::Work, work_id);
 
@@ -636,7 +697,7 @@ TEST(TestModel, checkParameterConstraints)
 /**
  * @brief Test the enforcement of NPIs (Non-Pharmaceutical Interventions) on mobility rules.
  */
-TEST(TestModel, mobilityRulesWithAppliedNPIs)
+TEST_F(TestModel, mobilityRulesWithAppliedNPIs)
 {
     using testing::Return;
     // Test when the NPIs are applied, people can enter targeted location if they comply to the rules.
@@ -644,6 +705,8 @@ TEST(TestModel, mobilityRulesWithAppliedNPIs)
     auto dt        = mio::abm::hours(1);
     auto test_time = mio::abm::minutes(30);
     auto model     = mio::abm::Model(num_age_groups);
+    model.get_rng() = this->get_rng();
+
     model.parameters
         .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();
@@ -751,7 +814,7 @@ TEST(TestModel, mobilityRulesWithAppliedNPIs)
 /**
  * @brief Test the enforcement of NPIs (Non-Pharmaceutical Interventions) on trips.
  */
-TEST(TestModel, mobilityTripWithAppliedNPIs)
+TEST_F(TestModel, mobilityTripWithAppliedNPIs)
 {
     using testing::Return;
     // Test when the NPIs are applied, people can enter targeted location if they comply to the rules.
@@ -759,6 +822,8 @@ TEST(TestModel, mobilityTripWithAppliedNPIs)
     auto dt        = mio::abm::hours(1);
     auto test_time = mio::abm::minutes(30);
     auto model     = mio::abm::Model(num_age_groups);
+    model.get_rng() = this->get_rng();
+
     model.parameters
         .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
         2 * dt.days();

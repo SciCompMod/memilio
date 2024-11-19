@@ -21,14 +21,15 @@
 #include "abm/mobility_rules.h"
 #include "abm/person.h"
 #include "abm_helpers.h"
-#include "memilio/utils/random_number_generator.h"
+#include "random_number_test.h"
+
+using TestLockdownRules = RandomNumberTest;
 
 /**
  * @brief Test applying school closure rules.
  */
-TEST(TestLockdownRules, school_closure)
+TEST_F(TestLockdownRules, school_closure)
 {
-    auto rng       = mio::RandomNumberGenerator();
     auto t         = mio::abm::TimePoint(0);
     auto dt        = mio::abm::hours(1);
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(6);
@@ -51,10 +52,10 @@ TEST(TestLockdownRules, school_closure)
         .WillRepeatedly(testing::Return(1.0));
 
     // Set up two people with assigned locations (home and school)
-    auto p1 = mio::abm::Person(rng, home.get_type(), home.get_id(), age_group_5_to_14);
+    auto p1 = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_5_to_14);
     p1.set_assigned_location(home.get_type(), home.get_id());
     p1.set_assigned_location(school.get_type(), school.get_id());
-    auto p2 = mio::abm::Person(rng, home.get_type(), home.get_id(), age_group_5_to_14);
+    auto p2 = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_5_to_14);
     p2.set_assigned_location(home.get_type(), home.get_id());
     p2.set_assigned_location(school.get_type(), school.get_id());
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
@@ -70,18 +71,17 @@ TEST(TestLockdownRules, school_closure)
     mio::abm::set_school_closure(t, 0.7, params);
 
     // Test that p1 stays home and p2 goes to school
-    auto p1_rng = mio::abm::PersonalRandomNumberGenerator(rng, p1);
+    auto p1_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p1);
     EXPECT_EQ(mio::abm::go_to_school(p1_rng, p1, t_morning, dt, params), mio::abm::LocationType::Home);
-    auto p2_rng = mio::abm::PersonalRandomNumberGenerator(rng, p2);
+    auto p2_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p2);
     EXPECT_EQ(mio::abm::go_to_school(p2_rng, p2, t_morning, dt, params), mio::abm::LocationType::School);
 }
 
 /**
  * @brief Test school reopening after closure.
  */
-TEST(TestLockdownRules, school_opening)
+TEST_F(TestLockdownRules, school_opening)
 {
-    auto rng       = mio::RandomNumberGenerator();
     auto t_closing = mio::abm::TimePoint(0);
     auto t_opening = mio::abm::TimePoint(0) + mio::abm::days(1);
     auto dt        = mio::abm::hours(1);
@@ -101,7 +101,7 @@ TEST(TestLockdownRules, school_opening)
         .WillRepeatedly(testing::Return(1.0));
 
     // Set up one person with assigned locations (home and school)
-    auto p = mio::abm::Person(rng, home.get_type(), home.get_id(), age_group_5_to_14);
+    auto p = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_5_to_14);
     p.set_assigned_location(home.get_type(), home.get_id());
     p.set_assigned_location(school.get_type(), school.get_id());
 
@@ -119,16 +119,15 @@ TEST(TestLockdownRules, school_opening)
     mio::abm::set_school_closure(t_opening, 0., params);
 
     // Test that after reopening, the person goes to school
-    auto p_rng = mio::abm::PersonalRandomNumberGenerator(rng, p);
+    auto p_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p);
     EXPECT_EQ(mio::abm::go_to_school(p_rng, p, t_morning, dt, params), mio::abm::LocationType::School);
 }
 
 /**
  * @brief Test applying home office rules.
  */
-TEST(TestLockdownRules, home_office)
+TEST_F(TestLockdownRules, home_office)
 {
-    auto rng       = mio::RandomNumberGenerator();
     auto t         = mio::abm::TimePoint(0);
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(8);
     auto dt        = mio::abm::hours(1);
@@ -158,26 +157,25 @@ TEST(TestLockdownRules, home_office)
         .WillOnce(testing::Return(0.7))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto person1 = mio::abm::Person(rng, home.get_type(), home.get_id(), age_group_15_to_34);
-    auto person2 = mio::abm::Person(rng, home.get_type(), home.get_id(), age_group_15_to_34);
+    auto person1 = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_15_to_34);
+    auto person2 = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_15_to_34);
     person1.set_assigned_location(home.get_type(), home.get_id());
     person1.set_assigned_location(work.get_type(), work.get_id());
     person2.set_assigned_location(home.get_type(), home.get_id());
     person2.set_assigned_location(work.get_type(), work.get_id());
 
     // Check that person1 goes to work and person2 stays at home.
-    auto p1_rng = mio::abm::PersonalRandomNumberGenerator(rng, person1);
+    auto p1_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person1);
     EXPECT_EQ(mio::abm::go_to_work(p1_rng, person1, t_morning, dt, params), mio::abm::LocationType::Work);
-    auto p2_rng = mio::abm::PersonalRandomNumberGenerator(rng, person2);
+    auto p2_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person2);
     EXPECT_EQ(mio::abm::go_to_work(p2_rng, person2, t_morning, dt, params), mio::abm::LocationType::Home);
 }
 
 /**
  * @brief Test home office reopening after closure.
  */
-TEST(TestLockdownRules, no_home_office)
+TEST_F(TestLockdownRules, no_home_office)
 {
-    auto rng       = mio::RandomNumberGenerator();
     auto t_closing = mio::abm::TimePoint(0);
     auto t_opening = mio::abm::TimePoint(0) + mio::abm::days(1);
     auto dt        = mio::abm::hours(1);
@@ -195,7 +193,7 @@ TEST(TestLockdownRules, no_home_office)
         .WillOnce(testing::Return(0.7))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto p = mio::abm::Person(rng, home.get_type(), home.get_id(), age_group_15_to_34);
+    auto p = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_15_to_34);
     p.set_assigned_location(home.get_type(), home.get_id());
     p.set_assigned_location(work.get_type(), work.get_id());
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
@@ -212,23 +210,22 @@ TEST(TestLockdownRules, no_home_office)
     mio::abm::set_home_office(t_opening, 0., params);
 
     // Test that after removing the home office rules, p goes back to the office.
-    auto p_rng = mio::abm::PersonalRandomNumberGenerator(rng, p);
+    auto p_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p);
     EXPECT_EQ(mio::abm::go_to_work(p_rng, p, t_morning, dt, params), mio::abm::LocationType::Work);
 }
 
 /**
  * @brief Test applying social event closure rules.
  */
-TEST(TestLockdownRules, social_event_closure)
+TEST_F(TestLockdownRules, social_event_closure)
 {
-    auto rng       = mio::RandomNumberGenerator();
     auto t         = mio::abm::TimePoint(0);
     auto dt        = mio::abm::hours(1);
     auto t_evening = mio::abm::TimePoint(0) + mio::abm::hours(19);
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location event(mio::abm::LocationType::SocialEvent, 1, num_age_groups);
-    auto p = mio::abm::Person(rng, home.get_type(), home.get_id(), age_group_5_to_14);
+    auto p = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_5_to_14);
     p.set_assigned_location(home.get_type(), home.get_id());
     p.set_assigned_location(event.get_type(), event.get_id());
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
@@ -237,16 +234,15 @@ TEST(TestLockdownRules, social_event_closure)
     mio::abm::close_social_events(t, 1, params);
 
     // Checks that p stays home instead of attending social events during a closure.
-    auto p_rng = mio::abm::PersonalRandomNumberGenerator(rng, p);
+    auto p_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p);
     EXPECT_EQ(mio::abm::go_to_event(p_rng, p, t_evening, dt, params), mio::abm::LocationType::Home);
 }
 
 /**
  * @brief Test reopening social events after closure.
  */
-TEST(TestLockdownRules, social_events_opening)
+TEST_F(TestLockdownRules, social_events_opening)
 {
-    auto rng       = mio::RandomNumberGenerator();
     auto t_closing = mio::abm::TimePoint(0);
     auto t_opening = mio::abm::TimePoint(0) + mio::abm::days(1);
     auto dt        = mio::abm::hours(1);
@@ -254,7 +250,7 @@ TEST(TestLockdownRules, social_events_opening)
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location event(mio::abm::LocationType::SocialEvent, 1, num_age_groups);
-    auto p = mio::abm::Person(rng, home.get_type(), home.get_id(), age_group_5_to_14);
+    auto p = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_5_to_14);
     p.set_assigned_location(event.get_type(), event.get_id());
     p.set_assigned_location(home.get_type(), home.get_id());
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
@@ -268,6 +264,6 @@ TEST(TestLockdownRules, social_events_opening)
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
 
     // Test that after reopening, p attends social events again.
-    auto p_rng = mio::abm::PersonalRandomNumberGenerator(rng, p);
+    auto p_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p);
     EXPECT_EQ(mio::abm::go_to_event(p_rng, p, t_evening, dt, params), mio::abm::LocationType::SocialEvent);
 }

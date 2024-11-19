@@ -19,17 +19,18 @@
 */
 #include "abm/testing_strategy.h"
 #include "abm_helpers.h"
-#include "memilio/utils/random_number_generator.h"
+#include "random_number_test.h"
 
+using TestTestingCriteria = RandomNumberTest;
 /**
  * @brief Test for adding/removing age groups and infection states in TestingCriteria.
  */
-TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
+TEST_F(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 {
     // Create test locations and a person in a specific infection state.
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
-    auto person = make_test_person(home, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
+    auto person = make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
 
     mio::abm::TimePoint t{0};
     // Initialize testing criteria with no age group or infection state set.
@@ -66,13 +67,13 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
     EXPECT_EQ(testing_criteria == testing_criteria_manual, true);
 }
 
+using TestTestingScheme = RandomNumberTest;
+
 /**
  * @brief Test for checking TestingScheme's activity status and behavior during runtime.
  */
-TEST(TestTestingScheme, runScheme)
+TEST_F(TestTestingScheme, runScheme)
 {
-    auto rng = mio::RandomNumberGenerator();
-
     std::vector<mio::abm::InfectionState> test_infection_states1 = {mio::abm::InfectionState::InfectedSymptoms,
                                                                     mio::abm::InfectionState::InfectedNoSymptoms};
     std::vector<mio::abm::LocationType> test_location_types1     = {mio::abm::LocationType::Home,
@@ -115,12 +116,13 @@ TEST(TestTestingScheme, runScheme)
     mio::abm::Location loc_home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location loc_work(mio::abm::LocationType::Work, 0, num_age_groups);
     // Since tests are performed before start_date, the InfectionState of all the Person have to take into account the test's required_time
-    auto person1     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms,
-                                        start_date - test_params_pcr.required_time);
-    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(rng, person1);
-    auto person2     = make_test_person(loc_home, age_group_15_to_34, mio::abm::InfectionState::Recovered,
-                                        start_date - test_params_pcr.required_time);
-    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(rng, person2);
+    auto person1 =
+        make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms,
+                         start_date - test_params_pcr.required_time);
+    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person1);
+    auto person2 = make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::InfectionState::Recovered,
+                                    start_date - test_params_pcr.required_time);
+    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person2);
 
     // Mock uniform distribution to control random behavior in testing.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -143,7 +145,7 @@ TEST(TestTestingScheme, runScheme)
 /**
  * @brief Test for TestingStrategy initialization and execution.
  */
-TEST(TestTestingScheme, initAndRunTestingStrategy)
+TEST_F(TestTestingScheme, initAndRunTestingStrategy)
 {
     auto rng                   = mio::RandomNumberGenerator();
     auto validity_period       = mio::abm::days(1);
@@ -165,12 +167,13 @@ TEST(TestTestingScheme, initAndRunTestingStrategy)
     testing_scheme2.update_activity_status(mio::abm::TimePoint(0));
     mio::abm::Location loc_work(mio::abm::LocationType::Work, 0);
     // Since tests are performed before start_date, the InfectionState of all the Person have to take into account the test's required_time
-    auto person1     = make_test_person(loc_work, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms,
-                                        start_date - test_params_pcr.required_time);
-    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(rng, person1);
-    auto person2     = make_test_person(loc_work, age_group_15_to_34, mio::abm::InfectionState::Recovered,
-                                        start_date - test_params_pcr.required_time);
-    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(rng, person2);
+    auto person1 =
+        make_test_person(this->get_rng(), loc_work, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms,
+                         start_date - test_params_pcr.required_time);
+    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person1);
+    auto person2 = make_test_person(this->get_rng(), loc_work, age_group_15_to_34, mio::abm::InfectionState::Recovered,
+                                    start_date - test_params_pcr.required_time);
+    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person2);
 
     // Mock uniform distribution to control random behavior in testing.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;

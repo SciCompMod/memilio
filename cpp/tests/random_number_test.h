@@ -33,13 +33,25 @@ public:
      * @return A random value between min and max. 
      */
     template <class FP = double>
-    double random_number(FP min = FP{-1e+3}, FP max = {1e+3})
+    double random_number(FP min = FP{-1e+3}, FP max = FP{1e+3})
     {
         return std::uniform_real_distribution<FP>(min, max)(m_rng);
     }
 
-    /// @brief Access the random number generator. Should only be used for debugging.
-    mio::RandomNumberGenerator get_rng()
+    /**
+     * @brief Draws a uniformly distributed integer.
+     * @tparam IntType A integer type, defaults to int.
+     * @param[in] min, max Lower and upper bound to the uniform distribution.
+     * @return A random value between min and max. 
+     */
+    template <class IntType = int>
+    IntType random_integer(IntType min = IntType{-1e+3}, IntType max = IntType{1e+3})
+    {
+        return std::uniform_int_distribution<IntType>(min, max)(m_rng);
+    }
+
+    /// @brief Access the random number generator. Should only be modified for debugging.
+    mio::RandomNumberGenerator& get_rng()
     {
         return m_rng;
     }
