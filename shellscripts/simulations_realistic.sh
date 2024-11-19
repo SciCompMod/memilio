@@ -16,15 +16,15 @@ RiskOfInfectionFromSymptomatic=0.3
 # For October:
 month_oct=10
 day_oct=1
-scale_contacts_oct=0.6536
+scale_contacts_oct=0.6537
 npi_size_oct=0.3
-scale_confirmed_cases=1.2
-scale_icu=1.2511
+scale_confirmed_cases_oct=1.2
 # For July: 
 month_jul=7
 day_jul=1
 scale_contacts_jul=0.4103
 npi_size_jul=-0.3
+scale_confirmed_cases_jul=1.
 
 # Compile with the different numbers of subcompartments and run with different setups.
 for num_subcomp in 1 3 10 50
@@ -33,12 +33,12 @@ do
     cmake --build . --target lct_realistic_scenario
 
     # First case: 01/10/2020.
-    ./bin/lct_realistic_scenario 0 $year $month_oct $day_oct $data_dir $result_folder $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_oct $npi_size_oct $scale_confirmed_cases $scale_icu
+    ./bin/lct_realistic_scenario 0 $year $month_oct $day_oct $data_dir $result_folder $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_oct $npi_size_oct $scale_confirmed_cases_oct
 
     # Second case: 01/07/2020.
-    ./bin/lct_realistic_scenario 0 $year $month_jul $day_jul $data_dir $result_folder $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_jul $npi_size_jul $scale_confirmed_cases $scale_icu
+    ./bin/lct_realistic_scenario 0 $year $month_jul $day_jul $data_dir $result_folder $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_jul $npi_size_jul $scale_confirmed_cases_jul
 
 done
 
-./bin/lct_realistic_scenario 1 $year $month_oct $day_oct $data_dir $result_folder $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_oct $npi_size_oct $scale_confirmed_cases $scale_icu
-./bin/lct_realistic_scenario 1 $year $month_jul $day_jul $data_dir $result_folder $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_jul $npi_size_jul $scale_confirmed_cases $scale_icu
+./bin/lct_realistic_scenario 1 $year $month_oct $day_oct $data_dir $result_folder $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_oct $npi_size_oct $scale_confirmed_cases_oct
+./bin/lct_realistic_scenario 1 $year $month_jul $day_jul $data_dir $result_folder $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_jul $npi_size_jul $scale_confirmed_cases_jul

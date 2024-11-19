@@ -455,7 +455,7 @@ def main():
     datafile_rki = "../data/pydata/Germany/cases_all_age_all_dates.json"
     datafile_icu = "../data/pydata/Germany/germany_divi_all_dates.json"
 
-    scaleConfirmed = 1.
+    scaleConfirmed = 1.2
 
     cases = [1, 2]
     for case in cases:

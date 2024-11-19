@@ -22,6 +22,8 @@
 #define LCTSECIR_PARAMETERS_IO_H
 
 #include "memilio/config.h"
+#include <algorithm>
+#include <vector>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -71,10 +73,8 @@ namespace details
 template <class Populations, class EntryType, size_t Group>
 void process_entry(Populations& populations, const EntryType& entry, int offset,
                    const std::vector<ScalarType> staytimes, ScalarType inv_prob_SymptomsPerNoSymptoms,
-                   ScalarType severePerInfectedSymptoms, ScalarType criticalPerSevere, ScalarType scale_confirmed_cases,
-                   ScalarType scale_icu)
+                   ScalarType severePerInfectedSymptoms, ScalarType criticalPerSevere, ScalarType scale_confirmed_cases)
 {
-    unused(criticalPerSevere);
     using LctStateGroup      = type_at_index_t<Group, typename Populations::LctStatesGroups>;
     size_t first_index_group = populations.template get_first_index_of_group<Group>();
 
@@ -274,7 +274,7 @@ void process_entry(Populations& populations, const EntryType& entry, int offset,
                           std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
                                      staytimes[(size_t)InfectionState::InfectedSevere] -
                                      (i + 1) * time_ICri_per_subcomp))) *
-                    scale_confirmed_cases * scale_icu * entry.num_confirmed;
+                    scale_confirmed_cases * entry.num_confirmed;
             }
             if (offset ==
                 std::ceil(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
@@ -285,7 +285,7 @@ void process_entry(Populations& populations, const EntryType& entry, int offset,
                      staytimes[(size_t)InfectionState::InfectedSevere] - (i + 1) * time_ICri_per_subcomp -
                      std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
                                 staytimes[(size_t)InfectionState::InfectedSevere] - (i + 1) * time_ICri_per_subcomp)) *
-                    scale_confirmed_cases * scale_icu * entry.num_confirmed;
+                    scale_confirmed_cases * entry.num_confirmed;
             }
             if (offset == std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
                                      staytimes[(size_t)InfectionState::InfectedSevere] - time_ICri_per_subcomp * i)) {
@@ -295,7 +295,7 @@ void process_entry(Populations& populations, const EntryType& entry, int offset,
                           staytimes[(size_t)InfectionState::InfectedSevere] - i * time_ICri_per_subcomp -
                           std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
                                      staytimes[(size_t)InfectionState::InfectedSevere] - i * time_ICri_per_subcomp))) *
-                    scale_confirmed_cases * scale_icu * entry.num_confirmed;
+                    scale_confirmed_cases * entry.num_confirmed;
             }
             if (offset == std::ceil(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
                                     staytimes[(size_t)InfectionState::InfectedSevere] - time_ICri_per_subcomp * i)) {
@@ -305,7 +305,7 @@ void process_entry(Populations& populations, const EntryType& entry, int offset,
                      staytimes[(size_t)InfectionState::InfectedSevere] - i * time_ICri_per_subcomp -
                      std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
                                 staytimes[(size_t)InfectionState::InfectedSevere] - i * time_ICri_per_subcomp)) *
-                    scale_confirmed_cases * scale_icu * entry.num_confirmed;
+                    scale_confirmed_cases * entry.num_confirmed;
             }
         }
     }
@@ -363,14 +363,13 @@ void process_entry(Populations& populations, const EntryType& entry, int offset,
 * @returns Any io errors that happen during data processing.
 */
 template <class Populations, class EntryType, size_t Group = 0>
-IOResult<void> set_initial_data_from_confirmed_cases_impl(
-    Populations& populations, const std::vector<EntryType>& rki_data, const std::vector<DiviEntry>& divi_data,
-    const Parameters& parameters, Date date, const std::vector<ScalarType>& total_population,
-    const std::vector<ScalarType>& scale_confirmed_cases, const std::vector<ScalarType>& scale_icu)
+IOResult<void> set_initial_data_from_confirmed_cases(Populations& populations, const std::vector<EntryType>& rki_data,
+                                                     const std::vector<DiviEntry>& divi_data,
+                                                     const Parameters& parameters, Date date,
+                                                     const std::vector<ScalarType>& total_population,
+                                                     const std::vector<ScalarType>& scale_confirmed_cases)
 {
     static_assert((Group < Populations::num_groups) && (Group >= 0), "The template parameter Group should be valid.");
-    using LctStateGroup      = type_at_index_t<Group, typename Populations::LctStatesGroups>;
-    size_t first_index_group = populations.template get_first_index_of_group<Group>();
 
     // Define variables for parameters.
     std::vector<ScalarType> staytimes((size_t)InfectionState::Count, -1.);
@@ -410,9 +409,93 @@ IOResult<void> set_initial_data_from_confirmed_cases_impl(
             if (offset == min_offset_needed) {
                 min_offset_needed_avail = true;
             }
-            process_entry<Populations, EntryType, Group>(
-                populations, entry, offset, staytimes, inv_prob_SymptomsPerNoSymptoms, prob_SeverePerInfectedSymptoms,
-                prob_CriticalPerSevere, scale_confirmed_cases[Group], scale_icu[Group]);
+            process_entry<Populations, EntryType, Group>(populations, entry, offset, staytimes,
+                                                         inv_prob_SymptomsPerNoSymptoms, prob_SeverePerInfectedSymptoms,
+                                                         prob_CriticalPerSevere, scale_confirmed_cases[Group]);
+        }
+    }
+
+    // Check whether all necessary dates are available.
+    if (!max_offset_needed_avail || !min_offset_needed_avail) {
+        log_error(
+            "Necessary range of dates needed to compute initial values does not exist in RKI data for group {:d}.",
+            Group);
+        return failure(StatusCode::OutOfRange,
+                       "Necessary range of dates needed to compute initial values does not exist in RKI data.");
+    }
+
+    if constexpr (Group + 1 < Populations::num_groups) {
+        return set_initial_data_from_confirmed_cases<Populations, EntryType, Group + 1>(
+            populations, rki_data, divi_data, parameters, date, total_population, scale_confirmed_cases);
+    }
+    else {
+        return mio::success();
+    }
+}
+
+template <class Populations, size_t Group = 0>
+ScalarType get_ICri_init(Populations& populations, ScalarType ICri_init)
+{
+    static_assert((Group < Populations::num_groups) && (Group >= 0), "The template parameter Group should be valid.");
+    using LctStateGroup      = type_at_index_t<Group, typename Populations::LctStatesGroups>;
+    size_t first_index_group = populations.template get_first_index_of_group<Group>();
+
+    // Index of the first subcompartment of InfectedCritical.
+    size_t first_index_ICri =
+        first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedCritical>();
+    // Number of subcompartments of InfectedCritical
+    int num_subcomps_ICri = LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>();
+    for (int i = 0; i < num_subcomps_ICri; i++) {
+        ICri_init += populations[first_index_ICri + i];
+    }
+
+    if constexpr (Group + 1 < Populations::num_groups) {
+        return get_ICri_init<Populations, Group + 1>(populations, ICri_init);
+    }
+    else {
+        return ICri_init;
+    }
+}
+
+template <class Populations>
+ScalarType scale_to_divi(Populations& populations, const std::vector<DiviEntry>& divi_data, Date date)
+{
+    // Go through entries of divi_data and get the number of ICU patients on the required date.
+    ScalarType divi_reported = 0;
+    for (auto&& entry : divi_data) {
+        int offset = get_offset_in_days(entry.date, date);
+        if (offset == 0) {
+            divi_reported = entry.num_icu;
+        }
+    }
+
+    // Get number of individuals in InfectedCritical compartment.
+    ScalarType ICri_init = 0;
+    ICri_init            = get_ICri_init(populations, ICri_init);
+
+    // Compute scaling factor so that number of indiviudals in InfectedCritical matches Divi data.
+    ScalarType scale_infected_critical = divi_reported / ICri_init;
+    std::cout << "Scale InfectedCritical (based on DIVI data) by " << scale_infected_critical << std::endl;
+
+    return scale_infected_critical;
+}
+
+template <class Populations, class EntryType, size_t Group = 0>
+IOResult<void> set_initial_data_for_remaining_compartments(Populations& populations,
+                                                           const std::vector<ScalarType>& total_population,
+                                                           ScalarType scale_infected_critical)
+{
+    static_assert((Group < Populations::num_groups) && (Group >= 0), "The template parameter Group should be valid.");
+    using LctStateGroup      = type_at_index_t<Group, typename Populations::LctStatesGroups>;
+    size_t first_index_group = populations.template get_first_index_of_group<Group>();
+
+    // Scale compartment InfectedCritical by scale_infected_critical if this scaling factor is not equal to 1.
+    if (!((scale_infected_critical > 1. - 1e-8) && (scale_infected_critical < 1. + 1e-8))) {
+        for (size_t i = LctStateGroup::template get_first_index<InfectionState::InfectedCritical>();
+             i < LctStateGroup::template get_first_index<InfectionState::InfectedCritical>() +
+                     LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSevere>();
+             i++) {
+            populations[first_index_group + i] *= scale_infected_critical;
         }
     }
 
@@ -432,15 +515,6 @@ IOResult<void> set_initial_data_from_confirmed_cases_impl(
         total_population[Group] -
         populations.get_compartments().segment(first_index_group + 1, LctStateGroup::Count - 1).sum();
 
-    // Check whether all necessary dates are available.
-    if (!max_offset_needed_avail || !min_offset_needed_avail) {
-        log_error(
-            "Necessary range of dates needed to compute initial values does not exist in RKI data for group {:d}.",
-            Group);
-        return failure(StatusCode::OutOfRange,
-                       "Necessary range of dates needed to compute initial values does not exist in RKI data.");
-    }
-
     // Check if all values for populations are valid.
     for (size_t i = first_index_group; i < LctStateGroup::Count; i++) {
         if (floating_point_less((ScalarType)populations[i], 0., 1e-14)) {
@@ -450,10 +524,9 @@ IOResult<void> set_initial_data_from_confirmed_cases_impl(
                            "Something went wrong in the initialization as at least one entry is negative.");
         }
     }
-
     if constexpr (Group + 1 < Populations::num_groups) {
-        return set_initial_data_from_confirmed_cases_impl<Populations, EntryType, Group + 1>(
-            populations, rki_data, divi_data, parameters, date, total_population, scale_confirmed_cases, scale_icu);
+        return set_initial_data_for_remaining_compartments<Populations, EntryType, Group + 1>(
+            populations, total_population, scale_infected_critical);
     }
     else {
         return mio::success();
@@ -496,12 +569,11 @@ IOResult<void> set_initial_data_from_confirmed_cases_impl(
 * @returns Any io errors that happen during data processing.
 */
 template <class Populations, class EntryType>
-IOResult<void> set_initial_data_from_confirmed_cases(const std::vector<EntryType>& rki_data,
-                                                     const std::vector<DiviEntry>& divi_data, Populations& populations,
-                                                     const Parameters& parameters, const Date date,
-                                                     const std::vector<ScalarType>& total_population,
-                                                     const std::vector<ScalarType>& scale_confirmed_cases,
-                                                     const std::vector<ScalarType>& scale_icu)
+IOResult<void> set_initial_data_from_reported_data(const std::vector<EntryType>& rki_data,
+                                                   const std::vector<DiviEntry>& divi_data, Populations& populations,
+                                                   const Parameters& parameters, const Date date,
+                                                   const std::vector<ScalarType>& total_population,
+                                                   std::vector<ScalarType> scale_confirmed_cases, bool use_divi = true)
 { // Check if the inputs are matching.
     assert(total_population.size() == Populations::num_groups);
     assert(scale_confirmed_cases.size() == Populations::num_groups);
@@ -530,8 +602,20 @@ IOResult<void> set_initial_data_from_confirmed_cases(const std::vector<EntryType
         populations[i] = 0;
     }
 
-    return details::set_initial_data_from_confirmed_cases_impl<Populations, EntryType>(
-        populations, rki_data, divi_data, parameters, date, total_population, scale_confirmed_cases, scale_icu);
+    auto init_part1 = details::set_initial_data_from_confirmed_cases<Populations, EntryType>(
+        populations, rki_data, divi_data, parameters, date, total_population, scale_confirmed_cases);
+    if (!init_part1) {
+        printf("%s\n", init_part1.error().formatted_message().c_str());
+        return init_part1;
+    }
+
+    ScalarType scale_infected_critical = 1.;
+    if (use_divi) {
+        scale_infected_critical = details::scale_to_divi<Populations>(populations, divi_data, date);
+    }
+
+    return details::set_initial_data_for_remaining_compartments<Populations, EntryType>(populations, total_population,
+                                                                                        scale_infected_critical);
 }
 
 } // namespace lsecir
