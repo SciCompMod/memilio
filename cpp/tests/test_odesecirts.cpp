@@ -276,10 +276,15 @@ TEST(TestOdeSECIRTS, smooth_vaccination_rate)
 
     const auto eps1 = 0.15;
 
-    // test when t is out of the range
-    Eigen::VectorXd result = model.vaccinations_at(5, daily_vaccinations, eps1);
+    // test when t is out of bounds
+    Eigen::VectorXd result = model.vaccinations_at(5.5, daily_vaccinations, eps1);
     EXPECT_EQ(result.size(), 1);
     EXPECT_NEAR(result[0], 0, 1e-12);
+
+    // test when ub + 1 is out of bounds
+    result = model.vaccinations_at(1.85, daily_vaccinations, eps1);
+    EXPECT_EQ(result.size(), 1);
+    EXPECT_NEAR(result[0], 100, 1e-12);
 
     // test when t i below the lower bound
     result = model.vaccinations_at(0.5, daily_vaccinations, eps1);
@@ -1365,6 +1370,26 @@ TEST(TestOdeSECIRTS, apply_variant_function)
     model.parameters.set<mio::osecirts::StartDay>(0);
     model.parameters.set<mio::osecirts::StartDayNewVariant>(10);
     model.parameters.set<mio::osecirts::InfectiousnessNewVariant<double>>(2.0);
+
+    // set vaccinations
+    const size_t daily_vaccinations = 1;
+    const size_t num_days           = 5;
+    model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().resize(mio::SimulationDay(num_days));
+    for (size_t i = 0; i < num_days; ++i) {
+        auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
+        model.parameters
+            .get<mio::osecirts::DailyPartialVaccinations<double>>()[{mio::AgeGroup(0), mio::SimulationDay(i)}] =
+            num_vaccinations;
+        model.parameters
+            .get<mio::osecirts::DailyFullVaccinations<double>>()[{mio::AgeGroup(0), mio::SimulationDay(i)}] =
+            num_vaccinations;
+        model.parameters
+            .get<mio::osecirts::DailyBoosterVaccinations<double>>()[{mio::AgeGroup(0), mio::SimulationDay(i)}] =
+            num_vaccinations;
+    }
+
     auto sim = mio::osecirts::Simulation<double>(model);
 
     // test that the transmission probability is not changed due to calling the advance function

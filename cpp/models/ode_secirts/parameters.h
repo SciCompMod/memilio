@@ -1222,15 +1222,6 @@ public:
                 log_error("Constraint check: Parameter InfectiousnessNewVariant smaller {}", 0);
                 return true;
             }
-
-            if (this->template get<TimeTemporaryImmunityPI<FP>>()[i] < 0.0) {
-                log_error("Constraint check: Parameter TimeTemporaryImmunityPI smaller {:d}", 0);
-                return true;
-            }
-            if (this->template get<TimeTemporaryImmunityII<FP>>()[i] < 0.0) {
-                log_error("Constraint check: Parameter TimeTemporaryImmunityII smaller {:d}", 0);
-                return true;
-            }
         }
         return false;
     }

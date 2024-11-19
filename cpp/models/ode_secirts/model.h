@@ -586,22 +586,21 @@ public:
         const ScalarType ub = (size_t)t + 1.0;
         const ScalarType lb = ub - eps;
 
+        const auto max_time = static_cast<size_t>(daily_vaccinations.size<SimulationDay>()) - 1;
+
         Eigen::VectorXd smoothed_vaccinations((size_t)params.get_num_groups());
         smoothed_vaccinations.setZero();
 
-        if (t > ub) {
-            mio::log_warning("Vaccination time is out of bounds");
-        }
-
-        if (static_cast<size_t>(daily_vaccinations.size<SimulationDay>()) <= (size_t)t) {
+        // if daily_vaccinations is not available for the current time point, we return zero vaccinations.
+        if (max_time <= (size_t)t) {
+            mio::log_warning("Vaccination data not available for time point ", t, ". Returning zero vaccinations.");
             return smoothed_vaccinations;
         }
-        // check if t is in the range of the interval [lb,ub]
         if (t >= lb) {
             for (AgeGroup age = AgeGroup(0); age < params.get_num_groups(); age++) {
                 // if ub + 1 is out of bounds, we use the value at ub
                 auto ubp1 = static_cast<size_t>(ub + 1);
-                if (static_cast<size_t>(daily_vaccinations.size<SimulationDay>()) < ubp1) {
+                if (max_time < ubp1) {
                     ubp1 = static_cast<size_t>(ub);
                 }
                 const auto num_vaccinations_ub = daily_vaccinations[{age, SimulationDay(static_cast<size_t>(ubp1))}] -
