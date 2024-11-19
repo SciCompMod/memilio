@@ -29,7 +29,7 @@ using TestLocation = RandomNumberTest;
 /**
  * @brief Test that initializing a location with cells correctly creates the given number of cells.
  */
-TEST(TestLocation, initCell)
+TEST_F(TestLocation, initCell)
 {
     // Create a location of type PublicTransport with 2 cells.
     mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
@@ -40,7 +40,7 @@ TEST(TestLocation, initCell)
 /**
  * @brief Test that a location correctly returns its ID.
  */
-TEST(TestLocation, getId)
+TEST_F(TestLocation, getId)
 {
     // Create a location of type Home with an ID of 0.
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -51,7 +51,7 @@ TEST(TestLocation, getId)
 /**
  * @brief Test that the computation of space per person relative to capacity works correctly.
  */
-TEST(TestLocation, computeSpacePerPersonRelative)
+TEST_F(TestLocation, computeSpacePerPersonRelative)
 {
     using testing::Return;
 
@@ -126,7 +126,7 @@ TEST_F(TestLocation, interact)
 /**
  * @brief Test setting and getting the capacity of a location.
  */
-TEST(TestLocation, setCapacity)
+TEST_F(TestLocation, setCapacity)
 {
     // Create a location of type Home.
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -139,7 +139,7 @@ TEST(TestLocation, setCapacity)
 /**
  * @brief Test setting and getting the required mask type at a location.
  */
-TEST(TestLocation, setRequiredMask)
+TEST_F(TestLocation, setRequiredMask)
 {
     // Create a location of type Home.
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -154,7 +154,7 @@ TEST(TestLocation, setRequiredMask)
 /**
  * @brief Test setting and getting the geographical location of a location.
  */
-TEST(TestLocation, getGeographicalLocation)
+TEST_F(TestLocation, getGeographicalLocation)
 {
     // Create a location of type Home.
     auto location = mio::abm::Location(mio::abm::LocationType::Home, 0);

@@ -27,7 +27,7 @@ using TestModel = RandomNumberTest;
 /**
  * @brief Test initialization of Model class.
  */
-TEST(TestModel, init)
+TEST_F(TestModel, init)
 {
     auto model = mio::abm::Model(num_age_groups);
 
@@ -42,7 +42,7 @@ TEST(TestModel, init)
 /**
  * @brief Test adding locations to the Model class.
  */
-TEST(TestModel, addLocation)
+TEST_F(TestModel, addLocation)
 {
     auto model      = mio::abm::Model(num_age_groups);
     auto school_id1 = model.add_location(mio::abm::LocationType::School);
@@ -79,7 +79,7 @@ TEST(TestModel, addLocation)
 /**
  * @brief Test adding persons to a specific location in the Model class.
  */
-TEST(TestModel, addPerson)
+TEST_F(TestModel, addPerson)
 {
     auto model    = mio::abm::Model(num_age_groups);
     auto location = model.add_location(mio::abm::LocationType::School);
@@ -97,7 +97,7 @@ TEST(TestModel, addPerson)
 /**
  * @brief Test combined subpopulation count by location type in the Model class.
  */
-TEST(TestModel, getSubpopulationCombined)
+TEST_F(TestModel, getSubpopulationCombined)
 {
     auto t       = mio::abm::TimePoint(0);
     auto model   = mio::abm::Model(num_age_groups);
@@ -603,7 +603,7 @@ TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 /**
  * @brief Test to validate the parameter constraints within the model.
  */
-TEST(TestModel, checkParameterConstraints)
+TEST_F(TestModel, checkParameterConstraints)
 {
     mio::set_log_level(mio::LogLevel::critical); // Suppress logging of errors since they are expected here
     auto model  = mio::abm::Model(num_age_groups);

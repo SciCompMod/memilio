@@ -26,7 +26,7 @@ using TestMasks = RandomNumberTest;
 /**
  * @brief Test initialization of a Mask object.
  */
-TEST(TestMasks, init)
+TEST_F(TestMasks, init)
 {
     auto t    = mio::abm::TimePoint(0);
     auto mask = mio::abm::Mask(mio::abm::MaskType::Count, t);
@@ -37,7 +37,7 @@ TEST(TestMasks, init)
 /**
  * @brief Test getting the MaskType from a Mask object.
  */
-TEST(TestMasks, getType)
+TEST_F(TestMasks, getType)
 {
     auto t    = mio::abm::TimePoint(0);
     auto mask = mio::abm::Mask(mio::abm::MaskType::Community, t);
@@ -49,7 +49,7 @@ TEST(TestMasks, getType)
 /**
  * @brief Test changing the type of a mask and resetting the time used.
  */
-TEST(TestMasks, changeMask)
+TEST_F(TestMasks, changeMask)
 {
     auto t    = mio::abm::TimePoint(2 * 60 * 60);
     auto mask = mio::abm::Mask(mio::abm::MaskType::Community, mio::abm::TimePoint(0));
