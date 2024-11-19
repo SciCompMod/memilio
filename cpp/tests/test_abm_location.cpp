@@ -77,9 +77,9 @@ TEST_F(TestLocation, interact)
     using testing::Return;
 
     // Test should work identically work with any age.
-    mio::AgeGroup age = mio::AgeGroup(this->random_number(0, int(num_age_groups - 1)));
+    mio::AgeGroup age = mio::AgeGroup(this->random_integer(0, int(num_age_groups - 1)));
     mio::abm::VirusVariant variant =
-        mio::abm::VirusVariant(this->random_number(0, int(mio::abm::VirusVariant::Count) - 1));
+        mio::abm::VirusVariant(this->random_integer(0, int(mio::abm::VirusVariant::Count) - 1));
 
     auto t  = mio::abm::TimePoint(0);
     auto dt = mio::abm::seconds(8640); //0.1 days
