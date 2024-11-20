@@ -93,19 +93,19 @@ IOResult<void> compute_confirmed_cases_data(
     std::vector<std::vector<FP>>& vnum_InfectedSevere, std::vector<std::vector<FP>>& vnum_icu,
     std::vector<std::vector<FP>>& vnum_death, std::vector<std::vector<FP>>& vnum_timm_i,
     std::vector<int> const& vregion, Date date, const std::vector<Model>& model,
-    const std::vector<FP>& scaling_factor_inf, const size_t layer)
+    const std::vector<FP>& scaling_factor_inf, const size_t layer, bool read_icu = false)
 {
     auto max_date_entry = std::max_element(case_data.begin(), case_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
     });
     if (max_date_entry == case_data.end()) {
-        log_error("RKI data file is empty.");
-        return failure(StatusCode::InvalidValue, "RKI data is empty.");
+        log_error("Case data file is empty.");
+        return failure(StatusCode::InvalidValue, "Case data is empty.");
     }
     auto max_date = max_date_entry->date;
     if (max_date < date) {
-        log_error("Specified date does not exist in RKI data");
-        return failure(StatusCode::OutOfRange, "RKI data does not contain specified date.");
+        log_error("Specified date does not exist in case data");
+        return failure(StatusCode::OutOfRange, "Case data does not contain specified date.");
     }
 
     // shifts the initilization to the recent past if simulation starts
@@ -131,8 +131,6 @@ IOResult<void> compute_confirmed_cases_data(
             auto& num_death              = vnum_death[region_idx];
             auto& num_icu                = vnum_icu[region_idx];
             auto& num_imm                = vnum_timm_i[region_idx];
-
-            bool read_icu = false;
 
             auto age = (size_t)entry.age_group;
             // (rounded) transition times
@@ -300,12 +298,13 @@ IOResult<void> read_confirmed_cases_data(
     std::vector<std::vector<FP>>& vnum_InfectedNoSymptoms, std::vector<std::vector<FP>>& vnum_InfectedSymptoms,
     std::vector<std::vector<FP>>& vnum_InfectedSevere, std::vector<std::vector<FP>>& vnum_icu,
     std::vector<std::vector<FP>>& vnum_death, std::vector<std::vector<FP>>& vnum_timm_i,
-    const std::vector<Model>& model, const std::vector<FP>& scaling_factor_inf, const size_t layer)
+    const std::vector<Model>& model, const std::vector<FP>& scaling_factor_inf, const size_t layer,
+    bool read_icu = false)
 {
     BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(path));
     return compute_confirmed_cases_data(case_data, vnum_Exposed, vnum_InfectedNoSymptoms, vnum_InfectedSymptoms,
                                         vnum_InfectedSevere, vnum_icu, vnum_death, vnum_timm_i, vregion, date, model,
-                                        scaling_factor_inf, layer);
+                                        scaling_factor_inf, layer, read_icu);
 }
 
 /**

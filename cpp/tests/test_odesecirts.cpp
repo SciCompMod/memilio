@@ -708,11 +708,26 @@ TEST(TestOdeSECIRTS, read_confirmed_cases)
     num_InfectedSevere[0]     = std::vector<double>(num_age_groups, 0.0);
     num_icu[0]                = std::vector<double>(num_age_groups, 0.0);
 
-    auto read = mio::osecirts::details::read_confirmed_cases_data(
-        path, region, {2020, 12, 01}, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere,
-        num_icu, num_death, num_timm, model, std::vector<double>(size_t(num_age_groups), 1.0), 0);
+    ASSERT_THAT(mio::osecirts::details::read_confirmed_cases_data(
+                    path, region, {2020, 12, 01}, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms,
+                    num_InfectedSevere, num_icu, num_death, num_timm, model,
+                    std::vector<double>(size_t(num_age_groups), 1.0), 0, true),
+                IsSuccess());
 
-    ASSERT_THAT(read, IsSuccess());
+    // read again with invalid date
+    ASSERT_THAT(mio::osecirts::details::read_confirmed_cases_data(
+                    path, region, {3020, 12, 01}, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms,
+                    num_InfectedSevere, num_icu, num_death, num_timm, model,
+                    std::vector<double>(size_t(num_age_groups), 1.0), 0, true),
+                IsFailure(mio::StatusCode::OutOfRange));
+
+    // call the compute function with empty case data
+    const std::vector<mio::ConfirmedCasesDataEntry> empty_case_data;
+    ASSERT_THAT(mio::osecirts::details::compute_confirmed_cases_data(
+                    empty_case_data, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere,
+                    num_icu, num_death, num_timm, region, {2020, 12, 01}, model,
+                    std::vector<double>(size_t(num_age_groups), 1.0), 0, true),
+                IsFailure(mio::StatusCode::InvalidValue));
 }
 
 TEST(TestOdeSECIRTS, read_data)
