@@ -63,7 +63,6 @@ int main()
     g.add_node(1002, model_group2, t0);
     for (auto& node : g.nodes()) {
         node.property.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore<ScalarType>>());
-        node.property.get_simulation().get_dt() = dt;
     }
     g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::oseir::InfectionState::Count, 0.05));
     g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::oseir::InfectionState::Count, 0.01));

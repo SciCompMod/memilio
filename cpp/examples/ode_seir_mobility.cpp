@@ -88,6 +88,9 @@ int main()
     auto save_result_status =
         mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result_standard.h5");
 
+    auto reproduction_numbers = model.get_reproduction_numbers(result_from_sim);
+    std::cout << "\nbasis reproduction number: " << reproduction_numbers[0] << "\n";
+
     // bool print_to_terminal = true;
 
     // result_from_sim.print_table();

@@ -8,6 +8,12 @@
 #include "models/ode_seir_mobility_improved/parameters.h"
 #include "models/ode_seir_mobility_improved/regions.h"
 #include "memilio/epidemiology/age_group.h"
+#include "memilio/utils/time_series.h"
+
+GCC_CLANG_DIAGNOSTIC(push)
+GCC_CLANG_DIAGNOSTIC(ignored "-Wshadow")
+#include <Eigen/Dense>
+GCC_CLANG_DIAGNOSTIC(pop)
 
 namespace mio
 {
@@ -96,6 +102,106 @@ public:
                                         y[population.get_flat_index({region, age_i, InfectionState::Infected})];
             }
         }
+    }
+
+    /**
+    *@brief Computes the reproduction number at a given index time of the Model output obtained by the Simulation.
+    *@param t_idx The index time at which the reproduction number is computed.
+    *@param y The TimeSeries obtained from the Model Simulation.
+    *@returns The computed reproduction number at the provided index time.
+    */
+    IOResult<ScalarType> get_reproduction_number(size_t t_idx, const mio::TimeSeries<ScalarType>& y)
+    {
+        if (!(t_idx < static_cast<size_t>(y.get_num_time_points()))) {
+            return mio::failure(mio::StatusCode::OutOfRange, "t_idx is not a valid index for the TimeSeries");
+        }
+
+        auto const& params = this->parameters;
+        auto const& pop    = this->populations;
+
+        const size_t num_age_groups                = (size_t)params.get_num_agegroups();
+        const size_t num_regions                   = (size_t)params.get_num_regions();
+        constexpr size_t num_infected_compartments = 2;
+        const size_t total_infected_compartments   = num_infected_compartments * num_age_groups * num_regions;
+
+        ContactMatrixGroup const& contact_matrix      = params.template get<ContactPatterns<ScalarType>>();
+        ContactMatrixGroup const& commuting_strengths = params.template get<CommutingStrengths<ScalarType>>();
+
+        Eigen::MatrixXd F = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
+        Eigen::MatrixXd V = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
+
+        for (auto i = AgeGroup(0); i < AgeGroup(num_age_groups); i++) {
+            for (auto n = Region(0); n < Region(num_regions); n++) {
+                size_t Si = pop.get_flat_index({n, i, InfectionState::Susceptible});
+                for (auto j = AgeGroup(0); j < AgeGroup(num_age_groups); j++) {
+                    for (auto m = Region(0); m < Region(num_regions); m++) {
+                        auto const population_region     = pop.template slice<Region>({(size_t)m, 1});
+                        auto const population_region_age = population_region.template slice<AgeGroup>({(size_t)j, 1});
+                        auto Njm = std::accumulate(population_region_age.begin(), population_region_age.end(), 0.);
+
+                        double coeffStoE = 0.5 * contact_matrix.get_matrix_at(y.get_time(t_idx))(i.get(), j.get()) *
+                                           params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i];
+                        if (n == m) {
+                            F((size_t)i * num_regions + (size_t)n,
+                              num_age_groups * num_regions + (size_t)j * num_regions + (size_t)m) +=
+                                coeffStoE * y.get_value(t_idx)[Si] / Njm;
+                        }
+                        for (auto k = Region(0); k < Region(num_regions); k++) {
+                            auto test = commuting_strengths.get_matrix_at(y.get_time(t_idx))(n.get(), k.get());
+                            mio::unused(test);
+                            F((size_t)i * num_regions + (size_t)n,
+                              num_age_groups * num_regions + (size_t)j * num_regions + (size_t)m) +=
+                                coeffStoE * y.get_value(t_idx)[Si] *
+                                commuting_strengths.get_matrix_at(y.get_time(t_idx))(n.get(), k.get()) *
+                                commuting_strengths.get_matrix_at(y.get_time(t_idx))(m.get(), k.get()) /
+                                m_population_after_commuting[{k, j}];
+                        }
+                    }
+                }
+
+                double T_Ei = params.template get<TimeExposed<ScalarType>>()[i];
+                double T_Ii = params.template get<TimeInfected<ScalarType>>()[i];
+                V((size_t)i * num_regions + (size_t)n, (size_t)i * num_regions + (size_t)n) = 1.0 / T_Ei;
+                V(num_age_groups * num_regions + (size_t)i * num_regions + (size_t)n,
+                  (size_t)i * num_regions + (size_t)n)                                      = -1.0 / T_Ei;
+                V(num_age_groups * num_regions + (size_t)i * num_regions + (size_t)n,
+                  num_age_groups * num_regions + (size_t)i * num_regions + (size_t)n)       = 1.0 / T_Ii;
+            }
+        }
+
+        V = V.inverse();
+
+        Eigen::MatrixXd NextGenMatrix = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
+        NextGenMatrix                 = F * V;
+
+        //Compute the largest eigenvalue in absolute value
+        Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces;
+
+        ces.compute(NextGenMatrix);
+        const Eigen::VectorXcd eigen_vals = ces.eigenvalues();
+
+        Eigen::VectorXd eigen_vals_abs;
+        eigen_vals_abs.resize(eigen_vals.size());
+
+        for (int i = 0; i < eigen_vals.size(); i++) {
+            eigen_vals_abs[i] = std::abs(eigen_vals[i]);
+        }
+        return mio::success(eigen_vals_abs.maxCoeff());
+    }
+
+    /**
+    *@brief Computes the reproduction number for all time points of the Model output obtained by the Simulation.
+    *@param y The TimeSeries obtained from the Model Simulation.
+    *@returns vector containing all reproduction numbers
+    */
+    Eigen::VectorXd get_reproduction_numbers(const mio::TimeSeries<ScalarType>& y)
+    {
+        auto num_time_points = y.get_num_time_points();
+        Eigen::VectorXd temp(num_time_points);
+        for (size_t i = 0; i < static_cast<size_t>(num_time_points); i++) {
+            temp[i] = get_reproduction_number(i, y).value();
+        }
+        return temp;
     }
 
     mio::Populations<FP, Region, AgeGroup> m_population_after_commuting;

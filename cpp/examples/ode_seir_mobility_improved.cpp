@@ -27,17 +27,15 @@ mio::IOResult<void> set_mobility_weights(const std::string& mobility_data, mio::
                             "transformMobilitydata.py from pycode memilio epidata package.");
     }
 
-    for (auto age = mio::AgeGroup(0); age < model.parameters.get_num_agegroups(); age++) {
-        for (size_t county_idx_i = 0; county_idx_i < number_regions; ++county_idx_i) {
-            auto population_i = model.populations.get_group_total(mio::oseirmobilityimproved::Region(county_idx_i));
-            mobility_data_commuter.row(county_idx_i) /= 2 * population_i;
-            mobility_data_commuter(county_idx_i, county_idx_i) =
-                1 - mobility_data_commuter.rowwise().sum()(county_idx_i);
-        }
-        model.parameters.template get<mio::oseirmobilityimproved::CommutingStrengths<>>()
-            .get_cont_freq_mat()[0]
-            .get_baseline() = mobility_data_commuter;
+    for (size_t county_idx_i = 0; county_idx_i < number_regions; ++county_idx_i) {
+        auto population_i = model.populations.get_group_total(mio::oseirmobilityimproved::Region(county_idx_i));
+        mobility_data_commuter.row(county_idx_i) /= population_i;
+        mobility_data_commuter(county_idx_i, county_idx_i) = 1 - mobility_data_commuter.rowwise().sum()(county_idx_i);
     }
+    model.parameters.template get<mio::oseirmobilityimproved::CommutingStrengths<>>()
+        .get_cont_freq_mat()[0]
+        .get_baseline() = mobility_data_commuter;
+
     return mio::success();
 }
 
@@ -47,26 +45,27 @@ int main()
 
     ScalarType t0   = 0.;
     ScalarType tmax = 15.;
-    ScalarType dt   = 0.5;
+    ScalarType dt   = 0.1;
 
-    // std::vector<int> region_ids  = {1001, 1002};
-    ScalarType number_regions    = 400;
+    ScalarType number_regions = 2;
+    std::vector<int> region_ids(number_regions);
+    iota(region_ids.begin(), region_ids.end(), 1);
     ScalarType number_age_groups = 1;
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    const std::string& mobility_data = "/home/gers_ca/code/memilio/data";
+    const std::string& mobility_data = "";
 
     mio::oseirmobilityimproved::Model<ScalarType> model(number_regions, number_age_groups);
     model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
-                       mio::oseirmobilityimproved::InfectionState::Exposed}]     = 100;
+                       mio::oseirmobilityimproved::InfectionState::Exposed}]     = 10;
     model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
-                       mio::oseirmobilityimproved::InfectionState::Susceptible}] = 99900;
+                       mio::oseirmobilityimproved::InfectionState::Susceptible}] = 9990;
     for (int i = 1; i < number_regions; i++) {
         model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(0),
                            mio::oseirmobilityimproved::InfectionState::Exposed}]     = 0;
         model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(0),
-                           mio::oseirmobilityimproved::InfectionState::Susceptible}] = 100000;
+                           mio::oseirmobilityimproved::InfectionState::Susceptible}] = 10000;
     }
 
     model.parameters.set<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>(1.);
@@ -74,7 +73,6 @@ int main()
     model.parameters.set<mio::oseirmobilityimproved::TimeExposed<>>(3.);
     model.parameters.set<mio::oseirmobilityimproved::TimeInfected<>>(5.);
 
-    model.parameters.set<mio::oseirmobilityimproved::ImpactTransmissionDuringCommuting<>>(0.);
     mio::ContactMatrixGroup& contact_matrix =
         model.parameters.get<mio::oseirmobilityimproved::ContactPatterns<>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(2.7);
@@ -84,15 +82,20 @@ int main()
     mio::ContactMatrixGroup& commuting_strengths =
         model.parameters.get<mio::oseirmobilityimproved::CommutingStrengths<>>().get_cont_freq_mat();
 
-    auto& population = model.parameters.get<mio::oseirmobilityimproved::PopulationSizes<>>();
-    for (int n = 0; n < number_regions; ++n) {
-        auto population_n = model.populations.get_group_total(mio::oseirmobilityimproved::Region(n));
-        population[{mio::oseirmobilityimproved::Region(n)}] += population_n;
-        for (int m = 0; m < number_regions; ++m) {
-            population[{mio::oseirmobilityimproved::Region(n)}] -=
-                commuting_strengths[0].get_baseline()(n, m) * population_n;
-            population[{mio::oseirmobilityimproved::Region(m)}] +=
-                commuting_strengths[0].get_baseline()(n, m) * population_n;
+    auto& population = model.m_population_after_commuting;
+    for (int region_n = 0; region_n < number_regions; ++region_n) {
+        for (int age = 0; age < number_age_groups; ++age) {
+            auto const population_region =
+                model.populations.template slice<mio::oseirmobilityimproved::Region>({(size_t)region_n, 1});
+            auto const population_region_age = population_region.template slice<mio::AgeGroup>({(size_t)age, 1});
+            auto population_n = std::accumulate(population_region_age.begin(), population_region_age.end(), 0.);
+            population[{mio::oseirmobilityimproved::Region(region_n), mio::AgeGroup(age)}] += population_n;
+            for (int region_m = 0; region_m < number_regions; ++region_m) {
+                population[{mio::oseirmobilityimproved::Region(region_n), mio::AgeGroup(age)}] -=
+                    commuting_strengths[0].get_baseline()(region_n, region_m) * population_n;
+                population[{mio::oseirmobilityimproved::Region(region_m), mio::AgeGroup(age)}] +=
+                    commuting_strengths[0].get_baseline()(region_n, region_m) * population_n;
+            }
         }
     }
     // using DefaultIntegratorCore =
@@ -111,9 +114,11 @@ int main()
 
     printf("Runtime: %f\n", ms_double.count());
 
-    // auto save_result_status =
-    //     mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result_test.h5");
+    auto save_result_status =
+        mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result_test.h5");
 
+    auto reproduction_numbers = model.get_reproduction_numbers(result_from_sim);
+    std::cout << "\nbasis reproduction number: " << reproduction_numbers[0] << "\n";
     // bool print_to_terminal = true;
 
     // result_from_sim.print_table();
