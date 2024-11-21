@@ -22,4 +22,4 @@
 Python bindings for MEmilio ODE SECIHURD model.
 """
 
-from memilio._simulation_osecir import *
+from memilio.simulation._simulation_osecir import *

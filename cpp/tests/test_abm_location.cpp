@@ -28,7 +28,7 @@
 TEST(TestLocation, initCell)
 {
     mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 0, 2);
-    ASSERT_EQ(location.get_cells().size(), 2);
+    EXPECT_EQ(location.get_cells().size(), 2);
 }
 
 TEST(TestLocation, getId)
@@ -108,9 +108,9 @@ TEST(TestLocation, computeSpacePerPersonRelative)
     home.set_capacity(0, 0, 2); // Capacity for Cell 3
 
     auto cells = home.get_cells();
-    ASSERT_EQ(cells[0].compute_space_per_person_relative(), 0.25);
-    ASSERT_EQ(cells[1].compute_space_per_person_relative(), 0.5);
-    ASSERT_EQ(cells[2].compute_space_per_person_relative(), 1.);
+    EXPECT_EQ(cells[0].compute_space_per_person_relative(), 0.25);
+    EXPECT_EQ(cells[1].compute_space_per_person_relative(), 0.5);
+    EXPECT_EQ(cells[2].compute_space_per_person_relative(), 1.);
 }
 
 TEST(TestLocation, interact)
@@ -167,27 +167,17 @@ TEST(TestLocation, setCapacity)
 {
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
     location.set_capacity(4, 200);
-    ASSERT_EQ(location.get_capacity().persons, (uint32_t)4);
-    ASSERT_EQ(location.get_capacity().volume, (uint32_t)200);
+    EXPECT_EQ(location.get_capacity().persons, (uint32_t)4);
+    EXPECT_EQ(location.get_capacity().volume, (uint32_t)200);
 }
 
 TEST(TestLocation, setRequiredMask)
 {
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
-    ASSERT_EQ(location.get_required_mask(), mio::abm::MaskType::Community);
+    EXPECT_EQ(location.get_required_mask(), mio::abm::MaskType::None);
 
     location.set_required_mask(mio::abm::MaskType::FFP2);
-    ASSERT_EQ(location.get_required_mask(), mio::abm::MaskType::FFP2);
-}
-
-TEST(TestLocation, setNPIActive)
-{
-    mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
-    location.set_npi_active(false);
-    ASSERT_FALSE(location.get_npi_active());
-
-    location.set_npi_active(true);
-    ASSERT_TRUE(location.get_npi_active());
+    EXPECT_EQ(location.get_required_mask(), mio::abm::MaskType::FFP2);
 }
 
 TEST(TestLocation, getGeographicalLocation)
@@ -196,5 +186,5 @@ TEST(TestLocation, getGeographicalLocation)
     mio::abm::GeographicalLocation geographical_location = {10.5100470359749, 52.2672785559812};
     location.set_geographical_location(geographical_location);
 
-    ASSERT_EQ(location.get_geographical_location(), geographical_location);
+    EXPECT_EQ(location.get_geographical_location(), geographical_location);
 }

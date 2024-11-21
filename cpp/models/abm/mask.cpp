@@ -27,16 +27,21 @@ namespace mio
 {
 namespace abm
 {
-Mask::Mask(MaskType type)
+Mask::Mask(MaskType type, TimePoint t)
     : m_type(type)
-    , m_time_used(TimeSpan(0))
+    , m_time_first_usage(t)
 {
 }
 
-void Mask::change_mask(MaskType new_mask_type)
+void Mask::change_mask(MaskType new_mask_type, TimePoint t)
 {
-    m_type      = new_mask_type;
-    m_time_used = TimeSpan(0);
+    m_type             = new_mask_type;
+    m_time_first_usage = t;
+}
+
+const TimeSpan Mask::get_time_used(TimePoint curr_time) const
+{
+    return curr_time - m_time_first_usage;
 }
 
 } // namespace abm

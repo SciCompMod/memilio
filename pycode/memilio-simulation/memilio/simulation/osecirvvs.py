@@ -22,4 +22,4 @@
 Python bindings for MEmilio ODE SECIRVVS model.
 """
 
-from memilio._simulation_osecirvvs import *
+from memilio.simulation._simulation_osecirvvs import *

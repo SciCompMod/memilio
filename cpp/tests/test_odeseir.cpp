@@ -311,6 +311,25 @@ TEST(TestOdeSeir, get_reproduction_number)
     EXPECT_NEAR(model.get_reproduction_number(0.9, result).value(), 1.858670429549998504, 1e-12);
 }
 
+// Test model initialization with total population of 0 and ensure get_flows returns no NaN values
+TEST(TestSeir, population_zero_no_nan)
+{
+    // initialize simple model with total population 0
+    mio::oseir::Model<double> model(1);
+    model.populations.set_total(0.0);
+
+    // call the get_flows function
+    auto dydt_default = Eigen::VectorXd(3);
+    dydt_default.setZero();
+    auto y0 = model.get_initial_values();
+    model.get_flows(y0, y0, 0, dydt_default);
+
+    // check that there are now NaN values in dydt_default
+    for (int i = 0; i < dydt_default.size(); i++) {
+        EXPECT_FALSE(std::isnan(dydt_default[i]));
+    }
+}
+
 TEST(TestSeir, get_flows)
 {
     mio::oseir::Model<double> model(1);

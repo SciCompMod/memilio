@@ -19,7 +19,6 @@
 */
 
 //Includes from pymio
-#include "abm/mobility_data.h"
 #include "pybind_util.h"
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
@@ -49,10 +48,10 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Recovered", mio::abm::InfectionState::Recovered)
         .value("Dead", mio::abm::InfectionState::Dead);
 
-    pymio::iterable_enum<mio::abm::ExposureType>(m, "ExposureType")
-        .value("NoProtection", mio::abm::ExposureType::NoProtection)
-        .value("NaturalInfection", mio::abm::ExposureType::NaturalInfection)
-        .value("GenericVaccine", mio::abm::ExposureType::GenericVaccine);
+    pymio::iterable_enum<mio::abm::ProtectionType>(m, "ProtectionType")
+        .value("NoProtection", mio::abm::ProtectionType::NoProtection)
+        .value("NaturalInfection", mio::abm::ProtectionType::NaturalInfection)
+        .value("GenericVaccine", mio::abm::ProtectionType::GenericVaccine);
 
     pymio::iterable_enum<mio::abm::VirusVariant>(m, "VirusVariant").value("Wildtype", mio::abm::VirusVariant::Wildtype);
 
@@ -68,37 +67,10 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("PublicTransport", mio::abm::LocationType::PublicTransport)
         .value("TransportWithoutContact", mio::abm::LocationType::TransportWithoutContact);
 
-    pymio::iterable_enum<mio::abm::TransportMode>(m, "TransportMode")
-        .value("Bike", mio::abm::TransportMode::Bike)
-        .value("CarDriver", mio::abm::TransportMode::CarDriver)
-        .value("CarPassenger", mio::abm::TransportMode::CarPassenger)
-        .value("PublicTransport", mio::abm::TransportMode::PublicTransport)
-        .value("Walking", mio::abm::TransportMode::Walking)
-        .value("Other", mio::abm::TransportMode::Other)
-        .value("Unknown", mio::abm::TransportMode::Unknown);
-
     pymio::iterable_enum<mio::abm::TestType>(m, "TestType")
         .value("Generic", mio::abm::TestType::Generic)
         .value("Antigen", mio::abm::TestType::Antigen)
         .value("PCR", mio::abm::TestType::PCR);
-
-    pymio::bind_class<mio::abm::TestParameters, pymio::EnablePickling::Never>(m, "TestParameters")
-        .def(py::init<double, double>())
-        .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
-        .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
-
-    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::abm::VirusVariant, mio::AgeGroup>(
-        m, "_AgeParameterArray");
-    pymio::bind_CustomIndexArray<mio::abm::TestParameters, mio::abm::TestType>(m, "_TestData");
-    pymio::bind_Index<mio::abm::ExposureType>(m, "ExposureTypeIndex");
-    pymio::bind_ParameterSet<mio::abm::ParametersBase, pymio::EnablePickling::Never>(m, "ParametersBase");
-    pymio::bind_class<mio::abm::Parameters, pymio::EnablePickling::Never, mio::abm::ParametersBase>(m, "Parameters")
-        .def(py::init<int>())
-        .def("check_constraints", &mio::abm::Parameters::check_constraints);
-
-    pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters, pymio::EnablePickling::Never>(
-        m, "LocalInfectionParameters")
-        .def(py::init<size_t>());
 
     pymio::bind_class<mio::abm::TimeSpan, pymio::EnablePickling::Never>(m, "TimeSpan")
         .def(py::init<int>(), py::arg("seconds") = 0)
@@ -145,6 +117,26 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::self - mio::abm::TimeSpan{})
         .def(py::self -= mio::abm::TimeSpan{});
 
+    pymio::bind_class<mio::abm::TestParameters, pymio::EnablePickling::Never>(m, "TestParameters")
+        .def(py::init<double, double, mio::abm::TimeSpan, mio::abm::TestType>())
+        .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
+        .def_readwrite("specificity", &mio::abm::TestParameters::specificity)
+        .def_readwrite("required_time", &mio::abm::TestParameters::required_time)
+        .def_readwrite("type", &mio::abm::TestParameters::type);
+
+    pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::abm::VirusVariant, mio::AgeGroup>(
+        m, "_AgeParameterArray");
+    pymio::bind_CustomIndexArray<mio::abm::TestParameters, mio::abm::TestType>(m, "_TestData");
+    pymio::bind_Index<mio::abm::ProtectionType>(m, "ProtectionTypeIndex");
+    pymio::bind_ParameterSet<mio::abm::ParametersBase, pymio::EnablePickling::Never>(m, "ParametersBase");
+    pymio::bind_class<mio::abm::Parameters, pymio::EnablePickling::Never, mio::abm::ParametersBase>(m, "Parameters")
+        .def(py::init<int>())
+        .def("check_constraints", &mio::abm::Parameters::check_constraints);
+
+    pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters, pymio::EnablePickling::Never>(
+        m, "LocalInfectionParameters")
+        .def(py::init<size_t>());
+
     pymio::bind_class<mio::abm::LocationId, pymio::EnablePickling::Never>(m, "LocationId")
         .def(py::init<uint32_t>(), py::arg("id"))
         .def("index", &mio::abm::LocationId::get);
@@ -154,8 +146,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("index", &mio::abm::PersonId::get);
 
     pymio::bind_class<mio::abm::Person, pymio::EnablePickling::Never>(m, "Person")
-        .def("set_assigned_location", py::overload_cast<mio::abm::LocationType, mio::abm::LocationId, int>(
-                                          &mio::abm::Person::set_assigned_location))
+        .def("set_assigned_location",
+             py::overload_cast<mio::abm::LocationType, mio::abm::LocationId>(&mio::abm::Person::set_assigned_location))
         .def_property_readonly("location", py::overload_cast<>(&mio::abm::Person::get_location, py::const_))
         .def_property_readonly("age", &mio::abm::Person::get_age)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
@@ -171,10 +163,10 @@ PYBIND11_MODULE(_simulation_abm, m)
              py::arg("end_date"), py::arg("test_parameters"), py::arg("probability"))
         .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
 
-    pymio::bind_class<mio::abm::Vaccination, pymio::EnablePickling::Never>(m, "Vaccination")
-        .def(py::init<mio::abm::ExposureType, mio::abm::TimePoint>(), py::arg("exposure_type"), py::arg("time"))
-        .def_readwrite("exposure_type", &mio::abm::Vaccination::exposure_type)
-        .def_readwrite("time", &mio::abm::Vaccination::time);
+    pymio::bind_class<mio::abm::ProtectionEvent, pymio::EnablePickling::Never>(m, "ProtectionEvent")
+        .def(py::init<mio::abm::ProtectionType, mio::abm::TimePoint>(), py::arg("type"), py::arg("time"))
+        .def_readwrite("type", &mio::abm::ProtectionEvent::type)
+        .def_readwrite("time", &mio::abm::ProtectionEvent::time);
 
     pymio::bind_class<mio::abm::TestingStrategy, pymio::EnablePickling::Never>(m, "TestingStrategy")
         .def(py::init<const std::vector<mio::abm::TestingStrategy::LocalStrategy>&>());
@@ -193,19 +185,14 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_Range<decltype(std::declval<const mio::abm::Model>().get_persons())>(m, "_ModelPersonsRange");
 
     pymio::bind_class<mio::abm::Trip, pymio::EnablePickling::Never>(m, "Trip")
-        .def(py::init<uint32_t, mio::abm::TimePoint, mio::abm::LocationId, int, mio::abm::LocationId, int,
-                      mio::abm::TransportMode, mio::abm::LocationType, std::vector<uint32_t>>(),
-             py::arg("person_id"), py::arg("time"), py::arg("destination"), py::arg("destination_model_id"),
-             py::arg("origin"), py::arg("origin_model_id"), py::arg("trip_mode"), py::arg("destination_type"),
+        .def(py::init<uint32_t, mio::abm::TimePoint, mio::abm::LocationId, mio::abm::LocationId,
+                      std::vector<uint32_t>>(),
+             py::arg("person_id"), py::arg("time"), py::arg("destination"), py::arg("origin"),
              py::arg("cells") = std::vector<uint32_t>())
         .def_readwrite("person_id", &mio::abm::Trip::person_id)
         .def_readwrite("time", &mio::abm::Trip::time)
         .def_readwrite("destination", &mio::abm::Trip::destination)
-        .def_readwrite("destination_model_id", &mio::abm::Trip::destination_model_id)
         .def_readwrite("origin", &mio::abm::Trip::origin)
-        .def_readwrite("destination_model_id", &mio::abm::Trip::origin_model_id)
-        .def_readwrite("trip_mode", &mio::abm::Trip::trip_mode)
-        .def_readwrite("destination_type", &mio::abm::Trip::destination_type)
         .def_readwrite("cells", &mio::abm::Trip::cells);
 
     pymio::bind_class<mio::abm::TripList, pymio::EnablePickling::Never>(m, "TripList")
@@ -219,7 +206,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("add_location", &mio::abm::Model::add_location, py::arg("location_type"), py::arg("num_cells") = 1)
         .def("add_person", py::overload_cast<mio::abm::LocationId, mio::AgeGroup>(&mio::abm::Model::add_person),
              py::arg("location_id"), py::arg("age_group"))
-        .def("assign_location", &mio::abm::Model::assign_location, py::arg("person_index"), py::arg("location_id"))
+        .def("assign_location", &mio::abm::Model::assign_location, py::arg("person_id"), py::arg("location_id"))
         .def_property_readonly("locations", py::overload_cast<>(&mio::abm::Model::get_locations, py::const_),
                                py::keep_alive<1, 0>{}) //keep this model alive while contents are referenced in ranges
         .def_property_readonly("persons", py::overload_cast<>(&mio::abm::Model::get_persons, py::const_),
@@ -240,12 +227,14 @@ PYBIND11_MODULE(_simulation_abm, m)
             },
             py::return_value_policy::reference_internal);
 
-    pymio::bind_class<mio::abm::Simulation<>, pymio::EnablePickling::Never>(m, "Simulation")
+    pymio::bind_class<mio::abm::Simulation, pymio::EnablePickling::Never>(m, "Simulation")
         .def(py::init<mio::abm::TimePoint, size_t>())
         .def("advance",
-             static_cast<void (mio::abm::Simulation<>::*)(mio::abm::TimePoint)>(&mio::abm::Simulation<>::advance),
+             static_cast<void (mio::abm::Simulation::*)(mio::abm::TimePoint)>(&mio::abm::Simulation::advance),
              py::arg("tmax"))
-        .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation<>::get_model));
+        .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation::get_model));
+
+    m.attr("__version__") = "dev";
 }
 
 PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::Model>().get_locations()))

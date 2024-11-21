@@ -72,8 +72,7 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
         auto age_receiver          = person.get_age();
         ScalarType mask_protection = person.get_mask_protective_factor(global_parameters);
         assert(person.get_cells().size() && "Person is in multiple cells. Interact logic is incorrect at the moment.");
-        for (auto cell_index :
-             person.get_cells()) { // TODO: the logic here is incorrect in case a person is in multiple cells
+        for (auto cell_index : person.get_cells()) {
             std::pair<VirusVariant, ScalarType> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
             for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
                 VirusVariant virus = static_cast<VirusVariant>(v);

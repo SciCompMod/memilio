@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "abm/location_type.h"
-#include "abm/mask_type.h"
+#include "abm/intervention_type.h"
 #include "abm/location.h"
 #include "abm/random_events.h"
 
@@ -33,7 +33,6 @@ Location::Location(LocationType loc_type, LocationId loc_id, size_t num_agegroup
     , m_parameters(num_agegroups)
     , m_cells(num_cells)
     , m_required_mask(MaskType::Community)
-    , m_npi_active(false)
     , m_model_id(model_id)
 {
     assert(num_cells > 0 && "Number of cells has to be larger than 0.");

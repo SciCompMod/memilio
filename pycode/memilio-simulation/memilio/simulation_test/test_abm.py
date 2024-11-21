@@ -114,10 +114,10 @@ class TestAbm(unittest.TestCase):
         self.assertEqual(model.trip_list.num_trips(), 2)
 
         # vaccination
-        vaccine = abm.Vaccination(
-            abm.ExposureType.GenericVaccine, abm.TimePoint(0))
-        self.assertEqual(vaccine.exposure_type,
-                         abm.ExposureType.GenericVaccine)
+        vaccine = abm.ProtectionEvent(
+            abm.ProtectionType.GenericVaccine, abm.TimePoint(0))
+        self.assertEqual(vaccine.type,
+                         abm.ProtectionType.GenericVaccine)
 
         # run
         t1 = t0 + abm.days(1)

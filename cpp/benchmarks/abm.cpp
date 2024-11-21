@@ -64,9 +64,9 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
         }
 
         //equal chance of (moderate) mask refusal and (moderate) mask eagerness
-        auto pct_mask_values = std::array{0.05 /*-1*/, 0.2 /*-0.5*/, 0.5 /*0*/, 0.2 /*0.5*/, 0.05 /*1*/};
-        auto mask_value      = -1 + 0.5 * mio::DiscreteDistribution<int>::get_instance()(prng, pct_mask_values);
-        person.set_mask_preferences({size_t(mio::abm::LocationType::Count), mask_value});
+        auto pct_compliance_values = std::array{0.05 /*0*/, 0.2 /*0.25*/, 0.5 /*0.5*/, 0.2 /*0.75*/, 0.05 /*1*/};
+        auto compliance_value      = 0.25 * mio::DiscreteDistribution<int>::get_instance()(prng, pct_compliance_values);
+        person.set_compliance(mio::abm::InterventionType::Mask, compliance_value);
     }
 
     //masks at locations
@@ -74,9 +74,10 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
         //some % of locations require masks
         //skip homes so persons always have a place to go, simulation might break otherwise
         auto pct_require_mask = 0.2;
-        auto requires_mask    = loc.get_type() != mio::abm::LocationType::Home &&
-                             mio::UniformDistribution<double>::get_instance()(model.get_rng()) < pct_require_mask;
-        loc.set_npi_active(requires_mask);
+        if (loc.get_type() != mio::abm::LocationType::Home &&
+            mio::UniformDistribution<double>::get_instance()(model.get_rng()) < pct_require_mask) {
+            loc.set_required_mask(mio::abm::MaskType::Community);
+        }
     }
 
     //testing schemes
