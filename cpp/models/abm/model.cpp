@@ -59,17 +59,22 @@ PersonId Model::add_person(Person&& person)
     assert(person.get_location() < LocationId((uint32_t)m_locations.size()) &&
            "Added Person's location is not in Model.");
     assert(person.get_age() < (AgeGroup)parameters.get_num_groups() && "Added Person's AgeGroup is too large.");
-    uint64_t id = (static_cast<int64_t>(m_id)) << 32 | static_cast<uint32_t>(m_persons.size());
-    PersonId new_id{id};
-    m_persons.emplace_back(person, new_id);
+    if (person.get_id() == PersonId::invalid_id()) {
+        uint64_t id = (static_cast<int64_t>(m_id)) << 32 | static_cast<uint32_t>(m_persons.size());
+        PersonId new_id{id};
+        person.set_assigned_location(LocationType::Cemetery, m_cemetery_id, m_id);
+        m_persons.emplace_back(person, new_id);
+    }
+    else {
+        m_persons.emplace_back(person);
+    }
     m_activeness_statuses.push_back(true);
     auto& new_person = m_persons.back();
-    new_person.set_assigned_location(LocationType::Cemetery, m_cemetery_id, m_id);
 
     if (m_is_local_population_cache_valid) {
         ++m_local_population_cache[new_person.get_location().get()];
     }
-    return new_id;
+    return new_person.get_id();
 }
 
 void Model::evolve(TimePoint t, TimeSpan dt)

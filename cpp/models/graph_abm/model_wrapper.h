@@ -166,7 +166,7 @@ private:
     }
     }
 
-    std::vector<size_t> m_person_buffer; ///< List with indices of persons that are deactivated per target world.
+    std::vector<size_t> m_person_buffer; ///< List with indices of persons that are deactivated.
 };
 } // namespace mio
 
