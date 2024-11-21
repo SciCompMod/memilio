@@ -90,6 +90,12 @@ struct Trip {
     {
     }
 
+    Trip(PersonId id, TimePoint time_new, LocationId dest, LocationType type_of_activity,
+         const std::vector<uint32_t>& input_cells = {})
+        : Trip(id, time_new, dest, dest, mio::abm::TransportMode::Unknown, type_of_activity, input_cells)
+    {
+    }
+
     Trip(PersonId id, TimePoint time_new, LocationId dest, LocationId orig, LocationType type_of_activity,
          const std::vector<uint32_t>& input_cells = {})
         : Trip(id, time_new, dest, orig, mio::abm::TransportMode::Unknown, type_of_activity, input_cells)
@@ -205,7 +211,7 @@ template <>
 struct DefaultFactory<abm::Trip> {
     static abm::Trip create()
     {
-        return abm::Trip{abm::PersonId{}, abm::TimePoint{}, abm::LocationId{}};
+        return abm::Trip{abm::PersonId{}, abm::TimePoint{}, abm::LocationId{}, abm::LocationType{}};
     }
 };
 

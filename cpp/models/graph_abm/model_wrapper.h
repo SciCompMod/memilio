@@ -96,17 +96,33 @@ private:
                     const Location& target_location =
                         Base::get_location(Base::find_location(target_type, person_index));
                     const LocationId current_location = person.get_location();
-                    if (Base::m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
-                        if (target_location.get_id() != current_location &&
-                            Base::get_number_persons(target_location.get_id()) <
-                                target_location.get_capacity().persons) {
-                            bool wears_mask = person.apply_mask_intervention(personal_rng, target_location);
-                            if (wears_mask) {
-                                Base::change_location(person_index, target_location.get_id());
-                            }
-                            return true;
+                    // the Person cannot move if they do not wear mask as required at targeted location
+                    if (target_location.is_mask_required() &&
+                        !person.is_compliant(personal_rng, InterventionType::Mask)) {
+                        return false;
+                    }
+                    // the Person cannot move if the capacity of targeted Location is reached
+                    if (target_location.get_id() == current_location ||
+                        get_number_persons(target_location.get_id()) >= target_location.get_capacity().persons) {
+                        return false;
+                    }
+                    // the Person cannot move if the performed TestingStrategy is positive
+                    if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                        return false;
+                    }
+                    // update worn mask to target location's requirements
+                    if (target_location.is_mask_required()) {
+                        // if the current MaskProtection level is lower than required, the Person changes mask
+                        if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
+                            parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
+                            person.set_mask(target_location.get_required_mask(), t);
                         }
                     }
+                    else {
+                        person.set_mask(MaskType::None, t);
+                    }
+                    Base::change_location(person_index, target_location.get_id());
+                    return true;
                 }
                 else { //person moves to other world
                     Base::m_activeness_statuses[person_index] = false;
@@ -133,32 +149,47 @@ private:
     bool weekend     = t.is_weekend();
     size_t num_trips = Base::m_trip_list.num_trips(weekend);
 
-    if (num_trips != 0) {
-        while (Base::m_trip_list.get_current_index() < num_trips &&
-               Base::m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds()) {
-            auto& trip        = Base::m_trip_list.get_next_trip(weekend);
-            auto person_index = Base::get_person_index(trip.person_id);
-            auto& person      = Base::get_person(person_index);
-            auto personal_rng = PersonalRandomNumberGenerator(Base::m_rng, person);
-            if (!person.is_in_quarantine(t, parameters) && person.get_infection_state(t) != InfectionState::Dead) {
-                if (trip.destination_model_id == Base::m_id) {
-                    auto& target_location = Base::get_location(trip.destination);
-                    if (Base::m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
-                        person.apply_mask_intervention(personal_rng, target_location);
-                        Base::change_location(person_index, target_location.get_id(), trip.trip_mode);
-                    }
-                }
-                else {
-                    //person moves to other world
-                    Base::m_activeness_statuses[person_index] = false;
-                    person.set_location(trip.destination_type, abm::LocationId::invalid_id(),
-                                        std::numeric_limits<int>::max());
-                    m_person_buffer.push_back(person_index);
-                    m_are_exposure_caches_valid       = false;
-                    m_is_local_population_cache_valid = false;
+    for (; Base::m_trip_list.get_current_index() < num_trips &&
+           Base::m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds();
+         Base::m_trip_list.increase_index()) {
+        auto& trip        = Base::m_trip_list.get_next_trip(weekend);
+        auto& person      = get_person(static_cast<uint32_t>(trip.person_id.get()));
+        auto person_index = Base::get_person_index(trip.person_id);
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
+        // skip the trip if the person is in quarantine or is dead
+        if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
+            continue;
+        }
+        if (trip.destination_model_id == Base::m_id) {
+            auto& target_location = get_location(trip.destination);
+            // skip the trip if the Person wears mask as required at targeted location
+            if (target_location.is_mask_required() && !person.is_compliant(personal_rng, InterventionType::Mask)) {
+                continue;
+            }
+            // skip the trip if the performed TestingStrategy is positive
+            if (!Base::m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                continue;
+            }
+            // all requirements are met, move to target location
+            change_location(person_index, target_location.get_id(), trip.trip_mode);
+            // update worn mask to target location's requirements
+            if (target_location.is_mask_required()) {
+                // if the current MaskProtection level is lower than required, the Person changes mask
+                if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
+                    parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
+                    person.set_mask(target_location.get_required_mask(), t);
                 }
             }
-            Base::m_trip_list.increase_index();
+            else {
+                person.set_mask(MaskType::None, t);
+            }
+        }
+        else { //person moves to other world
+            Base::m_activeness_statuses[person_index] = false;
+            person.set_location(trip.destination_type, abm::LocationId::invalid_id(), std::numeric_limits<int>::max());
+            m_person_buffer.push_back(person_index);
+            m_are_exposure_caches_valid       = false;
+            m_is_local_population_cache_valid = false;
         }
     }
     if (((t).days() < std::floor((t + dt).days()))) {

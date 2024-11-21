@@ -634,17 +634,17 @@ TEST(TestModel, mobilityRulesWithAppliedNPIs)
     auto& p_no_test                = model.get_person(p_id_no_test);
     auto& p_no_isolation           = model.get_person(p_id_no_isolation);
 
-    p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Home, home_id);
-    p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Work, work_id);
-    p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Home, home_id);
-    p_compliant_go_to_school.set_assigned_location(mio::abm::LocationType::School, school_id);
-    p_compliant_go_to_school.set_assigned_location(mio::abm::LocationType::Home, home_id);
-    p_no_mask.set_assigned_location(mio::abm::LocationType::Work, work_id);
-    p_no_mask.set_assigned_location(mio::abm::LocationType::Home, home_id);
-    p_no_test.set_assigned_location(mio::abm::LocationType::Work, work_id);
-    p_no_test.set_assigned_location(mio::abm::LocationType::Home, home_id);
-    p_no_isolation.set_assigned_location(mio::abm::LocationType::Work, work_id);
-    p_no_isolation.set_assigned_location(mio::abm::LocationType::Home, home_id);
+    p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
+    p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    p_compliant_go_to_school.set_assigned_location(mio::abm::LocationType::School, school_id, model.get_id());
+    p_compliant_go_to_school.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    p_no_mask.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
+    p_no_mask.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    p_no_test.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
+    p_no_test.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    p_no_isolation.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
+    p_no_isolation.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
 
     auto testing_criteria = mio::abm::TestingCriteria(
         {}, {mio::abm::InfectionState::InfectedSymptoms, mio::abm::InfectionState::InfectedNoSymptoms});
@@ -746,17 +746,17 @@ TEST(TestModel, mobilityTripWithAppliedNPIs)
     auto& p_no_test                = model.get_person(p_id_no_test);
     auto& p_no_isolation           = model.get_person(p_id_no_isolation);
 
-    p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Home, home_id);
-    p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Work, work_id);
-    p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Home, home_id);
-    p_compliant_go_to_school.set_assigned_location(mio::abm::LocationType::School, school_id);
-    p_compliant_go_to_school.set_assigned_location(mio::abm::LocationType::Home, home_id);
-    p_no_mask.set_assigned_location(mio::abm::LocationType::Work, work_id);
-    p_no_mask.set_assigned_location(mio::abm::LocationType::Home, home_id);
-    p_no_test.set_assigned_location(mio::abm::LocationType::Work, work_id);
-    p_no_test.set_assigned_location(mio::abm::LocationType::Home, home_id);
-    p_no_isolation.set_assigned_location(mio::abm::LocationType::Work, work_id);
-    p_no_isolation.set_assigned_location(mio::abm::LocationType::Home, home_id);
+    p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
+    p_compliant_go_to_work.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    p_compliant_go_to_school.set_assigned_location(mio::abm::LocationType::School, school_id, model.get_id());
+    p_compliant_go_to_school.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    p_no_mask.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
+    p_no_mask.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    p_no_test.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
+    p_no_test.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    p_no_isolation.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
+    p_no_isolation.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
 
     auto testing_criteria = mio::abm::TestingCriteria(
         {}, {mio::abm::InfectionState::InfectedSymptoms, mio::abm::InfectionState::InfectedNoSymptoms});
@@ -781,11 +781,11 @@ TEST(TestModel, mobilityTripWithAppliedNPIs)
 
     // Using trip list
     mio::abm::TripList& trip_list = model.get_trip_list();
-    mio::abm::Trip trip1(p_compliant_go_to_work.get_id(), t, work_id, home_id);
-    mio::abm::Trip trip2(p_compliant_go_to_school.get_id(), t, school_id, home_id);
-    mio::abm::Trip trip3(p_no_mask.get_id(), t, work_id, home_id);
-    mio::abm::Trip trip4(p_no_test.get_id(), t, work_id, home_id);
-    mio::abm::Trip trip5(p_no_isolation.get_id(), t, work_id, home_id);
+    mio::abm::Trip trip1(p_compliant_go_to_work.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
+    mio::abm::Trip trip2(p_compliant_go_to_school.get_id(), t, school_id, home_id, mio::abm::LocationType::School);
+    mio::abm::Trip trip3(p_no_mask.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
+    mio::abm::Trip trip4(p_no_test.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
+    mio::abm::Trip trip5(p_no_isolation.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
     trip_list.add_trip(trip1);
     trip_list.add_trip(trip2);
     trip_list.add_trip(trip3);

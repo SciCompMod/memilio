@@ -143,6 +143,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                     change_location(person_index, target_location.get_id());
                     return true;
                 }
+                return false;
             };
 
             // run mobility rules one after the other if the corresponding location type exists
@@ -168,224 +169,223 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                     (has_locations({LocationType::Home}) && try_mobility_rule(&go_to_quarantine));
             }
         }
+    }
 
-        // check if a person makes a trip
-        bool weekend     = t.is_weekend();
-        size_t num_trips = m_trip_list.num_trips(weekend);
+    // check if a person makes a trip
+    bool weekend     = t.is_weekend();
+    size_t num_trips = m_trip_list.num_trips(weekend);
 
-        for (; m_trip_list.get_current_index() < num_trips &&
-               m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds();
-             m_trip_list.increase_index()) {
-            auto& trip        = m_trip_list.get_next_trip(weekend);
-            auto& person      = get_person(static_cast<uint32_t>(trip.person_id.get()));
-            auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
-            // skip the trip if the person is in quarantine or is dead
-            if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
-                continue;
-            }
-            auto& target_location = get_location(trip.destination);
-            // skip the trip if the Person wears mask as required at targeted location
-            if (target_location.is_mask_required() && !person.is_compliant(personal_rng, InterventionType::Mask)) {
-                continue;
-            }
-            // skip the trip if the performed TestingStrategy is positive
-            if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
-                continue;
-            }
-            // all requirements are met, move to target location
-            change_location(static_cast<uint32_t>(trip.person_id.get()), target_location.get_id(), trip.trip_mode);
-            // update worn mask to target location's requirements
-            if (target_location.is_mask_required()) {
-                // if the current MaskProtection level is lower than required, the Person changes mask
-                if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
-                    parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
-                    person.set_mask(target_location.get_required_mask(), t);
-                }
-            }
-            else {
-                person.set_mask(MaskType::None, t);
+    for (; m_trip_list.get_current_index() < num_trips &&
+           m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds();
+         m_trip_list.increase_index()) {
+        auto& trip        = m_trip_list.get_next_trip(weekend);
+        auto& person      = get_person(static_cast<uint32_t>(trip.person_id.get()));
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
+        // skip the trip if the person is in quarantine or is dead
+        if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
+            continue;
+        }
+        auto& target_location = get_location(trip.destination);
+        // skip the trip if the Person wears mask as required at targeted location
+        if (target_location.is_mask_required() && !person.is_compliant(personal_rng, InterventionType::Mask)) {
+            continue;
+        }
+        // skip the trip if the performed TestingStrategy is positive
+        if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+            continue;
+        }
+        // all requirements are met, move to target location
+        change_location(static_cast<uint32_t>(trip.person_id.get()), target_location.get_id(), trip.trip_mode);
+        // update worn mask to target location's requirements
+        if (target_location.is_mask_required()) {
+            // if the current MaskProtection level is lower than required, the Person changes mask
+            if (parameters.get<MaskProtection>()[person.get_mask().get_type()] <
+                parameters.get<MaskProtection>()[target_location.get_required_mask()]) {
+                person.set_mask(target_location.get_required_mask(), t);
             }
         }
-        if (((t).days() < std::floor((t + dt).days()))) {
-            m_trip_list.reset_index();
+        else {
+            person.set_mask(MaskType::None, t);
         }
     }
-
-    void Model::build_compute_local_population_cache() const
-    {
-        PRAGMA_OMP(single)
-        {
-            const size_t num_locations = m_locations.size();
-            const size_t num_persons   = m_persons.size();
-            m_local_population_cache.resize(num_locations);
-            PRAGMA_OMP(taskloop)
-            for (size_t i = 0; i < num_locations; i++) {
-                m_local_population_cache[i] = 0;
-            } // implicit taskloop barrier
-            PRAGMA_OMP(taskloop)
-            for (size_t i = 0; i < num_persons; i++) {
-                if (m_persons[i].get_location_model_id() == m_id) {
-                    ++m_local_population_cache[m_persons[i].get_location().get()];
-                }
-            } // implicit taskloop barrier
-        } // implicit single barrier
+    if (((t).days() < std::floor((t + dt).days()))) {
+        m_trip_list.reset_index();
     }
+}
 
-    void Model::build_exposure_caches()
+void Model::build_compute_local_population_cache() const
+{
+    PRAGMA_OMP(single)
     {
-        PRAGMA_OMP(single)
-        {
-            const size_t num_locations = m_locations.size();
-            m_air_exposure_rates_cache.resize(num_locations);
-            m_contact_exposure_rates_cache.resize(num_locations);
-            PRAGMA_OMP(taskloop)
-            for (size_t i = 0; i < num_locations; i++) {
-                m_air_exposure_rates_cache[i].resize(
-                    {CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count});
-                m_contact_exposure_rates_cache[i].resize({CellIndex(m_locations[i].get_cells().size()),
-                                                          VirusVariant::Count, AgeGroup(parameters.get_num_groups())});
-            } // implicit taskloop barrier
-            m_are_exposure_caches_valid    = false;
-            m_exposure_caches_need_rebuild = false;
-        } // implicit single barrier
-    }
-
-    void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
-    {
-        PRAGMA_OMP(single)
-        {
-            // if cache shape was changed (e.g. by add_location), rebuild it
-            if (m_exposure_caches_need_rebuild) {
-                build_exposure_caches();
+        const size_t num_locations = m_locations.size();
+        const size_t num_persons   = m_persons.size();
+        m_local_population_cache.resize(num_locations);
+        PRAGMA_OMP(taskloop)
+        for (size_t i = 0; i < num_locations; i++) {
+            m_local_population_cache[i] = 0;
+        } // implicit taskloop barrier
+        PRAGMA_OMP(taskloop)
+        for (size_t i = 0; i < num_persons; i++) {
+            if (m_persons[i].get_location_model_id() == m_id) {
+                ++m_local_population_cache[m_persons[i].get_location().get()];
             }
-            // use these const values to help omp recognize that the for loops are bounded
-            const auto num_locations = m_locations.size();
-            const auto num_persons   = m_persons.size();
+        } // implicit taskloop barrier
+    } // implicit single barrier
+}
 
-            // 1) reset all cached values
-            // Note: we cannot easily reuse values, as they are time dependant (get_infection_state)
-            PRAGMA_OMP(taskloop)
-            for (size_t i = 0; i < num_locations; ++i) {
-                const auto index         = i;
-                auto& local_air_exposure = m_air_exposure_rates_cache[index];
-                std::for_each(local_air_exposure.begin(), local_air_exposure.end(), [](auto& r) {
-                    r = 0.0;
-                });
-                auto& local_contact_exposure = m_contact_exposure_rates_cache[index];
-                std::for_each(local_contact_exposure.begin(), local_contact_exposure.end(), [](auto& r) {
-                    r = 0.0;
-                });
-            } // implicit taskloop barrier
-            // here is an implicit (and needed) barrier from parallel for
-
-            // 2) add all contributions from each person
-            PRAGMA_OMP(taskloop)
-            for (size_t i = 0; i < num_persons; ++i) {
-                const Person& person = m_persons[i];
-                const auto location  = person.get_location().get();
-                if (person.get_location_model_id() == m_id) {
-                    mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
-                                                        m_contact_exposure_rates_cache[location], person,
-                                                        get_location(uint32_t(i)), t, dt);
-                }
-            } // implicit taskloop barrier
-        } // implicit single barrier
-    }
-
-    void Model::begin_step(TimePoint t, TimeSpan dt)
+void Model::build_exposure_caches()
+{
+    PRAGMA_OMP(single)
     {
-        m_testing_strategy.update_activity_status(t);
+        const size_t num_locations = m_locations.size();
+        m_air_exposure_rates_cache.resize(num_locations);
+        m_contact_exposure_rates_cache.resize(num_locations);
+        PRAGMA_OMP(taskloop)
+        for (size_t i = 0; i < num_locations; i++) {
+            m_air_exposure_rates_cache[i].resize({CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count});
+            m_contact_exposure_rates_cache[i].resize({CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count,
+                                                      AgeGroup(parameters.get_num_groups())});
+        } // implicit taskloop barrier
+        m_are_exposure_caches_valid    = false;
+        m_exposure_caches_need_rebuild = false;
+    } // implicit single barrier
+}
 
-        if (!m_is_local_population_cache_valid) {
-            build_compute_local_population_cache();
-            m_is_local_population_cache_valid = true;
+void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
+{
+    PRAGMA_OMP(single)
+    {
+        // if cache shape was changed (e.g. by add_location), rebuild it
+        if (m_exposure_caches_need_rebuild) {
+            build_exposure_caches();
         }
-        compute_exposure_caches(t, dt);
-        m_are_exposure_caches_valid = true;
-    }
+        // use these const values to help omp recognize that the for loops are bounded
+        const auto num_locations = m_locations.size();
+        const auto num_persons   = m_persons.size();
 
-    auto Model::get_locations() const->Range<std::pair<ConstLocationIterator, ConstLocationIterator>>
-    {
-        return std::make_pair(m_locations.cbegin(), m_locations.cend());
-    }
-    auto Model::get_locations()->Range<std::pair<LocationIterator, LocationIterator>>
-    {
-        return std::make_pair(m_locations.begin(), m_locations.end());
-    }
+        // 1) reset all cached values
+        // Note: we cannot easily reuse values, as they are time dependant (get_infection_state)
+        PRAGMA_OMP(taskloop)
+        for (size_t i = 0; i < num_locations; ++i) {
+            const auto index         = i;
+            auto& local_air_exposure = m_air_exposure_rates_cache[index];
+            std::for_each(local_air_exposure.begin(), local_air_exposure.end(), [](auto& r) {
+                r = 0.0;
+            });
+            auto& local_contact_exposure = m_contact_exposure_rates_cache[index];
+            std::for_each(local_contact_exposure.begin(), local_contact_exposure.end(), [](auto& r) {
+                r = 0.0;
+            });
+        } // implicit taskloop barrier
+        // here is an implicit (and needed) barrier from parallel for
 
-    auto Model::get_persons() const->Range<std::pair<ConstPersonIterator, ConstPersonIterator>>
-    {
-        return std::make_pair(m_persons.cbegin(), m_persons.cend());
-    }
+        // 2) add all contributions from each person
+        PRAGMA_OMP(taskloop)
+        for (size_t i = 0; i < num_persons; ++i) {
+            const Person& person = m_persons[i];
+            const auto location  = person.get_location().get();
+            if (person.get_location_model_id() == m_id) {
+                mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
+                                                    m_contact_exposure_rates_cache[location], person,
+                                                    get_location(uint32_t(i)), t, dt);
+            }
+        } // implicit taskloop barrier
+    } // implicit single barrier
+}
 
-    auto Model::get_persons()->Range<std::pair<PersonIterator, PersonIterator>>
-    {
-        return std::make_pair(m_persons.begin(), m_persons.end());
-    }
+void Model::begin_step(TimePoint t, TimeSpan dt)
+{
+    m_testing_strategy.update_activity_status(t);
 
-    auto Model::get_activeness_statuses() const->Range<std::pair<ConstActivenessIterator, ConstActivenessIterator>>
-    {
-        return std::make_pair(m_activeness_statuses.cbegin(), m_activeness_statuses.cend());
+    if (!m_is_local_population_cache_valid) {
+        build_compute_local_population_cache();
+        m_is_local_population_cache_valid = true;
     }
+    compute_exposure_caches(t, dt);
+    m_are_exposure_caches_valid = true;
+}
 
-    auto Model::get_activeness_statuses()->Range<std::pair<ActivenessIterator, ActivenessIterator>>
-    {
-        return std::make_pair(m_activeness_statuses.begin(), m_activeness_statuses.end());
-    }
+auto Model::get_locations() const -> Range<std::pair<ConstLocationIterator, ConstLocationIterator>>
+{
+    return std::make_pair(m_locations.cbegin(), m_locations.cend());
+}
+auto Model::get_locations() -> Range<std::pair<LocationIterator, LocationIterator>>
+{
+    return std::make_pair(m_locations.begin(), m_locations.end());
+}
 
-    LocationId Model::find_location(LocationType type, const uint32_t person_index) const
-    {
-        auto location_id = get_person(person_index).get_assigned_location(type);
-        assert(location_id != LocationId::invalid_id() && "The person has no assigned location of that type.");
-        return location_id;
-    }
+auto Model::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPersonIterator>>
+{
+    return std::make_pair(m_persons.cbegin(), m_persons.cend());
+}
 
-    size_t Model::get_subpopulation_combined(TimePoint t, InfectionState s) const
-    {
-        return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
-                               [t, s, this](size_t running_sum, const Location& loc) {
-                                   return running_sum + get_subpopulation(loc.get_id(), t, s);
-                               });
-    }
+auto Model::get_persons() -> Range<std::pair<PersonIterator, PersonIterator>>
+{
+    return std::make_pair(m_persons.begin(), m_persons.end());
+}
 
-    size_t Model::get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const
-    {
-        return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
-                               [t, s, type, this](size_t running_sum, const Location& loc) {
-                                   return loc.get_type() == type ? running_sum + get_subpopulation(loc.get_id(), t, s)
-                                                                 : running_sum;
-                               });
-    }
+auto Model::get_activeness_statuses() const -> Range<std::pair<ConstActivenessIterator, ConstActivenessIterator>>
+{
+    return std::make_pair(m_activeness_statuses.cbegin(), m_activeness_statuses.cend());
+}
 
-    TripList& Model::get_trip_list()
-    {
-        return m_trip_list;
-    }
+auto Model::get_activeness_statuses() -> Range<std::pair<ActivenessIterator, ActivenessIterator>>
+{
+    return std::make_pair(m_activeness_statuses.begin(), m_activeness_statuses.end());
+}
 
-    const TripList& Model::get_trip_list() const
-    {
-        return m_trip_list;
-    }
+LocationId Model::find_location(LocationType type, const uint32_t person_index) const
+{
+    auto location_id = get_person(person_index).get_assigned_location(type);
+    assert(location_id != LocationId::invalid_id() && "The person has no assigned location of that type.");
+    return location_id;
+}
 
-    void Model::use_mobility_rules(bool param)
-    {
-        m_use_mobility_rules = param;
-    }
+size_t Model::get_subpopulation_combined(TimePoint t, InfectionState s) const
+{
+    return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
+                           [t, s, this](size_t running_sum, const Location& loc) {
+                               return running_sum + get_subpopulation(loc.get_id(), t, s);
+                           });
+}
 
-    bool Model::use_mobility_rules() const
-    {
-        return m_use_mobility_rules;
-    }
+size_t Model::get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const
+{
+    return std::accumulate(
+        m_locations.begin(), m_locations.end(), (size_t)0, [t, s, type, this](size_t running_sum, const Location& loc) {
+            return loc.get_type() == type ? running_sum + get_subpopulation(loc.get_id(), t, s) : running_sum;
+        });
+}
 
-    TestingStrategy& Model::get_testing_strategy()
-    {
-        return m_testing_strategy;
-    }
+TripList& Model::get_trip_list()
+{
+    return m_trip_list;
+}
 
-    const TestingStrategy& Model::get_testing_strategy() const
-    {
-        return m_testing_strategy;
-    }
+const TripList& Model::get_trip_list() const
+{
+    return m_trip_list;
+}
+
+void Model::use_mobility_rules(bool param)
+{
+    m_use_mobility_rules = param;
+}
+
+bool Model::use_mobility_rules() const
+{
+    return m_use_mobility_rules;
+}
+
+TestingStrategy& Model::get_testing_strategy()
+{
+    return m_testing_strategy;
+}
+
+const TestingStrategy& Model::get_testing_strategy() const
+{
+    return m_testing_strategy;
+}
 
 } // namespace abm
 } // namespace mio

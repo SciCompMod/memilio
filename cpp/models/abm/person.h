@@ -485,7 +485,7 @@ template <>
 struct DefaultFactory<abm::Person> {
     static abm::Person create()
     {
-        return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::LocationId(), AgeGroup(0),
+        return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::LocationId(), 0, AgeGroup(0),
                            abm::PersonId());
     }
 };
