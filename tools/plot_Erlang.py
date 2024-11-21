@@ -91,8 +91,38 @@ def plot_contact_matrix():
     plt.savefig('Plots/contact_pattern.png', bbox_inches='tight', dpi=500)
 
 
+def deviations_final_sizes():
+    # Define final sizes for different reproduction numbers.
+    # Order: ODE, LCT3, LCT10, LCT50
+    order = [1, 3, 10, 50]
+    final_size2 = [66187889.688620, 66177703.545307,
+                   66173558.070585, 66172050.325873]
+    final_size4 = [81489437.728607, 81487771.258965,
+                   81487273.028473, 81487137.117737]
+    final_size10 = [83151138.095973, 83151130.429073,
+                    83151128.860178, 83151128.506111]
+    print("Final size deviations for R=2:")
+    for i in range(1, len(order)):
+        print(str(i)+": ", end=" ")
+        result = 100*(final_size2[i]-final_size2[0])/final_size2[0]
+        print(f"{result:.5f}")
+
+    print("Final size deviations for R=4:")
+    for i in range(1, len(order)):
+        print(str(i)+": ", end=" ")
+        result = 100*(final_size4[i]-final_size4[0])/final_size4[0]
+        print(f"{result:.5f}")
+
+    print("Final size deviations for R=10:")
+    for i in range(1, len(order)):
+        print(str(i)+": ", end=" ")
+        result = 100*(final_size10[i]-final_size10[0])/final_size10[0]
+        print(f"{result:.8f}")
+
+
 if __name__ == '__main__':
-    ns = list([1, 3, 5, 10, 20, 50, 150, 300])
-    plot_erlang_survival(ns)
-    plot_erlang_density(ns)
-    plot_contact_matrix()
+    deviations_final_sizes()
+    # ns = list([1, 3, 5, 10, 20, 50, 150, 300])
+    # plot_erlang_survival(ns)
+    # plot_erlang_density(ns)
+    # plot_contact_matrix()

@@ -246,6 +246,8 @@ def plot_subcompartments3D(file, subcompartments, compartment_idx, first_time_id
 
     ax.set_zlim(bottom=0)
     ax.tick_params(axis='z', pad=1, labelsize=9)
+    ax.set_title(secir_dict[compartment_idx],
+                 fontsize=fontsize_labels, pad=-50)
 
     sc = cm.ScalarMappable(cmap=cmap, norm=norm)
     sc.set_array([])
@@ -417,7 +419,6 @@ if __name__ == '__main__':
         __file__), "..", "data", "simulation_lct_noage")
     R0s = list([2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
     cases = [-1, -2, -3, 0, 1, 2, 3, 4]
-    # cases=[-2]
     for case in cases:
         if case == 0:
             # rise R0 short
@@ -516,7 +517,7 @@ if __name__ == '__main__':
                                                 data_dir, "fictional_lct_ageres_10_agegroupinit_5"),
                                             os.path.join(data_dir, "fictional_lct_notageres_10")],
                                             legendplot=list(
-                ["University Scenario", "Retirement Home Scenario", "Non age-resolved Scenario"]),
+                ["A15–34 scenario", "A80+ scenario", "Non age-resolved scenario"]),
                 filename_plot="compartments_agevsnoage", compartment_indices=[0, 1, 2, 3, 4, 5, 6, 7])
         elif case == -1:
             # Plots to compare time and size of epidemic peaks.

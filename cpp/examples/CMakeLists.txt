@@ -124,6 +124,7 @@ if (MEMILIO_ENABLE_OPENMP)
     add_executable(lct_timing lct_timing.cpp)
     target_link_libraries(lct_timing PRIVATE memilio lct_secir)
     target_compile_options(lct_timing PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    #target_compile_options(lct_timing PRIVATE -O0)
 endif()
 
 if(MEMILIO_HAS_HDF5)
