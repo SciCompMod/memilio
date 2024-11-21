@@ -22,6 +22,8 @@
 #define LCTSECIR_PARAMETERS_IO_H
 
 #include "memilio/config.h"
+#include <algorithm>
+#include <vector>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -336,12 +338,15 @@ void process_entry(Populations& populations, const EntryType& entry, int offset,
 }
 
 /**
-* @brief Computes an initialization vector for an LCT population with case data from RKI recursively for each age group
+* @brief Computes part of an initialization vector for an LCT population with case data from RKI recursively for each age group
 *    (or for one age group in the case without age resolution).
 *   
-* Please use the set_initial_data_from_confirmed_cases() function, which calls this function automatically!
+* Please use the set_initial_data_from_reported_data() function, which calls this function automatically!
 * This function calculates a segment referring to the defined age group of the initial value vector with 
 *   subcompartments using the rki_data and the parameters.
+* Values for the InfectionStates Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere, InfectedCritical, 
+*   Recovered and Dead are set. The InfectionStates InfectedCritical and Recovered will be further processed in 
+*   set_initial_data_for_remaining_compartments
 * The values for the whole initial value vector stored in populations are calculated recursively.
 *
 * @param[in] rki_data Vector with the RKI data.
@@ -361,15 +366,12 @@ void process_entry(Populations& populations, const EntryType& entry, int offset,
 * @returns Any io errors that happen during data processing.
 */
 template <class Populations, class EntryType, size_t Group = 0>
-IOResult<void> set_initial_data_from_confirmed_cases_impl(Populations& populations,
-                                                          const std::vector<EntryType>& rki_data,
-                                                          const Parameters& parameters, Date date,
-                                                          const std::vector<ScalarType>& total_population,
-                                                          const std::vector<ScalarType>& scale_confirmed_cases)
+IOResult<void> set_initial_data_from_confirmed_cases(Populations& populations, const std::vector<EntryType>& rki_data,
+                                                     const Parameters& parameters, Date date,
+                                                     const std::vector<ScalarType>& total_population,
+                                                     const std::vector<ScalarType>& scale_confirmed_cases)
 {
     static_assert((Group < Populations::num_groups) && (Group >= 0), "The template parameter Group should be valid.");
-    using LctStateGroup      = type_at_index_t<Group, typename Populations::LctStatesGroups>;
-    size_t first_index_group = populations.template get_first_index_of_group<Group>();
 
     // Define variables for parameters.
     std::vector<ScalarType> staytimes((size_t)InfectionState::Count, -1.);
@@ -415,6 +417,136 @@ IOResult<void> set_initial_data_from_confirmed_cases_impl(Populations& populatio
         }
     }
 
+    // Check whether all necessary dates are available.
+    if (!max_offset_needed_avail || !min_offset_needed_avail) {
+        log_error(
+            "Necessary range of dates needed to compute initial values does not exist in RKI data for group {:d}.",
+            Group);
+        return failure(StatusCode::OutOfRange,
+                       "Necessary range of dates needed to compute initial values does not exist in RKI data.");
+    }
+
+    if constexpr (Group + 1 < Populations::num_groups) {
+        return set_initial_data_from_confirmed_cases<Populations, EntryType, Group + 1>(
+            populations, rki_data, parameters, date, total_population, scale_confirmed_cases);
+    }
+    else {
+        return mio::success();
+    }
+}
+
+/**
+* @brief Computes the total number of individuals in InfectedCritical (over all age groups) after initializing set_initial_data_from_confirmed_cases().
+*   
+* Please use the set_initial_data_from_reported_data() function, which calls this function automatically!
+*
+* @param[in] populations The populations for which the initial data should be computed and set.
+* @param[out] ICri_init Initial value of the InfectionState InfectedCritical.
+* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations. 
+*   This defined the number of age groups and the number of subcompartments used.
+* @tparam Group The age group for which the initial values should be calculated. The function is called recursively 
+*   such that the initial values are calculated for every age group if Group is zero at the beginning.
+* @returns Total number of individuals in InfectedCritical.
+*/
+template <class Populations, size_t Group = 0>
+ScalarType get_ICri_init(Populations& populations, ScalarType ICri_init)
+{
+    static_assert((Group < Populations::num_groups) && (Group >= 0), "The template parameter Group should be valid.");
+    using LctStateGroup      = type_at_index_t<Group, typename Populations::LctStatesGroups>;
+    size_t first_index_group = populations.template get_first_index_of_group<Group>();
+
+    // Index of the first subcompartment of InfectedCritical.
+    size_t first_index_ICri =
+        first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedCritical>();
+    // Number of subcompartments of InfectedCritical
+    int num_subcomps_ICri = LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>();
+    for (int i = 0; i < num_subcomps_ICri; i++) {
+        ICri_init += populations[first_index_ICri + i];
+    }
+
+    if constexpr (Group + 1 < Populations::num_groups) {
+        return get_ICri_init<Populations, Group + 1>(populations, ICri_init);
+    }
+    else {
+        return ICri_init;
+    }
+}
+
+/**
+* @brief Computes the ratio between the total number of individuals in InfectedSevere and the number of ICU patients 
+* reported by DIVI so that we can scale accordingly. 
+*   
+* Please use the set_initial_data_from_reported_data() function, which calls this function automatically!
+*
+* @param[in] populations The populations for which the initial data should be computed and set.
+* @param[in] divi_data Vector with the DIVI data.
+* @param[in] date Date for which the initial values should be computed. date is the start date of the simulation.
+* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations. 
+*   This defined the number of age groups and the number of subcompartments used.
+* @returns Scaling factor so that the number of individuals in InfectedSevere can be scaled to DIVI data.
+*/
+template <class Populations>
+ScalarType scale_to_divi(Populations& populations, const std::vector<DiviEntry>& divi_data, Date date)
+{
+    // Go through entries of divi_data and get the number of ICU patients on the required date.
+    ScalarType divi_reported = 0;
+    for (auto&& entry : divi_data) {
+        int offset = get_offset_in_days(entry.date, date);
+        if (offset == 0) {
+            divi_reported = entry.num_icu;
+        }
+    }
+
+    // Get number of individuals in InfectedCritical compartment.
+    ScalarType ICri_init = 0;
+    ICri_init            = get_ICri_init(populations, ICri_init);
+
+    // Compute scaling factor so that number of indiviudals in InfectedCritical matches Divi data.
+    ScalarType scale_infected_critical = divi_reported / ICri_init;
+    std::cout << "Scale InfectedCritical (based on DIVI data) by " << scale_infected_critical << std::endl;
+
+    return scale_infected_critical;
+}
+
+/**
+* @brief Computes an initialization vector for an LCT population recursively for each age group
+*    (or for one age group in the case without age resolution) for InfectionStates InfectedCritical, Susceptible
+*    and Recovered.
+*   
+* Please use the set_initial_data_from_reported_data() function, which calls this function automatically!
+* This function calculates a segment referring to the defined age group of the initial value vector with 
+*   subcompartments.
+* The number of individuals in InfectedCritical is scaled according to scale_infected_critical. 
+* The values for Susceptible and Recovered are computed based on the already known values for the other InfectionStates. 
+* The values for the whole initial value vector stored in populations are calculated recursively.
+*
+* @param[out] populations The populations for which the initial data should be computed and set.
+* @param[in] total_population Total size of the population of Germany or of every age group. 
+* @param[in] scale_infected_critical Scaling factor so that InfectedCritical matches DIVI data. 
+* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations. 
+*   This defined the number of age groups and the number of subcompartments used.
+* @tparam Group The age group of the entry the should be processed.
+* @returns Scaling factor so that the number of individuals in InfectedSevere can be scaled to DIVI data.
+*/
+template <class Populations, size_t Group = 0>
+IOResult<void> set_initial_data_for_remaining_compartments(Populations& populations,
+                                                           const std::vector<ScalarType>& total_population,
+                                                           ScalarType scale_infected_critical)
+{
+    static_assert((Group < Populations::num_groups) && (Group >= 0), "The template parameter Group should be valid.");
+    using LctStateGroup      = type_at_index_t<Group, typename Populations::LctStatesGroups>;
+    size_t first_index_group = populations.template get_first_index_of_group<Group>();
+
+    // Scale compartment InfectedCritical by scale_infected_critical if this scaling factor is not equal to 1.
+    if (!((scale_infected_critical > 1. - 1e-8) && (scale_infected_critical < 1. + 1e-8))) {
+        for (size_t i = LctStateGroup::template get_first_index<InfectionState::InfectedCritical>();
+             i < LctStateGroup::template get_first_index<InfectionState::InfectedCritical>() +
+                     LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSevere>();
+             i++) {
+            populations[first_index_group + i] *= scale_infected_critical;
+        }
+    }
+
     // Compute Recovered.
     populations[first_index_group + LctStateGroup::template get_first_index<InfectionState::Recovered>()] -=
         populations.get_compartments()
@@ -431,15 +563,6 @@ IOResult<void> set_initial_data_from_confirmed_cases_impl(Populations& populatio
         total_population[Group] -
         populations.get_compartments().segment(first_index_group + 1, LctStateGroup::Count - 1).sum();
 
-    // Check whether all necessary dates are available.
-    if (!max_offset_needed_avail || !min_offset_needed_avail) {
-        log_error(
-            "Necessary range of dates needed to compute initial values does not exist in RKI data for group {:d}.",
-            Group);
-        return failure(StatusCode::OutOfRange,
-                       "Necessary range of dates needed to compute initial values does not exist in RKI data.");
-    }
-
     // Check if all values for populations are valid.
     for (size_t i = first_index_group; i < LctStateGroup::Count; i++) {
         if (floating_point_less((ScalarType)populations[i], 0., 1e-14)) {
@@ -449,10 +572,9 @@ IOResult<void> set_initial_data_from_confirmed_cases_impl(Populations& populatio
                            "Something went wrong in the initialization as at least one entry is negative.");
         }
     }
-
     if constexpr (Group + 1 < Populations::num_groups) {
-        return set_initial_data_from_confirmed_cases_impl<Populations, EntryType, Group + 1>(
-            populations, rki_data, parameters, date, total_population, scale_confirmed_cases);
+        return set_initial_data_for_remaining_compartments<Populations, Group + 1>(populations, total_population,
+                                                                                   scale_infected_critical);
     }
     else {
         return mio::success();
@@ -495,10 +617,11 @@ IOResult<void> set_initial_data_from_confirmed_cases_impl(Populations& populatio
 * @returns Any io errors that happen during data processing.
 */
 template <class Populations, class EntryType>
-IOResult<void> set_initial_data_from_confirmed_cases(const std::vector<EntryType>& rki_data, Populations& populations,
-                                                     const Parameters& parameters, const Date date,
-                                                     const std::vector<ScalarType>& total_population,
-                                                     const std::vector<ScalarType>& scale_confirmed_cases)
+IOResult<void> set_initial_data_from_reported_data(const std::vector<EntryType>& rki_data,
+                                                   const std::vector<DiviEntry>& divi_data, Populations& populations,
+                                                   const Parameters& parameters, const Date date,
+                                                   const std::vector<ScalarType>& total_population,
+                                                   std::vector<ScalarType> scale_confirmed_cases, bool use_divi = true)
 { // Check if the inputs are matching.
     assert(total_population.size() == Populations::num_groups);
     assert(scale_confirmed_cases.size() == Populations::num_groups);
@@ -526,8 +649,21 @@ IOResult<void> set_initial_data_from_confirmed_cases(const std::vector<EntryType
     for (size_t i = 0; i < populations.get_num_compartments(); i++) {
         populations[i] = 0;
     }
-    return details::set_initial_data_from_confirmed_cases_impl<Populations, EntryType>(
+
+    auto init_part1 = details::set_initial_data_from_confirmed_cases<Populations, EntryType>(
         populations, rki_data, parameters, date, total_population, scale_confirmed_cases);
+    if (!init_part1) {
+        printf("%s\n", init_part1.error().formatted_message().c_str());
+        return init_part1;
+    }
+
+    ScalarType scale_infected_critical = 1.;
+    if (use_divi) {
+        scale_infected_critical = details::scale_to_divi<Populations>(populations, divi_data, date);
+    }
+
+    return details::set_initial_data_for_remaining_compartments<Populations>(populations, total_population,
+                                                                             scale_infected_critical);
 }
 
 } // namespace lsecir
