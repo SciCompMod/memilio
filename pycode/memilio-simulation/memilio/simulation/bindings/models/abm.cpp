@@ -193,6 +193,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("time", &mio::abm::Trip::time)
         .def_readwrite("destination", &mio::abm::Trip::destination)
         .def_readwrite("origin", &mio::abm::Trip::origin)
+        .def_readwrite("type_of_activity", &mio::abm::LocationType)
         .def_readwrite("cells", &mio::abm::Trip::cells);
 
     pymio::bind_class<mio::abm::TripList, pymio::EnablePickling::Never>(m, "TripList")
