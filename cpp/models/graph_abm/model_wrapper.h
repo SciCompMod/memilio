@@ -132,7 +132,6 @@ private:
                     m_is_local_population_cache_valid = false;
                     return true;
                 }
-                return false;
             };
 
             for (auto rule : Base::m_mobility_rules) {
