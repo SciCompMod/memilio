@@ -15,6 +15,7 @@ add_library(abm
     testing_strategy.h
     model.cpp
     model.h
+    model_def.h
     location_type.h
     parameters.h
     parameters.cpp

@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "abm/simulation.h"
+#include "abm/model_def.h"
 
 namespace mio
 {
@@ -30,11 +31,14 @@ Simulation::Simulation(TimePoint t, Model&& model)
     , m_dt(hours(1))
 {
 }
+ModelDefinition m_mdef;
 
 void Simulation::evolve_model(TimePoint tmax)
 {
     auto dt = std::min(m_dt, tmax - m_t);
-    m_model.evolve(m_t, dt);
+    // m_model.evolve(m_t, dt);
+    m_mdef.evolve(m_model, m_t, dt);
+
     m_t += m_dt;
 }
 

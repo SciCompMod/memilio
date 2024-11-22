@@ -309,6 +309,10 @@ public:
     {
         return m_rng;
     }
+    const RandomNumberGenerator& get_rng() const
+    {
+        return m_rng;
+    }
 
     /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing at all Locations that have
@@ -366,6 +370,7 @@ public:
      */
     size_t get_number_persons(LocationId location) const
     {
+        // TODO: this is not thread safe
         if (!m_is_local_population_cache_valid) {
             build_compute_local_population_cache();
         }

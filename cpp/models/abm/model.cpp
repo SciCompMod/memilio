@@ -86,7 +86,7 @@ void Model::interaction(TimePoint t, TimeSpan dt)
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
     for (uint32_t person_id = 0; person_id < num_persons; ++person_id) {
-        interact(person_id, t, dt);
+        interact(static_cast<PersonId>(person_id), t, dt);
     }
 }
 
@@ -100,8 +100,9 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
 
         auto try_mobility_rule = [&](auto rule) -> bool {
             // run mobility rule and check if change of location can actually happen
-            auto target_type                  = rule(personal_rng, person, t, dt, parameters);
-            const Location& target_location   = get_location(find_location(target_type, person_id));
+            auto target_type = rule(personal_rng, person, t, dt, parameters);
+            const Location& target_location =
+                get_location(find_location(target_type, static_cast<PersonId>(person_id)));
             const LocationId current_location = person.get_location();
 
             // the Person cannot move if they do not wear mask as required at targeted location
@@ -129,7 +130,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                 person.set_mask(MaskType::None, t);
             }
             // all requirements are met, move to target location
-            change_location(person_id, target_location.get_id());
+            change_location(static_cast<PersonId>(person_id), target_location.get_id());
             return true;
         };
 

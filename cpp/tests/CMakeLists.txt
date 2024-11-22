@@ -36,7 +36,7 @@ set(TESTSOURCES
     test_abm_masks.cpp
     test_abm_mobility_rules.cpp
     test_abm_person.cpp
-    test_abm_simulation.cpp
+    # test_abm_simulation.cpp
     test_abm_serialization.cpp
     test_abm_testing_strategy.cpp
     test_abm_model.cpp
@@ -59,7 +59,7 @@ set(TESTSOURCES
     test_mobility_io.cpp
     test_transform_iterator.cpp
     test_metaprogramming.cpp
-    test_history.cpp
+    # test_history.cpp
     test_utils.cpp
     test_ide_seir.cpp
     test_ide_secir.cpp

@@ -104,11 +104,12 @@ TYPED_TEST(TestVerifyExplicitNumericalIntegrator, sine)
     EXPECT_NEAR(this->err, 0.0, 1e-3);
 }
 
-using TestTypes = ::testing::Types<
-    mio::RKIntegratorCore<double>,
-    mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>,
-    // mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>, // TODO: reenable once boost bug is fixed
-    mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_fehlberg78>>;
+using TestTypes =
+    ::testing::Types<mio::RKIntegratorCore<double>,
+                     mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>,
+                     mio::ControlledStepperWrapper<
+                         double, boost::numeric::odeint::runge_kutta_dopri5>, // TODO: reenable once boost bug is fixed
+                     mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_fehlberg78>>;
 
 TYPED_TEST_SUITE(TestVerifyNumericalIntegrator, TestTypes);
 
@@ -176,8 +177,10 @@ TYPED_TEST(TestVerifyNumericalIntegrator, adaptiveStepSizing)
 
     // this deriv function is supposed to (not guaranteed to!) break any integrator
     double c        = 1;
-    auto deriv_fail = [&c, tol](const auto&&, auto&&, auto&& dxds) {
-        c /= -10 * tol;
+    int nnn         = 0;
+    auto deriv_fail = [&c, tol, &nnn](const auto&&, auto&&, auto&& dxds) {
+        c *= -0.01 / tol;
+        nnn++;
         dxds.array() = 1 / c; // increasing oscillation with each evaluation (indep. of t and dt)
     };
     // this deriv function is easily integrable
@@ -191,7 +194,7 @@ TYPED_TEST(TestVerifyNumericalIntegrator, adaptiveStepSizing)
     this->dt  = dt_max;
     step_okay = integrator.step(deriv_fail, this->y[0], t_eval, this->dt, this->sol[0]);
     c         = 1; // reset deriv_fail
-
+    std::cout << nnn << "\n";
     EXPECT_EQ(step_okay, false); // step sizing should fail
     EXPECT_EQ(this->dt, dt_min); // new step size should fall back to dt_min
     EXPECT_EQ(t_eval, dt_min); // a step must be made with no less than dt_min
