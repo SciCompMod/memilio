@@ -8,6 +8,7 @@ from memilio.simulation.osecir import InfectionState
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from matplotlib.ticker import ScalarFormatter
 
 # load data path = os.path.dirname(os.path.realpath(__file__))
 
@@ -16,7 +17,8 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
     os.path.dirname(os.path.realpath(path)))), 'data_paper')
 
-filename = "data_secir_simple_30_days_10k.pickle"
+path_data = "/localdata1/gnn_paper_2024/data_Iteration2/one_population/without_agegroups/"
+filename = "data_secir_simple_90days_I_based_10k.pickle"
 
 if not os.path.isfile(os.path.join(path_data, filename)):
     ValueError("no dataset found in path: " + path_data)
@@ -33,7 +35,7 @@ test_labels = data['labels'][int((0.8 * len(data['labels']))):]
 # load trained model
 # new_model = tf.keras.models.load_model('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple')
 new_model = tf.keras.models.load_model(
-    '/home/schm_a45/Documents/Code/memilio_test/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple_paper/LSTM_30days_secirsimple_10k.h5')
+    '/localdata1/gnn_paper_2024/data_Iteration2/saved_models/saved_models_secir_simple_paper/LSTM_90days_secirsimple_I_based_10k.h5')
 
 pred = new_model.predict(test_inputs)
 
@@ -68,10 +70,9 @@ def lineplots_compartments(mape_per_day, mape_reversed_per_day, savename):
     axes = [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8]
 
     for ax, c, m, mr in zip(axes, infectionstates, mape_per_day.transpose(), mape_reversed_per_day.transpose()):
-        # Plot the first 5 days from inp (in blue)
+
         ax.plot(m, color='blue', label='Test MAPE scaled')
 
-        # Plot the remaining days from lab (in orange) starting from day 6
         ax.plot(mr, color='orange',
                 label='Test MAPE not scaled')
 
@@ -150,13 +151,17 @@ def lineplots_pred_labels(pred_reversed, labels_reversed, num_plots):
             nrows=4, ncols=2, sharey=False, figsize=(10, 13), constrained_layout=True)
 
         axes = [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8]
+        # Formatter for scientific notation (e.g., x10^6)
+        sci_formatter = ScalarFormatter(useMathText=True)
+        sci_formatter.set_powerlimits((6, 6))  # Force le6 notation (1e6)
+        for ax, c, p, l, input in zip(axes, infectionstates, pred_reversed[i].transpose(), labels_reversed[i].transpose(), np.expm1(np.asarray(test_inputs))[i].transpose()):
+            ax.plot(np.arange(1, 6), input, color='black',
+                    label='Inputs', linewidth=2)
 
-        for ax, c, p, l in zip(axes, infectionstates, pred_reversed[i].transpose(), labels_reversed[i].transpose()):
-
-            ax.plot(l, color='orange',
+            ax.plot(np.arange(6, 96), l, color='orange',
                     label='Labels', linewidth=2)
 
-            ax.plot(p, color='blue', label='Predictions',
+            ax.plot(np.arange(6, 96), p, color='blue', label='Predictions',
                     linestyle='--', linewidth=1)
 
             # ax.set_xlabel('Day')
@@ -164,7 +169,7 @@ def lineplots_pred_labels(pred_reversed, labels_reversed, num_plots):
             ax.set_title(c+' / MAPE = ' + str(np.round(100 *
                          np.mean(abs((l - p)/l)), 4))+'%'+"//scaled MAPE: " + str(np.round(100 *
                                                                                            np.mean(abs((np.log1p(l) - np.log1p(p))/np.log1p(l))), 4)), fontsize=10)
-
+            ax.yaxis.set_major_formatter(sci_formatter)
         ax7.set_xlabel('Day')
         ax8.set_xlabel('Day')
 
@@ -175,10 +180,10 @@ def lineplots_pred_labels(pred_reversed, labels_reversed, num_plots):
             lines.extend(Line)
             line_labels.extend(Label)
 
-        fig.legend(lines[:2], line_labels[:2], loc='lower center')
+        fig.legend(lines[:3], line_labels[:3], loc='lower center')
 
         print('Plot No.'+str(i) + ' done.')
-        plt.savefig("/localdata1/gnn_paper_2024/images/pred_labels_trajectories/no_agegroups_30days_I_based_pred_labels/compartment_lines_noagegroups_30days_I_based_pred_labels_10k_paper_no" + str(i) + ".png")
+        plt.savefig("/localdata1/gnn_paper_2024/images/pred_labels_trajectories/no_agegroups_90days_I_based_pred_labels_withinput/compartment_lines_noagegroups_90days_I_based_pred_labels_10k_paper_no" + str(i) + ".png")
 
 
 def histogram_mape_per_run(mape_per_run, savename):
