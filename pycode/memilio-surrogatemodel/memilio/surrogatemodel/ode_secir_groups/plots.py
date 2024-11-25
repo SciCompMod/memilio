@@ -7,7 +7,7 @@ import matplotlib.gridspec as gridspec
 from memilio.simulation.osecir import InfectionState
 import seaborn as sns
 
-filename = 'data_secir_groups_30days_Germany_10k.pickle'
+filename = 'data_secir_groups_90days_I_based_Germany_10k_nodamp.pickle'
 
 # import data
 path = os.path.dirname(os.path.realpath(__file__))
@@ -100,8 +100,8 @@ def SINGLE_lineplot_compartments_log_and_nolog_agegroups(inputs_reversed, labels
         fig.legend(handles=handles, loc='upper center', bbox_to_anchor=(
             0.5, 0.08), ncol=4, title="Compartments")
 
-        # Save the figure
-        plt.savefig("/localdata1/gnn_paper_2024/images/lineplots_compartments/with_agegroups_30days_2plt/compartment_lines_withagegroups_30days_2plt_10k_paper_no" + str(i) + ".png")
+        plt.savefig(
+            f"/localdata1/gnn_paper_2024/images/lineplots_compartments/with_agegroups/with_agegroups_90days_2plt_NODAMP/compartment_lines_withagegroups_90days_2plt_10k_paper_NODAMP_no{i}.png")
         print(f'Plot No. {i} done.')
 
 
@@ -205,17 +205,94 @@ SINGLE_lineplot_compartments_log_and_nolog_agegroups(
     data['inputs'], data['labels'], 100, input_width=5, label_width=30)
 
 
-# file_path = '/home/schm_a45/Documents/Code/memilio_test/memilio/pycode/memilio-surrogatemodel/memilio/data_paper/data_secir_groups_30days_I_based_Germany_10k.pickle'
-# savename = 'boxplot_withagegroups_I_based_10k_'
-# boxplot_inputs_single(file_path, savename)
+def barplot_hyperparameters(filename):
+    path = os.path.dirname(os.path.realpath(__file__))
+    path_data = os.path.join(os.path.dirname(os.path.realpath(
+        os.path.dirname(os.path.realpath(path)))), 'secir_groups_grid_search_paper')
+    filepath = os.path.join(path_data, filename)
+    df = pd.DataFrame(data=pd.read_csv(filepath))
+
+    df_plot = df[['optimizer', 'kfold_val']]
+    fig, ax = plt.subplots()
+    ax.bar(df_plot['optimizer'], df_plot['kfold_val'])
+    ax.set_ylabel('Validation MAPE')
+    ax.set_xlabel('Optimizer')
+    ax.set_title('Validation MAPE depending on optimizer ')
+    ax.bar_label(ax.containers[0], label_type='edge')
+    # pad the spacing between the number and the edge of the figure
+    ax.margins(y=0.1)
+
+    plt.show()
+    plt.savefig("secir_groups_optimizer.png")
 
 
-filename = 'dataframe_withgroups_30days_Germany_I_based_10k_nodamp.csv'
+def heatmap_activation_optimiizer(filename, filename_2):
+    path = os.path.dirname(os.path.realpath(__file__))
+    path_data = os.path.join(os.path.dirname(os.path.realpath(
+        os.path.dirname(os.path.realpath(path)))), 'secir_groups_grid_search_paper')
+    filepath = os.path.join(path_data, filename)
+    df = pd.DataFrame(data=pd.read_csv(filepath))
+    # plot for part2
+    filepath = os.path.join(path_data, filename_2)
+    df_2 = pd.DataFrame(data=pd.read_csv(filepath))
+    df_concat = pd.conct(df, df_2)
+    df_plot = df_concat[['optimizer', 'activation', 'kfold_val']]
 
+    plt.figure().clf()
+
+    df_plot = df_plot.pivot(
+        index='optimizer', columns='activation', values='kfold_val')
+
+    fig, ax = plt.subplots()
+    im = ax.imshow(df_plot.values, cmap='RdYlGn_r')
+
+    # Show all ticks and label them with the respective list entries
+    ax.set_xticks(np.arange(len(df_plot.columns)), labels=df_plot.columns)
+    ax.set_yticks(np.arange(len(df_plot.index)), labels=df_plot.index)
+
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+
+    # Loop over data dimensions and create text annotations.
+    for i in range(len(df_plot.index)):
+        for j in range(len(df_plot.columns)):
+            text = ax.text(j, i, np.around(df_plot.values, decimals=2)[i, j],
+                           ha="center", va="center", color="black")
+
+    cbar_kw = {}
+    cbar = ax.figure.colorbar(im, ax=ax, **cbar_kw)
+    cbar.ax.set_ylabel('MAPE', rotation=-90, va="bottom")
+
+    ax.set_title("Activation anf Optimizer for LSTM")
+    fig.tight_layout()
+    plt.show()
+    plt.savefig("heatmap_activation_optimizer_LSTM_GroupsNN_I_based.png")
+
+
+# BOXPLOT INPUTS
+file_path = '/home/schm_a45/Documents/Code/memilio_test/memilio/pycode/memilio-surrogatemodel/memilio/data_paper/data_secir_groups_30days_I_based_Germany_10k.pickle'
+savename = 'boxplot_withagegroups_I_based_10k_'
+boxplot_inputs_single(file_path, savename)
+
+# HEATMAP
+filename = 'gridsearch_data_secir_groups_30days_Germany_10k_nodamp.csv'
+# filename = 'gridserach_secir_groups_30days_I_based_Germany_10k_nodamp.csv'
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
     os.path.dirname(os.path.realpath(path)))), 'secir_groups_grid_search_paper')
 filepath = os.path.join(path_data, filename)
 df = pd.DataFrame(data=pd.read_csv(filepath))
-savename = "heatmap_secir_withagegroups_30days_I_based_10k_paper.png"
+savename = "NODAMP_heatmap_secir_withagegroups_30days_10k_paper.png"
+# NODAMP_heatmap_secir_withagegroups_30days_I_based_10k_paper
+
 heatmap_gridsearch_results(df, savename)
+
+# HYPERPARAMETERS
+filename = 'groups_dataframe_optimizer_paper.csv'
+barplot_hyperparameters(filename)
+
+# HYPERPARAMETERS I_BASED
+filename = 'groups_I_based_dataframe_optimizer_paper.csv'
+filename_2 = 'groups_I_based_dataframe_optimizer_paper_part2.csv'
+heatmap_activation_optimiizer(filename, filename_2)
