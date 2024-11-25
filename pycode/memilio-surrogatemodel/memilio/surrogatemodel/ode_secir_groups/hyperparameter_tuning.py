@@ -7,33 +7,28 @@ import pandas as pd
 import time
 from sklearn.model_selection import KFold
 import numpy as np
-from keras.activations import relu, elu, softmax, sigmoid, linear, tanh
-# grid serach of activation and optimizer for our best model: the LSTM
+from keras.optimizers import Adam, Nadam, SGD, Adagrad, RMSprop
 
-activations_str = ['relu', 'elu', 'softmax',  'sigmoid', 'linear', 'tanh']
-activations = [relu, elu, softmax, sigmoid, linear, tanh]
+# grid serach of activation and optimizer for our best model: the LSTM with 0 hidden layers and 128 neurons per layer
 optimizers = ['Adam', 'Nadam', 'SGD', 'Adagrad', 'RMSProp']
 
 parameters = []
-for a in activations:
-    for o in optimizers:
-        for astr in activations_str:
 
-            parameters.append((a, o, astr))
+for o in optimizers:
+    parameters.append((o))
 
 modelname = 'LSTM'
 
 df_results = pd.DataFrame(
-    columns=['model', 'optimizer', 'activation',
+    columns=['model', 'optimizer',
              'mean_test_MAPE', 'kfold_train',
              'kfold_val', 'kfold_test', 'training_time',
              'train_losses', 'val_losses'])
 
 
 def train_and_evaluate_model(param, max_epochs, filename, filename_df):
-    act = param[0]
-    optimizer = param[1]
-    activation_s = param[2]
+
+    optimizer = param
 
     if not os.path.isfile(os.path.join(path_data, 'data_secir_simple.pickle')):
         ValueError("no dataset found in path: " + path_data)
@@ -61,7 +56,6 @@ def train_and_evaluate_model(param, max_epochs, filename, filename_df):
         num_outputs = 8
         model = tf.keras.Sequential([
             tf.keras.layers.LSTM(128, return_sequences=False),
-            tf.keras.layers.Dense(units=128, activation=act),
             tf.keras.layers.Dense(label_width * 8 * 6,
                                   kernel_initializer=tf.initializers.zeros()),
             tf.keras.layers.Reshape([label_width, 8 * 6])
@@ -103,7 +97,7 @@ def train_and_evaluate_model(param, max_epochs, filename, filename_df):
 
     # After cross-validation, we can test on the withhold dataset (outside of the loop)
     df_results.loc[len(df_results.index)] = [
-        modelname, optimizer, activation_s,  np.nan,  # Placeholder for test score
+        modelname, optimizer,  np.nan,  # Placeholder for test score
         np.mean(train_losses),
         np.mean(val_losses),
         np.nan,  # Placeholder for final test score
@@ -131,7 +125,7 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
     os.path.dirname(os.path.realpath(path)))), 'data_paper')
 
-filename = "data_secir_groups_30days_Germany_10k.pickle"
+filename = "data_secir_groups_30days_Germany_10k_nodamp.pickle"
 
 label_width = 30
 early_stop = 100
