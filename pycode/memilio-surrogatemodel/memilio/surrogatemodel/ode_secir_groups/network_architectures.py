@@ -86,22 +86,21 @@ def cnn_multi_input_multi_output(label_width, num_age_groups=6):
 
 
 def lstm_multi_input_multi_output(label_width, num_age_groups=6):
-    """! LSTM Network which uses multiple time steps as input and returns the 8 compartments for
-    multiple time steps in the future.
+        """! LSTM Network which uses multiple time steps as input and returns the 8 compartments for
+        multiple time steps in the future.
 
-    Input and output have shape [number of expert model simulations, time points in simulation,
-    number of individuals in infection states].
+        Input and output have shape [number of expert model simulations, time points in simulation,
+        number of individuals in infection states].
 
-    @param label_width Number of time steps in the output.
-    """
-    model = tf.keras.Sequential([
-        tf.keras.layers.LSTM(128, return_sequences=False),
-        tf.keras.layers.Dense(units=128, activation='relu'),
-        tf.keras.layers.Dense(label_width * 8 * num_age_groups,
-                              kernel_initializer=tf.initializers.zeros()),
-        tf.keras.layers.Reshape([label_width, 8 * num_age_groups])
-    ])
-    return model
+        @param label_width Number of time steps in the output.
+        """
+        model = tf.keras.Sequential([
+            tf.keras.layers.LSTM(128, return_sequences=False),
+            tf.keras.layers.Dense(label_width * 8 * num_age_groups,
+                                kernel_initializer=tf.initializers.zeros()),
+            tf.keras.layers.Reshape([label_width, 8 * num_age_groups])
+        ])
+        return model
 
 
 
@@ -115,8 +114,8 @@ def lstm_multi_input_multi_output_Ibased(label_width, num_age_groups=6):
     @param label_width Number of time steps in the output.
     """
     model = tf.keras.Sequential([
-        tf.keras.layers.LSTM(512, return_sequences=False),
-        tf.keras.layers.Dense(units=512, activation='relu'),
+        tf.keras.layers.LSTM(1024, return_sequences=False),
+        tf.keras.layers.Dense(units=1024, activation='elu'),
         tf.keras.layers.Dense(label_width * 8 * num_age_groups,
                               kernel_initializer=tf.initializers.zeros()),
         tf.keras.layers.Reshape([label_width, 8 * num_age_groups])
