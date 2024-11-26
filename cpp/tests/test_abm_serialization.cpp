@@ -125,7 +125,8 @@ TEST(TestAbmSerialization, TestingScheme)
     unsigned i = 1; // counter s.t. members have different values
 
     Json::Value testing_criteria;
-    std::vector<bool> ages_bits(mio::abm::MAX_NUM_AGE_GROUPS, false);
+    std::array<bool, mio::abm::MAX_NUM_AGE_GROUPS> ages_bits;
+    ages_bits.fill(false);
     ages_bits[i++]                     = true;
     testing_criteria["ages"]["bitset"] = mio::serialize_json(ages_bits).value();
     std::vector<bool> inf_st_bits((size_t)mio::abm::InfectionState::Count, false);
