@@ -44,7 +44,7 @@ struct TimeExposed {
     using Type = Vector<UncertainValue<ScalarType>>;
     static Type get_default(size_t size)
     {
-        return Type::Constant(size, 1, 2.);
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -76,7 +76,7 @@ struct TimeInfectedSymptoms {
     using Type = Vector<UncertainValue<ScalarType>>;
     static Type get_default(size_t size)
     {
-        return Type::Constant(size, 1, 1.5);
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
