@@ -152,13 +152,16 @@ def plot_runtime_and_steps(jsonfilename, name=''):
 
     # Run time at the left y-axis.
     ax1.plot(df_age["Subcompartments"], df_age["Time"],
-             linestyle='--', marker='o', linewidth=1.2, color=colors[0])
-    ax1.set_xlabel('Number of subcompartments', fontsize=fontsize_labels)
+             linestyle='--', marker='o', linewidth=1.3, color=colors[0])
+    ax1.plot(df_age["Subcompartments"], df_age["Time"].max()/(df_age["Subcompartments"].max()**2) *
+             df_age["Subcompartments"]**2, linewidth=1.2, linestyle='--', color='black', label=r"$\mathcal{O}((n_Z)^{2})$")
+    ax1.set_xlabel('Number of subcompartments $n_Z$', fontsize=fontsize_labels)
     ax1.set_ylabel('Run time [seconds]',
                    fontsize=fontsize_labels, color=colors[0])
     ax1.set_ylim(bottom=0.)
     ax1.set_xlim(left=0., right=df_age["Subcompartments"].max()+1)
     ax1.tick_params(axis='y', labelcolor=colors[0])
+    ax1.legend(fontsize=fontsize_labels)
 
     # Second y-axis for Steps.
     ax2 = ax1.twinx()
@@ -168,8 +171,8 @@ def plot_runtime_and_steps(jsonfilename, name=''):
     ax2.tick_params(axis='y', labelcolor=colors[1])
     ax2.set_ylim(bottom=0., top=df_age["Steps"].max()+10)
 
-    ax1.grid(True, axis='x', linestyle='--')
-    ax2.grid(True, which='both', axis='both', linestyle='--')
+    ax1.grid(True, axis='x', linestyle='--', alpha=0.9)
+    ax2.grid(True, which='both', axis='both', linestyle='--', alpha=0.9)
     plt.tight_layout()
     if not os.path.isdir('Plots_time'):
         os.makedirs('Plots_time')
@@ -224,12 +227,14 @@ def plot_cachemisses(jsonfilename, cachelevel=1, savename='', rate=False):
 
 def main():
     # run times
-    filename = 'runtimes_adaptive'
+    filename = 'runtimes_adaptive_200sub'
     folderfilename = 'runtimes/'+filename
-    extract_json_segments(
-        folderfilename+'.txt', folderfilename+'.json')
-    # plot_runtime_noage(folderfilename+'.json', filename)
+    # extract_json_segments(
+    #     folderfilename+'.txt', folderfilename+'.json')
+    # # plot_runtime_noage(folderfilename+'.json', filename)
     plot_runtime_and_steps(folderfilename+'.json', filename)
+    # plot_runtime_per_step(folderfilename+'.json',
+    #                       'runtimeperstep_adaptive_200sub')
 
     # Cache
     # jsonfilenamecache = 'runtimes/valgrind_85sub_20days.json'
