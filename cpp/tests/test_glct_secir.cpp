@@ -45,7 +45,7 @@ TEST(TestGLCTSecir, testEvalRightHandSide)
 
     // Set parameters such that the stay times are Erlang-distributed as in the corresponding LCT model.
     // Exposed.
-    // Default functions are used to set the parameters but the corresponding dimensions ave to be set manually.
+    // Default functions are used to set the parameters but the corresponding dimensions have to be set manually.
     model.parameters.get<mio::glsecir::StartingProbabilitiesExposed>() =
         mio::glsecir::StartingProbabilitiesExposed().get_default(
             LctState::get_num_subcompartments<InfectionState::Exposed>());
