@@ -32,6 +32,7 @@
 #include "models/abm/person.h"
 #include "models/abm/trip_list.h"
 #include "models/abm/model.h"
+#include <cstddef>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -125,11 +126,10 @@ TEST(TestAbmSerialization, TestingScheme)
     unsigned i = 1; // counter s.t. members have different values
 
     Json::Value testing_criteria;
-    std::array<bool, mio::abm::MAX_NUM_AGE_GROUPS> ages_bits;
-    ages_bits.fill(false);
+    std::array<bool, mio::abm::MAX_NUM_AGE_GROUPS> ages_bits{}; // initialize to false
     ages_bits[i++]                     = true;
     testing_criteria["ages"]["bitset"] = mio::serialize_json(ages_bits).value();
-    std::vector<bool> inf_st_bits((size_t)mio::abm::InfectionState::Count, false);
+    std::array<bool, (size_t)mio::abm::InfectionState::Count> inf_st_bits{}; // initialize to false
     inf_st_bits[i++]                               = true;
     testing_criteria["infection_states"]["bitset"] = mio::serialize_json(inf_st_bits).value();
 
