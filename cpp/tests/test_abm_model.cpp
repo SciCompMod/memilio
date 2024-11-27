@@ -442,6 +442,7 @@ TEST_F(TestModel, reachCapacity)
     auto dt    = mio::abm::hours(1);
     auto model = mio::abm::Model(num_age_groups);
     model.get_rng() = this->get_rng();
+    model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
 
     auto home_id   = model.add_location(mio::abm::LocationType::Home);
     auto school_id = model.add_location(mio::abm::LocationType::School);
