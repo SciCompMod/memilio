@@ -430,7 +430,7 @@ TEST_F(TestModel, evolveMobilityTrips)
     EXPECT_EQ(model.get_number_persons(home_id), 3);
 }
 
-#ifdef MEMILIO_ENABLE_OPENMP // Test can fail with parallel execution of mobility, as the capacity is not taken into account correctly at the moment
+#ifndef MEMILIO_ENABLE_OPENMP // Test can fail with parallel execution of mobility, as the capacity is not taken into account correctly at the moment
 /**
  * @brief Test that a location correctly enforces its capacity constraint.
  */
