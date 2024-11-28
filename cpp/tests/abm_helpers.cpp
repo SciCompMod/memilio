@@ -21,12 +21,11 @@
 #include "abm/person.h"
 #include "memilio/utils/random_number_generator.h"
 
-mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup age,
+mio::abm::Person make_test_person(mio::RandomNumberGenerator& rng, mio::abm::Location& location, mio::AgeGroup age,
                                   mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
                                   mio::abm::Parameters params)
 {
     assert(age.get() < params.get_num_groups());
-    auto rng = mio::RandomNumberGenerator();
     mio::abm::Person p(rng, location.get_type(), location.get_id(), age);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
         auto rng_p = mio::abm::PersonalRandomNumberGenerator(rng, p);
@@ -36,10 +35,11 @@ mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup ag
     return p;
 }
 
-mio::abm::PersonId add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id, mio::AgeGroup age,
-                                   mio::abm::InfectionState infection_state, mio::abm::TimePoint t)
+mio::abm::PersonId add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id,
+                                   mio::AgeGroup age, mio::abm::InfectionState infection_state, mio::abm::TimePoint t)
 {
-    return model.add_person(make_test_person(model.get_location(loc_id), age, infection_state, t, model.parameters));
+    return model.add_person(
+        make_test_person(model.get_rng(), model.get_location(loc_id), age, infection_state, t, model.parameters));
 }
 
 void interact_testing(mio::abm::PersonalRandomNumberGenerator& personal_rng, mio::abm::Person& person,
