@@ -17,32 +17,34 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    int num_agegroups              = 3;
-    ScalarType tmax                = 5.0;
-    std::vector<ScalarType> N      = std::vector<ScalarType>(num_agegroups, 5000.);
-    std::vector<ScalarType> deaths = std::vector<ScalarType>(num_agegroups, 6.);
-    ScalarType dt                  = 1.;
+    size_t num_agegroups = 3;
+    ScalarType tmax      = 5.0;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 5000.);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 6.);
+    ScalarType dt = 1.;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
-    // Create TimeSeries with num_transitions times num_agegroups elements where transitions needed for simulation will be stored.
+    // Create TimeSeries with num_transitions * num_agegroups elements where transitions needed for simulation will be stored.
     mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
 
     // Define transitions that will be used for initialization.
     Vec vec_init = Vec::Constant(num_transitions * num_agegroups, 1.);
-    // First Age Group.
+    // First AgeGroup.
     vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 20.0;
     vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 10.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 3.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 10.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 10.0;
-    // Second Age Group.
+    // Second AgeGroup.
     vec_init[num_transitions + (int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 20.0;
     vec_init[num_transitions + (int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
     vec_init[num_transitions + (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
     vec_init[num_transitions + (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
     vec_init[num_transitions + (int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 10.0;
-    // Third Age Group.
+    // Third AgeGroup.
     vec_init[2 * num_transitions + (int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
     vec_init[2 * num_transitions + (int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
     vec_init[2 * num_transitions + (int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
@@ -51,7 +53,7 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
     // Add initial time point to TimeSeries.
     init.add_time_point(-10., vec_init);
     // Add further time points until t0.
-    while (init.get_last_time() < -dt / 2) {
+    while (init.get_last_time() < -dt / 2.) {
         init.add_time_point(init.get_last_time() + dt, vec_init);
     }
 
@@ -60,7 +62,7 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
 
     // Set working parameters.
 
-    // First AgeGroup for Transition Distributions.
+    // First AgeGroup for TransitionDistributions.
     mio::SmootherCosine smoothcos1(2.0);
     mio::StateAgeFunctionWrapper delaydistribution1(smoothcos1);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib1(num_transitions, delaydistribution1);
@@ -71,7 +73,7 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
 
     model.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(0)] = vec_delaydistrib1;
 
-    // Second AgeGroup for Transition Distributions.
+    // Second AgeGroup for TransitionDistributions.
     mio::SmootherCosine smoothcos2(3.0);
     mio::StateAgeFunctionWrapper delaydistribution2(smoothcos2);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib2(num_transitions, delaydistribution2);
@@ -82,7 +84,7 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
 
     model.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(1)] = vec_delaydistrib2;
 
-    // Third AgeGroup for Transition Distributions.
+    // Third AgeGroup for TransitionDistributions.
     mio::SmootherCosine smoothcos3(2.5);
     mio::StateAgeFunctionWrapper delaydistribution3(smoothcos3);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib3(num_transitions, delaydistribution3);
@@ -93,7 +95,7 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
 
     model.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(2)] = vec_delaydistrib3;
 
-    //Transition Probabilities.
+    //TransitionProbabilities.
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
         std::vector<ScalarType> vec_prob(num_transitions, 0.5);
         // The following probabilities must be 1, as there is no other way to go.
@@ -102,7 +104,7 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
         model.parameters.get<mio::isecir::TransitionProbabilities>()[group]                   = vec_prob;
     }
 
-    //Contact matrix.
+    // Contact matrix.
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, num_agegroups);
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
@@ -120,7 +122,7 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
 
     model.check_constraints(dt);
 
-    //Compare Compartments with previous run.
+    //Compare compartments with previous run.
     mio::TimeSeries<ScalarType> compartments = simulate(tmax, dt, model);
     auto compare_compartments                = load_test_data_csv<ScalarType>("ide-secir-ageres-compare.csv");
 
@@ -133,7 +135,7 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
             ASSERT_NEAR(compartments.get_value(i)[j - 1], compare_compartments[i][j], 1e-7) << " at row " << i;
         }
     }
-    //Compare Transitions with previous run.
+    //Compare transitions with previous run.
 
     mio::isecir::Simulation sim(model, dt);
     sim.advance(tmax);

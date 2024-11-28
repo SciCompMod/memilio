@@ -34,12 +34,14 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    int num_agegroups = 1;
+    size_t num_agegroups = 1;
 
-    ScalarType tmax                = 10;
-    std::vector<ScalarType> N      = std::vector<ScalarType>(num_agegroups, 10000.);
-    std::vector<ScalarType> deaths = std::vector<ScalarType>(num_agegroups, 13.10462213);
-    ScalarType dt                  = 1.;
+    ScalarType tmax = 10;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 13.10462213);
+    ScalarType dt = 1.;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -115,7 +117,7 @@ int main()
     mio::isecir::Simulation sim(model, dt);
     sim.advance(tmax);
 
-    auto interpolated_results = mio::interpolate_simulation_result(sim.get_result(), dt / 2);
+    auto interpolated_results = mio::interpolate_simulation_result(sim.get_result(), dt / 2.);
 
     interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
     // Uncomment this line to print the transitions.

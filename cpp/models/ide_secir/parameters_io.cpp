@@ -86,44 +86,46 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     Eigen::Index start_shift = 4 * global_support_max_index;
     // The last time needed is dependent on the mean stay time in the Exposed compartment and
     // the mean stay time of asymptomatic individuals in InfectedNoSymptoms.
-    // The mean stay time in a compartment may be dependent on the Age Group.
-    std::vector<ScalarType> mean_ExposedToInfectedNoSymptoms = std::vector<ScalarType>(int(num_age_groups), 0.);
-    std::vector<ScalarType> mean_InfectedNoSymptomsToInfectedSymptoms =
-        std::vector<ScalarType>(int(num_age_groups), 0.);
-    std::vector<ScalarType> mean_InfectedSymptomsToInfectedSevere = std::vector<ScalarType>(int(num_age_groups), 0.);
-    std::vector<ScalarType> mean_InfectedSevereToInfectedCritical = std::vector<ScalarType>(int(num_age_groups), 0.);
-    std::vector<ScalarType> mean_InfectedCriticalToDead           = std::vector<ScalarType>(int(num_age_groups), 0.);
-    Eigen::Index last_time_index_needed                           = 0;
+    // The mean stay time in a compartment may be dependent on the AgeGroup.
+    CustomIndexArray<ScalarType, AgeGroup> mean_ExposedToInfectedNoSymptoms =
+        CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
+    CustomIndexArray<ScalarType, AgeGroup> mean_InfectedNoSymptomsToInfectedSymptoms =
+        CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
+    CustomIndexArray<ScalarType, AgeGroup> mean_InfectedSymptomsToInfectedSevere =
+        CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
+    CustomIndexArray<ScalarType, AgeGroup> mean_InfectedSevereToInfectedCritical =
+        CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
+    CustomIndexArray<ScalarType, AgeGroup> mean_InfectedCriticalToDead =
+        CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
+    Eigen::Index last_time_index_needed = 0;
 
-    for (size_t group = 0; group < num_age_groups; group++) {
+    for (AgeGroup group = AgeGroup(0); group < AgeGroup(num_age_groups); group++) {
         // Set the Dead compartment to 0 so that RKI data can be added correctly.
         int Di                     = model.get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
         model.m_populations[0][Di] = 0;
 
         mean_ExposedToInfectedNoSymptoms[group] =
             model.parameters
-                .get<TransitionDistributions>()[AgeGroup(group)]
-                                               [Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)]
+                .get<TransitionDistributions>()[group][Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)]
                 .get_mean(dt);
         mean_InfectedNoSymptomsToInfectedSymptoms[group] =
             model.parameters
-                .get<TransitionDistributions>()[AgeGroup(group)]
+                .get<TransitionDistributions>()[group]
                                                [Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]
                 .get_mean(dt);
         mean_InfectedSymptomsToInfectedSevere[group] =
             model.parameters
-                .get<TransitionDistributions>()[AgeGroup(group)]
+                .get<TransitionDistributions>()[group]
                                                [Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere)]
                 .get_mean(dt);
         mean_InfectedSevereToInfectedCritical[group] =
             model.parameters
-                .get<TransitionDistributions>()[AgeGroup(group)]
+                .get<TransitionDistributions>()[group]
                                                [Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical)]
                 .get_mean(dt);
         mean_InfectedCriticalToDead[group] =
             model.parameters
-                .get<TransitionDistributions>()[AgeGroup(group)]
-                                               [Eigen::Index(InfectionTransition::InfectedCriticalToDead)]
+                .get<TransitionDistributions>()[group][Eigen::Index(InfectionTransition::InfectedCriticalToDead)]
                 .get_mean(dt);
         if (last_time_index_needed <
             Eigen::Index(std::ceil(
@@ -136,11 +138,12 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     // Create TimeSeries with zeros. The index of time zero is start_shift.
     for (Eigen::Index i = -start_shift; i <= last_time_index_needed; i++) {
         // Add time point.
-        model.m_transitions.add_time_point(i * dt, TimeSeries<ScalarType>::Vector::Constant(
-                                                       (int)InfectionTransition::Count * (int)num_age_groups, 0.));
+        model.m_transitions.add_time_point(
+            i * dt, TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count * num_age_groups, 0.));
     }
 
-    model.m_total_confirmed_cases = std::vector<ScalarType>(num_age_groups, 0.);
+    // Setting the entries in m_total_confirmed_cases to zero before overwriting it with the RKI data.
+    model.m_total_confirmed_cases = CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
     //--- Calculate the flow InfectedNoSymptomsToInfectedSymptoms using the RKI data and store in the m_transitions object.---
     ScalarType min_offset_needed = std::ceil(
         model.m_transitions.get_time(0) -
@@ -156,8 +159,8 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     Eigen::Index idx_needed_last  = 0;
     ScalarType time_idx           = 0;
     for (auto&& entry : rki_data) {
-        int offset   = get_offset_in_days(entry.date, date);
-        size_t group = size_t(entry.age_group);
+        int offset     = get_offset_in_days(entry.date, date);
+        AgeGroup group = entry.age_group;
         if ((offset >= min_offset_needed) && (offset <= max_offset_needed)) {
             if (offset == min_offset_needed) {
                 min_offset_needed_avail = true;
@@ -172,26 +175,26 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
             idx_needed_last = Eigen::Index(std::min(std::ceil((offset - model.m_transitions.get_time(0) + 1) / dt),
                                                     double(model.m_transitions.get_num_time_points() - 1)));
 
-            int INStISi = model.get_transition_flat_index(
+            int INStISyi = model.get_transition_flat_index(
                 Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), group);
 
             for (Eigen::Index i = idx_needed_first; i <= idx_needed_last; i++) {
 
                 time_idx = model.m_transitions.get_time(i);
                 if (offset == int(std::floor(time_idx))) {
-                    model.m_transitions[i][INStISi] +=
+                    model.m_transitions[i][INStISyi] +=
                         (1 - (time_idx - std::floor(time_idx))) * scale_confirmed_cases * entry.num_confirmed;
                 }
                 if (offset == int(std::ceil(time_idx))) {
-                    model.m_transitions[i][INStISi] +=
+                    model.m_transitions[i][INStISyi] +=
                         (time_idx - std::floor(time_idx)) * scale_confirmed_cases * entry.num_confirmed;
                 }
                 if (offset == int(std::floor(time_idx - dt))) {
-                    model.m_transitions[i][INStISi] -=
+                    model.m_transitions[i][INStISyi] -=
                         (1 - (time_idx - dt - std::floor(time_idx - dt))) * scale_confirmed_cases * entry.num_confirmed;
                 }
                 if (offset == int(std::ceil(time_idx - dt))) {
-                    model.m_transitions[i][INStISi] -=
+                    model.m_transitions[i][INStISyi] -=
                         (time_idx - dt - std::floor(time_idx - dt)) * scale_confirmed_cases * entry.num_confirmed;
                 }
             }
@@ -249,7 +252,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     model.set_transitiondistributions_support_max(dt);
     model.set_transitiondistributions_derivative(dt);
 
-    for (size_t group = 0; group < num_age_groups; group++) {
+    for (AgeGroup group = AgeGroup(0); group < AgeGroup(num_age_groups); group++) {
         //--- Calculate the flows "after" InfectedNoSymptomsToInfectedSymptoms. ---
         // Compute flow InfectedSymptomsToInfectedSevere for -3 * global_support_max, ..., 0.
         for (Eigen::Index i = -3 * global_support_max_index; i <= 0; i++) {
@@ -328,10 +331,6 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     auto transition_copy(model.m_transitions);
     model.m_transitions = TimeSeries<ScalarType>(Eigen::Index(InfectionTransition::Count) * num_age_groups);
     for (Eigen::Index i = -global_support_max_index; i <= 0; i++) {
-        // std::cout << "i: " << i << "\n";
-        // std::cout << "start_shift" << start_shift << "\n";
-        // std::cout << "last index needed" << last_time_index_needed << "\n";
-        // std::cout << "last index 2" << transition_copy.get_last_time() << "\n";
         model.m_transitions.add_time_point(i * dt, transition_copy.get_value(i + start_shift));
     }
 

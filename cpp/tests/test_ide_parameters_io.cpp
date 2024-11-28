@@ -34,14 +34,15 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-// Check that initialization based on synthetic RKI data match previous result.
+// Check that initialization based on synthetic RKI data matches previous result.
 TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
 {
     // Define start date and the total population used for the initialization.
-    size_t num_agegroups                     = 6;
-    std::vector<ScalarType> total_population = std::vector(num_agegroups, 15 * 1e6);
-    auto start_date                          = mio::Date(2020, 11, 1);
-    ScalarType dt                            = 0.5;
+    size_t num_agegroups = 6;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_population =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 15 * 1e6);
+    auto start_date = mio::Date(2020, 11, 1);
+    ScalarType dt   = 0.5;
     // Initialize model.
     // The number of deaths will be overwritten if real data is used for initialization. Therefore, an arbitrary number
     // is used for the number of deaths.
@@ -49,7 +50,8 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
     mio::isecir::Model model(
         mio::TimeSeries<ScalarType>(-1, mio::TimeSeries<ScalarType>::Vector::Constant(
                                             (int)mio::isecir::InfectionTransition::Count * num_agegroups, 1.)),
-        total_population, std::vector(num_agegroups, -1.), num_agegroups);
+        total_population, mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), -1.),
+        num_agegroups);
 
     // Set the model parameters so that if the default values are changed, the test is still valid.
     mio::SmootherCosine smoothcos(2.0);
@@ -90,16 +92,16 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
     //Compare with previous run.
     auto compare = load_test_data_csv<ScalarType>("ide-ageres-parameters-io-compare.csv");
 
-    std::vector<ScalarType> Deaths = {
+    std::vector<ScalarType> deaths = {
         1, 2.471428571455, 26.34999999999, 603.621428571465, 3972.41428571431, 7668.84999999998};
 
     std::vector<ScalarType> total_confirmed_cases = {10269.2857142857, 29615.8571428571, 185321.571428571,
                                                      215386.428571429, 77163.5714285714, 35588.4285714286};
 
-    for (size_t group = 0; group < num_agegroups; ++group) {
+    for (mio::AgeGroup group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
         int Di = model.get_state_flat_index((Eigen::Index)mio::isecir::InfectionState::Dead, group);
-        EXPECT_NEAR(model.m_populations.get_value(0)[Di], Deaths[group], 1e-4);
-        EXPECT_NEAR(model.m_total_confirmed_cases[group], total_confirmed_cases[group], 1e-4);
+        EXPECT_NEAR(model.m_populations.get_value(0)[Di], deaths[size_t(group)], 1e-4);
+        EXPECT_NEAR(model.m_total_confirmed_cases[group], total_confirmed_cases[size_t(group)], 1e-4);
     }
     mio::isecir::Simulation sim(model, dt);
     ASSERT_EQ(compare.size(), static_cast<size_t>(model.m_transitions.get_num_time_points()));
@@ -116,15 +118,17 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
 TEST(TestIDEParametersIo, ParametersIoRKIFailure)
 {
     // Define start date and the total population used for the initialization.
-    size_t num_agegroups                     = 6;
-    std::vector<ScalarType> total_population = std::vector(num_agegroups, 15 * 1e6);
-    ScalarType dt                            = 0.5;
+    size_t num_agegroups = 6;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_population =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 15 * 1e6);
+    ScalarType dt = 0.5;
 
     // Initialize model.
     // The number of deaths will be overwritten if real data is used for initialization. Therefore, an arbitrary number
     // is used for the number of deaths.
-    mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count * num_agegroups),
-                             total_population, std::vector(num_agegroups, -1.), num_agegroups);
+    mio::isecir::Model model(
+        mio::TimeSeries<ScalarType>((size_t)mio::isecir::InfectionTransition::Count * num_agegroups), total_population,
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), -1.), num_agegroups);
 
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);

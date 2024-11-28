@@ -25,6 +25,7 @@
 #include "ide_secir/infection_state.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/age_group.h"
+#include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/time_series.h"
 
 #include "vector"
@@ -56,8 +57,9 @@ public:
     * @param[in] total_confirmed_cases A vector, containing the total confirmed cases at time t0 can be set if it 
     *   should be used for initialization, for every AgeGroup.
     */
-    Model(TimeSeries<ScalarType>&& init, std::vector<ScalarType> N_init, std::vector<ScalarType> deaths,
-          size_t num_agegroups, std::vector<ScalarType> total_confirmed_cases = {});
+    Model(TimeSeries<ScalarType>&& init, CustomIndexArray<ScalarType, AgeGroup> N_init,
+          CustomIndexArray<ScalarType, AgeGroup> deaths, size_t num_agegroups,
+          CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases = CustomIndexArray<ScalarType, AgeGroup>());
 
     /**
     * @brief Returns a flat index for the InfectionTransition TimeSeries.
@@ -66,13 +68,13 @@ public:
     * #InfectionTransition%s for every AgeGroup.
     * This function is used to get the right index in this vector for a specific AgeGroup and InfectionTransition.
     *
-    * @param[in] Transition_idx Index determining which InfectionTransition we want to evaluate.
+    * @param[in] transition_idx Index determining which InfectionTransition we want to evaluate.
     * @param[in] agegroup The agegroup for which we want to evaluate.
     */
 
-    int get_transition_flat_index(Eigen::Index transition_idx, size_t agegroup) const
+    int get_transition_flat_index(Eigen::Index transition_idx, AgeGroup agegroup) const
     {
-        return (int(agegroup) * int(InfectionTransition::Count) + int(transition_idx));
+        return (static_cast<int>(size_t(agegroup)) * int(InfectionTransition::Count) + int(transition_idx));
     }
 
     /**
@@ -82,12 +84,12 @@ public:
     * for every AgeGroup.
     * This function is used to get the right index in this vector for a specific AgeGroup and InfectionState.
     *
-    * @param[in] State_idx Index at which InfectionState we want to evaluate.
+    * @param[in] state_idx Index at which InfectionState we want to evaluate.
     * @param[in] agegroup The agegroup for which we want to evaluate.
     */
-    int get_state_flat_index(Eigen::Index state_idx, size_t agegroup) const
+    int get_state_flat_index(Eigen::Index state_idx, AgeGroup agegroup) const
     {
-        return (int(agegroup) * int(InfectionState::Count) + int(state_idx));
+        return (static_cast<int>(size_t(agegroup)) * int(InfectionState::Count) + int(state_idx));
     }
 
     // ---- Functionality to calculate the sizes of the compartments for time t0. ----
@@ -363,7 +365,7 @@ public:
     }
 
     // ---- Public parameters. ----
-    ParameterSet parameters{AgeGroup(int(m_num_agegroups))}; ///< ParameterSet of Model Parameters.
+    ParameterSet parameters{AgeGroup(m_num_agegroups)}; ///< ParameterSet of Model Parameters.
     // Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the
     // initialization part.
     TimeSeries<ScalarType>
@@ -371,8 +373,8 @@ public:
     // AgeGroup.
     TimeSeries<ScalarType> m_populations; ///< TimeSeries containing points of time and the corresponding number of
         // people in defined #InfectionState%s for every AgeGroup.
-    std::vector<ScalarType> m_total_confirmed_cases{
-        0}; ///< Vector that contains the total number of confirmed cases at time t0 for every AgeGroup.
+    CustomIndexArray<ScalarType, AgeGroup>
+        m_total_confirmed_cases; ///< CustomIndexArray that contains the total number of confirmed cases at time t0 for every AgeGroup.
 
 private:
     /**
@@ -384,32 +386,26 @@ private:
      */
     void update_compartment_from_flow(InfectionState infectionState,
                                       std::vector<InfectionTransition> const& IncomingFlows,
-                                      std::vector<InfectionTransition> const& OutgoingFlows, size_t group);
+                                      std::vector<InfectionTransition> const& OutgoingFlows, AgeGroup group);
 
     // ---- Private parameters. ----
-    std::vector<ScalarType> m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
-    std::vector<ScalarType> m_N{
-        0}; ///< Vector containing the total population size of the considered region for every AgeGroup.
+    CustomIndexArray<ScalarType, AgeGroup> m_forceofinfection; ///< Force of infection term needed for numerical scheme.
+    CustomIndexArray<ScalarType, AgeGroup>
+        m_N; ///< Vector containing the total population size of the considered region for every AgeGroup.
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
     size_t m_num_agegroups; ///< Number of Age Groups.
     int m_initialization_method{0}; ///< Gives the index of the method used for the initialization of the model.
     // See also get_initialization_method_compartments() for the number code.
-    std::vector<std::vector<ScalarType>> m_transitiondistributions_support_max{std::vector<std::vector<ScalarType>>(
-        int(m_num_agegroups),
-        std::vector<ScalarType>((int)InfectionTransition::Count, 0.))}; ///< Vector containing the support_max
-    // for all TransitionDistributions.
-    std::vector<std::vector<std::vector<ScalarType>>> m_transitiondistributions_derivative{
-        std::vector<std::vector<std::vector<ScalarType>>>(
-            int(m_num_agegroups),
-            std::vector<std::vector<ScalarType>>(
-                (int)InfectionTransition::Count,
-                std::vector<ScalarType>(
-                    1, 0.)))}; ///< Vector containing the approximated derivative for all TransitionDistributions for
+    CustomIndexArray<std::vector<ScalarType>, AgeGroup> m_transitiondistributions_support_max; ///<  CustomIndexArray
+    // of Type AgeGroup containing a Vector containing the support_max for all TransitionDistributions.
+    CustomIndexArray<std::vector<std::vector<ScalarType>>, AgeGroup>
+        m_transitiondistributions_derivative; ///< CustomIndexArray
+    //of Type AgeGroup containing a Vector containing the approximated derivative for all TransitionDistributions for
     // all necessary time points.
-    std::vector<std::vector<std::vector<ScalarType>>> m_transitiondistributions_in_forceofinfection{
-        std::vector<std::vector<std::vector<ScalarType>>>(
-            int(m_num_agegroups), std::vector<std::vector<ScalarType>>(2, std::vector<ScalarType>(1, 0.)))}; ///< Vector
-    // containing the weighted TransitionDistributions for all necessary time points in the force of infection term.
+    CustomIndexArray<std::vector<std::vector<ScalarType>>, AgeGroup>
+        m_transitiondistributions_in_forceofinfection; ///< CustomIndexArray
+    // of Type AgeGroup containing a Vector containing the weighted TransitionDistributions for all necessary time
+    // points in the force of infection term.
 };
 
 } // namespace isecir

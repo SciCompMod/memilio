@@ -26,6 +26,7 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/date.h"
 #include "memilio/math/eigen.h"
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -60,10 +61,12 @@ int main(int argc, char** argv)
     // The default parameters of the IDE-SECIR model are used, so that the simulation results are not realistic and are for demonstration purpose only.
 
     // Initialize model.
-    int num_agegroups                        = 1;
-    std::vector<ScalarType> total_population = std::vector<ScalarType>(num_agegroups, 80 * 1e6);
-    std::vector<ScalarType> deaths           = std::vector<ScalarType>(
-        num_agegroups, 0); // The number of deaths will be overwritten if real data is used for initialization.
+    size_t num_agegroups = 1;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_population =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 80 * 1e6);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths = mio::CustomIndexArray<ScalarType, mio::AgeGroup>(
+        mio::AgeGroup(num_agegroups),
+        0.); // The number of deaths will be overwritten if real data is used for initialization.
     ScalarType dt = 0.5;
     mio::isecir::Model model(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count),
                              total_population, deaths, num_agegroups);
@@ -74,9 +77,10 @@ int main(int argc, char** argv)
         std::cout << "You did not provide a valid filename. A default initialization is used." << std::endl;
 
         using Vec = mio::TimeSeries<ScalarType>::Vector;
-        mio::TimeSeries<ScalarType> init(num_agegroups * (int)mio::isecir::InfectionTransition::Count);
-        init.add_time_point<Eigen::VectorXd>(-7., Vec::Constant((int)mio::isecir::InfectionTransition::Count, 1. * dt));
-        while (init.get_last_time() < -dt / 2) {
+        mio::TimeSeries<ScalarType> init(num_agegroups * (size_t)mio::isecir::InfectionTransition::Count);
+        init.add_time_point<Eigen::VectorXd>(-7.,
+                                             Vec::Constant((size_t)mio::isecir::InfectionTransition::Count, 1. * dt));
+        while (init.get_last_time() < -dt / 2.) {
             init.add_time_point(init.get_last_time() + dt,
                                 Vec::Constant((int)mio::isecir::InfectionTransition::Count, 1. * dt));
         }

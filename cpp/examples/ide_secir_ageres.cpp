@@ -17,10 +17,12 @@ int main()
 
     size_t num_agegroups = 2;
 
-    ScalarType tmax                = 5;
-    std::vector<ScalarType> N      = std::vector<ScalarType>(num_agegroups, 10000.);
-    std::vector<ScalarType> deaths = std::vector<ScalarType>(num_agegroups, 6.);
-    ScalarType dt                  = 1.;
+    ScalarType tmax = 5;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 6.);
+    ScalarType dt = 1.;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -86,12 +88,12 @@ int main()
 
     model.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(1)] = vec_delaydistrib2;
 
+    std::vector<ScalarType> vec_prob(num_transitions, 0.5);
+    // The following probabilities must be 1, as there is no other way to go.
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
     for (mio::AgeGroup group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
-        std::vector<ScalarType> vec_prob(num_transitions, 0.5);
-        // The following probabilities must be 1, as there is no other way to go.
-        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
-        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
-        model.parameters.get<mio::isecir::TransitionProbabilities>()[group]                   = vec_prob;
+        model.parameters.get<mio::isecir::TransitionProbabilities>()[group] = vec_prob;
     }
 
     mio::ContactMatrixGroup contact_matrix =
@@ -116,7 +118,7 @@ int main()
     mio::isecir::Simulation sim(model, dt);
     sim.advance(tmax);
 
-    auto interpolated_results = mio::interpolate_simulation_result(sim.get_result(), dt / 2);
+    auto interpolated_results = mio::interpolate_simulation_result(sim.get_result(), dt / 2.);
 
     interpolated_results.print_table(
         {"S1", "E1", "C1", "I1", "H1", "U1", "R1", "D1 ", "S2", "E2", "C2", "I2", "H2", "U2", "R2", "D2 "}, 16, 8);

@@ -40,10 +40,12 @@ protected:
         using Vec = mio::TimeSeries<ScalarType>::Vector;
 
         //Set initial conditions
-        int num_agegroups = 1;
+        size_t num_agegroups = 1;
 
-        std::vector<ScalarType> N      = std::vector<ScalarType>(num_agegroups, 10000.);
-        std::vector<ScalarType> deaths = std::vector<ScalarType>(num_agegroups, 13.10462213);
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
+            mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+            mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 13.10462213);
 
         int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -109,9 +111,8 @@ public:
 TEST_F(ModelTestIdeSecir, checkPopulationConservation)
 {
     mio::TimeSeries<ScalarType> compartments = simulate(15, dt, *model);
-
-    ScalarType num_persons_before = 0.0;
-    ScalarType num_persons_after  = 0.0;
+    ScalarType num_persons_before            = 0.0;
+    ScalarType num_persons_after             = 0.0;
 
     for (auto i = 0; i < compartments[0].size(); i++) {
         num_persons_before += compartments[0][i];
@@ -166,16 +167,19 @@ TEST(IdeSecir, checkStartTime)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    int num_agegroups              = 1;
-    ScalarType tmax                = 3.0;
-    std::vector<ScalarType> N      = std::vector<ScalarType>(num_agegroups, 10000.);
-    std::vector<ScalarType> deaths = std::vector<ScalarType>(num_agegroups, 10.);
-    ScalarType dt                  = 1.;
-    ScalarType t0                  = 2.;
+    size_t num_agegroups = 1;
+    ScalarType tmax      = 3.0;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10.);
+    ScalarType dt = 1.;
+    ScalarType t0 = 2.;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
-    // Create TimeSeries with num_transitions times num_agegroups(=1) elements where transitions needed for simulation will be stored.
+    // Create TimeSeries with num_transitions * num_agegroups elements where transitions needed for simulation
+    // will be stored.
     mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
 
     // Define transitions that will be used for initialization.
@@ -210,12 +214,14 @@ TEST(IdeSecir, checkStartTime)
 // TODO: Add link to material when published.
 TEST(IdeSecir, checkSimulationFunctions)
 {
-    using Vec                      = mio::TimeSeries<ScalarType>::Vector;
-    int num_agegroups              = 1;
-    ScalarType tmax                = 0.5;
-    std::vector<ScalarType> N      = std::vector<ScalarType>(num_agegroups, 10000.);
-    std::vector<ScalarType> deaths = std::vector<ScalarType>(num_agegroups, 10.);
-    ScalarType dt                  = 0.5;
+    using Vec            = mio::TimeSeries<ScalarType>::Vector;
+    size_t num_agegroups = 1;
+    ScalarType tmax      = 0.5;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10.);
+    ScalarType dt = 0.5;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -294,12 +300,14 @@ TEST(IdeSecir, checkInitializations)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    int num_agegroups = 1;
+    size_t num_agegroups = 1;
 
-    ScalarType tmax                = 1;
-    std::vector<ScalarType> N      = std::vector<ScalarType>(num_agegroups, 10000.);
-    std::vector<ScalarType> deaths = std::vector<ScalarType>(num_agegroups, 13.10462213);
-    ScalarType dt                  = 1;
+    ScalarType tmax = 1;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 13.10462213);
+    ScalarType dt = 1;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -314,7 +322,8 @@ TEST(IdeSecir, checkInitializations)
 
     // --- Case with total_confirmed_cases.
     mio::TimeSeries<ScalarType> init_copy1(init);
-    mio::isecir::Model model1(std::move(init_copy1), N, deaths, num_agegroups, std::vector(num_agegroups, 1000.));
+    mio::isecir::Model model1(std::move(init_copy1), N, deaths, num_agegroups,
+                              mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 1000.));
 
     // Check that the initialization method is not already set.
     EXPECT_EQ(0, model1.get_initialization_method_compartments());
@@ -334,7 +343,8 @@ TEST(IdeSecir, checkInitializations)
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 0));
 
     mio::TimeSeries<ScalarType> init_copy2(init);
-    mio::isecir::Model model2(std::move(init_copy2), N, deaths, num_agegroups, std::vector(num_agegroups, 0.));
+    mio::isecir::Model model2(std::move(init_copy2), N, deaths, num_agegroups,
+                              mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 0.));
 
     model2.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
     model2.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 5000;
@@ -349,7 +359,8 @@ TEST(IdeSecir, checkInitializations)
 
     // --- Case with R.
     mio::TimeSeries<ScalarType> init_copy3(init);
-    mio::isecir::Model model3(std::move(init_copy3), N, deaths, num_agegroups, std::vector(num_agegroups, 0.));
+    mio::isecir::Model model3(std::move(init_copy3), N, deaths, num_agegroups,
+                              mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 0.));
 
     model3.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
     model3.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
@@ -364,7 +375,8 @@ TEST(IdeSecir, checkInitializations)
 
     // --- Case with forceofinfection.
     mio::TimeSeries<ScalarType> init_copy4(init);
-    mio::isecir::Model model4(std::move(init_copy4), N, deaths, num_agegroups, std::vector(num_agegroups, 0.));
+    mio::isecir::Model model4(std::move(init_copy4), N, deaths, num_agegroups,
+                              mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 0.));
 
     // Carry out simulation.
     mio::isecir::Simulation sim4(model4, dt);
@@ -378,7 +390,8 @@ TEST(IdeSecir, checkInitializations)
     mio::set_log_level(mio::LogLevel::off);
 
     mio::TimeSeries<ScalarType> init_copy5(init);
-    mio::isecir::Model model5(std::move(init_copy5), N, deaths, num_agegroups, std::vector(num_agegroups, 0.));
+    mio::isecir::Model model5(std::move(init_copy5), N, deaths, num_agegroups,
+                              mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 0.));
 
     model5.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
     model5.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
@@ -392,10 +405,11 @@ TEST(IdeSecir, checkInitializations)
     EXPECT_EQ(-1, sim5.get_model().get_initialization_method_compartments());
 
     // --- Test with negative number of deaths.
-    deaths[0] = -10;
+    deaths[mio::AgeGroup(0)] = -10;
 
     // Here we do not need a copy of init as this is the last use of the vector. We can apply move directly.
-    mio::isecir::Model model6(std::move(init), N, deaths, num_agegroups, std::vector(num_agegroups, 0.));
+    mio::isecir::Model model6(std::move(init), N, deaths, num_agegroups,
+                              mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 0.));
 
     model6.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
     model6.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
@@ -424,10 +438,12 @@ TEST(IdeSecir, testModelConstraints)
     // Follow the same order as in check_constraints().
 
     // --- Test with wrong size of the initial value vector for the flows.
-    int num_agegroups              = 1;
-    std::vector<ScalarType> N      = std::vector<ScalarType>(num_agegroups, 10000.);
-    std::vector<ScalarType> deaths = std::vector<ScalarType>(num_agegroups, 10.);
-    ScalarType dt                  = 1;
+    size_t num_agegroups = 1;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10.);
+    ScalarType dt = 1;
 
     int num_transitions  = (int)mio::isecir::InfectionTransition::Count;
     int num_compartments = (int)mio::isecir::InfectionState::Count;
@@ -458,7 +474,7 @@ TEST(IdeSecir, testModelConstraints)
     while (init.get_last_time() < 0) {
         init.add_time_point(init.get_last_time() + dt, vec_init);
     }
-    deaths[0] = -10;
+    deaths[mio::AgeGroup(0)] = -10;
 
     // Initialize a model.
     mio::isecir::Model model_negative_deaths(std::move(init), N, deaths, num_agegroups);
@@ -475,7 +491,7 @@ TEST(IdeSecir, testModelConstraints)
     while (init_few_timepoints.get_last_time() < 0) {
         init_few_timepoints.add_time_point(init_few_timepoints.get_last_time() + dt, vec_init);
     }
-    deaths[0] = 10;
+    deaths[mio::AgeGroup(0)] = 10;
 
     // Initialize a model.
     mio::isecir::Model model(std::move(init_few_timepoints), N, deaths, num_agegroups);
@@ -559,7 +575,7 @@ TEST(IdeSecir, testModelConstraints)
 // b) Test if check_constraints() function of Parameters does not complain if parameters are set within correct ranges.
 TEST(IdeSecir, testParametersConstraints)
 {
-    int num_agegroups = 1;
+    size_t num_agegroups = 1;
     // Create an object from the class Parameters.
     mio::isecir::Parameters parameters(num_agegroups);
 
@@ -692,12 +708,14 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    int num_agegroups = 1;
+    size_t num_agegroups = 1;
 
-    ScalarType tmax                = 30;
-    std::vector<ScalarType> N      = std::vector<ScalarType>(num_agegroups, 10000.);
-    std::vector<ScalarType> deaths = std::vector<ScalarType>(num_agegroups, 10.);
-    ScalarType dt                  = 1;
+    ScalarType tmax = 30;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10.);
+    ScalarType dt = 1;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
@@ -767,7 +785,7 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
                 1e-8);
     EXPECT_NEAR(secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::InfectedCritical], 0,
                 1e-8);
-                
+
     // Check whether equilibrium has the right proportion between Recovered and Dead.
     EXPECT_NEAR((vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)] /
                  vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)]) *
@@ -786,12 +804,14 @@ TEST(IdeSecir, compareEquilibria)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    int num_agegroups = 1;
+    size_t num_agegroups = 1;
 
-    ScalarType tmax                = 20;
-    std::vector<ScalarType> N      = std::vector<ScalarType>(num_agegroups, 10000.);
-    std::vector<ScalarType> deaths = std::vector<ScalarType>(num_agegroups, 10.);
-    ScalarType dt                  = 1;
+    ScalarType tmax = 20;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10.);
+    ScalarType dt = 1;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
