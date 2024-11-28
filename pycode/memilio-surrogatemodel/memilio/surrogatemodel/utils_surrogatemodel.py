@@ -110,6 +110,16 @@ def get_population(path):
 
 def generate_dampings_withshadowdamp(number_of_dampings, days, min_distance, min_damping_day, n_runs):
 
+    # the idea is to draw dampings with a minimum distance while traying to keep
+    # the distribution of damping days uniformly. We create a list of all possible days,
+    # draw one damping day and delete all days before and after the damping that
+    # are within the range of the min_distance. To ensure that the the data is not biased,
+    # we include days outside the usual range. A day x in the middle of the list can
+    # be removed from the list by a drawn day before and after x. A day in the beggining
+    # of the list can be removed only by drawn days y , y>x. This leads to the effect that
+    # the first and last days are chosen more often. By drawing days ouside of the allowed range
+    # (forbidden dampings) which are removed after, we ensure that also the days atthe beginning and
+    # end of the list can be removed from the list because of the minimum distance.
     number_of_dampings = number_of_dampings
     days = days
     min_distance = min_distance
@@ -120,47 +130,62 @@ def generate_dampings_withshadowdamp(number_of_dampings, days, min_distance, min
     count_runs = 0
     count_shadow = 0
     while len(all_dampings) < number_of_runs:
-
-        days_list = list(range((min_damping_day), days))
+        # Reset the days list and dampings for each run
+        days_list = list(range(min_damping_day, days))
         dampings = []
+
         if count_shadow < 2:
-            for i in range(number_of_dampings):
-                damp = random.choice(days_list)
-                days_before = list(range(damp-(min_distance), damp))
-                days_after = list(range(damp, damp+(min_distance+1)))
-                dampings.append(damp)
-                days_list = [ele for ele in days_list if ele not in (
-                    days_before+days_after)]
+            for _ in range(number_of_dampings):
+                if len(days_list) > 0:
+                    damp = random.choice(days_list)
+                    days_before = list(range(damp - min_distance, damp))
+                    days_after = list(range(damp, damp + min_distance + 1))
+                    dampings.append(damp)
+                    days_list = [ele for ele in days_list if ele not in (
+                        days_before + days_after)]
+                else:
+                    # Restart the process when days_list is empty
+                    break
+            else:
+                # Exit loop only if dampings were successfully drawn
+                forbidden_damping_values = list(
+                    range(0 - min_distance, 0)) + list(range(days + 1, days + min_distance + 1))
+                dampings = [
+                    ele for ele in dampings if ele not in forbidden_damping_values]
+                if len(dampings) >= number_of_dampings:
+                    all_dampings.append(sorted(dampings))
+                continue
         else:
-            # chose a forbidden damping
+            # Generate forbidden damping
             damp = random.choice(
-                list(range((0-min_distance), 0)) + list(range(days+1, (days+min_distance+1))))
-
-            days_before = list(range(damp-(min_distance), damp))
-            days_after = list(range(damp, damp+(min_distance+1)))
-            days_list = [ele for ele in days_list if ele not in (
-                days_before+days_after)]
+                list(range(0 - min_distance, 0)) +
+                list(range(days + 1, days + min_distance + 1))
+            )
             dampings.append(damp)
-            for i in range(number_of_dampings):
-
-                damp = random.choice(days_list)
-                days_before = list(range(damp-(min_distance), damp))
-                days_after = list(range(damp, damp+(min_distance+1)))
-                dampings.append(damp)
-                days_list = [ele for ele in days_list if ele not in (
-                    days_before+days_after)]
+            for _ in range(number_of_dampings):
+                if len(days_list) > 0:
+                    damp = random.choice(days_list)
+                    days_before = list(range(damp - min_distance, damp))
+                    days_after = list(range(damp, damp + min_distance + 1))
+                    dampings.append(damp)
+                    days_list = [ele for ele in days_list if ele not in (
+                        days_before + days_after)]
+                else:
+                    # Restart the process when days_list is empty
+                    break
+            else:
+                # Reset shadow count only if dampings were successfully drawn
                 count_shadow = 0
+                forbidden_damping_values = list(
+                    range(0 - min_distance, 0)) + list(range(days + 1, days + min_distance + 1))
+                dampings = [
+                    ele for ele in dampings if ele not in forbidden_damping_values]
+                if len(dampings) >= number_of_dampings:
+                    all_dampings.append(sorted(dampings))
+                continue
 
-        forbidden_damping_values = list(
-            range((0-min_distance), 0)) + list(range(days+1, (days+min_distance+1)))
-        dampings = [
-            ele for ele in dampings if ele not in forbidden_damping_values]
+        # Restart process if any issue occurred
         count_runs += 1
         count_shadow += 1
-        # select first or last five dampings
-        if len(dampings) >= number_of_dampings:
-            # dampings = random.sample(dampings, 5)
-            all_dampings.append(sorted(dampings))
-        #     if count_runs % 2 == 0:
 
-    return np.asarray(all_dampings)
+    return all_dampings
