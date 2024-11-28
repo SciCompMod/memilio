@@ -106,25 +106,8 @@ struct LocationSizesLogger : public mio::LogAlways {
     std::vector<uint32_t> persons_per_location;
 };
 
-// logger to double check graph output
-struct LocationPopulationLogger : public mio::LogAlways {
-    using Type = std::vector<std::vector<uint32_t>>;
-
-    Type log(const mio::abm::Simulation& sim)
-    {
-        std::vector<std::vector<uint32_t>> loc_pop(sim.get_world().get_locations().size());
-        for (uint32_t loc = 0; loc < loc_pop.size(); loc++) {
-            for (auto&& p : sim.get_world().get_locations()[loc].get_persons()) {
-                loc_pop[loc].push_back(p->get_person_id());
-            }
-        }
-        return loc_pop;
-    }
-};
-
 void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
-                         const std::vector<LocationPerPersonLogger::Type>& loclog,
-                         const std::vector<std::vector<std::vector<uint32_t>>>& loc_pop)
+                         const std::vector<LocationPerPersonLogger::Type>& loclog)
 {
     std::bitset<(uint32_t)mio::abm::LocationType::Count> missing_loc_types;
     out << "# Hour, PersonId1, PersonId2, Intensity\n";
@@ -132,15 +115,6 @@ void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
         for (size_t p = 0; p < loclog[t].second.size(); p++) { // iterate over population
             assert(loclog[t].second[p] != mio::abm::INVALID_LOCATION_INDEX);
             const auto& loc = world.get_locations()[loclog[t].second[p]]; // p's location at time t
-            {
-                const auto& pop   = loc_pop[t][loc.get_index()];
-                const auto& p_itr = std::find(pop.begin(), pop.end(), p);
-                if (p_itr == pop.end()) {
-                    const auto loc_type = loc_type_name(loc.get_type());
-                    mio::log_error("person is not at logged location!!");
-                    (void)loc_type;
-                }
-            }
             // skip locations without assigments
             if (loc.get_assigned_persons().size() == 0) {
                 missing_loc_types[(uint32_t)loc.get_type()] = true;
@@ -159,18 +133,9 @@ void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
                     // skip false contacts, i.e. ones that are not at p's location
                     continue;
                 }
-
                 const auto& t_matrix = loc.get_contact_matrices()[loclog[t].first.hour_of_day()];
                 const auto intensity = t_matrix(std::distance(loc.get_assigned_persons().begin(), p_loc), contact);
                 if (intensity > 0) {
-                    {
-                        const auto& pop   = loc_pop[t][loc.get_index()];
-                        const auto& p_itr = std::find(pop.begin(), pop.end(), p);
-                        if (p_itr == pop.end()) {
-                            mio::log_error("contact is not at logged location!!");
-                            const auto assignees = loc.get_assigned_persons();
-                        }
-                    }
                     out << loclog[t].first.hours() << ", " << p << ", " << contact_id << ", " << intensity << "\n";
                 }
             }
@@ -556,20 +521,19 @@ int main()
     // Create a history object to store the time series of the infection states.
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
-    mio::History<mio::DataWriterToMemory, LocationPerPersonLogger, LocationPopulationLogger, LocationSizesLogger>
-        loclog;
+    mio::History<mio::DataWriterToMemory, LocationPerPersonLogger, LocationSizesLogger> loclog;
     // Run the simulation until tmax with the history object.
     sim.advance(tmax, historyTimeSeries, loclog);
 
     {
         std::ofstream contactfile("micro_abm_contacts.csv");
-        write_contacts_flat(contactfile, sim.get_world(), std::get<0>(loclog.get_log()), std::get<1>(loclog.get_log()));
+        write_contacts_flat(contactfile, sim.get_world(), std::get<0>(loclog.get_log()));
         std::cout << "Contacts written to micro_abm_contacts.csv" << std::endl;
     }
 
     {
         std::ofstream outfile("debug_location-sizes.csv");
-        for (auto& loc_sizes : std::get<2>(loclog.get_log())) {
+        for (auto& loc_sizes : std::get<1>(loclog.get_log())) {
             outfile << "t=" << loc_sizes.first.hours() << ": ";
             auto max = std::max_element(loc_sizes.second.begin(), loc_sizes.second.end());
             // print out maximum as well as ID and type
