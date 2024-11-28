@@ -7,7 +7,7 @@ import numpy as np
 from memilio.simulation.osecir import InfectionState
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
+# import seaborn as sns
 from matplotlib.ticker import ScalarFormatter
 
 # load data path = os.path.dirname(os.path.realpath(__file__))
@@ -140,36 +140,100 @@ def lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename
 
 
 def lineplots_pred_labels(pred_reversed, labels_reversed, num_plots):
+    from matplotlib.transforms import Bbox
 
     infectionstates = ['Susceptible', 'Exposed', 'InfectedNoSymptoms',
                        'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
 
-    for i in range(num_plots):
+    def get_best_text_position(ax, textstr, props, candidate_positions):
+        """
+        Determine the best position for the text box to minimize overlap with plot lines.
+        """
+        best_position = candidate_positions[0]
+        min_overlap = float('inf')  # Initialize with a very large number
 
+        for pos in candidate_positions:
+            x_pos, y_pos = pos
+            # Simulate the bounding box of the text at this position
+            renderer = ax.figure.canvas.get_renderer()
+            temp_text = ax.text(
+                x_pos, y_pos, textstr, transform=ax.transAxes, fontsize=10,
+                bbox=props, visible=False  # Don't draw it; just calculate position
+            )
+            text_bbox = temp_text.get_window_extent(renderer=renderer)
+            temp_text.remove()  # Remove the temporary text box
+
+            # Convert bbox to data coordinates
+            text_bbox_data = Bbox(ax.transData.inverted().transform(text_bbox))
+
+            # Check overlap with plotted lines
+            overlap = 0
+            for line in ax.get_lines():
+                line_data = line.get_xydata()
+                in_bbox = (
+                    (line_data[:, 0] >= text_bbox_data.xmin) &
+                    (line_data[:, 0] <= text_bbox_data.xmax) &
+                    (line_data[:, 1] >= text_bbox_data.ymin) &
+                    (line_data[:, 1] <= text_bbox_data.ymax)
+                )
+                overlap += in_bbox.sum()  # Count the points within the text box
+
+            if overlap < min_overlap:
+                min_overlap = overlap
+                best_position = pos  # Update the best position
+
+        return best_position
+
+    for i in range(num_plots):
         plt.clf()
         fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6), (ax7, ax8)) = plt.subplots(
-            nrows=4, ncols=2, sharey=False, figsize=(10, 13), constrained_layout=True)
+            nrows=4, ncols=2, sharey=False, figsize=(10, 13), constrained_layout=True, dpi=300)
 
         axes = [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8]
         # Formatter for scientific notation (e.g., x10^6)
         sci_formatter = ScalarFormatter(useMathText=True)
         sci_formatter.set_powerlimits((6, 6))  # Force le6 notation (1e6)
+
+        # Candidate positions in Axes coordinates
+        candidate_positions = [
+            (0.05, 0.95),  # Top-left
+            (0.95, 0.95),  # Top-right
+            (0.05, 0.05),  # Bottom-left
+            (0.95, 0.05),  # Bottom-right
+        ]
+
         for ax, c, p, l, input in zip(axes, infectionstates, pred_reversed[i].transpose(), labels_reversed[i].transpose(), np.expm1(np.asarray(test_inputs))[i].transpose()):
             ax.plot(np.arange(1, 6), input, color='black',
-                    label='Inputs', linewidth=2)
+                    label='Inputs', linewidth=3)
 
-            ax.plot(np.arange(6, 96), l, color='orange',
-                    label='Labels', linewidth=2)
+            ax.plot(np.arange(6, pred_reversed.shape[1] + 6), l, color='orange',
+                    label='Labels', linewidth=3)
 
-            ax.plot(np.arange(6, 96), p, color='blue', label='Predictions',
-                    linestyle='--', linewidth=1)
+            ax.plot(np.arange(6, pred_reversed.shape[1]+6), p, color='blue', label='Predictions',
+                    linestyle='--', linewidth=2)
 
-            # ax.set_xlabel('Day')
+            # Prepare text box properties and text
+            textstr = '\n'.join((
+                'not log MAPE = ' +
+                str(np.round(100 * np.mean(abs((l - p) / l)), 4)) + '%',
+                'log MAPE: ' +
+                str(np.round(
+                    100 * np.mean(abs((np.log1p(l) - np.log1p(p)) / np.log1p(l))), 4)) + '%'
+            ))
+            props = dict(boxstyle='round,pad=0.3',
+                         facecolor='lightgray', edgecolor='black', alpha=0.8)
+
+            # Dynamically determine the best position for the text box
+            best_position = get_best_text_position(
+                ax, textstr, props, candidate_positions)
+            best_position = (0.95, 0.95)
+            ax.text(*best_position, textstr, transform=ax.transAxes, fontsize=10,
+                    verticalalignment='top', bbox=props)
+
             ax.set_ylabel('Number of individuals')
-            ax.set_title(c+' / MAPE = ' + str(np.round(100 *
-                         np.mean(abs((l - p)/l)), 4))+'%'+"//scaled MAPE: " + str(np.round(100 *
-                                                                                           np.mean(abs((np.log1p(l) - np.log1p(p))/np.log1p(l))), 4)), fontsize=10)
+            ax.set_title(c)
             ax.yaxis.set_major_formatter(sci_formatter)
+
         ax7.set_xlabel('Day')
         ax8.set_xlabel('Day')
 
@@ -182,7 +246,7 @@ def lineplots_pred_labels(pred_reversed, labels_reversed, num_plots):
 
         fig.legend(lines[:3], line_labels[:3], loc='lower center')
 
-        print('Plot No.'+str(i) + ' done.')
+        print('Plot No.' + str(i) + ' done.')
         plt.savefig("/localdata1/gnn_paper_2024/images/pred_labels_trajectories/no_agegroups_90days_I_based_pred_labels_withinput/compartment_lines_noagegroups_90days_I_based_pred_labels_10k_paper_no" + str(i) + ".png")
 
 
