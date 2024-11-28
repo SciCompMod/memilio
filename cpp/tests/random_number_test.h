@@ -33,7 +33,7 @@ public:
      * @return A random value between min and max. 
      */
     template <class FP = double>
-    double random_number(FP min = FP{-1e+3}, FP max = FP{1e+3})
+    FP random_number(FP min = FP{-1e+3}, FP max = FP{1e+3})
     {
         return std::uniform_real_distribution<FP>(min, max)(m_rng);
     }
