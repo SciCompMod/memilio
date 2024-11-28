@@ -35,7 +35,7 @@ from memilio.simulation.osecir import (Index_InfectionState,
                                        InfectionState, Model, Simulation,
                                        interpolate_simulation_result, simulate)
 
-#from memilio.surrogatemodel.utils_surrogatemodel import remove_confirmed_compartments
+# from memilio.surrogatemodel.utils_surrogatemodel import remove_confirmed_compartments
 
 
 def remove_confirmed_compartments(dataset_entries, num_groups):
@@ -61,6 +61,7 @@ def remove_confirmed_compartments(dataset_entries, num_groups):
             np.delete(dataset_entries_reshaped, [3, 5], axis=1).flatten()
         )
     return new_dataset_entries
+
 
 def run_secir_simple_simulation(days):
     """! Uses an ODE SECIR model allowing for asymptomatic infection. The model is not stratified by region or demographic properties such as age.
@@ -93,18 +94,19 @@ def run_secir_simple_simulation(days):
 
     # Initial number of people in each compartment with random numbers
     model.populations[A0, Index_InfectionState(
-        InfectionState.Exposed)] = populations*random.uniform(0.00025,0.005)
+        InfectionState.Exposed)] = populations*random.uniform(0.00025, 0.005)
     model.populations[A0, Index_InfectionState(
-        InfectionState.InfectedNoSymptoms)] = populations * random.uniform(0.0001,0.0035)
+        InfectionState.InfectedNoSymptoms)] = populations * random.uniform(0.0001, 0.0035)
     model.populations[A0, Index_InfectionState(
-        InfectionState.InfectedSymptoms)] = populations * random.uniform(0.00007,0.001)
+        InfectionState.InfectedSymptoms)] = populations * random.uniform(0.00007, 0.001)
     model.populations[A0, Index_InfectionState(
-        InfectionState.InfectedSevere)] = populations * random.uniform(0.00003,0.0006)
+        InfectionState.InfectedSevere)] = populations * random.uniform(0.00003, 0.0006)
     model.populations[A0, Index_InfectionState(
-        InfectionState.InfectedCritical)] = populations * random.uniform(0.00001,0.0002)
+        InfectionState.InfectedCritical)] = populations * random.uniform(0.00001, 0.0002)
     model.populations[A0, Index_InfectionState(
-        InfectionState.Recovered)] = populations * random.uniform(0.002,0.08)
-    model.populations[A0, Index_InfectionState(InfectionState.Dead)] = populations * random.uniform(0,0.0003)
+        InfectionState.Recovered)] = populations * random.uniform(0.002, 0.08)
+    model.populations[A0, Index_InfectionState(
+        InfectionState.Dead)] = populations * random.uniform(0, 0.0003)
     model.populations.set_difference_from_total(
         (A0, Index_InfectionState(InfectionState.Susceptible)), populations)
 
@@ -147,7 +149,7 @@ def run_secir_simple_simulation(days):
 
 
 def generate_data(
-        num_runs, path, input_width, label_width, normalize=True,
+        num_runs, path, input_width, label_width, filename, normalize=True,
         save_data=True):
     """! Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
     Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
@@ -208,7 +210,7 @@ def generate_data(
             os.mkdir(path)
 
         # save dict to json file
-        with open(os.path.join(path, 'data_secir_simple_90days_100k.pickle'), 'wb') as f:
+        with open(os.path.join(path, filename), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -218,9 +220,11 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data_paper')
+    path_data = '/hpc_data/schm_a45/data_paper/'
+    filename = 'data_secir_simple_90days_10k.pickle'
 
     input_width = 5
     label_width = 90
-    num_runs = 100000
+    num_runs = 10000
     data = generate_data(num_runs, path_data, input_width,
-                         label_width, save_data=True)
+                         label_width, filename, save_data=True)
