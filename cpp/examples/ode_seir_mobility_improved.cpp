@@ -85,10 +85,11 @@ int main()
     auto& population = model.m_population_after_commuting;
     for (int region_n = 0; region_n < number_regions; ++region_n) {
         for (int age = 0; age < number_age_groups; ++age) {
-            auto const population_region =
-                model.populations.template slice<mio::oseirmobilityimproved::Region>({(size_t)region_n, 1});
-            auto const population_region_age = population_region.template slice<mio::AgeGroup>({(size_t)age, 1});
-            auto population_n = std::accumulate(population_region_age.begin(), population_region_age.end(), 0.);
+            double population_n = 0;
+            for (size_t state = 0; state < (size_t)mio::oseirmobilityimproved::InfectionState::Count; state++) {
+                population_n += model.populations[{mio::oseirmobilityimproved::Region(region_n), mio::AgeGroup(age),
+                                                   mio::oseirmobilityimproved::InfectionState(state)}];
+            }
             population[{mio::oseirmobilityimproved::Region(region_n), mio::AgeGroup(age)}] += population_n;
             for (int region_m = 0; region_m < number_regions; ++region_m) {
                 population[{mio::oseirmobilityimproved::Region(region_n), mio::AgeGroup(age)}] -=
@@ -119,30 +120,6 @@ int main()
 
     auto reproduction_numbers = model.get_reproduction_numbers(result_from_sim);
     std::cout << "\nbasis reproduction number: " << reproduction_numbers[0] << "\n";
-    // bool print_to_terminal = true;
 
-    // result_from_sim.print_table();
-
-    // if (print_to_terminal) {
-
-    //     std::vector<std::string> vars = {"S", "E", "I", "R"};
-    //     printf("\n # t");
-    //     for (size_t i = 0; i < (size_t)model.parameters.get_num_regions(); i++) {
-    //         for (size_t k = 0; k < (size_t)mio::oseirmobilityimproved::InfectionState::Count; k++) {
-    //             printf(" %s_%d", vars[k].c_str(), (int)i);
-    //         }
-    //     }
-
-    //     auto num_points = static_cast<size_t>(result_from_sim.get_num_time_points());
-    //     for (size_t i = 0; i < num_points; i++) {
-    //         printf("\n%.14f ", result_from_sim.get_time(i));
-    //         for (size_t k = 0; k < (size_t)model.parameters.get_num_regions(); k++) {
-    //             for (size_t j = 0; j < (size_t)mio::oseirmobilityimproved::InfectionState::Count; j++) {
-    //                 printf(" %.14f", result_from_sim.get_value(
-    //                                      i)[j + (size_t)mio::oseirmobilityimproved::InfectionState::Count * (int)k]);
-    //             }
-    //         }
-    //     }
-    //     printf("\n");
-    // }
+    result_from_sim.print_table();
 }
