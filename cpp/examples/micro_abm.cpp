@@ -251,7 +251,7 @@ int main()
     // Setup the world
 
     //1. Households
-    int n_households = 100; // we do 100 Households -> 50/30/15/5 split for 1/2/3/4 person households
+    int n_households = 300;
     auto child       = mio::abm::HouseholdMember(num_age_groups); // A child is 25/75% 0-4 or 5-24.
     child.set_age_weight(age_group_0_to_4, 1);
     child.set_age_weight(age_group_5_to_24, 3);
@@ -267,7 +267,7 @@ int main()
     auto onePersonHousehold_full  = mio::abm::Household();
     onePersonHousehold_full.add_members(parent, 3);
     onePersonHousehold_full.add_members(grandparent, 1);
-    onePersonHousehold_group.add_households(onePersonHousehold_full, n_households * 0.5);
+    onePersonHousehold_group.add_households(onePersonHousehold_full, n_households * 0.4);
 
     // Two-person household with two parents.
     auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
@@ -281,14 +281,14 @@ int main()
     auto threePersonHousehold_full  = mio::abm::Household();
     threePersonHousehold_full.add_members(child, 1);
     threePersonHousehold_full.add_members(parent, 2);
-    threePersonHousehold_group.add_households(threePersonHousehold_full, n_households * 0.15);
+    threePersonHousehold_group.add_households(threePersonHousehold_full, n_households * 0.2);
 
     // Four-person household with two parents and two children.
     auto fourPersonHousehold_group = mio::abm::HouseholdGroup();
     auto fourPersonHousehold_full  = mio::abm::Household();
     fourPersonHousehold_full.add_members(child, 2);
     fourPersonHousehold_full.add_members(parent, 2);
-    fourPersonHousehold_group.add_households(fourPersonHousehold_full, n_households * 0.05);
+    fourPersonHousehold_group.add_households(fourPersonHousehold_full, n_households * 0.1);
 
     add_household_group_to_world(world, onePersonHousehold_group);
     add_household_group_to_world(world, twoPersonHousehold_group);
@@ -297,54 +297,53 @@ int main()
 
     //2. Schools
     std::vector<mio::abm::LocationId> schools;
-    const std::vector<int> school_sizes{60, 60};
-    std::vector<std::string> school_files{"highschool_60_60.csv", "primaryschool_60_60.csv"};
+    const std::vector<int> school_sizes{60, 60, 60, 60};
+    std::vector<std::string> school_files{"highschool_60_60.csv", "primaryschool_60_60.csv", "highschool_60_60.csv",
+                                          "primaryschool_60_60.csv"};
     for (auto size : school_sizes) {
         schools.push_back(world.add_location(mio::abm::LocationType::School));
         world.get_individualized_location(schools.back())
             .get_infection_parameters()
             .set<mio::abm::MaximumContacts>(size);
     }
-    // auto school_other = world.add_location(mio::abm::LocationType::School);
-    // world.get_individualized_location(school_other).get_infection_parameters().set<mio::abm::MaximumContacts>(1000);
 
     //3. Workplaces
     std::vector<mio::abm::LocationId> works;
-    const std::vector<int> work_sizes{20, 20, 15, 15, 15, 15, 15, 5, 100};
-    std::vector<std::string> work_files{"office_20_20.csv", "office_20_20.csv", "office_15_15.csv",
-                                        "office_15_15.csv", "office_15_15.csv", "office_15_15.csv",
-                                        "office_15_15.csv", "office_5_5.csv",   "office_100_100.csv"};
+    const std::vector<int> work_sizes{20, 20, 20, 20, 15, 15, 15, 15, 15, 5, 100, 100, 100, 100, 100, 100};
+    std::vector<std::string> work_files{
+        "office_20_20.csv",   "office_20_20.csv",   "office_20_20.csv",   "office_20_20.csv",
+        "office_15_15.csv",   "office_15_15.csv",   "office_15_15.csv",   "office_15_15.csv",
+        "office_15_15.csv",   "office_5_5.csv",     "office_100_100.csv", "office_100_100.csv",
+        "office_100_100.csv", "office_100_100.csv", "office_100_100.csv", "office_100_100.csv"};
     for (auto size : work_sizes) {
         works.push_back(world.add_location(mio::abm::LocationType::Work));
         world.get_individualized_location(works.back()).get_infection_parameters().set<mio::abm::MaximumContacts>(size);
     }
-    // auto work_other = world.add_location(mio::abm::LocationType::Work);
-    // world.get_individualized_location(work_other).get_infection_parameters().set<mio::abm::MaximumContacts>(1000);
 
     //4. Social Events
-    // Maximum contacs limit the number of people that a person can infect while being at this location.
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);
     world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
 
     //5. Shops
     std::vector<mio::abm::LocationId> shops;
-    const std::vector<int> shop_sizes{5, 5, 5, 5, 5, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30};
-    std::vector<std::string> shop_files(5, "supermarked_5_5.csv");
+    const std::vector<int> shop_sizes{5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  30, 30, 30, 30,
+                                      30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
+                                      30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30};
+    std::vector<std::string> shop_files(10, "supermarked_5_5.csv");
     shop_files.resize(shop_sizes.size(), "supermarked_30_30.csv");
     for (auto size : shop_sizes) {
         shops.push_back(world.add_location(mio::abm::LocationType::BasicsShop));
         world.get_individualized_location(shops.back()).get_infection_parameters().set<mio::abm::MaximumContacts>(size);
     }
-    // auto shop_other = world.add_location(mio::abm::LocationType::BasicsShop);
-    // world.get_individualized_location(shop_other).get_infection_parameters().set<mio::abm::MaximumContacts>(1000);
 
     //6. Hospitals
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
-    world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    // Add ICU with 5 maximum contacs.
+    world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    // Add ICU with 10 maximum contacts.
     auto icu = world.add_location(mio::abm::LocationType::ICU);
-    world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
 
+    // Infection distribution remains unchanged
     std::vector<double> infection_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
     for (auto& person : world.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
@@ -423,7 +422,8 @@ int main()
     // Load contact matrices
     std::string contacts_path =
         // "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/contacts/microcontacts/24h_networks_csv";
-        "/home/schm_r6/Documents/24h_networks_csv";
+        // "/home/schm_r6/Documents/24h_networks_csv";
+        "/localdata2/dial_mo/Graphs/24h_networks_csv";
 
     for (auto& location : world.get_locations()) {
         if (location.get_type() == mio::abm::LocationType::Home) {
