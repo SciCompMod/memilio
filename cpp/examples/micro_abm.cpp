@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
+#include <iterator>
 #include <ostream>
 #include <string>
 #include <iostream>
@@ -19,9 +20,59 @@
 #include "abm/simulation.h"
 #include "abm/time.h"
 #include "abm/world.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/io/history.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/random_number_generator.h"
+
+constexpr std::string_view loc_type_name(mio::abm::LocationType t)
+{
+    using mio::abm::LocationType;
+    switch (t) {
+    case LocationType::Home:
+        return "Home";
+    case LocationType::BasicsShop:
+        return "BasicsShop";
+    case LocationType::Car:
+        return "Car";
+    case LocationType::Cemetery:
+        return "Cemetery";
+    case LocationType::Hospital:
+        return "Hospital";
+    case LocationType::ICU:
+        return "ICU";
+    case LocationType::PublicTransport:
+        return "PublicTransport";
+    case LocationType::TransportWithoutContact:
+        return "TransportWithoutContact";
+    case LocationType::School:
+        return "School";
+    case LocationType::Work:
+        return "Work";
+    case LocationType::SocialEvent:
+        return "SocialEvent";
+    case LocationType::Count:
+        return "InvalidValueCount";
+    default:
+        return "InvalidValue";
+    }
+}
+
+const std::string_view age_group_name(const mio::AgeGroup& a)
+{
+    switch (a.get()) {
+    case 0:
+        return "age_group_0_to_4";
+    case 1:
+        return "age_group_5_to_24";
+    case 2:
+        return "age_group_25_to_64";
+    case 3:
+        return "age_group_65_plus";
+    default:
+        return "InvalidValue";
+    }
+}
 
 struct LocationPerPersonLogger : public mio::LogAlways {
     using Type = std::pair<mio::abm::TimePoint, std::vector<uint32_t>>;
@@ -39,8 +90,41 @@ struct LocationPerPersonLogger : public mio::LogAlways {
     std::vector<uint32_t> location_per_person;
 };
 
+struct LocationSizesLogger : public mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, std::vector<uint32_t>>;
+
+    Type log(const mio::abm::Simulation& sim)
+    {
+        persons_per_location.resize(sim.get_world().get_locations().size());
+        std::transform(sim.get_world().get_locations().begin(), sim.get_world().get_locations().end(),
+                       persons_per_location.begin(), [](const mio::abm::Location& l) {
+                           return l.get_number_persons();
+                       });
+        return std::pair(sim.get_time(), persons_per_location);
+    }
+
+    std::vector<uint32_t> persons_per_location;
+};
+
+// logger to double check graph output
+struct LocationPopulationLogger : public mio::LogAlways {
+    using Type = std::vector<std::vector<uint32_t>>;
+
+    Type log(const mio::abm::Simulation& sim)
+    {
+        std::vector<std::vector<uint32_t>> loc_pop(sim.get_world().get_locations().size());
+        for (uint32_t loc = 0; loc < loc_pop.size(); loc++) {
+            for (auto&& p : sim.get_world().get_locations()[loc].get_persons()) {
+                loc_pop[loc].push_back(p->get_person_id());
+            }
+        }
+        return loc_pop;
+    }
+};
+
 void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
-                         const std::vector<LocationPerPersonLogger::Type>& loclog)
+                         const std::vector<LocationPerPersonLogger::Type>& loclog,
+                         const std::vector<std::vector<std::vector<uint32_t>>>& loc_pop)
 {
     std::bitset<(uint32_t)mio::abm::LocationType::Count> missing_loc_types;
     out << "# Hour, PersonId1, PersonId2, Intensity\n";
@@ -48,6 +132,15 @@ void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
         for (size_t p = 0; p < loclog[t].second.size(); p++) { // iterate over population
             assert(loclog[t].second[p] != mio::abm::INVALID_LOCATION_INDEX);
             const auto& loc = world.get_locations()[loclog[t].second[p]]; // p's location at time t
+            {
+                const auto& pop   = loc_pop[t][loc.get_index()];
+                const auto& p_itr = std::find(pop.begin(), pop.end(), p);
+                if (p_itr == pop.end()) {
+                    const auto loc_type = loc_type_name(loc.get_type());
+                    mio::log_error("person is not at logged location!!");
+                    (void)loc_type;
+                }
+            }
             // skip locations without assigments
             if (loc.get_assigned_persons().size() == 0) {
                 missing_loc_types[(uint32_t)loc.get_type()] = true;
@@ -57,16 +150,28 @@ void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
             assert(p_loc != loc.get_assigned_persons().end());
             // write out all contacts with a positive intensity
             for (size_t contact = 0; contact < loc.get_assigned_persons().size(); contact++) {
-                if (loc.get_assigned_persons()[contact] == mio::abm::INVALID_PERSON_ID ||
-                    loc.get_assigned_persons()[contact] == p) {
+                const auto contact_id = loc.get_assigned_persons()[contact];
+                if (contact_id == mio::abm::INVALID_PERSON_ID || contact_id == p) {
                     // skip loops (contact with oneself) and filler entries (invalid ids)
                     continue;
                 }
+                if (loclog[t].second[contact_id] != loc.get_index()) {
+                    // skip false contacts, i.e. ones that are not at p's location
+                    continue;
+                }
+
                 const auto& t_matrix = loc.get_contact_matrices()[loclog[t].first.hour_of_day()];
-                const auto intensity = t_matrix(p_loc - loc.get_assigned_persons().begin(), contact);
+                const auto intensity = t_matrix(std::distance(loc.get_assigned_persons().begin(), p_loc), contact);
                 if (intensity > 0) {
-                    out << loclog[t].first.hours() << ", " << p << ", " << loc.get_assigned_persons()[contact] << ", "
-                        << intensity << "\n";
+                    {
+                        const auto& pop   = loc_pop[t][loc.get_index()];
+                        const auto& p_itr = std::find(pop.begin(), pop.end(), p);
+                        if (p_itr == pop.end()) {
+                            mio::log_error("contact is not at logged location!!");
+                            const auto assignees = loc.get_assigned_persons();
+                        }
+                    }
+                    out << loclog[t].first.hours() << ", " << p << ", " << contact_id << ", " << intensity << "\n";
                 }
             }
         }
@@ -74,7 +179,8 @@ void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
     if (missing_loc_types.any()) {
         for (uint32_t i = 0; i < (uint32_t)mio::abm::LocationType::Count; i++) {
             if (missing_loc_types[i]) {
-                mio::log_warning("Missing contact matrix for a Location of type: {}", i);
+                mio::log_warning("Missing contact matrix for a Location of type: {}",
+                                 loc_type_name((mio::abm::LocationType)i));
             }
         }
     }
@@ -227,6 +333,8 @@ void assign_home_contact_matrix(mio::abm::World& world, mio::abm::Location& home
 
 int main()
 {
+    mio::set_log_level(mio::LogLevel::warn);
+
     size_t num_age_groups         = 4;
     const auto age_group_0_to_4   = mio::AgeGroup(0);
     const auto age_group_5_to_24  = mio::AgeGroup(1);
@@ -422,8 +530,8 @@ int main()
     // Load contact matrices
     std::string contacts_path =
         // "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/contacts/microcontacts/24h_networks_csv";
-        // "/home/schm_r6/Documents/24h_networks_csv";
-        "/localdata2/dial_mo/Graphs/24h_networks_csv";
+        "/home/schm_r6/Documents/24h_networks_csv";
+    // "/localdata2/dial_mo/Graphs/24h_networks_csv";
 
     for (auto& location : world.get_locations()) {
         if (location.get_type() == mio::abm::LocationType::Home) {
@@ -440,7 +548,7 @@ int main()
         assign_contact_matrix(world, shops[i], mio::path_join(contacts_path, shop_files.at(i)), shop_sizes.at(i));
     }
 
-    // Run the simulation
+    // Run the simulatio
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = t0 + mio::abm::days(10);
     world.parameters.check_constraints();
@@ -448,14 +556,64 @@ int main()
     // Create a history object to store the time series of the infection states.
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
-    mio::History<mio::DataWriterToMemory, LocationPerPersonLogger> loclog;
+    mio::History<mio::DataWriterToMemory, LocationPerPersonLogger, LocationPopulationLogger, LocationSizesLogger>
+        loclog;
     // Run the simulation until tmax with the history object.
     sim.advance(tmax, historyTimeSeries, loclog);
 
     {
         std::ofstream contactfile("micro_abm_contacts.csv");
-        write_contacts_flat(contactfile, sim.get_world(), std::get<0>(loclog.get_log()));
+        write_contacts_flat(contactfile, sim.get_world(), std::get<0>(loclog.get_log()), std::get<1>(loclog.get_log()));
         std::cout << "Contacts written to micro_abm_contacts.csv" << std::endl;
+    }
+
+    {
+        std::ofstream outfile("debug_location-sizes.csv");
+        for (auto& loc_sizes : std::get<2>(loclog.get_log())) {
+            outfile << "t=" << loc_sizes.first.hours() << ": ";
+            auto max = std::max_element(loc_sizes.second.begin(), loc_sizes.second.end());
+            // print out maximum as well as ID and type
+            outfile << "max=" << *max
+                    << " argmax id=" << std::distance(loc_sizes.second.begin(), loc_sizes.second.begin())
+                    << " argmax type="
+                    << loc_type_name(
+                           sim.get_world().get_locations()[std::distance(loc_sizes.second.begin(), max)].get_type())
+                    << " all=";
+            // print out all locations
+            for (auto& loc_size : loc_sizes.second) {
+                outfile << loc_size << " ";
+            }
+            outfile << "\n";
+        }
+        std::cout << "Debug: Current Location population written to debug_location-sizes.csv\n";
+    }
+
+    {
+        std::ofstream outfile("metadata_location-props.csv");
+        outfile << "# LocationID, LocationType (Value), LocationType (Name)\n";
+        for (auto& location : sim.get_world().get_locations()) {
+            outfile << location.get_index() << ", " << (uint32_t)location.get_type() << ", "
+                    << loc_type_name(location.get_type()) << "\n";
+        }
+        std::cout << "Metadata: Location info written to metadata_location-props.csv\n";
+    }
+
+    {
+        std::ofstream outfile("metadata_person-props.csv");
+        outfile << "# PersonID, AgeGroup (Value), AgeGroup (Name), Assigned LocationID (Home), Assigned LocationID "
+                   "(School), Assigned LocationID (Work), Assigned LocationID (SocialEvent), Assigned LocationID "
+                   "(BasicsShop), Assigned LocationID (Hospital), Assigned LocationID (ICU), Assigned LocationID "
+                   "(Car), Assigned LocationID (PublicTransport), Assigned LocationID (TransportWithoutContact), "
+                   "Assigned LocationID (Cemetery)\n";
+        for (auto& person : sim.get_world().get_persons()) {
+            outfile << person.get_person_id() << ", " << person.get_age().get() << ", "
+                    << age_group_name(person.get_age());
+            for (auto id : person.get_assigned_locations()) {
+                outfile << ", " << id;
+            }
+            outfile << "\n";
+        }
+        std::cout << "Metadata: Person info written to metadata_person-props.csv\n";
     }
 
     {
