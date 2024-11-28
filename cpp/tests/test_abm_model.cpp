@@ -590,9 +590,13 @@ TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     model.get_testing_strategy().update_activity_status(current_time);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(2))
-        .WillOnce(testing::Return(0.7)) // Draw for testing compliance
-        .WillOnce(testing::Return(0.4)); // Draw for testing result (positive)
+        .Times(testing::Exactly(5))
+        .WillOnce(testing::Return(0.7)) // Person complies with testing
+        .WillOnce(testing::Return(0.5)) // Probability for testing (is performed)
+        .WillOnce(testing::Return(0.4)) // Test result is positive
+        .WillOnce(testing::Return(0.0)) // Draw for isolation compliance (doesn't matter in this test)
+        .WillOnce(
+            testing::Return(0.7)); // Person complies with testing (even though there is not testing strategy left)
     EXPECT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time), false); // Testing scheme active and restricts entry
 
     // Try to re-add the same testing scheme and confirm it doesn't duplicate, then remove it.
