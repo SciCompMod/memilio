@@ -153,53 +153,17 @@ private:
         static_assert((Group < num_groups) && (Group >= 0), "The template parameter Group should be valid.");
         using LctStateGroup = type_at_index_t<Group, LctStates...>;
 
-        // Specify first indices of the vector slices considered.
-        // First index of the group Group in an vector including all subcompartments.
-        Eigen::Index first_index_group_subcomps = this->populations.template get_first_index_of_group<Group>();
-        Eigen::Index count_InfStates            = (Eigen::Index)InfectionState::Count;
-        // First index of the group Group in an vector including all compartments without a resolution
+        // Define first index of the group Group in a vector including all compartments without a resolution
         // in subcompartments.
+        Eigen::Index count_InfStates         = (Eigen::Index)InfectionState::Count;
         Eigen::Index first_index_group_comps = Group * count_InfStates;
 
-        // Use segment of the vector subcompartments of each InfectionState and sum up the values of subcompartments.
-        compartments[first_index_group_comps + (Eigen::Index)InfectionState::Susceptible] =
-            subcompartments[first_index_group_subcomps];
-        compartments[first_index_group_comps + (Eigen::Index)InfectionState::Exposed] =
-            subcompartments
-                .segment(first_index_group_subcomps +
-                             LctStateGroup::template get_first_index<InfectionState::Exposed>(),
-                         LctStateGroup::template get_num_subcompartments<InfectionState::Exposed>())
-                .sum();
-        compartments[first_index_group_comps + (Eigen::Index)InfectionState::InfectedNoSymptoms] =
-            subcompartments
-                .segment(first_index_group_subcomps +
-                             LctStateGroup::template get_first_index<InfectionState::InfectedNoSymptoms>(),
-                         LctStateGroup::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>())
-                .sum();
-        compartments[first_index_group_comps + (Eigen::Index)InfectionState::InfectedSymptoms] =
-            subcompartments
-                .segment(first_index_group_subcomps +
-                             LctStateGroup::template get_first_index<InfectionState::InfectedSymptoms>(),
-                         LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSymptoms>())
-                .sum();
-        compartments[first_index_group_comps + (Eigen::Index)InfectionState::InfectedSevere] =
-            subcompartments
-                .segment(first_index_group_subcomps +
-                             LctStateGroup::template get_first_index<InfectionState::InfectedSevere>(),
-                         LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSevere>())
-                .sum();
-        compartments[first_index_group_comps + (Eigen::Index)InfectionState::InfectedCritical] =
-            subcompartments
-                .segment(first_index_group_subcomps +
-                             LctStateGroup::template get_first_index<InfectionState::InfectedCritical>(),
-                         LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>())
-                .sum();
-        compartments[first_index_group_comps + (Eigen::Index)InfectionState::Recovered] =
-            subcompartments[first_index_group_subcomps +
-                            LctStateGroup::template get_first_index<InfectionState::Recovered>()];
-        compartments[first_index_group_comps + (Eigen::Index)InfectionState::Dead] =
-            subcompartments[first_index_group_subcomps +
-                            LctStateGroup::template get_first_index<InfectionState::Dead>()];
+        // Use function from the LctState of the Group to calculate the vector without subcompartments
+        // using the corresponding vector with subcompartments.
+        compartments.segment(first_index_group_comps, count_InfStates) =
+            LctStateGroup::calculate_compartments(subcompartments.segment(
+                this->populations.template get_first_index_of_group<Group>(), LctStateGroup::Count));
+
         // Function call for next group if applicable.
         if constexpr (Group + 1 < num_groups) {
             compress_vector<Group + 1>(subcompartments, compartments);

@@ -399,11 +399,6 @@ void set_parameters(mio::abm::Parameters params)
 
     params.set<mio::abm::IncubationPeriod>({{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, 4.});
 
-    // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
-    params.get<mio::abm::HighViralLoadProtectionFactor>() = {
-        mio::TimeSeriesFunctorType::LinearInterpolation,
-        {{0, 0.863}, {1, 0.969}, {7, 0.029}, {10, 0.002}, {14, 0.0014}, {21, 0}}};
-
     //0-4
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 0.276;
     params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.092;
@@ -491,7 +486,7 @@ void set_parameters(mio::abm::Parameters params)
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]        = 0.0;
     // Protection of reinfection is the same for all age-groups, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5, https://doi.org/10.1038/s41591-021-01377-8
-    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_0_to_4,
+    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_0_to_4,
                                                        mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.852},
@@ -508,14 +503,14 @@ void set_parameters(mio::abm::Parameters params)
          {450, 0.550}}};
 
     // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
-    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_0_to_4,
+    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, age_group_0_to_4,
                                                        mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.91}, {60, 0.92}, {90, 0.88}, {120, 0.84}, {150, 0.81}, {180, 0.88}, {450, 0.5}}};
 
     // Set up age-related severe protection levels, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
-    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_0_to_4,
+    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_0_to_4,
                                                       mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.967},
@@ -533,7 +528,7 @@ void set_parameters(mio::abm::Parameters params)
          {360, 0.887},
          {450, 0.5}}};
     // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
-    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_0_to_4,
+    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, age_group_0_to_4,
                                                       mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {450, 0.5}}};
@@ -551,7 +546,7 @@ void set_parameters(mio::abm::Parameters params)
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]      = 0.0;
     // Protection of reinfection is the same for all age-groups, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5, https://doi.org/10.1038/s41591-021-01377-8
-    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_5_to_14,
+    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_5_to_14,
                                                        mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.852},
@@ -567,14 +562,14 @@ void set_parameters(mio::abm::Parameters params)
          {450, 0.559},
          {450, 0.550}}};
     // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
-    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_5_to_14,
+    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, age_group_5_to_14,
                                                        mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.91}, {60, 0.92}, {90, 0.88}, {120, 0.84}, {150, 0.81}, {180, 0.88}, {450, 0.5}}};
 
     // Set up age-related severe protection levels, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
-    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_5_to_14,
+    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_5_to_14,
                                                       mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.967},
@@ -592,7 +587,7 @@ void set_parameters(mio::abm::Parameters params)
          {360, 0.887},
          {450, 0.5}}};
     // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
-    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_5_to_14,
+    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, age_group_5_to_14,
                                                       mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {450, 0.5}}};
@@ -610,7 +605,7 @@ void set_parameters(mio::abm::Parameters params)
     params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]              = 0.021;
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]      = 0.0;
     // Set up personal infection and vaccine protection levels, based on: https://doi.org/10.1038/s41577-021-00550-x, https://doi.org/10.1038/s41591-021-01377-8
-    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_15_to_34,
+    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_15_to_34,
                                                        mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.852},
@@ -626,13 +621,13 @@ void set_parameters(mio::abm::Parameters params)
          {450, 0.559},
          {450, 0.550}}};
     // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
-    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_15_to_34,
+    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, age_group_15_to_34,
                                                        mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.89}, {60, 0.84}, {90, 0.78}, {120, 0.68}, {150, 0.57}, {180, 0.39}, {450, 0.1}}};
     // Set up age-related severe protection levels, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
-    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_15_to_34,
+    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_15_to_34,
                                                       mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.967},
@@ -650,7 +645,7 @@ void set_parameters(mio::abm::Parameters params)
          {360, 0.887},
          {450, 0.5}}};
     // Information is from: https://doi.org/10.1016/S0140-6736(21)02183-8
-    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_15_to_34,
+    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, age_group_15_to_34,
                                                       mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {180, 0.90}, {450, 0.5}}};
@@ -669,7 +664,7 @@ void set_parameters(mio::abm::Parameters params)
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]      = 0.0;
     // Protection of reinfection is the same for all age-groups, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5, https://doi.org/10.1038/s41591-021-01377-8
-    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_35_to_59,
+    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_35_to_59,
                                                        mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.852},
@@ -685,13 +680,13 @@ void set_parameters(mio::abm::Parameters params)
          {450, 0.559},
          {450, 0.550}}};
     // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
-    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_35_to_59,
+    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, age_group_35_to_59,
                                                        mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.89}, {60, 0.84}, {90, 0.78}, {120, 0.68}, {150, 0.57}, {180, 0.39}, {450, 0.1}}};
     // Set up age-related severe protection levels, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
-    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_35_to_59,
+    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_35_to_59,
                                                       mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.967},
@@ -709,7 +704,7 @@ void set_parameters(mio::abm::Parameters params)
          {360, 0.887},
          {450, 0.5}}};
     // Information is from: https://doi.org/10.1016/S0140-6736(21)02183-8
-    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_35_to_59,
+    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, age_group_35_to_59,
                                                       mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {180, 0.90}, {450, 0.5}}};
@@ -727,7 +722,7 @@ void set_parameters(mio::abm::Parameters params)
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}]      = 0.0;
     // Protection of reinfection is the same for all age-groups, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5, https://doi.org/10.1038/s41591-021-01377-8
-    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_60_to_79,
+    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_60_to_79,
                                                        mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.852},
@@ -743,14 +738,14 @@ void set_parameters(mio::abm::Parameters params)
          {450, 0.559},
          {450, 0.550}}};
     // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
-    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_60_to_79,
+    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, age_group_60_to_79,
                                                        mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.87}, {60, 0.85}, {90, 0.78}, {120, 0.67}, {150, 0.61}, {180, 0.50}, {450, 0.1}}};
     // Set up personal severe protection levels.
     // Protection of severe infection of age group 65 + is different from other age group, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
-    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_60_to_79,
+    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_60_to_79,
                                                       mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.967},
@@ -767,7 +762,7 @@ void set_parameters(mio::abm::Parameters params)
          {330, 0.887},
          {360, 0.887},
          {360, 0.5}}};
-    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_60_to_79,
+    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, age_group_60_to_79,
                                                       mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.91}, {60, 0.86}, {90, 0.91}, {120, 0.94}, {150, 0.95}, {180, 0.90}, {450, 0.5}}};
@@ -785,7 +780,7 @@ void set_parameters(mio::abm::Parameters params)
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]      = 0.0;
     // Protection of reinfection is the same for all age-groups, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5, https://doi.org/10.1038/s41591-021-01377-8
-    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_80_plus,
+    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_80_plus,
                                                        mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.852},
@@ -801,14 +796,14 @@ void set_parameters(mio::abm::Parameters params)
          {450, 0.559},
          {450, 0.550}}};
     // Information is from: https://doi.org/10.1016/S0140-6736(21)02183-8
-    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_80_plus,
+    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, age_group_80_plus,
                                                        mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.80}, {60, 0.79}, {90, 0.75}, {120, 0.56}, {150, 0.49}, {180, 0.43}, {450, 0.1}}};
     // Set up personal severe protection levels.
     // Protection of severe infection of age group 65 + is different from other age group, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
-    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::NaturalInfection, age_group_0_to_4,
+    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_0_to_4,
                                                       mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.967},
@@ -826,7 +821,7 @@ void set_parameters(mio::abm::Parameters params)
          {360, 0.887},
          {360, 0.5}}};
     // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
-    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, age_group_80_plus,
+    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, age_group_80_plus,
                                                       mio::abm::VirusVariant::Wildtype}] = {
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.84}, {60, 0.88}, {90, 0.89}, {120, 0.86}, {150, 0.85}, {180, 0.83}, {450, 0.5}}};

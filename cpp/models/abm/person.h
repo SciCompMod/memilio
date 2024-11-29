@@ -31,7 +31,7 @@
 #include "memilio/io/default_serialize.h"
 #include "abm/time.h"
 #include "abm/test_type.h"
-#include "abm/vaccine.h"
+#include "abm/protection_event.h"
 #include "abm/intervention_type.h"
 #include "abm/mask.h"
 #include "abm/mobility_data.h"
@@ -79,16 +79,16 @@ public:
     const Infection& get_infection() const;
 
     /**
-     * @brief Get all Vaccination%s of the Person.
-     * @return A vector with all Vaccination%s.
+     * @brief Get all vaccinations of the Person.
+     * @return A vector with all vaccinations.
      * @{
      */
-    std::vector<Vaccination>& get_vaccinations()
+    std::vector<ProtectionEvent>& get_vaccinations()
     {
         return m_vaccinations;
     }
 
-    const std::vector<Vaccination>& get_vaccinations() const
+    const std::vector<ProtectionEvent>& get_vaccinations() const
     {
         return m_vaccinations;
     }
@@ -338,13 +338,13 @@ public:
     ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const Parameters& params) const;
 
     /**
-     * @brief Add a new #Vaccination
-     * @param[in] v ExposureType (i. e. vaccine) the person takes.
-     * @param[in] t TimePoint of the Vaccination.
+     * @brief Add a new vaccination
+     * @param[in] v ProtectionType (i. e. vaccine) the person takes.
+     * @param[in] t TimePoint of the vaccination.
      */
-    void add_new_vaccination(ExposureType v, TimePoint t)
+    void add_new_vaccination(ProtectionType v, TimePoint t)
     {
-        m_vaccinations.push_back(Vaccination(v, t));
+        m_vaccinations.push_back(ProtectionEvent(v, t));
     }
 
     /**
@@ -375,9 +375,9 @@ public:
     }
 
     /**
-     * @brief Get the latest #ExposureType and its initial TimePoint of the Person.
+     * @brief Get the latest #ProtectionType and its initial TimePoint of the Person.
      */
-    std::pair<ExposureType, TimePoint> get_latest_protection() const;
+    ProtectionEvent get_latest_protection() const;
 
     /// This method is used by the default serialization feature.
     auto default_serialize()
@@ -425,7 +425,7 @@ private:
     LocationType m_location_type; ///< Type of the current Location.
     std::vector<LocationId> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the
     Person always visits the same Home or School etc. */
-    std::vector<Vaccination> m_vaccinations; ///< Vector with all Vaccination%s the Person has received.
+    std::vector<ProtectionEvent> m_vaccinations; ///< Vector with all vaccinations the Person has received.
     std::vector<Infection> m_infections; ///< Vector with all Infection%s the Person had.
     TimePoint m_home_isolation_start; ///< TimePoint when the Person started isolation at home.
     AgeGroup m_age; ///< AgeGroup the Person belongs to.
