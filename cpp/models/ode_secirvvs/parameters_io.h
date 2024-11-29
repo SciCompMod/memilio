@@ -843,7 +843,7 @@ IOResult<void> export_input_data_county_timeseries(
     std::vector<Model> models, const std::string& results_dir, const std::vector<int>& counties, Date date,
     const std::vector<double>& scaling_factor_inf, const double scaling_factor_icu, const int num_days,
     const std::string& divi_data_path, const std::string& confirmed_cases_path, const std::string& population_data_path,
-    const std::string& vaccination_data_path = "")
+    const std::string& vaccination_data_path = "", bool save_non_aggregated_results = false)
 {
     const auto num_groups = (size_t)models[0].parameters.get_num_groups();
     assert(scaling_factor_inf.size() == num_groups);
@@ -966,6 +966,21 @@ IOResult<void> export_input_data_county_timeseries(
         sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_data_aggregated});
     BOOST_OUTCOME_TRY(save_result({extrapolated_data_sum_aggregated[0][0]}, {0}, static_cast<int>(num_groups),
                                   path_join(results_dir, "Results_sum.h5")));
+
+    if (save_non_aggregated_results) {
+        // Create directory where non-aggregated results will be saved.
+        auto results_dir_non_agg = path_join(results_dir, "non_aggregated_results");
+        BOOST_OUTCOME_TRY(create_directory(results_dir_non_agg));
+
+        // Save non-aggregated extrapolated_data.
+        BOOST_OUTCOME_TRY(save_result(extrapolated_data, counties, static_cast<int>(num_groups),
+                                      path_join(results_dir_non_agg, "Results.h5")));
+
+        // Take sum over all nodes for extrapolated_data and save this.
+        auto extrapolated_data_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_data});
+        BOOST_OUTCOME_TRY(save_result({extrapolated_data_sum[0][0]}, {0}, static_cast<int>(num_groups),
+                                      path_join(results_dir_non_agg, "Results_sum.h5")));
+    }
 
     return success();
 }

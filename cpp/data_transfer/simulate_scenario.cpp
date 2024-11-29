@@ -310,17 +310,17 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir)
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
     auto scaling_factor_icu      = 1.0;
     auto mobile_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                mio::osecirvvs::InfectionState::ExposedNaive,
-                                mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
+                                    mio::osecirvvs::InfectionState::ExposedNaive,
+                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                    mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                    mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                    mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
     auto tnt_capacity_factor     = 0.;
 
     const auto& set_node_function =
@@ -355,7 +355,8 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir)
 }
 
 mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std::string& data_dir,
-                        const std::string& result_dir, bool save_single_runs, const int num_runs)
+                        const std::string& result_dir, bool save_single_runs, const int num_runs,
+                        bool save_non_aggregated_results)
 {
     //create or load graph
     mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph;
@@ -389,7 +390,7 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std:
             auto params              = std::vector<mio::osecirvvs::Model<double>>();
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                           [](auto&& node) {
+                                         [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 
@@ -415,7 +416,7 @@ mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std:
 
         // BOOST_OUTCOME_TRY(save_single_run_result);
         BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, save_single_runs,
-                                       save_percentiles, size_t(num_days_sim)));
+                                       save_percentiles, size_t(num_days_sim), save_non_aggregated_results));
     }
 
     return mio::success();
@@ -429,26 +430,26 @@ int main(int argc, char** argv)
 
     std::string data_dir;
 
-    mio::Date start_date    = mio::Date(2022, 6, 1);
-    int num_days_sim        = 5;
-    int num_simulation_runs = 5;
+    mio::Date start_date             = mio::Date(2022, 6, 1);
+    int num_days_sim                 = 5;
+    int num_simulation_runs          = 5;
+    bool save_non_aggregated_results = false;
 
     if (argc == 1) {
         data_dir = "../../data";
     }
-    else if (argc == 2) {
+    if (argc > 1) {
         data_dir = argv[1];
     }
-    else if (argc == 6) {
-        data_dir     = argv[1];
+    if (argc > 5) {
         start_date   = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
         num_days_sim = std::atoi(argv[5]);
     }
-    else if (argc == 7) {
-        data_dir            = argv[1];
-        start_date          = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
-        num_days_sim        = std::atoi(argv[5]);
+    if (argc > 6) {
         num_simulation_runs = std::atoi(argv[6]);
+    }
+    if (argc > 7) {
+        save_non_aggregated_results = bool(argv[7]);
     }
     else {
         mio::mpi::finalize();
@@ -476,7 +477,8 @@ int main(int argc, char** argv)
     }
     printf("Saving results to \"%s\".\n", result_dir.c_str());
 
-    auto result = run(num_days_sim, start_date, data_dir, result_dir, false, num_simulation_runs);
+    auto result =
+        run(num_days_sim, start_date, data_dir, result_dir, false, num_simulation_runs, save_non_aggregated_results);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         mio::mpi::finalize();

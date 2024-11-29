@@ -253,7 +253,8 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
  * @returns created graph or any io errors that happen during reading of the files.
  */
 mio::IOResult<mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>>
-generate_extrapolated_data(mio::Date start_date, const int num_days, const fs::path& data_dir)
+generate_extrapolated_data(mio::Date start_date, const int num_days, const fs::path& data_dir,
+                           bool save_non_aggregated_results)
 {
 
     // global parameters
@@ -275,17 +276,17 @@ generate_extrapolated_data(mio::Date start_date, const int num_days, const fs::p
     auto scaling_factor_icu      = 1.0;
     auto tnt_capacity_factor     = 0.0;
     auto mobile_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                mio::osecirvvs::InfectionState::ExposedNaive,
-                                mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
+                                    mio::osecirvvs::InfectionState::ExposedNaive,
+                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                    mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                    mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                    mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
     mio::Date end_date           = offset_date_by_days(start_date, num_days);
 
     const auto& set_node_function =
@@ -320,7 +321,8 @@ generate_extrapolated_data(mio::Date start_date, const int num_days, const fs::p
         nodes, data_dir.string(), node_ids, start_date, scaling_factor_infected, scaling_factor_icu, num_days,
         mio::path_join(data_dir.string(), "pydata/Germany", "county_divi_ma7.json"),
         mio::path_join(data_dir.string(), "pydata/Germany", "cases_all_county_age_ma7.json"),
-        mio::path_join(data_dir.string(), "pydata/Germany", "county_current_population.json")));
+        mio::path_join(data_dir.string(), "pydata/Germany", "county_current_population.json"), "",
+        save_non_aggregated_results));
 
     return mio::success(params_graph);
 }
@@ -332,19 +334,22 @@ int main(int argc, char** argv)
     mio::mpi::init();
 
     std::string data_dir;
-    mio::Date start_date = mio::Date(2023, 6, 1);
-    double num_days      = 2.0;
+    mio::Date start_date             = mio::Date(2023, 6, 1);
+    double num_days                  = 2.0;
+    bool save_non_aggregated_results = false;
 
     if (argc == 1) {
         data_dir = "../../data";
     }
-    else if (argc == 2) {
+    if (argc > 1) {
         data_dir = argv[1];
     }
-    else if (argc == 6) {
-        data_dir   = argv[1];
+    if (argc > 5) {
         start_date = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
         num_days   = std::atoi(argv[5]);
+    }
+    if (argc > 6) {
+        save_non_aggregated_results = argv[6];
     }
     else {
         mio::mpi::finalize();
@@ -363,7 +368,8 @@ int main(int argc, char** argv)
     }
 
     //create or load graph
-    auto create_extrapolated_data = generate_extrapolated_data(start_date, num_days, data_dir);
+    auto create_extrapolated_data =
+        generate_extrapolated_data(start_date, num_days, data_dir, save_non_aggregated_results);
 
     mio::mpi::finalize();
     return 0;
