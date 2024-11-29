@@ -30,15 +30,8 @@ runs:
           cp dist/*.whl wheelhouse
         fi
         cp -r wheelhouse ..
-    - name: Upload Python Wheels Simulation # See Issue #939
-      uses: actions/upload-artifact@v3
-      if: inputs.package == 'simulation'
-      with:
-        name: python-wheels-${{ inputs.package }}
-        path: pycode/wheelhouse
     - name: Upload Python Wheels
       uses: actions/upload-artifact@v4
-      if: inputs.package != 'simulation'
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
