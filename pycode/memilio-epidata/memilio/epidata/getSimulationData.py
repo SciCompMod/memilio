@@ -27,13 +27,14 @@ The functions which are called are:
 - getPopulationData.get_population_data
 - getVacccinationData.get_vaccination_data
 - getDIVIData.get_divi_data
+- getCommuterMobility.get_commuter_data
 """
 
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseData
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import getDIVIData, getPopulationData, getVaccinationData
+from memilio.epidata import getDIVIData, getPopulationData, getVaccinationData, getCommuterMobility
 
 
 def print_error(text):
@@ -53,6 +54,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
                         split_berlin=dd.defaultDict['split_berlin'],
                         rep_date=dd.defaultDict['rep_date'],
                         sanitize_data=dd.defaultDict['sanitize_data'],
+                        ref_year = 2022,
                         **kwargs
                         ):
     """! Downloads all data from external sources
@@ -62,6 +64,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     - getPopulationData.get_population_data
     - getVaccinationData.get_vaccination_data
     - getDIVIData.get_divi_data
+    - getCommuterMobility.get_commuter_data
 
     Keyword arguments:
     @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
@@ -75,6 +78,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
     @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
     @param sanitize_data Value in {0,1,2,3}. Redistributes cases of every county either based on regions' ratios or on thresholds and population.
+    @param ref_year Year between 2013 and 2022 that specifies where the data should be taken from. Default value is 2022.
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
@@ -97,6 +101,8 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
 
     arg_dict_divi = {**arg_dict_all, **arg_dict_data_download}
 
+    arg_dict_mobility = {**arg_dict_all, **arg_dict_data_download,
+                         "ref_year": ref_year}    
     try:
         getCaseData.get_case_data(**arg_dict_cases)
     except Exception as exp:
@@ -120,6 +126,12 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     except Exception as exp:
         gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('vaccination')
+
+    try:
+        getCommuterMobility.get_commuter_data(**arg_dict_mobility)
+    except Exception as exp:
+        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
+        print_error('commuter mobility')
 
 
 def main():
