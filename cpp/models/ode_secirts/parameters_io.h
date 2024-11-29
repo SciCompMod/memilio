@@ -56,9 +56,16 @@ namespace details
 template <class EpiDataEntry>
 int get_region_id(const EpiDataEntry& data_entry)
 {
-    return data_entry.county_id ? data_entry.county_id->get()
-                                : (data_entry.state_id ? data_entry.state_id->get()
-                                                       : (data_entry.district_id ? data_entry.district_id->get() : 0));
+    if (data_entry.county_id) {
+        return data_entry.county_id->get();
+    }
+    if (data_entry.state_id) {
+        return data_entry.state_id->get();
+    }
+    if (data_entry.district_id) {
+        return data_entry.district_id->get();
+    }
+    return 0;
 }
 
 /**
