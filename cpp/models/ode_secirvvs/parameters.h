@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRVVS_PARAMETERS_H
-#define ODESECIRVVS_PARAMETERS_H
+#ifndef MIO_ODE_SECIRVVS_PARAMETERS_H
+#define MIO_ODE_SECIRVVS_PARAMETERS_H
 
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/dynamic_npis.h"
@@ -1158,4 +1158,4 @@ private:
 } // namespace osecirvvs
 } // namespace mio
 
-#endif // ODESECIRVVS_PARAMETERS_H
+#endif // MIO_ODE_SECIRVVS_PARAMETERS_H

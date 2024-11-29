@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRVVS_MODEL_H
-#define ODESECIRVVS_MODEL_H
+#ifndef MIO_ODE_SECIRVVS_MODEL_H
+#define MIO_ODE_SECIRVVS_MODEL_H
 
 #include "memilio/compartments/flow_model.h"
 #include "memilio/compartments/simulation.h"
@@ -914,4 +914,4 @@ auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> mobile_pop
 } // namespace osecirvvs
 } // namespace mio
 
-#endif //ODESECIRVVS_MODEL_H
+#endif //MIO_ODE_SECIRVVS_MODEL_H

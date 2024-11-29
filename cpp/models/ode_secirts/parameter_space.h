@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRTS_PARAMETER_SPACE_H
-#define ODESECIRTS_PARAMETER_SPACE_H
+#ifndef MIO_ODE_SECIRTS_PARAMETER_SPACE_H
+#define MIO_ODE_SECIRTS_PARAMETER_SPACE_H
 
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/memory.h"
@@ -37,10 +37,11 @@ namespace mio
 namespace osecirts
 {
 /**
-* draws a sample from the specified distributions for all parameters related to the demographics, e.g. population.
-* @tparam FP floating point type, e.g., double
-* @param[inout] model Model including contact patterns for alle age groups
-*/
+ * Draws a sample from the specified distributions for all parameters
+ * related to the demographics, e.g., population.
+ * @tparam FP Floating point type, e.g., double.
+ * @param[inout] model Model including contact patterns for all age groups
+ */
 template <typename FP = double>
 void draw_sample_demographics(Model<FP>& model)
 {
@@ -118,10 +119,12 @@ void draw_sample_demographics(Model<FP>& model)
 }
 
 /**
-* draws a sample from the specified distributions for all parameters related to the infection.
-* @tparam FP floating point type, e.g., double
-* @param[inout] model Model including contact patterns for alle age groups
-*/
+ * Draws a sample from the specified distributions for all parameters 
+ * related to the infection.
+ * 
+ * @tparam FP Floating point type, e.g., double.
+ * @param[inout] model Model including contact patterns for all age groups.
+ */
 template <typename FP = double>
 void draw_sample_infection(Model<FP>& model)
 {
@@ -185,11 +188,13 @@ void draw_sample_infection(Model<FP>& model)
     }
 }
 
-/** Draws a sample from Model parameter distributions and stores sample values
-* as Parameters parameter values (cf. UncertainValue and Parameters classes)
-* @tparam FP floating point type, e.g., double
-* @param[inout] model Model including contact patterns for alle age groups
-*/
+/**
+ * Draws a sample from model parameter distributions and stores sample values
+ * as parameters values (cf. UncertainValue and Parameters classes).
+ * 
+ * @tparam FP Floating point type, e.g., double.
+ * @param[inout] model Model including contact patterns for all age groups.
+ */
 template <typename FP = double>
 void draw_sample(Model<FP>& model)
 {
@@ -200,12 +205,13 @@ void draw_sample(Model<FP>& model)
 }
 
 /**
-* Draws samples for each model node in a graph.
-* Some parameters are shared between nodes and only sampled once.
-* @tparam FP floating point type, e.g., double
-* @param graph Graph to be sampled.
-* @return Graph with nodes and edges from the input graph sampled.
-*/
+ * Draws samples for each model node in a graph.
+ * Some parameters are shared between nodes and are only sampled once.
+ * 
+ * @tparam FP Floating point type, e.g., double.
+ * @param graph Graph to be sampled.
+ * @return Graph with nodes and edges from the input graph sampled.
+ */
 template <typename FP = double>
 Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityParameters<FP>>& graph)
 {
@@ -260,4 +266,4 @@ Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityPa
 } // namespace osecirts
 } // namespace mio
 
-#endif // ODESECIRTS_PARAMETER_SPACE_H
+#endif // MIO_ODE_SECIRTS_PARAMETER_SPACE_H

@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRVVS_ANALYZE_RESULT_H
-#define ODESECIRVVS_ANALYZE_RESULT_H
+#ifndef MIO_ODE_SECIRVVS_ANALYZE_RESULT_H
+#define MIO_ODE_SECIRVVS_ANALYZE_RESULT_H
 
 #include "ode_secirvvs/infection_state.h"
 #include "ode_secirvvs/parameters.h"
@@ -209,4 +209,4 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
 } // namespace osecirvvs
 } // namespace mio
 
-#endif //ODESECIRVVS
+#endif //MIO_ODE_SECIRVVS_ANALYZE_RESULT_H

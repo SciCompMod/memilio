@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRTS_ANALYZE_RESULT_H
-#define ODESECIRTS_ANALYZE_RESULT_H
+#ifndef MIO_ODE_SECIRTS_ANALYZE_RESULT_H
+#define MIO_ODE_SECIRTS_ANALYZE_RESULT_H
 
 #include "ode_secirts/model.h"
 #include "memilio/data/analyze_result.h"
@@ -211,4 +211,4 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
 } // namespace osecirts
 } // namespace mio
 
-#endif //ODESECIRTS
+#endif //MIO_ODE_SECIRTS_ANALYZE_RESULT_H

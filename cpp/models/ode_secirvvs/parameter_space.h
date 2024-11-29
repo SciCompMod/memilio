@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRVVS_PARAMETER_SPACE_H
-#define ODESECIRVVS_PARAMETER_SPACE_H
+#ifndef MIO_ODE_SECIRVVS_PARAMETER_SPACE_H
+#define MIO_ODE_SECIRVVS_PARAMETER_SPACE_H
 
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/logging.h"
@@ -226,4 +226,4 @@ Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityPa
 } // namespace osecirvvs
 } // namespace mio
 
-#endif // ODESECIRVVS_PARAMETER_SPACE_H
+#endif // MIO_ODE_SECIRVVS_PARAMETER_SPACE_H

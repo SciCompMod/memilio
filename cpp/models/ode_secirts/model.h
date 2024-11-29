@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRTS_MODEL_H
-#define ODESECIRTS_MODEL_H
+#ifndef MIO_ODE_SECIRTS_MODEL_H
+#define MIO_ODE_SECIRTS_MODEL_H
 
 #include "memilio/compartments/flow_model.h"
 #include "memilio/compartments/simulation.h"
@@ -185,17 +185,17 @@ public:
 
             size_t SIIi = this->populations.get_flat_index({i, InfectionState::SusceptibleImprovedImmunity});
 
-            double reducExposedPartialImmunity  = params.template get<ReducExposedPartialImmunity<FP>>()[i];
-            double reducExposedImprovedImmunity = params.template get<ReducExposedImprovedImmunity<FP>>()[i];
-            double reducInfectedSymptomsPartialImmunity =
+            FP reducExposedPartialImmunity  = params.template get<ReducExposedPartialImmunity<FP>>()[i];
+            FP reducExposedImprovedImmunity = params.template get<ReducExposedImprovedImmunity<FP>>()[i];
+            FP reducInfectedSymptomsPartialImmunity =
                 params.template get<ReducInfectedSymptomsPartialImmunity<FP>>()[i];
-            double reducInfectedSymptomsImprovedImmunity =
+            FP reducInfectedSymptomsImprovedImmunity =
                 params.template get<ReducInfectedSymptomsImprovedImmunity<FP>>()[i];
-            double reducInfectedSevereCriticalDeadPartialImmunity =
+            FP reducInfectedSevereCriticalDeadPartialImmunity =
                 params.template get<ReducInfectedSevereCriticalDeadPartialImmunity<FP>>()[i];
-            double reducInfectedSevereCriticalDeadImprovedImmunity =
+            FP reducInfectedSevereCriticalDeadImprovedImmunity =
                 params.template get<ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>()[i];
-            double reducTimeInfectedMild = params.template get<ReducTimeInfectedMild<FP>>()[i];
+            FP reducTimeInfectedMild = params.template get<ReducTimeInfectedMild<FP>>()[i];
 
             //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
             auto riskFromInfectedSymptomatic =
@@ -247,31 +247,29 @@ public:
                     this->populations.get_flat_index({j, InfectionState::InfectedSymptomsImprovedImmunityConfirmed});
 
                 // effective contact rate by contact rate between groups i and j and damping j
-                double season_val =
-                    (1 + params.template get<Seasonality<FP>>() *
-                             sin(3.141592653589793 *
-                                 (std::fmod((params.template get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
-                double cont_freq_eff =
-                    season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
-                                                                 static_cast<Eigen::Index>((size_t)j));
+                FP season_val    = (1 + params.template get<Seasonality<FP>>() *
+                                         sin(3.141592653589793 *
+                                             (std::fmod((params.template get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
+                FP cont_freq_eff = season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
+                                                                                static_cast<Eigen::Index>((size_t)j));
                 // without died people
-                double Nj = pop[SNj] + pop[ENj] + pop[INSNj] + pop[ISyNj] + pop[ISevNj] + pop[ICrNj] + pop[INSNCj] +
-                            pop[ISyNCj] + pop[SPIj] + pop[EPIj] + pop[INSPIj] + pop[ISyPIj] + pop[ISevPIj] +
-                            pop[ICrPIj] + pop[INSPICj] + pop[ISyPICj] + pop[SIIj] + pop[EIIj] + pop[INSIIj] +
-                            pop[ISyIIj] + pop[ISevIIj] + pop[ICrIIj] + pop[INSIICj] + pop[ISyIICj];
+                FP Nj = pop[SNj] + pop[ENj] + pop[INSNj] + pop[ISyNj] + pop[ISevNj] + pop[ICrNj] + pop[INSNCj] +
+                        pop[ISyNCj] + pop[SPIj] + pop[EPIj] + pop[INSPIj] + pop[ISyPIj] + pop[ISevPIj] + pop[ICrPIj] +
+                        pop[INSPICj] + pop[ISyPICj] + pop[SIIj] + pop[EIIj] + pop[INSIIj] + pop[ISyIIj] + pop[ISevIIj] +
+                        pop[ICrIIj] + pop[INSIICj] + pop[ISyIICj];
 
-                double divNj = (Nj > 0) ? 1.0 / Nj : 0;
+                FP divNj = (Nj > 0) ? 1.0 / Nj : 0;
 
-                double ext_inf_force_dummy = cont_freq_eff * divNj *
-                                             params.template get<TransmissionProbabilityOnContact<FP>>()[(AgeGroup)i] *
-                                             (riskFromInfectedNoSymptoms * (pop[INSNj] + pop[INSPIj] + pop[INSIIj]) +
-                                              riskFromInfectedSymptomatic * (pop[ISyNj] + pop[ISyPIj] + pop[ISyIIj]));
+                FP ext_inf_force_dummy = cont_freq_eff * divNj *
+                                         params.template get<TransmissionProbabilityOnContact<FP>>()[(AgeGroup)i] *
+                                         (riskFromInfectedNoSymptoms * (pop[INSNj] + pop[INSPIj] + pop[INSIIj]) +
+                                          riskFromInfectedSymptomatic * (pop[ISyNj] + pop[ISyPIj] + pop[ISyIIj]));
 
-                double dummy_SN = y[SNi] * ext_inf_force_dummy;
+                FP dummy_SN = y[SNi] * ext_inf_force_dummy;
 
-                double dummy_SPI = y[SPIi] * reducExposedPartialImmunity * ext_inf_force_dummy;
+                FP dummy_SPI = y[SPIi] * reducExposedPartialImmunity * ext_inf_force_dummy;
 
-                double dummy_SII = y[SIIi] * reducExposedImprovedImmunity * ext_inf_force_dummy;
+                FP dummy_SII = y[SIIi] * reducExposedImprovedImmunity * ext_inf_force_dummy;
 
                 flows[this->template get_flat_flow_index<InfectionState::SusceptibleNaive,
                                                          InfectionState::ExposedNaive>({i})] += dummy_SN;
@@ -306,12 +304,11 @@ public:
             // TODO: if this is used with vaccination model, it has to be adapted if CriticalPerSevere
             // is different for different vaccination status. This is not the case here and in addition, ICUCapacity
             // is set to infinity and this functionality is deactivated, so this is OK for the moment.
-            double criticalPerSevereAdjusted = smoother_cosine(
-                icu_occupancy, 0.90 * params.template get<ICUCapacity<FP>>(), params.template get<ICUCapacity<FP>>(),
-                params.template get<CriticalPerSevere<FP>>()[i], 0);
+            FP criticalPerSevereAdjusted = smoother_cosine(icu_occupancy, 0.90 * params.template get<ICUCapacity<FP>>(),
+                                                           params.template get<ICUCapacity<FP>>(),
+                                                           params.template get<CriticalPerSevere<FP>>()[i], 0);
 
-            double deathsPerSevereAdjusted =
-                params.template get<CriticalPerSevere<FP>>()[i] - criticalPerSevereAdjusted;
+            FP deathsPerSevereAdjusted = params.template get<CriticalPerSevere<FP>>()[i] - criticalPerSevereAdjusted;
 
             /**** path of immune-naive ***/
             // Exposed
@@ -578,13 +575,13 @@ public:
     * @param eps [Default: 0.15] The smoothing factor used in the cosine smoothing function.
     * @return A vector containing the number of vaccinations for each age group at time t.
     */
-    Eigen::VectorXd vaccinations_at(const ScalarType t,
-                                    const CustomIndexArray<double, AgeGroup, SimulationDay>& daily_vaccinations,
-                                    const ScalarType eps = 0.15) const
+    Eigen::VectorXd vaccinations_at(const FP t,
+                                    const CustomIndexArray<ScalarType, AgeGroup, SimulationDay>& daily_vaccinations,
+                                    const FP eps = 0.15) const
     {
-        auto const& params  = this->parameters;
-        const ScalarType ub = (size_t)t + 1.0;
-        const ScalarType lb = ub - eps;
+        auto const& params = this->parameters;
+        const FP ub        = (size_t)t + 1.0;
+        const FP lb        = ub - eps;
 
         const auto max_time = static_cast<size_t>(daily_vaccinations.size<SimulationDay>()) - 1;
 
@@ -699,20 +696,19 @@ public:
     * @param [in] base_infectiousness The base infectiousness of the old variant for each age group.
     */
 
-    void apply_variant(const double t, const CustomIndexArray<UncertainValue<FP>, AgeGroup> base_infectiousness)
+    void apply_variant(const FP t, const CustomIndexArray<UncertainValue<FP>, AgeGroup> base_infectiousness)
     {
         auto start_day             = this->get_model().parameters.template get<StartDay>();
         auto start_day_new_variant = this->get_model().parameters.template get<StartDayNewVariant>();
 
         if (start_day + t >= start_day_new_variant - 1e-10) {
-            const double days_variant      = t - (start_day_new_variant - start_day);
-            const double share_new_variant = std::min(1.0, 0.01 * pow(2, (1. / 7) * days_variant));
-            const auto num_groups          = this->get_model().parameters.get_num_groups();
+            const FP days_variant      = t - (start_day_new_variant - start_day);
+            const FP share_new_variant = std::min(1.0, 0.01 * pow(2, (1. / 7) * days_variant));
+            const auto num_groups      = this->get_model().parameters.get_num_groups();
             for (auto i = AgeGroup(0); i < num_groups; ++i) {
-                double new_transmission =
-                    (1 - share_new_variant) * base_infectiousness[i] +
-                    share_new_variant * base_infectiousness[i] *
-                        this->get_model().parameters.template get<InfectiousnessNewVariant<FP>>()[i];
+                FP new_transmission = (1 - share_new_variant) * base_infectiousness[i] +
+                                      share_new_variant * base_infectiousness[i] *
+                                          this->get_model().parameters.template get<InfectiousnessNewVariant<FP>>()[i];
                 this->get_model().parameters.template get<TransmissionProbabilityOnContact<FP>>()[i] = new_transmission;
             }
         }
@@ -725,7 +721,7 @@ public:
      * @param tmax next stopping point of simulation
      * @return value at tmax
      */
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
+    Eigen::Ref<Eigen::VectorXd> advance(FP tmax)
     {
         auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
@@ -736,7 +732,7 @@ public:
         // the base value to use it in the apply_variant function and also to reset the parameter after the simulation.
         auto base_infectiousness = this->get_model().parameters.template get<TransmissionProbabilityOnContact<FP>>();
 
-        double delay_lockdown;
+        FP delay_lockdown;
         auto t        = BaseT::get_result().get_last_time();
         const auto dt = dyn_npis.get_interval().get();
         while (t < tmax) {
@@ -767,12 +763,12 @@ public:
                         auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
                         if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
                             (exceeded_threshold->first > m_dynamic_npi.first ||
-                             t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
+                             t > FP(m_dynamic_npi.second))) { //old npi was weaker or is expired
 
                             auto t_start = SimulationTime(t + delay_lockdown);
                             auto t_end   = t_start + SimulationTime(dyn_npis.get_duration());
-                            this->get_model().parameters.get_start_commuter_detection() = (double)t_start;
-                            this->get_model().parameters.get_end_commuter_detection()   = (double)t_end;
+                            this->get_model().parameters.get_start_commuter_detection() = (FP)t_start;
+                            this->get_model().parameters.get_end_commuter_detection()   = (FP)t_end;
                             m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
                             implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
                                                    t_start, t_end, [](auto& g) {
@@ -795,8 +791,8 @@ public:
     }
 
 private:
-    double m_t_last_npi_check;
-    std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
+    FP m_t_last_npi_check;
+    std::pair<FP, SimulationTime> m_dynamic_npi = {-std::numeric_limits<FP>::max(), SimulationTime(0)};
 };
 
 /**
@@ -840,7 +836,7 @@ inline auto simulate_flows(FP t0, FP tmax, FP dt, const Model<FP>& model,
 template <typename FP, class Base>
 FP get_infections_relative(const Simulation<FP, Base>& sim, FP /*t*/, const Eigen::Ref<const Vector<FP>>& y)
 {
-    double sum_inf = 0;
+    FP sum_inf = 0;
     for (auto i = AgeGroup(0); i < sim.get_model().parameters.get_num_groups(); ++i) {
         sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedSymptomsNaive});
         sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedSymptomsNaiveConfirmed});
@@ -905,6 +901,15 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::R
     return factors;
 }
 
+/**
+ * @brief Adjusts the state of commuters in a model, accounting for detection and mobility effects.
+ * 
+ * @tparam FP Floating-point type, e.g., double.
+ * @tparam Base Simulation type that uses the SECIRTS-type model. see Simulation.
+ * @param[in,out] sim Simulation object containing the model and result data.
+ * @param[in,out] migrated Vector representing the number of commuters in each state.
+ * @param[in] time Current simulation time, used to determine the commuter detection period.
+ */
 template <typename FP = double, class Base = mio::Simulation<Model<FP>, FP>>
 auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> migrated, FP time)
 {
@@ -963,4 +968,4 @@ auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> migrated, 
 } // namespace osecirts
 } // namespace mio
 
-#endif //ODESECIRTS_MODEL_H
+#endif //MIO_ODE_SECIRTS_MODEL_H

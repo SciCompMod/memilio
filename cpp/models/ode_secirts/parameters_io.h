@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRTS_PARAMETERS_IO_H
-#define ODESECIRTS_PARAMETERS_IO_H
+#ifndef MIO_ODE_SECIRTS_PARAMETERS_IO_H
+#define MIO_ODE_SECIRTS_PARAMETERS_IO_H
 
 #include "memilio/config.h"
 
@@ -663,20 +663,28 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
 }
 
 /**
-* @brief reads population data from census data.
-* @param[in] path Path to the population data file.
-* @param[in] population_data Vector of population data entries.
-* @param[in] vregion Vector of keys representing the regions of interest.
-* @return An IOResult containing a vector of vectors, where each inner vector represents the population
-*         distribution across age groups for a specific region, or an error if the function fails.
-* @see mio::read_population_data
-* @{
-*/
+ * @brief Reads population data from census data.
+ * 
+ * @param[in] path Path to the population data file.
+ * @param[in] vregion Vector of keys representing the regions of interest.
+ * @return An IOResult containing a vector of vectors, where each inner vector represents the population
+ *         distribution across age groups for a specific region, or an error if the function fails.
+ * @see mio::read_population_data
+ */
 IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
                                                                 const std::vector<int>& vregion);
+
+/**
+ * @brief Reads population data from a vector of population data entries.
+ * 
+ * @param[in] population_data Vector of population data entries.
+ * @param[in] vregion Vector of keys representing the regions of interest.
+ * @return An IOResult containing a vector of vectors, where each inner vector represents the population
+ *         distribution across age groups for a specific region, or an error if the function fails.
+ * @see mio::read_population_data
+ */
 IOResult<std::vector<std::vector<double>>> read_population_data(const std::vector<PopulationDataEntry>& population_data,
                                                                 const std::vector<int>& vregion);
-/**@}*/
 
 /**
  * @brief Sets the population data for the given models based on the provided population distribution and immunity levels.
@@ -1076,8 +1084,8 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
         // Run time equals run time of the previous functions times the num_days !
         // (This only represents the vectorization of the previous function over all simulation days...)
-        log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
-                    "For simulation runs over the same time period, deactivate it.");
+        log_info("Exporting time series of extrapolated real data. This may take some minutes. "
+                 "For simulation runs over the same time period, deactivate it.");
         BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
             model, dir, county, date, scaling_factor_inf, scaling_factor_icu, num_days,
             path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
@@ -1138,8 +1146,8 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
         // Run time equals run time of the previous functions times the num_days !
         // (This only represents the vectorization of the previous function over all simulation days...)
-        log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
-                    "For simulation runs over the same time period, deactivate it.");
+        log_info("Exporting time series of extrapolated real data. This may take some minutes. "
+                 "For simulation runs over the same time period, deactivate it.");
         BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
             model, data_dir, node_ids, date, scaling_factor_inf, scaling_factor_icu, num_days,
             path_join(data_dir, "critical_cases.json"), path_join(data_dir, "confirmed_cases.json"),
@@ -1155,4 +1163,4 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
 
 #endif // MEMILIO_HAS_JSONCPP
 
-#endif // ODESECIRTS_PARAMETERS_IO_H
+#endif // MIO_ODE_SECIRTS_PARAMETERS_IO_H

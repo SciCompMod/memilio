@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRTS_PARAMETERS_H
-#define ODESECIRTS_PARAMETERS_H
+#ifndef MIO_ODE_SECIRTS_PARAMETERS_H
+#define MIO_ODE_SECIRTS_PARAMETERS_H
 
 #include "memilio/math/eigen.h"
 #include "memilio/utils/uncertain_value.h"
@@ -1256,4 +1256,4 @@ private:
 } // namespace osecirts
 } // namespace mio
 
-#endif // ODESECIRTS_PARAMETERS_H
+#endif // MIO_ODE_SECIRTS_PARAMETERS_H

@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRVVS_PARAMETERS_IO_H
-#define ODESECIRVVS_PARAMETERS_IO_H
+#ifndef MIO_ODE_SECIRVVS_PARAMETERS_IO_H
+#define MIO_ODE_SECIRVVS_PARAMETERS_IO_H
 
 #include "memilio/config.h"
 
@@ -1030,4 +1030,4 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
 
 #endif // MEMILIO_HAS_JSONCPP
 
-#endif // ODESECIRVVS_PARAMETERS_IO_H
+#endif // MIO_ODE_SECIRVVS_PARAMETERS_IO_H

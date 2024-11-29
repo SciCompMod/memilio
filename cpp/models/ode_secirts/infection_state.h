@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRTS_INFECTIONSTATE_H
-#define ODESECIRTS_INFECTIONSTATE_H
+#ifndef MIO_ODE_SECIRTS_INFECTIONSTATE_H
+#define MIO_ODE_SECIRTS_INFECTIONSTATE_H
 namespace mio
 {
 namespace osecirts
@@ -71,4 +71,4 @@ enum class InfectionState
 } // namespace osecirts
 } // namespace mio
 
-#endif //ODESECIRTS_INFECTIONSTATE_H
+#endif //MIO_ODE_SECIRTS_INFECTIONSTATE_H
