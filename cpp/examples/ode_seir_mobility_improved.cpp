@@ -86,28 +86,12 @@ mio::IOResult<void> set_parameters_and_population(mio::oseirmobilityimproved::Mo
                                                   const std::string& mobility_data)
 {
     BOOST_OUTCOME_TRY(set_population_data(model, population_data_path));
-    mio::unused(population_data_path);
 
     auto& populations = model.populations;
     auto& parameters  = model.parameters;
 
     size_t number_regions    = (size_t)parameters.get_num_regions();
     size_t number_age_groups = (size_t)parameters.get_num_agegroups();
-
-    // for (size_t j = 0; j < number_age_groups; j++) {
-    //     populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(j),
-    //                  mio::oseirmobilityimproved::InfectionState::Exposed}]     = 10;
-    //     populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(j),
-    //                  mio::oseirmobilityimproved::InfectionState::Susceptible}] = 631207;
-    //     auto test = populations.get_group_total(mio::oseirmobilityimproved::Region(0));
-    //     mio::unused(test);
-    //     for (size_t i = 1; i < number_regions; i++) {
-    //         model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(j),
-    //                            mio::oseirmobilityimproved::InfectionState::Exposed}]     = 0;
-    //         model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(j),
-    //                            mio::oseirmobilityimproved::InfectionState::Susceptible}] = 503707;
-    //     }
-    // }
 
     BOOST_OUTCOME_TRY(set_mobility_weights(model, mobility_data));
 
@@ -143,9 +127,6 @@ mio::IOResult<void> set_parameters_and_population(mio::oseirmobilityimproved::Mo
                     commuting_strengths[0].get_baseline()(region_n, region_m) * population_n;
                 population_after_commuting[{mio::oseirmobilityimproved::Region(region_m), mio::AgeGroup(age)}] +=
                     commuting_strengths[0].get_baseline()(region_n, region_m) * population_n;
-                auto test =
-                    population_after_commuting[{mio::oseirmobilityimproved::Region(region_m), mio::AgeGroup(age)}];
-                mio::unused(test);
             }
         }
     }
@@ -158,10 +139,10 @@ int main()
     mio::set_log_level(mio::LogLevel::debug);
 
     ScalarType t0   = 0.;
-    ScalarType tmax = 1.0;
+    ScalarType tmax = 0.2;
     ScalarType dt   = 0.1;
 
-    ScalarType number_regions = 3;
+    ScalarType number_regions = 53;
     std::vector<int> region_ids(number_regions);
     iota(region_ids.begin(), region_ids.end(), 1);
     ScalarType number_age_groups = 6;
