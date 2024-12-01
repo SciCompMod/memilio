@@ -135,22 +135,19 @@ public:
                 size_t Si = pop.get_flat_index({n, i, InfectionState::Susceptible});
                 for (auto j = AgeGroup(0); j < AgeGroup(num_age_groups); j++) {
                     for (auto m = Region(0); m < Region(num_regions); m++) {
-                        auto const population_region     = pop.template slice<Region>({(size_t)m, 1});
-                        auto const population_region_age = population_region.template slice<AgeGroup>({(size_t)j, 1});
+                        auto const population_region     = pop.template slice<Region>({m.get(), 1});
+                        auto const population_region_age = population_region.template slice<AgeGroup>({j.get(), 1});
                         auto Njm = std::accumulate(population_region_age.begin(), population_region_age.end(), 0.);
 
                         double coeffStoE = 0.5 * contact_matrix.get_matrix_at(y.get_time(t_idx))(i.get(), j.get()) *
                                            params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i];
                         if (n == m) {
-                            F((size_t)i * num_regions + (size_t)n,
-                              num_age_groups * num_regions + (size_t)j * num_regions + (size_t)m) +=
-                                coeffStoE * y.get_value(t_idx)[Si] / Njm;
+                            F(i.get() * num_regions + n.get(), num_age_groups * num_regions + j.get() * num_regions +
+                                                                   m.get()) += coeffStoE * y.get_value(t_idx)[Si] / Njm;
                         }
                         for (auto k = Region(0); k < Region(num_regions); k++) {
-                            auto test = commuting_strengths.get_matrix_at(y.get_time(t_idx))(n.get(), k.get());
-                            mio::unused(test);
-                            F((size_t)i * num_regions + (size_t)n,
-                              num_age_groups * num_regions + (size_t)j * num_regions + (size_t)m) +=
+                            F(i.get() * num_regions + n.get(),
+                              num_age_groups * num_regions + j.get() * num_regions + m.get()) +=
                                 coeffStoE * y.get_value(t_idx)[Si] *
                                 commuting_strengths.get_matrix_at(y.get_time(t_idx))(n.get(), k.get()) *
                                 commuting_strengths.get_matrix_at(y.get_time(t_idx))(m.get(), k.get()) /
@@ -161,11 +158,11 @@ public:
 
                 double T_Ei = params.template get<TimeExposed<ScalarType>>()[i];
                 double T_Ii = params.template get<TimeInfected<ScalarType>>()[i];
-                V((size_t)i * num_regions + (size_t)n, (size_t)i * num_regions + (size_t)n) = 1.0 / T_Ei;
-                V(num_age_groups * num_regions + (size_t)i * num_regions + (size_t)n,
-                  (size_t)i * num_regions + (size_t)n)                                      = -1.0 / T_Ei;
-                V(num_age_groups * num_regions + (size_t)i * num_regions + (size_t)n,
-                  num_age_groups * num_regions + (size_t)i * num_regions + (size_t)n)       = 1.0 / T_Ii;
+                V(i.get() * num_regions + n.get(), i.get() * num_regions + n.get()) = 1.0 / T_Ei;
+                V(num_age_groups * num_regions + i.get() * num_regions + n.get(), i.get() * num_regions + n.get()) =
+                    -1.0 / T_Ei;
+                V(num_age_groups * num_regions + i.get() * num_regions + n.get(),
+                  num_age_groups * num_regions + i.get() * num_regions + n.get()) = 1.0 / T_Ii;
             }
         }
 
