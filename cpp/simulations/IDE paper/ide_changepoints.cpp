@@ -340,7 +340,7 @@ mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType cont
 
 int main()
 {
-    // Paths are valid if file is executed eg in memilio/build/bin.
+    // Paths are valid if file is executed e.g. in memilio/build/bin.
     std::string save_dir = "../../results/fictional/covasim/";
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
