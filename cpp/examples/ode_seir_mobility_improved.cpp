@@ -39,6 +39,7 @@ mio::IOResult<void> set_population_data(mio::oseirmobilityimproved::Model<FP>& m
         }
     }
 
+    printf("Setting population data successful.\n");
     return mio::success();
 }
 
@@ -66,9 +67,7 @@ mio::IOResult<void> set_mobility_weights(mio::oseirmobilityimproved::Model<FP>& 
 
         for (size_t county_idx_i = 0; county_idx_i < number_regions; ++county_idx_i) {
             auto population_i = model.populations.get_group_total(mio::oseirmobilityimproved::Region(county_idx_i));
-            auto test         = population_i;
             mobility_data_commuter.row(county_idx_i) /= population_i;
-            mio::unused(test);
             mobility_data_commuter(county_idx_i, county_idx_i) =
                 1 - mobility_data_commuter.rowwise().sum()(county_idx_i);
         }
@@ -76,6 +75,7 @@ mio::IOResult<void> set_mobility_weights(mio::oseirmobilityimproved::Model<FP>& 
             .get_cont_freq_mat()[0]
             .get_baseline() = mobility_data_commuter;
 
+        printf("Setting mobility weights successful.\n");
         return mio::success();
     }
 }
@@ -85,20 +85,35 @@ mio::IOResult<void> set_parameters_and_population(mio::oseirmobilityimproved::Mo
                                                   const std::string& population_data_path,
                                                   const std::string& mobility_data)
 {
-    BOOST_OUTCOME_TRY(set_population_data(model, population_data_path));
-
     auto& populations = model.populations;
     auto& parameters  = model.parameters;
 
     size_t number_regions    = (size_t)parameters.get_num_regions();
     size_t number_age_groups = (size_t)parameters.get_num_agegroups();
 
+    if (number_age_groups != 6) {
+        printf("Data is not compatible, using demo population instead.\n");
+        for (size_t j = 0; j < number_age_groups; j++) {
+            model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(j),
+                               mio::oseirmobilityimproved::InfectionState::Exposed}]     = 10;
+            model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(j),
+                               mio::oseirmobilityimproved::InfectionState::Susceptible}] = 9990;
+            for (size_t i = 1; i < number_regions; i++) {
+                model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(j),
+                                   mio::oseirmobilityimproved::InfectionState::Exposed}]     = 0;
+                model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(j),
+                                   mio::oseirmobilityimproved::InfectionState::Susceptible}] = 10000;
+            }
+        }
+    }
+    else {
+        BOOST_OUTCOME_TRY(set_population_data(model, population_data_path));
+        populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(1),
+                     mio::oseirmobilityimproved::InfectionState::Susceptible}] -= 100;
+        populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(1),
+                     mio::oseirmobilityimproved::InfectionState::Exposed}] += 100;
+    }
     BOOST_OUTCOME_TRY(set_mobility_weights(model, mobility_data));
-
-    populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(3),
-                 mio::oseirmobilityimproved::InfectionState::Susceptible}] -= 100;
-    populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(3),
-                 mio::oseirmobilityimproved::InfectionState::Exposed}] += 100;
 
     mio::ContactMatrixGroup& contact_matrix =
         parameters.template get<mio::oseirmobilityimproved::ContactPatterns<>>().get_cont_freq_mat();
@@ -170,7 +185,7 @@ int main()
     std::chrono::duration<double, std::milli> ms_double = t2 - t1;
 
     printf("Runtime: %f\n", ms_double.count());
-    result_from_sim.print_table({"S", "E", "I", "R"});
+    result_from_sim.print_table();
 
     auto save_result_status =
         mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result_test.h5");
