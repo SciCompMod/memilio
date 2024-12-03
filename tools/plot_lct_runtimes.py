@@ -28,7 +28,7 @@ import json
 
 colors = ["tab:blue", "tab:orange", "tab:green",
           "tab:red", "tab:purple", "tab:brown"]
-fontsize_labels = 14
+fontsize_labels = 16
 fontsize_legends = 12
 
 
@@ -136,6 +136,8 @@ def plot_runtime_noage(jsonfilename, name=''):
     plt.xlim(left=0., right=df_age["Subcompartments"].max()+1)
     plt.xlabel('Number of subcompartments', fontsize=fontsize_labels)
     plt.ylabel('Run time [seconds]', fontsize=fontsize_labels)
+    plt.yticks(fontsize=fontsize_legends)
+    plt.xticks(fontsize=fontsize_legends)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
@@ -152,7 +154,7 @@ def plot_runtime_and_steps(jsonfilename, name=''):
 
     # Run time at the left y-axis.
     ax1.plot(df_age["Subcompartments"], df_age["Time"],
-             linestyle='--', marker='o', linewidth=1.3, color=colors[0])
+             linestyle='--', marker='o', linewidth=1.3, color=colors[0], label="Run time")
     ax1.plot(df_age["Subcompartments"], df_age["Time"].max()/(df_age["Subcompartments"].max()**2) *
              df_age["Subcompartments"]**2, linewidth=1.2, linestyle='--', color='black', label=r"$\mathcal{O}((n_Z)^{2})$")
     ax1.set_xlabel('Number of subcompartments $n_Z$', fontsize=fontsize_labels)
@@ -160,17 +162,21 @@ def plot_runtime_and_steps(jsonfilename, name=''):
                    fontsize=fontsize_labels, color=colors[0])
     ax1.set_ylim(bottom=0.)
     ax1.set_xlim(left=0., right=df_age["Subcompartments"].max()+1)
-    ax1.tick_params(axis='y', labelcolor=colors[0])
-    ax1.legend(fontsize=fontsize_labels)
+    ax1.tick_params(axis='y', labelcolor=colors[0], labelsize=fontsize_legends)
 
     # Second y-axis for Steps.
     ax2 = ax1.twinx()
     ax2.plot(df_age["Subcompartments"], df_age["Steps"]-1,
-             linestyle='--', marker='x', linewidth=1.2, color=colors[1])
+             linestyle='--', marker='x', linewidth=1.2, color=colors[1], label="Steps")
     ax2.set_ylabel('Steps', fontsize=fontsize_labels, color=colors[1])
-    ax2.tick_params(axis='y', labelcolor=colors[1])
+    ax2.tick_params(axis='y', labelcolor=colors[1], labelsize=fontsize_legends)
     ax2.set_ylim(bottom=0., top=df_age["Steps"].max()+10)
 
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax2.legend(lines2 + lines1, labels2 + labels1, fontsize=fontsize_labels-2)
+
+    ax1.tick_params(axis='x', labelsize=fontsize_legends)
     ax1.grid(True, axis='x', linestyle='--', alpha=0.9)
     ax2.grid(True, which='both', axis='both', linestyle='--', alpha=0.9)
     plt.tight_layout()
@@ -231,13 +237,17 @@ def main():
     folderfilename = 'runtimes/'+filename
     # extract_json_segments(
     #     folderfilename+'.txt', folderfilename+'.json')
-    # # plot_runtime_noage(folderfilename+'.json', filename)
     plot_runtime_and_steps(folderfilename+'.json', filename)
-    # plot_runtime_per_step(folderfilename+'.json',
-    #                       'runtimeperstep_adaptive_200sub')
+    plot_runtime_noage(
+        'runtimes/runtimes_100sub_20days_run2.json', 'runtimes_100sub_20days_run2')
+    plot_runtime_noage('runtimes/runtimes_100sub_opt0.json',
+                       'runtimes_100sub_opt0')
 
     # Cache
     # jsonfilenamecache = 'runtimes/valgrind_85sub_20days.json'
+    # parse_valgrind_output(
+    #     'runtimes/valgrind_85_sub_20days.txt', jsonfilenamecache)
+
     # plot_cachemisses(jsonfilenamecache, 0, 'Refstotal_85sub_20days')
     # plot_cachemisses(jsonfilenamecache, 1, 'L1cachemisstotal_85sub_20days')
     # plot_cachemisses(jsonfilenamecache, 3, 'LLcachemisstotal_85sub_20days')
@@ -245,9 +255,6 @@ def main():
     #                  'L1cachemissrate_85sub_20days', True)
     # plot_cachemisses(jsonfilenamecache, 3,
     #                  'LLcachemissrate_85sub_20days', True)
-    # jsonfilenamecache = 'runtimes/valgrind_85sub_20days.json'
-    # parse_valgrind_output(
-    #     'runtimes/valgrind_85_sub_20days.txt', jsonfilenamecache)
 
 
 if __name__ == "__main__":

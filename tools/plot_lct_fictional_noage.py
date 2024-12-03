@@ -51,6 +51,7 @@ color_dict = {'ODE': '#1f77b4',
               }
 fontsize_labels = 14
 fontsize_legends = 14
+plotfolder = 'Plots_fictional'
 
 
 def compare_compartments_horizontal(files, legendplot,  filename_plot="compare_compartments", compartment_indices=range(8)):
@@ -124,10 +125,9 @@ def compare_compartments_horizontal(files, legendplot,  filename_plot="compare_c
     fig.subplots_adjust(bottom=0.09)
 
     # Save result.
-    if not os.path.isdir('Plots_fictional'):
-        os.makedirs('Plots_fictional')
-    fig.savefig('Plots_fictional/'+filename_plot+'.png',
+    fig.savefig(plotfolder+'/'+filename_plot+'.png',
                 bbox_extra_artists=(lgd,),  bbox_inches='tight', dpi=500)
+    plt.close()
 
 
 def compare_single_compartment(files, legendplot,  compartment_idx=1, filename_plot="compare_single_compartment"):
@@ -182,10 +182,9 @@ def compare_single_compartment(files, legendplot,  compartment_idx=1, filename_p
     plt.tight_layout()
 
     # Save result.
-    if not os.path.isdir('Plots_fictional'):
-        os.makedirs('Plots_fictional')
-    plt.savefig('Plots_fictional/'+filename_plot +
+    plt.savefig(plotfolder+'/'+filename_plot +
                 '.png', bbox_inches='tight', dpi=500)
+    plt.close()
 
 
 def plot_subcompartments3D(file, subcompartments, compartment_idx, first_time_idx, filename_plot="compare_new_infections"):
@@ -254,10 +253,10 @@ def plot_subcompartments3D(file, subcompartments, compartment_idx, first_time_id
     cbar = plt.colorbar(sc, ax=ax, shrink=0.75)
 
     h5file.close()
-    if not os.path.isdir('Plots_fictional'):
-        os.makedirs('Plots_fictional')
-    plt.savefig('Plots_fictional/'+filename_plot +
+
+    plt.savefig(plotfolder+'/'+filename_plot +
                 '.png', bbox_inches='tight', dpi=500)
+    plt.close()
 
 
 def plot_maxpeak_incidence(func_get_file_name, R0s, subcomps, filename_plot="maxpeak2d"):
@@ -279,10 +278,9 @@ def plot_maxpeak_incidence(func_get_file_name, R0s, subcomps, filename_plot="max
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
-    if not os.path.isdir('Plots_fictional'):
-        os.makedirs('Plots_fictional')
-    plt.savefig('Plots_fictional/'+filename_plot +
+    plt.savefig(plotfolder+'/'+filename_plot +
                 '.png', bbox_inches='tight', dpi=500)
+    plt.close()
 
 
 def get_maxpeak_incidence(file):
@@ -312,7 +310,7 @@ def plot_day_peak_incidence(func_get_file_name, R0s, subcomps, filename_plot="ma
         for i in range(len(subcomps)):
             y[i] = get_day_peak_incidence(
                 func_get_file_name(R0=R0, subcompartment=subcomps[i]))
-        plt.plot(subcomps, y, 'x-', linewidth=1.2,
+        plt.plot(subcomps, y, 'o-', linewidth=1.2,
                  label=str(R0))
 
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10,
@@ -323,10 +321,9 @@ def plot_day_peak_incidence(func_get_file_name, R0s, subcomps, filename_plot="ma
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
-    if not os.path.isdir('Plots_fictional'):
-        os.makedirs('Plots_fictional')
-    plt.savefig('Plots_fictional/'+filename_plot +
+    plt.savefig(plotfolder+'/'+filename_plot +
                 '.png', bbox_inches='tight', dpi=500)
+    plt.close()
 
 
 def get_day_peak_incidence(file):
@@ -348,7 +345,7 @@ def get_day_peak_incidence(file):
     return dates[argmax]
 
 
-def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infections", tmax=0):
+def plot_new_infections(files, legendplot, filename_plot="compare_new_infections", tmax=0):
     """ Single plot to compare the incidence of different results. Incidence means the number of people leaving the
         susceptible class per day.
 
@@ -357,7 +354,6 @@ def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infe
         Results should contain exactly 8 compartments (so use accumulated numbers for LCT models).
         Names can be given in form of a list.
         One could compare results with eg different parameters or different models.
-    @param[in] ylim: upper limit for the y-axis of the plot.
     @param[in] legendplot: list with names for the results that should be used for the legend of the plot.
     @param[in] filename_plot: name to use as the file name for the saved plot.
     """
@@ -390,7 +386,7 @@ def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infe
     plt.xlabel('Simulation time [days]', fontsize=fontsize_labels)
     plt.yticks(fontsize=9)
     plt.ylabel('Daily new transmissions', fontsize=fontsize_labels)
-    plt.ylim(bottom=0, top=ylim)
+    plt.ylim(bottom=0, top=np.max(incidence)*1.05)
     if tmax > 0:
         plt.xlim(left=0, right=tmax)
     else:
@@ -400,10 +396,9 @@ def plot_new_infections(files, ylim, legendplot, filename_plot="compare_new_infe
     plt.tight_layout()
 
     # Save result.
-    if not os.path.isdir('Plots_fictional'):
-        os.makedirs('Plots_fictional')
-    plt.savefig('Plots_fictional/'+filename_plot +
+    plt.savefig(plotfolder+'/'+filename_plot +
                 '.png', bbox_inches='tight', dpi=500)
+    plt.close()
 
 
 def get_file_name(R0, subcompartment, data_dir, boolsubcomp=False):
@@ -414,6 +409,9 @@ def get_file_name(R0, subcompartment, data_dir, boolsubcomp=False):
 
 
 if __name__ == '__main__':
+    if not os.path.isdir(plotfolder):
+        os.makedirs(plotfolder)
+
     # simulation results should be stored in this folder.
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "data", "simulation_lct_noage")
@@ -426,7 +424,8 @@ if __name__ == '__main__':
             plot_new_infections([os.path.join(folder, "fictional_lct_2.0_1"), os.path.join(folder, "fictional_lct_2.0_3"),
                                 os.path.join(folder, "fictional_lct_2.0_10"),
                                 os.path.join(folder, "fictional_lct_2.0_50")],
-                                20000, legendplot=list(["ODE", "LCT3", "LCT10", "LCT50"]),
+                                legendplot=list(
+                                    ["ODE", "LCT3", "LCT10", "LCT50"]),
                                 filename_plot="new_infections_rise2.0")
             compare_single_compartment([os.path.join(folder, "fictional_lct_2.0_1"), os.path.join(folder, "fictional_lct_2.0_3"),
                                         os.path.join(
@@ -449,7 +448,8 @@ if __name__ == '__main__':
             plot_new_infections([os.path.join(folder, "fictional_lct_0.5_1"), os.path.join(folder, "fictional_lct_0.5_3"),
                                 os.path.join(folder, "fictional_lct_0.5_10"),
                                 os.path.join(folder, "fictional_lct_0.5_50")],
-                                4100, legendplot=list(["ODE", "LCT3", "LCT10", "LCT50"]),
+                                legendplot=list(
+                                    ["ODE", "LCT3", "LCT10", "LCT50"]),
                                 filename_plot="new_infections_drop0.5")
             compare_single_compartment([os.path.join(folder, "fictional_lct_0.5_1"),
                                         os.path.join(
@@ -482,7 +482,8 @@ if __name__ == '__main__':
                                 os.path.join(folder,
                                              "fictional_lct_2.0_50")
                                  ],
-                                2.1e6, legendplot=list(["ODE", "LCT3", "LCT10", "LCT50"]),
+                                legendplot=list(
+                                    ["ODE", "LCT3", "LCT10", "LCT50"]),
                                 filename_plot="new_infections_rise2.0_long", tmax=150)
             compare_compartments_horizontal([os.path.join(folder, "fictional_lct_2.0_1"),
                                             os.path.join(folder,
@@ -506,7 +507,8 @@ if __name__ == '__main__':
                                 os.path.join(folder,
                                              "fictional_lct_4.0_50")
                                  ],
-                                6e6, legendplot=list(["ODE", "LCT3", "LCT10", "LCT50"]),
+                                legendplot=list(
+                                    ["ODE", "LCT3", "LCT10", "LCT50"]),
                                 filename_plot="new_infections_rise4.0_long", tmax=70)
         elif case == 4:
             data_dir = os.path.join(os.path.dirname(
@@ -521,14 +523,14 @@ if __name__ == '__main__':
                 filename_plot="compartments_agevsnoage", compartment_indices=[0, 1, 2, 3, 4, 5, 6, 7])
         elif case == -1:
             # Plots to compare time and size of epidemic peaks.
-            data_dir_other = "../data/simulation_lct_noage/riseR0long/"
-            plot_maxpeak_incidence(lambda R0, subcompartment: get_file_name(R0, subcompartment, data_dir=data_dir_other),
+            folder = os.path.join(data_dir, "riseR0long")
+            plot_maxpeak_incidence(lambda R0, subcompartment: get_file_name(R0, subcompartment, data_dir=folder),
                                    R0s, list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), filename_plot="compare_peak_size")
-            plot_day_peak_incidence(lambda R0, subcompartment: get_file_name(R0, subcompartment, data_dir=data_dir_other),
+            plot_day_peak_incidence(lambda R0, subcompartment: get_file_name(R0, subcompartment, data_dir=folder),
                                     R0s, list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), filename_plot="compare_peak_days")
         elif case == -2:
             # All 3d Plots for normal parameters.
-            folder = "../data/simulation_lct_noage/riseR0short/"
+            folder = os.path.join(data_dir, "riseR0short/")
             nums_subcomp = [10, 50]
             for num_subcomp in nums_subcomp:
                 plot_subcompartments3D(get_file_name(
@@ -538,11 +540,21 @@ if __name__ == '__main__':
                 plot_subcompartments3D(get_file_name(
                     2, num_subcomp, folder, True), num_subcomp, 3, 1, filename_plot="subcompartments"+f"{num_subcomp}"+"_infected")
         elif case == -3:
-            # All 3d Plots for swapped values TE and TC.
-            folder = "../data/simulation_lct_noage/riseR0shortswappedTETC/"
+            if not os.path.isdir(plotfolder+"/changedTE"):
+                os.makedirs(plotfolder+"/changedTE")
+            # All Plots for changed values of TE.
+            folder = os.path.join(data_dir, "riseR0shortTEhalved/")
             num_subcomp = 50
             plot_subcompartments3D(get_file_name(
-                2, num_subcomp, folder, True), num_subcomp, 2, 1, filename_plot="subcompartments"+f"{num_subcomp}"+"_carrier_swappedTETC")
+                2, num_subcomp, folder, True), num_subcomp, 2, 1, filename_plot="changedTE/subcompartments"+f"{num_subcomp}"+"_carrier_TEhalved")
             plot_new_infections([get_file_name(2, 1, folder), get_file_name(2, 3, folder), get_file_name(2, 10, folder), get_file_name(2, 50, folder)],
-                                20000, legendplot=list(["ODE", "LCT3", "LCT10", "LCT50"]),
-                                filename_plot="new_infections_rise2.0_swappedTETC")
+                                legendplot=list(
+                                    ["ODE", "LCT3", "LCT10", "LCT50"]),
+                                filename_plot="changedTE/new_infections_rise2.0_TEhalved")
+            # Plots to compare time and size of epidemic peaks.
+            for TEcase in ["TEhalved", "TEdoubled"]:
+                folder = os.path.join(data_dir, "riseR0long"+TEcase)
+                plot_maxpeak_incidence(lambda R0, subcompartment: get_file_name(R0, subcompartment, data_dir=folder),
+                                       R0s, list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), filename_plot="changedTE/compare_peak_size_"+TEcase)
+                plot_day_peak_incidence(lambda R0, subcompartment: get_file_name(R0, subcompartment, data_dir=folder),
+                                        R0s, list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), filename_plot="changedTE/compare_peak_days_"+TEcase)

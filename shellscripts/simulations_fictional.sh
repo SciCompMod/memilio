@@ -16,13 +16,9 @@ subdir_riseR0short="$dir/riseR0short/"
 if [ ! -d "$subdir_riseR0short" ]; then
     mkdir "$subdir_riseR0short"
 fi
-subdir_riseR0shortswapped="$dir/riseR0shortswappedTETC/"
-if [ ! -d "$subdir_riseR0shortswapped" ]; then
-    mkdir "$subdir_riseR0shortswapped"
-fi
-subdir_riseR0long="$dir/riseR0long/"
-if [ ! -d "$subdir_riseR0long" ]; then
-    mkdir "$subdir_riseR0long"
+subdir_riseR0shortTEhalved="$dir/riseR0shortTEhalved/"
+if [ ! -d "$subdir_riseR0shortTEhalved" ]; then
+    mkdir "$subdir_riseR0shortTEhalved"
 fi
 
 # Compile with the different numbers of subcompartments and run with different setups.
@@ -44,23 +40,39 @@ do
     fi
     ./bin/lct_fictional_noage $R0 $simulation_days $subdir_riseR0short
 
-    # Third case: rise R0 short 2 with swappedvalues for TE and TC.
+    # Third case: rise R0 short 2 with TE scaled by 0.5.
     R0=2.
     simulation_days=12
     if [ "$num_subcomp" -eq 50 ]; then
-        ./bin/lct_fictional_noage $R0 $simulation_days $subdir_riseR0shortswapped 1 1
+        ./bin/lct_fictional_noage $R0 $simulation_days $subdir_riseR0shortTEhalved 1 0.5
     fi
-    ./bin/lct_fictional_noage $R0 $simulation_days $subdir_riseR0shortswapped 0 1
+    ./bin/lct_fictional_noage $R0 $simulation_days $subdir_riseR0shortTEhalved 0 0.5
 
     # Fourth case: Print final sizes.
     simulation_days=500
-    ./bin/lct_fictional_noage 2 $simulation_days "" 0 0 1
-    ./bin/lct_fictional_noage 4 $simulation_days "" 0 0 1
-    ./bin/lct_fictional_noage 10 $simulation_days "" 0 0 1
+    ./bin/lct_fictional_noage 2 $simulation_days "" 0 1.0 1
+    ./bin/lct_fictional_noage 4 $simulation_days "" 0 1.0 1
+    ./bin/lct_fictional_noage 10 $simulation_days "" 0 1.0 1
 done
 
+
 # Fourth case: rise R0 to different R0 values and simulate for a long time period.
-simulationdays=(140 100 90 80 60 60 60 60 60)
+# Check if all relevant folders are present.
+subdir_riseR0long="$dir/riseR0long/"
+if [ ! -d "$subdir_riseR0long" ]; then
+    mkdir "$subdir_riseR0long"
+fi
+subdir_riseR0longTEhalved="$dir/riseR0longTEhalved/"
+if [ ! -d "$subdir_riseR0longTEhalved" ]; then
+    mkdir "$subdir_riseR0longTEhalved"
+fi
+subdir_riseR0longTEdoubled="$dir/riseR0longTEdoubled/"
+if [ ! -d "$subdir_riseR0longTEdoubled" ]; then
+    mkdir "$subdir_riseR0longTEdoubled"
+fi
+
+simulationdays=(200 200 200 200 200 200 200 200 200)
+#(140 100 90 80 60 60 60 60 60)
 R0s=(2 3 4 5 6 7 8 9 10)
 for num_subcomp in 1 2 3 4 5 6 7 8 9 10 50
 do
@@ -69,6 +81,8 @@ do
     for index in {0..8}
     do
         ./bin/lct_fictional_noage ${R0s[index]} ${simulationdays[index]} $subdir_riseR0long
+        ./bin/lct_fictional_noage ${R0s[index]} ${simulationdays[index]} $subdir_riseR0longTEhalved 0 0.5
+        ./bin/lct_fictional_noage ${R0s[index]} ${simulationdays[index]} $subdir_riseR0longTEdoubled 0 2.0
     done
 done
 
