@@ -169,14 +169,16 @@ private:
 };
 
 /**
- * @brief Construct a Range that can be used to iterate over all MultiIndices in the given dimensions.
- * The range for each Index i in the MultiIndex is determined by [0, d_i), where d_i is the dimension of i.
- * @param[in] dimensions A MultiIndex that contains the dimension for each Category.
+ * @brief Construct a range that can be used to iterate over all MultiIndices in the given dimensions.
+ * The range spans over [0, d) for each category in the MultiIndex, where d is that category's value in dimensions.
+ * @param[in] dimensions A MultiIndex that contains the dimension for each category.
+ * @tparam Categories All categories of the given MultiIndex.
+ * @return An iterable range over the given dimensions.
  */
-template <class MultiIndex>
-IndexRange<MultiIndex> make_index_range(const MultiIndex& dimensions)
+template <class... Categories>
+IndexRange<Index<Categories...>> make_index_range(const Index<Categories...>& dimensions)
 {
-    return IndexRange<MultiIndex>(dimensions);
+    return IndexRange<Index<Categories...>>(dimensions);
 }
 
 } // namespace mio

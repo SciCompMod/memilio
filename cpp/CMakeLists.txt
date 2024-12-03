@@ -24,6 +24,12 @@ option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
+# try to treat AppleClang as Clang, but warn about missing support 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    message(WARNING "The compiler ID \"AppleClang\" is not supported, trying to compile with \"Clang\" options.")
+    set(CMAKE_CXX_COMPILER_ID "Clang")
+endif()
+
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -146,6 +152,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/ode_secir)
     add_subdirectory(models/ode_secirvvs)
     add_subdirectory(models/lct_secir)
+    add_subdirectory(models/glct_secir)
     add_subdirectory(models/ide_secir)
     add_subdirectory(models/ide_seir)
     add_subdirectory(models/ode_seir)
