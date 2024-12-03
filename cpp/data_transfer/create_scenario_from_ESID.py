@@ -18,6 +18,7 @@
 #
 import json
 import time
+import datetime
 import numpy as np
 from enum import Enum
 import os
@@ -58,6 +59,7 @@ class Simulation:
         self.results_dir = results_dir
         self.start_date = start_date
         self.szenario_data = ""
+        self.intervention_list = []
         self.run_data_dir = run_data_dir
         if not os.path.exists(self.results_dir):
             os.makedirs(self.results_dir)
@@ -371,10 +373,110 @@ class Simulation:
             )
         model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
 
-    def get_graph(self, end_date):
+    def set_npis(self, params):
+        # set up for damping
+        contacts = params.ContactPatterns
+        dampings = contacts.dampings
+
+        group_weights_all = np.ones(self.num_groups)
+        group_weights_seniors = np.vectorize(
+            lambda i: 1.0 if i == 5 else (0.5 if i == 4 else 0.0))(
+            np.arange(self.num_groups))
+
+        loc_home = Location.Home.value
+        loc_school = Location.School.value
+        loc_work = Location.Work.value
+        loc_other = Location.Other.value
+
+        lvl_main = InterventionLevel.Main.value
+        lvl_pd_and_masks = InterventionLevel.PhysicalDistanceAndMasks.value
+        lvl_seniors = InterventionLevel.SeniorAwareness.value
+        lvl_holidays = InterventionLevel.Holidays.value
+
+        typ_home = Intervention.Home.value
+        typ_school = Intervention.SchoolClosure.value
+        typ_homeoffice = Intervention.HomeOffice.value
+        typ_gathering = Intervention.GatheringBanFacilitiesClosure.value
+        typ_distance = Intervention.PhysicalDistanceAndMasks.value
+        typ_senior = Intervention.SeniorAwareness.value
+
+        def damping_helper(
+                t, min, max, damping_level, type, location,
+                group_weights=group_weights_all):
+            v = mio.UncertainValue(0.5 * (max + min))
+            v.set_distribution(mio.ParameterDistributionUniform(min, max))
+            return mio.DampingSampling(
+                value=v,
+                level=damping_level,
+                type=type,
+                time=t,
+                matrix_indices=location,
+                group_weights=group_weights)
+
+        def school_closure(t, min, max):
+            return damping_helper(
+                t, min, max, lvl_main, typ_school, [loc_school])
+
+        def home_office(t, min, max):
+            return damping_helper(
+                t, min, max, lvl_main, typ_homeoffice, [loc_work])
+
+        def physical_distancing_school(t, min, max):
+            return damping_helper(
+                t, min, max, lvl_pd_and_masks, typ_distance, [loc_school])
+
+        def physical_distancing_work(t, min, max):
+            return damping_helper(
+                t, min, max, lvl_pd_and_masks, typ_distance, [loc_work])
+
+        def physical_distancing_other(t, min, max):
+            return damping_helper(
+                t, min, max, lvl_pd_and_masks, typ_distance, [loc_other])
+
+        # read interventions given from the scenario
+        interventions_scenario = self.scenario_data[0]['linkedInterventions']
+
+        for intervention in interventions_scenario:
+            # search intervention in self.intervention_list
+            intervention_data = next(
+                (entry for entry in self.intervention_list if entry['id'] == intervention['interventionId']), None)
+
+            if not intervention_data:
+                print(
+                    f"Intervention {intervention['interventionId']} not found in intervention list")
+                continue
+
+            start_date = datetime.datetime.strptime(
+                intervention['startDate'], '%Y-%m-%d').date()
+            start_date_day = mio.Date(
+                start_date.year, start_date.month, start_date.day) - self.start_date
+
+            if intervention_data['name'] == 'School closure':
+                dampings.append(school_closure(
+                    start_date_day, intervention['coefficient'], intervention['coefficient']))
+            elif intervention_data['name'] == 'Remote work':
+                dampings.append(home_office(
+                    start_date_day, intervention['coefficient'], intervention['coefficient']))
+            elif intervention_data['name'] == "Face masks & social distancing School":
+                dampings.append(physical_distancing_school(
+                    start_date_day, intervention['coefficient'], intervention['coefficient']))
+            elif intervention_data['name'] == "Face masks & social distancing Work":
+                dampings.append(physical_distancing_work(
+                    start_date_day, intervention['coefficient'], intervention['coefficient']))
+            elif intervention_data['name'] == "Face masks & social distancing Other":
+                dampings.append(physical_distancing_other(
+                    start_date_day, intervention['coefficient'], intervention['coefficient']))
+            else:
+                print(
+                    f"Intervention {intervention_data['name']} not implemented yet!")
+
+        params.ContactPatterns.dampings = dampings
+
+    def get_graph(self, end_date, extrapolate):
         model = osecirvvs.Model(self.num_groups)
         self.set_covid_parameters(model)
         self.set_contact_matrices(model)
+        self.set_npis(model.parameters)
 
         graph = osecirvvs.ModelGraph()
 
@@ -391,20 +493,24 @@ class Simulation:
             self.start_date,
             end_date, self.data_dir,
             path_population_data, True, graph, scaling_factor_infected,
-            scaling_factor_icu, tnt_capacity_factor, end_date - self.start_date, False)
+            scaling_factor_icu, tnt_capacity_factor, end_date - self.start_date, extrapolate)
 
         osecirvvs.set_edges(
             self.data_dir, graph, len(Location))
 
         return graph
 
-    def run(self, num_days_sim, num_runs=10):
+    def run(self, num_days_sim, num_runs=10, extrapolate=False):
         mio.set_log_level(mio.LogLevel.Warning)
         end_date = self.start_date + num_days_sim
 
         # list all files in dir self.run_data_dir and filter for scenario_*
         scenario_files = [file for file in os.listdir(
             self.run_data_dir) if file.startswith("scenario_")]
+
+        # read intervention list
+        with open(os.path.join(self.run_data_dir, "intervention.json")) as f:
+            self.intervention_list = json.load(f)
 
         # TODO: Assuming all parameters are equal for each scenarios.
         # Therefore, we only need to build the graph once?
@@ -414,11 +520,11 @@ class Simulation:
             with open(szenario_data_path) as f:
                 self.scenario_data = json.load(f)
 
-            graph = self.get_graph(end_date)
+            graph = self.get_graph(end_date, extrapolate)
 
             study = osecirvvs.ParameterStudy(
                 graph, 0., num_days_sim, 0.5, num_runs)
-            ensemble = study.run(self.high)
+            ensemble = study.run(False)
 
             ensemble_results = []
             ensemble_params = []
@@ -437,7 +543,7 @@ class Simulation:
 
             osecirvvs.save_results(
                 ensemble_results, ensemble_params, node_ids, self.results_dir,
-                save_single_runs, save_percentiles)
+                save_single_runs, save_percentiles, 0, True)
 
             # update timestamp in the scenario file
             with open(szenario_data_path, 'r') as f:
@@ -447,11 +553,11 @@ class Simulation:
 
 if __name__ == "__main__":
     cwd = os.getcwd()
-    start_date = mio.Date(2022, 6, 1)
+    start_date = mio.Date(2022, 1, 20)
     run_data_dir = '/localdata1/revised_paper/memilio/cpp/data_transfer/Scenario_creation/'
     # with open(scenario_data_path) as f:
     #     scenario_data = json.load(f)
     sim = Simulation(
         data_dir=os.path.join(cwd, "data"),
         results_dir=os.path.join(cwd, "results_osecirvvs"), start_date=start_date, run_data_dir=run_data_dir)
-    sim.run(num_days_sim=30, num_runs=5)
+    sim.run(num_days_sim=30, num_runs=2, extrapolate=False)

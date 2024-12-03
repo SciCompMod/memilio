@@ -34,17 +34,16 @@ namespace pymio
 template <class Model>
 void bind_save_results(pybind11::module_& m)
 {
-    m.def("save_results",
-          [&](const std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_results,
-              const std::vector<std::vector<Model>>& ensemble_params, const std::vector<int>& county_ids,
-              const std::string& result_dir, bool save_single_runs, bool save_percentiles) {
-              boost::filesystem::path dir(result_dir);
-              auto ioresult = mio::save_results<Model>(ensemble_results, ensemble_params, county_ids, dir, save_single_runs,
-                                       save_percentiles);
-              return NULL;
-          });
+    m.def("save_results", [&](const std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_results,
+                              const std::vector<std::vector<Model>>& ensemble_params,
+                              const std::vector<int>& county_ids, const std::string& result_dir, bool save_single_runs,
+                              bool save_percentiles, size_t num_days, bool save_non_aggregated_results) {
+        boost::filesystem::path dir(result_dir);
+        auto ioresult = mio::save_results<Model>(ensemble_results, ensemble_params, county_ids, dir, save_single_runs,
+                                                 save_percentiles, num_days, save_non_aggregated_results);
+        return NULL;
+    });
 }
-
 } // namespace pymio
 
 #endif // MEMILIO_HAS_HDF5
