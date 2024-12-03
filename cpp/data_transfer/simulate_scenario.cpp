@@ -433,22 +433,28 @@ int main(int argc, char** argv)
     mio::Date start_date             = mio::Date(2022, 6, 1);
     int num_days_sim                 = 5;
     int num_simulation_runs          = 5;
-    bool save_non_aggregated_results = false;
+    bool save_non_aggregated_results = true;
+    std::cout << argc << std::endl;
 
     if (argc == 1) {
         data_dir = "../../data";
     }
-    if (argc > 1) {
-        data_dir = argv[1];
-    }
-    if (argc > 5) {
+    else if (argc == 6) {
+        data_dir     = argv[1];
         start_date   = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
         num_days_sim = std::atoi(argv[5]);
     }
-    if (argc > 6) {
+    else if (argc == 7) {
+        data_dir            = argv[1];
+        start_date          = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
+        num_days_sim        = std::atoi(argv[5]);
         num_simulation_runs = std::atoi(argv[6]);
     }
-    if (argc > 7) {
+    else if (argc == 8) {
+        data_dir                    = argv[1];
+        start_date                  = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
+        num_days_sim                = std::atoi(argv[5]);
+        num_simulation_runs         = std::atoi(argv[6]);
         save_non_aggregated_results = bool(argv[7]);
     }
     else {

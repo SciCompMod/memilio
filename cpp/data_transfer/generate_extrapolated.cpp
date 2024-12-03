@@ -341,14 +341,15 @@ int main(int argc, char** argv)
     if (argc == 1) {
         data_dir = "../../data";
     }
-    if (argc > 1) {
-        data_dir = argv[1];
-    }
-    if (argc > 5) {
+    else if (argc == 6) {
+        data_dir   = argv[1];
         start_date = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
         num_days   = std::atoi(argv[5]);
     }
-    if (argc > 6) {
+    else if (argc == 7) {
+        data_dir                    = argv[1];
+        start_date                  = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
+        num_days                    = std::atoi(argv[5]);
         save_non_aggregated_results = argv[6];
     }
     else {
