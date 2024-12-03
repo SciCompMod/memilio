@@ -20,10 +20,11 @@
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_covid_parameters(mio::oseirmobilityimproved::Parameters<double>& params)
+mio::IOResult<void> set_covid_parameters(mio::oseirmobilityimproved::Parameters<double>& params,
+                                         bool synthetic_population)
 {
     params.template set<mio::oseirmobilityimproved::TimeExposed<>>(3.335);
-    if ((size_t)params.get_num_agegroups() == 6) {
+    if (!synthetic_population) {
         params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(0)] = 8.0096875;
         params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(1)] = 8.0096875;
         params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(2)] = 8.2182;
@@ -73,9 +74,10 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
  * @returns any io errors that happen during reading of the files.
  */
 mio::IOResult<void> set_contact_matrices(const fs::path& data_dir,
-                                         mio::oseirmobilityimproved::Parameters<double>& params)
+                                         mio::oseirmobilityimproved::Parameters<double>& params,
+                                         bool synthetic_population)
 {
-    if ((size_t)params.get_num_agegroups() == 6) {
+    if (!synthetic_population) {
         //TODO: io error handling
         auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_agegroups()));
         for (auto&& contact_location : contact_locations) {
@@ -91,7 +93,6 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir,
         params.get<mio::oseirmobilityimproved::ContactPatterns<double>>() =
             mio::UncertainContactMatrix<double>(contact_matrices);
     }
-
     else {
         mio::ContactMatrixGroup& contact_matrix =
             params.get<mio::oseirmobilityimproved::ContactPatterns<>>().get_cont_freq_mat();
@@ -175,7 +176,7 @@ mio::IOResult<void> set_mobility_weights(mio::oseirmobilityimproved::Model<FP>& 
 
 template <typename FP = ScalarType>
 mio::IOResult<void> set_parameters_and_population(mio::oseirmobilityimproved::Model<FP>& model,
-                                                  const fs::path& data_dir)
+                                                  const fs::path& data_dir, bool synthetic_population)
 {
     auto& populations = model.populations;
     auto& parameters  = model.parameters;
@@ -183,33 +184,33 @@ mio::IOResult<void> set_parameters_and_population(mio::oseirmobilityimproved::Mo
     size_t number_regions    = (size_t)parameters.get_num_regions();
     size_t number_age_groups = (size_t)parameters.get_num_agegroups();
 
-    if (number_age_groups != 6) {
-        printf("Data is not compatible, using demo population instead.\n");
+    if (synthetic_population) {
+        printf("Data is not compatible, using synthetic population instead.\n");
         for (size_t j = 0; j < number_age_groups; j++) {
             model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(j),
                                mio::oseirmobilityimproved::InfectionState::Exposed}]     = 10;
             model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(j),
-                               mio::oseirmobilityimproved::InfectionState::Susceptible}] = 99990;
+                               mio::oseirmobilityimproved::InfectionState::Susceptible}] = 9990;
             for (size_t i = 1; i < number_regions; i++) {
                 model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(j),
                                    mio::oseirmobilityimproved::InfectionState::Exposed}]     = 0;
                 model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(j),
-                                   mio::oseirmobilityimproved::InfectionState::Susceptible}] = 100000;
+                                   mio::oseirmobilityimproved::InfectionState::Susceptible}] = 10000;
             }
         }
     }
     else {
         BOOST_OUTCOME_TRY(set_population_data(model, data_dir));
-        populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(1),
+        populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
                      mio::oseirmobilityimproved::InfectionState::Susceptible}] -= 100;
-        populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(1),
+        populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
                      mio::oseirmobilityimproved::InfectionState::Exposed}] += 100;
     }
     BOOST_OUTCOME_TRY(set_mobility_weights(model, data_dir));
 
-    BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, parameters))
+    BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, parameters, synthetic_population))
 
-    BOOST_OUTCOME_TRY(set_covid_parameters(parameters));
+    BOOST_OUTCOME_TRY(set_covid_parameters(parameters, synthetic_population));
 
     mio::ContactMatrixGroup& commuting_strengths =
         parameters.template get<mio::oseirmobilityimproved::CommutingStrengths<>>().get_cont_freq_mat();
@@ -241,20 +242,24 @@ int main()
     mio::set_log_level(mio::LogLevel::debug);
 
     ScalarType t0   = 0.;
-    ScalarType tmax = 0.2;
+    ScalarType tmax = 5.;
     ScalarType dt   = 0.1;
 
     ScalarType number_regions = 53;
     std::vector<int> region_ids(number_regions);
     iota(region_ids.begin(), region_ids.end(), 1);
     ScalarType number_age_groups = 6;
+    bool synthetic_population    = false;
+    if (number_age_groups != 6) {
+        synthetic_population = true;
+    }
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
     const std::string& data_dir = "";
 
     mio::oseirmobilityimproved::Model<ScalarType> model(number_regions, number_age_groups);
-    auto result_prepare_simulation = set_parameters_and_population(model, data_dir);
+    auto result_prepare_simulation = set_parameters_and_population(model, data_dir, synthetic_population);
 
     // using DefaultIntegratorCore =
     //     mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>;
@@ -271,11 +276,11 @@ int main()
     std::chrono::duration<double, std::milli> ms_double = t2 - t1;
 
     printf("Runtime: %f\n", ms_double.count());
-    result_from_sim.print_table();
+    // result_from_sim.print_table();
 
     auto save_result_status =
         mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result_test.h5");
 
-    auto reproduction_numbers = model.get_reproduction_numbers(result_from_sim);
-    std::cout << "\nbasis reproduction number: " << reproduction_numbers[0] << "\n";
+    // auto reproduction_numbers = model.get_reproduction_numbers(result_from_sim);
+    // std::cout << "\nbasis reproduction number: " << reproduction_numbers[0] << "\n";
 }
