@@ -29,12 +29,12 @@ The functions which are called are:
 - getDIVIData.get_divi_data
 - getCommuterMobility.get_commuter_data
 """
-
+import os
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseData
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import getDIVIData, getPopulationData, getVaccinationData, getCommuterMobility
+from memilio.epidata import getDIVIData, getPopulationData, getVaccinationData, getCommuterMobility, transformMobilityData
 
 
 def print_error(text):
@@ -65,6 +65,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     - getVaccinationData.get_vaccination_data
     - getDIVIData.get_divi_data
     - getCommuterMobility.get_commuter_data
+    - transformMobilityData.updateMobility2022 (if ref_year < 2022)
 
     Keyword arguments:
     @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
@@ -102,7 +103,8 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     arg_dict_divi = {**arg_dict_all, **arg_dict_data_download}
 
     arg_dict_mobility = {**arg_dict_all, **arg_dict_data_download,
-                         "ref_year": ref_year}    
+                         "ref_year": ref_year}   
+    
     try:
         getCaseData.get_case_data(**arg_dict_cases)
     except Exception as exp:
@@ -132,6 +134,17 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     except Exception as exp:
         gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('commuter mobility')
+    
+    try:
+        transformMobilityData.updateMobility2022(out_folder, mobility_file='commuter_mobility')
+        if(ref_year < 2022):
+            transformMobilityData.updateMobility2022(out_folder, mobility_file='twitter_scaled_1252')
+    except Exception as exp:
+        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
+        print_error('transform mobility')
+
+    # rename commuter mobility file
+    os.rename(f'{out_folder}/commuter_mobility_{ref_year}.txt', f'{out_folder}/commuter_mobility.txt')
 
 
 def main():
