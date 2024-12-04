@@ -103,19 +103,22 @@ def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
         "\n"
         "//specialization of pretty_name\n"
     )
-    print(intermed_repr.population_groups)
     for key in intermed_repr.population_groups:
+        if key == "FP":
+            continue
+
         if key == "AgeGroup":
-            substitution_string += (
-                "template <>\n"
-                "std::string pretty_name<mio::{enum_class}>()\n"
-                "{{\n"
-                "   return \"{enum_class}\";\n"
-                "}}\n"
-                "\n"
-            ).format(
-                enum_class=key
-            )
+            if intermed_repr.has_age_group is False:
+                substitution_string += (
+                    "template <>\n"
+                    "std::string pretty_name<mio::{enum_class}>()\n"
+                    "{{\n"
+                    "   return \"{enum_class}\";\n"
+                    "}}\n"
+                    "\n"
+                ).format(
+                    enum_class=key
+                )
         else:
             substitution_string += (
                 "template <>\n"
@@ -124,6 +127,7 @@ def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
                 "   return \"{enum_class}\";\n"
                 "}}\n"
                 "\n"
+
             ).format(
                 namespace=intermed_repr.namespace,
                 enum_class=key
