@@ -103,6 +103,7 @@ class Scanner:
             CursorKind.TYPE_ALIAS_TEMPLATE_DECL: self.check_type_alias
 
 
+
         }
         return switch.get(kind, lambda *args: None)
 
@@ -238,7 +239,7 @@ class Scanner:
     def check_age_group(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Inspect the nodes of kind CLASS_DECL with the name defined in 
+        """! Inspect the nodes of kind CLASS_DECL with the name defined in
         config.age_group and write needed information into intermed_repr.
         Information: age_group
 
@@ -311,10 +312,27 @@ class Scanner:
         # remove unnecesary enum
         population_groups = []
         for value in intermed_repr.model_base[0:]:
-            if "Populations" in value[0]:
-                population_groups = [pop[0].split(
-                    "::")[-1] for pop in value[1:]]
+            if "FlowModel" in value[0]:  # Prüfe, ob "FlowModel" im String ist
+
+                # Extrahiere den Block "Populations<...>"
+                # Finde Position von "Populations<"
+                start = value[0].find("Populations<")
+                # Finde Position des schließenden ">"
+                end = value[0].find(">", start)
+
+                if start != -1 and end != -1:  # Wenn "Populations<...>" gefunden wurde
+                    # Extrahiere Inhalt zwischen "<" und ">"
+                    populations_part = value[0][start + 11:end]
+
+            # Trenne die Werte mit "," und bereinige
+                    population_groups = [
+                        # Entferne "<", ">" und extrahiere den letzten Teil nach "::"
+                        part.strip("<>").split("::")[-1]
+                        # Trenne nach ","
+                        for part in populations_part.split(",")
+                    ]
         intermed_repr.population_groups = population_groups
+
         new_enum = {}
         for key in intermed_repr.enum_populations:
 

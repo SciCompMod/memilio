@@ -93,7 +93,7 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
-    """
+    """ ! pretty_name_function
     @param intermed_repr Dataclass holding the model features.
     @return Formatted string representing a part of the bindings.
     """
