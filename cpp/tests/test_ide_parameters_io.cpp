@@ -119,10 +119,9 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
         80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081;
 
     mio::isecir::Simulation sim(model, dt);
-    int last_time_point = int(model.m_transitions.get_last_time());
-    ASSERT_EQ(compare.size(), model.m_transitions[last_time_point].size());
+    ASSERT_EQ(compare.size(), model.m_transitions.get_last_value().size());
 
-    for (int j = 1; j < compare.size(); j++) {
+    for (int j = 0; j < compare.size(); j++) {
         ASSERT_NEAR(compare[j], model.m_transitions.get_last_value()[j], 1e-7);
     }
 }

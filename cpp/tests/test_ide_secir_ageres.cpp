@@ -123,27 +123,26 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
 
     model.check_constraints(dt);
 
+    mio::isecir::Simulation sim(model, dt);
+    sim.advance(tmax);
+
     // Compare compartments at last time point with results from a previous run that are given here.
-    mio::TimeSeries<ScalarType> compartments = simulate(tmax, dt, model);
+    mio::TimeSeries<ScalarType> compartments = sim.get_result();
     mio::Vector<ScalarType> compare_compartments(num_compartments * num_agegroups);
     compare_compartments << 484.3056557672, 15.7685031055, 22.7020934123, 7.0615933479, 3.3491460693, 1.5803397070,
         4454.5548070034, 10.6778615873, 484.3056557672, 31.0934010790, 21.1271954388, 23.6370809253, 3.9106794140,
         1.7242153411, 4424.0110181177, 10.1907539167, 605.3820697090, 60.1973290710, 23.8046231705, 16.6085494134,
         3.6307172673, 1.6536810707, 4278.2949856871, 10.4280446109;
 
-    int last_time_point = int(compartments.get_last_time());
-    ASSERT_EQ(compare_compartments.size(), static_cast<size_t>(compartments[last_time_point].size()));
+    ASSERT_EQ(compare_compartments.size(), static_cast<size_t>(compartments.get_last_value().size()));
 
-    for (int j = 1; j < compare_compartments.size(); j++) {
+    for (int j = 0; j < compare_compartments.size(); j++) {
         ASSERT_NEAR(compartments.get_last_value()[j], compare_compartments[j], 1e-7);
     }
 
     // Compare transitions at last time point with results from a previous run that are given here.
 
-    mio::isecir::Simulation sim(model, dt);
-    sim.advance(tmax);
-
-    auto transitions = sim.get_transitions();
+    mio::TimeSeries<ScalarType> transitions = sim.get_transitions();
     mio::Vector<ScalarType> compare_transitions(num_transitions * num_agegroups);
     compare_transitions << 31.5370062111, 30.6497959470, 14.1231866958, 14.7543908776, 6.6982921386, 6.6982921386,
         3.1606794140, 3.1606794140, 1.4742153411, 1.4742153411, 31.5370062111, 29.5087817552, 14.7543908776,
@@ -151,9 +150,9 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
         39.4212577639, 30.1092463410, 14.4459531059, 14.4459531059, 6.5114345346, 6.5114345346, 3.0573621415,
         3.0573621415, 1.4155355888, 1.4155355888;
 
-    ASSERT_EQ(compare_transitions.size(), static_cast<size_t>(transitions[last_time_point].size()));
+    ASSERT_EQ(compare_transitions.size(), static_cast<size_t>(transitions.get_last_value().size()));
 
-    for (int j = 1; j < compare_transitions.size(); j++) {
+    for (int j = 0; j < compare_transitions.size(); j++) {
         ASSERT_NEAR(transitions.get_last_value()[j], compare_transitions[j], 1e-7);
     }
 }
