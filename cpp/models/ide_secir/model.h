@@ -239,7 +239,7 @@ public:
             return true;
         }
 
-        for (size_t group = 0; group < m_num_agegroups; ++group) {
+        for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
 
             for (int i = 0; i < (int)InfectionState::Count; i++) {
                 int index = get_state_flat_index(i, group);
@@ -257,7 +257,7 @@ public:
             return true;
         }
 
-        for (size_t group = 0; group < m_num_agegroups; ++group) {
+        for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
 
             for (int i = 0; i < m_transitions.get_num_time_points(); i++) {
                 for (int j = 0; j < (int)InfectionTransition::Count; j++) {

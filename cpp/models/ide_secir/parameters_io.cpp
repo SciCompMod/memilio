@@ -298,7 +298,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
             Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), group);
         for (Eigen::Index i = -2 * global_support_max_index; i <= 0; i++) {
             model.m_transitions[i + start_shift][EtINSi] =
-                (1 / model.parameters.get<TransitionProbabilities>()[AgeGroup(group)][Eigen::Index(
+                (1 / model.parameters.get<TransitionProbabilities>()[group][Eigen::Index(
                          InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]) *
                 model.m_transitions[i + start_shift + index_shift_mean][INStISyi];
         }
@@ -312,7 +312,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
 
         for (Eigen::Index i = -global_support_max_index; i <= 0; i++) {
             model.m_transitions[i + start_shift][StEi] =
-                (1 / model.parameters.get<TransitionProbabilities>()[AgeGroup(group)][Eigen::Index(
+                (1 / model.parameters.get<TransitionProbabilities>()[group][Eigen::Index(
                          InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]) *
                 model.m_transitions[i + start_shift + index_shift_mean][INStISyi];
         }

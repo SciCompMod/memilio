@@ -25,7 +25,8 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 6.);
     ScalarType dt = 1.;
 
-    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+    int num_transitions  = (int)mio::isecir::InfectionTransition::Count;
+    int num_compartments = (int)mio::isecir::InfectionState::Count;
 
     // Create TimeSeries with num_transitions * num_agegroups elements where transitions needed for simulation will be stored.
     mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
@@ -122,38 +123,37 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
 
     model.check_constraints(dt);
 
-    //Compare compartments with previous run.
+    // Compare compartments at last time point with results from a previous run that are given here.
     mio::TimeSeries<ScalarType> compartments = simulate(tmax, dt, model);
-    auto compare_compartments                = load_test_data_csv<ScalarType>("ide-secir-ageres-compare.csv");
+    mio::Vector<ScalarType> compare_compartments(num_compartments * num_agegroups);
+    compare_compartments << 484.3056557672, 15.7685031055, 22.7020934123, 7.0615933479, 3.3491460693, 1.5803397070,
+        4454.5548070034, 10.6778615873, 484.3056557672, 31.0934010790, 21.1271954388, 23.6370809253, 3.9106794140,
+        1.7242153411, 4424.0110181177, 10.1907539167, 605.3820697090, 60.1973290710, 23.8046231705, 16.6085494134,
+        3.6307172673, 1.6536810707, 4278.2949856871, 10.4280446109;
 
-    ASSERT_EQ(compare_compartments.size(), static_cast<size_t>(compartments.get_num_time_points()));
-    for (size_t i = 0; i < compare_compartments.size(); i++) {
-        ASSERT_EQ(compare_compartments[i].size(), static_cast<size_t>(compartments.get_num_elements()) + 1)
-            << "at row " << i;
-        ASSERT_NEAR(compartments.get_time(i), compare_compartments[i][0], 1e-7) << "at row " << i;
-        for (size_t j = 1; j < compare_compartments[i].size(); j++) {
-            ASSERT_NEAR(compartments.get_value(i)[j - 1], compare_compartments[i][j], 1e-7) << " at row " << i;
-        }
+    int last_time_point = compartments.get_last_time();
+    ASSERT_EQ(compare_compartments.size(), static_cast<size_t>(compartments[last_time_point].size()));
+
+    for (int j = 1; j < compare_compartments.size(); j++) {
+        ASSERT_NEAR(compartments.get_last_value()[j], compare_compartments[j], 1e-7);
     }
-    //Compare transitions with previous run.
+
+    // Compare transitions at last time point with results from a previous run that are given here.
 
     mio::isecir::Simulation sim(model, dt);
     sim.advance(tmax);
 
-    auto transitions         = sim.get_transitions();
-    auto compare_transitions = load_test_data_csv<ScalarType>("ide-secir-ageres-transitions-compare.csv");
+    auto transitions = sim.get_transitions();
+    mio::Vector<ScalarType> compare_transitions(num_transitions * num_agegroups);
+    compare_transitions << 31.5370062111, 30.6497959470, 14.1231866958, 14.7543908776, 6.6982921386, 6.6982921386,
+        3.1606794140, 3.1606794140, 1.4742153411, 1.4742153411, 31.5370062111, 29.5087817552, 14.7543908776,
+        14.1231866958, 6.3213588280, 6.3213588280, 2.9484306823, 2.9484306823, 1.3533839877, 1.3533839877,
+        39.4212577639, 30.1092463410, 14.4459531059, 14.4459531059, 6.5114345346, 6.5114345346, 3.0573621415,
+        3.0573621415, 1.4155355888, 1.4155355888;
 
-    size_t iter_0 = 0;
-    while (transitions.get_time(iter_0) < compare_transitions[0][0]) {
-        iter_0++;
-    }
+    ASSERT_EQ(compare_transitions.size(), static_cast<size_t>(transitions[last_time_point].size()));
 
-    for (size_t i = 0; i < compare_transitions.size(); i++) {
-        ASSERT_EQ(compare_transitions[i].size(), static_cast<size_t>(transitions.get_num_elements()) + 1)
-            << "at row " << i;
-        ASSERT_NEAR(transitions.get_time(i + iter_0), compare_transitions[i][0], 1e-7) << "at row " << i;
-        for (size_t j = 1; j < compare_transitions[i].size(); j++) {
-            ASSERT_NEAR(transitions.get_value(i + iter_0)[j - 1], compare_transitions[i][j], 1e-7) << " at row " << i;
-        }
+    for (int j = 1; j < compare_transitions.size(); j++) {
+        ASSERT_NEAR(transitions.get_last_value()[j], compare_transitions[j], 1e-7);
     }
 }

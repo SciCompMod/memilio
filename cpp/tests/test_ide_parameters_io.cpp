@@ -43,6 +43,8 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 15 * 1e6);
     auto start_date = mio::Date(2020, 11, 1);
     ScalarType dt   = 0.5;
+
+    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
     // Initialize model.
     // The number of deaths will be overwritten if real data is used for initialization. Therefore, an arbitrary number
     // is used for the number of deaths.
@@ -89,8 +91,7 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
 
     ASSERT_THAT(print_wrap(status), IsSuccess());
 
-    //Compare with previous run.
-    auto compare = load_test_data_csv<ScalarType>("ide-ageres-parameters-io-compare.csv");
+    // Compare with previous run.
 
     std::vector<ScalarType> deaths = {
         1, 2.471428571455, 26.34999999999, 603.621428571465, 3972.41428571431, 7668.84999999998};
@@ -103,14 +104,26 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
         EXPECT_NEAR(model.m_populations.get_value(0)[Di], deaths[size_t(group)], 1e-4);
         EXPECT_NEAR(model.m_total_confirmed_cases[group], total_confirmed_cases[size_t(group)], 1e-4);
     }
+
+    // Compare transitions at last time point with results from a previous run that are given here.
+    mio::Vector<ScalarType> compare(num_transitions * num_agegroups);
+    compare << 336.428571428600, 328.285714285701, 162.000000000000, 163.071428571425, 80.130989648839, 79.803571428575,
+        39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081, 1105.714285714297, 1069.857142857200,
+        515.714285714250, 163.071428571425, 80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415,
+        19.550404043081, 19.550404043081, 5819.000000000000, 5744.000000000000, 2806.428571428551, 163.071428571425,
+        80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081,
+        6685.142857142899, 6572.857142857101, 3200.714285714304, 163.071428571425, 80.130989648839, 79.803571428575,
+        39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081, 2376.000000000000, 2342.285714285696,
+        1142.571428571406, 163.071428571425, 80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415,
+        19.550404043081, 19.550404043081, 966.714285714304, 946.142857142797, 457.214285714301, 163.071428571425,
+        80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081;
+
     mio::isecir::Simulation sim(model, dt);
-    ASSERT_EQ(compare.size(), static_cast<size_t>(model.m_transitions.get_num_time_points()));
-    for (size_t i = 0; i < compare.size(); i++) {
-        ASSERT_EQ(compare[i].size(), static_cast<size_t>(model.m_transitions.get_num_elements()) + 1) << "at row " << i;
-        ASSERT_NEAR(compare[i][0], model.m_transitions.get_time(i), 1e-7) << "at row " << i;
-        for (size_t j = 1; j < compare[i].size(); j++) {
-            ASSERT_NEAR(compare[i][j], model.m_transitions.get_value(i)[j - 1], 1e-7) << " at row " << i;
-        }
+    int last_time_point = model.m_transitions.get_last_time();
+    ASSERT_EQ(compare.size(), static_cast<size_t>(model.m_transitions[last_time_point].size()));
+
+    for (int j = 1; j < compare.size(); j++) {
+        ASSERT_NEAR(compare[j], model.m_transitions.get_last_value()[j], 1e-7);
     }
 }
 

@@ -147,7 +147,7 @@ void Model::initial_compute_compartments(ScalarType dt)
 
     // We store in two Booleans if there are Susceptibles or Recovered given for every age group.
     bool susceptibles_given = true;
-    for (size_t group = 0; group < m_num_agegroups; ++group) {
+    for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
         int Si = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
         if (m_populations[Eigen::Index(0)][Si] < 1e-12) {
             susceptibles_given = false;
@@ -155,7 +155,7 @@ void Model::initial_compute_compartments(ScalarType dt)
         }
     }
     bool recovered_given = true;
-    for (size_t group = 0; group < m_num_agegroups; ++group) {
+    for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
         int Ri = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
         if (m_populations[Eigen::Index(0)][Ri] < 1e-12) {
             recovered_given = false;
@@ -282,7 +282,7 @@ void Model::initial_compute_compartments(ScalarType dt)
     // This also means that if a compartment is greater than N, we will always have one or more compartments less than
     // zero.
     // Check if all compartments are non negative.
-    for (size_t group = 0; group < m_num_agegroups; ++group) {
+    for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
         for (Eigen::Index i = 0; i < (Eigen::Index)InfectionState::Count; i++) {
             int idx = get_state_flat_index(i, group);
             if (m_populations[0][idx] < 0) {
@@ -389,7 +389,7 @@ void Model::flows_current_timestep(ScalarType dt)
 void Model::update_compartments()
 {
     // Update compartments for every AgeGroup.
-    for (size_t group = 0; group < m_num_agegroups; ++group) {
+    for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
         // Exposed
         update_compartment_from_flow(InfectionState::Exposed, {InfectionTransition::SusceptibleToExposed},
                                      {InfectionTransition::ExposedToInfectedNoSymptoms}, group);
@@ -494,15 +494,12 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
             // subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of support_max).
             Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
 
-            int Dj     = get_state_flat_index(Eigen::Index(InfectionState::Dead), static_cast<Eigen::Index>((size_t)j));
-            int ICrtDj = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToDead),
-                                                   static_cast<Eigen::Index>((size_t)j));
+            int Dj     = get_state_flat_index(Eigen::Index(InfectionState::Dead), j);
+            int ICrtDj = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToDead), j);
 
-            int EtINSj = get_transition_flat_index(Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms),
-                                                   static_cast<Eigen::Index>((size_t)j));
+            int EtINSj = get_transition_flat_index(Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), j);
             int INStISyj =
-                get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms),
-                                          static_cast<Eigen::Index>((size_t)j));
+                get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), j);
 
             // We store the number of deaths for every AgeGroup.
             ScalarType deaths_j;
@@ -569,8 +566,8 @@ void Model::set_transitiondistributions_derivative(ScalarType dt)
                 ScalarType state_age = (ScalarType)i * dt;
                 // Compute derivative.
                 vec_derivative[i] =
-                    (parameters.get<TransitionDistributions>()[AgeGroup(group)][transition].eval(state_age) -
-                     parameters.get<TransitionDistributions>()[AgeGroup(group)][transition].eval(state_age - dt)) /
+                    (parameters.get<TransitionDistributions>()[group][transition].eval(state_age) -
+                     parameters.get<TransitionDistributions>()[group][transition].eval(state_age - dt)) /
                     dt;
             }
             m_transitiondistributions_derivative[group][transition] = vec_derivative;
@@ -608,14 +605,12 @@ void Model::set_transitiondistributions_in_forceofinfection(ScalarType dt)
                 // Compute state_age for all indices from t_0, ..., t_{calc_time_index}.
                 ScalarType state_age = i * dt;
                 vec_contribution_to_foi[i] =
-                    parameters.get<TransitionProbabilities>()[AgeGroup(group)][relevant_transitions[contribution][0]] *
-                        parameters
-                            .get<TransitionDistributions>()[AgeGroup(group)][relevant_transitions[contribution][0]]
-                            .eval(state_age) +
-                    parameters.get<TransitionProbabilities>()[AgeGroup(group)][relevant_transitions[contribution][1]] *
-                        parameters
-                            .get<TransitionDistributions>()[AgeGroup(group)][relevant_transitions[contribution][1]]
-                            .eval(state_age);
+                    parameters.get<TransitionProbabilities>()[group][relevant_transitions[contribution][0]] *
+                        parameters.get<TransitionDistributions>()[group][relevant_transitions[contribution][0]].eval(
+                            state_age) +
+                    parameters.get<TransitionProbabilities>()[group][relevant_transitions[contribution][1]] *
+                        parameters.get<TransitionDistributions>()[group][relevant_transitions[contribution][1]].eval(
+                            state_age);
             }
 
             m_transitiondistributions_in_forceofinfection[group][contribution] = vec_contribution_to_foi;

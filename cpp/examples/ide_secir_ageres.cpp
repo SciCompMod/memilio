@@ -96,8 +96,7 @@ int main()
         model.parameters.get<mio::isecir::TransitionProbabilities>()[group] = vec_prob;
     }
 
-    mio::ContactMatrixGroup contact_matrix =
-        mio::ContactMatrixGroup(1, static_cast<Eigen::Index>((size_t)num_agegroups));
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, static_cast<Eigen::Index>(num_agegroups));
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
