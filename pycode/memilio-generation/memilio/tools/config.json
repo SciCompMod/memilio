@@ -1,0 +1,35 @@
+[
+    {
+        "source_file": "/home/rich_dn/repos/memilio/cpp/models/ode_seir/model.cpp",
+        "namespace": "mio::oseir::",
+        "python_module_name": "oseir",
+        "python_generation_module_path": "/home/rich_dn/repos/memilio/pycode/memilio-generation/../memilio-generation",
+        "skbuild_path_to_database": "/home/rich_dn/repos/memilio/pycode/memilio-generation/_skbuild/linux-x86_64-3.10/cmake-build",
+        "target_folder": "/home/rich_dn/repos/memilio/pycode/memilio-generation/../memilio-generation/memilio/tools",
+        "optional": {
+            "libclang_library_path": "/tools/modulesystem/spack-22.2/opt/spack/linux-ubuntu20.04-x86_64_v3/gcc-9.4.0/llvm-14.0.6-u6u3nxayshaogte7pdnas4i6h4ta5ymi/lib/libclang.so"
+        }
+    },
+    {
+        "source_file": "/home/rich_dn/repos/memilio/cpp/models/ode_secir/model.cpp",
+        "namespace": "mio::osecir::",
+        "python_module_name": "osecir",
+        "python_generation_module_path": "/home/rich_dn/repos/memilio/pycode/memilio-generation/../memilio-generation",
+        "skbuild_path_to_database": "/home/rich_dn/repos/memilio/pycode/memilio-generation/_skbuild/linux-x86_64-3.10/cmake-build",
+        "target_folder": "/home/rich_dn/repos/memilio/pycode/memilio-generation/../memilio-generation/memilio/tools",
+        "optional": {
+            "libclang_library_path": "/tools/modulesystem/spack-22.2/opt/spack/linux-ubuntu20.04-x86_64_v3/gcc-9.4.0/llvm-14.0.6-u6u3nxayshaogte7pdnas4i6h4ta5ymi/lib/libclang.so"
+        }
+    },
+    {
+        "source_file": "/home/rich_dn/repos/memilio/cpp/models/ode_secirvvs/model.cpp",
+        "namespace": "mio::osecirvvs::",
+        "python_module_name": "osecirvvs",
+        "python_generation_module_path": "/home/rich_dn/repos/memilio/pycode/memilio-generation/../memilio-generation",
+        "skbuild_path_to_database": "/home/rich_dn/repos/memilio/pycode/memilio-generation/_skbuild/linux-x86_64-3.10/cmake-build",
+        "target_folder": "/home/rich_dn/repos/memilio/pycode/memilio-generation/../memilio-generation/memilio/tools",
+        "optional": {
+            "libclang_library_path": "/tools/modulesystem/spack-22.2/opt/spack/linux-ubuntu20.04-x86_64_v3/gcc-9.4.0/llvm-14.0.6-u6u3nxayshaogte7pdnas4i6h4ta5ymi/lib/libclang.so"
+        }
+    }
+]
