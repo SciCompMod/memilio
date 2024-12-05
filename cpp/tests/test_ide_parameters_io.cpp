@@ -119,7 +119,7 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
         80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081;
 
     mio::isecir::Simulation sim(model, dt);
-    ScalarType last_time_point = model.m_transitions.get_last_time();
+    int last_time_point = int(model.m_transitions.get_last_time());
     ASSERT_EQ(compare.size(), static_cast<size_t>(model.m_transitions[last_time_point].size()));
 
     for (int j = 1; j < compare.size(); j++) {
