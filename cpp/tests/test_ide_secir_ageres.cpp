@@ -131,7 +131,7 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
         1.7242153411, 4424.0110181177, 10.1907539167, 605.3820697090, 60.1973290710, 23.8046231705, 16.6085494134,
         3.6307172673, 1.6536810707, 4278.2949856871, 10.4280446109;
 
-    size_t last_time_point = compartments.get_last_time();
+    ScalarType last_time_point = compartments.get_last_time();
     ASSERT_EQ(compare_compartments.size(), static_cast<size_t>(compartments[last_time_point].size()));
 
     for (int j = 1; j < compare_compartments.size(); j++) {
