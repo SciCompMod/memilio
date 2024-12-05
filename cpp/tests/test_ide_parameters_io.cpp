@@ -120,7 +120,7 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
 
     mio::isecir::Simulation sim(model, dt);
     int last_time_point = int(model.m_transitions.get_last_time());
-    ASSERT_EQ(compare.size(), static_cast<size_t>(model.m_transitions[last_time_point].size()));
+    ASSERT_EQ(compare.size(), model.m_transitions[last_time_point].size());
 
     for (int j = 1; j < compare.size(); j++) {
         ASSERT_NEAR(compare[j], model.m_transitions.get_last_value()[j], 1e-7);
