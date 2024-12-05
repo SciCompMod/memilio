@@ -36,8 +36,7 @@ if TYPE_CHECKING:
 
 
 class Generator:
-    """
-    Generates the model specific python bindings code with the information given by the IntermediateRepresentation.
+    """! Generates the model specific python bindings code with the information given by the IntermediateRepresentation.
     """
 
     def __init__(self: Self) -> None:
@@ -46,20 +45,17 @@ class Generator:
 
     def create_substitutions(
             self: Self, intermed_repr: IntermediateRepresentation) -> None:
-        """
-        Create the substitutions needed to generate the bindings.
+        """! Create the substitutions needed to generate the bindings.
         Divided into substitutions for the Python- and C++-file. 
         Uses the string template methods from the template folder.
 
         @param intermed_repr: Dataclass holding the model features.
         """
 
-        # Substitutions for the Python file
         self.substitutions_py = {
             "python_module_name": intermed_repr.python_module_name
         }
 
-        # Substitutions for the C++ file
         if len(intermed_repr.model_base) > 0:
             model_base_templates = ", ".join(
                 entry[0] for entry in intermed_repr.model_base if len(entry) > 0
@@ -79,10 +75,8 @@ class Generator:
             "population_enums": StringTemplates.population_enums(intermed_repr),
             "model_init": StringTemplates.model_init(intermed_repr),
             "population": StringTemplates.population(intermed_repr),
-            # Optional: Model with age groups
             "parameterset_indexing": StringTemplates.parameterset_indexing(intermed_repr),
             "parameterset_wrapper": StringTemplates.parameterset_wrapper(intermed_repr),
-            # Optional: Model with simulation class
             "simulation": StringTemplates.simulation(intermed_repr),
             "simulating": StringTemplates.simulating(intermed_repr),
             "ScalarType": StringTemplates.ScalarType(intermed_repr),
@@ -92,14 +86,12 @@ class Generator:
 
     def generate_files(
             self: Self, intermed_repr: IntermediateRepresentation) -> None:
-        """
-        Generate the python bindings to the C++ code.
+        """! Generate the python bindings to the C++ code.
         Template files for python and cpp from the template folder are used 
         and the identifiers substituted with the corresponding substitutions.
 
         @param intermed_repr Dataclass holding the model features.
         """
-        # read templates
         with open(os.path.join(intermed_repr.python_generation_module_path,
                                "memilio/generation/template/template_py.txt")) as t:
             template_py = string.Template(t.read())
@@ -107,11 +99,9 @@ class Generator:
                                "memilio/generation/template/template_cpp.txt")) as t:
             template_cpp = string.Template(t.read())
 
-        # substitue identifiers
         output_py = template_py.safe_substitute(**self.substitutions_py)
         output_cpp = template_cpp.safe_substitute(**self.substitutions_cpp)
 
-        # print code into files
         py_filename = intermed_repr.python_module_name + ".py"
         cpp_filename = intermed_repr.python_module_name + ".cpp"
         with open(os.path.join(intermed_repr.target_folder, py_filename), "w") as output:

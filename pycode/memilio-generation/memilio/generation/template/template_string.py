@@ -30,12 +30,15 @@ if TYPE_CHECKING:
 
 
 def ScalarType(intermed_repr: IntermediateRepresentation) -> str:
+    """! Set the datatype for the bindings via. intermediate_representation.
+    @return string from intermediate_representation
+    """
     scalartypestr = intermed_repr.scalartype
     return scalartypestr
 
 
 def includes(intermed_repr: IntermediateRepresentation) -> str:
-    """
+    """! Fills in the Includes for the binding
     @param intermed_repr Dataclass holding the model features.
     @return Formatted string representing a part of the bindings.
     """
@@ -58,7 +61,6 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
 
     if intermed_repr.has_age_group:
         substitution_string += (
-            # aus Populations auslese genauso wie parameterset wrapper
             "#include \"epidemiology/age_group.h\"\n"
             "#include \"utils/parameter_set.h\"\n"
         )
@@ -72,7 +74,6 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
         "#include \"io/result_io.h\"\n"
     )
 
-    # Memilio includes c++
     substitution_string += "\n//Includes from Memilio\n"
     for inlcude in intermed_repr.include_list:
         substitution_string += "#include \"" + inlcude + "\"\n"
@@ -93,7 +94,7 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
-    """ ! pretty_name_function
+    """ ! pretty_name_function 
     @param intermed_repr Dataclass holding the model features.
     @return Formatted string representing a part of the bindings.
     """
@@ -137,8 +138,7 @@ def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def age_group(intermed_repr: IntermediateRepresentation) -> str:
-    """
-    Generate the code for the AgeGroup class.
+    """! Generate the code for the AgeGroup class.
     Not used by every model.
 
     @param intermed_repr Dataclass holding the model features.
@@ -157,7 +157,8 @@ def age_group(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def population_enums(intermed_repr: IntermediateRepresentation) -> str:
-    """
+    """! Sets the population enums as part of the bindings.
+
     @param intermed_repr Dataclass holding the model features.
     @return Formatted string representing a part of the bindings.
     """
@@ -189,12 +190,16 @@ def population(intermed_repr: IntermediateRepresentation) -> str:
     @return Formatted string representing a part of the bindings.
     """
     for value in intermed_repr.model_base[0:]:
-        # print(value)
         if "Population" in value[0]:
             return "Populations"
 
 
 def draw_sample(intermed_repr: IntermediateRepresentation) -> str:
+    """! Sets the draw_sample function as part of the bindings.
+
+    @param intermed_repr Dataclass holding the model features.
+    @return Formatted string representing a part of the bindings.  
+    """
     if intermed_repr.has_draw_sample:
         return (
 
@@ -229,8 +234,7 @@ def model_init(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def parameterset_indexing(intermed_repr: IntermediateRepresentation) -> str:
-    """
-    Generate the code for the AgeGroup class.
+    """! Generate the code for the AgeGroup class.
     Not used by every model.
 
     @param intermed_repr Dataclass holding the model features.
@@ -245,8 +249,7 @@ def parameterset_indexing(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def parameterset_wrapper(intermed_repr: IntermediateRepresentation) -> str:
-    """
-    Generate the code for the parameterset_wrapper needed when using age groups.
+    """! Generate the code for the parameterset_wrapper needed when using age groups.
     Not used by every model.
 
     @param intermed_repr Dataclass holding the model features.
@@ -270,7 +273,6 @@ def parameterset_wrapper(intermed_repr: IntermediateRepresentation) -> str:
     )
 
 
-# 1
 def simulation(intermed_repr: IntermediateRepresentation) -> str:
     """! Generate the code for the Simulation class.
     Not used by every model.
@@ -302,7 +304,7 @@ def simulation(intermed_repr: IntermediateRepresentation) -> str:
             "Model<"+ScalarType(intermed_repr)+">"
 
     sub_string = ""
-    # Simulation
+
     sub_string += (
         "pymio::bind_Simulation<{b_sim}<{sub}>>(m, \"Simulation\");\n\n\t"
 
@@ -319,7 +321,6 @@ def simulation(intermed_repr: IntermediateRepresentation) -> str:
         "pymio::bind_GraphSimulation<mio::Graph<mio::SimulationNode<{b_sim}<>>, mio::MobilityEdge<" +
         ScalarType(intermed_repr)+">>>(m, \"MobilitySimulation\");\n\n\t"
 
-        # mio::Graph<mio::SimulationNode<{namespace}{simulation_class}<>>, mio::MobilityEdge>>(m, \"MobilitySimulation\");\n\n\t"
     ).format(
         namespace=intermed_repr.namespace,
         sim=simulation,
@@ -328,7 +329,7 @@ def simulation(intermed_repr: IntermediateRepresentation) -> str:
     )
 
     if intermed_repr.is_flowmodel is True:
-        # FlowSimulation
+
         sub_string += (
             "pymio::bind_Flow_Simulation<{b_sim}<"+ScalarType(intermed_repr) +
             ", mio::FlowSimulation<{sub}>>>(m, \"FlowSimulation\");\n\n\t"
@@ -337,13 +338,11 @@ def simulation(intermed_repr: IntermediateRepresentation) -> str:
             'py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());\n\t\t'
             '"Simulate a {namespace} with flows from t0 to tmax."\n\n\t'
 
-            # Die doppelten können raus?
             "pymio::bind_SimulationNode<{namespace}FlowSimulation<>>(m, \"SimulationNode\");\n\t"
             "pymio::bind_MobilityGraph<{namespace}FlowSimulation<>>(m, \"MobilityGraph\");\n\t"
-            "pymio::bind_GraphSimulation<mio::Graph<mio::SimulationNode<{b_flowsim}<>>, mio::MobilityEdge<" + \
+            "pymio::bind_GraphSimulation<mio::Graph<mio::SimulationNode<{b_flowsim}<>>, mio::MobilityEdge<" +
             ScalarType(intermed_repr)+">>>(m, \"MobilitySimulation\");\n\n\t"
 
-            # mio::Graph<mio::SimulationNode<{namespace}{simulation_class}<>>, mio::MobilityEdge>>(m, \"MobilitySimulation\");\n\n\t"
         ).format(
             namespace=intermed_repr.namespace,
             flow_sim=flow_simulation,
@@ -352,8 +351,6 @@ def simulation(intermed_repr: IntermediateRepresentation) -> str:
             sub=bind_simulation_string
         )
     return sub_string
-
-# 2
 
 
 def simulating(intermed_repr: IntermediateRepresentation) -> str:
@@ -393,39 +390,10 @@ def simulating(intermed_repr: IntermediateRepresentation) -> str:
         flow_sim=flow_simulation
     )
 
-# 3
-
-
-# def simulation_graph(intermed_repr: IntermediateRepresentation) -> str:
-#     """
-#     Generate the code of the classes for graph simulations.
-#     Not used by every model.
-
-#     @param intermed_repr Dataclass holding the model features.
-#     @return Formatted string representing a part of the bindings.
-#     """
-#     if intermed_repr.simulation is False:
-#         return ""
-
-#     return (
-#         "pymio::bind_ModelNode<{namespace}{model_class}>(m, \"ModelNode\");\n\t"
-#         "pymio::bind_SimulationNode<{namespace}{simulation_class}<>>(m, \"SimulationNode\");\n\t"
-#         "pymio::bind_ModelGraph<{namespace}{model_class}>(m, \"ModelGraph\");\n\t"
-#         "pymio::bind_MobilityGraph<{namespace}{simulation_class}<>>(m, \"MobilityGraph\");\n\t"
-#         "pymio::bind_GraphSimulation<mio::Graph<mio::SimulationNode<{namespace}{simulation_class}<>>, mio::MobilityEdge>>(m, \"MobilitySimulation\");\n\t"
-#     ).format(
-#         namespace=intermed_repr.namespace,
-#         model_class=intermed_repr.model_class,
-#         simulation_class="Simulation"
-#     )
-
-# 4
-
 
 def simulation_vector_definition(
         intermed_repr: IntermediateRepresentation) -> str:
-    """
-    Generate the code for vector definition.
+    """! Generate the code for vector definition.
     Not used by every model.
 
     @param intermed_repr Dataclass holding the model features.
