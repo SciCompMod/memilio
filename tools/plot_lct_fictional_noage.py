@@ -177,6 +177,7 @@ def compare_single_compartment(files, legendplot,  compartment_idx=1, filename_p
                secir_dict[compartment_idx] + " individuals", fontsize=fontsize_labels)
     # plt.ylim(bottom=0)
     plt.xlim(left=0, right=dates[-1])
+    plt.title(secir_dict[compartment_idx], fontsize=fontsize_legends)
     plt.legend(legendplot, fontsize=fontsize_legends, framealpha=0.5)
     plt.grid(True, linestyle='--')
     plt.tight_layout()
