@@ -379,6 +379,7 @@ public:
      */
     Person& get_person(PersonId id)
     {
+        mio::log_debug("get_person is accessed by PersonID instead of person index. Therefore m_persons is searched.");
         auto it = std::find_if(m_persons.begin(), m_persons.end(), [id](auto& person) {
             return person.get_id() == id;
         });
@@ -390,6 +391,7 @@ public:
 
     const Person& get_person(PersonId id) const
     {
+        mio::log_debug("get_person is accessed by PersonID instead of person index. Therefore m_persons is searched.");
         auto it = std::find_if(m_persons.begin(), m_persons.end(), [id](auto& person) {
             return person.get_id() == id;
         });
@@ -519,6 +521,7 @@ public:
      */
     uint32_t get_person_index(PersonId id) const
     {
+        mio::log_debug("get_person_index is used leading to a search in m_persons.");
         auto it = std::find_if(m_persons.begin(), m_persons.end(), [id](auto& person) {
             return person.get_id() == id;
         });
