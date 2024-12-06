@@ -72,7 +72,7 @@ struct Limits<double> {
 template <class AD_TAPE_REAL, class DATA_HANDLER>
 struct Limits<ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER>> {
     /// @brief Returns the limit under which an ad::internal::active_type may be rounded down to zero.
-    static constexpr float zero_tolerance()
+    static constexpr AD_TAPE_REAL zero_tolerance()
     {
         return Limits<AD_TAPE_REAL>::zero_tolerance();
     }
