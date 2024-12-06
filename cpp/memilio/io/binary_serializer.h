@@ -278,7 +278,7 @@ public:
                                      "Unexpected type in stream:" + type_result.value() + ". Expected " + type);
             }
         }
-        return BinarySerializerObject(m_stream, m_status, m_flags);
+        return obj;
     }
 
     /**

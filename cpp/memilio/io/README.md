@@ -4,7 +4,25 @@ This directory contains utilities for reading and writing data from and to files
 
 ## The Serialization framework
 
-## Main functions and types
+### Using serialization
+
+In the next sections we will explain how to implement serialization (both for types and formats), here we quickly show
+how to use it once it already is implemented for a type. In the following examples, we serialize (write) `Foo` to a
+file in Json format, then deserialize (read) the Json again.
+```cpp
+Foo foo{5};
+mio::IOResult<void> io_result = mio::write_json("path/to/foo.json", foo);
+```
+```cpp
+mio::IOResult<Foo> io_result = mio::read_json("path/to/foo.json", mio::Tag<Foo>{});
+if (io_result) {
+  Foo foo = io_result.value();
+}
+```
+There is also support for a binary format. If you want to use a format directly, use the
+`serialize_json`/`deserialize_json` and `serialize_binary`/`deserialize_binary` functions.
+
+### Main functions and types
 
 - functions serialize and deserialize:
      Main entry points to the framework to write and read values, respectively. The functions expect an IOContext
@@ -14,7 +32,38 @@ This directory contains utilities for reading and writing data from and to files
 - IOStatus and IOResult:
      Used for error handling, see section "Error Handling" below.
 
-## Concepts
+### Default serialization
+
+Before we get into the details of the framework, this feature provides an easy and convenient alternative to the
+serialize and deserialize functions. To give an example:
+
+```cpp
+struct Foo {
+  int i;
+  auto default_serialize() {
+    return Members("Foo").add("i", i);
+  }
+};
+```
+The default serialization is less flexible than the serialize and deserialize functions and has additional 
+requirements:
+- The class must be default constructible.
+  - If there is a default constructor that is *private*, it can still be used by marking the struct `DefaultFactory` as
+    a friend. For the example above, the line `friend DefaultFactory<Foo>;` would be added to the class definition.
+  - Alternatively, you may provide a specialization of the struct `DefaultFactory`. For more details,
+    view the struct's documentation.
+- Every class member must be added to `Members` exactly once, and the provided names must be unique.
+  - The members must be passed directly, like in the example. No copies, accessors, etc.
+  - It is recommended, but not required, to add member variables to `Members` in the same order they are declared in
+    the class, using the variables' names or something very similar. 
+- Every class member itself must be serializable, deserializable and assignable.
+
+As to the feature set, default-serialization only supports the `add_element` and `expect_element` operations defined in
+the Concepts section below, where each operation's arguments are provided through the `add` function. Note that the
+value provided to `add` is also used to assign a value during deserialization, hence the class members must be used
+directly in the function (i.e. as a non-const lvalue reference).
+
+### Concepts
 
 1. IOContext
 Stores data that describes serialized objects of any type in some unspecified format and provides structured
@@ -66,7 +115,7 @@ for an IOObject `obj`:
           value or it may be empty. Otherwise returns an error. Note that for some formats a wrong key is indistinguishable from
           an empty optional, so make sure to provide the correct key.
 
-## Error handling
+### Error handling
 
 Errors are handled by returning error codes. The type IOStatus contains an error code and an optional string with additional
 information. The type IOResult contains either a value or an IOStatus that describes an error. Operations that can fail return
@@ -78,7 +127,7 @@ inspected, so `expect_...` operations return an IOResult. The `apply` utility fu
 of multiple `expect_...` operations and use the values if all are succesful. See the documentation of `IOStatus`, `IOResult`
 and `apply` below for more details.
 
-## Adding a new data type to be serialized
+### Adding a new data type to be serialized
 
 Serialization of a new type T can be customized by providing _either_ member functions `serialize` and `deserialize` _or_ free functions
 `serialize_internal` and `deserialize_internal`.
