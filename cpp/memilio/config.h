@@ -27,6 +27,7 @@
 
 #include "memilio/config_internal.h"
 #include <type_traits>
+#include "ad/ad.hpp"
 
 using ScalarType = double;
 
@@ -65,6 +66,15 @@ struct Limits<double> {
     static constexpr double zero_tolerance()
     {
         return 1e-12;
+    }
+};
+
+template <class AD_TAPE_REAL, class DATA_HANDLER>
+struct Limits<ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER>> {
+    /// @brief Returns the limit under which an ad::internal::active_type may be rounded down to zero.
+    static constexpr float zero_tolerance()
+    {
+        return Limits<AD_TAPE_REAL>::zero_tolerance();
     }
 };
 /** @} */
