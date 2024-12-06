@@ -504,10 +504,10 @@ TEST_F(TestModel, checkMobilityOfDeadPerson)
     auto icu_id      = model.add_location(mio::abm::LocationType::ICU);
     auto hospital_id = model.add_location(mio::abm::LocationType::Hospital);
 
-        // Make sure all persons will be InfectedSevere -> InfectedCritical -> Dead.
-        ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-            mock_uniform_dist;
-        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).WillRepeatedly(testing::Return(1.0));
+    // Make sure all persons will be InfectedSevere -> InfectedCritical -> Dead.
+    // Also mocks other things in the setup and evolve, thus not using times::Exactly here.
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).WillRepeatedly(testing::Return(1.0));
 
     // Create a person that is dead at time t
     add_test_person(model, icu_id, age_group_60_to_79, mio::abm::InfectionState::Dead, t);
@@ -955,13 +955,17 @@ TEST_F(TestModel, mobilityTripWithAppliedNPIs)
     EXPECT_FALSE(p_no_isolation.is_in_quarantine(t, model.parameters));
 }
 
-TEST(TestModel, personCanDieInHospital)
+/**
+ * @brief Tests whether a person can die in a hospital setting, specifically not only in the InfectionState Severe.
+ */
+TEST_F(TestModel, personCanDieInHospital)
 {
     using testing::Return;
 
     auto t     = mio::abm::TimePoint(0);
     auto dt    = mio::abm::days(1);
     auto model = mio::abm::Model(num_age_groups);
+    model.get_rng() = this->get_rng();
 
     // Time to go from infected with symptoms to severe infection is 1 day(dt).
     model.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 1;
@@ -978,6 +982,7 @@ TEST(TestModel, personCanDieInHospital)
     auto hospital_id = model.add_location(mio::abm::LocationType::Hospital);
 
     // Make sure all persons will be InfectedSevere before Dead.
+    // Also mocks other things in the setup and evolve, thus not using times::Exactly here.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).WillRepeatedly(testing::Return(0.3));
 
