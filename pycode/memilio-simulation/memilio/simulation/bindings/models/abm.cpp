@@ -72,7 +72,6 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Antigen", mio::abm::TestType::Antigen)
         .value("PCR", mio::abm::TestType::PCR);
 
-
     pymio::bind_class<mio::abm::TimeSpan, pymio::EnablePickling::Never>(m, "TimeSpan")
         .def(py::init<int>(), py::arg("seconds") = 0)
         .def_property_readonly("seconds", &mio::abm::TimeSpan::seconds)
@@ -117,7 +116,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::self += mio::abm::TimeSpan{})
         .def(py::self - mio::abm::TimeSpan{})
         .def(py::self -= mio::abm::TimeSpan{});
-        
+
     pymio::bind_class<mio::abm::TestParameters, pymio::EnablePickling::Never>(m, "TestParameters")
         .def(py::init<double, double, mio::abm::TimeSpan, mio::abm::TestType>())
         .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
@@ -143,12 +142,12 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("index", &mio::abm::LocationId::get);
 
     pymio::bind_class<mio::abm::PersonId, pymio::EnablePickling::Never>(m, "PersonId")
-        .def(py::init<uint32_t>(), py::arg("id"))
+        .def(py::init<uint64_t>(), py::arg("id"))
         .def("index", &mio::abm::PersonId::get);
 
     pymio::bind_class<mio::abm::Person, pymio::EnablePickling::Never>(m, "Person")
-        .def("set_assigned_location",
-             py::overload_cast<mio::abm::LocationType, mio::abm::LocationId>(&mio::abm::Person::set_assigned_location))
+        .def("set_assigned_location", py::overload_cast<mio::abm::LocationType, mio::abm::LocationId, int>(
+                                          &mio::abm::Person::set_assigned_location))
         .def_property_readonly("location", py::overload_cast<>(&mio::abm::Person::get_location, py::const_))
         .def_property_readonly("age", &mio::abm::Person::get_age)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
@@ -186,14 +185,15 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_Range<decltype(std::declval<const mio::abm::Model>().get_persons())>(m, "_ModelPersonsRange");
 
     pymio::bind_class<mio::abm::Trip, pymio::EnablePickling::Never>(m, "Trip")
-        .def(py::init<uint32_t, mio::abm::TimePoint, mio::abm::LocationId, mio::abm::LocationId,
+        .def(py::init<uint64_t, mio::abm::TimePoint, mio::abm::LocationId, mio::abm::LocationId, mio::abm::LocationType,
                       std::vector<uint32_t>>(),
              py::arg("person_id"), py::arg("time"), py::arg("destination"), py::arg("origin"),
-             py::arg("cells") = std::vector<uint32_t>())
+             py::arg("type_of_activity"), py::arg("cells") = std::vector<uint32_t>())
         .def_readwrite("person_id", &mio::abm::Trip::person_id)
         .def_readwrite("time", &mio::abm::Trip::time)
         .def_readwrite("destination", &mio::abm::Trip::destination)
         .def_readwrite("origin", &mio::abm::Trip::origin)
+        .def_readwrite("destination_type", &mio::abm::Trip::destination_type)
         .def_readwrite("cells", &mio::abm::Trip::cells);
 
     pymio::bind_class<mio::abm::TripList, pymio::EnablePickling::Never>(m, "TripList")
@@ -228,12 +228,12 @@ PYBIND11_MODULE(_simulation_abm, m)
             },
             py::return_value_policy::reference_internal);
 
-    pymio::bind_class<mio::abm::Simulation, pymio::EnablePickling::Never>(m, "Simulation")
+    pymio::bind_class<mio::abm::Simulation<>, pymio::EnablePickling::Never>(m, "Simulation")
         .def(py::init<mio::abm::TimePoint, size_t>())
         .def("advance",
-             static_cast<void (mio::abm::Simulation::*)(mio::abm::TimePoint)>(&mio::abm::Simulation::advance),
+             static_cast<void (mio::abm::Simulation<>::*)(mio::abm::TimePoint)>(&mio::abm::Simulation<>::advance),
              py::arg("tmax"))
-        .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation::get_model));
+        .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation<>::get_model));
 
     m.attr("__version__") = "dev";
 }

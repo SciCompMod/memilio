@@ -152,17 +152,17 @@ int main()
     for (auto& person : model.get_persons()) {
         const auto pid = person.get_id();
         //assign shop and event
-        model.assign_location(pid, event);
-        model.assign_location(pid, shop);
+        model.assign_location(model.get_person_index(pid), event);
+        model.assign_location(model.get_person_index(pid), shop);
         //assign hospital and ICU
-        model.assign_location(pid, hospital);
-        model.assign_location(pid, icu);
+        model.assign_location(model.get_person_index(pid), hospital);
+        model.assign_location(model.get_person_index(pid), icu);
         //assign work/school to people depending on their age
         if (person.get_age() == age_group_5_to_14) {
-            model.assign_location(pid, school);
+            model.assign_location(model.get_person_index(pid), school);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            model.assign_location(pid, work);
+            model.assign_location(model.get_person_index(pid), work);
         }
     }
 
@@ -176,14 +176,14 @@ int main()
 
     struct LogTimePoint : mio::LogAlways {
         using Type = double;
-        static Type log(const mio::abm::Simulation& sim)
+        static Type log(const mio::abm::Simulation<>& sim)
         {
             return sim.get_time().hours();
         }
     };
     struct LogLocationIds : mio::LogOnce {
         using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
-        static Type log(const mio::abm::Simulation& sim)
+        static Type log(const mio::abm::Simulation<>& sim)
         {
             Type location_ids{};
             for (auto& location : sim.get_model().get_locations()) {

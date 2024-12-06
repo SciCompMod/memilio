@@ -113,13 +113,13 @@ TEST_F(TestInfection, getInfectionState)
 {
     auto counter = mio::Counter<uint32_t>(0);
     auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), mio::abm::PersonId(0), counter);
-    auto params     = mio::abm::Parameters(num_age_groups);
-    auto t          = mio::abm::TimePoint(0);
+    auto params  = mio::abm::Parameters(num_age_groups);
+    auto t       = mio::abm::TimePoint(0);
 
     // Initialize infection in Exposed state
     auto infection = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
                                          mio::abm::InfectionState::Exposed,
-                                          {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, true);
+                                         {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, true);
 
     // Test infection state at different time points
     EXPECT_EQ(infection.get_infection_state(t), mio::abm::InfectionState::Exposed);
@@ -133,8 +133,8 @@ TEST_F(TestInfection, drawInfectionCourseForward)
 {
     auto counter = mio::Counter<uint32_t>(0);
     auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), mio::abm::PersonId(0), counter);
-    auto params     = mio::abm::Parameters(num_age_groups);
-    auto t          = mio::abm::TimePoint(0);
+    auto params  = mio::abm::Parameters(num_age_groups);
+    auto t       = mio::abm::TimePoint(0);
 
     // Mock recovery transition
     params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 1;
@@ -144,7 +144,7 @@ TEST_F(TestInfection, drawInfectionCourseForward)
         .WillRepeatedly(testing::Return(0.8)); // Recovered
     auto infection = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
                                          mio::abm::InfectionState::InfectedCritical,
-                                          {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, true);
+                                         {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, true);
     // Test state transitions from Critical to Recovered
     EXPECT_EQ(infection.get_infection_state(t), mio::abm::InfectionState::InfectedCritical);
     EXPECT_EQ(infection.get_infection_state(t + mio::abm::days(1)), mio::abm::InfectionState::Recovered);
@@ -213,7 +213,8 @@ TEST_F(TestInfection, getPersonalProtectiveFactor)
     const ScalarType eps = 1e-4;
 
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
-    auto person   = mio::abm::Person(this->get_rng(), location.get_type(), location.get_id(), age_group_15_to_34);
+    auto person   = mio::abm::Person(this->get_rng(), location.get_type(), location.get_id(), location.get_model_id(),
+                                     age_group_15_to_34);
     person.add_new_vaccination(mio::abm::ProtectionType::GenericVaccine, mio::abm::TimePoint(0));
     auto latest_protection = person.get_latest_protection();
 
@@ -249,42 +250,42 @@ TEST_F(TestInfection, getPersonalProtectiveFactor)
     // Test Parameter InfectionProtectionFactor and get_protection_factor()
     t                                = mio::abm::TimePoint(0) + mio::abm::days(2);
     auto infection_protection_factor = params.get<mio::abm::InfectionProtectionFactor>()[{
-        latest_protection.type, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
-        t.days() - latest_protection.time.days());
+        latest_protection.type, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](t.days() -
+                                                                                       latest_protection.time.days());
     EXPECT_NEAR(infection_protection_factor, 0.91, eps);
     EXPECT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.91, eps);
 
     t                           = mio::abm::TimePoint(0) + mio::abm::days(15);
     infection_protection_factor = params.get<mio::abm::InfectionProtectionFactor>()[{
-        latest_protection.type, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
-        t.days() - latest_protection.time.days());
+        latest_protection.type, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](t.days() -
+                                                                                       latest_protection.time.days());
     EXPECT_NEAR(infection_protection_factor, 0.8635, eps);
     EXPECT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.8635, eps);
 
     t                           = mio::abm::TimePoint(0) + mio::abm::days(40);
     infection_protection_factor = params.get<mio::abm::InfectionProtectionFactor>()[{
-        latest_protection.type, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
-        t.days() - latest_protection.time.days());
+        latest_protection.type, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](t.days() -
+                                                                                       latest_protection.time.days());
     EXPECT_NEAR(infection_protection_factor, 0.81, eps);
     EXPECT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.81, eps);
 
     // Test Parameter SeverityProtectionFactor
     t                               = mio::abm::TimePoint(0) + mio::abm::days(2);
     auto severity_protection_factor = params.get<mio::abm::SeverityProtectionFactor>()[{
-        latest_protection.type, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
-        t.days() - latest_protection.time.days());
+        latest_protection.type, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](t.days() -
+                                                                                       latest_protection.time.days());
     EXPECT_NEAR(severity_protection_factor, 0.91, eps);
 
     t                          = mio::abm::TimePoint(0) + mio::abm::days(15);
     severity_protection_factor = params.get<mio::abm::SeverityProtectionFactor>()[{
-        latest_protection.type, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
-        t.days() - latest_protection.time.days());
+        latest_protection.type, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](t.days() -
+                                                                                       latest_protection.time.days());
     EXPECT_NEAR(severity_protection_factor, 0.8635, eps);
 
     t                          = mio::abm::TimePoint(0) + mio::abm::days(40);
     severity_protection_factor = params.get<mio::abm::SeverityProtectionFactor>()[{
-        latest_protection.type, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](
-        t.days() - latest_protection.time.days());
+        latest_protection.type, age_group_15_to_34, mio::abm::VirusVariant::Wildtype}](t.days() -
+                                                                                       latest_protection.time.days());
     EXPECT_NEAR(severity_protection_factor, 0.81, eps);
 
     // Test Parameter HighViralLoadProtectionFactor
