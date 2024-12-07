@@ -199,6 +199,32 @@ TEST(TestOdeSECIRTS, simulateDefault)
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
 }
 
+// Test model initialization with total population of 0 and ensure get_flows returns no NaN values
+TEST(TestOdeSECIRTS, population_zero_no_nan)
+{
+    // initialize simple model with total population 0
+    mio::osecirts::Model<double> model(1);
+    model.populations.set_total(0.0);
+
+    model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().array().setConstant(0);
+
+    // call the get_flows function
+    auto dydt_default = Eigen::VectorXd(model.get_initial_flows().size());
+    dydt_default.setZero();
+    auto y0 = model.get_initial_values();
+    model.get_flows(y0, y0, 0, dydt_default);
+
+    // check that there are now NaN values in dydt_default
+    for (int i = 0; i < dydt_default.size(); i++) {
+        EXPECT_FALSE(std::isnan(dydt_default[i]));
+    }
+}
+
 TEST(TestOdeSECIRTS, overflow_vaccinations)
 {
     const double t0   = 0;
@@ -240,13 +266,13 @@ TEST(TestOdeSECIRTS, overflow_vaccinations)
     // get the flow indices for each type of vaccination and also the indices of the susceptible compartments
     auto flow_indx_partial_vaccination =
         model.get_flat_flow_index<mio::osecirts::InfectionState::SusceptibleNaive,
-                                  mio::osecirts::InfectionState::TemporaryImmunPartialImmunity>({mio::AgeGroup(0)});
+                                  mio::osecirts::InfectionState::TemporaryImmunePartialImmunity>({mio::AgeGroup(0)});
     auto flow_indx_full_vaccination =
         model.get_flat_flow_index<mio::osecirts::InfectionState::SusceptiblePartialImmunity,
-                                  mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>({mio::AgeGroup(0)});
+                                  mio::osecirts::InfectionState::TemporaryImmuneImprovedImmunity>({mio::AgeGroup(0)});
     auto flow_indx_booster_vaccination =
         model.get_flat_flow_index<mio::osecirts::InfectionState::SusceptibleImprovedImmunity,
-                                  mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity>({mio::AgeGroup(0)});
+                                  mio::osecirts::InfectionState::TemporaryImmuneImprovedImmunity>({mio::AgeGroup(0)});
     auto indx_S_naive =
         model.populations.get_flat_index({mio::AgeGroup(0), mio::osecirts::InfectionState::SusceptibleNaive});
     auto indx_S_partial =
@@ -818,8 +844,9 @@ TEST(TestOdeSECIRTS, read_data)
                   0);
         EXPECT_GE(double(model3[0].populations[{i, mio::osecirts::InfectionState::InfectedSymptomsImprovedImmunity}]),
                   0);
-        EXPECT_GE(double(model2[0].populations[{i, mio::osecirts::InfectionState::TemporaryImmunPartialImmunity}]), 0);
-        EXPECT_GE(double(model3[0].populations[{i, mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity}]), 0);
+        EXPECT_GE(double(model2[0].populations[{i, mio::osecirts::InfectionState::TemporaryImmunePartialImmunity}]), 0);
+        EXPECT_GE(double(model3[0].populations[{i, mio::osecirts::InfectionState::TemporaryImmuneImprovedImmunity}]),
+                  0);
 
         // currently dead and confirmed after commuting compartments are initialized as zero
         EXPECT_EQ(double(model1[0].populations[{i, mio::osecirts::InfectionState::InfectedNoSymptomsNaiveConfirmed}]),
@@ -1134,6 +1161,18 @@ TEST(TestOdeSECIRTS, check_constraints_parameters)
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     model.parameters.set<mio::osecirts::ICUCapacity<double>>(2);
+    model.parameters.set<mio::osecirts::TestAndTraceCapacity<double>>(-1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirts::TestAndTraceCapacity<double>>(1);
+    model.parameters.set<mio::osecirts::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(-1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirts::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(1);
+    model.parameters.set<mio::osecirts::TestAndTraceCapacityMaxRiskSymptoms<double>>(-1);
+    EXPECT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecirts::TestAndTraceCapacityMaxRiskSymptoms<double>>(1);
     model.parameters.set<mio::osecirts::TimeExposed<double>>(-2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
@@ -1241,6 +1280,8 @@ TEST(TestOdeSECIRTS, check_constraints_parameters)
     model.parameters.set<mio::osecirts::InfectiousnessNewVariant<double>>(-4);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
+    model.parameters.set<mio::osecirts::InfectiousnessNewVariant<double>>(2.0);
+    ASSERT_EQ(model.parameters.check_constraints(), 0);
     mio::set_log_level(mio::LogLevel::warn);
 }
 
@@ -1260,6 +1301,18 @@ TEST(TestOdeSECIRTS, apply_constraints_parameters)
     model.parameters.set<mio::osecirts::ICUCapacity<double>>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirts::Seasonality<double>>(), 0);
+
+    model.parameters.set<mio::osecirts::TestAndTraceCapacity<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirts::TestAndTraceCapacity<double>>(), 0);
+
+    model.parameters.set<mio::osecirts::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirts::TestAndTraceCapacityMaxRiskNoSymptoms<double>>(), 0);
+
+    model.parameters.set<mio::osecirts::TestAndTraceCapacityMaxRiskSymptoms<double>>(-1);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirts::TestAndTraceCapacityMaxRiskSymptoms<double>>(), 0);
 
     model.parameters.set<mio::osecirts::TimeExposed<double>>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);

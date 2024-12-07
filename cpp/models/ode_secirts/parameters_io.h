@@ -464,7 +464,7 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
                     .parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity<FP>>()[(AgeGroup)i] *
                 denom_I_Sev[i] * num_InfectedSevere[county][i];
             // the += is necessary because we already set the previous vaccinated individuals
-            model[county].populations[{AgeGroup(i), InfectionState::TemporaryImmunPartialImmunity}] +=
+            model[county].populations[{AgeGroup(i), InfectionState::TemporaryImmunePartialImmunity}] +=
                 immunity_population[1][i] *
                 model[county].parameters.template get<ReducExposedPartialImmunity<FP>>()[(AgeGroup)i] * denom_E[i] *
                 num_timm1[county][i];
@@ -513,7 +513,7 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
                     .parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>()[(AgeGroup)i] *
                 denom_I_Sev[i] * num_InfectedSevere[county][i];
             // the += is necessary because we already set the previous vaccinated individuals
-            model[county].populations[{AgeGroup(i), InfectionState::TemporaryImmunImprovedImmunity}] +=
+            model[county].populations[{AgeGroup(i), InfectionState::TemporaryImmuneImprovedImmunity}] +=
                 immunity_population[2][i] *
                 model[county].parameters.template get<ReducExposedImprovedImmunity<FP>>()[(AgeGroup)i] * denom_E[i] *
                 num_timm2[county][i];
@@ -732,7 +732,7 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::vector<
                         model[region].populations[{i, InfectionState::InfectedSevereImprovedImmunity}] +
                         model[region].populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] +
                         model[region].populations[{i, InfectionState::DeadImprovedImmunity}] +
-                        model[region].populations[{i, InfectionState::TemporaryImmunImprovedImmunity}])));
+                        model[region].populations[{i, InfectionState::TemporaryImmuneImprovedImmunity}])));
 
                 model[region].populations[{i, InfectionState::SusceptiblePartialImmunity}] = std::max(
                     0.0,
@@ -744,7 +744,7 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::vector<
                         model[region].populations[{i, InfectionState::InfectedSeverePartialImmunity}] -
                         model[region].populations[{i, InfectionState::InfectedCriticalPartialImmunity}] -
                         model[region].populations[{i, InfectionState::DeadPartialImmunity}] -
-                        model[region].populations[{i, InfectionState::TemporaryImmunPartialImmunity}]);
+                        model[region].populations[{i, InfectionState::TemporaryImmunePartialImmunity}]);
 
                 model[region].populations.template set_difference_from_group_total<AgeGroup>(
                     {i, InfectionState::SusceptibleNaive}, num_population[region][size_t(i)]);

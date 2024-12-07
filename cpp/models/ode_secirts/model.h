@@ -37,63 +37,62 @@ namespace osecirts
 using Flows = TypeList<
     //naive
     Flow<InfectionState::SusceptibleNaive,                            InfectionState::ExposedNaive>, 
-    Flow<InfectionState::SusceptibleNaive,                            InfectionState::TemporaryImmunPartialImmunity>, 
+    Flow<InfectionState::SusceptibleNaive,                            InfectionState::TemporaryImmunePartialImmunity>, 
     Flow<InfectionState::ExposedNaive,                                InfectionState::InfectedNoSymptomsNaive>,
     Flow<InfectionState::InfectedNoSymptomsNaive,                     InfectionState::InfectedSymptomsNaive>,
-    Flow<InfectionState::InfectedNoSymptomsNaive,                     InfectionState::TemporaryImmunPartialImmunity>,
+    Flow<InfectionState::InfectedNoSymptomsNaive,                     InfectionState::TemporaryImmunePartialImmunity>,
     Flow<InfectionState::InfectedNoSymptomsNaiveConfirmed,            InfectionState::InfectedSymptomsNaiveConfirmed>,
-    Flow<InfectionState::InfectedNoSymptomsNaiveConfirmed,            InfectionState::TemporaryImmunPartialImmunity>,
+    Flow<InfectionState::InfectedNoSymptomsNaiveConfirmed,            InfectionState::TemporaryImmunePartialImmunity>,
     Flow<InfectionState::InfectedSymptomsNaive,                       InfectionState::InfectedSevereNaive>,
-    Flow<InfectionState::InfectedSymptomsNaive,                       InfectionState::TemporaryImmunPartialImmunity>,
+    Flow<InfectionState::InfectedSymptomsNaive,                       InfectionState::TemporaryImmunePartialImmunity>,
     Flow<InfectionState::InfectedSymptomsNaiveConfirmed,              InfectionState::InfectedSevereNaive>,
-    Flow<InfectionState::InfectedSymptomsNaiveConfirmed,              InfectionState::TemporaryImmunPartialImmunity>,
+    Flow<InfectionState::InfectedSymptomsNaiveConfirmed,              InfectionState::TemporaryImmunePartialImmunity>,
     Flow<InfectionState::InfectedSevereNaive,                         InfectionState::InfectedCriticalNaive>,
-    Flow<InfectionState::InfectedSevereNaive,                         InfectionState::TemporaryImmunPartialImmunity>, 
+    Flow<InfectionState::InfectedSevereNaive,                         InfectionState::TemporaryImmunePartialImmunity>, 
     Flow<InfectionState::InfectedSevereNaive,                         InfectionState::DeadNaive>,
     Flow<InfectionState::InfectedCriticalNaive,                       InfectionState::DeadNaive>,
-    Flow<InfectionState::InfectedCriticalNaive,                       InfectionState::TemporaryImmunPartialImmunity>,
-    Flow<InfectionState::TemporaryImmunPartialImmunity,                          InfectionState::SusceptiblePartialImmunity>,
+    Flow<InfectionState::InfectedCriticalNaive,                       InfectionState::TemporaryImmunePartialImmunity>,
+    Flow<InfectionState::TemporaryImmunePartialImmunity,              InfectionState::SusceptiblePartialImmunity>,
     //partial immunity
     Flow<InfectionState::SusceptiblePartialImmunity,                  InfectionState::ExposedPartialImmunity>,
-    Flow<InfectionState::SusceptiblePartialImmunity,                  InfectionState::TemporaryImmunImprovedImmunity>,
+    Flow<InfectionState::SusceptiblePartialImmunity,                  InfectionState::TemporaryImmuneImprovedImmunity>,
     Flow<InfectionState::ExposedPartialImmunity,                      InfectionState::InfectedNoSymptomsPartialImmunity>,
     Flow<InfectionState::InfectedNoSymptomsPartialImmunity,           InfectionState::InfectedSymptomsPartialImmunity>,
-    Flow<InfectionState::InfectedNoSymptomsPartialImmunity,           InfectionState::TemporaryImmunImprovedImmunity>,
+    Flow<InfectionState::InfectedNoSymptomsPartialImmunity,           InfectionState::TemporaryImmuneImprovedImmunity>,
     Flow<InfectionState::InfectedNoSymptomsPartialImmunityConfirmed,  InfectionState::InfectedSymptomsPartialImmunityConfirmed>,
-    Flow<InfectionState::InfectedNoSymptomsPartialImmunityConfirmed,  InfectionState::TemporaryImmunImprovedImmunity>,
+    Flow<InfectionState::InfectedNoSymptomsPartialImmunityConfirmed,  InfectionState::TemporaryImmuneImprovedImmunity>,
     Flow<InfectionState::InfectedSymptomsPartialImmunity,             InfectionState::InfectedSeverePartialImmunity>,
-    Flow<InfectionState::InfectedSymptomsPartialImmunity,             InfectionState::TemporaryImmunImprovedImmunity>,
+    Flow<InfectionState::InfectedSymptomsPartialImmunity,             InfectionState::TemporaryImmuneImprovedImmunity>,
     Flow<InfectionState::InfectedSymptomsPartialImmunityConfirmed,    InfectionState::InfectedSeverePartialImmunity>,
-    Flow<InfectionState::InfectedSymptomsPartialImmunityConfirmed,    InfectionState::TemporaryImmunImprovedImmunity>,
+    Flow<InfectionState::InfectedSymptomsPartialImmunityConfirmed,    InfectionState::TemporaryImmuneImprovedImmunity>,
     Flow<InfectionState::InfectedSeverePartialImmunity,               InfectionState::InfectedCriticalPartialImmunity>,
-    Flow<InfectionState::InfectedSeverePartialImmunity,               InfectionState::TemporaryImmunImprovedImmunity>,
+    Flow<InfectionState::InfectedSeverePartialImmunity,               InfectionState::TemporaryImmuneImprovedImmunity>,
     Flow<InfectionState::InfectedSeverePartialImmunity,               InfectionState::DeadPartialImmunity>,
     Flow<InfectionState::InfectedCriticalPartialImmunity,             InfectionState::DeadPartialImmunity>,
-    Flow<InfectionState::InfectedCriticalPartialImmunity,             InfectionState::TemporaryImmunImprovedImmunity>,
+    Flow<InfectionState::InfectedCriticalPartialImmunity,             InfectionState::TemporaryImmuneImprovedImmunity>,
     //improved immunity
     Flow<InfectionState::SusceptibleImprovedImmunity,                 InfectionState::ExposedImprovedImmunity>,
-    Flow<InfectionState::SusceptibleImprovedImmunity,                 InfectionState::TemporaryImmunImprovedImmunity>,
+    Flow<InfectionState::SusceptibleImprovedImmunity,                 InfectionState::TemporaryImmuneImprovedImmunity>,
     Flow<InfectionState::ExposedImprovedImmunity,                     InfectionState::InfectedNoSymptomsImprovedImmunity>,
     Flow<InfectionState::InfectedNoSymptomsImprovedImmunity,          InfectionState::InfectedSymptomsImprovedImmunity>,
-    Flow<InfectionState::InfectedNoSymptomsImprovedImmunity,          InfectionState::TemporaryImmunImprovedImmunity>,
+    Flow<InfectionState::InfectedNoSymptomsImprovedImmunity,          InfectionState::TemporaryImmuneImprovedImmunity>,
     Flow<InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed, InfectionState::InfectedSymptomsImprovedImmunityConfirmed>,
-    Flow<InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed, InfectionState::TemporaryImmunImprovedImmunity>,
+    Flow<InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed, InfectionState::TemporaryImmuneImprovedImmunity>,
     Flow<InfectionState::InfectedSymptomsImprovedImmunity,            InfectionState::InfectedSevereImprovedImmunity>,
-    Flow<InfectionState::InfectedSymptomsImprovedImmunity,            InfectionState::TemporaryImmunImprovedImmunity>,
+    Flow<InfectionState::InfectedSymptomsImprovedImmunity,            InfectionState::TemporaryImmuneImprovedImmunity>,
     Flow<InfectionState::InfectedSymptomsImprovedImmunityConfirmed,   InfectionState::InfectedSevereImprovedImmunity>,
-    Flow<InfectionState::InfectedSymptomsImprovedImmunityConfirmed,   InfectionState::TemporaryImmunImprovedImmunity>,
+    Flow<InfectionState::InfectedSymptomsImprovedImmunityConfirmed,   InfectionState::TemporaryImmuneImprovedImmunity>,
     Flow<InfectionState::InfectedSevereImprovedImmunity,              InfectionState::InfectedCriticalImprovedImmunity>,
-    Flow<InfectionState::InfectedSevereImprovedImmunity,              InfectionState::TemporaryImmunImprovedImmunity>,
+    Flow<InfectionState::InfectedSevereImprovedImmunity,              InfectionState::TemporaryImmuneImprovedImmunity>,
     Flow<InfectionState::InfectedSevereImprovedImmunity,              InfectionState::DeadImprovedImmunity>,
     Flow<InfectionState::InfectedCriticalImprovedImmunity,            InfectionState::DeadImprovedImmunity>,
-    Flow<InfectionState::InfectedCriticalImprovedImmunity,            InfectionState::TemporaryImmunImprovedImmunity>,
+    Flow<InfectionState::InfectedCriticalImprovedImmunity,            InfectionState::TemporaryImmuneImprovedImmunity>,
     
     // waning
-    Flow<InfectionState::TemporaryImmunPartialImmunity,                          InfectionState::SusceptiblePartialImmunity>,
-    Flow<InfectionState::TemporaryImmunImprovedImmunity,                          InfectionState::SusceptibleImprovedImmunity>,
+    Flow<InfectionState::TemporaryImmunePartialImmunity,              InfectionState::SusceptiblePartialImmunity>,
+    Flow<InfectionState::TemporaryImmuneImprovedImmunity,             InfectionState::SusceptibleImprovedImmunity>,
     Flow<InfectionState::SusceptibleImprovedImmunity,                 InfectionState::SusceptiblePartialImmunity>,
     Flow<InfectionState::SusceptiblePartialImmunity,                  InfectionState::SusceptibleNaive>>;
-
 // clang-format on
 
 template <typename FP = ScalarType>
@@ -180,8 +179,8 @@ public:
                 this->populations.get_flat_index({i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed});
             size_t ISyIICi =
                 this->populations.get_flat_index({i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed});
-            size_t TImm1 = this->populations.get_flat_index({i, InfectionState::TemporaryImmunPartialImmunity});
-            size_t TImm2 = this->populations.get_flat_index({i, InfectionState::TemporaryImmunImprovedImmunity});
+            size_t TImm1 = this->populations.get_flat_index({i, InfectionState::TemporaryImmunePartialImmunity});
+            size_t TImm2 = this->populations.get_flat_index({i, InfectionState::TemporaryImmuneImprovedImmunity});
 
             size_t SIIi = this->populations.get_flat_index({i, InfectionState::SusceptibleImprovedImmunity});
 
@@ -200,13 +199,15 @@ public:
             //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
             auto riskFromInfectedSymptomatic =
                 smoother_cosine(test_and_trace_required, params.template get<TestAndTraceCapacity<FP>>(),
-                                params.template get<TestAndTraceCapacity<FP>>() * 15,
+                                params.template get<TestAndTraceCapacity<FP>>() *
+                                    params.template get<TestAndTraceCapacityMaxRiskSymptoms<FP>>(),
                                 params.template get<RiskOfInfectionFromSymptomatic<FP>>()[i],
                                 params.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[i]);
 
             auto riskFromInfectedNoSymptoms =
                 smoother_cosine(test_and_trace_required, params.template get<TestAndTraceCapacity<FP>>(),
-                                params.template get<TestAndTraceCapacity<FP>>() * 2,
+                                params.template get<TestAndTraceCapacity<FP>>() *
+                                    params.template get<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(),
                                 params.template get<RelativeTransmissionNoSymptoms<FP>>()[i], 1.0);
 
             for (auto j = AgeGroup(0); j < n_agegroups; j++) {
@@ -258,7 +259,7 @@ public:
                         pop[INSPICj] + pop[ISyPICj] + pop[SIIj] + pop[EIIj] + pop[INSIIj] + pop[ISyIIj] + pop[ISevIIj] +
                         pop[ICrIIj] + pop[INSIICj] + pop[ISyIICj];
 
-                FP divNj = (Nj > 0) ? 1.0 / Nj : 0;
+                const FP divNj = (Nj < Limits<FP>::zero_tolerance()) ? 0.0 : 1.0 / Nj;
 
                 FP ext_inf_force_dummy = cont_freq_eff * divNj *
                                          params.template get<TransmissionProbabilityOnContact<FP>>()[(AgeGroup)i] *
@@ -281,20 +282,20 @@ public:
 
             // vaccinations
             flows[this->template get_flat_flow_index<InfectionState::SusceptibleNaive,
-                                                     InfectionState::TemporaryImmunPartialImmunity>({i})] =
+                                                     InfectionState::TemporaryImmunePartialImmunity>({i})] =
                 std::min(y[SNi] - flows[this->template get_flat_flow_index<InfectionState::SusceptibleNaive,
                                                                            InfectionState::ExposedNaive>({i})],
                          partial_vaccination[static_cast<size_t>(i)]);
 
             flows[this->template get_flat_flow_index<InfectionState::SusceptiblePartialImmunity,
-                                                     InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                                                     InfectionState::TemporaryImmuneImprovedImmunity>({i})] =
                 std::min(y[SPIi] -
                              flows[this->template get_flat_flow_index<InfectionState::SusceptiblePartialImmunity,
                                                                       InfectionState::ExposedPartialImmunity>({i})],
                          full_vaccination[static_cast<size_t>(i)]);
 
             flows[this->template get_flat_flow_index<InfectionState::SusceptibleImprovedImmunity,
-                                                     InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                                                     InfectionState::TemporaryImmuneImprovedImmunity>({i})] =
                 std::min(y[SIIi] -
                              flows[this->template get_flat_flow_index<InfectionState::SusceptibleImprovedImmunity,
                                                                       InfectionState::ExposedImprovedImmunity>({i})],
@@ -318,7 +319,7 @@ public:
 
             // InfectedNoSymptoms
             flows[this->template get_flat_flow_index<InfectionState::InfectedNoSymptomsNaive,
-                                                     InfectionState::TemporaryImmunPartialImmunity>({i})] =
+                                                     InfectionState::TemporaryImmunePartialImmunity>({i})] =
                 params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] *
                 (1 / params.template get<TimeInfectedNoSymptoms<FP>>()[i]) * y[INSNi];
             flows[this->template get_flat_flow_index<InfectionState::InfectedNoSymptomsNaive,
@@ -330,7 +331,7 @@ public:
                 (1 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
                 params.template get<TimeInfectedNoSymptoms<FP>>()[i] * y[INSNCi];
             flows[this->template get_flat_flow_index<InfectionState::InfectedNoSymptomsNaiveConfirmed,
-                                                     InfectionState::TemporaryImmunPartialImmunity>({i})] =
+                                                     InfectionState::TemporaryImmunePartialImmunity>({i})] =
                 params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] *
                 (1 / params.template get<TimeInfectedNoSymptoms<FP>>()[i]) * y[INSNCi];
 
@@ -341,7 +342,7 @@ public:
                 params.template get<TimeInfectedSymptoms<FP>>()[i] * y[ISyNi];
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedSymptomsNaive,
-                                                     InfectionState::TemporaryImmunPartialImmunity>({i})] =
+                                                     InfectionState::TemporaryImmunePartialImmunity>({i})] =
                 (1 - params.template get<SeverePerInfectedSymptoms<FP>>()[i]) /
                 params.template get<TimeInfectedSymptoms<FP>>()[i] * y[ISyNi];
 
@@ -351,7 +352,7 @@ public:
                 params.template get<TimeInfectedSymptoms<FP>>()[i] * y[ISyNCi];
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedSymptomsNaiveConfirmed,
-                                                     InfectionState::TemporaryImmunPartialImmunity>({i})] =
+                                                     InfectionState::TemporaryImmunePartialImmunity>({i})] =
                 (1 - params.template get<SeverePerInfectedSymptoms<FP>>()[i]) /
                 params.template get<TimeInfectedSymptoms<FP>>()[i] * y[ISyNCi];
 
@@ -361,7 +362,7 @@ public:
                 criticalPerSevereAdjusted / params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevNi];
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedSevereNaive,
-                                                     InfectionState::TemporaryImmunPartialImmunity>({i})] =
+                                                     InfectionState::TemporaryImmunePartialImmunity>({i})] =
                 (1 - params.template get<CriticalPerSevere<FP>>()[i]) /
                 params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevNi];
 
@@ -373,7 +374,7 @@ public:
                         params.template get<TimeInfectedCritical<FP>>()[i] * y[ICrNi];
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedCriticalNaive,
-                                                     InfectionState::TemporaryImmunPartialImmunity>({i})] =
+                                                     InfectionState::TemporaryImmunePartialImmunity>({i})] =
                 (1 - params.template get<DeathsPerCritical<FP>>()[i]) /
                 params.template get<TimeInfectedCritical<FP>>()[i] * y[ICrNi];
 
@@ -381,7 +382,7 @@ public:
             flows[this->template get_flat_flow_index<InfectionState::SusceptiblePartialImmunity,
                                                      InfectionState::SusceptibleNaive>({i})] =
                 1 / params.template get<TimeWaningPartialImmunity<FP>>()[i] * y[SPIi];
-            flows[this->template get_flat_flow_index<InfectionState::TemporaryImmunPartialImmunity,
+            flows[this->template get_flat_flow_index<InfectionState::TemporaryImmunePartialImmunity,
                                                      InfectionState::SusceptiblePartialImmunity>({i})] =
                 1 / params.template get<TimeTemporaryImmunityPI<FP>>()[i] * y[TImm1];
 
@@ -394,7 +395,7 @@ public:
 
             // InfectedNoSymptoms
             flows[this->template get_flat_flow_index<InfectionState::InfectedNoSymptomsPartialImmunity,
-                                                     InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                                                     InfectionState::TemporaryImmuneImprovedImmunity>({i})] =
                 (1 - (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
                          (1 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i])) /
                 (params.template get<TimeInfectedNoSymptoms<FP>>()[i] * reducTimeInfectedMild) * y[INSPIi];
@@ -409,7 +410,7 @@ public:
                 (1 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
                 (params.template get<TimeInfectedNoSymptoms<FP>>()[i] * reducTimeInfectedMild) * y[INSPICi];
             flows[this->template get_flat_flow_index<InfectionState::InfectedNoSymptomsPartialImmunityConfirmed,
-                                                     InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                                                     InfectionState::TemporaryImmuneImprovedImmunity>({i})] =
                 (1 - (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
                          (1 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i])) /
                 (params.template get<TimeInfectedNoSymptoms<FP>>()[i] * reducTimeInfectedMild) * y[INSPICi];
@@ -422,7 +423,7 @@ public:
                 (params.template get<TimeInfectedSymptoms<FP>>()[i] * reducTimeInfectedMild) * y[ISyPIi];
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedSymptomsPartialImmunity,
-                                                     InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                                                     InfectionState::TemporaryImmuneImprovedImmunity>({i})] =
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity) *
                          params.template get<SeverePerInfectedSymptoms<FP>>()[i]) /
                 (params.template get<TimeInfectedSymptoms<FP>>()[i] * reducTimeInfectedMild) * y[ISyPIi];
@@ -434,7 +435,7 @@ public:
                 (params.template get<TimeInfectedSymptoms<FP>>()[i] * reducTimeInfectedMild) * y[ISyPICi];
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedSymptomsPartialImmunityConfirmed,
-                                                     InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                                                     InfectionState::TemporaryImmuneImprovedImmunity>({i})] =
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity) *
                          params.template get<SeverePerInfectedSymptoms<FP>>()[i]) /
                 (params.template get<TimeInfectedSymptoms<FP>>()[i] * reducTimeInfectedMild) * y[ISyPICi];
@@ -446,7 +447,7 @@ public:
                 criticalPerSevereAdjusted / params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevPIi];
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedSeverePartialImmunity,
-                                                     InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                                                     InfectionState::TemporaryImmuneImprovedImmunity>({i})] =
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) *
                          params.template get<CriticalPerSevere<FP>>()[i]) /
                 params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevPIi];
@@ -463,7 +464,7 @@ public:
                 y[ICrPIi];
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedCriticalPartialImmunity,
-                                                     InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                                                     InfectionState::TemporaryImmuneImprovedImmunity>({i})] =
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) *
                          params.template get<DeathsPerCritical<FP>>()[i]) /
                 params.template get<TimeInfectedCritical<FP>>()[i] * y[ICrPIi];
@@ -476,7 +477,7 @@ public:
 
             // InfectedNoSymptoms
             flows[this->template get_flat_flow_index<InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                                     InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                                                     InfectionState::TemporaryImmuneImprovedImmunity>({i})] =
                 (1 - (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
                          (1 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i])) /
                 (params.template get<TimeInfectedNoSymptoms<FP>>()[i] * reducTimeInfectedMild) * y[INSIIi];
@@ -491,7 +492,7 @@ public:
                 (1 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
                 (params.template get<TimeInfectedNoSymptoms<FP>>()[i] * reducTimeInfectedMild) * y[INSIICi];
             flows[this->template get_flat_flow_index<InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed,
-                                                     InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                                                     InfectionState::TemporaryImmuneImprovedImmunity>({i})] =
                 (1 - (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
                          (1 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i])) /
                 (params.template get<TimeInfectedNoSymptoms<FP>>()[i] * reducTimeInfectedMild) * y[INSIICi];
@@ -504,7 +505,7 @@ public:
                 (params.template get<TimeInfectedSymptoms<FP>>()[i] * reducTimeInfectedMild) * y[ISyIIi];
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedSymptomsImprovedImmunity,
-                                                     InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                                                     InfectionState::TemporaryImmuneImprovedImmunity>({i})] =
                 (1 - (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity) *
                          params.template get<SeverePerInfectedSymptoms<FP>>()[i]) /
                 (params.template get<TimeInfectedSymptoms<FP>>()[i] * reducTimeInfectedMild) * y[ISyIIi];
@@ -516,7 +517,7 @@ public:
                 (params.template get<TimeInfectedSymptoms<FP>>()[i] * reducTimeInfectedMild) * y[ISyIICi];
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedSymptomsImprovedImmunityConfirmed,
-                                                     InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                                                     InfectionState::TemporaryImmuneImprovedImmunity>({i})] =
                 (1 - (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity) *
                          params.template get<SeverePerInfectedSymptoms<FP>>()[i]) /
                 (params.template get<TimeInfectedSymptoms<FP>>()[i] * reducTimeInfectedMild) * y[ISyIICi];
@@ -528,7 +529,7 @@ public:
                 criticalPerSevereAdjusted / params.template get<TimeInfectedSevere<FP>>()[i] * y[ISevIIi];
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedSevereImprovedImmunity,
-                                                     InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                                                     InfectionState::TemporaryImmuneImprovedImmunity>({i})] =
                 (1 -
                  (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) *
                      params.template get<CriticalPerSevere<FP>>()[i]) /
@@ -547,14 +548,14 @@ public:
                 y[ICrIIi];
 
             flows[this->template get_flat_flow_index<InfectionState::InfectedCriticalImprovedImmunity,
-                                                     InfectionState::TemporaryImmunImprovedImmunity>({i})] =
+                                                     InfectionState::TemporaryImmuneImprovedImmunity>({i})] =
                 (1 -
                  (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) *
                      params.template get<DeathsPerCritical<FP>>()[i]) /
                 params.template get<TimeInfectedCritical<FP>>()[i] * y[ICrIIi];
 
             // Waning immunity
-            flows[this->template get_flat_flow_index<InfectionState::TemporaryImmunImprovedImmunity,
+            flows[this->template get_flat_flow_index<InfectionState::TemporaryImmuneImprovedImmunity,
                                                      InfectionState::SusceptibleImprovedImmunity>({i})] =
                 1 / params.template get<TimeTemporaryImmunityII<FP>>()[i] * y[TImm2];
 
@@ -732,7 +733,7 @@ public:
         // the base value to use it in the apply_variant function and also to reset the parameter after the simulation.
         auto base_infectiousness = this->get_model().parameters.template get<TransmissionProbabilityOnContact<FP>>();
 
-        FP delay_lockdown;
+        FP delay_npi_implementation;
         auto t        = BaseT::get_result().get_last_time();
         const auto dt = dyn_npis.get_interval().get();
         while (t < tmax) {
@@ -748,10 +749,12 @@ public:
             }
 
             if (t > 0) {
-                delay_lockdown = 7;
+                delay_npi_implementation =
+                    this->get_model().parameters.template get<DynamicNPIsImplementationDelay<FP>>();
             }
             else {
-                delay_lockdown = 0;
+                // DynamicNPIs for t=0 are 'misused' to be from-start NPIs. I.e., do not enforce delay.
+                delay_npi_implementation = 0;
             }
             t = t + dt_eff;
 
@@ -765,7 +768,7 @@ public:
                             (exceeded_threshold->first > m_dynamic_npi.first ||
                              t > FP(m_dynamic_npi.second))) { //old npi was weaker or is expired
 
-                            auto t_start = SimulationTime(t + delay_lockdown);
+                            auto t_start = SimulationTime(t + delay_npi_implementation);
                             auto t_end   = t_start + SimulationTime(dyn_npis.get_duration());
                             this->get_model().parameters.get_start_commuter_detection() = (FP)t_start;
                             this->get_model().parameters.get_end_commuter_detection()   = (FP)t_end;

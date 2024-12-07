@@ -65,7 +65,7 @@ void draw_sample_demographics(Model<FP>& model)
         InfectionState::InfectedNoSymptomsPartialImmunity, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed,
         InfectionState::InfectedSymptomsPartialImmunity,   InfectionState::InfectedSymptomsPartialImmunityConfirmed,
         InfectionState::InfectedSeverePartialImmunity,     InfectionState::InfectedCriticalPartialImmunity,
-        InfectionState::TemporaryImmunPartialImmunity,     InfectionState::DeadPartialImmunity,
+        InfectionState::TemporaryImmunePartialImmunity,    InfectionState::DeadPartialImmunity,
     };
 
     const static std::vector<InfectionState> improved_immunity_states = {
@@ -73,7 +73,7 @@ void draw_sample_demographics(Model<FP>& model)
         InfectionState::InfectedNoSymptomsImprovedImmunity, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed,
         InfectionState::InfectedSymptomsImprovedImmunity,   InfectionState::InfectedSymptomsImprovedImmunityConfirmed,
         InfectionState::InfectedSevereImprovedImmunity,     InfectionState::InfectedCriticalImprovedImmunity,
-        InfectionState::TemporaryImmunImprovedImmunity,     InfectionState::DeadImprovedImmunity,
+        InfectionState::TemporaryImmuneImprovedImmunity,    InfectionState::DeadImprovedImmunity,
     };
 
     // helper function to calculate the total population of a layer for a given age group

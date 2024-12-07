@@ -65,8 +65,8 @@ int main()
         model.populations[{i, mio::osecirts::InfectionState::SusceptibleNaive}]                            = 1000;
         model.populations[{i, mio::osecirts::InfectionState::SusceptiblePartialImmunity}]                  = 1200;
         model.populations[{i, mio::osecirts::InfectionState::SusceptibleImprovedImmunity}]                 = 1000;
-        model.populations[{i, mio::osecirts::InfectionState::TemporaryImmunPartialImmunity}]               = 60;
-        model.populations[{i, mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity}]              = 70;
+        model.populations[{i, mio::osecirts::InfectionState::TemporaryImmunePartialImmunity}]              = 60;
+        model.populations[{i, mio::osecirts::InfectionState::TemporaryImmuneImprovedImmunity}]             = 70;
         model.populations[{i, mio::osecirts::InfectionState::DeadNaive}]                                   = 0;
         model.populations[{i, mio::osecirts::InfectionState::DeadPartialImmunity}]                         = 0;
         model.populations[{i, mio::osecirts::InfectionState::DeadImprovedImmunity}]                        = 0;
@@ -144,9 +144,9 @@ int main()
             double timm_ii = 0.0;
             for (mio::AgeGroup i = 0; i < nb_groups; i++) {
                 timm_pi += result_interpolated.get_value(t_indx)[model.populations.get_flat_index(
-                    {i, mio::osecirts::InfectionState::TemporaryImmunPartialImmunity})];
+                    {i, mio::osecirts::InfectionState::TemporaryImmunePartialImmunity})];
                 timm_ii += result_interpolated.get_value(t_indx)[model.populations.get_flat_index(
-                    {i, mio::osecirts::InfectionState::TemporaryImmunImprovedImmunity})];
+                    {i, mio::osecirts::InfectionState::TemporaryImmuneImprovedImmunity})];
             }
             printf("t=%i, timm_pi=%f, timm_ii=%f\n", int(result_interpolated.get_time(t_indx)), timm_pi, timm_ii);
         }

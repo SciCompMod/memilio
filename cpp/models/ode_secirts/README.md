@@ -25,8 +25,8 @@ Below is an overview of the model architecture and its compartments.
 | $T_{I_{Sy}}$                    |  `TimeInfectedSymptoms`               | Time in days an individual stays in the InfectedSymptoms compartment. |
 | $T_{I_{Sev}}$                       |  `TimeInfectedSevere`               | Time in days an individual stays in the InfectedSevere compartment. |
 | $T_{I_{Cr}}$                       |  `TimeInfectedCritical`               | Time in days an individual stays in the InfectedCritical compartment. |
-| $T_{\mathcal{I}_{PI}}$                       |  `TimeTemporaryImmunityPI`               | Time in days an individual stays in the TemporaryImmunPartialImmunity compartment. |
-| $T_{\mathcal{I}_{PI}}$                       |  `TimeTemporaryImmunityII`               | Time in days an individual stays in the TemporaryImmunImprovedImmunity compartment. |
+| $T_{\mathcal{I}_{PI}}$                       |  `TimeTemporaryImmunityPI`               | Time in days an individual stays in the TemporaryImmunePartialImmunity compartment. |
+| $T_{\mathcal{I}_{PI}}$                       |  `TimeTemporaryImmunityII`               | Time in days an individual stays in the TemporaryImmuneImprovedImmunity compartment. |
 | $T_{W_{PI}}$                       |  `TimeWaningPartialImmunity`               | Time in days an individual stays in the SusceptiblePartialImmunity compartment before waning to the SusceptibleNaive compartment assuming no exposure occurred during this period. |
 | $T_{W_{II}}$                       |  `TimeWaningImprovedImmunity`               | Time in days an individual stays in the SusceptibleImprovedImmunity compartment before waning to the SusceptiblePartialImmunity compartment assuming no exposure occurred during this period. |
 | $\mu_{I_{NS}}^{I_{Sy}}$              |   `1 - RecoveredPerInfectedNoSymptoms`              | Probability of transition from compartment InfectedNoSymptoms to InfectedSymptoms. |  

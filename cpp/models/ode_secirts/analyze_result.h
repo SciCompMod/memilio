@@ -194,6 +194,10 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             node, [](auto&& model) -> auto& { return model.parameters.template get<TestAndTraceCapacity<double>>(); });
         param_percentil(
             node, [](auto&& model) -> auto& { return model.parameters.template get<ICUCapacity<double>>(); });
+        param_percentil(
+            node, [](auto&& model) -> auto& {
+                return model.parameters.template get<DynamicNPIsImplementationDelay<double>>();
+            });
 
         for (size_t run = 0; run < num_runs; run++) {
 
