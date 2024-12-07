@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
+* Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,11 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_ODE_SECIRVVS_INFECTIONSTATE_H
-#define MIO_ODE_SECIRVVS_INFECTIONSTATE_H
+#ifndef MIO_ODE_SECIRTS_INFECTIONSTATE_H
+#define MIO_ODE_SECIRTS_INFECTIONSTATE_H
 namespace mio
 {
-namespace osecirvvs
+namespace osecirts
 {
 
 /**
@@ -58,15 +58,17 @@ enum class InfectionState
     InfectedCriticalNaive,
     InfectedCriticalPartialImmunity,
     InfectedCriticalImprovedImmunity,
-    SusceptibleImprovedImmunity, //includes all with improved immunity, either through infection or at least two vaccinations
+    SusceptibleImprovedImmunity,
     DeadNaive,
     DeadPartialImmunity,
     DeadImprovedImmunity,
+    TemporaryImmunePartialImmunity,
+    TemporaryImmuneImprovedImmunity,
 
     Count
 };
 
-} // namespace osecirvvs
+} // namespace osecirts
 } // namespace mio
 
-#endif //MIO_ODE_SECIRVVS_INFECTIONSTATE_H
+#endif //MIO_ODE_SECIRTS_INFECTIONSTATE_H

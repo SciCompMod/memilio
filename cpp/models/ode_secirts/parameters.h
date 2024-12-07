@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
+* Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,27 +17,31 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_ODE_SECIRVVS_PARAMETERS_H
-#define MIO_ODE_SECIRVVS_PARAMETERS_H
+#ifndef MIO_ODE_SECIRTS_PARAMETERS_H
+#define MIO_ODE_SECIRTS_PARAMETERS_H
 
+#include "memilio/math/eigen.h"
+#include "memilio/utils/uncertain_value.h"
+#include "memilio/math/adapt_rk.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/epidemiology/dynamic_npis.h"
 #include "memilio/epidemiology/simulation_day.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
-#include "memilio/utils/custom_index_array.h"
+#include "memilio/epidemiology/dynamic_npis.h"
 #include "memilio/utils/parameter_set.h"
-#include "memilio/utils/uncertain_value.h"
+#include "memilio/utils/custom_index_array.h"
+
+#include <vector>
 
 namespace mio
 {
-namespace osecirvvs
+namespace osecirts
 {
 
 /**
-* @brief the start day in the SECIRVVS model
+* @brief The start day in the SECIRTS-type model.
 * The start day defines in which season the simulation can be started
 * If the start day is 180 and simulation takes place from t0=0 to
-* tmax=100 the days 180 to 280 of the year are simulated
+* tmax=100 the days 180 to 280 of the year are simulated.
 */
 struct StartDay {
     using Type = double;
@@ -52,7 +56,7 @@ struct StartDay {
 };
 
 /**
-* @brief the start day of a new variant in the SECIRVVS model
+* @brief The start day of a new variant in the SECIRTS-type model.
 * The start day of the new variant defines in which day of the simulation the new variant is introduced.
 * Starting on this day, the new variant will impact the transmission probability depending on the
 * infectiousness of the new variant in the parameter InfectiousnessNewVariant.
@@ -70,9 +74,10 @@ struct StartDayNewVariant {
 };
 
 /**
-* @brief the seasonality in the SECIR model
+* @brief The seasonality in the SECIRTS-type model.
 * the seasonality is given as (1+k*sin()) where the sine
-* curve is below one in summer and above one in winter
+* curve is below one in summer and above one in winter.
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct Seasonality {
@@ -88,7 +93,8 @@ struct Seasonality {
 };
 
 /**
-* @brief the icu capacity in the SECIR model
+* @brief Represents the icu capacity in the SECIRTS model.
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct ICUCapacity {
@@ -104,7 +110,8 @@ struct ICUCapacity {
 };
 
 /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief The Capacity to test and trace contacts of infected for quarantine per day.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct TestAndTraceCapacity {
@@ -152,7 +159,8 @@ struct TestAndTraceCapacityMaxRiskSymptoms {
 };
 
 /**
- * @brief the contact patterns within the society are modelled using an UncertainContactMatrix
+ * @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct ContactPatterns {
@@ -168,7 +176,8 @@ struct ContactPatterns {
 };
 
 /**
- * @brief the NPIs that are enforced if certain infection thresholds are exceeded.
+ * @brief The NPIs that are enacted if certain infection thresholds are exceeded.
+ * @tparam FP The floating-point type (default: double).
  */
 template <typename FP = double>
 struct DynamicNPIsInfectedSymptoms {
@@ -180,6 +189,539 @@ struct DynamicNPIsInfectedSymptoms {
     static std::string name()
     {
         return "DynamicNPIsInfectedSymptoms";
+    }
+};
+
+/**
+ * @brief Represents the mean latent time in days for different age groups.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct TimeExposed {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeExposed";
+    }
+};
+
+/**
+ * @brief The (mean) time in day unit for asymptomatic cases that are infected but
+ *        have not yet developed symptoms.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct TimeInfectedNoSymptoms {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeInfectedNoSymptoms";
+    }
+};
+
+/**
+* @brief The infectious time for symptomatic cases that are infected but
+*        who do not need to be hospitalized in the SECIRTS model in day unit.
+* @tparam FP The floating-point type (default: double).
+*/
+template <typename FP = double>
+struct TimeInfectedSymptoms {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeInfectedSymptoms";
+    }
+};
+
+/**
+ * @brief The time people are 'simply' hospitalized before returning home in the SECIRTS model
+ *        in day unit.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct TimeInfectedSevere {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeInfectedSevere";
+    }
+};
+
+/**
+ * @brief The time people are treated by ICU before returning home in the SECIRTS model
+ *        in day unit.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct TimeInfectedCritical {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeInfectedCritical";
+    }
+};
+
+/** 
+ * @brief Time in days to describe waning immunity to get susceptible from partial to naive immunity layer.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct TimeWaningPartialImmunity {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 90.0);
+    }
+    static std::string name()
+    {
+        return "TimeWaningPartialImmunity";
+    }
+};
+
+/** 
+ * @brief Time in days to describe waning immunity to get susceptible from improved to partial immunity layer.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct TimeWaningImprovedImmunity {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 90.0);
+    }
+    static std::string name()
+    {
+        return "TimeWaningImprovedImmunity";
+    }
+};
+
+/**
+ * @brief The time people stays immune after infection or vaccination located in naive immunity layer 
+ * in day unit.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct TimeTemporaryImmunityPI {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeTemporaryImmunityPI";
+    }
+};
+
+/**
+ * @brief The time people stays immune after infection or vaccination located in the partial or improved immunity layer
+ *  in day unit
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct TimeTemporaryImmunityII {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TimeTemporaryImmunityII";
+    }
+};
+/**
+* @brief The probability of getting infected from a single contact.
+* @tparam FP The floating-point type (default: double).
+*/
+template <typename FP = double>
+struct TransmissionProbabilityOnContact {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "TransmissionProbabilityOnContact";
+    }
+};
+
+/**
+* @brief The relative infectability from individuals located in the InfectedNoSymptoms infection state.
+* @tparam FP The floating-point type (default: double). 
+*/
+template <typename FP = double>
+struct RelativeTransmissionNoSymptoms {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "RelativeTransmissionNoSymptoms";
+    }
+};
+
+/**
+* @brief The percentage of asymptomatic cases in the SECIRTS model.
+* @tparam FP The floating-point type (default: double).
+*/
+template <typename FP = double>
+struct RecoveredPerInfectedNoSymptoms {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.);
+    }
+    static std::string name()
+    {
+        return "RecoveredPerInfectedNoSymptoms";
+    }
+};
+
+/**
+* @brief The risk of infection from symptomatic cases in the SECIRTS model.
+* @tparam FP The floating-point type (default: double).
+*/
+template <typename FP = double>
+struct RiskOfInfectionFromSymptomatic {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "RiskOfInfectionFromSymptomatic";
+    }
+};
+
+/**
+* @brief Risk of infection from symptomatic cases increases if test and trace capacity is exceeded.
+* @tparam FP The floating-point type (default: double).
+*/
+template <typename FP = double>
+struct MaxRiskOfInfectionFromSymptomatic {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.);
+    }
+    static std::string name()
+    {
+        return "MaxRiskOfInfectionFromSymptomatic";
+    }
+};
+
+/**
+* @brief The percentage of hospitalized patients per infected patients in the SECIRTS model.
+* @tparam FP The floating-point type (default: double).
+*/
+template <typename FP = double>
+struct SeverePerInfectedSymptoms {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.);
+    }
+    static std::string name()
+    {
+        return "SeverePerInfectedSymptoms";
+    }
+};
+
+/**
+* @brief The percentage of ICU patients per hospitalized patients in the SECIRTS model.
+* @tparam FP The floating-point type (default: double).
+*/
+template <typename FP = double>
+struct CriticalPerSevere {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.);
+    }
+    static std::string name()
+    {
+        return "CriticalPerSevere";
+    }
+};
+
+/**
+* @brief The percentage of dead patients per ICU patients in the SECIRTS model.
+* @tparam FP The floating-point type (default: double).
+*/
+template <typename FP = double>
+struct DeathsPerCritical {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.);
+    }
+    static std::string name()
+    {
+        return "DeathsPerCritical";
+    }
+};
+
+/**
+ * @brief Time in days until first vaccine dose takes full effect.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct DaysUntilEffectivePartialVaccination {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 14.0);
+    }
+    static std::string name()
+    {
+        return "DaysUntilEffectivePartialVaccination";
+    }
+};
+
+/**
+ * @brief Time in days until second vaccine dose takes full effect.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct DaysUntilEffectiveImprovedVaccination {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 7.0);
+    }
+    static std::string name()
+    {
+        return "DaysUntilEffectiveImprovedVaccination";
+    }
+};
+
+/**
+ * @brief Time in days until booster vaccine dose takes full effect.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct DaysUntilEffectiveBoosterImmunity {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 7.0);
+    }
+    static std::string name()
+    {
+        return "DaysUntilEffectiveBoosterImmunity";
+    }
+};
+
+/**
+* @brief Total number of first vaccinations up to the given day.
+* @tparam FP The floating-point type (default: double).
+*/
+template <typename FP = double>
+struct DailyPartialVaccinations {
+    using Type = CustomIndexArray<FP, AgeGroup, SimulationDay>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type({size, SimulationDay(0)});
+    }
+    static std::string name()
+    {
+        return "DailyPartialVaccinations";
+    }
+};
+
+/**
+* @brief Total number of full vaccinations up to the given day.
+* @tparam FP The floating-point type (default: double).
+*/
+template <typename FP = double>
+struct DailyFullVaccinations {
+    using Type = CustomIndexArray<FP, AgeGroup, SimulationDay>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type({size, SimulationDay(0)});
+    }
+    static std::string name()
+    {
+        return "DailyFullVaccinations";
+    }
+};
+
+/**
+* @brief Total number of booster vaccinations up to the given day.
+* @tparam FP The floating-point type (default: double).
+*/
+template <typename FP = double>
+struct DailyBoosterVaccinations {
+    using Type = CustomIndexArray<FP, AgeGroup, SimulationDay>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type({size, SimulationDay(0)});
+    }
+    static std::string name()
+    {
+        return "DailyBoosterVaccinations";
+    }
+};
+
+/**
+ * @brief Factor to reduce infection risk for persons with partial immunity.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct ReducExposedPartialImmunity {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "ReducExposedPartialImmunity";
+    }
+};
+
+/**
+ * @brief Factor to reduce infection risk for persons with improved immunity.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct ReducExposedImprovedImmunity {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "ReducExposedImprovedImmunity";
+    }
+};
+
+/**
+ * @brief Factor to reduce risk of developing symptoms for persons with partial immunity.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct ReducInfectedSymptomsPartialImmunity {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "ReducInfectedSymptomsPartialImmunity";
+    }
+};
+
+/**
+ * @brief Factor to reduce risk of developing symptoms for persons with improved immunity.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct ReducInfectedSymptomsImprovedImmunity {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "ReducInfectedSymptomsImprovedImmunity";
+    }
+};
+
+/**
+ * @brief Factor to reduce risk of hospitalization for persons with partial immunity.
+ * Also applies to ICU and Death risk.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct ReducInfectedSevereCriticalDeadPartialImmunity {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "ReducInfectedSevereCriticalDeadPartialImmunity";
+    }
+};
+
+/**
+ * @brief Factor to reduce risk of hospitalization for persons with improved immunity.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct ReducInfectedSevereCriticalDeadImprovedImmunity {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "ReducInfectedSevereCriticalDeadImprovedImmunity";
+    }
+};
+
+/**
+ * @brief Factor to reduce infectious time of persons with partial or improved immunity.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct ReducTimeInfectedMild {
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.5);
+    }
+    static std::string name()
+    {
+        return "ReducTimeInfectedMild";
+    }
+};
+
+/**
+ * @brief Represents the relative infectiousness of a new variant.
+ * @tparam FP The floating-point type (default: double).
+ */
+template <typename FP = double>
+struct InfectiousnessNewVariant {
+    using Type = CustomIndexArray<FP, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.0);
+    }
+    static std::string name()
+    {
+        return "InfectiousnessNewVariant";
     }
 };
 
@@ -199,444 +741,25 @@ struct DynamicNPIsImplementationDelay {
     }
 };
 
-/**
- * @brief the (mean) latent time in day unit
- */
-template <typename FP = double>
-struct TimeExposed {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "TimeExposed";
-    }
-};
-
-/**
- * @brief the (mean) time in day unit for asymptomatic cases that are infected but
- *        have not yet developed symptoms.
- */
-template <typename FP = double>
-struct TimeInfectedNoSymptoms {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "TimeInfectedNoSymptoms";
-    }
-};
-
-/**
-* @brief the infectious time for symptomatic cases that are infected but
-*        who do not need to be hsopitalized in the SECIR model in day unit
-*/
-template <typename FP = double>
-struct TimeInfectedSymptoms {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "TimeInfectedSymptoms";
-    }
-};
-
-/**
- * @brief the time people are 'simply' hospitalized before returning home in the SECIR model
- *        in day unit
- */
-template <typename FP = double>
-struct TimeInfectedSevere {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "TimeInfectedSevere";
-    }
-};
-
-/**
- * @brief the time people are treated by ICU before returning home in the SECIR model
- *        in day unit
- */
-template <typename FP = double>
-struct TimeInfectedCritical {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "TimeInfectedCritical";
-    }
-};
-
-/**
-* @brief probability of getting infected from a contact
-*/
-template <typename FP = double>
-struct TransmissionProbabilityOnContact {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "TransmissionProbabilityOnContact";
-    }
-};
-
-/**
-* @brief the relative InfectedNoSymptoms infectability
-*/
-template <typename FP = double>
-struct RelativeTransmissionNoSymptoms {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "RelativeTransmissionNoSymptoms";
-    }
-};
-
-/**
-* @brief the percentage of asymptomatic cases in the SECIR model
-*/
-template <typename FP = double>
-struct RecoveredPerInfectedNoSymptoms {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.);
-    }
-    static std::string name()
-    {
-        return "RecoveredPerInfectedNoSymptoms";
-    }
-};
-
-/**
-* @brief the risk of infection from symptomatic cases in the SECIR model
-*/
-template <typename FP = double>
-struct RiskOfInfectionFromSymptomatic {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "RiskOfInfectionFromSymptomatic";
-    }
-};
-
-/**
-* @brief risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
-*/
-template <typename FP = double>
-struct MaxRiskOfInfectionFromSymptomatic {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.);
-    }
-    static std::string name()
-    {
-        return "MaxRiskOfInfectionFromSymptomatic";
-    }
-};
-
-/**
-* @brief the percentage of hospitalized patients per infected patients in the SECIR model
-*/
-template <typename FP = double>
-struct SeverePerInfectedSymptoms {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.);
-    }
-    static std::string name()
-    {
-        return "SeverePerInfectedSymptoms";
-    }
-};
-
-/**
-* @brief the percentage of ICU patients per hospitalized patients in the SECIR model
-*/
-template <typename FP = double>
-struct CriticalPerSevere {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.);
-    }
-    static std::string name()
-    {
-        return "CriticalPerSevere";
-    }
-};
-
-/**
-* @brief the percentage of dead patients per ICU patients in the SECIR model
-*/
-template <typename FP = double>
-struct DeathsPerCritical {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.);
-    }
-    static std::string name()
-    {
-        return "DeathsPerCritical";
-    }
-};
-
-/**
- * @brief Time in days between first and second vaccine dose.
- */
-template <typename FP = double>
-struct VaccinationGap {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 49.0);
-    }
-    static std::string name()
-    {
-        return "VaccinationGap";
-    }
-};
-
-/**
- * @brief Time in days until first vaccine dose takes full effect.
- */
-template <typename FP = double>
-struct DaysUntilEffectivePartialImmunity {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 14.0);
-    }
-    static std::string name()
-    {
-        return "DaysUntilEffectivePartialImmunity";
-    }
-};
-
-/**
- * @brief Time in days until second vaccine dose takes full effect.
- */
-template <typename FP = double>
-struct DaysUntilEffectiveImprovedImmunity {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 7.0);
-    }
-    static std::string name()
-    {
-        return "DaysUntilEffectiveImprovedImmunity";
-    }
-};
-
-/**
-* @brief Total number of first vaccinations up to the given day.
-*/
-template <typename FP = double>
-struct DailyPartialVaccinations {
-    using Type = CustomIndexArray<FP, AgeGroup, SimulationDay>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type({size, SimulationDay(0)});
-    }
-    static std::string name()
-    {
-        return "DailyPartialVaccinations";
-    }
-};
-
-/**
-* @brief Total number of full vaccinations up to the given day.
-*/
-template <typename FP = double>
-struct DailyFullVaccinations {
-    using Type = CustomIndexArray<FP, AgeGroup, SimulationDay>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type({size, SimulationDay(0)});
-    }
-    static std::string name()
-    {
-        return "DailyFullVaccinations";
-    }
-};
-
-/**
- * @brief Factor to reduce infection risk for persons with partial immunity.
- */
-template <typename FP = double>
-struct ReducExposedPartialImmunity {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "ReducExposedPartialImmunity";
-    }
-};
-
-/**
- * @brief Factor to reduce infection risk for persons with improved immunity.
- */
-template <typename FP = double>
-struct ReducExposedImprovedImmunity {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "ReducExposedImprovedImmunity";
-    }
-};
-
-/**
- * @brief Factor to reduce risk of developing symptoms for persons with partial immunity.
- */
-template <typename FP = double>
-struct ReducInfectedSymptomsPartialImmunity {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "ReducInfectedSymptomsPartialImmunity";
-    }
-};
-
-/**
- * @brief Factor to reduce risk of developing symptoms for persons with improved immunity.
- */
-template <typename FP = double>
-struct ReducInfectedSymptomsImprovedImmunity {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "ReducInfectedSymptomsImprovedImmunity";
-    }
-};
-
-/**
- * @brief Factor to reduce risk of hospitalization for persons with partial immunity.
- * Also applies to ICU and Death risk.
- */
-template <typename FP = double>
-struct ReducInfectedSevereCriticalDeadPartialImmunity {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "ReducInfectedSevereCriticalDeadPartialImmunity";
-    }
-};
-
-/**
- * @brief Factor to reduce risk of hospitalization for persons with improved immunity.
- */
-template <typename FP = double>
-struct ReducInfectedSevereCriticalDeadImprovedImmunity {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "ReducInfectedSevereCriticalDeadImprovedImmunity";
-    }
-};
-
-/**
- * @brief Factor to reduce infectious time of persons with partial or improved immunity.
- */
-template <typename FP = double>
-struct ReducTimeInfectedMild {
-    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.5);
-    }
-    static std::string name()
-    {
-        return "ReducTimeInfectedMild";
-    }
-};
-
-/**
- * @brief Represents the relative infectiousness of a new variant.
- */
-template <typename FP = double>
-struct InfectiousnessNewVariant {
-    using Type = CustomIndexArray<FP, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.0);
-    }
-    static std::string name()
-    {
-        return "InfectiousnessNewVariant";
-    }
-};
-
 template <typename FP = double>
 using ParametersBase = ParameterSet<
     StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, TestAndTraceCapacityMaxRiskNoSymptoms<FP>,
-    TestAndTraceCapacityMaxRiskSymptoms<FP>, ContactPatterns<FP>, DynamicNPIsImplementationDelay<FP>,
-    DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>, TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>,
-    TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
-    RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
-    MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>,
-    VaccinationGap<FP>, DaysUntilEffectivePartialImmunity<FP>, DaysUntilEffectiveImprovedImmunity<FP>,
-    DailyFullVaccinations<FP>, DailyPartialVaccinations<FP>, ReducExposedPartialImmunity<FP>,
-    ReducExposedImprovedImmunity<FP>, ReducInfectedSymptomsPartialImmunity<FP>,
-    ReducInfectedSymptomsImprovedImmunity<FP>, ReducInfectedSevereCriticalDeadPartialImmunity<FP>,
-    ReducInfectedSevereCriticalDeadImprovedImmunity<FP>, ReducTimeInfectedMild<FP>, InfectiousnessNewVariant<FP>,
-    StartDayNewVariant>;
+    TestAndTraceCapacityMaxRiskSymptoms<FP>, ContactPatterns<FP>, DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>,
+    TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>, TimeInfectedSevere<FP>, TimeInfectedCritical<FP>,
+    TimeWaningPartialImmunity<FP>, TimeWaningImprovedImmunity<FP>, TimeTemporaryImmunityPI<FP>,
+    TimeTemporaryImmunityII<FP>, TransmissionProbabilityOnContact<FP>, RelativeTransmissionNoSymptoms<FP>,
+    RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>,
+    SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>,
+    DaysUntilEffectivePartialVaccination<FP>, DaysUntilEffectiveImprovedVaccination<FP>,
+    DaysUntilEffectiveBoosterImmunity<FP>, DailyFullVaccinations<FP>, DailyPartialVaccinations<FP>,
+    DailyBoosterVaccinations<FP>, ReducExposedPartialImmunity<FP>, ReducExposedImprovedImmunity<FP>,
+    ReducInfectedSymptomsPartialImmunity<FP>, ReducInfectedSymptomsImprovedImmunity<FP>,
+    ReducInfectedSevereCriticalDeadPartialImmunity<FP>, ReducInfectedSevereCriticalDeadImprovedImmunity<FP>,
+    ReducTimeInfectedMild<FP>, InfectiousnessNewVariant<FP>, DynamicNPIsImplementationDelay<FP>, StartDayNewVariant>;
 
 /**
- * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.
+ * @brief Parameters of the age-resolved SECIRS-type model with high temporary immunity upon immunization and waning immunity over
+time.
  */
 template <typename FP = double>
 class Parameters : public ParametersBase<FP>
@@ -764,6 +887,7 @@ public:
         const double tol_times = 1e-1; // accepted tolerance for compartment stays
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
+
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
                 log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please "
                             "note that unreasonably small compartment stays lead to massively increased run time. "
@@ -807,6 +931,42 @@ public:
                             this->template get<TimeInfectedCritical<FP>>()[i], tol_times);
                 this->template get<TimeInfectedCritical<FP>>()[i] = tol_times;
                 corrected                                         = true;
+            }
+
+            if (this->template get<TimeTemporaryImmunityPI<FP>>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeTemporaryImmunityPI changed from {} to {}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->template get<TimeTemporaryImmunityPI<FP>>()[i], tol_times);
+                this->template get<TimeTemporaryImmunityPI<FP>>()[i] = tol_times;
+                corrected                                            = true;
+            }
+
+            if (this->template get<TimeTemporaryImmunityII<FP>>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeTemporaryImmunityII changed from {} to {}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->template get<TimeTemporaryImmunityII<FP>>()[i], tol_times);
+                this->template get<TimeTemporaryImmunityII<FP>>()[i] = tol_times;
+                corrected                                            = true;
+            }
+
+            if (this->template get<TimeWaningPartialImmunity<FP>>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeWaningPartialImmunity changed from {} to {}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->template get<TimeWaningPartialImmunity<FP>>()[i], tol_times);
+                this->template get<TimeWaningPartialImmunity<FP>>()[i] = tol_times;
+                corrected                                              = true;
+            }
+
+            if (this->template get<TimeWaningImprovedImmunity<FP>>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeWaningImprovedImmunity changed from {} to {}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->template get<TimeWaningImprovedImmunity<FP>>()[i], tol_times);
+                this->template get<TimeWaningImprovedImmunity<FP>>()[i] = tol_times;
+                corrected                                               = true;
             }
 
             if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
@@ -864,17 +1024,25 @@ public:
                 corrected                                      = true;
             }
 
-            if (this->template get<DaysUntilEffectivePartialImmunity<FP>>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter DaysUntilEffectivePartialImmunity changed from {} to {}",
-                            this->template get<DaysUntilEffectivePartialImmunity<FP>>()[i], 0);
-                this->template get<DaysUntilEffectivePartialImmunity<FP>>()[i] = 0;
-                corrected                                                      = true;
+            if (this->template get<DaysUntilEffectivePartialVaccination<FP>>()[i] < 0.0) {
+                log_warning("Constraint check: Parameter DeathsPerCritical changed from {} to {}",
+                            this->template get<DaysUntilEffectivePartialVaccination<FP>>()[i], 0);
+                this->template get<DaysUntilEffectivePartialVaccination<FP>>()[i] = 0;
+                corrected                                                         = true;
             }
-            if (this->template get<DaysUntilEffectiveImprovedImmunity<FP>>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter DaysUntilEffectiveImprovedImmunity changed from {} to {}",
-                            this->template get<DaysUntilEffectiveImprovedImmunity<FP>>()[i], 0);
-                this->template get<DaysUntilEffectiveImprovedImmunity<FP>>()[i] = 0;
-                corrected                                                       = true;
+
+            if (this->template get<DaysUntilEffectiveImprovedVaccination<FP>>()[i] < 0.0) {
+                log_warning("Constraint check: Parameter DaysUntilEffectiveImprovedVaccination changed from {} to {}",
+                            this->template get<DaysUntilEffectiveImprovedVaccination<FP>>()[i], 0);
+                this->template get<DaysUntilEffectiveImprovedVaccination<FP>>()[i] = 0;
+                corrected                                                          = true;
+            }
+
+            if (this->template get<DaysUntilEffectiveBoosterImmunity<FP>>()[i] < 0.0) {
+                log_warning("Constraint check: Parameter DaysUntilEffectiveBoosterImmunity changed from {} to {}",
+                            this->template get<DaysUntilEffectiveBoosterImmunity<FP>>()[i], 0);
+                this->template get<DaysUntilEffectiveBoosterImmunity<FP>>()[i] = 0;
+                corrected                                                      = true;
             }
 
             if (this->template get<ReducExposedPartialImmunity<FP>>()[i] <= 0.0 ||
@@ -934,12 +1102,6 @@ public:
                 this->template get<InfectiousnessNewVariant<FP>>()[i] = 1.0;
                 corrected                                             = true;
             }
-            if (this->template get<VaccinationGap<FP>>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter VaccinationGap changed from {} to {}",
-                            this->template get<VaccinationGap<FP>>()[i], 0);
-                this->template get<VaccinationGap<FP>>()[i] = 0;
-                corrected                                   = true;
-            }
         }
         return corrected;
     }
@@ -953,12 +1115,12 @@ public:
     {
         const double tol_times = 1e-1; // accepted tolerance for compartment stays
         if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
-            log_error("Constraint check: Parameter Seasonality smaller {} or larger {}", 0, 0.5);
+            log_error("Constraint check: Parameter m_seasonality smaller {} or larger {}", 0, 0.5);
             return true;
         }
 
         if (this->template get<ICUCapacity<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter ICUCapacity smaller {}", 0);
+            log_error("Constraint check: Parameter m_icu_capacity smaller {}", 0);
             return true;
         }
 
@@ -1024,6 +1186,38 @@ public:
                 return true;
             }
 
+            if (this->template get<TimeTemporaryImmunityPI<FP>>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeTemporaryImmunityPI {} smaller {}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->template get<TimeTemporaryImmunityPI<FP>>()[i], tol_times);
+                return true;
+            }
+
+            if (this->template get<TimeTemporaryImmunityII<FP>>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeTemporaryImmunityII {} smaller {}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->template get<TimeTemporaryImmunityII<FP>>()[i], tol_times);
+                return true;
+            }
+
+            if (this->template get<TimeWaningPartialImmunity<FP>>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeWaningPartialImmunity {} smaller {}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->template get<TimeWaningPartialImmunity<FP>>()[i], tol_times);
+                return true;
+            }
+
+            if (this->template get<TimeWaningImprovedImmunity<FP>>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeWaningImprovedImmunity {} smaller {}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->template get<TimeWaningImprovedImmunity<FP>>()[i], tol_times);
+                return true;
+            }
+
             if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {} or larger {}", 0, 1);
@@ -1065,17 +1259,18 @@ public:
                 return true;
             }
 
-            if (this->template get<VaccinationGap<FP>>()[i] < 1) {
-                log_error("Constraint check: Parameter VaccinationGap smaller {}", 1);
+            if (this->template get<DaysUntilEffectivePartialVaccination<FP>>()[i] < 0.0) {
+                log_error("Constraint check: Parameter DaysUntilEffectivePartialVaccination smaller {}", 0);
                 return true;
             }
 
-            if (this->template get<DaysUntilEffectivePartialImmunity<FP>>()[i] < 0.0) {
-                log_error("Constraint check: Parameter DaysUntilEffectivePartialImmunity smaller {}", 0);
+            if (this->template get<DaysUntilEffectiveImprovedVaccination<FP>>()[i] < 0.0) {
+                log_error("Constraint check: Parameter DaysUntilEffectiveImprovedVaccination smaller {}", 0);
                 return true;
             }
-            if (this->template get<DaysUntilEffectiveImprovedImmunity<FP>>()[i] < 0.0) {
-                log_error("Constraint check: Parameter DaysUntilEffectiveImprovedImmunity smaller {}", 0);
+
+            if (this->template get<DaysUntilEffectiveBoosterImmunity<FP>>()[i] < 0.0) {
+                log_error("Constraint check: Parameter DaysUntilEffectiveImprovedVaccination smaller {}", 0);
                 return true;
             }
 
@@ -1155,7 +1350,7 @@ private:
     double m_end_dynamic_npis         = std::numeric_limits<double>::max();
 };
 
-} // namespace osecirvvs
+} // namespace osecirts
 } // namespace mio
 
-#endif // MIO_ODE_SECIRVVS_PARAMETERS_H
+#endif // MIO_ODE_SECIRTS_PARAMETERS_H

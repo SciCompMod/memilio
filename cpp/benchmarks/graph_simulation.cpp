@@ -69,10 +69,10 @@ mio::osecirvvs::Model<ScalarType> create_model(size_t num_agegroups, const Scala
     const size_t vacc_full                                                   = 5;
     model.parameters.get<mio::osecirvvs::ICUCapacity<ScalarType>>()          = 100;
     model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<ScalarType>>() = 0.0143;
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<ScalarType>>().resize(mio::SimulationDay(tmax));
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<ScalarType>>().array().setConstant(vacc_first);
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<ScalarType>>().resize(mio::SimulationDay(tmax));
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<ScalarType>>().array().setConstant(vacc_full);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<ScalarType>>().resize(mio::SimulationDay(tmax));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<ScalarType>>().array().setConstant(vacc_first);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<ScalarType>>().resize(mio::SimulationDay(tmax));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<ScalarType>>().array().setConstant(vacc_full);
 
     auto& contacts       = model.parameters.get<mio::osecirvvs::ContactPatterns<ScalarType>>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
