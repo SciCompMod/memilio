@@ -126,14 +126,29 @@ public:
         auto icu_occupancy           = 0.0;
         auto test_and_trace_required = 0.0;
         for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
+            // naive flow to symptomatic in unit time
             test_and_trace_required +=
                 (1 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
                 params.template get<TimeInfectedNoSymptoms<FP>>()[i] *
                 (this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsNaive}) +
-                 this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsPartialImmunity}) +
-                 this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsImprovedImmunity}) +
-                 this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsNaiveConfirmed}) +
-                 this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}) +
+                 this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsNaiveConfirmed}));
+            // partial immunity flow to symptomatic in unit time
+            test_and_trace_required +=
+                (params.template get<ReducInfectedSymptomsPartialImmunity<FP>>()[i] /
+                 params.template get<ReducExposedPartialImmunity<FP>>()[i]) *
+                (1 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
+                (params.template get<TimeInfectedNoSymptoms<FP>>()[i] *
+                 params.template get<ReducTimeInfectedMild<FP>>()[i]) *
+                (this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsPartialImmunity}) +
+                 this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}));
+            // improved immunity flow to symptomatic in unit time
+            test_and_trace_required +=
+                (params.template get<ReducInfectedSymptomsImprovedImmunity<FP>>()[i] /
+                 params.template get<ReducExposedImprovedImmunity<FP>>()[i]) *
+                (1 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
+                (params.template get<TimeInfectedNoSymptoms<FP>>()[i] *
+                 params.template get<ReducTimeInfectedMild<FP>>()[i]) *
+                (this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsImprovedImmunity}) +
                  this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}));
             icu_occupancy += this->populations.get_from(pop, {i, InfectionState::InfectedCriticalNaive}) +
                              this->populations.get_from(pop, {i, InfectionState::InfectedCriticalPartialImmunity}) +
