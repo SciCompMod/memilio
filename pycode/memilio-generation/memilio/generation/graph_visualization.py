@@ -116,13 +116,14 @@ def _output_cursor_and_children(cursor: Cursor, ast: AST, writer: Callable[[int,
 
     cursor_kind = f"<CursorKind.{cursor.kind.name}>"
     file_path = cursor.location.file.name if cursor.location.file else ""
+    line_number = cursor.location.line if cursor.location.file else ""
 
     if cursor.spelling:
         cursor_label = (f'ID:{cursor_id} {cursor.spelling} '
                         f'{cursor_kind}   '
-                        f'{file_path}')
+                        f'{file_path}:{line_number}')
     else:
-        cursor_label = f'ID:{cursor_id} {cursor_kind} {file_path}'
+        cursor_label = f'ID:{cursor_id} {cursor_kind} {file_path}:{line_number}'
 
     writer(level, cursor_label)
 
