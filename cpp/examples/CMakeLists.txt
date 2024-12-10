@@ -76,6 +76,10 @@ add_executable(ode_secirvvs_example ode_secirvvs.cpp)
 target_link_libraries(ode_secirvvs_example PRIVATE memilio ode_secirvvs)
 target_compile_options(ode_secirvvs_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ode_secirts_example ode_secirts.cpp)
+target_link_libraries(ode_secirts_example PRIVATE memilio ode_secirts)
+target_compile_options(ode_secirts_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_secir_ageres_example ode_secir_ageres.cpp)
 target_link_libraries(ode_secir_ageres_example PRIVATE memilio ode_secir)
 target_compile_options(ode_secir_ageres_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
