@@ -872,39 +872,35 @@ public:
                 }
             }
 
-            if (this->get<GotoWorkTimeMinimum>()[age_group].seconds() < 0.0 ||
-                this->get<GotoWorkTimeMinimum>()[age_group].seconds() >
-                    this->get<GotoWorkTimeMaximum>()[age_group].seconds()) {
+            if (this->get<GotoWorkTimeMinimum>()[i].seconds() < 0.0 ||
+                this->get<GotoWorkTimeMinimum>()[i].seconds() > this->get<GotoWorkTimeMaximum>()[i].seconds()) {
                 log_error("Constraint check: Parameter GotoWorkTimeMinimum of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
-                          (size_t)age_group, 0, this->get<GotoWorkTimeMaximum>()[age_group].seconds());
+                          (size_t)i, 0, this->get<GotoWorkTimeMaximum>()[i].seconds());
                 return true;
             }
 
-            if (this->get<GotoWorkTimeMaximum>()[age_group].seconds() <
-                    this->get<GotoWorkTimeMinimum>()[age_group].seconds() ||
-                this->get<GotoWorkTimeMaximum>()[age_group] > days(1)) {
+            if (this->get<GotoWorkTimeMaximum>()[i].seconds() < this->get<GotoWorkTimeMinimum>()[i].seconds() ||
+                this->get<GotoWorkTimeMaximum>()[i] > days(1)) {
                 log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
                           "than one day time span",
-                          (size_t)age_group, this->get<GotoWorkTimeMinimum>()[age_group].seconds());
+                          (size_t)i, this->get<GotoWorkTimeMinimum>()[i].seconds());
                 return true;
             }
 
-            if (this->get<GotoSchoolTimeMinimum>()[age_group].seconds() < 0.0 ||
-                this->get<GotoSchoolTimeMinimum>()[age_group].seconds() >
-                    this->get<GotoSchoolTimeMaximum>()[age_group].seconds()) {
+            if (this->get<GotoSchoolTimeMinimum>()[i].seconds() < 0.0 ||
+                this->get<GotoSchoolTimeMinimum>()[i].seconds() > this->get<GotoSchoolTimeMaximum>()[i].seconds()) {
                 log_error("Constraint check: Parameter GotoSchoolTimeMinimum of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
-                          (size_t)age_group, 0, this->get<GotoWorkTimeMaximum>()[age_group].seconds());
+                          (size_t)i, 0, this->get<GotoWorkTimeMaximum>()[i].seconds());
                 return true;
             }
 
-            if (this->get<GotoSchoolTimeMaximum>()[age_group].seconds() <
-                    this->get<GotoSchoolTimeMinimum>()[age_group].seconds() ||
-                this->get<GotoSchoolTimeMaximum>()[age_group] > days(1)) {
+            if (this->get<GotoSchoolTimeMaximum>()[i].seconds() < this->get<GotoSchoolTimeMinimum>()[i].seconds() ||
+                this->get<GotoSchoolTimeMaximum>()[i] > days(1)) {
                 log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
                           "than one day time span",
-                          (size_t)age_group, this->get<GotoSchoolTimeMinimum>()[age_group].seconds());
+                          (size_t)i, this->get<GotoSchoolTimeMinimum>()[i].seconds());
                 return true;
             }
         }

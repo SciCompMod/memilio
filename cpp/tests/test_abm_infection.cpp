@@ -19,6 +19,7 @@
 */
 
 #include "abm/location_type.h"
+#include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm_helpers.h"
 #include "random_number_test.h"
@@ -104,7 +105,7 @@ TEST_F(TestInfection, init)
     EXPECT_EQ(infection.get_infection_state(mio::abm::TimePoint(0) + mio::abm::days(1)),
               mio::abm::InfectionState::InfectedNoSymptoms);
     // Test infectivity at a specific time point
-    EXPECT_NEAR(infection.get_infectivity(mio::abm::TimePoint(0) + mio::abm::days(3)), 0.2689414213699951, 1e-14);
+    EXPECT_NEAR(infection.get_infectivity(mio::abm::TimePoint(0) + mio::abm::days(3)), 0.02689414213699951, 1e-14);
 
     // Test infection with previous exposure and recovery state transition.
     params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, age_group_test,
@@ -156,7 +157,8 @@ TEST_F(TestInfection, drawInfectionCourseForward)
     auto counter = mio::Counter<uint32_t>(0);
     auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), mio::abm::PersonId(0), counter);
     auto params  = mio::abm::Parameters(num_age_groups);
-    auto t       = mio::abm::TimePoint(0);
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.;
+    auto t = mio::abm::TimePoint(0);
 
     // Mock recovery transition
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>>
@@ -255,18 +257,18 @@ TEST_F(TestInfection, drawInfectionCourseBackward)
         .WillOnce(testing::Return(1.0)) //TimeInfectedCriticalToRecovered
         .WillRepeatedly(testing::Return(1.0));
 
-    auto infection1 = mio::abm::Infection(rng, virus_variant_test, age_group_test, params, mio::abm::TimePoint(t + dt),
+    auto infection1 = mio::abm::Infection(prng, virus_variant_test, age_group_test, params, mio::abm::TimePoint(t + dt),
                                           mio::abm::InfectionState::Recovered,
-                                          {mio::abm::ExposureType::NoProtection, mio::abm::TimePoint(0)}, false);
-    auto infection2 = mio::abm::Infection(rng, virus_variant_test, age_group_test, params, mio::abm::TimePoint(t + dt),
+                                          {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, false);
+    auto infection2 = mio::abm::Infection(prng, virus_variant_test, age_group_test, params, mio::abm::TimePoint(t + dt),
                                           mio::abm::InfectionState::Recovered,
-                                          {mio::abm::ExposureType::NoProtection, mio::abm::TimePoint(0)}, false);
-    auto infection3 = mio::abm::Infection(rng, virus_variant_test, age_group_test, params, mio::abm::TimePoint(t + dt),
+                                          {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, false);
+    auto infection3 = mio::abm::Infection(prng, virus_variant_test, age_group_test, params, mio::abm::TimePoint(t + dt),
                                           mio::abm::InfectionState::Recovered,
-                                          {mio::abm::ExposureType::NoProtection, mio::abm::TimePoint(0)}, false);
-    auto infection4 = mio::abm::Infection(rng, virus_variant_test, age_group_test, params, mio::abm::TimePoint(t + dt),
+                                          {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, false);
+    auto infection4 = mio::abm::Infection(prng, virus_variant_test, age_group_test, params, mio::abm::TimePoint(t + dt),
                                           mio::abm::InfectionState::Recovered,
-                                          {mio::abm::ExposureType::NoProtection, mio::abm::TimePoint(0)}, false);
+                                          {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, false);
 
     // Validate infection state progression backward.
     EXPECT_EQ(infection1.get_infection_state(t), mio::abm::InfectionState::InfectedNoSymptoms);

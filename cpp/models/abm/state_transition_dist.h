@@ -73,6 +73,11 @@ struct StateTransitionDist {
     virtual std::vector<double> params() const = 0;
 
     /**
+     * @brief Returns name of the distribution.
+     */
+    virtual std::string name() const = 0;
+
+    /**
      * @brief Returns a sampled value of the distribution.
      */
     virtual double get(PersonalRandomNumberGenerator& rng) = 0;
@@ -100,14 +105,51 @@ struct LogNormal : StateTransitionDist {
     {
     }
 
+    LogNormal(std::vector<double> params)
+        : StateTransitionDist()
+        , m_dist(params[0], params[1])
+    {
+    }
+
     std::vector<double> params() const override
     {
         return {m_dist.params.m(), m_dist.params.s()};
     }
 
+    std::string name() const override
+    {
+        return "LogNormal";
+    }
+
     double get(PersonalRandomNumberGenerator& rng) override
     {
         return m_dist.get_distribution_instance()(rng, m_dist.params);
+    }
+
+    template <class IOContext, class IOObject>
+    static IOResult<LogNormal> deserialize_elements(IOContext& io, IOObject& obj)
+    {
+        auto params = obj.expect_list("params", Tag<double>{});
+        auto p      = apply(
+            io,
+            [](auto&& params_) {
+                auto dist = LogNormal(params_);
+                return dist;
+            },
+            params);
+        if (p) {
+            return success(p.value());
+        }
+        else {
+            return p.as_failure();
+        }
+    }
+
+    template <class IOContext>
+    static IOResult<LogNormal> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("LogNormal");
+        return deserialize_elements(io, obj);
     }
 
 protected:
@@ -133,14 +175,51 @@ struct Exponential : StateTransitionDist {
     {
     }
 
+    Exponential(std::vector<double> params)
+        : StateTransitionDist()
+        , m_dist(params[0])
+    {
+    }
+
     std::vector<double> params() const override
     {
         return {m_dist.params.lambda()};
     }
 
+    std::string name() const override
+    {
+        return "Exponential";
+    }
+
     double get(PersonalRandomNumberGenerator& rng) override
     {
         return m_dist.get_distribution_instance()(rng, m_dist.params);
+    }
+
+    template <class IOContext, class IOObject>
+    static IOResult<Exponential> deserialize_elements(IOContext& io, IOObject& obj)
+    {
+        auto params = obj.expect_list("params", Tag<double>{});
+        auto p      = apply(
+            io,
+            [](auto&& params_) {
+                auto dist = Exponential(params_);
+                return dist;
+            },
+            params);
+        if (p) {
+            return success(p.value());
+        }
+        else {
+            return p.as_failure();
+        }
+    }
+
+    template <class IOContext>
+    static IOResult<Exponential> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("Exponential");
+        return deserialize_elements(io, obj);
     }
 
 protected:
@@ -156,6 +235,76 @@ protected:
 
 private:
     ExponentialDistribution<double>::ParamType m_dist;
+};
+
+struct Constant : StateTransitionDist {
+
+    Constant(double p1)
+        : StateTransitionDist()
+        , m_dist(p1)
+    {
+    }
+
+    Constant(std::vector<double> params)
+        : StateTransitionDist()
+        , m_dist(params[0])
+    {
+    }
+
+    std::vector<double> params() const override
+    {
+        return {m_dist};
+    }
+
+    std::string name() const override
+    {
+        return "Constant";
+    }
+
+    double get(PersonalRandomNumberGenerator& /*rng*/) override
+    {
+        return m_dist;
+    }
+
+    template <class IOContext, class IOObject>
+    static IOResult<Constant> deserialize_elements(IOContext& io, IOObject& obj)
+    {
+        auto params = obj.expect_list("params", Tag<double>{});
+        auto p      = apply(
+            io,
+            [](auto&& params_) {
+                auto dist = Constant(params_);
+                return dist;
+            },
+            params);
+        if (p) {
+            return success(p.value());
+        }
+        else {
+            return p.as_failure();
+        }
+    }
+
+    template <class IOContext>
+    static IOResult<Exponential> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("Constant");
+        return deserialize_elements(io, obj);
+    }
+
+protected:
+    /**
+     * @brief Implements clone for Constant.
+     * 
+     * @return Pointer to StateTransitionDist.
+     */
+    StateTransitionDist* clone_impl() const override
+    {
+        return new Constant(*this);
+    }
+
+private:
+    double m_dist;
 };
 
 struct StateTransitionDistWrapper {
@@ -198,14 +347,57 @@ struct StateTransitionDistWrapper {
         return m_dist->params();
     }
 
+    std::string name() const
+    {
+        return m_dist->name();
+    }
+
     double get(PersonalRandomNumberGenerator& rng)
     {
         return m_dist->get(rng);
     }
 
+    /**
+     * serialize this.
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("StateTransitionDistWrapper");
+        obj.add_element("Type", m_dist->name());
+        obj.add_list("params", m_dist->params().begin(), m_dist->params().end());
+    }
+
 private:
     std::unique_ptr<StateTransitionDist> m_dist;
 };
+
+/**
+ * deserialize a state transition dist as a shared_ptr.
+ * @see mio::deserialize
+ */
+template <class IOContext>
+IOResult<StateTransitionDistWrapper> deserialize_internal(IOContext& io, Tag<StateTransitionDistWrapper>)
+{
+    auto obj  = io.expect_object("StateTransitionDistWrapper");
+    auto type = obj.expect_element("Type", Tag<std::string>{});
+    if (type) {
+        if (type.value() == "LogNormal") {
+            BOOST_OUTCOME_TRY(auto&& r, LogNormal::deserialize_elements(io, obj));
+            return StateTransitionDistWrapper(r);
+        }
+        else if (type.value() == "Exponential") {
+            BOOST_OUTCOME_TRY(auto&& r, Exponential::deserialize_elements(io, obj));
+            return StateTransitionDistWrapper(r);
+        }
+        else {
+            return failure(StatusCode::InvalidValue,
+                           "Type of StateTransitionDistWrapper " + type.value() + " not valid.");
+        }
+    }
+    return failure(type.error());
+}
 } // namespace abm
 } // namespace mio
 
