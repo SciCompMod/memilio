@@ -24,6 +24,7 @@
 #include "abm/personal_rng.h"
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/utils/logging.h"
+#include <cstddef>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -310,6 +311,7 @@ private:
 struct StateTransitionDistWrapper {
 
     StateTransitionDistWrapper()
+        : m_dist(nullptr)
     {
     }
 
@@ -319,24 +321,24 @@ struct StateTransitionDistWrapper {
     }
 
     StateTransitionDistWrapper(const StateTransitionDistWrapper& other)
-        : m_dist(other.m_dist->clone())
     {
+        m_dist = (other.m_dist == nullptr) ? nullptr : other.m_dist->clone();
     }
 
     StateTransitionDistWrapper(StateTransitionDistWrapper&& other)
-        : m_dist(other.m_dist->clone())
     {
+        m_dist = (other.m_dist == nullptr) ? nullptr : other.m_dist->clone();
     }
 
     StateTransitionDistWrapper& operator=(StateTransitionDistWrapper const& other)
     {
-        m_dist = other.m_dist->clone();
+        m_dist = (other.m_dist == nullptr) ? nullptr : other.m_dist->clone();
         return *this;
     }
 
     StateTransitionDistWrapper& operator=(StateTransitionDistWrapper&& other)
     {
-        m_dist = other.m_dist->clone();
+        m_dist = (other.m_dist == nullptr) ? nullptr : other.m_dist->clone();
         return *this;
     };
 
@@ -344,16 +346,25 @@ struct StateTransitionDistWrapper {
 
     std::vector<double> params() const
     {
+        if (m_dist == nullptr) {
+            log_error("Distribution is not defined. Parameters cannot be deduced.");
+        }
         return m_dist->params();
     }
 
     std::string name() const
     {
+        if (m_dist == nullptr) {
+            log_error("Distribution is not defined. Name cannopt be deduced.");
+        }
         return m_dist->name();
     }
 
     double get(PersonalRandomNumberGenerator& rng)
     {
+        if (m_dist == nullptr) {
+            log_error("Distribution is not defined. Value cannot be sampled.");
+        }
         return m_dist->get(rng);
     }
 
@@ -366,7 +377,8 @@ struct StateTransitionDistWrapper {
     {
         auto obj = io.create_object("StateTransitionDistWrapper");
         obj.add_element("Type", m_dist->name());
-        obj.add_list("params", m_dist->params().begin(), m_dist->params().end());
+        auto&& params = m_dist->params();
+        obj.add_list("params", params.begin(), params.end());
     }
 
 private:
@@ -374,7 +386,7 @@ private:
 };
 
 /**
- * deserialize a state transition dist as a shared_ptr.
+ * deserialize a state transition dist wrapper.
  * @see mio::deserialize
  */
 template <class IOContext>
@@ -398,6 +410,7 @@ IOResult<StateTransitionDistWrapper> deserialize_internal(IOContext& io, Tag<Sta
     }
     return failure(type.error());
 }
+
 } // namespace abm
 } // namespace mio
 

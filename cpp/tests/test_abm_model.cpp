@@ -317,9 +317,9 @@ TEST_F(TestModel, evolveMobilityTrips)
 
     // Create persons with various infection states and assign them to multiple locations.
     auto pid1 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
-    auto pid2 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t);
-    auto pid3 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedSevere, t);
-    auto pid4 = add_test_person(model, hospital_id, age_group_5_to_14, mio::abm::InfectionState::Recovered, t);
+    auto pid2 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t);
+    auto pid3 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedSevere, t);
+    auto pid4 = add_test_person(model, hospital_id, age_group_15_to_34, mio::abm::InfectionState::Recovered, t);
     auto pid5 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t);
 
     // Assign persons to locations for trips.
