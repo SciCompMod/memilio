@@ -462,7 +462,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         data=mat_commuter_mobility, columns=countykey_list, index=countykey_list)
     filename = 'mobility_bfa_' + \
         str(ref_year) + '_dim' + str(mat_commuter_mobility.shape[0])
-    gd.write_dataframe(df_commuter_mobility, directory, filename, file_format)
+    gd.write_dataframe(df_commuter_mobility, mobility_dir, filename, file_format)
 
     # this is neither a very elegant nor a very general way to merge...
     # better options to be searched for!
@@ -487,11 +487,9 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         data=mat_commuter_mobility, columns=countykey_list, index=countykey_list)
     commuter_sanity_checks(df_commuter_mobility)
     filename = 'mobility_bfa_' + str(ref_year)
-    gd.write_dataframe(df_commuter_mobility, directory, filename, file_format)
-    directory = directory.split('pydata')[0] + 'mobility/'
-    gd.check_dir(directory)
+    gd.write_dataframe(df_commuter_mobility, mobility_dir, filename, file_format)
     gd.write_dataframe(
-        df_commuter_mobility, directory,
+        df_commuter_mobility, mobility_dir,
         'commuter_mobility_' + str(ref_year),
         'txt', {'sep': ' ', 'index': False, 'header': False})
 

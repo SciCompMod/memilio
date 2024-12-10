@@ -128,7 +128,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     except Exception as exp:
         gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('vaccination')
-
+      
     try:
         getCommuterMobility.get_commuter_data(**arg_dict_mobility)
     except Exception as exp:
@@ -136,16 +136,15 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
         print_error('commuter mobility')
     
     try:
-        transformMobilityData.updateMobility2022(out_folder, mobility_file='commuter_mobility')
+        mobility_dir = os.path.join(out_folder, 'Germany/mobility/')
+        transformMobilityData.updateMobility2022(mobility_dir, mobility_file='twitter_scaled_1252')
         if(ref_year < 2022):
-            transformMobilityData.updateMobility2022(out_folder, mobility_file='twitter_scaled_1252')
+            transformMobilityData.updateMobility2022(mobility_dir, mobility_file=f'commuter_mobility_{ref_year}')
+        # rename commuter mobility file
+        os.rename(f'{mobility_dir}/commuter_mobility_{ref_year}.txt', f'{mobility_dir}/commuter_mobility.txt')
     except Exception as exp:
         gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('transform mobility')
-
-    # rename commuter mobility file
-    os.rename(f'{out_folder}/commuter_mobility_{ref_year}.txt', f'{out_folder}/commuter_mobility.txt')
-
 
 def main():
     """! Main program entry."""
