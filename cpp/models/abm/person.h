@@ -28,9 +28,11 @@
 #include "abm/parameters.h"
 #include "abm/person_id.h"
 #include "abm/personal_rng.h"
+#include "memilio/io/default_serialize.h"
 #include "abm/time.h"
 #include "abm/test_type.h"
-#include "abm/vaccine.h"
+#include "abm/protection_event.h"
+#include "abm/intervention_type.h"
 #include "abm/mask.h"
 #include "abm/mobility_data.h"
 #include "memilio/epidemiology/age_group.h"
@@ -77,16 +79,16 @@ public:
     const Infection& get_infection() const;
 
     /**
-     * @brief Get all Vaccination%s of the Person.
-     * @return A vector with all Vaccination%s.
+     * @brief Get all vaccinations of the Person.
+     * @return A vector with all vaccinations.
      * @{
      */
-    std::vector<Vaccination>& get_vaccinations()
+    std::vector<ProtectionEvent>& get_vaccinations()
     {
         return m_vaccinations;
     }
 
-    const std::vector<Vaccination>& get_vaccinations() const
+    const std::vector<ProtectionEvent>& get_vaccinations() const
     {
         return m_vaccinations;
     }
@@ -232,7 +234,7 @@ public:
      */
     bool is_in_quarantine(TimePoint t, const Parameters& params) const
     {
-        return t < m_quarantine_start + params.get<mio::abm::QuarantineDuration>();
+        return t < m_home_isolation_start + params.get<mio::abm::QuarantineDuration>();
     }
 
     /**
@@ -290,51 +292,41 @@ public:
     ScalarType get_mask_protective_factor(const Parameters& params) const;
 
     /**
-     * @brief For every #LocationType a Person has a compliance value between -1 and 1.
-     * -1 means that the Person never complies to any Mask duty at the given #LocationType.
-     * 1 means that the Person always wears a Mask a the #LocationType even if it is not required.
-     * @param[in] preferences The vector of Mask compliance values for all #LocationType%s.
+     * @brief For every #InterventionType a Person has a compliance value between 0 and 1.
+     * 0 means that the Person never complies to the Intervention.
+     * 1 means that the Person always complies to the Intervention.
+     * @param[in] intervention_type The #InterventionType.
+     * @param[in] value The compliance value.
      */
-    void set_mask_preferences(std::vector<ScalarType> preferences)
+    void set_compliance(InterventionType intervention_type, ScalarType value)
     {
-        m_mask_compliance = preferences;
+        m_compliance[static_cast<uint32_t>(intervention_type)] = value;
     }
 
     /**
-     * @brief Get the Mask compliance of the Person for the current Location.
-     * @param[in] location The current Location of the Person.
-     * @return The probability that the Person does not comply to any Mask duty/wears a Mask even if it is not required.
+     * @brief Get the compliance of the Person for an Intervention.
+     * @param[in] intervention_type The #InterventionType.
+     * @return The probability that the Person complies to an Intervention.
      */
-    ScalarType get_mask_compliance(LocationType location) const
+    ScalarType get_compliance(InterventionType intervention_type) const
     {
-        return m_mask_compliance[static_cast<int>(location)];
+        return m_compliance[static_cast<uint32_t>(intervention_type)];
     }
 
     /**
-     * @brief Checks whether the Person wears a Mask at the target Location.
-     * @param[inout] rng RandomNumberGenerator of the Person.
-     * @param[in] target The target Location.
-     * @return Whether a Person wears a Mask at the Location.
+     * @brief Checks whether the Person complies an Intervention.
+     * @param[inout] rng PersonalRandomNumberGenerator of the Person.
+     * @param[in] intervention The #InterventionType.
+     * @return Checks whether the Person complies an Intervention.
      */
-    bool apply_mask_intervention(PersonalRandomNumberGenerator& rng, const Location& target);
+    bool is_compliant(PersonalRandomNumberGenerator& rng, InterventionType intervention) const;
 
     /**
-     * @brief Decide if a Person is currently wearing a Mask.
-     * @param[in] wear_mask If true, the protection of the Mask is considered when computing the exposure rate.
+     * @brief Change the mask to new type.
+     * @param[in] type The required #MaskType.
+     * @param[in] t The TimePoint of mask change.
      */
-    void set_wear_mask(bool wear_mask)
-    {
-        m_wears_mask = wear_mask;
-    }
-
-    /**
-     * @brief Get the information if the Person is currently wearing a Mask.
-     * @return True if the Person is currently wearing a Mask.
-     */
-    bool get_wear_mask() const
-    {
-        return m_wears_mask;
-    }
+    void set_mask(MaskType type, TimePoint t);
 
     /**
      * @brief Get the multiplicative factor on how likely an #Infection is due to the immune system.
@@ -346,13 +338,13 @@ public:
     ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const Parameters& params) const;
 
     /**
-     * @brief Add a new #Vaccination
-     * @param[in] v ExposureType (i. e. vaccine) the person takes.
-     * @param[in] t TimePoint of the Vaccination.
+     * @brief Add a new vaccination
+     * @param[in] v ProtectionType (i. e. vaccine) the person takes.
+     * @param[in] t TimePoint of the vaccination.
      */
-    void add_new_vaccination(ExposureType v, TimePoint t)
+    void add_new_vaccination(ProtectionType v, TimePoint t)
     {
-        m_vaccinations.push_back(Vaccination(v, t));
+        m_vaccinations.push_back(ProtectionEvent(v, t));
     }
 
     /**
@@ -383,40 +375,33 @@ public:
     }
 
     /**
-     * @brief Get the latest #ExposureType and its initial TimePoint of the Person.
+     * @brief Get the latest #ProtectionType and its initial TimePoint of the Person.
      */
-    std::pair<ExposureType, TimePoint> get_latest_protection() const;
+    ProtectionEvent get_latest_protection() const;
 
-    /**
-     * serialize this.
-     * @see mio::serialize
-     */
-    template <class IOContext>
-    void serialize(IOContext& io) const
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
-        auto obj = io.create_object("Person");
-        obj.add_element("Location", m_location);
-        obj.add_element("age", m_age);
-        obj.add_element("id", m_person_id);
-    }
-
-    /**
-     * deserialize an object of this class.
-     * @see mio::deserialize
-     */
-    template <class IOContext>
-    static IOResult<Person> deserialize(IOContext& io)
-    {
-        auto obj = io.expect_object("Person");
-        auto loc = obj.expect_element("Location", mio::Tag<LocationId>{});
-        auto age = obj.expect_element("age", Tag<uint32_t>{});
-        auto id  = obj.expect_element("id", Tag<PersonId>{});
-        return apply(
-            io,
-            [](auto&& loc_, auto&& age_, auto&& id_) {
-                return Person{mio::RandomNumberGenerator(), loc_, AgeGroup(age_), id_};
-            },
-            loc, age, id);
+        return Members("Person")
+            .add("location", m_location)
+            .add("location_type", m_location_type)
+            .add("assigned_locations", m_assigned_locations)
+            .add("vaccinations", m_vaccinations)
+            .add("infections", m_infections)
+            .add("home_isolation_start", m_home_isolation_start)
+            .add("age_group", m_age)
+            .add("time_at_location", m_time_at_location)
+            .add("rnd_workgroup", m_random_workgroup)
+            .add("rnd_schoolgroup", m_random_schoolgroup)
+            .add("rnd_go_to_work_hour", m_random_goto_work_hour)
+            .add("rnd_go_to_school_hour", m_random_goto_school_hour)
+            .add("mask", m_mask)
+            .add("compliance", m_compliance)
+            .add("id", m_person_id)
+            .add("cells", m_cells)
+            .add("last_transport_mode", m_last_transport_mode)
+            .add("rng_counter", m_rng_counter)
+            .add("test_results", m_test_results);
     }
 
     /**
@@ -440,9 +425,9 @@ private:
     LocationType m_location_type; ///< Type of the current Location.
     std::vector<LocationId> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the
     Person always visits the same Home or School etc. */
-    std::vector<Vaccination> m_vaccinations; ///< Vector with all Vaccination%s the Person has received.
+    std::vector<ProtectionEvent> m_vaccinations; ///< Vector with all vaccinations the Person has received.
     std::vector<Infection> m_infections; ///< Vector with all Infection%s the Person had.
-    TimePoint m_quarantine_start; ///< TimePoint when the Person started quarantine.
+    TimePoint m_home_isolation_start; ///< TimePoint when the Person started isolation at home.
     AgeGroup m_age; ///< AgeGroup the Person belongs to.
     TimeSpan m_time_at_location; ///< Time the Person has spent at its current Location so far.
     double m_random_workgroup; ///< Value to determine if the Person goes to work or works from home during lockdown.
@@ -450,8 +435,8 @@ private:
     double m_random_goto_work_hour; ///< Value to determine at what time the Person goes to work.
     double m_random_goto_school_hour; ///< Value to determine at what time the Person goes to school.
     Mask m_mask; ///< The Mask of the Person.
-    bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.
-    std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
+    std::vector<ScalarType>
+        m_compliance; ///< Vector of compliance values for all #InterventionType%s. Values from 0 to 1.
     PersonId m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
@@ -460,6 +445,17 @@ private:
 };
 
 } // namespace abm
+
+/// @brief Creates an instance of abm::Person for default serialization.
+template <>
+struct DefaultFactory<abm::Person> {
+    static abm::Person create()
+    {
+        return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::LocationId(), AgeGroup(0),
+                           abm::PersonId());
+    }
+};
+
 } // namespace mio
 
 #endif

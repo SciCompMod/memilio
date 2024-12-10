@@ -33,8 +33,8 @@ namespace mio
 {
 
 /**
- * @brief Creates and manages an instance of a boost::numeric::odeint::controlled_runge_kutta
- * integrator, wrapped as mio::IntegratorCore.
+ * @brief This is an adaptive IntegratorCore. It creates and manages an instance of a
+ * boost::numeric::odeint::controlled_runge_kutta integrator, wrapped as mio::IntegratorCore.
  */
 template <typename FP,
           template <class State, class Value, class Deriv, class Time, class Algebra, class Operations, class Resizer>
@@ -69,13 +69,13 @@ public:
     }
 
     /**
-    * @brief Make a single integration step on a system of ODEs and adapt the step size dt.
-
-    * @param[in] yt Value of y at t_{k}, y(t_{k}).
-    * @param[in,out] t Current time step t_{k} for some k. Will be set to t_{k+1} in [t_{k} + dt_min, t_{k} + dt].
-    * @param[in,out] dt Current time step size h=dt. Overwritten by an estimated optimal step size for the next step.
-    * @param[out] ytp1 The approximated value of y(t_{k+1}).
-    */
+     * @brief Make a single integration step on a system of ODEs and adapt the step size dt.
+     *
+     * @param[in] yt Value of y at t, y(t).
+     * @param[in,out] t Current time. Will be set to t' in [t+dt_min, t+dt].
+     * @param[in,out] dt Current time step size h=dt. Overwritten by an estimated optimal step size for the next step.
+     * @param[out] ytp1 The approximated value of y(t').
+     */
     bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<Vector<FP> const> yt, FP& t, FP& dt,
               Eigen::Ref<Vector<FP>> ytp1) const override
     {
@@ -92,19 +92,19 @@ public:
         auto step_result = fail;
         bool is_dt_valid = true;
         // copy vectors from the references, since the stepper cannot (trivially) handle Eigen::Ref
-        m_ytp1 = ytp1;
-        m_yt   = yt;
+        m_ytp1 = ytp1; // y(t')
+        m_yt   = yt; // y(t)
         // make a integration step, adapting dt to a possibly larger value on success,
         // or a strictly smaller value on fail.
-        // stop only on a successful step or a failed step size adaption (w.r.t. the minimal step size m_dt_min)
+        // stop only on a successful step or a failed step size adaption (w.r.t. the minimal step size dt_min)
         while (step_result == fail && is_dt_valid) {
             if (dt < this->get_dt_min()) {
                 is_dt_valid = false;
                 dt          = this->get_dt_min();
             }
-            // we use the scheme try_step(sys, in, t, out, dt) with sys=f, in=y(t_{k}), out=y(t_{k+1}).
+            // we use the scheme try_step(sys, in, t, out, dt) with sys=f, in=y(t), out=y(t').
             // this is similiar to do_step, but it can adapt the step size dt. If successful, it also updates t.
-
+            // Note: the resizer used by m_stepper restricts dt to dt_max (via making a failed step)
             if constexpr (!is_fsal_stepper) { // prevent compile time errors with fsal steppers
                 step_result = m_stepper.try_step(
                     // reorder arguments of the DerivFunction f for the stepper
@@ -171,6 +171,58 @@ private:
 
     FP m_abs_tol, m_rel_tol; ///< Absolute and relative tolerances for integration.
     mutable Vector<FP> m_ytp1, m_yt; ///< Temporary storage to avoid allocations in step function.
+    mutable Stepper m_stepper; ///< A stepper instance used for integration.
+};
+
+/**
+ * @brief This is a non-adaptive IntegratorCore. It creates and manages an instance of an explicit stepper from
+ * boost::numeric::odeint, wrapped as mio::IntegratorCore.
+ */
+template <typename FP,
+          template <class State, class Value, class Deriv, class Time, class Algebra, class Operations, class Resizer>
+          class ExplicitStepper>
+class ExplicitStepperWrapper : public mio::IntegratorCore<FP>
+{
+public:
+    using Stepper = ExplicitStepper<Vector<FP>, FP, Vector<FP>, FP, boost::numeric::odeint::vector_space_algebra,
+                                    typename boost::numeric::odeint::operations_dispatcher<Vector<FP>>::operations_type,
+                                    boost::numeric::odeint::never_resizer>;
+
+    /**
+     * @brief Set up the integrator.
+     */
+    ExplicitStepperWrapper()
+        : mio::IntegratorCore<FP>(FP{}, FP{})
+    {
+    }
+
+    /**
+     * @brief Make a single integration step on a system of ODEs with fixed step size dt.
+     *
+     * @param[in] yt Value of y at t, y(t).
+     * @param[in,out] t Current time. Overwritten with t+dt.
+     * @param[in] dt Current time step size h=dt.
+     * @param[out] ytp1 The approximated value of y(t+dt).
+     */
+    bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<Vector<FP> const> yt, FP& t, FP& dt,
+              Eigen::Ref<Vector<FP>> ytp1) const override
+    {
+        // copy the values from y(t) to ytp1, since we use the scheme do_step(sys, inout, t, dt) with
+        // sys=f, inout=y(t) for in-place computation - also, this form is shared by several steppers in boost
+        ytp1 = yt;
+        m_stepper.do_step(
+            // reorder arguments of the DerivFunction f for the stepper
+            [&](const Vector<FP>& x, Vector<FP>& dxds, FP s) {
+                dxds.resizeLike(x); // do_step calls sys with a vector of size 0 for some reason
+                f(x, s, dxds);
+            },
+            ytp1, t, dt);
+        // update time (it is not modified by do_step)
+        t += dt;
+        return true; // no step size adaption
+    }
+
+private:
     mutable Stepper m_stepper; ///< A stepper instance used for integration.
 };
 

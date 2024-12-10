@@ -22,10 +22,11 @@
 #define LCT_SECIR_PARAMS_H
 
 #include "memilio/config.h"
-#include "memilio/utils/parameter_set.h"
 #include "memilio/math/eigen.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
+#include "memilio/utils/parameter_set.h"
 #include "memilio/utils/logging.h"
+#include "memilio/utils/uncertain_value.h"
 
 namespace mio
 {
@@ -37,13 +38,13 @@ namespace lsecir
 **********************************************/
 
 /**
- * @brief Average Time spent in the Exposed compartment.
+ * @brief Average time spent in the Exposed compartment for each group.
  */
 struct TimeExposed {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return 2.0;
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -53,13 +54,13 @@ struct TimeExposed {
 
 /**
  * @brief Average time spent in the TimeInfectedNoSymptoms before developing 
- *  Symptoms or recover in the SECIR model in day unit.
+ *  symptoms or recover for each group in the SECIR model in day unit.
  */
 struct TimeInfectedNoSymptoms {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return 1.0;
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -68,14 +69,14 @@ struct TimeInfectedNoSymptoms {
 };
 
 /**
- * @brief Average time spent in the TimeInfectedSymptoms before going to Hospital 
- *  or recover in the SECIR model in day unit.
+ * @brief Average time spent in the TimeInfectedSymptoms before going to hospital 
+ *  or recover for each group in the SECIR model in day unit.
  */
 struct TimeInfectedSymptoms {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return 1.5;
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -84,14 +85,14 @@ struct TimeInfectedSymptoms {
 };
 
 /**
- * @brief Average time being in the Hospital before treated by ICU or recover in the 
+ * @brief Average time being in the Hospital before treated by ICU or recover for each group in the 
  *  SECIR model in day unit.
  */
 struct TimeInfectedSevere {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return 1.0;
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -100,13 +101,13 @@ struct TimeInfectedSevere {
 };
 
 /**
- * @brief Average time treated by ICU before dead or recover in the SECIR model in day unit.
+ * @brief Average time treated by ICU before dead or recover for each group in the SECIR model in day unit.
  */
 struct TimeInfectedCritical {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return 1.0;
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -115,13 +116,13 @@ struct TimeInfectedCritical {
 };
 
 /**
- * @brief Probability of getting infected from a contact.
+ * @brief Probability of getting infected from a contact for each group.
  */
 struct TransmissionProbabilityOnContact {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return 1.0;
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -135,10 +136,10 @@ struct TransmissionProbabilityOnContact {
 struct ContactPatterns {
     using Type = UncertainContactMatrix<ScalarType>;
 
-    static Type get_default()
+    static Type get_default(size_t size)
     {
-        ContactMatrixGroup contact_matrix = ContactMatrixGroup(1, 1);
-        contact_matrix[0]                 = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+        mio::ContactMatrixGroup contact_matrix(1, (Eigen::Index)size);
+        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((Eigen::Index)size, (Eigen::Index)size, 10.));
         return Type(contact_matrix);
     }
     static std::string name()
@@ -148,13 +149,13 @@ struct ContactPatterns {
 };
 
 /**
- * @brief The relative InfectedNoSymptoms infectability.
+ * @brief The relative InfectedNoSymptoms infectability for each group.
  */
 struct RelativeTransmissionNoSymptoms {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return 0.5;
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -163,13 +164,13 @@ struct RelativeTransmissionNoSymptoms {
 };
 
 /**
- * @brief The risk of infection from symptomatic cases in the SECIR model.
+ * @brief The risk of infection from symptomatic cases for each group in the SECIR model.
  */
 struct RiskOfInfectionFromSymptomatic {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return 0.5;
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -178,13 +179,13 @@ struct RiskOfInfectionFromSymptomatic {
 };
 
 /**
- * @brief The percentage of asymptomatic cases in the SECIR model.
+ * @brief The percentage of asymptomatic cases for each group in the SECIR model.
  */
 struct RecoveredPerInfectedNoSymptoms {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return 0.5;
+        return Type::Constant(size, 1, 0.5);
     }
     static std::string name()
     {
@@ -193,13 +194,13 @@ struct RecoveredPerInfectedNoSymptoms {
 };
 
 /**
- * @brief The percentage of hospitalized patients per infected patients in the SECIR model.
+ * @brief The percentage of hospitalized patients per infected patients for each group in the SECIR model.
  */
 struct SeverePerInfectedSymptoms {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return 0.5;
+        return Type::Constant(size, 1, 0.5);
     }
     static std::string name()
     {
@@ -208,13 +209,13 @@ struct SeverePerInfectedSymptoms {
 };
 
 /**
- * @brief The percentage of ICU patients per hospitalized patients in the SECIR model.
+ * @brief The percentage of ICU patients per hospitalized patients for each group in the SECIR model.
  */
 struct CriticalPerSevere {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return 0.5;
+        return Type::Constant(size, 1, 0.5);
     }
     static std::string name()
     {
@@ -223,13 +224,13 @@ struct CriticalPerSevere {
 };
 
 /**
- * @brief The percentage of dead patients per ICU patients in the SECIR model.
+ * @brief The percentage of dead patients per ICU patients for each group in the SECIR model.
  */
 struct DeathsPerCritical {
-    using Type = ScalarType;
-    static Type get_default()
+    using Type = Vector<UncertainValue<ScalarType>>;
+    static Type get_default(size_t size)
     {
-        return 0.1;
+        return Type::Constant(size, 1, 0.1);
     }
     static std::string name()
     {
@@ -245,7 +246,7 @@ struct DeathsPerCritical {
  */
 struct StartDay {
     using Type = ScalarType;
-    static Type get_default()
+    static Type get_default(size_t)
     {
         return 0.;
     }
@@ -262,9 +263,9 @@ struct StartDay {
  */
 struct Seasonality {
     using Type = ScalarType;
-    static Type get_default()
+    static Type get_default(size_t)
     {
-        return Type(0.);
+        return 0.;
     }
     static std::string name()
     {
@@ -285,83 +286,99 @@ class Parameters : public ParametersBase
 {
 public:
     /**
-     * @brief Default constructor.
+     * @brief Constructor.
+     * @param num_groups The number of groups considered in the LCT model.
      */
-    Parameters()
-        : ParametersBase()
+    Parameters(size_t num_groups)
+        : ParametersBase(num_groups)
+        , m_num_groups{num_groups}
     {
     }
 
+    size_t get_num_groups() const
+    {
+        return m_num_groups;
+    }
+
     /**
-     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not.
+     * @brief Checks whether all parameters satisfy their corresponding constraints and throws errors, if they do not.
      * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
      */
     bool check_constraints() const
     {
-        if (this->get<TimeExposed>() < 1.0) {
-            log_error("Constraint check: Parameter TimeExposed is smaller than {:.4f}", 1.0);
-            return true;
-        }
-
-        if (this->get<TimeInfectedNoSymptoms>() < 1.0) {
-            log_error("Constraint check: Parameter TimeInfectedNoSymptoms is smaller than {:.4f}", 1.0);
-            return true;
-        }
-
-        if (this->get<TimeInfectedSymptoms>() < 1.0) {
-            log_error("Constraint check: Parameter TimeInfectedSymptoms is smaller than {:.4f}", 1.0);
-            return true;
-        }
-
-        if (this->get<TimeInfectedSevere>() < 1.0) {
-            log_error("Constraint check: Parameter TimeInfectedSevere is smaller than {:.4f}", 1.0);
-            return true;
-        }
-
-        if (this->get<TimeInfectedCritical>() < 1.0) {
-            log_error("Constraint check: Parameter TimeInfectedCritical is smaller than {:.4f}", 1.0);
-            return true;
-        }
-
-        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
-            this->get<TransmissionProbabilityOnContact>() > 1.0) {
-            log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0, 1);
-            return true;
-        }
-
-        if (this->get<RelativeTransmissionNoSymptoms>() < 0.0 || this->get<RelativeTransmissionNoSymptoms>() > 1.0) {
-            log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d} or larger {:d}", 0, 1);
-            return true;
-        }
-
-        if (this->get<RiskOfInfectionFromSymptomatic>() < 0.0 || this->get<RiskOfInfectionFromSymptomatic>() > 1.0) {
-            log_error("Constraint check: Parameter  RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0, 1);
-            return true;
-        }
-
-        if (this->get<RecoveredPerInfectedNoSymptoms>() < 0.0 || this->get<RecoveredPerInfectedNoSymptoms>() > 1.0) {
-            log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {:d} or larger {:d}", 0, 1);
-            return true;
-        }
-
-        if (this->get<SeverePerInfectedSymptoms>() < 0.0 || this->get<SeverePerInfectedSymptoms>() > 1.0) {
-            log_error("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
-            return true;
-        }
-
-        if (this->get<CriticalPerSevere>() < 0.0 || this->get<CriticalPerSevere>() > 1.0) {
-            log_error("Constraint check: Parameter CriticalPerSevere smaller {:d} or larger {:d}", 0, 1);
-            return true;
-        }
-
-        if (this->get<DeathsPerCritical>() < 0.0 || this->get<DeathsPerCritical>() > 1.0) {
-            log_error("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
-            return true;
-        }
-
         if (this->get<Seasonality>() < 0.0 || this->get<Seasonality>() > 0.5) {
             log_warning("Constraint check: Parameter Seasonality should lie between {:0.4f} and {:.4f}", 0.0, 0.5);
             return true;
+        }
+
+        for (size_t i = 0; i < m_num_groups; ++i) {
+            if (this->get<TimeExposed>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeExposed is smaller than {:.4f}", 1.0);
+                return true;
+            }
+
+            if (this->get<TimeInfectedNoSymptoms>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeInfectedNoSymptoms is smaller than {:.4f}", 1.0);
+                return true;
+            }
+
+            if (this->get<TimeInfectedSymptoms>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeInfectedSymptoms is smaller than {:.4f}", 1.0);
+                return true;
+            }
+
+            if (this->get<TimeInfectedSevere>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeInfectedSevere is smaller than {:.4f}", 1.0);
+                return true;
+            }
+
+            if (this->get<TimeInfectedCritical>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeInfectedCritical is smaller than {:.4f}", 1.0);
+                return true;
+            }
+
+            if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
+                this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
+                log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0,
+                          1);
+                return true;
+            }
+
+            if (this->get<RelativeTransmissionNoSymptoms>()[i] < 0.0 ||
+                this->get<RelativeTransmissionNoSymptoms>()[i] > 1.0) {
+                log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d} or larger {:d}", 0,
+                          1);
+                return true;
+            }
+
+            if (this->get<RiskOfInfectionFromSymptomatic>()[i] < 0.0 ||
+                this->get<RiskOfInfectionFromSymptomatic>()[i] > 1.0) {
+                log_error("Constraint check: Parameter  RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0,
+                          1);
+                return true;
+            }
+
+            if (this->get<RecoveredPerInfectedNoSymptoms>()[i] < 0.0 ||
+                this->get<RecoveredPerInfectedNoSymptoms>()[i] > 1.0) {
+                log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {:d} or larger {:d}", 0,
+                          1);
+                return true;
+            }
+
+            if (this->get<SeverePerInfectedSymptoms>()[i] < 0.0 || this->get<SeverePerInfectedSymptoms>()[i] > 1.0) {
+                log_error("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
+                return true;
+            }
+
+            if (this->get<CriticalPerSevere>()[i] < 0.0 || this->get<CriticalPerSevere>()[i] > 1.0) {
+                log_error("Constraint check: Parameter CriticalPerSevere smaller {:d} or larger {:d}", 0, 1);
+                return true;
+            }
+
+            if (this->get<DeathsPerCritical>()[i] < 0.0 || this->get<DeathsPerCritical>()[i] > 1.0) {
+                log_error("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
+                return true;
+            }
         }
 
         return false;
@@ -370,8 +387,11 @@ public:
 private:
     Parameters(ParametersBase&& base)
         : ParametersBase(std::move(base))
+        , m_num_groups(this->template get<ContactPatterns>().get_cont_freq_mat().get_num_groups())
     {
     }
+
+    size_t m_num_groups;
 
 public:
     /**

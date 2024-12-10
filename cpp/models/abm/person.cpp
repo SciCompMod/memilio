@@ -36,12 +36,11 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     : m_location(location_id)
     , m_location_type(location_type)
     , m_assigned_locations((uint32_t)LocationType::Count, LocationId::invalid_id())
-    , m_quarantine_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
+    , m_home_isolation_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_age(age)
     , m_time_at_location(0)
-    , m_mask(Mask(MaskType::Community))
-    , m_wears_mask(false)
-    , m_mask_compliance((uint32_t)LocationType::Count, 0.)
+    , m_mask(Mask(MaskType::None, TimePoint(-(std::numeric_limits<int>::max() / 2))))
+    , m_compliance((uint32_t)InterventionType::Count, 1.)
     , m_person_id(person_id)
     , m_cells{0}
     , m_last_transport_mode(TransportMode::Unknown)
@@ -149,7 +148,7 @@ bool Person::goes_to_school(TimePoint t, const Parameters& params) const
 
 void Person::remove_quarantine()
 {
-    m_quarantine_start = TimePoint(-(std::numeric_limits<int>::max() / 2));
+    m_home_isolation_start = TimePoint(-(std::numeric_limits<int>::max() / 2));
 }
 
 bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const TestParameters& params)
@@ -158,7 +157,10 @@ bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const T
     if (is_infected(t)) {
         // true positive
         if (random < params.sensitivity) {
-            m_quarantine_start = t;
+            // If the Person complies to isolation, start the quarantine.
+            if (is_compliant(rng, InterventionType::Isolation)) {
+                m_home_isolation_start = t;
+            }
             m_infections.back().set_detected();
             return true;
         }
@@ -174,7 +176,10 @@ bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const T
         }
         // false positive
         else {
-            m_quarantine_start = t;
+            // If the Person complies to isolation, start the quarantine.
+            if (is_compliant(rng, InterventionType::Isolation)) {
+                m_home_isolation_start = t;
+            }
             return true;
         }
     }
@@ -197,71 +202,45 @@ const std::vector<uint32_t>& Person::get_cells() const
 
 ScalarType Person::get_mask_protective_factor(const Parameters& params) const
 {
-    if (m_wears_mask == false) {
-        return 0.;
-    }
-    else {
-        return params.get<MaskProtection>()[m_mask.get_type()];
-    }
+    return params.get<MaskProtection>()[m_mask.get_type()];
 }
 
-bool Person::apply_mask_intervention(PersonalRandomNumberGenerator& rng, const Location& target)
+bool Person::is_compliant(PersonalRandomNumberGenerator& rng, InterventionType intervention) const
 {
-    if (target.get_npi_active() == false) {
-        m_wears_mask = false;
-        if (get_mask_compliance(target.get_type()) > 0.) {
-            // draw if the person wears a mask even if not required
-            ScalarType wear_mask = UniformDistribution<double>::get_instance()(rng);
-            if (wear_mask < get_mask_compliance(target.get_type())) {
-                m_wears_mask = true;
-            }
-        }
-    }
-    else {
-        m_wears_mask = true;
-        if (get_mask_compliance(target.get_type()) < 0.) {
-            // draw if a person refuses to wear the required mask
-            ScalarType wear_mask = UniformDistribution<double>::get_instance()(rng, -1., 0.);
-            if (wear_mask > get_mask_compliance(target.get_type())) {
-                m_wears_mask = false;
-            }
-            return false;
-        }
-        if (m_wears_mask == true) {
-
-            if (static_cast<int>(m_mask.get_type()) < static_cast<int>(target.get_required_mask())) {
-                m_mask.change_mask(target.get_required_mask());
-            }
-        }
-    }
-    return true;
+    ScalarType compliance_check = UniformDistribution<double>::get_instance()(rng);
+    return compliance_check <= get_compliance(intervention);
 }
 
-std::pair<ExposureType, TimePoint> Person::get_latest_protection() const
+ProtectionEvent Person::get_latest_protection() const
 {
-    ExposureType latest_exposure_type = ExposureType::NoProtection;
+    ProtectionType latest_protection_type = ProtectionType::NoProtection;
     TimePoint infection_time          = TimePoint(0);
     if (!m_infections.empty()) {
-        latest_exposure_type = ExposureType::NaturalInfection;
+        latest_protection_type = ProtectionType::NaturalInfection;
         infection_time       = m_infections.back().get_start_date();
     }
     if (!m_vaccinations.empty() && infection_time.days() <= m_vaccinations.back().time.days()) {
-        latest_exposure_type = m_vaccinations.back().exposure_type;
+        latest_protection_type = m_vaccinations.back().type;
         infection_time       = m_vaccinations.back().time;
     }
-    return std::make_pair(latest_exposure_type, infection_time);
+    return ProtectionEvent{latest_protection_type, infection_time};
 }
 
 ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const Parameters& params) const
 {
     auto latest_protection = get_latest_protection();
     // If there is no previous protection or vaccination, return 0.
-    if (latest_protection.first == ExposureType::NoProtection) {
+    if (latest_protection.type == ProtectionType::NoProtection) {
         return 0;
     }
-    return params.get<InfectionProtectionFactor>()[{latest_protection.first, m_age, virus}](
-        t.days() - latest_protection.second.days());
+    return params.get<InfectionProtectionFactor>()[{latest_protection.type, m_age, virus}](
+        t.days() - latest_protection.time.days());
 }
+
+void Person::set_mask(MaskType type, TimePoint t)
+{
+    m_mask.change_mask(type, t);
+} 
 
 void Person::add_test_result(TimePoint t, TestType type, bool result)
 {

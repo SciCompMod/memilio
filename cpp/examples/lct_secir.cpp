@@ -19,10 +19,12 @@
 */
 
 #include "lct_secir/model.h"
+#include "lct_secir/infection_state.h"
 #include "lct_secir/initializer_flows.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
+#include "memilio/epidemiology/lct_infection_state.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/logging.h"
 #include "memilio/compartments/simulation.h"
@@ -33,51 +35,50 @@
 int main()
 {
     // Simple example to demonstrate how to run a simulation using an LCT-SECIR model.
+    // One single AgeGroup/Category member is used here.
     // Parameters, initial values and the number of subcompartments are not meant to represent a realistic scenario.
     constexpr size_t NumExposed = 2, NumInfectedNoSymptoms = 3, NumInfectedSymptoms = 1, NumInfectedSevere = 1,
                      NumInfectedCritical = 5;
-    using Model          = mio::lsecir::Model<NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms, NumInfectedSevere,
-                                     NumInfectedCritical>;
-    using LctState       = Model::LctState;
-    using InfectionState = LctState::InfectionState;
-
+    using InfState                       = mio::lsecir::InfectionState;
+    using LctState = mio::LctInfectionState<InfState, 1, NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms,
+                                            NumInfectedSevere, NumInfectedCritical, 1, 1>;
+    using Model    = mio::lsecir::Model<LctState>;
     Model model;
 
     // Variable defines whether the class Initializer is used to define an initial vector from flows or whether a manually
     // defined initial vector is used to initialize the LCT model.
-    bool use_initializer_flows = true;
+    bool use_initializer_flows = false;
 
-    ScalarType tmax = 20;
+    ScalarType tmax = 10;
 
     // Set Parameters.
-    model.parameters.get<mio::lsecir::TimeExposed>()            = 3.2;
-    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2.;
-    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 5.8;
-    model.parameters.get<mio::lsecir::TimeInfectedSevere>()     = 9.5;
-    // It is also possible to change values with the set function.
-    model.parameters.set<mio::lsecir::TimeInfectedCritical>(7.1);
+    model.parameters.get<mio::lsecir::TimeExposed>()[0]            = 3.2;
+    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0] = 2.;
+    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]   = 5.8;
+    model.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]     = 9.5;
+    model.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]   = 7.1;
 
-    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.05;
+    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.05;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
     // From SimulationTime 5, the contact pattern is reduced to 30% of the initial value.
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(5.));
 
-    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 0.7;
-    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 0.25;
-    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.09;
-    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.2;
-    model.parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.25;
-    model.parameters.set<mio::lsecir::DeathsPerCritical>(0.3);
+    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 0.7;
+    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = 0.25;
+    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 0.09;
+    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0]      = 0.2;
+    model.parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = 0.25;
+    model.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
 
     if (use_initializer_flows) {
         // Example how to use the class Initializer for the definition of an initial vector for the LCT model.
 
-        ScalarType dt                    = 0.001;
-        ScalarType total_population      = 1000000;
-        ScalarType deaths                = 10;
-        ScalarType total_confirmed_cases = 16000;
+        ScalarType dt                                 = 0.001;
+        mio::Vector<ScalarType> total_population      = mio::Vector<ScalarType>::Constant(1, 1000000.);
+        mio::Vector<ScalarType> deaths                = mio::Vector<ScalarType>::Constant(1, 10.);
+        mio::Vector<ScalarType> total_confirmed_cases = mio::Vector<ScalarType>::Constant(1, 16000.);
 
         // Create TimeSeries with num_transitions elements.
         int num_transitions = (int)mio::lsecir::InfectionTransition::Count;
@@ -120,22 +121,22 @@ int main()
                                                                     {50},  {10, 10, 5, 3, 2}, {20},         {10}};
 
         // Assert that initial_populations has the right shape.
-        if (initial_populations.size() != (size_t)InfectionState::Count) {
+        if (initial_populations.size() != (size_t)InfState::Count) {
             mio::log_error(
                 "The number of vectors in initial_populations does not match the number of InfectionStates.");
             return 1;
         }
-        if ((initial_populations[(size_t)InfectionState::Susceptible].size() !=
-             LctState::get_num_subcompartments<InfectionState::Susceptible>()) ||
-            (initial_populations[(size_t)InfectionState::Exposed].size() != NumExposed) ||
-            (initial_populations[(size_t)InfectionState::InfectedNoSymptoms].size() != NumInfectedNoSymptoms) ||
-            (initial_populations[(size_t)InfectionState::InfectedSymptoms].size() != NumInfectedSymptoms) ||
-            (initial_populations[(size_t)InfectionState::InfectedSevere].size() != NumInfectedSevere) ||
-            (initial_populations[(size_t)InfectionState::InfectedCritical].size() != NumInfectedCritical) ||
-            (initial_populations[(size_t)InfectionState::Recovered].size() !=
-             LctState::get_num_subcompartments<InfectionState::Recovered>()) ||
-            (initial_populations[(size_t)InfectionState::Dead].size() !=
-             LctState::get_num_subcompartments<InfectionState::Dead>())) {
+        if ((initial_populations[(size_t)InfState::Susceptible].size() !=
+             LctState::get_num_subcompartments<InfState::Susceptible>()) ||
+            (initial_populations[(size_t)InfState::Exposed].size() != NumExposed) ||
+            (initial_populations[(size_t)InfState::InfectedNoSymptoms].size() != NumInfectedNoSymptoms) ||
+            (initial_populations[(size_t)InfState::InfectedSymptoms].size() != NumInfectedSymptoms) ||
+            (initial_populations[(size_t)InfState::InfectedSevere].size() != NumInfectedSevere) ||
+            (initial_populations[(size_t)InfState::InfectedCritical].size() != NumInfectedCritical) ||
+            (initial_populations[(size_t)InfState::Recovered].size() !=
+             LctState::get_num_subcompartments<InfState::Recovered>()) ||
+            (initial_populations[(size_t)InfState::Dead].size() !=
+             LctState::get_num_subcompartments<InfState::Dead>())) {
             mio::log_error(
                 "The length of at least one vector in initial_populations does not match the related number of "
                 "subcompartments.");
@@ -148,15 +149,15 @@ int main()
             flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
         }
         for (size_t i = 0; i < LctState::Count; i++) {
-            model.populations[mio::Index<LctState>(i)] = flat_initial_populations[i];
+            model.populations[i] = flat_initial_populations[i];
         }
     }
 
     // Perform a simulation.
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, 0.5, model);
     // The simulation result is divided by subcompartments.
-    // We call the function calculate_comparttments to get a result according to the InfectionStates.
+    // We call the function calculate_compartments to get a result according to the InfectionStates.
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
     auto interpolated_results = mio::interpolate_simulation_result(population_no_subcompartments);
-    interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
+    interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 12, 4);
 }

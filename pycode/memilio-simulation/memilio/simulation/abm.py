@@ -22,4 +22,4 @@
 Python bindings for MEmilio ABM model.
 """
 
-from memilio._simulation_abm import *
+from memilio.simulation._simulation_abm import *
