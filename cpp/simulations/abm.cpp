@@ -23,6 +23,7 @@
 #include "abm/lockdown_rules.h"
 #include "memilio/config.h"
 #include "abm/state_transition_dist.h"
+#include "memilio/config.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"

@@ -24,6 +24,7 @@
 #include "abm/time.h"
 #include "abm/virus_variant.h"
 #include "abm/protection_event.h"
+#include "abm/protection_event.h"
 #include "abm/test_type.h"
 #include "memilio/config.h"
 #include "memilio/io/default_serialize.h"
@@ -128,7 +129,7 @@ struct TimeInfectedSymptomsToRecovered {
     }
     static std::string name()
     {
-        return "TimeInfectedNoSymptomsToSymptoms";
+        return "TimeInfectedSymptomsToRecovered";
     }
 };
 

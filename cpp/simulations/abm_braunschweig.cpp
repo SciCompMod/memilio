@@ -21,6 +21,7 @@
 #include "abm/location_id.h"
 #include "abm/lockdown_rules.h"
 #include "abm/parameters.h"
+#include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/simulation.h"
 #include "abm/model.h"

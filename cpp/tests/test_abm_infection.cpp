@@ -2,6 +2,7 @@
 * Copyright (C) 2020-2024 MEmilio
 *
 * Authors: David Kerkmann, Khoa Nguyen
+* Authors: David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -34,6 +35,7 @@ TEST_F(TestInfection, init)
     auto params             = mio::abm::Parameters(num_age_groups);
     auto virus_variant_test = mio::abm::VirusVariant::Wildtype;
     auto age_group_test     = age_group_15_to_34;
+    mio::abm::Location loc(mio::abm::LocationType::Hospital, 0);
 
     params.get<mio::abm::VirusShedFactor>()[{virus_variant_test, age_group_test}] = {0.1, 0.2};
 

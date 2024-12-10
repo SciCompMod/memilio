@@ -64,7 +64,6 @@ TEST_F(TestMasks, changeMask)
     EXPECT_EQ(mask.get_type(), mio::abm::MaskType::Surgical);
     EXPECT_EQ(mask.get_time_used(t), mio::abm::hours(0));
 }
-
 /**
  * @brief Test mask protection during person interactions.
  */

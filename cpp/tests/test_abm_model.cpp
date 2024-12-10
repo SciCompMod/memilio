@@ -94,6 +94,10 @@ TEST_F(TestModel, addPerson)
     EXPECT_EQ(model.get_persons().size(), 2);
     EXPECT_EQ(model.get_person(0).get_age(), age_group_15_to_34);
     EXPECT_EQ(model.get_person(1).get_age(), age_group_35_to_59);
+    // Verify the number of persons in the model and their respective age groups.
+    EXPECT_EQ(model.get_persons().size(), 2);
+    EXPECT_EQ(model.get_person(0).get_age(), age_group_15_to_34);
+    EXPECT_EQ(model.get_person(1).get_age(), age_group_35_to_59);
 }
 
 /**
@@ -350,6 +354,8 @@ TEST_F(TestModel, evolveMobilityTrips)
 
     // Set trips to use weekday trips on weekends.
     data.use_weekday_trips_on_weekend();
+    // Set trips to use weekday trips on weekends.
+    data.use_weekday_trips_on_weekend();
 
     // Mock the distribution to prevent infectionsin the test.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
@@ -371,7 +377,7 @@ TEST_F(TestModel, evolveMobilityTrips)
 
     // Move all persons back to their home location to prepare for weekend trips.
     model.change_location(p1.get_id(), home_id);
-    model.change_location(p1.get_id(), home_id);
+    model.change_location(p3.get_id(), home_id);
     model.change_location(p2.get_id(), home_id);
     model.change_location(p5.get_id(), home_id);
 
