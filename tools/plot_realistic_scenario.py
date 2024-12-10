@@ -457,54 +457,9 @@ def main():
 
     scaleConfirmed = 1.2
 
-    cases = [1, 2]
+    cases = [1]
     for case in cases:
         if case == 1:
-            # Start date july.
-            start_date = '2020-7-1'
-            start_date_timestamp = pd.Timestamp(start_date)
-            plot_new_infections_real([get_file_name(start_date, 1, folder, False), get_file_name(
-                start_date, 3, folder, False), get_file_name(
-                start_date, 10, folder, False), get_file_name(
-                start_date, 50, folder, False), get_file_name(
-                start_date, "var", folder, False)],
-                -1, datafile_rki, start_date_timestamp, 45, scaleConfirmed,
-                legendplot=list(
-                ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),
-                filename_plot="real_new_infections_"+start_date+"_allage")
-            compare_compartments_real([get_file_name(start_date, 1, folder, False),
-                                      get_file_name(
-                                          start_date, 3, folder, False),
-                                      get_file_name(
-                                          start_date, 10, folder, False),
-                                      get_file_name(
-                                          start_date, 50, folder, False),
-                                      get_file_name(
-                                          start_date,  "var", folder, False)], -1, datafile_rki, start_date_timestamp, 45, scaleConfirmed, list(
-                ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=False, filename_plot="real_infected_"+start_date+"_allage")
-
-            compare_compartments_real([get_file_name(start_date, 1, folder, False),
-                                      get_file_name(
-                                          start_date, 3, folder, False),
-                                      get_file_name(
-                                          start_date, 10, folder, False),
-                                      get_file_name(
-                                          start_date, 50, folder, False),
-                                      get_file_name(
-                                          start_date, "var", folder, False)], -1, datafile_rki, start_date_timestamp, 45, scaleConfirmed, list(
-                ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]), deaths=True, filename_plot="real_deaths_"+start_date+"_allage")
-            plot_icu_real(
-                [get_file_name(start_date, 1, folder, False),
-                 get_file_name(
-                    start_date, 3, folder, False),
-                 get_file_name(
-                    start_date, 10, folder, False),
-                 get_file_name(
-                    start_date, 50, folder, False),
-                 get_file_name(
-                    start_date, "var", folder, False)], datafile_icu, start_date_timestamp, 45,  list(
-                    ["Extrapolated RKI data", "ODE", "LCT3", "LCT10", "LCT50", "LCTvar"]),  filename_plot="real_icu_"+start_date+"_allage")
-        elif case == 2:
             # Start date october.
             start_date = '2020-10-1'
             start_date_timestamp = pd.Timestamp(start_date)

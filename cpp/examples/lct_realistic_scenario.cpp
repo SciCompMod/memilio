@@ -95,7 +95,7 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
 mio::TimeSeries<ScalarType> add_age_groups(mio::TimeSeries<ScalarType> ageres)
 {
     using namespace params;
-    size_t infstatecount = (size_t)mio::lsecir::InfectionState::Count;
+    size_t infstatecount = (size_t)(ageres.get_num_elements() / num_groups);
     mio::TimeSeries<ScalarType> noage(infstatecount);
 
     for (Eigen::Index timepoint = 0; timepoint < ageres.get_num_time_points(); ++timepoint) {

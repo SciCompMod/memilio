@@ -272,7 +272,7 @@ def plot_maxpeak_incidence(func_get_file_name, R0s, subcomps, filename_plot="max
                  label=str(R0))
 
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10,
-               title="$\\mathcal{R}_{\\text{eff}}\\approx$", title_fontsize=14)
+               title="$\\mathcal{R}_{\\text{eff}}(2)\\approx$", title_fontsize=11)
     plt.ylim(bottom=0)
     plt.xlabel('Number of subcompartments', fontsize=fontsize_labels)
     plt.ylabel('Maximum daily new transmissions', fontsize=fontsize_labels)
@@ -315,7 +315,7 @@ def plot_day_peak_incidence(func_get_file_name, R0s, subcomps, filename_plot="ma
                  label=str(R0))
 
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10,
-               title="$\\mathcal{R}_{\\text{eff}}\\approx$", title_fontsize=14)
+               title="$\\mathcal{R}_{\\text{eff}}(2)\\approx$", title_fontsize=11)
     plt.ylim(bottom=0)
     plt.xlabel('Number of subcompartments', fontsize=fontsize_labels)
     plt.ylabel('Simulation day of peak [days]', fontsize=fontsize_labels)
