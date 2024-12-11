@@ -550,7 +550,7 @@ TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 {
     auto model = mio::abm::Model(num_age_groups);
     // make sure the infected person stay in Infected long enough
-    mio::abm::LogNormal log_norm(100., 0.);
+    mio::abm::LogNormal log_norm(100., 1.0);
     model.parameters.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant(0), age_group_15_to_34}] =
         mio::abm::StateTransitionDistWrapper(log_norm);
     model.parameters.get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant(0), age_group_15_to_34}] =
@@ -620,15 +620,15 @@ TEST_F(TestModel, checkParameterConstraints)
     auto model  = mio::abm::Model(num_age_groups);
     auto params = model.parameters;
 
-    mio::abm::LogNormal log_norm1(1., 0.);
-    mio::abm::LogNormal log_norm2(2., 0.);
-    mio::abm::LogNormal log_norm3(3., 0.);
-    mio::abm::LogNormal log_norm4(4., 0.);
-    mio::abm::LogNormal log_norm5(5., 0.);
-    mio::abm::LogNormal log_norm6(6., 0.);
-    mio::abm::LogNormal log_norm7(7., 0.);
-    mio::abm::LogNormal log_norm8(8., 0.);
-    mio::abm::LogNormal log_norm9(9., 0.);
+    mio::abm::LogNormal log_norm1(1., 0.5);
+    mio::abm::LogNormal log_norm2(2., 0.5);
+    mio::abm::LogNormal log_norm3(3., 0.5);
+    mio::abm::LogNormal log_norm4(4., 0.5);
+    mio::abm::LogNormal log_norm5(5., 0.5);
+    mio::abm::LogNormal log_norm6(6., 0.5);
+    mio::abm::LogNormal log_norm7(7., 0.5);
+    mio::abm::LogNormal log_norm8(8., 0.5);
+    mio::abm::LogNormal log_norm9(9., 0.5);
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
         mio::abm::StateTransitionDistWrapper(log_norm1);
     params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
@@ -658,15 +658,15 @@ TEST_F(TestModel, checkParameterConstraints)
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(0);
     ASSERT_EQ(params.check_constraints(), false);
 
-    mio::abm::LogNormal log_normm1(-1., 0.);
-    mio::abm::LogNormal log_normm2(-2., 0.);
-    mio::abm::LogNormal log_normm3(-3., 0.);
-    mio::abm::LogNormal log_normm4(-4., 0.);
-    mio::abm::LogNormal log_normm5(-5., 0.);
-    mio::abm::LogNormal log_normm6(-6., 0.);
-    mio::abm::LogNormal log_normm7(-7., 0.);
-    mio::abm::LogNormal log_normm8(-8., 0.);
-    mio::abm::LogNormal log_normm9(-9., 0.);
+    mio::abm::LogNormal log_normm1(-1., 0.5);
+    mio::abm::LogNormal log_normm2(-2., 0.5);
+    mio::abm::LogNormal log_normm3(-3., 0.5);
+    mio::abm::LogNormal log_normm4(-4., 0.5);
+    mio::abm::LogNormal log_normm5(-5., 0.5);
+    mio::abm::LogNormal log_normm6(-6., 0.5);
+    mio::abm::LogNormal log_normm7(-7., 0.5);
+    mio::abm::LogNormal log_normm8(-8., 0.5);
+    mio::abm::LogNormal log_normm9(-9., 0.5);
 
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
         mio::abm::StateTransitionDistWrapper(log_normm1);
@@ -758,10 +758,10 @@ TEST_F(TestModel, mobilityRulesWithAppliedNPIs)
     auto model      = mio::abm::Model(num_age_groups);
     model.get_rng() = this->get_rng();
 
-    mio::abm::LogNormal log_norm(2 * dt.days(), 0.);
+    mio::abm::Constant constant(2 * dt.days());
     model.parameters
         .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::abm::StateTransitionDistWrapper(constant);
     model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
 
@@ -876,10 +876,10 @@ TEST_F(TestModel, mobilityTripWithAppliedNPIs)
     auto model      = mio::abm::Model(num_age_groups);
     model.get_rng() = this->get_rng();
 
-    mio::abm::LogNormal log_norm(2 * dt.days(), 0.);
+    mio::abm::Constant constant(2 * dt.days());
     model.parameters
         .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::abm::StateTransitionDistWrapper(constant);
     model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
 
