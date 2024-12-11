@@ -71,8 +71,6 @@ class Scanner:
         @param intermed_repr Dataclass used for saving the extracted model features.
         @param namespace [Default = ""] Namespace of the current node.
         """
-        if node.spelling == "draw_sample":
-            intermed_repr.has_draw_sample = True
         if node.kind == CursorKind.NAMESPACE:
             namespace = (namespace + node.spelling + "::")
         elif namespace == self.config.namespace:
@@ -98,9 +96,20 @@ class Scanner:
             CursorKind.CONSTRUCTOR: self.check_constructor,
             CursorKind.STRUCT_DECL: self.check_struct,
             CursorKind.TYPE_ALIAS_DECL: self.check_type_alias,
-            CursorKind.TYPE_ALIAS_TEMPLATE_DECL: self.check_type_alias
+            CursorKind.TYPE_ALIAS_TEMPLATE_DECL: self.check_type_alias,
+            CursorKind.FUNCTION_TEMPLATE: self.check_function
         }
         return switch.get(kind, lambda *args: None)
+
+    def check_function(self: Self, node: Cursor, intermed_repr: IntermediateRepresentation) -> None:
+        """! Inspect the nodes of kind FUNCTION_TEMPLATE and write needed information into intermed_repr.
+
+        @param node Current node represented as a Cursor object.
+        @param intermed_repr Dataclass used for saving the extracted model features.
+        """
+
+        if node.spelling == "draw_sample" and CursorKind.FUNCTION_TEMPLATE:
+            intermed_repr.has_draw_sample = True
 
     def check_enum(
         self: Self, node: Cursor,
