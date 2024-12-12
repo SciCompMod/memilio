@@ -76,8 +76,11 @@ def network_fit(path_data, model, savename, filename_df,  max_epochs=30, early_s
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
         'saved_models_secir_simple_paper')
+
     if not os.path.isdir(path_models):
         os.mkdir(path_models)
+
+    path_models = path_models = '/localdata1/gnn_paper_2024/data_Iteration2/results/saved_models/'
 
     model.save(os.path.join(path_models, savename))
 
@@ -144,6 +147,8 @@ def get_test_statistic(test_inputs, test_labels, model, filename_df):
         columns=['MAPE_Scaled'])
     mean_percentage['MAPE_rescaled'] = relative_err_means_percentage_rescaled
 
+    print('MAPE scaled data directly: ',
+          relative_err_means_percentage.mean(), "%")
     print('MAPE scaled data: ', mean_percentage['MAPE_Scaled'].mean(), "%")
     print('MAPE rescaled data: ', mean_percentage['MAPE_rescaled'].mean(), "%")
 
@@ -155,6 +160,7 @@ def get_test_statistic(test_inputs, test_labels, model, filename_df):
 
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
+    file_path = '/hpc_data/schm_a45/data_paper'
     file_path = os.path.join(file_path, filename_df)
     mean_percentage.to_csv(file_path)
     return mean_percentage
@@ -164,14 +170,14 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data_paper')
-
-    dataset_name = 'data_secir_simple_90days_I_based_10k.pickle'
+    path_data = '/hpc_data/schm_a45/data_paper/data_noagegroups/'
+    dataset_name = 'data_secir_simple_90days_10k.pickle'
     path_data = os.path.join(path_data, dataset_name)
-    max_epochs = 1500
+    max_epochs = 2
 
     model = network_architectures.lstm_multi_input_multi_output(90)
-    savename = 'LSTM_90days_secirsimple_I_based_10k.h5'
-    filename_df = 'LSTM_90days_secirsimple_I_based_10k.csv'
+    savename = 'LSTM_simple_90days_10k_test.h5'
+    filename_df = 'data_secir_simple_90days_10k_test.csv'
     model_output = network_fit(
         path_data, model=model, savename=savename, filename_df=filename_df,
         max_epochs=max_epochs)
