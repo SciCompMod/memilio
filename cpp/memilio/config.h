@@ -30,6 +30,17 @@
 
 using ScalarType = double;
 
+namespace ad
+{
+namespace internal
+{
+// Forward declaration used for support of ad types in Limits.
+// These templates are called AD_TAPE_REAL and DATA_HANDLER internally in AD.
+template <class FP, class DataHandler>
+struct active_type;
+} // namespace internal
+} // namespace ad
+
 namespace mio
 {
 /**
@@ -65,6 +76,15 @@ struct Limits<double> {
     static constexpr double zero_tolerance()
     {
         return 1e-12;
+    }
+};
+
+template <class FP, class DataHandler>
+struct Limits<ad::internal::active_type<FP, DataHandler>> {
+    /// @brief Returns the limit under which an AD value may be rounded down to zero.
+    static constexpr FP zero_tolerance()
+    {
+        return Limits<FP>::zero_tolerance();
     }
 };
 /** @} */
