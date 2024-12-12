@@ -35,7 +35,8 @@ namespace ad
 namespace internal
 {
 // Forward declaration used for support of ad types in Limits.
-template <class AD_TAPE_REAL, class DATA_HANDLER>
+// These templates are called AD_TAPE_REAL and DATA_HANDLER internally in AD.
+template <class FP, class DataHandler>
 struct active_type;
 } // namespace internal
 } // namespace ad
@@ -78,12 +79,12 @@ struct Limits<double> {
     }
 };
 
-template <class ADTapeReal, class DataHandler>
-struct Limits<ad::internal::active_type<ADTapeReal, DataHandler>> {
+template <class FP, class DataHandler>
+struct Limits<ad::internal::active_type<FP, DataHandler>> {
     /// @brief Returns the limit under which an AD value may be rounded down to zero.
-    static constexpr ADTapeReal zero_tolerance()
+    static constexpr FP zero_tolerance()
     {
-        return Limits<ADTapeReal>::zero_tolerance();
+        return Limits<FP>::zero_tolerance();
     }
 };
 /** @} */
