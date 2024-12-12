@@ -413,7 +413,7 @@ if __name__ == '__main__':
     if not os.path.isdir(plotfolder):
         os.makedirs(plotfolder)
 
-    # simulation results should be stored in this folder.
+    # Simulation results should be stored in this folder.
     data_dir = os.path.join(os.path.dirname(
         __file__), "..", "data", "simulation_lct_noage")
     R0s = list([2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
@@ -427,21 +427,21 @@ if __name__ == '__main__':
                                 os.path.join(folder, "fictional_lct_2.0_50")],
                                 legendplot=list(
                                     ["ODE", "LCT3", "LCT10", "LCT50"]),
-                                filename_plot="new_infections_rise2.0")
+                                filename_plot="new_infections_rise2")
             compare_single_compartment([os.path.join(folder, "fictional_lct_2.0_1"), os.path.join(folder, "fictional_lct_2.0_3"),
                                         os.path.join(
                                             folder, "fictional_lct_2.0_10"),
                                         os.path.join(folder, "fictional_lct_2.0_50")],
                                        legendplot=list(
                 ["ODE", "LCT3", "LCT10", "LCT50"]),
-                compartment_idx=2, filename_plot="carrier_compartment_rise2.0")
+                compartment_idx=2, filename_plot="carrier_compartment_rise2")
             compare_single_compartment([os.path.join(folder, "fictional_lct_2.0_1"), os.path.join(folder, "fictional_lct_2.0_3"),
                                         os.path.join(
                                             folder, "fictional_lct_2.0_10"),
                                         os.path.join(folder, "fictional_lct_2.0_50")],
                                        legendplot=list(
                 ["ODE", "LCT3", "LCT10", "LCT50"]),
-                compartment_idx=3, filename_plot="infected_compartment_rise2.0")
+                compartment_idx=3, filename_plot="infected_compartment_rise2")
 
         elif case == 1:
             # drop R0 short
@@ -451,7 +451,7 @@ if __name__ == '__main__':
                                 os.path.join(folder, "fictional_lct_0.5_50")],
                                 legendplot=list(
                                     ["ODE", "LCT3", "LCT10", "LCT50"]),
-                                filename_plot="new_infections_drop0.5")
+                                filename_plot="new_infections_drophalf")
             compare_single_compartment([os.path.join(folder, "fictional_lct_0.5_1"),
                                         os.path.join(
                                             folder, "fictional_lct_0.5_3"),
@@ -460,7 +460,7 @@ if __name__ == '__main__':
                                         os.path.join(folder, "fictional_lct_0.5_50")],
                                        legendplot=list(
                 ["ODE", "LCT3", "LCT10", "LCT50"]),
-                compartment_idx=2, filename_plot="carrier_compartment_drop0.5")
+                compartment_idx=2, filename_plot="carrier_compartment_drophalf")
             compare_single_compartment([os.path.join(folder, "fictional_lct_0.5_1"),
                                         os.path.join(folder,
                                                      "fictional_lct_0.5_3"),
@@ -471,7 +471,7 @@ if __name__ == '__main__':
                                         ],
                                        legendplot=list(
                 ["ODE", "LCT3", "LCT10", "LCT50"]),
-                compartment_idx=3, filename_plot="infected_compartment_drop0.5")
+                compartment_idx=3, filename_plot="infected_compartment_drophalf")
         elif case == 2:
             # rise r0 2.0 long
             folder = os.path.join(data_dir, "riseR0long")
@@ -485,7 +485,7 @@ if __name__ == '__main__':
                                  ],
                                 legendplot=list(
                                     ["ODE", "LCT3", "LCT10", "LCT50"]),
-                                filename_plot="new_infections_rise2.0_long", tmax=150)
+                                filename_plot="new_infections_rise2_long", tmax=150)
             compare_compartments_horizontal([os.path.join(folder, "fictional_lct_2.0_1"),
                                             os.path.join(folder,
                                                          "fictional_lct_2.0_3"),
@@ -496,7 +496,7 @@ if __name__ == '__main__':
                                              ],
                                             legendplot=list(
                 ["ODE", "LCT3", "LCT10", "LCT50"]),
-                filename_plot="compartments_rise2.0_long", compartment_indices=[0, 1, 2, 3, 4, 5, 6, 7])
+                filename_plot="compartments_rise2_long", compartment_indices=[0, 1, 2, 3, 4, 5, 6, 7])
         elif case == 3:
             # rise r0 4.0 long
             folder = os.path.join(data_dir, "riseR0long")
@@ -510,7 +510,7 @@ if __name__ == '__main__':
                                  ],
                                 legendplot=list(
                                     ["ODE", "LCT3", "LCT10", "LCT50"]),
-                                filename_plot="new_infections_rise4.0_long", tmax=70)
+                                filename_plot="new_infections_rise4_long", tmax=70)
         elif case == 4:
             data_dir = os.path.join(os.path.dirname(
                 __file__), "..", "data", "simulation_lct_agevsnoage")
@@ -551,7 +551,7 @@ if __name__ == '__main__':
             plot_new_infections([get_file_name(2, 1, folder), get_file_name(2, 3, folder), get_file_name(2, 10, folder), get_file_name(2, 50, folder)],
                                 legendplot=list(
                                     ["ODE", "LCT3", "LCT10", "LCT50"]),
-                                filename_plot="changedTE/new_infections_rise2.0_TEhalved")
+                                filename_plot="changedTE/new_infections_rise2_TEhalved")
             # Plots to compare time and size of epidemic peaks.
             for TEcase in ["TEhalved", "TEdoubled"]:
                 folder = os.path.join(data_dir, "riseR0long"+TEcase)
