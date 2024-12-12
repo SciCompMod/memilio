@@ -27,9 +27,18 @@
 
 #include "memilio/config_internal.h"
 #include <type_traits>
-#include "ad/ad.hpp"
 
 using ScalarType = double;
+
+namespace ad
+{
+namespace internal
+{
+// Forward declaration used for support of ad types in Limits.
+template <class AD_TAPE_REAL, class DATA_HANDLER>
+struct active_type;
+} // namespace internal
+} // namespace ad
 
 namespace mio
 {
@@ -69,12 +78,12 @@ struct Limits<double> {
     }
 };
 
-template <class AD_TAPE_REAL, class DATA_HANDLER>
-struct Limits<ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER>> {
-    /// @brief Returns the limit under which an ad::internal::active_type may be rounded down to zero.
-    static constexpr AD_TAPE_REAL zero_tolerance()
+template <class ADTapeReal, class DataHandler>
+struct Limits<ad::internal::active_type<ADTapeReal, DataHandler>> {
+    /// @brief Returns the limit under which an AD value may be rounded down to zero.
+    static constexpr ADTapeReal zero_tolerance()
     {
-        return Limits<AD_TAPE_REAL>::zero_tolerance();
+        return Limits<ADTapeReal>::zero_tolerance();
     }
 };
 /** @} */
