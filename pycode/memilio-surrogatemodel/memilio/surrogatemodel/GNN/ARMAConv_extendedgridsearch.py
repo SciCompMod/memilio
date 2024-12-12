@@ -46,7 +46,7 @@ from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale
 
 # file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
 file = open(
-    '/hpc_data/schm_a45/data_paper/GNN_data_30days_nodeswithvariance_1k.pickle', 'rb')
+    '/hpc_data/schm_a45/data_paper/GNN_data_30days_samenodes_1k.pickle', 'rb')
 data = pickle.load(file)
 
 
@@ -95,16 +95,19 @@ node_labels = new_labels
 
 
 layers = [ARMAConv]
-number_of_layers = [4, 5, 6]
-# number_of_layers = [2,3,4]
-number_of_neurons = [128, 512, 1024, 2048]
+#number_of_layers = [1
+number_of_layers = [4,5,6]
+number_of_neurons = [32]
 
 
 parameters = []
-for l in layers:
-    for nl in number_of_layers:
-        for nn in number_of_neurons:
-            parameters.append((l, nl, nn))
+for nl in number_of_layers:
+    for nn in number_of_neurons:
+        parameters.append((nl, nn))
+
+parameters.append((1, 2048))
+parameters.append((2, 2048))
+parameters.append((3, 2048))
 
 
 df = pd.DataFrame(
@@ -116,7 +119,8 @@ df = pd.DataFrame(
 def train_and_evaluate_model(
         epochs, learning_rate, param):
 
-    layer, number_of_layer, number_of_n = param
+    layer = ARMAConv
+    number_of_layer, number_of_n = param
 
     class MyDataset(spektral.data.dataset.Dataset):
         def read(self):
@@ -143,7 +147,64 @@ def train_and_evaluate_model(
     epochs = epochs
     es_patience = 100  # Patience for early stopping
 
-    if number_of_layer == 4:
+    if number_of_layer == 1:
+        class Net(Model):
+            def __init__(self):
+                super().__init__()
+
+                self.conv1 = layer(number_of_n, activation='relu')
+                self.dense = Dense(data.n_labels, activation="linear")
+
+            def call(self, inputs):
+                x, a = inputs
+                a = np.asarray(a)
+
+                x = self.conv1([x, a])
+                output = self.dense(x)
+                return output    
+
+    elif number_of_layer == 2:
+        class Net(Model):
+            def __init__(self):
+                super().__init__()
+
+                self.conv1 = layer(number_of_n, activation='relu')
+                self.conv2 = layer(number_of_n, activation='relu')
+                self.dense = Dense(data.n_labels, activation="linear")
+
+            def call(self, inputs):
+                x, a = inputs
+                a = np.asarray(a)
+
+                x = self.conv1([x, a])
+                x = self.conv2([x, a])
+                output = self.dense(x)
+                return output
+
+    
+    elif number_of_layer == 3:
+        class Net(Model):
+            def __init__(self):
+                super().__init__()
+
+                self.conv1 = layer(number_of_n, activation='relu')
+                self.conv2 = layer(number_of_n, activation='relu')
+                self.conv3 = layer(number_of_n, activation='relu')
+                self.dense = Dense(data.n_labels, activation="linear")
+
+            def call(self, inputs):
+                x, a = inputs
+                a = np.asarray(a)
+
+                x = self.conv1([x, a])
+                x = self.conv2([x, a])
+                x = self.conv3([x, a])
+
+                output = self.dense(x)
+                return output
+
+
+    elif number_of_layer == 4:
         class Net(Model):
             def __init__(self):
                 super().__init__()
@@ -269,16 +330,6 @@ def train_and_evaluate_model(
                 output = np.array(output)
                 return np.average(output[:, :-1], 0, weights=output[:, -1])
 
-    def evaluate_rescaled(loader):
-
-        inputs, target = loader.__next__()
-        pred = model(inputs, training=False)
-        pred_r = np.expm1(pred)
-        target_r = np.expm1(target)
-        mape = mean_absolute_percentage_error(target_r, pred_r)
-
-        return np.asarray(mape)
-
     kf = KFold(n_splits=5)
     train_idxs = []
     test_idxs = []
@@ -357,50 +408,48 @@ def train_and_evaluate_model(
         ################################################################################
         model.set_weights(best_weights)  # Load best model
         test_loss, test_acc = evaluate(loader_te)
-        test_mape_rescaled = evaluate_r(loader_te)
-        # test_MAPE = test_evaluation(loader_te)
-        # print(test_MAPE)
+        test_loss_r, test_acc_r = evaluate_r(loader_te)
 
         print(
             "Done. Test loss: {:.4f}. Test acc: {:.2f}".format(
                 test_loss, test_acc))
         test_scores.append(test_loss)
-        test_rescaled.append(test_mape_rescaled)
+        test_rescaled.append(test_loss_r)  # Append to rescaled list
         train_losses.append(np.asarray(losses_history).min())
         val_losses.append(np.asarray(val_losses_history).min())
         losses_history_all.append(losses_history)
         val_losses_history_all.append(val_losses_history)
 
-        elapsed = time.perf_counter() - start
+    elapsed = time.perf_counter() - start
 
-    # plot the losses
-    # plt.figure()
-    # plt.plot(np.asarray(losses_history_all).mean(axis=0), label='train loss')
-    # plt.plot(np.asarray(val_losses_history_all).mean(axis=0), label='val loss')
-    # plt.xlabel('Epoch')
-    # plt.ylabel('Loss ( MAPE)')
-    # plt.title('Loss for' + str(layer))
-    # plt.legend()
-    # plt.savefig('losses'+str(layer)+'.png')
-
-    # print out stats
+    # Print out stats
     print("Best train losses: {} ".format(train_losses))
     print("Best validation losses: {}".format(val_losses))
     print("Test values: {}".format(test_scores))
     print("--------------------------------------------")
-    print("K-Fold Train Score:{}".format(np.mean(train_losses)))
-    print("K-Fold Validation Score:{}".format(np.mean(val_losses)))
+    print("K-Fold Train Score: {}".format(np.mean(train_losses)))
+    print("K-Fold Validation Score: {}".format(np.mean(val_losses)))
     print("K-Fold Test Score: {}".format(np.mean(test_scores)))
-    print("K-Fold ORIGINAL DATA Test Score: {}".format(np.mean(test_mape_rescaled)))
+    # Use test_rescaled
+    print("K-Fold ORIGINAL DATA Test Score: {}".format(np.mean(test_rescaled)))
 
     print("Time for training: {:.4f} seconds".format(elapsed))
-    print("Time for training: {:.4f} minutes".format(elapsed/60))
+    print("Time for training: {:.4f} minutes".format(elapsed / 60))
 
-    df.loc[len(df.index)] = [layer, number_of_layer, number_of_n,
-                             learning_rate, np.mean(train_losses),
-                             np.mean(val_losses),
-                             np.mean(test_scores),
-                             (elapsed / 60), test_scores, test_mape_rescaled, val_losses, train_losses]
+    df.loc[len(df.index)] = [
+        layer,
+        number_of_layer,
+        number_of_n,
+        learning_rate,
+        np.mean(train_losses),
+        np.mean(val_losses),
+        np.mean(test_scores),
+        (elapsed / 60),
+        test_scores,  # Append full list of test_scores
+        test_rescaled,  # Append full list of test_rescaled
+        val_losses,
+        train_losses
+    ]
     # [np.asarray(losses_history_all).mean(axis=0)],
     # [np.asarray(val_losses_history_all).mean(axis=0)]]
 
@@ -417,7 +466,7 @@ def train_and_evaluate_model(
 
 start_hyper = time.perf_counter()
 epochs = 1500
-filename = '/GNN_gridsearch_ARMA_nodeswithvariance_2.csv'
+filename = '/GNN_gridsearch_ARMA_equalnodes_fillNAN.csv'
 for param in parameters:
     train_and_evaluate_model(epochs, 0.001, param)
 
