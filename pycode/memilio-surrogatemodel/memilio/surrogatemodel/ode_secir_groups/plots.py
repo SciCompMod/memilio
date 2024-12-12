@@ -236,7 +236,7 @@ def heatmap_activation_optimiizer(filename, filename_2):
     filepath = os.path.join(path_data, filename_2)
     df_2 = pd.DataFrame(data=pd.read_csv(filepath))
     df_concat = pd.conct(df, df_2)
-    df_plot = df_concat[['optimizer', 'activation', 'kfold_val']]
+    df_plot = df_concat[['optimizer', 'activation', 'kfold_test']]
 
     plt.figure().clf()
 
