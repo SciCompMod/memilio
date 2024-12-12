@@ -90,7 +90,7 @@ public:
                     flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(
                         {region_n, age_i})] +=
                         flow_SE_helper * coeffStoI *
-                        y[population.get_flat_index({region_n, age_j, InfectionState::Susceptible})];
+                        y[population.get_flat_index({region_n, age_i, InfectionState::Susceptible})];
                 }
             }
             for (auto region : make_index_range(n_regions)) {

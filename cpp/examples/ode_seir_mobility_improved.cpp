@@ -40,9 +40,9 @@ mio::IOResult<void> set_covid_parameters(mio::oseirmobilityimproved::Parameters<
         params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(5)] = 0.175;
     }
     else {
-        params.template set<mio::oseirmobilityimproved::TimeInfected<>>(8.);
+        params.template set<mio::oseirmobilityimproved::TimeInfected<>>(8.097612257);
 
-        params.template set<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>(0.07);
+        params.template set<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>(0.07333);
     }
 
     printf("Setting epidemiological parameters successful.\n");
@@ -188,22 +188,22 @@ mio::IOResult<void> set_parameters_and_population(mio::oseirmobilityimproved::Mo
         printf("Data is not compatible, using synthetic population instead.\n");
         for (size_t j = 0; j < number_age_groups; j++) {
             model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(j),
-                               mio::oseirmobilityimproved::InfectionState::Exposed}]     = 10;
+                               mio::oseirmobilityimproved::InfectionState::Exposed}]     = 100;
             model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(j),
-                               mio::oseirmobilityimproved::InfectionState::Susceptible}] = 9990;
+                               mio::oseirmobilityimproved::InfectionState::Susceptible}] = 999900;
             for (size_t i = 1; i < number_regions; i++) {
                 model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(j),
                                    mio::oseirmobilityimproved::InfectionState::Exposed}]     = 0;
                 model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(j),
-                                   mio::oseirmobilityimproved::InfectionState::Susceptible}] = 10000;
+                                   mio::oseirmobilityimproved::InfectionState::Susceptible}] = 1000000;
             }
         }
     }
     else {
         BOOST_OUTCOME_TRY(set_population_data(model, data_dir));
-        populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
+        populations[{mio::oseirmobilityimproved::Region(27), mio::AgeGroup(0),
                      mio::oseirmobilityimproved::InfectionState::Susceptible}] -= 100;
-        populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
+        populations[{mio::oseirmobilityimproved::Region(27), mio::AgeGroup(0),
                      mio::oseirmobilityimproved::InfectionState::Exposed}] += 100;
     }
     BOOST_OUTCOME_TRY(set_mobility_weights(model, data_dir));
@@ -242,7 +242,7 @@ int main()
     mio::set_log_level(mio::LogLevel::debug);
 
     ScalarType t0   = 0.;
-    ScalarType tmax = 5.;
+    ScalarType tmax = 15.;
     ScalarType dt   = 0.1;
 
     ScalarType number_regions = 53;
@@ -279,7 +279,7 @@ int main()
     // result_from_sim.print_table();
 
     auto save_result_status =
-        mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result_test.h5");
+        mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result_nrw.h5");
 
     // auto reproduction_numbers = model.get_reproduction_numbers(result_from_sim);
     // std::cout << "\nbasis reproduction number: " << reproduction_numbers[0] << "\n";

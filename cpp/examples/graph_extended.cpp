@@ -85,22 +85,18 @@ mio::IOResult<void> set_covid_parameters(mio::oseir::Parameters<double>& params,
         params.get<mio::oseir::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(5)] = 0.175;
     }
     else {
-        params.template set<mio::oseir::TimeInfected<>>(8.);
+        params.template set<mio::oseir::TimeInfected<>>(8.097612257);
 
-        params.template set<mio::oseir::TransmissionProbabilityOnContact<>>(0.07);
+        params.template set<mio::oseir::TransmissionProbabilityOnContact<>>(0.07333);
     }
 
     printf("Setting epidemiological parameters successful.\n");
     return mio::success();
 }
 
-mio::IOResult<std::vector<mio::oseir::Model<double>>> set_population_data(const fs::path& data_dir,
-                                                                          mio::oseir::Parameters<double>& params)
+mio::IOResult<std::vector<mio::oseir::Model<double>>>
+set_population_data(const fs::path& data_dir, mio::oseir::Parameters<double>& params, std::vector<int> node_ids)
 {
-    BOOST_OUTCOME_TRY(
-        auto&& node_ids,
-        mio::get_node_ids((data_dir / "pydata" / "Germany" / "county_current_population_nrw.json").string(), true,
-                          true));
     size_t number_regions = node_ids.size();
 
     std::vector<mio::oseir::Model<double>> nodes(number_regions,
@@ -140,8 +136,8 @@ mio::IOResult<std::vector<mio::oseir::Model<double>>> set_population_data(const 
                 {i, mio::oseir::InfectionState::Susceptible}, vnum_population[region][size_t(i)]);
         }
     }
-    nodes[0].populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] -= 100;
-    nodes[0].populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] += 100;
+    nodes[27].populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] -= 100;
+    nodes[27].populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] += 100;
 
     return mio::success(nodes);
 }
@@ -149,7 +145,7 @@ mio::IOResult<std::vector<mio::oseir::Model<double>>> set_population_data(const 
 mio::IOResult<std::vector<mio::oseir::Model<double>>>
 set_synthetic_population_data(mio::oseir::Parameters<double>& params)
 {
-    size_t number_regions = 3;
+    size_t number_regions = 53;
 
     std::vector<mio::oseir::Model<double>> nodes(number_regions,
                                                  mio::oseir::Model(int(size_t(params.get_num_groups()))));
@@ -158,15 +154,15 @@ set_synthetic_population_data(mio::oseir::Parameters<double>& params)
         {params.get_num_groups(), mio::oseir::InfectionState::Count});
 
     for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-        population[{i, mio::oseir::InfectionState::Susceptible}] = 10000;
+        population[{i, mio::oseir::InfectionState::Susceptible}] = 1000000;
     }
     for (auto& node : nodes) {
         node.parameters  = params;
         node.populations = population;
     }
     for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-        nodes[0].populations[{i, mio::oseir::InfectionState::Exposed}]     = 10;
-        nodes[0].populations[{i, mio::oseir::InfectionState::Susceptible}] = 9990;
+        nodes[0].populations[{i, mio::oseir::InfectionState::Exposed}]     = 100;
+        nodes[0].populations[{i, mio::oseir::InfectionState::Susceptible}] = 999900;
     }
 
     return mio::success(nodes);
@@ -191,17 +187,22 @@ mio::IOResult<void> run(const fs::path& data_dir, double t0, double tmax, double
     // and mobility between counties
     mio::Graph<mio::SimulationNode<mio::Simulation<ScalarType, mio::oseir::Model<>>>, mio::MobilityEdge<>> params_graph;
 
+    BOOST_OUTCOME_TRY(
+        auto&& node_ids,
+        mio::get_node_ids((data_dir / "pydata" / "Germany" / "county_current_population_nrw.json").string(), true,
+                          true));
+
     if (synthetic_population) {
         BOOST_OUTCOME_TRY(auto&& nodes, set_synthetic_population_data(params));
         for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
-            params_graph.add_node(node_idx, nodes[node_idx]);
+            params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
         }
         printf("Setting synthetic population successful.\n");
     }
     else {
-        BOOST_OUTCOME_TRY(auto&& nodes, set_population_data(data_dir, params));
+        BOOST_OUTCOME_TRY(auto&& nodes, set_population_data(data_dir, params, node_ids));
         for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
-            params_graph.add_node(node_idx, nodes[node_idx]);
+            params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
         }
         printf("Setting population from data successful.\n");
     }
@@ -250,7 +251,7 @@ mio::IOResult<void> run(const fs::path& data_dir, double t0, double tmax, double
         return n.id;
     });
 
-    auto save_result_status = save_result(result, county_ids, 1, "graph_result.h5");
+    auto save_result_status = save_result(result, county_ids, num_age_groups, "graph_result_nrw.h5");
     result_graph.nodes()[0].property.get_result().print_table();
     result_graph.nodes()[1].property.get_result().print_table();
     result_graph.nodes()[2].property.get_result().print_table();
@@ -261,7 +262,7 @@ mio::IOResult<void> run(const fs::path& data_dir, double t0, double tmax, double
 int main()
 {
     const auto t0   = 0.;
-    const auto tmax = 5.;
+    const auto tmax = 15.;
     const auto dt   = 0.5; //time step of mobility, daily mobility every second step
 
     const std::string& data_dir = "";
