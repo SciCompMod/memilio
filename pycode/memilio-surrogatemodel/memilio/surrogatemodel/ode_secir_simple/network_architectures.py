@@ -82,7 +82,7 @@ def lstm_multi_input_multi_output(label_width, num_outputs=8):
     @param num_outputs [Default: 8] Number of compartments. Default value is reached when aggregating the confirmed compartments.
     """
     model = tf.keras.Sequential([
-        tf.keras.layers.LSTM(32, return_sequences=False),
+        tf.keras.layers.LSTM(64, return_sequences=False),
         tf.keras.layers.Dense(label_width*num_outputs,
                               kernel_initializer=tf.initializers.zeros()),
         tf.keras.layers.Reshape([label_width, num_outputs])])
