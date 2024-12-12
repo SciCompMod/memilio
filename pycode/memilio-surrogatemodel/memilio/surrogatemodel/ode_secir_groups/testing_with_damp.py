@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 
-from memilio.surrogatemodel.ode_secir_groups import network_architectures
-from memilio.simulation.osecir import InfectionState
+# from memilio.surrogatemodel.ode_secir_groups import network_architectures
+# from memilio.simulation.osecir import InfectionState
 import os
 import pickle
 
@@ -232,7 +232,8 @@ def network_fit(
         'saved_models_secir_groups_paper')
     if not os.path.isdir(path_models):
         os.mkdir(path_models)
-    path_models = '/localdata1/gnn_paper_2024/data_Iteration2/results/saved_models/with_age_groups'
+    # path_models = '/localdata1/gnn_paper_2024/data_Iteration2/results/saved_models/with_age_groups'
+    path_models = '/hpc_data/schm_a45/data_paper/'
     model.save(os.path.join(path_models, modelname))
 
     if (plot):
@@ -291,10 +292,19 @@ def get_test_statistic(test_inputs, test_labels, model, filename_df):
     relative_err_means_percentage_rescaled = relative_err_transformed_rescaled.mean(
         axis=1) * 100
 
+    # mean_percentage = pd.DataFrame(
+    #    data=relative_err_means_percentage,
+    #    index=[x for i, x in enumerate([str(compartment).split(
+    #        '.')[1] for compartment in InfectionState.values()]) if i not in (3, 5)],
+    #    columns=['MAPE_Scaled'])
+    # mean_percentage['MAPE_rescaled'] = relative_err_means_percentage_rescaled
+
+    infectionstates = ['Susceptible', 'Exposed', 'InfectedNoSymptoms',
+                       'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
+
     mean_percentage = pd.DataFrame(
         data=relative_err_means_percentage,
-        index=[x for i, x in enumerate([str(compartment).split(
-            '.')[1] for compartment in InfectionState.values()]) if i not in (3, 5)],
+        index=infectionstates,
         columns=['MAPE_Scaled'])
     mean_percentage['MAPE_rescaled'] = relative_err_means_percentage_rescaled
 
@@ -306,7 +316,8 @@ def get_test_statistic(test_inputs, test_labels, model, filename_df):
     path = os.path.dirname(os.path.realpath(__file__))
     file_path = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'testing_paper')
-    file_path = '/localdata1/gnn_paper_2024/data_Iteration2/results/testing'
+    # file_path = '/localdata1/gnn_paper_2024/data_Iteration2/results/testing'
+    file_path = '/hpc_data/schm_a45/data_paper/'
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
     file_path = os.path.join(file_path, filename_df)
@@ -443,33 +454,55 @@ if __name__ == "__main__":
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data_paper')
 
-    dataset_name = 'data_secir_groups_30days_I_based_Germany_10k_new.pickle'
-    filename = 'data_secir_groups_30days_I_based_Germany_10k_new.csv'
-    modelname = 'LSTM_30days_1damp_I_based_10k.h5'
+    dataset_name = 'data_secir_groups_30days_Germany_I_based_10k_1damp.pickle'
+    filename = 'data_secir_groups_30days_Germany_I_based_10k_onedamp.csv'
+    modelname = 'LSTM_groups_30days_onedamp_I_based_10k.h5'
     path = os.path.join(path_data, dataset_name)
+    path = '/localdata1/gnn_paper_2024/data_Iteration2/one_population/with_agegroups_Germany/1damp/data_secir_groups_30days_I_based_Germany_10k_onedamp.pickle'
 
     max_epochs = 1500
     label_width = 30
 
     input_dim = get_input_dim_lstm(path)
 
-    model = "LSTM"
-    if model == "Dense_Single":
-        model = network_architectures.mlp_multi_input_single_output()
-        modeltype = 'classic'
+    def lstm_multi_input_multi_output(label_width, num_age_groups=6):
+        """! LSTM Network which uses multiple time steps as input and returns the 8 compartments for
+        multiple time steps in the future.
 
-    elif model == "Dense":
-        model = network_architectures.mlp_multi_input_multi_output(label_width)
-        modeltype = 'classic'
+        Input and output have shape [number of expert model simulations, time points in simulation,
+        number of individuals in infection states].
 
-    elif model == "LSTM":
-        model = network_architectures.lstm_multi_input_multi_output(
-            label_width)
-        modeltype = 'timeseries'
+        @param label_width Number of time steps in the output.
+        """
+        model = tf.keras.Sequential([
+            tf.keras.layers.LSTM(128, return_sequences=False),
+            tf.keras.layers.Dense(label_width * 8 * num_age_groups,
+                                  kernel_initializer=tf.initializers.zeros()),
+            tf.keras.layers.Reshape([label_width, 8 * num_age_groups])
+        ])
+        return model
 
-    elif model == "CNN":
-        model = network_architectures.cnn_multi_input_multi_output(label_width)
-        modeltype = 'timeseries'
+    def lstm_multi_input_multi_output_Ibased(label_width, num_age_groups=6):
+        """! LSTM Network which uses multiple time steps as input and returns the 8 compartments for
+        multiple time steps in the future.
+
+        Input and output have shape [number of expert model simulations, time points in simulation,
+        number of individuals in infection states].
+
+        @param label_width Number of time steps in the output.
+        """
+        model = tf.keras.Sequential([
+            tf.keras.layers.LSTM(1024, return_sequences=False),
+            tf.keras.layers.Dense(units=1024, activation='elu'),
+            tf.keras.layers.Dense(label_width * 8 * num_age_groups,
+                                  kernel_initializer=tf.initializers.zeros()),
+            tf.keras.layers.Reshape([label_width, 8 * num_age_groups])
+        ])
+        return model
+
+    model = lstm_multi_input_multi_output_Ibased(
+        label_width)
+    modeltype = 'timeseries'
 
     model_output = network_fit(
         path, model=model, modeltype=modeltype, modelname=modelname, filename=filename,
