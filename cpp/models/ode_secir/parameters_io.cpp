@@ -30,6 +30,7 @@ GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
 
 #include "ode_secir/parameters_io.h"
 #include "memilio/io/epi_data.h"
+#include "memilio/io/parameters_io.h"
 #include "memilio/io/io.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/utils/date.h"
@@ -42,15 +43,6 @@ namespace osecir
 
 namespace details
 {
-//district, county or state id of a data entry if available, 0 (for whole country) otherwise
-//used to compare data entries to integer ids in STL algorithms
-template <class EpiDataEntry>
-int get_region_id(const EpiDataEntry& entry)
-{
-    return entry.county_id
-               ? entry.county_id->get()
-               : (entry.state_id ? entry.state_id->get() : (entry.district_id ? entry.district_id->get() : 0));
-}
 //overload for integers, so the comparison of data entry to integers is symmetric (required by e.g. equal_range)
 int get_region_id(int id)
 {
@@ -195,38 +187,6 @@ IOResult<void> read_confirmed_cases_data(
             try_fix_constraints(num_death[i], -5, "Dead");
             try_fix_constraints(num_icu[i], -5, "InfectedCritical");
             try_fix_constraints(num_rec[i], -20, "Recovered");
-        }
-    }
-
-    return success();
-}
-
-IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
-                              std::vector<double>& vnum_icu)
-{
-    BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(path));
-
-    auto max_date_entry = std::max_element(divi_data.begin(), divi_data.end(), [](auto&& a, auto&& b) {
-        return a.date < b.date;
-    });
-    if (max_date_entry == divi_data.end()) {
-        log_error("DIVI data file is empty.");
-        return failure(StatusCode::InvalidFileFormat, path + ", file is empty.");
-    }
-    auto max_date = max_date_entry->date;
-    if (max_date < date) {
-        log_error("Specified date does not exist in DIVI data.");
-        return failure(StatusCode::OutOfRange, path + ", specified date does not exist in DIVI data.");
-    }
-
-    for (auto&& entry : divi_data) {
-        auto it      = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
-            return r == 0 || r == get_region_id(entry);
-        });
-        auto date_df = entry.date;
-        if (it != vregion.end() && date_df == date) {
-            auto region_idx      = size_t(it - vregion.begin());
-            vnum_icu[region_idx] = entry.num_icu;
         }
     }
 

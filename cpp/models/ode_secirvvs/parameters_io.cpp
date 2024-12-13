@@ -29,16 +29,6 @@ namespace osecirvvs
 {
 namespace details
 {
-//gets the county or state id of the entry if available, 0 (for whole country) otherwise
-//used for comparisons of entry to integer region id
-template <class EpiDataEntry>
-int get_region_id(const EpiDataEntry& rki_entry)
-{
-    return rki_entry.county_id ? rki_entry.county_id->get()
-                               : (rki_entry.state_id ? rki_entry.state_id->get()
-                                                     : (rki_entry.district_id ? rki_entry.district_id->get() : 0));
-}
-
 IOResult<void> read_confirmed_cases_data(
     std::string const& path, std::vector<int> const& vregion, Date date, std::vector<std::vector<double>>& vnum_Exposed,
     std::vector<std::vector<double>>& vnum_InfectedNoSymptoms, std::vector<std::vector<double>>& vnum_InfectedSymptoms,
@@ -273,43 +263,6 @@ IOResult<void> read_confirmed_cases_data_fix_recovered(const std::vector<Confirm
                 }
             };
             try_fix_constraints(num_rec[i], 0, "Recovered");
-        }
-    }
-
-    return success();
-}
-
-IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
-                              std::vector<double>& vnum_icu)
-{
-    BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(path));
-    return read_divi_data(divi_data, vregion, date, vnum_icu);
-}
-
-IOResult<void> read_divi_data(const std::vector<DiviEntry>& divi_data, const std::vector<int>& vregion, Date date,
-                              std::vector<double>& vnum_icu)
-{
-    auto max_date_entry = std::max_element(divi_data.begin(), divi_data.end(), [](auto&& a, auto&& b) {
-        return a.date < b.date;
-    });
-    if (max_date_entry == divi_data.end()) {
-        log_error("DIVI data is empty.");
-        return failure(StatusCode::InvalidValue, "DIVI data is empty.");
-    }
-    auto max_date = max_date_entry->date;
-    if (max_date < date) {
-        log_error("DIVI data does not contain the specified date.");
-        return failure(StatusCode::OutOfRange, "DIVI data does not contain the specified date.");
-    }
-
-    for (auto&& entry : divi_data) {
-        auto it      = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
-            return r == 0 || r == get_region_id(entry);
-        });
-        auto date_df = entry.date;
-        if (it != vregion.end() && date_df == date) {
-            auto region_idx      = size_t(it - vregion.begin());
-            vnum_icu[region_idx] = entry.num_icu;
         }
     }
 

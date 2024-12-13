@@ -27,6 +27,7 @@
 
 #include "ode_secir/model.h"
 #include "memilio/io/epi_data.h"
+#include "memilio/io/parameters_io.h"
 #include "memilio/io/result_io.h"
 
 namespace mio
@@ -166,16 +167,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
     BOOST_OUTCOME_TRY(set_confirmed_cases_data(model, case_data, region, date, scaling_factor_inf));
     return success();
 }
-
-/**
-     * @brief Reads number of ICU patients from DIVI register into Parameters.
-     * @param[in] path Path to DIVI file.
-     * @param[in] vregion Keys of the region of interest.
-     * @param date Date for which we initialize.
-     * @param vnum_icu Number of ICU patients.
-     */
-IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
-                              std::vector<double>& vnum_icu);
 
 /**
      * @brief Sets populations data from DIVI register into Model.
