@@ -94,7 +94,7 @@ TEST(TestDABMSimulation, advance)
 {
     using Model   = mio::dabm::Model<QuadWellModel<InfectionState>>;
     auto& pos_rng = mio::UniformDistribution<double>::get_instance();
-    auto& sta_rng = mio::DiscreteDistribution<int>::get_instance();
+    auto& sta_rng = mio::DiscreteDistribution<size_t>::get_instance();
     std::vector<double> pop_dist{0.98, 0.01, 0.005, 0.005, 0., 0.};
     std::vector<Model::Agent> agents(50);
     for (auto& a : agents) {
