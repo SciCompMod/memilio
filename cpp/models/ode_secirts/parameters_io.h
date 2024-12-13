@@ -30,6 +30,7 @@
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/io/epi_data.h"
+#include "memilio/io/parameters_io.h"
 #include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/io/result_io.h"
@@ -43,31 +44,6 @@ namespace osecirts
 
 namespace details
 {
-
-/**
- * @brief Gets the region ID (county, state, or district) of an EpiDataEntry.
- * 
- * If none are available, it defaults to 0 which is representing the whole country.
- * 
- * @tparam EpiDataEntry The type of the data entry.
- * @param data_entry The (RKI) data entry to extract the region ID from.
- * @return The region ID as integer, or 0 if no specific region information is available.
- */
-template <class EpiDataEntry>
-int get_region_id(const EpiDataEntry& data_entry)
-{
-    if (data_entry.county_id) {
-        return data_entry.county_id->get();
-    }
-    if (data_entry.state_id) {
-        return data_entry.state_id->get();
-    }
-    if (data_entry.district_id) {
-        return data_entry.district_id->get();
-    }
-    return 0;
-}
-
 /**
  * @brief Computes the distribution of confirmed cases across infection states based on Case (RKI) data.
  *
@@ -559,70 +535,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
 }
 
 /**
- * @brief Extracts the number of individuals in critical condition (ICU) for each region 
- * on a specified date from the provided DIVI data.
- *
- * @tparam FP Floating point type (default: double).
- *
- * @param[in] divi_data Vector of DIVI data entries containing date, region, and ICU information.
- * @param[in] vregion Vector of region IDs for which the data is computed.
- * @param[in] date Date for which the ICU data is computed.
- * @param[out] vnum_icu Output vector containing the number of ICU cases for each region.
- *
- * @return An IOResult indicating success or failure.
- */
-template <typename FP = double>
-IOResult<void> compute_divi_data(const std::vector<DiviEntry>& divi_data, const std::vector<int>& vregion, Date date,
-                                 std::vector<FP>& vnum_icu)
-{
-    auto max_date_entry = std::max_element(divi_data.begin(), divi_data.end(), [](auto&& a, auto&& b) {
-        return a.date < b.date;
-    });
-    if (max_date_entry == divi_data.end()) {
-        log_error("DIVI data is empty.");
-        return failure(StatusCode::InvalidValue, "DIVI data is empty.");
-    }
-    auto max_date = max_date_entry->date;
-    if (max_date < date) {
-        log_error("DIVI data does not contain the specified date.");
-        return failure(StatusCode::OutOfRange, "DIVI data does not contain the specified date.");
-    }
-
-    for (auto&& entry : divi_data) {
-        auto it      = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
-            return r == 0 || r == get_region_id(entry);
-        });
-        auto date_df = entry.date;
-        if (it != vregion.end() && date_df == date) {
-            auto region_idx      = size_t(it - vregion.begin());
-            vnum_icu[region_idx] = entry.num_icu;
-        }
-    }
-
-    return success();
-}
-
-/**
- * @brief Reads DIVI data from a file and computes the ICU data for specified regions and date.
- *
- * @tparam FP Floating point type (default: double).
- *
- * @param[in] path Path to the file containing DIVI data.
- * @param[in] vregion Vector of region IDs for which the data is computed.
- * @param[in] date Date for which the ICU data is computed.
- * @param[out] vnum_icu Output vector containing the number of ICU cases for each region.
- *
- * @return An IOResult indicating success or failure.
- */
-template <typename FP = double>
-IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
-                              std::vector<FP>& vnum_icu)
-{
-    BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(path));
-    return compute_divi_data(divi_data, vregion, date, vnum_icu);
-}
-
-/**
  * @brief Sets ICU data from DIVI data into the a vector of models, distributed across age groups.
  *
  * This function reads DIVI data from a file, computes the number of individuals in critical condition (ICU) 
@@ -668,30 +580,6 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
 
     return success();
 }
-
-/**
- * @brief Reads population data from census data.
- * 
- * @param[in] path Path to the population data file.
- * @param[in] vregion Vector of keys representing the regions of interest.
- * @return An IOResult containing a vector of vectors, where each inner vector represents the population
- *         distribution across age groups for a specific region, or an error if the function fails.
- * @see mio::read_population_data
- */
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
-                                                                const std::vector<int>& vregion);
-
-/**
- * @brief Reads population data from a vector of population data entries.
- * 
- * @param[in] population_data Vector of population data entries.
- * @param[in] vregion Vector of keys representing the regions of interest.
- * @return An IOResult containing a vector of vectors, where each inner vector represents the population
- *         distribution across age groups for a specific region, or an error if the function fails.
- * @see mio::read_population_data
- */
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::vector<PopulationDataEntry>& population_data,
-                                                                const std::vector<int>& vregion);
 
 /**
  * @brief Sets the population data for the given models based on the provided population distribution and immunity levels.
@@ -785,7 +673,7 @@ template <class Model>
 IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
                                    const std::vector<std::vector<double>> immunity_population)
 {
-    BOOST_OUTCOME_TRY(auto&& num_population, details::read_population_data(path, vregion));
+    BOOST_OUTCOME_TRY(auto&& num_population, mio::read_population_data(path, vregion));
     BOOST_OUTCOME_TRY(set_population_data(model, num_population, vregion, immunity_population));
     return success();
 }
@@ -976,7 +864,7 @@ IOResult<void> export_input_data_county_timeseries(
         models.size(), TimeSeries<double>::zero(num_days + 1, (size_t)InfectionState::Count * num_groups));
 
     BOOST_OUTCOME_TRY(auto&& case_data, read_confirmed_cases_data(confirmed_cases_path));
-    BOOST_OUTCOME_TRY(auto&& population_data, details::read_population_data(population_data_path, counties));
+    BOOST_OUTCOME_TRY(auto&& population_data, read_population_data(population_data_path, counties));
 
     // empty vector if set_vaccination_data is not set
     std::vector<VaccinationDataEntry> vacc_data;
