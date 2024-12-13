@@ -26,6 +26,7 @@
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/parameters.h"
 #include "ode_secir/parameters_io.h"
+#include "memilio/io/parameters_io.h"
 #include "memilio/data/analyze_result.h"
 #include "memilio/math/adapt_rk.h"
 
@@ -1216,21 +1217,6 @@ TEST(TestOdeSecir, apply_constraints_parameters)
 }
 
 #if defined(MEMILIO_HAS_JSONCPP)
-
-TEST(TestOdeSecir, read_population_data_one_age_group)
-{
-    std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
-    const std::vector<int> region{1001};
-    auto result_one_age_group       = mio::osecir::details::read_population_data(path, region, true).value();
-    auto result_multiple_age_groups = mio::osecir::details::read_population_data(path, region, false).value();
-    EXPECT_EQ(result_one_age_group.size(), 1);
-    EXPECT_EQ(result_one_age_group[0].size(), 1);
-    EXPECT_EQ(result_one_age_group[0][0], 90163.0);
-
-    EXPECT_EQ(result_multiple_age_groups.size(), 1);
-    EXPECT_EQ(result_multiple_age_groups[0].size(), 6);
-    EXPECT_EQ(result_multiple_age_groups[0][0], 3433.0);
-}
 #if defined(MEMILIO_HAS_HDF5)
 
 class ModelTestOdeSecir : public testing::Test
@@ -1362,7 +1348,7 @@ TEST_F(ModelTestOdeSecir, export_time_series_init_old_date)
     // read population data
     std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
     const std::vector<int> region{1002};
-    auto population_data = mio::osecir::details::read_population_data(path, region, false).value();
+    auto population_data = mio::read_population_data(path, region).value();
 
     // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
     for (size_t i = 0; i < num_age_groups; i++) {
@@ -1414,7 +1400,7 @@ TEST_F(ModelTestOdeSecir, model_initialization_old_date)
     // read population data
     std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
     const std::vector<int> region{1002};
-    auto population_data = mio::osecir::details::read_population_data(path, region, false).value();
+    auto population_data = mio::read_population_data(path, region).value();
 
     // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
     auto expected_values =

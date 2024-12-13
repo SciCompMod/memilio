@@ -582,30 +582,6 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
 }
 
 /**
- * @brief Reads population data from census data.
- * 
- * @param[in] path Path to the population data file.
- * @param[in] vregion Vector of keys representing the regions of interest.
- * @return An IOResult containing a vector of vectors, where each inner vector represents the population
- *         distribution across age groups for a specific region, or an error if the function fails.
- * @see mio::read_population_data
- */
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
-                                                                const std::vector<int>& vregion);
-
-/**
- * @brief Reads population data from a vector of population data entries.
- * 
- * @param[in] population_data Vector of population data entries.
- * @param[in] vregion Vector of keys representing the regions of interest.
- * @return An IOResult containing a vector of vectors, where each inner vector represents the population
- *         distribution across age groups for a specific region, or an error if the function fails.
- * @see mio::read_population_data
- */
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::vector<PopulationDataEntry>& population_data,
-                                                                const std::vector<int>& vregion);
-
-/**
  * @brief Sets the population data for the given models based on the provided population distribution and immunity levels.
  *
  * @tparam Model The type of the model used.
@@ -697,7 +673,7 @@ template <class Model>
 IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
                                    const std::vector<std::vector<double>> immunity_population)
 {
-    BOOST_OUTCOME_TRY(auto&& num_population, details::read_population_data(path, vregion));
+    BOOST_OUTCOME_TRY(auto&& num_population, mio::read_population_data(path, vregion));
     BOOST_OUTCOME_TRY(set_population_data(model, num_population, vregion, immunity_population));
     return success();
 }
@@ -888,7 +864,7 @@ IOResult<void> export_input_data_county_timeseries(
         models.size(), TimeSeries<double>::zero(num_days + 1, (size_t)InfectionState::Count * num_groups));
 
     BOOST_OUTCOME_TRY(auto&& case_data, read_confirmed_cases_data(confirmed_cases_path));
-    BOOST_OUTCOME_TRY(auto&& population_data, details::read_population_data(population_data_path, counties));
+    BOOST_OUTCOME_TRY(auto&& population_data, read_population_data(population_data_path, counties));
 
     // empty vector if set_vaccination_data is not set
     std::vector<VaccinationDataEntry> vacc_data;

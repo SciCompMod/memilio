@@ -113,6 +113,27 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
     return compute_divi_data(divi_data, vregion, date, vnum_icu);
 }
 
+/**
+ * @brief Reads population data from a vector of population data entries.
+ * 
+ * @param[in] population_data Vector of population data entries.
+ * @param[in] vregion Vector of keys representing the regions of interest.
+ * @return An IOResult containing a vector of vectors, where each inner vector represents the population
+ *         distribution across age groups for a specific region, or an error if the function fails.
+ */
+IOResult<std::vector<std::vector<double>>> read_population_data(const std::vector<PopulationDataEntry>&,
+                                                                const std::vector<int>&);
+
+/**
+ * @brief Reads population data from census data.
+ * 
+ * @param[in] path Path to the population data file.
+ * @param[in] vregion Vector of keys representing the regions of interest.
+ * @return An IOResult containing a vector of vectors, where each inner vector represents the population
+ *         distribution across age groups for a specific region, or an error if the function fails.
+ */
+IOResult<std::vector<std::vector<double>>> read_population_data(const std::string&, const std::vector<int>&);
+
 } // namespace mio
 
 #endif //MEMILIO_HAS_JSONCPP

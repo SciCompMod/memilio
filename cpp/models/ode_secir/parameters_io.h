@@ -207,16 +207,6 @@ IOResult<void> set_divi_data(std::vector<Model<FP>>& model, const std::string& p
 }
 
 /**
-     * @brief Reads population data from census data.
-     * @tparam FP floating point data type, e.g., double.
-     * @param[in] path Path to RKI file.
-     * @param[in] vregion Vector of keys of the regions of interest. 
-     * @param[in] accumulate_age_groups Specifies whether population data should be accumulated to one age group.
-     */
-IOResult<std::vector<std::vector<double>>>
-read_population_data(const std::string& path, const std::vector<int>& vregion, bool accumulate_age_groups = false);
-
-/**
 * @brief Sets population data from census data which has been read into num_population.
 * @tparam FP floating point data type, e.g., double.
 * @param[in, out] model Vector of models in which the data is set. There should be one model per region.
@@ -251,9 +241,7 @@ template <typename FP = double>
 IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::string& path,
                                    const std::vector<int>& vregion)
 {
-    // Specifies whether population data should be accumulated to one age group.
-    const bool is_single_age_group = static_cast<size_t>(model[0].parameters.get_num_groups()) == 1;
-    BOOST_OUTCOME_TRY(const auto&& num_population, read_population_data(path, vregion, is_single_age_group));
+    BOOST_OUTCOME_TRY(const auto&& num_population, read_population_data(path, vregion));
     BOOST_OUTCOME_TRY(set_population_data(model, num_population, vregion));
     return success();
 }
@@ -291,7 +279,7 @@ IOResult<void> export_input_data_county_timeseries(
     std::vector<TimeSeries<double>> extrapolated_data(
         region.size(), TimeSeries<double>::zero(num_days + 1, (size_t)InfectionState::Count * num_age_groups));
 
-    BOOST_OUTCOME_TRY(auto&& num_population, details::read_population_data(population_data_path, region));
+    BOOST_OUTCOME_TRY(auto&& num_population, mio::read_population_data(population_data_path, region));
     BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(confirmed_cases_path));
 
     for (int t = 0; t <= num_days; ++t) {
