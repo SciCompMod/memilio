@@ -90,7 +90,7 @@ TEST(TestQuadWell, setNonMovingRegions)
     EXPECT_EQ(a1.position[1], 1);
 }
 
-TEST(TestDABMSimulation, Advance)
+TEST(TestDABMSimulation, advance)
 {
     using Model   = mio::dabm::Model<QuadWellModel<InfectionState>>;
     auto& pos_rng = mio::UniformDistribution<double>::get_instance();
