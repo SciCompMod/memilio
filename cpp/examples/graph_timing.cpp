@@ -103,7 +103,7 @@ void set_parameters_and_population(mio::Graph<mio::SimulationNode<mio::Simulatio
     }
 }
 
-void simulate(size_t num_warm_up_runs, size_t num_runs, size_t number_regions, ScalarType tmax)
+double simulate(size_t number_regions, ScalarType tmax)
 {
     ScalarType t0 = 0.;
     ScalarType dt = 0.1;
@@ -112,43 +112,40 @@ void simulate(size_t num_warm_up_runs, size_t num_runs, size_t number_regions, S
 
     set_parameters_and_population(params_graph, number_regions);
 
-    // using DefaultIntegratorCore =
-    //     mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>;
+    auto sim        = mio::make_mobility_sim(t0, dt, std::move(params_graph));
+    auto start_time = omp_get_wtime();
+    sim.advance(tmax);
+    auto end_time = omp_get_wtime();
 
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator = std::make_shared<mio::EulerIntegratorCore<>>();
-
-    std::cout << "{ \"Regions\": " << number_regions << ", " << std::endl;
-
-    // Warm up runs.
-    for (size_t i = 0; i < num_warm_up_runs; i++) {
-        auto sim = mio::make_mobility_sim(t0, dt, std::move(params_graph));
-        sim.advance(tmax);
-    }
-
-    // Runs with timing.
-    ScalarType total = 0;
-    for (size_t i = 0; i < num_runs; i++) {
-        auto sim = mio::make_mobility_sim(t0, dt, std::move(params_graph));
-        total -= omp_get_wtime();
-        sim.advance(tmax);
-        total += omp_get_wtime();
-        auto result_graph = std::move(sim).get_graph();
-        result_graph.nodes()[0].property.get_result().print_table();
-    }
-    std::cout << "\"Time\": " << total / num_runs << "\n}," << std::endl;
+    return end_time - start_time;
 }
 
 int main(int argc, char** argv)
 {
-    const ScalarType tmax = 20;
-    size_t warm_up        = 10;
-    size_t num_runs       = 100;
-    size_t num_regions    = 10;
+    const ScalarType tmax = 1;
+    size_t warm_up        = 1;
+    size_t num_runs       = 2;
+    size_t num_regions    = 5;
     if (argc > 3) {
         warm_up     = std::stod(argv[1]);
         num_runs    = std::stod(argv[2]);
         num_regions = std::stod(argv[3]);
     }
-    simulate(warm_up, num_runs, num_regions, tmax);
+
+    std::cout << "{ \"Regions\": " << num_regions << ", " << std::endl;
+    // Warm up runs.
+    for (size_t i = 0; i < warm_up; i++) {
+        double warm_up_time = simulate(num_regions, tmax);
+        mio::unused(warm_up_time);
+    }
+
+    // Runs with timing.
+    ScalarType total = 0;
+    for (size_t i = 0; i < num_runs; i++) {
+        double run_time = simulate(num_regions, tmax);
+        total += run_time;
+    }
+    std::cout << "\"Time\": " << total / num_runs << "\n}," << std::endl;
+
     return 0;
 }
