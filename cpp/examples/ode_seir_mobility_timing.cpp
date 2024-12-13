@@ -131,14 +131,10 @@ void set_parameters_and_population(mio::oseirmobilityimproved::Model<FP>& model)
     }
 }
 
-void simulate(size_t num_warm_up_runs, size_t num_runs, ScalarType tmax)
+void simulate(size_t num_warm_up_runs, size_t num_runs, size_t number_regions, ScalarType tmax)
 {
-    ScalarType t0 = 0.;
-    ScalarType dt = 0.1;
-
-    constexpr size_t number_regions = NUM_REGIONS;
-    std::vector<int> region_ids(number_regions);
-    iota(region_ids.begin(), region_ids.end(), 1);
+    ScalarType t0                = 0.;
+    ScalarType dt                = 0.1;
     ScalarType number_age_groups = 6;
 
     mio::oseirmobilityimproved::Model<ScalarType> model(number_regions, number_age_groups);
@@ -168,13 +164,15 @@ void simulate(size_t num_warm_up_runs, size_t num_runs, ScalarType tmax)
 
 int main(int argc, char** argv)
 {
-    const ScalarType tmax = 2;
+    const ScalarType tmax = 20;
     size_t warm_up        = 10;
     size_t num_runs       = 100;
-    if (argc > 2) {
-        warm_up  = std::stod(argv[1]);
-        num_runs = std::stod(argv[2]);
+    size_t num_regions    = 10;
+    if (argc > 3) {
+        warm_up     = std::stod(argv[1]);
+        num_runs    = std::stod(argv[2]);
+        num_regions = std::stod(argv[3]);
     }
-    simulate(warm_up, num_runs, tmax);
+    simulate(warm_up, num_runs, num_regions, tmax);
     return 0;
 }

@@ -39,14 +39,9 @@ target_link_libraries(ode_seir_mobility_example PRIVATE memilio ode_seir_mobilit
 target_compile_options(ode_seir_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 if (MEMILIO_ENABLE_OPENMP)
-    if(NOT DEFINED NUM_REGIONS)
-            set(NUM_REGIONS "42")
-        endif()
-    add_definitions(-DNUM_REGIONS=${NUM_REGIONS})
-
-    add_executable(ode_seir_mobility_example_timing ode_seir_mobility_timing.cpp)
-    target_link_libraries(ode_seir_mobility_example_timing PRIVATE memilio ode_seir_mobility_improved)
-    target_compile_options(ode_seir_mobility_example_timing PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    add_executable(ode_seir_mobility_timing ode_seir_mobility_timing.cpp)
+    target_link_libraries(ode_seir_mobility_timing PRIVATE memilio ode_seir_mobility_improved)
+    target_compile_options(ode_seir_mobility_timing PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
 add_executable(ode_seir_mobility_example_improved ode_seir_mobility_improved.cpp)
@@ -110,6 +105,12 @@ target_compile_options(graph_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_
 add_executable(graph_example_extended graph_extended.cpp)
 target_link_libraries(graph_example_extended PRIVATE memilio ode_seir)
 target_compile_options(graph_example_extended PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+if (MEMILIO_ENABLE_OPENMP)
+    add_executable(graph_timing graph_timing.cpp)
+    target_link_libraries(graph_timing PRIVATE memilio ode_seir)
+    target_compile_options(graph_timing PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+endif()
 
 add_executable(graph_stochastic_mobility_example graph_stochastic_mobility.cpp)
 target_link_libraries(graph_stochastic_mobility_example PRIVATE memilio ode_secir)
