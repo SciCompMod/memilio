@@ -105,6 +105,21 @@ public:
     }
 
     /**
+     * @brief advance simulation to tmax
+     * tmax must be greater than get_result().get_last_time_point()
+     * @param tmax next stopping point of simulation
+     */
+    Eigen::Ref<Vector<FP>> advance_stoch(FP tmax)
+    {
+        return m_integrator.advance(
+            [this](auto&& y, auto&& t, auto&& dydt) {
+                get_model().eval_right_hand_side(y, y, t, dydt);
+            },
+            tmax, m_dt, m_result);
+    }
+
+
+    /**
      * @brief Returns the simulation result describing the model population in each time step.
      *
      * Which compartments are used by the model is defined by the Comp template argument for the CompartmentalModel
@@ -188,6 +203,16 @@ template <typename FP, class Sim>
 using advance_expr_t = decltype(std::declval<Sim>().advance(std::declval<FP>()));
 
 /**
+ * Defines the return type of the `advance_stoch` member function of a type.
+ * Template is invalid if this member function does not exist.
+ *
+ * @tparam FP floating point type, e.g., double
+ * @tparam Sim a compartment model simulation type.
+ */
+template <typename FP, class Sim>
+using advance_stoch_expr_t = decltype(std::declval<Sim>().advance_stoch(std::declval<FP>()));
+
+/**
  * Template meta function to check if a type is a compartment model simulation. 
  * Defines a static constant of name `value`. 
  * The constant `value` will be equal to true if Sim is a valid compartment simulation type.
@@ -224,6 +249,32 @@ TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model const& model,
     sim.advance(tmax);
     return sim.get_result();
 }
+
+/**
+ * @brief Run a stochastic Simulation of a CompartmentalModel.
+ * @param[in] t0 Start time.
+ * @param[in] tmax End time.
+ * @param[in] dt Initial step size of integration.
+ * @param[in] model An instance of a CompartmentalModel.
+ * @param[in] integrator Optionally override the IntegratorCore used by the Simulation.
+ * @return A TimeSeries to represent the final Simulation result
+ * @tparam FP floating point type, e.g., double
+ * @tparam Model The particular Model derived from CompartmentModel to simulate.
+ * @tparam Sim A Simulation that can simulate the model.
+ */
+template <typename FP, class Model, class Sim = Simulation<FP, Model>>
+TimeSeries<FP> simulate_stoch(FP t0, FP tmax, FP dt, Model const& model,
+                        std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
+{
+    model.check_constraints();
+    Sim sim(model, t0, dt);
+    if (integrator) {
+        sim.set_integrator(integrator);
+    }
+    sim.advance_stoch(tmax);
+    return sim.get_result();
+}
+
 
 } // namespace mio
 

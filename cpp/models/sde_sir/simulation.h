@@ -65,6 +65,22 @@ public:
             },
             tmax, get_dt(), get_result());
     }
+
+    /**
+     * @brief advance simulation to tmax
+     * tmax must be greater than get_result().get_last_time_point()
+     * @param tmax next stopping point of simulation
+     */
+    Eigen::Ref<Vector<>> advance_stoch(ScalarType tmax)
+    {
+        return get_ode_integrator().advance(
+            [this](auto&& y, auto&& t, auto&& dydt) {
+                get_model().step_size = get_dt();
+                auto& stepsize = get_dt();
+                get_model().get_derivatives_stoch(y, y, t, dydt, stepsize);
+            },
+            tmax, get_dt(), get_result());
+    }
 };
 
 /**
@@ -80,6 +96,22 @@ inline TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarTyp
     model.check_constraints();
     Simulation sim(model, t0, dt);
     sim.advance(tmax);
+    return sim.get_result();
+}
+
+/**
+ * @brief Run a Simulation of a mio::ssir::Model.
+ * @param[in] t0 Start time.
+ * @param[in] tmax End time.
+ * @param[in] dt Initial step size of integration.
+ * @param[in] model An instance of mio::ssir::Model.
+ * @return A TimeSeries to represent the final simulation result
+ */
+inline TimeSeries<ScalarType> simulate_stoch(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& model)
+{
+    model.check_constraints();
+    Simulation sim(model, t0, dt);
+    sim.advance_stoch(tmax);
     return sim.get_result();
 }
 
@@ -128,6 +160,34 @@ public:
         compute_population_results();
         return result;
     }
+
+    /**
+     * @brief Advance the simulation to tmax.
+     * tmax must be greater than get_result().get_last_time_point().
+     * @param[in] tmax Next stopping time of the simulation.
+     */
+    Eigen::Ref<Vector<>> advance_stoch(ScalarType tmax)
+    {
+        assert(get_flows().get_num_time_points() == get_result().get_num_time_points());
+        auto result = this->get_ode_integrator().advance(
+            // see the general mio::FlowSimulation for more details on this DerivFunction
+            [this](auto&& flows, auto&& t, auto&& dflows_dt) {
+                const auto& pop_result = get_result();
+                auto& model            = get_model();
+                auto& stepsize         = get_dt();
+                // compute current population
+                model.get_derivatives_stoch(flows - get_flows().get_value(pop_result.get_num_time_points() - 1), m_pop, stepsize);
+                m_pop += pop_result.get_last_value();
+                // compute the current change in flows with respect to the current population
+                dflows_dt.setZero();
+                model.step_size = get_dt(); // set the current step size
+                model.get_flows(m_pop, m_pop, t, dflows_dt);
+            },
+            tmax, get_dt(), get_flows());
+        compute_population_results();
+        return result;
+    }
+
 };
 
 /**

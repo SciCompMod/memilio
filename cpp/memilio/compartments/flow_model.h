@@ -25,6 +25,7 @@
 #include "memilio/utils/index_range.h"
 #include "memilio/utils/flow.h"
 #include "memilio/utils/type_list.h"
+#include "memilio/utils/random_number_generator.h"
 
 namespace mio
 {
@@ -124,6 +125,29 @@ public:
     }
 
     /**
+     * @brief Compute the right-hand-side of the ODE dydt = f(y, t) from flow values.
+     *
+     * This function is generated at compile time depending on the template parameters Flows and Pop of the model.
+     *
+     * @param[in] flows The current flow values (as calculated by get_flows) as a flat array.
+     * @param[out] dydt A reference to the calculated output.
+     */
+    void get_derivatives_stoch(Eigen::Ref<const Vector<FP>> flows, Eigen::Ref<Vector<FP>> dydt, const FP stepsize) const
+    {
+        // set dydt to 0, then iteratively add all flow contributions
+        dydt.setZero();
+        if constexpr (std::is_same_v<FlowIndex, Index<>>) {
+            // special case where PopIndex only contains Comp, hence FlowIndex has no dimensions to iterate over
+            get_rhs_impl_stoch(flows, dydt, Index<>{}, stepsize);
+        }
+        else {
+            for (FlowIndex I : make_index_range(reduce_index<FlowIndex>(this->populations.size()))) {
+                get_rhs_impl_stoch(flows, dydt, I, stepsize);
+            }
+        }
+    }
+
+    /**
      * @brief Compute the right-hand-side f(y, t) of the ODE and store it in dydt.
      *
      * This function uses get_flows(..., flows) and get_derivatives(flows, dydt) to provide the
@@ -140,6 +164,26 @@ public:
         m_flow_values.setZero();
         get_flows(pop, y, t, m_flow_values);
         get_derivatives(m_flow_values, dydt);
+    }
+
+    /**
+     * @brief Compute the right-hand-side f(y, t) of the ODE and store it in dydt.
+     *
+     * This function uses get_flows(..., flows) and get_derivatives(flows, dydt) to provide the
+     * same interface as a CompartmentalModel.
+     *
+     * @param[in] pop The current population of the model as a flat array.
+     * @param[in] y The current state of the model as a flat array.
+     * @param[in] t The current time.
+     * @param[out] dydt A reference to the calculated output.
+     * @param[in] stepsize The stepsize.
+     */
+    void get_derivatives_stoch(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
+                         Eigen::Ref<Vector<FP>> dydt, const FP stepsize) const override final
+    {
+        m_flow_values.setZero();
+        get_flows(pop, y, t, m_flow_values);
+        get_derivatives_stoch(m_flow_values, dydt, stepsize);
     }
 
     /**
@@ -232,6 +276,38 @@ private:
             get_rhs_impl<I + 1>(flows, rhs, index);
         }
     }
+
+    mutable RandomNumberGenerator rng;
+
+    /**
+     * @brief Compute the derivatives of the compartments.
+     * Compute the derivatives/rhs of the model equations for a given flow and index.
+     * Uses recursion, which is resolved at compile time depending on the Flows.
+     * @param[in] flows Current change in flows, as computed by get_flows.
+     * @param[out] rhs The derivatives of the model equations.
+     * @param[in, out] i The Popindex at which to compute derivative. The entry for Comp wll be overwritten.
+     * @tparam I The index of a flow in FlowChart.
+     */
+    template <size_t I = 0>
+    inline void get_rhs_impl_stoch(Eigen::Ref<const Vector<FP>> flows, Eigen::Ref<Vector<FP>> rhs,
+                             const FlowIndex& index, const ScalarType stepsize) const
+    {
+        using Flow                 = type_at_index_t<I, Flows>;
+        const auto flat_flow_index = get_flat_flow_index<Flow::source, Flow::target>(index);
+        const auto flat_source_population =
+            this->populations.get_flat_index(extend_index<PopIndex>(index, (size_t)Flow::source));
+        const auto flat_target_population =
+            this->populations.get_flat_index(extend_index<PopIndex>(index, (size_t)Flow::target));
+        const ScalarType dW = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
+        std::cout << 1;
+        rhs[flat_source_population] -= flows[flat_flow_index] + sqrt(flows[flat_flow_index] / stepsize) * dW; // subtract outflow from source compartment
+        rhs[flat_target_population] += flows[flat_flow_index] + sqrt(flows[flat_flow_index] / stepsize) * dW; // add outflow to target compartment
+        // handle next flow (if there is one)
+        if constexpr (I + 1 < Flows::size()) {
+            get_rhs_impl_stoch<I + 1>(flows, rhs, index, stepsize);
+        }
+    }
+
 };
 
 /**
@@ -245,6 +321,10 @@ private:
 template <typename FP, class M>
 using get_derivatives_expr_t = decltype(std::declval<const M&>().get_derivatives(
     std::declval<Eigen::Ref<const Vector<FP>>>(), std::declval<Eigen::Ref<Vector<FP>>>()));
+
+    template <typename FP, class M>
+using get_derivatives_stoch_expr_t = decltype(std::declval<const M&>().get_derivatives_stoch(
+    std::declval<Eigen::Ref<const Vector<FP>>>(), std::declval<Eigen::Ref<Vector<FP>>>(), std::declval<const FP>));
 
 template <typename FP, class M>
 using get_flows_expr_t =

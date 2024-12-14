@@ -144,14 +144,13 @@ public:
                 dydt[I1i] += coeffStoI1 * y[Si] * pop[I1j];
                 dydt[I2i] += coeffStoI2 * y[Si] * pop[I2j];
                 dydt[I3i] += coeffStoI3 * y[Si] * pop[I3j];
-                dydt[I4i] += coeffStoI3 * y[Si] * pop[I4j];
-                dydt[I5i] += coeffStoI3 * y[Si] * pop[I5j];
-                dydt[I6i] += coeffStoI3 * y[Si] * pop[I6j];
-                dydt[I7i] += coeffStoI3 * y[Si] * pop[I7j];
-                dydt[I8i] += coeffStoI3 * y[Si] * pop[I8j];
-                dydt[I9i] += coeffStoI3 * y[Si] * pop[I9j];
-                dydt[I10i] += coeffStoI3 * y[Si] * pop[I10j];
-
+                dydt[I4i] += coeffStoI4 * y[Si] * pop[I4j];
+                dydt[I5i] += coeffStoI5 * y[Si] * pop[I5j];
+                dydt[I6i] += coeffStoI6 * y[Si] * pop[I6j];
+                dydt[I7i] += coeffStoI7 * y[Si] * pop[I7j];
+                dydt[I8i] += coeffStoI8 * y[Si] * pop[I8j];
+                dydt[I9i] += coeffStoI9 * y[Si] * pop[I9j];
+                dydt[I10i] += coeffStoI10 * y[Si] * pop[I10j];
 
                 ScalarType coeffStoR1 = recovery_matrix_v1.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                        static_cast<Eigen::Index>((size_t)j)) * 
@@ -184,7 +183,7 @@ public:
                                                                        static_cast<Eigen::Index>((size_t)j)) * 
                                         (1.0 / params.template get<TimeInfectedV10<FP>>()[i]);
 
-                dydt[I1j] += -coeffStoR1 * pop[I1j]; 
+                /*dydt[I1j] += -coeffStoR1 * pop[I1j]; 
                 dydt[I2j] += -coeffStoR2 * pop[I2j]; 
                 dydt[I3j] += -coeffStoR3 * pop[I3j]; 
                 dydt[I4j] += -coeffStoR4 * pop[I4j];
@@ -197,11 +196,27 @@ public:
                 dydt[Si] += coeffStoR1 * pop[I1j] + coeffStoR2 * pop[I2j] + coeffStoR3 * pop[I3j] 
                             + coeffStoR4 * pop[I4j] + coeffStoR5 * pop[I5j] + coeffStoR6 * pop[I6j]
                             + coeffStoR7 * pop[I7j] + coeffStoR8 * pop[I8j] + coeffStoR9 * pop[I9j]
-                            + coeffStoR10 * pop[I10j];
+                            + coeffStoR10 * pop[I10j];*/
+
+                dydt[I1j] += -coeffStoR1 * y[I1j]; 
+                dydt[I2j] += -coeffStoR2 * y[I2j]; 
+                dydt[I3j] += -coeffStoR3 * y[I3j]; 
+                dydt[I4j] += -coeffStoR4 * y[I4j];
+                dydt[I5j] += -coeffStoR5 * y[I5j];
+                dydt[I6j] += -coeffStoR6 * y[I6j];
+                dydt[I7j] += -coeffStoR7 * y[I7j];
+                dydt[I8j] += -coeffStoR8 * y[I8j];
+                dydt[I9j] += -coeffStoR9 * y[I9j];
+                dydt[I10j] += -coeffStoR10 * y[I10j];
+                dydt[Si] += coeffStoR1 * y[I1j] + coeffStoR2 * y[I2j] + coeffStoR3 * y[I3j] 
+                            + coeffStoR4 * y[I4j] + coeffStoR5 * y[I5j] + coeffStoR6 * y[I6j]
+                            + coeffStoR7 * y[I7j] + coeffStoR8 * y[I8j] + coeffStoR9 * y[I9j]
+                            + coeffStoR10 * y[I10j];
             }
-            ScalarType mut_p = 0.02;
+            ScalarType mut_p = 0.001;
             ScalarType mut_p2 = mut_p * mut_p;
-            dydt[I1i] += (-mut_p - mut_p2) * y[I1i] + mut_p * y[I2i] + mut_p2 * y[I3i];
+
+            /*dydt[I1i] += (-mut_p - mut_p2) * y[I1i] + mut_p * y[I2i] + mut_p2 * y[I3i];
             dydt[I2i] += (-2.0 * mut_p - mut_p2) * y[I2i] + mut_p * (y[I1i] + y[I3i]) + mut_p2 * y[I4i];
             dydt[I3i] += (-mut_p - mut_p2) * 2.0 * y[I3i] + mut_p * (y[I2i] + y[I4i]) + mut_p2 * (y[I1i] + y[I5i]);
             dydt[I4i] += (-mut_p - mut_p2) * 2.0 * y[I4i] + mut_p * (y[I3i] + y[I5i]) + mut_p2 * (y[I2i] + y[I6i]);
@@ -210,7 +225,39 @@ public:
             dydt[I7i] += (-mut_p - mut_p2) * 2.0 * y[I7i] + mut_p * (y[I6i] + y[I8i]) + mut_p2 * (y[I5i] + y[I9i]);
             dydt[I8i] += (-mut_p - mut_p2) * 2.0 * y[I8i] + mut_p * (y[I7i] + y[I9i]) + mut_p2 * (y[I6i] + y[I10i]);
             dydt[I9i] += (-2.0 * mut_p - mut_p2) * y[I9i] + mut_p * (y[I8i] + y[I10i]) + mut_p2 * y[I7i];
-            dydt[I10i] += (-mut_p - mut_p2) * y[I10i] + mut_p * y[I9i] + mut_p2 * y[I8i];
+            dydt[I10i] += (-mut_p - mut_p2) * y[I10i] + mut_p * y[I9i] + mut_p2 * y[I8i];*/
+
+            dydt[I1i] += (-mut_p - mut_p2) * pop[I1i] + mut_p * pop[I2i] + mut_p2 * pop[I3i];
+            dydt[I2i] += (-2.0 * mut_p - mut_p2) * pop[I2i] + mut_p * (pop[I1i] + pop[I3i]) + mut_p2 * pop[I4i];
+            dydt[I3i] += (-mut_p - mut_p2) * 2.0 * pop[I3i] + mut_p * (pop[I2i] + pop[I4i]) + mut_p2 * (pop[I1i] + pop[I5i]);
+            dydt[I4i] += (-mut_p - mut_p2) * 2.0 * pop[I4i] + mut_p * (pop[I3i] + pop[I5i]) + mut_p2 * (pop[I2i] + pop[I6i]);
+            dydt[I5i] += (-mut_p - mut_p2) * 2.0 * pop[I5i] + mut_p * (pop[I4i] + pop[I6i]) + mut_p2 * (pop[I3i] + pop[I7i]);
+            dydt[I6i] += (-mut_p - mut_p2) * 2.0 * pop[I6i] + mut_p * (pop[I5i] + pop[I7i]) + mut_p2 * (pop[I4i] + pop[I8i]);
+            dydt[I7i] += (-mut_p - mut_p2) * 2.0 * pop[I7i] + mut_p * (pop[I6i] + pop[I8i]) + mut_p2 * (pop[I5i] + pop[I9i]);
+            dydt[I8i] += (-mut_p - mut_p2) * 2.0 * pop[I8i] + mut_p * (pop[I7i] + pop[I9i]) + mut_p2 * (pop[I6i] + pop[I10i]);
+            dydt[I9i] += (-2.0 * mut_p - mut_p2) * pop[I9i] + mut_p * (pop[I8i] + pop[I10i]) + mut_p2 * pop[I7i];
+            dydt[I10i] += (-mut_p - mut_p2) * pop[I10i] + mut_p * pop[I9i] + mut_p2 * pop[I8i];
+
+            /*dydt[I2i] += (-mut_p) * y[I2i] + mut_p * y[I1i];
+            dydt[I3i] += (-mut_p - mut_p2) * y[I3i] + mut_p * y[I2i] + mut_p2 * y[I1i];
+            dydt[I4i] += (-mut_p - mut_p2) * y[I4i] + mut_p * y[I3i] + mut_p2 * y[I2i];
+            dydt[I5i] += (-mut_p - mut_p2) * y[I5i] + mut_p * y[I4i] + mut_p2 * y[I3i];
+            dydt[I6i] += (-mut_p - mut_p2) * y[I6i] + mut_p * y[I5i] + mut_p2 * y[I4i];
+            dydt[I7i] += (-mut_p - mut_p2) * y[I7i] + mut_p * y[I6i] + mut_p2 * y[I5i];
+            dydt[I8i] += (-mut_p - mut_p2) * y[I8i] + mut_p * y[I7i] + mut_p2 * y[I6i];
+            dydt[I9i] += (-mut_p - mut_p2) * y[I9i] + mut_p * y[I8i] + mut_p2 * y[I7i];
+            dydt[I10i] += (-mut_p - mut_p2) * y[I10i] + mut_p * y[I9i] + mut_p2 * y[I8i];*/
+
+            /*dydt[I2i] += (-mut_p) * pop[I2i] + mut_p * pop[I1i];
+            dydt[I3i] += (-mut_p - mut_p2) * pop[I3i] + mut_p * pop[I2i] + mut_p2 * pop[I1i];
+            dydt[I4i] += (-mut_p - mut_p2) * pop[I4i] + mut_p * pop[I3i] + mut_p2 * pop[I2i];
+            dydt[I5i] += (-mut_p - mut_p2) * pop[I5i] + mut_p * pop[I4i] + mut_p2 * pop[I3i];
+            dydt[I6i] += (-mut_p - mut_p2) * pop[I6i] + mut_p * pop[I5i] + mut_p2 * pop[I4i];
+            dydt[I7i] += (-mut_p - mut_p2) * pop[I7i] + mut_p * pop[I6i] + mut_p2 * pop[I5i];
+            dydt[I8i] += (-mut_p - mut_p2) * pop[I8i] + mut_p * pop[I7i] + mut_p2 * pop[I6i];
+            dydt[I9i] += (-mut_p - mut_p2) * pop[I9i] + mut_p * pop[I8i] + mut_p2 * pop[I7i];
+            dydt[I10i] += (-mut_p - mut_p2) * pop[I10i] + mut_p * pop[I9i] + mut_p2 * pop[I8i];*/
+            
         }
     }
 

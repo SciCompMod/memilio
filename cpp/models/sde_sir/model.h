@@ -57,8 +57,8 @@ public:
         ScalarType coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
                                params.get<TransmissionProbabilityOnContact>() / populations.get_total();
 
-        ScalarType si = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
-        ScalarType ir = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
+        ScalarType si = 0; //mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
+        ScalarType ir = 0; //mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
 
         // Assuming that no person can change its InfectionState twice in a single time step,
         // take the minimum of the calculated flow and the source compartment, to ensure that

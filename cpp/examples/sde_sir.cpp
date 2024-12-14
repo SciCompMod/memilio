@@ -49,7 +49,7 @@ int main()
 
     model.check_constraints();
 
-    auto sir = mio::ssir::simulate(t0, tmax, dt, model);
+    auto sir = mio::ssir::simulate_stoch(t0, tmax, dt, model);
 
     sir.print_table();
 }

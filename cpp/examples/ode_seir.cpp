@@ -57,7 +57,7 @@ int main()
 
     model.check_constraints();
 
-    auto seir = simulate(t0, tmax, dt, model);
+    auto seir = simulate_stoch(t0, tmax, dt, model);
 
     seir.print_table({"S", "E", "I", "R"});
     std::cout << "\nnumber total: " << seir.get_last_value().sum() << "\n";

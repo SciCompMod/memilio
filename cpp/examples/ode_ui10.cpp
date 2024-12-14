@@ -9,7 +9,7 @@ int main()
     mio::set_log_level(mio::LogLevel::debug);
 
     double t0   = 0;
-    double tmax = 400;
+    double tmax = 1000;
     double dt   = 0.1;
 
     mio::log_info("Simulating UI; t={} ... {} with dt = {}.", t0, tmax, dt);
@@ -39,32 +39,32 @@ int main()
         //model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::oui::InfectionState::Susceptible},
         //                                                                 fact * (nb_total_t0 - 1000));
 
-        ScalarType base = 1.35;
+        //ScalarType base = 1.0;
 
-        model.parameters.get<mio::oui10::TimeInfectedV1<double>>()[i]                     = 12 * std::pow(base, 0);
-        model.parameters.get<mio::oui10::TimeInfectedV2<double>>()[i]                     = 12 * std::pow(base, 1);
-        model.parameters.get<mio::oui10::TimeInfectedV3<double>>()[i]                     = 12 * std::pow(base, 2);
-        model.parameters.get<mio::oui10::TimeInfectedV1<double>>()[i]                     = 12 * std::pow(base, 3);
-        model.parameters.get<mio::oui10::TimeInfectedV2<double>>()[i]                     = 12 * std::pow(base, 4);
-        model.parameters.get<mio::oui10::TimeInfectedV3<double>>()[i]                     = 12 * std::pow(base, 5);
-        model.parameters.get<mio::oui10::TimeInfectedV1<double>>()[i]                     = 12 * std::pow(base, 6);
-        model.parameters.get<mio::oui10::TimeInfectedV2<double>>()[i]                     = 12 * std::pow(base, 7);
-        model.parameters.get<mio::oui10::TimeInfectedV3<double>>()[i]                     = 12 * std::pow(base, 8);
-        model.parameters.get<mio::oui10::TimeInfectedV1<double>>()[i]                     = 12 * std::pow(base, 9);
-        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV1<double>>()[i] = 0.1;
-        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV2<double>>()[i] = 0.1;
-        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV3<double>>()[i] = 0.1;
-        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV4<double>>()[i] = 0.1;
-        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV5<double>>()[i] = 0.1;
-        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV6<double>>()[i] = 0.1;
-        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV7<double>>()[i] = 0.1;
-        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV8<double>>()[i] = 0.1;
-        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV9<double>>()[i] = 0.1;
-        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV10<double>>()[i] = 0.1;
+        model.parameters.get<mio::oui10::TimeInfectedV1<double>>()[i]                     = 7;
+        model.parameters.get<mio::oui10::TimeInfectedV2<double>>()[i]                     = 9;
+        model.parameters.get<mio::oui10::TimeInfectedV3<double>>()[i]                     = 7;
+        model.parameters.get<mio::oui10::TimeInfectedV4<double>>()[i]                     = 7;
+        model.parameters.get<mio::oui10::TimeInfectedV5<double>>()[i]                     = 7;
+        model.parameters.get<mio::oui10::TimeInfectedV6<double>>()[i]                     = 7;
+        model.parameters.get<mio::oui10::TimeInfectedV7<double>>()[i]                     = 7;
+        model.parameters.get<mio::oui10::TimeInfectedV8<double>>()[i]                     = 7;
+        model.parameters.get<mio::oui10::TimeInfectedV9<double>>()[i]                     = 7;
+        model.parameters.get<mio::oui10::TimeInfectedV10<double>>()[i]                     = 7;
+        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV1<double>>()[i] = 0.2;
+        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV2<double>>()[i] = 0.2;
+        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV3<double>>()[i] = 0.2;
+        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV4<double>>()[i] = 0.2;
+        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV5<double>>()[i] = 0.2;
+        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV6<double>>()[i] = 0.2;
+        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV7<double>>()[i] = 0.2;
+        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV8<double>>()[i] = 0.2;
+        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV9<double>>()[i] = 0.2;
+        model.parameters.get<mio::oui10::TransmissionProbabilityOnContactV10<double>>()[i] = 0.2;
     }
 
-    model.populations[{mio::AgeGroup(0), mio::oui10::InfectionState::Susceptible}] = 9000;
-    model.populations[{mio::AgeGroup(0), mio::oui10::InfectionState::InfectedV1}]  = 1000;
+    model.populations[{mio::AgeGroup(0), mio::oui10::InfectionState::Susceptible}] = 9900;
+    model.populations[{mio::AgeGroup(0), mio::oui10::InfectionState::InfectedV1}]  = 100;
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::oui10::ContactPatterns<double>>();
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
