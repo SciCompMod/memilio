@@ -105,7 +105,6 @@ public:
                 const auto& pop_result = this->get_result();
                 const auto& model      = this->get_model();
                 const auto& stepsize   = this->get_dt();
-                std::cout << 2;
                 // compute current population
                 //   flows contains the accumulated outflows of each compartment for each target compartment at time t.
                 //   Using that the ODEs are linear expressions of the flows, get_derivatives can compute the total change

@@ -14,13 +14,14 @@ int main()
 
     mio::log_info("Simulating UI; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    double cont_freq = 10;
+    
 
     //double nb_total_t0 = 10000;//  nb_inf_t0 = 100;
     const size_t num_groups = 4;
 
     mio::oui::Model<double> model(num_groups);
     double fact = 1.0 / num_groups;
+    double cont_freq = num_groups;
 
     auto& params = model.parameters;
 
@@ -31,17 +32,17 @@ int main()
         
         //model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::oui::InfectionState::Susceptible},
         //                                                                 fact * (nb_total_t0 - 1000));
-
-        model.parameters.get<mio::oui::TimeInfectedV1<double>>()[i]                     = 12;
-        model.parameters.get<mio::oui::TimeInfectedV2<double>>()[i]                     = 12 * 1.35;
-        model.parameters.get<mio::oui::TimeInfectedV3<double>>()[i]                     = 12 * 1.35 * 1.35;
-        model.parameters.get<mio::oui::TransmissionProbabilityOnContactV1<double>>()[i] = 0.1;
-        model.parameters.get<mio::oui::TransmissionProbabilityOnContactV2<double>>()[i] = 0.1;
-        model.parameters.get<mio::oui::TransmissionProbabilityOnContactV3<double>>()[i] = 0.1;
+    
     }
 
-    model.populations[{mio::AgeGroup(0), mio::oui::InfectionState::Susceptible}] = 9000;
-    model.populations[{mio::AgeGroup(0), mio::oui::InfectionState::InfectedV1}]  = 1000;
+    model.parameters.get<mio::oui::TransmissionProbabilityOnContactV1<double>>()        = 0.1;
+    model.parameters.get<mio::oui::TransmissionProbabilityOnContactV2<double>>()        = 0.1;
+    model.parameters.get<mio::oui::TransmissionProbabilityOnContactV3<double>>()        = 0.1;
+    model.parameters.get<mio::oui::TimeInfectedV1<double>>()                            = 12;
+    model.parameters.get<mio::oui::TimeInfectedV2<double>>()                            = 12 * 1.35;
+    model.parameters.get<mio::oui::TimeInfectedV3<double>>()                            = 12 * 1.35 * 1.35;
+    model.populations[{mio::AgeGroup(0), mio::oui::InfectionState::Susceptible}]        = 9000;
+    model.populations[{mio::AgeGroup(0), mio::oui::InfectionState::InfectedV1}]         = 1000;
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::oui::ContactPatterns<double>>();
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
@@ -52,18 +53,18 @@ int main()
              1, 100, 0, 0, 
              0, 0, 100, 0, 
              0, 0, 0, 100;
-    mio::ContactMatrixGroup& recovery_matrix_v1 = params.get<mio::oui::RecoveryPatternsV1<double>>();
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& recovery_matrix_v1 = params.get<mio::oui::RecoveryPatternsV1<double>>();
     //recovery_matrix_v1[0] = mio::ContactMatrix(Eigen::MatrixXd::Identity(num_groups, num_groups));
-    recovery_matrix_v1[0] = mio::ContactMatrix(rec_1);
+    recovery_matrix_v1 = rec_1;
 
     Eigen::MatrixXd rec_2 = Eigen::MatrixXd::Constant(num_groups, num_groups, 0.0);
     rec_2 << 0, 0, 0, 0,
              0, 0, 0, 0, 
              1, 1, 100, 0, 
-             0, 0, 0, 100; 
-    mio::ContactMatrixGroup& recovery_matrix_v2 = params.get<mio::oui::RecoveryPatternsV2<double>>();
+             0, 0, 0, 100;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& recovery_matrix_v2 = params.get<mio::oui::RecoveryPatternsV2<double>>();
     //recovery_matrix_v2[0] = mio::ContactMatrix(Eigen::MatrixXd::Identity(num_groups, num_groups));
-    recovery_matrix_v2[0] = mio::ContactMatrix(rec_2);
+    recovery_matrix_v2 = rec_2;
 
     Eigen::MatrixXd rec_3 = Eigen::MatrixXd::Constant(num_groups, num_groups, 0.0);
     rec_3 << 0, 0, 0, 0,
@@ -71,9 +72,9 @@ int main()
              0, 0, 0, 0,
              1, 1, 1, 100;
 
-    mio::ContactMatrixGroup& recovery_matrix_v3 = params.get<mio::oui::RecoveryPatternsV3<double>>();
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& recovery_matrix_v3 = params.get<mio::oui::RecoveryPatternsV3<double>>();
     //recovery_matrix_v3[0] = mio::ContactMatrix(Eigen::MatrixXd::Identity(num_groups, num_groups));
-    recovery_matrix_v3[0] = mio::ContactMatrix(rec_3);
+    recovery_matrix_v3 = rec_3;
 
     //model.apply_constraints();
 

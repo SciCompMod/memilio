@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef UI_PARAMETERS_H
-#define UI_PARAMETERS_H
+#ifndef SUI_PARAMETERS_H
+#define SUI_PARAMETERS_H
 
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -29,7 +29,7 @@
 
 namespace mio
 {
-namespace oui
+namespace sui
 {
 
 /**************************************
@@ -379,7 +379,7 @@ private:
     AgeGroup m_num_groups;
 };
 
-} // namespace oui
+} // namespace sui
 } // namespace mio
 
-#endif // UI_PARAMETERS_H
+#endif // SUI_PARAMETERS_H

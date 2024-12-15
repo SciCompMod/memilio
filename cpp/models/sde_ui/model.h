@@ -18,21 +18,21 @@
 * limitations under the License.
 */
 
-#ifndef ODEUI_MODEL_H
-#define ODEUI_MODEL_H
+#ifndef SDEUI_MODEL_H
+#define SDEUI_MODEL_H
 
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
-#include "ode_ui/infection_state.h"
-#include "ode_ui/parameters.h"
+#include "sde_ui/infection_state.h"
+#include "sde_ui/parameters.h"
 
 
 
 namespace mio
 {
-namespace oui
+namespace sui
 {
 
 /********************
@@ -156,7 +156,7 @@ public:
     }
 };
 
-} // namespace oui
+} // namespace sui
 } // namespace mio
 
 #endif // ODEUI_MODEL_H

@@ -99,7 +99,7 @@ public:
                                  Eigen::Ref<Vector<FP>> /*dydt*/) const {};
 
     virtual void get_derivatives_stoch(Eigen::Ref<const Vector<FP>>, Eigen::Ref<const Vector<FP>> /*y*/, FP /*t*/,
-                                 Eigen::Ref<Vector<FP>> /*dydt*/, FP /*stepsize*/) const {};
+                                 Eigen::Ref<Vector<FP>> /*dydt*/, const FP /*stepsize*/) const {};
 
     /**
      * @brief This function evaluates the right-hand-side f of the ODE dydt = f(y, t).
