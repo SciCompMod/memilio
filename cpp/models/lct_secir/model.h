@@ -321,9 +321,10 @@ private:
                 .sum();
         // Size of the Subpopulation Group2 without dead people.
         double N_2            = pop.segment(first_index_group2, LctStateGroup2::Count - 1).sum();
+        const double divN_2   = (N_2 < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / N_2;
         ScalarType season_val = 1 + params.template get<Seasonality>() *
                                         sin(3.141592653589793 * ((params.template get<StartDay>() + t) / 182.5 + 0.5));
-        dydt[Si_1] += -y[Si_1] / N_2 * season_val * params.template get<TransmissionProbabilityOnContact>()[Group1] *
+        dydt[Si_1] += -y[Si_1] * divN_2 * season_val * params.template get<TransmissionProbabilityOnContact>()[Group1] *
                       params.template get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(t)(
                           static_cast<Eigen::Index>(Group1), static_cast<Eigen::Index>(Group2)) *
                       (params.template get<RelativeTransmissionNoSymptoms>()[Group2] * infectedNoSymptoms_2 +

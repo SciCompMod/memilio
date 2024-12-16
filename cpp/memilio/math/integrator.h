@@ -31,7 +31,7 @@ namespace mio
 {
 
 /**
- * Function template to be integrated
+ * Function template to be integrated.
  */
 template <typename FP = double>
 using DerivFunction = std::function<void(Eigen::Ref<const mio::Vector<FP>> y, FP t, Eigen::Ref<mio::Vector<FP>> dydt)>;
@@ -120,7 +120,7 @@ private:
 
 /**
  * @brief Integrate initial value problems (IVP) of ordinary differential equations (ODE) of the form y' = f(y, t), y(t0) = y0.
- * @tparam FP a floating point type accepted by Eigen.
+ * @tparam FP a floating point type accepted by Eigen
  */
 template <typename FP = double>
 class OdeIntegrator
@@ -169,9 +169,9 @@ public:
         FP t              = t0;
 
         for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t) / (tmax - t0)) > 1e-10; ++i) {
-            //we don't make time steps too small as the error estimator of an adaptive integrator
+            // We don't make time steps too small as the error estimator of an adaptive integrator
             //may not be able to handle it. this is very conservative and maybe unnecessary,
-            //but also unlikely to happen. may need to be reevaluated
+            //but also unlikely to happen. may need to be reevaluated.
 
             if (dt > tmax - t) {
                 dt_restore = dt;
@@ -188,7 +188,7 @@ public:
             step_okay &= m_core->step(f, results[i], t, dt, results[i + 1]);
             results.get_last_time() = t;
 
-            // if dt has been changed (even slightly) by step, register the current m_core as adaptive
+            // if dt has been changed by step, register the current m_core as adaptive.
             m_is_adaptive |= !floating_point_equal<FP>(dt, dt_copy, Limits<FP>::zero_tolerance());
         }
         m_core->get_dt_min() = dt_min_restore; // restore dt_min
