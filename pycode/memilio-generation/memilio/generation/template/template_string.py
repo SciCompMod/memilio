@@ -74,7 +74,7 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
         "#include \"io/result_io.h\"\n"
     )
 
-    substitution_string += "\n//Includes from Memilio\n"
+    substitution_string += "\n//Includes from MEmilio\n"
     for inlcude in intermed_repr.include_list:
         substitution_string += "#include \"" + inlcude + "\"\n"
 

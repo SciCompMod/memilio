@@ -107,7 +107,7 @@ class AST:
 
         @param cursor: The current node (Cursor) in the AST to traverse.
         """
-        # assing_ids umschreiben -> mapping
+
         self.cursor_id += 1
         id = self.cursor_id
         self.id_to_val[id] = cursor
@@ -130,7 +130,7 @@ class AST:
     def get_node_id(self, cursor: Cursor) -> int:
         """! Returns the id of the current node.
 
-        Extracs the key from the current cursor from the dictonary id_to_val
+        Extracts the key from the current cursor from the dictonary id_to_val
 
         @param cursor: The current node of the AST as a cursor object from libclang.
         """
@@ -144,7 +144,7 @@ class AST:
     def get_node_by_index(self, index: int) -> Cursor:
         """! Returns the node at the specified index position.
 
-        @param index: Node_id from the ast.
+        @param index: Node_id from the AST.
         """
 
         if index < 0 or index >= len(self.id_to_val):

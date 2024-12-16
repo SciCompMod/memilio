@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import os
 from typing import TYPE_CHECKING, Any, Callable
+import pathlib
 
 from clang.cindex import *
 from typing_extensions import Self
@@ -60,7 +61,29 @@ class Scanner:
         intermed_repr = IntermediateRepresentation()
         self.find_node(root_cursor, intermed_repr)
         self.finalize(intermed_repr)
+        self.check_parameter_space(intermed_repr)
         return intermed_repr
+
+    def check_parameter_space(self: Self, intermed_repr: IntermediateRepresentation) -> None:
+        """! Checks for /parameter_space.cpp in the model folder and set has_draw_sample
+
+        @param intermed_repr Dataclass used for saving the extracted model features.
+        """
+        config = self.config
+
+        s_file = getattr(config, "source_file")
+
+        path = pathlib.Path(s_file)
+
+        path_vor_parameter_space = path.parent
+
+        vor_parameter_space = str(path_vor_parameter_space)
+
+        new_path_source_file = vor_parameter_space + "/parameter_space.cpp"
+
+        if (os.path.isfile(new_path_source_file)):
+
+            intermed_repr.has_draw_sample = True
 
     def find_node(self: Self, node: Cursor,
                   intermed_repr: IntermediateRepresentation, namespace: str = "") -> None:
@@ -96,20 +119,9 @@ class Scanner:
             CursorKind.CONSTRUCTOR: self.check_constructor,
             CursorKind.STRUCT_DECL: self.check_struct,
             CursorKind.TYPE_ALIAS_DECL: self.check_type_alias,
-            CursorKind.TYPE_ALIAS_TEMPLATE_DECL: self.check_type_alias,
-            CursorKind.FUNCTION_TEMPLATE: self.check_function
+            CursorKind.TYPE_ALIAS_TEMPLATE_DECL: self.check_type_alias
         }
         return switch.get(kind, lambda *args: None)
-
-    def check_function(self: Self, node: Cursor, intermed_repr: IntermediateRepresentation) -> None:
-        """! Inspect the nodes of kind FUNCTION_TEMPLATE and write needed information into intermed_repr.
-
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
-        """
-
-        if node.spelling == "draw_sample" and CursorKind.FUNCTION_TEMPLATE:
-            intermed_repr.has_draw_sample = True
 
     def check_enum(
         self: Self, node: Cursor,

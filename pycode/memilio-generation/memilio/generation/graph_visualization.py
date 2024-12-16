@@ -75,8 +75,8 @@ class Visualization:
         logging.info(f"AST-png written to {output_path}")
 
     @staticmethod
-    def output_ast_formatted(ast: AST, cursor: Cursor, output_file_name: str = 'ast_formated.txt') -> None:
-        """!Output the abstract syntax tree to a file.
+    def output_ast_formatted(ast: AST, cursor: Cursor, output_file_name: str = 'ast_formatted.txt') -> None:
+        """! Output the abstract syntax tree to a file.
 
         @param ast: ast object from AST class.
         @param cursor: The current node of the AST as a cursor object from libclang.
@@ -88,7 +88,7 @@ class Visualization:
             _output_cursor_and_children(cursor, ast,  file_writer)
 
         output_path = os.path.abspath(f"{output_file_name}")
-        logging.info(f"AST-formated written to {output_path}")
+        logging.info(f"AST-formatted written to {output_path}")
 
 
 def indent(level: int) -> str:
