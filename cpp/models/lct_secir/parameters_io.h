@@ -500,23 +500,41 @@ void rescale_to_divi_data(Populations& populations, ScalarType infectedCritical_
     using LctStateGroup      = type_at_index_t<Group, typename Populations::LctStatesGroups>;
     size_t first_index_group = populations.template get_first_index_of_group<Group>();
     if (floating_point_equal<ScalarType>(infectedCritical_calculated, 0., Limits<ScalarType>::zero_tolerance())) {
-        log_info("TODO");
+        if (!(floating_point_equal<ScalarType>(infectedCritical_reported, 0., Limits<ScalarType>::zero_tolerance()))) {
+            log_info("The calculated number of patients in intensive care is zero, although the reported number is "
+                     "not. The reported number is uniformly distributed across age groups and subcompartments. Note "
+                     "that especially the uniform distribution across age groups is not necessarily realistic.");
+            size_t num_InfectedCritical =
+                LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>();
+            size_t num_age_groups = Populations::num_groups;
+            // Distribute reported number uniformly to age groups and subcompartments.
+            populations.get_compartments().segment(
+                first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedCritical>(),
+                num_InfectedCritical) =
+                Vector<ScalarType>::Constant(num_InfectedCritical, (ScalarType)infectedCritical_reported /
+                                                                       (num_InfectedCritical * num_age_groups));
+            // Adjust Recovered compartment. Susceptible compartment remains the same as Recovered is adjusted accordingly.
+            populations[first_index_group + LctStateGroup::template get_first_index<InfectionState::Recovered>()] -=
+                (ScalarType)infectedCritical_reported / num_age_groups;
+        }
     }
-    // Adjust number of Recovered by adding the old number in InfectedCritical
-    // and subtracting the new number (= scaling_factor * old number).
-    ScalarType scaling_factor = infectedCritical_reported / infectedCritical_calculated;
-    populations[first_index_group + LctStateGroup::template get_first_index<InfectionState::Recovered>()] +=
-        (1 - scaling_factor) *
-        populations.get_compartments()
-            .segment(first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedCritical>(),
-                     LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>())
-            .sum();
-    // Adjust InfectedCritical.
-    populations.get_compartments().segment(
-        first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedCritical>(),
-        LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>()) *= scaling_factor;
-    // Number of Susceptibles is not affected because Recovered is adjusted accordingly.
-
+    else {
+        // Adjust number of Recovered by adding the old number in InfectedCritical
+        // and subtracting the new number (= scaling_factor * old number).
+        ScalarType scaling_factor = infectedCritical_reported / infectedCritical_calculated;
+        populations[first_index_group + LctStateGroup::template get_first_index<InfectionState::Recovered>()] +=
+            (1 - scaling_factor) *
+            populations.get_compartments()
+                .segment(first_index_group +
+                             LctStateGroup::template get_first_index<InfectionState::InfectedCritical>(),
+                         LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>())
+                .sum();
+        // Adjust InfectedCritical.
+        populations.get_compartments().segment(
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedCritical>(),
+            LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>()) *= scaling_factor;
+        // Number of Susceptibles is not affected because Recovered is adjusted accordingly.
+    }
     if constexpr (Group + 1 < Populations::num_groups) {
         rescale_to_divi_data<Populations, Group + 1>(populations, infectedCritical_reported,
                                                      infectedCritical_calculated);

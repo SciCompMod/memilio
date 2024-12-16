@@ -239,7 +239,6 @@ mio::IOResult<void> simulate_other_subcompartments(std::string const& dir_to_con
 
     BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(infection_data_dir));
     BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(divi_data_dir));
-    bool use_divi = true;
     auto init = mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
         rki_data, model.populations, model.parameters, start_date,
         std::vector<ScalarType>(age_group_sizes, age_group_sizes + num_groups),
@@ -329,11 +328,10 @@ mio::IOResult<void> simulate(std::string const& dir_to_contact_data, std::string
 
     BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(infection_data_dir));
     BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(divi_data_dir));
-    bool use_divi = true;
     auto init = mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
-        rki_data, divi_data, model.populations, model.parameters, start_date,
+        rki_data, model.populations, model.parameters, start_date,
         std::vector<ScalarType>(age_group_sizes, age_group_sizes + num_groups),
-        std::vector<ScalarType>(num_groups, simulation_parameter["scale_confirmed_cases"]), use_divi);
+        std::vector<ScalarType>(num_groups, simulation_parameter["scale_confirmed_cases"]), divi_data);
     if (!init) {
         printf("%s\n", init.error().formatted_message().c_str());
         return init;
