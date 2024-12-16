@@ -62,10 +62,10 @@ class TestOseirGeneration(unittest.TestCase):
             "python_generation_module_path": self.project_path + "/pycode/memilio-generation",
             "target_folder": self.test_dir.name,
             "optional": {
-                "libclang_library_path": "",
-                "simulation_name": "",
-                "age_group": False,
-                "parameterset_wrapper": True
+                "libclang_library_path": ""
+                # "simulation_name": "",
+                # "age_group": False,
+                # "parameterset_wrapper": True
             }
         }
 
