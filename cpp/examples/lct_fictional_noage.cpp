@@ -139,7 +139,7 @@ std::vector<ScalarType> get_initial_values(size_t num_subcomp)
 * @returns Any io errors that happen during saving the results.
 */
 mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::string save_dir = "",
-                                       bool save_subcompartments = false, bool swapped_TETC = false,
+                                       bool save_subcompartments = false, ScalarType scale_TimeExposed = 1.,
                                        bool final_size = false)
 {
     using namespace params;
@@ -168,11 +168,8 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::stri
         CriticalPerSevere += age_group_sizes[group] * CriticalPerSevere_age[group] / total_population;
         DeathsPerCritical += age_group_sizes[group] * DeathsPerCritical_age[group] / total_population;
     }
-    if (swapped_TETC) {
-        ScalarType dummy       = TimeExposed;
-        TimeExposed            = TimeInfectedNoSymptoms;
-        TimeInfectedNoSymptoms = dummy;
-    }
+
+    TimeExposed                                                              = scale_TimeExposed * TimeExposed;
     model.parameters.get<mio::lsecir::TimeExposed>()[0]                      = TimeExposed;
     model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0]           = TimeInfectedNoSymptoms;
     model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]             = TimeInfectedSymptoms;
@@ -250,12 +247,12 @@ mio::IOResult<void> simulate_lct_model(ScalarType R0, ScalarType tmax, std::stri
 
 int main(int argc, char** argv)
 {
-    ScalarType R0              = 1.;
-    ScalarType simulation_days = 40;
-    std::string save_dir       = "";
-    bool save_subcompartments  = false;
-    bool swapped_TETC          = false;
-    bool final_size            = false;
+    ScalarType R0                = 1.;
+    ScalarType simulation_days   = 40;
+    std::string save_dir         = "";
+    bool save_subcompartments    = false;
+    ScalarType scale_TimeExposed = 1.;
+    bool final_size              = false;
 
     if (argc > 2) {
         R0              = std::stod(argv[1]);
@@ -268,12 +265,13 @@ int main(int argc, char** argv)
         save_subcompartments = std::stoi(argv[4]);
     }
     if (argc > 5) {
-        swapped_TETC = std::stoi(argv[5]);
+        scale_TimeExposed = std::stod(argv[5]);
     }
     if (argc > 6) {
         final_size = std::stoi(argv[6]);
     }
-    auto result = simulate_lct_model(R0, simulation_days, save_dir, save_subcompartments, swapped_TETC, final_size);
+    auto result =
+        simulate_lct_model(R0, simulation_days, save_dir, save_subcompartments, scale_TimeExposed, final_size);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;

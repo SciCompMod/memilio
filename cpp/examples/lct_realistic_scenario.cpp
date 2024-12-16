@@ -51,6 +51,7 @@ std::map<std::string, ScalarType> simulation_parameter = {{"RelativeTransmission
                                                           {"RiskOfInfectionFromSymptomatic", 0.3},
                                                           {"Seasonality", 0.},
                                                           {"scale_confirmed_cases", 1.},
+                                                          {"scale_icu", 1.},
                                                           {"scale_contacts", 1.},
                                                           {"npi_size", 371 * 14 / (45 * 401.)},
                                                           {"tmax", 45}};
@@ -94,7 +95,7 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
 mio::TimeSeries<ScalarType> add_age_groups(mio::TimeSeries<ScalarType> ageres)
 {
     using namespace params;
-    size_t infstatecount = (size_t)mio::lsecir::InfectionState::Count;
+    size_t infstatecount = (size_t)(ageres.get_num_elements() / num_groups);
     mio::TimeSeries<ScalarType> noage(infstatecount);
 
     for (Eigen::Index timepoint = 0; timepoint < ageres.get_num_time_points(); ++timepoint) {
@@ -171,12 +172,12 @@ mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(const 
     // ----- Add NPIs to the contact matrices. -----
     mio::Date end_date  = mio::offset_date_by_days(start_date, simulation_parameter["tmax"]);
     auto start_npi_july = mio::Date(2020, 7, 7);
-    if ((start_npi_july < end_date) & (start_date < start_npi_july)) {
+    if ((int)(start_npi_july < end_date) & (int)(start_date < start_npi_july)) {
         set_npi_july(contact_matrices);
     }
     // Set of NPIs for October.
     auto start_npi_october = mio::Date(2020, 10, 25);
-    if ((start_npi_october < end_date) & (start_date < start_npi_october)) {
+    if ((int)(start_npi_october < end_date) & (int)(start_date < start_npi_october)) {
         set_npi_october(contact_matrices);
     }
     return mio::success(mio::UncertainContactMatrix<ScalarType>(contact_matrices));
@@ -192,7 +193,8 @@ mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(const 
  * @returns Any io errors that happen during reading of the RKI file or files for contact matrices or saving the results.
  */
 mio::IOResult<void> simulate_other_subcompartments(std::string const& dir_to_contact_data,
-                                                   std::string const& infection_data_dir, std::string save_dir = "")
+                                                   std::string const& infection_data_dir,
+                                                   std::string const& divi_data_dir, std::string save_dir = "")
 {
     using namespace params;
     std::cout << "Realistic scenario with number of subcompartments is approximately the mean stay time." << std::endl;
@@ -236,10 +238,12 @@ mio::IOResult<void> simulate_other_subcompartments(std::string const& dir_to_con
     model.parameters.get<mio::lsecir::StartDay>()        = mio::get_day_in_year(start_date);
 
     BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(infection_data_dir));
-    auto init = mio::lsecir::set_initial_data_from_confirmed_cases<Model::Populations, mio::ConfirmedCasesDataEntry>(
-        rki_data, model.populations, model.parameters, start_date,
+    BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(divi_data_dir));
+    bool use_divi = true;
+    auto init     = mio::lsecir::set_initial_data_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
+        rki_data, divi_data, model.populations, model.parameters, start_date,
         std::vector<ScalarType>(age_group_sizes, age_group_sizes + num_groups),
-        std::vector<ScalarType>(num_groups, simulation_parameter["scale_confirmed_cases"]));
+        std::vector<ScalarType>(num_groups, simulation_parameter["scale_confirmed_cases"]), use_divi);
     if (!init) {
         printf("%s\n", init.error().formatted_message().c_str());
         return init;
@@ -284,7 +288,7 @@ mio::IOResult<void> simulate_other_subcompartments(std::string const& dir_to_con
  * @returns Any io errors that happen during reading of the RKI file or files for contact matrices or saving the results.
  */
 mio::IOResult<void> simulate(std::string const& dir_to_contact_data, std::string const& infection_data_dir,
-                             std::string save_dir = "")
+                             std::string const& divi_data_dir, std::string save_dir = "")
 {
     using namespace params;
     std::cout << "Realistic scenario with " << num_subcompartments << " subcompartments." << std::endl;
@@ -324,10 +328,12 @@ mio::IOResult<void> simulate(std::string const& dir_to_contact_data, std::string
     model.parameters.get<mio::lsecir::StartDay>()        = mio::get_day_in_year(start_date);
 
     BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(infection_data_dir));
-    auto init = mio::lsecir::set_initial_data_from_confirmed_cases<Model::Populations, mio::ConfirmedCasesDataEntry>(
-        rki_data, model.populations, model.parameters, start_date,
+    BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(divi_data_dir));
+    bool use_divi = true;
+    auto init     = mio::lsecir::set_initial_data_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
+        rki_data, divi_data, model.populations, model.parameters, start_date,
         std::vector<ScalarType>(age_group_sizes, age_group_sizes + num_groups),
-        std::vector<ScalarType>(num_groups, simulation_parameter["scale_confirmed_cases"]));
+        std::vector<ScalarType>(num_groups, simulation_parameter["scale_confirmed_cases"]), use_divi);
     if (!init) {
         printf("%s\n", init.error().formatted_message().c_str());
         return init;
@@ -384,25 +390,27 @@ int main(int argc, char** argv)
         save_folder        = argv[6];
     }
 
-    if (argc > 10) {
+    if (argc > 11) {
         params::simulation_parameter["RelativeTransmissionNoSymptoms"] = std::stod(argv[7]);
         params::simulation_parameter["RiskOfInfectionFromSymptomatic"] = std::stod(argv[8]);
         params::simulation_parameter["scale_contacts"]                 = std::stod(argv[9]);
         params::simulation_parameter["npi_size"]                       = std::stod(argv[10]);
+        params::simulation_parameter["scale_confirmed_cases"]          = std::stod(argv[11]);
     }
 
     std::string save_dir           = dir_to_data + save_folder;
     std::string infection_data_dir = dir_to_data + "/pydata/Germany/cases_all_age_ma7.json";
+    std::string divi_data_dir      = dir_to_data + "/pydata/Germany/germany_divi_all_dates.json";
 
     if (other_subcompartments) {
-        auto result = simulate_other_subcompartments(dir_to_data, infection_data_dir, save_dir);
+        auto result = simulate_other_subcompartments(dir_to_data, infection_data_dir, divi_data_dir, save_dir);
         if (!result) {
             printf("%s\n", result.error().formatted_message().c_str());
             return -1;
         }
     }
     else {
-        auto result = simulate(dir_to_data, infection_data_dir, save_dir);
+        auto result = simulate(dir_to_data, infection_data_dir, divi_data_dir, save_dir);
         if (!result) {
             printf("%s\n", result.error().formatted_message().c_str());
             return -1;

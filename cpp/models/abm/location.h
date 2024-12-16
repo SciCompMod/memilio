@@ -25,6 +25,7 @@
 #include "abm/parameters.h"
 #include "abm/location_type.h"
 
+#include "memilio/io/default_serialize.h"
 #include "boost/atomic/atomic.hpp"
 
 namespace mio
@@ -47,6 +48,12 @@ struct GeographicalLocation {
     bool operator!=(const GeographicalLocation& other) const
     {
         return !(latitude == other.latitude && longitude == other.longitude);
+    }
+
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("GraphicalLocation").add("latitude", latitude).add("longitude", longitude);
     }
 };
 
@@ -73,6 +80,12 @@ struct CellCapacity {
     }
     uint32_t volume; ///< Volume of the Cell.
     uint32_t persons; ///< Maximal number of Person%s at the Cell.
+
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("CellCapacity").add("volume", volume).add("persons", persons);
+    }
 };
 
 /**
@@ -87,6 +100,12 @@ struct Cell {
     * @return The relative cell size for the Cell.
     */
     ScalarType compute_space_per_person_relative() const;
+
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("Cell").add("capacity", m_capacity);
+    }
 }; // namespace mio
 
 /**
@@ -223,36 +242,6 @@ public:
     }
 
     /**
-     * serialize this. 
-     * @see mio::serialize
-     */
-    template <class IOContext>
-    void serialize(IOContext& io) const
-    {
-        auto obj = io.create_object("Location");
-        obj.add_element("index", m_id);
-        obj.add_element("type", m_type);
-    }
-
-    /**
-     * deserialize an object of this class.
-     * @see mio::deserialize
-     */
-    template <class IOContext>
-    static IOResult<Location> deserialize(IOContext& io)
-    {
-        auto obj   = io.expect_object("Location");
-        auto index = obj.expect_element("index", Tag<LocationId>{});
-        auto type  = obj.expect_element("type", Tag<LocationType>{});
-        return apply(
-            io,
-            [](auto&& index_, auto&& type_) {
-                return Location{type_, index_};
-            },
-            index, type);
-    }
-
-    /**
      * @brief Get the geographical location of the Location.
      * @return The geographical location of the Location.
      */
@@ -270,7 +259,22 @@ public:
         m_geographical_location = location;
     }
 
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("Location")
+            .add("type", m_type)
+            .add("id", m_id)
+            .add("parameters", m_parameters)
+            .add("cells", m_cells)
+            .add("required_mask", m_required_mask)
+            .add("geographical_location", m_geographical_location);
+    }
+
 private:
+    friend DefaultFactory<Location>;
+    Location() = default;
+
     LocationType m_type; ///< Type of the Location.
     LocationId m_id; ///< Unique identifier for the Location in the Model owning it.
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.

@@ -315,8 +315,8 @@ int main()
 {
     std::string save_dir = "../../data/simulation_lct_agevsnoage/";
     ScalarType tmax      = 40;
-    // Simulation with initial exposed population in age group 1.
-    auto result = simulate_ageres_model(1, tmax, save_dir);
+    // Simulation with initial exposed population in age group 2.
+    auto result = simulate_ageres_model(2, tmax, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
