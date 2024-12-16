@@ -325,9 +325,13 @@ class Scanner:
 
         new_enum = {}
         for key in intermed_repr.enum_populations:
+
             if key in population_groups:
+
                 new_enum[key] = intermed_repr.enum_populations[key]
-        intermed_repr.enum_populations = new_enum
+
+                intermed_repr.enum_populations = new_enum
+
         intermed_repr.set_attribute("namespace", self.config.namespace)
         intermed_repr.set_attribute(
             "python_module_name", self.config.python_module_name)

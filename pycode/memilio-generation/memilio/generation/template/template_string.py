@@ -200,15 +200,16 @@ def draw_sample(intermed_repr: IntermediateRepresentation) -> str:
     @param intermed_repr Dataclass holding the model features.
     @return Formatted string representing a part of the bindings.  
     """
-    if intermed_repr.has_draw_sample:
-        return (
+    if not intermed_repr.has_draw_sample:
+        return ""
+    return (
 
-            'm.def(\n\t\t"draw_sample",\n\t\t[]({namespace}Model<' +
-            ScalarType(intermed_repr) +
-            '>& model) {{\n\t\t\t return {namespace}draw_sample(model);\n\t }} ,\n\t py::arg("model"));\n'
-        ).format(
-            namespace=intermed_repr.namespace
-        )
+        'm.def(\n\t\t"draw_sample",\n\t\t[]({namespace}Model<' +
+        ScalarType(intermed_repr) +
+        '>& model) {{\n\t\t\treturn {namespace}draw_sample(model);\n\t}},\n\tpy::arg("model"));\n'
+    ).format(
+        namespace=intermed_repr.namespace
+    )
 
 
 def model_init(intermed_repr: IntermediateRepresentation) -> str:
@@ -343,7 +344,7 @@ def simulation(intermed_repr: IntermediateRepresentation) -> str:
             "pymio::bind_SimulationNode<{namespace}FlowSimulation<>>(m, \"SimulationNode\");\n\t"
             "pymio::bind_MobilityGraph<{namespace}FlowSimulation<>>(m, \"MobilityGraph\");\n\t"
             "pymio::bind_GraphSimulation<mio::Graph<mio::SimulationNode<{b_flowsim}<>>, mio::MobilityEdge<" +
-            ScalarType(intermed_repr)+">>>(m, \"MobilitySimulation\");\n\n\t"
+            ScalarType(intermed_repr)+">>>(m, \"MobilitySimulation\");\n\t"
 
         ).format(
             namespace=intermed_repr.namespace,

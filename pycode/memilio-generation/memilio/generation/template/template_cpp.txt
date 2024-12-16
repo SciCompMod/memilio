@@ -42,18 +42,16 @@ PYBIND11_MODULE(_simulation_${python_module_name}, m)
     ${model_init}
 
     ${simulation}
-
     ${draw_sample}
+    m.def("interpolate_simulation_result",
+        static_cast<mio::TimeSeries<${ScalarType}> (*)(const mio::TimeSeries<${ScalarType}>&, const ${ScalarType})>(
+            &mio::interpolate_simulation_result),
+        py::arg("ts"), py::arg("abs_tol") = 1e-14);
 
     m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<${ScalarType}> (*)(const mio::TimeSeries<${ScalarType}>&, const ${ScalarType})>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("abs_tol") = 1e-14);
-
-    m.def("interpolate_simulation_result",
-          static_cast<mio::TimeSeries<${ScalarType}> (*)(const mio::TimeSeries<${ScalarType}>&, const std::vector<${ScalarType}>&)>(
-              &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("interpolation_times"));
+        static_cast<mio::TimeSeries<${ScalarType}> (*)(const mio::TimeSeries<${ScalarType}>&, const std::vector<${ScalarType}>&)>(
+            &mio::interpolate_simulation_result),
+        py::arg("ts"), py::arg("interpolation_times"));
 
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<${ScalarType}>>);
     
