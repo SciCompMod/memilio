@@ -260,11 +260,11 @@ def parameterset_wrapper(intermed_repr: IntermediateRepresentation) -> str:
 
     return (
         "py::class_<{namespace}Parameters<"+ScalarType(
-            intermed_repr)+">, pymio::EnablePickling::Required, {namespace}{parameterset}<"+ScalarType(intermed_repr)+">>(m, \"Parameters\")\n"
-        "\t.def(py::init<mio::AgeGroup>())\n"
-        "\t.def(\"check_constraints\", &{namespace}Parameters<" +
-        ScalarType(intermed_repr)+">::check_constraints)\n"
-        "\t.def(\"apply_constraints\", &{namespace}Parameters<" +
+            intermed_repr)+">, pymio::EnablePickling::Required, {namespace}{parameterset}<"+ScalarType(intermed_repr)+">>(m, \"Parameters\");\n"
+        "\t\t.def(py::init<mio::AgeGroup>());\n"
+        "\t\t.def(\"check_constraints\", &{namespace}Parameters<" +
+        ScalarType(intermed_repr)+">::check_constraints);\n"
+        "\t\t.def(\"apply_constraints\", &{namespace}Parameters<" +
         ScalarType(intermed_repr)+">::apply_constraints);\n"
     ).format(
         namespace=intermed_repr.namespace,
@@ -309,8 +309,9 @@ def simulation(intermed_repr: IntermediateRepresentation) -> str:
         "pymio::bind_Simulation<{b_sim}<{sub}>>(m, \"Simulation\");\n\n\t"
 
         'm.def(\n\t\t"simulate", {sim},\n\t\t'
-        'py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());\n\t\t'
-        '"Simulate a {namespace} from t0 to tmax."\n\n\t'
+        'py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none(),\n\t\t'
+        '"Simulate a {namespace} from t0 to tmax."\n\t\t'
+        ');\n\n\t'
 
         "pymio::bind_ModelNode<{namespace}Model<" +
         ScalarType(intermed_repr)+">>(m, \"ModelNode\");\n\t"
@@ -335,8 +336,9 @@ def simulation(intermed_repr: IntermediateRepresentation) -> str:
             ", mio::FlowSimulation<{sub}>>>(m, \"FlowSimulation\");\n\n\t"
 
             'm.def(\n\t\t"simulate_flows", {flow_sim},\n\t\t'
-            'py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());\n\t\t'
-            '"Simulate a {namespace} with flows from t0 to tmax."\n\n\t'
+            'py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none(),\n\t\t'
+            '"Simulate a {namespace} with flows from t0 to tmax."\n\t\t'
+            ');\n\n\t'
 
             "pymio::bind_SimulationNode<{namespace}FlowSimulation<>>(m, \"SimulationNode\");\n\t"
             "pymio::bind_MobilityGraph<{namespace}FlowSimulation<>>(m, \"MobilityGraph\");\n\t"
@@ -351,44 +353,6 @@ def simulation(intermed_repr: IntermediateRepresentation) -> str:
             sub=bind_simulation_string
         )
     return sub_string
-
-
-def simulating(intermed_repr: IntermediateRepresentation) -> str:
-    """! Generate the code for the simulation from t0 to tmax.
-
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
-    """
-    namespace = intermed_repr.namespace
-
-    if intermed_repr.simulation is True:
-        simulation = "&" + namespace + "simulate<" + \
-            ScalarType(intermed_repr)+">"
-        flow_simulation = "&" + namespace + \
-            "flow_simulation<"+ScalarType(intermed_repr)+">"
-
-    else:
-        simulation = "&mio::simulate<"+ScalarType(intermed_repr) + \
-            "," + namespace + "Model<"+ScalarType(intermed_repr)+">>"
-        flow_simulation = "&mio::flow_simulation<" + \
-            namespace + "Model<"+ScalarType(intermed_repr)+">>"
-
-    return (
-        'm.def(\n\t\t"simulate", {sim},\n\t\t'
-        'py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());\n\t\t'
-        '"Simulate a {namespace} from t0 to tmax."\n\n\t'
-
-        'm.def(\n\t\t"simulate_flows", {flow_sim},\n\t\t'
-        'py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());\n\t\t'
-        '"Simulate a {namespace} with flows from t0 to tmax."\n\n\t'
-
-
-
-    ).format(
-        namespace=intermed_repr.namespace,
-        sim=simulation,
-        flow_sim=flow_simulation
-    )
 
 
 def simulation_vector_definition(

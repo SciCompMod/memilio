@@ -37,7 +37,7 @@ PYBIND11_MODULE(_simulation_${python_module_name}, m)
     pymio::bind_Population(m, "Populations", mio::Tag<${namespace}${model_class_name}<${ScalarType}>::${population}>{});
    
     pymio::bind_CompartmentalModel<${model_base_templates}>(m, "${model_class_name}Base");
-    py::class_<${namespace}${model_class_name}<${ScalarType}>, pymio::EnablePickling::Required, ${model_base_templates}>(m, "${model_class_name}")
+    py::class_<${namespace}${model_class_name}<${ScalarType}>, pymio::EnablePickling::Required, ${model_base_templates}>(m, "${model_class_name}");
     
     ${model_init}
 

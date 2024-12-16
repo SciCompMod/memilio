@@ -78,7 +78,6 @@ class Generator:
             "parameterset_indexing": StringTemplates.parameterset_indexing(intermed_repr),
             "parameterset_wrapper": StringTemplates.parameterset_wrapper(intermed_repr),
             "simulation": StringTemplates.simulation(intermed_repr),
-            "simulating": StringTemplates.simulating(intermed_repr),
             "ScalarType": StringTemplates.ScalarType(intermed_repr),
             "draw_sample": StringTemplates.draw_sample(intermed_repr),
             "simulation_vector_definition": StringTemplates.simulation_vector_definition(intermed_repr)
