@@ -26,7 +26,6 @@
 #define MIO_CONFIG_H
 
 #include "memilio/config_internal.h"
-#include "ad/ad.hpp"
 #include <type_traits>
 
 using ScalarType = double;
@@ -60,15 +59,6 @@ namespace mio
 template <typename FP>
 struct Limits {
     static constexpr FP zero_tolerance() = delete;
-};
-
-template <class AD_TAPE_REAL, class DATA_HANDLER>
-struct Limits<ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER>> {
-    /// @brief Returns the limit under which an ad::internal::active_type may be rounded down to zero.
-    static constexpr float zero_tolerance()
-    {
-        return Limits<AD_TAPE_REAL>::zero_tolerance();
-    }
 };
 
 template <>
