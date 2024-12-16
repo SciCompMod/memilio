@@ -155,9 +155,8 @@ void simulate(size_t num_warm_up_runs, size_t num_runs, size_t number_regions, S
     // Runs with timing.
     ScalarType total = 0;
     for (size_t i = 0; i < num_runs; i++) {
-        total -= omp_get_wtime();
-        auto result_from_sim = simulate(t0, tmax, dt, model, integrator);
-        total += omp_get_wtime();
+        double runtime = simulate(t0, tmax, dt, model, integrator);
+        total += runtime;
     }
     std::cout << "\"Time\": " << total / num_runs << "\n}," << std::endl;
 }

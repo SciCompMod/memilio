@@ -106,13 +106,14 @@ void set_parameters_and_population(mio::Graph<mio::SimulationNode<mio::Simulatio
 double simulate(size_t number_regions, ScalarType tmax)
 {
     ScalarType t0 = 0.;
-    ScalarType dt = 0.1;
+    ScalarType dt = 0.5;
 
     mio::Graph<mio::SimulationNode<mio::Simulation<ScalarType, mio::oseir::Model<>>>, mio::MobilityEdge<>> params_graph;
 
     set_parameters_and_population(params_graph, number_regions);
 
-    auto sim        = mio::make_mobility_sim(t0, dt, std::move(params_graph));
+    auto sim = mio::make_mobility_sim(t0, dt, std::move(params_graph));
+    mio::set_log_level(mio::LogLevel::off);
     auto start_time = omp_get_wtime();
     sim.advance(tmax);
     auto end_time = omp_get_wtime();
@@ -122,10 +123,10 @@ double simulate(size_t number_regions, ScalarType tmax)
 
 int main(int argc, char** argv)
 {
-    const ScalarType tmax = 1;
-    size_t warm_up        = 1;
-    size_t num_runs       = 2;
-    size_t num_regions    = 5;
+    const ScalarType tmax = 20;
+    size_t warm_up        = 10;
+    size_t num_runs       = 100;
+    size_t num_regions    = 10;
     if (argc > 3) {
         warm_up     = std::stod(argv[1]);
         num_runs    = std::stod(argv[2]);

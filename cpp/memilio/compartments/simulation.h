@@ -26,6 +26,8 @@
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/time_series.h"
 
+#include <omp.h>
+
 namespace mio
 {
 
@@ -213,16 +215,17 @@ using is_compartment_model_simulation =
  * @tparam Sim A Simulation that can simulate the model.
  */
 template <typename FP, class Model, class Sim = Simulation<FP, Model>>
-TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model const& model,
-                        std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
+double simulate(FP t0, FP tmax, FP dt, Model const& model, std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);
     if (integrator) {
         sim.set_integrator(integrator);
     }
+    double start_time = omp_get_wtime();
     sim.advance(tmax);
-    return sim.get_result();
+    double end_time = omp_get_wtime();
+    return end_time - start_time;
 }
 
 } // namespace mio
