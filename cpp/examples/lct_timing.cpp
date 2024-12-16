@@ -25,6 +25,7 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/lct_infection_state.h"
 #include "memilio/math/eigen.h"
+#include "memilio/utils/logging.h"
 #include "memilio/compartments/simulation.h"
 
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
@@ -111,7 +112,7 @@ std::vector<ScalarType> get_initial_values()
  * @brief Performs multiple simulations with one model to get an average run time.
  * @tparam num_subcompartments number of subcompartments used for all compartments and all age groups.
  */
-void simulate(size_t num_warm_up_runs, size_t num_runs, ScalarType tmax)
+void simulate(size_t num_warm_up_runs, size_t num_runs, ScalarType tmax, ScalarType tol)
 {
     using namespace params;
     std::cout << "{ \"Agegroups\": " << num_groups << ",\n\"Subcompartments\": " << num_subcompartments << ", "
@@ -160,15 +161,20 @@ void simulate(size_t num_warm_up_runs, size_t num_runs, ScalarType tmax)
     }
     // Integrator.
     auto integrator =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+            1e-10, tol, std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     // Choose dt_min = dt_max so that we have a fixed time step.
-    integrator->set_dt_min(dt);
-    integrator->set_dt_max(dt);
+    // integrator->set_dt_min(dt);
+    // integrator->set_dt_max(dt);
 
     // Warm up runs.
+    mio::set_log_level(mio::LogLevel::off);
     for (size_t i = 0; i < num_warm_up_runs; i++) {
         mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
     }
+    auto result = mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
+    std::cout << "\"Steps\": " << result.get_num_time_points() << "," << std::endl;
+    std::cout << "\"Tol\": " << tol << "," << std::endl;
 
     // Runs with timing.
     ScalarType total = 0;
@@ -178,17 +184,22 @@ void simulate(size_t num_warm_up_runs, size_t num_runs, ScalarType tmax)
         total += omp_get_wtime();
     }
     std::cout << "\"Time\": " << total / num_runs << "\n}," << std::endl;
+    mio::set_log_level(mio::LogLevel::warn);
 }
 
 int main(int argc, char** argv)
 {
-    const ScalarType tmax = 20;
+    const ScalarType tmax = 100;
     size_t warm_up        = 10;
     size_t num_runs       = 100;
+    ScalarType tol        = 1e-4;
     if (argc > 2) {
         warm_up  = std::stod(argv[1]);
         num_runs = std::stod(argv[2]);
     }
-    simulate(warm_up, num_runs, tmax);
+    if (argc > 3) {
+        tol = std::pow(10, -std::stod(argv[3]));
+    }
+    simulate(warm_up, num_runs, tmax, tol);
     return 0;
 }
