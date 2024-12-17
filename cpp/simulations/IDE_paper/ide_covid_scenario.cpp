@@ -45,7 +45,7 @@ using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 
 // Used parameters.
 std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
-                                                          {"dt_flows", 0.1},
+                                                          {"dt", 0.1},
                                                           {"total_population", 83155031.},
                                                           {"total_confirmed_cases", 0.}, // set by RKI data
                                                           {"deaths", 0.}, // set by RKI data
@@ -201,25 +201,22 @@ void set_npi_october(mio::ContactMatrixGroup& contact_matrices, mio::Date start_
 }
 
 /**
- * @brief Set the contact pattern of parameters for a Model without division in age groups.
+ * @brief Set the contact pattern of parameters for a model without division in age groups.
  *
  * The contacts are calculated using contact matrices from files in the data directory for different locations.
  * Also set nonpharmaceutical interventions influencing the ContactPatterns used for simulation in the timeframe from start_date to end_date.
  * 
  * @param[in] data_dir Directory to files with minimum and baseline contact matrices.
- * @param[in] parameters Object that the contact pattern will be added to.
- * @param[in] simulation_parameters Map with parameters necessary for the calculation of contacts an NPIs which can be different for diffferent start dates.
- *      Function uses the values to define start and end date, lockdown_hard and scale_contacts.
+ * @param[in] start_date Start date of the simulation.
  * @returns Any io errors that happen during reading of the input files.
  */
 mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(const boost::filesystem::path& data_dir,
-                                                               std::map<std::string, ScalarType> simulation_parameters,
                                                                mio::Date start_date)
 {
     // Files in data_dir are containing contact matrices with 6 agegroups. We use this to compute a contact pattern without division of age groups.
     // Age group sizes are calculated using table number 12411-04-02-4-B from www.regionalstatistik.de for the date 31.12.2020.
     const ScalarType age_group_sizes[] = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
-    const ScalarType total             = 83155031.0;
+    const ScalarType total             = simulation_parameter["total_population"];
     const int numagegroups             = 6;
 
     auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), 1);
@@ -241,20 +238,33 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(const boost::file
             }
         }
         contact_matrices[size_t(contact_location.first)].get_baseline() =
-            simulation_parameters["scale_contacts"] * Eigen::MatrixXd::Constant(1, 1, base);
+            simulation_parameter["scale_contacts"] * Eigen::MatrixXd::Constant(1, 1, base);
         contact_matrices[size_t(contact_location.first)].get_minimum() =
-            simulation_parameters["scale_contacts"] * Eigen::MatrixXd::Constant(1, 1, min);
+            simulation_parameter["scale_contacts"] * Eigen::MatrixXd::Constant(1, 1, min);
     }
 
     // ----- Add NPIs to the contact matrices. -----
     // Set of NPIs for October.
     if (start_date == mio::Date(2020, 10, 1)) {
-        set_npi_october(contact_matrices, start_date, simulation_parameters["lockdown_hard"]);
+        set_npi_october(contact_matrices, start_date, simulation_parameter["lockdown_hard"]);
     }
 
     return mio::success(contact_matrices);
 }
 
+/**
+ * @brief Set the contact pattern of parameters for a model without division in age groups without using the 
+ * age-resolved contact_matrices.
+ *
+ * In case of only one age group the contact matrix reduces to a 1x1 matrix. 
+ * Instead of using contact matrices from files in the data directory for different locations as in the function
+ * define_contact_matrices(), we set the contact frequency to the value that we obtained using the function 
+ * define_contact_matrices() above. Accordingly, we set the damping as in the function above to model the implementation
+ * of NPIs on Oct 24, 2020. 
+ *
+ * @param[in] start_date Start date of the simulation.
+ * @returns Any io errors that happen during reading of the input files.
+ */
 mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices_simplified(mio::Date start_date)
 {
     // Set of NPIs for October.
@@ -272,10 +282,19 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices_simplified(mio::D
     return mio::success(contact_matrices);
 }
 
+/**
+* @brief Simulates using an IDE model. 
+*
+* @param[in] start_date Start date of the simulation 
+* @param[in] simulation_time Duration of the simulation.
+* @param[in] contact_matrices Contact matrices used. 
+* @param[in] data_dir Directory to files with minimum and baseline contact matrices and reported data from RKI.
+* @param[in] save_dir Directory where simulation results will be stored. 
+* @returns Any IO errros that happen.
+*/
 mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>>
-simulate_ide_model(mio::Date start_date, ScalarType tmax, mio::ContactMatrixGroup contact_matrices,
-                   const boost::filesystem::path& data_dir, std::string save_dir = "",
-                   std::vector<ScalarType> lognormal_parameters_U = {0.42819924, 9.76267505, 0.33816427, 17.09411753})
+simulate_ide_model(mio::Date start_date, ScalarType simulation_time, mio::ContactMatrixGroup contact_matrices,
+                   const boost::filesystem::path& data_dir, std::string save_dir = "")
 
 {
     // Initialize model.
@@ -327,13 +346,11 @@ simulate_ide_model(mio::Date start_date, ScalarType tmax, mio::ContactMatrixGrou
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered].set_state_age_function(
         survivalInfectedSevereToRecovered);
     // InfectedCriticalToDead
-    mio::LognormSurvivalFunction survivalInfectedCriticalToDead(lognormal_parameters_U[0], 0,
-                                                                lognormal_parameters_U[1]);
+    mio::LognormSurvivalFunction survivalInfectedCriticalToDead(0.42819924, 0, 9.76267505);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead].set_state_age_function(
         survivalInfectedCriticalToDead);
     // InfectedCriticalToRecovered
-    mio::LognormSurvivalFunction survivalInfectedCriticalToRecovered(lognormal_parameters_U[2], 0,
-                                                                     lognormal_parameters_U[3]);
+    mio::LognormSurvivalFunction survivalInfectedCriticalToRecovered(0.33816427, 0, 17.09411753);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_state_age_function(
         survivalInfectedCriticalToRecovered);
 
@@ -376,20 +393,20 @@ simulate_ide_model(mio::Date start_date, ScalarType tmax, mio::ContactMatrixGrou
     // Set initial flows according to RKI data.
     std::string path_rki = mio::path_join((data_dir / "pydata" / "Germany").string(), "cases_all_germany_ma7.json");
 
-    mio::IOResult<void> init_flows = set_initial_flows(model_ide, simulation_parameter["dt_flows"], path_rki,
-                                                       start_date, simulation_parameter["scale_confirmed_cases"]);
+    mio::IOResult<void> init_flows = set_initial_flows(model_ide, simulation_parameter["dt"], path_rki, start_date,
+                                                       simulation_parameter["scale_confirmed_cases"]);
 
-    model_ide.check_constraints(simulation_parameter["dt_flows"]);
+    model_ide.check_constraints(simulation_parameter["dt"]);
 
     // Simulate.
-    mio::isecir::Simulation sim(model_ide, simulation_parameter["dt_flows"]);
+    mio::isecir::Simulation sim(model_ide, simulation_parameter["dt"]);
 
-    sim.advance(tmax);
+    sim.advance(simulation_time);
 
     // Save results.
     if (!save_dir.empty()) {
-        std::string tmax_string  = std::to_string(tmax);
-        std::string dt_string    = std::to_string(simulation_parameter["dt_flows"]);
+        std::string tmax_string  = std::to_string(simulation_time);
+        std::string dt_string    = std::to_string(simulation_parameter["dt"]);
         std::string filename_ide = save_dir + "ide_" + std::to_string(start_date.year) + "-" +
                                    std::to_string(start_date.month) + "-" + std::to_string(start_date.day) + "_" +
                                    tmax_string.substr(0, tmax_string.find(".")) + "_" +
@@ -408,7 +425,20 @@ simulate_ide_model(mio::Date start_date, ScalarType tmax, mio::ContactMatrixGrou
     return mio::success(result);
 }
 
-mio::IOResult<void> simulate_ode_model(mio::Date start_date, Vector init_compartments, ScalarType tmax,
+/**
+* @brief Simulates using an ODE model. 
+*
+* We need intial values for the compartments as input. With this, we can make the starting conditions equivalent to an
+* the previously simulated results using an IDE model. 
+*
+* @param[in] start_date Start date of the simulation 
+* @param[in] simulation_time Duration of the simulation.
+* @param[in] init_compartments Vector containing initial values for compartments. 
+* @param[in] contact_matrices Contact matrices used. 
+* @param[in] save_dir Directory where simulation results will be stored. 
+* @returns Any IO errros that happen.
+*/
+mio::IOResult<void> simulate_ode_model(mio::Date start_date, ScalarType simulation_time, Vector init_compartments,
                                        mio::ContactMatrixGroup contact_matrices, std::string save_dir = "")
 {
     // Use ODE FlowModel.
@@ -479,20 +509,20 @@ mio::IOResult<void> simulate_ode_model(mio::Date start_date, Vector init_compart
     // Set integrator and fix step size.
     auto integrator =
         std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
-    integrator->set_dt_min(simulation_parameter["dt_flows"]);
-    integrator->set_dt_max(simulation_parameter["dt_flows"]);
+    integrator->set_dt_min(simulation_parameter["dt"]);
+    integrator->set_dt_max(simulation_parameter["dt"]);
 
     // Simulate.
     std::vector<mio::TimeSeries<ScalarType>> results_ode = mio::osecir::simulate_flows<ScalarType>(
-        simulation_parameter["t0"], tmax, simulation_parameter["dt_flows"], model_ode, integrator);
+        simulation_parameter["t0"], simulation_time, simulation_parameter["dt"], model_ode, integrator);
 
     // Save results.
     if (!save_dir.empty()) {
-        std::string tmax_string  = std::to_string(tmax);
-        std::string dt_string    = std::to_string(simulation_parameter["dt_flows"]);
-        std::string filename_ode = save_dir + "ode_" + std::to_string(start_date.year) + "-" +
+        std::string simulation_time_string = std::to_string(simulation_time);
+        std::string dt_string              = std::to_string(simulation_parameter["dt"]);
+        std::string filename_ode           = save_dir + "ode_" + std::to_string(start_date.year) + "-" +
                                    std::to_string(start_date.month) + "-" + std::to_string(start_date.day) + "_" +
-                                   tmax_string.substr(0, tmax_string.find(".")) + "_" +
+                                   simulation_time_string.substr(0, simulation_time_string.find(".")) + "_" +
                                    dt_string.substr(0, dt_string.find(".") + 5);
 
         std::string filename_ode_flows           = filename_ode + "_flows.h5";
@@ -508,23 +538,20 @@ mio::IOResult<void> simulate_ode_model(mio::Date start_date, Vector init_compart
 int main(int argc, char** argv)
 {
     // Paths are valid if file is executed e.g. in memilio/build/bin.
-    std::string data_dir_tmp = "../../data";
-    std::string save_dir     = "../../results/real/";
+    std::string data_dir_string = "../../data";
+    std::string save_dir        = "../../data/simulation_results/covid_scenario/";
 
     mio::Date start_date(2020, 10, 01);
 
     ScalarType simulation_time = 45;
 
-    std::vector<ScalarType> lognormal_parameters_U = {0.42819924, 9.76267505, 0.33816427, 17.09411753};
-
-    std::cout << "argc: " << argc << std::endl;
     if (argc == 9) {
 
-        data_dir_tmp                           = argv[1];
+        data_dir_string                        = argv[1];
         save_dir                               = argv[2];
         start_date                             = mio::Date(std::stoi(argv[3]), std::stoi(argv[4]), std::stoi(argv[5]));
         simulation_time                        = std::stod(argv[6]);
-        simulation_parameter["dt_flows"]       = std::stod(argv[7]);
+        simulation_parameter["dt"]             = std::stod(argv[7]);
         simulation_parameter["scale_contacts"] = std::stod(argv[8]);
 
         std::cout << std::setprecision(10) << "Contact scaling: " << simulation_parameter["scale_contacts"]
@@ -535,26 +562,24 @@ int main(int argc, char** argv)
     boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directories(dir);
 
-    const boost::filesystem::path data_dir = data_dir_tmp;
+    const boost::filesystem::path data_dir = data_dir_string;
 
     // Set contact matrices.
-    mio::ContactMatrixGroup contact_matrices =
-        define_contact_matrices(data_dir, simulation_parameter, start_date).value();
+    mio::ContactMatrixGroup contact_matrices = define_contact_matrices(data_dir, start_date).value();
     // mio::ContactMatrixGroup contact_matrices = define_contact_matrices_simplified(start_date).value();
 
     // Run IDE simulation.
-    auto result_ide =
-        simulate_ide_model(start_date, simulation_time, contact_matrices, data_dir, save_dir, lognormal_parameters_U);
+    auto result_ide = simulate_ide_model(start_date, simulation_time, contact_matrices, data_dir, save_dir);
     if (!result_ide) {
         printf("%s\n", result_ide.error().formatted_message().c_str());
         return -1;
     }
 
-    // Use results from IDE simulation as iniitalization for ODE model.
+    // Use results from IDE simulation as initialization for ODE model.
     Vector init_compartments = result_ide.value()[0].get_value(0);
 
     // Run ODE simulation.
-    auto result_ode = simulate_ode_model(start_date, init_compartments, simulation_time, contact_matrices, save_dir);
+    auto result_ode = simulate_ode_model(start_date, simulation_time, init_compartments, contact_matrices, save_dir);
     if (!result_ode) {
         printf("%s\n", result_ode.error().formatted_message().c_str());
         return -1;

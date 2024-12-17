@@ -43,6 +43,24 @@
 * can be determined numerically with the ODE model with a high accuracy as ground truth.
 */
 
+// Used parameters.
+std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
+                                                          {"total_population", 10000.},
+                                                          {"TimeExposed", 1.4},
+                                                          {"TimeInfectedNoSymptoms", 1.2},
+                                                          {"TimeInfectedSymptoms", 0.3},
+                                                          {"TimeInfectedSevere", 0.3},
+                                                          {"TimeInfectedCritical", 0.3},
+                                                          {"TransmissionProbabilityOnContact", 1.},
+                                                          {"RelativeTransmissionNoSymptoms", 1.},
+                                                          {"RiskOfInfectionFromSymptomatic", 1.},
+                                                          {"Seasonality", 0.},
+                                                          {"InfectedSymptomsPerInfectedNoSymptoms", 0.5},
+                                                          {"SeverePerInfectedSymptoms", 0.5},
+                                                          {"CriticalPerSevere", 0.5},
+                                                          {"DeathsPerCritical", 0.5},
+                                                          {"cont_freq", 1.}};
+
 /**
 * @brief Takes the compartments of an ODE simulation and computes the respective flows. 
 *
@@ -205,6 +223,7 @@ void compute_initial_flows_for_ide_from_ode(mio::osecir::Model<ScalarType>& mode
 * @param[in] saving_dt Step size in between the time points of the TimeSeries with less time points.
 *   This should be a multiple of the time step size used in simulation_results.
 * @param[in] scale Factor by which the TimeSeries values should be scaled.
+* @returns TimeSeries with simulation results where some time points have been removed. 
 */
 mio::TimeSeries<ScalarType> remove_time_points(const mio::TimeSeries<ScalarType>& simulation_result,
                                                ScalarType saving_dt, ScalarType scale = 1)
@@ -222,25 +241,35 @@ mio::TimeSeries<ScalarType> remove_time_points(const mio::TimeSeries<ScalarType>
     return removed;
 }
 
-int main()
-{
-    // Directory where results will be stored. If this string is empty, results will not be saved.
-    std::string result_dir = "../../results/";
-    // The results of the ODE model will be saved using the step size 10^{-save_exponent}
-    // as for very small step sizes used for the simulation, the number of time points stored gets very big.
-    ScalarType save_exponent = 4;
-    // Decide if we want to run the IDE simulation or just the ODE simulation , e.g., to create a ground truth.
-    bool ide_simulation = true;
+/**
+* @brief Simulates from t0 until tmax using an ODE model and subsequently simulates from 
+* t0_ide = (tmax-t0)/2 until tmax using a matching IDE model to determine convergence of the IDE solver. 
+*
+* To make both ODE and IDE model comparable, we set the parameters of the IDE model according to the parameters of the 
+* ODE model. Furthermore, we determine the initial flows for the IDE model based on the ODE results so that we have
+* equivalent conditions for both models at t0_ide. 
 
-    // General set up.
-    ScalarType t0   = 0.;
-    ScalarType tmax = 70.;
+* The time step size of ODE and IDE simulation can be chosen independently.
+* However, we assume that the time step size of the IDE model is a multiple of the one of the ODE model.
+*
+* @param[in] t0 Start time of the ODE simulation. 
+* @param[in] tmax Maximal time for which we simulate.
+* @param[in] ode_exponent The ODE model is simulated using a fixed step size dt=10^{-ode_exponent}.
+* @param[in] ide_exponent The IDE model is simulated using a fixed step size dt=10^{-ide_exponent}.
+* @param[in] save_exponent The results of the ODE model will be saved using the step size 10^{-save_exponent}.
+* @param[in] result_dir Directory where simulation results will be stored. 
+* @param[in] ide_simulation Bool that determines if we want to do an IDE-based in addition to an ODE-based simulation;
+* default is true. 
+* @returns Any io errors that happen. 
+*/
+mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarType ode_exponent,
+                                         ScalarType ide_exponent, ScalarType save_exponent, std::string result_dir,
+                                         bool ide_simulation = true)
+{
     // The ODE model is simulated using a fixed step size dt=10^{-ode_exponent}.
-    ScalarType ode_exponent = 1;
-    ScalarType dt_ode       = pow(10, -ode_exponent);
+    ScalarType dt_ode = pow(10, -ode_exponent);
     // The IDE model is simulated using a fixed step size dt=10^{-ide_exponent}.
-    ScalarType ide_exponent = 1;
-    ScalarType dt_ide       = pow(10, -ide_exponent);
+    ScalarType dt_ide = pow(10, -ide_exponent);
 
     /**********************************
     *         ODE simulation          *
@@ -248,10 +277,10 @@ int main()
     mio::osecir::Model<ScalarType> model_ode(1);
 
     // Set initial values for compartments.
-    ScalarType nb_total_t0 = 10000, nb_exp_t0 = 20, nb_car_t0 = 20, nb_inf_t0 = 3, nb_hosp_t0 = 1, nb_icu_t0 = 1,
-               nb_rec_t0 = 10, nb_dead_t0 = 0;
+    ScalarType nb_exp_t0 = 20, nb_car_t0 = 20, nb_inf_t0 = 3, nb_hosp_t0 = 1, nb_icu_t0 = 1, nb_rec_t0 = 10,
+               nb_dead_t0 = 0;
 
-    model_ode.populations.set_total(nb_total_t0);
+    model_ode.populations.set_total(simulation_parameter["total_population"]);
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]                     = nb_exp_t0;
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}]          = nb_car_t0;
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
@@ -262,33 +291,45 @@ int main()
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]                   = nb_rec_t0;
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]                        = nb_dead_t0;
     model_ode.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
-                                                    nb_total_t0);
+                                                    simulation_parameter["total_population"]);
 
     // Set parameters.
-    ScalarType cont_freq = 1.0;
+    ScalarType cont_freq = simulation_parameter["cont_freq"];
     // Set Seasonality=0 so that cont_freq_eff is equal to contact_matrix.
-    model_ode.parameters.set<mio::osecir::Seasonality<ScalarType>>(0.0);
+    model_ode.parameters.set<mio::osecir::Seasonality<ScalarType>>(simulation_parameter["Seasonality"]);
     mio::ContactMatrixGroup& contact_matrix = model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = mio::UncertainContactMatrix(contact_matrix);
 
     // Parameters needed to determine transition rates.
-    model_ode.parameters.get<mio::osecir::TimeExposed<ScalarType>>()[(mio::AgeGroup)0]            = 1.4;
-    model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] = 1.2;
-    model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0]   = 0.3;
-    model_ode.parameters.get<mio::osecir::TimeInfectedSevere<ScalarType>>()[(mio::AgeGroup)0]     = 0.3;
-    model_ode.parameters.get<mio::osecir::TimeInfectedCritical<ScalarType>>()[(mio::AgeGroup)0]   = 0.3;
+    model_ode.parameters.get<mio::osecir::TimeExposed<ScalarType>>()[(mio::AgeGroup)0] =
+        simulation_parameter["TimeExposed"];
+    model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
+        simulation_parameter["TimeInfectedNoSymptoms"];
+    model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
+        simulation_parameter["TimeInfectedSymptoms"];
+    model_ode.parameters.get<mio::osecir::TimeInfectedSevere<ScalarType>>()[(mio::AgeGroup)0] =
+        simulation_parameter["TimeInfectedSevere"];
+    model_ode.parameters.get<mio::osecir::TimeInfectedCritical<ScalarType>>()[(mio::AgeGroup)0] =
+        simulation_parameter["TimeInfectedCritical"];
 
     // Set probabilities that determine proportion between compartments.
-    model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] = 0.5;
-    model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0]      = 0.5;
-    model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0]              = 0.5;
-    model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0]              = 0.5;
+    model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
+        1 - simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"];
+    model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
+        simulation_parameter["SeverePerInfectedSymptoms"];
+    model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0] =
+        simulation_parameter["CriticalPerSevere"];
+    model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0] =
+        simulation_parameter["DeathsPerCritical"];
 
     // Further model parameters.
-    model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()[(mio::AgeGroup)0] = 1.0;
-    model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()[(mio::AgeGroup)0]   = 1.0;
-    model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[(mio::AgeGroup)0]   = 1.0;
+    model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()[(mio::AgeGroup)0] =
+        simulation_parameter["TransmissionProbabilityOnContact"];
+    model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
+        simulation_parameter["RelativeTransmissionNoSymptoms"];
+    model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[(mio::AgeGroup)0] =
+        simulation_parameter["RiskOfInfectionFromSymptomatic"];
     // Choose TestAndTraceCapacity very large so that parameter has no effect.
     model_ode.parameters.get<mio::osecir::TestAndTraceCapacity<ScalarType>>() = std::numeric_limits<ScalarType>::max();
     // Choose ICUCapacity very large so that parameter has no effect.
@@ -331,8 +372,8 @@ int main()
             std::cout << "Successfully saved the ODE simulation results. \n";
         }
         else {
-            std::cout << "Error occured while saving the ODE simulation results. \n";
-            return 1;
+            return mio::failure(mio::StatusCode::InvalidValue,
+                                "Error occured while saving the ODE simulation results.");
         }
     }
 
@@ -342,14 +383,15 @@ int main()
     if (ide_simulation) {
         // Start IDE model simulation at half of tmax.
         ScalarType t0_ide = (tmax - t0) / 2.;
-        // Number of deaths will be set according to the ODE model in the function where also the transitions are calculated.
+        // Number of deaths will be set according to the ODE model later in the function where also the transitions are calculated.
         ScalarType deaths_init_value = 0.;
 
         // Initialize model.
         mio::TimeSeries<ScalarType> init_transitions((int)mio::isecir::InfectionTransition::Count);
         size_t num_agegroups = 1;
         mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_population =
-            mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), nb_total_t0);
+            mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups),
+                                                             simulation_parameter["total_population"]);
         mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
             mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), deaths_init_value);
         mio::isecir::Model model_ide(std::move(init_transitions), total_population, deaths, num_agegroups);
@@ -441,6 +483,7 @@ int main()
         compute_initial_flows_for_ide_from_ode(model_ode, model_ide, secihurd_ode, t0_ide, dt_ide);
 
         model_ide.check_constraints(dt_ide);
+
         // Carry out simulation.
         std::cout << "Starting simulation with IDE model. \n";
         mio::isecir::Simulation sim(model_ide, dt_ide);
@@ -466,8 +509,38 @@ int main()
             }
             else {
                 std::cout << "Error occured while saving the IDE simulation results. \n";
-                return 1;
+                return mio::failure(mio::StatusCode::InvalidValue,
+                                    "Error occured while saving the IDE simulation results.");
             }
         }
     }
+    return mio::success();
+}
+
+int main()
+{
+    // Directory where results will be stored. If this string is empty, results will not be saved.
+    std::string result_dir = "../../data/simulation_results/convergence/";
+    // The results of the ODE model will be saved using the step size 10^{-save_exponent}
+    // as for very small step sizes used for the simulation, the number of time points stored gets very big.
+    ScalarType save_exponent = 4;
+    // Decide if we want to run the IDE simulation or just the ODE simulation, e.g., to create a ground truth.
+    bool ide_simulation = true;
+
+    // General set up.
+    ScalarType t0   = 0.;
+    ScalarType tmax = 70.;
+    // The ODE model will be simulated using a fixed step size dt=10^{-ode_exponent}.
+    ScalarType ode_exponent = 1;
+    // The IDE model will be simulated using a fixed step size dt=10^{-ide_exponent}.
+    ScalarType ide_exponent = 1;
+
+    auto result = simulate_ode_and_ide(t0, tmax, ode_exponent, ide_exponent, save_exponent, result_dir, ide_simulation);
+
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+        return -1;
+    }
+
+    return 0;
 }

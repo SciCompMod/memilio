@@ -33,7 +33,6 @@
 #include "ode_secir/parameters.h"
 
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
-#include "boost/filesystem.hpp"
 #include "ode_secir/infection_state.h"
 #include <string>
 #include <map>
@@ -43,7 +42,7 @@ using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 // Used parameters
 std::map<std::string, ScalarType> simulation_parameter = {
     {"t0", 0.},
-    {"dt_flows", 0.01},
+    {"dt", 0.01},
     {"total_population", 83155031.},
     {"total_confirmed_cases", 341223.},
     {"deaths", 0.},
@@ -62,7 +61,13 @@ std::map<std::string, ScalarType> simulation_parameter = {
     {"DeathsPerCritical", 0.387803},
     {"cont_freq", 3.114219}}; // Computed so that we obtain constant new infections at beginning of simulation.
 
-mio::UncertainContactMatrix<ScalarType> get_contact_matrix(ScalarType contact_scaling)
+/**
+* @brief Function to scale the contact matrix according to factor contact_scaling after two days.  
+*
+* @param[in] contact_scaling Factor that is applied to contact matrix after two days. 
+* @returns Scaled contact matrix.
+*/
+mio::UncertainContactMatrix<ScalarType> scale_contact_matrix(ScalarType contact_scaling)
 {
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
     if (contact_scaling <= 1.) {
@@ -83,6 +88,12 @@ mio::UncertainContactMatrix<ScalarType> get_contact_matrix(ScalarType contact_sc
     return mio::UncertainContactMatrix(contact_matrix);
 }
 
+/**
+* @brief Function to compute the initial flows needed for the IDE model where we assume that we have a constant number 
+* of new transmissions.  
+*
+* @returns TimeSeries containing intitial flows. 
+*/
 mio::TimeSeries<ScalarType> get_initial_flows()
 {
     // The initialization vector for the IDE model is calculated by defining transitions.
@@ -121,18 +132,28 @@ mio::TimeSeries<ScalarType> get_initial_flows()
     init_transitions[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered] =
         init_transitions[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical] *
         (1 - simulation_parameter["DeathsPerCritical"]);
-    init_transitions = init_transitions * simulation_parameter["dt_flows"];
+    init_transitions = init_transitions * simulation_parameter["dt"];
 
     // Add initial time point to time series.
     init.add_time_point(-350, init_transitions);
     // Add further time points until time 0 with constant values.
     while (init.get_last_time() < simulation_parameter["t0"] - 1e-3) {
-        init.add_time_point(init.get_last_time() + simulation_parameter["dt_flows"], init_transitions);
+        init.add_time_point(init.get_last_time() + simulation_parameter["dt"], init_transitions);
     }
     return init;
 }
 
-mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType contact_scaling, ScalarType tmax, std::string save_dir = "")
+/**
+* @brief Function that simulates from time 0 until tmax using an IDE model where we apply a contact scaling after
+* two days.   
+*
+* @param[in] contact_scaling Factor that is applied to contact matrix after two days. 
+* @param[in] tmax Time up to which we simulate. 
+* @param[in] save_dir Directory where simulation results will be stored. 
+* @returns Any io errors that happen.
+*/
+mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ide_model(ScalarType contact_scaling, ScalarType tmax,
+                                                              std::string save_dir = "")
 {
     // Initialize model.
     size_t num_agegroups = 1;
@@ -213,7 +234,7 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType contact_scaling, Scala
 
     model_ide.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
-    model_ide.parameters.get<mio::isecir::ContactPatterns>() = get_contact_matrix(contact_scaling);
+    model_ide.parameters.get<mio::isecir::ContactPatterns>() = scale_contact_matrix(contact_scaling);
 
     mio::ConstantFunction constfunc(simulation_parameter["TransmissionProbabilityOnContact"]);
     mio::StateAgeFunctionWrapper StateAgeFunctionWrapperide(constfunc);
@@ -224,32 +245,44 @@ mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType contact_scaling, Scala
     model_ide.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(StateAgeFunctionWrapperide);
 
     model_ide.set_tol_for_support_max(1e-6);
-    model_ide.check_constraints(simulation_parameter["dt_flows"]);
+    model_ide.check_constraints(simulation_parameter["dt"]);
 
     // Simulate.
-    mio::isecir::Simulation sim(model_ide, simulation_parameter["dt_flows"]);
+    mio::isecir::Simulation sim(model_ide, simulation_parameter["dt"]);
     sim.advance(tmax);
 
     if (!save_dir.empty()) {
-        std::string R0_string    = std::to_string(contact_scaling);
-        std::string tmax_string  = std::to_string(tmax);
-        std::string dt_string    = std::to_string(simulation_parameter["dt_flows"]);
-        std::string filename_ide = save_dir + "fictional_ide_covasim_" + R0_string.substr(0, R0_string.find(".") + 2) +
-                                   "_" + tmax_string.substr(0, tmax_string.find(".")) + "_" +
-                                   dt_string.substr(0, dt_string.find(".") + 5);
+        std::string contact_scaling_string = std::to_string(contact_scaling);
+        std::string tmax_string            = std::to_string(tmax);
+        std::string dt_string              = std::to_string(simulation_parameter["dt"]);
+
+        std::string filename_ide =
+            save_dir + "changepoint_ide_" + contact_scaling_string.substr(0, contact_scaling_string.find(".") + 2) +
+            "_" + tmax_string.substr(0, tmax_string.find(".")) + "_" + dt_string.substr(0, dt_string.find(".") + 5);
 
         std::string filename_ide_flows = filename_ide + "_flows.h5";
         mio::IOResult<void> save_result_status_f =
             mio::save_result({sim.get_transitions()}, {0}, 1, filename_ide_flows);
+
         std::string filename_ide_compartments = filename_ide + "_compartments.h5";
         mio::IOResult<void> save_result_status_c =
             mio::save_result({sim.get_result()}, {0}, 1, filename_ide_compartments);
     }
 
     // Return vector with initial compartments.
-    return sim.get_result();
+    return mio::success(sim.get_result());
 }
 
+/**
+* @brief Function that simulates from time 0 until tmax using an ODE model where we apply a contact scaling after
+* two days.   
+*
+* @param[in] init_compartments Vector containing initial values for the compartments. 
+* @param[in] contact_scaling Factor that is applied to contact matrix after two days. 
+* @param[in] tmax Time up to which we simulate. 
+* @param[in] save_dir Directory where simulation results will be stored. 
+* @returns Any io errors that happen.
+*/
 mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType contact_scaling, ScalarType tmax,
                                        std::string save_dir = "")
 {
@@ -314,32 +347,34 @@ mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType cont
     // Set Seasonality=0 so that cont_freq_eff is equal to contact_matrix.
     model_ode.parameters.set<mio::osecir::Seasonality<ScalarType>>(simulation_parameter["Seasonality"]);
 
-    model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = get_contact_matrix(contact_scaling);
+    model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = scale_contact_matrix(contact_scaling);
 
     model_ode.check_constraints();
 
     // Set integrator and fix step size.
     auto integrator =
         std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
-    integrator->set_dt_min(simulation_parameter["dt_flows"]);
-    integrator->set_dt_max(simulation_parameter["dt_flows"]);
+    integrator->set_dt_min(simulation_parameter["dt"]);
+    integrator->set_dt_max(simulation_parameter["dt"]);
 
     // Simulate.
     std::vector<mio::TimeSeries<ScalarType>> results_ode = mio::osecir::simulate_flows<ScalarType>(
-        simulation_parameter["t0"], tmax, simulation_parameter["dt_flows"], model_ode, integrator);
+        simulation_parameter["t0"], tmax, simulation_parameter["dt"], model_ode, integrator);
 
     // Save results.
     if (!save_dir.empty()) {
-        std::string R0_string    = std::to_string(contact_scaling);
-        std::string tmax_string  = std::to_string(tmax);
-        std::string dt_string    = std::to_string(simulation_parameter["dt_flows"]);
-        std::string filename_ode = save_dir + "fictional_ode_covasim_" + R0_string.substr(0, R0_string.find(".") + 2) +
-                                   "_" + tmax_string.substr(0, tmax_string.find(".")) + "_" +
-                                   dt_string.substr(0, dt_string.find(".") + 5);
+        std::string contact_scaling_string = std::to_string(contact_scaling);
+        std::string tmax_string            = std::to_string(tmax);
+        std::string dt_string              = std::to_string(simulation_parameter["dt"]);
+
+        std::string filename_ode =
+            save_dir + "changepoint_ode_" + contact_scaling_string.substr(0, contact_scaling_string.find(".") + 2) +
+            "_" + tmax_string.substr(0, tmax_string.find(".")) + "_" + dt_string.substr(0, dt_string.find(".") + 5);
 
         std::string filename_ode_flows           = filename_ode + "_flows.h5";
         mio::IOResult<void> save_result_status_f = mio::save_result({results_ode[1]}, {0}, 1, filename_ode_flows);
-        std::string filename_ode_compartments    = filename_ode + "_compartments.h5";
+
+        std::string filename_ode_compartments = filename_ode + "_compartments.h5";
         mio::IOResult<void> save_result_status_c =
             mio::save_result({results_ode[0]}, {0}, 1, filename_ode_compartments);
     }
@@ -350,7 +385,7 @@ mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType cont
 int main()
 {
     // Paths are valid if file is executed e.g. in memilio/build/bin.
-    std::string save_dir = "../../results/fictional/covasim/";
+    std::string save_dir = "../../data/simulation_results/changepoints/";
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directories(dir);
@@ -359,9 +394,14 @@ int main()
     ScalarType contact_scaling = 0.5;
     ScalarType tmax            = 12;
 
-    mio::TimeSeries<ScalarType> result_ide = simulate_ide_model(contact_scaling, tmax, save_dir);
+    auto result_ide = simulate_ide_model(contact_scaling, tmax, save_dir);
+    if (!result_ide) {
+        printf("%s\n", result_ide.error().formatted_message().c_str());
+        return -1;
+    }
 
-    Vector compartments = result_ide.get_value(0);
+    // Use compartments at time 0 from IDE simulation as initial values for ODE model to make results comparable.
+    Vector compartments = result_ide.value().get_value(0);
 
     auto result_ode = simulate_ode_model(compartments, contact_scaling, tmax, save_dir);
     if (!result_ode) {
@@ -374,8 +414,13 @@ int main()
     tmax            = 12;
 
     result_ide = simulate_ide_model(contact_scaling, tmax, save_dir);
+    if (!result_ide) {
+        printf("%s\n", result_ide.error().formatted_message().c_str());
+        return -1;
+    }
 
-    compartments = result_ide.get_value(0);
+    // Use compartments at time 0 from IDE simulation as initial values for ODE model to make results comparable.
+    compartments = result_ide.value().get_value(0);
 
     result_ode = simulate_ode_model(compartments, contact_scaling, tmax, save_dir);
     if (!result_ode) {
