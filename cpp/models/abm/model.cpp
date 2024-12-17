@@ -21,6 +21,7 @@
 #include "abm/location_id.h"
 #include "abm/location_type.h"
 #include "abm/intervention_type.h"
+#include "abm/model_functions.h"
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/mobility_rules.h"
@@ -28,6 +29,8 @@
 #include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"
 #include "memilio/utils/stl_util.h"
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
 
 namespace mio
@@ -247,9 +250,10 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
         const auto num_persons   = m_persons.size();
 
         // 1) reset all cached values
-        // Note: we cannot easily reuse values, as they are time dependant (get_infection_state)
+        // Note: we cannot easily reuse values, as they are time dependent (get_infection_state)
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_locations; ++i) {
+            mio::abm::adjust_contact_rates(m_locations[i], parameters.get_num_groups());
             const auto index         = i;
             auto& local_air_exposure = m_air_exposure_rates_cache[index];
             std::for_each(local_air_exposure.begin(), local_air_exposure.end(), [](auto& r) {
@@ -271,6 +275,20 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
                                                 m_contact_exposure_rates_cache[location], person,
                                                 get_location(person.get_id()), t, dt);
         } // implicit taskloop barrier
+        //normalize cached exposure rates
+        for (size_t i = 0; i < num_locations; ++i) {
+            for (auto age_group = AgeGroup(0); age_group < AgeGroup(parameters.get_num_groups()); ++age_group) {
+                auto num_persons_in_location =
+                    std::count_if(m_persons.begin(), m_persons.end(), [age_group](Person& p) {
+                        return p.get_age() == age_group;
+                    });
+                if (num_persons_in_location > 0) {
+                    for (auto& v : m_contact_exposure_rates_cache[i].slice(AgeGroup(age_group))) {
+                        v = v / num_persons_in_location;
+                    }
+                }
+            }
+        }
     } // implicit single barrier
 }
 

@@ -711,6 +711,20 @@ IOResult<UniformDistributionParams> deserialize_internal(IOContext& io, Tag<Unif
 template <class Int>
 using PoissonDistribution = DistributionAdapter<std::poisson_distribution<Int>>;
 
+/**
+ * adapted lognormal_distribution.
+ * @see DistributionAdapter
+ */
+template <class Real>
+using LogNormalDistribution = DistributionAdapter<std::lognormal_distribution<Real>>;
+
+/**
+ * adapted gamma_distribution.
+ * @see DistributionAdapter
+ */
+template <class Real>
+using GammaDistribution = DistributionAdapter<std::gamma_distribution<Real>>;
+
 } // namespace mio
 
 #endif
