@@ -74,6 +74,21 @@ std::vector<mio::ConfirmedCasesDataEntry> get_synthetic_rki_data_age()
     return mio::deserialize_confirmed_cases_data(js).value();
 }
 
+// Define synthetic rki data vector with age groups for testing purposes.
+std::vector<mio::DiviEntry> get_synthetic_divi_data()
+{
+    Json::Value js(Json::arrayValue);
+    std::vector<Json::Value> dates = {"2020-05-26", "2020-05-27", "2020-05-28", "2020-05-29",
+                                      "2020-05-30", "2020-05-31", "2020-06-01", "2020-06-02",
+                                      "2020-06-03", "2020-06-04", "2020-06-05"};
+    for (int day = 0; day < 11; day++) {
+        js[day]["ICU"]  = 0;
+        js[day]["Date"] = dates[day];
+    }
+    js[6]["ICU"] = 50;
+    return mio::deserialize_divi_data(js).value();
+}
+
 // Check that initialization based on synthetic RKI data match a calculated result without age resolution.
 TEST(TestLCTParametersIo, ReadPopulationDataRKI)
 {
@@ -192,6 +207,49 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIAgeres)
     for (size_t i = 0; i < num_populations; i++) {
         EXPECT_NEAR(population.get_value(0)[i], compare[i], 1e-6) << "at subcompartment number " << i;
     }
+}
+
+// Check that the scaling using DIVI data is working as expected.
+TEST(TestLCTParametersIo, CheckScalingDIVI)
+{
+    // Define start date and the total population used for the initialization.
+    const size_t num_agegroups = 6;
+    std::vector<ScalarType> total_population(num_agegroups, 1000.);
+    auto start_date = mio::Date(2020, 6, 1);
+
+    using InfState  = mio::lsecir::InfectionState;
+    using LctState1 = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
+    using LctState2 = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model     = mio::lsecir::Model<LctState1, LctState2, LctState1, LctState2, LctState1, LctState2>;
+    Model model;
+
+    // Define parameters used for simulation and initialization.
+    for (size_t i = 0; i < num_agegroups; i++) {
+        model.parameters.get<mio::lsecir::TimeExposed>()[i]            = 2.3;
+        model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[i] = 1.3;
+        model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[i]   = 2.4;
+        model.parameters.get<mio::lsecir::TimeInfectedSevere>()[i]     = 1.8;
+        model.parameters.get<mio::lsecir::TimeInfectedCritical>()[i]   = 1.0;
+
+        model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[i] = 0.2;
+        model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[i]      = 0.1;
+        model.parameters.get<mio::lsecir::CriticalPerSevere>()[i]              = 0.3;
+        model.parameters.get<mio::lsecir::DeathsPerCritical>()[i]              = 0.2;
+    }
+
+    // Calculate initial value vector for subcompartments with RKI data.
+    auto read_result =
+        mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
+            get_synthetic_rki_data_age(), model.populations, model.parameters, start_date, total_population,
+            std::vector<ScalarType>(num_agegroups, 1.), get_synthetic_divi_data());
+    ASSERT_THAT(print_wrap(read_result), IsSuccess());
+    // Check that the result is as expected.
+    EXPECT_NEAR(
+        mio::lsecir::details::get_total_InfectedCritical_from_populations<Model::Populations>(model.populations), 50,
+        1e-6);
+    // Check that the function to get the DIVI data at a specific day works.
+    EXPECT_NEAR(mio::lsecir::details::get_icu_from_divi_data(get_synthetic_divi_data(), mio::Date(2020, 6, 3)).value(),
+                0, 1e-6);
 }
 
 // Check some cases where computation of initial values based on RKI data should fail.
