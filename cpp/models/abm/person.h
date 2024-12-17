@@ -28,9 +28,10 @@
 #include "abm/parameters.h"
 #include "abm/person_id.h"
 #include "abm/personal_rng.h"
+#include "memilio/io/default_serialize.h"
 #include "abm/time.h"
 #include "abm/test_type.h"
-#include "abm/vaccine.h"
+#include "abm/protection_event.h"
 #include "abm/intervention_type.h"
 #include "abm/mask.h"
 #include "abm/mobility_data.h"
@@ -78,16 +79,16 @@ public:
     const Infection& get_infection() const;
 
     /**
-     * @brief Get all Vaccination%s of the Person.
-     * @return A vector with all Vaccination%s.
+     * @brief Get all vaccinations of the Person.
+     * @return A vector with all vaccinations.
      * @{
      */
-    std::vector<Vaccination>& get_vaccinations()
+    std::vector<ProtectionEvent>& get_vaccinations()
     {
         return m_vaccinations;
     }
 
-    const std::vector<Vaccination>& get_vaccinations() const
+    const std::vector<ProtectionEvent>& get_vaccinations() const
     {
         return m_vaccinations;
     }
@@ -337,13 +338,13 @@ public:
     ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const Parameters& params) const;
 
     /**
-     * @brief Add a new #Vaccination
-     * @param[in] v ExposureType (i. e. vaccine) the person takes.
-     * @param[in] t TimePoint of the Vaccination.
+     * @brief Add a new vaccination
+     * @param[in] v ProtectionType (i. e. vaccine) the person takes.
+     * @param[in] t TimePoint of the vaccination.
      */
-    void add_new_vaccination(ExposureType v, TimePoint t)
+    void add_new_vaccination(ProtectionType v, TimePoint t)
     {
-        m_vaccinations.push_back(Vaccination(v, t));
+        m_vaccinations.push_back(ProtectionEvent(v, t));
     }
 
     /**
@@ -374,40 +375,33 @@ public:
     }
 
     /**
-     * @brief Get the latest #ExposureType and its initial TimePoint of the Person.
+     * @brief Get the latest #ProtectionType and its initial TimePoint of the Person.
      */
-    std::pair<ExposureType, TimePoint> get_latest_protection() const;
+    ProtectionEvent get_latest_protection() const;
 
-    /**
-     * serialize this.
-     * @see mio::serialize
-     */
-    template <class IOContext>
-    void serialize(IOContext& io) const
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
     {
-        auto obj = io.create_object("Person");
-        obj.add_element("Location", m_location);
-        obj.add_element("age", m_age);
-        obj.add_element("id", m_person_id);
-    }
-
-    /**
-     * deserialize an object of this class.
-     * @see mio::deserialize
-     */
-    template <class IOContext>
-    static IOResult<Person> deserialize(IOContext& io)
-    {
-        auto obj = io.expect_object("Person");
-        auto loc = obj.expect_element("Location", mio::Tag<LocationId>{});
-        auto age = obj.expect_element("age", Tag<uint32_t>{});
-        auto id  = obj.expect_element("id", Tag<PersonId>{});
-        return apply(
-            io,
-            [](auto&& loc_, auto&& age_, auto&& id_) {
-                return Person{mio::RandomNumberGenerator(), loc_, AgeGroup(age_), id_};
-            },
-            loc, age, id);
+        return Members("Person")
+            .add("location", m_location)
+            .add("location_type", m_location_type)
+            .add("assigned_locations", m_assigned_locations)
+            .add("vaccinations", m_vaccinations)
+            .add("infections", m_infections)
+            .add("home_isolation_start", m_home_isolation_start)
+            .add("age_group", m_age)
+            .add("time_at_location", m_time_at_location)
+            .add("rnd_workgroup", m_random_workgroup)
+            .add("rnd_schoolgroup", m_random_schoolgroup)
+            .add("rnd_go_to_work_hour", m_random_goto_work_hour)
+            .add("rnd_go_to_school_hour", m_random_goto_school_hour)
+            .add("mask", m_mask)
+            .add("compliance", m_compliance)
+            .add("id", m_person_id)
+            .add("cells", m_cells)
+            .add("last_transport_mode", m_last_transport_mode)
+            .add("rng_counter", m_rng_counter)
+            .add("test_results", m_test_results);
     }
 
     /**
@@ -431,7 +425,7 @@ private:
     LocationType m_location_type; ///< Type of the current Location.
     std::vector<LocationId> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the
     Person always visits the same Home or School etc. */
-    std::vector<Vaccination> m_vaccinations; ///< Vector with all Vaccination%s the Person has received.
+    std::vector<ProtectionEvent> m_vaccinations; ///< Vector with all vaccinations the Person has received.
     std::vector<Infection> m_infections; ///< Vector with all Infection%s the Person had.
     TimePoint m_home_isolation_start; ///< TimePoint when the Person started isolation at home.
     AgeGroup m_age; ///< AgeGroup the Person belongs to.
@@ -451,6 +445,17 @@ private:
 };
 
 } // namespace abm
+
+/// @brief Creates an instance of abm::Person for default serialization.
+template <>
+struct DefaultFactory<abm::Person> {
+    static abm::Person create()
+    {
+        return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::LocationId(), AgeGroup(0),
+                           abm::PersonId());
+    }
+};
+
 } // namespace mio
 
 #endif

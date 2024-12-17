@@ -23,6 +23,7 @@
 
 #include "abm/mask_type.h"
 #include "abm/time.h"
+#include "memilio/io/default_serialize.h"
 
 namespace mio
 {
@@ -63,11 +64,27 @@ public:
      */
     void change_mask(MaskType new_mask_type, TimePoint t);
 
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("Mask").add("mask_type", m_type).add("time_first_used", m_time_first_usage);
+    }
+
 private:
     MaskType m_type; ///< Type of the Mask.
     TimePoint m_time_first_usage; ///< TimePoint of the Mask's initial usage.
 };
 } // namespace abm
+
+/// @brief Creates an instance of abm::Mask for default serialization.
+template <>
+struct DefaultFactory<abm::Mask> {
+    static abm::Mask create()
+    {
+        return abm::Mask(abm::MaskType::Count, abm::TimePoint());
+    }
+};
+
 } // namespace mio
 
 #endif

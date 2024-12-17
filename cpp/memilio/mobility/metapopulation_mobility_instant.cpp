@@ -21,5 +21,4 @@
 
 namespace mio
 {
-
 } // namespace mio

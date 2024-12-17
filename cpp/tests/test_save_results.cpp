@@ -231,7 +231,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    size_t num_groups = 3;
+    const size_t num_groups = 3;
     mio::osecir::Model model((int)num_groups);
     double fact = 1.0 / (double)num_groups;
 
@@ -270,13 +270,35 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
 
+    // get indices of INS and ISy compartments.
+    std::vector<std::vector<size_t>> indices_save_edges(2);
+
+    // Reserve Space. The multiplication by 2 is necessary because we have the
+    // base and the confirmed compartments for each age group.
+    for (auto& vec : indices_save_edges) {
+        vec.reserve(2 * num_groups);
+    }
+
+    // get indices and write them to the vector
+    for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(num_groups); ++i) {
+        indices_save_edges[0].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptoms}));
+        indices_save_edges[0].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}));
+        indices_save_edges[1].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptoms}));
+        indices_save_edges[1].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}));
+    }
+
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     auto graph = mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>();
     graph.add_node(0, model);
     graph.add_node(1, model);
     graph.add_edge(0, 1,
-                   mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
+                   mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0),
+                                                   indices_save_edges));
 
     auto num_runs        = 3;
     auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
@@ -290,6 +312,8 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     ensemble_results.reserve(size_t(num_runs));
     auto ensemble_params = std::vector<std::vector<mio::osecir::Model<double>>>{};
     ensemble_params.reserve(size_t(num_runs));
+    auto ensemble_edges = std::vector<std::vector<mio::TimeSeries<double>>>{};
+    ensemble_edges.reserve(size_t(num_runs));
     parameter_study.run(
         [](auto&& g) {
             return draw_sample(g);
@@ -303,6 +327,14 @@ TEST(TestSaveResult, save_percentiles_and_sums)
                            std::back_inserter(ensemble_params.back()), [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
+
+            ensemble_edges.emplace_back();
+            ensemble_edges.back().reserve(results_graph.edges().size());
+            std::transform(results_graph.edges().begin(), results_graph.edges().end(),
+                           std::back_inserter(ensemble_edges.back()), [](auto&& edge) {
+                               return edge.property.get_mobility_results();
+                           });
+
             return 0; //function needs to return something
         });
 
@@ -339,4 +371,127 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     ASSERT_TRUE(results_run2);
     auto results_run2_sum = mio::read_result(tmp_results_dir + "/results_run2_sum.h5");
     ASSERT_TRUE(results_run2_sum);
+
+    // test save edges (percentiles and results from single runs)
+    std::vector<std::pair<int, int>> pairs_edges = {{0, 1}};
+
+    auto save_edges_status = save_edges(ensemble_edges, pairs_edges, tmp_results_dir, true, true);
+    ASSERT_TRUE(save_edges_status);
+
+    // percentiles
+    auto results_edges_from_file_p05 = mio::read_result(tmp_results_dir + "/p05/Edges.h5");
+    ASSERT_TRUE(results_edges_from_file_p05);
+    auto results_edges_from_file_p25 = mio::read_result(tmp_results_dir + "/p25/Edges.h5");
+    ASSERT_TRUE(results_edges_from_file_p25);
+    auto results_edges_from_file_p50 = mio::read_result(tmp_results_dir + "/p50/Edges.h5");
+    ASSERT_TRUE(results_edges_from_file_p50);
+    auto results_edges_from_file_p75 = mio::read_result(tmp_results_dir + "/p75/Edges.h5");
+    ASSERT_TRUE(results_edges_from_file_p75);
+    auto results_edges_from_file_p95 = mio::read_result(tmp_results_dir + "/p95/Edges.h5");
+    ASSERT_TRUE(results_edges_from_file_p95);
+
+    auto result_edges_from_file = results_edges_from_file_p25.value()[0];
+    EXPECT_EQ(ensemble_edges.back().back().get_num_elements(), result_edges_from_file.get_groups().get_num_elements());
+    EXPECT_EQ(ensemble_edges.back().back().get_num_time_points(),
+              result_edges_from_file.get_groups().get_num_time_points());
+
+    // single runs
+    auto results_edges_run0 = mio::read_result(tmp_results_dir + "/Edges_run0.h5");
+    ASSERT_TRUE(results_edges_run0);
+    auto results_edges_run1 = mio::read_result(tmp_results_dir + "/Edges_run1.h5");
+    ASSERT_TRUE(results_edges_run1);
+    auto results_edges_run2 = mio::read_result(tmp_results_dir + "/Edges_run2.h5");
+    ASSERT_TRUE(results_edges_run2);
+}
+
+TEST(TestSaveResult, save_edges)
+{
+    // create some results and pairs_edges
+    const auto n = Eigen::Index(3);
+    std::vector<mio::TimeSeries<double>> results_edges(3, mio::TimeSeries<double>(n));
+    results_edges[0].add_time_point(0.0, Eigen::VectorXd::Constant(n, 0));
+    results_edges[0].add_time_point(1.0, Eigen::VectorXd::Constant(n, 1));
+    results_edges[0].add_time_point(2.0, Eigen::VectorXd::Constant(n, 1));
+
+    results_edges[1].add_time_point(0.0, Eigen::VectorXd::Constant(n, 2));
+    results_edges[1].add_time_point(1.0, Eigen::VectorXd::Constant(n, 3));
+    results_edges[1].add_time_point(2.0, Eigen::VectorXd::Constant(n, 5));
+
+    results_edges[2].add_time_point(0.0, Eigen::VectorXd::Constant(n, 3));
+    results_edges[2].add_time_point(1.0, Eigen::VectorXd::Constant(n, 4));
+    results_edges[2].add_time_point(2.0, Eigen::VectorXd::Constant(n, 7));
+
+    const std::vector<std::pair<int, int>> pairs_edges = {{0, 1}, {0, 2}, {1, 2}};
+
+    // save the results to a file
+    TempFileRegister file_register;
+    auto results_file_path = file_register.get_unique_path("test_result-%%%%-%%%%.h5");
+    auto save_edges_status = mio::save_edges(results_edges, pairs_edges, results_file_path);
+    ASSERT_TRUE(save_edges_status);
+
+    // read the results back in and check that they are correct.
+    auto results_from_file = mio::read_result(results_file_path);
+    ASSERT_TRUE(results_from_file);
+
+    // group 0
+    auto result_from_file_group0 = results_from_file.value()[0];
+    EXPECT_EQ(result_from_file_group0.get_groups().get_num_time_points(), 3);
+    EXPECT_EQ(result_from_file_group0.get_groups().get_num_elements(), 6);
+    EXPECT_EQ(result_from_file_group0.get_groups().get_value(0), (Eigen::VectorXd(6) << 0, 0, 0, 2, 2, 2).finished());
+    EXPECT_EQ(result_from_file_group0.get_groups().get_value(1), (Eigen::VectorXd(6) << 1, 1, 1, 3, 3, 3).finished());
+    EXPECT_EQ(result_from_file_group0.get_groups().get_value(2), (Eigen::VectorXd(6) << 1, 1, 1, 5, 5, 5).finished());
+    EXPECT_EQ(result_from_file_group0.get_groups().get_time(0), 0.0);
+    EXPECT_EQ(result_from_file_group0.get_groups().get_time(1), 1.0);
+    EXPECT_EQ(result_from_file_group0.get_groups().get_time(2), 2.0);
+
+    EXPECT_EQ(result_from_file_group0.get_totals().get_num_time_points(), 3);
+    EXPECT_EQ(result_from_file_group0.get_totals().get_num_elements(), 3);
+    EXPECT_EQ(result_from_file_group0.get_totals().get_value(0), Eigen::VectorXd::Constant(3, 2));
+    EXPECT_EQ(result_from_file_group0.get_totals().get_value(1), Eigen::VectorXd::Constant(3, 4));
+    EXPECT_EQ(result_from_file_group0.get_totals().get_value(2), Eigen::VectorXd::Constant(3, 6));
+    EXPECT_EQ(result_from_file_group0.get_totals().get_time(0), 0.0);
+    EXPECT_EQ(result_from_file_group0.get_totals().get_time(1), 1.0);
+    EXPECT_EQ(result_from_file_group0.get_totals().get_time(2), 2.0);
+
+    // group 1
+    auto result_from_file_group1 = results_from_file.value()[1];
+    EXPECT_EQ(result_from_file_group1.get_groups().get_num_elements(), 3);
+    EXPECT_EQ(result_from_file_group1.get_groups().get_value(0), Eigen::VectorXd::Constant(3, 3));
+    EXPECT_EQ(result_from_file_group1.get_groups().get_value(1), Eigen::VectorXd::Constant(3, 4));
+    EXPECT_EQ(result_from_file_group1.get_groups().get_value(2), Eigen::VectorXd::Constant(3, 7));
+    EXPECT_EQ(result_from_file_group1.get_groups().get_time(0), 0.0);
+    EXPECT_EQ(result_from_file_group1.get_groups().get_time(1), 1.0);
+    EXPECT_EQ(result_from_file_group1.get_groups().get_time(2), 2.0);
+
+    EXPECT_EQ(result_from_file_group1.get_totals().get_num_elements(), 3);
+    EXPECT_EQ(result_from_file_group1.get_totals().get_value(0), Eigen::VectorXd::Constant(3, 3));
+    EXPECT_EQ(result_from_file_group1.get_totals().get_value(1), Eigen::VectorXd::Constant(3, 4));
+    EXPECT_EQ(result_from_file_group1.get_totals().get_value(2), Eigen::VectorXd::Constant(3, 7));
+}
+
+TEST(TestSaveEdges, save_edges_empty_ts)
+{
+    mio::set_log_level(mio::LogLevel::off);
+    std::vector<mio::TimeSeries<double>> results;
+
+    const auto num_elements = 2;
+
+    // Add filled TimeSeries to the results vector
+    mio::TimeSeries<double> ts_1(num_elements);
+    ts_1.add_time_point(0.0, Eigen::VectorXd::Constant(num_elements, 1));
+    ts_1.add_time_point(1.0, Eigen::VectorXd::Constant(num_elements, 2));
+    results.push_back(ts_1);
+
+    // Add an empty TimeSeries and add it to the results vector
+    mio::TimeSeries<double> ts_2(num_elements);
+    results.push_back(ts_2);
+
+    const std::vector<std::pair<int, int>> pairs_edges = {{0, 1}, {1, 2}};
+
+    // Create a TempFile for HDF5 output
+    TempFileRegister file_register;
+    auto results_file_path = file_register.get_unique_path("TestEdges-%%%%-%%%%.h5");
+
+    // Call the save_edges function and check if it returns a failure
+    ASSERT_THAT(save_edges(results, pairs_edges, results_file_path), IsFailure(mio::StatusCode::InvalidValue));
 }
