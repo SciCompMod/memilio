@@ -438,19 +438,6 @@ public:
     */
     TestResult get_test_result(TestType type) const;
 
-    /**
-     * @brief Get the most recent TestResult performed from the Person based on the TestType.
-     * If time_of_testing == TimePoint(std::numeric_limits<int>::min()), there is no previous TestResult.
-     * @param[in] type The TestType of the test.
-     * @return The latest TestResult of the given Type.
-    */
-    TestResult get_test_result(TestType type) const;
-
-    TimeSpan get_time_since_transmission()
-    {
-        return m_time_since_transmission;
-    };
-
     TimeSpan get_time_since_transmission()
     {
         return m_time_since_transmission;

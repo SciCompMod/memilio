@@ -164,19 +164,6 @@ TimeSpan Infection::get_time_in_state(InfectionState state)
     return ((pos + 1)->first - pos->first);
 }
 
-TimeSpan Infection::get_time_in_state(InfectionState state)
-{
-    auto pos = std::find_if(m_infection_course.begin(), m_infection_course.end(),
-                            [state](const std::pair<TimePoint, InfectionState>& inf) {
-                                return (inf.second == state);
-                            });
-    // infection state is not part of infection course
-    if (pos == m_infection_course.end()) {
-        return TimeSpan(0);
-    }
-    return ((pos + 1)->first - pos->first);
-}
-
 TimePoint Infection::draw_infection_course(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
                                            TimePoint init_date, InfectionState init_state,
                                            ProtectionEvent latest_protection)

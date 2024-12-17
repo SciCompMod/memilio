@@ -112,7 +112,7 @@ public:
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("Model");
-        obj.add_element("parameters", parameters);
+        // obj.add_element("parameters", parameters);
         // skip caches, they are rebuild by the deserialized model
         obj.add_list("persons", get_persons().begin(), get_persons().end());
         obj.add_list("locations", get_locations().begin(), get_locations().end());
@@ -131,8 +131,8 @@ public:
     template <class IOContext>
     static IOResult<Model> deserialize(IOContext& io)
     {
-        auto obj                = io.expect_object("Model");
-        auto params             = obj.expect_element("parameters", Tag<Parameters>{});
+        auto obj = io.expect_object("Model");
+        //auto params             = obj.expect_element("parameters", Tag<Parameters>{});
         auto persons            = obj.expect_list("persons", Tag<Person>{});
         auto locations          = obj.expect_list("locations", Tag<Location>{});
         auto location_types     = obj.expect_element("location_types", Tag<unsigned long>{});
@@ -142,9 +142,9 @@ public:
         auto rng                = obj.expect_element("rng", Tag<RandomNumberGenerator>{});
         return apply(
             io,
-            [](auto&& params_, auto&& persons_, auto&& locations_, auto&& location_types_, auto&& trip_list_,
+            [](auto&& persons_, auto&& locations_, auto&& location_types_, auto&& trip_list_,
                auto&& use_mobility_rules_, auto&& cemetery_id_, auto&& rng_) {
-                Model model{params_};
+                Model model{1};
                 model.m_persons.assign(persons_.cbegin(), persons_.cend());
                 model.m_locations.assign(locations_.cbegin(), locations_.cend());
                 model.m_has_locations      = location_types_;
@@ -154,7 +154,7 @@ public:
                 model.m_rng                = rng_;
                 return model;
             },
-            params, persons, locations, location_types, trip_list, use_mobility_rules, cemetery_id, rng);
+            persons, locations, location_types, trip_list, use_mobility_rules, cemetery_id, rng);
     }
 
     /** 

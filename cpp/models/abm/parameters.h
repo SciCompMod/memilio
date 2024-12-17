@@ -37,10 +37,6 @@
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/contact_matrix.h"
 
-#include <algorithm>
-#include <limits>
-#include <unordered_string>
-
 namespace mio
 {
 namespace abm
@@ -189,7 +185,7 @@ struct TimeInfectedCriticalToRecovered {
 * @brief the percentage of symptomatic cases
 */
 struct SymptomsPerInfectedNoSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, .5);
@@ -204,7 +200,7 @@ struct SymptomsPerInfectedNoSymptoms {
 * @brief the percentage of hospitalized cases per infected cases
 */
 struct SeverePerInfectedSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, .5);
@@ -219,7 +215,7 @@ struct SeverePerInfectedSymptoms {
 * @brief the percentage of ICU cases per hospitalized cases
 */
 struct CriticalPerInfectedSevere {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, .5);
@@ -234,7 +230,7 @@ struct CriticalPerInfectedSevere {
 * @brief the percentage of dead cases per ICU cases
 */
 struct DeathsPerInfectedCritical {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, .5);
@@ -717,21 +713,6 @@ struct AgeGroupGotoWork {
     }
 };
 
-/**
- * @brief The set of Agent Ids to be logged.
- */
-struct LogAgentIds {
-    using Type = std::unordered_set<uint32_t>;
-    static Type get_default(AgeGroup /*num_agegroups*/)
-    {
-        return {};
-    }
-    static std::string name()
-    {
-        return "LogAgentIds";
-    }
-};
-
 using ParametersBase =
     ParameterSet<IncubationPeriod, TimeInfectedNoSymptomsToSymptoms, TimeInfectedNoSymptomsToRecovered,
                  TimeInfectedSymptomsToSevere, TimeInfectedSymptomsToRecovered, TimeInfectedSevereToCritical,
@@ -743,7 +724,7 @@ using ParametersBase =
                  GotoWorkTimeMaximum, ReturnFromWorkTimeMinimum, ReturnFromWorkTimeMaximum, GotoSchoolTimeMinimum,
                  GotoSchoolTimeMaximum, ReturnFromSchoolTimeMinimum, ReturnFromSchoolTimeMaximum, AgeGroupGotoSchool,
                  AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor,
-                 LogAgentIds, TestData>;
+                 TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
@@ -833,7 +814,7 @@ public:
             for (auto&& v : enum_members<VirusVariant>()) {
 
                 if (this->get<IncubationPeriod>()[{v, i}].params.m() < 0) {
-                    log_error("Constraint check: Lower end of parameter range IncubationPeriod of virus variant {} and "
+                    log_error("Constraint check: Mean of parameter IncubationPeriod of virus variant {} and "
                               "age group {:.0f} smaller "
                               "than {:.4f}",
                               (uint32_t)v, (size_t)i, 0);
@@ -841,7 +822,7 @@ public:
                 }
 
                 if (this->get<TimeInfectedNoSymptomsToSymptoms>()[{v, i}].params.m() < 0.0) {
-                    log_error("Constraint check: Lower end of parameter range TimeInfectedNoSymptomsToSymptoms "
+                    log_error("Constraint check: Mean of parameter TimeInfectedNoSymptomsToSymptoms "
                               "of virus variant "
                               "{} and age group {:.0f} smaller "
                               "than {:d}",
@@ -850,7 +831,7 @@ public:
                 }
 
                 if (this->get<TimeInfectedNoSymptomsToRecovered>()[{v, i}].params.m() < 0.0) {
-                    log_error("Constraint check: Lower end of parameter range TimeInfectedNoSymptomsToRecovered of "
+                    log_error("Constraint check: Mean of parameter TimeInfectedNoSymptomsToRecovered of "
                               "virus variant "
                               "{} and age group {:.0f} smaller "
                               "than {:d}",
@@ -859,7 +840,7 @@ public:
                 }
 
                 if (this->get<TimeInfectedSymptomsToSevere>()[{v, i}].params.m() < 0.0) {
-                    log_error("Constraint check: Lower end of parameter range TimeInfectedSymptomsToSevere of virus "
+                    log_error("Constraint check: Mean of parameter TimeInfectedSymptomsToSevere of virus "
                               "variant {} "
                               "and age group {:.0f} smaller "
                               "than {:d}",
@@ -868,7 +849,7 @@ public:
                 }
 
                 if (this->get<TimeInfectedSymptomsToRecovered>()[{v, i}].params.m() < 0.0) {
-                    log_error("Constraint check: Lower end of parameter range TimeInfectedSymptomsToRecovered of virus "
+                    log_error("Constraint check: Mean of parameter TimeInfectedSymptomsToRecovered of virus "
                               "variant {} "
                               "and age group {:.0f} smaller "
                               "than {:d}",
@@ -877,7 +858,7 @@ public:
                 }
 
                 if (this->get<TimeInfectedSevereToCritical>()[{v, i}].params.m() < 0.0) {
-                    log_error("Constraint check: Lower end of parameter range TimeInfectedSevereToCritical of virus "
+                    log_error("Constraint check: Mean of parameter TimeInfectedSevereToCritical of virus "
                               "variant {} "
                               "and age group {:.0f} smaller "
                               "than {:d}",
@@ -886,7 +867,7 @@ public:
                 }
 
                 if (this->get<TimeInfectedSevereToRecovered>()[{v, i}].params.m() < 0.0) {
-                    log_error("Constraint check: Lower end of parameter range TimeInfectedSevereToRecovered of virus "
+                    log_error("Constraint check: Mean of parameter TimeInfectedSevereToRecovered of virus "
                               "variant {} "
                               "and age group {:.0f} smaller "
                               "than {:d}",
@@ -895,16 +876,15 @@ public:
                 }
 
                 if (this->get<TimeInfectedCriticalToDead>()[{v, i}].params.m() < 0.0) {
-                    log_error(
-                        "Constraint check: Lower end of parameter range TimeInfectedCriticalToDead of virus variant {} "
-                        "and age group {:.0f} smaller "
-                        "than {:d}",
-                        (uint32_t)v, (size_t)i, 0);
+                    log_error("Constraint check: Mean of parameter TimeInfectedCriticalToDead of virus variant {} "
+                              "and age group {:.0f} smaller "
+                              "than {:d}",
+                              (uint32_t)v, (size_t)i, 0);
                     return true;
                 }
 
                 if (this->get<TimeInfectedCriticalToRecovered>()[{v, i}].params.m() < 0.0) {
-                    log_error("Constraint check: Lower end of parameter range TimeInfectedCriticalToRecovered of virus "
+                    log_error("Constraint check: Mean of parameter TimeInfectedCriticalToRecovered of virus "
                               "variant {} "
                               "and age group {:.0f} smaller "
                               "than {:d}",
@@ -953,21 +933,19 @@ public:
                 }
             }
 
-            if (this->get<GotoWorkTimeMinimum>()[age_group].seconds() < 0.0 ||
-                this->get<GotoWorkTimeMinimum>()[age_group].seconds() >
-                    this->get<GotoWorkTimeMaximum>()[age_group].seconds()) {
+            if (this->get<GotoWorkTimeMinimum>()[i].seconds() < 0.0 ||
+                this->get<GotoWorkTimeMinimum>()[i].seconds() > this->get<GotoWorkTimeMaximum>()[i].seconds()) {
                 log_error("Constraint check: Parameter GotoWorkTimeMinimum of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
-                          (size_t)age_group, 0, this->get<GotoWorkTimeMaximum>()[age_group].seconds());
+                          (size_t)i, 0, this->get<GotoWorkTimeMaximum>()[i].seconds());
                 return true;
             }
 
-            if (this->get<GotoWorkTimeMaximum>()[age_group].seconds() <
-                    this->get<GotoWorkTimeMinimum>()[age_group].seconds() ||
-                this->get<GotoWorkTimeMaximum>()[age_group] > days(1)) {
+            if (this->get<GotoWorkTimeMaximum>()[i].seconds() < this->get<GotoWorkTimeMinimum>()[i].seconds() ||
+                this->get<GotoWorkTimeMaximum>()[i] > days(1)) {
                 log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
                           "than one day time span",
-                          (size_t)age_group, this->get<GotoWorkTimeMinimum>()[age_group].seconds());
+                          (size_t)i, this->get<GotoWorkTimeMinimum>()[i].seconds());
                 return true;
             }
 
@@ -1013,13 +991,12 @@ public:
                 this->get<GotoSchoolTimeMinimum>()[i].seconds() > this->get<GotoSchoolTimeMaximum>()[i].seconds()) {
                 log_error("Constraint check: Parameter GotoSchoolTimeMinimum of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
-                          (size_t)age_group, 0, this->get<GotoWorkTimeMaximum>()[age_group].seconds());
+                          (size_t)i, 0, this->get<GotoWorkTimeMaximum>()[i].seconds());
                 return true;
             }
 
-            if (this->get<GotoSchoolTimeMaximum>()[age_group].seconds() <
-                    this->get<GotoSchoolTimeMinimum>()[age_group].seconds() ||
-                this->get<GotoSchoolTimeMaximum>()[age_group] > days(1)) {
+            if (this->get<GotoSchoolTimeMaximum>()[i].seconds() < this->get<GotoSchoolTimeMinimum>()[i].seconds() ||
+                this->get<GotoSchoolTimeMaximum>()[i] > days(1)) {
                 log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
                           "than one day time span",
                           (size_t)i, this->get<GotoSchoolTimeMinimum>()[i].seconds());

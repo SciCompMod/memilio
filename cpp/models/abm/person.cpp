@@ -107,11 +107,6 @@ LocationId Person::get_location() const
 
 void Person::set_location(LocationType type, LocationId id)
 {
-    return m_location;
-}
-
-void Person::set_location(LocationType type, LocationId id)
-{
     m_location         = id;
     m_location_type    = type;
     m_time_at_location = TimeSpan(0);
