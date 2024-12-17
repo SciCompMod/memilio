@@ -58,7 +58,6 @@ std::map<std::string, ScalarType> simulation_parameter = {{"RelativeTransmission
 mio::Date start_date(2021, 01, 01);
 const ScalarType dt                = 0.01;
 const ScalarType age_group_sizes[] = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
-const ScalarType total_population  = 83155031.0;
 
 const ScalarType TransmissionProbabilityOnContact[] = {0.03, 0.06, 0.06, 0.06, 0.09, 0.175};
 
@@ -170,7 +169,7 @@ mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(const 
     }
 
     // ----- Add NPIs to the contact matrices. -----
-    mio::Date end_date  = mio::offset_date_by_days(start_date, simulation_parameter["tmax"]);
+    mio::Date end_date  = mio::offset_date_by_days(start_date, (int)simulation_parameter["tmax"]);
     auto start_npi_july = mio::Date(2020, 7, 7);
     if ((int)(start_npi_july < end_date) & (int)(start_date < start_npi_july)) {
         set_npi_july(contact_matrices);
@@ -383,7 +382,7 @@ int main(int argc, char** argv)
         other_subcompartments = std::stoi(argv[1]);
     }
     if (argc > 6) {
-        params::start_date = mio::Date(std::stod(argv[2]), std::stod(argv[3]), std::stod(argv[4]));
+        params::start_date = mio::Date(std::stoi(argv[2]), std::stoi(argv[3]), std::stoi(argv[4]));
         dir_to_data        = argv[5];
         save_folder        = argv[6];
     }
