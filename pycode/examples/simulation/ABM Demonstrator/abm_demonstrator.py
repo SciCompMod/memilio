@@ -21,6 +21,8 @@ import argparse
 import numpy as np
 import os
 import sys
+import h5py
+import time
 
 import memilio.simulation as mio
 from memilio.simulation import abm
@@ -603,11 +605,11 @@ def assign_locations(world):
 
 
 def convert_loc_id_to_string(loc_id):
-    type = str(int(loc_id[0]))
-    index = str(loc_id[1])
-    if int(int(loc_id[0])) < 10:
+    type = str(int(loc_id.type))
+    index = str(loc_id.index)
+    if int(loc_id.type) < 10:
         type = "0" + type
-    if int(loc_id[1]) < 10:
+    if int(loc_id.index) < 10:
         index = "0" + index
 
     return type + index
@@ -616,7 +618,7 @@ def convert_loc_id_to_string(loc_id):
 def get_agents_per_location(loc_id, agents):
     agents_per_loc = []
     for a in agents:
-        if (int(a[0].type) == int(loc_id[0]) and a[0].index == loc_id[1]):
+        if (int(a[0].type) == int(loc_id.type) and a[0].index == loc_id.index):
             agents_per_loc.append(a)
     return agents_per_loc
 
@@ -773,6 +775,30 @@ def write_compartments_to_file(world, path, timepoints):
         f.close()
 
 
+def convert_time_since_transmission(time):
+    if (time.days > 1000):
+        return -1.0
+    else:
+        return time.hours
+
+
+def write_results_to_h5(path, log):
+    file = h5py.File(path, 'w')
+    result_list = []
+    for agent in log[3][0]:
+        gr = file.create_group(str(agent))
+        loc_ids = np.array([convert_loc_id_to_string(log[2][t][agent][0])
+                           for t in range(len(log[2]))], dtype=np.str_)
+        time_since_transm = np.array([convert_time_since_transmission(
+            log[2][t][agent][2]) for t in range(len(log[2]))], dtype=np.float64)
+        ds = gr.create_dataset('loc_ids', shape=len(
+            loc_ids), dtype=h5py.string_dtype())
+        ds[:] = loc_ids
+        gr.create_dataset("time_since_transm",
+                          data=time_since_transm, dtype=np.float64)
+    file.close()
+
+
 def run_abm_simulation(sim_num):
     mio.set_log_level(mio.LogLevel.Warning)
     input_path = sys.path[0] + '/input/'
@@ -818,9 +844,17 @@ def run_abm_simulation(sim_num):
     # write compartment size per time step to file
     write_compartments_to_file(sim.world, os.path.join(
         output_path, str(sim_num) + '_comps.csv'), log[0])
+    start = time.time()
+    write_results_to_h5(os.path.join(
+        output_path, str(sim_num) + '_output.h5'), log)
+    end = time.time()
+    print(f'Time to write output h5: {end - start} seconds')
+    start = time.time()
     # write simulation results to txt file
     write_results_to_file(os.path.join(
         output_path, str(sim_num) + '_output.txt'), log)
+    end = time.time()
+    print(f'Time to write output txt: {end - start} seconds')
     # write location mapping to txt file
     write_location_mapping_to_file(
         os.path.join(output_path, str(sim_num) + '_location_mapping.txt'), mapping)

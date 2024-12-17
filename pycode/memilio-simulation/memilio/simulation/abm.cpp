@@ -48,14 +48,27 @@ struct LogTimePoint : mio::LogAlways {
 
 //LocationId logger
 struct LogLocationIds : mio::LogOnce {
-    using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
+    using Type = std::vector<mio::abm::LocationId>;
     static Type log(const mio::abm::Simulation& sim)
     {
-        std::vector<std::tuple<mio::abm::LocationType, uint32_t>> location_ids{};
+        std::vector<mio::abm::LocationId> location_ids{};
         for (auto&& location : sim.get_world().get_locations()) {
-            location_ids.push_back(std::make_tuple(location.get_type(), location.get_index()));
+            location_ids.push_back(location.get_id());
         }
         return location_ids;
+    }
+};
+
+//AgentId logger
+struct LogAgentIds : mio::LogOnce {
+    using Type = std::vector<uint32_t>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        std::vector<uint32_t> agent_ids{};
+        for (auto&& person : sim.get_world().get_persons()) {
+            agent_ids.push_back(person.get_person_id());
+        }
+        return agent_ids;
     }
 };
 
@@ -444,18 +457,17 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::init<mio::abm::TimePoint, size_t>())
         .def("advance",
              &mio::abm::Simulation::advance<mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
-                                                         LogPersonsPerLocationAndInfectionTime>>)
+                                                         LogPersonsPerLocationAndInfectionTime, LogAgentIds>>)
         //.def("advance", &mio::abm::Simulation::advance)
         //.def_property_readonly("result", &mio::abm::Simulation::get_result)
         .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world),
                                py::return_value_policy::reference_internal);
 
-    py::class_<
-        mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime>>(
-        m, "History")
+    py::class_<mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
+                            LogPersonsPerLocationAndInfectionTime, LogAgentIds>>(m, "History")
         .def(py::init<>())
         .def_property_readonly("log", [](mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
-                                                      LogPersonsPerLocationAndInfectionTime>& self) {
+                                                      LogPersonsPerLocationAndInfectionTime, LogAgentIds>& self) {
             return self.get_log();
         });
 }
