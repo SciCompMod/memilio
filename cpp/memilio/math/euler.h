@@ -51,8 +51,13 @@ public:
               Eigen::Ref<Vector<FP>> ytp1) const override
     {
         // we are misusing the next step y as temporary space to store the derivative
+        FP N = yt.sum();
         f(yt, t, ytp1);
-        ytp1 = yt + dt * ytp1;
+        ytp1 = yt + dt * ytp1;      
+        ytp1 = ytp1.cwiseMax(0.0).cwiseMin(N);
+        ytp1 = ytp1.unaryExpr([](double x){return (x<1e-4)?0.:x;});
+        FP divN_new = 1.0 / ytp1.sum();
+        ytp1 = ytp1 * N * divN_new;        
         t += dt;
         return true;
     }
