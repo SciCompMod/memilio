@@ -1,6 +1,7 @@
 #include "ode_ui/model.h"
 #include "ode_ui/infection_state.h"
 #include "ode_ui/parameters.h"
+#include "memilio/math/euler.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
 
@@ -78,7 +79,8 @@ int main()
 
     //model.apply_constraints();
 
-    auto ui = simulate(t0, tmax, dt, model);
+    std::shared_ptr<mio::IntegratorCore<ScalarType>> I  = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
+    auto ui = simulate(t0, tmax, dt, model, I);
 
     std::vector<std::string> vars = {"U", "I1", "I2", "I3"};
     printf("Number of time points :%d\n", static_cast<int>(ui.get_num_time_points()));
