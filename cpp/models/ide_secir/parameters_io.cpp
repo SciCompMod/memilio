@@ -19,7 +19,6 @@
 */
 
 #include "ide_secir/parameters_io.h"
-#include "ide_secir/parameters.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/age_group.h"
 #include <cstddef>
@@ -29,6 +28,7 @@
 
 #include "ide_secir/model.h"
 #include "ide_secir/infection_state.h"
+#include "memilio/math/eigen.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/io.h"
 #include "memilio/utils/date.h"
