@@ -135,8 +135,17 @@ mio::TimeSeries<ScalarType> get_initial_flows()
 mio::TimeSeries<ScalarType> simulate_ide_model(ScalarType contact_scaling, ScalarType tmax, std::string save_dir = "")
 {
     // Initialize model.
-    mio::isecir::Model model_ide(get_initial_flows(), simulation_parameter["total_population"],
-                                 simulation_parameter["deaths"], simulation_parameter["total_confirmed_cases"]);
+    size_t num_agegroups = 1;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_population =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups),
+                                                         simulation_parameter["total_population"]);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), simulation_parameter["deaths"]);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_confirmed_cases =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups),
+                                                         simulation_parameter["total_confirmed_cases"]);
+
+    mio::isecir::Model model_ide(get_initial_flows(), total_population, deaths, num_agegroups, total_confirmed_cases);
 
     // Set working parameters.
     // Set TransitionDistributions.

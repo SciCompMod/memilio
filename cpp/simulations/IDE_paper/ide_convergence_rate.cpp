@@ -343,11 +343,16 @@ int main()
         // Start IDE model simulation at half of tmax.
         ScalarType t0_ide = (tmax - t0) / 2.;
         // Number of deaths will be set according to the ODE model in the function where also the transitions are calculated.
-        ScalarType deaths = 0.;
+        ScalarType deaths_init_value = 0.;
 
         // Initialize model.
         mio::TimeSeries<ScalarType> init_transitions((int)mio::isecir::InfectionTransition::Count);
-        mio::isecir::Model model_ide(std::move(init_transitions), nb_total_t0, deaths);
+        size_t num_agegroups = 1;
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_population =
+            mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), nb_total_t0);
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+            mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), deaths_init_value);
+        mio::isecir::Model model_ide(std::move(init_transitions), total_population, deaths, num_agegroups);
 
         // Set parameters.
         // Contact matrix; contact_matrix was already defined for ODE.

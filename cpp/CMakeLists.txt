@@ -174,6 +174,7 @@ endif()
 
 if(MEMILIO_BUILD_SIMULATIONS)
     add_subdirectory(simulations)
+    add_subdirectory(simulations/IDE_paper)
 endif()
 
 if(MEMILIO_BUILD_BENCHMARKS)

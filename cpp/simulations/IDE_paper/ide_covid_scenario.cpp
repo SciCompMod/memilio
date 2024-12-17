@@ -279,9 +279,18 @@ simulate_ide_model(mio::Date start_date, ScalarType tmax, mio::ContactMatrixGrou
 
 {
     // Initialize model.
+    size_t num_agegroups = 1;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_population =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups),
+                                                         simulation_parameter["total_population"]);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), simulation_parameter["deaths"]);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_confirmed_cases =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups),
+                                                         simulation_parameter["total_confirmed_cases"]);
+
     mio::isecir::Model model_ide(mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionTransition::Count),
-                                 simulation_parameter["total_population"], simulation_parameter["deaths"],
-                                 simulation_parameter["total_confirmed_cases"]);
+                                 total_population, deaths, num_agegroups, total_confirmed_cases);
 
     // Set working parameters.
     // Set TransitionDistributions.
