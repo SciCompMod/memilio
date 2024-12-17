@@ -41,6 +41,7 @@ import matplotlib
 from io import BytesIO
 from zipfile import ZipFile
 from enum import Enum
+from pkg_resources import parse_version
 
 import pandas as pd
 
@@ -63,6 +64,12 @@ class Conf:
 
     v_level = 'Info'
     show_progr = False
+    if parse_version(pd.__version__) < parse_version('2.2'):
+        excel_engine = 'openpyxl'
+    else:
+        # calamine is faster, but cannot be used for pandas < 2.2
+        # also there are issues with pd >= 2.2 and openpyxl engine
+        excel_engine = 'calamine'
 
     def __init__(self, out_folder, **kwargs):
 
@@ -77,7 +84,6 @@ class Conf:
 
         # activate CoW for more predictable behaviour of pandas DataFrames
         pd.options.mode.copy_on_write = True
-
         # read in config file
         # if no config file is given, use default values
         if os.path.exists(path):
@@ -98,12 +104,17 @@ class Conf:
                 if key not in kwargs:
                     kwargs.update({key: parser['SETTINGS'][key]})
 
-            Conf.show_progr = True if kwargs['show_progress'] == 'True' else False
+            Conf.show_progr = True if str(
+                kwargs['show_progress']) == 'True' else False
             Conf.v_level = str(kwargs['verbosity_level'])
-            self.checks = True if kwargs['run_checks'] == 'True' else False
-            self.interactive = True if kwargs['interactive'] == 'True' else False
-            self.plot = True if kwargs['make_plot'] == 'True' else False
-            self.no_raw = True if kwargs['no_raw'] == 'True' else False
+            self.checks = True if str(
+                kwargs['run_checks']) == 'True' else False
+            self.interactive = True if str(
+                kwargs['interactive']) == 'True' else False
+            self.plot = True if str(kwargs['make_plot']) == 'True' else False
+            self.no_raw = True if str(kwargs['no_raw']) == 'True' else False
+            self.to_dataset = True if str(
+                kwargs['to_dataset']) == 'True' else False
         else:
             # default values:
             Conf.show_progr = kwargs['show_progress'] if 'show_progress' in kwargs.keys(
@@ -119,6 +130,8 @@ class Conf:
             self.no_raw = kwargs['no_raw'] if 'no_raw' in kwargs.keys(
             ) else dd.defaultDict['no_raw']
             self.path_to_use = out_folder
+            self.to_dataset = kwargs['to_dataset'] if 'to_dataset' in kwargs.keys(
+            ) else False
 
         # suppress Future & DepricationWarnings
         if VerbosityLevel[Conf.v_level].value <= 2:
@@ -189,13 +202,19 @@ def download_file(
                 "Error: URL " + url + " could not be opened.")
     if req.status_code != 200:  # e.g. 404
         raise requests.exceptions.HTTPError("HTTPError: "+str(req.status_code))
-    # get file size from http header
-    # this is only the number of bytes downloaded, the size of the actual file
-    # may be larger (e.g. when 'content-encoding' is gzip; decoding is handled
-    # by iter_content)
-    file_size = int(req.headers.get('content-length'))
+    if ('content-length' in req.headers) and progress_function:
+        # get file size from http header
+        # this is only the number of bytes downloaded, the size of the actual file
+        # may be larger (e.g. when 'content-encoding' is gzip; decoding is handled
+        # by iter_content)
+        # this is only needed for the progress indicator
+        file_size = int(req.headers.get('content-length'))
+        # if content length is not known, a progress cant be set.
+        set_progr = True
+    else:
+        set_progr = False
     file = bytearray()  # file to be downloaded
-    if progress_function:
+    if set_progr:
         progress = 0
         # download file as bytes via iter_content
         for chunk in req.iter_content(chunk_size=chunk_size):
@@ -250,7 +269,8 @@ def get_file(
 
     @return pandas dataframe
     """
-    param_dict_excel = {"sheet_name": 0, "header": 0, "engine": 'openpyxl'}
+    param_dict_excel = {"sheet_name": 0,
+                        "header": 0, "engine": Conf.excel_engine}
     param_dict_csv = {"sep": ',', "header": 0, "encoding": None, 'dtype': None}
     param_dict_zip = {}
 
@@ -344,8 +364,7 @@ def cli(what):
     - verbose
     - skip_checks
     - no_raw
-    - username
-    - password
+    - to_dataset
 
     @param what Defines what packages calls and thus what kind of command line arguments should be defined.
     """
@@ -357,9 +376,8 @@ def cli(what):
     #                "start_date": ['divi']                 }
 
     cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
-                "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date'],
-                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date'],
-                "population": ['Download population data from official sources', 'username'],
+                "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date', 'files'],
+                "population": ['Download population data from official sources'],
                 "commuter_official": ['Download commuter data from official sources'],
                 "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'sanitize_data'],
                 "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
@@ -440,6 +458,15 @@ def cli(what):
             '-sd', '--sanitize-data', type=int, default=dd.defaultDict['sanitize_data'], dest='sanitize_data',
             help='Redistributes cases of every county either based on regions ratios or on thresholds and population'
         )
+    if 'files' in what_list:
+        parser.add_argument(
+            '--files', nargs="*", default='All'
+        )
+    if 'ref_year' in what_list:
+        parser.add_argument(
+            '--ref-year', default='newest',
+            help='Considered year.'
+        )
 
     # add optional download options
     if '--no-progress-indicators' in sys.argv:
@@ -474,14 +501,13 @@ def cli(what):
             '--skip-checks', dest='run_checks', action='store_false',
             help='Skips sanity checks etc.')
 
-    if 'username' in what_list:
+    if '--to-dataset' in sys.argv:
         parser.add_argument(
-            '--username', type=str
+            '--to-dataset', dest='to_dataset',
+            help="To return saved dataframes as objects.",
+            action='store_true'
         )
 
-        parser.add_argument(
-            '--password', type=str
-        )
     args = vars(parser.parse_args())
 
     return args

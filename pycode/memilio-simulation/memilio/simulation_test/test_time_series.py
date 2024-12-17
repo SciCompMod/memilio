@@ -59,7 +59,7 @@ class Test_TimeSeries(unittest.TestCase):
         ts.add_time_point(3.5, np.r_[2])
         output = ts.print_table(["a", "b"], 2, 2)
         self.assertEqual(
-            output, 'Time a \n2.00 1.00\n3.50 2.00\n')
+            output, '\nTime a \n2.00 1.00\n3.50 2.00\n')
 
 
 if __name__ == '__main__':

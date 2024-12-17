@@ -17,6 +17,7 @@ add_library(memilio
     epidemiology/dynamic_npis.h
     epidemiology/dynamic_npis.cpp
     epidemiology/lct_infection_state.h
+    epidemiology/lct_populations.h
     geography/regions.h
     geography/regions.cpp
     epidemiology/simulation_day.h
@@ -26,6 +27,8 @@ add_library(memilio
     compartments/simulation.h
     compartments/flow_simulation.h
     compartments/parameter_studies.h
+    io/default_serialize.h
+    io/default_serialize.cpp
     io/io.h
     io/io.cpp
     io/hdf5_cpp.h
@@ -56,6 +59,8 @@ add_library(memilio
     math/matrix_shape.cpp
     math/interpolation.h
     math/interpolation.cpp
+    math/time_series_functor.h
+    math/time_series_functor.cpp
     mobility/metapopulation_mobility_instant.h
     mobility/metapopulation_mobility_instant.cpp
     mobility/metapopulation_mobility_stochastic.h
@@ -98,7 +103,7 @@ target_include_directories(memilio PUBLIC
 )
 
 target_compile_features(memilio PUBLIC cxx_std_17)
-target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost Boost::filesystem Boost::disable_autolinking Random123)
+target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost Boost::filesystem Boost::disable_autolinking Random123 AD::AD)
 target_compile_options(memilio
     PRIVATE
     ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}

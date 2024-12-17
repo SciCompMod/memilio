@@ -2,8 +2,23 @@
 # If you like to upgrade, just change the number
 set(MEMILIO_EIGEN_VERSION "3.3.9")
 set(MEMILIO_SPDLOG_VERSION "1.11.0")
+set(MEMILIO_BOOST_VERSION "1.84.0")
+set(MEMILIO_MINIMAL_BOOST_VERSION "1.76.0")
 set(MEMILIO_JSONCPP_VERSION "1.9.5")
 set(MEMILIO_RANDOM123_VERSION "v1.14.0")
+set(MEMILIO_IPOPT_VERSION "3.14.12")
+
+# Gperftools for profiling; must be first, so that libraries are included in the profile
+if(MEMILIO_ENABLE_PROFILING)
+    if(NOT UNIX)
+        message(FATAL_ERROR "Profiling with gperftools currently only supported on unix systems.")
+    endif()
+
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(GPERFTOOLS REQUIRED libprofiler)
+    link_libraries(${GPERFTOOLS_LINK_LIBRARIES}) # link globally so all libs are included
+    include_directories(${GPERFTOOLS_INCLUDE_DIRS})
+endif()
 
 # ## SPDLOG
 set(SPDLOG_INSTALL ON)
@@ -49,12 +64,80 @@ else()
     find_package(Eigen3 ${MEMILIO_EIGEN_VERSION} REQUIRED NO_MODULE)
 endif()
 
+# ## IPOPT (numerial optimization)
+if(MEMILIO_ENABLE_IPOPT)
+    message(STATUS "Downloading Ipopt library")
+
+    include(FetchContent)
+    FetchContent_Declare(Ipopt
+        GIT_REPOSITORY https://git.rwth-aachen.de/avt-svt/public/thirdparty/IpoptCmake.git
+        GIT_TAG ${MEMILIO_IPOPT_VERSION})
+
+    FetchContent_MakeAvailable(Ipopt)
+endif()
+
 # ## BOOST
 if(MEMILIO_USE_BUNDLED_BOOST)
-    include(BuildBoost)
+    message(STATUS "Downloading Boost library")
+
+    string(REPLACE "." "_" MEMILIO_BOOST_VERSION_UNDERSC "${MEMILIO_BOOST_VERSION}")
+
+    include(FetchContent)
+    FetchContent_Declare(boost
+        #don't use the URL from github, that download isn't complete and requires more setup (subrepositories, bootstrapping)
+        URL https://archives.boost.io/release/${MEMILIO_BOOST_VERSION}/source/boost_${MEMILIO_BOOST_VERSION_UNDERSC}.tar.gz
+    )
+    FetchContent_GetProperties(boost)
+
+    if(NOT boost_POPULATED)
+        FetchContent_Populate(boost)
+    endif()
+
+    add_library(boost INTERFACE)
+    add_dependencies(boost boost-bootstrap)
+    add_library(Boost::boost ALIAS boost)
+    target_include_directories(boost SYSTEM INTERFACE $<BUILD_INTERFACE:${boost_SOURCE_DIR}>)
+    
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14)
+            target_compile_options(boost INTERFACE "-Wno-c++20-attribute-extensions")
+        else()
+            target_compile_options(boost INTERFACE "-Wno-c++20-extensions")
+        endif()
+    endif()
+
+    add_library(boost_disable_autolink INTERFACE)
+    target_compile_definitions(boost_disable_autolink INTERFACE BOOST_ALL_NO_LIB)
+    add_library(Boost::disable_autolinking ALIAS boost_disable_autolink)
+
+    add_library(boost_filesystem STATIC
+        ${boost_SOURCE_DIR}/libs/filesystem/src/codecvt_error_category.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/directory.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/exception.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/operations.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/path.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/path_traits.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/portability.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/unique_path.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/utf8_codecvt_facet.cpp
+        ${boost_SOURCE_DIR}/libs/filesystem/src/windows_file_codecvt.cpp
+    )
+    # Ensure that the boost atomic library is used instead of the standard atomic library, where some functionality is only available as of C++20.
+    target_compile_definitions(boost_filesystem PUBLIC BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF)
+
+    target_link_libraries(boost_filesystem PUBLIC boost_disable_autolink boost)
+    set_property(TARGET boost_filesystem PROPERTY POSITION_INDEPENDENT_CODE ON)
+    add_library(Boost::filesystem ALIAS boost_filesystem)
+    if(NOT MSVC) #on gcc and apple clang we need to define BOOST_NO_CXX98_FUNCTION_BASE because a deprecated function is sometimes used in boost 
+        target_compile_definitions(boost_filesystem PUBLIC BOOST_NO_CXX98_FUNCTION_BASE)
+    endif()
+
+    set(Boost_LIBRARIES Boost::boost Boost::filesystem)
+    set(Boost_FOUND ON)
+
 else()
-    find_package(Boost REQUIRED COMPONENTS outcome optional filesystem)
-endif(MEMILIO_USE_BUNDLED_BOOST)
+    find_package(Boost ${MEMILIO_MINIMAL_BOOST_VERSION}...${MEMILIO_BOOST_VERSION} REQUIRED COMPONENTS outcome optional filesystem)
+endif()
 
 # ## HDF5
 find_package(HDF5 COMPONENTS C)

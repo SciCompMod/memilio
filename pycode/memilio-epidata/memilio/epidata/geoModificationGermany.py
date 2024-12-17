@@ -97,7 +97,7 @@ def insert_names_of_states(df, state_id_col=dd.EngEng["idState"]):
     @return dataframe df with column of state names corresponding to county ids
     """
     df = modifyDataframeSeries.insert_column_by_map(
-        df, state_id_col, dd.EngEng["state"], get_state_names_and_ids())
+        df, state_id_col, dd.EngEng["state"], get_state_names_and_ids(), str)
     return df
 
 # while reporting for Berlin is just different for different sources, Eisenach
@@ -188,7 +188,7 @@ def insert_names_of_counties(
     county_id_map = get_county_names_and_ids(
         merge_berlin=merge_berlin, merge_eisenach=False)
     df = modifyDataframeSeries.insert_column_by_map(
-        df, county_id_col, dd.EngEng["county"], county_id_map)
+        df, county_id_col, dd.EngEng["county"], county_id_map, str)
     return df
 
 
@@ -320,7 +320,7 @@ def get_official_county_table():
         file = gd.download_file(url_counties, 1024, None,
                                 p.set_progress, verify=False)
     county_table = pd.read_excel(
-        file, sheet_name=1, header=5, engine='openpyxl')
+        file, sheet_name=1, header=5, engine=gd.Conf.excel_engine)
     rename_kreise_deu_dict = {
         1: dd.EngEng['idCounty'],
         '2': "type",  # name not important, column not used so far

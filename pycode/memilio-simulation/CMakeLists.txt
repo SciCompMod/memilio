@@ -32,47 +32,56 @@ endif()
 # add in C++ library
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
 
+# Function to add a pybind11 module
+function(add_pymio_module target_name)
+    set(options)
+    set(oneValueArgs)
+    set(multiValueArgs LINKED_LIBRARIES SOURCES)
+    cmake_parse_arguments(PYBIND11_MODULE "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+
+    pybind11_add_module(${target_name} MODULE ${PYBIND11_MODULE_SOURCES})
+    target_link_libraries(${target_name} PRIVATE ${PYBIND11_MODULE_LINKED_LIBRARIES})
+    target_include_directories(${target_name} PRIVATE memilio/simulation/bindings)
+    install(TARGETS ${target_name} LIBRARY DESTINATION memilio/simulation)
+endfunction()
+
+
 # build python extensions
-pybind11_add_module(_simulation_secir MODULE
-    memilio/simulation/secir.cpp
+add_pymio_module(_simulation_abm
+    LINKED_LIBRARIES memilio abm
+    SOURCES memilio/simulation/bindings/models/abm.cpp
 )
-target_link_libraries(_simulation_secir PRIVATE memilio ode_secir)
-target_include_directories(_simulation_secir PRIVATE memilio/simulation)
-install(TARGETS _simulation_secir LIBRARY DESTINATION memilio)
 
-pybind11_add_module(_simulation_abm MODULE
-    memilio/simulation/abm.cpp
+add_pymio_module(_simulation
+    LINKED_LIBRARIES memilio
+    SOURCES memilio/simulation/bindings/simulation.cpp
+    memilio/simulation/bindings/epidemiology/damping_sampling.cpp
+    memilio/simulation/bindings/epidemiology/uncertain_matrix.cpp
+    memilio/simulation/bindings/mobility/metapopulation_mobility_instant.cpp
+    memilio/simulation/bindings/utils/date.cpp
+    memilio/simulation/bindings/utils/logging.cpp
+    memilio/simulation/bindings/utils/time_series.cpp
+    memilio/simulation/bindings/utils/parameter_distributions.cpp
+    memilio/simulation/bindings/utils/uncertain_value.cpp
 )
-target_link_libraries(_simulation_abm PRIVATE memilio abm)
-target_include_directories(_simulation_abm PRIVATE memilio/simulation)
-install(TARGETS _simulation_abm LIBRARY DESTINATION memilio)
 
-pybind11_add_module(_simulation MODULE
-    memilio/simulation/simulation.cpp
-    memilio/simulation/epidemiology/damping_sampling.cpp
-    memilio/simulation/epidemiology/uncertain_matrix.cpp
-    memilio/simulation/mobility/metapopulation_mobility_instant.cpp
-    memilio/simulation/utils/date.cpp
-    memilio/simulation/utils/logging.cpp
-    memilio/simulation/utils/time_series.cpp
-    memilio/simulation/utils/parameter_distributions.cpp
-    memilio/simulation/utils/uncertain_value.cpp
+add_pymio_module(_simulation_osir
+    LINKED_LIBRARIES memilio ode_sir
+    SOURCES memilio/simulation/bindings/models/osir.cpp
 )
-target_link_libraries(_simulation PRIVATE memilio)
-target_include_directories(_simulation PRIVATE memilio/simulation)
-install(TARGETS _simulation LIBRARY DESTINATION memilio)
 
-pybind11_add_module(_simulation_oseir MODULE
-    memilio/simulation/oseir.cpp
+add_pymio_module(_simulation_oseir
+    LINKED_LIBRARIES memilio ode_seir
+    SOURCES memilio/simulation/bindings/models/oseir.cpp
 )
-target_link_libraries(_simulation_oseir PRIVATE memilio ode_seir)
-target_include_directories(_simulation_oseir PRIVATE memilio/simulation)
-install(TARGETS _simulation_oseir LIBRARY DESTINATION memilio)
 
-pybind11_add_module(_simulation_osir MODULE
-    memilio/simulation/osir.cpp
+add_pymio_module(_simulation_osecir
+    LINKED_LIBRARIES memilio ode_secir
+    SOURCES memilio/simulation/bindings/models/osecir.cpp
 )
-target_link_libraries(_simulation_osir PRIVATE memilio ode_sir)
-target_include_directories(_simulation_osir PRIVATE memilio/simulation)
-install(TARGETS _simulation_osir LIBRARY DESTINATION memilio)
 
+add_pymio_module(_simulation_osecirvvs
+    LINKED_LIBRARIES memilio ode_secirvvs
+    SOURCES memilio/simulation/bindings/models/osecirvvs.cpp
+)

@@ -18,11 +18,12 @@
 * limitations under the License.
 */
 
-#ifndef EPI_ABM_MASK_H
-#define EPI_ABM_MASK_H
+#ifndef MIO_ABM_MASK_H
+#define MIO_ABM_MASK_H
 
 #include "abm/mask_type.h"
 #include "abm/time.h"
+#include "memilio/io/default_serialize.h"
 
 namespace mio
 {
@@ -38,8 +39,9 @@ public:
     /**
      * @brief Construct a new Mask of a certain type.
      * @param[in] type The type of the Mask.
+     * @param[in] t The TimePoint of the Mask's initial usage.
      */
-    Mask(MaskType type);
+    Mask(MaskType type, TimePoint t);
 
     /**
      * @brief Get the MaskType of this Mask.
@@ -51,32 +53,38 @@ public:
 
     /**
      * @brief Get the length of time this Mask has been used.
+     * @param[in] curr_time The current TimePoint.
      */
-    const TimeSpan& get_time_used() const
-    {
-        return m_time_used;
-    }
-
-    /**
-     * @brief Increase the time this Mask was used by a timestep.
-     * @param[in] dt The length of the timestep.
-     */
-    void increase_time_used(TimeSpan dt)
-    {
-        m_time_used += dt;
-    }
+    const TimeSpan get_time_used(TimePoint curr_time) const;
 
     /**
      * @brief Change the type of the Mask and reset the time it was used.
      * @param[in] new_mask_type The type of the new Mask.
+     * @param[in] t The TimePoint of mask change.
      */
-    void change_mask(MaskType new_mask_type);
+    void change_mask(MaskType new_mask_type, TimePoint t);
+
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("Mask").add("mask_type", m_type).add("time_first_used", m_time_first_usage);
+    }
 
 private:
     MaskType m_type; ///< Type of the Mask.
-    TimeSpan m_time_used; ///< Length of time the Mask has been used.
+    TimePoint m_time_first_usage; ///< TimePoint of the Mask's initial usage.
 };
 } // namespace abm
+
+/// @brief Creates an instance of abm::Mask for default serialization.
+template <>
+struct DefaultFactory<abm::Mask> {
+    static abm::Mask create()
+    {
+        return abm::Mask(abm::MaskType::Count, abm::TimePoint());
+    }
+};
+
 } // namespace mio
 
 #endif

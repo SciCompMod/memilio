@@ -67,7 +67,6 @@ setup(
             'getdividata = memilio.epidata.getDIVIData:main',
             'getsimdata = memilio.epidata.getSimulationData:main',
             'cleandata = memilio.epidata.cleanData:main',
-            'getcasesestimation = memilio.epidata.getCaseDatawithEstimations:main',
             'getcommutermobility = memilio.epidata.getCommuterMobility:main',
             'getvaccinationdata = memilio.epidata.getVaccinationData:main',
             'gethospitalizationdata = memilio.epidata.getHospitalizationData:main'
@@ -77,10 +76,8 @@ setup(
     long_description='',
     test_suite='memilio.epidata_test',
     install_requires=[
-        # smaller pandas versions contain a bug that sometimes prevents reading
-        # some excel files (e.g. population or twitter data)
-        # Has to use less than 2.2.0, see Issue #910
-        'pandas>=2.0.0,<2.2.0',
+        # pandas 2.0 is minimum for CoW
+        'pandas>=2.0.0',
         # FutureWarning of pandas that pyarrow will be required in a future release
         'pyarrow',
         'matplotlib',
@@ -94,6 +91,10 @@ setup(
         'pyxlsb',
         'wget',
         'twill==3.1',
+        # set PyQt6-sip version as the one pulled by PyQt6 in Epidata-CI (using manylinux_2_28_x86_64) req. python 3.9
+        'PyQt6-sip<13.9',
+        'PyQt6',
+        'python-calamine',
         pymagic
     ],
     extras_require={

@@ -23,7 +23,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from memilio.simulation import Damping
+from memilio.simulation import AgeGroup, Damping
 from memilio.simulation.oseir import Index_InfectionState
 from memilio.simulation.oseir import InfectionState as State
 from memilio.simulation.oseir import Model, simulate, simulate_flows
@@ -35,27 +35,30 @@ class Test_oseir_integration(unittest.TestCase):
 
     def setUp(self):
 
-        model = Model()
+        model = Model(1)
+        A0 = AgeGroup(0)
 
         self.t0 = 0.
         self.tmax = 50.
         self.dt = 0.1002004008016032
         total_population = 1061000
 
-        model.populations[Index_InfectionState(State.Exposed)] = 10000
-        model.populations[Index_InfectionState(State.Infected)] = 1000
-        model.populations[Index_InfectionState(State.Recovered)] = 1000
+        model.populations[A0, State.Exposed] = 10000
+        model.populations[A0, State.Infected] = 1000
+        model.populations[A0, State.Recovered] = 1000
         model.populations.set_difference_from_total(
-            Index_InfectionState(State.Susceptible), total_population)
+            (A0, State.Susceptible), total_population)
 
-        model.parameters.TransmissionProbabilityOnContact.value = 1.
-        model.parameters.TimeExposed.value = 5.2
-        model.parameters.TimeInfected.value = 2.
+        model.parameters.TransmissionProbabilityOnContact[A0] = 1.
+        model.parameters.TimeExposed[A0] = 5.2
+        model.parameters.TimeInfected[A0] = 2.
 
-        model.parameters.ContactPatterns.baseline = [[2.7]]
-        model.parameters.ContactPatterns.minimum = np.zeros((1, 1))
-        model.parameters.ContactPatterns.add_damping(
-            Damping(coeffs=[[0.6]], t=12.5, level=0, type=0))
+        model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
+            (1, 1)) * 2.7
+        model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.zeros(
+            (1, 1))
+        model.parameters.ContactPatterns.cont_freq_mat.add_damping(
+            Damping(coeffs=np.r_[0.6], t=12.5, level=0, type=0))
 
         model.check_constraints()
 
@@ -71,11 +74,11 @@ class Test_oseir_integration(unittest.TestCase):
         """
         Tests the correctness of the python bindings. The results of a simulation 
         in python get compared to the results of a cpp simulation. Cpp simulation 
-        results contained in the file seir-compare.csv. 
+        results contained in the file ode-seir-compare.csv. 
         If cpp model changes this test needs to be adjusted accordingly.
         """
         refData = pd.read_csv(
-            os.path.join(self.here + '/data/seir-compare.csv'),
+            os.path.join(self.here + '/data/ode-seir-compare.csv'),
             sep=r'(?<!#)\s+', engine='python')
         refData.columns = pd.Series(refData.columns.str.replace(
             r"#\s", "", regex=True))
@@ -97,7 +100,7 @@ class Test_oseir_integration(unittest.TestCase):
 
             self.assertAlmostEqual(
                 t, result.get_time(index_timestep),
-                delta=1e-12)
+                delta=1e-10)
 
             for index_compartment in range(0, 4):
                 ref = timestep[index_compartment+1]
@@ -121,26 +124,27 @@ class Test_oseir_integration(unittest.TestCase):
 
     def test_check_constraints_parameters(self):
 
-        model = Model()
+        model = Model(1)
+        A0 = AgeGroup(0)
 
-        model.parameters.TimeExposed.value = 5.2
-        model.parameters.TimeInfected.value = 6.
-        model.parameters.TransmissionProbabilityOnContact.value = 1.
+        model.parameters.TimeExposed[A0] = 5.2
+        model.parameters.TimeInfected[A0] = 6.
+        model.parameters.TransmissionProbabilityOnContact[A0] = 1.
 
-        model.parameters.TimeExposed.value = 5.2
-        model.parameters.TimeInfected.value = 6.
-        model.parameters.TransmissionProbabilityOnContact.value = 1.
+        model.parameters.TimeExposed[A0] = 5.2
+        model.parameters.TimeInfected[A0] = 6.
+        model.parameters.TransmissionProbabilityOnContact[A0] = 1.
         self.assertEqual(model.parameters.check_constraints(), 0)
 
-        model.parameters.TimeExposed.value = -1.
+        model.parameters.TimeExposed[A0] = -1.
         self.assertEqual(model.parameters.check_constraints(), 1)
 
-        model.parameters.TimeExposed.value = 5.2
-        model.parameters.TimeInfected.value = 0
+        model.parameters.TimeExposed[A0] = 5.2
+        model.parameters.TimeInfected[A0] = 0
         self.assertEqual(model.parameters.check_constraints(), 1)
 
-        model.parameters.TimeInfected.value = 6.
-        model.parameters.TransmissionProbabilityOnContact.value = -1.
+        model.parameters.TimeInfected[A0] = 6.
+        model.parameters.TransmissionProbabilityOnContact[A0] = -1.
         self.assertEqual(model.parameters.check_constraints(), 1)
 
 

@@ -51,7 +51,7 @@ defaultDict = {
     'file_format': 'json_timeasstring',
     'no_raw': False,
     'rep_date': False,
-    'sanitize_data': 1
+    'sanitize_data': 1,
 }
 
 # The following dict EngEng makes sure that for all
@@ -98,6 +98,7 @@ EngEng = {
     'vaccNotComplete': "Vacc_not_completed",
     # test data
     'positiveRate': 'Positive_rate',
+    'testPositiveRatio': 'Positive_rate',
     # NPI data
     'npiCode': 'NPI_code',
     # mobility data refs

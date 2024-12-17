@@ -25,7 +25,7 @@ namespace mio
 namespace benchmark
 {
 
-using FlowModel = osecirvvs::Model;
+using FlowModel = osecirvvs::Model<>;
 
 // For comparison benchmarks, an old model version that does not provide computation of flows has been reimplemented here.
 // For more details see the original implementation in:
@@ -34,12 +34,14 @@ using FlowModel = osecirvvs::Model;
 // - Apply_variant function has been adjusted to be more generic
 // - Fixed a bug where the transmission probability was always set to zero.
 
-class FlowlessModel : public CompartmentalModel<osecirvvs::InfectionState,
-                                                Populations<AgeGroup, osecirvvs::InfectionState>, osecirvvs::Parameters>
+class FlowlessModel : public CompartmentalModel<ScalarType, osecirvvs::InfectionState,
+                                                Populations<ScalarType, AgeGroup, osecirvvs::InfectionState>,
+                                                osecirvvs::Parameters<ScalarType>>
 {
     using InfectionState = osecirvvs::InfectionState;
-    using Parameters     = osecirvvs::Parameters;
-    using Base           = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters>;
+    using Base           = CompartmentalModel<ScalarType, osecirvvs::InfectionState,
+                                    mio::Populations<ScalarType, AgeGroup, osecirvvs::InfectionState>,
+                                    osecirvvs::Parameters<ScalarType>>;
 
 public:
     FlowlessModel(const Populations& pop, const ParameterSet& params)
@@ -59,14 +61,14 @@ public:
         auto const& params   = this->parameters;
         AgeGroup n_agegroups = params.get_num_groups();
 
-        ContactMatrixGroup const& contact_matrix = params.get<osecirvvs::ContactPatterns>();
+        ContactMatrixGroup const& contact_matrix = params.get<osecirvvs::ContactPatterns<ScalarType>>();
 
         auto icu_occupancy           = 0.0;
         auto test_and_trace_required = 0.0;
         for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
             test_and_trace_required +=
-                (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms>()[i]) /
-                params.get<osecirvvs::TimeInfectedNoSymptoms>()[i] *
+                (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i]) /
+                params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] *
                 (this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsNaive}) +
                  this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsPartialImmunity}) +
                  this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsImprovedImmunity}) +
@@ -127,29 +129,29 @@ public:
             dydt[SIIi] = 0;
             dydt[EIIi] = 0;
 
-            double reducExposedPartialImmunity  = params.get<osecirvvs::ReducExposedPartialImmunity>()[i];
-            double reducExposedImprovedImmunity = params.get<osecirvvs::ReducExposedImprovedImmunity>()[i];
+            double reducExposedPartialImmunity  = params.get<osecirvvs::ReducExposedPartialImmunity<double>>()[i];
+            double reducExposedImprovedImmunity = params.get<osecirvvs::ReducExposedImprovedImmunity<double>>()[i];
             double reducInfectedSymptomsPartialImmunity =
-                params.get<osecirvvs::ReducInfectedSymptomsPartialImmunity>()[i];
+                params.get<osecirvvs::ReducInfectedSymptomsPartialImmunity<ScalarType>>()[i];
             double reducInfectedSymptomsImprovedImmunity =
-                params.get<osecirvvs::ReducInfectedSymptomsImprovedImmunity>()[i];
+                params.get<osecirvvs::ReducInfectedSymptomsImprovedImmunity<ScalarType>>()[i];
             double reducInfectedSevereCriticalDeadPartialImmunity =
-                params.get<osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>()[i];
+                params.get<osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<ScalarType>>()[i];
             double reducInfectedSevereCriticalDeadImprovedImmunity =
-                params.get<osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>()[i];
-            double reducTimeInfectedMild = params.get<osecirvvs::ReducTimeInfectedMild>()[i];
+                params.get<osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<ScalarType>>()[i];
+            double reducTimeInfectedMild = params.get<osecirvvs::ReducTimeInfectedMild<ScalarType>>()[i];
 
             //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
             auto riskFromInfectedSymptomatic =
-                smoother_cosine(test_and_trace_required, params.get<osecirvvs::TestAndTraceCapacity>(),
-                                params.get<osecirvvs::TestAndTraceCapacity>() * 15,
-                                params.get<osecirvvs::RiskOfInfectionFromSymptomatic>()[i],
-                                params.get<osecirvvs::MaxRiskOfInfectionFromSymptomatic>()[i]);
+                smoother_cosine(test_and_trace_required, params.get<osecirvvs::TestAndTraceCapacity<ScalarType>>(),
+                                params.get<osecirvvs::TestAndTraceCapacity<ScalarType>>() * 15,
+                                params.get<osecirvvs::RiskOfInfectionFromSymptomatic<ScalarType>>()[i],
+                                params.get<osecirvvs::MaxRiskOfInfectionFromSymptomatic<ScalarType>>()[i]);
 
             auto riskFromInfectedNoSymptoms =
-                smoother_cosine(test_and_trace_required, params.get<osecirvvs::TestAndTraceCapacity>(),
-                                params.get<osecirvvs::TestAndTraceCapacity>() * 2,
-                                params.get<osecirvvs::RelativeTransmissionNoSymptoms>()[i], 1.0);
+                smoother_cosine(test_and_trace_required, params.get<osecirvvs::TestAndTraceCapacity<ScalarType>>(),
+                                params.get<osecirvvs::TestAndTraceCapacity<ScalarType>>() * 2,
+                                params.get<osecirvvs::RelativeTransmissionNoSymptoms<ScalarType>>()[i], 1.0);
 
             for (auto j = AgeGroup(0); j < n_agegroups; j++) {
                 size_t SNj    = this->populations.get_flat_index({j, InfectionState::SusceptibleNaive});
@@ -190,9 +192,8 @@ public:
 
                 // effective contact rate by contact rate between groups i and j and damping j
                 double season_val =
-                    (1 + params.get<osecirvvs::Seasonality>() *
-                             sin(3.141592653589793 *
-                                 (std::fmod((params.get<osecirvvs::StartDay>() + t), 365.0) / 182.5 + 0.5)));
+                    (1 + params.get<osecirvvs::Seasonality<ScalarType>>() *
+                             sin(3.141592653589793 * ((params.get<osecirvvs::StartDay>() + t) / 182.5 + 0.5)));
                 double cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                  static_cast<Eigen::Index>((size_t)j));
@@ -202,11 +203,11 @@ public:
                             pop[ICrPIj] + pop[INSPICj] + pop[ISyPICj] + pop[SIIj] + pop[EIIj] + pop[INSIIj] +
                             pop[ISyIIj] + pop[ISevIIj] + pop[ICrIIj] + pop[INSIICj] + pop[ISyIICj];
 
-                double divNj = 1.0 / Nj; // precompute 1.0/Nj
+                const double divNj = (Nj < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / Nj;
 
                 double ext_inf_force_dummy =
                     cont_freq_eff * divNj *
-                    params.template get<osecirvvs::TransmissionProbabilityOnContact>()[(AgeGroup)i] *
+                    params.template get<osecirvvs::TransmissionProbabilityOnContact<ScalarType>>()[(AgeGroup)i] *
                     (riskFromInfectedNoSymptoms * (pop[INSNj] + pop[INSPIj] + pop[INSIIj]) +
                      riskFromInfectedSymptomatic * (pop[ISyNj] + pop[ISyPIj] + pop[ISyIIj]));
 
@@ -231,151 +232,168 @@ public:
             // is different for different vaccination status. This is not the case here and in addition, ICUCapacity
             // is set to infinity and this functionality is deactivated, so this is OK for the moment.
             double criticalPerSevereAdjusted =
-                smoother_cosine(icu_occupancy, 0.90 * params.get<osecirvvs::ICUCapacity>(),
-                                params.get<osecirvvs::ICUCapacity>(), params.get<osecirvvs::CriticalPerSevere>()[i], 0);
+                smoother_cosine(icu_occupancy, 0.90 * params.get<osecirvvs::ICUCapacity<ScalarType>>(),
+                                params.get<osecirvvs::ICUCapacity<ScalarType>>(),
+                                params.get<osecirvvs::CriticalPerSevere<ScalarType>>()[i], 0);
 
-            double deathsPerSevereAdjusted = params.get<osecirvvs::CriticalPerSevere>()[i] - criticalPerSevereAdjusted;
+            double deathsPerSevereAdjusted =
+                params.get<osecirvvs::CriticalPerSevere<ScalarType>>()[i] - criticalPerSevereAdjusted;
 
             /**** path of immune-naive ***/
 
             dydt[ENi] -=
-                y[ENi] / params.get<osecirvvs::TimeExposed>()[i]; // only exchange of E and InfectedNoSymptoms done here
-            dydt[INSNi] = y[ENi] / params.get<osecirvvs::TimeExposed>()[i] -
-                          y[INSNi] / params.get<osecirvvs::TimeInfectedNoSymptoms>()[i];
-            dydt[INSNCi] = -y[INSNCi] / params.get<osecirvvs::TimeInfectedNoSymptoms>()[i];
+                y[ENi] /
+                params.get<
+                    osecirvvs::TimeExposed<ScalarType>>()[i]; // only exchange of E and InfectedNoSymptoms done here
+            dydt[INSNi] = y[ENi] / params.get<osecirvvs::TimeExposed<ScalarType>>()[i] -
+                          y[INSNi] / params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i];
+            dydt[INSNCi] = -y[INSNCi] / params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i];
 
-            dydt[ISyNi] = (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms>()[i]) /
-                              params.get<osecirvvs::TimeInfectedNoSymptoms>()[i] * y[INSNi] -
-                          (y[ISyNi] / params.get<osecirvvs::TimeInfectedSymptoms>()[i]);
-            dydt[ISyNCi] = (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms>()[i]) /
-                               params.get<osecirvvs::TimeInfectedNoSymptoms>()[i] * y[INSNCi] -
-                           (y[ISyNCi] / params.get<osecirvvs::TimeInfectedSymptoms>()[i]);
+            dydt[ISyNi] = (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i]) /
+                              params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] * y[INSNi] -
+                          (y[ISyNi] / params.get<osecirvvs::TimeInfectedSymptoms<ScalarType>>()[i]);
+            dydt[ISyNCi] = (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i]) /
+                               params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] * y[INSNCi] -
+                           (y[ISyNCi] / params.get<osecirvvs::TimeInfectedSymptoms<ScalarType>>()[i]);
 
-            dydt[ISevNi] = params.get<osecirvvs::SeverePerInfectedSymptoms>()[i] /
-                               params.get<osecirvvs::TimeInfectedSymptoms>()[i] * (y[ISyNi] + y[ISyNCi]) -
-                           (1 / params.get<osecirvvs::TimeInfectedSevere>()[i]) * y[ISevNi];
-            dydt[ICrNi] = -y[ICrNi] / params.get<osecirvvs::TimeInfectedCritical>()[i];
+            dydt[ISevNi] = params.get<osecirvvs::SeverePerInfectedSymptoms<ScalarType>>()[i] /
+                               params.get<osecirvvs::TimeInfectedSymptoms<ScalarType>>()[i] * (y[ISyNi] + y[ISyNCi]) -
+                           (1 / params.get<osecirvvs::TimeInfectedSevere<ScalarType>>()[i]) * y[ISevNi];
+            dydt[ICrNi] = -y[ICrNi] / params.get<osecirvvs::TimeInfectedCritical<ScalarType>>()[i];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
-            dydt[ICrNi] += criticalPerSevereAdjusted / params.get<osecirvvs::TimeInfectedSevere>()[i] * y[ISevNi];
+            dydt[ICrNi] +=
+                criticalPerSevereAdjusted / params.get<osecirvvs::TimeInfectedSevere<ScalarType>>()[i] * y[ISevNi];
 
             /**** path of partially immune (e.g., one dose of vaccination) ***/
 
             dydt[EPIi] -=
                 y[EPIi] /
-                params.get<osecirvvs::TimeExposed>()[i]; // only exchange of E and InfectedNoSymptoms done here
-            dydt[INSPIi] = y[EPIi] / params.get<osecirvvs::TimeExposed>()[i] -
-                           y[INSPIi] / (params.get<osecirvvs::TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild);
-            dydt[INSPICi] = -y[INSPICi] / (params.get<osecirvvs::TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild);
-            dydt[ISyPIi]  = (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
-                               (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms>()[i]) * y[INSPIi] /
-                               (params.get<osecirvvs::TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild) -
-                           (y[ISyPIi] / (params.get<osecirvvs::TimeInfectedSymptoms>()[i] * reducTimeInfectedMild));
-            dydt[ISyPICi] = (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
-                                (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms>()[i]) /
-                                (params.get<osecirvvs::TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild) *
-                                y[INSPICi] -
-                            (y[ISyPICi] / (params.get<osecirvvs::TimeInfectedSymptoms>()[i] * reducTimeInfectedMild));
+                params.get<
+                    osecirvvs::TimeExposed<ScalarType>>()[i]; // only exchange of E and InfectedNoSymptoms done here
+            dydt[INSPIi] =
+                y[EPIi] / params.get<osecirvvs::TimeExposed<ScalarType>>()[i] -
+                y[INSPIi] / (params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] * reducTimeInfectedMild);
+            dydt[INSPICi] =
+                -y[INSPICi] / (params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] * reducTimeInfectedMild);
+            dydt[ISyPIi] =
+                (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
+                    (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i]) * y[INSPIi] /
+                    (params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] * reducTimeInfectedMild) -
+                (y[ISyPIi] / (params.get<osecirvvs::TimeInfectedSymptoms<ScalarType>>()[i] * reducTimeInfectedMild));
+            dydt[ISyPICi] =
+                (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
+                    (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i]) /
+                    (params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] * reducTimeInfectedMild) *
+                    y[INSPICi] -
+                (y[ISyPICi] / (params.get<osecirvvs::TimeInfectedSymptoms<ScalarType>>()[i] * reducTimeInfectedMild));
             dydt[ISevPIi] = reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity *
-                                params.get<osecirvvs::SeverePerInfectedSymptoms>()[i] /
-                                (params.get<osecirvvs::TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) *
+                                params.get<osecirvvs::SeverePerInfectedSymptoms<ScalarType>>()[i] /
+                                (params.get<osecirvvs::TimeInfectedSymptoms<ScalarType>>()[i] * reducTimeInfectedMild) *
                                 (y[ISyPIi] + y[ISyPICi]) -
-                            (1 / params.get<osecirvvs::TimeInfectedSevere>()[i]) * y[ISevPIi];
-            dydt[ICrPIi] = -(1 / params.get<osecirvvs::TimeInfectedCritical>()[i]) * y[ICrPIi];
+                            (1 / params.get<osecirvvs::TimeInfectedSevere<ScalarType>>()[i]) * y[ISevPIi];
+            dydt[ICrPIi] = -(1 / params.get<osecirvvs::TimeInfectedCritical<ScalarType>>()[i]) * y[ICrPIi];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
             dydt[ICrPIi] += reducInfectedSevereCriticalDeadPartialImmunity /
                             reducInfectedSevereCriticalDeadPartialImmunity * criticalPerSevereAdjusted /
-                            params.get<osecirvvs::TimeInfectedSevere>()[i] * y[ISevPIi];
+                            params.get<osecirvvs::TimeInfectedSevere<ScalarType>>()[i] * y[ISevPIi];
 
             /**** path of twice vaccinated, here called immune although reinfection is possible now ***/
 
-            dydt[EIIi] -= y[EIIi] / params.get<osecirvvs::TimeExposed>()[i]; // only exchange of E and C done here
+            dydt[EIIi] -=
+                y[EIIi] / params.get<osecirvvs::TimeExposed<ScalarType>>()[i]; // only exchange of E and C done here
 
-            dydt[INSIIi] = y[EIIi] / params.get<osecirvvs::TimeExposed>()[i] -
-                           y[INSIIi] / (params.get<osecirvvs::TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild);
-            dydt[INSIICi] = -y[INSIICi] / (params.get<osecirvvs::TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild);
+            dydt[INSIIi] =
+                y[EIIi] / params.get<osecirvvs::TimeExposed<ScalarType>>()[i] -
+                y[INSIIi] / (params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] * reducTimeInfectedMild);
+            dydt[INSIICi] =
+                -y[INSIICi] / (params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] * reducTimeInfectedMild);
 
-            dydt[ISyIIi] = (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
-                               (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms>()[i]) * y[INSIIi] /
-                               (params.get<osecirvvs::TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild) -
-                           (1 / (params.get<osecirvvs::TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * y[ISyIIi];
+            dydt[ISyIIi] =
+                (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
+                    (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i]) * y[INSIIi] /
+                    (params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] * reducTimeInfectedMild) -
+                (1 / (params.get<osecirvvs::TimeInfectedSymptoms<ScalarType>>()[i] * reducTimeInfectedMild)) *
+                    y[ISyIIi];
             dydt[ISyIICi] =
                 (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
-                    (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms>()[i]) * y[INSIICi] /
-                    (params.get<osecirvvs::TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild) -
-                (1 / (params.get<osecirvvs::TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * y[ISyIICi];
+                    (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i]) * y[INSIICi] /
+                    (params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] * reducTimeInfectedMild) -
+                (1 / (params.get<osecirvvs::TimeInfectedSymptoms<ScalarType>>()[i] * reducTimeInfectedMild)) *
+                    y[ISyIICi];
             dydt[ISevIIi] = reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity *
-                                params.get<osecirvvs::SeverePerInfectedSymptoms>()[i] /
-                                (params.get<osecirvvs::TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) *
+                                params.get<osecirvvs::SeverePerInfectedSymptoms<ScalarType>>()[i] /
+                                (params.get<osecirvvs::TimeInfectedSymptoms<ScalarType>>()[i] * reducTimeInfectedMild) *
                                 (y[ISyIIi] + y[ISyIICi]) -
-                            (1 / params.get<osecirvvs::TimeInfectedSevere>()[i]) * y[ISevIIi];
-            dydt[ICrIIi] = -(1 / params.get<osecirvvs::TimeInfectedCritical>()[i]) * y[ICrIIi];
+                            (1 / params.get<osecirvvs::TimeInfectedSevere<ScalarType>>()[i]) * y[ISevIIi];
+            dydt[ICrIIi] = -(1 / params.get<osecirvvs::TimeInfectedCritical<ScalarType>>()[i]) * y[ICrIIi];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
             dydt[ICrIIi] += reducInfectedSevereCriticalDeadImprovedImmunity /
                             reducInfectedSevereCriticalDeadImprovedImmunity * criticalPerSevereAdjusted /
-                            params.get<osecirvvs::TimeInfectedSevere>()[i] * y[ISevIIi];
+                            params.get<osecirvvs::TimeInfectedSevere<ScalarType>>()[i] * y[ISevIIi];
 
             // recovered and deaths from all paths
-            dydt[SIIi] += params.get<osecirvvs::RecoveredPerInfectedNoSymptoms>()[i] /
-                              params.get<osecirvvs::TimeInfectedNoSymptoms>()[i] * (y[INSNi] + y[INSNCi]) +
-                          (1 - params.get<osecirvvs::SeverePerInfectedSymptoms>()[i]) /
-                              params.get<osecirvvs::TimeInfectedSymptoms>()[i] * (y[ISyNi] + y[ISyNCi]) +
-                          (1 - params.get<osecirvvs::CriticalPerSevere>()[i]) /
-                              params.get<osecirvvs::TimeInfectedSevere>()[i] * y[ISevNi] +
-                          (1 - params.get<osecirvvs::DeathsPerCritical>()[i]) /
-                              params.get<osecirvvs::TimeInfectedCritical>()[i] * y[ICrNi];
+            dydt[SIIi] += params.get<osecirvvs::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i] /
+                              params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] * (y[INSNi] + y[INSNCi]) +
+                          (1 - params.get<osecirvvs::SeverePerInfectedSymptoms<ScalarType>>()[i]) /
+                              params.get<osecirvvs::TimeInfectedSymptoms<ScalarType>>()[i] * (y[ISyNi] + y[ISyNCi]) +
+                          (1 - params.get<osecirvvs::CriticalPerSevere<ScalarType>>()[i]) /
+                              params.get<osecirvvs::TimeInfectedSevere<ScalarType>>()[i] * y[ISevNi] +
+                          (1 - params.get<osecirvvs::DeathsPerCritical<ScalarType>>()[i]) /
+                              params.get<osecirvvs::TimeInfectedCritical<ScalarType>>()[i] * y[ICrNi];
 
             dydt[SIIi] +=
                 (1 - (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
-                         (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms>()[i])) /
-                    (params.get<osecirvvs::TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild) *
+                         (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i])) /
+                    (params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] * reducTimeInfectedMild) *
                     (y[INSPIi] + y[INSPICi]) +
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity) *
-                         params.get<osecirvvs::SeverePerInfectedSymptoms>()[i]) /
-                    (params.get<osecirvvs::TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) *
+                         params.get<osecirvvs::SeverePerInfectedSymptoms<ScalarType>>()[i]) /
+                    (params.get<osecirvvs::TimeInfectedSymptoms<ScalarType>>()[i] * reducTimeInfectedMild) *
                     (y[ISyPIi] + y[ISyPICi]) +
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) *
-                         params.get<osecirvvs::CriticalPerSevere>()[i]) /
-                    params.get<osecirvvs::TimeInfectedSevere>()[i] * y[ISevPIi] +
+                         params.get<osecirvvs::CriticalPerSevere<ScalarType>>()[i]) /
+                    params.get<osecirvvs::TimeInfectedSevere<ScalarType>>()[i] * y[ISevPIi] +
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) *
-                         params.get<osecirvvs::DeathsPerCritical>()[i]) /
-                    params.get<osecirvvs::TimeInfectedCritical>()[i] * y[ICrPIi];
+                         params.get<osecirvvs::DeathsPerCritical<ScalarType>>()[i]) /
+                    params.get<osecirvvs::TimeInfectedCritical<ScalarType>>()[i] * y[ICrPIi];
 
             dydt[SIIi] +=
                 (1 - (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
-                         (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms>()[i])) *
-                    (params.get<osecirvvs::TimeInfectedNoSymptoms>()[i] * reducTimeInfectedMild) *
+                         (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i])) *
+                    (params.get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] * reducTimeInfectedMild) *
                     (y[INSIIi] + y[INSIICi]) +
                 (1 - (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity) *
-                         params.get<osecirvvs::SeverePerInfectedSymptoms>()[i]) /
-                    (params.get<osecirvvs::TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) *
+                         params.get<osecirvvs::SeverePerInfectedSymptoms<ScalarType>>()[i]) /
+                    (params.get<osecirvvs::TimeInfectedSymptoms<ScalarType>>()[i] * reducTimeInfectedMild) *
                     (y[ISyIIi] + y[ISyIICi]) +
                 (1 -
                  (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) *
-                     params.get<osecirvvs::CriticalPerSevere>()[i]) /
-                    params.get<osecirvvs::TimeInfectedSevere>()[i] * y[ISevIIi] +
+                     params.get<osecirvvs::CriticalPerSevere<ScalarType>>()[i]) /
+                    params.get<osecirvvs::TimeInfectedSevere<ScalarType>>()[i] * y[ISevIIi] +
                 (1 -
                  (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) *
-                     params.get<osecirvvs::DeathsPerCritical>()[i]) /
-                    params.get<osecirvvs::TimeInfectedCritical>()[i] * y[ICrIIi];
+                     params.get<osecirvvs::DeathsPerCritical<ScalarType>>()[i]) /
+                    params.get<osecirvvs::TimeInfectedCritical<ScalarType>>()[i] * y[ICrIIi];
 
-            dydt[DNi] = params.get<osecirvvs::DeathsPerCritical>()[i] /
-                        params.get<osecirvvs::TimeInfectedCritical>()[i] * y[ICrNi];
+            dydt[DNi] = params.get<osecirvvs::DeathsPerCritical<ScalarType>>()[i] /
+                        params.get<osecirvvs::TimeInfectedCritical<ScalarType>>()[i] * y[ICrNi];
             dydt[DPIi] = reducInfectedSevereCriticalDeadPartialImmunity /
                          reducInfectedSevereCriticalDeadPartialImmunity *
-                         params.get<osecirvvs::DeathsPerCritical>()[i] /
-                         params.get<osecirvvs::TimeInfectedCritical>()[i] * y[ICrPIi];
+                         params.get<osecirvvs::DeathsPerCritical<ScalarType>>()[i] /
+                         params.get<osecirvvs::TimeInfectedCritical<ScalarType>>()[i] * y[ICrPIi];
             dydt[DIIi] = reducInfectedSevereCriticalDeadImprovedImmunity /
                          reducInfectedSevereCriticalDeadImprovedImmunity *
-                         params.get<osecirvvs::DeathsPerCritical>()[i] /
-                         params.get<osecirvvs::TimeInfectedCritical>()[i] * y[ICrIIi];
+                         params.get<osecirvvs::DeathsPerCritical<ScalarType>>()[i] /
+                         params.get<osecirvvs::TimeInfectedCritical<ScalarType>>()[i] * y[ICrIIi];
             // add potential, additional deaths due to ICU overflow
-            dydt[DNi] += deathsPerSevereAdjusted / params.get<osecirvvs::TimeInfectedSevere>()[i] * y[ISevNi];
+            dydt[DNi] +=
+                deathsPerSevereAdjusted / params.get<osecirvvs::TimeInfectedSevere<ScalarType>>()[i] * y[ISevNi];
             dydt[DPIi] +=
                 (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) *
-                deathsPerSevereAdjusted / params.get<osecirvvs::TimeInfectedSevere>()[i] * y[ISevPIi];
+                deathsPerSevereAdjusted / params.get<osecirvvs::TimeInfectedSevere<ScalarType>>()[i] * y[ISevPIi];
             dydt[DIIi] +=
                 (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) *
-                deathsPerSevereAdjusted / params.get<osecirvvs::TimeInfectedSevere>()[i] * y[ISevIIi];
+                deathsPerSevereAdjusted / params.get<osecirvvs::TimeInfectedSevere<ScalarType>>()[i] * y[ISevIIi];
         }
     }
 
@@ -410,8 +428,9 @@ public:
     }
 };
 
-template <class Base = mio::Simulation<FlowlessModel>>
-double get_infections_relative(const Simulation<Base>& model, double t, const Eigen::Ref<const Eigen::VectorXd>& y);
+template <class Base = mio::Simulation<ScalarType, FlowlessModel>>
+double get_infections_relative(const Simulation<ScalarType, Base>& model, double t,
+                               const Eigen::Ref<const Eigen::VectorXd>& y);
 
 template <class Base>
 class Simulation : public Base
@@ -429,7 +448,7 @@ public:
     {
     }
 
-    void apply_variant(const double t, const CustomIndexArray<UncertainValue, AgeGroup> base_infectiousness)
+    void apply_variant(const double t, const CustomIndexArray<UncertainValue<ScalarType>, AgeGroup> base_infectiousness)
     {
         auto start_day             = this->get_model().parameters.template get<osecirvvs::StartDay>();
         auto start_day_new_variant = this->get_model().parameters.template get<osecirvvs::StartDayNewVariant>();
@@ -442,8 +461,9 @@ public:
                 double new_transmission =
                     (1 - share_new_variant) * base_infectiousness[i] +
                     share_new_variant * base_infectiousness[i] *
-                        this->get_model().parameters.template get<osecirvvs::InfectiousnessNewVariant>()[i];
-                this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[i] =
+                        this->get_model().parameters.template get<osecirvvs::InfectiousnessNewVariant<ScalarType>>()[i];
+                this->get_model()
+                    .parameters.template get<osecirvvs::TransmissionProbabilityOnContact<ScalarType>>()[i] =
                     new_transmission;
             }
         }
@@ -466,16 +486,18 @@ public:
             double first_vacc;
             double full_vacc;
             if (t_idx == SimulationDay(0)) {
-                first_vacc = params.template get<osecirvvs::DailyFirstVaccination>()[{(AgeGroup)i, t_idx}];
-                full_vacc  = params.template get<osecirvvs::DailyFullVaccination>()[{(AgeGroup)i, t_idx}];
+                first_vacc =
+                    params.template get<osecirvvs::DailyPartialVaccinations<ScalarType>>()[{(AgeGroup)i, t_idx}];
+                full_vacc = params.template get<osecirvvs::DailyFullVaccinations<ScalarType>>()[{(AgeGroup)i, t_idx}];
             }
             else {
                 first_vacc =
-                    params.template get<osecirvvs::DailyFirstVaccination>()[{(AgeGroup)i, t_idx}] -
-                    params.template get<osecirvvs::DailyFirstVaccination>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
-                full_vacc =
-                    params.template get<osecirvvs::DailyFullVaccination>()[{(AgeGroup)i, t_idx}] -
-                    params.template get<osecirvvs::DailyFullVaccination>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
+                    params.template get<osecirvvs::DailyPartialVaccinations<ScalarType>>()[{(AgeGroup)i, t_idx}] -
+                    params.template get<osecirvvs::DailyPartialVaccinations<ScalarType>>()[{(AgeGroup)i,
+                                                                                            t_idx - SimulationDay(1)}];
+                full_vacc = params.template get<osecirvvs::DailyFullVaccinations<ScalarType>>()[{(AgeGroup)i, t_idx}] -
+                            params.template get<osecirvvs::DailyFullVaccinations<ScalarType>>()[{
+                                (AgeGroup)i, t_idx - SimulationDay(1)}];
             }
 
             if (last_value(count * i + S) - first_vacc < 0) {
@@ -509,15 +531,16 @@ public:
     */
     Eigen::Ref<Eigen::VectorXd> advance(double tmax)
     {
-        auto& t_end_dyn_npis    = this->get_model().parameters.get_end_dynamic_npis();
-        auto& dyn_npis          = this->get_model().parameters.template get<osecirvvs::DynamicNPIsInfectedSymptoms>();
-        auto& contact_patterns  = this->get_model().parameters.template get<osecirvvs::ContactPatterns>();
+        auto& t_end_dyn_npis = this->get_model().parameters.get_end_dynamic_npis();
+        auto& dyn_npis =
+            this->get_model().parameters.template get<osecirvvs::DynamicNPIsInfectedSymptoms<ScalarType>>();
+        auto& contact_patterns  = this->get_model().parameters.template get<osecirvvs::ContactPatterns<ScalarType>>();
         const size_t num_groups = (size_t)this->get_model().parameters.get_num_groups();
 
         auto base_infectiousness =
-            this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>();
+            this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact<ScalarType>>();
 
-        double delay_lockdown;
+        double delay_npi_implementation;
         auto t        = Base::get_result().get_last_time();
         const auto dt = dyn_npis.get_interval().get();
         while (t < tmax) {
@@ -538,10 +561,10 @@ public:
             }
 
             if (t > 0) {
-                delay_lockdown = 7;
+                delay_npi_implementation = 7;
             }
             else {
-                delay_lockdown = 0;
+                delay_npi_implementation = 0;
             }
             t = t + dt_eff;
 
@@ -555,7 +578,7 @@ public:
                             (exceeded_threshold->first > m_dynamic_npi.first ||
                              t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
 
-                            auto t_start = SimulationTime(t + delay_lockdown);
+                            auto t_start = SimulationTime(t + delay_npi_implementation);
                             auto t_end   = t_start + SimulationTime(dyn_npis.get_duration());
                             this->get_model().parameters.get_start_commuter_detection() = (double)t_start;
                             this->get_model().parameters.get_end_commuter_detection()   = (double)t_end;
@@ -574,7 +597,8 @@ public:
             }
         }
 
-        this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact>() = base_infectiousness;
+        this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact<ScalarType>>() =
+            base_infectiousness;
 
         return this->get_result().get_last_value();
     }
@@ -641,47 +665,50 @@ void setup_model(Model& model)
             {i, osecirvvs::InfectionState::SusceptibleNaive}, 1000);
     }
 
-    model.parameters.template get<osecirvvs::ICUCapacity>()          = 100;
-    model.parameters.template get<osecirvvs::TestAndTraceCapacity>() = 0.0143;
-    model.parameters.template get<osecirvvs::DailyFirstVaccination>().resize(SimulationDay(size_t(1000)));
-    model.parameters.template get<osecirvvs::DailyFirstVaccination>().array().setConstant(5);
-    model.parameters.template get<osecirvvs::DailyFullVaccination>().resize(SimulationDay(size_t(1000)));
-    model.parameters.template get<osecirvvs::DailyFullVaccination>().array().setConstant(3);
+    model.parameters.template get<osecirvvs::ICUCapacity<ScalarType>>()          = 100;
+    model.parameters.template get<osecirvvs::TestAndTraceCapacity<ScalarType>>() = 0.0143;
+    model.parameters.template get<osecirvvs::DailyPartialVaccinations<ScalarType>>().resize(
+        SimulationDay(size_t(1000)));
+    model.parameters.template get<osecirvvs::DailyPartialVaccinations<ScalarType>>().array().setConstant(5);
+    model.parameters.template get<osecirvvs::DailyFullVaccinations<ScalarType>>().resize(SimulationDay(size_t(1000)));
+    model.parameters.template get<osecirvvs::DailyFullVaccinations<ScalarType>>().array().setConstant(3);
 
-    auto& contacts       = model.parameters.template get<osecirvvs::ContactPatterns>();
+    auto& contacts       = model.parameters.template get<osecirvvs::ContactPatterns<ScalarType>>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
     contact_matrix[0].add_damping(0.3, SimulationTime(5.0));
 
     //times
-    model.parameters.template get<osecirvvs::TimeExposed>()[AgeGroup(0)]            = 3.33;
-    model.parameters.template get<osecirvvs::TimeInfectedNoSymptoms>()[AgeGroup(0)] = 1.87;
-    model.parameters.template get<osecirvvs::TimeInfectedSymptoms>()[AgeGroup(0)]   = 7;
-    model.parameters.template get<osecirvvs::TimeInfectedSevere>()[AgeGroup(0)]     = 6;
-    model.parameters.template get<osecirvvs::TimeInfectedCritical>()[AgeGroup(0)]   = 7;
+    model.parameters.template get<osecirvvs::TimeExposed<ScalarType>>()[AgeGroup(0)]            = 3.33;
+    model.parameters.template get<osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[AgeGroup(0)] = 1.87;
+    model.parameters.template get<osecirvvs::TimeInfectedSymptoms<ScalarType>>()[AgeGroup(0)]   = 7;
+    model.parameters.template get<osecirvvs::TimeInfectedSevere<ScalarType>>()[AgeGroup(0)]     = 6;
+    model.parameters.template get<osecirvvs::TimeInfectedCritical<ScalarType>>()[AgeGroup(0)]   = 7;
 
     //probabilities
-    model.parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[AgeGroup(0)] = 0.15;
-    model.parameters.template get<osecirvvs::RelativeTransmissionNoSymptoms>()[AgeGroup(0)]   = 0.5;
+    model.parameters.template get<osecirvvs::TransmissionProbabilityOnContact<ScalarType>>()[AgeGroup(0)] = 0.15;
+    model.parameters.template get<osecirvvs::RelativeTransmissionNoSymptoms<ScalarType>>()[AgeGroup(0)]   = 0.5;
     // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
     // depends on incidence and test and trace capacity
-    model.parameters.template get<osecirvvs::RiskOfInfectionFromSymptomatic>()[AgeGroup(0)]    = 0.0;
-    model.parameters.template get<osecirvvs::MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)] = 0.4;
-    model.parameters.template get<osecirvvs::RecoveredPerInfectedNoSymptoms>()[AgeGroup(0)]    = 0.2;
-    model.parameters.template get<osecirvvs::SeverePerInfectedSymptoms>()[AgeGroup(0)]         = 0.1;
-    model.parameters.template get<osecirvvs::CriticalPerSevere>()[AgeGroup(0)]                 = 0.1;
-    model.parameters.template get<osecirvvs::DeathsPerCritical>()[AgeGroup(0)]                 = 0.1;
+    model.parameters.template get<osecirvvs::RiskOfInfectionFromSymptomatic<ScalarType>>()[AgeGroup(0)]    = 0.0;
+    model.parameters.template get<osecirvvs::MaxRiskOfInfectionFromSymptomatic<ScalarType>>()[AgeGroup(0)] = 0.4;
+    model.parameters.template get<osecirvvs::RecoveredPerInfectedNoSymptoms<ScalarType>>()[AgeGroup(0)]    = 0.2;
+    model.parameters.template get<osecirvvs::SeverePerInfectedSymptoms<ScalarType>>()[AgeGroup(0)]         = 0.1;
+    model.parameters.template get<osecirvvs::CriticalPerSevere<ScalarType>>()[AgeGroup(0)]                 = 0.1;
+    model.parameters.template get<osecirvvs::DeathsPerCritical<ScalarType>>()[AgeGroup(0)]                 = 0.1;
 
-    model.parameters.template get<osecirvvs::ReducExposedPartialImmunity>()[AgeGroup(0)]                     = 0.8;
-    model.parameters.template get<osecirvvs::ReducExposedImprovedImmunity>()[AgeGroup(0)]                    = 0.331;
-    model.parameters.template get<osecirvvs::ReducInfectedSymptomsPartialImmunity>()[AgeGroup(0)]            = 0.65;
-    model.parameters.template get<osecirvvs::ReducInfectedSymptomsImprovedImmunity>()[AgeGroup(0)]           = 0.243;
-    model.parameters.template get<osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>()[AgeGroup(0)]  = 0.1;
-    model.parameters.template get<osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>()[AgeGroup(0)] = 0.091;
-    model.parameters.template get<osecirvvs::ReducTimeInfectedMild>()[AgeGroup(0)]                           = 0.9;
+    model.parameters.template get<osecirvvs::ReducExposedPartialImmunity<ScalarType>>()[AgeGroup(0)]           = 0.8;
+    model.parameters.template get<osecirvvs::ReducExposedImprovedImmunity<ScalarType>>()[AgeGroup(0)]          = 0.331;
+    model.parameters.template get<osecirvvs::ReducInfectedSymptomsPartialImmunity<ScalarType>>()[AgeGroup(0)]  = 0.65;
+    model.parameters.template get<osecirvvs::ReducInfectedSymptomsImprovedImmunity<ScalarType>>()[AgeGroup(0)] = 0.243;
+    model.parameters
+        .template get<osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<ScalarType>>()[AgeGroup(0)] = 0.1;
+    model.parameters
+        .template get<osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<ScalarType>>()[AgeGroup(0)] = 0.091;
+    model.parameters.template get<osecirvvs::ReducTimeInfectedMild<ScalarType>>()[AgeGroup(0)]               = 0.9;
 
-    model.parameters.template get<osecirvvs::Seasonality>() = 0.2;
+    model.parameters.template get<osecirvvs::Seasonality<ScalarType>>() = 0.2;
 
     model.apply_constraints();
 }

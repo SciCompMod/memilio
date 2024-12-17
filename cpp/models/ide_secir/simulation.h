@@ -20,14 +20,11 @@
 #ifndef IDE_SECIR_SIMULATION_H
 #define IDE_SECIR_SIMULATION_H
 
-#include "ide_secir/parameters.h"
-#include "ide_secir/infection_state.h"
 #include "ide_secir/model.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include <memory>
 #include <cstdio>
-#include <iostream>
 
 namespace mio
 {
@@ -44,12 +41,10 @@ public:
     /**
      * @brief setup the Simulation for an IDE model.
      * @param[in] model An instance of the IDE model.
-     * @param[in] t0 Start time.
      * @param[in] dt Step size of numerical solver.
      */
-    Simulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 0.1)
+    Simulation(Model const& model, ScalarType dt = 0.1)
         : m_model(std::make_unique<Model>(model))
-        , m_t0(t0)
         , m_dt(dt)
     {
     }
@@ -65,7 +60,7 @@ public:
      * Return the number of persons in all #InfectionState%s.
      * @return The result of the simulation.
      */
-    TimeSeries<double>& get_result()
+    TimeSeries<ScalarType> get_result()
     {
         return m_model->m_populations;
     }
@@ -75,7 +70,7 @@ public:
      * Return the number of persons in all #InfectionState%s.
      * @return The result of the simulation.
      */
-    const TimeSeries<double>& get_result() const
+    const TimeSeries<ScalarType>& get_result() const
     {
         return m_model->m_populations;
     }
@@ -107,15 +102,6 @@ public:
     }
 
     /**
-     * @brief get the starting time of the simulation.
-     * 
-     */
-    ScalarType get_t0()
-    {
-        return m_t0;
-    }
-
-    /**
      * @brief get the time step of the simulation.
      * 
      */
@@ -126,19 +112,18 @@ public:
 
 private:
     std::unique_ptr<Model> m_model; ///< Unique pointer to the Model simulated.
-    ScalarType m_t0; ///< Start time used for simulation.
     ScalarType m_dt; ///< Time step used for numerical computations in simulation.
 };
 
 /**
- * @brief simulates a compartmental model
- * @param[in] t0 start time
- * @param[in] tmax end time
- * @param[in] dt initial step size of integration
- * @param[in] model an instance of a compartmental model
- * @return a TimeSeries to represent the final simulation result
+ * @brief Run a Simulation of an IDE-SECIR model.
+ *
+ * @param[in] tmax End time.
+ * @param[in] dt Initial step size of integration.
+ * @param[in] model An instance of an IDE-SECIR model.
+ * @return A TimeSeries to represent the final simulation result.
  */
-TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model);
+TimeSeries<ScalarType> simulate(double tmax, double dt, Model const& model);
 
 } // namespace isecir
 } // namespace mio

@@ -35,31 +35,31 @@ namespace mio
 {
 
 /**
- * status and age dependent migration coefficients.
+ * status and age dependent mobility coefficients.
  */
-using MigrationCoefficients = DampingMatrixExpression<VectorDampings>;
+using MobilityCoefficients = DampingMatrixExpression<VectorDampings>;
 
 /**
- * parameters that influence migration.
+ * parameters that influence mobility.
  */
-class MigrationParametersStochastic
+class MobilityParametersStochastic
 {
 public:
     /**
-     * constructor from migration coefficients.
-     * @param coeffs migration coefficients
+     * constructor from mobility coefficients.
+     * @param coeffs mobility coefficients
      */
-    MigrationParametersStochastic(const MigrationCoefficients& coeffs)
+    MobilityParametersStochastic(const MobilityCoefficients& coeffs)
         : m_coefficients(coeffs)
     {
     }
 
     /**
-     * constructor from migration coefficients.
-     * @param coeffs migration coefficients
+     * constructor from mobility coefficients.
+     * @param coeffs mobility coefficients
      */
-    MigrationParametersStochastic(const Eigen::VectorXd& coeffs)
-        : m_coefficients(MigrationCoefficients(coeffs))
+    MobilityParametersStochastic(const Eigen::VectorXd& coeffs)
+        : m_coefficients(MobilityCoefficients(coeffs))
     {
     }
 
@@ -67,37 +67,37 @@ public:
      * equality comparison operators
      */
     //@{
-    bool operator==(const MigrationParametersStochastic& other) const
+    bool operator==(const MobilityParametersStochastic& other) const
     {
         return m_coefficients == other.m_coefficients;
     }
-    bool operator!=(const MigrationParametersStochastic& other) const
+    bool operator!=(const MobilityParametersStochastic& other) const
     {
         return m_coefficients != other.m_coefficients;
     }
     //@}
 
     /**
-     * Get/Set the migration coefficients.
-     * The coefficients represent the rates for migrating 
+     * Get/Set the mobility coefficients.
+     * The coefficients represent the rates for moving
      * from one node to another by age and infection compartment. 
      * @{
      */
     /**
-     * @return the migration coefficients.
+     * @return the mobility coefficients.
      */
-    const MigrationCoefficients& get_coefficients() const
+    const MobilityCoefficients& get_coefficients() const
     {
         return m_coefficients;
     }
-    MigrationCoefficients& get_coefficients()
+    MobilityCoefficients& get_coefficients()
     {
         return m_coefficients;
     }
     /**
-     * @param coeffs the migration coefficients.
+     * @param coeffs the mobility coefficients.
      */
-    void set_coefficients(const MigrationCoefficients& coeffs)
+    void set_coefficients(const MobilityCoefficients& coeffs)
     {
         m_coefficients = coeffs;
     }
@@ -109,7 +109,7 @@ public:
     template <class IOContext>
     void serialize(IOContext& io) const
     {
-        auto obj = io.create_object("MigrationParameters");
+        auto obj = io.create_object("MobilityParameters");
         obj.add_element("Coefficients", m_coefficients);
     }
 
@@ -118,51 +118,51 @@ public:
      * @see mio::deserialize
      */
     template <class IOContext>
-    static IOResult<MigrationParametersStochastic> deserialize(IOContext& io)
+    static IOResult<MobilityParametersStochastic> deserialize(IOContext& io)
     {
-        auto obj = io.expect_object("MigrationParameters");
-        auto c   = obj.expect_element("Coefficients", Tag<MigrationCoefficients>{});
+        auto obj = io.expect_object("MobilityParameters");
+        auto c   = obj.expect_element("Coefficients", Tag<MobilityCoefficients>{});
         return apply(
             io,
             [](auto&& c_) {
-                MigrationParametersStochastic params(c_);
+                MobilityParametersStochastic params(c_);
                 return params;
             },
             c);
     }
 
 private:
-    MigrationCoefficients m_coefficients; //one per group and compartment
+    MobilityCoefficients m_coefficients; //one per group and compartment
 };
 
 /** 
- * represents the migration between two nodes.
+ * represents the mobility between two nodes.
  */
-class MigrationEdgeStochastic
+class MobilityEdgeStochastic
 {
 public:
     /**
      * create edge with coefficients.
-     * @param coeffs migration rate for each group and compartment
+     * @param coeffs mobility rate for each group and compartment
      */
-    MigrationEdgeStochastic(const MigrationParametersStochastic& params)
+    MobilityEdgeStochastic(const MobilityParametersStochastic& params)
         : m_parameters(params)
     {
     }
 
     /**
      * create edge with coefficients.
-     * @param coeffs migration rate for each group and compartment
+     * @param coeffs mobility rate for each group and compartment
      */
-    MigrationEdgeStochastic(const Eigen::VectorXd& coeffs)
+    MobilityEdgeStochastic(const Eigen::VectorXd& coeffs)
         : m_parameters(coeffs)
     {
     }
 
     /**
-     * get the migration parameters.
+     * get the mobility parameters.
      */
-    const MigrationParametersStochastic& get_parameters() const
+    const MobilityParametersStochastic& get_parameters() const
     {
         return m_parameters;
     }
@@ -182,60 +182,64 @@ public:
     }
 
     /**
-     * compute migration from node_from to node_to for a given event
-     * @param[in] event index specifying which compartment and age group migrates
-     * @param node_from node that people migrated from
-     * @param node_to node that people migrated to
+     * compute mobility from node_from to node_to for a given event
+     * @param[in] event index specifying which compartment and age group change nodes
+     * @param node_from node that people changed from
+     * @param node_to node that people changed to
      */
     template <class Sim>
-    void apply_migration(size_t event, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
+    void apply_mobility(size_t event, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
 
 private:
-    MigrationParametersStochastic m_parameters;
+    MobilityParametersStochastic m_parameters;
 };
 
 template <class Sim>
-void MigrationEdgeStochastic::apply_migration(size_t event, SimulationNode<Sim>& node_from,
-                                              SimulationNode<Sim>& node_to)
+void MobilityEdgeStochastic::apply_mobility(size_t event, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
 {
     node_from.get_result().get_last_value()[event] -= 1;
     node_to.get_result().get_last_value()[event] += 1;
 }
 
 /**
- * edge functor for migration simulation.
- * @see MigrationEdgeStochastic::apply_migration
+ * edge functor for mobility-based simulation.
+ * @see MobilityEdgeStochastic::apply_mobility
  */
 template <class Sim, class StochasticEdge>
-void apply_migration(StochasticEdge& migrationEdge, size_t event, SimulationNode<Sim>& node_from,
-                     SimulationNode<Sim>& node_to)
+void apply_mobility(StochasticEdge& mobilityEdge, size_t event, SimulationNode<Sim>& node_from,
+                    SimulationNode<Sim>& node_to)
 {
-    migrationEdge.apply_migration(event, node_from, node_to);
+    mobilityEdge.apply_mobility(event, node_from, node_to);
 }
 
 /**
- * create a migration simulation.
+ * create a mobility-based simulation.
  * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
- * moves from one node to the other. In the next timestep, the migrated population return to their "home" node. 
+ * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node. 
  * Returns are adjusted based on the development in the target node. 
  * @param t0 start time of the simulation
- * @param dt time step between migrations
- * @param graph set up for migration simulation
+ * @param dt time step between mobility
+ * @param graph set up for mobility-based simulation
  * @{
  */
 template <class Sim>
-GraphSimulationStochastic<Graph<SimulationNode<Sim>, MigrationEdgeStochastic>>
-make_migration_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MigrationEdgeStochastic>& graph)
+GraphSimulationStochastic<Graph<SimulationNode<Sim>, MobilityEdgeStochastic>>
+make_mobility_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MobilityEdgeStochastic>& graph)
 {
-    return make_graph_sim_stochastic(t0, dt, graph, &evolve_model<Sim>, &apply_migration<Sim, MigrationEdgeStochastic>);
+    return make_graph_sim_stochastic(
+        t0, dt, graph, &evolve_model<Sim>,
+        static_cast<void (*)(MobilityEdgeStochastic&, size_t, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
+            &apply_mobility<Sim, MobilityEdgeStochastic>));
 }
 
 template <class Sim>
-GraphSimulationStochastic<Graph<SimulationNode<Sim>, MigrationEdgeStochastic>>
-make_migration_sim(double t0, double dt, Graph<SimulationNode<Sim>, MigrationEdgeStochastic>&& graph)
+GraphSimulationStochastic<Graph<SimulationNode<Sim>, MobilityEdgeStochastic>>
+make_mobility_sim(double t0, double dt, Graph<SimulationNode<Sim>, MobilityEdgeStochastic>&& graph)
 {
-    return make_graph_sim_stochastic(t0, dt, std::move(graph), &evolve_model<Sim>,
-                                     &apply_migration<Sim, MigrationEdgeStochastic>);
+    return make_graph_sim_stochastic(
+        t0, dt, std::move(graph), &evolve_model<Sim>,
+        static_cast<void (*)(MobilityEdgeStochastic&, size_t, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
+            &apply_mobility<Sim, MobilityEdgeStochastic>));
 }
 
 /** @} */
