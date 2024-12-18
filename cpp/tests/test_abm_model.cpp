@@ -232,11 +232,15 @@ TEST_F(TestModel, evolveMobilityRules)
         .WillOnce(testing::Return(0.8)) // draw random work group
         .WillOnce(testing::Return(0.8)) // draw random school group
         .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random work return hour
         .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillOnce(testing::Return(0.8)) // draw random school return hour
         .WillOnce(testing::Return(0.8)) // draw random work group
         .WillOnce(testing::Return(0.8)) // draw random school group
         .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random work return hour
         .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillOnce(testing::Return(0.8)) // draw random school return hour
         .WillRepeatedly(testing::Return(1.0));
 
     auto pid2 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t);

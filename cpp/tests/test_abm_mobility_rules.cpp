@@ -81,6 +81,8 @@ TEST_F(TestMobilityRules, student_goes_to_school)
         .WillOnce(testing::Return(0.6))
         .WillOnce(testing::Return(0.6))
         .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
         .WillRepeatedly(testing::Return(1.0));
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -125,6 +127,10 @@ TEST_F(TestMobilityRules, students_go_to_school_in_different_times)
         .WillOnce(testing::Return(0.0))
         .WillOnce(testing::Return(0.0))
         .WillOnce(testing::Return(0.0))
+        .WillOnce(testing::Return(0.0))
+        .WillOnce(testing::Return(0.0))
+        .WillOnce(testing::Return(0.8))
+        .WillOnce(testing::Return(0.8))
         .WillOnce(testing::Return(0.8))
         .WillOnce(testing::Return(0.8))
         .WillOnce(testing::Return(0.8))
@@ -190,6 +196,10 @@ TEST_F(TestMobilityRules, students_go_to_school_in_different_times_with_smaller_
         .WillOnce(testing::Return(0.0))
         .WillOnce(testing::Return(0.0))
         .WillOnce(testing::Return(0.0))
+        .WillOnce(testing::Return(0.0))
+        .WillOnce(testing::Return(0.0))
+        .WillOnce(testing::Return(0.9))
+        .WillOnce(testing::Return(0.9))
         .WillOnce(testing::Return(0.9))
         .WillOnce(testing::Return(0.9))
         .WillOnce(testing::Return(0.9))
@@ -242,12 +252,16 @@ TEST_F(TestMobilityRules, students_go_to_school_in_different_times_with_smaller_
  */
 TEST_F(TestMobilityRules, school_return)
 {
+    // Mock the uniform distribution to control the randomness of the student's return-from-school times.
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(testing::AtLeast(6)).WillRepeatedly(testing::Return(1.0));
+
     mio::abm::Location school(mio::abm::LocationType::School, 0, num_age_groups);
     auto p_child   = mio::abm::Person(this->get_rng(), school.get_type(), school.get_id(), age_group_5_to_14);
     auto rng_child = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_child);
 
     // Simulate a time point after school hours
-    auto t  = mio::abm::TimePoint(0) + mio::abm::hours(15);
+    auto t  = mio::abm::TimePoint(0) + mio::abm::hours(17);
     auto dt = mio::abm::hours(1);
 
     // Ensure that the child returns home after school is over
@@ -369,6 +383,10 @@ TEST_F(TestMobilityRules, workers_go_to_work_in_different_times)
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.9))
+        .WillOnce(testing::Return(0.9))
         .WillOnce(testing::Return(0.9))
         .WillOnce(testing::Return(0.9))
         .WillOnce(testing::Return(0.9))
@@ -423,13 +441,16 @@ TEST_F(TestMobilityRules, workers_go_to_work_in_different_times)
  */
 TEST_F(TestMobilityRules, work_return)
 {
+    // Mock the uniform distribution to control the randomness of the worker's return-from-work times.
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(testing::AtLeast(6)).WillRepeatedly(testing::Return(1.0));
     mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
     // Set up a random number generator and a worker who is currently at work
     auto p_adult   = mio::abm::Person(this->get_rng(), work.get_type(), work.get_id(), age_group_35_to_59);
     auto rng_adult = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_adult);
-    // Set the time to 5 PM (17:00) when the worker should return home
-    auto t         = mio::abm::TimePoint(0) + mio::abm::hours(17);
-    auto dt        = mio::abm::hours(1);
+    // Set the time to 6 PM (18:00) when the worker should return home
+    auto t  = mio::abm::TimePoint(0) + mio::abm::hours(18);
+    auto dt = mio::abm::hours(1);
     // Test that the worker, who is currently at work, goes home after 5 PM
     EXPECT_EQ(mio::abm::go_to_work(rng_adult, p_adult, t, dt, mio::abm::Parameters(num_age_groups)),
               mio::abm::LocationType::Home);
@@ -477,8 +498,8 @@ TEST_F(TestMobilityRules, quarantine)
 TEST_F(TestMobilityRules, hospital)
 {
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
-    auto t       = mio::abm::TimePoint(12346);
-    auto dt      = mio::abm::hours(1);
+    auto t  = mio::abm::TimePoint(12346);
+    auto dt = mio::abm::hours(1);
     auto p_inf =
         make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::InfectedSevere, t);
     auto rng_inf = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_inf);
@@ -621,8 +642,8 @@ TEST_F(TestMobilityRules, event_return)
 TEST_F(TestMobilityRules, icu)
 {
     mio::abm::Location hospital(mio::abm::LocationType::Hospital, 0, num_age_groups);
-    auto t        = mio::abm::TimePoint(12346);
-    auto dt       = mio::abm::hours(1);
+    auto t  = mio::abm::TimePoint(12346);
+    auto dt = mio::abm::hours(1);
     auto p_hosp =
         make_test_person(this->get_rng(), hospital, age_group_15_to_34, mio::abm::InfectionState::InfectedCritical, t);
     auto rng_hosp = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_hosp);
@@ -646,8 +667,8 @@ TEST_F(TestMobilityRules, icu)
 TEST_F(TestMobilityRules, recover)
 {
     mio::abm::Location hospital(mio::abm::LocationType::Hospital, 0);
-    auto t       = mio::abm::TimePoint(12346);
-    auto dt      = mio::abm::hours(1);
+    auto t  = mio::abm::TimePoint(12346);
+    auto dt = mio::abm::hours(1);
     auto p_rec =
         make_test_person(this->get_rng(), hospital, age_group_60_to_79, mio::abm::InfectionState::Recovered, t);
     auto rng_rec = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), p_rec);

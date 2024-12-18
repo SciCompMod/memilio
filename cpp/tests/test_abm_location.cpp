@@ -48,7 +48,7 @@ TEST_F(TestLocation, getId)
     EXPECT_EQ(location.get_id(), mio::abm::LocationId(0));
 }
 
-TEST(TestLocation, computeSpacePerPersonRelative)
+TEST_F(TestLocation, computeSpacePerPersonRelative)
 {
     using testing::Return;
 
