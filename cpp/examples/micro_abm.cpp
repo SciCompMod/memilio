@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <ostream>
@@ -176,11 +177,22 @@ mio::IOResult<mio::abm::HourlyContactMatrix> read_hourly_contact_matrix(const st
 
         if (status != 4) {
             return mio::failure(mio::StatusCode::InvalidFileFormat,
-                                "Unexpected format while reading " + csv_file + ". Line reads \"" + reader + "\"");
+                                "Unexpected format while reading " + csv_file + ". Line reads \"" + reader + "\"\n");
         }
 
+        // collect matrix_entries until t hits the next hour
         if (t > current_hour) {
-            size_t n          = std::round(std::sqrt(matrix_entries.size()));
+            size_t n = std::round(std::sqrt(matrix_entries.size()));
+            if (std::ceil(std::sqrt((double)n)) != std::floor(std::sqrt((double)n))) {
+                return mio::failure(mio::StatusCode::InvalidFileFormat, "Unexpected format while reading " + csv_file +
+                                                                            ". Matrix at t=" + std::to_string(t) +
+                                                                            " is not square.\n");
+            }
+            if (current_hour > 1 && (size_t)hcm[current_hour - 1].cols() != n) {
+                return mio::failure(mio::StatusCode::InvalidFileFormat,
+                                    "Unexpected format while reading " + csv_file + ". Matrix at t=" +
+                                        std::to_string(current_hour) + " differs in size from prior matrix.\n");
+            }
             hcm[current_hour] = Eigen::MatrixXd(n, n);
             for (size_t i = 0; i < matrix_entries.size(); i++) {
                 hcm[current_hour].data()[i] = matrix_entries[i];
@@ -222,6 +234,41 @@ void assign_contact_matrix(mio::abm::World& world, mio::abm::LocationId location
     }
 
     world.get_individualized_location(location).assign_contact_matrices(res.value(), assigned_persons_for_location);
+}
+
+void assign_contact_matrix(mio::abm::World& world, mio::abm::LocationId location, std::string base_path,
+                           std::string type_of_location, unsigned location_capacity, unsigned time_step_in_minutes)
+{
+    const std::filesystem::path file_dir =
+        mio::path_join(base_path, type_of_location, "num_nodes=" + std::to_string(location_capacity),
+                       "time=" + std::to_string(time_step_in_minutes));
+
+    if (!std::filesystem::exists(file_dir)) {
+        mio::log(mio::LogLevel::critical, "Cannot find directory \"{}\"", file_dir.string());
+        exit(1);
+    }
+
+    const int num_files =
+        (int)std::distance(std::filesystem::directory_iterator(file_dir), std::filesystem::directory_iterator());
+
+    if (num_files == 0) {
+        mio::log(mio::LogLevel::critical, "No files in directory \"{}\"", file_dir.string());
+        exit(1);
+    }
+
+    int file_choice = mio::UniformIntDistribution<int>::get_instance()(world.get_rng(), 0, num_files - 1);
+
+    auto file_itr = std::filesystem::directory_iterator(file_dir);
+    for (int i = 0; i < file_choice; i++) {
+        ++file_itr;
+    }
+
+    const std::string file_name = file_itr->path().string();
+
+    mio::log_info("Picked file {} for location {} of type {}.", file_name, location.index,
+                  loc_type_name(location.type));
+
+    assign_contact_matrix(world, location, file_name, location_capacity);
 }
 
 const static Eigen::MatrixXd& full_home_contact_matrix()
@@ -298,13 +345,19 @@ void assign_home_contact_matrix(mio::abm::World& world, mio::abm::Location& home
 
 int main()
 {
-    mio::set_log_level(mio::LogLevel::warn);
+    mio::set_log_level(mio::LogLevel::info);
 
     size_t num_age_groups         = 4;
     const auto age_group_0_to_4   = mio::AgeGroup(0);
     const auto age_group_5_to_24  = mio::AgeGroup(1);
     const auto age_group_25_to_64 = mio::AgeGroup(2);
     const auto age_group_65_plus  = mio::AgeGroup(3);
+
+    const unsigned time_step_in_minutes = 60;
+    std::string contacts_path =
+        // "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/contacts/microcontacts/24h_networks_csv";
+        "/home/schm_r6/Documents/24h_networks_csv";
+    // "/localdata2/dial_mo/Graphs/24h_networks_csv";
 
     std::cout << "Base home contact matrix:\n" << full_home_contact_matrix() << "\n";
 
@@ -370,9 +423,7 @@ int main()
 
     //2. Schools
     std::vector<mio::abm::LocationId> schools;
-    const std::vector<int> school_sizes{60, 60, 60, 60};
-    std::vector<std::string> school_files{"highschool_60_60.csv", "primaryschool_60_60.csv", "highschool_60_60.csv",
-                                          "primaryschool_60_60.csv"};
+    const std::vector<int> school_sizes{100, 100, 100};
     for (auto size : school_sizes) {
         schools.push_back(world.add_location(mio::abm::LocationType::School));
         world.get_individualized_location(schools.back())
@@ -493,11 +544,6 @@ int main()
     //           << "Assignees in shop_other: " << num_assignees_shop_other << "\n";
 
     // Load contact matrices
-    std::string contacts_path =
-        // "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/contacts/microcontacts/24h_networks_csv";
-        "/home/schm_r6/Documents/24h_networks_csv";
-    // "/localdata2/dial_mo/Graphs/24h_networks_csv";
-
     for (auto& location : world.get_locations()) {
         if (location.get_type() == mio::abm::LocationType::Home) {
             assign_home_contact_matrix(world, location);
@@ -507,7 +553,8 @@ int main()
         assign_contact_matrix(world, works[i], mio::path_join(contacts_path, work_files.at(i)), work_sizes.at(i));
     }
     for (size_t i = 0; i < schools.size(); i++) {
-        assign_contact_matrix(world, schools[i], mio::path_join(contacts_path, school_files.at(i)), school_sizes.at(i));
+        assign_contact_matrix(world, schools[i], "/home/schm_r6/Documents/memilio_contact_networks", "highschool",
+                              school_sizes[i], time_step_in_minutes);
     }
     for (size_t i = 0; i < shops.size(); i++) {
         assign_contact_matrix(world, shops[i], mio::path_join(contacts_path, shop_files.at(i)), shop_sizes.at(i));
