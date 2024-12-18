@@ -63,7 +63,6 @@ public:
         }
         for (auto& r : rates) {
             m_adoption_rates.emplace(std::forward_as_tuple(r.region, r.from, r.to), r);
-            //m_adoption_rates[{r.region, r.from, r.to}] = r;
         }
     }
 

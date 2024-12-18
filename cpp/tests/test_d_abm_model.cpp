@@ -23,6 +23,7 @@
 #include "d_abm/model.h"
 #include "d_abm/simulation.h"
 #include "memilio/utils/random_number_generator.h"
+#include "abm_helpers.h"
 #include <cstddef>
 #include <gtest/gtest.h>
 #include <vector>
@@ -92,16 +93,11 @@ TEST(TestQuadWell, setNonMovingRegions)
 
 TEST(TestDABMSimulation, advance)
 {
-    using Model   = mio::dabm::Model<QuadWellModel<InfectionState>>;
-    auto& pos_rng = mio::UniformDistribution<double>::get_instance();
-    auto& sta_rng = mio::DiscreteDistribution<size_t>::get_instance();
-    std::vector<double> pop_dist{0.98, 0.01, 0.005, 0.005, 0., 0.};
-    std::vector<Model::Agent> agents(50);
-    for (auto& a : agents) {
-        a.position =
-            Eigen::Vector2d{pos_rng(mio::thread_local_rng(), -2., 2.), pos_rng(mio::thread_local_rng(), -2., 2.)};
-        a.status = static_cast<InfectionState>(sta_rng(mio::thread_local_rng(), pop_dist));
-    }
+    using testing::Return;
+    using Model = mio::dabm::Model<QuadWellModel<InfectionState>>;
+    QuadWellModel<InfectionState>::Agent a1{Eigen::Vector2d{-1, 1}, InfectionState::S};
+    QuadWellModel<InfectionState>::Agent a2{Eigen::Vector2d{-1, 1}, InfectionState::R};
+    QuadWellModel<InfectionState>::Agent a3{Eigen::Vector2d{-1, 1}, InfectionState::I};
     std::vector<mio::dabm::AdoptionRate<InfectionState>> adoption_rates;
     for (size_t region = 0; region < 4; ++region) {
         adoption_rates.push_back({InfectionState::S,
@@ -116,8 +112,31 @@ TEST(TestDABMSimulation, advance)
         adoption_rates.push_back({InfectionState::I, InfectionState::R, mio::dabm::Region(region), 0.99 / 5., {}, {}});
         adoption_rates.push_back({InfectionState::I, InfectionState::D, mio::dabm::Region(region), 0.01 / 5., {}, {}});
     }
-    Model model(agents, adoption_rates, 0.4, 0.4, {InfectionState::D});
+    Model model({a1, a2, a3}, adoption_rates, 0.4, 0.0, {InfectionState::D});
     auto sim = mio::Simulation<double, Model>(model, 0.0, 0.1);
+    //Setup so first adoption event will be in second time step
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(1))
+        .WillOnce(Return(0.0226))
+        .WillRepeatedly(testing::Return(1.0));
+    //Setup so first adoption event will be the transition of a3 from I to R
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;
+    EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(size_t(1)));
     sim.advance(30.);
+    //Initial positions and infection state of all agents
+    EXPECT_EQ(sim.get_result().get_value(0)[static_cast<size_t>(InfectionState::S)], 1);
+    EXPECT_EQ(sim.get_result().get_value(0)[static_cast<size_t>(InfectionState::I)], 1);
+    EXPECT_EQ(sim.get_result().get_value(0)[static_cast<size_t>(InfectionState::R)], 1);
+    //In the first time step no adoption event happens
+    EXPECT_EQ(sim.get_result().get_value(1)[static_cast<size_t>(InfectionState::S)], 1);
+    EXPECT_EQ(sim.get_result().get_value(1)[static_cast<size_t>(InfectionState::I)], 1);
+    EXPECT_EQ(sim.get_result().get_value(1)[static_cast<size_t>(InfectionState::R)], 1);
+    //a3 transitions from I to R in the second time step
+    EXPECT_EQ(sim.get_result().get_value(2)[static_cast<size_t>(InfectionState::S)], 1);
+    EXPECT_EQ(sim.get_result().get_value(2)[static_cast<size_t>(InfectionState::I)], 0);
+    EXPECT_EQ(sim.get_result().get_value(2)[static_cast<size_t>(InfectionState::R)], 2);
+    //check whether simulation advances until the end
     EXPECT_EQ(sim.get_result().get_last_time(), 30.);
 }

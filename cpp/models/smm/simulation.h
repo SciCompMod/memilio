@@ -108,7 +108,7 @@ public:
             for (size_t i = 0; i < m_internal_time.size(); i++) {
                 m_internal_time[i] += m_current_rates[i] * m_waiting_times[next_event];
             }
-            // draw new "next event" time for the ocuured event
+            // draw new "next event" time for the occured event
             m_tp_next_event[next_event] +=
                 mio::ExponentialDistribution<ScalarType>::get_instance()(m_model->get_rng(), 1.0);
             // precalculate next event
