@@ -1,6 +1,7 @@
 
 import datetime as dt
 import os.path
+import h5py
 
 import numpy as np
 import pandas as pd
@@ -16,6 +17,11 @@ import memilio.plot.plotMap as pm
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+
+compartments = {'Susceptible': 0,
+                'Exposed': 1,
+                'Infected': 2,
+                'Recovered': 3}
 
 
 def plot_map_nrw(data: pd.DataFrame,
@@ -115,7 +121,7 @@ def plot_map_nrw(data: pd.DataFrame,
 
     for i in range(len(data_columns)):
 
-        cmap = 'viridis'
+        cmap = 'inferno'
         ax = fig.add_subplot(gs[1, i])
         if log_scale:
             map_data.plot(data_columns[i], ax=ax, legend=False,
@@ -140,35 +146,33 @@ def plot_map_nrw(data: pd.DataFrame,
 
     plt.subplots_adjust(bottom=0.1)
     plt.savefig(os.path.join(output_path, fig_name + '.png'), dpi=dpi)
+    plt.close()
 
+def plot_maps(files, output_dir, name=''):
 
-if __name__ == '__main__':
+    for date in range(10, 50, 10):
+        dfs_all = extract_nrw_data_and_combine(files=files, date=date)
 
-    files_input = {'Data set 1': 'cpp/build/ode_result_nrw', 
-                   'Data set 2': 'cpp/build/graph_result_nrw'} # Result file of equation-based model has to be first
-    file_format = 'h5'
-    # Define age groups which will be considered through filtering
-    # Keep keys and values as well as its assignment constant, remove entries
-    # if only part of the population should be plotted or considered, e.g., by
-    # setting:
-    # age_groups = {1: '5-14', 2: '15-34'}
+        min_val = dfs_all[dfs_all.columns[1:]].min().min()
+        max_val = dfs_all[dfs_all.columns[1:]].max().max()
+
+        plot_map_nrw(
+            dfs_all, scale_colors=[min_val, max_val],
+            legend=['', ''],
+            title='NRW - Simulation Day '+str(date), plot_colorbar=True,
+            output_path=output_dir,
+            fig_name=name+str(date), dpi=900,
+            outercolor='white', 
+            log_scale=True)
+        
+def extract_nrw_data_and_combine(files, date):
     age_groups = {0: '0-4', 1: '5-14', 2: '15-34',
                   3: '35-59', 4: '60-79', 5: '80+'}
-    if len(age_groups) == 6:
-        filter_age = None
-    else:
-        if file_format == 'json':
-            filter_age = [val for val in age_groups.values()]
-        else:
-            filter_age = ['Group' + str(key) for key in age_groups.keys()]
-
+    filter_age = None
     relative = True
 
-    date = 14
-
     i = 0
-    for file in files_input.values():
-        # MEmilio backend hdf5 example
+    for file in files.values():
         if(i == 0): # result file of equation-based model has to be first
             df = pm.extract_data(
                 file, region_spec=None, column=None, date=date,
@@ -194,7 +198,7 @@ if __name__ == '__main__':
                 file, region_spec=None, column=None, date=date,
                 filters={'Group': filter_age, 'InfectionState': [2]},
                 file_format=file_format)
-
+            
         df = df.apply(pd.to_numeric, errors='coerce')
 
         if relative:
@@ -222,14 +226,43 @@ if __name__ == '__main__':
         dfs_all[df.columns[-1] + ' ' + str(i)] = df[df.columns[-1]]
         i += 1
 
-    min_val = dfs_all[dfs_all.columns[1:]].min().min()
-    max_val = dfs_all[dfs_all.columns[1:]].max().max()
+    return dfs_all                
+    
 
-    plot_map_nrw(
-        dfs_all, scale_colors=[min_val, max_val],
-        legend=['', ''],
-        title='NRW - Simulation Day 10', plot_colorbar=True,
-        output_path=os.path.dirname(__file__),
-        fig_name='NRWPlot', dpi=300,
-        outercolor='white', 
-        log_scale=True)
+def plot_total_compartment(files, output_dir, compartment = 'Infected', name='', title=''):
+
+    i = 0
+    for file in files.values():
+        # Load data.
+        h5file = h5py.File(file + '.h5', 'r')
+        if i == 0:
+            dates = h5file['1']['Time'][:]
+            data = h5file['1']['Total'][:,compartments[compartment]]
+            plt.plot(dates, data, label='Equation-based model')
+        else:
+            df = pd.DataFrame()
+            regions = list(h5file.keys())
+            for i in range(len(regions)):
+                df['Region'+str(i)] = h5file[regions[i]]['Total'][:, compartments[compartment]]
+            df['Total'] = df.sum(axis=1)
+            df['Time'] = h5file['5111']['Time'][:] # hardcoded
+            plt.plot(df['Time'], df['Total'], label='Graph-based model')
+
+        i = i+1
+
+    plt.title(title)
+    plt.legend()
+    plt.savefig(os.path.join(output_dir, name + '.png'), dpi=300)
+    plt.close()
+
+
+if __name__ == '__main__':
+
+    files_input = {'Data set 1': 'cpp/build/ode_result_nrw', 
+                   'Data set 2': 'cpp/build/graph_result_nrw'} # Result file of equation-based model has to be first
+    file_format = 'h5'
+
+    plot_dir = os.path.join(os.path.dirname(__file__), '../Plots')
+    
+    plot_maps(files=files_input,output_dir=plot_dir, name='NRWPlotDay')
+    plot_total_compartment(files=files_input, output_dir=plot_dir, compartment='Infected', name='infectives_total', title='Total infectives')
