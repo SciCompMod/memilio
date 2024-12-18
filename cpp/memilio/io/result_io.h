@@ -317,34 +317,34 @@ IOResult<void> save_results(const std::vector<std::vector<TimeSeries<double>>>& 
             }
         }
 
-        // save percentiles of parameters
-        {
-            auto ensemble_params_p05 = ensemble_params_percentile(ensemble_params, 0.05);
-            auto ensemble_params_p15 = ensemble_params_percentile(ensemble_params, 0.15);
-            auto ensemble_params_p25 = ensemble_params_percentile(ensemble_params, 0.25);
-            auto ensemble_params_p50 = ensemble_params_percentile(ensemble_params, 0.50);
-            auto ensemble_params_p75 = ensemble_params_percentile(ensemble_params, 0.75);
-            auto ensemble_params_p85 = ensemble_params_percentile(ensemble_params, 0.85);
-            auto ensemble_params_p95 = ensemble_params_percentile(ensemble_params, 0.95);
+        // // save percentiles of parameters
+        // {
+        //     auto ensemble_params_p05 = ensemble_params_percentile(ensemble_params, 0.05);
+        //     auto ensemble_params_p15 = ensemble_params_percentile(ensemble_params, 0.15);
+        //     auto ensemble_params_p25 = ensemble_params_percentile(ensemble_params, 0.25);
+        //     auto ensemble_params_p50 = ensemble_params_percentile(ensemble_params, 0.50);
+        //     auto ensemble_params_p75 = ensemble_params_percentile(ensemble_params, 0.75);
+        //     auto ensemble_params_p85 = ensemble_params_percentile(ensemble_params, 0.85);
+        //     auto ensemble_params_p95 = ensemble_params_percentile(ensemble_params, 0.95);
 
-            auto make_graph = [&county_ids](auto&& params) {
-                return create_graph_without_edges<Model, MobilityParameters<double>>(params, county_ids);
-            };
-            BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), IOF_OmitDistributions));
-            BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p15), result_dir_p15.string(), IOF_OmitDistributions));
-            BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p25), result_dir_p25.string(), IOF_OmitDistributions));
-            BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p50), result_dir_p50.string(), IOF_OmitDistributions));
-            BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p75), result_dir_p75.string(), IOF_OmitDistributions));
-            BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p85), result_dir_p85.string(), IOF_OmitDistributions));
-            BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p95), result_dir_p95.string(), IOF_OmitDistributions));
-        }
+        //     auto make_graph = [&county_ids](auto&& params) {
+        //         return create_graph_without_edges<Model, MobilityParameters<double>>(params, county_ids);
+        //     };
+        //     BOOST_OUTCOME_TRY(
+        //         write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), IOF_OmitDistributions));
+        //     BOOST_OUTCOME_TRY(
+        //         write_graph(make_graph(ensemble_params_p15), result_dir_p15.string(), IOF_OmitDistributions));
+        //     BOOST_OUTCOME_TRY(
+        //         write_graph(make_graph(ensemble_params_p25), result_dir_p25.string(), IOF_OmitDistributions));
+        //     BOOST_OUTCOME_TRY(
+        //         write_graph(make_graph(ensemble_params_p50), result_dir_p50.string(), IOF_OmitDistributions));
+        //     BOOST_OUTCOME_TRY(
+        //         write_graph(make_graph(ensemble_params_p75), result_dir_p75.string(), IOF_OmitDistributions));
+        //     BOOST_OUTCOME_TRY(
+        //         write_graph(make_graph(ensemble_params_p85), result_dir_p85.string(), IOF_OmitDistributions));
+        //     BOOST_OUTCOME_TRY(
+        //         write_graph(make_graph(ensemble_params_p95), result_dir_p95.string(), IOF_OmitDistributions));
+        // }
     }
     return success();
 }
