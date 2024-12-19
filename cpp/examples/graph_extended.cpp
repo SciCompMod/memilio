@@ -170,6 +170,7 @@ set_synthetic_population_data(mio::oseir::Parameters<double>& params)
 
 mio::IOResult<void> run(const fs::path& data_dir, double t0, double tmax, double dt)
 {
+    mio::set_log_level(mio::LogLevel::off);
     // global parameters
     bool synthetic_population = false;
     const int num_age_groups  = 6;
@@ -252,9 +253,6 @@ mio::IOResult<void> run(const fs::path& data_dir, double t0, double tmax, double
     });
 
     auto save_result_status = save_result(result, county_ids, num_age_groups, "graph_result_nrw.h5");
-    result_graph.nodes()[0].property.get_result().print_table();
-    result_graph.nodes()[1].property.get_result().print_table();
-    result_graph.nodes()[2].property.get_result().print_table();
 
     return mio::success();
 }
@@ -262,7 +260,7 @@ mio::IOResult<void> run(const fs::path& data_dir, double t0, double tmax, double
 int main()
 {
     const auto t0   = 0.;
-    const auto tmax = 15.;
+    const auto tmax = 50.;
     const auto dt   = 0.5; //time step of mobility, daily mobility every second step
 
     const std::string& data_dir = "";

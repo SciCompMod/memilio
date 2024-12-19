@@ -103,7 +103,24 @@ void set_parameters_and_population(mio::Graph<mio::SimulationNode<mio::Simulatio
     }
 }
 
-double simulate(size_t number_regions, ScalarType tmax)
+double simulate_runtime(size_t number_regions, ScalarType tmax)
+{
+    ScalarType t0 = 0.;
+    ScalarType dt = 0.5;
+
+    mio::Graph<mio::SimulationNode<mio::Simulation<ScalarType, mio::oseir::Model<>>>, mio::MobilityEdge<>> params_graph;
+
+    set_parameters_and_population(params_graph, number_regions);
+
+    auto sim        = mio::make_mobility_sim(t0, dt, std::move(params_graph));
+    auto start_time = omp_get_wtime();
+    sim.advance(tmax);
+    auto end_time = omp_get_wtime();
+
+    return end_time - start_time;
+}
+
+int simulate_steps(size_t number_regions, ScalarType tmax)
 {
     ScalarType t0 = 0.;
     ScalarType dt = 0.5;
@@ -113,16 +130,21 @@ double simulate(size_t number_regions, ScalarType tmax)
     set_parameters_and_population(params_graph, number_regions);
 
     auto sim = mio::make_mobility_sim(t0, dt, std::move(params_graph));
-    mio::set_log_level(mio::LogLevel::off);
-    auto start_time = omp_get_wtime();
     sim.advance(tmax);
-    auto end_time = omp_get_wtime();
 
-    return end_time - start_time;
+    auto result_graph = std::move(sim).get_graph();
+
+    int num_steps = 0;
+    for (auto&& node : result_graph.nodes()) {
+        num_steps += node.property.get_result().get_num_time_points() - 1;
+    }
+
+    return num_steps;
 }
 
 int main(int argc, char** argv)
 {
+    mio::set_log_level(mio::LogLevel::off);
     const ScalarType tmax = 20;
     size_t warm_up        = 10;
     size_t num_runs       = 100;
@@ -135,15 +157,16 @@ int main(int argc, char** argv)
 
     std::cout << "{ \"Regions\": " << num_regions << ", " << std::endl;
     // Warm up runs.
+    int num_steps = 0;
     for (size_t i = 0; i < warm_up; i++) {
-        double warm_up_time = simulate(num_regions, tmax);
-        mio::unused(warm_up_time);
+        num_steps = simulate_steps(num_regions, tmax);
     }
+    std::cout << "\"Steps\": " << num_steps / num_regions << "," << std::endl;
 
     // Runs with timing.
     ScalarType total = 0;
     for (size_t i = 0; i < num_runs; i++) {
-        double run_time = simulate(num_regions, tmax);
+        double run_time = simulate_runtime(num_regions, tmax);
         total += run_time;
     }
     std::cout << "\"Time\": " << total / num_runs << "\n}," << std::endl;

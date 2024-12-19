@@ -242,12 +242,10 @@ int main()
     mio::set_log_level(mio::LogLevel::debug);
 
     ScalarType t0   = 0.;
-    ScalarType tmax = 15.;
+    ScalarType tmax = 50.;
     ScalarType dt   = 0.1;
 
-    ScalarType number_regions = 53;
-    std::vector<int> region_ids(number_regions);
-    iota(region_ids.begin(), region_ids.end(), 1);
+    ScalarType number_regions    = 53;
     ScalarType number_age_groups = 6;
     bool synthetic_population    = false;
     if (number_age_groups != 6) {
@@ -279,8 +277,8 @@ int main()
     // result_from_sim.print_table();
 
     auto save_result_status =
-        mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result_nrw.h5");
+        mio::save_result({result_from_sim}, {1}, number_regions * number_age_groups, "ode_result_nrw.h5");
 
-    // auto reproduction_numbers = model.get_reproduction_numbers(result_from_sim);
-    // std::cout << "\nbasis reproduction number: " << reproduction_numbers[0] << "\n";
+    auto basic_reproduction_number = model.get_reproduction_number(0, result_from_sim).value();
+    std::cout << "\nbasis reproduction number: " << basic_reproduction_number << "\n";
 }

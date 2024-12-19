@@ -151,11 +151,13 @@ void simulate(size_t num_warm_up_runs, size_t num_runs, size_t number_regions, S
     for (size_t i = 0; i < num_warm_up_runs; i++) {
         simulate(t0, tmax, dt, model, integrator);
     }
+    auto result = simulate(t0, tmax, dt, model, integrator);
+    std::cout << "\"Steps\": " << result.get_num_time_points() << "," << std::endl;
 
     // Runs with timing.
     ScalarType total = 0;
     for (size_t i = 0; i < num_runs; i++) {
-        double runtime = simulate(t0, tmax, dt, model, integrator);
+        double runtime = simulate_runtime(t0, tmax, dt, model, integrator);
         total += runtime;
     }
     std::cout << "\"Time\": " << total / num_runs << "\n}," << std::endl;

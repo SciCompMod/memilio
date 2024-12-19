@@ -70,24 +70,22 @@ public:
                 }
                 for (size_t region_n = 0; region_n < (size_t)n_regions; region_n++) {
                     FP flow_SE_helper = 0;
-                    const size_t Ej =
+                    const size_t Ejn =
                         population.get_flat_index({Region(region_n), AgeGroup(age_j), InfectionState::Exposed});
-                    const size_t Ij =
+                    const size_t Ijn =
                         population.get_flat_index({Region(region_n), AgeGroup(age_j), InfectionState::Infected});
-                    const size_t Rj =
+                    const size_t Rjn =
                         population.get_flat_index({Region(region_n), AgeGroup(age_j), InfectionState::Recovered});
-                    const size_t Sj =
+                    const size_t Sjn =
                         population.get_flat_index({Region(region_n), AgeGroup(age_j), InfectionState::Susceptible});
 
-                    const double Nj_inv = 1.0 / (pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj]);
+                    const double Nj_inv = 1.0 / (pop[Sjn] + pop[Ejn] + pop[Ijn] + pop[Rjn]);
                     double coeffStoI =
                         0.5 *
                         params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(age_i, age_j) *
                         params.template get<TransmissionProbabilityOnContact<FP>>()[AgeGroup(age_i)];
 
-                    flow_SE_helper +=
-                        pop[population.get_flat_index({Region(region_n), AgeGroup(age_j), InfectionState::Infected})] *
-                        Nj_inv;
+                    flow_SE_helper += pop[Ijn] * Nj_inv;
                     for (size_t region_m = 0; region_m < (size_t)n_regions; region_m++) {
                         flow_SE_helper += commuting_strengths(region_n, region_m) * infectives_per_region(region_m) /
                                           m_population_after_commuting[{Region(region_m), AgeGroup(age_j)}];
