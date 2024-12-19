@@ -9,28 +9,201 @@
 #include "models/ode_seir_mobility/parameters.h"
 #include "models/ode_seir_mobility/regions.h"
 #include "memilio/io/io.h"
-#include "memilio/io/result_io.h"
+#include "memilio/io/epi_data.h"
+
+/**
+ * Set epidemiological parameters of Sars-CoV-2 for a immune-naive
+ * population and wild type variant.
+ * @param params Object that the parameters will be added to.
+ * @returns Currently generates no errors.
+ */
+mio::IOResult<void> set_covid_parameters(mio::oseirmobility::Parameters<double>& params, bool synthetic_population)
+{
+    params.template set<mio::oseirmobility::TimeExposed<>>(3.335);
+    if (!synthetic_population) {
+        params.get<mio::oseirmobility::TimeInfected<>>()[mio::AgeGroup(0)] = 8.0096875;
+        params.get<mio::oseirmobility::TimeInfected<>>()[mio::AgeGroup(1)] = 8.0096875;
+        params.get<mio::oseirmobility::TimeInfected<>>()[mio::AgeGroup(2)] = 8.2182;
+        params.get<mio::oseirmobility::TimeInfected<>>()[mio::AgeGroup(3)] = 8.1158;
+        params.get<mio::oseirmobility::TimeInfected<>>()[mio::AgeGroup(4)] = 8.033;
+        params.get<mio::oseirmobility::TimeInfected<>>()[mio::AgeGroup(5)] = 7.985;
+
+        params.get<mio::oseirmobility::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(0)] = 0.03;
+        params.get<mio::oseirmobility::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(1)] = 0.06;
+        params.get<mio::oseirmobility::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(2)] = 0.06;
+        params.get<mio::oseirmobility::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(3)] = 0.06;
+        params.get<mio::oseirmobility::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(4)] = 0.09;
+        params.get<mio::oseirmobility::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(5)] = 0.175;
+    }
+    else {
+        params.template set<mio::oseirmobility::TimeInfected<>>(8.097612257);
+
+        params.template set<mio::oseirmobility::TransmissionProbabilityOnContact<>>(0.07333);
+    }
+
+    printf("Setting epidemiological parameters successful.\n");
+    return mio::success();
+}
+
+/**
+ * indices of contact matrix corresponding to locations where contacts occur.
+ */
+enum class ContactLocation
+{
+    Home = 0,
+    School,
+    Work,
+    Other,
+    Count,
+};
+
+static const std::map<ContactLocation, std::string> contact_locations = {{ContactLocation::Home, "home"},
+                                                                         {ContactLocation::School, "school_pf_eig"},
+                                                                         {ContactLocation::Work, "work"},
+                                                                         {ContactLocation::Other, "other"}};
+
+/**
+ * Set contact matrices.
+ * Reads contact matrices from files in the data directory.
+ * @param data_dir data directory.
+ * @param params Object that the contact matrices will be added to.
+ * @returns any io errors that happen during reading of the files.
+ */
+mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::oseirmobility::Parameters<double>& params,
+                                         bool synthetic_population)
+{
+    if (!synthetic_population) {
+        //TODO: io error handling
+        auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_agegroups()));
+        for (auto&& contact_location : contact_locations) {
+            BOOST_OUTCOME_TRY(auto&& baseline,
+                              mio::read_mobility_plain(
+                                  (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
+            BOOST_OUTCOME_TRY(auto&& minimum,
+                              mio::read_mobility_plain(
+                                  (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
+            contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
+            contact_matrices[size_t(contact_location.first)].get_minimum()  = minimum;
+        }
+        params.get<mio::oseirmobility::ContactPatterns<double>>() =
+            mio::UncertainContactMatrix<double>(contact_matrices);
+    }
+    else {
+        mio::ContactMatrixGroup& contact_matrix =
+            params.get<mio::oseirmobility::ContactPatterns<>>().get_cont_freq_mat();
+        contact_matrix[0].get_baseline().setConstant(7.95 / (size_t)params.get_num_agegroups());
+    }
+
+    printf("Setting contact matrices successful.\n");
+    return mio::success();
+}
 
 template <typename FP = ScalarType>
-mio::IOResult<void> set_mobility_weights(const std::string& mobility_data, mio::oseirmobility::Model<FP>& model,
-                                         size_t number_regions)
+mio::IOResult<void> set_population_data(mio::oseirmobility::Model<FP>& model, const fs::path& data_dir)
 {
-    // mobility between nodes
-    BOOST_OUTCOME_TRY(auto&& mobility_data_commuter,
-                      mio::read_mobility_plain(mobility_data + "/mobility" + "/commuter_migration_test.txt"));
-    if (mobility_data_commuter.rows() != Eigen::Index(number_regions) ||
-        mobility_data_commuter.cols() != Eigen::Index(number_regions)) {
-        return mio::failure(mio::StatusCode::InvalidValue,
-                            "Mobility matrices do not have the correct size. You may need to run "
-                            "transformMobilitydata.py from pycode memilio epidata package.");
+    BOOST_OUTCOME_TRY(
+        auto&& node_ids,
+        mio::get_node_ids((data_dir / "pydata" / "Germany" / "county_current_population_nrw.json").string(), true,
+                          true));
+
+    BOOST_OUTCOME_TRY(const auto&& population_data,
+                      mio::read_population_data(
+                          (data_dir / "pydata" / "Germany" / "county_current_population_nrw.json").string(), true));
+
+    for (auto&& entry : population_data) {
+        auto it = std::find_if(node_ids.begin(), node_ids.end(), [&entry](auto r) {
+            return r == 0 ||
+                   (entry.county_id && mio::regions::StateId(r) == mio::regions::get_state_id(int(*entry.county_id))) ||
+                   (entry.county_id && mio::regions::CountyId(r) == *entry.county_id) ||
+                   (entry.district_id && mio::regions::DistrictId(r) == *entry.district_id);
+        });
+        if (it != node_ids.end()) {
+            auto region_idx = size_t(it - node_ids.begin());
+            for (size_t age = 0; age < (size_t)model.parameters.get_num_agegroups(); age++) {
+                model.populations[{mio::oseirmobility::Region(region_idx), mio::AgeGroup(age),
+                                   mio::oseirmobility::InfectionState::Susceptible}] =
+                    entry.population[mio::AgeGroup(age)];
+            }
+        }
     }
 
-    for (size_t county_idx_i = 0; county_idx_i < number_regions; ++county_idx_i) {
-        auto population_i = model.populations.get_group_total(mio::oseirmobility::Region(county_idx_i));
-        mobility_data_commuter.row(county_idx_i) /= population_i;
+    printf("Setting population data successful.\n");
+    return mio::success();
+}
+
+template <typename FP = ScalarType>
+mio::IOResult<void> set_mobility_weights(mio::oseirmobility::Model<FP>& model, const fs::path& data_dir)
+{
+    size_t number_regions = (size_t)model.parameters.get_num_regions();
+    if (number_regions == 1) {
+        model.parameters.template get<mio::oseirmobility::CommutingStrengths<>>()
+            .get_cont_freq_mat()[0]
+            .get_baseline()
+            .setConstant(1.0);
+
+        return mio::success();
     }
-    model.parameters.template get<mio::oseirmobility::CommutingStrengths<>>().get_cont_freq_mat()[0].get_baseline() =
-        mobility_data_commuter;
+    else {
+        // mobility between nodes
+        BOOST_OUTCOME_TRY(auto&& mobility_data_commuter,
+                          mio::read_mobility_plain((data_dir / "mobility" / "commuter_mobility_nrw.txt").string()));
+        if (mobility_data_commuter.rows() != Eigen::Index(number_regions) ||
+            mobility_data_commuter.cols() != Eigen::Index(number_regions)) {
+            return mio::failure(mio::StatusCode::InvalidValue,
+                                "Mobility matrices do not have the correct size. You may need to run "
+                                "transformMobilitydata.py from pycode memilio epidata package.");
+        }
+
+        for (size_t county_idx_i = 0; county_idx_i < number_regions; ++county_idx_i) {
+            auto population_i = model.populations.get_group_total(mio::oseirmobility::Region(county_idx_i));
+            mobility_data_commuter.row(county_idx_i) /= population_i;
+        }
+        model.parameters.template get<mio::oseirmobility::CommutingStrengths<>>()
+            .get_cont_freq_mat()[0]
+            .get_baseline() = mobility_data_commuter;
+
+        printf("Setting mobility weights successful.\n");
+        return mio::success();
+    }
+}
+
+template <typename FP = ScalarType>
+mio::IOResult<void> set_parameters_and_population(mio::oseirmobility::Model<FP>& model, const fs::path& data_dir,
+                                                  bool synthetic_population)
+{
+    auto& populations = model.populations;
+    auto& parameters  = model.parameters;
+
+    size_t number_regions    = (size_t)parameters.get_num_regions();
+    size_t number_age_groups = (size_t)parameters.get_num_agegroups();
+
+    if (synthetic_population) {
+        printf("Data is not compatible, using synthetic population instead.\n");
+        for (size_t j = 0; j < number_age_groups; j++) {
+            model.populations[{mio::oseirmobility::Region(0), mio::AgeGroup(j),
+                               mio::oseirmobility::InfectionState::Exposed}]     = 100;
+            model.populations[{mio::oseirmobility::Region(0), mio::AgeGroup(j),
+                               mio::oseirmobility::InfectionState::Susceptible}] = 999900;
+            for (size_t i = 1; i < number_regions; i++) {
+                model.populations[{mio::oseirmobility::Region(i), mio::AgeGroup(j),
+                                   mio::oseirmobility::InfectionState::Exposed}]     = 0;
+                model.populations[{mio::oseirmobility::Region(i), mio::AgeGroup(j),
+                                   mio::oseirmobility::InfectionState::Susceptible}] = 1000000;
+            }
+        }
+    }
+    else {
+        BOOST_OUTCOME_TRY(set_population_data(model, data_dir));
+        populations[{mio::oseirmobility::Region(27), mio::AgeGroup(0),
+                     mio::oseirmobility::InfectionState::Susceptible}] -= 100;
+        populations[{mio::oseirmobility::Region(27), mio::AgeGroup(0), mio::oseirmobility::InfectionState::Exposed}] +=
+            100;
+    }
+    BOOST_OUTCOME_TRY(set_mobility_weights(model, data_dir));
+
+    BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, parameters, synthetic_population))
+
+    BOOST_OUTCOME_TRY(set_covid_parameters(parameters, synthetic_population));
 
     return mio::success();
 }
@@ -40,80 +213,37 @@ int main()
     mio::set_log_level(mio::LogLevel::debug);
 
     ScalarType t0   = 0.;
-    ScalarType tmax = 15.;
+    ScalarType tmax = 50.;
     ScalarType dt   = 0.1;
 
-    ScalarType number_regions = 2;
+    ScalarType number_regions = 53;
     std::vector<int> region_ids(number_regions);
     iota(region_ids.begin(), region_ids.end(), 1);
-    ScalarType number_age_groups = 1;
+    ScalarType number_age_groups = 6;
+    bool synthetic_population    = false;
+    if (number_age_groups != 6) {
+        synthetic_population = true;
+    }
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    const std::string& mobility_data = "";
+    const std::string& data_dir = "";
 
     mio::oseirmobility::Model<ScalarType> model(number_regions, number_age_groups);
-    model.populations[{mio::oseirmobility::Region(0), mio::AgeGroup(0), mio::oseirmobility::InfectionState::Exposed}] =
-        10;
-    model.populations[{mio::oseirmobility::Region(0), mio::AgeGroup(0),
-                       mio::oseirmobility::InfectionState::Susceptible}] = 9990;
-    for (int i = 1; i < number_regions; i++) {
-        model.populations[{mio::oseirmobility::Region(i), mio::AgeGroup(0),
-                           mio::oseirmobility::InfectionState::Exposed}]     = 0;
-        model.populations[{mio::oseirmobility::Region(i), mio::AgeGroup(0),
-                           mio::oseirmobility::InfectionState::Susceptible}] = 10000;
-    }
+    auto result_prepare_simulation = set_parameters_and_population(model, data_dir, synthetic_population);
 
-    model.parameters.set<mio::oseirmobility::TransmissionProbabilityOnContact<>>(1.);
+    // using DefaultIntegratorCore =
+    //     mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>;
 
-    model.parameters.set<mio::oseirmobility::TimeExposed<>>(3.);
-    model.parameters.set<mio::oseirmobility::TimeInfected<>>(5.);
-
-    mio::ContactMatrixGroup& contact_matrix =
-        model.parameters.get<mio::oseirmobility::ContactPatterns<>>().get_cont_freq_mat();
-    contact_matrix[0].get_baseline().setConstant(2.7);
-    // contact_matrix[0].add_damping(0.5, mio::SimulationTime(5));
-
-    auto result_preprocess = set_mobility_weights(mobility_data, model, number_regions);
-
-    using DefaultIntegratorCore =
-        mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>;
-
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator = std::make_shared<DefaultIntegratorCore>();
+    std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator = std::make_shared<mio::EulerIntegratorCore<>>();
 
     model.check_constraints();
 
     auto result_from_sim = simulate(t0, tmax, dt, model, integrator);
 
-    auto save_result_status =
-        mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result_standard.h5");
+    // auto save_result_status =
+    //     mio::save_result({result_from_sim}, region_ids, number_regions * number_age_groups, "ode_result_standard2.h5");
 
-    auto reproduction_numbers = model.get_reproduction_numbers(result_from_sim);
-    std::cout << "\nbasis reproduction number: " << reproduction_numbers[0] << "\n";
-
-    // bool print_to_terminal = true;
-
-    // result_from_sim.print_table();
-
-    // if (print_to_terminal) {
-
-    //     std::vector<std::string> vars = {"S", "E", "I", "R"};
-    //     printf("\n # t");
-    //     for (size_t i = 0; i < (size_t)model.parameters.get_num_regions(); i++) {
-    //         for (size_t k = 0; k < (size_t)mio::oseirmobility::InfectionState::Count; k++) {
-    //             printf(" %s_%d", vars[k].c_str(), (int)i);
-    //         }
-    //     }
-
-    //     auto num_points = static_cast<size_t>(sir.get_num_time_points());
-    //     for (size_t i = 0; i < num_points; i++) {
-    //         printf("\n%.14f ", sir.get_time(i));
-    //         for (size_t k = 0; k < (size_t)model.parameters.get_num_regions(); k++) {
-    //             for (size_t j = 0; j < (size_t)mio::oseirmobility::InfectionState::Count; j++) {
-    //                 printf(" %.14f", sir.get_value(i)[j + (size_t)mio::oseirmobility::InfectionState::Count * (int)k]);
-    //             }
-    //         }
-    //     }
-    //     printf("\n");
-    // }
+    auto basic_reproduction_number = model.get_reproduction_number(0, result_from_sim).value();
+    std::cout << "\nbasis reproduction number: " << basic_reproduction_number << "\n";
 }
