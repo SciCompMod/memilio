@@ -96,7 +96,7 @@ def plot_map_nrw(data: pd.DataFrame,
     # Use n+2 many columns (1: legend + 2: empty space + 3-n: data sets) and
     # n+2 rows where the top row is used for a potential title, the second row
     # for the content and all other rows have height zero.
-    height_ratios = [0.05, 1, 0]
+    height_ratios = [0.25, 1, 0]
     if len(data_columns) > 1:
         height_ratios = height_ratios + [
             0.0 for i in range(len(data_columns)-1)]
@@ -135,7 +135,7 @@ def plot_map_nrw(data: pd.DataFrame,
             map_data.plot(data_columns[i], ax=ax, legend=False,
                           vmin=scale_colors[0], vmax=scale_colors[1])
 
-        ax.set_title(legend[i], fontsize=12)
+        ax.set_title(legend[i], fontsize=10)
         ax.set_axis_off()
 
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
@@ -148,9 +148,9 @@ def plot_map_nrw(data: pd.DataFrame,
     plt.savefig(os.path.join(output_path, fig_name + '.png'), dpi=dpi)
     plt.close()
 
-def plot_maps(files, output_dir, name=''):
+def plot_maps(files, output_dir, legend, name=''):
 
-    for date in range(10, 50, 10):
+    for date in range(10, 21, 10):
         dfs_all = extract_nrw_data_and_combine(files=files, date=date)
 
         min_val = dfs_all[dfs_all.columns[1:]].min().min()
@@ -158,7 +158,7 @@ def plot_maps(files, output_dir, name=''):
 
         plot_map_nrw(
             dfs_all, scale_colors=[min_val, max_val],
-            legend=['', ''],
+            legend=legend,
             title='NRW - Simulation Day '+str(date), plot_colorbar=True,
             output_path=output_dir,
             fig_name=name+str(date), dpi=900,
@@ -173,7 +173,8 @@ def extract_nrw_data_and_combine(files, date):
 
     i = 0
     for file in files.values():
-        if(i == 0): # result file of equation-based model has to be first
+        model_type = os.path.basename(file).split('_')[0]
+        if model_type == 'ode': # result file of equation-based model has to be first
             df = pm.extract_data(
                 file, region_spec=None, column=None, date=date,
                 filters={'Group': filter_age, 'InfectionState': [2]},
@@ -187,7 +188,6 @@ def extract_nrw_data_and_combine(files, date):
 
             ids = geoger.get_county_ids()
             ids = [id for id in ids if str(id).startswith('5')]
-            # ids = [5111, 5112, 5113]
 
             if len(ids) != len(df):
                 raise gd.DataError("Data is not compatible with number of NRW counties.")
@@ -229,26 +229,27 @@ def extract_nrw_data_and_combine(files, date):
     return dfs_all                
     
 
-def plot_total_compartment(files, output_dir, compartment = 'Infected', name='', title=''):
+def plot_total_compartment(files, output_dir, legend, compartment = 'Infected', name='', title=''):
 
-    i = 0
+    file_idx = 0
     for file in files.values():
+        model_type = os.path.basename(file).split('_')[0]
         # Load data.
         h5file = h5py.File(file + '.h5', 'r')
-        if i == 0:
+        if model_type=='ode':
             dates = h5file['1']['Time'][:]
             data = h5file['1']['Total'][:,compartments[compartment]]
-            plt.plot(dates, data, label='Equation-based model')
+            plt.plot(dates, data, label=legend[file_idx])
         else:
             df = pd.DataFrame()
             regions = list(h5file.keys())
             for i in range(len(regions)):
                 df['Region'+str(i)] = h5file[regions[i]]['Total'][:, compartments[compartment]]
             df['Total'] = df.sum(axis=1)
-            df['Time'] = h5file['5111']['Time'][:] # hardcoded
-            plt.plot(df['Time'], df['Total'], label='Graph-based model')
+            df['Time'] = h5file[regions[0]]['Time'][:] # hardcoded
+            plt.plot(df['Time'], df['Total'], label=legend[file_idx], linestyle='dashed')
 
-        i = i+1
+        file_idx = file_idx+1
 
     plt.title(title)
     plt.legend()
@@ -258,11 +259,23 @@ def plot_total_compartment(files, output_dir, compartment = 'Infected', name='',
 
 if __name__ == '__main__':
 
-    files_input = {'Data set 1': 'cpp/build/ode_result_nrw', 
-                   'Data set 2': 'cpp/build/graph_result_nrw'} # Result file of equation-based model has to be first
+    files_input = {'Data set 1': 'cpp/build/ode_result_timing',
+                   'Data set 3': 'cpp/build/graph_result_timing'}#,
+                #    'Data set 2': 'cpp/build/ode_result_standard2'}
+    files_compare_solver = {'Data set 1': 'cpp/build/ode_result_nrw_euler',
+                            'Data set 2': 'cpp/build/ode_result_nrw_adaptive',
+                            'Data set 3': 'cpp/build/graph_result_nrw_euler',
+                            'Data set 4': 'cpp/build/graph_result_nrw_adaptive'}
     file_format = 'h5'
+
+    models = ['ODE Metapopulation model',
+              'Graph-based hybrid ODE model',
+              'ODE Metapopulation model (Wang)']
 
     plot_dir = os.path.join(os.path.dirname(__file__), '../Plots')
     
-    plot_maps(files=files_input,output_dir=plot_dir, name='NRWPlotDay')
-    plot_total_compartment(files=files_input, output_dir=plot_dir, compartment='Infected', name='infectives_total', title='Total infectives')
+    plot_maps(files={'Ode': 'cpp/build/graph_result_timing'}, output_dir=plot_dir, legend=['ODE'], name='TimingTest')
+    plot_total_compartment(files={'Ode': 'cpp/build/graph_result_timing'}, output_dir=plot_dir,  legend=['Graph'], 
+                           compartment='Infected', name='timing_test', title='Total infectives')
+    # plot_total_compartment(files=files_input, output_dir=plot_dir,  legend=['ODE', 'Graph'], 
+    #                        compartment='Infected', name='infectives_total', title='Total infectives')
