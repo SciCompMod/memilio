@@ -58,7 +58,7 @@ if(MEMILIO_USE_BUNDLED_EIGEN)
     endif()
 
     add_library(eigen INTERFACE)
-    target_include_directories(eigen INTERFACE ${eigen_SOURCE_DIR})
+    target_include_directories(eigen SYSTEM INTERFACE ${eigen_SOURCE_DIR})
     add_library(Eigen3::Eigen ALIAS eigen)
 else()
     find_package(Eigen3 ${MEMILIO_EIGEN_VERSION} REQUIRED NO_MODULE)
