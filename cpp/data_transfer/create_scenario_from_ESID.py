@@ -22,10 +22,12 @@ import datetime
 import numpy as np
 from enum import Enum
 import os
+import requests
+from itertools import combinations
+
 
 import memilio.simulation as mio
 import memilio.simulation.osecirvvs as osecirvvs
-import memilio.plot.createGIF as mp
 
 
 class Location(Enum):
@@ -51,16 +53,76 @@ class InterventionLevel(Enum):
     Holidays = 3
 
 
+def get_invervention_list(url, header):
+    get_interventions = requests.get(
+        url + "interventions/templates/", headers=header)
+
+    school_closure_id = [intervention["id"] for intervention in get_interventions.json(
+    ) if intervention["name"] == "School closure"]
+    facemasks_school_id = [intervention["id"] for intervention in get_interventions.json(
+    ) if intervention["name"] == "Face masks & social distancing School"]
+    facemasks_work_id = [intervention["id"] for intervention in get_interventions.json(
+    ) if intervention["name"] == "Face masks & social distancing Work"]
+    facemasks_other_id = [intervention["id"] for intervention in get_interventions.json(
+    ) if intervention["name"] == "Face masks & social distancing Other"]
+    remote_work_id = [intervention["id"] for intervention in get_interventions.json(
+    ) if intervention["name"] == "Remote work"]
+
+    intervention_data_extended = [
+        {
+            "id": school_closure_id[0],
+            "name": "School closure",
+            "description": "School closure intervention",
+            "tags": [],
+            "coefficient": 0.
+        },
+        {
+            "id": facemasks_school_id[0],
+            "name": "Face masks & social distancing School",
+            "description": "Face mask usage and social distancing measures applied at 1-25% in schools",
+            "tags": [],
+            "coefficient": 0.25
+        },
+        {
+            "id": facemasks_work_id[0],
+            "name": "Face masks & social distancing Work",
+            "description": "Face mask usage and social distancing measures applied at 1-25% in workplaces",
+            "tags": [],
+            "coefficient": 0.25
+        },
+        {
+            "id": facemasks_other_id[0],
+            "name": "Face masks & social distancing Other",
+            "description": "Face mask usage and social distancing measures applied at 1-25% in other settings",
+            "tags": [],
+            "coefficient": 0.25
+        },
+        {
+            "id": remote_work_id[0],
+            "name": "Remote work",
+            "description": "Implementation of remote work policies",
+            "tags": [],
+            "coefficient": 0.35
+        }
+    ]
+
+    # Get all possible combinations of interventions
+    all_combinations = []
+    for r in range(1, len(intervention_data_extended) + 1):
+        all_combinations.extend(combinations(intervention_data_extended, r))
+
+    return all_combinations
+
+
 class Simulation:
 
-    def __init__(self, data_dir, results_dir, start_date, run_data_dir):
+    def __init__(self, data_dir, results_dir, run_data_url):
         self.num_groups = 6
         self.data_dir = data_dir
         self.results_dir = results_dir
-        self.start_date = start_date
         self.szenario_data = ""
         self.intervention_list = []
-        self.run_data_dir = run_data_dir
+        self.run_data_url = run_data_url
         if not os.path.exists(self.results_dir):
             os.makedirs(self.results_dir)
 
@@ -76,27 +138,29 @@ class Simulation:
 
     def set_covid_parameters(self, model):
         # read parameters given from the scenario
-        parameters = self.scenario_data[0]['modelParameters']
+        # TODO: Fix when the scenario data is fixed
+        # parameters = self.scenario_data['modelParameters']
+        parameters = []
 
-        with open(os.path.join(self.run_data_dir, "parameter_1.json")) as f:
-            self.param_dict = json.load(f)
+        # with open(os.path.join(self.run_data_dir, "parameter_1.json")) as f:
+        #     self.param_dict = json.load(f)
 
-        # Create a mapping from parameterId to name
-        id_to_name = {entry['id']: entry['name'] for entry in self.param_dict}
+        # # Create a mapping from parameterId to name
+        # id_to_name = {entry['id']: entry['name'] for entry in self.param_dict}
 
         # Add the corresponding name to each entry in parameters
         # get min, max values for each parameter
         parameter_values = {}
-        for parameter in parameters:
-            parameter['name'] = id_to_name.get(
-                parameter['parameterId'], "Unknown")
-            param_name = parameter['name']
-            min_value, max_value = self.get_parameter_values(
-                parameters, param_name)
+        # for parameter in parameters:
+        #     parameter['name'] = id_to_name.get(
+        #         parameter['parameterId'], "Unknown")
+        #     param_name = parameter['name']
+        #     min_value, max_value = self.get_parameter_values(
+        #         parameters, param_name)
 
-            # Store values in the dictionary with dynamically generated keys
-            parameter_values[f"{param_name}Min"] = min_value
-            parameter_values[f"{param_name}Max"] = max_value
+        #     # Store values in the dictionary with dynamically generated keys
+        #     parameter_values[f"{param_name}Min"] = min_value
+        #     parameter_values[f"{param_name}Max"] = max_value
 
         def array_assign_uniform_distribution(param, min, max, num_groups=6):
             if isinstance(
@@ -338,9 +402,13 @@ class Simulation:
             reducTimeInfectedMild)
 
         # start day is set to the n-th day of the year
+        start_date = datetime.datetime.strptime(
+            self.scenario_data['startDate'], '%Y-%m-%d').date()
+        start_day = mio.Date(
+            start_date.year, start_date.month, start_date.day).day_in_year
+
         model.parameters.StartDay = parameter_values.get(
-            "StartDay", self.start_date.day_in_year
-        )
+            "StartDay", start_day)
 
         model.parameters.Seasonality = mio.UncertainValue(
             0.5 * (parameter_values.get(
@@ -434,22 +502,19 @@ class Simulation:
                 t, min, max, lvl_pd_and_masks, typ_distance, [loc_other])
 
         # read interventions given from the scenario
-        interventions_scenario = self.scenario_data[0]['linkedInterventions']
+        interventions_scenario = self.scenario_data['linkedInterventions']
 
         for intervention in interventions_scenario:
             # search intervention in self.intervention_list
             intervention_data = next(
-                (entry for entry in self.intervention_list if entry['id'] == intervention['interventionId']), None)
+                (entry for entry in self.intervention_list if entry['id'] == intervention['id']), None)
 
             if not intervention_data:
                 print(
                     f"Intervention {intervention['interventionId']} not found in intervention list")
                 continue
 
-            start_date = datetime.datetime.strptime(
-                intervention['startDate'], '%Y-%m-%d').date()
-            start_date_day = mio.Date(
-                start_date.year, start_date.month, start_date.day) - self.start_date
+            start_date_day = 0
 
             if intervention_data['name'] == 'School closure':
                 dampings.append(school_closure(
@@ -472,7 +537,7 @@ class Simulation:
 
         params.ContactPatterns.dampings = dampings
 
-    def get_graph(self, end_date, extrapolate):
+    def get_graph(self, extrapolate):
         model = osecirvvs.Model(self.num_groups)
         self.set_covid_parameters(model)
         self.set_contact_matrices(model)
@@ -488,39 +553,77 @@ class Simulation:
             self.data_dir, "pydata", "Germany",
             "county_current_population.json")
 
+        # get start date in mio.Date format
+        start_date = datetime.datetime.strptime(
+            self.scenario_data['startDate'], '%Y-%m-%d').date()
+        start_date = mio.Date(
+            start_date.year, start_date.month, start_date.day)
+
+        # get nums between start and end date
+        end_date = datetime.datetime.strptime(
+            self.scenario_data['endDate'], '%Y-%m-%d').date()
+        end_date = mio.Date(
+            end_date.year, end_date.month, end_date.day)
+
         osecirvvs.set_nodes(
             model.parameters,
-            self.start_date,
+            start_date,
             end_date, self.data_dir,
             path_population_data, True, graph, scaling_factor_infected,
-            scaling_factor_icu, tnt_capacity_factor, end_date - self.start_date, extrapolate)
+            scaling_factor_icu, tnt_capacity_factor, end_date - start_date, extrapolate)
 
         osecirvvs.set_edges(
             self.data_dir, graph, len(Location))
 
         return graph
 
-    def run(self, num_days_sim, num_runs=10, extrapolate=False):
+    def run(self, num_days_sim, num_runs=10):
         mio.set_log_level(mio.LogLevel.Warning)
-        end_date = self.start_date + num_days_sim
 
-        # list all files in dir self.run_data_dir and filter for scenario_*
-        scenario_files = [file for file in os.listdir(
-            self.run_data_dir) if file.startswith("scenario_")]
+        header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
+
+        # list all scenarios
+        scenarios = requests.get(
+            self.run_data_url + "scenarios/", headers=header).json()
+
+        ################### Delete block when fixed ###################
+        # since the linked_interventions are broken yet, we get them manually.
+        linked_interventions = get_invervention_list(self.run_data_url, header)
+
+        # add 2 empty entires to the front sinc the first two scenarios dont use any interventions
+        linked_interventions = [(), ()] + linked_interventions
+
+        # Add interventions to the scenarios
+        for scenario in scenarios:
+            scenario['linkedInterventions'] = linked_interventions.pop(0)
+        ################### Delete block when fixed ###################
+
+        # parameters = requests.get(
+        #     self.run_data_url + "parameterdefinitions/", headers=header).json()
 
         # read intervention list
-        with open(os.path.join(self.run_data_dir, "intervention.json")) as f:
-            self.intervention_list = json.load(f)
+        self.intervention_list = requests.get(
+            self.run_data_url + "interventions/templates/", headers=header).json()
 
         # TODO: Assuming all parameters are equal for each scenarios.
         # Therefore, we only need to build the graph once?
 
-        for scenario_file in scenario_files:
-            szenario_data_path = os.path.join(self.run_data_dir, scenario_file)
-            with open(szenario_data_path) as f:
-                self.scenario_data = json.load(f)
+        for scenario in scenarios:
+            extrapolate = False
+            if scenario['name'] == 'casedata':
+                extrapolate = True
 
-            graph = self.get_graph(end_date, extrapolate)
+            self.scenario_data = scenario
+
+            # for testing overwrite startDate and endDate
+            self.scenario_data['startDate'] = "2022-01-01"
+            self.scenario_data['endDate'] = "2022-01-31"
+
+            graph = self.get_graph(extrapolate)
+
+            # in the casedata scenario, we are just interested in the extrapolated data. Therefore, we skip the simulation.
+            if extrapolate:
+                continue
 
             study = osecirvvs.ParameterStudy(
                 graph, 0., num_days_sim, 0.5, num_runs)
@@ -541,23 +644,24 @@ class Simulation:
             save_percentiles = True
             save_single_runs = False
 
-            osecirvvs.save_results(
-                ensemble_results, ensemble_params, node_ids, self.results_dir,
-                save_single_runs, save_percentiles, 0, True)
+            res_dir_scenario = os.path.join(
+                self.results_dir, scenario['name'])
 
-            # update timestamp in the scenario file
-            with open(szenario_data_path, 'r') as f:
-                data = json.load(f)
-                data[0]['timestamp'] = time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            # create directory if it does not exist
+            if not os.path.exists(res_dir_scenario):
+                os.makedirs(res_dir_scenario)p
+
+            osecirvvs.save_results(
+                ensemble_results, ensemble_params, node_ids, res_dir_scenario,
+                save_single_runs, save_percentiles, 0, True)
 
 
 if __name__ == "__main__":
     cwd = os.getcwd()
-    start_date = mio.Date(2022, 1, 20)
-    run_data_dir = '/localdata1/revised_paper/memilio/cpp/data_transfer/Scenario_creation/'
+    run_data_url = "http://localhost:8123/"
     # with open(scenario_data_path) as f:
     #     scenario_data = json.load(f)
     sim = Simulation(
         data_dir=os.path.join(cwd, "data"),
-        results_dir=os.path.join(cwd, "results_osecirvvs"), start_date=start_date, run_data_dir=run_data_dir)
-    sim.run(num_days_sim=30, num_runs=2, extrapolate=False)
+        results_dir=os.path.join(cwd, "results_osecirvvs"), run_data_url=run_data_url)
+    sim.run(num_days_sim=30, num_runs=2)
