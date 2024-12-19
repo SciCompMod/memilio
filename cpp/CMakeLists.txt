@@ -174,6 +174,7 @@ endif()
 
 if(MEMILIO_BUILD_SIMULATIONS)
     add_subdirectory(simulations)
+    add_subdirectory(simulations/2024_Ploetzke_Linear_Chain_Trick)
 endif()
 
 if(MEMILIO_BUILD_BENCHMARKS)
