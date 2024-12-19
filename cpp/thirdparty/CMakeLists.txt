@@ -1,12 +1,12 @@
 # Versions of the bundled libraries
 # If you like to upgrade, just change the number
-set(MEMILIO_EIGEN_VERSION "3.3.9")
-set(MEMILIO_SPDLOG_VERSION "1.11.0")
+set(MEMILIO_EIGEN_VERSION "3.4.0")
+set(MEMILIO_SPDLOG_VERSION "1.15.0")
 set(MEMILIO_BOOST_VERSION "1.84.0")
 set(MEMILIO_MINIMAL_BOOST_VERSION "1.76.0")
-set(MEMILIO_JSONCPP_VERSION "1.9.5")
+set(MEMILIO_JSONCPP_VERSION "1.9.6")
 set(MEMILIO_RANDOM123_VERSION "v1.14.0")
-set(MEMILIO_IPOPT_VERSION "3.14.12")
+set(MEMILIO_IPOPT_VERSION "3.14.17")
 
 # Gperftools for profiling; must be first, so that libraries are included in the profile
 if(MEMILIO_ENABLE_PROFILING)
