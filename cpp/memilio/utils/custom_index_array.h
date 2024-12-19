@@ -235,14 +235,28 @@ public:
     }
 
     /**
-     * Resize all dimensions.
-     * @param new_dims new dimensions.
+     * @brief Resize all dimensions.
+     ' Note that when increasing the overall size, new values may be uninitialized.
+     * @param new_dims New dimensions.
      */
     void resize(Index new_dims)
     {
         m_dimensions = new_dims;
         m_numel      = product(m_dimensions);
         m_y.conservativeResize(m_numel);
+    }
+
+    /**
+     * @brief Resize all dimensions, destroying all values.
+     * This Version of resize should only be used when the CustomIndexArray contains non-movable and non-copyable
+     * values, like atomics. New entries are all default initialized.
+     * @param new_dims New dimensions.
+     */
+    void resize_destructive(Index new_dims)
+    {
+        m_dimensions = new_dims;
+        m_numel      = product(m_dimensions);
+        m_y.resize(m_numel);
     }
 
     /**
