@@ -41,11 +41,11 @@
 #include <vector>
 namespace params
 {
-// Necessary because num_subcompartments is used as a template argument and has to be a constexpr.
+// num_subcompartments is used as a template argument and has to be a constexpr.
 constexpr int num_subcompartments = 10;
 constexpr size_t num_groups       = 6;
 
-// Parameters
+// Define (age-resolved) parameters.
 const ScalarType dt                             = 0.01;
 const ScalarType seasonality                    = 0.;
 const ScalarType RelativeTransmissionNoSymptoms = 1.;
@@ -67,52 +67,69 @@ const ScalarType CriticalPerSevere[]              = {0.075, 0.075, 0.075, 0.15, 
 const ScalarType DeathsPerCritical[]              = {0.05, 0.05, 0.14, 0.14, 0.4, 0.6};
 } // namespace params
 
-mio::TimeSeries<ScalarType> add_age_groups(mio::TimeSeries<ScalarType> ageres)
+/** 
+* @brief Function to transform an age-resolved simulation result into a result without age resolution.
+*
+* Sums up the values in the age groups to transform the simulation result into a result without age resolution. 
+* For the sake of comparability, we use non age-resolved results for visualizations.
+* This implementation is only valid if the simulation is run with equal LctStates for all groups or if the result 
+* does not contain subcompartments.
+*   
+* @param[in] ageresolved_result TimeSeries with an age-resolved simulation result.
+* @returns TimeSeries with the result where the values of the age groups are summed up.
+*/
+mio::TimeSeries<ScalarType> sum_age_groups(const mio::TimeSeries<ScalarType> ageresolved_result)
 {
     using namespace params;
-    size_t infstatecount = (size_t)mio::lsecir::InfectionState::Count;
-    mio::TimeSeries<ScalarType> noage(infstatecount);
+    size_t size_result = size_t((ScalarType)ageresolved_result.get_num_elements() / (ScalarType)num_groups);
+    mio::TimeSeries<ScalarType> nonageresolved_result(size_result);
 
-    for (Eigen::Index timepoint = 0; timepoint < ageres.get_num_time_points(); ++timepoint) {
-        Eigen::VectorXd result = Eigen::VectorXd::Zero(infstatecount);
-        for (size_t infstate = 0; infstate < infstatecount; infstate++) {
+    // For each time point, calculate the result without age resolution and add the time point
+    // to the nonageresolved_result.
+    for (Eigen::Index timepoint = 0; timepoint < ageresolved_result.get_num_time_points(); ++timepoint) {
+        mio::Vector result = mio::Vector::Zero(size_result);
+        for (size_t infstate = 0; infstate < size_result; infstate++) {
             for (size_t group = 0; group < num_groups; group++) {
-                result[infstate] += ageres.get_value(timepoint)[group * infstatecount + infstate];
+                result[infstate] += ageresolved_result.get_value(timepoint)[group * size_result + infstate];
             }
         }
-        noage.add_time_point(ageres.get_time(timepoint), result);
+        nonageresolved_result.add_time_point(ageresolved_result.get_time(timepoint), result);
     }
 
-    return noage;
+    return nonageresolved_result;
 }
 
-/** @brief Returns contact matrix in relation to defined R0.
-* Contacts are defined such that R0 equals 1 at the beginning of the simulation and jumps to R0 in 
-* the time interval [1.9,2.0].
+/** 
+* @brief Gets a contact matrix from data files and computes a weighted average for non age-resolved simulations.
+* @param[in] contact_data_dir Directory to the contact data.
+* @param[in] resolve_by_age If true, the function gives an age resolved contact matrix. If false, a weighted average
+*    is calculated from the age-resolved data. Default is true.
+* @returns The contact matrix or any IO errors that occur during reading the contact data files.
 */
-mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(std::string contact_data_dir, bool age = true)
+mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(std::string contact_data_dir,
+                                                                          bool resolve_by_age = true)
 {
     using namespace params;
     const std::string contact_locations[] = {"home", "school_pf_eig", "work", "other"};
     const size_t num_locations            = 4;
-    size_t mat_size                       = num_groups;
-    if (!age) {
-        mat_size = 1;
+    size_t matrix_size                    = num_groups;
+    if (!resolve_by_age) {
+        matrix_size = 1;
     }
-    auto contact_matrices = mio::ContactMatrixGroup(num_locations, mat_size);
+    auto contact_matrices = mio::ContactMatrixGroup(num_locations, matrix_size);
     // Load and set baseline contacts for each contact location.
     for (size_t location = 0; location < num_locations; location++) {
         BOOST_OUTCOME_TRY(auto&& baseline, mio::read_mobility_plain(contact_data_dir + "baseline_" +
                                                                     contact_locations[location] + ".txt"));
-        if (!age) {
-            ScalarType base = 0.;
+        if (!resolve_by_age) {
+            ScalarType average = 0.;
             for (size_t i = 0; i < num_groups; i++) {
                 for (size_t j = 0; j < num_groups; j++) {
-                    // Calculate a weighted average according to the age group sizes of the total contacts.
-                    base += age_group_sizes[i] / total_population * baseline(i, j);
+                    // Calculate a weighted average according to the age group sizes.
+                    average += age_group_sizes[i] / total_population * baseline(i, j);
                 }
             }
-            contact_matrices[location].get_baseline() = Eigen::MatrixXd::Constant(1, 1, base);
+            contact_matrices[location].get_baseline() = Eigen::MatrixXd::Constant(1, 1, average);
             contact_matrices[location].get_minimum()  = Eigen::MatrixXd::Zero(1, 1);
         }
         else {
@@ -120,22 +137,34 @@ mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(std::s
             contact_matrices[location].get_minimum()  = Eigen::MatrixXd::Zero(num_groups, num_groups);
         }
     }
-    std::cout << "Contact Pattern used:" << std::endl;
-    std::cout << mio::UncertainContactMatrix<ScalarType>(contact_matrices).get_cont_freq_mat().get_matrix_at(0)
-              << std::endl;
-    std::cout << std::endl;
     return mio::success(mio::UncertainContactMatrix<ScalarType>(contact_matrices));
 }
 
-std::vector<std::vector<ScalarType>> get_initialization(bool age = false, size_t agegroup_init = 0)
+/** 
+* @brief Constructs an initial value vector with 100 Exposed individuals and remaining population in Susceptible.
+*   
+* The function constructs an initial value vector with age resolution if resolve_by_age is true with 100 
+* Exposed individuals in agegroup_exposed. 
+* If resolve_by_age is false, an initial value vector without age resolution is created with 100 Exposed individuals.
+* The idea is that all settings for agegroup_exposed are translated into the same setting if we use a model 
+*   without age resolution. 
+*
+* @param[in] resolve_by_age If true, the function gives an age resolved contact matrix. If false, a weighted average
+*    is calculated from the age-resolved data. Default is true.
+* @param[in] agegroup_exposed The agegroup with the 100 initially exposed individuals. 
+*    This only makes sense if resolved_by_age is true.
+* @returns The initial value vector.
+*/
+// TODO: forgot to describe that withpout subcompartments( btw why?) and a vector with vectors.
+std::vector<std::vector<ScalarType>> get_initialization(bool resolve_by_age = false, size_t agegroup_exposed = 0)
 {
     using namespace params;
     ScalarType num_exposed = 100.;
     std::vector<std::vector<ScalarType>> init;
-    if (age) {
+    if (resolve_by_age) {
         for (size_t group = 0; group < num_groups; group++) {
             std::vector<ScalarType> init_vector_group({age_group_sizes[group], 0., 0., 0., 0., 0., 0., 0.});
-            if (group == agegroup_init) {
+            if (group == agegroup_exposed) {
                 init_vector_group[0] = age_group_sizes[group] - num_exposed;
                 init_vector_group[1] = num_exposed;
             }
@@ -158,12 +187,12 @@ std::vector<std::vector<ScalarType>> get_initialization(bool age = false, size_t
 * @param[in] save_dir Specifies the directory where the results should be stored. Provide an empty string if results should not be saved.
 * @returns Any io errors that happen during saving the results.
 */
-mio::IOResult<void> simulate_ageres_model(size_t agegroup_init, ScalarType tmax, std::string contact_data_dir,
-                                          std::string save_dir = "")
+mio::IOResult<void> simulation_with_ageresolution(size_t agegroup_exposed, ScalarType tmax,
+                                                  std::string contact_data_dir, std::string save_dir = "")
 {
     using namespace params;
     std::cout << "Simulation with " << num_subcompartments
-              << " subcompartments for the initial exposed population in age group " << agegroup_init << "."
+              << " subcompartments for the initial exposed population in age group " << agegroup_exposed << "."
               << std::endl;
     // ----- Initialize age resolved model. -----
     using InfState = mio::lsecir::InfectionState;
@@ -195,7 +224,8 @@ mio::IOResult<void> simulate_ageres_model(size_t agegroup_init, ScalarType tmax,
     model.parameters.get<mio::lsecir::ContactPatterns>() = contact_matrix;
     model.parameters.get<mio::lsecir::Seasonality>()     = seasonality;
 
-    auto init_vector = get_initialization(true, agegroup_init);
+    auto init_vector = get_initialization(true, agegroup_exposed);
+    // TODO: may be just one vector and not vector with vectors?
     for (size_t group = 0; group < num_groups; group++) {
         model.populations[group * LctState::Count + 0]                   = init_vector[group][0]; //S
         model.populations[group * LctState::Count + LctState::Count - 2] = init_vector[group][6]; //R
@@ -216,18 +246,20 @@ mio::IOResult<void> simulate_ageres_model(size_t agegroup_init, ScalarType tmax,
     integrator->set_dt_max(dt);
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
     // Calculate result without division in subcompartments.
-    mio::TimeSeries<ScalarType> populations = add_age_groups(model.calculate_compartments(result));
+    mio::TimeSeries<ScalarType> populations = sum_age_groups(model.calculate_compartments(result));
 
     if (!save_dir.empty()) {
         std::string filename = save_dir + "fictional_lct_ageres_" + std::to_string(num_subcompartments) +
-                               "_agegroupinit_" + std::to_string(agegroup_init) + ".h5";
+                               "_agegroupinit_" + std::to_string(agegroup_exposed) + ".h5";
         mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename);
     }
 
     return mio::success();
 }
 
-mio::IOResult<void> simulate_notageres_model(ScalarType tmax, std::string contact_data_dir, std::string save_dir = "")
+//TODO
+mio::IOResult<void> simulation_without_ageresolution(ScalarType tmax, std::string contact_data_dir,
+                                                     std::string save_dir = "")
 {
     using namespace params;
     std::cout << "Simulation with " << num_subcompartments << " subcompartments without age resolution." << std::endl;
@@ -311,31 +343,39 @@ mio::IOResult<void> simulate_notageres_model(ScalarType tmax, std::string contac
     return mio::success();
 }
 
+/** 
+* Usage: lct_impact_age_resolution <contact_data_dir> <save_dir> 
+*   Both command line arguments are optional but it is beneficial to specify the 
+*   contact_data_dir as the default is just an educated guess.
+*/
 int main(int argc, char** argv)
 {
-    std::string save_dir         = "../../data/simulation_lct_numerical_experiments/age_resolution/";
     std::string contact_data_dir = "../../data/contacts/";
-    if (argc > 1) {
+    std::string save_dir         = "";
+    switch (argc) {
+    case 3:
         save_dir = argv[1];
-    }
-    if (argc > 2) {
+        [[fallthrough]];
+    case 2:
         contact_data_dir = argv[2];
     }
+
     ScalarType tmax = 40;
+
     // Simulation with initial exposed population in age group 2.
-    auto result = simulate_ageres_model(2, tmax, contact_data_dir, save_dir);
+    auto result = simulation_with_ageresolution(2, tmax, contact_data_dir, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
     }
     // Simulation with initial exposed population in age group 5.
-    result = simulate_ageres_model(5, tmax, contact_data_dir, save_dir);
+    result = simulation_with_ageresolution(5, tmax, contact_data_dir, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
     }
     // Simulation without age resolution.
-    result = simulate_notageres_model(tmax, contact_data_dir, save_dir);
+    result = simulation_without_ageresolution(tmax, contact_data_dir, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;

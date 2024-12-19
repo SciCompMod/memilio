@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+#include "abm_helpers.h"
 #include "memilio/config.h"
 
 #include "lct_secir/parameters_io.h"
@@ -26,6 +27,7 @@
 #include "memilio/math/eigen.h"
 #include "memilio/utils/date.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/epidemiology/lct_infection_state.h"
 #include "test_data_dir.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/io.h"
@@ -41,9 +43,9 @@ std::vector<mio::ConfirmedCasesNoAgeEntry> get_synthetic_rki_data_noage()
     Json::Value js(Json::arrayValue);
     std::vector<Json::Value> dates = {"2020-05-26", "2020-05-27", "2020-05-28", "2020-05-29",
                                       "2020-05-30", "2020-05-31", "2020-06-01", "2020-06-02",
-                                      "2020-06-03", "2020-06-04", "2020-06-05"};
+                                      "2020-06-03", "2020-06-04", "2020-06-05", "2020-06-06"};
 
-    for (int day = 0; day < 11; day++) {
+    for (int day = 0; day < 12; day++) {
         js[day]["Date"]      = dates[day];
         js[day]["Confirmed"] = 100. + day;
         js[day]["Deaths"]    = 2.;
@@ -59,9 +61,9 @@ std::vector<mio::ConfirmedCasesDataEntry> get_synthetic_rki_data_age()
     Json::Value js(Json::arrayValue);
     std::vector<Json::Value> dates           = {"2020-05-26", "2020-05-27", "2020-05-28", "2020-05-29",
                                       "2020-05-30", "2020-05-31", "2020-06-01", "2020-06-02",
-                                      "2020-06-03", "2020-06-04", "2020-06-05"};
+                                      "2020-06-03", "2020-06-04", "2020-06-05", "2020-06-06"};
     std::vector<Json::Value> age_group_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"};
-    for (int day = 0; day < 11; day++) {
+    for (int day = 0; day < 12; day++) {
         for (int age = 0; age < num_agegroups; age++) {
             js[num_agegroups * day + age]["Age_RKI"]   = age_group_names[age];
             js[num_agegroups * day + age]["ID_County"] = 1001;
@@ -79,9 +81,8 @@ std::vector<mio::DiviEntry> get_synthetic_divi_data()
 {
     Json::Value js(Json::arrayValue);
     std::vector<Json::Value> dates = {"2020-05-26", "2020-05-27", "2020-05-28", "2020-05-29",
-                                      "2020-05-30", "2020-05-31", "2020-06-01", "2020-06-02",
-                                      "2020-06-03", "2020-06-04", "2020-06-05"};
-    for (int day = 0; day < 11; day++) {
+                                      "2020-05-30", "2020-05-31", "2020-06-01"};
+    for (int day = 0; day < 7; day++) {
         js[day]["ICU"]  = 0;
         js[day]["Date"] = dates[day];
     }
@@ -243,13 +244,87 @@ TEST(TestLCTParametersIo, CheckScalingDIVI)
             get_synthetic_rki_data_age(), model.populations, model.parameters, start_date, total_population,
             std::vector<ScalarType>(num_agegroups, 1.), get_synthetic_divi_data());
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
-    // Check that the result is as expected.
+    // Check that the function to get the DIVI data at a specific day works.
+    EXPECT_NEAR(mio::lsecir::details::get_icu_from_divi_data(get_synthetic_divi_data(), mio::Date(2020, 5, 31)).value(),
+                0, 1e-6);
+    // Check that the result of set_initial_values_from_reported_data() is scaled as expected.
     EXPECT_NEAR(
         mio::lsecir::details::get_total_InfectedCritical_from_populations<Model::Populations>(model.populations), 50,
         1e-6);
-    // Check that the function to get the DIVI data at a specific day works.
-    EXPECT_NEAR(mio::lsecir::details::get_icu_from_divi_data(get_synthetic_divi_data(), mio::Date(2020, 6, 3)).value(),
-                0, 1e-6);
+
+    // Check that we get an error if the date is not part of the input.
+    // Deactivate temporarily log output for next tests.
+    mio::set_log_level(mio::LogLevel::off);
+    auto read_result_failure =
+        mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
+            get_synthetic_rki_data_age(), model.populations, model.parameters, mio::Date(2020, 6, 2), total_population,
+            std::vector<ScalarType>(num_agegroups, 1.), get_synthetic_divi_data());
+    EXPECT_THAT(print_wrap(read_result_failure), IsFailure(mio::StatusCode::OutOfRange));
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
+// Check that the function rescale_to_divi_data() handles each input case well.
+TEST(TestLCTParametersIo, CheckRescaleToDIVIDataFunctionCases)
+{
+    const size_t num_agegroups = 6;
+    using InfState             = mio::lsecir::InfectionState;
+    using LctState1            = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 5, 1, 1>;
+    using LctState2            = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model                = mio::lsecir::Model<LctState1, LctState2, LctState1, LctState2, LctState1, LctState2>;
+    using Populations          = Model::Populations;
+
+    // Initialize a population with zero values.
+    Populations pop;
+    for (size_t i = 0; i < pop.get_num_compartments(); i++) {
+        pop[i] = 0;
+    }
+    // Deactivate temporarily log output for next tests.
+    mio::set_log_level(mio::LogLevel::off);
+    // Check that we get an error if the input for the reported InfectedCritical cases is negative.
+    auto status = mio::lsecir::details::rescale_to_divi_data<Populations>(pop, -50, 0);
+    EXPECT_THAT(print_wrap(status), IsFailure(mio::StatusCode::InvalidValue));
+    // Check that we get an error as the number of Recovered should be less than zero after scaling.
+    status = mio::lsecir::details::rescale_to_divi_data<Populations>(pop, 50, 0);
+    EXPECT_THAT(print_wrap(status), IsFailure(mio::StatusCode::InvalidValue));
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
+
+    // Construct valid case with non-zero values for Recovered and Susceptible compartments.
+    // For groups with LctState1.
+    for (size_t i = 0; i < 3; i++) {
+        size_t first_idx = i * (LctState1::Count + LctState2::Count);
+        pop[first_idx + LctState1::get_first_index<InfState::Susceptible>()] = 1000;
+        pop[first_idx + LctState1::get_first_index<InfState::Recovered>()]   = 100;
+    }
+    // For groups with LctState2.
+    for (size_t i = 0; i < 3; i++) {
+        size_t first_idx = (i + 1) * LctState1::Count + i * LctState2::Count;
+        pop[first_idx + LctState2::get_first_index<InfState::Susceptible>()] = 3000;
+        pop[first_idx + LctState2::get_first_index<InfState::Recovered>()]   = 300;
+    }
+
+    status = mio::lsecir::details::rescale_to_divi_data<Populations>(pop, 50, 0);
+    ASSERT_THAT(print_wrap(status), IsSuccess());
+    // Check that the reported value of 50 is distributed uniformly as expected.
+    // For groups with LctState1.
+    for (size_t i = 0; i < 3; i++) {
+        size_t first_idx =
+            i * (LctState1::Count + LctState2::Count) + LctState1::get_first_index<InfState::InfectedCritical>();
+        for (size_t subcomp = 0; subcomp < LctState1::get_num_subcompartments<InfState::InfectedCritical>();
+             subcomp++) {
+            EXPECT_NEAR(pop[first_idx + subcomp],
+                        50. / ((ScalarType)num_agegroups) *
+                            (1. / ((ScalarType)LctState1::get_num_subcompartments<InfState::InfectedCritical>())),
+                        1e-6);
+        }
+    }
+    // For groups with LctState2.
+    for (size_t i = 0; i < 3; i++) {
+        size_t first_idx = (i + 1) * LctState1::Count + i * LctState2::Count;
+        EXPECT_NEAR(pop[first_idx + LctState2::get_first_index<InfState::InfectedCritical>()],
+                    50. / ((ScalarType)num_agegroups), 1e-6);
+    }
 }
 
 // Check some cases where computation of initial values based on RKI data should fail.

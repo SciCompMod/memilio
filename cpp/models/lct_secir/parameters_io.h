@@ -445,7 +445,7 @@ IOResult<void> set_initial_values_from_confirmed_cases(Populations& populations,
 
     // Check if all values for populations are valid.
     for (size_t i = first_index_group; i < LctStateGroup::Count; i++) {
-        if (floating_point_less((ScalarType)populations[i], 0., 1e-14)) {
+        if (floating_point_less<ScalarType>((ScalarType)populations[i], 0., Limits<ScalarType>::zero_tolerance())) {
             log_error("Something went wrong in the initialization of group {:d}. At least one entry is negative.",
                       Group);
             return failure(StatusCode::InvalidValue,
@@ -458,7 +458,7 @@ IOResult<void> set_initial_values_from_confirmed_cases(Populations& populations,
             populations, rki_data, parameters, date, total_population, scale_confirmed_cases);
     }
     else {
-        return mio::success();
+        return success();
     }
 }
 
@@ -512,7 +512,7 @@ IOResult<ScalarType> get_icu_from_divi_data(const std::vector<DiviEntry>& divi_d
     for (auto&& entry : divi_data) {
         int offset = get_offset_in_days(entry.date, date);
         if (offset == 0) {
-            return mio::success(entry.num_icu);
+            return success(entry.num_icu);
         }
     }
     log_error("Specified date does not exist in DIVI data.");
@@ -527,7 +527,8 @@ IOResult<ScalarType> get_icu_from_divi_data(const std::vector<DiviEntry>& divi_d
 * such that the total number in all InfectedCritical compartments equals the reported number infectedCritical_reported.
 *
 * If the total of individuals in InfectedCritical in populations is zero and the reported number is not,
-* the reported number is distributed uniformly across the groups and the subcompartments. 
+* the reported number is distributed uniformly across the groups. 
+* Within the groups, the number is distributed equally to the subcompartments. 
 * Note that especially the uniform distribution across groups is not necessarily realistic, 
 * because the need for intensive care can differ by group.
 *
@@ -542,11 +543,18 @@ IOResult<ScalarType> get_icu_from_divi_data(const std::vector<DiviEntry>& divi_d
 * @tparam Group The age group for which the entries of InfectedCritical should be scaled. 
 *   The function is called recursively for the groups. The total number in the InfectedCritical compartments is only 
 *   equal to infectedCritical_reported after the function call if Group is set to zero in the beginning.
+* @returns Any io errors that happen during the scaling.
 */
 template <class Populations, size_t Group = 0>
-void rescale_to_divi_data(Populations& populations, const ScalarType infectedCritical_reported,
-                          const ScalarType infectedCritical_populations)
+IOResult<void> rescale_to_divi_data(Populations& populations, const ScalarType infectedCritical_reported,
+                                    const ScalarType infectedCritical_populations)
 {
+    if (floating_point_less<ScalarType>(infectedCritical_reported, 0., Limits<ScalarType>::zero_tolerance())) {
+        log_error("The provided reported number of InfectedCritical is negative. Please check the data.");
+        return failure(StatusCode::InvalidValue,
+                       "The provided reported number of InfectedCritical is negative. Please check the data.");
+    }
+
     using LctStateGroup      = type_at_index_t<Group, typename Populations::LctStatesGroups>;
     size_t first_index_group = populations.template get_first_index_of_group<Group>();
 
@@ -557,16 +565,19 @@ void rescale_to_divi_data(Populations& populations, const ScalarType infectedCri
                      "that this is not necessarily realistic.");
             size_t num_InfectedCritical =
                 LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>();
-            size_t num_age_groups = Populations::num_groups;
+            ScalarType num_age_groups = (ScalarType)Populations::num_groups;
             // Distribute reported number uniformly to age groups and subcompartments.
-            populations.get_compartments().segment(
-                first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedCritical>(),
-                num_InfectedCritical) =
-                Vector<ScalarType>::Constant(num_InfectedCritical, (ScalarType)infectedCritical_reported /
-                                                                       (num_InfectedCritical * num_age_groups));
+            for (size_t subcompartment = 0;
+                 subcompartment < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>();
+                 subcompartment++) {
+                populations[first_index_group +
+                            LctStateGroup::template get_first_index<InfectionState::InfectedCritical>() +
+                            subcompartment] =
+                    infectedCritical_reported / ((ScalarType)num_InfectedCritical * num_age_groups);
+            }
             // Adjust Recovered compartment.
             populations[first_index_group + LctStateGroup::template get_first_index<InfectionState::Recovered>()] -=
-                (ScalarType)infectedCritical_reported / num_age_groups;
+                infectedCritical_reported / num_age_groups;
             // Number of Susceptibles is not affected because Recovered is adjusted accordingly.
         }
     }
@@ -591,9 +602,22 @@ void rescale_to_divi_data(Populations& populations, const ScalarType infectedCri
         }
         // Number of Susceptibles is not affected because Recovered is adjusted accordingly.
     }
+    if (floating_point_less<ScalarType>(
+            (ScalarType)
+                populations[first_index_group + LctStateGroup::template get_first_index<InfectionState::Recovered>()],
+            0., Limits<ScalarType>::zero_tolerance())) {
+        log_error(
+            "Scaling with reported DIVI data led to a negative entry in the Recovered compartment for group {:d}.",
+            Group);
+        return failure(StatusCode::InvalidValue,
+                       "Scaling with reported DIVI data led to a negative entry in a Recovered compartment.");
+    }
     if constexpr (Group + 1 < Populations::num_groups) {
-        rescale_to_divi_data<Populations, Group + 1>(populations, infectedCritical_reported,
-                                                     infectedCritical_populations);
+        return rescale_to_divi_data<Populations, Group + 1>(populations, infectedCritical_reported,
+                                                            infectedCritical_populations);
+    }
+    else {
+        return success();
     }
 }
 } // namespace details
@@ -688,8 +712,8 @@ IOResult<void> set_initial_values_from_reported_data(const std::vector<EntryType
         if (!(infectedCritical_reported)) {
             return infectedCritical_reported.error();
         }
-        details::rescale_to_divi_data<Populations>(populations, infectedCritical_reported.value(),
-                                                   infectedCritical_populations);
+        return details::rescale_to_divi_data<Populations>(populations, infectedCritical_reported.value(),
+                                                          infectedCritical_populations);
     }
 
     return success();

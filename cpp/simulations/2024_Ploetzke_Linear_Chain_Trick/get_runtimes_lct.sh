@@ -2,12 +2,12 @@
 #SBATCH --job-name=lct-performance
 #SBATCH --output=lct-%A.out
 #SBATCH --error=lct-%A.err
-#SBATCH -N 1
-#SBATCH -n 1
-#SBATCH -c 1
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
 #SBATCH --exclusive
 #SBATCH --exclude="be-cpu05, be-gpu01"
-#SBATCH -t 5-0:00:00
+#SBATCH --time=5-0:00:00
 
 ## This script can be used to monitor runtimes for the lct model using the file lct_runtime.cpp.
 ## The command "sbatch get_runtimes_lct.sh ./bin/lct_runtime" should be run in this folder 
@@ -28,5 +28,5 @@ for i in {1..200}
 do
     cmake -DNUM_SUBCOMPARTMENTS=$i -DCMAKE_BUILD_TYPE="Release" -DMEMILIO_ENABLE_OPENMP=ON .
     cmake --build . --target lct_runtime
-    srun --cpu-bind=core ./$1 $warm_up_runs $runs
+    srun --cpus-per-task=1 --cpu-bind=cores ./$1 $warm_up_runs $runs
 done
