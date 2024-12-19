@@ -24,6 +24,7 @@
 #include "memilio/utils/logging.h"
 
 #include "boost/numeric/odeint/external/eigen/eigen_algebra.hpp"
+#include "boost/numeric/odeint/external/eigen/eigen_resize.hpp"
 #include "boost/numeric/odeint/stepper/controlled_runge_kutta.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta_fehlberg78.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
@@ -44,7 +45,7 @@ class ControlledStepperWrapper : public mio::IntegratorCore<FP>
     using Stepper = boost::numeric::odeint::controlled_runge_kutta<
         ControlledStepper<Vector<FP>, FP, Vector<FP>, FP, boost::numeric::odeint::vector_space_algebra,
                           typename boost::numeric::odeint::operations_dispatcher<Vector<FP>>::operations_type,
-                          boost::numeric::odeint::never_resizer>>;
+                          boost::numeric::odeint::initially_resizer>>;
     static constexpr bool is_fsal_stepper = std::is_same_v<typename Stepper::stepper_type::stepper_category,
                                                            boost::numeric::odeint::explicit_error_stepper_fsal_tag>;
     static_assert(!is_fsal_stepper,
@@ -109,7 +110,6 @@ public:
                 step_result = m_stepper.try_step(
                     // reorder arguments of the DerivFunction f for the stepper
                     [&](const Vector<FP>& x, Vector<FP>& dxds, FP s) {
-                        dxds.resizeLike(x); // boost resizers cannot resize Eigen::Vector, hence we need to do that here
                         f(x, s, dxds);
                     },
                     m_yt, t, m_ytp1, dt);
@@ -186,7 +186,7 @@ class ExplicitStepperWrapper : public mio::IntegratorCore<FP>
 public:
     using Stepper = ExplicitStepper<Vector<FP>, FP, Vector<FP>, FP, boost::numeric::odeint::vector_space_algebra,
                                     typename boost::numeric::odeint::operations_dispatcher<Vector<FP>>::operations_type,
-                                    boost::numeric::odeint::never_resizer>;
+                                    boost::numeric::odeint::initially_resizer>;
 
     /**
      * @brief Set up the integrator.
@@ -213,7 +213,6 @@ public:
         m_stepper.do_step(
             // reorder arguments of the DerivFunction f for the stepper
             [&](const Vector<FP>& x, Vector<FP>& dxds, FP s) {
-                dxds.resizeLike(x); // do_step calls sys with a vector of size 0 for some reason
                 f(x, s, dxds);
             },
             ytp1, t, dt);
