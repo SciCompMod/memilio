@@ -26,7 +26,6 @@
 #define MIO_CONFIG_H
 
 #include "memilio/config_internal.h"
-#include <type_traits>
 
 using ScalarType = double;
 

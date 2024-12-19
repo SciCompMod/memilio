@@ -787,7 +787,11 @@ using compare_iterators_t = decltype(std::declval<const C&>().begin() != std::de
  * @tparam C any type.
  */
 template <class C>
-using is_container = is_expression_valid<details::compare_iterators_t, C>;
+using is_container =
+    conjunction<is_expression_valid<details::compare_iterators_t, C>,
+                std::is_constructible<C, decltype(std::declval<C>().begin()), decltype(std::declval<C>().end())>,
+                // Eigen types may pass as container, but we want to handle them separately
+                negation<std::is_base_of<Eigen::EigenBase<C>, C>>>;
 
 /**
  * serialize an STL compatible container.
