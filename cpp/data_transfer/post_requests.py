@@ -277,9 +277,13 @@ def post_to_db_nodelist():
 
 
 def post_to_db_scenarios():
+    # Define start and end date for casedata scenario
+    start_date_casedata = (datetime.datetime.now() -
+                datetime.timedelta(days=365)).strftime("%Y-%m-%d")
+    end_date_casedata = datetime.datetime.now().strftime("%Y-%m-%d")
     # Define start and end date of simulation
-    start_date = datetime.datetime.now().strftime("%Y-%m-%d")
-    end_date = (datetime.datetime.now() +
+    start_date_simulation = datetime.datetime.now().strftime("%Y-%m-%d")
+    end_date_simulation = (datetime.datetime.now() +
                 datetime.timedelta(days=30)).strftime("%Y-%m-%d")
 
     # Get ids of model, nodelist and interventions
@@ -371,7 +375,7 @@ def post_to_db_scenarios():
             "name": "School closure",
             "description": "School closure intervention",
             "tags": [],
-            "coefficient": 1.0.
+            "coefficient": 1.0
         },
         {
             "id": facemasks_school_id[0],
@@ -412,8 +416,8 @@ def post_to_db_scenarios():
     scenario_data = [{
         "name": "casedata",
         "description": "Extrapolated RKI data",
-        "startDate": f"{start_date}",
-        "endDate": f"{end_date}",
+        "startDate": f"{start_date_casedata}",
+        "endDate": f"{end_date_casedata}",
         "modelId": model_id[0],
         "modelParameters": modelparameters_entry,
         "nodeListId": nodelist_id[0],
@@ -422,8 +426,8 @@ def post_to_db_scenarios():
         {
         "name": "baseline",
         "description": "Baseline scenario without any interventions",
-        "startDate": f"{start_date}",
-        "endDate": f"{end_date}",
+        "startDate": f"{start_date_simulation}",
+        "endDate": f"{end_date_simulation}",
         "modelId": model_id[0],
         "modelParameters": modelparameters_entry,
         "nodeListId": nodelist_id[0],
@@ -436,15 +440,15 @@ def post_to_db_scenarios():
         for intervention in combination:
             intervention_entry.append({
                 "interventionId": intervention["id"],
-                "startDate": f"{start_date}",
-                "endDate": f"{end_date}",
+                "startDate": f"{start_date_simulation}",
+                "endDate": f"{end_date_simulation}",
                 "coefficient": intervention["coefficient"]
             })
         scenario_data.append({
             "name": f"Scenario {i+2}",
             "description": "",
-            "startDate": f"{start_date}",
-            "endDate": f"{end_date}",
+            "startDate": f"{start_date_simulation}",
+            "endDate": f"{end_date_simulation}",
             "modelId": model_id[0],
             "modelParameters": modelparameters_entry,
             "nodeListId": nodelist_id[0],
@@ -467,6 +471,7 @@ def post_to_db():
     post_to_db_model()
     post_to_db_nodes()
     post_to_db_nodelist()
+    post_to_db_scenarios()
 
 
 def main():
