@@ -371,7 +371,7 @@ def post_to_db_scenarios():
             "name": "School closure",
             "description": "School closure intervention",
             "tags": [],
-            "coefficient": 0.
+            "coefficient": 1.0.
         },
         {
             "id": facemasks_school_id[0],

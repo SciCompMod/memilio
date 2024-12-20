@@ -122,6 +122,7 @@ class Simulation:
         self.results_dir = results_dir
         self.szenario_data = ""
         self.intervention_list = []
+        self.parameter_list = []
         self.run_data_url = run_data_url
         if not os.path.exists(self.results_dir):
             os.makedirs(self.results_dir)
@@ -139,28 +140,25 @@ class Simulation:
     def set_covid_parameters(self, model):
         # read parameters given from the scenario
         # TODO: Fix when the scenario data is fixed
-        # parameters = self.scenario_data['modelParameters']
-        parameters = []
+        parameters = self.scenario_data['modelParameters']
 
-        # with open(os.path.join(self.run_data_dir, "parameter_1.json")) as f:
-        #     self.param_dict = json.load(f)
-
-        # # Create a mapping from parameterId to name
-        # id_to_name = {entry['id']: entry['name'] for entry in self.param_dict}
+        # Create a mapping from parameterId to name
+        id_to_name = {entry['id']: entry['name']
+                      for entry in self.parameter_list}
 
         # Add the corresponding name to each entry in parameters
         # get min, max values for each parameter
         parameter_values = {}
-        # for parameter in parameters:
-        #     parameter['name'] = id_to_name.get(
-        #         parameter['parameterId'], "Unknown")
-        #     param_name = parameter['name']
-        #     min_value, max_value = self.get_parameter_values(
-        #         parameters, param_name)
+        for parameter in parameters:
+            parameter['name'] = id_to_name.get(
+                parameter['parameterId'], "Unknown")
+            param_name = parameter['name']
+            min_value, max_value = self.get_parameter_values(
+                parameters, param_name)
 
-        #     # Store values in the dictionary with dynamically generated keys
-        #     parameter_values[f"{param_name}Min"] = min_value
-        #     parameter_values[f"{param_name}Max"] = max_value
+            # Store values in the dictionary with dynamically generated keys
+            parameter_values[f"{param_name}Min"] = min_value
+            parameter_values[f"{param_name}Max"] = max_value
 
         def array_assign_uniform_distribution(param, min, max, num_groups=6):
             if isinstance(
@@ -507,7 +505,7 @@ class Simulation:
         for intervention in interventions_scenario:
             # search intervention in self.intervention_list
             intervention_data = next(
-                (entry for entry in self.intervention_list if entry['id'] == intervention['id']), None)
+                (entry for entry in self.intervention_list if entry['id'] == intervention['interventionId']), None)
 
             if not intervention_data:
                 print(
@@ -586,20 +584,8 @@ class Simulation:
         scenarios = requests.get(
             self.run_data_url + "scenarios/", headers=header).json()
 
-        ################### Delete block when fixed ###################
-        # since the linked_interventions are broken yet, we get them manually.
-        linked_interventions = get_invervention_list(self.run_data_url, header)
-
-        # add 2 empty entires to the front sinc the first two scenarios dont use any interventions
-        linked_interventions = [(), ()] + linked_interventions
-
-        # Add interventions to the scenarios
-        for scenario in scenarios:
-            scenario['linkedInterventions'] = linked_interventions.pop(0)
-        ################### Delete block when fixed ###################
-
-        # parameters = requests.get(
-        #     self.run_data_url + "parameterdefinitions/", headers=header).json()
+        self.parameter_list = requests.get(
+            self.run_data_url + "parameterdefinitions/", headers=header).json()
 
         # read intervention list
         self.intervention_list = requests.get(
@@ -613,11 +599,13 @@ class Simulation:
             if scenario['name'] == 'casedata':
                 extrapolate = True
 
-            self.scenario_data = scenario
+            # load full set of scenario data
+            self.scenario_data = requests.get(
+                self.run_data_url + "scenarios/" + scenario['id'], headers=header).json()
 
             # for testing overwrite startDate and endDate
-            self.scenario_data['startDate'] = "2022-01-01"
-            self.scenario_data['endDate'] = "2022-01-31"
+            # self.scenario_data['startDate'] = "2022-01-01"
+            # self.scenario_data['endDate'] = "2022-01-31"
 
             graph = self.get_graph(extrapolate)
 
@@ -649,7 +637,7 @@ class Simulation:
 
             # create directory if it does not exist
             if not os.path.exists(res_dir_scenario):
-                os.makedirs(res_dir_scenario)p
+                os.makedirs(res_dir_scenario)
 
             osecirvvs.save_results(
                 ensemble_results, ensemble_params, node_ids, res_dir_scenario,
