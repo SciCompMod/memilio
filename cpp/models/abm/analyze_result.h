@@ -21,7 +21,6 @@
 #define ABM_ANALYZE_RESULT_H
 
 #include "abm/parameters.h"
-#include "abm/state_transition_dist.h"
 #include "memilio/utils/compiler_diagnostics.h"
 
 #include <vector>

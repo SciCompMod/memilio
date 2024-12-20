@@ -19,7 +19,6 @@
 */
 #include "abm/analyze_result.h"
 #include "abm/model.h"
-#include "abm/state_transition_dist.h"
 #include "matchers.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/data/analyze_result.h"

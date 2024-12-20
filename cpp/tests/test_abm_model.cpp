@@ -20,7 +20,6 @@
 #include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/model.h"
-#include "abm/state_transition_dist.h"
 #include "abm/virus_variant.h"
 #include "abm_helpers.h"
 #include "memilio/utils/parameter_distribution_wrapper.h"
