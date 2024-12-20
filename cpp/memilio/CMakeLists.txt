@@ -78,6 +78,7 @@ add_library(memilio
     utils/custom_index_array.h
     utils/memory.h
     utils/parameter_distributions.h
+    utils/parameter_distribution_wrapper.h
     utils/time_series.h
     utils/time_series.cpp
     utils/span.h

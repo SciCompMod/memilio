@@ -725,6 +725,13 @@ using LogNormalDistribution = DistributionAdapter<std::lognormal_distribution<Re
 template <class Real>
 using GammaDistribution = DistributionAdapter<std::gamma_distribution<Real>>;
 
+/**
+ * adapted normal_distribution.
+ * @see DistributionAdapter
+ */
+template <class Real>
+using NormalDistribution = DistributionAdapter<std::normal_distribution<Real>>;
+
 } // namespace mio
 
 #endif

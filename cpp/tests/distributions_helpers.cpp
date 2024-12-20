@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/utils/parameter_distributions.h"
 #include <distributions_helpers.h>
 #include <matchers.h>
 #include <gtest/gtest.h>
@@ -39,10 +40,6 @@ void check_distribution(const mio::ParameterDistribution& dist, const mio::Param
             EXPECT_THAT(self.get_mean(), FloatingPointEqual(p_other_normal_distribution->get_mean(), 1e-12, 1e-12));
             EXPECT_THAT(self.get_standard_dev(),
                         FloatingPointEqual(p_other_normal_distribution->get_standard_dev(), 1e-12, 1e-12));
-            EXPECT_THAT(self.get_lower_bound(),
-                        FloatingPointEqual(p_other_normal_distribution->get_lower_bound(), 1e-12, 1e-12));
-            EXPECT_THAT(self.get_upper_bound(),
-                        FloatingPointEqual(p_other_normal_distribution->get_upper_bound(), 1e-12, 1e-12));
 
             EXPECT_EQ(self.get_predefined_samples().size(),
                       p_other_normal_distribution->get_predefined_samples().size());
@@ -56,17 +53,51 @@ void check_distribution(const mio::ParameterDistribution& dist, const mio::Param
             auto p_other_uniform_distribution = dynamic_cast<const mio::ParameterDistributionUniform*>(&other);
             ASSERT_TRUE(p_other_uniform_distribution != nullptr);
 
-            EXPECT_THAT(self.get_lower_bound(),
-                        FloatingPointEqual(p_other_uniform_distribution->get_lower_bound(), 1e-12, 1e-12));
-            EXPECT_THAT(self.get_upper_bound(),
-                        FloatingPointEqual(p_other_uniform_distribution->get_upper_bound(), 1e-12, 1e-12));
-
             EXPECT_EQ(self.get_predefined_samples().size(),
                       p_other_uniform_distribution->get_predefined_samples().size());
             for (size_t i = 0; i < self.get_predefined_samples().size(); i++) {
                 EXPECT_THAT(
                     self.get_predefined_samples()[i],
                     FloatingPointEqual(p_other_uniform_distribution->get_predefined_samples()[i], 1e-12, 1e-12));
+            }
+        }
+        void visit(const mio::ParameterDistributionLogNormal& self) override
+        {
+            auto p_other_lognormal_distribution = dynamic_cast<const mio::ParameterDistributionLogNormal*>(&other);
+            ASSERT_TRUE(p_other_lognormal_distribution != nullptr);
+
+            EXPECT_EQ(self.get_predefined_samples().size(),
+                      p_other_lognormal_distribution->get_predefined_samples().size());
+            for (size_t i = 0; i < self.get_predefined_samples().size(); i++) {
+                EXPECT_THAT(
+                    self.get_predefined_samples()[i],
+                    FloatingPointEqual(p_other_lognormal_distribution->get_predefined_samples()[i], 1e-12, 1e-12));
+            }
+        }
+        void visit(const mio::ParameterDistributionExponential& self) override
+        {
+            auto p_other_exponential_distribution = dynamic_cast<const mio::ParameterDistributionExponential*>(&other);
+            ASSERT_TRUE(p_other_exponential_distribution != nullptr);
+
+            EXPECT_EQ(self.get_predefined_samples().size(),
+                      p_other_exponential_distribution->get_predefined_samples().size());
+            for (size_t i = 0; i < self.get_predefined_samples().size(); i++) {
+                EXPECT_THAT(
+                    self.get_predefined_samples()[i],
+                    FloatingPointEqual(p_other_exponential_distribution->get_predefined_samples()[i], 1e-12, 1e-12));
+            }
+        }
+        void visit(const mio::ParameterDistributionConstant& self) override
+        {
+            auto p_other_constant_distribution = dynamic_cast<const mio::ParameterDistributionConstant*>(&other);
+            ASSERT_TRUE(p_other_constant_distribution != nullptr);
+
+            EXPECT_EQ(self.get_predefined_samples().size(),
+                      p_other_constant_distribution->get_predefined_samples().size());
+            for (size_t i = 0; i < self.get_predefined_samples().size(); i++) {
+                EXPECT_THAT(
+                    self.get_predefined_samples()[i],
+                    FloatingPointEqual(p_other_constant_distribution->get_predefined_samples()[i], 1e-12, 1e-12));
             }
         }
         const mio::ParameterDistribution& other;
