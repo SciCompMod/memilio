@@ -75,11 +75,10 @@ public:
     template <class RNG>
     double get(RNG& rng)
     {
-        mio::unused(rng);
         if (m_dist == nullptr) {
             log_error("Distribution is not defined. Value cannot be sampled.");
         }
-        return m_dist->get_sample();
+        return m_dist->get_sample(rng);
     }
 
     /**
@@ -104,22 +103,8 @@ template <class IOContext>
 IOResult<ParameterDistributionWrapper> deserialize_internal(IOContext& io, Tag<ParameterDistributionWrapper>)
 {
 
-    auto obj  = io.expect_object("ParameterDistribution");
-    auto type = obj.expect_element("Type", Tag<std::string>{});
-    if (type) {
-        if (type.value() == "Uniform") {
-            BOOST_OUTCOME_TRY(auto&& r, ParameterDistributionUniform::deserialize_elements(io, obj));
-            return std::make_shared<ParameterDistributionUniform>(r);
-        }
-        else if (type.value() == "Normal") {
-            BOOST_OUTCOME_TRY(auto&& r, ParameterDistributionNormal::deserialize_elements(io, obj));
-            return std::make_shared<ParameterDistributionNormal>(r);
-        }
-        else {
-            return failure(StatusCode::InvalidValue, "Type of ParameterDistribution " + type.value() + " not valid.");
-        }
-    }
-    return failure(type.error());
+    BOOST_OUTCOME_TRY(auto&& r, deserialize(io, Tag<std::shared_ptr<ParameterDistribution>>{}));
+    return success(ParameterDistributionWrapper(r));
 }
 
 } // namespace mio

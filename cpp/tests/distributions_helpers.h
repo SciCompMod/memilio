@@ -45,7 +45,7 @@ class MockParameterDistributionRef : public mio::ParameterDistributionNormal
 public:
     using mio::ParameterDistributionNormal::ParameterDistributionNormal;
 
-    double get_rand_sample() override
+    double get_rand_sample(mio::RandomNumberGenerator& /*rng*/) override
     {
         return mock->get_rand_sample();
     }

@@ -24,6 +24,7 @@
 #include "memilio/utils/logging.h"
 #include "memilio/utils/visitor.h"
 #include "memilio/utils/random_number_generator.h"
+#include "models/abm/personal_rng.h"
 #include "memilio/io/io.h"
 
 #include <limits>
@@ -101,7 +102,8 @@ public:
      * first, in case the vector of predefined values is empty, a 'real'
      * random sample is taken
      */
-    double get_sample()
+    template <class RNG>
+    double get_sample(RNG& rng)
     {
         if (m_predefined_samples.size() > 0) {
             double rnumb = m_predefined_samples[0];
@@ -109,7 +111,7 @@ public:
             return rnumb;
         }
         else {
-            return get_rand_sample();
+            return get_rand_sample(rng);
         }
     }
 
@@ -130,7 +132,8 @@ public:
      */
     virtual std::vector<double> params() const = 0;
 
-    virtual double get_rand_sample() = 0;
+    virtual double get_rand_sample(RandomNumberGenerator& rng)          = 0;
+    virtual double get_rand_sample(abm::PersonalRandomNumberGenerator&) = 0;
 
     virtual ParameterDistribution* clone() const = 0;
 
@@ -303,7 +306,8 @@ public:
      * density function lie in the interval defined by the boundaries
      * otherwise the normal distribution is adapted
      */
-    double get_rand_sample() override
+    template <class RNG>
+    double sample(RNG& rng)
     {
         //If ub = lb, sampling can only be succesful if mean = lb and dev = 0.
         //But this degenerate normal distribution is not allowed by the c++ standard.
@@ -320,7 +324,7 @@ public:
         int retries  = 10;
         double rnumb = m_distribution.get_distribution_instance()(thread_local_rng(), m_distribution.params);
         while ((rnumb > m_upper_bound || rnumb < m_lower_bound) && i < retries) {
-            rnumb = m_distribution.get_distribution_instance()(thread_local_rng(), m_distribution.params);
+            rnumb = m_distribution.get_distribution_instance()(rng, m_distribution.params);
             i++;
             if (i == retries) {
                 log_warning("Not successfully sampled within [min,max].");
@@ -333,6 +337,16 @@ public:
             }
         }
         return rnumb;
+    }
+
+    double get_rand_sample(RandomNumberGenerator& rng) override
+    {
+        return sample(rng);
+    }
+
+    double get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
+    {
+        return sample(rng);
     }
 
     template <class IOObject>
@@ -450,13 +464,24 @@ public:
     /*
      * @brief gets a sample of a uniformly distributed variable
      */
-    double get_rand_sample() override
+    template <class RNG>
+    double sample(RNG& rng)
     {
         if (m_distribution.params.b() != m_upper_bound || m_distribution.params.a() != m_lower_bound) {
             m_distribution = UniformDistribution<double>::ParamType{m_lower_bound, m_upper_bound};
         }
 
-        return m_distribution.get_distribution_instance()(thread_local_rng(), m_distribution.params);
+        return m_distribution.get_distribution_instance()(rng, m_distribution.params);
+    }
+
+    double get_rand_sample(RandomNumberGenerator& rng) override
+    {
+        return sample(rng);
+    }
+
+    double get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
+    {
+        return sample(rng);
     }
 
     ParameterDistribution* clone() const override
@@ -565,13 +590,24 @@ public:
     /*
      * @brief gets a sample of a lognormally distributed variable
      */
-    double get_rand_sample() override
+    template <class RNG>
+    double sample(RNG& rng)
     {
         if (m_distribution.params.m() != m_log_mean || m_distribution.params.s() != m_log_stddev) {
             m_distribution = LogNormalDistribution<double>::ParamType{m_log_mean, m_log_stddev};
         }
 
-        return m_distribution.get_distribution_instance()(thread_local_rng(), m_distribution.params);
+        return m_distribution.get_distribution_instance()(rng, m_distribution.params);
+    }
+
+    double get_rand_sample(RandomNumberGenerator& rng) override
+    {
+        return sample(rng);
+    }
+
+    double get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
+    {
+        return sample(rng);
     }
 
     ParameterDistribution* clone() const override
@@ -669,13 +705,24 @@ public:
     /*
      * @brief gets a sample of a exponentially distributed variable
      */
-    double get_rand_sample() override
+    template <class RNG>
+    double sample(RNG& rng)
     {
         if (m_distribution.params.lambda() != m_rate) {
             m_distribution = ExponentialDistribution<double>::ParamType{m_rate};
         }
 
-        return m_distribution.get_distribution_instance()(thread_local_rng(), m_distribution.params);
+        return m_distribution.get_distribution_instance()(rng, m_distribution.params);
+    }
+
+    double get_rand_sample(RandomNumberGenerator& rng) override
+    {
+        return sample(rng);
+    }
+
+    double get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
+    {
+        return sample(rng);
     }
 
     ParameterDistribution* clone() const override
@@ -769,9 +816,20 @@ public:
     /*
      * @brief gets a constant
      */
-    double get_rand_sample() override
+    template <class RNG>
+    double sample(RNG& /*rng*/)
     {
         return m_constant;
+    }
+
+    double get_rand_sample(RandomNumberGenerator& rng) override
+    {
+        return sample(rng);
+    }
+
+    double get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
+    {
+        return sample(rng);
     }
 
     ParameterDistribution* clone() const override
