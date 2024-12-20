@@ -421,7 +421,8 @@ def post_to_db_scenarios():
         "modelId": model_id[0],
         "modelParameters": modelparameters_entry,
         "nodeListId": nodelist_id[0],
-        "linkedInterventions": []
+        "linkedInterventions": [],
+        "percentiles": [50]
     },
         {
         "name": "baseline",
@@ -431,7 +432,8 @@ def post_to_db_scenarios():
         "modelId": model_id[0],
         "modelParameters": modelparameters_entry,
         "nodeListId": nodelist_id[0],
-        "linkedInterventions": []
+        "linkedInterventions": [],
+        "percentiles": [25, 50, 75]
     }]
 
     # Define remaining scenarios with different combinations of interventions
@@ -452,7 +454,8 @@ def post_to_db_scenarios():
             "modelId": model_id[0],
             "modelParameters": modelparameters_entry,
             "nodeListId": nodelist_id[0],
-            "linkedInterventions": intervention_entry
+            "linkedInterventions": intervention_entry,
+            "percentiles": [25, 50, 75]
         })
 
     for scenario in scenario_data:
