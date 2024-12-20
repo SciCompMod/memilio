@@ -505,7 +505,7 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
                                  result_dir + "result_ide_flows_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
                                      "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
             if (save_result_status_ide && save_result_status_ide_flows) {
-                std::cout << "Successfully saved the IDE simulation results. \n";
+                std::cout << "Successfully saved the IDE simulation results. \n\n";
             }
             else {
                 std::cout << "Error occured while saving the IDE simulation results. \n";
@@ -521,21 +521,23 @@ int main()
 {
     // Directory where results will be stored. If this string is empty, results will not be saved.
     std::string result_dir = "../../data/simulation_results/convergence/";
+
+    // General set up.
+    ScalarType t0   = 0.;
+    ScalarType tmax = 70.;
+    // The ODE model will be simulated using a fixed step size dt=10^{-ode_exponent}.
+    ScalarType ode_exponent = 6;
+    // The IDE model will be simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
+    std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
     // The results of the ODE model will be saved using the step size 10^{-save_exponent}
     // as for very small step sizes used for the simulation, the number of time points stored gets very big.
     ScalarType save_exponent = 4;
     // Decide if we want to run the IDE simulation or just the ODE simulation, e.g., to create a ground truth.
     bool ide_simulation = true;
 
-    // General set up.
-    ScalarType t0   = 0.;
-    ScalarType tmax = 70.;
-    // The ODE model will be simulated using a fixed step size dt=10^{-ode_exponent}.
-    ScalarType ode_exponent = 1;
-    // The IDE model will be simulated using a fixed step size dt=10^{-ide_exponent}.
-    ScalarType ide_exponent = 1;
-
-    auto result = simulate_ode_and_ide(t0, tmax, ode_exponent, ide_exponent, save_exponent, result_dir, ide_simulation);
+    mio::IOResult<void> result = mio::success();
+    for (ScalarType ide_exponent : ide_exponents)
+        result = simulate_ode_and_ide(t0, tmax, ode_exponent, ide_exponent, save_exponent, result_dir, ide_simulation);
 
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());

@@ -45,7 +45,7 @@ using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 
 // Used parameters.
 std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
-                                                          {"dt", 0.1},
+                                                          {"dt", 0.01},
                                                           {"total_population", 83155031.},
                                                           {"total_confirmed_cases", 0.}, // set by RKI data
                                                           {"deaths", 0.}, // set by RKI data
