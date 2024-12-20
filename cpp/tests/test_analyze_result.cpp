@@ -483,31 +483,45 @@ TEST(TestEnsembleParamsPercentile, graph_osecir_basic)
 
 TEST(TestEnsembleParamsPercentile, graph_abm_basic)
 {
-    size_t num_age_groups = 6;
+    size_t num_age_groups = 1;
     auto model1           = mio::abm::Model(num_age_groups);
     auto model2           = mio::abm::Model(num_age_groups);
 
-    model1.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        0.1;
-    model1.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
-
-    model2.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        0.2;
-    model2.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.3;
+    mio::ParameterDistributionLogNormal log_norm1(2., 1.2);
+    model1.parameters
+        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+        mio::ParameterDistributionWrapper(log_norm1);
+    mio::ParameterDistributionLogNormal log_norm2(5., 1.2);
+    model1.parameters
+        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+        mio::ParameterDistributionWrapper(log_norm2);
+    mio::ParameterDistributionLogNormal log_norm3(1.3, 2.);
+    model2.parameters
+        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+        mio::ParameterDistributionWrapper(log_norm3);
+    mio::ParameterDistributionLogNormal log_norm4(4., 1.2);
+    model2.parameters
+        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+        mio::ParameterDistributionWrapper(log_norm4);
 
     auto g1 = std::vector<mio::abm::Model>({model1, model2});
 
+    mio::ParameterDistributionLogNormal log_norm5(1.5, 1.5);
     model1.parameters
-        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.2;
-    model1.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        0.3;
-    model1.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.4;
-
+        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+        mio::ParameterDistributionWrapper(log_norm5);
+    mio::ParameterDistributionLogNormal log_norm(4., 1.5);
+    model1.parameters
+        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+        mio::ParameterDistributionWrapper(log_norm);
+    mio::ParameterDistributionLogNormal log_norm6(1.1, 1.2);
     model2.parameters
-        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.7;
-    model2.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        0.4;
-    model2.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] = 0.5;
+        .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+        mio::ParameterDistributionWrapper(log_norm6);
+    mio::ParameterDistributionLogNormal log_norm7(6., 1.5);
+    model2.parameters
+        .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
+        mio::ParameterDistributionWrapper(log_norm7);
 
     auto g2 = std::vector<mio::abm::Model>({model1, model2});
 
@@ -518,51 +532,59 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
 
     auto check1 =
         ensemble_p49_params[0]
-            .parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params()[0];
     auto check2 =
         ensemble_p49_params[1]
-            .parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params()[0];
 
-    EXPECT_EQ(check1, 0.1);
-    EXPECT_EQ(check2, 0.2);
+    EXPECT_EQ(check1, 1.5);
+    EXPECT_EQ(check2, 1.1);
 
     auto check3 =
         ensemble_p51_params[0]
-            .parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params()[0];
     auto check4 =
         ensemble_p51_params[1]
-            .parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params()[0];
 
-    EXPECT_EQ(check3, 0.3);
-    EXPECT_EQ(check4, 0.4);
+    EXPECT_EQ(check3, 2.);
+    EXPECT_EQ(check4, 1.3);
 
     auto check5 =
         ensemble_p49_params[0]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params()[0];
     auto check6 =
         ensemble_p49_params[1]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params()[0];
 
-    EXPECT_EQ(check5, 0.2);
-    EXPECT_EQ(check6, 0.3);
+    EXPECT_EQ(check5, 4.);
+    EXPECT_EQ(check6, 4.);
 
     auto check7 =
         ensemble_p51_params[0]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params()[0];
     auto check8 =
         ensemble_p51_params[1]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
-            .value();
+            .parameters
+            .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}]
+            .params()[0];
 
-    EXPECT_EQ(check7, 0.4);
-    EXPECT_EQ(check8, 0.5);
+    EXPECT_EQ(check7, 5.);
+    EXPECT_EQ(check8, 6.);
 }
 
 TEST(TestDistance, same_result_zero_distance)

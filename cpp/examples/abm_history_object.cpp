@@ -22,7 +22,9 @@
 #include "abm/simulation.h"
 #include "abm/model.h"
 #include "abm/location_type.h"
+#include "memilio/utils/parameter_distribution_wrapper.h"
 #include "memilio/io/history.h"
+#include "memilio/utils/parameter_distributions.h"
 
 #include <fstream>
 #include <string>
@@ -68,9 +70,9 @@ int main()
 
     // Create the model with 4 age groups.
     auto model = mio::abm::Model(num_age_groups);
-
-    // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    model.parameters.get<mio::abm::IncubationPeriod>() = 4.;
+    mio::ParameterDistributionLogNormal log_norm(4., 1.);
+    // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
+    model.parameters.get<mio::abm::IncubationPeriod>() = mio::ParameterDistributionWrapper(log_norm);
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
