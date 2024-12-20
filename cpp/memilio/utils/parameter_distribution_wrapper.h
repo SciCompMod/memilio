@@ -103,8 +103,35 @@ template <class IOContext>
 IOResult<ParameterDistributionWrapper> deserialize_internal(IOContext& io, Tag<ParameterDistributionWrapper>)
 {
 
-    BOOST_OUTCOME_TRY(auto&& r, deserialize(io, Tag<std::shared_ptr<ParameterDistribution>>{}));
-    return success(ParameterDistributionWrapper(r));
+    auto obj  = io.expect_object("ParameterDistribution");
+    auto type = obj.expect_element("Type", Tag<std::string>{});
+    if (type) {
+        if (type.value() == "Uniform") {
+            BOOST_OUTCOME_TRY(auto&& r, ParameterDistributionUniform::deserialize_elements(io, obj));
+            return ParameterDistributionWrapper(r);
+        }
+        else if (type.value() == "Normal") {
+            BOOST_OUTCOME_TRY(auto&& r, ParameterDistributionNormal::deserialize_elements(io, obj));
+            return ParameterDistributionWrapper(r);
+        }
+        else if (type.value() == "LogNormal") {
+            BOOST_OUTCOME_TRY(auto&& r, ParameterDistributionLogNormal::deserialize_elements(io, obj));
+            return ParameterDistributionWrapper(r);
+        }
+        else if (type.value() == "Exponential") {
+            BOOST_OUTCOME_TRY(auto&& r, ParameterDistributionExponential::deserialize_elements(io, obj));
+            return ParameterDistributionWrapper(r);
+        }
+        else if (type.value() == "Constant") {
+            BOOST_OUTCOME_TRY(auto&& r, ParameterDistributionConstant::deserialize_elements(io, obj));
+            return ParameterDistributionWrapper(r);
+        }
+        else {
+            return failure(StatusCode::InvalidValue, "Type of ParameterDistribution in ParameterDistributionWrapper" +
+                                                         type.value() + " not valid.");
+        }
+    }
+    return failure(type.error());
 }
 
 } // namespace mio

@@ -25,10 +25,11 @@
 #include "abm/person.h"
 #include "abm/simulation.h"
 #include "abm/model.h"
-#include "abm/state_transition_dist.h"
+#include "memilio/utils/parameter_distribution_wrapper.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/io/io.h"
 #include "memilio/io/result_io.h"
+#include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/uncertain_value.h"
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
@@ -398,117 +399,117 @@ void set_parameters(mio::abm::Parameters params)
     params.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
     params.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
-    mio::abm::LogNormal log_norm(4., 1.);
-    params.set<mio::abm::IncubationPeriod>({{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)},
-                                            mio::abm::StateTransitionDistWrapper(log_norm)});
+    mio::ParameterDistributionLogNormal log_norm(4., 1.);
+    params.set<mio::abm::IncubationPeriod>(
+        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, mio::ParameterDistributionWrapper(log_norm)});
 
     //0-4
     params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
 
     //5-14
     params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
 
     //15-34
     params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
 
     //35-59
     params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
 
     //60-79
     params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
 
     //80+
     params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
     params.get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
-        mio::abm::StateTransitionDistWrapper(log_norm);
+        mio::ParameterDistributionWrapper(log_norm);
 
     // Set each parameter for vaccinated people including personal infection and vaccine protection levels.
     // Summary: https://doi.org/10.1038/s41577-021-00550-x,
