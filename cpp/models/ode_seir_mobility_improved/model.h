@@ -59,15 +59,18 @@ public:
         const Index<Region> n_regions      = reduce_index<Index<Region>>(params.get_num_regions());
         for (size_t age_i = 0; age_i < (size_t)n_age_groups; age_i++) {
             for (size_t age_j = 0; age_j < (size_t)n_age_groups; age_j++) {
-                Eigen::VectorXd infectives_per_region = Eigen::VectorXd::Zero((size_t)n_regions);
+                Eigen::VectorXd infectious_share_per_region = Eigen::VectorXd::Zero((size_t)n_regions);
                 for (size_t region_n = 0; region_n < (size_t)n_regions; region_n++) {
                     for (size_t region_m = 0; region_m < (size_t)n_regions; region_m++) {
-                        infectives_per_region(region_n) +=
+                        infectious_share_per_region(region_n) +=
                             commuting_strengths(region_m, region_n) *
                             pop[population.get_flat_index(
                                 {Region(region_m), AgeGroup(age_j), InfectionState::Infected})];
                     }
+                    infectious_share_per_region(region_n) /=
+                        m_population_after_commuting[{Region(region_n), AgeGroup(age_j)}];
                 }
+                Eigen::VectorXd infections_due_commuting = commuting_strengths * infectious_share_per_region;
                 for (size_t region_n = 0; region_n < (size_t)n_regions; region_n++) {
                     FP flow_SE_helper = 0;
                     const size_t Ejn =
@@ -85,11 +88,7 @@ public:
                         params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(age_i, age_j) *
                         params.template get<TransmissionProbabilityOnContact<FP>>()[AgeGroup(age_i)];
 
-                    flow_SE_helper += pop[Ijn] * Nj_inv;
-                    for (size_t region_m = 0; region_m < (size_t)n_regions; region_m++) {
-                        flow_SE_helper += commuting_strengths(region_n, region_m) * infectives_per_region(region_m) /
-                                          m_population_after_commuting[{Region(region_m), AgeGroup(age_j)}];
-                    }
+                    flow_SE_helper += pop[Ijn] * Nj_inv + infections_due_commuting(region_n);
                     flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(
                         {Region(region_n), AgeGroup(age_i)})] +=
                         flow_SE_helper * coeffStoI *
