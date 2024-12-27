@@ -40,7 +40,7 @@ class SIRStrategy(ModelStrategy):
     # Possible option to draw without redraw
     def add_base(prior_array: list[UnboundParameter]) -> None:
         prior_array.append(LambdaParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(1.2), sigma=0.5), name=ParameterNamesSir.LAMBDA_0.value))
+            np.random.lognormal, mean=np.log(0.8), sigma=0.5), name=ParameterNamesSir.LAMBDA_0.value))
         prior_array.append(UnboundParameter(distribution=partial(
             np.random.lognormal, mean=np.log(8), sigma=0.2), name=ParameterNamesSir.MU.value))
         prior_array.append(UnboundParameter(distribution=partial(
@@ -202,8 +202,6 @@ def simulator_SIR(params: list[float], N: int, T: int, intervention_model: bool,
 
     if observation_model:
 
-        timepoints = flows.get_num_time_points()
-
         # Adding new cases with delay D
         # Note, we assume the same delay
         shifted_t0 = sim_lag-D_i+1
@@ -213,7 +211,7 @@ def simulator_SIR(params: list[float], N: int, T: int, intervention_model: bool,
 
         # Compute lags
         fs_i = (1-f_i)*(1 -
-                        np.abs(np.sin((np.pi/7) * np.arange(0, timepoints-sim_lag-1, 1) - 0.5*phi_i)))
+                        np.abs(np.sin((np.pi/7) * np.arange(0, T, 1) - 0.5*phi_i)))
 
         # Compute weekly modulation
         I_data = (1-fs_i) * I_data

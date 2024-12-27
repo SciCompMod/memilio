@@ -4,7 +4,84 @@ from collections.abc import Callable
 from inspect import isclass
 
 import numpy as np
-from bayesflow.simulation import Prior
+from bayesflow.simulation import Prior, TwoLevelPrior
+
+
+class TwoLevelPriorScaler():
+    def fit(self: Self, prior: TwoLevelPrior, *args, **kwargs) -> Self:
+        prior_means, prior_stds = self.estimate_means_and_stds(
+            prior, *args, **kwargs)
+
+        for stds in prior_stds.values():
+            stds[stds == 0] = 10 ** -14
+        self.prior_means = prior_means
+        self.prior_stds = prior_stds
+        return self
+
+    def transform(self: Self, data: Any) -> Any:
+        # z-standardize with previously computed means and stds
+        # Make this use different scalers
+        self._check_is_fitted()
+        for key in self.prior_stds.keys():
+            data[key] = (data[key] - self.prior_means[key]) / \
+                self.prior_stds[key]
+        return data
+
+    def inverse_transform(self: Self, data: Any) -> Any:
+        self._check_is_fitted()
+        for key in data.keys():
+            data[key] = self.prior_means[key] + \
+                data[key] * self.prior_stds[key]
+        return data
+
+    def _check_is_fitted(self: Self):
+        if isclass(self):
+            raise TypeError(
+                f"{self} is a class, not an instance.")
+        msg = (
+            "This %(name)s instance is not fitted yet. Call 'fit' with "
+            "appropriate arguments before using this estimator."
+        )
+        for attribute in ["prior_means", "prior_stds"]:
+            if not hasattr(self, attribute):
+                raise AttributeError(msg % {"name": type(self).__name__})
+
+    def estimate_means_and_stds(self, prior: TwoLevelPrior, n_draws=1000, *args, **kwargs):
+        """Estimates prior means and stds given n_draws from the prior, useful
+        for z-standardization of the prior draws.
+
+        Parameters
+        ----------
+
+        n_draws: int, optional (default = 1000)
+            The number of random draws to obtain from the joint prior.
+        *args      : tuple
+            Optional positional arguments passed to the generator functions.
+        **kwargs   : dict
+            Optional keyword arguments passed to the generator functions.
+
+        Returns
+        -------
+        (prior_means, prior_stds) - tuple of dictionaries for each type of parameters
+            The estimated means and stds of the joint prior.
+        """
+        prior_means = {}
+        prior_stds = {}
+        out_dict = prior(n_draws, *args, **kwargs)
+        prior_means["hyper_parameters"] = np.mean(
+            out_dict["hyper_parameters"], axis=0, keepdims=True)
+        prior_means["local_parameters"] = np.mean(
+            out_dict["local_parameters"], axis=(0, 2), keepdims=True)
+        prior_means["shared_parameters"] = np.mean(
+            out_dict["shared_parameters"], axis=0, keepdims=True)
+
+        prior_stds["hyper_parameters"] = np.std(
+            out_dict["hyper_parameters"], axis=0, ddof=1, keepdims=True)
+        prior_stds["local_parameters"] = np.std(
+            out_dict["local_parameters"], axis=(0, 2), keepdims=True)
+        prior_stds["shared_parameters"] = np.std(
+            out_dict["shared_parameters"], axis=0, keepdims=True)
+        return prior_means, prior_stds
 
 
 class PriorScaler():
@@ -58,7 +135,7 @@ class FixedParameter(UnboundParameter):
 
     def get_draw(self: Self) -> Callable[[], float]:
         def draw() -> float:
-            return self.distribution
+            return self.distribution()
         return draw
 
 

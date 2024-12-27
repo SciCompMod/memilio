@@ -18,7 +18,7 @@ setup(
         'pandas>=1.2.2',
         # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
         'numpy>=1.22,<1.25',
-        'bayesflow'
+        'bayesflow',
         'tensorflow',
         'matplotlib',
         'dataclasses',
