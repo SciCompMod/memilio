@@ -28,16 +28,25 @@
 
 #include <omp.h>
 
+bool age_groups = true;
+
 template <typename FP>
 void set_contact_matrix(mio::oseirmobilityimproved::Model<FP>& model)
 {
-    Eigen::MatrixXd contact_matrix_eigen(6, 6);
-    contact_matrix_eigen << 3.9547, 1.1002, 2.9472, 2.05, 0.3733, 0.0445, 0.3327, 3.5892, 1.236, 1.9208, 0.2681, 0.0161,
-        0.246, 0.7124, 5.6518, 3.2939, 0.2043, 0.0109, 0.1742, 0.8897, 3.3124, 4.5406, 0.4262, 0.0214, 0.0458, 0.1939,
-        0.5782, 1.3825, 1.473, 0.0704, 0.1083, 0.1448, 0.4728, 0.9767, 0.6266, 0.1724;
-    mio::ContactMatrixGroup& contact_matrix =
-        model.parameters.template get<mio::oseirmobilityimproved::ContactPatterns<>>().get_cont_freq_mat();
-    contact_matrix[0].get_baseline() = contact_matrix_eigen;
+    if (age_groups) {
+        Eigen::MatrixXd contact_matrix_eigen(6, 6);
+        contact_matrix_eigen << 3.9547, 1.1002, 2.9472, 2.05, 0.3733, 0.0445, 0.3327, 3.5892, 1.236, 1.9208, 0.2681,
+            0.0161, 0.246, 0.7124, 5.6518, 3.2939, 0.2043, 0.0109, 0.1742, 0.8897, 3.3124, 4.5406, 0.4262, 0.0214,
+            0.0458, 0.1939, 0.5782, 1.3825, 1.473, 0.0704, 0.1083, 0.1448, 0.4728, 0.9767, 0.6266, 0.1724;
+        mio::ContactMatrixGroup& contact_matrix =
+            model.parameters.template get<mio::oseirmobilityimproved::ContactPatterns<>>().get_cont_freq_mat();
+        contact_matrix[0].get_baseline() = contact_matrix_eigen;
+    }
+    {
+        mio::ContactMatrixGroup& contact_matrix =
+            model.parameters.template get<mio::oseirmobilityimproved::ContactPatterns<>>().get_cont_freq_mat();
+        contact_matrix[0].get_baseline().setConstant(7.95);
+    }
 }
 
 /**
@@ -50,19 +59,25 @@ void set_covid_parameters(mio::oseirmobilityimproved::Parameters<double>& params
 {
     params.template set<mio::oseirmobilityimproved::TimeExposed<>>(3.335);
 
-    params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(0)] = 8.0096875;
-    params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(1)] = 8.0096875;
-    params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(2)] = 8.2182;
-    params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(3)] = 8.1158;
-    params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(4)] = 8.033;
-    params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(5)] = 7.985;
+    if (age_groups) {
+        params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(0)] = 8.0096875;
+        params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(1)] = 8.0096875;
+        params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(2)] = 8.2182;
+        params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(3)] = 8.1158;
+        params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(4)] = 8.033;
+        params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(5)] = 7.985;
 
-    params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(0)] = 0.03;
-    params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(1)] = 0.06;
-    params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(2)] = 0.06;
-    params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(3)] = 0.06;
-    params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(4)] = 0.09;
-    params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(5)] = 0.175;
+        params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(0)] = 0.03;
+        params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(1)] = 0.06;
+        params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(2)] = 0.06;
+        params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(3)] = 0.06;
+        params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(4)] = 0.09;
+        params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(5)] = 0.175;
+    }
+    else {
+        params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(0)] = 0.07333;
+        params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(0)]                     = 8.097612257;
+    }
 }
 
 template <typename FP = ScalarType>
@@ -91,17 +106,15 @@ void set_parameters_and_population(mio::oseirmobilityimproved::Model<FP>& model)
     size_t number_regions    = (size_t)parameters.get_num_regions();
     size_t number_age_groups = (size_t)parameters.get_num_agegroups();
     for (size_t j = 0; j < number_age_groups; j++) {
-        model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(j),
-                           mio::oseirmobilityimproved::InfectionState::Exposed}]     = 100;
-        model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(j),
-                           mio::oseirmobilityimproved::InfectionState::Susceptible}] = 999900;
-        for (size_t i = 1; i < number_regions; i++) {
+        for (size_t i = 0; i < number_regions; i++) {
             model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(j),
-                               mio::oseirmobilityimproved::InfectionState::Exposed}]     = 0;
-            model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(j),
-                               mio::oseirmobilityimproved::InfectionState::Susceptible}] = 1000000;
+                               mio::oseirmobilityimproved::InfectionState::Susceptible}] = 10000;
         }
     }
+    model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
+                       mio::oseirmobilityimproved::InfectionState::Exposed}] += 100;
+    model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
+                       mio::oseirmobilityimproved::InfectionState::Susceptible}] -= 100;
     set_mobility_weights(model);
 
     set_contact_matrix(model);
@@ -133,9 +146,13 @@ void set_parameters_and_population(mio::oseirmobilityimproved::Model<FP>& model)
 
 void simulate(size_t num_warm_up_runs, size_t num_runs, size_t number_regions, ScalarType tmax)
 {
+    mio::set_log_level(mio::LogLevel::off);
     ScalarType t0                = 0.;
     ScalarType dt                = 0.1;
-    ScalarType number_age_groups = 6;
+    ScalarType number_age_groups = 1;
+    if (age_groups) {
+        number_age_groups = 6;
+    }
 
     mio::oseirmobilityimproved::Model<ScalarType> model(number_regions, number_age_groups);
     set_parameters_and_population(model);
