@@ -106,7 +106,6 @@ for l in layers:
         for nn in number_of_neurons:
             parameters.append((l, nl, nn))
 
-
 df = pd.DataFrame(
     columns=['layer', 'number_of_layers', 'number_of_neurons',
              'learning_rate', 'kfold_train',
@@ -281,59 +280,25 @@ def train_and_evaluate_model(
                 output = np.array(output)
                 return np.average(output[:, :-1], 0, weights=output[:, -1])
 
+    def evaluate_r(loader):
+        output = []
+        step = 0
+        while step < loader.steps_per_epoch:
+            step += 1
+            inputs, target = loader.__next__()
+            pred = model(inputs, training=False)
+            outs = (
+                loss_fn(np.expm1(target), np.expm1(pred)),
+                tf.reduce_mean(mean_absolute_percentage_error(
+                    np.expm1(target), np.expm1(pred))),
+                len(target),  # Keep track of batch size
+            )
+            output.append(outs)
+            if step == loader.steps_per_epoch:
+                output = np.array(output)
+                return np.average(output[:, :-1], 0, weights=output[:, -1])
+
     n_days = int(new_labels.shape[2]/48)
-
-    def test_evaluation(loader):
-
-        inputs, target = loader.__next__()
-        pred = model(inputs, training=False)
-
-        mean_per_batch = []
-        states_array = []
-        infectionstates = ['Susceptible', 'Exposed', 'InfectedNoSymptoms',
-                           'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
-        # for i in InfectionState.values():
-        for i in infectionstates:
-            states_array.append(i)
-
-        for batch_p, batch_t in zip(pred, target):
-            MAPE_v = []
-            for v_p, v_t in zip(batch_p, batch_t):
-
-                pred_ = tf.reshape(v_p, (n_days, 48))
-                target_ = tf.reshape(v_t, (n_days, 48))
-
-                diff = pred_ - target_
-                relative_err = (abs(diff))/abs(target_)
-                relative_err_transformed = np.asarray(
-                    relative_err).transpose().reshape(8, -1)
-                relative_err_means_percentage = relative_err_transformed.mean(
-                    axis=1) * 100
-
-                MAPE_v.append(relative_err_means_percentage)
-
-            mean_per_batch.append(np.asarray(MAPE_v).transpose().mean(axis=1))
-
-        mean_percentage = pd.DataFrame(
-            data=relative_err_means_percentage,
-            index=infectionstates,
-            columns=['MAPE_log'])
-        mean_percentage['MAPE_log'] = relative_err_means_percentage
-
-        # same evaluation for rescaled data:
-        pred = np.expm1(pred)
-        test_labels = np.expm1(np.array(test_labels))
-
-        diff_rescaled = pred - test_labels
-        relative_err_rescaled = (abs(diff_rescaled))/abs(test_labels)
-        # reshape [batch, time, features] -> [features, time * batch]
-        relative_err_transformed_rescaled = relative_err_rescaled.transpose(
-            2, 0, 1).reshape(8, -1)
-        relative_err_means_percentage_rescaled = relative_err_transformed_rescaled.mean(
-            axis=1) * 100
-        mean_percentage['MAPE_rescaled'] = relative_err_means_percentage_rescaled
-
-        return mean_percentage
 
     kf = KFold(n_splits=5)
     train_idxs = []
@@ -345,6 +310,7 @@ def train_and_evaluate_model(
 
     test_scores = []
     train_losses = []
+    test_rescaled = []
     val_losses = []
 
     losses_history_all = []
@@ -412,6 +378,7 @@ def train_and_evaluate_model(
         ################################################################################
         model.set_weights(best_weights)  # Load best model
         test_loss, test_acc = evaluate(loader_te)
+        test_mape_rescaled = evaluate_r(loader_te)
         # test_MAPE = test_evaluation(loader_te)
         # print(test_MAPE)
 
@@ -419,6 +386,7 @@ def train_and_evaluate_model(
             "Done. Test loss: {:.4f}. Test acc: {:.2f}".format(
                 test_loss, test_acc))
         test_scores.append(test_loss)
+        test_rescaled.append(test_mape_rescaled)
         train_losses.append(np.asarray(losses_history).min())
         val_losses.append(np.asarray(val_losses_history).min())
         losses_history_all.append(losses_history)
@@ -444,6 +412,7 @@ def train_and_evaluate_model(
     print("K-Fold Train Score:{}".format(np.mean(train_losses)))
     print("K-Fold Validation Score:{}".format(np.mean(val_losses)))
     print("K-Fold Test Score: {}".format(np.mean(test_scores)))
+    print("K-Fold ORIGINAL DATA Test Score: {}".format(np.mean(test_rescaled)))
 
     print("Time for training: {:.4f} seconds".format(elapsed))
     print("Time for training: {:.4f} minutes".format(elapsed/60))
@@ -452,7 +421,7 @@ def train_and_evaluate_model(
                              learning_rate, np.mean(train_losses),
                              np.mean(val_losses),
                              np.mean(test_scores),
-                             (elapsed / 60), test_scores, val_losses, train_losses]
+                             (elapsed / 60), test_scores, test_rescaled, val_losses, train_losses]
     # [np.asarray(losses_history_all).mean(axis=0)],
     # [np.asarray(val_losses_history_all).mean(axis=0)]]
 
