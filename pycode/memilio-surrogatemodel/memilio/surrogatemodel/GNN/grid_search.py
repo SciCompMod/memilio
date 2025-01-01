@@ -34,6 +34,11 @@ from spektral.layers import GCSConv, GlobalAvgPool, GlobalAttentionPool, ARMACon
 from spektral.transforms.normalize_adj import NormalizeAdj
 from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale_laplacian, normalized_adjacency
 
+# tensorflow configurations
+
+tf.config.threading.set_intra_op_parallelism_threads(16)
+tf.config.threading.set_inter_op_parallelism_threads(16)
+
 # from memilio.simulation.secir import InfectionState
 
 
@@ -46,7 +51,7 @@ from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale
 
 # file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
 file = open(
-    '/hpc_data/schm_a45/data_paper/GNN_data_30days_nodeswithvariance_1k.pickle', 'rb')
+    '/hpc_data/schm_a45/data_paper/GNN_data_30days_nodeswithvariance_5k.pickle', 'rb')
 data_secir = pickle.load(file)
 
 
@@ -274,6 +279,25 @@ def train_and_evaluate_model(
                 output = np.array(output)
                 return np.average(output[:, :-1], 0, weights=output[:, -1])
 
+
+    def evaluate_r(loader):
+        output = []
+        step = 0
+        while step < loader.steps_per_epoch:
+            step += 1
+            inputs, target = loader.__next__()
+            pred = model(inputs, training=False)
+            outs = (
+                loss_fn(np.expm1(target), np.expm1(pred)),
+                tf.reduce_mean(mean_absolute_percentage_error(
+                    np.expm1(target), np.expm1(pred))),
+                len(target),  # Keep track of batch size
+            )
+            output.append(outs)
+            if step == loader.steps_per_epoch:
+                output = np.array(output)
+                return np.average(output[:, :-1], 0, weights=output[:, -1])
+
     n_days = int(new_labels.shape[2]/48)
 
     def test_evaluation(loader):
@@ -337,6 +361,7 @@ def train_and_evaluate_model(
         test_idxs.append(test_index)
 
     test_scores = []
+    test_rescaled = []
     train_losses = []
     val_losses = []
 
@@ -405,6 +430,8 @@ def train_and_evaluate_model(
         ################################################################################
         model.set_weights(best_weights)  # Load best model
         test_loss, test_acc = evaluate(loader_te)
+        test_mape_rescaled = evaluate_r(loader_te)
+
         # test_MAPE = test_evaluation(loader_te)
         # print(test_MAPE)
 
@@ -412,6 +439,7 @@ def train_and_evaluate_model(
             "Done. Test loss: {:.4f}. Test acc: {:.2f}".format(
                 test_loss, test_acc))
         test_scores.append(test_loss)
+        test_rescaled.append(test_mape_rescaled)
         train_losses.append(np.asarray(losses_history).min())
         val_losses.append(np.asarray(val_losses_history).min())
         losses_history_all.append(losses_history)
@@ -437,6 +465,7 @@ def train_and_evaluate_model(
     print("K-Fold Train Score:{}".format(np.mean(train_losses)))
     print("K-Fold Validation Score:{}".format(np.mean(val_losses)))
     print("K-Fold Test Score: {}".format(np.mean(test_scores)))
+    print("K-Fold ORIGINAL DATA Test Score: {}".format(np.mean(test_rescaled)))
 
     print("Time for training: {:.4f} seconds".format(elapsed))
     print("Time for training: {:.4f} minutes".format(elapsed/60))
@@ -445,7 +474,7 @@ def train_and_evaluate_model(
                              learning_rate, np.mean(train_losses),
                              np.mean(val_losses),
                              np.mean(test_scores),
-                             (elapsed / 60), test_scores, val_losses, train_losses]
+                             (elapsed / 60), test_scores, test_rescaled, val_losses, train_losses]
     # [np.asarray(losses_history_all).mean(axis=0)],
     # [np.asarray(val_losses_history_all).mean(axis=0)]]
 
