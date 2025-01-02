@@ -5,7 +5,7 @@ from functools import partial
 import re
 
 from memilio.inference.utils import generate_offline_data, configure_input
-from memilio.inference.sir import ParameterNamesSir, SIRStrategy, simulator_SIR
+from memilio.inference.sir import SIRStrategy, simulator_SIR, DEFAULT_PRIORS
 from memilio.inference.plotting import Plotting
 from memilio.inference.prior import ModelPriorBuilder, PriorScaler
 from memilio.inference.config import InferenceConfig
@@ -114,9 +114,9 @@ def run_pairwise_parameter_inference(output_folder_path: os.PathLike, config: In
 
 
 if __name__ == "__main__":
-    fixed_parameter_values = {ParameterNamesSir.LAMBDA_0.value: 0.7,
-                              ParameterNamesSir.MU.value: 4,
-                              ParameterNamesSir.I0.value: 200, }
+    fixed_parameter_values = {DEFAULT_PRIORS["LAMBDA_0"]["name"]: 0.7,
+                              DEFAULT_PRIORS["MU"]["name"]: 4,
+                              DEFAULT_PRIORS["I0"]["name"]: 200, }
 
     config = InferenceConfig(T=81, N=83e6, intervention_model=False,
                              observation_model=False)

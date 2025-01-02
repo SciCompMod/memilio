@@ -7,7 +7,7 @@ import pandas as pd
 
 from memilio.inference.plotting import Plotting
 from memilio.inference.prior import ModelPriorBuilder, PriorScaler
-from memilio.inference.sir import ParameterNamesSir, SIRStrategy, simulator_SIR
+from memilio.inference.sir import DEFAULT_PRIORS, SIRStrategy, simulator_SIR
 from memilio.inference.config import InferenceConfig
 from memilio.inference.utils import generate_offline_data, configure_input
 
@@ -46,11 +46,11 @@ def load_data_synthetic(simulator_fun: Callable[[list[float]], np.ndarray], para
 
 
 def run_single_learnable_inference(output_folder_path: os.PathLike, config: InferenceConfig) -> None:
-    fixed_parameter_values = {ParameterNamesSir.LAMBDA_0.value: 0.7,
-                              ParameterNamesSir.MU.value: 4,
-                              ParameterNamesSir.I0.value: 200, }
+    fixed_parameter_values = {DEFAULT_PRIORS["LAMBDA_0"]["name"]: 0.7,
+                              DEFAULT_PRIORS["MU"]["name"]: 4,
+                              DEFAULT_PRIORS["I0"]["name"]: 200, }
 
-    learnable_parameters_list = [ParameterNamesSir.I0.value]
+    learnable_parameters_list = [DEFAULT_PRIORS["I0"]["name"]]
     fixed_parameters_list = {k: fixed_parameter_values[k]
                              for k in fixed_parameter_values.keys() - list(learnable_parameters_list)}
 

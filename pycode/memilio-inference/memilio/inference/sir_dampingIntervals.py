@@ -18,61 +18,184 @@ alpha_f = (0.7**2)*((1-0.7)/(0.17**2) - (1-0.7))
 beta_f = alpha_f*(1/0.7 - 1)
 mio.set_log_level(mio.LogLevel.Warning)
 
+# Default-Priors for SIR-Model
+DEFAULT_PRIORS = {
+    "LAMBDA_0": {
+        "type": "prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "params": {"mean": np.log(0.8), "sigma": 0.5},  # before np.log(1.2)
+        "name": r"$\lambda_0$",
+        "description": "infectionrate before interventions"
+    },
+    "MU": {
+        "type": "prior",
+        "parameter_class": UnboundParameter,
+        "distribution": np.random.lognormal,
+        "params": {"mean": np.log(8), "sigma": 0.2},
+        "name": r"$\mu$",
+        "description": "recoveryrate"
+    },
+    "I0": {
+        "type": "prior",
+        "parameter_class": UnboundParameter,
+        "distribution": np.random.gamma,
+        # Expected value of gamma-distribution (shape * scale) = 60
+        "params": {"shape": 2, "scale": 30},
+        "name": r"$I_0$",
+        "description": "initial number of infected"
+    },
+    "LAMBDA_1": {
+        "type": "prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "params": {"mean": np.log(0.6), "sigma": 0.5},
+        "name": r"$\lambda_1$",
+        "description": "infectionrate after first intervention"
+    },
+    "LAMBDA_2": {
+        "type": "prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "params": {"mean": np.log(0.6), "sigma": 0.5},
+        "name": r"$\lambda_2$",
+        "description": "infectionrate after second intervention"
+    },
+    "LAMBDA_3": {
+        "type": "prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "params": {"mean": np.log(0.6), "sigma": 0.5},
+        "name": r"$\lambda_3$",
+        "description": "infectionrate after third intervention"
+    },
+    "LAMBDA_4": {
+        "type": "prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "params": {"mean": np.log(0.6), "sigma": 0.5},
+        "name": r"$\lambda_4$",
+        "description": "infectionrate after fourth intervention"
+    },
+    "LAMBDA_5": {
+        "type": "prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "params": {"mean": np.log(0.6), "sigma": 0.5},
+        "name": r"$\lambda_5$",
+        "description": "infectionrate after fifth intervention"
+    },
+    "LAMBDA_6": {
+        "type": "prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "params": {"mean": np.log(0.6), "sigma": 0.5},
+        "name": r"$\lambda_6$",
+        "description": "infectionrate after sixth intervention"
+    },
+    "F_I": {
+        "type": "prior",
+        "parameter_class": WeeklyModulationAmplitudeParameter,
+        "distribution": np.random.beta,
+        # Erwartungswert der Beta-Verteilung alpha_f / (alpha_f + beta_f)
+        "params": {"a": alpha_f, "b": beta_f},
+        "name": r"$f_i$",
+        "description": "modulation amplitude"
+    },
+    "PHI_I": {
+        "type": "prior",
+        "parameter_class": UnboundParameter,
+        "distribution": stats.vonmises(kappa=0.01).rvs,
+        "params": {},
+        "name": r"$\phi_i$",
+        "description": "phase shift"
+    },
+    "D_I": {
+        "type": "prior",
+        "parameter_class": DelayParameter,
+        "distribution": np.random.lognormal,
+        "params": {"mean": np.log(8), "sigma": 0.2},
+        "name": r"$D_i$",
+        "description": "reporting delay"
+    },
+    "PSI": {
+        "type": "prior",
+        "parameter_class": ScaleMultiplicativeReportingNoiseParameter,
+        "distribution": np.random.gamma,
+        "params": {"shape": 1, "scale": 5},
+        "name": r"$\psi$",
+        "description": "reporting noise"
+    },
+}
 
-class ParameterNamesSir(Enum):
-    LAMBDA_0 = r'$\lambda_0$'
-    MU = r'$\mu$'
-    I0 = r'$I_0$'
-    LAMBDA_1 = r'$\lambda_1$'
-    LAMBDA_2 = r'$\lambda_2$'
-    LAMBDA_3 = r'$\lambda_3$'
-    LAMBDA_4 = r'$\lambda_4$'
-    LAMBDA_5 = r'$\lambda_5$'
-    LAMBDA_6 = r'$\lambda_6$'
-    F_I = r'$f_i$'
-    PHI_I = r'$\phi_i$'
-    D_I = r'$D_i$'
-    PSI = r'$\psi$'
+test_different_damping_priors = {
+    "T1": {
+        "type": "prior",
+        "parameter_class": InterventionChangePointParameter,
+        "distribution": np.random.uniform,
+        "params": {"low": 0, "high": 180},
+        "name": r"$t_1$",
+        "description": "first InterventionChangePoint"
+    },
+    "T2": {
+        "type": "prior",
+        "parameter_class": InterventionChangePointParameter,
+        "distribution": np.random.uniform,
+        "params": {"low": 0, "high": 180},
+        "name": r"$t_2$",
+        "description": "second InterventionChangePoint"
+    },
+    "T3": {
+        "type": "prior",
+        "parameter_class": InterventionChangePointParameter,
+        "distribution": np.random.uniform,
+        "params": {"low": 0, "high": 180},
+        "name": r"$t_3$",
+        "description": "third InterventionChangePoint"
+    },
+    "T4": {
+        "type": "prior",
+        "parameter_class": InterventionChangePointParameter,
+        "distribution": np.random.uniform,
+        "params": {"low": 0, "high": 180},
+        "name": r"$t_4$",
+        "description": "fourth InterventionChangePoint"
+    }
+}
+
+
+def create_prior_from_dd(key, additional_params={}):
+    prior_entry = DEFAULT_PRIORS[key]
+    return prior_entry["parameter_class"](distribution=partial(
+        prior_entry["distribution"], **prior_entry["params"]), name=prior_entry["name"], **additional_params)
 
 
 class SIRStrategy(ModelStrategy):
     @staticmethod
     # Possible option to draw without redraw
     def add_base(prior_array: list[UnboundParameter]) -> None:
-        prior_array.append(LambdaParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(1.2), sigma=0.5), name=ParameterNamesSir.LAMBDA_0.value))
-        prior_array.append(UnboundParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(8), sigma=0.2), name=ParameterNamesSir.MU.value))
-        prior_array.append(UnboundParameter(distribution=partial(
-            np.random.gamma, shape=2, scale=30), name=ParameterNamesSir.I0.value))
+        prior_array.append(create_prior_from_dd("LAMBDA_0"))
+        prior_array.append(create_prior_from_dd("MU"))
+        prior_array.append(create_prior_from_dd("I0"))
 
     @staticmethod
     # Possible option to draw without redraw
     def add_intervention(prior_array: list[UnboundParameter]) -> None:
-        prior_array.append(LambdaParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(0.6), sigma=0.5), name=ParameterNamesSir.LAMBDA_1.value))
-        prior_array.append(LambdaParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(0.6), sigma=0.5), name=ParameterNamesSir.LAMBDA_2.value))
-        prior_array.append(LambdaParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(0.6), sigma=0.5), name=ParameterNamesSir.LAMBDA_3.value))
-        prior_array.append(LambdaParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(0.6), sigma=0.5), name=ParameterNamesSir.LAMBDA_4.value))
-        prior_array.append(LambdaParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(0.6), sigma=0.5), name=ParameterNamesSir.LAMBDA_5.value))
-        prior_array.append(LambdaParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(0.6), sigma=0.5), name=ParameterNamesSir.LAMBDA_6.value))
+        prior_array.append(create_prior_from_dd("LAMBDA_1"))
+        prior_array.append(create_prior_from_dd("LAMBDA_2"))
+        prior_array.append(create_prior_from_dd("LAMBDA_3"))
+        prior_array.append(create_prior_from_dd("LAMBDA_4"))
+        prior_array.append(create_prior_from_dd("LAMBDA_5"))
+        prior_array.append(create_prior_from_dd("LAMBDA_6"))
 
     @staticmethod
     # Possible option to draw without redraw
     def add_observation(prior_array: list[UnboundParameter], sim_lag: int) -> None:
-        prior_array.append(WeeklyModulationAmplitudeParameter(distribution=partial(
-            np.random.beta, a=alpha_f, b=beta_f), name=ParameterNamesSir.F_I.value))
-        prior_array.append(UnboundParameter(
-            distribution=stats.vonmises(kappa=0.01).rvs, name=ParameterNamesSir.PHI_I.value))
-        prior_array.append(DelayParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(8), sigma=0.2), name=ParameterNamesSir.D_I.value, sim_lag=sim_lag))
-        prior_array.append(ScaleMultiplicativeReportingNoiseParameter(distribution=partial(
-            np.random.gamma, shape=1, scale=5), name=ParameterNamesSir.PSI.value))
+        prior_array.append(create_prior_from_dd("F_I"))
+        prior_array.append(create_prior_from_dd("PHI_I"))
+        prior_array.append(create_prior_from_dd(
+            "D_I", additional_params={"sim_lag": sim_lag}))
+        prior_array.append(create_prior_from_dd("PSI"))
 
 
 def simulator_SIR(params: list[float], T: int, N: int, intervention_model: bool, observation_model: bool, param_names: list[str], fixed_params: dict[str, float] = dict(), sim_lag: int = 15) -> npt.NDArray[np.float64]:
@@ -85,32 +208,32 @@ def simulator_SIR(params: list[float], T: int, N: int, intervention_model: bool,
     combined_params = {**dynamic_params, **fixed_params}
 
     # Extract parameters using the Enum
-    lambd0 = combined_params[ParameterNamesSir.LAMBDA_0.value]
-    mu = combined_params[ParameterNamesSir.MU.value]
-    I0 = combined_params[ParameterNamesSir.I0.value]
+    lambd0 = combined_params[DEFAULT_PRIORS["LAMBDA_0"]["name"]]
+    mu = combined_params[DEFAULT_PRIORS["MU"]["name"]]
+    I0 = combined_params[DEFAULT_PRIORS["I0"]["name"]]
     # Should IO also be a constraint instead of set to bouandry?
     I0 = max(1, np.round(I0))
 
     lambda_dampings = list()
     if intervention_model:
         lambda_dampings.append(
-            combined_params[ParameterNamesSir.LAMBDA_1.value])
+            combined_params[DEFAULT_PRIORS["T1"]["name"]])
         lambda_dampings.append(
-            combined_params[ParameterNamesSir.LAMBDA_2.value])
+            combined_params[DEFAULT_PRIORS["T2"]["name"]])
         lambda_dampings.append(
-            combined_params[ParameterNamesSir.LAMBDA_3.value])
+            combined_params[DEFAULT_PRIORS["T3"]["name"]])
         lambda_dampings.append(
-            combined_params[ParameterNamesSir.LAMBDA_4.value])
+            combined_params[DEFAULT_PRIORS["T4"]["name"]])
         lambda_dampings.append(
-            combined_params[ParameterNamesSir.LAMBDA_5.value])
+            combined_params[DEFAULT_PRIORS["T5"]["name"]])
         lambda_dampings.append(
-            combined_params[ParameterNamesSir.LAMBDA_6.value])
+            combined_params[DEFAULT_PRIORS["T6"]["name"]])
 
     if observation_model:
-        f_i = combined_params[ParameterNamesSir.F_I.value]
-        phi_i = combined_params[ParameterNamesSir.PHI_I.value]
-        D_i = combined_params[ParameterNamesSir.D_I.value]
-        scale_I = combined_params[ParameterNamesSir.PSI.value]
+        f_i = combined_params[DEFAULT_PRIORS["F_I"]["name"]]
+        phi_i = combined_params[DEFAULT_PRIORS["PHI_I"]["name"]]
+        D_i = combined_params[DEFAULT_PRIORS["D_I"]["name"]]
+        scale_I = combined_params[DEFAULT_PRIORS["PSI"]["name"]]
         D_i = int(round(D_i))
 
     # Maybe check for missing parameter
@@ -222,7 +345,7 @@ def simulator_SIR(params: list[float], T: int, N: int, intervention_model: bool,
 if __name__ == "__main__":
 
     results = simulator_SIR([0.7, 4, 200], 81, 83e6, False, False, [
-        ParameterNamesSir.LAMBDA_0.value, ParameterNamesSir.MU.value, ParameterNamesSir.I0.value])
+        DEFAULT_PRIORS["LAMBDA_0"]["name"], DEFAULT_PRIORS["MU"]["name"], DEFAULT_PRIORS["I0"]["name"]])
 
     plt.plot(results)
     plt.savefig("simulator_SIR.png")

@@ -5,9 +5,12 @@ from typing import Callable, Any
 import numpy as np
 import pandas as pd
 
+import memilio.simulation as mio
 from memilio.inference.plotting import Plotting
-from memilio.inference.prior import ModelPriorBuilder, PriorScaler
-from memilio.inference.sir_variableT import ParameterNamesSir, SIRStrategy, simulator_SIR
+from memilio.inference.prior import (ModelPriorBuilder, PriorScaler, UnboundParameter, LambdaParameter, DelayParameter,
+                                     InterventionChangePointParameter, WeeklyModulationAmplitudeParameter,
+                                     ScaleMultiplicativeReportingNoiseParameter, ModelStrategy)
+from memilio.inference.sir import SIRStrategy, simulator_SIR, DEFAULT_PRIORS
 from memilio.inference.config import InferenceConfig, TrainerParameters
 from memilio.inference.utils import generate_offline_data
 
@@ -18,6 +21,74 @@ from bayesflow.trainers import Trainer
 
 RNG = np.random.default_rng(2023)
 FILE_PATH = os.path.dirname(os.path.abspath(__file__))
+mio.set_log_level(mio.LogLevel.Warning)
+
+VARIABLE_T_PRIORS = {
+    "LAMBDA_1": {
+        "type": "prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "params": {"mean": np.log(0.6), "sigma": 0.5},
+        "name": r"$\lambda_1$",
+        "description": "infectionrate after first intervention"
+    },
+    "LAMBDA_2": {
+        "type": "prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "params": {"mean": np.log(0.6), "sigma": 0.5},
+        "name": r"$\lambda_2$",
+        "description": "infectionrate after second intervention"
+    },
+    "LAMBDA_3": {
+        "type": "prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "params": {"mean": np.log(0.6), "sigma": 0.5},
+        "name": r"$\lambda_3$",
+        "description": "infectionrate after third intervention"
+    },
+    "LAMBDA_4": {
+        "type": "prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "params": {"mean": np.log(0.6), "sigma": 0.5},
+        "name": r"$\lambda_4$",
+        "description": "infectionrate after fourth intervention"
+    },
+    "T1": {
+        "type": "prior",
+        "parameter_class": InterventionChangePointParameter,
+        "distribution": np.random.uniform,
+        "params": {"low": 0, "high": 180},
+        "name": r"$t_1$",
+        "description": "first InterventionChangePoint"
+    },
+    "T2": {
+        "type": "prior",
+        "parameter_class": InterventionChangePointParameter,
+        "distribution": np.random.uniform,
+        "params": {"low": 0, "high": 180},
+        "name": r"$t_2$",
+        "description": "second InterventionChangePoint"
+    },
+    "T3": {
+        "type": "prior",
+        "parameter_class": InterventionChangePointParameter,
+        "distribution": np.random.uniform,
+        "params": {"low": 0, "high": 180},
+        "name": r"$t_3$",
+        "description": "third InterventionChangePoint"
+    },
+    "T4": {
+        "type": "prior",
+        "parameter_class": InterventionChangePointParameter,
+        "distribution": np.random.uniform,
+        "params": {"low": 0, "high": 180},
+        "name": r"$t_4$",
+        "description": "fourth InterventionChangePoint"
+    }
+}
 
 
 def configure_input(forward_dict: dict[str, Any], prior_scaler: PriorScaler) -> dict[str, Any]:
@@ -106,6 +177,10 @@ def run_inference(output_folder_path: os.PathLike, config: InferenceConfig) -> N
 
     # save current config
     # config.save(output_folder_path)
+
+    # Change default values of prior
+    for key, value in VARIABLE_T_PRIORS.items():
+        DEFAULT_PRIORS[key] = value
 
     # Create Priors
     prior_builder = ModelPriorBuilder(SIRStrategy)

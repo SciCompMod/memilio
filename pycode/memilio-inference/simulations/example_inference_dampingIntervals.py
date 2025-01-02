@@ -6,7 +6,7 @@ import numpy as np
 
 from memilio.inference.plotting import Plotting
 from memilio.inference.prior import ModelPriorBuilder, PriorScaler
-from memilio.inference.sir_dampingIntervals import ParameterNamesSir, SIRStrategy, simulator_SIR
+from memilio.inference.sir_dampingIntervals import DEFAULT_PRIORS, SIRStrategy, simulator_SIR
 from memilio.inference.config import InferenceConfig, TrainerParameters
 from memilio.inference.utils import generate_offline_data, configure_input, load_data_rki_sir, start_training
 
