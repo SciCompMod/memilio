@@ -551,12 +551,11 @@ TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 {
     auto model = mio::abm::Model(num_age_groups);
     // make sure the infected person stay in Infected long enough
-    mio::ParameterDistributionLogNormal log_norm(100., 1.0);
+    mio::ParameterDistributionConstant constant(100.);
     model.parameters.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant(0), age_group_15_to_34}] =
-        mio::ParameterDistributionWrapper(log_norm);
+        mio::ParameterDistributionWrapper(constant);
     model.parameters.get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant(0), age_group_15_to_34}] =
-        mio::ParameterDistributionWrapper(log_norm);
-    ;
+        mio::ParameterDistributionWrapper(constant);
 
     auto home_id = model.add_location(mio::abm::LocationType::Home);
     auto work_id = model.add_location(mio::abm::LocationType::Work);
