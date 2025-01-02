@@ -43,7 +43,7 @@ namespace params
 // num_subcompartments is used as a template argument and has to be a constexpr.
 constexpr size_t num_subcompartments = NUM_SUBCOMPARTMENTS;
 
-// Define (non age-resolved) parameters.
+// Define (non-age-resolved) parameters.
 const ScalarType dt                             = 0.01;
 const ScalarType seasonality                    = 0.;
 const ScalarType relativeTransmissionNoSymptoms = 1.;

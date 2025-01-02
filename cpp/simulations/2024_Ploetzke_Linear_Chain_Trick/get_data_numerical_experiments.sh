@@ -66,7 +66,7 @@ do
 done
 
 
-# Fourth case: Increase the effective reproduction number at simulation day 2 to different values and 
+# Fifth case: Increase the effective reproduction number at simulation day 2 to different values and 
 # simulate for 200 days to compare epidemic peaks.
 # Also perform simulations with TimeExposed scaled by 0.5 or 2.
 # Define and construct relevant folders.
@@ -96,7 +96,7 @@ do
     done
 done
 
-# Fifth case: Simulation for the impact of age resolution.
+# Sixth case: Simulation for the impact of age resolution.
 subdir_age_resolution="$dir/age_resolution/"
 if [ ! -d "$subdir_age_resolution" ]; then
     mkdir "$subdir_age_resolution"
