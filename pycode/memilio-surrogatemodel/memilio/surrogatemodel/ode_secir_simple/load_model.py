@@ -271,13 +271,13 @@ def lineplots_pred_labels(pred_reversed, labels_reversed, num_plots):
         for ax, state, pred, label, input_data in zip(
                 axes, infectionstates, pred_reversed[i].transpose(),
                 labels_reversed[i].transpose(), np.expm1(np.asarray(test_inputs))[i].transpose()):
-
+            pred_plot = np.insert(pred, 0, input_data[-1])
             # Plot lines
             ax.plot(np.arange(1, 6), input_data,
                     color='black', label='Inputs', linewidth=3)
             ax.plot(np.arange(
-                6, pred_reversed.shape[1] + 6), label, color='orange', label='Labels', linewidth=3)
-            ax.plot(np.arange(6, pred_reversed.shape[1] + 6), pred, color='blue', label='Predictions',
+                6, pred_reversed.shape[1] + 6), label, color='red', label='Labels', linewidth=3)
+            ax.plot(np.arange(5, pred_reversed.shape[1] + 6), pred_plot, color='deepskyblue', label='Predictions',
                     linestyle='--', linewidth=2)
 
             # Compute and add annotation text
@@ -285,7 +285,14 @@ def lineplots_pred_labels(pred_reversed, labels_reversed, num_plots):
                 100 * np.mean(abs((label - pred) / label)), 4)
             log_mape = np.round(
                 100 * np.mean(abs((np.log1p(label) - np.log1p(pred)) / np.log1p(label))), 4)
-            textstr = f"not log MAPE = {not_log_mape}%\nlog MAPE = {log_mape}%"
+            # textstr = f"not log MAPE = {not_log_mape}%\nlog MAPE = {log_mape}%"
+            textstr = '\n'.join((
+                'not log MAPE = ' +
+                str(np.round(100 * np.mean(abs((label - pred) / label)), 4)) + '%',
+                'log MAPE: ' +
+                str(np.round(
+                    100 * np.mean(abs((np.log1p(label) - np.log1p(pred)) / np.log1p(label))), 4)) + '%'
+            ))
             props = dict(boxstyle='round,pad=0.3',
                          facecolor='lightgray', edgecolor='black', alpha=0.8)
 
@@ -308,7 +315,7 @@ def lineplots_pred_labels(pred_reversed, labels_reversed, num_plots):
                    ncol=3, frameon=False, fontsize=10)
 
         # Save the figure
-        save_path = f"/localdata1/gnn_paper_2024/images/pred_labels_trajectories/no_agegroups_90days_I_based_pred_labels_withinput/compartment_lines_noagegroups_90days_I_based_pred_labels_10k_paper_no{i}.png"
+        save_path = f"/localdata1/gnn_paper_2024/images/pred_labels_trajectories/no_agegroups_90days_I_based_pred_labels_withinput_2/compartment_lines_noagegroups_90days_I_based_pred_labels_10k_paper_no{i}.png"
         plt.savefig(save_path, bbox_inches='tight')
         print(f'Plot No. {i} saved')
 
@@ -397,7 +404,7 @@ def lineplots_pred_labels_selected_plot(pred_reversed, labels_reversed, plotID):
         ax.plot(np.arange(1, 6), input_data,
                 color='black', label='Inputs', linewidth=3)
         ax.plot(np.arange(
-                6, pred_reversed.shape[1] + 6), label, color='orange', label='Labels', linewidth=3)
+                6, pred_reversed.shape[1] + 6), label, color='red', label='Labels', linewidth=3)
         ax.plot(np.arange(6, pred_reversed.shape[1] + 6), pred, color='blue', label='Predictions',
                 linestyle='--', linewidth=2)
 
