@@ -26,7 +26,7 @@ from spektral.utils.convolution import normalized_laplacian, rescale_laplacian
 
 # file = open(os.path.join(path_data, 'GNN_data_30days_10k.pickle'), 'rb')
 file = open(
-    '/hpc_data/schm_a45/data_paper/GNN_data_30days_samenodes_2damp_1k_new.pickle', 'rb')
+    '/hpc_data/schm_a45/data_paper/GNN_data_30days_samenodes_2damp_1k_new2.pickle', 'rb')
 data_secir = pickle.load(file)
 
 len_dataset = data_secir['inputs'].shape[0]

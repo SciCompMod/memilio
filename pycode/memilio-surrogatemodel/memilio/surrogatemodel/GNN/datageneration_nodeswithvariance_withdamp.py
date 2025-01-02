@@ -192,7 +192,7 @@ def run_secir_groups_simulation(days, damping_days, graph, num_groups=6):
             # model.populations[age_group, Index_InfectionState(
             #    InfectionState.Recovered)] = random.uniform(0, ((1-np.asarray(randoms).sum())*pop_age_group))
             model.populations[age_group, Index_InfectionState(
-                InfectionState.Recovered)] = pop_age_group*p_recovered * random.uniform(0.1, 1)
+                InfectionState.Recovered)] = pop_age_group * p_recovered * random.uniform(0.1, 1)
 
             # if (subtotal+model.populations[age_group, InfectionState.Recovered].value) >= pop_age_group:
             #    print('Subtotal is larger or equal than population!')
