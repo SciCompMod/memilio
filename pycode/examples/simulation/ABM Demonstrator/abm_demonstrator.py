@@ -794,7 +794,7 @@ def write_results_to_h5(path, log):
     file = h5py.File(path, 'w')
     result_list = []
     for agent in log[3][0]:
-        gr = file.create_group(str(agent))
+        gr = file.create_group(str(agent.index()))
         loc_ids = np.array([convert_loc_id_to_string((log[2][t][agent.index()][0], log[2][t][agent.index()][1]))
                            for t in range(len(log[2]))], dtype=np.str_)
         time_since_transm = np.array([convert_time_since_transmission(
@@ -830,6 +830,10 @@ def run_abm_simulation(sim_num):
     abm.set_seeds(sim.model, sim_num)
     # set infection parameters
     sim.model.parameters = set_infection_parameters(parameters)
+    # set age groups that go to school and work
+    abm.set_AgeGroupGoToSchool(sim.model.parameters, age_group_5_to_14)
+    abm.set_AgeGroupGoToWork(sim.model.parameters, age_group_15_to_34)
+    abm.set_AgeGroupGoToWork(sim.model.parameters, age_group_35_to_59)
     # as input areas do not fit one-to-one to abm location types, there has to be a mapping
     mapping = create_locations_from_input(
         sim.model, areas, household_distribution)

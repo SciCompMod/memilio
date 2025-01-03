@@ -454,6 +454,14 @@ PYBIND11_MODULE(_simulation_abm, m)
         },
         py::return_value_policy::reference_internal);
 
+    m.def("set_AgeGroupGoToSchool", [](mio::abm::Parameters& infection_params, mio::AgeGroup age) {
+        infection_params.get<mio::abm::AgeGroupGotoSchool>()[age] = true;
+    });
+
+    m.def("set_AgeGroupGoToWork", [](mio::abm::Parameters& infection_params, mio::AgeGroup age) {
+        infection_params.get<mio::abm::AgeGroupGotoWork>()[age] = true;
+    });
+
     m.def(
         "set_infectivity_parameters",
         [](mio::abm::Parameters& infection_params, mio::abm::VirusVariant variant, mio::AgeGroup age, double min_alpha,
