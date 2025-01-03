@@ -133,7 +133,7 @@ namespace internal
 {
 
 /**
- * @brief Format AD types (like ad::gt1s<double>) using their value for logging with spdlog.
+ * @brief Format AD types (like ad::gt1s<double>::type) using their value for logging with spdlog.
  *
  * If derivative information is needed as well, use `ad::derivative(...)` or define a `fmt::formatter<...>`.
  */
