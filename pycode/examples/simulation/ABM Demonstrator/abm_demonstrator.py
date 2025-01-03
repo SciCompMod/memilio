@@ -361,10 +361,10 @@ def make_multiple_person_households(household_size,
     return household_group
 
 
-def add_households(world, distribution, num_inhabitants):
+def add_households(model, distribution, num_inhabitants):
     household_sizes = np.zeros(len(distribution))
     locationIds = []
-    new_index = len(world.locations)
+    new_index = len(model.locations)
     # distribute inhabintants to households
     while num_inhabitants > 0:
         size = np.random.choice(
@@ -374,7 +374,7 @@ def add_households(world, distribution, num_inhabitants):
 
     # one-person household
     one_person_household_group = make_one_person_households(household_sizes[0])
-    abm.add_household_group_to_world(world, one_person_household_group)
+    abm.add_household_group_to_model(model, one_person_household_group)
 
     # two-person households
     two_person_two_parents = int(0.85 * household_sizes[1])
@@ -383,7 +383,7 @@ def add_households(world, distribution, num_inhabitants):
         household_sizes[1] - two_person_two_parents - two_person_one_parent)
     two_person_household_group = make_multiple_person_households(2, two_person_two_parents,
                                                                  two_person_one_parent, two_person_other)
-    abm.add_household_group_to_world(world, two_person_household_group)
+    abm.add_household_group_to_model(model, two_person_household_group)
 
     # three-person households
     three_person_two_parents = int(0.83 * household_sizes[2])
@@ -392,7 +392,7 @@ def add_households(world, distribution, num_inhabitants):
         household_sizes[2] - three_person_two_parents - three_person_one_parent)
     three_person_household_group = make_multiple_person_households(3, three_person_two_parents,
                                                                    three_person_one_parent, three_person_other)
-    abm.add_household_group_to_world(world, three_person_household_group)
+    abm.add_household_group_to_model(model, three_person_household_group)
 
     # four-person households
     four_person_two_parents = int(0.93 * household_sizes[3])
@@ -401,7 +401,7 @@ def add_households(world, distribution, num_inhabitants):
         household_sizes[3] - four_person_two_parents - four_person_one_parent)
     four_person_household_group = make_multiple_person_households(4, four_person_two_parents,
                                                                   four_person_one_parent, four_person_other)
-    abm.add_household_group_to_world(world, four_person_household_group)
+    abm.add_household_group_to_model(model, four_person_household_group)
 
     # five-person households
     five_person_two_parents = int(0.88 * household_sizes[4])
@@ -410,206 +410,214 @@ def add_households(world, distribution, num_inhabitants):
         household_sizes[4] - five_person_two_parents - five_person_one_parent)
     five_person_household_group = make_multiple_person_households(5, five_person_two_parents,
                                                                   five_person_one_parent, five_person_other)
-    abm.add_household_group_to_world(world, five_person_household_group)
+    abm.add_household_group_to_model(model, five_person_household_group)
 
     for hh in range(int(sum(household_sizes))):
-        id = abm.LocationId(new_index, abm.LocationType.Home)
-        locationIds.append(id)
+        locationIds.append(
+            (mio.abm.LocationId(new_index), abm.LocationType.Home))
         new_index += 1
     return locationIds
 
 
-def insert_locations_to_map(mapping, inputId, locationIds):
+def insert_locations_to_map(mapping, inputId, locations):
     map = LocationMapping()
     map.inputId = inputId
-    for id in locationIds:
-        type = str(int(id.type))
-        index = str(id.index)
-        if int(id.type) < 10:
+    for loc in locations:
+        type = str(int(loc[1]))
+        index = str(loc[0].index())
+        if int(loc[1]) < 10:
             type = "0" + type
-        if int(id.index) < 10:
+        if loc[0].index() < 10:
             index = "0" + index
         map.modelId.append(type+index)
     mapping.append(map)
     return mapping
 
 
-def create_locations_from_input(world, input_areas, household_distribution):
+def create_locations_from_input(model, input_areas, household_distribution):
     # map input area ids to corresponding abm location ids
     mapping = []
-    # bools to make sure the world has a school and a hospital
+    # bools to make sure the model has a school and a hospital
     has_school = False
     has_hospital = False
     for index, area in input_areas.iterrows():
-        locationIds = []
+        locations = []
         if ('residential' in area.type):
             # area 'residential' corresponds to location type 'Home'
-            locationIds = add_households(
-                world, household_distribution, area.inhabitants)
+            locations = add_households(
+                model, household_distribution, area.inhabitants)
         elif (area.type == 'recreational'):
             # area 'recreational' corresponds to location type 'SocialEvent'
-            location = world.add_location(abm.LocationType.SocialEvent)
+            location = model.add_location(abm.LocationType.SocialEvent)
             # set maximum contacts and capacity for social events
-            world.get_individualized_location(
+            model.get_location(
                 location).infection_parameters.MaximumContacts = 30.
-            world.get_individualized_location(location).set_capacity(30, 40, 0)
-            locationIds.append(location)
+            model.get_location(location).set_capacity(30, 40, 0)
+            locations.append((model.get_location(location).id,
+                             model.get_location(location).type))
         elif (area.type == 'shopping_business'):
             # area 'shopping_business' corresponds to location type School, Hospital, BasicsShops, Work
             if (not has_school):
-                # if world does not have a school yet, a school is added
-                location = world.add_location(abm.LocationType.School)
+                # if model does not have a school yet, a school is added
+                location = model.add_location(abm.LocationType.School)
                 # set maximum contacts and capacity for school
-                world.get_individualized_location(
+                model.get_location(
                     location).infection_parameters.MaximumContacts = 40.
-                world.get_individualized_location(
+                model.get_location(
                     location).set_capacity(500, 2000, 0)
-                locationIds.append(location)
+                locations.append(
+                    (model.get_location(location).id, model.get_location(location).type))
                 has_school = True
             elif (not has_hospital):
-                # if world does not have a hospital yet, a hospital and a icu is added
-                locHosp = world.add_location(abm.LocationType.Hospital)
+                # if model does not have a hospital yet, a hospital and a icu is added
+                locHosp = model.add_location(abm.LocationType.Hospital)
                 # set maximum contacts and capacity for hospital
-                world.get_individualized_location(
+                model.get_location(
                     locHosp).infection_parameters.MaximumContacts = 5.
-                world.get_individualized_location(
+                model.get_location(
                     locHosp).set_capacity(300, 10000, 0)
-                locICU = world.add_location(abm.LocationType.ICU)
+                locICU = model.add_location(abm.LocationType.ICU)
                 # set maximum contacts and capacity for icu
-                world.get_individualized_location(
+                model.get_location(
                     locICU).infection_parameters.MaximumContacts = 5.
-                world.get_individualized_location(
+                model.get_location(
                     locICU).set_capacity(30, 1000, 0)
-                locationIds.append(locHosp)
-                locationIds.append(locICU)
+                locations.append(
+                    (model.get_location(locHosp).id, model.get_location(locHosp).type))
+                locations.append((model.get_location(locICU).id,
+                                 model.get_location(locICU).type))
                 has_hospital = True
             else:
                 # when hospital and school has been added, the area 'shopping_business' is either
                 # transformed to location type BasicsShop or location type Work with same probability
                 type = np.random.choice(np.arange(0, 2), p=[0.5, 0.5])
                 if (type):
-                    location = world.add_location(abm.LocationType.BasicsShop)
+                    location = model.add_location(abm.LocationType.BasicsShop)
                     # set maximum contacts and capacity for basics shops
-                    world.get_individualized_location(
+                    model.get_location(
                         location).infection_parameters.MaximumContacts = 20.
-                    world.get_individualized_location(
+                    model.get_location(
                         location).set_capacity(100, 1000, 0)
-                    locationIds.append(location)
+                    locations.append(
+                        (model.get_location(location).id, model.get_location(location).type))
                 else:
-                    location = world.add_location(abm.LocationType.Work)
+                    location = model.add_location(abm.LocationType.Work)
                     # set maximum contacts and capacity for work
-                    world.get_individualized_location(
+                    model.get_location(
                         location).infection_parameters.MaximumContacts = 40.
-                    world.get_individualized_location(
+                    model.get_location(
                         location).set_capacity(300, 2000, 0)
-                    locationIds.append(location)
+                    locations.append(
+                        (model.get_location(location).id, model.get_location(location).type))
         elif (area.type == 'university'):
             # area 'university' corresponds to location type 'Work'
-            location = world.add_location(abm.LocationType.Work)
+            location = model.add_location(abm.LocationType.Work)
             # set maximum contacts and capacity for work
-            world.get_individualized_location(
+            model.get_location(
                 location).infection_parameters.MaximumContacts = 50.
-            world.get_individualized_location(
+            model.get_location(
                 location).set_capacity(200, 4000, 0)
-            locationIds.append(location)
+            locations.append((model.get_location(location).id,
+                             model.get_location(location).type))
         elif (area.type == 'mixed'):
             # area 'mixed' corresponds either to location type 'Work' or location type 'Home' with same probability
             type = np.random.choice(np.arange(0, 2), p=[0.5, 0.5])
             if (type):
-                location = world.add_location(abm.LocationType.Work)
+                location = model.add_location(abm.LocationType.Work)
                 # set maximum contacts and capacity for work
-                world.get_individualized_location(
+                model.get_location(
                     location).infection_parameters.MaximumContacts = 40.
-                world.get_individualized_location(
+                model.get_location(
                     location).set_capacity(100, 2000, 0)
-                locationIds.append(location)
+                locations.append(
+                    (model.get_location(location).id, model.get_location(location).type))
             else:
-                locationIds = add_households(
-                    world, household_distribution, area.inhabitants)
-        insert_locations_to_map(mapping, str(area.id), locationIds)
+                locations = add_households(
+                    model, household_distribution, area.inhabitants)
+        insert_locations_to_map(mapping, str(area.id), locations)
     return mapping
 
 
-def assign_infection_states(world, t0, exposed_pct, infected_no_symptoms_pct, infected_symptoms_pct,
+def assign_infection_states(model, t0, exposed_pct, infected_no_symptoms_pct, infected_symptoms_pct,
                             infected_severe_pct, infected_critical_pct, recovered_pct):
     susceptible_pct = 1 - exposed_pct - infected_no_symptoms_pct - \
         infected_symptoms_pct - infected_severe_pct - \
         infected_critical_pct - recovered_pct
-    for person in world.persons:
+    for person in model.persons:
         # draw infection state from distribution for every agent
         infection_state = np.random.choice(np.arange(0, int(abm.InfectionState.Count)),
                                            p=[susceptible_pct, exposed_pct, infected_no_symptoms_pct,
                                                infected_symptoms_pct, infected_severe_pct, infected_critical_pct, recovered_pct, 0.0])
         if (abm.InfectionState(infection_state) != abm.InfectionState.Susceptible):
             person.add_new_infection(Infection(
-                world, person, VirusVariant.Wildtype, t0, abm.InfectionState(infection_state), False), t0)
+                model, person, VirusVariant.Wildtype, t0, abm.InfectionState(infection_state), False), t0)
 
 
-def find_all_locations_of_type(world, type):
+def find_all_locations_of_type(model, type):
     locations = []
-    for loc in world.locations:
+    for loc in model.locations:
         if (loc.type == type):
-            locations.append(abm.LocationId(loc.index, type))
+            locations.append(loc.id)
     return locations
 
 
-def assign_locations(world):
-    # get locations from world
-    schools = find_all_locations_of_type(world, abm.LocationType.School)
+def assign_locations(model):
+    # get locations from model
+    schools = find_all_locations_of_type(model, abm.LocationType.School)
     school_weights = [(1/len(schools)) for i in range(len(schools))]
-    hospitals = find_all_locations_of_type(world, abm.LocationType.Hospital)
+    hospitals = find_all_locations_of_type(model, abm.LocationType.Hospital)
     hospital_weights = [(1/len(hospitals)) for i in range(len(hospitals))]
-    icus = find_all_locations_of_type(world, abm.LocationType.ICU)
+    icus = find_all_locations_of_type(model, abm.LocationType.ICU)
     icu_weights = [(1/len(icus)) for i in range(len(icus))]
-    workplaces = find_all_locations_of_type(world, abm.LocationType.Work)
+    workplaces = find_all_locations_of_type(model, abm.LocationType.Work)
     workplace_weights = [(1/len(workplaces)) for i in range(len(workplaces))]
     basic_shops = find_all_locations_of_type(
-        world, abm.LocationType.BasicsShop)
+        model, abm.LocationType.BasicsShop)
     shop_weights = [(1/len(basic_shops)) for i in range(len(basic_shops))]
     social_events = find_all_locations_of_type(
-        world, abm.LocationType.SocialEvent)
+        model, abm.LocationType.SocialEvent)
     event_weights = [(1/len(social_events)) for i in range(len(social_events))]
 
     # assign locations to agents
-    for person in world.persons:
+    for person in model.persons:
         shop = np.random.choice(np.arange(0, len(basic_shops)), p=shop_weights)
-        person.set_assigned_location(abm.LocationId(
-            basic_shops[int(shop)].index, basic_shops[int(shop)].type))
+        person.set_assigned_location(model.get_location(basic_shops[int(shop)]).type,
+                                     basic_shops[int(shop)])
 
         hospital = np.random.choice(
             np.arange(0, len(hospitals)), p=hospital_weights)
-        person.set_assigned_location(abm.LocationId(
-            hospitals[int(hospital)].index, hospitals[int(hospital)].type))
+        person.set_assigned_location(model.get_location(hospitals[int(hospital)]).type,
+                                     hospitals[int(hospital)])
 
         icu = np.random.choice(np.arange(0, len(icus)), p=icu_weights)
-        person.set_assigned_location(abm.LocationId(
-            icus[int(icu)].index, icus[int(icu)].type))
+        person.set_assigned_location(model.get_location(icus[int(icu)]).type,
+                                     icus[int(icu)])
 
         event = np.random.choice(
             np.arange(0, len(social_events)), p=event_weights)
-        person.set_assigned_location(abm.LocationId(
-            social_events[int(event)].index, social_events[int(event)].type))
+        person.set_assigned_location(model.get_location(social_events[int(event)]).type,
+                                     social_events[int(event)])
 
         # assign school to agents between 5 and 14 years
         if (person.age == age_group_5_to_14):
             school = np.random.choice(
                 np.arange(0, len(schools)), p=school_weights)
-            person.set_assigned_location(abm.LocationId(
-                schools[int(school)].index, schools[int(school)].type))
+            person.set_assigned_location(model.get_location(schools[int(school)]).type,
+                                         schools[int(school)])
         # assign work to agents between 15 and 59
         if (person.age == age_group_15_to_34 or person.age == age_group_35_to_59):
             work = np.random.choice(
                 np.arange(0, len(workplaces)), p=workplace_weights)
-            person.set_assigned_location(abm.LocationId(
-                workplaces[int(work)].index, workplaces[int(work)].type))
+            person.set_assigned_location(model.get_location(workplaces[int(work)]).type,
+                                         workplaces[int(work)])
 
 
-def convert_loc_id_to_string(loc_id):
-    type = str(int(loc_id.type))
-    index = str(loc_id.index)
-    if int(loc_id.type) < 10:
+def convert_loc_id_to_string(loc):
+    type = str(int(loc[1]))
+    index = str(loc[0].index())
+    if int(loc[1]) < 10:
         type = "0" + type
-    if int(loc_id.index) < 10:
+    if int(loc[0].index()) < 10:
         index = "0" + index
 
     return type + index
@@ -618,7 +626,7 @@ def convert_loc_id_to_string(loc_id):
 def get_agents_per_location(loc_id, agents):
     agents_per_loc = []
     for a in agents:
-        if (int(a[0].type) == int(loc_id.type) and a[0].index == loc_id.index):
+        if (int(a[1]) == int(loc_id[1]) and a[0].index() == loc_id[0].index()):
             agents_per_loc.append(a)
     return agents_per_loc
 
@@ -637,11 +645,11 @@ def write_results_to_file(path, log):
                 line += " " + str(time_points[t]) + \
                     " " + str(len(agents_per_loc))
                 for a in agents_per_loc:
-                    if (a[2].days > 1000):
+                    if (a[3].days > 1000):
                         time_since_transmission = -1.0
                     else:
-                        time_since_transmission = a[2].hours
-                    line += " " + str(a[1]) + " " + \
+                        time_since_transmission = a[3].hours
+                    line += " " + str(a[2].index()) + " " + \
                         str(time_since_transmission)
             f.write(line)
             f.write('\n')
@@ -682,11 +690,11 @@ def write_infection_paths_to_file_states(path, log):
     f.close()
 
 
-def write_infection_paths_to_file(path, world, tmax):
+def write_infection_paths_to_file(path, model, tmax):
     with open(path, 'w') as f:
         f.write("Agent_id S E I_ns I_sy I_sev I_cri R D\n")
-        for person in world.persons:
-            line = str(int(person.id)) + " "
+        for person in model.persons:
+            line = str(int(person.id.index())) + " "
             if person.infection_state(tmax) == abm.InfectionState.Susceptible:
                 line += str(int(tmax.hours)) + " "
                 for i in range(int(abm.InfectionState.Count)-1):
@@ -743,14 +751,14 @@ def write_location_mapping_to_file(path, mapping):
 
 
 def set_sim_result_at_start(sim):
-    for location in sim.world.locations:
+    for location in sim.model.locations:
         result = sim.result.get_last_value()
         result += location.population.get_last_value()
 
 
-def write_age_and_hh(world, path):
+def write_age_and_hh(model, path):
     with open(path, 'w') as f:
-        for person in world.persons:
+        for person in model.persons:
             line = str(person.id) + " " + age_group_to_string(person.age) + " " + \
                 str(person.assigned_location(abm.LocationType.Home))
             f.write(line)
@@ -758,14 +766,14 @@ def write_age_and_hh(world, path):
         f.close()
 
 
-def write_compartments_to_file(world, path, timepoints):
+def write_compartments_to_file(model, path, timepoints):
     with open(path, 'w') as f:
         f.write("t S E Ins Isy Isev Icri R D\n")
         for t in range(len(timepoints)):
             tp = abm.TimePoint(0) + abm.hours(t)
             line = str(timepoints[t]) + " "
             comps = np.zeros(int(abm.InfectionState.Count))
-            for person in world.persons:
+            for person in model.persons:
                 state = person.infection_state(tp)
                 comps[int(state)] += 1
             for c in comps:
@@ -787,10 +795,10 @@ def write_results_to_h5(path, log):
     result_list = []
     for agent in log[3][0]:
         gr = file.create_group(str(agent))
-        loc_ids = np.array([convert_loc_id_to_string(log[2][t][agent][0])
+        loc_ids = np.array([convert_loc_id_to_string((log[2][t][agent.index()][0], log[2][t][agent.index()][1]))
                            for t in range(len(log[2]))], dtype=np.str_)
         time_since_transm = np.array([convert_time_since_transmission(
-            log[2][t][agent][2]) for t in range(len(log[2]))], dtype=np.float64)
+            log[2][t][agent.index()][3]) for t in range(len(log[2]))], dtype=np.float64)
         ds = gr.create_dataset('loc_ids', shape=len(
             loc_ids), dtype=h5py.string_dtype())
         ds[:] = loc_ids
@@ -800,7 +808,7 @@ def write_results_to_h5(path, log):
 
 
 def run_abm_simulation(sim_num):
-    mio.set_log_level(mio.LogLevel.Warning)
+    mio.set_log_level(mio.LogLevel.Off)
     input_path = sys.path[0] + '/input/'
     output_path = sys.path[0] + '/output/'
     # set seed for fixed model initialization (locations and initial infection states)
@@ -819,30 +827,30 @@ def run_abm_simulation(sim_num):
     # create simulation with starting timepoint and number of age groups
     sim = abm.Simulation(t0, num_age_groups)
     # set seeds for simulation
-    abm.set_seeds(sim.world, sim_num)
+    abm.set_seeds(sim.model, sim_num)
     # set infection parameters
-    sim.world.parameters = set_infection_parameters(parameters)
+    sim.model.parameters = set_infection_parameters(parameters)
     # as input areas do not fit one-to-one to abm location types, there has to be a mapping
     mapping = create_locations_from_input(
-        sim.world, areas, household_distribution)
+        sim.model, areas, household_distribution)
     # assign initial infection states according to distribution
-    assign_infection_states(sim.world, t0, 0.002, 0.005,
+    assign_infection_states(sim.model, t0, 0.002, 0.005,
                             0.0029, 0.0001, 0.0, 0.0)
     # assign locations to agents
-    assign_locations(sim.world)
+    assign_locations(sim.model)
     # output object
     history = History()
     # just used for debugging
-    # write_age_and_hh(sim.world, os.path.join(output_path, 'age_hh.txt'))
+    # write_age_and_hh(sim.model, os.path.join(output_path, 'age_hh.txt'))
     # advance simulation until tmax
     sim.advance(tmax, history)
     # results collected during the simulation
     log = history.log
     # write infection paths per agent to file
     write_infection_paths_to_file(os.path.join(
-        output_path, str(sim_num) + '_infection_paths.txt'), sim.world, tmax)
+        output_path, str(sim_num) + '_infection_paths.txt'), sim.model, tmax)
     # write compartment size per time step to file
-    write_compartments_to_file(sim.world, os.path.join(
+    write_compartments_to_file(sim.model, os.path.join(
         output_path, str(sim_num) + '_comps.csv'), log[0])
     start = time.time()
     write_results_to_h5(os.path.join(
@@ -868,6 +876,7 @@ if __name__ == "__main__":
         description='Example demonstrating the agent-based model for a synthetic population.')
     args = arg_parser.parse_args()
     # set LogLevel
-    mio.set_log_level(mio.LogLevel.Warning)
-    for i in range(1):
+    mio.set_log_level(mio.LogLevel.Off)
+    mio.abm.set_log_level_warn()
+    for i in range(1, 2):
         run_abm_simulation(i, **args.__dict__)

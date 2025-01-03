@@ -49,12 +49,12 @@ struct LogTimePoint : mio::LogAlways {
 
 //LocationId logger
 struct LogLocationIds : mio::LogOnce {
-    using Type = std::vector<mio::abm::LocationId>;
+    using Type = std::vector<std::tuple<mio::abm::LocationId, mio::abm::LocationType>>;
     static Type log(const mio::abm::Simulation& sim)
     {
-        std::vector<mio::abm::LocationId> location_ids{};
+        std::vector<std::tuple<mio::abm::LocationId, mio::abm::LocationType>> location_ids{};
         for (auto&& location : sim.get_model().get_locations()) {
-            location_ids.push_back(location.get_id());
+            location_ids.push_back(std::make_tuple(location.get_id(), location.get_type()));
         }
         return location_ids;
     }
@@ -75,15 +75,16 @@ struct LogAgentIds : mio::LogOnce {
 
 //agent logger
 struct LogPersonsPerLocationAndInfectionTime : mio::LogAlways {
-    using Type =
-        std::vector<std::tuple<mio::abm::LocationId, mio::abm::PersonId, mio::abm::TimeSpan, mio::abm::InfectionState>>;
+    using Type = std::vector<std::tuple<mio::abm::LocationId, mio::abm::LocationType, mio::abm::PersonId,
+                                        mio::abm::TimeSpan, mio::abm::InfectionState>>;
     static Type log(const mio::abm::Simulation& sim)
     {
-        std::vector<std::tuple<mio::abm::LocationId, mio::abm::PersonId, mio::abm::TimeSpan, mio::abm::InfectionState>>
+        std::vector<std::tuple<mio::abm::LocationId, mio::abm::LocationType, mio::abm::PersonId, mio::abm::TimeSpan,
+                               mio::abm::InfectionState>>
             location_ids_person{};
         for (auto&& person : sim.get_model().get_persons()) {
-            location_ids_person.push_back(std::make_tuple(person.get_location(), person.get_id(),
-                                                          person.get_time_since_transmission(),
+            location_ids_person.push_back(std::make_tuple(person.get_location(), person.get_location_type(),
+                                                          person.get_id(), person.get_time_since_transmission(),
                                                           person.get_infection_state(sim.get_time())));
         }
         return location_ids_person;
@@ -107,7 +108,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("InfectedSevere", mio::abm::InfectionState::InfectedSevere)
         .value("InfectedCritical", mio::abm::InfectionState::InfectedCritical)
         .value("Recovered", mio::abm::InfectionState::Recovered)
-        .value("Dead", mio::abm::InfectionState::Dead);
+        .value("Dead", mio::abm::InfectionState::Dead)
+        .value("Count", mio::abm::InfectionState::Count);
 
     pymio::iterable_enum<mio::abm::ProtectionType>(m, "ProtectionType")
         .value("NoProtection", mio::abm::ProtectionType::NoProtection)
@@ -126,7 +128,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("ICU", mio::abm::LocationType::ICU)
         .value("Car", mio::abm::LocationType::Car)
         .value("PublicTransport", mio::abm::LocationType::PublicTransport)
-        .value("TransportWithoutContact", mio::abm::LocationType::TransportWithoutContact);
+        .value("TransportWithoutContact", mio::abm::LocationType::TransportWithoutContact)
+        .value("Cemetery", mio::abm::LocationType::Cemetery);
 
     pymio::iterable_enum<mio::abm::TestType>(m, "TestType")
         .value("Generic", mio::abm::TestType::Generic)
@@ -336,18 +339,18 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::init<mio::abm::TimePoint, size_t>())
         .def("advance",
              &mio::abm::Simulation::advance<mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
-                                                         LogPersonsPerLocationAndInfectionTime>>)
+                                                         LogPersonsPerLocationAndInfectionTime, LogAgentIds>>)
         // .def("advance",
         //      static_cast<void (mio::abm::Simulation::*)(mio::abm::TimePoint)>(&mio::abm::Simulation::advance),
         //      py::arg("tmax"))
         .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation::get_model));
 
-    pymio::bind_class<
-        mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime>,
-        pymio::EnablePickling::Never>(m, "History")
+    pymio::bind_class<mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
+                                   LogPersonsPerLocationAndInfectionTime, LogAgentIds>,
+                      pymio::EnablePickling::Never>(m, "History")
         .def(py::init<>())
         .def_property_readonly("log", [](mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
-                                                      LogPersonsPerLocationAndInfectionTime>& self) {
+                                                      LogPersonsPerLocationAndInfectionTime, LogAgentIds>& self) {
             return self.get_log();
         });
 
@@ -466,6 +469,13 @@ PYBIND11_MODULE(_simulation_abm, m)
             auto rng = mio::RandomNumberGenerator();
             rng.seed({static_cast<uint32_t>(seed)});
             model.get_rng() = rng;
+        },
+        py::return_value_policy::reference_internal);
+
+    m.def(
+        "set_log_level_warn",
+        []() {
+            mio::set_log_level(mio::LogLevel::warn);
         },
         py::return_value_policy::reference_internal);
 
