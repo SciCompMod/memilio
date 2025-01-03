@@ -438,7 +438,7 @@ public:
     */
     TestResult get_test_result(TestType type) const;
 
-    TimeSpan get_time_since_transmission()
+    TimeSpan get_time_since_transmission() const
     {
         return m_time_since_transmission;
     };
