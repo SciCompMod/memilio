@@ -185,6 +185,9 @@ void simulate(size_t num_warm_up_runs, size_t num_runs, ScalarType tmax)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
+/* TODO
+The numbers of subcompartments used in the LCT model is determined by the preprocessor macro NUM_SUBCOMPARTMENTS.
+*   You can set the number via the flag -DNUM_SUBCOMPARTMENTS=... . */
 int main(int argc, char** argv)
 {
     const ScalarType tmax = 20;

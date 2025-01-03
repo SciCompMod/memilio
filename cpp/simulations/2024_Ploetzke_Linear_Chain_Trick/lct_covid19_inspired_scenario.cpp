@@ -44,8 +44,8 @@
 namespace params
 {
 // num_subcompartments is used as a template argument and has to be a constexpr.
-// If num_subcompartments is set to zero, a model with numbers of subcompartments so that each corresponds to the
-// approximate stay time in the compartment is used.
+// If NUM_SUBCOMPARTMENTS is set to zero, an LCT model is used with numbers of subcompartments such that
+// each corresponds to the approximate stay time in the compartment.
 constexpr int num_subcompartments = NUM_SUBCOMPARTMENTS;
 constexpr size_t num_groups       = 6;
 
@@ -109,20 +109,22 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
 mio::TimeSeries<ScalarType> sum_age_groups(const mio::TimeSeries<ScalarType> ageresolved_result)
 {
     using namespace params;
-    size_t infstatecount = (size_t)(ageresolved_result.get_num_elements() / num_groups);
-    mio::TimeSeries<ScalarType> noage(infstatecount);
+    size_t infstatecount = size_t((ScalarType)ageresolved_result.get_num_elements() / (ScalarType)num_groups);
+    mio::TimeSeries<ScalarType> nonageresolved_result(infstatecount);
 
+    // For each time point, calculate the result without age resolution and add the time point
+    // to the non-age-resolved result.
     for (Eigen::Index timepoint = 0; timepoint < ageresolved_result.get_num_time_points(); ++timepoint) {
-        Eigen::VectorXd result = Eigen::VectorXd::Zero(infstatecount);
+        mio::Vector<ScalarType> result = mio::Vector<ScalarType>::Zero(infstatecount);
         for (size_t infstate = 0; infstate < infstatecount; infstate++) {
             for (size_t group = 0; group < num_groups; group++) {
                 result[infstate] += ageresolved_result.get_value(timepoint)[group * infstatecount + infstate];
             }
         }
-        noage.add_time_point(ageresolved_result.get_time(timepoint), result);
+        nonageresolved_result.add_time_point(ageresolved_result.get_time(timepoint), result);
     }
 
-    return noage;
+    return nonageresolved_result;
 }
 
 /**
@@ -180,13 +182,15 @@ mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(std::s
  * @brief Perform simulation for a Covid-19 inspired scenario in Germany.
  *
  *   The simulation uses LCT models with Covid-19 inspired parameters and a contact rate for Germany. The initial values
- *   are set using real data provided by the RKI (and the DIVI data set).
+ *   are set using reported data provided by the RKI (and the DIVI data set).
  *   The scaling factors scale_confirmed_cases, scale_contacts and npi_size are used for their defined reasons.
  *   The simulation results are stored with age resolution in a file with the suffix "_ageresolved" and without 
  *   age resolution (age-resolved results are accumulated) in a file with suffix "_accumulated".
- *
- *   If num_subcompartments is set to zero, a model with numbers of subcompartments so that each corresponds 
- *   to the approximate stay time in the compartment is used.
+ *   
+ *   The LCT model is constructed with NUM_SUBCOMPARTMENT subcompartments for all compartments where subcompartments 
+ *   make sense (so all except Susceptibles, Recovered and Dead) for all age groups.
+ *   If NUM_SUBCOMPARTMENTS is set to zero, an LCT model is used with numbers of subcompartments such that 
+ *   each corresponds to the approximate stay time in the compartment.
  *
  * @param[in] contact_data_dir Directory to the contact data.
  * @param[in] infection_data_dir Directory to infection data provided by the RKI for Germany.
@@ -202,19 +206,23 @@ mio::IOResult<void> simulate(std::string const& contact_data_dir, std::string co
     std::cout << "Realistic scenario with " << num_subcompartments << " subcompartments." << std::endl;
     // Initialize (age-resolved) model.
     using InfState = mio::lsecir::InfectionState;
-    // Define LctState as a random other LctInfectionState if num_subcompartments is equal to zero as the template
+    // Define appropriate LCT model type: 1.) An LCT model with NUM_SUBCOMPARTMENTS subcompartments for all compartments
+    // and age groups if NUM_SUBCOMPOARTMENTS if greater than zero or 2.) if the value is zero, an LCT model
+    // with numbers of subcompartments such that each corresponds to the approximate stay time in the compartment.
+    // For 1.) : Define single LctState.
+    // If NUM_SUBCOMPOARTMENTS=0, define LctState as a random other LctInfectionState as the template
     // arguments for LctInfectionState have to be greater than zero.
     using LctState = std::conditional<
         (num_subcompartments == 0), mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>,
         mio::LctInfectionState<InfState, 1, num_subcompartments, num_subcompartments, num_subcompartments,
                                num_subcompartments, num_subcompartments, 1, 1>>::type;
+    // Define LctStates for 2.): We need to define a separate LctState for each age group.
     using LctState0_14  = mio::LctInfectionState<InfState, 1, 3, 3, 7, 5, 7, 1, 1>;
     using LctState15_34 = mio::LctInfectionState<InfState, 1, 3, 3, 7, 6, 7, 1, 1>;
     using LctState35_59 = mio::LctInfectionState<InfState, 1, 3, 3, 7, 8, 17, 1, 1>;
     using LctState60_79 = mio::LctInfectionState<InfState, 1, 3, 3, 7, 9, 17, 1, 1>;
     using LctState80    = mio::LctInfectionState<InfState, 1, 3, 3, 7, 11, 12, 1, 1>;
-    // Define the LCT model type with equal LctStates if num_subcompartments is set to a non-zero value and use an
-    // LCT model with numbers of subcompartments so that each corresponds to the approximate stay time in the compartment.
+    // Decide which LCT model type should be used.
     using Model = std::conditional<
         (num_subcompartments == 0),
         mio::lsecir::Model<LctState0_14, LctState0_14, LctState15_34, LctState35_59, LctState60_79, LctState80>,
@@ -247,6 +255,7 @@ mio::IOResult<void> simulate(std::string const& contact_data_dir, std::string co
     model.parameters.get<mio::lsecir::Seasonality>()     = seasonality;
     model.parameters.get<mio::lsecir::StartDay>()        = mio::get_day_in_year(start_date);
 
+    // Set initial values using reported data.
     BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(infection_data_dir));
     BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(divi_data_dir));
     auto init = mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
@@ -283,10 +292,10 @@ mio::IOResult<void> simulate(std::string const& contact_data_dir, std::string co
             return save_result_status;
         }
     }
-    // Print the number of new infections on the first day of simulation.
-    // Could be used to compare the result with the extrapolated real data and afterwards to scale the
+    // Print the predicted number of daily new transmissions at the start of the simulation.
+    // Could be used to compare the result with the extrapolated reported data and, afterwards, to scale the
     // contacts using the variable scale_contacts.
-    std::cout << "Number of new infections on the first day of simulation: " << std::endl;
+    std::cout << "Predicted number of daily new transmissions at the start of the simulation.: " << std::endl;
     std::cout << std::fixed << std::setprecision(1)
               << (populations_accumulated_age[0][0] - populations_accumulated_age[1][0]) /
                      (populations.get_time(1) - populations.get_time(0))
@@ -294,106 +303,6 @@ mio::IOResult<void> simulate(std::string const& contact_data_dir, std::string co
 
     return mio::success();
 }
-
-/**
- * @brief Perform simulation for a Covid-19 inspired scenario in Germany with an LCT model with numbers of 
- *       subcompartments so that each corresponds to the approximate stay time in the compartment.
- *
- *   Same function as simulate() but with a different method to define the number of subcompartments used. 
- *   The LCT model is defined with numbers of subcompartments so that each corresponds to the approximate stay time 
- *   in the compartment. The separate function is used as the numbers of subcompartments has to be defined using 
- *   constexpr, such that this is easier.
- *
- * @param[in] contact_data_dir Directory to the contact data.
- * @param[in] infection_data_dir Directory to infection data provided by the RKI for Germany.
- * @param[in] divi_data_dir Directory to DIVI data regarding the number of patients in intensive care units.
- * @param[in] save_dir Specifies the directory where the results should be stored. 
- *   Provide an empty string if the results should not be saved.
- * @returns Any io errors that happen during reading of the RKI file or files for contact matrices or saving the results.
- */
-// mio::IOResult<void> simulate_subcompartments_LCTvar(std::string const& contact_data_dir,
-//                                                     std::string const& infection_data_dir,
-//                                                     std::string const& divi_data_dir, std::string save_dir = "")
-// {
-//     using namespace params;
-//     std::cout << "Realistic scenario with number of subcompartments is approximately the mean stay time." << std::endl;
-//     // ----- Initialize age resolved model. -----
-//     using InfState      = mio::lsecir::InfectionState;
-//     using LctState0_14  = mio::LctInfectionState<InfState, 1, 3, 3, 7, 5, 7, 1, 1>;
-//     using LctState15_34 = mio::LctInfectionState<InfState, 1, 3, 3, 7, 6, 7, 1, 1>;
-//     using LctState35_59 = mio::LctInfectionState<InfState, 1, 3, 3, 7, 8, 17, 1, 1>;
-//     using LctState60_79 = mio::LctInfectionState<InfState, 1, 3, 3, 7, 9, 17, 1, 1>;
-//     using LctState80    = mio::LctInfectionState<InfState, 1, 3, 3, 7, 11, 12, 1, 1>;
-//     using Model =
-//         mio::lsecir::Model<LctState0_14, LctState0_14, LctState15_34, LctState35_59, LctState60_79, LctState80>;
-//     Model model;
-
-//     // Define parameters used for simulation and initialization.
-//     for (size_t group = 0; group < num_groups; group++) {
-//         model.parameters.get<mio::lsecir::TimeExposed>()[group]            = timeExposed[group];
-//         model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[group] = timeInfectedNoSymptoms[group];
-//         model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[group]   = timeInfectedSymptoms[group];
-//         model.parameters.get<mio::lsecir::TimeInfectedSevere>()[group]     = timeInfectedSevere[group];
-//         model.parameters.get<mio::lsecir::TimeInfectedCritical>()[group]   = timeInfectedCritical[group];
-//         model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[group] =
-//             transmissionProbabilityOnContact[group];
-
-//         model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[group] = relativeTransmissionNoSymptoms;
-//         model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[group] = riskOfInfectionFromSymptomatic;
-
-//         model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[group] =
-//             recoveredPerInfectedNoSymptoms[group];
-//         model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[group] = severePerInfectedSymptoms[group];
-//         model.parameters.get<mio::lsecir::CriticalPerSevere>()[group]         = criticalPerSevere[group];
-//         model.parameters.get<mio::lsecir::DeathsPerCritical>()[group]         = deathsPerCritical[group];
-//     }
-
-//     BOOST_OUTCOME_TRY(auto&& contact_matrix, get_contact_matrix(contact_data_dir));
-
-//     model.parameters.get<mio::lsecir::ContactPatterns>() = contact_matrix;
-//     model.parameters.get<mio::lsecir::Seasonality>()     = seasonality;
-//     model.parameters.get<mio::lsecir::StartDay>()        = mio::get_day_in_year(start_date);
-
-//     BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(infection_data_dir));
-//     BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(divi_data_dir));
-//     auto init = mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
-//         rki_data, model.populations, model.parameters, start_date,
-//         std::vector<ScalarType>(age_group_sizes, age_group_sizes + num_groups),
-//         std::vector<ScalarType>(num_groups, scale_confirmed_cases), divi_data);
-//     if (!init) {
-//         printf("%s\n", init.error().formatted_message().c_str());
-//         return init;
-//     }
-
-//     // Perform simulation.
-//     auto integrator =
-//         std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
-//     // Choose dt_min = dt_max so that we have a fixed time step and can compare to the result with one group.
-//     integrator->set_dt_min(dt);
-//     integrator->set_dt_max(dt);
-//     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
-
-//     // Calculate result without division in subcompartments.
-//     mio::TimeSeries<ScalarType> populations                 = model.calculate_compartments(result);
-//     mio::TimeSeries<ScalarType> populations_accumulated_age = sum_age_groups(populations);
-
-//     if (!save_dir.empty()) {
-//         std::string filename = save_dir + "real_" + std::to_string(start_date.year) + "-" +
-//                                std::to_string(start_date.month) + "-" + std::to_string(start_date.day) + "_var";
-//         // Age-resolved.
-//         mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename + "_ageresolved.h5");
-//         // Not resolved by age.
-//         save_result_status = mio::save_result({populations_accumulated_age}, {0}, 1, filename + "_accumulated.h5");
-//     }
-//     // Print commands to get the number of new infections on the first day of simulation. Could be used to scale the contacts.
-//     std::cout << "Number of new infections on the first day of simulation: " << std::endl;
-//     std::cout << std::fixed << std::setprecision(1)
-//               << (populations_accumulated_age[0][0] - populations_accumulated_age[1][0]) /
-//                      (populations.get_time(1) - populations.get_time(0))
-//               << std::endl;
-
-//     return mio::success();
-// }
 
 /** 
 * Usage: lct_covid19_inspired scenario <data_dir> <save_dir> <start_date-year> <start_date-month> <start_date-day> 
@@ -411,15 +320,19 @@ mio::IOResult<void> simulate(std::string const& contact_data_dir, std::string co
 *       extrapolated RKI data (for aggregated age groups).
 *   - <npi_size> (double): Size of the NPI to be implemented from 25/20/2020. 0 means no NPIs, 1 means no contacts.
 *   
-*   All command line arguments are optional but it is beneficial to specify at least the data_dir as the default 
-*   is just an educated guess.
+*   All command line arguments are optional but it is beneficial to specify at least the first argument <data_dir> 
+*   as the default is just an educated guess.
+*
+*   The numbers of subcompartments used in the LCT model is determined by the preprocessor macro NUM_SUBCOMPARTMENTS.
+*   You can set the number via the flag -DNUM_SUBCOMPARTMENTS=... . 
+*   If NUM_SUBCOMPARTMENTS is set to zero, an LCT model is used with numbers of subcompartments such that 
+*   each corresponds to the approximate stay time in the compartment.
 */
 int main(int argc, char** argv)
 {
     std::string data_dir = "../../data";
     std::string save_dir = "";
 
-    bool subcompartments_LCTvar = false;
     switch (argc) {
     case 11:
         params::npi_size = std::stod(argv[10]);

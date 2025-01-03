@@ -37,6 +37,7 @@ do
 done
 
 # Setup with numbers of subcompartments so that each corresponds to the approximate stay time in the compartment.
+# This is done by setting the makro NUM_SUBCOMPARTMENTS to zero.
 cmake -DNUM_SUBCOMPARTMENTS=0 -DCMAKE_BUILD_TYPE="Release" .
 cmake --build . --target lct_covid19_inspired_scenario
 ./bin/lct_covid19_inspired_scenario $data_dir $result_dir $year $month_oct $day_oct $RelativeTransmissionNoSymptoms $RiskOfInfectionFromSymptomatic $scale_contacts_oct $scale_confirmed_cases_oct $npi_size_oct 

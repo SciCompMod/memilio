@@ -81,16 +81,16 @@ const ScalarType deathsPerCritical[]              = {0.05, 0.05, 0.14, 0.14, 0.4
 mio::TimeSeries<ScalarType> sum_age_groups(const mio::TimeSeries<ScalarType> ageresolved_result)
 {
     using namespace params;
-    size_t size_result = size_t((ScalarType)ageresolved_result.get_num_elements() / (ScalarType)num_groups);
-    mio::TimeSeries<ScalarType> nonageresolved_result(size_result);
+    size_t infstatecount = size_t((ScalarType)ageresolved_result.get_num_elements() / (ScalarType)num_groups);
+    mio::TimeSeries<ScalarType> nonageresolved_result(infstatecount);
 
     // For each time point, calculate the result without age resolution and add the time point
     // to the non-age-resolved result.
     for (Eigen::Index timepoint = 0; timepoint < ageresolved_result.get_num_time_points(); ++timepoint) {
-        mio::Vector<ScalarType> result = mio::Vector<ScalarType>::Zero(size_result);
-        for (size_t infstate = 0; infstate < size_result; infstate++) {
+        mio::Vector<ScalarType> result = mio::Vector<ScalarType>::Zero(infstatecount);
+        for (size_t infstate = 0; infstate < infstatecount; infstate++) {
             for (size_t group = 0; group < num_groups; group++) {
-                result[infstate] += ageresolved_result.get_value(timepoint)[group * size_result + infstate];
+                result[infstate] += ageresolved_result.get_value(timepoint)[group * infstatecount + infstate];
             }
         }
         nonageresolved_result.add_time_point(ageresolved_result.get_time(timepoint), result);
@@ -366,7 +366,7 @@ mio::IOResult<void> simulation_without_ageresolution(ScalarType tmax, std::strin
 /** 
 * Usage: lct_impact_age_resolution <contact_data_dir> <save_dir> 
 *   Both command line arguments are optional but it is beneficial to specify the 
-*   contact_data_dir as the default is just an educated guess.
+*   <contact_data_dir> as the default is just an educated guess.
 */
 int main(int argc, char** argv)
 {

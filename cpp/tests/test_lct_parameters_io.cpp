@@ -18,7 +18,6 @@
 * limitations under the License.
 */
 
-#include "abm_helpers.h"
 #include "memilio/config.h"
 
 #include "lct_secir/parameters_io.h"
@@ -27,13 +26,14 @@
 #include "memilio/math/eigen.h"
 #include "memilio/utils/date.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/utils/logging.h"
 #include "memilio/epidemiology/lct_infection_state.h"
 #include "test_data_dir.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/io.h"
-#include <matchers.h>
-#include "json/value.h"
+#include "matchers.h"
 
+#include "json/value.h"
 #include <gtest/gtest.h>
 #include <string>
 

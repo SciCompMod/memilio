@@ -255,6 +255,9 @@ mio::IOResult<void> simulate(ScalarType Reff2, ScalarType tmax, std::string save
 *           <print_final_size>
 *   All command line arguments are optional. Simple default values are provided if not specified.
 *   All parameters are passed to the simulation() function. See the documentation for a description of the parameters.
+*
+*   The numbers of subcompartments used in the LCT model is determined by the preprocessor macro NUM_SUBCOMPARTMENTS.
+*   You can set the number via the flag -DNUM_SUBCOMPARTMENTS=... . 
 */
 int main(int argc, char** argv)
 {
