@@ -138,7 +138,7 @@ namespace internal
  * If derivative information is needed as well, use `ad::derivative(...)` or define a `fmt::formatter<...>`.
  */
 template <class FP, class DataHandler>
-FP format_as(const active_type<FP, DataHandler>& ad_type)
+const FP& format_as(const active_type<FP, DataHandler>& ad_type)
 {
     // Note: the format_as function needs to be in the same namespace as the value it takes
     return value(ad_type);

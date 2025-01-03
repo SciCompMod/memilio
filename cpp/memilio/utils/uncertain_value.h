@@ -231,8 +231,9 @@ private:
  * @brief Format UncertainValues using their value for logging with spdlog.
  */
 template <class FP>
-double format_as(const UncertainValue<FP>& uv)
+const FP& format_as(const UncertainValue<FP>& uv)
 {
+    // uses UncertainValue<FP>::operator const FP&() const
     return uv;
 }
 
