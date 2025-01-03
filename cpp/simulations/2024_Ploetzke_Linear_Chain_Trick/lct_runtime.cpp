@@ -35,142 +35,107 @@
 
 namespace params
 {
-// Define epidemiological parameters and parameters needed for the simulation.
+// num_subcompartments is used as a template argument and has to be a constexpr.
 constexpr size_t num_subcompartments = NUM_SUBCOMPARTMENTS;
-constexpr size_t num_groups          = 1;
 
-const ScalarType dt                = 0.01;
-const ScalarType age_group_sizes[] = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
-const ScalarType total_population  = 83155031.0;
+// Define (non-age-resolved) parameters.
+const ScalarType dt                             = 0.01;
+const ScalarType seasonality                    = 0.;
+const ScalarType relativeTransmissionNoSymptoms = 1.;
+const ScalarType riskOfInfectionFromSymptomatic = 0.3;
+const ScalarType total_population               = 83155031.0;
 
-const ScalarType seasonality                        = 0.;
-const ScalarType RelativeTransmissionNoSymptoms     = 1.;
-const ScalarType RiskOfInfectionFromSymptomatic     = 0.3;
-const ScalarType TransmissionProbabilityOnContact[] = {0.03, 0.06, 0.06, 0.06, 0.09, 0.175};
-
-const ScalarType TimeExposed[]            = {3.335, 3.335, 3.335, 3.335, 3.335, 3.335};
-const ScalarType TimeInfectedNoSymptoms[] = {2.74, 2.74, 2.565, 2.565, 2.565, 2.565};
-const ScalarType TimeInfectedSymptoms[]   = {7.02625, 7.02625, 7.0665, 6.9385, 6.835, 6.775};
-const ScalarType TimeInfectedSevere[]     = {5., 5., 5.925, 7.55, 8.5, 11.};
-const ScalarType TimeInfectedCritical[]   = {6.95, 6.95, 6.86, 17.36, 17.1, 11.6};
-
-const ScalarType RecoveredPerInfectedNoSymptoms[] = {1 - 0.75, 1 - 0.75, 1 - 0.8, 1 - 0.8, 1 - 0.8, 1 - 0.8};
-const ScalarType SeverePerInfectedSymptoms[]      = {0.0075, 0.0075, 0.019, 0.0615, 0.165, 0.225};
-const ScalarType CriticalPerSevere[]              = {0.075, 0.075, 0.075, 0.15, 0.3, 0.4};
-const ScalarType DeathsPerCritical[]              = {0.05, 0.05, 0.14, 0.14, 0.4, 0.6};
-
+const ScalarType timeExposed                      = 3.335;
+const ScalarType timeInfectedNoSymptoms           = 2.58916;
+const ScalarType timeInfectedSymptoms             = 6.94547;
+const ScalarType timeInfectedSevere               = 7.28196;
+const ScalarType timeInfectedCritical             = 13.066;
+const ScalarType transmissionProbabilityOnContact = 0.07333;
+const ScalarType recoveredPerInfectedNoSymptoms   = 0.206901;
+const ScalarType severePerInfectedSymptoms        = 0.07864;
+const ScalarType criticalPerSevere                = 0.17318;
+const ScalarType deathsPerCritical                = 0.21718;
 } // namespace params
 
-/** @brief Initial value vector for the simulation.
-*   It is assumed that all age groups use equal LctStates.
-* @tparam LctStates LctState of all the age groups.
+/** 
+* @brief Performs multiple simulations with one model to get an average run time.
+*
+*   This function measures the run time taken for the simulation execution.
+*   The model setup is not included in the run time. The run time is averaged over several runs.
+*   The simulation uses (non-age-resolved) LCT models with Covid-19 inspired parameters and a contact rate for Germany.
+*   The initial values are set to some realistic values. 
+*
+* @param[in] num_runs Number of runs with run time measurement. 
+* @param[in] num_warm_up_runs Number of warm-up runs before actual measurements begin. 
+*       These runs are used to allow the system to stabilize.
+* @param[in] tmax Time horizon of the simulation.
+* @param[in] use_adaptive_solver Determines whether to use an adaptive solver. If false, a fixed step size is used.
+*            Default is false. 
 */
-std::vector<ScalarType> get_initial_values()
+void simulate(size_t num_runs, size_t num_warm_up_runs, ScalarType tmax, bool use_adaptive_solver = false)
 {
     using namespace params;
-    // Vector is a "random vector" taken from another example. Just need some realistic values.
-    const std::vector<std::vector<ScalarType>> init_compartments = {
-        {3966564.2110, 664.2367, 545.5523, 1050.3946, 5.6045, 0.5844, 307.4165, 0.},
-        {7500988.3044, 2108.8502, 1732.0453, 3334.8427, 17.7934, 1.8555, 478.3085, 0.},
-        {18874457.8051, 12584.3371, 9674.4579, 21348.6877, 340.0557, 29.5323, 2857.1243, 0.},
-        {28612752.3265, 13788.4953, 10600.1783, 22967.4792, 1537.0744, 530.3313, 3990.1151, 0.},
-        {8134534.1310, 4612.1712, 3545.6978, 7567.8082, 1553.0877, 937.6034, 588.5007, 0.},
-        {928318.1474, 1595.6020, 1226.6506, 2595.1188, 948.2972, 400.0181, 1350.1658, 0.}};
-    std::vector<ScalarType> initial_value_vector;
-    for (size_t age = 0; age < num_groups; age++) {
-        std::vector<ScalarType> init_age;
-        init_age.push_back(init_compartments[age][(int)mio::lsecir::InfectionState::Susceptible]);
-        // Distribute value equally to the subcompartments.
-        for (size_t i = 0; i < num_subcompartments; i++) {
-            init_age.push_back(init_compartments[age][(int)mio::lsecir::InfectionState::Exposed] / num_subcompartments);
-        }
-        for (size_t i = 0; i < num_subcompartments; i++) {
-            init_age.push_back(init_compartments[age][(int)mio::lsecir::InfectionState::InfectedNoSymptoms] /
-                               num_subcompartments);
-        }
-        for (size_t i = 0; i < num_subcompartments; i++) {
-            init_age.push_back(init_compartments[age][(int)mio::lsecir::InfectionState::InfectedSymptoms] /
-                               num_subcompartments);
-        }
-        for (size_t i = 0; i < num_subcompartments; i++) {
-            init_age.push_back(init_compartments[age][(int)mio::lsecir::InfectionState::InfectedSevere] /
-                               num_subcompartments);
-        }
-        for (size_t i = 0; i < num_subcompartments; i++) {
-            init_age.push_back(init_compartments[age][(int)mio::lsecir::InfectionState::InfectedCritical] /
-                               num_subcompartments);
-        }
-        init_age.push_back(init_compartments[age][(int)mio::lsecir::InfectionState::Recovered]);
-        init_age.push_back(init_compartments[age][(int)mio::lsecir::InfectionState::Dead]);
-
-        initial_value_vector.insert(initial_value_vector.end(), init_age.begin(), init_age.end());
-    }
-    return initial_value_vector;
-}
-
-/**
- * @brief Performs multiple simulations with one model to get an average run time.
- * @tparam num_subcompartments number of subcompartments used for all compartments and all age groups.
- */
-void simulate(size_t num_warm_up_runs, size_t num_runs, ScalarType tmax)
-{
-    using namespace params;
-    std::cout << "{ \"Agegroups\": " << num_groups << ",\n\"Subcompartments\": " << num_subcompartments << ", "
-              << std::endl;
-    // ----- Initialize age resolved model. -----
+    std::cout << "{ \"Subcompartments\": " << num_subcompartments << ", " << std::endl;
+    // Initialize (non-age-resolved) LCT model.
     using InfState = mio::lsecir::InfectionState;
     using LctState = mio::LctInfectionState<InfState, 1, num_subcompartments, num_subcompartments, num_subcompartments,
                                             num_subcompartments, num_subcompartments, 1, 1>;
     using Model    = mio::lsecir::Model<LctState>;
     Model model;
 
-    // Define epidemiological parameters.
+    // Set parameters.
+    model.parameters.get<mio::lsecir::TimeExposed>()[0]                      = timeExposed;
+    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0]           = timeInfectedNoSymptoms;
+    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]             = timeInfectedSymptoms;
+    model.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]               = timeInfectedSevere;
+    model.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]             = timeInfectedCritical;
+    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = transmissionProbabilityOnContact;
+
+    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = relativeTransmissionNoSymptoms;
+    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = riskOfInfectionFromSymptomatic;
+    model.parameters.get<mio::lsecir::Seasonality>()                       = seasonality;
+
+    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = recoveredPerInfectedNoSymptoms;
+    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0]      = severePerInfectedSymptoms;
+    model.parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = criticalPerSevere;
+    model.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = deathsPerCritical;
+    // Realistic average number of contacts.
+    mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 7.69129));
+    model.parameters.get<mio::lsecir::ContactPatterns>() = mio::UncertainContactMatrix<ScalarType>(contact_matrix);
+
+    // Set initial values.
+    // Vector is a "random vector" taken from another example. Just need some realistic values.
+    std::vector<ScalarType> init = {3966564.2110, 664.2367, 545.5523, 1050.3946, 5.6045, 0.5844, 307.4165, 0.};
+    // Use init as a basis to define appropriate initial values.
+    // Compartment values are distributed equally to subcompartments.
     for (size_t group = 0; group < num_groups; group++) {
-        model.parameters.get<mio::lsecir::TimeExposed>()[group]            = TimeExposed[group];
-        model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[group] = TimeInfectedNoSymptoms[group];
-        model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[group]   = TimeInfectedSymptoms[group];
-        model.parameters.get<mio::lsecir::TimeInfectedSevere>()[group]     = TimeInfectedSevere[group];
-        model.parameters.get<mio::lsecir::TimeInfectedCritical>()[group]   = TimeInfectedCritical[group];
-        model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[group] =
-            TransmissionProbabilityOnContact[group];
-
-        model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[group] = RelativeTransmissionNoSymptoms;
-        model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[group] = RiskOfInfectionFromSymptomatic;
-
-        model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[group] =
-            RecoveredPerInfectedNoSymptoms[group];
-        model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[group] = SeverePerInfectedSymptoms[group];
-        model.parameters.get<mio::lsecir::CriticalPerSevere>()[group]         = CriticalPerSevere[group];
-        model.parameters.get<mio::lsecir::DeathsPerCritical>()[group]         = DeathsPerCritical[group];
+        model.populations[group * LctState::Count + 0]                   = init[group][0]; // Susceptible
+        model.populations[group * LctState::Count + LctState::Count - 2] = init[group][6]; // Recovered
+        model.populations[group * LctState::Count + LctState::Count - 1] = init[group][7]; // Dead
+        for (size_t i = 1; i < (size_t)InfState::Count - 2; i++) {
+            for (size_t subcomp = 0; subcomp < num_subcompartments; subcomp++) {
+                model.populations[group * LctState::Count + (i - 1) * num_subcompartments + 1 + subcomp] =
+                    init[group][i] / (ScalarType)num_subcompartments;
+            }
+        }
     }
-    // Realistic contacts.
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
-    Eigen::MatrixXd contact_matrix_eigen(6, 6);
-    contact_matrix_eigen << 3.9547, 1.1002, 2.9472, 2.05, 0.3733, 0.0445, 0.3327, 3.5892, 1.236, 1.9208, 0.2681, 0.0161,
-        0.246, 0.7124, 5.6518, 3.2939, 0.2043, 0.0109, 0.1742, 0.8897, 3.3124, 4.5406, 0.4262, 0.0214, 0.0458, 0.1939,
-        0.5782, 1.3825, 1.473, 0.0704, 0.1083, 0.1448, 0.4728, 0.9767, 0.6266, 0.1724;
-    contact_matrix[0] = mio::ContactMatrix(contact_matrix_eigen.block(0, 0, (size_t)num_groups, (size_t)num_groups));
-
-    model.parameters.get<mio::lsecir::ContactPatterns>() = contact_matrix;
-    model.parameters.get<mio::lsecir::Seasonality>()     = seasonality;
-
-    // Set initial values;
-    auto initial_values = get_initial_values();
-    for (size_t i = 0; i < model.populations.get_num_compartments(); i++) {
-        model.populations[i] = initial_values[i];
-    }
-    // Integrator.
+    // Set integrator of fifth order.
     auto integrator =
         std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
-    // Choose dt_min = dt_max so that we have a fixed time step.
-    // integrator->set_dt_min(dt);
-    // integrator->set_dt_max(dt);
+    if (!use_adaptive_solver) {
+        // Choose dt_min = dt_max to get a fixed step size.
+        integrator->set_dt_min(dt);
+        integrator->set_dt_max(dt);
+    }
 
+    // Perform simulation several times and measure run times.
     // Warm up runs.
     mio::set_log_level(mio::LogLevel::off);
     for (size_t i = 0; i < num_warm_up_runs; i++) {
         mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
     }
+    // Simulate one time to track the number of steps.
     auto result = mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
     std::cout << "\"Steps\": " << result.get_num_time_points() << "," << std::endl;
 
@@ -185,18 +150,31 @@ void simulate(size_t num_warm_up_runs, size_t num_runs, ScalarType tmax)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-/* TODO
-The numbers of subcompartments used in the LCT model is determined by the preprocessor macro NUM_SUBCOMPARTMENTS.
-*   You can set the number via the flag -DNUM_SUBCOMPARTMENTS=... . */
+/**
+* Usage: lct_timing <num_runs> <num_warm_up_runs> <use_adaptive_solver> 
+*   All command line arguments are optional. Simple default values are provided if not specified.
+*   All parameters are passed to the simulation() function. See the documentation for a description of the parameters.
+*
+*  The numbers of subcompartments used in the LCT model is determined by the preprocessor macro NUM_SUBCOMPARTMENTS.
+*   You can set the number via the flag -DNUM_SUBCOMPARTMENTS=... . 
+*/
 int main(int argc, char** argv)
 {
-    const ScalarType tmax = 20;
-    size_t warm_up        = 10;
-    size_t num_runs       = 100;
-    if (argc > 2) {
-        warm_up  = std::stod(argv[1]);
-        num_runs = std::stod(argv[2]);
+    const ScalarType tmax    = 20;
+    size_t num_runs          = 100;
+    size_t num_warm_up_runs  = 10;
+    bool use_adaptive_solver = false;
+
+    switch (argc) {
+    case 4:
+        use_adaptive_solver = std::stoi(argv[3]);
+        [[fallthrough]];
+    case 3:
+        num_warm_up_runs = std::stod(argv[2]);
+        [[fallthrough]];
+    case 2:
+        num_runs = std::stod(argv[1]);
     }
-    simulate(warm_up, num_runs, tmax);
+    simulate(num_runs, num_warm_up_runs, tmax, use_adaptive_solver);
     return 0;
 }

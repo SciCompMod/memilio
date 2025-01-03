@@ -162,7 +162,7 @@ mio::IOResult<void> simulate(ScalarType Reff2, ScalarType tmax, std::string save
     using Model    = mio::lsecir::Model<LctState>;
     Model model;
 
-    // Define parameters.
+    // Set parameters.
     // Scale TimeExposed for some numerical experiments.
     timeExposed                                                              = scale_TimeExposed * timeExposed;
     model.parameters.get<mio::lsecir::TimeExposed>()[0]                      = timeExposed;

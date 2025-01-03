@@ -280,9 +280,8 @@ mio::IOResult<void> simulate(std::string const& contact_data_dir, std::string co
     mio::TimeSeries<ScalarType> populations_accumulated_age = sum_age_groups(populations);
 
     if (!save_dir.empty()) {
-        std::string filename = save_dir + "real_" + std::to_string(start_date.year) + "-" +
-                               std::to_string(start_date.month) + "-" + std::to_string(start_date.day) + "_" +
-                               std::to_string(num_subcompartments);
+        std::string filename = save_dir + std::to_string(start_date.year) + "-" + std::to_string(start_date.month) +
+                               "-" + std::to_string(start_date.day) + "_" + std::to_string(num_subcompartments);
         mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename + "_ageresolved.h5");
         if (!save_result_status) {
             return save_result_status;
