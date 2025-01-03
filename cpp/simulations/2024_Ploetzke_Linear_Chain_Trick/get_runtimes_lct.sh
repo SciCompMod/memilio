@@ -27,7 +27,9 @@ cd build/
 cmake -DCMAKE_BUILD_TYPE="Release" -DMEMILIO_ENABLE_OPENMP=ON ..
 
 for i in {1..200}
-do
+do  
+    # Uncomment this line and comment next line to build with the optimizing flag -O0.
+    # cmake -DNUM_SUBCOMPARTMENTS=$i -DCMAKE_BUILD_TYPE="Release" -DMEMILIO_ENABLE_OPENMP=ON -DCMAKE_CXX_FLAGS="-O0" .
     cmake -DNUM_SUBCOMPARTMENTS=$i -DCMAKE_BUILD_TYPE="Release" -DMEMILIO_ENABLE_OPENMP=ON .
     cmake --build . --target lct_runtime
     srun --cpus-per-task=1 --cpu-bind=cores ./$1 $num_runs $num_warm_up_runs $use_adaptive_solver
