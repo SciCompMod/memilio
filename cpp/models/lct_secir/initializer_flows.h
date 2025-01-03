@@ -85,11 +85,12 @@ public:
      * @return Returns true if one (or more) constraint(s) of the model, the initial flows 
      *      or the computed initial value vector are not satisfied, otherwise false. 
      */
-    bool compute_initialization_vector(Vector<ScalarType> const& total_population, Vector<ScalarType> const& deaths,
-                                       Vector<ScalarType> const& total_confirmed_cases)
+    bool compute_initialization_vector(Eigen::VectorX<ScalarType> const& total_population,
+                                       Eigen::VectorX<ScalarType> const& deaths,
+                                       Eigen::VectorX<ScalarType> const& total_confirmed_cases)
     {
 
-        Vector<ScalarType> init(m_model.populations.get_compartments());
+        Eigen::VectorX<ScalarType> init(m_model.populations.get_compartments());
 
         bool error = compute_initialization_vector_impl(init, total_population, deaths, total_confirmed_cases);
         if (error) {
@@ -131,9 +132,10 @@ private:
      *       otherwise false. 
      */
     template <size_t Group = 0>
-    bool compute_initialization_vector_impl(Vector<ScalarType>& init, Vector<ScalarType> const& total_population,
-                                            Vector<ScalarType> const& deaths,
-                                            Vector<ScalarType> const& total_confirmed_cases)
+    bool compute_initialization_vector_impl(Eigen::VectorX<ScalarType>& init,
+                                            Eigen::VectorX<ScalarType> const& total_population,
+                                            Eigen::VectorX<ScalarType> const& deaths,
+                                            Eigen::VectorX<ScalarType> const& total_confirmed_cases)
     {
         static_assert((Group < Model::num_groups) && (Group >= 0), "The template parameter Group should be valid.");
         using LctStateGroup            = type_at_index_t<Group, LctStatesGroups>;
@@ -254,7 +256,8 @@ private:
      *      are not satisfied, otherwise false. 
      */
     template <InfectionState State, size_t Group>
-    bool compute_compartment(Vector<ScalarType>& init, Eigen::Index idx_incoming_flow, ScalarType transition_rate) const
+    bool compute_compartment(Eigen::VectorX<ScalarType>& init, Eigen::Index idx_incoming_flow,
+                             ScalarType transition_rate) const
     {
         size_t first_index = m_model.populations.template get_first_index_of_group<Group>() +
                              type_at_index_t<Group, LctStatesGroups>::template get_first_index<State>();

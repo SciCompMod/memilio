@@ -292,7 +292,7 @@ protected:
     TableauFinal m_tab_final;
     FP m_abs_tol, m_rel_tol;
     mutable Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> m_kt_values;
-    mutable Vector<FP> m_yt_eval;
+    mutable Eigen::VectorX<FP> m_yt_eval;
 
 private:
     mutable Eigen::Array<FP, Eigen::Dynamic, Eigen::Dynamic> m_eps,
