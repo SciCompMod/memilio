@@ -14,6 +14,7 @@ set(TESTSOURCES
     test_damping.cpp
     test_odesecir.cpp
     test_odesecirvvs.cpp
+    test_odesecirts.cpp
     test_sde_sir.cpp
     test_sde_sirs.cpp
     test_sde_seirvv.cpp
@@ -63,9 +64,11 @@ set(TESTSOURCES
     test_utils.cpp
     test_ide_seir.cpp
     test_ide_secir.cpp
+    test_ide_secir_ageres.cpp
     test_state_age_function.cpp
     test_lct_secir.cpp
     test_lct_initializer_flows.cpp
+    test_glct_secir.cpp
     test_ad.cpp
     abm_helpers.h
     abm_helpers.cpp
@@ -80,24 +83,24 @@ set(TESTSOURCES
 )
 
 if(MEMILIO_HAS_JSONCPP)
-set(TESTSOURCES ${TESTSOURCES}
-test_json_serializer.cpp
-test_epi_data_io.cpp
-test_lct_parameters_io.cpp
-test_ide_parameters_io.cpp
-)
+    set(TESTSOURCES ${TESTSOURCES}
+        test_json_serializer.cpp
+        test_epi_data_io.cpp
+        test_lct_parameters_io.cpp
+        test_ide_parameters_io.cpp
+    )
 endif()
 
 if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
-set(TESTSOURCES ${TESTSOURCES}
-test_save_parameters.cpp
-test_save_results.cpp
-)
+    set(TESTSOURCES ${TESTSOURCES}
+        test_save_parameters.cpp
+        test_save_results.cpp
+    )
 endif()
 
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ode_seair ide_seir ide_secir lct_secir abm gtest_main AD::AD)
+target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ode_secirts ode_seair ide_seir ide_secir lct_secir glct_secir abm gtest_main AD::AD)
 target_compile_options(memilio-test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 # make unit tests find the test data files

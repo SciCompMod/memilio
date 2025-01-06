@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRVVS_MODEL_H
-#define ODESECIRVVS_MODEL_H
+#ifndef MIO_ODE_SECIRVVS_MODEL_H
+#define MIO_ODE_SECIRVVS_MODEL_H
 
 #include "memilio/compartments/flow_model.h"
 #include "memilio/compartments/simulation.h"
@@ -625,14 +625,15 @@ public:
             double first_vacc;
             double full_vacc;
             if (t_idx == SimulationDay(0)) {
-                first_vacc = params.template get<DailyFirstVaccination<FP>>()[{(AgeGroup)i, t_idx}];
-                full_vacc  = params.template get<DailyFullVaccination<FP>>()[{(AgeGroup)i, t_idx}];
+                first_vacc = params.template get<DailyPartialVaccinations<FP>>()[{(AgeGroup)i, t_idx}];
+                full_vacc  = params.template get<DailyFullVaccinations<FP>>()[{(AgeGroup)i, t_idx}];
             }
             else {
-                first_vacc = params.template get<DailyFirstVaccination<FP>>()[{(AgeGroup)i, t_idx}] -
-                             params.template get<DailyFirstVaccination<FP>>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
-                full_vacc = params.template get<DailyFullVaccination<FP>>()[{(AgeGroup)i, t_idx}] -
-                            params.template get<DailyFullVaccination<FP>>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
+                first_vacc =
+                    params.template get<DailyPartialVaccinations<FP>>()[{(AgeGroup)i, t_idx}] -
+                    params.template get<DailyPartialVaccinations<FP>>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
+                full_vacc = params.template get<DailyFullVaccinations<FP>>()[{(AgeGroup)i, t_idx}] -
+                            params.template get<DailyFullVaccinations<FP>>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
             }
 
             if (last_value(count * i + S) - first_vacc < 0) {
@@ -913,4 +914,4 @@ auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> mobile_pop
 } // namespace osecirvvs
 } // namespace mio
 
-#endif //ODESECIRVVS_MODEL_H
+#endif //MIO_ODE_SECIRVVS_MODEL_H

@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRVVS_INFECTIONSTATE_H
-#define ODESECIRVVS_INFECTIONSTATE_H
+#ifndef MIO_ODE_SECIRVVS_INFECTIONSTATE_H
+#define MIO_ODE_SECIRVVS_INFECTIONSTATE_H
 namespace mio
 {
 namespace osecirvvs
@@ -69,4 +69,4 @@ enum class InfectionState
 } // namespace osecirvvs
 } // namespace mio
 
-#endif //ODESECIRVVS_INFECTIONSTATE_H
+#endif //MIO_ODE_SECIRVVS_INFECTIONSTATE_H
