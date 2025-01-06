@@ -58,6 +58,9 @@ class Scanner:
         @param root_cursor Represents the root node of the abstract syntax tree as a Cursor object from libclang.
         @return Information extracted from the model saved as an IntermediateRepresentation.
         """
+        if self.config.model_class is not "Model":
+            raise AssertionError("set a model name")
+
         intermed_repr = IntermediateRepresentation()
         self.find_node(root_cursor, intermed_repr)
         self.finalize(intermed_repr)
@@ -65,7 +68,7 @@ class Scanner:
         return intermed_repr
 
     def check_parameter_space(self: Self, intermed_repr: IntermediateRepresentation) -> None:
-        """! Checks for /parameter_space.cpp in the model folder and set has_draw_sample
+        """! Checks for parameter_space.cpp in the model folder and set has_draw_sample
 
         @param intermed_repr Dataclass used for saving the extracted model features.
         """
