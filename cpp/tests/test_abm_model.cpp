@@ -311,26 +311,12 @@ TEST_F(TestModel, evolveMobilityTrips)
     auto work_id     = model.add_location(mio::abm::LocationType::Work);
     auto hospital_id = model.add_location(mio::abm::LocationType::Hospital);
 
-    // Mock the random distribution to control random behavior.
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(8))
-        .WillOnce(testing::Return(0.8)) // draw random work group
-        .WillOnce(testing::Return(0.8)) // draw random school group
-        .WillOnce(testing::Return(0.8)) // draw random work hour
-        .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillOnce(testing::Return(0.8)) // draw random work group
-        .WillOnce(testing::Return(0.8)) // draw random school group
-        .WillOnce(testing::Return(0.8)) // draw random work hour
-        .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillRepeatedly(testing::Return(1.0)); // this forces p1 and p3 to recover
-
     // Create persons with various infection states and assign them to multiple locations.
-    auto pid1 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
-    auto pid2 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t);
-    auto pid3 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::InfectedSevere, t);
-    auto pid4 = add_test_person(model, hospital_id, age_group_5_to_14, mio::abm::InfectionState::Recovered, t);
-    auto pid5 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t);
+    auto pid1 = model.add_person(home_id, age_group_15_to_34);
+    auto pid2 = model.add_person(home_id, age_group_5_to_14);
+    auto pid3 = model.add_person(home_id, age_group_5_to_14);
+    auto pid4 = model.add_person(hospital_id, age_group_5_to_14);
+    auto pid5 = model.add_person(home_id, age_group_15_to_34);
 
     // Assign persons to locations for trips.
     auto& p1 = model.get_person(pid1);
@@ -364,6 +350,43 @@ TEST_F(TestModel, evolveMobilityTrips)
 
     // Set trips to use weekday trips on weekends.
     data.use_weekday_trips_on_weekend();
+
+    // Mock the random distribution to control random behavior.
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::Exactly(18))
+        .WillOnce(testing::Return(1.0)) // draw transition to Recovered p1
+        .WillOnce(testing::Return(0.8)) // draw random peak p1
+        .WillOnce(testing::Return(0.8)) // draw random incline p1
+        .WillOnce(testing::Return(0.8)) // draw random decline p1
+        .WillOnce(testing::Return(0.8)) // draw random alpha p1
+        .WillOnce(testing::Return(0.8)) // draw random beta p1
+        .WillOnce(testing::Return(1.0)) // draw transition to Recovered p3
+        .WillOnce(testing::Return(0.8)) // draw random peak p3
+        .WillOnce(testing::Return(0.8)) // draw random incline p3
+        .WillOnce(testing::Return(0.8)) // draw random decline p3
+        .WillOnce(testing::Return(0.8)) // draw random alpha p3
+        .WillOnce(testing::Return(0.8)) // draw random beta p3
+        .WillOnce(testing::Return(1.0)) // draw transition from InfectedCritical p4
+        .WillOnce(testing::Return(0.8)) // draw random peak p4
+        .WillOnce(testing::Return(0.8)) // draw random incline p4
+        .WillOnce(testing::Return(0.8)) // draw random decline p4
+        .WillOnce(testing::Return(0.8)) // draw random alpha p4
+        .WillOnce(testing::Return(0.8)) // draw random beta p4
+        .RetiresOnSaturation();
+
+    auto rng_p1 = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), p1);
+    p1.add_new_infection(mio::abm::Infection(rng_p1, static_cast<mio::abm::VirusVariant>(0), p1.get_age(),
+                                             model.parameters, t, mio::abm::InfectionState::InfectedNoSymptoms));
+    auto rng_p3 = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), p1);
+    p3.add_new_infection(mio::abm::Infection(rng_p3, static_cast<mio::abm::VirusVariant>(0), p3.get_age(),
+                                             model.parameters, t, mio::abm::InfectionState::InfectedSevere));
+    auto rng_p4 = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), p1);
+    p4.add_new_infection(mio::abm::Infection(rng_p4, static_cast<mio::abm::VirusVariant>(0), p4.get_age(),
+                                             model.parameters, t, mio::abm::InfectionState::Recovered));
+
+    // For any other uniform distribution calls in model.evolve
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).WillRepeatedly(Return(1.));
 
     // Mock the distribution to prevent infections or state transitions in the test.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
