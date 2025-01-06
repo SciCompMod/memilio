@@ -86,7 +86,8 @@ class TestOseirGeneration(unittest.TestCase):
             self.assertEqual(result.read(), self.expected_test_oseir_cpp)
 
     def test_wrong_model_name(self):
-        self.scanner.config.model_class = "wrong_name"
+        # self.scanner.config.model_class = "wrong_name"
+        self.scanner.config.python_module_name = "wrong name"
         with self.assertRaises(AssertionError) as error:
             self.scanner.extract_results(self.ast.root_cursor)
 
