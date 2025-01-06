@@ -29,8 +29,13 @@ from matplotlib.transforms import Affine2D
 
 
 def read_groundtruth(data_dir, exponent_ode, flows=False):
-    """ Read groundtruth from data. We define the groundtruth as the results obtained by the ODE model with timestep dt=1e-6."""
-
+    """ Read groundtruth from data. We define the groundtruth as the results obtained by the ODE model with timestep dt=1e-6.
+    
+    @param[in] data_dir Directory where h5 files are stored. 
+    @param[in] exponent_ode Exponent that determines time step size via dt =10^{-exponent_ode}.
+    @param[in] flows Bool that determines whether we consider flows or compartments. Default is False. 
+    @returns Dict with results of ODE model.    
+    """
     model = 'ode'
     results = {model: []}
     savefreq = 4
@@ -74,8 +79,15 @@ def read_data(data_dir, exponent_ode, exponents_ide, flows=False):
     """ Read data into a dict, where the keys correspond to the respective model.
     At the moment we are only storing results of the IDE model here. There
     we have an array that contains all results for SECIHURD for all time points
-    for each time step size that is investigated."""
-
+    for each time step size that is investigated.
+    
+    @param[in] data_dir Directory where h5 files are stored. 
+    @param[in] exponent_ode Exponent that determines time step size of ODE simulation via dt =10^{-exponent_ode}.
+    @param[in] exponents_ide List of considered exponents that determine time step size of IDE simulation via 
+    dt =10^{-exponent_ide}.
+    @param[in] flows Bool that determines whether we consider flows or compartments. Default is False. 
+    @returns Dict with results of ODE model per time step size.   
+    """
     models = ['ide']
     results = {models[0]: []}
     for model in models:
@@ -94,10 +106,10 @@ def read_data(data_dir, exponent_ode, exponents_ide, flows=False):
                 results[model].append(data['Total'][:, :])
             else:
                 if len(data['Total'][0]) == 8:
-                    # As there should be only one Group, total is the simulation result
+                    # As there should be only one Group, total is the simulation result.
                     results[model].append(data['Total'][:, :])
                 elif len(data['Total'][0]) == 10:
-                    # in ODE there are two compartments we don't use, throw these out
+                    # In ODE there are two compartments we don't use, throw these out.
                     results[model].append(
                         data['Total'][:, [0, 1, 2, 4, 6, 7, 8, 9]])
                 else:
@@ -110,16 +122,27 @@ def read_data(data_dir, exponent_ode, exponents_ide, flows=False):
 
 
 def compute_l2_norm(timeseries, timestep):
-    """ Compute norm of a time series."""
-
+    """ Computes L2 norm of a time series.
+    
+    @param[in] timeseries Considered timeseries.
+    @param[in] Time step size. 
+    @returns Norm.
+    """
     norm = np.sqrt(timestep * np.sum(timeseries**2))
     return norm
 
 
 def compute_relerror_norm_l2(groundtruth, results, timestep_ode, timesteps_ide, flows=False):
-    """ Compute norm of the difference between time series from ODE and time series
-    from IDE for all compartments/flows."""
-
+    """ Computes relative L2 norm of the difference between time series from ODE and time series
+    from IDE for all compartments/flows.
+    
+    @param[in] groundtruth Result obtained with ODE model.
+    @param[in] results Results obtained with IDE model fordifferent time step sizes. 
+    @param[in] timestep_ode Time step used in ODE simulation.
+    @param[in] timesteps_ide List of time steps used in IDE simulations.
+    @param[in] flows Bool that determines whether we consider flows or compartments. Default is False. 
+    @param[in] Array that contains computed errors.
+    """
     if flows:
         num_errors = 10
     else:
@@ -152,9 +175,14 @@ def compute_relerror_norm_l2(groundtruth, results, timestep_ode, timesteps_ide, 
     return np.array(errors)
 
 
-def plot_convergence(errors, timesteps_ide, flows=False, compartment=None, save=False):
-    """ Plot errors against timesteps."""
-
+def plot_convergence(errors, timesteps_ide, flows=False, save_dir=""):
+    """ Plots errors against timesteps with a subplot for each compartment /flow.
+    
+    @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
+    @param[in] timesteps_ide List of time steps used in IDE simulations.
+    @param[in] flows Bool that determines whether we consider flows or compartments. Default is False. 
+    @param[in] save_dir Directory where plot will be stored.
+    """
     # Define subplots and labels.
     if flows:
         fig, axs = plt.subplots(
@@ -200,22 +228,25 @@ def plot_convergence(errors, timesteps_ide, flows=False, compartment=None, save=
     lgd = fig.legend(labels, ncol=2,  loc='outside lower center',
                      fontsize=14, bbox_to_anchor=(0.5, -0.06), bbox_transform=fig.transFigure)
     plt.tight_layout(pad=0, w_pad=0.5, h_pad=0.1)
-    if save:
+    if save_dir != "":
+        if not os.path.isdir(save_dir):
+            os.makedirs(save_dir)
         if flows:
-            if not os.path.isdir('plots/flows'):
-                os.makedirs('plots/flows')
-            plt.savefig(f'plots/flows/convergence_all_flows.png', format='png', bbox_extra_artists=(lgd,), bbox_inches='tight',
+            plt.savefig(f'{save_dir}/convergence_all_flows.png', format='png', bbox_extra_artists=(lgd,), bbox_inches='tight',
                         dpi=500)
         else:
-            if not os.path.isdir('plots/compartments'):
-                os.makedirs('plots/compartments')
-            plt.savefig(f'plots/compartments/convergence_all_compartments.png', format='png', bbox_extra_artists=(lgd,), bbox_inches='tight',
+            plt.savefig(f'{save_dir}/convergence_all_compartments.png', format='png', bbox_extra_artists=(lgd,), bbox_inches='tight',
                         dpi=500)
 
 
-def plot_convergence_oneplot(errors, timesteps_ide, flows=False, save=False):
-    """ Plot errors against timesteps. This function creates one plot to depict all compartments/flows, respectively."""
-
+def plot_convergence_oneplot(errors, timesteps_ide, flows=False, save_dir=""):
+    """ Plot errors against timesteps. This function creates one plot to depict all compartments/flows, respectively.
+    
+    @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
+    @param[in] timesteps_ide List of time steps used in IDE simulations.
+    @param[in] flows Bool that determines whether we consider flows or compartments. Default is False. 
+    @param[in] save_dir Directory where plot will be stored.
+    """
     plt.figure()
 
     if flows:
@@ -261,21 +292,24 @@ def plot_convergence_oneplot(errors, timesteps_ide, flows=False, save=False):
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.tight_layout()
 
-    if save:
+    if save_dir != "":
+        if not os.path.isdir(save_dir):
+            os.makedirs(save_dir)
         if flows:
-            if not os.path.isdir('plots/flows'):
-                os.makedirs('plots/flows')
-            plt.savefig(f'plots/flows/convergence_flows.png', format='png',
+            plt.savefig(f'{save_dir}/convergence_flows.png', format='png',
                         dpi=500)
         else:
-            if not os.path.isdir('plots/compartments'):
-                os.makedirs('plots/compartments')
-            plt.savefig(f'plots/compartments/convergence_compartments.png', format='png',
+            plt.savefig(f'{save_dir}/convergence_compartments.png', format='png',
                         dpi=500)
 
 
 def compute_order_of_convergence(errors, timesteps_ide, flows=False):
-    """ Compute order of convergence between two consecutive time step sizes."""
+    """ Compute order of convergence between two consecutive time step sizes.
+    
+    @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
+    @param[in] timesteps_ide List of time steps used in IDE simulations.
+    @param[in] flows Bool that determines whether we consider flows or compartments. Default is False. 
+    """
     if flows:
         num_orders = 10
     else:
@@ -291,32 +325,41 @@ def compute_order_of_convergence(errors, timesteps_ide, flows=False):
 
 
 def main():
-    data_dir = os.path.join(os.path.dirname(
-        __file__), "..", "results")
+    # Path where simulation results (generated with ide_convergence_rate.cpp) are stored. 
+    result_dir = os.path.join(os.path.dirname(
+        __file__), "../../..", "data/simulation_results/1097_results/")
 
-    exponents_ide = [1, 2, 3, 4]
+    # Path where plots will be stored. 
+    save_dir =  os.path.join(os.path.dirname(
+        __file__), "../../..", "data/plots/1097/")
+
+    exponent_ode = 6
+    exponents_ide = [1, 2]
     timesteps_ide = []
     for x in exponents_ide:
         timesteps_ide.append(pow(10, -x))
 
-    flows = True
+    # Plot compartments and flows.
+    # flow_bools = [False, True]
+    flow_bools =[True]
 
-    groundtruth = read_groundtruth(data_dir, 6, flows=flows)
-    timestep_ode = 1e-4
+    for flow_bool in flow_bools:
+        groundtruth = read_groundtruth(result_dir, exponent_ode, flow_bool)
+        timestep_ode = 1e-4
 
-    results = read_data(data_dir, 6, exponents_ide, flows=flows)
+        results = read_data(result_dir, exponent_ode, exponents_ide, flow_bool)
 
-    relerrors_l2 = compute_relerror_norm_l2(
-        groundtruth, results, timestep_ode, timesteps_ide, flows=flows)
+        relerrors_l2 = compute_relerror_norm_l2(
+            groundtruth, results, pow(10,-4), timesteps_ide, flow_bool)
 
-    plot_convergence_oneplot(
-        relerrors_l2, timesteps_ide, flows=flows, save=True)
-    plot_convergence(relerrors_l2, timesteps_ide,  flows=flows, save=True)
+        plot_convergence_oneplot(
+            relerrors_l2, timesteps_ide, flow_bool, save_dir)
+        plot_convergence(relerrors_l2, timesteps_ide,  flow_bool, save_dir)
 
-    """order = compute_order_of_convergence(
-        relerrors_l2, timesteps_ide, flows=flows)
+        order = compute_order_of_convergence(
+            relerrors_l2, timesteps_ide, flow_bool)
 
-    print('Orders of convergence: ', order)"""
+        print('Orders of convergence: ', order)
 
 
 if __name__ == '__main__':
