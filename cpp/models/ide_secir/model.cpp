@@ -67,6 +67,61 @@ Model::Model(TimeSeries<ScalarType>&& init, CustomIndexArray<ScalarType, AgeGrou
     }
 }
 
+bool Model::check_constraints(ScalarType dt) const
+{
+
+    if (!((size_t)m_transitions.get_num_elements() == (size_t)InfectionTransition::Count * m_num_agegroups)) {
+        log_error("A variable given for model construction is not valid. Number of elements in transition vector "
+                  "does not match the required number.");
+        return true;
+    }
+
+    for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+
+        for (int i = 0; i < (int)InfectionState::Count; i++) {
+            int index = get_state_flat_index(i, group);
+            if (m_populations[0][index] < 0) {
+                log_error("Initialization failed. Initial values for populations are less than zero.");
+                return true;
+            }
+        }
+    }
+
+    // It may be possible to run the simulation with fewer time points, but this number ensures that it is possible.
+    if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(get_global_support_max(dt) / dt)) {
+        log_error("Initialization failed. Not enough time points for transitions given before start of "
+                  "simulation.");
+        return true;
+    }
+
+    for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+
+        for (int i = 0; i < m_transitions.get_num_time_points(); i++) {
+            for (int j = 0; j < (int)InfectionTransition::Count; j++) {
+                int index = get_transition_flat_index(j, group);
+                if (m_transitions[i][index] < 0) {
+                    log_error("Initialization failed. One or more initial value for transitions is less than zero.");
+                    return true;
+                }
+            }
+        }
+    }
+    if (m_transitions.get_last_time() != m_populations.get_last_time()) {
+        log_error("Last time point of TimeSeries for transitions does not match last time point of "
+                  "TimeSeries for "
+                  "compartments. Both of these time points have to agree for a sensible simulation.");
+        return true;
+    }
+
+    if (m_populations.get_num_time_points() != 1) {
+        log_error("The TimeSeries for the compartments contains more than one time point. It is unclear how to "
+                  "initialize.");
+        return true;
+    }
+
+    return parameters.check_constraints();
+}
+
 // Note that this function computes the global_support_max via the get_support_max() method and does not make use
 // of the vector m_transitiondistributions_support_max. This is because the global_support_max is already used in
 // check_constraints and we cannot ensure that the vector has already been computed when checking for constraints

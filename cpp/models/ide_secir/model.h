@@ -29,8 +29,6 @@
 #include "memilio/utils/time_series.h"
 
 #include "vector"
-#include <cstddef>
-#include <vector>
 
 namespace mio
 {
@@ -51,8 +49,8 @@ public:
     *   simulation. 
     *   The time history must reach a certain point in the past so that the simulation can be performed.
     *   A warning is displayed if the condition is violated.
-    * @param[in] N_init A vector, containg the populations of the considered region, for every AgeGroup.
-    * @param[in] deaths A vector, containg the total number of deaths at time t0, for every AgeGroup.
+    * @param[in] N_init A vector, containing the populations of the considered region, for every AgeGroup.
+    * @param[in] deaths A vector, containing the total number of deaths at time t0, for every AgeGroup.
     * @param[in] num_agegroups The number of AgeGroups.
     * @param[in] total_confirmed_cases A vector, containing the total confirmed cases at time t0 can be set if it 
     *   should be used for initialization, for every AgeGroup.
@@ -66,61 +64,7 @@ public:
     * @brief Checks constraints on model parameters and initial data.
     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
     */
-    bool check_constraints(ScalarType dt) const
-    {
-
-        if (!((size_t)m_transitions.get_num_elements() == (size_t)InfectionTransition::Count * m_num_agegroups)) {
-            log_error("A variable given for model construction is not valid. Number of elements in transition vector "
-                      "does not match the required number.");
-            return true;
-        }
-
-        for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
-
-            for (int i = 0; i < (int)InfectionState::Count; i++) {
-                int index = get_state_flat_index(i, group);
-                if (m_populations[0][index] < 0) {
-                    log_error("Initialization failed. Initial values for populations are less than zero.");
-                    return true;
-                }
-            }
-        }
-
-        // It may be possible to run the simulation with fewer time points, but this number ensures that it is possible.
-        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(get_global_support_max(dt) / dt)) {
-            log_error("Initialization failed. Not enough time points for transitions given before start of "
-                      "simulation.");
-            return true;
-        }
-
-        for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
-
-            for (int i = 0; i < m_transitions.get_num_time_points(); i++) {
-                for (int j = 0; j < (int)InfectionTransition::Count; j++) {
-                    int index = get_transition_flat_index(j, group);
-                    if (m_transitions[i][index] < 0) {
-                        log_error(
-                            "Initialization failed. One or more initial value for transitions is less than zero.");
-                        return true;
-                    }
-                }
-            }
-        }
-        if (m_transitions.get_last_time() != m_populations.get_last_time()) {
-            log_error("Last time point of TimeSeries for transitions does not match last time point of "
-                      "TimeSeries for "
-                      "compartments. Both of these time points have to agree for a sensible simulation.");
-            return true;
-        }
-
-        if (m_populations.get_num_time_points() != 1) {
-            log_error("The TimeSeries for the compartments contains more than one time point. It is unclear how to "
-                      "initialize.");
-            return true;
-        }
-
-        return parameters.check_constraints();
-    }
+    bool check_constraints(ScalarType dt) const;
 
     /**
     * @brief Returns a flat index for the InfectionTransition TimeSeries.
@@ -181,7 +125,7 @@ public:
     *
     * @return Index representing the initialization method.
     */
-    int get_initialization_method_compartments()
+    int get_initialization_method_compartments() const
     {
         return m_initialization_method;
     }
@@ -221,7 +165,7 @@ private:
      * @param[in] dt Time discretization step size.
      * @param[in] idx_InfectionState Specifies the considered #InfectionState
      * @param[in] group The AgeGroup for which we want to compute.
-     * @param[in] idx_IncomingFlow Specifies the index of the infoming flow to #InfectionState in m_transitions. 
+     * @param[in] idx_IncomingFlow Specifies the index of the incoming flow to #InfectionState in m_transitions. 
      * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant TransitionDistribution, 
      *              related to a flow from the considered #InfectionState to any other #InfectionState.
      *              This index is also used for related probability.
@@ -409,7 +353,11 @@ private:
     // points in the force of infection term.
 
     // ---- Friend classes/functions. ----
+    // In the Simulation class, the actual simulation is performed which is why it needs access to the here
+    // defined (and private) functions to solve the model equations.
     friend class Simulation;
+    // In set_initial_flows(), we compute initial flows based on RKI data using the (private) compute_flow() function
+    // which is why it is defined as a friend function.
     friend IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date,
                                             ScalarType scale_confirmed_cases);
 };
