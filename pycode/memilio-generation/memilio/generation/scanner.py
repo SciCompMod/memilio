@@ -58,7 +58,7 @@ class Scanner:
         @param root_cursor Represents the root node of the abstract syntax tree as a Cursor object from libclang.
         @return Information extracted from the model saved as an IntermediateRepresentation.
         """
-        if self.config.model_class is not "Model":
+        if self.config.model_class != "Model":
             raise AssertionError("set a model name")
 
         intermed_repr = IntermediateRepresentation()
