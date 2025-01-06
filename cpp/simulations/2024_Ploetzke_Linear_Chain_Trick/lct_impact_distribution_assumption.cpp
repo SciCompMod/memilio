@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -221,7 +221,7 @@ mio::IOResult<void> simulate(ScalarType Reff2, ScalarType tmax, std::string save
     // Save results and print desired information.
     if (!save_dir.empty()) {
         std::string Reff2string = std::to_string(Reff2);
-        std::string filename    = save_dir + "fictional_lct_" + Reff2string.substr(0, Reff2string.find(".") + 2) + "_" +
+        std::string filename = save_dir + "lct_Reff" + Reff2string.substr(0, Reff2string.find(".") + 2) + "_subcomp" +
                                std::to_string(num_subcompartments);
         if (save_subcompartments) {
             filename = filename + "_subcompartments.h5";

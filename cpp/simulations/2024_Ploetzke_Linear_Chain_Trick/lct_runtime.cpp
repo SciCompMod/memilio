@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -109,17 +109,15 @@ void simulate(size_t num_runs, size_t num_warm_up_runs, ScalarType tmax, bool us
     std::vector<ScalarType> init = {3966564.2110, 664.2367, 545.5523, 1050.3946, 5.6045, 0.5844, 307.4165, 0.};
     // Use init as a basis to define appropriate initial values.
     // Compartment values are distributed equally to subcompartments.
-    for (size_t group = 0; group < num_groups; group++) {
-        model.populations[group * LctState::Count + 0]                   = init[group][0]; // Susceptible
-        model.populations[group * LctState::Count + LctState::Count - 2] = init[group][6]; // Recovered
-        model.populations[group * LctState::Count + LctState::Count - 1] = init[group][7]; // Dead
-        for (size_t i = 1; i < (size_t)InfState::Count - 2; i++) {
-            for (size_t subcomp = 0; subcomp < num_subcompartments; subcomp++) {
-                model.populations[group * LctState::Count + (i - 1) * num_subcompartments + 1 + subcomp] =
-                    init[group][i] / (ScalarType)num_subcompartments;
-            }
+    model.populations[0]                   = init[0]; // Susceptible.
+    model.populations[LctState::Count - 2] = init[6]; // Recovered.
+    model.populations[LctState::Count - 1] = init[7]; // Dead.
+    for (size_t i = 1; i < (size_t)InfState::Count - 2; i++) {
+        for (size_t subcomp = 0; subcomp < num_subcompartments; subcomp++) {
+            model.populations[(i - 1) * num_subcompartments + 1 + subcomp] = init[i] / (ScalarType)num_subcompartments;
         }
     }
+
     // Set integrator of fifth order.
     auto integrator =
         std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();

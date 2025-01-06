@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -257,7 +257,7 @@ mio::IOResult<void> simulation_with_ageresolution(size_t agegroup_exposed, Scala
     mio::TimeSeries<ScalarType> populations = sum_age_groups(model.calculate_compartments(result));
 
     if (!save_dir.empty()) {
-        std::string filename = save_dir + "fictional_lct_ageres_" + std::to_string(num_subcompartments) +
+        std::string filename = save_dir + "lct_ageresolved_subcomp" + std::to_string(num_subcompartments) +
                                "_agegroupinit" + std::to_string(agegroup_exposed) + ".h5";
         mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename);
     }
@@ -356,7 +356,7 @@ mio::IOResult<void> simulation_without_ageresolution(ScalarType tmax, std::strin
     mio::TimeSeries<ScalarType> populations = model.calculate_compartments(result);
 
     if (!save_dir.empty()) {
-        std::string filename = save_dir + "fictional_lct_notageres_" + std::to_string(num_subcompartments) + ".h5";
+        std::string filename = save_dir + "lct_nonageresolved_subcomp" + std::to_string(num_subcompartments) + ".h5";
         mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, 1, filename);
     }
 
