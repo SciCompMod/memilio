@@ -235,24 +235,12 @@ public:
     }
 
     /**
-     * @brief Resize all dimensions.
-     * Note that when increasing the overall size, new values may be uninitialized.
+     * @brief Resize all dimensions, invalidating entries.
+     * All entries of the CustomIndexArray should be reassigned a new value after a resize, as it may delete or reorder
+     * entries in an unexpected way. Newly added entries are default constructed.
      * @param new_dims New dimensions.
      */
     void resize(Index new_dims)
-    {
-        m_dimensions = new_dims;
-        m_numel      = product(m_dimensions);
-        m_y.conservativeResize(m_numel);
-    }
-
-    /**
-     * @brief Resize all dimensions, destroying all values.
-     * This version of resize should only be used when the CustomIndexArray contains non-movable and non-copyable
-     * values, like atomics. New entries are all default initialized.
-     * @param new_dims New dimensions.
-     */
-    void resize_destructive(Index new_dims)
     {
         m_dimensions = new_dims;
         m_numel      = product(m_dimensions);
@@ -260,15 +248,18 @@ public:
     }
 
     /**
-     * Resize a single dimension.
-     * @param new dimension.
+     * Resize a single dimension, invalidating entries.
+     * All entries of the CustomIndexArray should be reassigned a new value after a resize, as it may delete or reorder
+     * entries in an unexpected way. Newly added entries are default constructed.
+     * @param new_dim New dimension size.
+     * @tparam Tag The dimension to resize.
      */
     template <class Tag>
     void resize(mio::Index<Tag> new_dim)
     {
         std::get<mio::Index<Tag>>(m_dimensions.indices) = new_dim;
         m_numel                                         = product(m_dimensions);
-        m_y.conservativeResize(m_numel);
+        m_y.resize(m_numel);
     }
 
     /**

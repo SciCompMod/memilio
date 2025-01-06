@@ -225,11 +225,9 @@ void Model::build_exposure_caches()
         m_contact_exposure_rates_cache.resize(num_locations);
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_locations; i++) {
-            m_air_exposure_rates_cache[i].resize_destructive(
-                {CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count});
-            m_contact_exposure_rates_cache[i].resize_destructive({CellIndex(m_locations[i].get_cells().size()),
-                                                                  VirusVariant::Count,
-                                                                  AgeGroup(parameters.get_num_groups())});
+            m_air_exposure_rates_cache[i].resize({CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count});
+            m_contact_exposure_rates_cache[i].resize({CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count,
+                                                      AgeGroup(parameters.get_num_groups())});
         } // implicit taskloop barrier
         m_are_exposure_caches_valid    = false;
         m_exposure_caches_need_rebuild = false;

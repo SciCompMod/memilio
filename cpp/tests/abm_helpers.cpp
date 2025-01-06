@@ -49,16 +49,14 @@ void interact_testing(mio::abm::PersonalRandomNumberGenerator& personal_rng, mio
 {
     // allocate and initialize air exposures with 0
     mio::abm::AirExposureRates local_air_exposure;
-    local_air_exposure.resize_destructive(
-        {mio::abm::CellIndex(location.get_cells().size()), mio::abm::VirusVariant::Count});
+    local_air_exposure.resize({mio::abm::CellIndex(location.get_cells().size()), mio::abm::VirusVariant::Count});
     std::for_each(local_air_exposure.begin(), local_air_exposure.end(), [](auto& r) {
         r = 0.0;
     });
     // allocate and initialize contact exposures with 0
     mio::abm::ContactExposureRates local_contact_exposure;
-    local_contact_exposure.resize_destructive({mio::abm::CellIndex(location.get_cells().size()),
-                                               mio::abm::VirusVariant::Count,
-                                               mio::AgeGroup(global_parameters.get_num_groups())});
+    local_contact_exposure.resize({mio::abm::CellIndex(location.get_cells().size()), mio::abm::VirusVariant::Count,
+                                   mio::AgeGroup(global_parameters.get_num_groups())});
     std::for_each(local_contact_exposure.begin(), local_contact_exposure.end(), [](auto& r) {
         r = 0.0;
     });
