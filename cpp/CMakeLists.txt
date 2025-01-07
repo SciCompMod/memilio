@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.13)
 
 project(memilio VERSION 1.0.0)
 
@@ -150,6 +150,7 @@ add_subdirectory(memilio)
 if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/abm)
     add_subdirectory(models/ode_secir)
+    add_subdirectory(models/ode_secirts)
     add_subdirectory(models/ode_secirvvs)
     add_subdirectory(models/lct_secir)
     add_subdirectory(models/glct_secir)

@@ -60,11 +60,11 @@ TEST(TestOdeSECIRVVS, simulateDefault)
     model.populations.set_total(10);
     model.populations.set_difference_from_total({(mio::AgeGroup)0, mio::osecirvvs::InfectionState::SusceptibleNaive},
                                                 10);
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().array().setConstant(0);
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().array().setConstant(0);
-    mio::TimeSeries<double> result = mio::simulate<double, mio::osecirvvs::Model<double>>(t0, tmax, dt, model);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(0);
+    mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
 
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
 }
@@ -114,10 +114,10 @@ TEST(TestOdeSECIRVVS, reduceToSecirAndCompareWithPreviousRun)
 
     model.parameters.get<mio::osecirvvs::ICUCapacity<double>>()          = 10000;
     model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<double>>() = 10000;
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().array().setConstant(0);
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(0);
 
     auto& contacts       = model.parameters.get<mio::osecirvvs::ContactPatterns<double>>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
@@ -269,12 +269,10 @@ void set_demographic_parameters(mio::osecirvvs::Model<double>::ParameterSet& par
 {
     assign_uniform_distribution(parameters.get<mio::osecirvvs::ICUCapacity<double>>(), 20, 50,
                                 set_invalid_initial_value);
-    assign_uniform_distribution(parameters.get<mio::osecirvvs::TestAndTraceCapacity<double>>(), 100, 200,
-                                set_invalid_initial_value);
-    parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().array().setConstant(5);
-    parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().array().setConstant(3);
+    parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(5);
+    parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(3);
 }
 
 void set_contact_parameters(mio::osecirvvs::Model<double>::ParameterSet& parameters, bool set_invalid_initial_value)
@@ -771,8 +769,8 @@ TEST(TestOdeSECIRVVS, export_time_series_init_old_date)
     auto model          = make_model(num_age_groups);
 
     // set vaccinations to zero
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().array().setConstant(0);
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(0);
     // set all compartments to zero
     model.populations.array().setConstant(0.0);
 
@@ -849,8 +847,8 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date)
     constexpr auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
     auto model                    = make_model(num_age_groups);
     // set vaccinations to zero
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().array().setConstant(0);
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(0);
     // set all compartments to zero
     model.populations.array().setConstant(0.0);
 
@@ -886,8 +884,8 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date_county)
     constexpr auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
     auto model                    = make_model(num_age_groups);
     // set vaccinations to zero
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().array().setConstant(0);
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(0);
     // set all compartments to zero
     model.populations.array().setConstant(0.0);
 
@@ -925,11 +923,11 @@ TEST(TestOdeSECIRVVS, set_population_data_overflow_vacc)
     model.populations.array().setConstant(0.0);
 
     model.parameters
-        .template get<mio::osecirvvs::DailyFirstVaccination<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] =
+        .template get<mio::osecirvvs::DailyPartialVaccinations<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] =
         1e7 + 1;
 
     model.parameters
-        .template get<mio::osecirvvs::DailyFullVaccination<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] = 1e7;
+        .template get<mio::osecirvvs::DailyFullVaccinations<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] = 1e7;
 
     auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
 
@@ -965,10 +963,11 @@ TEST(TestOdeSECIRVVS, set_population_data_no_data_avail)
 
     // if the number of vaccinated individuals is greater than the population, we must limit the number of vaccinated.
     model.parameters
-        .template get<mio::osecirvvs::DailyFirstVaccination<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] = 0;
+        .template get<mio::osecirvvs::DailyPartialVaccinations<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] =
+        0;
 
     model.parameters
-        .template get<mio::osecirvvs::DailyFullVaccination<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] = 0;
+        .template get<mio::osecirvvs::DailyFullVaccinations<double>>()[{mio::AgeGroup(0), mio::SimulationDay(0)}] = 0;
 
     auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
 

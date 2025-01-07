@@ -228,6 +228,16 @@ private:
     std::unique_ptr<ParameterDistribution> m_dist;
 };
 
+/**
+ * @brief Format UncertainValues using their value for logging with spdlog.
+ */
+template <class FP>
+const FP& format_as(const UncertainValue<FP>& uv)
+{
+    // uses UncertainValue<FP>::operator const FP&() const
+    return uv;
+}
+
 // gtest printer
 // TODO: should be extended when UncertainValue gets operator== that compares distributions as well
 template <typename FP = double>
