@@ -49,9 +49,8 @@ public:
     {
     }
 
-    void get_flows(Eigen::Ref<const Vector<>> pop,
-                   Eigen::Ref<const Vector<>> y, ScalarType t,
-                   Eigen::Ref<Vector<>> flows) const
+    void get_flows(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop, Eigen::Ref<const Eigen::VectorX<ScalarType>> y,
+                   ScalarType t, Eigen::Ref<Eigen::VectorX<ScalarType>> flows) const
     {
         auto& params         = this->parameters;
         ScalarType coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *

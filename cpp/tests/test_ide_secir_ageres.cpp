@@ -128,7 +128,7 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
 
     // Compare compartments at last time point with results from a previous run that are given here.
     mio::TimeSeries<ScalarType> compartments = sim.get_result();
-    mio::Vector<ScalarType> compare_compartments(num_compartments * num_agegroups);
+    Eigen::VectorX<ScalarType> compare_compartments(num_compartments * num_agegroups);
     compare_compartments << 484.3056557672, 15.7685031055, 22.7020934123, 7.0615933479, 3.3491460693, 1.5803397070,
         4454.5548070034, 10.6778615873, 484.3056557672, 31.0934010790, 21.1271954388, 23.6370809253, 3.9106794140,
         1.7242153411, 4424.0110181177, 10.1907539167, 605.3820697090, 60.1973290710, 23.8046231705, 16.6085494134,
@@ -143,7 +143,7 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
     // Compare transitions at last time point with results from a previous run that are given here.
 
     mio::TimeSeries<ScalarType> transitions = sim.get_transitions();
-    mio::Vector<ScalarType> compare_transitions(num_transitions * num_agegroups);
+    Eigen::VectorX<ScalarType> compare_transitions(num_transitions * num_agegroups);
     compare_transitions << 31.5370062111, 30.6497959470, 14.1231866958, 14.7543908776, 6.6982921386, 6.6982921386,
         3.1606794140, 3.1606794140, 1.4742153411, 1.4742153411, 31.5370062111, 29.5087817552, 14.7543908776,
         14.1231866958, 6.3213588280, 6.3213588280, 2.9484306823, 2.9484306823, 1.3533839877, 1.3533839877,
