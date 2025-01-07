@@ -382,8 +382,8 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
     /**********************************
     *         IDE simulation          *
     **********************************/
-    if (!ide_exponents.empty()) {
 
+    for (ScalarType ide_exponent : ide_exponents) {
         // Start IDE model simulation at half of tmax.
         ScalarType t0_ide = (tmax - t0) / 2.;
         // Number of deaths will be set according to the ODE model later in the function where also the transitions are calculated.
@@ -482,44 +482,41 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
         mio::StateAgeFunctionWrapper riskofinf(constfunc_riskofinf);
         model_ide.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(riskofinf);
 
-        for (ScalarType ide_exponent : ide_exponents) {
+        // The IDE model is simulated using a fixed step size dt=10^{-ide_exponent}.
+        ScalarType dt_ide = pow(10, -ide_exponent);
 
-            // The IDE model is simulated using a fixed step size dt=10^{-ide_exponent}.
-            ScalarType dt_ide = pow(10, -ide_exponent);
+        // Compute initial flows from results of ODE simulation and set initial values for populations.
+        compute_initial_flows_for_ide_from_ode(model_ode, model_ide, secihurd_ode, t0_ide, dt_ide);
 
-            // Compute initial flows from results of ODE simulation and set initial values for populations.
-            compute_initial_flows_for_ide_from_ode(model_ode, model_ide, secihurd_ode, t0_ide, dt_ide);
+        model_ide.check_constraints(dt_ide);
 
-            model_ide.check_constraints(dt_ide);
+        // Carry out simulation.
+        std::cout << "Starting simulation with IDE model. \n";
+        mio::isecir::Simulation sim(model_ide, dt_ide);
+        sim.advance(tmax);
 
-            // Carry out simulation.
-            std::cout << "Starting simulation with IDE model. \n";
-            mio::isecir::Simulation sim(model_ide, dt_ide);
-            sim.advance(tmax);
-
-            std::cout << "Initialization method of the IDE model: "
-                      << sim.get_model().get_initialization_method_compartments() << "\n";
-            if (!result_dir.empty()) {
-                // Save compartments.
-                mio::TimeSeries<ScalarType> secihurd_ide = sim.get_result();
-                auto save_result_status_ide =
-                    mio::save_result({secihurd_ide}, {0}, 1,
-                                     result_dir + "result_ide_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
-                                         "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
-                // Save flows.
-                mio::TimeSeries<ScalarType> secihurd_ide_flows = sim.get_transitions();
-                auto save_result_status_ide_flows =
-                    mio::save_result({remove_time_points(secihurd_ide_flows, dt_ide, 1. / dt_ide)}, {0}, 1,
-                                     result_dir + "result_ide_flows_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
-                                         "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
-                if (save_result_status_ide && save_result_status_ide_flows) {
-                    std::cout << "Successfully saved the IDE simulation results. \n\n";
-                }
-                else {
-                    std::cout << "Error occured while saving the IDE simulation results. \n";
-                    return mio::failure(mio::StatusCode::InvalidValue,
-                                        "Error occured while saving the IDE simulation results.");
-                }
+        std::cout << "Initialization method of the IDE model: "
+                  << sim.get_model().get_initialization_method_compartments() << "\n";
+        if (!result_dir.empty()) {
+            // Save compartments.
+            mio::TimeSeries<ScalarType> secihurd_ide = sim.get_result();
+            auto save_result_status_ide =
+                mio::save_result({secihurd_ide}, {0}, 1,
+                                 result_dir + "result_ide_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
+                                     "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
+            // Save flows.
+            mio::TimeSeries<ScalarType> secihurd_ide_flows = sim.get_transitions();
+            auto save_result_status_ide_flows =
+                mio::save_result({remove_time_points(secihurd_ide_flows, dt_ide, 1. / dt_ide)}, {0}, 1,
+                                 result_dir + "result_ide_flows_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
+                                     "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
+            if (save_result_status_ide && save_result_status_ide_flows) {
+                std::cout << "Successfully saved the IDE simulation results. \n\n";
+            }
+            else {
+                std::cout << "Error occured while saving the IDE simulation results. \n";
+                return mio::failure(mio::StatusCode::InvalidValue,
+                                    "Error occured while saving the IDE simulation results.");
             }
         }
     }
