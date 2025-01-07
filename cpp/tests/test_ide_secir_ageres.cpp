@@ -28,10 +28,10 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
     int num_transitions  = (int)mio::isecir::InfectionTransition::Count;
     int num_compartments = (int)mio::isecir::InfectionState::Count;
 
-    // Create TimeSeries with num_transitions * num_agegroups elements where transitions needed for simulation will be stored.
+    // Create TimeSeries with num_transitions * num_agegroups elements where flows needed for simulation will be stored.
     mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
 
-    // Define transitions that will be used for initialization.
+    // Define flows that will be used for initialization.
     Vec vec_init = Vec::Constant(num_transitions * num_agegroups, 1.);
     // First AgeGroup.
     vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 20.0;
@@ -140,19 +140,19 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
         ASSERT_NEAR(compartments.get_last_value()[j], compare_compartments[j], 1e-7);
     }
 
-    // Compare transitions at last time point with results from a previous run that are given here.
+    // Compare flows at last time point with results from a previous run that are given here.
 
-    mio::TimeSeries<ScalarType> transitions = sim.get_transitions();
-    Eigen::VectorX<ScalarType> compare_transitions(num_transitions * num_agegroups);
-    compare_transitions << 31.5370062111, 30.6497959470, 14.1231866958, 14.7543908776, 6.6982921386, 6.6982921386,
+    mio::TimeSeries<ScalarType> flows = sim.get_flows();
+    Eigen::VectorX<ScalarType> compare_flows(num_transitions * num_agegroups);
+    compare_flows << 31.5370062111, 30.6497959470, 14.1231866958, 14.7543908776, 6.6982921386, 6.6982921386,
         3.1606794140, 3.1606794140, 1.4742153411, 1.4742153411, 31.5370062111, 29.5087817552, 14.7543908776,
         14.1231866958, 6.3213588280, 6.3213588280, 2.9484306823, 2.9484306823, 1.3533839877, 1.3533839877,
         39.4212577639, 30.1092463410, 14.4459531059, 14.4459531059, 6.5114345346, 6.5114345346, 3.0573621415,
         3.0573621415, 1.4155355888, 1.4155355888;
 
-    ASSERT_EQ(compare_transitions.size(), static_cast<size_t>(transitions.get_last_value().size()));
+    ASSERT_EQ(compare_flows.size(), static_cast<size_t>(flows.get_last_value().size()));
 
-    for (int j = 0; j < compare_transitions.size(); j++) {
-        ASSERT_NEAR(transitions.get_last_value()[j], compare_transitions[j], 1e-7);
+    for (int j = 0; j < compare_flows.size(); j++) {
+        ASSERT_NEAR(flows.get_last_value()[j], compare_flows[j], 1e-7);
     }
 }

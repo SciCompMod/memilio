@@ -62,7 +62,7 @@ public:
      */
     TimeSeries<ScalarType> get_result()
     {
-        return m_model->m_populations;
+        return m_model->populations;
     }
 
     /**
@@ -72,17 +72,17 @@ public:
      */
     const TimeSeries<ScalarType>& get_result() const
     {
-        return m_model->m_populations;
+        return m_model->populations;
     }
 
     /**
-     * @brief Get the transitions between the different #InfectionState%s.
+     * @brief Get the computed flows between the different #InfectionState%s.
      * 
-     * @return TimeSeries with stored transitions calculated in the simulation.
+     * @return TimeSeries with stored flows calculated in the simulation.
      */
-    TimeSeries<ScalarType> const& get_transitions()
+    TimeSeries<ScalarType> const& get_flows()
     {
-        return m_model->m_transitions;
+        return m_model->flows;
     }
 
     /**
