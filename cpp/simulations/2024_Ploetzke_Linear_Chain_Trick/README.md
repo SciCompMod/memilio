@@ -23,6 +23,8 @@ Below is an overview of the files and the paper sections they belong to.
 
     The visualizations of the simulation results in the paper were created using the python script [plot_covid19_inspired](plot_covid19_inspired.py).
 
+- Figure 2 and Figure 12: These figures are not based on simulation results. Figure 2 contains a visualization of the density and the survival function of Erlang distributions with different parameter choices. Figure 12 shows the age-resolved contact pattern for Germany. Both plots are created using [plot_details](plot_details.py).
+
 
 For most of the above `.cpp` files, the number of subcompartments used in the LCT models for all compartments can be controlled via the preprocessor macro NUM_SUBCOMPARTMENTS. Have a look at the files for further documentation or the shell scripts for the usage. 
 

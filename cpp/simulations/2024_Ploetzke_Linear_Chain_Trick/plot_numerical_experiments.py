@@ -188,8 +188,9 @@ def plot_single_compartment(files, legend_labels,  compartment_idx=1, file_name=
     plt.tight_layout()
 
     # Save result.
-    plt.savefig(plotfolder+'/'+file_name +
-                '.png', bbox_inches='tight', dpi=500)
+    if file_name:
+        plt.savefig(plotfolder+'/'+file_name +
+                    '.png', bbox_inches='tight', dpi=500)
     plt.close()
 
 
