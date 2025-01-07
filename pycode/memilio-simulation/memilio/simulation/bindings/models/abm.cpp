@@ -340,9 +340,9 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("advance",
              &mio::abm::Simulation::advance<mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
                                                          LogPersonsPerLocationAndInfectionTime, LogAgentIds>>)
-        // .def("advance",
-        //      static_cast<void (mio::abm::Simulation::*)(mio::abm::TimePoint)>(&mio::abm::Simulation::advance),
-        //      py::arg("tmax"))
+        .def("advance",
+             static_cast<void (mio::abm::Simulation::*)(mio::abm::TimePoint)>(&mio::abm::Simulation::advance),
+             py::arg("tmax"))
         .def_property_readonly("model", py::overload_cast<>(&mio::abm::Simulation::get_model));
 
     pymio::bind_class<mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
