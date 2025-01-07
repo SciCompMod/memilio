@@ -39,6 +39,8 @@ add_library(memilio
     io/history.h
     io/mobility_io.h
     io/mobility_io.cpp
+    io/parameters_io.h
+    io/parameters_io.cpp
     io/result_io.h
     io/result_io.cpp
     io/epi_data.h
