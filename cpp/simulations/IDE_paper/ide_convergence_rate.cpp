@@ -364,12 +364,11 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
         // Note that we are computing \tilde{\sigma} here. To be able to compare flows between different timesteps (of ODE and IDE)
         // we need to divide by dt to get \hat{\sigma}. This is done while saving the results.
         mio::TimeSeries<ScalarType> secihurd_ode_flows((int)mio::isecir::InfectionTransition::Count);
-        get_flows_from_ode_compartments(model_ode, secihurd_ode, secihurd_ode_flows, tmax, tmax - t0,
-                                        pow(10, -save_exponent));
-        auto save_result_status_ode_flows = mio::save_result(
-            {remove_time_points(secihurd_ode_flows, pow(10, -save_exponent), 1. / pow(10, -save_exponent))}, {0}, 1,
-            result_dir + "result_ode_flows_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + "_savefrequency" +
-                fmt::format("{:.0f}", save_exponent) + ".h5");
+        get_flows_from_ode_compartments(model_ode, secihurd_ode, secihurd_ode_flows, tmax, tmax - t0);
+        auto save_result_status_ode_flows =
+            mio::save_result({remove_time_points(secihurd_ode_flows, pow(10, -save_exponent), 1. / dt_ode)}, {0}, 1,
+                             result_dir + "result_ode_flows_dt=1e-" + fmt::format("{:.0f}", ode_exponent) +
+                                 "_savefrequency" + fmt::format("{:.0f}", save_exponent) + ".h5");
 
         if (save_result_status_ode && save_result_status_ode_flows) {
             std::cout << "Successfully saved the ODE simulation results. \n\n";
@@ -488,7 +487,7 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
             // The IDE model is simulated using a fixed step size dt=10^{-ide_exponent}.
             ScalarType dt_ide = pow(10, -ide_exponent);
 
-            // Compute initial flows from results of ODE simulation.
+            // Compute initial flows from results of ODE simulation and set initial values for populations.
             compute_initial_flows_for_ide_from_ode(model_ode, model_ide, secihurd_ode, t0_ide, dt_ide);
 
             model_ide.check_constraints(dt_ide);
@@ -541,11 +540,9 @@ int main()
     // as for very small step sizes used for the simulation, the number of time points stored gets very big.
     ScalarType save_exponent = 4;
     // The IDE model will be simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
-    std::vector<ScalarType> ide_exponents = {1, 2, 3};
+    std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
 
-    mio::IOResult<void> result = mio::success();
-    // for (ScalarType ide_exponent : ide_exponents)
-    result = simulate_ode_and_ide(t0, tmax, ode_exponent, ide_exponents, save_exponent, result_dir);
+    mio::IOResult<void> result = simulate_ode_and_ide(t0, tmax, ode_exponent, ide_exponents, save_exponent, result_dir);
 
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());

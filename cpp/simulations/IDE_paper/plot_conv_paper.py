@@ -28,23 +28,23 @@ from matplotlib.markers import MarkerStyle
 from matplotlib.transforms import Affine2D
 
 
-def read_groundtruth(data_dir, exponent_ode, flows=False):
+def read_groundtruth(data_dir, ode_exponent, save_exponent, flows=False):
     """ Read groundtruth from data. We define the groundtruth as the results obtained by the ODE model with timestep dt=1e-6.
     
     @param[in] data_dir Directory where h5 files are stored. 
-    @param[in] exponent_ode Exponent that determines time step size via dt =10^{-exponent_ode}.
+    @param[in] ode_exponent Exponent that determines time step size via dt =10^{-ode_exponent}.
+    @param[in] save_exponent The results of the ODE model were saved using the step size 10^{-save_exponent}.
     @param[in] flows Bool that determines whether we consider flows or compartments. Default is False. 
     @returns Dict with results of ODE model.    
     """
     model = 'ode'
     results = {model: []}
-    savefreq = 4
     if flows:
         h5file = h5py.File(os.path.join(
-            data_dir, f'result_{model}_flows_dt=1e-{exponent_ode:.0f}_savefrequency{savefreq:.0f}.h5'), 'r')
+            data_dir, f'result_{model}_flows_dt=1e-{ode_exponent:.0f}_savefrequency{save_exponent:.0f}.h5'), 'r')
     else:
         h5file = h5py.File(os.path.join(
-            data_dir, f'result_{model}_dt=1e-{exponent_ode:.0f}_savefrequency{savefreq:.0f}.h5'), 'r')
+            data_dir, f'result_{model}_dt=1e-{ode_exponent:.0f}_savefrequency{save_exponent:.0f}.h5'), 'r')
 
     if (len(list(h5file.keys())) > 1):
         raise gd.DataError("File should contain one dataset.")
@@ -75,14 +75,14 @@ def read_groundtruth(data_dir, exponent_ode, flows=False):
     return results
 
 
-def read_data(data_dir, exponent_ode, exponents_ide, flows=False):
+def read_data(data_dir, ode_exponent, exponents_ide, flows=False):
     """ Read data into a dict, where the keys correspond to the respective model.
     At the moment we are only storing results of the IDE model here. There
     we have an array that contains all results for SECIHURD for all time points
     for each time step size that is investigated.
     
     @param[in] data_dir Directory where h5 files are stored. 
-    @param[in] exponent_ode Exponent that determines time step size of ODE simulation via dt =10^{-exponent_ode}.
+    @param[in] ode_exponent Exponent that determines time step size of ODE simulation via dt =10^{-ode_exponent}.
     @param[in] exponents_ide List of considered exponents that determine time step size of IDE simulation via 
     dt =10^{-exponent_ide}.
     @param[in] flows Bool that determines whether we consider flows or compartments. Default is False. 
@@ -94,10 +94,10 @@ def read_data(data_dir, exponent_ode, exponents_ide, flows=False):
         for exponent in exponents_ide:
             if flows:
                 h5file = h5py.File(os.path.join(
-                    data_dir, f'result_{model}_flows_dt=1e-{exponent:.0f}_init_dt_ode=1e-{exponent_ode:.0f}.h5'), 'r')
+                    data_dir, f'result_{model}_flows_dt=1e-{exponent:.0f}_init_dt_ode=1e-{ode_exponent:.0f}.h5'), 'r')
             else:
                 h5file = h5py.File(os.path.join(
-                    data_dir, f'result_{model}_dt=1e-{exponent:.0f}_init_dt_ode=1e-{exponent_ode:.0f}.h5'), 'r')
+                    data_dir, f'result_{model}_dt=1e-{exponent:.0f}_init_dt_ode=1e-{ode_exponent:.0f}.h5'), 'r')
 
             data = h5file[list(h5file.keys())[0]]
 
@@ -132,13 +132,13 @@ def compute_l2_norm(timeseries, timestep):
     return norm
 
 
-def compute_relerror_norm_l2(groundtruth, results, timestep_ode, timesteps_ide, flows=False):
+def compute_relerror_norm_l2(groundtruth, results, save_exponent, timesteps_ide, flows=False):
     """ Computes relative L2 norm of the difference between time series from ODE and time series
     from IDE for all compartments/flows.
     
     @param[in] groundtruth Result obtained with ODE model.
     @param[in] results Results obtained with IDE model fordifferent time step sizes. 
-    @param[in] timestep_ode Time step used in ODE simulation.
+    @param[in] save_exponent The results of the ODE model were saved using the step size 10^{-save_exponent}.
     @param[in] timesteps_ide List of time steps used in IDE simulations.
     @param[in] flows Bool that determines whether we consider flows or compartments. Default is False. 
     @param[in] Array that contains computed errors.
@@ -154,7 +154,7 @@ def compute_relerror_norm_l2(groundtruth, results, timestep_ode, timesteps_ide, 
         errors.append([])
         for compartment in range(num_errors):
             timestep = timesteps_ide[i]
-            scale_timesteps = timestep/timestep_ode
+            scale_timesteps = timestep/pow(10, -save_exponent)
             num_timepoints = len(results['ide'][i])
             # Only consider compartments of ODE model for t>=t0_IDE. Use that 2*t0_IDE = t_max.
             if flows:
@@ -327,39 +327,49 @@ def compute_order_of_convergence(errors, timesteps_ide, flows=False):
 def main():
     # Path where simulation results (generated with ide_convergence_rate.cpp) are stored. 
     result_dir = os.path.join(os.path.dirname(
-        __file__), "../../..", "data/simulation_results/1097_results/")
+        __file__), "../../..", "data/simulation_results/convergence/")
 
     # Path where plots will be stored. 
     save_dir =  os.path.join(os.path.dirname(
-        __file__), "../../..", "data/plots/1097/")
+        __file__), "../../..", "data/plots/convergence/")
 
-    exponent_ode = 6
-    exponents_ide = [1, 2]
+    # The ODE model was simulated using a fixed step size dt=10^{-ode_exponent}.
+    ode_exponent = 6
+    # The results of the ODE model were saved using the step size 10^{-save_exponent}
+    # as for very small step sizes used for the simulation, the number of time points stored gets very big.
+    save_exponent = 4
+    # The IDE model was simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
+    exponents_ide = [1, 2, 3, 4]
+    # Calculate time steps resulting from exponents_ide.
     timesteps_ide = []
-    for x in exponents_ide:
-        timesteps_ide.append(pow(10, -x))
+    for exp in exponents_ide:
+        timesteps_ide.append(pow(10, -exp))
 
     # Plot compartments and flows.
-    # flow_bools = [False, True]
-    flow_bools =[True]
+    flow_bools = [False, True]
 
     for flow_bool in flow_bools:
-        groundtruth = read_groundtruth(result_dir, exponent_ode, flow_bool)
-        timestep_ode = 1e-4
+        # Read groundtruth (from ODE model).
+        groundtruth = read_groundtruth(result_dir, ode_exponent, save_exponent, flow_bool)
 
-        results = read_data(result_dir, exponent_ode, exponents_ide, flow_bool)
+        # Read results from IDE simulations.
+        results = read_data(result_dir, ode_exponent, exponents_ide, flow_bool)
 
+        # Compute relative L2 error norm of IDE results compared to groundtruth.
         relerrors_l2 = compute_relerror_norm_l2(
-            groundtruth, results, pow(10,-4), timesteps_ide, flow_bool)
+            groundtruth, results, save_exponent, timesteps_ide, flow_bool)
 
+        # Plot convergence of all compartments/flows in one plot, respectively.
         plot_convergence_oneplot(
             relerrors_l2, timesteps_ide, flow_bool, save_dir)
+        # Plot convergence of all compartments/flows separately.
         plot_convergence(relerrors_l2, timesteps_ide,  flow_bool, save_dir)
 
-        order = compute_order_of_convergence(
-            relerrors_l2, timesteps_ide, flow_bool)
+        # # Determine order of convergence
+        # order = compute_order_of_convergence(
+        #     relerrors_l2, timesteps_ide, flow_bool)
 
-        print('Orders of convergence: ', order)
+        # print('Orders of convergence: ', order)
 
 
 if __name__ == '__main__':
