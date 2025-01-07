@@ -58,8 +58,8 @@ std::vector<mio::ConfirmedCasesDataEntry> get_synthetic_rki_data_age()
     const int num_agegroups = 6;
     Json::Value js(Json::arrayValue);
     std::vector<Json::Value> dates           = {"2020-05-26", "2020-05-27", "2020-05-28", "2020-05-29",
-                                      "2020-05-30", "2020-05-31", "2020-06-01", "2020-06-02",
-                                      "2020-06-03", "2020-06-04", "2020-06-05"};
+                                                "2020-05-30", "2020-05-31", "2020-06-01", "2020-06-02",
+                                                "2020-06-03", "2020-06-04", "2020-06-05"};
     std::vector<Json::Value> age_group_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"};
     for (int day = 0; day < 11; day++) {
         for (int age = 0; age < num_agegroups; age++) {
@@ -106,7 +106,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKI)
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
     // Result to compare the simulation result with.
-    mio::Vector<ScalarType> compare((Eigen::Index)LctState::Count);
+    Eigen::VectorX<ScalarType> compare((Eigen::Index)LctState::Count);
     // Calculate result using that the number of new confirmed cases at each day is one in the synthetic case data
     // and additionally the stay times, the number of subcompartments, and the transition probabilities.
     compare << 889.5, 1. / (2. * 0.8) * 2.3, 1. / (2. * 0.8) * 2.3, 1. / (3. * 0.8) * 1.3, 1. / (3. * 0.8) * 1.3,
@@ -156,7 +156,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIAgeres)
     // in the synthetic case data and additionally the stay times, the number of subcompartments,
     // and the transition probabilities.
     size_t num_populations = (size_t)InfState::Count * num_agegroups;
-    mio::Vector<ScalarType> compare(num_populations);
+    Eigen::VectorX<ScalarType> compare(num_populations);
     for (size_t age = 0; age < num_agegroups; age++) {
         compare[(size_t)InfState::Count * age + (size_t)InfState::Exposed] =
             1. / (1. - model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[age]) *
