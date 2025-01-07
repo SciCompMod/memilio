@@ -205,8 +205,10 @@ void compute_initial_flows_for_ide_from_ode(mio::osecir::Model<ScalarType>& mode
     // Use t_window=t0_ide to get flows from t0 onwards.
     get_flows_from_ode_compartments(model_ode, compartments, model_ide.m_transitions, t0_ide, t0_ide, dt_ide);
     ScalarType dt_ode = compartments.get_time(1) - compartments.get_time(0);
-    // Correct values in populations.
-    model_ide.m_populations.remove_last_time_point();
+    // Remove time series from previous run and set initial values in populations.
+    if (model_ide.m_populations.get_num_time_points() > 0) {
+        model_ide.m_populations = mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionState::Count);
+    }
     model_ide.m_populations.add_time_point<Eigen::VectorXd>(
         model_ide.m_transitions.get_last_time(),
         mio::TimeSeries<ScalarType>::Vector::Constant((int)mio::isecir::InfectionState::Count, 0));
@@ -249,31 +251,32 @@ mio::TimeSeries<ScalarType> remove_time_points(const mio::TimeSeries<ScalarType>
 * ODE model. Furthermore, we determine the initial flows for the IDE model based on the ODE results so that we have
 * equivalent conditions for both models at t0_ide. 
 
-* The time step size of ODE and IDE simulation can be chosen independently.
+* The time step size of ODE and IDE simulation can be chosen independently. A vector containing the desired 
+* ide_exponents is passed for which an IDE simulation is run. If an empty vector is passed, only an ODE simulation is 
+* run, e.g., to create a ground truth
 * However, we assume that the time step size of the IDE model is a multiple of the one of the ODE model.
 *
 * @param[in] t0 Start time of the ODE simulation. 
 * @param[in] tmax Maximal time for which we simulate.
 * @param[in] ode_exponent The ODE model is simulated using a fixed step size dt=10^{-ode_exponent}.
-* @param[in] ide_exponent The IDE model is simulated using a fixed step size dt=10^{-ide_exponent}.
-* @param[in] save_exponent The results of the ODE model will be saved using the step size 10^{-save_exponent}.
+* @param[in] ide_exponents The IDE model is simulated using fixed step sizes dt=10^{-ide_exponent} for ide_exponent in 
+* ide_exponents.
+* @param[in] save_exponent The results of the ODE model will be saved using the step size 10^{-save_exponent}, should 
+* not be larger than the maximum ide_exponent.
 * @param[in] result_dir Directory where simulation results will be stored. 
-* @param[in] ide_simulation Bool that determines if we want to do an IDE-based in addition to an ODE-based simulation;
-* default is true. 
 * @returns Any io errors that happen. 
 */
 mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarType ode_exponent,
-                                         ScalarType ide_exponent, ScalarType save_exponent, std::string result_dir,
-                                         bool ide_simulation = true)
+                                         std::vector<ScalarType> ide_exponents, ScalarType save_exponent,
+                                         std::string result_dir)
 {
-    // The ODE model is simulated using a fixed step size dt=10^{-ode_exponent}.
-    ScalarType dt_ode = pow(10, -ode_exponent);
-    // The IDE model is simulated using a fixed step size dt=10^{-ide_exponent}.
-    ScalarType dt_ide = pow(10, -ide_exponent);
-
     /**********************************
     *         ODE simulation          *
     **********************************/
+
+    // The ODE model is simulated using a fixed step size dt=10^{-ode_exponent}.
+    ScalarType dt_ode = pow(10, -ode_exponent);
+
     mio::osecir::Model<ScalarType> model_ode(1);
 
     // Set initial values for compartments.
@@ -369,7 +372,7 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
                 fmt::format("{:.0f}", save_exponent) + ".h5");
 
         if (save_result_status_ode && save_result_status_ode_flows) {
-            std::cout << "Successfully saved the ODE simulation results. \n";
+            std::cout << "Successfully saved the ODE simulation results. \n\n";
         }
         else {
             return mio::failure(mio::StatusCode::InvalidValue,
@@ -380,7 +383,8 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
     /**********************************
     *         IDE simulation          *
     **********************************/
-    if (ide_simulation) {
+    if (!ide_exponents.empty()) {
+
         // Start IDE model simulation at half of tmax.
         ScalarType t0_ide = (tmax - t0) / 2.;
         // Number of deaths will be set according to the ODE model later in the function where also the transitions are calculated.
@@ -479,38 +483,44 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
         mio::StateAgeFunctionWrapper riskofinf(constfunc_riskofinf);
         model_ide.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(riskofinf);
 
-        // Compute initial flows from results of ODE simulation.
-        compute_initial_flows_for_ide_from_ode(model_ode, model_ide, secihurd_ode, t0_ide, dt_ide);
+        for (ScalarType ide_exponent : ide_exponents) {
 
-        model_ide.check_constraints(dt_ide);
+            // The IDE model is simulated using a fixed step size dt=10^{-ide_exponent}.
+            ScalarType dt_ide = pow(10, -ide_exponent);
 
-        // Carry out simulation.
-        std::cout << "Starting simulation with IDE model. \n";
-        mio::isecir::Simulation sim(model_ide, dt_ide);
-        sim.advance(tmax);
+            // Compute initial flows from results of ODE simulation.
+            compute_initial_flows_for_ide_from_ode(model_ode, model_ide, secihurd_ode, t0_ide, dt_ide);
 
-        std::cout << "Initialization method of the IDE model: "
-                  << sim.get_model().get_initialization_method_compartments() << "\n";
-        if (!result_dir.empty()) {
-            // Save compartments.
-            mio::TimeSeries<ScalarType> secihurd_ide = sim.get_result();
-            auto save_result_status_ide =
-                mio::save_result({secihurd_ide}, {0}, 1,
-                                 result_dir + "result_ide_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
-                                     "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
-            // Save flows.
-            mio::TimeSeries<ScalarType> secihurd_ide_flows = sim.get_transitions();
-            auto save_result_status_ide_flows =
-                mio::save_result({remove_time_points(secihurd_ide_flows, dt_ide, 1. / dt_ide)}, {0}, 1,
-                                 result_dir + "result_ide_flows_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
-                                     "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
-            if (save_result_status_ide && save_result_status_ide_flows) {
-                std::cout << "Successfully saved the IDE simulation results. \n\n";
-            }
-            else {
-                std::cout << "Error occured while saving the IDE simulation results. \n";
-                return mio::failure(mio::StatusCode::InvalidValue,
-                                    "Error occured while saving the IDE simulation results.");
+            model_ide.check_constraints(dt_ide);
+
+            // Carry out simulation.
+            std::cout << "Starting simulation with IDE model. \n";
+            mio::isecir::Simulation sim(model_ide, dt_ide);
+            sim.advance(tmax);
+
+            std::cout << "Initialization method of the IDE model: "
+                      << sim.get_model().get_initialization_method_compartments() << "\n";
+            if (!result_dir.empty()) {
+                // Save compartments.
+                mio::TimeSeries<ScalarType> secihurd_ide = sim.get_result();
+                auto save_result_status_ide =
+                    mio::save_result({secihurd_ide}, {0}, 1,
+                                     result_dir + "result_ide_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
+                                         "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
+                // Save flows.
+                mio::TimeSeries<ScalarType> secihurd_ide_flows = sim.get_transitions();
+                auto save_result_status_ide_flows =
+                    mio::save_result({remove_time_points(secihurd_ide_flows, dt_ide, 1. / dt_ide)}, {0}, 1,
+                                     result_dir + "result_ide_flows_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
+                                         "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
+                if (save_result_status_ide && save_result_status_ide_flows) {
+                    std::cout << "Successfully saved the IDE simulation results. \n\n";
+                }
+                else {
+                    std::cout << "Error occured while saving the IDE simulation results. \n";
+                    return mio::failure(mio::StatusCode::InvalidValue,
+                                        "Error occured while saving the IDE simulation results.");
+                }
             }
         }
     }
@@ -527,17 +537,15 @@ int main()
     ScalarType tmax = 70.;
     // The ODE model will be simulated using a fixed step size dt=10^{-ode_exponent}.
     ScalarType ode_exponent = 6;
-    // The IDE model will be simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
-    std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
     // The results of the ODE model will be saved using the step size 10^{-save_exponent}
     // as for very small step sizes used for the simulation, the number of time points stored gets very big.
     ScalarType save_exponent = 4;
-    // Decide if we want to run the IDE simulation or just the ODE simulation, e.g., to create a ground truth.
-    bool ide_simulation = true;
+    // The IDE model will be simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
+    std::vector<ScalarType> ide_exponents = {1, 2, 3};
 
     mio::IOResult<void> result = mio::success();
-    for (ScalarType ide_exponent : ide_exponents)
-        result = simulate_ode_and_ide(t0, tmax, ode_exponent, ide_exponent, save_exponent, result_dir, ide_simulation);
+    // for (ScalarType ide_exponent : ide_exponents)
+    result = simulate_ode_and_ide(t0, tmax, ode_exponent, ide_exponents, save_exponent, result_dir);
 
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
