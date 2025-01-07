@@ -265,6 +265,6 @@ def list_border_counties():
 
 if __name__ == '__main__':
     # plot_mean_distances()
-    # plot_county_in_distances(radius=73.5)
+    plot_county_in_distances(radius=73.5)
     # plot_random_counties(radius=103)
-    list_border_counties()
+    # list_border_counties()

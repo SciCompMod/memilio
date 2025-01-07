@@ -10,7 +10,7 @@ import memilio.plot.plotMap as pm
 from memilio.epidata import geoModificationGermany as geoger
 from matplotlib import pyplot as plt
 import matplotlib.colors as mcolors
-from matplotlib.colors import SymLogNorm, LinearSegmentedColormap
+from matplotlib.colors import SymLogNorm, LinearSegmentedColormap, Normalize
 from tqdm.auto import tqdm
 
 import warnings
@@ -25,13 +25,12 @@ def plot_risk_map(path_results, path_plots, days, percentile):
               days=days, min_val=0, max_val=1, filename="risk_map", relative=False, age_groups={0: '0-4'})
 
 
-def plot_icu_map(path_results, path_plots, days, percentile, modes, path_results2, max_val):
-    for mode in modes:
-        path = os.path.join(path_plots)
-        if not os.path.exists(path):
-            os.makedirs(path)
-        plot_maps(os.path.join(path_results, mode), path, compartments=[7], percentile=percentile,
-                  days=days, min_val=1, max_val=max_val, filename="icu_map", relative=True, path_results2=os.path.join(path_results2, mode))
+def plot_icu_map(path_results, path_plots, days, percentile, max_val, icu_cap):
+    path = os.path.join(path_plots)
+    if not os.path.exists(path):
+        os.makedirs(path)
+    plot_maps(path_results, path, compartments=[7], percentile=percentile,
+              days=days, min_val=0, max_val=max_val, filename="icu_map", relative=True, icu_cap=icu_cap)
 
 
 def plot_flows(path_results, path_plots, days, percentile, mode, fn, symptomatic=True):
@@ -76,7 +75,7 @@ def create_colorbar(path_plots, norm, title):
 
 
 def plot_maps(path_results, path_plots, compartments, percentile, days, min_val, max_val, filename="data", relative=True, age_groups={0: '0-4', 1: '5-14', 2: '15-34',
-                                                                                                                                      3: '35-59', 4: '60-79', 5: '80+'}, flows=False, path_results2=""):
+                                                                                                                                      3: '35-59', 4: '60-79', 5: '80+'}, flows=False, path_results2="", icu_cap=1):
     progress_bar = tqdm(total=len(days))
 
     path = os.path.join(path_results, percentile, "Results")
@@ -103,6 +102,8 @@ def plot_maps(path_results, path_plots, compartments, percentile, days, min_val,
 
     norm = SymLogNorm(linthresh=1, linscale=0.7,
                       vmin=min_val, vmax=max_val)
+    # linear norm
+    # norm = Normalize(vmin=min_val, vmax=max_val)
     create_colorbar(path_plots, norm, filename)
 
     for day in days:
@@ -157,7 +158,7 @@ def plot_maps(path_results, path_plots, compartments, percentile, days, min_val,
                     df, age_group_values, population)
 
                 # overwrite data in col 'Count' with data from 'Count (rel)'
-                df['Count'] = df['Count (rel)'] * 100_000
+                df['Count'] = df['Count (rel)'] * 100_000 / icu_cap
                 # del old column 'Count (rel)'
                 df = df.drop(columns=['Count (rel)'])
 
@@ -174,14 +175,18 @@ def plot_maps(path_results, path_plots, compartments, percentile, days, min_val,
         dfs_all_sorted = dfs_all.sort_values(by='Region')
         dfs_all_sorted = dfs_all_sorted.reset_index(drop=True)
 
-        if dfs_all_sorted['Count 0'].max() > get_max_val or dfs_all_sorted['Count 1'].max() > get_max_val:
-            get_max_val = max(
-                dfs_all_sorted['Count 0'].max(), dfs_all_sorted['Count 1'].max())
+        # or dfs_all_sorted['Count 1'].max() > get_max_val:
+        if dfs_all_sorted['Count 0'].max() > get_max_val:
+            if path_results2 == "":
+                get_max_val = dfs_all_sorted['Count 0'].max()
+            else:
+                get_max_val = max(
+                    dfs_all_sorted['Count 0'].max(), dfs_all_sorted['Count 1'].max())
 
         pm.plot_map(norm=norm, data=dfs_all_sorted,
                     scale_colors=[min_val, max_val],
                     legend=['', ''],
-                    title='bf 0 (left), bf 0.7 (right). day ' + str(day),
+                    title='',
                     plot_colorbar=False,
                     output_path=path_plots,
                     fig_name=fn,
@@ -209,35 +214,42 @@ if __name__ == '__main__':
 
     # /localdata1/code_2024/memilio/results/ICUCap_9.000000/rho_1.080000/BlendingFactorRegional_0.000000/kmin_0.000000_kmax_0.360000
 
-    # path_results = os.path.join(
-    #     path_cwd, "results", "kmin_0.200000_kmax_0.800000")  # fixed_damping_kmin_0.300000
+    # /localdata1/code_2024/memilio/results/ICUCap_9.000000/rho_1.000000/BlendingFactorRegional_0.700000/kmin_0.000000_kmax_0.360000/FeedbackDamping/risk
+
+    path_results = os.path.join(
+        path_cwd, "results/new_regional_def", "ICUCap_9.000000", "rho_1.000000", "BlendingFactorRegional_0.700000", "kmin_0.000000_kmax_0.360000", "FeedbackDamping")
     path_plots = os.path.join(
-        path_cwd, "plots", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000")
+        path_cwd, "plots", "ICUCap_" + str(icu_cap[cap_indx]) + ".000000", "rp_kmin_0.000000_kmax_0.360000", "new")
     path_data = os.path.join(path_cwd, "data")
-    num_days = 199
+    num_days = 198
 
     percentile = "p50"
     days = list(range(0, num_days + 1, 20))
 
+    days.append(num_days)
+
+    # plot_risk_map(path_results, path_plots, days, percentile)
+    plot_icu_map(path_results, path_plots, days, percentile,
+                 10, icu_cap[cap_indx])
     regional_proximity = True
     kmax = [x / 100 for x in range(0, 101, 10)]
     loc = 'ICU_Proximity' if regional_proximity else "ICU_Federal_State"
     # path_plots = os.path.join(
     #     path_plots, loc)
-    max_val = [430, 350, 250, 150, 90, 60, 45, 35, 25, 20, 18]
-    if regional_proximity:
-        max_val = [430, 320, 200, 130, 80, 60, 40, 30, 25, 20, 16]
-    max_val_indx = 0
-    for km in kmax:
-        km_formatted = f"{km:.2f}"
-        res_dir = "results"
-        if regional_proximity:
-            res_dir += "/new_regional_def"
-        plot_icu_map(os.path.join(
-            path_cwd, "results/new_regional_def", "ICUCap_9.000000/rho_1.000000/BlendingFactorRegional_0.000000", f'kmin_0.000000_kmax_{km_formatted}0000'),
-            os.path.join(path_plots, f"MAP_kmax_{km_formatted}_" + loc), days, percentile, ["FeedbackDamping"],  os.path.join(
-            path_cwd, "results/new_regional_def", "ICUCap_9.000000/rho_1.000000/BlendingFactorRegional_0.700000", f'kmin_0.000000_kmax_{km_formatted}0000'), max_val[max_val_indx])
-        max_val_indx += 1
+    # max_val = [430, 350, 250, 150, 90, 60, 45, 35, 25, 20, 18]
+    # if regional_proximity:
+    #     max_val = [430, 320, 200, 130, 80, 60, 40, 30, 25, 20, 16]
+    # max_val_indx = 0
+    # for km in kmax:
+    #     km_formatted = f"{km:.2f}"
+    #     res_dir = "results"
+    #     if regional_proximity:
+    #         res_dir += "/new_regional_def"
+    #     plot_icu_map(os.path.join(
+    #         path_cwd, "results/new_regional_def", "ICUCap_9.000000/rho_1.000000/BlendingFactorRegional_0.000000", f'kmin_0.000000_kmax_{km_formatted}0000'),
+    #         os.path.join(path_plots, f"MAP_kmax_{km_formatted}_" + loc), days, percentile, ["FeedbackDamping"],  os.path.join(
+    #         path_cwd, "results/new_regional_def", "ICUCap_9.000000/rho_1.000000/BlendingFactorRegional_0.700000", f'kmin_0.000000_kmax_{km_formatted}0000'), max_val[max_val_indx])
+    #     max_val_indx += 1
     # plot_r0_map(path_results, path_plots, np.arange(
     #     0, 101, 5), percentile, modes)
     # plot_icu_map(path_results, path_plots, days, percentile, modes)
