@@ -68,8 +68,8 @@ public:
     {
     }
 
-    void get_flows(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
-                   Eigen::Ref<Vector<FP>> flows) const override
+    void get_flows(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
+                   Eigen::Ref<Eigen::VectorX<FP>> flows) const override
     {
         const Index<AgeGroup> age_groups = reduce_index<Index<AgeGroup>>(this->populations.size());
         const auto& params               = this->parameters;

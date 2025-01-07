@@ -65,6 +65,7 @@ set(TESTSOURCES
     test_utils.cpp
     test_ide_seir.cpp
     test_ide_secir.cpp
+    test_ide_secir_ageres.cpp
     test_state_age_function.cpp
     test_lct_secir.cpp
     test_lct_initializer_flows.cpp

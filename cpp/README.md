@@ -27,10 +27,10 @@ The following table lists the dependencies that are used. Most of them are requi
 
 | Library | Version  | Required | Bundled               | Notes |
 |---------|----------|----------|-----------------------|-------|
-| spdlog  | 1.11.0   | Yes      | Yes (git repo)        | https://github.com/gabime/spdlog |
-| Eigen   | 3.3.9    | Yes      | Yes (git repo)        | http://gitlab.com/libeigen/eigen |
+| spdlog  | 1.15.0   | Yes      | Yes (git repo)        | https://github.com/gabime/spdlog |
+| Eigen   | 3.4.0    | Yes      | Yes (git repo)        | http://gitlab.com/libeigen/eigen |
 | Boost   | 1.84.0   | Yes      | Yes (git repo)        | https://github.com/boostorg/boost |
-| JsonCpp | 1.9.5    | No       | Yes (git repo)        | https://github.com/open-source-parsers/jsoncpp |
+| JsonCpp | 1.9.6    | No       | Yes (git repo)        | https://github.com/open-source-parsers/jsoncpp |
 | HDF5    | 1.12.0   | No       | No                    | https://www.hdfgroup.org/, package libhdf5-dev on apt (Ubuntu) |
 | GoogleTest | 1.10  | For Tests only | Yes (git repo)  | https://github.com/google/googletest |
 

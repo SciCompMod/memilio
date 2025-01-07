@@ -91,6 +91,8 @@ setup(
         'pyxlsb',
         'wget',
         'twill==3.1',
+        # set PyQt6-sip version as the one pulled by PyQt6 in Epidata-CI (using manylinux_2_28_x86_64) req. python 3.9
+        'PyQt6-sip<13.9',
         'PyQt6',
         'python-calamine',
         pymagic

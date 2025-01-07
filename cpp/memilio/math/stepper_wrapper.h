@@ -24,6 +24,7 @@
 #include "memilio/utils/logging.h"
 
 #include "boost/numeric/odeint/external/eigen/eigen_algebra.hpp"
+#include "boost/numeric/odeint/external/eigen/eigen_resize.hpp"
 #include "boost/numeric/odeint/stepper/controlled_runge_kutta.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta_fehlberg78.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
@@ -42,9 +43,9 @@ template <typename FP,
 class ControlledStepperWrapper : public mio::IntegratorCore<FP>
 {
     using Stepper = boost::numeric::odeint::controlled_runge_kutta<
-        ControlledStepper<Vector<FP>, FP, Vector<FP>, FP, boost::numeric::odeint::vector_space_algebra,
-                          typename boost::numeric::odeint::operations_dispatcher<Vector<FP>>::operations_type,
-                          boost::numeric::odeint::never_resizer>>;
+        ControlledStepper<Eigen::VectorX<FP>, FP, Eigen::VectorX<FP>, FP, boost::numeric::odeint::vector_space_algebra,
+                          typename boost::numeric::odeint::operations_dispatcher<Eigen::VectorX<FP>>::operations_type,
+                          boost::numeric::odeint::initially_resizer>>;
     static constexpr bool is_fsal_stepper = std::is_same_v<typename Stepper::stepper_type::stepper_category,
                                                            boost::numeric::odeint::explicit_error_stepper_fsal_tag>;
     static_assert(!is_fsal_stepper,
@@ -76,8 +77,8 @@ public:
      * @param[in,out] dt Current time step size h=dt. Overwritten by an estimated optimal step size for the next step.
      * @param[out] ytp1 The approximated value of y(t').
      */
-    bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<Vector<FP> const> yt, FP& t, FP& dt,
-              Eigen::Ref<Vector<FP>> ytp1) const override
+    bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<Eigen::VectorX<FP> const> yt, FP& t, FP& dt,
+              Eigen::Ref<Eigen::VectorX<FP>> ytp1) const override
     {
         using boost::numeric::odeint::fail;
         using std::max;
@@ -108,8 +109,7 @@ public:
             if constexpr (!is_fsal_stepper) { // prevent compile time errors with fsal steppers
                 step_result = m_stepper.try_step(
                     // reorder arguments of the DerivFunction f for the stepper
-                    [&](const Vector<FP>& x, Vector<FP>& dxds, FP s) {
-                        dxds.resizeLike(x); // boost resizers cannot resize Eigen::Vector, hence we need to do that here
+                    [&](const Eigen::VectorX<FP>& x, Eigen::VectorX<FP>& dxds, FP s) {
                         f(x, s, dxds);
                     },
                     m_yt, t, m_ytp1, dt);
@@ -170,7 +170,7 @@ private:
     }
 
     FP m_abs_tol, m_rel_tol; ///< Absolute and relative tolerances for integration.
-    mutable Vector<FP> m_ytp1, m_yt; ///< Temporary storage to avoid allocations in step function.
+    mutable Eigen::VectorX<FP> m_ytp1, m_yt; ///< Temporary storage to avoid allocations in step function.
     mutable Stepper m_stepper; ///< A stepper instance used for integration.
 };
 
@@ -184,9 +184,10 @@ template <typename FP,
 class ExplicitStepperWrapper : public mio::IntegratorCore<FP>
 {
 public:
-    using Stepper = ExplicitStepper<Vector<FP>, FP, Vector<FP>, FP, boost::numeric::odeint::vector_space_algebra,
-                                    typename boost::numeric::odeint::operations_dispatcher<Vector<FP>>::operations_type,
-                                    boost::numeric::odeint::never_resizer>;
+    using Stepper =
+        ExplicitStepper<Eigen::VectorX<FP>, FP, Eigen::VectorX<FP>, FP, boost::numeric::odeint::vector_space_algebra,
+                        typename boost::numeric::odeint::operations_dispatcher<Eigen::VectorX<FP>>::operations_type,
+                        boost::numeric::odeint::initially_resizer>;
 
     /**
      * @brief Set up the integrator.
@@ -204,16 +205,15 @@ public:
      * @param[in] dt Current time step size h=dt.
      * @param[out] ytp1 The approximated value of y(t+dt).
      */
-    bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<Vector<FP> const> yt, FP& t, FP& dt,
-              Eigen::Ref<Vector<FP>> ytp1) const override
+    bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<Eigen::VectorX<FP> const> yt, FP& t, FP& dt,
+              Eigen::Ref<Eigen::VectorX<FP>> ytp1) const override
     {
         // copy the values from y(t) to ytp1, since we use the scheme do_step(sys, inout, t, dt) with
         // sys=f, inout=y(t) for in-place computation - also, this form is shared by several steppers in boost
         ytp1 = yt;
         m_stepper.do_step(
             // reorder arguments of the DerivFunction f for the stepper
-            [&](const Vector<FP>& x, Vector<FP>& dxds, FP s) {
-                dxds.resizeLike(x); // do_step calls sys with a vector of size 0 for some reason
+            [&](const Eigen::VectorX<FP>& x, Eigen::VectorX<FP>& dxds, FP s) {
                 f(x, s, dxds);
             },
             ytp1, t, dt);
