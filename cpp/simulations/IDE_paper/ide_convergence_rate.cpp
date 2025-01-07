@@ -226,7 +226,7 @@ void compute_initial_flows_for_ide_from_ode(mio::osecir::Model<ScalarType>& mode
 * @returns TimeSeries with simulation results where some time points have been removed. 
 */
 mio::TimeSeries<ScalarType> remove_time_points(const mio::TimeSeries<ScalarType>& simulation_result,
-                                               ScalarType saving_dt, ScalarType scale = 1)
+                                               ScalarType saving_dt, ScalarType scale = 1.)
 {
     mio::TimeSeries<ScalarType> removed(simulation_result.get_num_elements());
     ScalarType time = simulation_result.get_time(0);
@@ -363,10 +363,10 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
         mio::TimeSeries<ScalarType> secihurd_ode_flows((int)mio::isecir::InfectionTransition::Count);
         get_flows_from_ode_compartments(model_ode, secihurd_ode, secihurd_ode_flows, tmax, tmax - t0,
                                         pow(10, -save_exponent));
-        auto save_result_status_ode_flows =
-            mio::save_result({remove_time_points(secihurd_ode_flows, pow(10, -save_exponent), 1. / dt_ode)}, {0}, 1,
-                             result_dir + "result_ode_flows_dt=1e-" + fmt::format("{:.0f}", ode_exponent) +
-                                 "_savefrequency" + fmt::format("{:.0f}", save_exponent) + ".h5");
+        auto save_result_status_ode_flows = mio::save_result(
+            {remove_time_points(secihurd_ode_flows, pow(10, -save_exponent), 1. / pow(10, -save_exponent))}, {0}, 1,
+            result_dir + "result_ode_flows_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + "_savefrequency" +
+                fmt::format("{:.0f}", save_exponent) + ".h5");
 
         if (save_result_status_ode && save_result_status_ode_flows) {
             std::cout << "Successfully saved the ODE simulation results. \n";
