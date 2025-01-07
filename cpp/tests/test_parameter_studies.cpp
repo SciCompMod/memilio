@@ -216,9 +216,9 @@ TEST(ParameterStudies, test_normal_distribution)
         EXPECT_LE(parameter_dist_normal_2.get_lower_bound() - 1e-10, val);
     }
 
-    //degenerate case: ub == lb
-    mio::ParameterDistributionNormal dist3(3.0, 3.0, 3.0, 0.0);
-    EXPECT_EQ(dist3.get_sample(mio::thread_local_rng()), 3.0);
+    //degenerate case: ub == lb //For MSVC the normal distribution cannot have a value of 0.0 for sigma
+    mio::ParameterDistributionNormal dist3(0.999999999 * 3.0, 1.000000001 * 3.0, 3.0, 0.00000001);
+    EXPECT_NEAR(dist3.get_sample(mio::thread_local_rng()), 3.0, 1e-07);
 }
 
 TEST(ParameterStudies, test_uniform_distribution)
