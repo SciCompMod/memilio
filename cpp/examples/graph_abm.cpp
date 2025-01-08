@@ -192,7 +192,6 @@ int main()
 
     auto start_date = mio::abm::TimePoint(0);
     auto end_date   = mio::abm::TimePoint(0) + mio::abm::days(30);
-    mio::unused(end_date);
 
     //Assign infection states and locations to persons from model 1
     std::vector<double> infection_distribution_m1{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
