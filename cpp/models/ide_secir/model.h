@@ -44,7 +44,7 @@ public:
     *
     * @param[in, out] flows_init TimeSeries with the initial values of the number of individuals, 
     *   which transit within one timestep dt from one compartment to another.
-    *   Possible flows are specified in #InfectionTransition%s.
+    *   Possible transitions are specified in #InfectionTransition%s.
     *   Considered time points should have the distance dt. The last time point determines the start time t0 of the 
     *   simulation. 
     *   The time history must reach a certain point in the past so that the simulation can be performed.
@@ -67,26 +67,26 @@ public:
     bool check_constraints(ScalarType dt) const;
 
     /**
-    * @brief Returns a flat index for the InfectionTransition TimeSeries.
+    * @brief Returns a flat index for the TimeSeries flows which contains values for the InfectionTransitions.
     *
-    * In the TimeSeries we store a vector for each time point. In this vector we store the different 
-    * #InfectionTransition%s for every AgeGroup.
+    * In the TimeSeries we store a vector for each time point. In this vector we store values for the different 
+    * InfectionTransitions for every AgeGroup.
     * This function is used to get the right index in this vector for a specific AgeGroup and InfectionTransition.
     *
     * @param[in] transition_idx Index determining which InfectionTransition we want to evaluate.
     * @param[in] agegroup The agegroup for which we want to evaluate.
     */
 
-    int get_transition_flat_index(Eigen::Index flow_idx, AgeGroup agegroup) const
+    int get_transition_flat_index(Eigen::Index transition_idx, AgeGroup agegroup) const
     {
-        return (static_cast<int>(size_t(agegroup)) * int(InfectionTransition::Count) + int(flow_idx));
+        return (static_cast<int>(size_t(agegroup)) * int(InfectionTransition::Count) + int(transition_idx));
     }
 
     /**
-    * @brief Returns a flat index for the InfectionState TimeSeries.
+    * @brief Returns a flat index for the TimeSeries populations which contains values for the InfectionStates.
     *
-    * In the TimeSeries we store a vector for each time point. In this vector we store the different InfectionStates 
-    * for every AgeGroup.
+    * In the TimeSeries we store a vector for each time point. In this vector we store values for the 
+    * different InfectionStates for every AgeGroup.
     * This function is used to get the right index in this vector for a specific AgeGroup and InfectionState.
     *
     * @param[in] state_idx Index at which InfectionState we want to evaluate.

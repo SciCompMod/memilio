@@ -71,7 +71,7 @@ bool Model::check_constraints(ScalarType dt) const
 {
 
     if (!((size_t)flows.get_num_elements() == (size_t)InfectionTransition::Count * m_num_agegroups)) {
-        log_error("A variable given for model construction is not valid. Number of elements in transition vector "
+        log_error("A variable given for model construction is not valid. Number of elements in vector of flows"
                   "does not match the required number.");
         return true;
     }
@@ -670,19 +670,20 @@ void Model::set_transitiondistributions_in_forceofinfection(ScalarType dt)
 {
     m_transitiondistributions_in_forceofinfection = CustomIndexArray<std::vector<std::vector<ScalarType>>, AgeGroup>(
         AgeGroup(m_num_agegroups), std::vector<std::vector<ScalarType>>(2, std::vector<ScalarType>(1, 0.)));
-    // Relevant flows for force of infection term.
-    std::vector<std::vector<int>> relevant_flows = {{(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms,
-                                                     (int)InfectionTransition::InfectedNoSymptomsToRecovered},
-                                                    {(int)InfectionTransition::InfectedSymptomsToInfectedSevere,
-                                                     (int)InfectionTransition::InfectedSymptomsToRecovered}};
+    // Relevant transitions for force of infection term.
+    std::vector<std::vector<int>> relevant_transitions = {
+        {(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms,
+         (int)InfectionTransition::InfectedNoSymptomsToRecovered},
+        {(int)InfectionTransition::InfectedSymptomsToInfectedSevere,
+         (int)InfectionTransition::InfectedSymptomsToRecovered}};
 
     // Determine the relevant calculation area = union of the supports of the relevant transition distributions.
 
     for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
-        ScalarType calc_time = std::max({m_transitiondistributions_support_max[group][relevant_flows[0][0]],
-                                         m_transitiondistributions_support_max[group][relevant_flows[0][1]],
-                                         m_transitiondistributions_support_max[group][relevant_flows[1][0]],
-                                         m_transitiondistributions_support_max[group][relevant_flows[1][1]]});
+        ScalarType calc_time = std::max({m_transitiondistributions_support_max[group][relevant_transitions[0][0]],
+                                         m_transitiondistributions_support_max[group][relevant_transitions[0][1]],
+                                         m_transitiondistributions_support_max[group][relevant_transitions[1][0]],
+                                         m_transitiondistributions_support_max[group][relevant_transitions[1][1]]});
         // Corresponding index.
         // Need to evaluate survival functions at t_0, ..., t_{calc_time_index} for computation of force of infection,
         // subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of support_max).
@@ -695,11 +696,11 @@ void Model::set_transitiondistributions_in_forceofinfection(ScalarType dt)
                 // Compute state_age for all indices from t_0, ..., t_{calc_time_index}.
                 ScalarType state_age = i * dt;
                 vec_contribution_to_foi[i] =
-                    parameters.get<TransitionProbabilities>()[group][relevant_flows[contribution][0]] *
-                        parameters.get<TransitionDistributions>()[group][relevant_flows[contribution][0]].eval(
+                    parameters.get<TransitionProbabilities>()[group][relevant_transitions[contribution][0]] *
+                        parameters.get<TransitionDistributions>()[group][relevant_transitions[contribution][0]].eval(
                             state_age) +
-                    parameters.get<TransitionProbabilities>()[group][relevant_flows[contribution][1]] *
-                        parameters.get<TransitionDistributions>()[group][relevant_flows[contribution][1]].eval(
+                    parameters.get<TransitionProbabilities>()[group][relevant_transitions[contribution][1]] *
+                        parameters.get<TransitionDistributions>()[group][relevant_transitions[contribution][1]].eval(
                             state_age);
             }
 
