@@ -42,7 +42,7 @@ import memilio.epidata.getDataIntoPandasDataFrame as gd
 secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
               5: 'ICU', 6: 'Recovered', 7: 'Dead'}
 
-# Define color and style to be used while plotting for different models to make plots consistent.
+# Define color to be used while plotting for different models to make plots consistent.
 color_dict = {'ODE': '#1f77b4',
               'LCT3': '#2ca02c',
               'LCT10': '#ff7f0e',
@@ -471,7 +471,7 @@ def plot_daily_new_transmissions(files, legend_labels, file_name="", tmax=0):
 def get_file_name(data_dir, Reff, num_subcompartments, boolsubcomp=False):
     """ Gives a paths to a file with the simulation results for an LCT model with num_subcompartments subcompartments, 
     where the effective reproduction number is set to Reff at simulation time 2.
-    This uses standard defined naming convention of the lct simualtions.
+    This uses standard defined naming convention of the lct simulations.
 
     @param[in] data_dir: Data directory pointing to the folder where the simulation result file lies in. 
     @param[in] Reff: Effective reproduction number at simulation time 2 of the simulation result.
