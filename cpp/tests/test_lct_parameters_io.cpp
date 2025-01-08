@@ -122,7 +122,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKI)
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
     // Result to compare the simulation result with.
-    mio::Vector<ScalarType> compare((Eigen::Index)LctState::Count);
+    Eigen::VectorX<ScalarType> compare((Eigen::Index)LctState::Count);
     // Calculate result using that the number of new confirmed cases at each day is one in the synthetic case data
     // and additionally the stay times, the number of subcompartments, and the transition probabilities.
     compare << 889.5, 1. / (2. * 0.8) * 2.3, 1. / (2. * 0.8) * 2.3, 1. / (3. * 0.8) * 1.3, 1. / (3. * 0.8) * 1.3,
@@ -172,7 +172,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIAgeres)
     // in the synthetic case data and additionally the stay times, the number of subcompartments,
     // and the transition probabilities.
     size_t num_populations = (size_t)InfState::Count * num_agegroups;
-    mio::Vector<ScalarType> compare(num_populations);
+    Eigen::VectorX<ScalarType> compare(num_populations);
     for (size_t age = 0; age < num_agegroups; age++) {
         compare[(size_t)InfState::Count * age + (size_t)InfState::Exposed] =
             1. / (1. - model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[age]) *

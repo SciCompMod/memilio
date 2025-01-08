@@ -88,15 +88,15 @@ public:
     {
     }
 
-    CompartmentalModel(const CompartmentalModel&) = default;
-    CompartmentalModel(CompartmentalModel&&)      = default;
+    CompartmentalModel(const CompartmentalModel&)            = default;
+    CompartmentalModel(CompartmentalModel&&)                 = default;
     CompartmentalModel& operator=(const CompartmentalModel&) = default;
-    CompartmentalModel& operator=(CompartmentalModel&&) = default;
-    virtual ~CompartmentalModel()                       = default;
+    CompartmentalModel& operator=(CompartmentalModel&&)      = default;
+    virtual ~CompartmentalModel()                            = default;
 
     // REMARK: Not pure virtual for easier java/python bindings.
-    virtual void get_derivatives(Eigen::Ref<const Vector<FP>>, Eigen::Ref<const Vector<FP>> /*y*/, FP /*t*/,
-                                 Eigen::Ref<Vector<FP>> /*dydt*/) const {};
+    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>>, Eigen::Ref<const Eigen::VectorX<FP>> /*y*/,
+                                 FP /*t*/, Eigen::Ref<Eigen::VectorX<FP>> /*dydt*/) const {};
 
     /**
      * @brief This function evaluates the right-hand-side f of the ODE dydt = f(y, t).
@@ -118,8 +118,8 @@ public:
      * @param[in] t The current time.
      * @param[out] dydt A reference to the calculated output.
      */
-    void eval_right_hand_side(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
-                              Eigen::Ref<Vector<FP>> dydt) const
+    void eval_right_hand_side(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
+                              Eigen::Ref<Eigen::VectorX<FP>> dydt) const
     {
         dydt.setZero();
         this->get_derivatives(pop, y, t, dydt);
@@ -130,7 +130,7 @@ public:
      * See eval_right_hand_side for more detail.
      * @return Current value of model populations as a flat vector.
      */
-    Vector<FP> get_initial_values() const
+    Eigen::VectorX<FP> get_initial_values() const
     {
         return populations.get_compartments();
     }
@@ -183,10 +183,9 @@ public:
  * @tparam M a type that has a eval_right_hand_side member function, e.g. a compartment model type.
  */
 template <typename FP, class M>
-using eval_right_hand_side_expr_t =
-    decltype(std::declval<const M&>().eval_right_hand_side(std::declval<Eigen::Ref<const Vector<FP>>>(),
-                                                           std::declval<Eigen::Ref<const Vector<FP>>>(),
-                                                           std::declval<FP>(), std::declval<Eigen::Ref<Vector<FP>>>()));
+using eval_right_hand_side_expr_t = decltype(std::declval<const M&>().eval_right_hand_side(
+    std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(), std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(),
+    std::declval<FP>(), std::declval<Eigen::Ref<Eigen::VectorX<FP>>>()));
 
 /**
  * Detect the get_initial_values member function of a compartment model.
@@ -197,7 +196,8 @@ using eval_right_hand_side_expr_t =
  * @tparam M a type that has a get_initial_values member function, e.g. a compartment model type.
  */
 template <typename FP, class M>
-using get_initial_values_expr_t = decltype(std::declval<Vector<FP>&>() = std::declval<const M&>().get_initial_values());
+using get_initial_values_expr_t =
+    decltype(std::declval<Eigen::VectorX<FP>&>() = std::declval<const M&>().get_initial_values());
 
 /**
  * Template meta function to check if a type is a valid compartment model. 

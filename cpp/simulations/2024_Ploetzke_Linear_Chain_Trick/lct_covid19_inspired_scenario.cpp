@@ -115,7 +115,7 @@ mio::TimeSeries<ScalarType> sum_age_groups(const mio::TimeSeries<ScalarType> age
     // For each time point, calculate the result without age resolution and add the time point
     // to the non-age-resolved result.
     for (Eigen::Index timepoint = 0; timepoint < ageresolved_result.get_num_time_points(); ++timepoint) {
-        mio::Vector<ScalarType> result = mio::Vector<ScalarType>::Zero(infstatecount);
+        Eigen::VectorX<ScalarType> result = Eigen::VectorX<ScalarType>::Zero(infstatecount);
         for (size_t infstate = 0; infstate < infstatecount; infstate++) {
             for (size_t group = 0; group < num_groups; group++) {
                 result[infstate] += ageresolved_result.get_value(timepoint)[group * infstatecount + infstate];

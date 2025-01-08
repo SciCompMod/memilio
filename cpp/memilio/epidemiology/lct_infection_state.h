@@ -90,11 +90,11 @@ public:
      *  The size of the vector has to match the LctInfectionState.
      * @return Vector with accumulated values for the InfectionStates.
      */
-    static Vector<ScalarType> calculate_compartments(const Vector<ScalarType>& subcompartments)
+    static Eigen::VectorX<ScalarType> calculate_compartments(const Eigen::VectorX<ScalarType>& subcompartments)
     {
         assert(subcompartments.rows() == Count);
 
-        Vector<ScalarType> compartments((Eigen::Index)InfectionState::Count);
+        Eigen::VectorX<ScalarType> compartments((Eigen::Index)InfectionState::Count);
         // Use segment of the vector subcompartments of each InfectionState and sum up the values of subcompartments.
         compartments[(Eigen::Index)InfectionState::Susceptible] = subcompartments[0];
         compartments[(Eigen::Index)InfectionState::Exposed] =

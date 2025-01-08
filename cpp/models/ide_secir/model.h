@@ -29,8 +29,6 @@
 #include "memilio/utils/time_series.h"
 
 #include "vector"
-#include <cstddef>
-#include <vector>
 
 namespace mio
 {
@@ -51,8 +49,8 @@ public:
     *   simulation. 
     *   The time history must reach a certain point in the past so that the simulation can be performed.
     *   A warning is displayed if the condition is violated.
-    * @param[in] N_init A vector, containg the populations of the considered region, for every AgeGroup.
-    * @param[in] deaths A vector, containg the total number of deaths at time t0, for every AgeGroup.
+    * @param[in] N_init A vector, containing the populations of the considered region, for every AgeGroup.
+    * @param[in] deaths A vector, containing the total number of deaths at time t0, for every AgeGroup.
     * @param[in] num_agegroups The number of AgeGroups.
     * @param[in] total_confirmed_cases A vector, containing the total confirmed cases at time t0 can be set if it 
     *   should be used for initialization, for every AgeGroup.
@@ -60,6 +58,13 @@ public:
     Model(TimeSeries<ScalarType>&& init, CustomIndexArray<ScalarType, AgeGroup> N_init,
           CustomIndexArray<ScalarType, AgeGroup> deaths, size_t num_agegroups,
           CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases = CustomIndexArray<ScalarType, AgeGroup>());
+
+    // ---- Additional functionality such as constraint checking, setters and getters, etc. ----
+    /**
+    * @brief Checks constraints on model parameters and initial data.
+    * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
+    */
+    bool check_constraints(ScalarType dt) const;
 
     /**
     * @brief Returns a flat index for the InfectionTransition TimeSeries.
@@ -92,6 +97,62 @@ public:
         return (static_cast<int>(size_t(agegroup)) * int(InfectionState::Count) + int(state_idx));
     }
 
+    /**
+     * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.
+     *
+     * This determines how many initial values we need for the flows.
+     * It may be possible to run the simulation with fewer time points than the value of the global support_max, 
+     * but this number ensures that it is possible.
+     *
+     * @param[in] dt Time step size.
+     * 
+     * @return Global support_max.
+     */
+    ScalarType get_global_support_max(ScalarType dt) const;
+
+    /**
+    * @brief Returns the index of the automatically selected initialization method.
+    *
+    * The initialization method is selected automatically based on the different values that need to be set beforehand.
+    * Infection compartments are always computed through historic flow.
+    * Initialization methods for Susceptible and Recovered are tested in the following order:
+    * 1.) If a positive number for the total number of confirmed cases is set, Recovered is set according to that value
+    *    and Susceptible%s are derived.
+    * 2.) If Susceptible%s are set, Recovered will be derived.
+    * 3.) If Recovered are set directly, Susceptible%s are derived.
+    * 4.) If none of the above is set with positive value, the force of infection is used as in Messina et al (2021) to
+    *     set the Susceptible%s.
+    *
+    * @return Index representing the initialization method.
+    */
+    int get_initialization_method_compartments() const
+    {
+        return m_initialization_method;
+    }
+
+    /**
+     * @brief Setter for the tolerance used to calculate the maximum support of the TransitionDistributions.
+     *
+     * @param[in] new_tol New tolerance.
+     */
+    void set_tol_for_support_max(ScalarType new_tol)
+    {
+        m_tol = new_tol;
+    }
+
+    // ---- Public parameters. ----
+    ParameterSet parameters{AgeGroup(m_num_agegroups)}; ///< ParameterSet of Model Parameters.
+    // Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the
+    // initialization part.
+    TimeSeries<ScalarType>
+        m_transitions; ///< TimeSeries containing points of time and the corresponding number of transitions for every
+    // AgeGroup.
+    TimeSeries<ScalarType> m_populations; ///< TimeSeries containing points of time and the corresponding number of
+        // people in defined #InfectionState%s for every AgeGroup.
+    CustomIndexArray<ScalarType, AgeGroup>
+        m_total_confirmed_cases; ///< CustomIndexArray that contains the total number of confirmed cases at time t0 for every AgeGroup.
+
+private:
     // ---- Functionality to calculate the sizes of the compartments for time t0. ----
     /**
      * @brief Compute the compartment specified in idx_InfectionState at the current time -- only using historic flow 
@@ -104,7 +165,7 @@ public:
      * @param[in] dt Time discretization step size.
      * @param[in] idx_InfectionState Specifies the considered #InfectionState
      * @param[in] group The AgeGroup for which we want to compute.
-     * @param[in] idx_IncomingFlow Specifies the index of the infoming flow to #InfectionState in m_transitions. 
+     * @param[in] idx_IncomingFlow Specifies the index of the incoming flow to #InfectionState in m_transitions. 
      * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant TransitionDistribution, 
      *              related to a flow from the considered #InfectionState to any other #InfectionState.
      *              This index is also used for related probability.
@@ -204,6 +265,17 @@ public:
     void flows_current_timestep(ScalarType dt);
 
     /**
+     * @brief Updates the values of one compartment using flows.
+     *
+     * New value is stored in m_populations. The value is calculated using the compartment size in the previous 
+     * time step and the related flows of the current time step. 
+     * Therefore the flows of the current time step should be calculated before using this function.
+     */
+    void update_compartment_from_flow(InfectionState infectionState,
+                                      std::vector<InfectionTransition> const& IncomingFlows,
+                                      std::vector<InfectionTransition> const& OutgoingFlows, AgeGroup group);
+
+    /**
      * @brief Updates the values of all compartments except Susceptible at initialization.
      *
      * New values are stored in m_populations. The values are calculated using the compartment size in the previous 
@@ -225,67 +297,7 @@ public:
      */
     void compute_forceofinfection(ScalarType dt, bool initialization = false);
 
-    // ---- Additional functionality such as constraint checking, setters and getters, etc. ----
-    /**
-    * @brief Checks constraints on model parameters and initial data.
-    * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
-    */
-    bool check_constraints(ScalarType dt) const
-    {
-
-        if (!((size_t)m_transitions.get_num_elements() == (size_t)InfectionTransition::Count * m_num_agegroups)) {
-            log_error("A variable given for model construction is not valid. Number of elements in transition vector "
-                      "does not match the required number.");
-            return true;
-        }
-
-        for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
-
-            for (int i = 0; i < (int)InfectionState::Count; i++) {
-                int index = get_state_flat_index(i, group);
-                if (m_populations[0][index] < 0) {
-                    log_error("Initialization failed. Initial values for populations are less than zero.");
-                    return true;
-                }
-            }
-        }
-
-        // It may be possible to run the simulation with fewer time points, but this number ensures that it is possible.
-        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(get_global_support_max(dt) / dt)) {
-            log_error("Initialization failed. Not enough time points for transitions given before start of "
-                      "simulation.");
-            return true;
-        }
-
-        for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
-
-            for (int i = 0; i < m_transitions.get_num_time_points(); i++) {
-                for (int j = 0; j < (int)InfectionTransition::Count; j++) {
-                    int index = get_transition_flat_index(j, group);
-                    if (m_transitions[i][index] < 0) {
-                        log_error(
-                            "Initialization failed. One or more initial value for transitions is less than zero.");
-                        return true;
-                    }
-                }
-            }
-        }
-        if (m_transitions.get_last_time() != m_populations.get_last_time()) {
-            log_error("Last time point of TimeSeries for transitions does not match last time point of "
-                      "TimeSeries for "
-                      "compartments. Both of these time points have to agree for a sensible simulation.");
-            return true;
-        }
-
-        if (m_populations.get_num_time_points() != 1) {
-            log_error("The TimeSeries for the compartments contains more than one time point. It is unclear how to "
-                      "initialize.");
-            return true;
-        }
-
-        return parameters.check_constraints();
-    }
-
+    // ---- Functionality to set vectors with necessary information regarding TransitionDistributions. ----
     /**
      * @brief Setter for the vector m_transitiondistributions_support_max that contains the support_max for all 
      * TransitionDistributions.
@@ -321,73 +333,6 @@ public:
      */
     void set_transitiondistributions_in_forceofinfection(ScalarType dt);
 
-    /**
-     * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.
-     *
-     * This determines how many inital values we need for the flows.
-     * It may be possible to run the simulation with fewer time points than the value of the global support_max, 
-     * but this number ensures that it is possible.
-     *
-     * @param[in] dt Time step size.
-     * 
-     * @return Global support_max.
-     */
-    ScalarType get_global_support_max(ScalarType dt) const;
-
-    /**
-     * @brief Setter for the tolerance used to calculate the maximum support of the TransitionDistributions.
-     *
-     * @param[in] new_tol New tolerance.
-     */
-    void set_tol_for_support_max(ScalarType new_tol)
-    {
-        m_tol = new_tol;
-    }
-
-    /**
-    * @brief Returns the index of the automatically selected initialization method.
-    *
-    * The initialization method is selected automatically based on the different values that need to be set beforehand.
-    * Infection compartments are always computed through historic flow.
-    * Initialization methods for Susceptible and Recovered are tested in the following order:
-    * 1.) If a positive number for the total number of confirmed cases is set, Recovered is set according to that value
-    *    and Susceptible%s are derived.
-    * 2.) If Susceptible%s are set, Recovered will be derived.
-    * 3.) If Recovered are set directly, Susceptible%s are derived.
-    * 4.) If none of the above is set with positive value, the force of infection is used as in Messina et al (2021) to
-    *     set the Susceptible%s.
-    *
-    * @return Index representing the initialization method.
-    */
-    int get_initialization_method_compartments()
-    {
-        return m_initialization_method;
-    }
-
-    // ---- Public parameters. ----
-    ParameterSet parameters{AgeGroup(m_num_agegroups)}; ///< ParameterSet of Model Parameters.
-    // Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the
-    // initialization part.
-    TimeSeries<ScalarType>
-        m_transitions; ///< TimeSeries containing points of time and the corresponding number of transitions for every
-    // AgeGroup.
-    TimeSeries<ScalarType> m_populations; ///< TimeSeries containing points of time and the corresponding number of
-        // people in defined #InfectionState%s for every AgeGroup.
-    CustomIndexArray<ScalarType, AgeGroup>
-        m_total_confirmed_cases; ///< CustomIndexArray that contains the total number of confirmed cases at time t0 for every AgeGroup.
-
-private:
-    /**
-     * @brief Updates the values of one compartment using flows.
-     *
-     * New value is stored in m_populations. The value is calculated using the compartment size in the previous 
-     * time step and the related flows of the current time step. 
-     * Therefore the flows of the current time step should be calculated before using this function.
-     */
-    void update_compartment_from_flow(InfectionState infectionState,
-                                      std::vector<InfectionTransition> const& IncomingFlows,
-                                      std::vector<InfectionTransition> const& OutgoingFlows, AgeGroup group);
-
     // ---- Private parameters. ----
     CustomIndexArray<ScalarType, AgeGroup> m_forceofinfection; ///< Force of infection term needed for numerical scheme.
     CustomIndexArray<ScalarType, AgeGroup>
@@ -406,6 +351,15 @@ private:
         m_transitiondistributions_in_forceofinfection; ///< CustomIndexArray
     // of Type AgeGroup containing a Vector containing the weighted TransitionDistributions for all necessary time
     // points in the force of infection term.
+
+    // ---- Friend classes/functions. ----
+    // In the Simulation class, the actual simulation is performed which is why it needs access to the here
+    // defined (and private) functions to solve the model equations.
+    friend class Simulation;
+    // In set_initial_flows(), we compute initial flows based on RKI data using the (private) compute_flow() function
+    // which is why it is defined as a friend function.
+    friend IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date,
+                                            ScalarType scale_confirmed_cases);
 };
 
 } // namespace isecir
