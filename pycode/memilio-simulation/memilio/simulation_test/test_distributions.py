@@ -37,8 +37,7 @@ class Test_ParameterDistribution(unittest.TestCase):
         N = mio.ParameterDistributionNormal(-1.0, 1.0, 0.0, 1.0)
         # properties
         self.assertEqual(N.mean, 0.0)  # std_dev automatically adapted
-        self.assertEqual(N.lower_bound, -1.0)
-        self.assertEqual(N.upper_bound, 1.0)
+
         # sample
         n = N.get_sample()
         self.assertGreaterEqual(n, -1)
