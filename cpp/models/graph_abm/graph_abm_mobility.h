@@ -39,7 +39,7 @@
 namespace mio
 {
 /**
-* @brief Represents the ABM simulation in one node of the abm graph model.
+* @brief Represents the ABM simulation in one node of the ABM graph model.
 */
 template <class... History>
 class ABMSimulationNode

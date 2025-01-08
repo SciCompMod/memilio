@@ -196,7 +196,7 @@ private:
     }
     }
 
-    std::vector<size_t> m_person_buffer; ///< List with indices of persons that are deactivated.
+    std::vector<size_t> m_person_buffer; ///< List with indices of persons that are subject to move to another node.
 };
 } // namespace mio
 

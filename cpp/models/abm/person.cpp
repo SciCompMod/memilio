@@ -111,7 +111,7 @@ Infection& Person::get_infection()
     return m_infections.back();
 }
 
-void Person::set_assigned_location(LocationType type, LocationId id, int model_id)
+void Person::set_assigned_location(LocationType type, LocationId id, int model_id = 0)
 {
     m_assigned_locations[static_cast<uint32_t>(type)]          = id;
     m_assigned_location_model_ids[static_cast<uint32_t>(type)] = model_id;

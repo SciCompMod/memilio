@@ -574,7 +574,7 @@ protected:
     int m_id; ///< Model id. Is only used for abm graph model or hybrid model.
     std::vector<Person> m_persons; ///< Vector of every Person.
     std::vector<Location> m_locations; ///< Vector of every Location.
-    std::vector<bool> m_activeness_statuses; ///< Vector with activeness status for every person
+    std::vector<bool> m_activeness_statuses; ///< Vector with activeness status for every person. Is only used for abm graph model or hybrid model.
     std::bitset<size_t(LocationType::Count)>
         m_has_locations; ///< Flags for each LocationType, set if a Location of that type exists.
     TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
