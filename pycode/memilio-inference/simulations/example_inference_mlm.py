@@ -5,16 +5,13 @@ import numpy as np
 from typing import Any, Callable
 import pandas as pd
 import tensorflow as tf
+import yaml
 
 from memilio.inference.plotting import MLMPlotting
 from memilio.inference.prior import ModelPriorBuilder, TwoLevelPriorScaler
-from memilio.inference.sir_mlm import HyperparameterNamesSir, ParameterNamesSir, SIRStrategy, simulator_SIR, get_population, create_prior
-from memilio.inference.config import InferenceConfig, TrainerParameters
+from memilio.inference.sir_mlm import DEFAULT_PRIORS, simulator_SIR, get_population, create_prior, build_mlm_amortizer
 from memilio.inference.utils import generate_offline_data, generate_offline_data_splitwise, start_training, RedirectStdout, parallelize_simulation
-from memilio.inference.networks import TwoLevelSequenceNetwork
 
-from bayesflow.amortizers import TwoLevelAmortizedPosterior, AmortizedPosterior
-from bayesflow.networks import InvertibleNetwork, SequenceNetwork, DeepSet, HierarchicalNetwork
 from bayesflow.simulation import TwoLevelGenerativeModel, Simulator
 from bayesflow.trainers import Trainer
 
@@ -54,6 +51,73 @@ def load_data_synthetic(simulator_fun: Callable[..., np.ndarray], **kwargs: Any)
     """Helper function to generate new cases from ."""
     new_cases_obs = simulator_fun(**kwargs)
     return new_cases_obs
+
+# import torch
+# from torch_geometric.nn import GCNConv
+# import torch.nn as nn
+# class MobilityGNN(nn.Module):
+#     def __init__(self, node_feature_dim, hidden_dim, output_dim):
+#         super().__init__()
+#         self.conv1 = GCNConv(node_feature_dim, hidden_dim)
+#         self.conv2 = GCNConv(hidden_dim, output_dim)
+
+#     def forward(self, node_features, edge_index, edge_weight=None):
+#         x = self.conv1(node_features, edge_index, edge_weight)
+#         x = torch.relu(x)
+#         x = self.conv2(x, edge_index, edge_weight)
+#         return x  # Node embeddings
+
+
+# def prepare_graph_data(mobility_matrix, population):
+#     """
+#     Converts the mobility matrix and population data into graph representation.
+#     Args:
+#         mobility_matrix: [n_regions, n_regions] Mobility matrix.
+#         population: [n_regions] Population data for each region.
+#     Returns:
+#         node_features: [n_regions, node_feature_dim] Node feature matrix.
+#         edge_index: [2, num_edges] Edge indices for the graph.
+#         edge_weight: [num_edges] Weights corresponding to edges (mobility values).
+#     """
+#     from torch_geometric.utils import dense_to_sparse
+
+#     # Node features: Add population as a feature
+#     node_features = torch.tensor(
+#         population, dtype=torch.float32).unsqueeze(-1)  # [n_regions, 1]
+
+#     # Edge indices and weights from mobility matrix
+#     mobility_tensor = torch.tensor(mobility_matrix, dtype=torch.float32)
+#     edge_index, edge_weight = dense_to_sparse(
+#         mobility_tensor)  # Sparse representation
+
+#     return node_features, edge_index, edge_weight
+
+
+# gnn_model = MobilityGNN(node_feature_dim=1, hidden_dim=32, output_dim=16)
+# gnn_model.eval()
+
+
+def configure_direct_conditions(population, mobility_params, mobility_condition_strategy):
+
+    if mobility_condition_strategy == "accumulated_flows":
+        mobility_condition = np.transpose(
+            [np.sum(mobility_params, axis=0), np.sum(mobility_params, axis=1)])
+        return {"direct_local_conditions": np.concatenate([np.log1p(np.array(population)[:, np.newaxis]), np.log1p(mobility_condition)], axis=1).astype(np.float32),
+                "direct_global_conditions": np.log1p(np.sum(population, keepdims=True)).astype(np.float32)}
+    elif mobility_condition_strategy == "flow_distributions":
+        mobility_condition = np.transpose(
+            [np.sum(mobility_params, axis=0), np.sum(mobility_params, axis=1)])
+        return {"direct_local_conditions": np.concatenate([np.log1p(np.array(population)[:, np.newaxis]), np.log1p(mobility_condition)], axis=1).astype(np.float32),
+                "direct_global_conditions": np.log1p(np.sum(population, keepdims=True)).astype(np.float32)}
+    # elif mobility_condition_strategy == "gnn":
+    #     # Process the mobility matrix and population with GNN (if necessary)
+    #     node_features, edge_index, edge_weight = prepare_graph_data(
+    #         mobility_params, population)
+
+    #     # Run the GNN model to get node embeddings
+    #     with torch.no_grad():
+    #         node_embeddings = gnn_model(node_features, edge_index, edge_weight)
+    #     return node_embeddings
 
 
 def configure_input(forward_dict: dict[str, Any], prior_scaler: TwoLevelPriorScaler, direct_conditions: dict[str, Any] = {}) -> dict[str, Any]:
@@ -103,83 +167,48 @@ def configure_input(forward_dict: dict[str, Any], prior_scaler: TwoLevelPriorSca
     return out_dict
 
 
-def build_amortizer(trainer_parameters, prior):
-    # # Should not be lower than number of parameters
-    # summary_net = SequenceNetwork(summary_dim=trainer_parameters.summary_dim)
-
-    # could try setting coupling_design=spline for more superior performance on lower-dimensional problems.
-    # infere local parameters on local data
-    local_inference_net = InvertibleNetwork(
-        num_params=2, num_coupling_layers=trainer_parameters.num_coupling_layers, coupling_design=trainer_parameters.coupling_design)
-    local_amortizer = AmortizedPosterior(
-        local_inference_net, name="local_amortizer")
-
-    # could try setting coupling_design=spline for more superior performance on lower-dimensional problems.
-    # infere hyper and shared parameters on global data
-    global_inference_net = InvertibleNetwork(
-        num_params=7, num_coupling_layers=trainer_parameters.num_coupling_layers, coupling_design=trainer_parameters.coupling_design)
-    global_amortizer = AmortizedPosterior(
-        global_inference_net, name="global_amortizer")
-
-    summary_net = HierarchicalNetwork(
-        [TwoLevelSequenceNetwork(summary_dim=10), DeepSet(summary_dim=20)])
-
-    amortizer = TwoLevelAmortizedPosterior(
-        local_amortizer, global_amortizer, summary_net, name="covid_amortizer")
-
-    return amortizer
-
-
-def run_inference(output_folder_path: os.PathLike, config: InferenceConfig) -> None:
+def run_inference(output_folder_path: str, settings: dict) -> None:
 
     # create dir if it does not exist
     if not os.path.exists(output_folder_path):
         os.makedirs(output_folder_path)
 
-    # save current config
-    config.save(output_folder_path)
-
     # Define synthetic case
-    # n_regions = 4
-    # N = [20000000, 22000000, 25000000, 20000000]
-    # mobility_params = [[0] * n_regions] * n_regions
-    # mobility_condition = [[0, 0]] * n_regions
-
-    # Define synthetic with commuting
-    n_regions = 4
-    N = [20000000, 22000000, 25000000, 20000000]
-    mobility_params = [[0, 20000, 15000, 18000],
-                       [20000, 0, 10000, 14000],
-                       [25000, 22000, 0, 28000],
-                       [5000, 8000, 1000, 0]]
-    mobility_condition = np.transpose(
-        [np.sum(mobility_params, axis=0), np.sum(mobility_params, axis=1)])
+    settings["task"]["population"] = [20000000, 22000000, 25000000, 20000000]
+    settings["task"]["mobility_params"] = [[0, 20000, 15000, 18000],
+                                           [20000, 0, 10000, 14000],
+                                           [25000, 22000, 0, 28000],
+                                           [5000, 8000, 1000, 0]]
 
     # ([[lambd0], [I0]], [mu, f_i, phi_i, D_i, scale_I])
     combined_params = ([[0.7, 0.75, 0.6, 0.8], [500, 2000, 500, 100]], [
-                       6, 0.7, 2.5, 7, 2])
-    direct_conditions = {"direct_local_conditions": np.concatenate([np.log1p(np.array(N)[:, np.newaxis]), np.log1p(mobility_condition)], axis=1).astype(np.float32),
-                         "direct_global_conditions": np.log1p(np.sum(N, keepdims=True)).astype(np.float32)}
+        6, 0.7, 2.5, 7, 2])
+    settings["task"]["direct_conditions"] = configure_direct_conditions(
+        settings["task"]["population"], settings["task"]["mobility_params"], settings["task"]["mobility_condition_strategy"])
+
+    # save current settings
+    with open(os.path.join(output_folder_path, "settings_mlm.yaml"), "w") as f:
+        yaml.dump(settings, f)
 
     # Define germany states
     # n_regions = 16
     # path_population_data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..",
     #                                     "..", "data", "pydata", "Germany",
     #                                     "county_current_population.json")
-    # N = get_population(path_population_data)
+    # population = get_population(path_population_data)
 
     # prior
     prior = create_prior()
-    prior_args = {"local_args": {"n_regions": n_regions}}
+    prior_args = {"local_args": {"n_regions": settings["task"]["n_regions"]}}
     # prior(10, **prior_args)
     prior_scaler = TwoLevelPriorScaler().fit(
         prior, **prior_args)
 
     # Create GenerativeModel
     simulator_function = partial(
-        simulator_SIR, n_regions=n_regions, N=N, T=config[
-            "T"], mobility_params=mobility_params, intervention_model=config["intervention_model"],
-        observation_model=config["observation_model"], param_names=[])
+        simulator_SIR, n_regions=settings["task"]["n_regions"], population=settings["task"]["population"], T=settings["task"][
+            "T"], mobility_params=settings["task"]["mobility_params"], intervention_model=settings["task"]["intervention_model"],
+        observation_model=settings["task"]["observation_model"], param_names=[])
 
     batch_simulator_fun = parallelize_simulation(
         num_threads=16)(simulator=simulator_function)
@@ -187,49 +216,54 @@ def run_inference(output_folder_path: os.PathLike, config: InferenceConfig) -> N
     generative_model = TwoLevelGenerativeModel(
         prior, simulator, skip_test=True, name="sir_covid_simulator")
 
+    # Create Trainer
+    amortizer = build_mlm_amortizer(settings, local_params=2, global_params=7)
+    trainer = Trainer(amortizer=amortizer, generative_model=generative_model,
+                      configurator=partial(
+                          configure_input, prior_scaler=prior_scaler, direct_conditions=settings["task"]["direct_conditions"]),
+                      checkpoint_path=os.path.join(output_folder_path, "checkpoint"), default_lr=settings["training"]["trainer"]["default_lr"],
+                      skip_checks=settings["training"]["trainer"]["skip_checks"], memory=settings["training"]["trainer"]["memory"])
+
     # generative_model(1, prior_args=prior_args)
     # offline_data = generate_offline_data_splitwise(
     #     output_folder_path, generative_model, 1000000, 100000, generative_model_args={"prior_args": prior_args})
+    # offline_data = generate_offline_data(
+    #     output_folder_path, generative_model, 1000000, generative_model_args={"prior_args": prior_args})
     offline_data = generate_offline_data(
-        output_folder_path, generative_model, 1000000, generative_model_args={"prior_args": prior_args})
+        output_folder_path, generative_model, settings["task"]["num_samples"], generative_model_args={"prior_args": prior_args})
 
     # offline_data = generate_offline_data_splitwise(
     #     output_folder_path, generative_model, 1000, 100, generative_model_args={"prior_args": prior_args})
 
-    # Create Trainer
-    amortizer = build_amortizer(config.trainer_parameters, prior)
-    trainer = Trainer(amortizer=amortizer, generative_model=generative_model,
-                      configurator=partial(
-                          configure_input, prior_scaler=prior_scaler, direct_conditions=direct_conditions), memory=True,
-                      checkpoint_path=os.path.join(output_folder_path, "checkpoint"), skip_checks=True)
-
     # Train **kwargs.pop("val_model_args", {})
-    history = start_training(trainer, epochs=config.trainer_parameters.epochs,
-                             batch_size=25000, offline_data=offline_data, early_stopping=True, validation_sims=2000, val_model_args={"prior_args": prior_args}, save_logs=False, output_folder_path=output_folder_path)
-    # history = start_training(trainer, epochs=config.trainer_parameters.epochs,
+    # history = start_training(trainer, offline_data=offline_data, epochs=settings["training"]["epochs"],
+    #                         batch_size=25000, early_stopping=True, validation_sims=2000, val_model_args={"prior_args": prior_args}, save_logs=False, output_folder_path=output_folder_path)
+    history = start_training(trainer, offline_data=offline_data, epochs=settings["training"]["epochs"],
+                             batch_size=settings["training"]["batch_size"], early_stopping=settings["training"][
+        "early_stopping"], validation_sims=settings["training"]["epochs"], val_model_args={"prior_args": prior_args},
+        save_logs=False, output_folder_path=output_folder_path)
+    # history = start_training(trainer, epochs=settings["training"]["batch_size"],
     #                          batch_size=3200, iterations_per_epoch=500, early_stopping=True, validation_sims=5000)
 
     # obs_data: (n_groups, n_time_steps, n_time_series)
-    # config["obs_data"] = load_data_rki_sir(datetime.date(2020, 3, 1), config.T, os.path.join(os.path.dirname(os.path.abspath(
+    # settings["obs_data"] = load_data_rki_sir(datetime.date(2020, 3, 1), settings["task"]["T"], os.path.join(os.path.dirname(os.path.abspath(
     #     __file__)), "../../../data/pydata/Germany/cases_infected_repdate.json"))
-    config["obs_data"] = load_data_synthetic(
+    settings["obs_data"] = load_data_synthetic(
         simulator_function, combined_params=combined_params)
 
-    config["obs_input"] = {
-        "summary_conditions": np.log1p(config["obs_data"])[np.newaxis].astype(np.float32),
-        "direct_local_conditions": [direct_conditions["direct_local_conditions"]],
-        "direct_global_conditions": [direct_conditions["direct_global_conditions"]]}
+    settings["obs_input"] = {
+        "summary_conditions": np.log1p(settings["obs_data"])[np.newaxis].astype(np.float32),
+        "direct_local_conditions": [settings["task"]["direct_conditions"]["direct_local_conditions"]],
+        "direct_global_conditions": [settings["task"]["direct_conditions"]["direct_global_conditions"]]}
 
     # history = trainer.loss_history
-    MLMPlotting(output_folder_path).plot_all(history, config, prior, prior_scaler,
+    MLMPlotting(output_folder_path).plot_all(history, settings, prior, prior_scaler,
                                              simulator_function, generative_model, trainer, prior_args=prior_args)
 
 
 if __name__ == "__main__":
-    trainer_parameters = TrainerParameters(epochs=20, coupling_design="spline",
-                                           summary_dim=16, num_coupling_layers=10)
-    config = InferenceConfig(T=81, N=83e6, intervention_model=False,
-                             observation_model=True, trainer_parameters=trainer_parameters)
+    with open(os.path.join("settings_mlm.yaml")) as f:
+        settings = yaml.safe_load(f)
 
     run_inference(output_folder_path=os.path.join(
-        FILE_PATH, "output_mlm/mlm_resimulation_mobility_spline"), config=config)
+        FILE_PATH, settings["task"]["output_path"], settings["task"]["name"]), settings=settings)

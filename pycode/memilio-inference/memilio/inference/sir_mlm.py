@@ -1,17 +1,17 @@
 import numpy as np
 import numpy.typing as npt
 from scipy import stats
-from enum import Enum
 from functools import partial
-import json
 import pandas as pd
 import os
+from copy import deepcopy
 
 import memilio.simulation as mio
 import memilio.simulation.osir as osir
 from memilio.inference.prior import (UnboundParameter, LambdaParameter, DelayParameter,
                                      InterventionChangePointParameter, WeeklyModulationAmplitudeParameter,
                                      ScaleMultiplicativeReportingNoiseParameter, ModelStrategy, BoundParameter)
+from memilio.inference.networks import NETWORKS_DICT
 
 from bayesflow.simulation import TwoLevelPrior, ContextGenerator
 import matplotlib.pyplot as plt
@@ -20,114 +20,198 @@ alpha_f = (0.7**2)*((1-0.7)/(0.17**2) - (1-0.7))
 beta_f = alpha_f*(1/0.7 - 1)
 mio.set_log_level(mio.LogLevel.Warning)
 
+# Default-Priors for SIR-MLM-Model
+DEFAULT_PRIORS = {
+    "LAMBDA_0_MEAN": {
+        "type": "hyper_prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.normal,
+        "dist_params": {"loc": 0.8, "scale": 0.5},
+        "name": r"$\lambda_0_mean$",
+        "description": "mean of lambda_0 prior"
+    },
+    "LAMBDA_0_SIGMA": {
+        "type": "hyper_prior",
+        "parameter_class": BoundParameter,
+        "parameter_class_params": {"lower_bound": 0},
+        "distribution": np.random.normal,
+        "dist_params": {"loc": 0.5, "scale": 0.2},
+        "name": r"$\lambda_0_sigma$",
+        "description": "sigma of lambda_0 prior"
+    },
+    "LAMBDA_0": {
+        "type": "local_prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "dist_params": {},
+        "name": r"$\lambda_0$",
+        "description": "infectionrate before interventions"
+    },
+    "I0": {
+        "type": "local_prior",
+        "parameter_class": UnboundParameter,
+        "distribution": np.random.gamma,
+        # Expected value of gamma-distribution (shape * scale) = 60
+        "dist_params": {"shape": 2, "scale": 30},
+        "name": r"$I_0$",
+        "description": "initial number of infected"
+    },
+    "MU": {
+        "type": "shared_prior",
+        "parameter_class": UnboundParameter,
+        "distribution": np.random.lognormal,
+        "dist_params": {"mean": np.log(8), "sigma": 0.2},
+        "name": r"$\mu$",
+        "description": "recoveryrate"
+    },
+    "T1": {
+        "type": "prior",
+        "parameter_class": InterventionChangePointParameter,
+        "distribution": np.random.normal,
+        "dist_params": {"loc": 8, "scale": 3},
+        "name": r"$t_1$",
+        "description": "first InterventionChangePoint"
+    },
+    "T2": {
+        "type": "prior",
+        "parameter_class": InterventionChangePointParameter,
+        "distribution": np.random.normal,
+        "dist_params": {"loc": 15, "scale": 1},
+        "name": r"$t_2$",
+        "description": "second InterventionChangePoint"
+    },
+    "T3": {
+        "type": "prior",
+        "parameter_class": InterventionChangePointParameter,
+        "distribution": np.random.normal,
+        "dist_params": {"loc": 22, "scale": 1},
+        "name": r"$t_3$",
+        "description": "third InterventionChangePoint"
+    },
+    "T4": {
+        "type": "prior",
+        "parameter_class": InterventionChangePointParameter,
+        "distribution": np.random.normal,
+        "dist_params": {"loc": 66, "scale": 1},
+        "name": r"$t_4$",
+        "description": "fourth InterventionChangePoint"
+    },
+    "LAMBDA_1": {
+        "type": "prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "dist_params": {"mean": np.log(0.6), "sigma": 0.5},
+        "name": r"$\lambda_1$",
+        "description": "infectionrate after first intervention"
+    },
+    "LAMBDA_2": {
+        "type": "prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "dist_params": {"mean": np.log(0.3), "sigma": 0.5},
+        "name": r"$\lambda_2$",
+        "description": "infectionrate after second intervention"
+    },
+    "LAMBDA_3": {
+        "type": "prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "dist_params": {"mean": np.log(0.1), "sigma": 0.5},
+        "name": r"$\lambda_3$",
+        "description": "infectionrate after third intervention"
+    },
+    "LAMBDA_4": {
+        "type": "prior",
+        "parameter_class": LambdaParameter,
+        "distribution": np.random.lognormal,
+        "dist_params": {"mean": np.log(0.1), "sigma": 0.5},
+        "name": r"$\lambda_4$",
+        "description": "infectionrate after fourth intervention"
+    },
+    "F_I": {
+        "type": "shared_prior",
+        "parameter_class": WeeklyModulationAmplitudeParameter,
+        "distribution": np.random.beta,
+        # Erwartungswert der Beta-Verteilung alpha_f / (alpha_f + beta_f)
+        "dist_params": {"a": alpha_f, "b": beta_f},
+        "name": r"$f_i$",
+        "description": "modulation amplitude"
+    },
+    "PHI_I": {
+        "type": "shared_prior",
+        "parameter_class": UnboundParameter,
+        "distribution": stats.vonmises(kappa=0.01).rvs,
+        "dist_params": {},
+        "name": r"$\phi_i$",
+        "description": "phase shift"
+    },
+    "D_I": {
+        "type": "shared_prior",
+        "parameter_class": DelayParameter,
+        "distribution": np.random.lognormal,
+        "dist_params": {"mean": np.log(8), "sigma": 0.2},
+        "name": r"$D_i$",
+        "description": "reporting delay"
+    },
+    "PSI": {
+        "type": "shared_prior",
+        "parameter_class": ScaleMultiplicativeReportingNoiseParameter,
+        "distribution": np.random.gamma,
+        "dist_params": {"shape": 1, "scale": 5},
+        "name": r"$\psi$",
+        "description": "reporting noise"
+    },
+}
 
-class HyperparameterNamesSir(Enum):
-    MEAN = r'$mean$'
-    SIGMA = r'$sigma$'
+
+def get_param_names_by_type(default_priors, param_type):
+    """! Retrieves all parameter names from the DEFAULT_PRIORS dictionary based on their type.
+
+    @param param_type The type of parameters to filter as str (e.g., 'local_prior', 'shared_prior').
+    """
+    return [key for key, value in default_priors.items() if value.get("type") == param_type]
 
 
-class ParameterNamesSir(Enum):
-    LAMBDA_0 = r'$\lambda_0$'
-    MU = r'$\mu$'
-    I0 = r'$I_0$'
-    T1 = r'$t_1$'
-    T2 = r'$t_2$'
-    T3 = r'$t_3$'
-    T4 = r'$t_4$'
-    LAMBDA_1 = r'$\lambda_1$'
-    LAMBDA_2 = r'$\lambda_2$'
-    LAMBDA_3 = r'$\lambda_3$'
-    LAMBDA_4 = r'$\lambda_4$'
-    F_I = r'$f_i$'
-    PHI_I = r'$\phi_i$'
-    D_I = r'$D_i$'
-    PSI = r'$\psi$'
-
-
-class SIRStrategy(ModelStrategy):
-    @staticmethod
-    # Possible option to draw without redraw
-    def add_base(prior_array: list[UnboundParameter]) -> None:
-        prior_array.append(LambdaParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(1.2), sigma=0.5), name=ParameterNamesSir.LAMBDA_0.value))
-        prior_array.append(UnboundParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(8), sigma=0.2), name=ParameterNamesSir.MU.value))
-        prior_array.append(UnboundParameter(distribution=partial(
-            np.random.gamma, shape=2, scale=30), name=ParameterNamesSir.I0.value))
-
-    @staticmethod
-    # Possible option to draw without redraw
-    def add_intervention(prior_array: list[UnboundParameter]) -> None:
-        prior_array.append(InterventionChangePointParameter(distribution=partial(
-            np.random.normal, loc=8, scale=3), name=ParameterNamesSir.T1.value))
-        prior_array.append(InterventionChangePointParameter(distribution=partial(
-            np.random.normal, loc=15, scale=1), name=ParameterNamesSir.T2.value))
-        prior_array.append(InterventionChangePointParameter(distribution=partial(
-            np.random.normal, loc=22, scale=1), name=ParameterNamesSir.T3.value))
-        prior_array.append(InterventionChangePointParameter(distribution=partial(
-            np.random.normal, loc=66, scale=1), name=ParameterNamesSir.T4.value))
-        prior_array.append(LambdaParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(0.6), sigma=0.5), name=ParameterNamesSir.LAMBDA_1.value))
-        prior_array.append(LambdaParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(0.3), sigma=0.5), name=ParameterNamesSir.LAMBDA_2.value))
-        prior_array.append(LambdaParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(0.1), sigma=0.5), name=ParameterNamesSir.LAMBDA_3.value))
-        prior_array.append(LambdaParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(0.1), sigma=0.5), name=ParameterNamesSir.LAMBDA_4.value))
-
-    @staticmethod
-    # Possible option to draw without redraw
-    def add_observation(prior_array: list[UnboundParameter], sim_diff: int) -> None:
-        prior_array.append(WeeklyModulationAmplitudeParameter(distribution=partial(
-            np.random.beta, a=alpha_f, b=beta_f), name=ParameterNamesSir.F_I.value))
-        prior_array.append(UnboundParameter(
-            distribution=stats.vonmises(kappa=0.01).rvs, name=ParameterNamesSir.PHI_I.value))
-        prior_array.append(DelayParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(8), sigma=0.2), name=ParameterNamesSir.D_I.value, sim_diff=sim_diff))
-        prior_array.append(ScaleMultiplicativeReportingNoiseParameter(distribution=partial(
-            np.random.gamma, shape=1, scale=5), name=ParameterNamesSir.PSI.value))
+def create_prior_from_dd(key, additional_params={}, hyper_params={}):
+    prior_entry = DEFAULT_PRIORS[key]
+    return prior_entry["parameter_class"](distribution=partial(
+        prior_entry["distribution"], **prior_entry.get("dist_params", {}), **hyper_params), name=prior_entry["name"], **prior_entry.get("parameter_class_params", {}), **additional_params)
 
 
 def create_prior():
 
     def draw_hyper_prior():
         # Draw location for 2D conditional prior
-        mean = LambdaParameter(distribution=partial(
-            np.random.normal, loc=0.8, scale=0.2), name=HyperparameterNamesSir.MEAN.value).get_draw()()  # np.log(0.8)
-        sigma = BoundParameter(distribution=partial(
-            np.random.normal, loc=0.5, scale=0.2), name=HyperparameterNamesSir.SIGMA.value, lower_bound=0).get_draw()()  # 0.5
-        return [mean, sigma]
+        lambd0_mean = create_prior_from_dd("LAMBDA_0_MEAN").get_draw()()
+        lambd0_mean = np.log(lambd0_mean)  # np.log(0.8)
+        lambd0_sigma = create_prior_from_dd(
+            "LAMBDA_0_SIGMA").get_draw()()  # 0.5
+        return [lambd0_mean, lambd0_sigma]
 
     def draw_local_prior(hyper_params, n_regions):
-        mean, sigma = hyper_params
+        lambd0_mean, lambd0_sigma = hyper_params
 
         lambd0 = np.zeros(n_regions)
         I0 = np.zeros(n_regions)
         for i in range(n_regions):
             # Draw parameter given location from hyperprior
-            lambd0[i] = LambdaParameter(distribution=partial(
-                np.random.lognormal, mean=np.log(mean), sigma=sigma), name=ParameterNamesSir.LAMBDA_0.value).get_draw()()
-
+            lambd0[i] = create_prior_from_dd("LAMBDA_0", hyper_params={
+                                             "mean": lambd0_mean, "sigma": lambd0_sigma}).get_draw()()
             # every state has its own I0
-            I0[i] = UnboundParameter(distribution=partial(
-                np.random.gamma, shape=2, scale=30), name=ParameterNamesSir.I0.value).get_draw()()
+            I0[i] = create_prior_from_dd("I0").get_draw()()
 
         return [lambd0, I0]
 
     def draw_shared_prior(sim_lag=15):
 
-        mu = UnboundParameter(distribution=partial(
-            np.random.lognormal, mean=np.log(8), sigma=0.2), name=ParameterNamesSir.MU.value).get_draw()()
+        mu = create_prior_from_dd("MU").get_draw()()
 
         # observation model
-        f_i = WeeklyModulationAmplitudeParameter(distribution=partial(
-            np.random.beta, a=alpha_f, b=beta_f), name=ParameterNamesSir.F_I.value).get_draw()()
-        phi_i = UnboundParameter(
-            distribution=stats.vonmises(kappa=0.01).rvs, name=ParameterNamesSir.PHI_I.value).get_draw()()
-        d_i = DelayParameter(distribution=partial(np.random.lognormal, mean=np.log(
-            8), sigma=0.2), name=ParameterNamesSir.D_I.value, sim_lag=sim_lag).get_draw()()
-        scale_I = ScaleMultiplicativeReportingNoiseParameter(distribution=partial(
-            np.random.gamma, shape=1, scale=5), name=ParameterNamesSir.PSI.value).get_draw()()
+        f_i = create_prior_from_dd("F_I").get_draw()()
+        phi_i = create_prior_from_dd("PHI_I").get_draw()()
+        d_i = create_prior_from_dd(
+            "D_I", additional_params={"sim_lag": sim_lag}).get_draw()()
+        scale_I = create_prior_from_dd("PSI").get_draw()()
         return [mu, f_i, phi_i, d_i, scale_I]
 
     # context = ContextGenerator(non_batchable_context_fun=lambda : np.random.randint(1, 101))
@@ -137,6 +221,39 @@ def create_prior():
 
     return TwoLevelPrior(
         draw_hyper_prior, draw_local_prior, draw_shared_prior)
+
+
+def build_mlm_amortizer(_settings: dict, local_params, global_params):
+    # # Should not be lower than number of parameters
+    # summary_net = SequenceNetwork(summary_dim=trainer_parameters.summary_dim)
+
+    model_settings = deepcopy(_settings["model"])
+
+    # could try setting coupling_design=spline for more superior performance on lower-dimensional problems.
+    # infere local parameters on local data
+    local_inference_net = NETWORKS_DICT[model_settings["local_amortizer"]["inference_net"].pop(
+        "type")](num_params=local_params, **model_settings["local_amortizer"]["inference_net"])
+    local_amortizer = NETWORKS_DICT[model_settings["local_amortizer"]["type"]](
+        local_inference_net, name=model_settings["local_amortizer"]["name"])
+
+    # could try setting coupling_design=spline for more superior performance on lower-dimensional problems.
+    # infere hyper and shared parameters on global data
+    global_inference_net = NETWORKS_DICT[model_settings["global_amortizer"]["inference_net"].pop(
+        "type")](num_params=global_params, **model_settings["global_amortizer"]["inference_net"])
+    global_amortizer = NETWORKS_DICT[model_settings["global_amortizer"]["type"]](
+        global_inference_net, name=model_settings["global_amortizer"]["name"])
+
+    local_summary_net = NETWORKS_DICT[model_settings["summary_net_kwargs"]["local_summary_net"].pop(
+        "type")](**model_settings["summary_net_kwargs"]["local_summary_net"])
+    global_summary_net = NETWORKS_DICT[model_settings["summary_net_kwargs"]["global_summary_net"].pop(
+        "type")](**model_settings["summary_net_kwargs"]["global_summary_net"])
+    summary_net = NETWORKS_DICT[model_settings["summary_net_kwargs"]["type"]](
+        [local_summary_net, global_summary_net])
+
+    amortizer = NETWORKS_DICT[model_settings["type"]](
+        local_amortizer, global_amortizer, summary_net, name=model_settings["name"])
+
+    return amortizer
 
 
 State = {
@@ -173,7 +290,7 @@ def get_population(path):
     return np.array(population)
 
 
-def simulator_SIR(combined_params: tuple[list[list[float]], list[float]], n_regions: int, N: list[int], T: int, mobility_params: list[list[int]], intervention_model: bool, observation_model: bool, param_names: list[str], sim_lag: int = 15) -> npt.NDArray[np.float64]:
+def simulator_SIR(combined_params: tuple[list[list[float]], list[float]], n_regions: int, population: list[int], T: int, mobility_params: list[list[int]], intervention_model: bool, observation_model: bool, param_names: list[str], sim_lag: int = 15) -> npt.NDArray[np.float64]:
     """Performs a forward simulation from the stationary SIR model given a random draw from the prior."""
 
     (local_params, shared_params) = combined_params
@@ -183,24 +300,24 @@ def simulator_SIR(combined_params: tuple[list[list[float]], list[float]], n_regi
     D_i = int(round(D_i))
 
     # if intervention_model:
-    #     t1 = params[ParameterNamesSir.T1.value]
-    #     t2 = params[ParameterNamesSir.T2.value]
-    #     t3 = params[ParameterNamesSir.T3.value]
-    #     t4 = params[ParameterNamesSir.T4.value]
+    #     t1 = params[DEFAULT_PRIORS["T1"]["name"]]
+    #     t2 = params[DEFAULT_PRIORS["T2"]["name"]]
+    #     t3 = params[DEFAULT_PRIORS["T3"]["name"]]
+    #     t4 = params[DEFAULT_PRIORS["T4"]["name"]]
     #     # Round integer parameters
     #     t1, t2, t3, t4 = int(round(t1)), int(
     #         round(t2)), int(round(t3)), int(round(t4))
 
-    #     lambd1 = params[ParameterNamesSir.LAMBDA_1.value]
-    #     lambd2 = params[ParameterNamesSir.LAMBDA_2.value]
-    #     lambd3 = params[ParameterNamesSir.LAMBDA_3.value]
-    #     lambd4 = params[ParameterNamesSir.LAMBDA_4.value]
+    #     lambd1 = params[DEFAULT_PRIORS["LAMBDA_1"]["name"]]
+    #     lambd2 = params[DEFAULT_PRIORS["LAMBDA_2"]["name"]]
+    #     lambd3 = params[DEFAULT_PRIORS["LAMBDA_3"]["name"]]
+    #     lambd4 = params[DEFAULT_PRIORS["LAMBDA_4"]["name"]]
 
     # if observation_model:
-    #     f_i = params[ParameterNamesSir.F_I.value]
-    #     phi_i = params[ParameterNamesSir.PHI_I.value]
-    #     D_i = params[ParameterNamesSir.D_I.value]
-    #     scale_I = params[ParameterNamesSir.PSI.value]
+    #     f_i = params[DEFAULT_PRIORS["F_I"]["name"]]
+    #     phi_i = params[DEFAULT_PRIORS["PHI_I"]["name"]]
+    #     D_i = params[DEFAULT_PRIORS["D_I"]["name"]]
+    #     scale_I = params[DEFAULT_PRIORS["PSI"]["name"]]
     #     D_i = int(round(D_i))
 
     # Maybe check for missing parameter
@@ -223,7 +340,7 @@ def simulator_SIR(combined_params: tuple[list[list[float]], list[float]], n_regi
         sir_model.populations[A0, osir.InfectionState.Infected] = I0[i]
         sir_model.populations[A0, osir.InfectionState.Recovered] = 0
         sir_model.populations.set_difference_from_total(
-            (A0, osir.InfectionState.Susceptible), N[i])
+            (A0, osir.InfectionState.Susceptible), population[i])
 
         # Initialize Parameters
         sir_model.parameters.TimeInfected[A0] = mu
@@ -263,7 +380,7 @@ def simulator_SIR(combined_params: tuple[list[list[float]], list[float]], n_regi
         graph.add_node(id=0, model=sir_model, t0=0)
 
         for end_node_idx in range(n_regions):
-            mobility_coefficients = (mobility_params[i][end_node_idx] / N[i]) * \
+            mobility_coefficients = (mobility_params[i][end_node_idx] / population[i]) * \
                 np.ones(sir_model.populations.numel())
 
             graph.add_edge(i, end_node_idx, mio.MobilityParameters(
@@ -292,7 +409,7 @@ def simulator_SIR(combined_params: tuple[list[list[float]], list[float]], n_regi
             # Note, we assume the same delay
             I_data = np.diff(result[i].as_ndarray()[
                              1, (sim_lag-D_i):(sim_lag-D_i)+T+1]) * (-1)
-            I_data = np.clip(I_data, 10 ** -14, N[i])
+            I_data = np.clip(I_data, 10 ** -14, population[i])
 
             # Compute weekly modulation
             I_data = (1-fs_i) * I_data
@@ -310,7 +427,7 @@ def simulator_SIR(combined_params: tuple[list[list[float]], list[float]], n_regi
                              scale=np.sqrt(I_data)*scale_I).rvs()
 
             # bound all negative values to 0
-            I_data = np.clip(I_data, 10 ** -14, N[i])
+            I_data = np.clip(I_data, 10 ** -14, population[i])
 
             out_data.append(I_data)
     else:
@@ -320,7 +437,7 @@ def simulator_SIR(combined_params: tuple[list[list[float]], list[float]], n_regi
             I_data = np.diff(result[i].as_ndarray()[1, :T+1]) * (-1)
 
             # bound all negative values to 0
-            I_data = np.clip(I_data, 10 ** -14, N[i])
+            I_data = np.clip(I_data, 10 ** -14, population[i])
 
             out_data.append(I_data)
 
@@ -336,11 +453,11 @@ if __name__ == "__main__":
                                         "..", "..", "data", "pydata", "Germany",
                                         "county_current_population.json")
 
-    N = get_population(path_population_data)
+    population = get_population(path_population_data)
     prior = create_prior()
     params = prior(1, local_args={"n_regions": 16})
-    results = simulator_SIR([params["local_parameters"][0], params["shared_parameters"][0]], 16, N, 81, False, False, [
-        ParameterNamesSir.LAMBDA_0.value, ParameterNamesSir.MU.value, ParameterNamesSir.I0.value])
+    results = simulator_SIR([params["local_parameters"][0], params["shared_parameters"][0]], 16, population, 81, False, False, [
+        DEFAULT_PRIORS["LAMBDA_0"]["name"], DEFAULT_PRIORS["MU"]["name"], DEFAULT_PRIORS["I0"]["name"]])
 
     plt.plot(results)
     plt.savefig("simulator_SIR.png")

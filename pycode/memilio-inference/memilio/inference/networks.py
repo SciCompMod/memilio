@@ -2,8 +2,10 @@ import tensorflow as tf
 from tensorflow.keras.layers import LSTM, Bidirectional, Dense
 from tensorflow.keras.models import Sequential
 
-from bayesflow import default_settings as defaults
+from bayesflow import default_settings
 
+from bayesflow.amortizers import TwoLevelAmortizedPosterior, AmortizedPosterior
+from bayesflow.networks import InvertibleNetwork, SequenceNetwork, DeepSet, HierarchicalNetwork
 from bayesflow.helper_networks import MultiConv1D
 
 
@@ -43,7 +45,7 @@ class TwoLevelSequenceNetwork(tf.keras.Model):
 
         # Take care of None conv_settings
         if conv_settings is None:
-            conv_settings = defaults.DEFAULT_SETTING_MULTI_CONV
+            conv_settings = default_settings.DEFAULT_SETTING_MULTI_CONV
 
         self.net = Sequential([MultiConv1D(conv_settings)
                               for _ in range(num_conv_layers)])
@@ -80,3 +82,14 @@ class TwoLevelSequenceNetwork(tf.keras.Model):
         out = tf.reshape(out, (batch_size, n_groups, -1))
 
         return out
+
+
+NETWORKS_DICT = {
+    "SequenceNetwork": SequenceNetwork,
+    "TwoLevelSequenceNetwork": TwoLevelSequenceNetwork,
+    "DeepSet": DeepSet,
+    "HierarchicalNetwork": HierarchicalNetwork,
+    "InvertibleNetwork": InvertibleNetwork,
+    "AmortizedPosterior": AmortizedPosterior,
+    "TwoLevelAmortizedPosterior": TwoLevelAmortizedPosterior,
+}

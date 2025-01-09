@@ -1,0 +1,34 @@
+model:
+  type: AmortizedPosterior
+  summary_net_kwargs:
+    summary_dim: 16
+    num_conv_layers: 2
+    lstm_units: 128
+    bidirectional: false
+    type: SequenceNetwork
+  inference_net_kwargs:
+    num_coupling_layers: 8
+    coupling_design: affine
+    permutation: fixed
+    type: InvertibleNetwork
+task:
+  name: test
+  description: synthetic data
+  output_path: output
+  intervention_model: true
+  observation_model: true
+  num_samples: 100000
+training:
+  batch_size: 320
+  epochs: 20
+  early_stopping: true
+  validation_sims: 2000
+  default_lr: 0.0005
+  # train_fraction: 0.95
+  # optimizer:
+  #   lr: 0.0002
+  #   type: adam
+  # scheduler:
+  #   factor: 0.2
+  #   patience: 1
+  #   type: reduce_on_plateau
