@@ -44,6 +44,14 @@ if (MEMILIO_ENABLE_OPENMP)
     target_compile_options(ode_seir_mobility_timing PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
+add_executable(ode_seir_mobility_steps ode_seir_mobility_steps.cpp)
+target_link_libraries(ode_seir_mobility_steps PRIVATE memilio ode_seir_mobility_improved)
+target_compile_options(ode_seir_mobility_steps PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(basic_reproduction_numbers basic_reproduction_numbers.cpp)
+target_link_libraries(basic_reproduction_numbers PRIVATE memilio ode_seir)
+target_compile_options(basic_reproduction_numbers PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_seir_mobility_example_improved ode_seir_mobility_improved.cpp)
 target_link_libraries(ode_seir_mobility_example_improved PRIVATE memilio ode_seir_mobility_improved)
 target_compile_options(ode_seir_mobility_example_improved PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -105,6 +113,10 @@ target_compile_options(graph_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_
 add_executable(graph_example_extended graph_extended.cpp)
 target_link_libraries(graph_example_extended PRIVATE memilio ode_seir)
 target_compile_options(graph_example_extended PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(graph_steps graph_steps.cpp)
+target_link_libraries(graph_steps PRIVATE memilio ode_seir)
+target_compile_options(graph_steps PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 if (MEMILIO_ENABLE_OPENMP)
     add_executable(graph_timing graph_timing.cpp)
