@@ -167,8 +167,8 @@ def post_to_db_parameters():
     parameter_data = [
         {"name": "TimeExposed",
          "description": "TimeExposed"},
-        {"name": "TimeInfectedNoSymptom",
-         "description": "TimeInfectedNoSymptom"},
+        {"name": "TimeInfectedNoSymptoms",
+         "description": "TimeInfectedNoSymptoms"},
         {"name": "TimeInfectedSymptoms",
          "description": "TimeInfectedSymptoms"},
         {"name": "TimeInfectedSevere",
@@ -279,12 +279,12 @@ def post_to_db_nodelist():
 def post_to_db_scenarios():
     # Define start and end date for casedata scenario
     start_date_casedata = (datetime.datetime.now() -
-                datetime.timedelta(days=365)).strftime("%Y-%m-%d")
+                           datetime.timedelta(days=365)).strftime("%Y-%m-%d")
     end_date_casedata = datetime.datetime.now().strftime("%Y-%m-%d")
     # Define start and end date of simulation
     start_date_simulation = datetime.datetime.now().strftime("%Y-%m-%d")
     end_date_simulation = (datetime.datetime.now() +
-                datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+                           datetime.timedelta(days=30)).strftime("%Y-%m-%d")
 
     # Get ids of model, nodelist and interventions
     get_models = requests.get(url + "models/", headers=header)
@@ -306,7 +306,7 @@ def post_to_db_scenarios():
     # Define dict that contains name of parameter and min and max values for all 6 age groups.
     parameter_dict_default = {
         "TimeExposed": [[2.67, 2.67, 2.67, 2.67, 2.67, 2.67], [4., 4., 4., 4., 4., 4.]],
-        "TimeInfectedNoSymptom": [[1.2, 1.2, 1.2, 1.2, 1.2, 1.2], [2.53, 2.53, 2.53, 2.53, 2.53, 2.53]],
+        "TimeInfectedNoSymptoms": [[1.2, 1.2, 1.2, 1.2, 1.2, 1.2], [2.53, 2.53, 2.53, 2.53, 2.53, 2.53]],
         "TimeInfectedSymptoms": [[5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465], [8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085]],
         "TimeInfectedSevere": [[
             3.925, 3.925, 4.85, 6.4, 7.2, 9.], [6.075, 6.075, 7., 8.7, 9.8, 13.]],
