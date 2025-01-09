@@ -104,6 +104,28 @@ struct LogLocationInformation : mio::LogOnce {
     }
 };
 
+struct LogLocationInformationOcc : mio::LogAlways {
+    using Type = std::vector<std::tuple<uint32_t, mio::abm::LocationType, int>>;
+    /**
+     * @brief Log the LocationInformation of the simulation. 
+     * @param[in] sim The simulation of the abm.
+     * @return A vector of tuples with the LocationInformation, where each tuple contains the following information:
+     * -# The index of the location.
+     * -# Location type.
+     * -# The amount of persons @ location.
+    */
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Type location_information{};
+        location_information.reserve(sim.get_world().get_locations().size());
+        for (auto&& location : sim.get_world().get_locations()) {
+            location_information.push_back(
+                std::make_tuple(location.get_index(), location.get_type(), location.get_number_persons()));
+        }
+        return location_information;
+    }
+};
+
 /**
  * @brief Logger to log the Person%s Information in the simulation.
  */
@@ -151,7 +173,6 @@ struct LogDataForMovement : mio::LogAlways {
     {
         Type movement_data{};
         movement_data.reserve(sim.get_world().get_persons().size());
-        PRAGMA_OMP(parallel for)
         for (auto&& p : sim.get_world().get_persons()) {
             movement_data.push_back(std::make_tuple(
                 p.get_person_id(), p.get_location().get_index(), sim.get_time(), p.get_last_transport_mode(),
@@ -259,6 +280,7 @@ struct LogInfectionPerAgeGroup : mio::LogAlways {
 * @brief This is like the DataWriterToMemory, but it only logs time series data.
 * @tparam Loggers The loggers that are used to log data. The loggers must return a touple with a TimePoint and a value.
 */
+
 template <class... Loggers>
 struct TimeSeriesWriter {
     using Data = std::tuple<mio::TimeSeries<ScalarType>>;
@@ -274,6 +296,20 @@ struct TimeSeriesWriter {
     }
 };
 
+template <class... Loggers>
+struct DataWriter {
+    using Data = std::tuple<std::vector<typename Loggers::Type>...>;
+    template <class Logger>
+    /**
+     * @brief This function adds an entry to the TimeSeries consisting of the TimePoint and the value. The Loggers must return a touple with a TimePoint and a value of return type Eigen::VectorXd.
+     * @param[in] t The data from the logger.
+     * @param[in,out] data The data tuple.
+    */
+    static void add_record(const typename Logger::Type& t, Data& data)
+    {
+        std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(t);
+    }
+};
 /**
 * @brief This class writes data retrieved from loggers to memory. It can be used as the Writer template parameter for the History class.
 * This specialization just saves the difference to the last saved data. Suitable when one wants to save huge data with a few changes.

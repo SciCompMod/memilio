@@ -457,8 +457,8 @@ bd_new = add_time_if_null(bd_new)
 
 # we need to remove unnecessary columns
 bd_new = bd_new.drop(columns=['start_zone', 'end_zone', 'loc_id_start', 'start_county', 'end_county', 'trip_distance', 'travel_time_sec',
-                     'lon_start', 'lat_start', 'travel_mode', 'activity_start', 'activity_end', 'map_feature_key', 'map_feature_value'])
+                     'lon_start', 'lat_start', 'travel_mode', 'activity_start'])
 # sort for better search performance
 bd_new = bd_new.sort_values(by=['puid', 'start_time'])
 # Write data back to disk
-bd_new.to_csv(PATH + "braunschweig_result_ffa8_modified2.csv", index=False)
+bd_new.to_csv(PATH + "braunschweig_result_ffa8_modified4.csv", index=False)
