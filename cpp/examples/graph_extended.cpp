@@ -7,8 +7,6 @@
 #include "memilio/io/result_io.h"
 #include "memilio/io/epi_data.h"
 
-#include <chrono>
-
 /**
  * indices of contact matrix corresponding to locations where contacts occur.
  */
@@ -136,8 +134,8 @@ set_population_data(const fs::path& data_dir, mio::oseir::Parameters<double>& pa
                 {i, mio::oseir::InfectionState::Susceptible}, vnum_population[region][size_t(i)]);
         }
     }
-    nodes[27].populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] -= 100;
-    nodes[27].populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] += 100;
+    nodes[27].populations[{mio::AgeGroup(4), mio::oseir::InfectionState::Susceptible}] -= 100;
+    nodes[27].populations[{mio::AgeGroup(4), mio::oseir::InfectionState::Exposed}] += 100;
 
     return mio::success(nodes);
 }
@@ -229,20 +227,14 @@ mio::IOResult<void> run(const fs::path& data_dir, double t0, double tmax, double
         }
     }
 
-    for (auto& node : params_graph.nodes()) {
-        node.property.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore<ScalarType>>());
-    }
+    // for (auto& node : params_graph.nodes()) {
+    //     node.property.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore<ScalarType>>());
+    // }
 
     auto sim = mio::make_mobility_sim(t0, dt, std::move(params_graph));
 
     printf("Start Simulation\n");
-    auto t1 = std::chrono::high_resolution_clock::now();
     sim.advance(tmax);
-    auto t2 = std::chrono::high_resolution_clock::now();
-
-    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
-
-    printf("Runtime: %f\n", ms_double.count());
 
     auto result_graph = std::move(sim).get_graph();
     auto result       = mio::interpolate_simulation_result(result_graph);
@@ -252,7 +244,7 @@ mio::IOResult<void> run(const fs::path& data_dir, double t0, double tmax, double
         return n.id;
     });
 
-    auto save_result_status = save_result(result, county_ids, num_age_groups, "graph_result_nrw.h5");
+    auto save_result_status = save_result(result, county_ids, num_age_groups, "graph_result_nrw_adaptive.h5");
 
     return mio::success();
 }
@@ -260,7 +252,7 @@ mio::IOResult<void> run(const fs::path& data_dir, double t0, double tmax, double
 int main()
 {
     const auto t0   = 0.;
-    const auto tmax = 50.;
+    const auto tmax = 100.;
     const auto dt   = 0.5; //time step of mobility, daily mobility every second step
 
     const std::string& data_dir = "";
