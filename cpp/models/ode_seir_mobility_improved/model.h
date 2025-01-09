@@ -72,7 +72,6 @@ public:
                 }
                 Eigen::VectorXd infections_due_commuting = commuting_strengths * infectious_share_per_region;
                 for (size_t region_n = 0; region_n < (size_t)n_regions; region_n++) {
-                    FP flow_SE_helper = 0;
                     const size_t Ejn =
                         population.get_flat_index({Region(region_n), AgeGroup(age_j), InfectionState::Exposed});
                     const size_t Ijn =
@@ -88,10 +87,9 @@ public:
                         params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(age_i, age_j) *
                         params.template get<TransmissionProbabilityOnContact<FP>>()[AgeGroup(age_i)];
 
-                    flow_SE_helper += pop[Ijn] * Nj_inv + infections_due_commuting(region_n);
                     flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(
                         {Region(region_n), AgeGroup(age_i)})] +=
-                        flow_SE_helper * coeffStoI *
+                        (pop[Ijn] * Nj_inv + infections_due_commuting(region_n)) * coeffStoI *
                         y[population.get_flat_index({Region(region_n), AgeGroup(age_i), InfectionState::Susceptible})];
                 }
             }
