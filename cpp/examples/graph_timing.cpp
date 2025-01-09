@@ -69,7 +69,7 @@ void set_population_data(mio::oseir::Parameters<double>& params,
         {params.get_num_groups(), mio::oseir::InfectionState::Count});
 
     for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-        population[{i, mio::oseir::InfectionState::Susceptible}] = 1000000;
+        population[{i, mio::oseir::InfectionState::Susceptible}] = 10000;
     }
     for (auto& node : nodes) {
         node.parameters  = params;
@@ -138,7 +138,7 @@ double simulate_runtime(size_t number_regions, ScalarType tmax)
     return end_time - start_time;
 }
 
-int simulate_steps(size_t number_regions, ScalarType tmax)
+void simulate(size_t number_regions, ScalarType tmax)
 {
     ScalarType t0 = 0.;
     ScalarType dt = 0.5;
@@ -149,15 +149,6 @@ int simulate_steps(size_t number_regions, ScalarType tmax)
 
     auto sim = mio::make_mobility_sim(t0, dt, std::move(params_graph));
     sim.advance(tmax);
-
-    auto result_graph = std::move(sim).get_graph();
-
-    int num_steps = 0;
-    for (auto&& node : result_graph.nodes()) {
-        num_steps += node.property.get_result().get_num_time_points() - 1;
-    }
-
-    return num_steps;
 }
 
 int main(int argc, char** argv)
@@ -175,11 +166,9 @@ int main(int argc, char** argv)
 
     std::cout << "{ \"Regions\": " << num_regions << ", " << std::endl;
     // Warm up runs.
-    int num_steps = 0;
     for (size_t i = 0; i < warm_up; i++) {
-        num_steps = simulate_steps(num_regions, tmax);
+        simulate(num_regions, tmax);
     }
-    std::cout << "\"Steps\": " << num_steps / num_regions << "," << std::endl;
 
     // Runs with timing.
     ScalarType total = 0;

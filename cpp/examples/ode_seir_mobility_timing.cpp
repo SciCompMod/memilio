@@ -107,14 +107,14 @@ void set_parameters_and_population(mio::oseirmobilityimproved::Model<FP>& model)
     size_t number_age_groups = (size_t)parameters.get_num_agegroups();
     for (size_t j = 0; j < number_age_groups; j++) {
         for (size_t i = 0; i < number_regions; i++) {
-            model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(j),
-                               mio::oseirmobilityimproved::InfectionState::Susceptible}] = 10000;
+            populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(j),
+                         mio::oseirmobilityimproved::InfectionState::Susceptible}] = 10000;
         }
     }
-    model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
-                       mio::oseirmobilityimproved::InfectionState::Exposed}] += 100;
-    model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
-                       mio::oseirmobilityimproved::InfectionState::Susceptible}] -= 100;
+    populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
+                 mio::oseirmobilityimproved::InfectionState::Exposed}] += 100;
+    populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
+                 mio::oseirmobilityimproved::InfectionState::Susceptible}] -= 100;
     set_mobility_weights(model);
 
     set_contact_matrix(model);
@@ -157,9 +157,6 @@ void simulate(size_t num_warm_up_runs, size_t num_runs, size_t number_regions, S
     mio::oseirmobilityimproved::Model<ScalarType> model(number_regions, number_age_groups);
     set_parameters_and_population(model);
 
-    // using DefaultIntegratorCore =
-    //     mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>;
-
     std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator = std::make_shared<mio::EulerIntegratorCore<>>();
 
     std::cout << "{ \"Regions\": " << number_regions << ", " << std::endl;
@@ -169,7 +166,6 @@ void simulate(size_t num_warm_up_runs, size_t num_runs, size_t number_regions, S
         simulate(t0, tmax, dt, model, integrator);
     }
     auto result = simulate(t0, tmax, dt, model, integrator);
-    std::cout << "\"Steps\": " << result.get_num_time_points() << "," << std::endl;
 
     // Runs with timing.
     ScalarType total = 0;
