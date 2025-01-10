@@ -106,7 +106,7 @@ class ABMMobilityEdge
 public:
     /**
      * @brief Exchanges persons via the edge. 
-     * Commuters are given by the ABMMobilityParameters and exchanged via mobility rules also given ABMMobilityParameters.
+     * Commuters are given by the person buffer of node_from.
      * @param[in] node_from Commuters home node
      * @param[in] node_to Node commuters (temporarily) move to
      * @param[in] t Echange time point
@@ -144,6 +144,8 @@ public:
 /**
  * @brief Edge functor for abm graph simulation. 
  * @see ABMMobilityEdge::apply_mobility
+ * The attribute dt is required by the GraphSimulation class and therefore an input argument of the function.
+ * However it is not used in ABMMobilityEdge::apply_mobility.
  * @param[in] t Time point the functor is applied.
  * @param[in] edge ABMMobilityEdge for which the functor is applied.
  * @param[in] node_from Edge start node.
@@ -171,8 +173,8 @@ void evolve_model(abm::TimePoint t, abm::TimeSpan dt, ABMSimulationNode<History.
 
 /**
  * @brief Creates an abm graph simulation.
- * Every dt time step for each edge the persons given in ABMMobilityParameters move from one node to the other 
- * according to mobility rules also given by ABMMobilityParameters.
+ * Every dt time step for each edge the persons that want to change to a location in another node 
+ * are removed from the model in their former location's node and added to the model of the new location.
  * @param[in] t0 Start time point of the simulation.
  * @param[in] dt Step between mobility on edges.
  * @param[in] graph Graph for simulation.

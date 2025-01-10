@@ -20,7 +20,6 @@
 #include "matchers.h"
 #include "distributions_helpers.h"
 
-#include "abm/location_type.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/stl_util.h"

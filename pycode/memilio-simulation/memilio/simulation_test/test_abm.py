@@ -95,8 +95,8 @@ class TestAbm(unittest.TestCase):
         p2_id = model.add_person(home_id, mio.AgeGroup(2))
 
         for loc_id in [home_id, social_event_id, work_id]:
-            model.assign_location(0, loc_id)
-            model.assign_location(1, loc_id)
+            model.assign_location(p1_id, loc_id)
+            model.assign_location(p2_id, loc_id)
 
         model.parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype, mio.AgeGroup(
             0)] = 0.0

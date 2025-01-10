@@ -207,7 +207,9 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("add_location", &mio::abm::Model::add_location, py::arg("location_type"), py::arg("num_cells") = 1)
         .def("add_person", py::overload_cast<mio::abm::LocationId, mio::AgeGroup>(&mio::abm::Model::add_person),
              py::arg("location_id"), py::arg("age_group"))
-        .def("assign_location", &mio::abm::Model::assign_location, py::arg("person_id"), py::arg("location_id"))
+        .def("assign_location",
+             py::overload_cast<mio::abm::PersonId, mio::abm::LocationId>(&mio::abm::Model::assign_location),
+             py::arg("person_id"), py::arg("location_id"))
         .def_property_readonly("locations", py::overload_cast<>(&mio::abm::Model::get_locations, py::const_),
                                py::keep_alive<1, 0>{}) //keep this model alive while contents are referenced in ranges
         .def_property_readonly("persons", py::overload_cast<>(&mio::abm::Model::get_persons, py::const_),

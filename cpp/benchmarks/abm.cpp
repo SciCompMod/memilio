@@ -1,9 +1,6 @@
 #include "abm/simulation.h"
 
 #include "benchmark/benchmark.h"
-#include <cstddef>
-#include <cstdint>
-#include <sys/types.h>
 
 mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list<uint32_t> seeds)
 {
