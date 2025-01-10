@@ -24,6 +24,7 @@
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/mobility_rules.h"
+#include "abm/person_id.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"
@@ -60,14 +61,16 @@ PersonId Model::add_person(Person&& person)
     assert(person.get_location() < LocationId((uint32_t)m_locations.size()) &&
            "Added Person's location is not in Model.");
     assert(person.get_age() < (AgeGroup)parameters.get_num_groups() && "Added Person's AgeGroup is too large.");
-    if (person.get_id() == PersonId::invalid_id()) {
-        uint64_t id = (static_cast<int64_t>(m_id)) << 32 | static_cast<uint32_t>(m_persons.size());
-        PersonId new_id{id};
+    PersonId new_id{static_cast<uint32_t>(m_persons.size())};
+    if (person.get_unique_id() == INVALID_UNIQUE_ID) {
+        //if the person does not have a valid unique id yet, it gets one which is coumbound by model id and index in m_persons
+        uint64_t unique_id = (static_cast<int64_t>(m_id)) << 32 | static_cast<uint32_t>(m_persons.size());
         person.set_assigned_location(LocationType::Cemetery, m_cemetery_id, m_id);
-        m_persons.emplace_back(person, new_id);
+        m_persons.emplace_back(person, new_id, unique_id);
     }
     else {
-        m_persons.emplace_back(person);
+        //if the person already has a valid unique id, it only gets a new PersonId
+        m_persons.emplace_back(person, new_id);
     }
     m_activeness_statuses.push_back(true);
     auto& new_person = m_persons.back();
@@ -91,9 +94,9 @@ void Model::interaction(TimePoint t, TimeSpan dt)
 {
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
-    for (uint32_t person_index = 0; person_index < num_persons; ++person_index) {
-        if (m_activeness_statuses[person_index]) {
-            interact(person_index, t, dt);
+    for (uint32_t person_id = 0; person_id < num_persons; ++person_id) {
+        if (m_activeness_statuses[person_id]) {
+            interact(person_id, t, dt);
         }
     }
 }
@@ -102,16 +105,16 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
 {
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
-    for (uint32_t person_index = 0; person_index < num_persons; ++person_index) {
-        if (m_activeness_statuses[person_index]) {
-            Person& person    = m_persons[person_index];
+    for (uint32_t person_id = 0; person_id < num_persons; ++person_id) {
+        if (m_activeness_statuses[person_id]) {
+            Person& person    = m_persons[person_id];
             auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
 
             auto try_mobility_rule = [&](auto rule) -> bool {
                 // run mobility rule and check if change of location can actually happen
                 auto target_type = rule(personal_rng, person, t, dt, parameters);
                 if (person.get_assigned_location_model_id(target_type) == m_id) {
-                    const Location& target_location   = get_location(find_location(target_type, person_index));
+                    const Location& target_location   = get_location(find_location(target_type, person_id));
                     const LocationId current_location = person.get_location();
 
                     // the Person cannot move if they do not wear mask as required at targeted location
@@ -140,7 +143,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                         person.set_mask(MaskType::None, t);
                     }
                     // all requirements are met, move to target location
-                    change_location(person_index, target_location.get_id());
+                    change_location(person_id, target_location.get_id());
                     return true;
                 }
                 return false;
@@ -179,7 +182,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
            m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds();
          m_trip_list.increase_index()) {
         auto& trip        = m_trip_list.get_next_trip(weekend);
-        auto& person      = get_person(static_cast<uint32_t>(trip.person_id.get()));
+        auto& person      = get_person(PersonId(static_cast<uint32_t>(trip.person_id)));
         auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
         // skip the trip if the person is in quarantine or is dead
         if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
@@ -195,7 +198,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             continue;
         }
         // all requirements are met, move to target location
-        change_location(static_cast<uint32_t>(trip.person_id.get()), target_location.get_id(), trip.trip_mode);
+        change_location(person.get_id(), target_location.get_id(), trip.trip_mode);
         // update worn mask to target location's requirements
         if (target_location.is_mask_required()) {
             // if the current MaskProtection level is lower than required, the Person changes mask
@@ -287,7 +290,7 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
             if (person.get_location_model_id() == m_id) {
                 mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
                                                     m_contact_exposure_rates_cache[location], person,
-                                                    get_location(uint32_t(i)), t, dt);
+                                                    get_location(person.get_id()), t, dt);
             }
         } // implicit taskloop barrier
     } // implicit single barrier
@@ -334,9 +337,9 @@ auto Model::get_activeness_statuses() -> Range<std::pair<ActivenessIterator, Act
     return std::make_pair(m_activeness_statuses.begin(), m_activeness_statuses.end());
 }
 
-LocationId Model::find_location(LocationType type, const uint32_t person_index) const
+LocationId Model::find_location(LocationType type, const PersonId person) const
 {
-    auto location_id = get_person(person_index).get_assigned_location(type);
+    auto location_id = get_person(person).get_assigned_location(type);
     assert(location_id != LocationId::invalid_id() && "The person has no assigned location of that type.");
     return location_id;
 }

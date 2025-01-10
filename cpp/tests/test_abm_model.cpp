@@ -142,21 +142,21 @@ TEST_F(TestModel, findLocation)
 
     // Add a person to the model and assign them to multiple locations.
     auto person_id = add_test_person(model, home_id);
-    auto& person   = model.get_person(model.get_person_index(person_id));
+    auto& person   = model.get_person(person_id);
     person.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
     person.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
     person.set_assigned_location(mio::abm::LocationType::School, school_id, model.get_id());
 
     // Verify that the find_location method correctly identifies each assigned location.
-    EXPECT_EQ(model.find_location(mio::abm::LocationType::Work, model.get_person_index(person_id)), work_id);
-    EXPECT_EQ(model.find_location(mio::abm::LocationType::School, model.get_person_index(person_id)), school_id);
-    EXPECT_EQ(model.find_location(mio::abm::LocationType::Home, model.get_person_index(person_id)), home_id);
+    EXPECT_EQ(model.find_location(mio::abm::LocationType::Work, person_id), work_id);
+    EXPECT_EQ(model.find_location(mio::abm::LocationType::School, person_id), school_id);
+    EXPECT_EQ(model.find_location(mio::abm::LocationType::Home, person_id), home_id);
 
     // Check that the method also works with a constant reference to the model.
     auto&& model_test = std::as_const(model);
-    EXPECT_EQ(model_test.find_location(mio::abm::LocationType::Work, model.get_person_index(person_id)), work_id);
-    EXPECT_EQ(model_test.find_location(mio::abm::LocationType::School, model.get_person_index(person_id)), school_id);
-    EXPECT_EQ(model_test.find_location(mio::abm::LocationType::Home, model.get_person_index(person_id)), home_id);
+    EXPECT_EQ(model_test.find_location(mio::abm::LocationType::Work, person_id), work_id);
+    EXPECT_EQ(model_test.find_location(mio::abm::LocationType::School, person_id), school_id);
+    EXPECT_EQ(model_test.find_location(mio::abm::LocationType::Home, person_id), home_id);
 }
 
 /**
@@ -257,8 +257,8 @@ TEST_F(TestModel, evolveMobilityRules)
     auto pid2 = add_test_person(model, home_id, age_group_5_to_14, mio::abm::InfectionState::Susceptible, t);
     auto pid1 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms, t);
 
-    auto& p1 = model.get_person(model.get_person_index(pid1));
-    auto& p2 = model.get_person(model.get_person_index(pid2));
+    auto& p1 = model.get_person(pid1);
+    auto& p2 = model.get_person(pid2);
 
     p1.set_assigned_location(mio::abm::LocationType::School, school_id, model.get_id());
     p2.set_assigned_location(mio::abm::LocationType::School, school_id, model.get_id());
@@ -334,11 +334,11 @@ TEST_F(TestModel, evolveMobilityTrips)
     auto pid5 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Susceptible, t);
 
     // Assign persons to locations for trips.
-    auto& p1 = model.get_person(model.get_person_index(pid1));
-    auto& p2 = model.get_person(model.get_person_index(pid2));
-    auto& p3 = model.get_person(model.get_person_index(pid3));
-    auto& p4 = model.get_person(model.get_person_index(pid4));
-    auto& p5 = model.get_person(model.get_person_index(pid5));
+    auto& p1 = model.get_person(pid1);
+    auto& p2 = model.get_person(pid2);
+    auto& p3 = model.get_person(pid3);
+    auto& p4 = model.get_person(pid4);
+    auto& p5 = model.get_person(pid5);
 
     p1.set_assigned_location(mio::abm::LocationType::SocialEvent, event_id, model.get_id());
     p2.set_assigned_location(mio::abm::LocationType::SocialEvent, event_id, model.get_id());
@@ -356,11 +356,11 @@ TEST_F(TestModel, evolveMobilityTrips)
 
     // Set trips for persons between assigned locations.
     mio::abm::TripList& data = model.get_trip_list();
-    mio::abm::Trip trip1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id,
+    mio::abm::Trip trip1(p1.get_unique_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id,
                          mio::abm::LocationType::Work);
-    mio::abm::Trip trip2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id,
+    mio::abm::Trip trip2(p2.get_unique_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id,
                          mio::abm::LocationType::SocialEvent);
-    mio::abm::Trip trip3(p5.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id,
+    mio::abm::Trip trip3(p5.get_unique_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id,
                          mio::abm::LocationType::SocialEvent);
     data.add_trip(trip1);
     data.add_trip(trip2);
@@ -388,10 +388,10 @@ TEST_F(TestModel, evolveMobilityTrips)
     EXPECT_EQ(model.get_number_persons(hospital_id), 1);
 
     // Move all persons back to their home location to prepare for weekend trips.
-    model.change_location(model.get_person_index(p1.get_id()), home_id);
-    model.change_location(model.get_person_index(p1.get_id()), home_id);
-    model.change_location(model.get_person_index(p2.get_id()), home_id);
-    model.change_location(model.get_person_index(p5.get_id()), home_id);
+    model.change_location(p1.get_id(), home_id);
+    model.change_location(p1.get_id(), home_id);
+    model.change_location(p2.get_id(), home_id);
+    model.change_location(p5.get_id(), home_id);
 
     // Update the time to the weekend and reset the trip index.
     t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
@@ -411,12 +411,12 @@ TEST_F(TestModel, evolveMobilityTrips)
 
     // Add additional weekend trips for further verification.
     bool weekend = true;
-    mio::abm::Trip tripweekend1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), event_id,
-                                work_id, mio::abm::LocationType::SocialEvent);
-    mio::abm::Trip tripweekend2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), home_id,
-                                event_id, mio::abm::LocationType::Home);
-    mio::abm::Trip tripweekend3(p5.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), work_id,
-                                event_id, mio::abm::LocationType::Work);
+    mio::abm::Trip tripweekend1(p1.get_unique_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10),
+                                event_id, work_id, mio::abm::LocationType::SocialEvent);
+    mio::abm::Trip tripweekend2(p2.get_unique_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10),
+                                home_id, event_id, mio::abm::LocationType::Home);
+    mio::abm::Trip tripweekend3(p5.get_unique_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10),
+                                work_id, event_id, mio::abm::LocationType::Work);
     data.add_trip(tripweekend1, weekend);
     data.add_trip(tripweekend2, weekend);
     data.add_trip(tripweekend3, weekend);
@@ -526,11 +526,11 @@ TEST_F(TestModel, checkMobilityOfDeadPerson)
 
     // Add trip to see if a dead person can change location outside of cemetery by scheduled trips
     mio::abm::TripList& trip_list = model.get_trip_list();
-    mio::abm::Trip trip1(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id, home_id,
+    mio::abm::Trip trip1(p_dead.get_unique_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id, home_id,
                          mio::abm::LocationType::Work);
-    mio::abm::Trip trip2(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id,
+    mio::abm::Trip trip2(p_dead.get_unique_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id,
                          mio::abm::LocationType::Home);
-    mio::abm::Trip trip3(p_severe.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id,
+    mio::abm::Trip trip3(p_severe.get_unique_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id,
                          mio::abm::LocationType::Home);
     trip_list.add_trip(trip1);
     trip_list.add_trip(trip2);
@@ -538,17 +538,15 @@ TEST_F(TestModel, checkMobilityOfDeadPerson)
 
     // Check the dead person got burried and the severely infected person starts in Hospital
     model.evolve(t, dt);
-    EXPECT_EQ(model.get_location(model.get_person_index(p_dead.get_id())).get_type(), mio::abm::LocationType::Cemetery);
+    EXPECT_EQ(model.get_location(p_dead.get_id()).get_type(), mio::abm::LocationType::Cemetery);
     EXPECT_EQ(p_severe.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
-    EXPECT_EQ(model.get_location(model.get_person_index(p_severe.get_id())).get_type(),
-              mio::abm::LocationType::Hospital);
+    EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Hospital);
 
     // Check the dead person is still in Cemetery and the severely infected person dies and got burried
     model.evolve(t + dt, dt);
-    EXPECT_EQ(model.get_location(model.get_person_index(p_dead.get_id())).get_type(), mio::abm::LocationType::Cemetery);
+    EXPECT_EQ(model.get_location(p_dead.get_id()).get_type(), mio::abm::LocationType::Cemetery);
     EXPECT_EQ(p_severe.get_infection_state(t + dt), mio::abm::InfectionState::Dead);
-    EXPECT_EQ(model.get_location(model.get_person_index(p_severe.get_id())).get_type(),
-              mio::abm::LocationType::Cemetery);
+    EXPECT_EQ(model.get_location(p_severe.get_id()).get_type(), mio::abm::LocationType::Cemetery);
 }
 
 using TestModelTestingCriteria = RandomNumberTest;
@@ -576,7 +574,7 @@ TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     // Since tests are performed before current_time, the InfectionState of the Person has to take into account test_time
     auto pid        = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms,
                                       current_time - test_time);
-    auto& person    = model.get_person(model.get_person_index(pid));
+    auto& person    = model.get_person(pid);
     auto rng_person = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
     person.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
     person.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
@@ -928,11 +926,12 @@ TEST_F(TestModel, mobilityTripWithAppliedNPIs)
 
     // Using trip list
     mio::abm::TripList& trip_list = model.get_trip_list();
-    mio::abm::Trip trip1(p_compliant_go_to_work.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
-    mio::abm::Trip trip2(p_compliant_go_to_school.get_id(), t, school_id, home_id, mio::abm::LocationType::School);
-    mio::abm::Trip trip3(p_no_mask.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
-    mio::abm::Trip trip4(p_no_test.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
-    mio::abm::Trip trip5(p_no_isolation.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
+    mio::abm::Trip trip1(p_compliant_go_to_work.get_unique_id(), t, work_id, home_id, mio::abm::LocationType::Work);
+    mio::abm::Trip trip2(p_compliant_go_to_school.get_unique_id(), t, school_id, home_id,
+                         mio::abm::LocationType::School);
+    mio::abm::Trip trip3(p_no_mask.get_unique_id(), t, work_id, home_id, mio::abm::LocationType::Work);
+    mio::abm::Trip trip4(p_no_test.get_unique_id(), t, work_id, home_id, mio::abm::LocationType::Work);
+    mio::abm::Trip trip5(p_no_isolation.get_unique_id(), t, work_id, home_id, mio::abm::LocationType::Work);
     trip_list.add_trip(trip1);
     trip_list.add_trip(trip2);
     trip_list.add_trip(trip3);

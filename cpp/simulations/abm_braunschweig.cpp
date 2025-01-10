@@ -31,6 +31,7 @@
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
 
+#include <cstdint>
 #include <fstream>
 #include <vector>
 #include <iostream>
@@ -370,23 +371,23 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
             auto first_location    = locations.find(first_location_id)->second;
             auto person_model_id   = model.add_person(first_location, determine_age_group(age));
             auto home              = locations.find(home_id)->second;
-            model.assign_location(model.get_person_index(person_model_id), home);
-            model.assign_location(model.get_person_index(person_model_id), hospital);
-            model.assign_location(model.get_person_index(person_model_id), icu);
+            model.assign_location(person_model_id, home);
+            model.assign_location(person_model_id, hospital);
+            model.assign_location(person_model_id, icu);
             pid_itr = pids_data_to_model.insert_or_assign(person_data_id, person_model_id).first;
         }
 
         model.assign_location(
-            model.get_person_index(pid_itr->second),
+            pid_itr->second,
             target_location); //This assumes that we only have in each tripchain only one location type for each person
         if (locations.find(start_location_id) == locations.end()) {
             // For trips where the start location is not known use Home instead
-            start_location = model.get_person(model.get_person_index(pid_itr->second))
-                                 .get_assigned_location(mio::abm::LocationType::Home);
+            start_location = model.get_person(pid_itr->second).get_assigned_location(mio::abm::LocationType::Home);
         }
-        model.get_trip_list().add_trip(mio::abm::Trip(
-            pid_itr->second, mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location, start_location,
-            mio::abm::TransportMode(transport_mode), mio::abm::LocationType(acticity_end)));
+        model.get_trip_list().add_trip(
+            mio::abm::Trip(static_cast<uint64_t>(pid_itr->first),
+                           mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location, start_location,
+                           mio::abm::TransportMode(transport_mode), mio::abm::LocationType(acticity_end)));
     }
     model.get_trip_list().use_weekday_trips_on_weekend();
 }

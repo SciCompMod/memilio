@@ -130,7 +130,7 @@ int main()
 
     // Assign locations to the people
     for (auto& person : model.get_persons()) {
-        const auto id = model.get_person_index(person.get_id());
+        const auto id = person.get_id();
         //assign shop and event
         model.assign_location(id, event);
         model.assign_location(id, shop);

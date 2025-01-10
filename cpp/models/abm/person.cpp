@@ -24,6 +24,7 @@
 #include "abm/infection.h"
 #include "abm/location.h"
 #include "memilio/utils/random_number_generator.h"
+#include <cstdint>
 #include <vector>
 
 namespace mio
@@ -32,7 +33,7 @@ namespace abm
 {
 
 Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
-               int location_model_id, AgeGroup age, PersonId person_id)
+               int location_model_id, AgeGroup age, PersonId person_id, uint64_t unique_id)
     : m_location(location_id)
     , m_location_type(location_type)
     , m_location_model_id(location_model_id)
@@ -47,6 +48,7 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     , m_last_transport_mode(TransportMode::Unknown)
     , m_test_results({TestType::Count}, TestResult())
     , m_assigned_location_model_ids((int)LocationType::Count)
+    , m_unique_id(unique_id)
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
     m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
@@ -58,6 +60,13 @@ Person::Person(const Person& other, PersonId id)
     : Person(other)
 {
     m_person_id = id;
+}
+
+Person::Person(const Person& other, PersonId id, uint64_t unique_id)
+    : Person(other)
+{
+    m_person_id = id;
+    m_unique_id = unique_id;
 }
 
 bool Person::is_infected(TimePoint t) const
@@ -199,6 +208,11 @@ PersonId Person::get_id() const
     return m_person_id;
 }
 
+uint64_t Person::get_unique_id() const
+{
+    return m_unique_id;
+}
+
 std::vector<uint32_t>& Person::get_cells()
 {
     return m_cells;
@@ -223,14 +237,14 @@ bool Person::is_compliant(PersonalRandomNumberGenerator& rng, InterventionType i
 ProtectionEvent Person::get_latest_protection() const
 {
     ProtectionType latest_protection_type = ProtectionType::NoProtection;
-    TimePoint infection_time          = TimePoint(0);
+    TimePoint infection_time              = TimePoint(0);
     if (!m_infections.empty()) {
         latest_protection_type = ProtectionType::NaturalInfection;
-        infection_time       = m_infections.back().get_start_date();
+        infection_time         = m_infections.back().get_start_date();
     }
     if (!m_vaccinations.empty() && infection_time.days() <= m_vaccinations.back().time.days()) {
         latest_protection_type = m_vaccinations.back().type;
-        infection_time       = m_vaccinations.back().time;
+        infection_time         = m_vaccinations.back().time;
     }
     return ProtectionEvent{latest_protection_type, infection_time};
 }
@@ -249,7 +263,7 @@ ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const 
 void Person::set_mask(MaskType type, TimePoint t)
 {
     m_mask.change_mask(type, t);
-} 
+}
 
 void Person::add_test_result(TimePoint t, TestType type, bool result)
 {

@@ -134,19 +134,19 @@ int main()
     auto model2 = mio::ModelWrapper(num_age_groups, 2);
 
     //Set infection parameters
-    model1.parameters.get<mio::abm::IncubationPeriod>()              = 4.;
-    model1.parameters.get<mio::abm::InfectedNoSymptomsToSymptoms>()  = 2.;
-    model1.parameters.get<mio::abm::InfectedNoSymptomsToRecovered>() = 4.;
-    model1.parameters.get<mio::abm::InfectedSymptomsToRecovered>()   = 5.;
-    model1.parameters.get<mio::abm::InfectedSymptomsToSevere>()      = 6.;
-    model1.parameters.get<mio::abm::SevereToRecovered>()             = 8.;
-    model1.parameters.get<mio::abm::SevereToCritical>()              = 7.;
-    model1.parameters.get<mio::abm::CriticalToRecovered>()           = 10.;
-    model1.parameters.get<mio::abm::CriticalToDead>()                = 11.;
+    model2.parameters.get<mio::abm::IncubationPeriod>()              = 4.;
+    model2.parameters.get<mio::abm::InfectedNoSymptomsToSymptoms>()  = 2.;
+    model2.parameters.get<mio::abm::InfectedNoSymptomsToRecovered>() = 4.;
+    model2.parameters.get<mio::abm::InfectedSymptomsToRecovered>()   = 5.;
+    model2.parameters.get<mio::abm::InfectedSymptomsToSevere>()      = 6.;
+    model2.parameters.get<mio::abm::SevereToRecovered>()             = 8.;
+    model2.parameters.get<mio::abm::SevereToCritical>()              = 7.;
+    model2.parameters.get<mio::abm::CriticalToRecovered>()           = 10.;
+    model2.parameters.get<mio::abm::CriticalToDead>()                = 11.;
 
     //Age group 0 goes to school and age group 1 goes to work
-    model1.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_children] = true;
-    model1.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_adults]     = true;
+    model2.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_children] = true;
+    model2.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_adults]     = true;
 
     //Household groups for model 2
     auto single_hh_group_m2 = mio::abm::HouseholdGroup();

@@ -31,6 +31,7 @@
 #include "abm/mobility_rules.h"
 #include "abm/mobility_rules.h"
 #include <cstddef>
+#include <cstdint>
 #include <list>
 #include <vector>
 
@@ -152,7 +153,7 @@ private:
            Base::m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds();
          Base::m_trip_list.increase_index()) {
         auto& trip        = Base::m_trip_list.get_next_trip(weekend);
-        auto& person      = get_person(static_cast<uint32_t>(trip.person_id.get()));
+        auto& person      = get_person(trip.person_id);
         auto person_index = Base::get_person_index(trip.person_id);
         auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
         // skip the trip if the person is in quarantine or is dead

@@ -125,11 +125,9 @@ struct LogPersonInformation : mio::LogOnce {
         Type person_information{};
         person_information.reserve(sim.get_model().get_persons().size());
         for (auto& person : sim.get_model().get_persons()) {
-            person_information.push_back(
-                std::make_tuple(person.get_id(),
-                                sim.get_model().find_location(mio::abm::LocationType::Home,
-                                                              sim.get_model().get_person_index(person.get_id())),
-                                person.get_age()));
+            person_information.push_back(std::make_tuple(
+                person.get_id(), sim.get_model().find_location(mio::abm::LocationType::Home, person.get_id()),
+                person.get_age()));
         }
         return person_information;
     }

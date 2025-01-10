@@ -22,6 +22,7 @@
 #include "abm/common_abm_loggers.h"
 #include "matchers.h"
 #include "memilio/io/history.h"
+#include <cstdint>
 
 TEST(TestSimulation, advance_random)
 {
@@ -33,10 +34,10 @@ TEST(TestSimulation, advance_random)
     auto p3        = model.add_person(location2, age_group_5_to_14);
     auto p4        = model.add_person(location2, age_group_5_to_14);
 
-    model.assign_location(model.get_person_index(p1), location1);
-    model.assign_location(model.get_person_index(p2), location1);
-    model.assign_location(model.get_person_index(p3), location2);
-    model.assign_location(model.get_person_index(p4), location2);
+    model.assign_location(p1, location1);
+    model.assign_location(p2, location1);
+    model.assign_location(p3, location2);
+    model.assign_location(p4, location2);
 
     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(model));
 
@@ -81,38 +82,38 @@ TEST(TestSimulation, advanceWithCommonHistory)
     auto person2 = add_test_person(model, home_id, age_group_15_to_34, mio::abm::InfectionState::Exposed);
     auto person3 = add_test_person(model, home_id, age_group_35_to_59, mio::abm::InfectionState::Dead);
 
-    model.assign_location(model.get_person_index(person1), home_id);
-    model.assign_location(model.get_person_index(person2), home_id);
-    model.assign_location(model.get_person_index(person3), home_id);
-    model.assign_location(model.get_person_index(person1), school_id);
-    model.assign_location(model.get_person_index(person2), work_id);
-    model.assign_location(model.get_person_index(person2), icu_id);
-    model.assign_location(model.get_person_index(person2), hospital_id);
-    model.assign_location(model.get_person_index(person1), social_id);
-    model.assign_location(model.get_person_index(person2), social_id);
-    model.assign_location(model.get_person_index(person3), social_id);
-    model.assign_location(model.get_person_index(person1), basics_id);
-    model.assign_location(model.get_person_index(person2), basics_id);
-    model.assign_location(model.get_person_index(person3), basics_id);
-    model.assign_location(model.get_person_index(person2), public_id);
+    model.assign_location(person1, home_id);
+    model.assign_location(person2, home_id);
+    model.assign_location(person3, home_id);
+    model.assign_location(person1, school_id);
+    model.assign_location(person2, work_id);
+    model.assign_location(person2, icu_id);
+    model.assign_location(person2, hospital_id);
+    model.assign_location(person1, social_id);
+    model.assign_location(person2, social_id);
+    model.assign_location(person3, social_id);
+    model.assign_location(person1, basics_id);
+    model.assign_location(person2, basics_id);
+    model.assign_location(person3, basics_id);
+    model.assign_location(person2, public_id);
 
     mio::abm::TripList& trip_list = model.get_trip_list();
 
     // We add trips for person two to test the history and if it is working correctly
-    mio::abm::Trip trip1(person2, mio::abm::TimePoint(0) + mio::abm::hours(2), work_id, home_id,
-                         mio::abm::LocationType::Work);
-    mio::abm::Trip trip2(person2, mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id, home_id,
-                         mio::abm::LocationType::ICU);
-    mio::abm::Trip trip3(person2, mio::abm::TimePoint(0) + mio::abm::hours(4), hospital_id, home_id,
-                         mio::abm::LocationType::Hospital);
-    mio::abm::Trip trip4(person2, mio::abm::TimePoint(0) + mio::abm::hours(5), social_id, home_id,
-                         mio::abm::LocationType::SocialEvent);
-    mio::abm::Trip trip5(person2, mio::abm::TimePoint(0) + mio::abm::hours(6), basics_id, home_id,
-                         mio::abm::LocationType::BasicsShop);
-    mio::abm::Trip trip6(person2, mio::abm::TimePoint(0) + mio::abm::hours(7), public_id, home_id,
-                         mio::abm::LocationType::PublicTransport);
-    mio::abm::Trip trip7(person2, mio::abm::TimePoint(0) + mio::abm::hours(8), home_id, home_id,
-                         mio::abm::LocationType::Home);
+    mio::abm::Trip trip1(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id,
+                         home_id, mio::abm::LocationType::Work);
+    mio::abm::Trip trip2(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id,
+                         home_id, mio::abm::LocationType::ICU);
+    mio::abm::Trip trip3(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(4), hospital_id,
+                         home_id, mio::abm::LocationType::Hospital);
+    mio::abm::Trip trip4(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(5), social_id,
+                         home_id, mio::abm::LocationType::SocialEvent);
+    mio::abm::Trip trip5(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(6), basics_id,
+                         home_id, mio::abm::LocationType::BasicsShop);
+    mio::abm::Trip trip6(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(7), public_id,
+                         home_id, mio::abm::LocationType::PublicTransport);
+    mio::abm::Trip trip7(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(8), home_id,
+                         home_id, mio::abm::LocationType::Home);
 
     trip_list.add_trip(trip1);
     trip_list.add_trip(trip2);
