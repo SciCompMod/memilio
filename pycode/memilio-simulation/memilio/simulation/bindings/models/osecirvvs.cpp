@@ -356,6 +356,44 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);
+    
+    m.def(
+        "set_vaccination_data",
+        [](std::vector<mio::osecirvvs::Model<double>>& model, const std::string& path, mio::Date date,
+        const std::vector<int>& vregion, int num_days) {
+            auto result = mio::osecirvvs::details::set_vaccination_data(model, path, date, vregion, num_days);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+
+    m.def(
+        "set_divi_data",
+        [](std::vector<mio::osecirvvs::Model<double>>& model, const std::string& path, const std::vector<int>& vregion,
+        mio::Date date, double scaling_factor_icu) {
+            auto result = mio::osecirvvs::details::set_divi_data(model, path, vregion, date, scaling_factor_icu);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+
+    m.def(
+        "set_confirmed_cases_data",
+        [](std::vector<mio::osecirvvs::Model<double>>& model, const std::string& path, const std::vector<int>& vregion,
+        mio::Date date, const std::vector<double>& scaling_factor_inf, bool set_death = false) {
+            auto result = mio::osecirvvs::details::set_confirmed_cases_data(
+                model, path, vregion, date, scaling_factor_inf, set_death);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+
+    m.def(
+        "set_population_data",
+        [](std::vector<mio::osecirvvs::Model<double>>& model, const std::string& population_path,
+        const std::string& case_data_path, const std::vector<int>& vregion, mio::Date date) {
+            auto result = mio::osecirvvs::details::set_population_data(model, population_path, case_data_path, vregion,
+                                                                    date);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
 #endif // MEMILIO_HAS_JSONCPP
 
     m.def("interpolate_simulation_result",
