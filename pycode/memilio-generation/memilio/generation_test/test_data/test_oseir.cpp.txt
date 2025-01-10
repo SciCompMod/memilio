@@ -20,13 +20,24 @@
 
 //Includes from pymio
 #include "pybind_util.h"
-#include "utils/custom_index_array.h"
+#include "compartments/flow_simulation.h"
+#include "compartments/simulation.h"
+#include "compartments/compartmentalmodel.h"
+#include "epidemiology/populations.h"
+#include "epidemiology/age_group.h"
 #include "utils/parameter_set.h"
+#include "utils/custom_index_array.h"
 #include "utils/index.h"
+#include "mobility/graph_simulation.h"
+#include "mobility/metapopulation_mobility_instant.h"
+#include "io/mobility_io.h"
+#include "io/result_io.h"
 
-//Includes from Memilio
+//Includes from MEmilio
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
+#include "memilio/data/analyze_result.h"
+#include "memilio/compartments/parameter_studies.h"
 #include "memilio/data/analyze_result.h"
 
 #include "pybind11/pybind11.h"
@@ -37,26 +48,22 @@ namespace py = pybind11;
 namespace pymio{
 //specialization of pretty_name
 template <>
-std::string pretty_name<mio::oseir::FP>()
+std::string pretty_name<mio::oseir:: AgeGroup>()
 {
-   return "FP";
+   return " AgeGroup";
 }
 
 template <>
-std::string pretty_name<mio::AgeGroup>()
+std::string pretty_name<mio::oseir:: InfectionState>()
 {
-   return "AgeGroup";
-}
-
-template <>
-std::string pretty_name<mio::oseir::InfectionState>()
-{
-   return "InfectionState";
+   return " InfectionState";
 }
 
 } // namespace pymio
 
 
+PYBIND11_MAKE_OPAQUE(std::vector<mio::Graph<mio::SimulationNode<mio::Simulation<>>, mio::MobilityEdge<double>>);
+PYBIND11_MAKE_OPAQUE(std::vector<mio::Graph<mio::SimulationNode<mio::FlowSimualtion<>>, mio::MobilityEdge<double>>);
 
 PYBIND11_MODULE(_simulation_test_oseir, m)
 {
@@ -70,30 +77,60 @@ PYBIND11_MODULE(_simulation_test_oseir, m)
 
     pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
 
-    pymio::bind_ParameterSet<mio::oseir::ParametersBase>(m, "ParametersBase");
+    pymio::bind_ParameterSet<mio::oseir::ParametersBase<double>, pymio::EnablePickling::Required>(m, "ParametersBase");
 
-    py::class_<mio::oseir::Parameters, mio::oseir::ParametersBase>(m, "Parameters")
-	.def(py::init<mio::AgeGroup>())
-	.def("check_constraints", &mio::oseir::Parameters::check_constraints)
-	.def("apply_constraints", &mio::oseir::Parameters::apply_constraints);
+    py::class_<mio::oseir::Parameters<double>, pymio::EnablePickling::Required, mio::oseir::ParametersBase<double>>(m, "Parameters");
+		.def(py::init<mio::AgeGroup>());
+		.def("check_constraints", &mio::oseir::Parameters<double>::check_constraints);
+		.def("apply_constraints", &mio::oseir::Parameters<double>::apply_constraints);
 
-    using Populations = mio::Populations<FP, AgeGroup, InfectionState>;
-    pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model::Populations>{});
+   
+    pymio::bind_Population(m, "Populations", mio::Tag<mio::oseir::Model<double>::Populations>{});
+   
+    pymio::bind_CompartmentalModel<FlowModel<FP, mio::oseir::InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, mio::oseir::Flows>, CompartmentalModel<FP, Comp, Pop, Params>>(m, "ModelBase");
+    py::class_<mio::oseir::Model<double>, pymio::EnablePickling::Required, FlowModel<FP, mio::oseir::InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, mio::oseir::Flows>, CompartmentalModel<FP, Comp, Pop, Params>>(m, "Model");
     
-    pymio::bind_CompartmentalModel<FP, mio::oseir::InfectionState, mio::Populations<FP, AgeGroup, InfectionState>>(m, "ModelBase");
-    py::class_<mio::oseir::Model, FlowModel<FP, mio::oseir::InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, mio::oseir::Flows>>(m, "Model")
-    ;
+        .def(py::init<int>(), py::arg("num_agegroups"));
 
 
+    pymio::bind_Simulation<mio::Simulation<double,mio::oseir::Model<double>>>(m, "Simulation");
+
+	m.def(
+		"simulate", &mio::simulate<double,mio::oseir::Model<double>>,
+		py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none(),
+		"Simulate a mio::oseir:: from t0 to tmax."
+		);
+
+	pymio::bind_ModelNode<mio::oseir::Model<double>>(m, "ModelNode");
+	pymio::bind_SimulationNode<mio::oseir::Simulation<>>(m, "SimulationNode");
+	pymio::bind_ModelGraph<mio::oseir::Model<double>>(m, "ModelGraph");
+	pymio::bind_MobilityGraph<mio::oseir::Simulation<>>(m, "MobilityGraph");
+	pymio::bind_GraphSimulation<mio::Graph<mio::SimulationNode<mio::Simulation<>>, mio::MobilityEdge<double>>>(m, "MobilitySimulation");
+
+	pymio::bind_Flow_Simulation<mio::Simulation<double, mio::FlowSimulation<double,mio::oseir::Model<double>>>>(m, "FlowSimulation");
+
+	m.def(
+		"simulate_flows", &mio::flow_simulation<mio::oseir::Model<double>>,
+		py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none(),
+		"Simulate a mio::oseir:: with flows from t0 to tmax."
+		);
+
+	pymio::bind_SimulationNode<mio::oseir::FlowSimulation<>>(m, "SimulationNode");
+	pymio::bind_MobilityGraph<mio::oseir::FlowSimulation<>>(m, "MobilityGraph");
+	pymio::bind_GraphSimulation<mio::Graph<mio::SimulationNode<mio::FlowSimulation<>>, mio::MobilityEdge<double>>>(m, "MobilitySimulation");
+	
     
+    m.def("interpolate_simulation_result",
+        static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
+            &mio::interpolate_simulation_result),
+        py::arg("ts"), py::arg("abs_tol") = 1e-14);
 
-    m.def(
-        "simulate",
-        [](double t0, double tmax, double dt, const mio::oseir::Model& model) {
-            return mio::simulate(t0, tmax, dt, model);
-        },
-        "Simulates a Model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
-    
+    m.def("interpolate_simulation_result",
+        static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
+            &mio::interpolate_simulation_result),
+        py::arg("ts"), py::arg("interpolation_times"));
+
+    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
     
 
     m.attr("__version__") = "dev";

@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import os
 from typing import TYPE_CHECKING, Any, Callable
+import pathlib
 
 from clang.cindex import *
 from typing_extensions import Self
@@ -55,12 +56,37 @@ class Scanner:
         Call find_node to visit all nodes of abstract syntax tree and finalize to finish the extraction.
 
         @param root_cursor Represents the root node of the abstract syntax tree as a Cursor object from libclang.
-        @return Information extracted from the model saved as an IntermediateRepresentation. 
+        @return Information extracted from the model saved as an IntermediateRepresentation.
         """
+        if self.config.model_class != "Model":
+            raise AssertionError("set a model name")
+
         intermed_repr = IntermediateRepresentation()
         self.find_node(root_cursor, intermed_repr)
         self.finalize(intermed_repr)
+        self.check_parameter_space(intermed_repr)
         return intermed_repr
+
+    def check_parameter_space(self: Self, intermed_repr: IntermediateRepresentation) -> None:
+        """! Checks for parameter_space.cpp in the model folder and set has_draw_sample
+
+        @param intermed_repr Dataclass used for saving the extracted model features.
+        """
+        config = self.config
+
+        s_file = getattr(config, "source_file")
+
+        path = pathlib.Path(s_file)
+
+        path_vor_parameter_space = path.parent
+
+        vor_parameter_space = str(path_vor_parameter_space)
+
+        new_path_source_file = vor_parameter_space + "/parameter_space.cpp"
+
+        if (os.path.isfile(new_path_source_file)):
+
+            intermed_repr.has_draw_sample = True
 
     def find_node(self: Self, node: Cursor,
                   intermed_repr: IntermediateRepresentation, namespace: str = "") -> None:
@@ -109,7 +135,7 @@ class Scanner:
         @param node Current node represented as a Cursor object.
         @param intermed_repr Dataclass used for saving the extracted model features.
         """
-        if node.spelling.strip() != "":  # alternative self.folder in node.location.file.name:
+        if node.spelling.strip() != "":
             intermed_repr.enum_populations[node.spelling] = []
 
     def check_enum_const(
@@ -128,7 +154,7 @@ class Scanner:
     def check_class(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Inspect the nodes of kind CLASS_DECL and write information 
+        """! Inspect the nodes of kind CLASS_DECL and write information
         (model_class, model_base, simulation_class, parameterset_wrapper) into intermed_repr.
 
         @param node Current node represented as a Cursor object.
@@ -138,12 +164,12 @@ class Scanner:
             intermed_repr.model_class = node.spelling
             self.check_model_base(node, intermed_repr)
             self.check_model_includes(node, intermed_repr)
-            if self.config.optional.get("age_group"):
-                self.check_age_group(node, intermed_repr)
-        elif (self.config.optional.get("simulation_class")
-              and node.spelling == self.config.optional.get("simulation_class")):
-            intermed_repr.simulation_class = node.spelling
-        elif (self.config.optional.get("parameterset_wrapper") and self.config.parameterset + "<FP>" in [base.spelling for base in node.get_children()]):
+            self.check_age_group(node, intermed_repr)
+
+        elif (node.spelling == "Simulation"):
+            intermed_repr.simulation = True
+
+        elif (intermed_repr.has_age_group and self.config.parameterset + "<FP>" in [base.spelling for base in node.get_children()]):
             intermed_repr.parameterset_wrapper = node.spelling
 
     def check_model_base(
@@ -154,11 +180,25 @@ class Scanner:
         @param node Current node represented as a Cursor object.
         @param intermed_repr Dataclass used for saving the extracted model features.
         """
+
         for base in node.get_children():
+
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
                 continue
+
+            base_name = base.spelling
             base_type = base.type
-            intermed_repr.model_base = utility.get_base_class_string(base_type)
+
+            if "FlowModel" in base_name:
+                intermed_repr.is_flowmodel = True
+
+            if "CompartmentalModel" in base_name and "mio" in node.semantic_parent.spelling:
+                intermed_repr.is_compartmentalmodel = True
+
+            intermed_repr.model_base.append(
+                utility.get_base_class_string(base_type))
+
+            self.check_model_base(base.referenced, intermed_repr)
 
     def check_base_specifier(
         self: Self, node: Cursor,
@@ -179,13 +219,14 @@ class Scanner:
         """
         filepath = node.location.file.name
         filepaths = filepath.split("../")
+
         model_has_analyze_results = False
 
         intermed_repr.include_list.append(filepaths[1])
+
         intermed_repr.include_list.append(
             filepaths[1].replace("model.h", "") + "infection_state.h")
 
-        # Iterate throught files in the directory of the model and check for files
         for file in os.listdir(filepaths[0]):
             if file == "parameter_space.h":
                 intermed_repr.include_list.append(filepaths[1].replace(
@@ -203,7 +244,7 @@ class Scanner:
     def check_age_group(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Inspect the nodes of kind CLASS_DECL with the name defined in 
+        """! Inspect the nodes of kind CLASS_DECL with the name defined in
         config.age_group and write needed information into intermed_repr.
         Information: age_group
 
@@ -214,8 +255,8 @@ class Scanner:
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
                 continue
             for base_template_arg in base.get_children():
-                if (base_template_arg.kind == CursorKind.TYPE_REF
-                        and "AgeGroup" in base_template_arg.spelling):
+                if (base_template_arg.kind == CursorKind.TYPE_REF and "AgeGroup" in base_template_arg.spelling):
+                    intermed_repr.has_age_group = True
                     for child in base_template_arg.get_definition().get_children():
                         if child.kind == CursorKind.CXX_BASE_SPECIFIER:
                             intermed_repr.age_group["base"] = child.get_definition(
@@ -234,15 +275,16 @@ class Scanner:
         @param node Current node represented as a Cursor object.
         @param intermed_repr Dataclass used for saving the extracted model features.
         """
-        if node.spelling == intermed_repr.model_class:
-            init = {"type": [], "name": []}
-            for arg in node.get_arguments():
-                tokens = []
-                for token in arg.get_tokens():
-                    tokens.append(token.spelling)
-                init["type"].append(" ".join(tokens[:-1]))
-                init["name"].append(tokens[-1])
-            intermed_repr.model_init.append(init)
+        if intermed_repr.model_class == "Model":
+            if node.spelling.startswith("Model") and ('<' in node.spelling and '>' in node.spelling):
+                init = {"type": [], "name": []}
+                for arg in node.get_arguments():
+                    tokens = []
+                    for token in arg.get_tokens():
+                        tokens.append(token.spelling)
+                    init["type"].append(" ".join(tokens[:-1]))
+                    init["name"].append(tokens[-1])
+                intermed_repr.model_init.append(init)
 
     def check_type_alias(
         self: Self, node: Cursor,
@@ -269,20 +311,30 @@ class Scanner:
 
         @param intermed_repr Dataclass used for saving the extracted model features.
         """
-        # remove unnecesary enum
+
         population_groups = []
-        for value in intermed_repr.model_base[1:]:
-            if "Population" in value[0]:
-                population_groups = [pop[0].split(
-                    "::")[-1] for pop in value[1:]]
+        for value in intermed_repr.model_base[0:]:
+            if "FlowModel" in value[0]:
+                start = value[0].find("Populations<")
+                end = value[0].find(">", start)
+
+                if start != -1 and end != -1:
+                    populations_part = value[0][start + 11:end]
+                    population_groups = [
+                        part.strip("<>").split("::")[-1]
+                        for part in populations_part.split(",")
+                    ]
         intermed_repr.population_groups = population_groups
+
         new_enum = {}
         for key in intermed_repr.enum_populations:
-            if key in population_groups:
-                new_enum[key] = intermed_repr.enum_populations[key]
-        intermed_repr.enum_populations = new_enum
 
-        # pass information from config
+            if key in population_groups:
+
+                new_enum[key] = intermed_repr.enum_populations[key]
+
+                intermed_repr.enum_populations = new_enum
+
         intermed_repr.set_attribute("namespace", self.config.namespace)
         intermed_repr.set_attribute(
             "python_module_name", self.config.python_module_name)
@@ -290,5 +342,4 @@ class Scanner:
         intermed_repr.set_attribute(
             "python_generation_module_path", self.config.python_generation_module_path)
 
-        # check for missing data
         intermed_repr.check_complete_data(self.config.optional)
