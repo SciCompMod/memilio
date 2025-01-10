@@ -73,7 +73,7 @@ int main()
     const auto age_group_adults   = mio::AgeGroup(1);
     const auto age_group_seniors  = mio::AgeGroup(2);
 
-    auto model1 = mio::ModelWrapper(num_age_groups, 1);
+    auto model1 = mio::ModelWrapper(num_age_groups, 0);
 
     //Set infection parameters
     model1.parameters.get<mio::abm::IncubationPeriod>()              = 4.;
@@ -131,7 +131,7 @@ int main()
     add_household_group_to_model(model1, single_hh_group_m1);
     add_household_group_to_model(model1, family_hh_group_m1);
 
-    auto model2 = mio::ModelWrapper(num_age_groups, 2);
+    auto model2 = mio::ModelWrapper(num_age_groups, 1);
 
     //Set infection parameters
     model2.parameters.get<mio::abm::IncubationPeriod>()              = 4.;
