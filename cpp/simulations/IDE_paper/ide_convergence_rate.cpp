@@ -23,7 +23,6 @@
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/math/floating_point.h"
-#include "memilio/compartments/simulation.h"
 
 #include "ode_secir/infection_state.h"
 #include "ode_secir/model.h"
