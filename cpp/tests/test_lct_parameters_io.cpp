@@ -26,12 +26,14 @@
 #include "memilio/math/eigen.h"
 #include "memilio/utils/date.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/utils/logging.h"
+#include "memilio/epidemiology/lct_infection_state.h"
 #include "test_data_dir.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/io.h"
-#include <matchers.h>
-#include "json/value.h"
+#include "matchers.h"
 
+#include "json/value.h"
 #include <gtest/gtest.h>
 #include <string>
 
@@ -41,9 +43,9 @@ std::vector<mio::ConfirmedCasesNoAgeEntry> get_synthetic_rki_data_noage()
     Json::Value js(Json::arrayValue);
     std::vector<Json::Value> dates = {"2020-05-26", "2020-05-27", "2020-05-28", "2020-05-29",
                                       "2020-05-30", "2020-05-31", "2020-06-01", "2020-06-02",
-                                      "2020-06-03", "2020-06-04", "2020-06-05"};
+                                      "2020-06-03", "2020-06-04", "2020-06-05", "2020-06-06"};
 
-    for (int day = 0; day < 11; day++) {
+    for (int day = 0; day < 12; day++) {
         js[day]["Date"]      = dates[day];
         js[day]["Confirmed"] = 100. + day;
         js[day]["Deaths"]    = 2.;
@@ -58,10 +60,10 @@ std::vector<mio::ConfirmedCasesDataEntry> get_synthetic_rki_data_age()
     const int num_agegroups = 6;
     Json::Value js(Json::arrayValue);
     std::vector<Json::Value> dates           = {"2020-05-26", "2020-05-27", "2020-05-28", "2020-05-29",
-                                                "2020-05-30", "2020-05-31", "2020-06-01", "2020-06-02",
-                                                "2020-06-03", "2020-06-04", "2020-06-05"};
+                                      "2020-05-30", "2020-05-31", "2020-06-01", "2020-06-02",
+                                      "2020-06-03", "2020-06-04", "2020-06-05", "2020-06-06"};
     std::vector<Json::Value> age_group_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"};
-    for (int day = 0; day < 11; day++) {
+    for (int day = 0; day < 12; day++) {
         for (int age = 0; age < num_agegroups; age++) {
             js[num_agegroups * day + age]["Age_RKI"]   = age_group_names[age];
             js[num_agegroups * day + age]["ID_County"] = 1001;
@@ -72,6 +74,20 @@ std::vector<mio::ConfirmedCasesDataEntry> get_synthetic_rki_data_age()
         }
     }
     return mio::deserialize_confirmed_cases_data(js).value();
+}
+
+// Define synthetic rki data vector with age groups for testing purposes.
+std::vector<mio::DiviEntry> get_synthetic_divi_data()
+{
+    Json::Value js(Json::arrayValue);
+    std::vector<Json::Value> dates = {"2020-05-26", "2020-05-27", "2020-05-28", "2020-05-29",
+                                      "2020-05-30", "2020-05-31", "2020-06-01"};
+    for (int day = 0; day < 7; day++) {
+        js[day]["ICU"]  = 0;
+        js[day]["Date"] = dates[day];
+    }
+    js[6]["ICU"] = 50;
+    return mio::deserialize_divi_data(js).value();
 }
 
 // Check that initialization based on synthetic RKI data match a calculated result without age resolution.
@@ -100,7 +116,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKI)
 
     // Calculate initial value vector for subcompartments with RKI data.
     auto read_result =
-        mio::lsecir::set_initial_data_from_confirmed_cases<Model::Populations, mio::ConfirmedCasesNoAgeEntry>(
+        mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesNoAgeEntry>(
             get_synthetic_rki_data_noage(), model.populations, model.parameters, start_date, total_population,
             std::vector<ScalarType>(1, 1.));
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
@@ -147,7 +163,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIAgeres)
 
     // Calculate initial value vector for subcompartments with RKI data.
     auto read_result =
-        mio::lsecir::set_initial_data_from_confirmed_cases<Model::Populations, mio::ConfirmedCasesDataEntry>(
+        mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
             get_synthetic_rki_data_age(), model.populations, model.parameters, start_date, total_population,
             std::vector<ScalarType>(num_agegroups, 1.));
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
@@ -194,6 +210,123 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIAgeres)
     }
 }
 
+// Check that the scaling using DIVI data is working as expected.
+TEST(TestLCTParametersIo, CheckScalingDIVI)
+{
+    // Define start date and the total population used for the initialization.
+    const size_t num_agegroups = 6;
+    std::vector<ScalarType> total_population(num_agegroups, 1000.);
+    auto start_date = mio::Date(2020, 6, 1);
+
+    using InfState  = mio::lsecir::InfectionState;
+    using LctState1 = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
+    using LctState2 = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model     = mio::lsecir::Model<LctState1, LctState2, LctState1, LctState2, LctState1, LctState2>;
+    Model model;
+
+    // Define parameters used for simulation and initialization.
+    for (size_t i = 0; i < num_agegroups; i++) {
+        model.parameters.get<mio::lsecir::TimeExposed>()[i]            = 2.3;
+        model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[i] = 1.3;
+        model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[i]   = 2.4;
+        model.parameters.get<mio::lsecir::TimeInfectedSevere>()[i]     = 1.8;
+        model.parameters.get<mio::lsecir::TimeInfectedCritical>()[i]   = 1.0;
+
+        model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[i] = 0.2;
+        model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[i]      = 0.1;
+        model.parameters.get<mio::lsecir::CriticalPerSevere>()[i]              = 0.3;
+        model.parameters.get<mio::lsecir::DeathsPerCritical>()[i]              = 0.2;
+    }
+
+    // Calculate initial value vector for subcompartments with RKI data.
+    auto read_result =
+        mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
+            get_synthetic_rki_data_age(), model.populations, model.parameters, start_date, total_population,
+            std::vector<ScalarType>(num_agegroups, 1.), get_synthetic_divi_data());
+    ASSERT_THAT(print_wrap(read_result), IsSuccess());
+    // Check that the function to get the DIVI data at a specific day works.
+    EXPECT_NEAR(mio::lsecir::details::get_icu_from_divi_data(get_synthetic_divi_data(), mio::Date(2020, 5, 31)).value(),
+                0, 1e-6);
+    // Check that the result of set_initial_values_from_reported_data() is scaled as expected.
+    EXPECT_NEAR(
+        mio::lsecir::details::get_total_InfectedCritical_from_populations<Model::Populations>(model.populations), 50,
+        1e-6);
+
+    // Check that we get an error if the date is not part of the input.
+    // Deactivate temporarily log output for next tests.
+    mio::set_log_level(mio::LogLevel::off);
+    auto read_result_failure =
+        mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
+            get_synthetic_rki_data_age(), model.populations, model.parameters, mio::Date(2020, 6, 2), total_population,
+            std::vector<ScalarType>(num_agegroups, 1.), get_synthetic_divi_data());
+    EXPECT_THAT(print_wrap(read_result_failure), IsFailure(mio::StatusCode::OutOfRange));
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
+// Check that the function rescale_to_divi_data() handles each input case well.
+TEST(TestLCTParametersIo, CheckRescaleToDIVIDataFunctionCases)
+{
+    const size_t num_agegroups = 6;
+    using InfState             = mio::lsecir::InfectionState;
+    using LctState1            = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 5, 1, 1>;
+    using LctState2            = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model                = mio::lsecir::Model<LctState1, LctState2, LctState1, LctState2, LctState1, LctState2>;
+    using Populations          = Model::Populations;
+
+    // Initialize a population with zero values.
+    Populations pop;
+    for (size_t i = 0; i < pop.get_num_compartments(); i++) {
+        pop[i] = 0;
+    }
+    // Deactivate temporarily log output for next tests.
+    mio::set_log_level(mio::LogLevel::off);
+    // Check that we get an error if the input for the reported InfectedCritical cases is negative.
+    auto status = mio::lsecir::details::rescale_to_divi_data<Populations>(pop, -50, 0);
+    EXPECT_THAT(print_wrap(status), IsFailure(mio::StatusCode::InvalidValue));
+    // Check that we get an error as the number of Recovered should be less than zero after scaling.
+    status = mio::lsecir::details::rescale_to_divi_data<Populations>(pop, 50, 0);
+    EXPECT_THAT(print_wrap(status), IsFailure(mio::StatusCode::InvalidValue));
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
+
+    // Construct valid case with non-zero values for Recovered and Susceptible compartments.
+    // For groups with LctState1.
+    for (size_t i = 0; i < 3; i++) {
+        size_t first_idx = i * (LctState1::Count + LctState2::Count);
+        pop[first_idx + LctState1::get_first_index<InfState::Susceptible>()] = 1000;
+        pop[first_idx + LctState1::get_first_index<InfState::Recovered>()]   = 100;
+    }
+    // For groups with LctState2.
+    for (size_t i = 0; i < 3; i++) {
+        size_t first_idx = (i + 1) * LctState1::Count + i * LctState2::Count;
+        pop[first_idx + LctState2::get_first_index<InfState::Susceptible>()] = 3000;
+        pop[first_idx + LctState2::get_first_index<InfState::Recovered>()]   = 300;
+    }
+
+    status = mio::lsecir::details::rescale_to_divi_data<Populations>(pop, 50, 0);
+    ASSERT_THAT(print_wrap(status), IsSuccess());
+    // Check that the reported value of 50 is distributed uniformly as expected.
+    // For groups with LctState1.
+    for (size_t i = 0; i < 3; i++) {
+        size_t first_idx =
+            i * (LctState1::Count + LctState2::Count) + LctState1::get_first_index<InfState::InfectedCritical>();
+        for (size_t subcomp = 0; subcomp < LctState1::get_num_subcompartments<InfState::InfectedCritical>();
+             subcomp++) {
+            EXPECT_NEAR(pop[first_idx + subcomp],
+                        50. / ((ScalarType)num_agegroups) *
+                            (1. / ((ScalarType)LctState1::get_num_subcompartments<InfState::InfectedCritical>())),
+                        1e-6);
+        }
+    }
+    // For groups with LctState2.
+    for (size_t i = 0; i < 3; i++) {
+        size_t first_idx = (i + 1) * LctState1::Count + i * LctState2::Count;
+        EXPECT_NEAR(pop[first_idx + LctState2::get_first_index<InfState::InfectedCritical>()],
+                    50. / ((ScalarType)num_agegroups), 1e-6);
+    }
+}
+
 // Check some cases where computation of initial values based on RKI data should fail.
 TEST(TestLCTParametersIo, ReadPopulationDataRKIFailure)
 {
@@ -222,27 +355,27 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIFailure)
     Json::Value js(Json::arrayValue);
     auto start_date = mio::Date(2020, 6, 9);
     auto read_result =
-        mio::lsecir::set_initial_data_from_confirmed_cases<Model::Populations, mio::ConfirmedCasesNoAgeEntry>(
+        mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesNoAgeEntry>(
             mio::deserialize_confirmed_cases_noage(js).value(), model.populations, model.parameters, start_date,
             total_population, std::vector<ScalarType>(1, 1.));
     EXPECT_THAT(print_wrap(read_result), IsFailure(mio::StatusCode::InvalidFileFormat));
 
     // Case where start_date is later than maximal provided date in file.
-    read_result = mio::lsecir::set_initial_data_from_confirmed_cases<Model::Populations, mio::ConfirmedCasesNoAgeEntry>(
+    read_result = mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesNoAgeEntry>(
         get_synthetic_rki_data_noage(), model.populations, model.parameters, start_date, total_population,
         std::vector<ScalarType>(1, 1.));
     EXPECT_THAT(print_wrap(read_result), IsFailure(mio::StatusCode::OutOfRange));
 
     // Case where not all required dates are provided.
     start_date  = mio::Date(2020, 6, 3);
-    read_result = mio::lsecir::set_initial_data_from_confirmed_cases<Model::Populations, mio::ConfirmedCasesNoAgeEntry>(
+    read_result = mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesNoAgeEntry>(
         get_synthetic_rki_data_noage(), model.populations, model.parameters, start_date, total_population,
         std::vector<ScalarType>(1, 1.));
     EXPECT_THAT(print_wrap(read_result), IsFailure(mio::StatusCode::OutOfRange));
 
     // Case with input values that lead to negative entries.
     start_date  = mio::Date(2020, 6, 1);
-    read_result = mio::lsecir::set_initial_data_from_confirmed_cases<Model::Populations, mio::ConfirmedCasesNoAgeEntry>(
+    read_result = mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesNoAgeEntry>(
         get_synthetic_rki_data_noage(), model.populations, model.parameters, start_date, std::vector<ScalarType>(1, 0.),
         std::vector<ScalarType>(1, 1.));
     EXPECT_THAT(print_wrap(read_result), IsFailure(mio::StatusCode::InvalidValue));
@@ -251,7 +384,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIFailure)
     mio::set_log_level(mio::LogLevel::warn);
 
     // Valid case.
-    read_result = mio::lsecir::set_initial_data_from_confirmed_cases<Model::Populations, mio::ConfirmedCasesNoAgeEntry>(
+    read_result = mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesNoAgeEntry>(
         get_synthetic_rki_data_noage(), model.populations, model.parameters, start_date, total_population,
         std::vector<ScalarType>(1, 1.));
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
@@ -289,28 +422,28 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIFailureAgeres)
     auto start_date = mio::Date(2020, 6, 9);
     Json::Value js(Json::arrayValue);
     auto read_result =
-        mio::lsecir::set_initial_data_from_confirmed_cases<Model::Populations, mio::ConfirmedCasesDataEntry>(
+        mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
             mio::deserialize_confirmed_cases_data(js).value(), model.populations, model.parameters, start_date,
             total_population, std::vector<ScalarType>(num_agegroups, 1.));
     EXPECT_THAT(print_wrap(read_result), IsFailure(mio::StatusCode::InvalidFileFormat));
 
     // Case where start_date is later than maximal provided date in file.
     start_date  = mio::Date(2021, 1, 1);
-    read_result = mio::lsecir::set_initial_data_from_confirmed_cases<Model::Populations, mio::ConfirmedCasesDataEntry>(
+    read_result = mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
         get_synthetic_rki_data_age(), model.populations, model.parameters, start_date, total_population,
         std::vector<ScalarType>(num_agegroups, 1.));
     EXPECT_THAT(print_wrap(read_result), IsFailure(mio::StatusCode::OutOfRange));
 
     // Case where not all required dates are provided.
     start_date  = mio::Date(2020, 6, 3);
-    read_result = mio::lsecir::set_initial_data_from_confirmed_cases<Model::Populations, mio::ConfirmedCasesDataEntry>(
+    read_result = mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
         get_synthetic_rki_data_age(), model.populations, model.parameters, start_date, total_population,
         std::vector<ScalarType>(num_agegroups, 1.));
     EXPECT_THAT(print_wrap(read_result), IsFailure(mio::StatusCode::OutOfRange));
 
     // Case with input values that lead to negative entries.
     start_date  = mio::Date(2020, 6, 1);
-    read_result = mio::lsecir::set_initial_data_from_confirmed_cases<Model::Populations, mio::ConfirmedCasesDataEntry>(
+    read_result = mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
         get_synthetic_rki_data_age(), model.populations, model.parameters, start_date,
         std::vector<ScalarType>(num_agegroups, 0.), std::vector<ScalarType>(num_agegroups, 1.));
     EXPECT_THAT(print_wrap(read_result), IsFailure(mio::StatusCode::InvalidValue));
@@ -319,7 +452,7 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIFailureAgeres)
     mio::set_log_level(mio::LogLevel::warn);
 
     // Valid case.
-    read_result = mio::lsecir::set_initial_data_from_confirmed_cases<Model::Populations, mio::ConfirmedCasesDataEntry>(
+    read_result = mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
         get_synthetic_rki_data_age(), model.populations, model.parameters, start_date, total_population,
         std::vector<ScalarType>(num_agegroups, 1.));
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
