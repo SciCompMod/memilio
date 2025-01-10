@@ -112,7 +112,7 @@ public:
      * @brief Adds a new Infection to the list of Infection%s.
      * @param[in] inf The new Infection.
      */
-    void add_new_infection(Infection&& inf);
+    void add_new_infection(Infection&& inf, TimePoint current_time = TimePoint(0));
 
     /**
      * @brief Get the AgeGroup of this Person.
@@ -208,6 +208,15 @@ public:
     TimeSpan get_go_to_work_time(const Parameters& params) const;
 
     /**
+     * @brief Draw at what time the Person returns from work.
+     * Every Person has a random number to determine what time to return from work.
+     * Depending on this number Person decides what time it has to return from work.
+     * @param[in] params Parameters that describe the migration between Location%s.
+     * @return The time of returning from work.
+     */
+    TimeSpan get_return_from_work_time(const Parameters& params) const;
+
+    /**
      * @brief Draw if the Person goes to school or stays at home during lockdown.
      * Every Person has a random number that determines if they go to school in case of a lockdown.
      * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
@@ -217,13 +226,22 @@ public:
     bool goes_to_school(TimePoint t, const Parameters& params) const;
 
     /**
-     * @brief Draw at what time the Person goes to work.
+     * @brief Draw at what time the Person goes to school.
      * Every Person has a random number to determine what time to go to school.
      * Depending on this number Person decides what time has to go to school.
      * @param[in] params Parameters that describe the mobility between Location%s.
      * @return The time of going to school.
      */
     TimeSpan get_go_to_school_time(const Parameters& params) const;
+
+    /**
+     * @brief Draw at what time the Person return from school.
+     * Every Person has a random number to determine what time to return from school.
+     * Depending on this number Person decides what time it has to return from school.
+     * @param[in] params Parameters that describe the migration between Location%s.
+     * @return The time of returning from school.
+     */
+    TimeSpan get_return_from_school_time(const Parameters& params) const;
 
     /**
      * @brief Answers the question if a Person is currently in quarantine.
@@ -420,20 +438,30 @@ public:
     */
     TestResult get_test_result(TestType type) const;
 
+    TimeSpan get_time_since_transmission() const
+    {
+        return m_time_since_transmission;
+    };
+
 private:
+    void change_time_since_transmission(const TimeSpan dt, TimePoint t);
+
     LocationId m_location; ///< Current Location of the Person.
     LocationType m_location_type; ///< Type of the current Location.
     std::vector<LocationId> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the
     Person always visits the same Home or School etc. */
     std::vector<ProtectionEvent> m_vaccinations; ///< Vector with all vaccinations the Person has received.
     std::vector<Infection> m_infections; ///< Vector with all Infection%s the Person had.
+    TimeSpan m_time_since_transmission;
     TimePoint m_home_isolation_start; ///< TimePoint when the Person started isolation at home.
     AgeGroup m_age; ///< AgeGroup the Person belongs to.
     TimeSpan m_time_at_location; ///< Time the Person has spent at its current Location so far.
     double m_random_workgroup; ///< Value to determine if the Person goes to work or works from home during lockdown.
     double m_random_schoolgroup; ///< Value to determine if the Person goes to school or stays at home during lockdown.
     double m_random_goto_work_hour; ///< Value to determine at what time the Person goes to work.
+    double m_random_return_from_work_hour; ///< Value to determine at what time the Person returns from work.
     double m_random_goto_school_hour; ///< Value to determine at what time the Person goes to school.
+    double m_random_return_from_school_hour; ///< Value to determine at what time the Person returns from school.
     Mask m_mask; ///< The Mask of the Person.
     std::vector<ScalarType>
         m_compliance; ///< Vector of compliance values for all #InterventionType%s. Values from 0 to 1.

@@ -45,6 +45,10 @@ TEST_F(TestLockdownRules, school_closure)
         .WillOnce(testing::Return(0.4))
         .WillOnce(testing::Return(0.4))
         .WillOnce(testing::Return(0.4))
+        .WillOnce(testing::Return(0.4))
+        .WillOnce(testing::Return(0.4))
+        .WillOnce(testing::Return(0.2))
+        .WillOnce(testing::Return(0.2))
         .WillOnce(testing::Return(0.2))
         .WillOnce(testing::Return(0.2))
         .WillOnce(testing::Return(0.2))
@@ -98,6 +102,8 @@ TEST_F(TestLockdownRules, school_opening)
         .WillOnce(testing::Return(0.6))
         .WillOnce(testing::Return(0.6))
         .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
         .WillRepeatedly(testing::Return(1.0));
 
     // Set up one person with assigned locations (home and school)
@@ -114,7 +120,7 @@ TEST_F(TestLockdownRules, school_opening)
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
 
-     // Apply school closure, then reopening
+    // Apply school closure, then reopening
     mio::abm::set_school_closure(t_closing, 1., params);
     mio::abm::set_school_closure(t_opening, 0., params);
 

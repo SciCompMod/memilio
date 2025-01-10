@@ -59,39 +59,128 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
 
     for (size_t node = 0; node < num_nodes; node++) {
         for (auto age_group = AgeGroup(0); age_group < AgeGroup(num_groups); age_group++) {
-            for (auto virus_variant = VirusVariant(0); virus_variant < VirusVariant::Count;
-                 virus_variant      = static_cast<VirusVariant>((uint32_t)virus_variant + 1)) {
+            for (auto virus_variant : enum_members<VirusVariant>()) {
                 // Global infection parameters
                 param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
-                    return model.parameters.template get<IncubationPeriod>()[{virus_variant, age_group}];
+                    static auto result =
+                        model.parameters.template get<IncubationPeriod>()[{virus_variant, age_group}].params.m();
+                    return result;
                 });
                 param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
-                    return model.parameters.template get<InfectedNoSymptomsToSymptoms>()[{virus_variant, age_group}];
+                    static auto result =
+                        model.parameters.template get<IncubationPeriod>()[{virus_variant, age_group}].params.s();
+                    return result;
                 });
                 param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
-                    return model.parameters.template get<InfectedNoSymptomsToRecovered>()[{virus_variant, age_group}];
+                    static auto result =
+                        model.parameters.template get<TimeInfectedNoSymptomsToSymptoms>()[{virus_variant, age_group}]
+                            .params.m();
+                    return result;
                 });
                 param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
-                    return model.parameters.template get<InfectedSymptomsToRecovered>()[{virus_variant, age_group}];
+                    static auto result =
+                        model.parameters.template get<TimeInfectedNoSymptomsToSymptoms>()[{virus_variant, age_group}]
+                            .params.s();
+                    return result;
                 });
                 param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
-                    return model.parameters.template get<InfectedSymptomsToSevere>()[{virus_variant, age_group}];
+                    static auto result =
+                        model.parameters.template get<TimeInfectedNoSymptomsToRecovered>()[{virus_variant, age_group}]
+                            .params.m();
+                    return result;
                 });
                 param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
-                    return model.parameters.template get<SevereToCritical>()[{virus_variant, age_group}];
+                    static auto result =
+                        model.parameters.template get<TimeInfectedNoSymptomsToRecovered>()[{virus_variant, age_group}]
+                            .params.s();
+                    return result;
                 });
                 param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
-                    return model.parameters.template get<SevereToRecovered>()[{virus_variant, age_group}];
+                    static auto result =
+                        model.parameters.template get<TimeInfectedSymptomsToSevere>()[{virus_variant, age_group}]
+                            .params.m();
+                    return result;
                 });
                 param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
-                    return model.parameters.template get<CriticalToDead>()[{virus_variant, age_group}];
+                    static auto result =
+                        model.parameters.template get<TimeInfectedSymptomsToSevere>()[{virus_variant, age_group}]
+                            .params.s();
+                    return result;
                 });
                 param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
-                    return model.parameters.template get<CriticalToRecovered>()[{virus_variant, age_group}];
+                    static auto result =
+                        model.parameters.template get<TimeInfectedSymptomsToRecovered>()[{virus_variant, age_group}]
+                            .params.m();
+                    return result;
                 });
                 param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
-                    return model.parameters.template get<RecoveredToSusceptible>()[{virus_variant, age_group}];
+                    static auto result =
+                        model.parameters.template get<TimeInfectedSymptomsToRecovered>()[{virus_variant, age_group}]
+                            .params.s();
+                    return result;
                 });
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<TimeInfectedSevereToCritical>()[{virus_variant, age_group}]
+                            .params.m();
+                    return result;
+                });
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<TimeInfectedSevereToCritical>()[{virus_variant, age_group}]
+                            .params.s();
+                    return result;
+                });
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<TimeInfectedSevereToRecovered>()[{virus_variant, age_group}]
+                            .params.m();
+                    return result;
+                });
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<TimeInfectedSevereToRecovered>()[{virus_variant, age_group}]
+                            .params.s();
+                    return result;
+                });
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<TimeInfectedCriticalToDead>()[{virus_variant, age_group}]
+                            .params.m();
+                    return result;
+                });
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<TimeInfectedCriticalToDead>()[{virus_variant, age_group}]
+                            .params.s();
+                    return result;
+                });
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<TimeInfectedCriticalToRecovered>()[{virus_variant, age_group}]
+                            .params.m();
+                    return result;
+                });
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<TimeInfectedCriticalToRecovered>()[{virus_variant, age_group}]
+                            .params.s();
+                    return result;
+                });
+
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    return model.parameters.template get<SymptomsPerInfectedNoSymptoms>()[{virus_variant, age_group}];
+                });
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    return model.parameters.template get<SeverePerInfectedSymptoms>()[{virus_variant, age_group}];
+                });
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    return model.parameters.template get<CriticalPerInfectedSevere>()[{virus_variant, age_group}];
+                });
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    return model.parameters.template get<DeathsPerInfectedCritical>()[{virus_variant, age_group}];
+                });
+
                 param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
                     return model.parameters.template get<DetectInfection>()[{virus_variant, age_group}];
                 });
@@ -153,6 +242,16 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                     static auto result =
                         model.parameters.template get<InfectivityDistributions>()[{virus_variant, age_group}]
                             .infectivity_beta.params.b();
+                    return result;
+                });
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<VirusShedFactor>()[{virus_variant, age_group}].params.a();
+                    return result;
+                });
+                param_percentil(node, [age_group, virus_variant](auto&& model) -> auto& {
+                    static auto result =
+                        model.parameters.template get<VirusShedFactor>()[{virus_variant, age_group}].params.b();
                     return result;
                 });
                 param_percentil(node, [virus_variant](auto&& model) -> auto& {

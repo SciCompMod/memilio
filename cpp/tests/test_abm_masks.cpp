@@ -73,7 +73,10 @@ TEST_F(TestMasks, maskProtection)
     mio::abm::Parameters params(num_age_groups);
 
     // Set incubation period to two days so that newly infected person is still exposed
-    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 2.;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>> mock_lognorm_dist;
+    EXPECT_CALL(mock_lognorm_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(2))
+        .WillRepeatedly(testing::Return(2)); // Time in every state is two days
 
     // Setup location and persons for the test
     auto t = mio::abm::TimePoint(0);

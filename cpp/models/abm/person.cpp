@@ -36,6 +36,7 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     : m_location(location_id)
     , m_location_type(location_type)
     , m_assigned_locations((uint32_t)LocationType::Count, LocationId::invalid_id())
+    , m_time_since_transmission(std::numeric_limits<int>::max() / 2)
     , m_home_isolation_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_age(age)
     , m_time_at_location(0)
@@ -46,10 +47,12 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     , m_last_transport_mode(TransportMode::Unknown)
     , m_test_results({TestType::Count}, TestResult())
 {
-    m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
-    m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
-    m_random_goto_work_hour   = UniformDistribution<double>::get_instance()(rng);
-    m_random_goto_school_hour = UniformDistribution<double>::get_instance()(rng);
+    m_random_workgroup               = UniformDistribution<double>::get_instance()(rng);
+    m_random_schoolgroup             = UniformDistribution<double>::get_instance()(rng);
+    m_random_goto_work_hour          = UniformDistribution<double>::get_instance()(rng);
+    m_random_return_from_work_hour   = UniformDistribution<double>::get_instance()(rng);
+    m_random_goto_school_hour        = UniformDistribution<double>::get_instance()(rng);
+    m_random_return_from_school_hour = UniformDistribution<double>::get_instance()(rng);
 }
 
 Person::Person(const Person& other, PersonId id)
@@ -81,9 +84,20 @@ InfectionState Person::get_infection_state(TimePoint t) const
     }
 }
 
-void Person::add_new_infection(Infection&& inf)
+void Person::add_new_infection(Infection&& inf, TimePoint current_time)
 {
+    m_time_since_transmission = current_time - inf.get_infection_start();
     m_infections.push_back(std::move(inf));
+}
+
+void Person::change_time_since_transmission(const TimeSpan dt, TimePoint t)
+{
+    if (is_infected(t + dt)) {
+        m_time_since_transmission = ((t + dt) - m_infections.back().get_infection_start());
+    }
+    else {
+        m_time_since_transmission = mio::abm::TimeSpan(std::numeric_limits<int>::max() / 2);
+    }
 }
 
 LocationId Person::get_location() const
@@ -132,6 +146,15 @@ TimeSpan Person::get_go_to_work_time(const Parameters& params) const
     return minimum_goto_work_time + seconds(seconds_after_minimum);
 }
 
+TimeSpan Person::get_return_from_work_time(const Parameters& params) const
+{
+    TimeSpan minimum_return_from_work_time = params.get<ReturnFromWorkTimeMinimum>()[m_age];
+    TimeSpan maximum_return_from_work_time = params.get<ReturnFromWorkTimeMaximum>()[m_age];
+    int timeSlots             = (maximum_return_from_work_time.seconds() - minimum_return_from_work_time.seconds());
+    int seconds_after_minimum = int(timeSlots * m_random_return_from_work_hour);
+    return minimum_return_from_work_time + seconds(seconds_after_minimum);
+}
+
 TimeSpan Person::get_go_to_school_time(const Parameters& params) const
 {
     TimeSpan minimum_goto_school_time = params.get<GotoSchoolTimeMinimum>()[m_age];
@@ -139,6 +162,15 @@ TimeSpan Person::get_go_to_school_time(const Parameters& params) const
     int timeSlots                     = (maximum_goto_school_time.seconds() - minimum_goto_school_time.seconds());
     int seconds_after_minimum         = int(timeSlots * m_random_goto_school_hour);
     return minimum_goto_school_time + seconds(seconds_after_minimum);
+}
+
+TimeSpan Person::get_return_from_school_time(const Parameters& params) const
+{
+    TimeSpan minimum_return_from_school_time = params.get<ReturnFromSchoolTimeMinimum>()[m_age];
+    TimeSpan maximum_return_from_school_time = params.get<ReturnFromSchoolTimeMaximum>()[m_age];
+    int timeSlots             = (maximum_return_from_school_time.seconds() - minimum_return_from_school_time.seconds());
+    int seconds_after_minimum = int(timeSlots * m_random_return_from_school_hour);
+    return minimum_return_from_school_time + seconds(seconds_after_minimum);
 }
 
 bool Person::goes_to_school(TimePoint t, const Parameters& params) const
@@ -214,14 +246,14 @@ bool Person::is_compliant(PersonalRandomNumberGenerator& rng, InterventionType i
 ProtectionEvent Person::get_latest_protection() const
 {
     ProtectionType latest_protection_type = ProtectionType::NoProtection;
-    TimePoint infection_time          = TimePoint(0);
+    TimePoint infection_time              = TimePoint(0);
     if (!m_infections.empty()) {
         latest_protection_type = ProtectionType::NaturalInfection;
-        infection_time       = m_infections.back().get_start_date();
+        infection_time         = m_infections.back().get_start_date();
     }
     if (!m_vaccinations.empty() && infection_time.days() <= m_vaccinations.back().time.days()) {
         latest_protection_type = m_vaccinations.back().type;
-        infection_time       = m_vaccinations.back().time;
+        infection_time         = m_vaccinations.back().time;
     }
     return ProtectionEvent{latest_protection_type, infection_time};
 }
@@ -240,7 +272,7 @@ ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const 
 void Person::set_mask(MaskType type, TimePoint t)
 {
     m_mask.change_mask(type, t);
-} 
+}
 
 void Person::add_test_result(TimePoint t, TestType type, bool result)
 {

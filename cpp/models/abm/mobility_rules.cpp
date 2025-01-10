@@ -56,7 +56,8 @@ LocationType go_to_school(PersonalRandomNumberGenerator& /*rng*/, const Person& 
         return LocationType::School;
     }
     //return home
-    if (current_loc == LocationType::School && t.hour_of_day() >= 15) {
+    if (current_loc == LocationType::School && person.get_return_from_school_time(params) >= t.time_since_midnight() &&
+        person.get_return_from_school_time(params) < t.time_since_midnight() + dt) {
         return LocationType::Home;
     }
     return current_loc;
@@ -75,7 +76,8 @@ LocationType go_to_work(PersonalRandomNumberGenerator& /*rng*/, const Person& pe
         return LocationType::Work;
     }
     //return home
-    if (current_loc == LocationType::Work && t.hour_of_day() >= 17) {
+    if (current_loc == LocationType::Work && t.time_since_midnight() <= person.get_return_from_work_time(params) &&
+        t.time_since_midnight() + dt > person.get_return_from_work_time(params)) {
         return LocationType::Home;
     }
     return current_loc;
@@ -106,7 +108,8 @@ LocationType go_to_event(PersonalRandomNumberGenerator& rng, const Person& perso
     auto current_loc = person.get_location_type();
     //leave
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
-        ((t.day_of_week() <= 4 && t.hour_of_day() >= 19) || (t.day_of_week() >= 5 && t.hour_of_day() >= 10)) &&
+        ((t.day_of_week() <= 4 && t.hour_of_day() >= 19 && t.hour_of_day() < 22) ||
+         (t.day_of_week() >= 5 && t.hour_of_day() >= 10 && t.hour_of_day() < 22)) &&
         !person.is_in_quarantine(t, params)) {
         return random_transition(rng, current_loc, dt,
                                  {{LocationType::SocialEvent,

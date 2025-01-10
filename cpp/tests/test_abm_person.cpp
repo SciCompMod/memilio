@@ -110,7 +110,8 @@ TEST_F(TestPerson, setGetAssignedLocation)
     EXPECT_EQ(person.get_assigned_location(mio::abm::LocationType::Work), mio::abm::LocationId(0));
 
     person.set_assigned_location(mio::abm::LocationType::Work, mio::abm::LocationId(std::numeric_limits<int>::max()));
-    EXPECT_EQ(person.get_assigned_location(mio::abm::LocationType::Work), mio::abm::LocationId(std::numeric_limits<int>::max()));
+    EXPECT_EQ(person.get_assigned_location(mio::abm::LocationType::Work),
+              mio::abm::LocationId(std::numeric_limits<int>::max()));
 }
 
 /**
@@ -133,14 +134,17 @@ TEST_F(TestPerson, quarantine)
         .WillOnce(testing::Return(0.6)) // workgroup
         .WillOnce(testing::Return(0.6)) // schoolgroup
         .WillOnce(testing::Return(0.6)) // goto_work_hour
+        .WillOnce(testing::Return(0.6)) // return_work_hour
         .WillOnce(testing::Return(0.6)) // goto_school_hour
+        .WillOnce(testing::Return(0.6)) // return_school_hour
         .WillRepeatedly(testing::Return(1.0)); // ViralLoad draws
 
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(7);
     auto dt        = mio::abm::hours(1);
-    infection_parameters
-        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
-        0.5 * dt.days();
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>> mock_lognorm_dist;
+    EXPECT_CALL(mock_lognorm_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(0.5 * dt.days())); // Time in every state is 0.5 * dt
     infection_parameters.get<mio::abm::AgeGroupGotoSchool>().set_multiple({age_group_5_to_14}, true);
     infection_parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
 
@@ -317,9 +321,9 @@ TEST_F(TestPerson, getMaskProtectiveFactor)
  */
 TEST_F(TestPerson, getLatestProtection)
 {
-    auto location               = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
-    auto person = mio::abm::Person(this->get_rng(), location.get_type(), location.get_id(), age_group_15_to_34);
-    auto prng   = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
+    auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
+    auto person   = mio::abm::Person(this->get_rng(), location.get_type(), location.get_id(), age_group_15_to_34);
+    auto prng     = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person);
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
 
     auto t = mio::abm::TimePoint(0);

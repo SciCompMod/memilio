@@ -59,7 +59,7 @@ PYBIND11_MODULE(_simulation, m)
     pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>(m, "AgeGroupArray");
     pymio::bind_class<mio::AgeGroup, pymio::EnablePickling::Required, mio::Index<mio::AgeGroup>>(m, "AgeGroup")
         .def(py::init<size_t>());
-    
+
     pymio::bind_CustomIndexArray<double, mio::AgeGroup, mio::SimulationDay>(m, "AgeGroupSimulationDayArray");
     pymio::bind_class<mio::SimulationDay, pymio::EnablePickling::Never, mio::Index<mio::SimulationDay>>(m,
                                                                                                         "SimulationDay")
@@ -127,7 +127,7 @@ PYBIND11_MODULE(_simulation, m)
             return std::vector<std::pair<mio::Date, mio::Date>>(h.begin(), h.end());
         },
         py::arg("state_id"), py::arg("start_date") = mio::Date(std::numeric_limits<int>::min(), 1, 1),
-        py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1)); 
+        py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1));
 
     m.def(
         "read_mobility_plain",

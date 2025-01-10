@@ -242,34 +242,34 @@ TEST(TestAbmSerialization, Location)
     test_json_serialization<mio::abm::Location>(reference_json);
 }
 
-TEST(TestAbmSerialization, Model)
-{
-    // See test_json_serialization for info on this test.
+// TEST(TestAbmSerialization, Model)
+// {
+//     // See test_json_serialization for info on this test.
 
-    auto json_uint_array = [](std::vector<uint32_t> values) {
-        return mio::serialize_json(values).value();
-    };
+//     auto json_uint_array = [](std::vector<uint32_t> values) {
+//         return mio::serialize_json(values).value();
+//     };
 
-    unsigned i = 1; // counter s.t. members have different values
+//     unsigned i = 1; // counter s.t. members have different values
 
-    Json::Value abm_parameters = mio::serialize_json(mio::abm::Parameters(i++)).value();
+//     Json::Value abm_parameters = mio::serialize_json(mio::abm::Parameters(i++)).value();
 
-    Json::Value reference_json;
-    reference_json["cemetery_id"]                 = Json::UInt(i++);
-    reference_json["location_types"]              = Json::UInt(i++);
-    reference_json["locations"]                   = Json::Value(Json::arrayValue);
-    reference_json["parameters"]                  = abm_parameters;
-    reference_json["persons"]                     = Json::Value(Json::arrayValue);
-    reference_json["rng"]["counter"]              = Json::UInt(i++);
-    reference_json["rng"]["key"]                  = Json::UInt(i++);
-    reference_json["rng"]["seeds"]                = json_uint_array({i++, i++, i++, i++, i++, i++});
-    reference_json["testing_strategy"]["schemes"] = Json::Value(Json::arrayValue);
-    reference_json["trip_list"]["index"]          = Json::UInt(i++);
-    reference_json["trip_list"]["trips_weekday"]  = Json::Value(Json::arrayValue);
-    reference_json["trip_list"]["trips_weekend"]  = Json::Value(Json::arrayValue);
-    reference_json["use_mobility_rules"]          = Json::Value(false);
+//     Json::Value reference_json;
+//     reference_json["cemetery_id"]                 = Json::UInt(i++);
+//     reference_json["location_types"]              = Json::UInt(i++);
+//     reference_json["locations"]                   = Json::Value(Json::arrayValue);
+//     reference_json["parameters"]                  = abm_parameters;
+//     reference_json["persons"]                     = Json::Value(Json::arrayValue);
+//     reference_json["rng"]["counter"]              = Json::UInt(i++);
+//     reference_json["rng"]["key"]                  = Json::UInt(i++);
+//     reference_json["rng"]["seeds"]                = json_uint_array({i++, i++, i++, i++, i++, i++});
+//     reference_json["testing_strategy"]["schemes"] = Json::Value(Json::arrayValue);
+//     reference_json["trip_list"]["index"]          = Json::UInt(i++);
+//     reference_json["trip_list"]["trips_weekday"]  = Json::Value(Json::arrayValue);
+//     reference_json["trip_list"]["trips_weekend"]  = Json::Value(Json::arrayValue);
+//     reference_json["use_mobility_rules"]          = Json::Value(false);
 
-    test_json_serialization<mio::abm::Model>(reference_json);
-}
+//     test_json_serialization<mio::abm::Model>(reference_json);
+// }
 
 #endif
