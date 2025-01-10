@@ -28,7 +28,7 @@
 #include "ode_secir/model.h"
 
 #include "ide_secir/infection_state.h"
-#include "ide_secir/model.h"
+// #include "ide_secir/model.h"
 // #include "ide_secir/simulation.h"
 
 #include <iostream>
@@ -195,27 +195,27 @@ void get_flows_from_ode_compartments(mio::osecir::Model<ScalarType>& model_ode,
 * @param[in] t0_ide Start time of IDE simulation that we want to compute initial flows for. 
 * @param[in] dt_ide Time step size of IDE simulation. 
 */
-void compute_initial_flows_for_ide_from_ode(mio::osecir::Model<ScalarType>& model_ode, mio::isecir::Model& model_ide,
-                                            mio::TimeSeries<ScalarType> compartments, ScalarType t0_ide,
-                                            ScalarType dt_ide)
-{
-    std::cout << "Computing initial flows. \n";
+// void compute_initial_flows_for_ide_from_ode(mio::osecir::Model<ScalarType>& model_ode, mio::isecir::Model& model_ide,
+//                                             mio::TimeSeries<ScalarType> compartments, ScalarType t0_ide,
+//                                             ScalarType dt_ide)
+// {
+//     std::cout << "Computing initial flows. \n";
 
-    // Use t_window=t0_ide to get flows from t0 onwards.
-    get_flows_from_ode_compartments(model_ode, compartments, model_ide.m_transitions, t0_ide, t0_ide, dt_ide);
-    ScalarType dt_ode = compartments.get_time(1) - compartments.get_time(0);
-    // Remove time series from previous run and set initial values in populations.
-    if (model_ide.m_populations.get_num_time_points() > 0) {
-        model_ide.m_populations = mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionState::Count);
-    }
-    model_ide.m_populations.add_time_point<Eigen::VectorXd>(
-        model_ide.m_transitions.get_last_time(),
-        mio::TimeSeries<ScalarType>::Vector::Constant((int)mio::isecir::InfectionState::Count, 0));
-    model_ide.m_populations[0][Eigen::Index(mio::isecir::InfectionState::Dead)] =
-        compartments[(Eigen::Index)compartments.get_num_time_points() -
-                     (Eigen::Index)((compartments.get_last_time() - t0_ide) / dt_ode) - 1]
-                    [(Eigen::Index)mio::osecir::InfectionState::Dead];
-}
+//     // Use t_window=t0_ide to get flows from t0 onwards.
+//     get_flows_from_ode_compartments(model_ode, compartments, model_ide.m_transitions, t0_ide, t0_ide, dt_ide);
+//     ScalarType dt_ode = compartments.get_time(1) - compartments.get_time(0);
+//     // Remove time series from previous run and set initial values in populations.
+//     if (model_ide.m_populations.get_num_time_points() > 0) {
+//         model_ide.m_populations = mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionState::Count);
+//     }
+//     model_ide.m_populations.add_time_point<Eigen::VectorXd>(
+//         model_ide.m_transitions.get_last_time(),
+//         mio::TimeSeries<ScalarType>::Vector::Constant((int)mio::isecir::InfectionState::Count, 0));
+//     model_ide.m_populations[0][Eigen::Index(mio::isecir::InfectionState::Dead)] =
+//         compartments[(Eigen::Index)compartments.get_num_time_points() -
+//                      (Eigen::Index)((compartments.get_last_time() - t0_ide) / dt_ode) - 1]
+//                     [(Eigen::Index)mio::osecir::InfectionState::Dead];
+// }
 
 /**
 * @brief Function to remove time points from some simulation results so that not every point has to be saved afterwards.
