@@ -132,10 +132,15 @@ public:
             for (auto n = Region(0); n < Region(num_regions); n++) {
                 size_t Si = pop.get_flat_index({n, i, InfectionState::Susceptible});
                 for (auto j = AgeGroup(0); j < AgeGroup(num_age_groups); j++) {
+                    auto const population_region_n      = pop.template slice<Region>({(size_t)n, 1});
+                    auto const population_region_age_nj = population_region_n.template slice<AgeGroup>({(size_t)j, 1});
+                    auto Njn = std::accumulate(population_region_age_nj.begin(), population_region_age_nj.end(), 0.);
                     for (auto m = Region(0); m < Region(num_regions); m++) {
-                        auto const population_region     = pop.template slice<Region>({(size_t)m, 1});
-                        auto const population_region_age = population_region.template slice<AgeGroup>({(size_t)j, 1});
-                        auto Njm = std::accumulate(population_region_age.begin(), population_region_age.end(), 0.);
+                        auto const population_region_m = pop.template slice<Region>({(size_t)m, 1});
+                        auto const population_region_age_mj =
+                            population_region_m.template slice<AgeGroup>({(size_t)j, 1});
+                        auto Njm =
+                            std::accumulate(population_region_age_mj.begin(), population_region_age_mj.end(), 0.);
 
                         if (n == m) {
                             double coeffStoE = contact_matrix.get_matrix_at(y.get_time(t_idx))(i.get(), j.get()) *
@@ -149,9 +154,9 @@ public:
                             double coeffStoE =
                                 contact_matrix.get_matrix_at(y.get_time(t_idx))(i.get(), j.get()) *
                                 params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i] *
-                                (commuting_strengths.get_matrix_at(y.get_time(t_idx))(n.get(), m.get()) +
+                                (commuting_strengths.get_matrix_at(y.get_time(t_idx))(n.get(), m.get()) / Njm +
                                  commuting_strengths.get_matrix_at(y.get_time(t_idx))(m.get(), n.get())) /
-                                Njm;
+                                Njn;
                             F((size_t)i * num_regions + (size_t)n,
                               num_age_groups * num_regions + (size_t)j * num_regions + (size_t)m) =
                                 coeffStoE * y.get_value(t_idx)[Si];
