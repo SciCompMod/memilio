@@ -60,31 +60,37 @@ public:
             for (auto region_n : make_index_range(n_regions)) {
                 for (auto age_j : make_index_range(n_age_groups)) {
                     FP flow_SE_helper = 0;
-                    const size_t Sj   = population.get_flat_index({region_n, age_j, InfectionState::Susceptible});
-                    const size_t Ej   = population.get_flat_index({region_n, age_j, InfectionState::Exposed});
-                    const size_t Ij   = population.get_flat_index({region_n, age_j, InfectionState::Infected});
-                    const size_t Rj   = population.get_flat_index({region_n, age_j, InfectionState::Recovered});
+                    const size_t Sjn  = population.get_flat_index({region_n, age_j, InfectionState::Susceptible});
+                    const size_t Ejn  = population.get_flat_index({region_n, age_j, InfectionState::Exposed});
+                    const size_t Ijn  = population.get_flat_index({region_n, age_j, InfectionState::Infected});
+                    const size_t Rjn  = population.get_flat_index({region_n, age_j, InfectionState::Recovered});
 
-                    const double Nj_inv = 1.0 / (pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj]);
+                    const double Njn_inv = 1.0 / (pop[Sjn] + pop[Ejn] + pop[Ijn] + pop[Rjn]);
 
                     double coeffStoI = params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(
                                            age_i.get(), age_j.get()) *
-                                       params.template get<TransmissionProbabilityOnContact<FP>>()[age_i] * Nj_inv;
+                                       params.template get<TransmissionProbabilityOnContact<FP>>()[age_i];
 
                     for (auto region_m : make_index_range(n_regions)) {
+                        const size_t Sjm = population.get_flat_index({region_m, age_j, InfectionState::Susceptible});
+                        const size_t Ejm = population.get_flat_index({region_m, age_j, InfectionState::Exposed});
+                        const size_t Ijm = population.get_flat_index({region_m, age_j, InfectionState::Infected});
+                        const size_t Rjm = population.get_flat_index({region_m, age_j, InfectionState::Recovered});
+
+                        const double Njm_inv = 1.0 / (pop[Sjm] + pop[Ejm] + pop[Ijm] + pop[Rjm]);
                         if (region_n == region_m) {
                             flow_SE_helper +=
-                                pop[population.get_flat_index({region_n, age_j, InfectionState::Infected})];
+                                pop[population.get_flat_index({region_n, age_j, InfectionState::Infected})] * Njn_inv;
                             continue;
                         }
-                        flow_SE_helper += (commuting_strengths(region_n.get(), region_m.get()) +
-                                           commuting_strengths(region_m.get(), region_n.get())) *
+                        flow_SE_helper += (commuting_strengths(region_n.get(), region_m.get()) * Njm_inv +
+                                           commuting_strengths(region_m.get(), region_n.get()) * Njn_inv) *
                                           pop[population.get_flat_index({region_m, age_j, InfectionState::Infected})];
                     }
                     flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(
                         {region_n, age_i})] +=
                         flow_SE_helper * coeffStoI *
-                        y[population.get_flat_index({region_n, age_j, InfectionState::Susceptible})];
+                        y[population.get_flat_index({region_n, age_i, InfectionState::Susceptible})];
                 }
                 flows[Base::template get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>(
                     {region_n, age_i})] = (1.0 / params.template get<TimeExposed<FP>>()[age_i]) *

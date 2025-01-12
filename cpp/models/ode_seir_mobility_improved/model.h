@@ -96,12 +96,12 @@ public:
             for (size_t region = 0; region < (size_t)n_regions; region++) {
                 flows[Base::template get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>(
                     {Region(region), AgeGroup(age_i)})] =
-                    (1.0 / params.template get<TimeExposed<FP>>()[AgeGroup(age_i)]) *
-                    y[population.get_flat_index({Region(region), AgeGroup(age_i), InfectionState::Exposed})];
+                    y[population.get_flat_index({Region(region), AgeGroup(age_i), InfectionState::Exposed})] /
+                    params.template get<TimeExposed<FP>>()[AgeGroup(age_i)];
                 flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>(
                     {Region(region), AgeGroup(age_i)})] =
-                    (1.0 / params.template get<TimeInfected<FP>>()[AgeGroup(age_i)]) *
-                    y[population.get_flat_index({Region(region), AgeGroup(age_i), InfectionState::Infected})];
+                    y[population.get_flat_index({Region(region), AgeGroup(age_i), InfectionState::Infected})] /
+                    params.template get<TimeInfected<FP>>()[AgeGroup(age_i)];
             }
         }
     }
