@@ -140,14 +140,25 @@ TEST_F(TestInfection, drawInfectionCourseForward)
     params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 1;
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(1))
-        .WillRepeatedly(testing::Return(0.8)); // Recovered
-    auto infection = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
+        .Times(testing::Exactly(6)) // First five draws for viral load
+        .WillRepeatedly(testing::Return(0.8)); // Sixth draw: Recovered draw in drawInfectionCourseForward
+    auto infection1 = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
                                          mio::abm::InfectionState::InfectedCritical,
                                           {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, true);
     // Test state transitions from Critical to Recovered
-    EXPECT_EQ(infection.get_infection_state(t), mio::abm::InfectionState::InfectedCritical);
-    EXPECT_EQ(infection.get_infection_state(t + mio::abm::days(1)), mio::abm::InfectionState::Recovered);
+    EXPECT_EQ(infection1.get_infection_state(t), mio::abm::InfectionState::InfectedCritical);
+    EXPECT_EQ(infection1.get_infection_state(t + mio::abm::days(1)), mio::abm::InfectionState::Recovered);
+
+    // Mock death transition
+    params.get<mio::abm::SevereToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 1;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::Exactly(6)) // First five draws for viral load
+        .WillRepeatedly(testing::Return(0.2)); // Sixth draw: Dead draw in drawInfectionCourseForward
+    auto infection2 = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
+                                          mio::abm::InfectionState::InfectedSevere,
+                                          {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, true);
+    EXPECT_EQ(infection2.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
+    EXPECT_EQ(infection2.get_infection_state(t + mio::abm::days(1)), mio::abm::InfectionState::Dead);
 }
 
 /**
