@@ -24,8 +24,8 @@ option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
-# try to treat AppleClang as Clang, but warn about missing support 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+# try to treat AppleClang as Clang, but warn about missing support
+if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
     message(WARNING "The compiler ID \"AppleClang\" is not supported, trying to compile with \"Clang\" options.")
     set(CMAKE_CXX_COMPILER_ID "Clang")
 endif()
@@ -82,6 +82,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         message(STATUS "Coverage enabled")
         include(CodeCoverage)
         append_coverage_compiler_flags()
+
         # In addition to standard flags, disable elision and inlining to prevent e.g. closing brackets being marked as
         # uncovered.
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-elide-constructors -fno-default-inline")
@@ -149,6 +150,7 @@ add_subdirectory(memilio)
 
 if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/abm)
+    add_subdirectory(models/d_abm)
     add_subdirectory(models/ode_secir)
     add_subdirectory(models/ode_secirts)
     add_subdirectory(models/ode_secirvvs)
@@ -162,6 +164,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/sde_sir)
     add_subdirectory(models/sde_sirs)
     add_subdirectory(models/sde_seirvv)
+    add_subdirectory(models/smm)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)
