@@ -19,6 +19,7 @@
 */
 #include "memilio/config.h"
 #include "memilio/epidemiology/state_age_function.h"
+#include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/io.h"
 #include "memilio/utils/time_series.h"
@@ -393,8 +394,8 @@ simulate_ide_model(mio::Date start_date, ScalarType simulation_time, mio::Contac
     // Set initial flows according to RKI data.
     std::string path_rki = mio::path_join((data_dir / "pydata" / "Germany").string(), "cases_all_germany_ma7.json");
 
-    mio::IOResult<void> init_flows = set_initial_flows(model_ide, simulation_parameter["dt"], path_rki, start_date,
-                                                       simulation_parameter["scale_confirmed_cases"]);
+    mio::IOResult<void> init_flows = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(
+        model_ide, simulation_parameter["dt"], path_rki, start_date, simulation_parameter["scale_confirmed_cases"]);
 
     model_ide.check_constraints(simulation_parameter["dt"]);
 

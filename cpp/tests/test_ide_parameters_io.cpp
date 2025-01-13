@@ -25,6 +25,7 @@
 
 #include "memilio/config.h"
 #include "memilio/epidemiology/age_group.h"
+#include "memilio/io/epi_data.h"
 #include "memilio/utils/date.h"
 #include "memilio/io/io.h"
 
@@ -39,6 +40,7 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
 {
     // Define start date and the total population used for the initialization.
     size_t num_agegroups = 6;
+
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_population =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 15 * 1e6);
     auto start_date = mio::Date(2020, 11, 1);
@@ -86,8 +88,8 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
     }
 
     // Calculate initialization.
-    auto status =
-        mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_age_ma7.json"), start_date);
+    auto status = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(
+        model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_age_ma7.json"), start_date, 1.);
 
     ASSERT_THAT(print_wrap(status), IsSuccess());
 
@@ -147,22 +149,22 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
 
     // --- Case where start_date is later than maximal provided date in file.
     auto start_date = mio::Date(2021, 01, 05);
-    auto status =
-        mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_age_ma7.json"), start_date);
+    auto status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(
+        model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_age_ma7.json"), start_date, 1.);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::OutOfRange));
 
     // --- Case where not all needed dates from the future are provided.
     start_date = mio::Date(2020, 12, 31);
-    status =
-        mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_age_ma7.json"), start_date);
+    status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(
+        model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_age_ma7.json"), start_date, 1.);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::OutOfRange));
 
     // --- Case where not all needed dates from the past are provided.
     start_date = mio::Date(2020, 10, 1);
-    status =
-        mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_age_ma7.json"), start_date);
+    status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(
+        model, dt, mio::path_join(TEST_DATA_DIR, "cases_all_age_ma7.json"), start_date, 1.);
     // Check that status is Success as just a warning is logged.
     ASSERT_THAT(print_wrap(status), IsSuccess());
     // Check that the flow InfectedNoSymptomsToInfectedSymptoms has actually been set to 0.
@@ -178,8 +180,8 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
     }
 
     // --- Case with empty RKI data file.
-    status =
-        mio::isecir::set_initial_flows(model, dt, mio::path_join(TEST_DATA_DIR, "test_empty_file.json"), start_date);
+    status = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(
+        model, dt, mio::path_join(TEST_DATA_DIR, "test_empty_file.json"), start_date, 1.);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::InvalidFileFormat));
 

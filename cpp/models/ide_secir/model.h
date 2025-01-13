@@ -25,6 +25,7 @@
 #include "ide_secir/infection_state.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/age_group.h"
+#include "memilio/io/epi_data.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/time_series.h"
 
@@ -358,6 +359,7 @@ private:
     friend class Simulation;
     // In set_initial_flows(), we compute initial flows based on RKI data using the (private) compute_flow() function
     // which is why it is defined as a friend function.
+    template <typename DataEntry>
     friend IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date,
                                             ScalarType scale_confirmed_cases);
 };

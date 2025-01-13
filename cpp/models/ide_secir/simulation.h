@@ -32,14 +32,14 @@ namespace isecir
 {
 
 /**
- * run the simulation in discrete steps and report results.
+ * Run the simulation in discrete steps and report results.
  */
 class Simulation
 {
 
 public:
     /**
-     * @brief setup the Simulation for an IDE model.
+     * @brief Setup the Simulation for an IDE model.
      * @param[in] model An instance of the IDE model.
      * @param[in] dt Step size of numerical solver.
      */
