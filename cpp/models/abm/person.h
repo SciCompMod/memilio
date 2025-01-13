@@ -295,7 +295,7 @@ public:
      * This id is only relevant for the graph abm and otherwise corresponds to the PersonId.
      * @return The unique id.
      */
-    uint64_t get_unique_id() const;
+    const uint64_t get_unique_id() const;
 
     /**
     * @brief Set the PersonId of the Person.

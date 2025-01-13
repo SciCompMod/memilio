@@ -208,9 +208,14 @@ PersonId Person::get_id() const
     return m_person_id;
 }
 
-uint64_t Person::get_unique_id() const
+const uint64_t Person::get_unique_id() const
 {
     return m_unique_id;
+}
+
+void Person::set_id(PersonId id)
+{
+    m_person_id = id;
 }
 
 std::vector<uint32_t>& Person::get_cells()

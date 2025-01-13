@@ -138,6 +138,8 @@ public:
                 persons_to_change.erase(persons_to_change.begin() + i);
             }
         }
+        //update person ids in model_from
+        model_from.update_person_ids();
     }
 };
 

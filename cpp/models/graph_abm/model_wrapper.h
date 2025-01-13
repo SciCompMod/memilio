@@ -80,6 +80,16 @@ public:
         perform_mobility(t, dt);
     }
 
+    void update_person_ids()
+    {
+        for (uint32_t i = 0; i < static_cast<uint32_t>(m_persons.size()); ++i) {
+            auto& person = m_persons[i];
+            if (person.get_id().get() != i) {
+                person.set_id(abm::PersonId{i});
+            }
+        }
+    }
+
 private:
     void perform_mobility(TimePoint t, TimeSpan dt)
     {
