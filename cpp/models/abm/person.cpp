@@ -208,7 +208,7 @@ PersonId Person::get_id() const
     return m_person_id;
 }
 
-const uint64_t Person::get_unique_id() const
+uint64_t Person::get_unique_id() const
 {
     return m_unique_id;
 }
