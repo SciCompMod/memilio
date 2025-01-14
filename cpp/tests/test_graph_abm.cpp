@@ -158,6 +158,8 @@ TEST(TestGraphAbm, test_apply_mobility)
               << static_cast<int>(p2.get_assigned_location_model_id(p2.get_location_type())) << "\n";
     std::cout << "p2 get go to work time "
               << p2.get_go_to_work_time(node1.get_simulation().get_model().parameters).hours() << "\n";
+    std::cout << "p2 unique id " << p2.get_unique_id() << "\n";
+    std::cout << "p2 index " << p2.get_id().get() << "\n";
 
     std::cout << "Size First: " << node1.get_simulation().get_model().get_person_buffer().size() << "\n";
     for (auto i = size_t(0); i < node1.get_simulation().get_model().get_person_buffer().size(); ++i) {
