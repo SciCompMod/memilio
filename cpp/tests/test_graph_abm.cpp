@@ -82,8 +82,8 @@ TEST(TestGraphAbm, test_apply_mobility)
     model3.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)] = true;
 
     //all persons go to work at 7am
-    model1.parameters.get<mio::abm::GotoWorkTimeMinimum>()[mio::AgeGroup(0)] = mio::abm::hours(8);
-    model1.parameters.get<mio::abm::GotoWorkTimeMaximum>()[mio::AgeGroup(0)] = mio::abm::hours(8);
+    model1.parameters.get<mio::abm::GotoWorkTimeMinimum>()[mio::AgeGroup(0)] = mio::abm::hours(7);
+    model1.parameters.get<mio::abm::GotoWorkTimeMaximum>()[mio::AgeGroup(0)] = mio::abm::hours(7);
 
     auto work_id_1  = model1.add_location(mio::abm::LocationType::Work);
     auto home_id    = model1.add_location(mio::abm::LocationType::Home);
