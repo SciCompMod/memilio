@@ -53,6 +53,13 @@ def get_mcmc_model_params(url, t, data_dir):
     data_t = get_mcmc_data_at_t(t, data_dir)
     parameter_list = requests.get(
         url + "parameterdefinitions/", headers=header).json()
+    
+    get_groups = requests.get(url + "groups/", headers=header)
+    group_ids = []
+    for i, group in enumerate(get_groups.json()):
+        if group["name"] == f"age_{i}":
+            group_ids.append(group["id"])
+
     # list all parameters that are in data_t
     data_t_parameters = []
     for group in data_t:
@@ -79,7 +86,7 @@ def get_mcmc_model_params(url, t, data_dir):
         for group in data_t:
             for entry in data_t[group]:
                 if entry["Name"] == parameter:
-                    param_val.append([entry["hdi_25%"], entry["hdi_75%"]])
+                    param_val.append([float(entry["hdi_25%"]),float(entry["hdi_75%"])])
         if len(param_val) != len(data_t):
             print("Parameter " + parameter +
                   " has not the correct number of groups.")
@@ -108,15 +115,47 @@ def post_mcmc_parameters(url, t, data_dir):
         # load full set of scenario data
         scenario_data = requests.get(
             url + "scenarios/" + scenario['id'], headers=header).json()
-        test = 2
-        # TODO: Upload the model parameters to the scenario
+
+        # Upload the model parameters to the scenario
+        scenario_data['modelParameters'] = parameters_mcmc
+
+        # put 
+        # response = requests.put(
+        #     url + f"scenarios/{scenario['id']}",
+        #     headers=header,
+        #     json=scenario_data
+        # )
+
+        # post
+        response = requests.post(
+            url + "scenarios/",
+            headers=header,
+            json=scenario_data
+        )
+
+        # patch
+        # updated_data = {
+        #     "modelParameters": parameters_mcmc
+        # }
+        # response = requests.patch(
+        #     url + f"scenarios/{scenario['id']}",
+        #     headers=header,
+        #     json=updated_data
+        # )
+
+        if response.status_code == 200:
+            print(f"Scenario {scenario['id']} updated successfully.")
+        else:
+            print(f"Failed to update scenario {scenario['id']}. Status code: {response.status_code}, Response: {response.text}")
+
 
 
 def main():
     url = "http://localhost:8123/"
     cwd = os.getcwd()
     mcmc_dir = os.path.join(cwd, "mcmc data")
-    date_today = datetime.datetime.now().strftime("%Y-%m-%d")
+    # date_today = datetime.datetime.now().strftime("%Y-%m-%d")
+    date_today = '2025-01-09'
     post_mcmc_parameters(url, date_today, mcmc_dir)
 
 
