@@ -52,7 +52,8 @@ LocationId Model::add_location(LocationType type, uint32_t num_cells)
 
 PersonId Model::add_person(const LocationId id, AgeGroup age)
 {
-    return add_person(Person(m_rng, get_location(id).get_type(), id, m_id, age));
+    uint64_t unique_id = (static_cast<int64_t>(m_id)) << 32 | static_cast<uint32_t>(m_persons.size());
+    return add_person(Person(m_rng, get_location(id).get_type(), id, m_id, age, PersonId::invalid_id(), unique_id));
 }
 
 PersonId Model::add_person(Person&& person)
@@ -60,21 +61,15 @@ PersonId Model::add_person(Person&& person)
     assert(person.get_location() != LocationId::invalid_id() && "Added Person's location must be valid.");
     assert(person.get_location() < LocationId((uint32_t)m_locations.size()) &&
            "Added Person's location is not in Model.");
+    assert(person.get_unique_id() != INVALID_UNIQUE_ID && "Added Person's unique id must be valid.");
     assert(person.get_age() < (AgeGroup)parameters.get_num_groups() && "Added Person's AgeGroup is too large.");
     PersonId new_id{static_cast<uint32_t>(m_persons.size())};
-    if (person.get_unique_id() == INVALID_UNIQUE_ID) {
-        //if the person does not have a valid unique id yet, it gets one which is coumbound by model id and index in m_persons
-        uint64_t unique_id = (static_cast<int64_t>(m_id)) << 32 | static_cast<uint32_t>(m_persons.size());
-        person.set_assigned_location(LocationType::Cemetery, m_cemetery_id, m_id);
-        m_persons.emplace_back(person, new_id, unique_id);
-    }
-    else {
-        //if the person already has a valid unique id, it only gets a new PersonId
-        m_persons.emplace_back(person, new_id);
-    }
+    //set correct person id aka index in m_persons vector
+    person.set_id(new_id);
+    person.set_assigned_location(LocationType::Cemetery, m_cemetery_id, m_id);
+    m_persons.emplace_back(person);
     m_activeness_statuses.push_back(true);
     auto& new_person = m_persons.back();
-
     if (m_is_local_population_cache_valid) {
         ++m_local_population_cache[new_person.get_location().get()];
     }
