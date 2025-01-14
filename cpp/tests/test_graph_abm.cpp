@@ -152,6 +152,8 @@ TEST(TestGraphAbm, test_apply_mobility)
     EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p4_id.get()], false);
     EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p5_id.get()], false);
 
+    std::cout << "here\n";
+
     std::cout << "Size First: " << node1.get_simulation().get_model().get_person_buffer().size() << "\n";
     for (auto i = size_t(0); i < node1.get_simulation().get_model().get_person_buffer().size(); ++i) {
         std::cout << "First: " << node1.get_simulation().get_model().get_person_buffer()[i] << "\n";
