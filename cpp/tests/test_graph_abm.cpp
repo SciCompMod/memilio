@@ -152,28 +152,9 @@ TEST(TestGraphAbm, test_apply_mobility)
     EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p4_id.get()], false);
     EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p5_id.get()], false);
 
-    std::cout << "p2 loc type " << static_cast<int>(p2.get_location_type()) << "\n";
-    std::cout << "p2 loc model id " << static_cast<int>(p2.get_location_model_id()) << "\n";
-    std::cout << "p2 assigned work model id "
-              << static_cast<int>(p2.get_assigned_location_model_id(p2.get_location_type())) << "\n";
-    std::cout << "p2 get go to work time "
-              << p2.get_go_to_work_time(node1.get_simulation().get_model().parameters).hours() << "\n";
-    std::cout << "p2 unique id " << p2.get_unique_id() << "\n";
-    std::cout << "p2 index " << p2.get_id().get() << "\n";
-
-    std::cout << "Size First: " << node1.get_simulation().get_model().get_person_buffer().size() << "\n";
-    for (auto i = size_t(0); i < node1.get_simulation().get_model().get_person_buffer().size(); ++i) {
-        std::cout << "First: " << node1.get_simulation().get_model().get_person_buffer()[i] << "\n";
-    }
-
     mio::ABMMobilityEdge<MockHistory> edge;
     edge.apply_mobility(node1, node2, t);
     edge.apply_mobility(node1, node3, t);
-
-    std::cout << "Size Second: " << node1.get_simulation().get_model().get_person_buffer().size() << "\n";
-    for (auto i = size_t(0); i < node1.get_simulation().get_model().get_person_buffer().size(); ++i) {
-        std::cout << "Second: " << node1.get_simulation().get_model().get_person_buffer()[i] << "\n";
-    }
 
     EXPECT_EQ(node1.get_simulation().get_model().get_persons().size(), 2);
     EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 2);
