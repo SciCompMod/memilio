@@ -32,7 +32,9 @@
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/compiler_diagnostics.h"
+#include <algorithm>
 #include <cstddef>
+#include <iostream>
 #include <utility>
 #include <vector>
 
@@ -117,6 +119,8 @@ public:
         auto& model_from        = node_from.get_simulation().get_model();
         auto& model_to          = node_to.get_simulation().get_model();
         auto& persons_to_change = model_from.get_person_buffer();
+        //sort vector such that we start removing the persons from the bottom
+        std::sort(persons_to_change.begin(), persons_to_change.end());
         //iterate over all persons that change from node_from
         for (int i = int(persons_to_change.size()) - 1; i >= 0; --i) {
             auto& person     = model_from.get_persons()[persons_to_change[i]];
@@ -130,7 +134,8 @@ public:
                 model_to.add_person(std::move(person));
                 //remove person from model_from
                 model_from.remove_person(persons_to_change[i]);
-                // correct indices in persons buffer from node_from
+                //correct indices in persons buffer from node_from
+                //here it is required that the vector is sorted
                 for (size_t j = i + 1; j < persons_to_change.size(); ++j) {
                     persons_to_change[j]--;
                 }
