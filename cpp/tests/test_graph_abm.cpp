@@ -152,17 +152,18 @@ TEST(TestGraphAbm, test_apply_mobility)
     EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p4_id.get()], false);
     EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p5_id.get()], false);
 
-    auto& persons_buffer = node1.get_simulation().get_model().get_person_buffer();
-    for (auto i = size_t(0); i < persons_buffer.size(); ++i) {
-        std::cout << persons_buffer[i] << "\n";
+    std::cout << "Size First: " << node1.get_simulation().get_model().get_person_buffer().size() << "\n";
+    for (auto i = size_t(0); i < node1.get_simulation().get_model().get_person_buffer().size(); ++i) {
+        std::cout << "First: " << node1.get_simulation().get_model().get_person_buffer()[i] << "\n";
     }
 
     mio::ABMMobilityEdge<MockHistory> edge;
     edge.apply_mobility(node1, node2, t);
     edge.apply_mobility(node1, node3, t);
 
-    for (auto i = size_t(0); i < persons_buffer.size(); ++i) {
-        std::cout << persons_buffer[i] << "\n";
+    std::cout << "Size Second: " << node1.get_simulation().get_model().get_person_buffer().size() << "\n";
+    for (auto i = size_t(0); i < node1.get_simulation().get_model().get_person_buffer().size(); ++i) {
+        std::cout << "Second: " << node1.get_simulation().get_model().get_person_buffer()[i] << "\n";
     }
 
     EXPECT_EQ(node1.get_simulation().get_model().get_persons().size(), 2);
