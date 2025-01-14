@@ -343,7 +343,7 @@ TEST(TestSeir, get_flows)
         total_population - model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] -
         model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}] -
         model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}];
-   
+
     model.parameters.set<mio::oseir::TimeExposed<double>>(2);
     model.parameters.set<mio::oseir::TimeInfected<double>>(4);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(1);
@@ -366,27 +366,26 @@ TEST(TestSeir, get_flows_two_agegroups)
 {
     mio::oseir::Model<double> model(2);
 
-    constexpr double total_first_population = 400;
+    constexpr double total_first_population  = 400;
     constexpr double total_second_population = 200;
 
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]  = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}] = 100;
-    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] =
-        total_first_population - model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] -
-        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}] -
-        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}];
+    model.populations.set_difference_from_group_total<mio::AgeGroup>({mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible},
+                                                                     total_first_population);
     model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Exposed}]   = 10;
     model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Infected}]  = 10;
     model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Recovered}] = 10;
-    model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Susceptible}] =
-        total_second_population - model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Exposed}] -
-        model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Infected}] -
-        model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Recovered}];
+    model.populations.set_difference_from_group_total<mio::AgeGroup>({mio::AgeGroup(1), mio::oseir::InfectionState::Susceptible},
+                                                                     total_second_population);
 
-    model.parameters.set<mio::oseir::TimeExposed<double>>(2);
-    model.parameters.set<mio::oseir::TimeInfected<double>>(4);
-    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(1);
+    for (auto i = mio::AgeGroup(0); i <= mio::AgeGroup(1); i++) {
+        model.parameters.get<mio::oseir::TimeExposed<double>>()[i]                      = 2;
+        model.parameters.get<mio::oseir::TimeInfected<double>>()[i]                     = 4;
+        model.parameters.get<mio::oseir::TransmissionProbabilityOnContact<double>>()[i] = 1;
+    }
+
     mio::ContactMatrixGroup& contact_matrix =
         model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(1);
