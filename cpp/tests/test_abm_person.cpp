@@ -22,6 +22,7 @@
 #include "abm/location_type.h"
 #include "abm/mobility_rules.h"
 #include "abm/person.h"
+#include "abm/person_id.h"
 #include "abm/time.h"
 #include "abm_helpers.h"
 #include "random_number_test.h"
@@ -44,6 +45,13 @@ TEST_F(TestPerson, init)
     EXPECT_EQ(person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
     EXPECT_EQ(person.get_location(), location.get_id());
     EXPECT_EQ(person.get_id(), mio::abm::PersonId::invalid_id());
+
+    // Verify copy constructor
+    auto copied_person = mio::abm::Person(person, mio::abm::PersonId(0), 0);
+    EXPECT_EQ(copied_person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
+    EXPECT_EQ(copied_person.get_location(), location.get_id());
+    EXPECT_EQ(copied_person.get_id(), mio::abm::PersonId(0));
+    EXPECT_EQ(copied_person.get_unique_id(), 0);
 }
 
 /**

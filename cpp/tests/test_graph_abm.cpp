@@ -75,36 +75,51 @@ TEST(TestGraphAbm, test_apply_mobility)
         mio::ModelWrapper(size_t(2), 1, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
     auto model2 =
         mio::ModelWrapper(size_t(2), 2, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
+    auto model3 =
+        mio::ModelWrapper(size_t(2), 3, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
     model1.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)] = true;
     model2.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)] = true;
+    model3.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)] = true;
+
+    //all persons go to work at 7am
+    model1.parameters.get<mio::abm::GotoWorkTimeMinimum>()[mio::AgeGroup(0)] = mio::abm::hours(8);
+    model1.parameters.get<mio::abm::GotoWorkTimeMaximum>()[mio::AgeGroup(0)] = mio::abm::hours(8);
+
     auto work_id_1  = model1.add_location(mio::abm::LocationType::Work);
     auto home_id    = model1.add_location(mio::abm::LocationType::Home);
     auto work_id_2  = model2.add_location(mio::abm::LocationType::Work);
+    auto work_id_3  = model3.add_location(mio::abm::LocationType::Work);
     auto event_id_1 = model1.add_location(mio::abm::LocationType::SocialEvent);
     auto event_id_2 = model2.add_location(mio::abm::LocationType::SocialEvent);
     auto& work_1    = model1.get_location(work_id_1);
     auto& work_2    = model2.get_location(work_id_2);
+    auto& work_3    = model3.get_location(work_id_3);
     auto& home      = model1.get_location(home_id);
     auto& event_1   = model1.get_location(event_id_1);
     auto& event_2   = model2.get_location(event_id_2);
 
     EXPECT_EQ(work_1.get_model_id(), 1);
     EXPECT_EQ(work_2.get_model_id(), 2);
+    EXPECT_EQ(work_3.get_model_id(), 3);
 
     auto p1_id = model1.add_person(home_id, mio::AgeGroup(0));
     auto p2_id = model1.add_person(home_id, mio::AgeGroup(0));
     auto p3_id = model1.add_person(home_id, mio::AgeGroup(1));
     auto p4_id = model1.add_person(home_id, mio::AgeGroup(1));
+    auto p5_id = model1.add_person(home_id, mio::AgeGroup(0));
     auto& p1   = model1.get_person(p1_id);
     auto& p2   = model1.get_person(p2_id);
     auto& p3   = model1.get_person(p3_id);
     auto& p4   = model1.get_person(p4_id);
+    auto& p5   = model1.get_person(p5_id);
     p1.set_assigned_location(work_1.get_type(), work_1.get_id(), work_1.get_model_id());
     p2.set_assigned_location(work_2.get_type(), work_2.get_id(), work_2.get_model_id());
+    p5.set_assigned_location(work_3.get_type(), work_3.get_id(), work_3.get_model_id());
     p1.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
     p2.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
     p3.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
     p4.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
+    p5.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
     p3.set_assigned_location(event_1.get_type(), event_1.get_id(), event_1.get_model_id());
     p4.set_assigned_location(event_2.get_type(), event_2.get_id(), event_2.get_model_id());
 
@@ -123,20 +138,26 @@ TEST(TestGraphAbm, test_apply_mobility)
     auto dt = mio::abm::hours(12);
     mio::ABMSimulationNode<MockHistory> node1(MockHistory{}, t, std::move(model1));
     mio::ABMSimulationNode<MockHistory> node2(MockHistory{}, t, std::move(model2));
+    mio::ABMSimulationNode<MockHistory> node3(MockHistory{}, t, std::move(model3));
 
     node1.evolve(t, dt);
     node2.evolve(t, dt);
+    node3.evolve(t, dt);
 
     EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 0);
-    EXPECT_EQ(node1.get_simulation().get_model().get_persons().size(), 4);
+    EXPECT_EQ(node3.get_simulation().get_model().get_persons().size(), 0);
+    EXPECT_EQ(node1.get_simulation().get_model().get_persons().size(), 5);
     EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p2_id.get()], false);
     EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p4_id.get()], false);
+    EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p5_id.get()], false);
 
     mio::ABMMobilityEdge<MockHistory> edge;
     edge.apply_mobility(node1, node2, t);
+    edge.apply_mobility(node1, node3, t);
 
     EXPECT_EQ(node1.get_simulation().get_model().get_persons().size(), 2);
     EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 2);
+    EXPECT_EQ(node3.get_simulation().get_model().get_persons().size(), 1);
     EXPECT_EQ(node1.get_simulation().get_model().get_person_buffer().size(), 0);
 }
 
