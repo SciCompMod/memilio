@@ -1047,7 +1047,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
                                                 num_days, path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
                                                 path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"),
                                                 path_join(dir, "pydata/Germany", "county_current_population.json"),
-                                                path_join(dir, "pydata/Germany", "all_county_ageinf_vacc_ma7.json")));
+                                                path_join(dir, "pydata/Germany", "vacc_county_ageinf_ma7.json")));
     }
 
     return success();
