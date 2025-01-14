@@ -152,7 +152,11 @@ TEST(TestGraphAbm, test_apply_mobility)
     EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p4_id.get()], false);
     EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p5_id.get()], false);
 
-    std::cout << "here\n";
+    std::cout << "p2 loc type " << static_cast<int>(p2.get_location_type()) << "\n";
+    std::cout << "p2 loc model id " << static_cast<int>(p2.get_location_model_id()) << "\n";
+    std::cout << "p2 assigned work model id "
+              << static_cast<int>(p2.get_assigned_location_model_id(p2.get_location_type())) << "\n";
+    std::cout << "p2 get go to work time " << p2.get_go_to_work_time(model1.parameters).hours() << "\n";
 
     std::cout << "Size First: " << node1.get_simulation().get_model().get_person_buffer().size() << "\n";
     for (auto i = size_t(0); i < node1.get_simulation().get_model().get_person_buffer().size(); ++i) {
