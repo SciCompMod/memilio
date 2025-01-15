@@ -80,11 +80,11 @@ IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::v
            (size_t)scale_confirmed_cases.size());
     // Check if the correct EntryType was used.
     if constexpr (std::is_same_v<EntryType, ConfirmedCasesDataEntry>) {
-        assert(size_t(model.m_transitions[0].size() / mio::InfectionTransition::Count) ==
+        assert(size_t(model.m_transitions[0].size() / mio::isecir::InfectionTransition::Count) ==
                EntryType::age_group_names.size());
     }
     else {
-        assert(size_t(model.m_transitions[0].size() / mio::InfectionTransition::Count) == 1);
+        assert(size_t(model.m_transitions[0].size() / mio::isecir::InfectionTransition::Count) == 1);
     }
 
     //--- Preparations ---
