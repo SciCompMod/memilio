@@ -20,6 +20,7 @@
 
 #include "abm/location_type.h"
 #include "abm/person.h"
+#include "abm/person_id.h"
 #include "abm_helpers.h"
 #include "random_number_test.h"
 
@@ -38,7 +39,7 @@ TEST_F(TestInfection, init)
     //set up a personal RNG for infections
     //uses uniformdistribution but result doesn't matter, so init before the mock
     auto counter = mio::Counter<uint32_t>(0);
-    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), mio::abm::PersonId(0), counter);
+    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), mio::abm::LocalIndex(0), counter);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -112,7 +113,7 @@ TEST_F(TestInfection, init)
 TEST_F(TestInfection, getInfectionState)
 {
     auto counter = mio::Counter<uint32_t>(0);
-    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), mio::abm::PersonId(0), counter);
+    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), mio::abm::LocalIndex(0), counter);
     auto params  = mio::abm::Parameters(num_age_groups);
     auto t       = mio::abm::TimePoint(0);
 
@@ -132,7 +133,7 @@ TEST_F(TestInfection, getInfectionState)
 TEST_F(TestInfection, drawInfectionCourseForward)
 {
     auto counter = mio::Counter<uint32_t>(0);
-    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), mio::abm::PersonId(0), counter);
+    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), mio::abm::LocalIndex(0), counter);
     auto params  = mio::abm::Parameters(num_age_groups);
     auto t       = mio::abm::TimePoint(0);
 
@@ -156,7 +157,7 @@ TEST_F(TestInfection, drawInfectionCourseForward)
 TEST_F(TestInfection, drawInfectionCourseBackward)
 {
     auto counter = mio::Counter<uint32_t>(0);
-    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), mio::abm::PersonId(0), counter);
+    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), mio::abm::LocalIndex(0), counter);
     auto t       = mio::abm::TimePoint(1);
     auto dt      = mio::abm::days(1);
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);

@@ -111,7 +111,7 @@ struct LogLocationInformation : mio::LogOnce {
  * @brief Logger to log the Person%s Information in the simulation.
  */
 struct LogPersonInformation : mio::LogOnce {
-    using Type = std::vector<std::tuple<mio::abm::PersonId, mio::abm::LocationId, mio::AgeGroup>>;
+    using Type = std::vector<std::tuple<mio::abm::GlobalID, mio::abm::LocationId, mio::AgeGroup>>;
     /** 
      * @brief Log the LocationInformation of the simulation. 
      * @param[in] sim The simulation of the abm.
@@ -126,7 +126,7 @@ struct LogPersonInformation : mio::LogOnce {
         person_information.reserve(sim.get_model().get_persons().size());
         for (auto& person : sim.get_model().get_persons()) {
             person_information.push_back(std::make_tuple(
-                person.get_id(), sim.get_model().find_location(mio::abm::LocationType::Home, person.get_id()),
+                person.get_global_id(), sim.get_model().find_location(mio::abm::LocationType::Home, person.get_index()),
                 person.get_age()));
         }
         return person_information;
@@ -137,7 +137,7 @@ struct LogPersonInformation : mio::LogOnce {
  * @brief Logger to log mobility data of the agents in the simulation.
  */
 struct LogDataForMobility : mio::LogAlways {
-    using Type = std::vector<std::tuple<mio::abm::PersonId, mio::abm::LocationId, mio::abm::TimePoint,
+    using Type = std::vector<std::tuple<mio::abm::GlobalID, mio::abm::LocationId, mio::abm::TimePoint,
                                         mio::abm::TransportMode, mio::abm::ActivityType, mio::abm::InfectionState>>;
     /** 
      * @brief Log the mobility data of the agents in the simulation.
@@ -155,7 +155,7 @@ struct LogDataForMobility : mio::LogAlways {
         Type mobility_data{};
         for (Person p : sim.get_model().get_persons()) {
             mobility_data.push_back(
-                std::make_tuple(p.get_id(), p.get_location(), sim.get_time(), p.get_last_transport_mode(),
+                std::make_tuple(p.get_global_id(), p.get_location(), sim.get_time(), p.get_last_transport_mode(),
                                 guess_activity_type(p.get_location_type()), p.get_infection_state(sim.get_time())));
         }
         return mobility_data;

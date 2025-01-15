@@ -41,7 +41,7 @@ namespace abm
  */
 struct Trip {
     //TODO: Origin is currently not used for the trips. Should we delete it then?
-    uint64_t person_id; /**< Person that makes the trip and corresponds to the index into the structure m_persons from
+    GlobalID person_id; /**< Person that makes the trip and corresponds to the index into the structure m_persons from
     Model, where all Person%s are saved.*/
     TimePoint time; ///< Daytime at which a Person changes the Location.
     LocationId destination; ///< Location where the Person changes to.
@@ -64,7 +64,7 @@ struct Trip {
      * @param[in] origin_model_id Model the Person starts the Trip.
      * @param[in] input_cells The index of the Cell%s the Person changes to.
      */
-    Trip(uint64_t id, TimePoint time_new, LocationId dest, int dest_model_id, LocationId orig, int orig_model_id,
+    Trip(GlobalID id, TimePoint time_new, LocationId dest, int dest_model_id, LocationId orig, int orig_model_id,
          TransportMode mode_of_transport, LocationType type_of_activity, const std::vector<uint32_t>& input_cells = {})
         : person_id(id)
         , time(mio::abm::TimePoint(time_new.time_since_midnight().seconds()))
@@ -78,7 +78,7 @@ struct Trip {
     {
     }
 
-    Trip(uint64_t id, TimePoint time_new, LocationId dest, LocationId orig, TransportMode mode_of_transport,
+    Trip(GlobalID id, TimePoint time_new, LocationId dest, LocationId orig, TransportMode mode_of_transport,
          LocationType type_of_activity, const std::vector<uint32_t>& input_cells = {})
         : person_id(id)
         , time(mio::abm::TimePoint(time_new.time_since_midnight().seconds()))
@@ -92,13 +92,13 @@ struct Trip {
     {
     }
 
-    Trip(uint64_t id, TimePoint time_new, LocationId dest, LocationId orig, LocationType type_of_activity,
+    Trip(GlobalID id, TimePoint time_new, LocationId dest, LocationId orig, LocationType type_of_activity,
          const std::vector<uint32_t>& input_cells = {})
         : Trip(id, time_new, dest, orig, mio::abm::TransportMode::Unknown, type_of_activity, input_cells)
     {
     }
 
-    Trip(uint64_t id, TimePoint time_new, LocationId dest, LocationType type_of_activity,
+    Trip(GlobalID id, TimePoint time_new, LocationId dest, LocationType type_of_activity,
          const std::vector<uint32_t>& input_cells = {})
         : Trip(id, time_new, dest, dest, mio::abm::TransportMode::Unknown, type_of_activity, input_cells)
     {
@@ -213,7 +213,7 @@ template <>
 struct DefaultFactory<abm::Trip> {
     static abm::Trip create()
     {
-        return abm::Trip{abm::INVALID_UNIQUE_ID, abm::TimePoint{}, abm::LocationId{}, abm::LocationType{}};
+        return abm::Trip{abm::GlobalID{}, abm::TimePoint{}, abm::LocationId{}, abm::LocationType{}};
     }
 };
 

@@ -23,6 +23,7 @@
 #include "abm/parameters.h"
 #include "abm/infection.h"
 #include "abm/location.h"
+#include "abm/person_id.h"
 #include "memilio/utils/random_number_generator.h"
 #include <cstdint>
 #include <vector>
@@ -33,7 +34,7 @@ namespace abm
 {
 
 Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
-               int location_model_id, AgeGroup age, PersonId person_id, uint64_t unique_id)
+               int location_model_id, AgeGroup age, LocalIndex person_index, GlobalID global_id)
     : m_location(location_id)
     , m_location_type(location_type)
     , m_location_model_id(location_model_id)
@@ -43,12 +44,12 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     , m_time_at_location(0)
     , m_mask(Mask(MaskType::None, TimePoint(-(std::numeric_limits<int>::max() / 2))))
     , m_compliance((uint32_t)InterventionType::Count, 1.)
-    , m_person_id(person_id)
+    , m_person_index(person_index)
     , m_cells{0}
     , m_last_transport_mode(TransportMode::Unknown)
     , m_test_results({TestType::Count}, TestResult())
     , m_assigned_location_model_ids((int)LocationType::Count)
-    , m_unique_id(unique_id)
+    , m_global_id(global_id)
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
     m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
@@ -56,17 +57,17 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     m_random_goto_school_hour = UniformDistribution<double>::get_instance()(rng);
 }
 
-Person::Person(const Person& other, PersonId id)
+Person::Person(const Person& other, LocalIndex index)
     : Person(other)
 {
-    m_person_id = id;
+    m_person_index = index;
 }
 
-Person::Person(const Person& other, PersonId id, uint64_t unique_id)
+Person::Person(const Person& other, LocalIndex index, GlobalID global_id)
     : Person(other)
 {
-    m_person_id = id;
-    m_unique_id = unique_id;
+    m_person_index = index;
+    m_global_id    = global_id;
 }
 
 bool Person::is_infected(TimePoint t) const
@@ -203,19 +204,19 @@ bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const T
     }
 }
 
-PersonId Person::get_id() const
+LocalIndex Person::get_index() const
 {
-    return m_person_id;
+    return m_person_index;
 }
 
-uint64_t Person::get_unique_id() const
+GlobalID Person::get_global_id() const
 {
-    return m_unique_id;
+    return m_global_id;
 }
 
-void Person::set_id(PersonId id)
+void Person::set_index(LocalIndex index)
 {
-    m_person_id = id;
+    m_person_index = index;
 }
 
 std::vector<uint32_t>& Person::get_cells()

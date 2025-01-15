@@ -193,16 +193,16 @@ public:
      * @brief Add a Person to the Model.
      * @param[in] id The LocationID of the initial Location of the Person.
      * @param[in] age AgeGroup of the person.
-     * @return ID of the newly created Person.
+     * @return Index of the newly created Person.
      */
-    PersonId add_person(const LocationId id, AgeGroup age);
+    LocalIndex add_person(const LocationId id, AgeGroup age);
 
     /**
      * @brief Adds a copy of a given Person to the Model.
      * @param[in] person The Person to copy from. 
-     * @return ID of the newly created Person.
+     * @return Index of the newly created Person.
      */
-    PersonId add_person(Person&& person);
+    LocalIndex add_person(Person&& person);
 
     /**
      * @brief Get a range of all Location%s in the Model.
@@ -234,19 +234,19 @@ public:
     /**
      * @brief Find an assigned Location of a Person.
      * @param[in] type The #LocationType that specifies the assigned Location.
-     * @param[in] person PersonId of the Person.
+     * @param[in] person LocalIndex of the Person.
      * @return ID of the Location of LocationType type assigend to person.
      */
-    LocationId find_location(LocationType type, const PersonId person) const;
+    LocationId find_location(LocationType type, const LocalIndex person) const;
 
     /**
      * @brief Assign a Location to a Person.
      * A Person can have at most one assigned Location of a certain LocationType.
      * Assigning another Location of an already assigned LocationType will replace the prior assignment.  
-     * @param[in] person The PersonId of the person this location will be assigned to.
+     * @param[in] person The LocalIndex of the person this location will be assigned to.
      * @param[in] location The LocationId of the Location.
      */
-    void assign_location(PersonId person, LocationId location)
+    void assign_location(LocalIndex person, LocationId location)
     {
         get_person(person).set_assigned_location(get_location(location).get_type(), location, m_id);
     }
@@ -255,10 +255,10 @@ public:
      * @brief Assign a Location to a Person.
      * A Person can have at most one assigned Location of a certain LocationType.
      * Assigning another Location of an already assigned LocationType will replace the prior assignment.  
-     * @param[in] person The unique id of the person this location will be assigned to.
+     * @param[in] person The GlobalID of the person this location will be assigned to.
      * @param[in] location The LocationId of the Location.
      */
-    void assign_location(uint64_t person, LocationId location)
+    void assign_location(GlobalID person, LocationId location)
     {
         get_person(person).set_assigned_location(get_location(location).get_type(), location, m_id);
     }
@@ -368,33 +368,32 @@ public:
 
     /**
      * @brief Get a reference to a Person from this Model.
-     * @param[in] id A Person's PersonId/index in m_persons.
+     * @param[in] index A Person's LocalIndex in m_persons.
      * @return A reference to the Person.
      * @{
      */
-    Person& get_person(PersonId id)
+    Person& get_person(LocalIndex index)
     {
-        assert(id.get() < m_persons.size() && "Given PersonId is not in this Model.");
-        return m_persons[id.get()];
+        assert(index.get() < m_persons.size() && "Given LocalIndex is not in this Model.");
+        return m_persons[index.get()];
     }
 
-    const Person& get_person(PersonId id) const
+    const Person& get_person(LocalIndex index) const
     {
-        assert(id.get() < m_persons.size() && "Given PersonId is not in this Model.");
-        return m_persons[id.get()];
+        assert(index.get() < m_persons.size() && "Given LocalIndex is not in this Model.");
+        return m_persons[index.get()];
     }
 
     /**
      * @brief Get a reference to a Person from this Model.
-     * @param[in] unique_id A Person's unique id.
+     * @param[in] global_id A Person's GlobalID.
      * @return A reference to the Person.
      */
-    Person& get_person(uint64_t unique_id)
+    Person& get_person(GlobalID global_id)
     {
-        mio::log_warning(
-            "get_person is accessed by unique id instead of PersonId/person index. Therefore m_persons is searched.");
-        auto it = std::find_if(m_persons.begin(), m_persons.end(), [unique_id](auto& person) {
-            return person.get_unique_id() == unique_id;
+        mio::log_warning("get_person is accessed by GlobalID instead of LocalIndex. Therefore m_persons is searched.");
+        auto it = std::find_if(m_persons.begin(), m_persons.end(), [global_id](auto& person) {
+            return person.get_global_id() == global_id;
         });
         if (it == m_persons.end()) {
             log_error("Given Person is not in this Model.");
@@ -402,12 +401,11 @@ public:
         return *it;
     }
 
-    const Person& get_person(uint64_t unique_id) const
+    const Person& get_person(GlobalID global_id) const
     {
-        mio::log_warning(
-            "get_person is accessed by unique id instead of PersonId/person index. Therefore m_persons is searched.");
-        auto it = std::find_if(m_persons.begin(), m_persons.end(), [unique_id](auto& person) {
-            return person.get_unique_id() == unique_id;
+        mio::log_warning("get_person is accessed by unique id instead of LocalIndex. Therefore m_persons is searched.");
+        auto it = std::find_if(m_persons.begin(), m_persons.end(), [global_id](auto& person) {
+            return person.get_global_id() == global_id;
         });
         if (it == m_persons.end()) {
             log_error("Given Person is not in this Model.");
@@ -446,12 +444,12 @@ public:
     // Change the Location of a Person. this requires that Location is part of this Model.
     /**
      * @brief Let a Person change to another Location.
-     * @param[in] person PersonId of a person from this Model.
+     * @param[in] person LocalIndex of a person from this Model.
      * @param[in] destination LocationId of the Location in this Model, which the Person should change to.
      * @param[in] mode The transport mode the person uses to change the Location.
      * @param[in] cells The cells within the destination the person should be in.
      */
-    inline void change_location(PersonId person, LocationId destination, TransportMode mode = TransportMode::Unknown,
+    inline void change_location(LocalIndex person, LocationId destination, TransportMode mode = TransportMode::Unknown,
                                 const std::vector<uint32_t>& cells = {0})
     {
         LocationId origin = get_location(person).get_id();
@@ -469,11 +467,11 @@ public:
 
     /**
      * @brief Let a person interact with the population at its current location.
-     * @param[in] person PersonId of a person from this Model.
+     * @param[in] person LocalIndex of a person from this Model.
      * @param[in] t Time step of the simulation.
      * @param[in] dt Step size of the simulation.
      */
-    inline void interact(PersonId person, TimePoint t, TimeSpan dt)
+    inline void interact(LocalIndex person, TimePoint t, TimeSpan dt)
     {
         if (!m_are_exposure_caches_valid) {
             // checking caches is only needed for external calls
@@ -510,36 +508,36 @@ public:
 
     /**
      * @brief Get a reference to the location of a person.
-     * @param[in] id PersonId of a person.
+     * @param[in] index LocalIndex of a person.
      * @return Reference to the Location.
      * @{
      */
-    inline Location& get_location(PersonId id)
+    inline Location& get_location(LocalIndex index)
     {
-        return get_location(get_person(id).get_location());
+        return get_location(get_person(index).get_location());
     }
 
-    inline const Location& get_location(PersonId id) const
+    inline const Location& get_location(LocalIndex index) const
     {
-        return get_location(get_person(id).get_location());
+        return get_location(get_person(index).get_location());
     }
     /** @} */
 
     /**
      * @brief Get index of person in m_persons.
-     * @param[in] id A person's unique id. 
+     * @param[in] id A person's unique GlobalID. 
      * First 32 bit are the Person's individual id and second 32 bit the Persons's home model id. 
      * @return Index of Person in m_persons vector.
      * @{
      */
-    uint32_t get_person_index(uint64_t unique_id) const
+    LocalIndex get_person_index(GlobalID global_id) const
     {
         mio::log_debug("get_person_index is used leading to a search in m_persons.");
-        auto it = std::find_if(m_persons.begin(), m_persons.end(), [unique_id](auto& person) {
-            return person.get_unique_id() == unique_id;
+        auto it = std::find_if(m_persons.begin(), m_persons.end(), [global_id](auto& person) {
+            return person.get_global_id() == global_id;
         });
         if (it == m_persons.end()) {
-            log_error("Given PersonId is not in this Model.");
+            log_error("Given LocalIndex is not in this Model.");
             return std::numeric_limits<uint32_t>::max();
         }
         else {

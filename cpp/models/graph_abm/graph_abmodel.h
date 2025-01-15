@@ -23,6 +23,7 @@
 
 #include "abm/location_type.h"
 #include "abm/model.h"
+#include "abm/person_id.h"
 #include "abm/time.h"
 #include "abm/location_id.h"
 #include "memilio/utils/compiler_diagnostics.h"
@@ -80,12 +81,12 @@ public:
         perform_mobility(t, dt);
     }
 
-    void update_person_ids()
+    void update_person_indices()
     {
         for (uint32_t i = 0; i < static_cast<uint32_t>(m_persons.size()); ++i) {
             auto& person = m_persons[i];
-            if (person.get_id().get() != i) {
-                person.set_id(abm::PersonId{i});
+            if (person.get_index().get() != i) {
+                person.set_index(abm::LocalIndex{i});
             }
         }
     }
@@ -195,10 +196,10 @@ private:
                 }
             }
             else { //person moves to other world
-                Base::m_activeness_statuses[person_index] = false;
+                Base::m_activeness_statuses[person_index.get()] = false;
                 person.set_location(trip.destination_type, abm::LocationId::invalid_id(),
                                     std::numeric_limits<int>::max());
-                m_person_buffer.push_back(person_index);
+                m_person_buffer.push_back(person_index.get());
                 m_are_exposure_caches_valid       = false;
                 m_is_local_population_cache_valid = false;
             }

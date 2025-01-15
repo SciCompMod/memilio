@@ -144,7 +144,7 @@ public:
             }
         }
         //update person ids in model_from
-        model_from.update_person_ids();
+        model_from.update_person_indices();
     }
 };
 

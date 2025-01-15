@@ -44,9 +44,6 @@ namespace mio
 namespace abm
 {
 
-static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
-static constexpr uint64_t INVALID_UNIQUE_ID = std::numeric_limits<uint64_t>::max();
-
 /**
  * @brief Agents in the simulated Model that can carry and spread the Infection.
  */
@@ -58,22 +55,23 @@ public:
      * @param[in, out] rng RandomNumberGenerator.
      * @param[in, out] location Initial Location of the Person.
      * @param[in] age The AgeGroup of the Person.
-     * @param[in] person_id Index of the Person.
+     * @param[in] person_index Index of the Person.
+     * 
      */
     explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
-                    int location_model_id, AgeGroup age, PersonId person_id = PersonId::invalid_id(),
-                    uint64_t unique_id = INVALID_UNIQUE_ID);
+                    int location_model_id, AgeGroup age, LocalIndex person_index = LocalIndex::invalid_index(),
+                    GlobalID global_id = GlobalID::invalid_ID());
 
-    explicit Person(const Person& other, PersonId id);
+    explicit Person(const Person& other, LocalIndex index);
 
-    explicit Person(const Person& other, PersonId id, uint64_t unique_id);
+    explicit Person(const Person& other, LocalIndex index, GlobalID global_id);
 
     /**
      * @brief Compare two Person%s.
      */
     bool operator==(const Person& other) const
     {
-        return (m_unique_id == other.m_unique_id);
+        return (m_global_id == other.m_global_id);
     }
 
     /**
@@ -284,24 +282,24 @@ public:
     bool get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const TestParameters& params);
 
     /**
-     * @brief Get the PersonId of the Person.
-     * The PersonId should correspond to the index in m_persons in the Model.
-     * @return The PersonId.
+     * @brief Get the LocalIndex of the Person.
+     * The LocalIndex should correspond to the index in m_persons in the Model.
+     * @return The LocalIndex.
      */
-    PersonId get_id() const;
+    LocalIndex get_index() const;
 
     /**
-     * @brief Get the unique id of the Person.
-     * This id is only relevant for the graph abm and otherwise corresponds to the PersonId.
-     * @return The unique id.
+     * @brief Get the GlobalID of the Person.
+     * This ID is only relevant for the graph abm and otherwise corresponds to the LocalIndex.
+     * @return The GlobalID.
      */
-    uint64_t get_unique_id() const;
+    GlobalID get_global_id() const;
 
     /**
-    * @brief Set the PersonId of the Person.
-    * The PersonID should correspond to the index in m_persons in model.
+    * @brief Set the LocalIndex of the Person.
+    * The LocalIndex should correspond to the index in m_persons in model.
     */
-    void set_id(PersonId id);
+    void set_index(LocalIndex index);
 
     /**
      * @brief Get index of Cell%s of the Person.
@@ -440,7 +438,7 @@ public:
             .add("rnd_go_to_school_hour", m_random_goto_school_hour)
             .add("mask", m_mask)
             .add("compliance", m_compliance)
-            .add("id", m_person_id)
+            .add("index", m_person_index)
             .add("cells", m_cells)
             .add("last_transport_mode", m_last_transport_mode)
             .add("rng_counter", m_rng_counter)
@@ -481,15 +479,15 @@ private:
     Mask m_mask; ///< The Mask of the Person.
     std::vector<ScalarType>
         m_compliance; ///< Vector of compliance values for all #InterventionType%s. Values from 0 to 1.
-    PersonId m_person_id; ///< Id of the Person. Corresponds to the index in m_persons in Model.
+    LocalIndex m_person_index; ///< LocalIndex of the Person. Corresponds to the index in m_persons in Model.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
     CustomIndexArray<TestResult, TestType> m_test_results; ///< CustomIndexArray for TestResults.
     std::vector<int>
         m_assigned_location_model_ids; ///< Vector with model ids of the assigned locations. Only used in graph abm.
-    uint64_t
-        m_unique_id; ///< Unique identifier of a person. Is only relevant in graph abm, otherwise is equal to m_person_id.
+    GlobalID
+        m_global_id; ///< Unique identifier of a person. Is only relevant in graph abm, otherwise is equal to m_person_index.
 };
 
 } // namespace abm
@@ -500,7 +498,7 @@ struct DefaultFactory<abm::Person> {
     static abm::Person create()
     {
         return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::LocationId(), 0, AgeGroup(0),
-                           abm::PersonId());
+                           abm::LocalIndex(), abm::GlobalID());
     }
 };
 

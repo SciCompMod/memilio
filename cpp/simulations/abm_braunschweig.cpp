@@ -221,9 +221,9 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
         count_of_titles++;
     }
 
-    std::map<uint32_t, mio::abm::LocationId> locations        = {};
-    std::map<uint32_t, mio::abm::PersonId> pids_data_to_model = {};
-    std::map<uint32_t, uint32_t> person_ids                   = {};
+    std::map<uint32_t, mio::abm::LocationId> locations          = {};
+    std::map<uint32_t, mio::abm::LocalIndex> pids_data_to_model = {};
+    std::map<uint32_t, uint32_t> person_ids                     = {};
     std::map<uint32_t, std::pair<uint32_t, int>> locations_before;
     std::map<uint32_t, std::pair<uint32_t, int>> locations_after;
 
@@ -900,7 +900,7 @@ void write_log_to_file_trip_data(const T& history)
             auto agent_id = std::get<0>(mobility_data[mobility_data_index][trip_index]);
 
             int start_index = mobility_data_index - 1;
-            using Type      = std::tuple<mio::abm::PersonId, mio::abm::LocationId, mio::abm::TimePoint,
+            using Type      = std::tuple<mio::abm::GlobalID, mio::abm::LocationId, mio::abm::TimePoint,
                                     mio::abm::TransportMode, mio::abm::ActivityType, mio::abm::InfectionState>;
             while (!std::binary_search(std::begin(mobility_data[start_index]), std::end(mobility_data[start_index]),
                                        mobility_data[mobility_data_index][trip_index],

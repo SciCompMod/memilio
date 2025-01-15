@@ -50,22 +50,23 @@ LocationId Model::add_location(LocationType type, uint32_t num_cells)
     return id;
 }
 
-PersonId Model::add_person(const LocationId id, AgeGroup age)
+LocalIndex Model::add_person(const LocationId id, AgeGroup age)
 {
-    uint64_t unique_id = (static_cast<int64_t>(m_id)) << 32 | static_cast<uint32_t>(m_persons.size());
-    return add_person(Person(m_rng, get_location(id).get_type(), id, m_id, age, PersonId::invalid_id(), unique_id));
+    GlobalID global_id = (static_cast<int64_t>(m_id)) << 32 | static_cast<uint32_t>(m_persons.size());
+    return add_person(
+        Person(m_rng, get_location(id).get_type(), id, m_id, age, LocalIndex::invalid_index(), global_id));
 }
 
-PersonId Model::add_person(Person&& person)
+LocalIndex Model::add_person(Person&& person)
 {
     assert(person.get_location() != LocationId::invalid_id() && "Added Person's location must be valid.");
     assert(person.get_location() < LocationId((uint32_t)m_locations.size()) &&
            "Added Person's location is not in Model.");
-    assert(person.get_unique_id() != INVALID_UNIQUE_ID && "Added Person's unique id must be valid.");
+    assert(person.get_global_id() != GlobalID::invalid_ID() && "Added Person's unique id must be valid.");
     assert(person.get_age() < (AgeGroup)parameters.get_num_groups() && "Added Person's AgeGroup is too large.");
-    PersonId new_id{static_cast<uint32_t>(m_persons.size())};
+    LocalIndex new_index{static_cast<uint32_t>(m_persons.size())};
     //set correct person id aka index in m_persons vector
-    person.set_id(new_id);
+    person.set_index(new_index);
     person.set_assigned_location(LocationType::Cemetery, m_cemetery_id, m_id);
     m_persons.emplace_back(person);
     m_activeness_statuses.push_back(true);
@@ -73,7 +74,7 @@ PersonId Model::add_person(Person&& person)
     if (m_is_local_population_cache_valid) {
         ++m_local_population_cache[new_person.get_location().get()];
     }
-    return new_person.get_id();
+    return new_person.get_index();
 }
 
 void Model::evolve(TimePoint t, TimeSpan dt)
@@ -177,7 +178,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
            m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds();
          m_trip_list.increase_index()) {
         auto& trip        = m_trip_list.get_next_trip(weekend);
-        auto& person      = get_person(PersonId(static_cast<uint32_t>(trip.person_id)));
+        auto& person      = get_person(LocalIndex(static_cast<uint32_t>(trip.person_id.get())));
         auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
         // skip the trip if the person is in quarantine or is dead
         if (person.is_in_quarantine(t, parameters) || person.get_infection_state(t) == InfectionState::Dead) {
@@ -193,7 +194,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             continue;
         }
         // all requirements are met, move to target location
-        change_location(person.get_id(), target_location.get_id(), trip.trip_mode);
+        change_location(person.get_index(), target_location.get_id(), trip.trip_mode);
         // update worn mask to target location's requirements
         if (target_location.is_mask_required()) {
             // if the current MaskProtection level is lower than required, the Person changes mask
@@ -285,7 +286,7 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
             if (person.get_location_model_id() == m_id && m_activeness_statuses[i]) {
                 mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
                                                     m_contact_exposure_rates_cache[location], person,
-                                                    get_location(person.get_id()), t, dt);
+                                                    get_location(person.get_index()), t, dt);
             }
         } // implicit taskloop barrier
     } // implicit single barrier
@@ -332,7 +333,7 @@ auto Model::get_activeness_statuses() -> Range<std::pair<ActivenessIterator, Act
     return std::make_pair(m_activeness_statuses.begin(), m_activeness_statuses.end());
 }
 
-LocationId Model::find_location(LocationType type, const PersonId person) const
+LocationId Model::find_location(LocationType type, const LocalIndex person) const
 {
     auto location_id = get_person(person).get_assigned_location(type);
     assert(location_id != LocationId::invalid_id() && "The person has no assigned location of that type.");
