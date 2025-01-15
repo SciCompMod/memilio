@@ -46,7 +46,7 @@ struct MockHistory {
     }
 };
 
-TEST(TestGraphAbm, test_evolve_node)
+TEST(TestGraphAbm, test_advance_node)
 {
     auto t                                                               = mio::abm::TimePoint(0);
     auto dt                                                              = mio::abm::hours(10);
@@ -62,7 +62,7 @@ TEST(TestGraphAbm, test_evolve_node)
     p.set_assigned_location(work.get_type(), work.get_id(), 2);
     mio::ABMSimulationNode<MockHistory> node(MockHistory{}, t, std::move(model));
     EXPECT_EQ(node.get_simulation().get_model().get_activeness_statuses()[index], true);
-    node.evolve(t, dt);
+    node.advance(t, dt);
 
     EXPECT_EQ(node.get_simulation().get_time(), mio::abm::TimePoint(dt.seconds()));
     EXPECT_EQ(node.get_simulation().get_model().get_activeness_statuses()[index], false);
@@ -141,9 +141,9 @@ TEST(TestGraphAbm, test_apply_mobility)
     mio::ABMSimulationNode<MockHistory> node2(MockHistory{}, t, std::move(model2));
     mio::ABMSimulationNode<MockHistory> node3(MockHistory{}, t, std::move(model3));
 
-    node1.evolve(t, dt);
-    node2.evolve(t, dt);
-    node3.evolve(t, dt);
+    node1.advance(t, dt);
+    node2.advance(t, dt);
+    node3.advance(t, dt);
 
     EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 0);
     EXPECT_EQ(node3.get_simulation().get_model().get_persons().size(), 0);

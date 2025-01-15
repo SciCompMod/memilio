@@ -88,7 +88,7 @@ public:
     * @param[in] dt Time span that shoulb be advanced
     * @param[in, out] history History object(s) storing simulation information
     */
-    void evolve(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
+    void advance(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
     {
         m_simulation.advance(t + dt, std::get<0>(m_history));
     }
@@ -167,15 +167,15 @@ void apply_mobility(abm::TimePoint t, abm::TimeSpan /*dt*/, ABMMobilityEdge<Hist
 
 /**
  * @brief Node functor for abm graph simulation.
- * @see ABMSimulationNode::evolve
+ * @see ABMSimulationNode::advance
  * @param[in] t Time point the functor is applied.
- * @param[in] dt Time interval the node is evolved.
+ * @param[in] dt Time interval the node is advanced.
  * @param[in] node ABMSimulationNode to which the functor is applied.
  */
 template <class... History>
-void evolve_model(abm::TimePoint t, abm::TimeSpan dt, ABMSimulationNode<History...>& node)
+void advance_model(abm::TimePoint t, abm::TimeSpan dt, ABMSimulationNode<History...>& node)
 {
-    node.evolve(t, dt);
+    node.advance(t, dt);
 }
 
 /**
@@ -194,7 +194,7 @@ GraphSimulation<Graph<ABMSimulationNode<History...>, ABMMobilityEdge<History...>
 make_abm_graph_sim(abm::TimePoint t0, abm::TimeSpan dt,
                    Graph<ABMSimulationNode<History...>, ABMMobilityEdge<History...>>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<History...>, &apply_mobility<History...>);
+    return make_graph_sim(t0, dt, std::move(graph), &advance_model<History...>, &apply_mobility<History...>);
 }
 
 } // namespace mio
