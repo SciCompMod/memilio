@@ -131,6 +131,16 @@ public:
     }
 
     /**
+     * @brief Getter for number of age groups.
+     *
+     * @return Returns number of age groups. 
+     */
+    size_t get_num_agegroups() const
+    {
+        return m_num_agegroups;
+    }
+
+    /**
      * @brief Setter for the tolerance used to calculate the maximum support of the TransitionDistributions.
      *
      * @param[in] new_tol New tolerance.
