@@ -23,6 +23,7 @@
 #include "ide_secir/simulation.h"
 #include "ide_secir/parameters_io.h"
 #include "memilio/config.h"
+#include "memilio/io/epi_data.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/date.h"
 #include "memilio/math/eigen.h"
@@ -88,7 +89,21 @@ int main(int argc, char** argv)
     }
     else {
         // Use the real data for initialization.
-        auto status = mio::isecir::set_initial_flows(model, dt, filename, mio::Date(2020, 12, 24));
+        // Here we assume that the file contains data without age resolution, hence we use read_confirmed_cases_noage()
+        // for reading the data and mio::ConfirmedCasesNoAgeEntry as EntryType in set_initial_flows().
+
+        auto status_read_data = mio::read_confirmed_cases_noage(filename);
+        if (!status_read_data) {
+            std::cout << "Error: " << status_read_data.error().formatted_message();
+            return -1;
+        }
+
+        std::vector<mio::ConfirmedCasesNoAgeEntry> rki_data = status_read_data.value();
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases =
+            mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 1.);
+
+        auto status = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(
+            model, dt, rki_data, mio::Date(2020, 12, 24), scale_confirmed_cases);
         if (!status) {
             std::cout << "Error: " << status.error().formatted_message();
             return -1;

@@ -131,6 +131,16 @@ public:
     }
 
     /**
+     * @brief Getter for number of age groups.
+     *
+     * @return Returns number of age groups. 
+     */
+    size_t get_num_agegroups() const
+    {
+        return m_num_agegroups;
+    }
+
+    /**
      * @brief Setter for the tolerance used to calculate the maximum support of the TransitionDistributions.
      *
      * @param[in] new_tol New tolerance.
@@ -358,8 +368,10 @@ private:
     friend class Simulation;
     // In set_initial_flows(), we compute initial flows based on RKI data using the (private) compute_flow() function
     // which is why it is defined as a friend function.
-    friend IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date,
-                                            ScalarType scale_confirmed_cases);
+    template <typename EntryType>
+    friend IOResult<void>
+    set_initial_flows(Model& model, const ScalarType dt, const std::vector<EntryType> rki_data, const Date date,
+                      const mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases);
 };
 
 } // namespace isecir
