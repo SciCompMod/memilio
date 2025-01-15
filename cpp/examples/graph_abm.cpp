@@ -25,7 +25,7 @@
 #include "abm/time.h"
 #include "abm/person_id.h"
 #include "graph_abm/graph_abm_mobility.h"
-#include "graph_abm/model_wrapper.h"
+#include "graph_abm/graph_abmodel.h"
 #include "memilio/io/history.h"
 #include "memilio/mobility/graph.h"
 #include <cstddef>
@@ -45,7 +45,7 @@ struct Logger : mio::LogAlways {
     */
     using Type = std::vector<std::tuple<int, mio::abm::LocationType, mio::abm::LocationId, size_t,
                                         std::map<mio::abm::InfectionState, size_t>>>;
-    static Type log(const mio::abm::Simulation<mio::ModelWrapper>& sim)
+    static Type log(const mio::abm::Simulation<mio::GraphABModel>& sim)
     {
         Type location_information{};
         location_information.reserve(size_t(mio::abm::LocationType::Count));
@@ -73,7 +73,7 @@ int main()
     const auto age_group_adults   = mio::AgeGroup(1);
     const auto age_group_seniors  = mio::AgeGroup(2);
 
-    auto model1 = mio::ModelWrapper(num_age_groups, 0);
+    auto model1 = mio::GraphABModel(num_age_groups, 0);
 
     //Set infection parameters
     model1.parameters.get<mio::abm::IncubationPeriod>()              = 4.;
@@ -131,7 +131,7 @@ int main()
     add_household_group_to_model(model1, single_hh_group_m1);
     add_household_group_to_model(model1, family_hh_group_m1);
 
-    auto model2 = mio::ModelWrapper(num_age_groups, 1);
+    auto model2 = mio::GraphABModel(num_age_groups, 1);
 
     //Set infection parameters
     model2.parameters.get<mio::abm::IncubationPeriod>()              = 4.;

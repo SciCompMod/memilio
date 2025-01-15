@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "graph_abm/model_wrapper.h"
+#include "graph_abm/graph_abmodel.h"
 
 namespace mio
 {

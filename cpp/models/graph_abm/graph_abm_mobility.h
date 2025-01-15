@@ -28,7 +28,7 @@
 #include "abm/person.h"
 #include "abm/person_id.h"
 #include "abm/model_functions.h"
-#include "graph_abm/model_wrapper.h"
+#include "graph_abm/graph_abmodel.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/compiler_diagnostics.h"
@@ -48,7 +48,7 @@ class ABMSimulationNode
 {
 
 public:
-    using Sim = abm::Simulation<ModelWrapper>;
+    using Sim = abm::Simulation<GraphABModel>;
 
     template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
     ABMSimulationNode(std::tuple<History...>&& history, Args&&... args)

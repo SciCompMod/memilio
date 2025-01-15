@@ -23,7 +23,7 @@
 #include "abm/mobility_data.h"
 #include "abm/model.h"
 #include "abm/parameters.h"
-#include "graph_abm/model_wrapper.h"
+#include "graph_abm/graph_abmodel.h"
 #include "abm/location_type.h"
 #include "abm/time.h"
 #include "graph_abm/graph_abm_mobility.h"
@@ -50,7 +50,7 @@ TEST(TestGraphAbm, test_evolve_node)
 {
     auto t                                                               = mio::abm::TimePoint(0);
     auto dt                                                              = mio::abm::hours(10);
-    auto model                                                           = mio::ModelWrapper(size_t(1), 1);
+    auto model                                                           = mio::GraphABModel(size_t(1), 1);
     model.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)] = true;
     auto home_id = model.add_location(mio::abm::LocationType::Home);
     auto& home   = model.get_location(home_id);
@@ -73,11 +73,11 @@ TEST(TestGraphAbm, test_evolve_node)
 TEST(TestGraphAbm, test_apply_mobility)
 {
     auto model1 =
-        mio::ModelWrapper(size_t(2), 1, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
+        mio::GraphABModel(size_t(2), 1, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
     auto model2 =
-        mio::ModelWrapper(size_t(2), 2, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
+        mio::GraphABModel(size_t(2), 2, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
     auto model3 =
-        mio::ModelWrapper(size_t(2), 3, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
+        mio::GraphABModel(size_t(2), 3, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
     model1.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)] = true;
     model2.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)] = true;
     model3.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(0)] = true;
@@ -164,8 +164,8 @@ TEST(TestGraphAbm, test_apply_mobility)
 
 TEST(TestGraphABM, test_graph_simulation)
 {
-    auto model1 = mio::ModelWrapper(size_t(1), 1);
-    auto model2 = mio::ModelWrapper(size_t(1), 2);
+    auto model1 = mio::GraphABModel(size_t(1), 1);
+    auto model2 = mio::GraphABModel(size_t(1), 2);
 
     mio::abm::TimePoint t0   = mio::abm::TimePoint(0);
     mio::abm::TimePoint tmax = t0 + mio::abm::days(5);

@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef MIO_ABM_MODEL_WRAPPER_H
-#define MIO_ABM_MODEL_WRAPPER_H
+#ifndef MIO_ABM_GRAPH_ABMODEL_H
+#define MIO_ABM_GRAPH_ABMODEL_H
 
 #include "abm/location_type.h"
 #include "abm/model.h"
@@ -38,12 +38,12 @@
 namespace mio
 {
 using namespace abm;
-class ModelWrapper : public abm::Model
+class GraphABModel : public abm::Model
 {
     using Base = Model;
 
 public:
-    ModelWrapper(size_t num_agegroups, int id,
+    GraphABModel(size_t num_agegroups, int id,
                  std::vector<Base::MobilityRuleType> mobility_rules =
                      std::vector<Base::MobilityRuleType>{&get_buried, &return_home_when_recovered, &go_to_hospital,
                                                          &go_to_icu, &go_to_school, &go_to_work, &go_to_shop,
@@ -212,4 +212,4 @@ private:
 };
 } // namespace mio
 
-#endif //MIO_ABM_MODEL_WRAPPER_H
+#endif //MIO_ABM_GRAPH_ABMODEL_H
