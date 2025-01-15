@@ -2,6 +2,7 @@ import requests
 import datetime
 import json
 from itertools import combinations
+import numpy as np
 import memilio.epidata.geoModificationGermany as gMG
 
 header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
@@ -308,7 +309,7 @@ def post_to_db_nodelist():
         print(post_response.status_code)
 
 
-def post_to_db_scenarios():
+def post_to_db_scenarios(modelparameters_entry={},   mcmc=False):
     # Define start and end date for casedata scenario
     start_date_casedata = (datetime.datetime.now() -
                            datetime.timedelta(days=365)).strftime("%Y-%m-%d")
@@ -334,9 +335,11 @@ def post_to_db_scenarios():
         if group["name"] == f"age_{i}":
             group_ids.append(group["id"])
 
-    variantFactor = 1.4
-    # Define dict that contains name of parameter and min and max values for all 6 age groups.
-    parameter_dict_default = {
+    if not mcmc:
+
+        variantFactor = 1.4
+        # Define dict that contains name of parameter and min and max values for all 6 age groups.
+        parameter_dict_default = {
         "TimeExposed": [[2.67, 2.67, 2.67, 2.67, 2.67, 2.67], [4., 4., 4., 4., 4., 4.]],
         "TimeInfectedNoSymptoms": [[1.2, 1.2, 1.2, 1.2, 1.2, 1.2], [2.53, 2.53, 2.53, 2.53, 2.53, 2.53]],
         "TimeInfectedSymptoms": [[5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465], [8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085]],
@@ -370,22 +373,26 @@ def post_to_db_scenarios():
         "ReducedTimeInfectedMild": [[1., 1., 1., 1., 1., 1.], [1., 1., 1., 1., 1., 1.]],
         "Seasonality": [[0.1, 0.1, 0.1, 0.1, 0.1, 0.1], [0.3, 0.3, 0.3, 0.3, 0.3, 0.3]]}
 
-    get_parameters = requests.get(
-        url + "parameterdefinitions/", headers=header)
+        # Append parameter value for age group "total". This is done by weighting the other parameter values according to 
+        # their share of the total population of Germany (using data from regionalstatistik). 
 
-    modelparameters_entry = []
-    for parameter in get_parameters.json():
-        value_entry = []
-        for i, group_id in enumerate(group_ids):
-            value_entry.append({
-                "groupId": f'{group_id}',
-                "valueMin": parameter_dict_default[parameter["name"]][0][i],
-                "valueMax": parameter_dict_default[parameter["name"]][1][i]
+        append_parameter_for_agegroup_total(parameter_dict_default)
+        get_parameters = requests.get(
+            url + "parameterdefinitions/", headers=header)
+
+        modelparameters_entry = []
+        for parameter in get_parameters.json():
+            value_entry = []
+            for i, group_id in enumerate(group_ids):
+                value_entry.append({
+                    "groupId": f'{group_id}',
+                    "valueMin": parameter_dict_default[parameter["name"]][0][i],
+                    "valueMax": parameter_dict_default[parameter["name"]][1][i]
+                })
+            modelparameters_entry.append({
+                "parameterId": f'{parameter["id"]}',
+                "values": value_entry
             })
-        modelparameters_entry.append({
-            "parameterId": f'{parameter["id"]}',
-            "values": value_entry
-        })
 
     get_interventions = requests.get(
         url + "interventions/templates/", headers=header)
@@ -454,7 +461,7 @@ def post_to_db_scenarios():
         "modelParameters": modelparameters_entry,
         "nodeListId": nodelist_id[0],
         "linkedInterventions": [],
-        "percentiles": [50]
+        "percentiles": [50],
     },
         {
         "name": "baseline",
@@ -465,7 +472,7 @@ def post_to_db_scenarios():
         "modelParameters": modelparameters_entry,
         "nodeListId": nodelist_id[0],
         "linkedInterventions": [],
-        "percentiles": [25, 50, 75]
+        "percentiles": [25, 50, 75],
     }]
 
     # Define remaining scenarios with different combinations of interventions
@@ -487,7 +494,7 @@ def post_to_db_scenarios():
             "modelParameters": modelparameters_entry,
             "nodeListId": nodelist_id[0],
             "linkedInterventions": intervention_entry,
-            "percentiles": [25, 50, 75]
+            "percentiles": [25, 50, 75],
         })
 
     for scenario in scenario_data:
@@ -495,7 +502,18 @@ def post_to_db_scenarios():
             url + "scenarios/", json=scenario, headers=header)
         if (post_response.status_code != 200):
             print(post_response.status_code)
+            print(post_response.reason)
 
+def append_parameter_for_agegroup_total(param_dict):
+    # Append parameter value for age group "total". This additional parameter is computed by weighting the other 
+    # parameter values according to their share of the total population of Germany (using data from regionalstatistik). 
+    share_of_agegroup = [0.04773178, 0.09029715, 0.22754236, 0.34473159, 0.21830716, 0.07138996]
+    for key in list(param_dict.keys()):
+
+        param_dict[key][0].append(np.dot(param_dict[key][0], share_of_agegroup))
+        param_dict[key][0].append(np.dot(param_dict[key][1], share_of_agegroup))
+
+    
 
 def post_to_db():
     # Define all necessary data and post.
@@ -510,7 +528,9 @@ def post_to_db():
 
 
 def main():
+    print("Delete everything from db.")
     delete_everything_from_db()
+    print("Fill db.")
     post_to_db()
     
 
