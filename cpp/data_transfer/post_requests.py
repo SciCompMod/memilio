@@ -10,77 +10,98 @@ url = "http://localhost:8123/"
 
 
 def delete_everything_from_db():
-    # GET and DELETE everything
-    response = requests.get(url + "compartments/", headers=header)
-    ids = [compartment["id"] for compartment in response.json()]
-    for id in ids:
-        delete_response = requests.delete(
-            url + "compartments/" + id, headers=header)
-        print(delete_response.status_code)
+    # # GET and DELETE everything
+    # response = requests.get(url + "compartments/", headers=header)
+    # ids = [compartment["id"] for compartment in response.json()]
+    # for id in ids:
+    #     delete_response = requests.delete(
+    #         url + "compartments/" + id, headers=header)
+    #     if (delete_response.status_code != 200):
+    #         print(delete_response.status_code)
+    #         print(delete_response.reason)
 
-    print(requests.get(url + "compartments/", headers=header).json())
+    # print(requests.get(url + "compartments/", headers=header).json())
+
+    # # response = requests.get(url + "groups/", headers=header)
+    # # print(len(response.json()))
 
     # response = requests.get(url + "groups/", headers=header)
-    # print(len(response.json()))
+    # ids = [compartment["id"] for compartment in response.json()]
+    # for id in ids:
+    #     delete_response = requests.delete(url + "groups/" + id, headers=header)
+    #     if (delete_response.status_code != 200):
+    #         print(delete_response.status_code)
+    #         print(delete_response.reason)
 
-    response = requests.get(url + "groups/", headers=header)
-    ids = [compartment["id"] for compartment in response.json()]
-    for id in ids:
-        delete_response = requests.delete(url + "groups/" + id, headers=header)
-        print(delete_response.status_code)
+    # print(requests.get(url + "groups/", headers=header).json())
 
-    print(requests.get(url + "groups/", headers=header).json())
+    
 
-    response = requests.get(url + "nodelists/", headers=header)
-    ids = [compartment["id"] for compartment in response.json()]
-    for id in ids:
-        delete_response = requests.delete(
-            url + "nodelists/" + id, headers=header)
-        print(delete_response.status_code)
-    print(requests.get(url + "nodelists/", headers=header).json())
+    # response = requests.get(url + "nodes/", headers=header)
+    # ids = [compartment["id"] for compartment in response.json()]
+    # for id in ids:
+    #     delete_response = requests.delete(url + "nodes/" + id, headers=header)
+    #     if (delete_response.status_code != 200):
+    #         print(delete_response.status_code)
+    #         print(delete_response.reason)
 
-    response = requests.get(url + "nodes/", headers=header)
-    ids = [compartment["id"] for compartment in response.json()]
-    for id in ids:
-        delete_response = requests.delete(url + "nodes/" + id, headers=header)
-        print(delete_response.status_code)
+    # print(requests.get(url + "nodes/", headers=header).json())
 
-    print(requests.get(url + "nodes/", headers=header).json())
+    # response = requests.get(url + "models/", headers=header)
+    # ids = [compartment["id"] for compartment in response.json()]
+    # for id in ids:
+    #     delete_response = requests.delete(url + "models/" + id, headers=header)
+    #     if (delete_response.status_code != 200):
+    #         print(delete_response.status_code)
+    #         print(delete_response.reason)
 
-    response = requests.get(url + "models/", headers=header)
-    ids = [compartment["id"] for compartment in response.json()]
-    for id in ids:
-        delete_response = requests.delete(url + "models/" + id, headers=header)
-        print(delete_response.status_code)
+    # print(requests.get(url + "models/", headers=header).json())
 
-    print(requests.get(url + "models/", headers=header).json())
+    # response = requests.get(url + "parameterdefinitions/", headers=header)
+    # ids = [compartment["id"] for compartment in response.json()]
+    # for id in ids:
+    #     delete_response = requests.delete(
+    #         url + "parameterdefinitions/" + id, headers=header)
+    #     if (delete_response.status_code != 200):
+    #         print(delete_response.status_code)
+    #         print(delete_response.reason)
 
-    response = requests.get(url + "parameterdefinitions/", headers=header)
-    ids = [compartment["id"] for compartment in response.json()]
-    for id in ids:
-        delete_response = requests.delete(
-            url + "parameterdefinitions/" + id, headers=header)
-        print(delete_response.status_code)
+    # print(requests.get(url + "parameterdefinitions/", headers=header).json())
 
-    print(requests.get(url + "parameterdefinitions/", headers=header).json())
+    # response = requests.get(url + "interventions/templates/", headers=header)
+    # ids = [compartment["id"] for compartment in response.json()]
+    # for id in ids:
+    #     delete_response = requests.delete(
+    #         url + "interventions/templates/" + id, headers=header)
+    #     if (delete_response.status_code != 200):
+    #         print(delete_response.status_code)
+    #         print(delete_response.reason)
 
-    response = requests.get(url + "interventions/templates/", headers=header)
-    ids = [compartment["id"] for compartment in response.json()]
-    for id in ids:
-        delete_response = requests.delete(
-            url + "interventions/templates/" + id, headers=header)
-        print(delete_response.status_code)
-
-    print(requests.get(url + "interventions/templates/", headers=header).json())
+    # print(requests.get(url + "interventions/templates/", headers=header).json())
 
     response = requests.get(url + "scenarios/", headers=header)
     ids = [compartment["id"] for compartment in response.json()]
     for id in ids:
         delete_response = requests.delete(
             url + "scenarios/" + id, headers=header)
-        print(delete_response.status_code)
+        if (delete_response.status_code != 200):
+            print(delete_response.status_code)
+            print(delete_response.reason)
+            # print(delete_response.json())
 
     print(requests.get(url + "scenarios/", headers=header).json())
+
+    response = requests.get(url + "nodelists/", headers=header)
+    ids = [compartment["id"] for compartment in response.json()]
+    for id in ids:
+        delete_response = requests.delete(
+            url + "nodelists/" + id, headers=header)
+        if (delete_response.status_code != 200):
+            print(delete_response.status_code)
+            print(delete_response.reason)
+            print(delete_response.json())
+
+    print(requests.get(url + "nodelists/", headers=header).json())
 
 
 def post_to_db_compartments():
@@ -117,7 +138,8 @@ def post_to_db_groups():
         {"name": "age_2", "description": "15-34", "category": "age"},
         {"name": "age_3", "description": "35-59", "category": "age"},
         {"name": "age_4", "description": "60-79", "category": "age"},
-        {"name": "age_5", "description": "80+", "category": "age"}
+        {"name": "age_5", "description": "80+", "category": "age"},
+        {"name": "total", "description": "Total population", "category": "age"}
     ]
 
     for group in group_data:
