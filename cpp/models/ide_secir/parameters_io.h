@@ -76,7 +76,8 @@ IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::v
                                  const mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases)
 {
     // Check if scale_confirmed_cases has the right size.
-    assert(size_t(model.m_transitions[0].size() / mio::InfectionTransition::Count) == scale_confirmed_cases.size());
+    assert((size_t)(model.m_transitions[0].size() / (size_t)mio::InfectionTransition::Count) ==
+           (size_t)scale_confirmed_cases.size());
     // Check if the correct EntryType was used.
     if constexpr (std::is_same_v<EntryType, ConfirmedCasesDataEntry>) {
         assert(size_t(model.m_transitions[0].size() / mio::InfectionTransition::Count) ==
