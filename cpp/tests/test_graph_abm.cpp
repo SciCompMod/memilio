@@ -181,3 +181,56 @@ TEST(TestGraphABM, test_graph_simulation)
 
     EXPECT_EQ(sim.get_t(), tmax);
 }
+
+TEST(TestGraphABM, mask_compliance)
+{
+    auto model = mio::GraphABModel(size_t(2), 0, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
+    model.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(1)]   = true;
+    model.parameters.get<mio::abm::AgeGroupGotoSchool>()[mio::AgeGroup(0)] = true;
+    //add home, work and school location
+    auto home_id   = model.add_location(mio::abm::LocationType::Home);
+    auto work_id   = model.add_location(mio::abm::LocationType::Work);
+    auto school_id = model.add_location(mio::abm::LocationType::School);
+    auto& work     = model.get_location(work_id);
+    auto& home     = model.get_location(home_id);
+    auto& school   = model.get_location(school_id);
+    //school and work require FFP2 masks
+    school.set_required_mask(mio::abm::MaskType::FFP2);
+    work.set_required_mask(mio::abm::MaskType::FFP2);
+    auto p_id1 = model.add_person(home_id, mio::AgeGroup(1));
+    auto p_id2 = model.add_person(home_id, mio::AgeGroup(0));
+    auto& p1   = model.get_person(p_id1);
+    auto& p2   = model.get_person(p_id2);
+    p1.set_assigned_location(work.get_type(), work.get_id(), work.get_model_id());
+    p1.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
+    p2.set_assigned_location(school.get_type(), school.get_id(), school.get_model_id());
+    p2.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
+    //person is not compliant with mask
+    p1.set_compliance(mio::abm::InterventionType::Mask, 0.0);
+    p2.set_compliance(mio::abm::InterventionType::Mask, 0.0);
+
+    //add trips for p2
+    mio::abm::TripList& trips = model.get_trip_list();
+    mio::abm::Trip trip1(p2.get_global_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), school_id, model.get_id(),
+                         home_id, model.get_id(), mio::abm::TransportMode::Unknown, mio::abm::LocationType::School);
+
+    trips.add_trip(trip1);
+
+    auto t0 = mio::abm::TimePoint(0);
+    auto dt = mio::abm::hours(12);
+    auto t  = t0;
+    model.evolve(t, dt);
+    t += dt;
+    //persons should still be at home
+    EXPECT_EQ(p1.get_location_type(), mio::abm::LocationType::Home);
+    EXPECT_EQ(p2.get_location_type(), mio::abm::LocationType::Home);
+    //person is compliant with mask
+    p1.set_compliance(mio::abm::InterventionType::Mask, 1.0);
+    p2.set_compliance(mio::abm::InterventionType::Mask, 1.0);
+    model.evolve(t, dt);
+    t += dt;
+    model.evolve(t, dt);
+    //person should be at work and school
+    EXPECT_EQ(p1.get_location_type(), mio::abm::LocationType::Work);
+    EXPECT_EQ(p2.get_location_type(), mio::abm::LocationType::School);
+}
