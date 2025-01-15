@@ -8,77 +8,7 @@ header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
 
 url = "http://localhost:8123/"
 
-
-def delete_everything_from_db():
-    # # GET and DELETE everything
-    # response = requests.get(url + "compartments/", headers=header)
-    # ids = [compartment["id"] for compartment in response.json()]
-    # for id in ids:
-    #     delete_response = requests.delete(
-    #         url + "compartments/" + id, headers=header)
-    #     if (delete_response.status_code != 200):
-    #         print(delete_response.status_code)
-    #         print(delete_response.reason)
-
-    # print(requests.get(url + "compartments/", headers=header).json())
-
-    # # response = requests.get(url + "groups/", headers=header)
-    # # print(len(response.json()))
-
-    # response = requests.get(url + "groups/", headers=header)
-    # ids = [compartment["id"] for compartment in response.json()]
-    # for id in ids:
-    #     delete_response = requests.delete(url + "groups/" + id, headers=header)
-    #     if (delete_response.status_code != 200):
-    #         print(delete_response.status_code)
-    #         print(delete_response.reason)
-
-    # print(requests.get(url + "groups/", headers=header).json())
-
-    
-
-    # response = requests.get(url + "nodes/", headers=header)
-    # ids = [compartment["id"] for compartment in response.json()]
-    # for id in ids:
-    #     delete_response = requests.delete(url + "nodes/" + id, headers=header)
-    #     if (delete_response.status_code != 200):
-    #         print(delete_response.status_code)
-    #         print(delete_response.reason)
-
-    # print(requests.get(url + "nodes/", headers=header).json())
-
-    # response = requests.get(url + "models/", headers=header)
-    # ids = [compartment["id"] for compartment in response.json()]
-    # for id in ids:
-    #     delete_response = requests.delete(url + "models/" + id, headers=header)
-    #     if (delete_response.status_code != 200):
-    #         print(delete_response.status_code)
-    #         print(delete_response.reason)
-
-    # print(requests.get(url + "models/", headers=header).json())
-
-    # response = requests.get(url + "parameterdefinitions/", headers=header)
-    # ids = [compartment["id"] for compartment in response.json()]
-    # for id in ids:
-    #     delete_response = requests.delete(
-    #         url + "parameterdefinitions/" + id, headers=header)
-    #     if (delete_response.status_code != 200):
-    #         print(delete_response.status_code)
-    #         print(delete_response.reason)
-
-    # print(requests.get(url + "parameterdefinitions/", headers=header).json())
-
-    # response = requests.get(url + "interventions/templates/", headers=header)
-    # ids = [compartment["id"] for compartment in response.json()]
-    # for id in ids:
-    #     delete_response = requests.delete(
-    #         url + "interventions/templates/" + id, headers=header)
-    #     if (delete_response.status_code != 200):
-    #         print(delete_response.status_code)
-    #         print(delete_response.reason)
-
-    # print(requests.get(url + "interventions/templates/", headers=header).json())
-
+def delete_scenarios():
     response = requests.get(url + "scenarios/", headers=header)
     ids = [compartment["id"] for compartment in response.json()]
     for id in ids:
@@ -87,10 +17,45 @@ def delete_everything_from_db():
         if (delete_response.status_code != 200):
             print(delete_response.status_code)
             print(delete_response.reason)
-            # print(delete_response.json())
 
     print(requests.get(url + "scenarios/", headers=header).json())
 
+def delete_interventions():
+    response = requests.get(url + "interventions/templates/", headers=header)
+    ids = [compartment["id"] for compartment in response.json()]
+    for id in ids:
+        delete_response = requests.delete(
+            url + "interventions/templates/" + id, headers=header)
+        if (delete_response.status_code != 200):
+            print(delete_response.status_code)
+            print(delete_response.reason)
+
+    print(requests.get(url + "interventions/templates/", headers=header).json())
+
+def delete_models():
+    response = requests.get(url + "models/", headers=header)
+    ids = [compartment["id"] for compartment in response.json()]
+    for id in ids:
+        delete_response = requests.delete(url + "models/" + id, headers=header)
+        if (delete_response.status_code != 200):
+            print(delete_response.status_code)
+            print(delete_response.reason)
+
+    print(requests.get(url + "models/", headers=header).json())
+
+def delete_parameters():
+    response = requests.get(url + "parameterdefinitions/", headers=header)
+    ids = [compartment["id"] for compartment in response.json()]
+    for id in ids:
+        delete_response = requests.delete(
+            url + "parameterdefinitions/" + id, headers=header)
+        if (delete_response.status_code != 200):
+            print(delete_response.status_code)
+            print(delete_response.reason)
+
+    print(requests.get(url + "parameterdefinitions/", headers=header).json())
+
+def delete_nodelists():
     response = requests.get(url + "nodelists/", headers=header)
     ids = [compartment["id"] for compartment in response.json()]
     for id in ids:
@@ -102,6 +67,51 @@ def delete_everything_from_db():
             print(delete_response.json())
 
     print(requests.get(url + "nodelists/", headers=header).json())
+
+def delete_nodes():
+    response = requests.get(url + "nodes/", headers=header)
+    ids = [compartment["id"] for compartment in response.json()]
+    for id in ids:
+        delete_response = requests.delete(url + "nodes/" + id, headers=header)
+        if (delete_response.status_code != 200):
+            print(delete_response.status_code)
+            print(delete_response.reason)
+
+    print(requests.get(url + "nodes/", headers=header).json())
+
+def delete_compartments():
+    response = requests.get(url + "compartments/", headers=header)
+    ids = [compartment["id"] for compartment in response.json()]
+    for id in ids:
+        delete_response = requests.delete(
+            url + "compartments/" + id, headers=header)
+        if (delete_response.status_code != 200):
+            print(delete_response.status_code)
+            print(delete_response.reason)
+
+    print(requests.get(url + "compartments/", headers=header).json())
+
+
+def delete_groups():
+    response = requests.get(url + "groups/", headers=header)
+    ids = [compartment["id"] for compartment in response.json()]
+    for id in ids:
+        delete_response = requests.delete(url + "groups/" + id, headers=header)
+        if (delete_response.status_code != 200):
+            print(delete_response.status_code)
+            print(delete_response.reason)
+
+    print(requests.get(url + "groups/", headers=header).json())
+
+def delete_everything_from_db():
+    delete_scenarios()
+    delete_interventions()
+    delete_models()
+    delete_parameters()
+    delete_nodelists()
+    delete_nodes()
+    delete_compartments()
+    delete_groups()
 
 
 def post_to_db_compartments():
@@ -138,8 +148,8 @@ def post_to_db_groups():
         {"name": "age_2", "description": "15-34", "category": "age"},
         {"name": "age_3", "description": "35-59", "category": "age"},
         {"name": "age_4", "description": "60-79", "category": "age"},
-        {"name": "age_5", "description": "80+", "category": "age"},
-        {"name": "total", "description": "Total population", "category": "age"}
+        {"name": "age_5", "description": "80+", "category": "age"} #,
+        # {"name": "total", "description": "Total population", "category": "age"}
     ]
 
     for group in group_data:
@@ -213,20 +223,20 @@ def post_to_db_parameters():
          "description": "CriticalPerSevere"},
         {"name": "DeathsPerCritical",
          "description": "DeathsPerCritical"},
-        {"name": "ReducExposedPartialImmunity",
-         "description": "ReducExposedPartialImmunity"},
-        {"name": "ReducExposedImprovedImmunity",
-         "description": "ReducExposedImprovedImmunity"},
-        {"name": "ReducInfectedSymptomsPartialImmunity",
-         "description": "ReducInfectedSymptomsPartialImmunity"},
-        {"name": "ReducInfectedSymptomsImprovedImmunity",
-         "description": "ReducInfectedSymptomsImprovedImmunity"},
-        {"name": "ReducInfectedSevereCriticalDeadPartialImmunity",
-         "description": "ReducInfectedSevereCriticalDeadPartialImmunity"},
-        {"name": "ReducInfectedSevereCriticalDeadImprovedImmunity",
-         "description": "ReducInfectedSevereCriticalDeadImprovedImmunity"},
-        {"name": "ReducTimeInfectedMild",
-         "description": "ReducTimeInfectedMild"},
+        {"name": "ReducedExposedPartialImmunity",
+         "description": "ReducedExposedPartialImmunity"},
+        {"name": "ReducedExposedImprovedImmunity",
+         "description": "ReducedExposedImprovedImmunity"},
+        {"name": "ReducedInfectedSymptomsPartialImmunity",
+         "description": "ReducedInfectedSymptomsPartialImmunity"},
+        {"name": "ReducedInfectedSymptomsImprovedImmunity",
+         "description": "ReducedInfectedSymptomsImprovedImmunity"},
+        {"name": "ReducedInfectedSevereCriticalDeadPartialImmunity",
+         "description": "ReducedInfectedSevereCriticalDeadPartialImmunity"},
+        {"name": "ReducedInfectedSevereCriticalDeadImprovedImmunity",
+         "description": "ReducedInfectedSevereCriticalDeadImprovedImmunity"},
+        {"name": "ReducedTimeInfectedMild",
+         "description": "ReducedTimeInfectedMild"},
         {"name": "Seasonality",
          "description": "Seasonality"}
     ]
@@ -351,13 +361,13 @@ def post_to_db_scenarios():
             0.009, 0.009, 0.023, 0.074, 0.18, 0.25]],
         "CriticalPerSevere": [[0.05, 0.05, 0.05, 0.10, 0.25, 0.35], [0.10, 0.10, 0.10, 0.20, 0.35, 0.45]],
         "DeathsPerCritical": [[0.00, 0.00, 0.10, 0.10, 0.30, 0.5], [0.10, 0.10, 0.18, 0.18, 0.50, 0.7]],
-        "ReducExposedPartialImmunity": [[0.75, 0.75, 0.75, 0.75, 0.75, 0.75], [0.85, 0.85, 0.85, 0.85, 0.85, 0.85]],
-        "ReducExposedImprovedImmunity": [[0.281, 0.281, 0.281, 0.281, 0.281, 0.281], [0.381, 0.381, 0.381, 0.381, 0.381, 0.381]],
-        "ReducInfectedSymptomsPartialImmunity": [[0.6, 0.6, 0.6, 0.6, 0.6, 0.6], [0.7, 0.7, 0.7, 0.7, 0.7, 0.7]],
-        "ReducInfectedSymptomsImprovedImmunity": [[0.193, 0.193, 0.193, 0.193, 0.193, 0.193], [0.293, 0.293, 0.293, 0.293, 0.293, 0.293]],
-        "ReducInfectedSevereCriticalDeadPartialImmunity": [[0.05, 0.05, 0.05, 0.05, 0.05, 0.05], [0.15, 0.15, 0.15, 0.15, 0.15, 0.15]],
-        "ReducInfectedSevereCriticalDeadImprovedImmunity": [[0.041, 0.041, 0.041, 0.041, 0.041, 0.041], [0.141, 0.141, 0.141, 0.141, 0.141, 0.141]],
-        "ReducTimeInfectedMild": [[1., 1., 1., 1., 1., 1.], [1., 1., 1., 1., 1., 1.]],
+        "ReducedExposedPartialImmunity": [[0.75, 0.75, 0.75, 0.75, 0.75, 0.75], [0.85, 0.85, 0.85, 0.85, 0.85, 0.85]],
+        "ReducedExposedImprovedImmunity": [[0.281, 0.281, 0.281, 0.281, 0.281, 0.281], [0.381, 0.381, 0.381, 0.381, 0.381, 0.381]],
+        "ReducedInfectedSymptomsPartialImmunity": [[0.6, 0.6, 0.6, 0.6, 0.6, 0.6], [0.7, 0.7, 0.7, 0.7, 0.7, 0.7]],
+        "ReducedInfectedSymptomsImprovedImmunity": [[0.193, 0.193, 0.193, 0.193, 0.193, 0.193], [0.293, 0.293, 0.293, 0.293, 0.293, 0.293]],
+        "ReducedInfectedSevereCriticalDeadPartialImmunity": [[0.05, 0.05, 0.05, 0.05, 0.05, 0.05], [0.15, 0.15, 0.15, 0.15, 0.15, 0.15]],
+        "ReducedInfectedSevereCriticalDeadImprovedImmunity": [[0.041, 0.041, 0.041, 0.041, 0.041, 0.041], [0.141, 0.141, 0.141, 0.141, 0.141, 0.141]],
+        "ReducedTimeInfectedMild": [[1., 1., 1., 1., 1., 1.], [1., 1., 1., 1., 1., 1.]],
         "Seasonality": [[0.1, 0.1, 0.1, 0.1, 0.1, 0.1], [0.3, 0.3, 0.3, 0.3, 0.3, 0.3]]}
 
     get_parameters = requests.get(
@@ -500,9 +510,9 @@ def post_to_db():
 
 
 def main():
+    delete_everything_from_db()
     post_to_db()
-    # delete_everything_from_db()
-
+    
 
 if __name__ == "__main__":
     main()

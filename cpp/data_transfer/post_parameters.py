@@ -65,13 +65,13 @@ def get_mcmc_model_params(url, t, data_dir):
     for group in data_t:
         for entry in data_t[group]:
             # ignore all entires starting with "sim" or "ChangePoint"
-            if entry["Name"].startswith("sim") or entry["Name"].startswith("ChangePoint"):
+            if entry["Name"].startswith("sim") or entry["Name"].startswith("ChangePoint") or entry["Name"].startswith("ContactPattern"):
                 continue
             if entry["Name"] not in data_t_parameters:
                 data_t_parameters.append(entry["Name"])
     for parameter in data_t_parameters:
         # seach the parameter in the parameter_list
-        parameter_id = None
+        parameter_id = None     
         for entry in parameter_list:
             if entry["name"] == parameter:
                 parameter_id = entry["id"]
@@ -114,10 +114,13 @@ def post_mcmc_parameters(url, t, data_dir):
     for scenario in scenarios:
         # load full set of scenario data
         scenario_data = requests.get(
-            url + "scenarios/" + scenario['id'], headers=header).json()
+            url + "scenarios/" + scenario['id'], headers=header)
+
+        print(scenario_data.status_code)
+        print(scenario_data.reason)
 
         # Upload the model parameters to the scenario
-        scenario_data['modelParameters'] = parameters_mcmc
+        scenario_data.json()['modelParameters'] = parameters_mcmc
 
         # put 
         # response = requests.put(
@@ -155,7 +158,7 @@ def main():
     cwd = os.getcwd()
     mcmc_dir = os.path.join(cwd, "mcmc data")
     # date_today = datetime.datetime.now().strftime("%Y-%m-%d")
-    date_today = '2025-01-09'
+    date_today = '2025-01-13'
     post_mcmc_parameters(url, date_today, mcmc_dir)
 
 

@@ -286,43 +286,43 @@ class Simulation:
             "DeathsPerCriticalMax", [0.10, 0.10, 0.18, 0.18, 0.50, 0.7]
         )
         reducExposedPartialImmunityMin = parameter_values.get(
-            "ReducExposedPartialImmunityMin", 0.75
+            "ReducedExposedPartialImmunityMin", 0.75
         )
         reducExposedPartialImmunityMax = parameter_values.get(
-            "ReducExposedPartialImmunityMax", 0.85
+            "ReducedExposedPartialImmunityMax", 0.85
         )
         reducExposedImprovedImmunityMin = parameter_values.get(
-            "ReducExposedImprovedImmunityMin", 0.281
+            "ReducedExposedImprovedImmunityMin", 0.281
         )
         reducExposedImprovedImmunityMax = parameter_values.get(
-            "ReducExposedImprovedImmunityMax", 0.381
+            "ReducedExposedImprovedImmunityMax", 0.381
         )
         reducInfectedSymptomsPartialImmunityMin = parameter_values.get(
-            "ReducInfectedSymptomsPartialImmunityMin", 0.6
+            "ReducedInfectedSymptomsPartialImmunityMin", 0.6
         )
         reducInfectedSymptomsPartialImmunityMax = parameter_values.get(
-            "ReducInfectedSymptomsPartialImmunityMax", 0.7
+            "ReducedInfectedSymptomsPartialImmunityMax", 0.7
         )
         reducInfectedSymptomsImprovedImmunityMin = parameter_values.get(
-            "ReducInfectedSymptomsImprovedImmunityMin", 0.193
+            "ReducedInfectedSymptomsImprovedImmunityMin", 0.193
         )
         reducInfectedSymptomsImprovedImmunityMax = parameter_values.get(
-            "ReducInfectedSymptomsImprovedImmunityMax", 0.293
+            "ReducedInfectedSymptomsImprovedImmunityMax", 0.293
         )
         reducInfectedSevereCriticalDeadPartialImmunityMin = parameter_values.get(
-            "ReducInfectedSevereCriticalDeadPartialImmunityMin", 0.05
+            "ReducedInfectedSevereCriticalDeadPartialImmunityMin", 0.05
         )
         reducInfectedSevereCriticalDeadPartialImmunityMax = parameter_values.get(
-            "ReducInfectedSevereCriticalDeadPartialImmunityMax", 0.15
+            "ReducedInfectedSevereCriticalDeadPartialImmunityMax", 0.15
         )
         reducInfectedSevereCriticalDeadImprovedImmunityMin = parameter_values.get(
-            "ReducInfectedSevereCriticalDeadImprovedImmunityMin", 0.041
+            "ReducedInfectedSevereCriticalDeadImprovedImmunityMin", 0.041
         )
         reducInfectedSevereCriticalDeadImprovedImmunityMax = parameter_values.get(
-            "ReducInfectedSevereCriticalDeadImprovedImmunityMax", 0.141
+            "ReducedInfectedSevereCriticalDeadImprovedImmunityMax", 0.141
         )
         reducTimeInfectedMild = parameter_values.get(
-            "ReducTimeInfectedMild", 1.0)
+            "ReducedTimeInfectedMild", 1.0)
 
         array_assign_uniform_distribution(
             model.parameters.TransmissionProbabilityOnContact,
