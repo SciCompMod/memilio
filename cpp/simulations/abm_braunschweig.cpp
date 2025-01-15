@@ -31,6 +31,7 @@
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
 
+#include <cstdint>
 #include <fstream>
 #include <vector>
 #include <iostream>
@@ -220,9 +221,9 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
         count_of_titles++;
     }
 
-    std::map<uint32_t, mio::abm::LocationId> locations        = {};
-    std::map<uint32_t, mio::abm::PersonId> pids_data_to_model = {};
-    std::map<uint32_t, uint32_t> person_ids                   = {};
+    std::map<uint32_t, mio::abm::LocationId> locations          = {};
+    std::map<uint32_t, mio::abm::LocalIndex> pids_data_to_model = {};
+    std::map<uint32_t, uint32_t> person_ids                     = {};
     std::map<uint32_t, std::pair<uint32_t, int>> locations_before;
     std::map<uint32_t, std::pair<uint32_t, int>> locations_after;
 
@@ -383,9 +384,10 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
             // For trips where the start location is not known use Home instead
             start_location = model.get_person(pid_itr->second).get_assigned_location(mio::abm::LocationType::Home);
         }
-        model.get_trip_list().add_trip(mio::abm::Trip(
-            pid_itr->second, mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location, start_location,
-            mio::abm::TransportMode(transport_mode), mio::abm::ActivityType(acticity_end)));
+        model.get_trip_list().add_trip(
+            mio::abm::Trip(static_cast<uint64_t>(pid_itr->first),
+                           mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location, start_location,
+                           mio::abm::TransportMode(transport_mode), mio::abm::LocationType(acticity_end)));
     }
     model.get_trip_list().use_weekday_trips_on_weekend();
 }
@@ -831,8 +833,8 @@ void set_parameters(mio::abm::Parameters params)
  * Create a sampled simulation with start time t0.
  * @param t0 The start time of the Simulation.
  */
-mio::abm::Simulation create_sampled_simulation(const std::string& input_file, const mio::abm::TimePoint& t0,
-                                               int max_num_persons)
+mio::abm::Simulation<> create_sampled_simulation(const std::string& input_file, const mio::abm::TimePoint& t0,
+                                                 int max_num_persons)
 {
     // Assumed percentage of infection state at the beginning of the simulation.
     ScalarType exposed_prob = 0.005, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,
@@ -898,7 +900,7 @@ void write_log_to_file_trip_data(const T& history)
             auto agent_id = std::get<0>(mobility_data[mobility_data_index][trip_index]);
 
             int start_index = mobility_data_index - 1;
-            using Type      = std::tuple<mio::abm::PersonId, mio::abm::LocationId, mio::abm::TimePoint,
+            using Type      = std::tuple<mio::abm::GlobalID, mio::abm::LocationId, mio::abm::TimePoint,
                                     mio::abm::TransportMode, mio::abm::ActivityType, mio::abm::InfectionState>;
             while (!std::binary_search(std::begin(mobility_data[start_index]), std::end(mobility_data[start_index]),
                                        mobility_data[mobility_data_index][trip_index],

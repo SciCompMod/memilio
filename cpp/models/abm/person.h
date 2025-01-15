@@ -37,13 +37,12 @@
 #include "abm/mobility_data.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/random_number_generator.h"
+#include <cstdint>
 
 namespace mio
 {
 namespace abm
 {
-
-static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
 
 /**
  * @brief Agents in the simulated Model that can carry and spread the Infection.
@@ -56,19 +55,23 @@ public:
      * @param[in, out] rng RandomNumberGenerator.
      * @param[in, out] location Initial Location of the Person.
      * @param[in] age The AgeGroup of the Person.
-     * @param[in] person_id Index of the Person.
+     * @param[in] person_index Index of the Person.
+     * 
      */
-    explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id, AgeGroup age,
-                    PersonId person_id = PersonId::invalid_id());
+    explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
+                    int location_model_id, AgeGroup age, LocalIndex person_index = LocalIndex::invalid_index(),
+                    GlobalID global_id = GlobalID::invalid_ID());
 
-    explicit Person(const Person& other, PersonId id);
+    explicit Person(const Person& other, LocalIndex index);
+
+    explicit Person(const Person& other, LocalIndex index, GlobalID global_id);
 
     /**
      * @brief Compare two Person%s.
      */
     bool operator==(const Person& other) const
     {
-        return (m_person_id == other.m_person_id);
+        return (m_global_id == other.m_global_id);
     }
 
     /**
@@ -134,11 +137,18 @@ public:
         return m_location_type;
     }
 
+    int get_location_model_id() const
+    {
+        return m_location_model_id;
+    }
+
     /**
      * @brief Change the location of the person.
-     * @param[in] id The new location.
+     * @param[in] type The LocationType of the new Location.
+     * @param[in] id The LocationId of the new Location.
+     * @param[in] model_id The model id of the new Location.
      */
-    void set_location(LocationType type, LocationId id);
+    void set_location(LocationType type, LocationId id, int model_id);
 
     /**
      * @brief Get the time the Person has been at its current Location.
@@ -168,8 +178,9 @@ public:
      * Location of a certain #LocationType.
      * @param[in] type The LocationType of the Location.
      * @param[in] id The LocationId of the Location.
+     * @param[in] model_id The model id of the Location.
      */
-    void set_assigned_location(LocationType type, LocationId id);
+    void set_assigned_location(LocationType type, LocationId id, int model_id);
 
     /**
      * @brief Returns the index of an assigned Location of the Person.
@@ -186,6 +197,23 @@ public:
     const std::vector<LocationId>& get_assigned_locations() const
     {
         return m_assigned_locations;
+    }
+
+    /**
+     * @brief Returns the model id of an assigned location of the Person.
+     * Assume that a Person has at most one assigned Location of a certain #LocationType.
+     * @param[in] type #LocationType of the assigned Location.
+     * @return The model id of the assigned Location.
+     */
+    int get_assigned_location_model_id(LocationType type) const;
+
+    /**
+     * @brief Get the assigned locations' model ids of the Person.
+     * @return A vector with the model ids of the assigned locations of the Person
+     */
+    const std::vector<int>& get_assigned_location_model_ids() const
+    {
+        return m_assigned_location_model_ids;
     }
 
     /**
@@ -254,11 +282,24 @@ public:
     bool get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const TestParameters& params);
 
     /**
-     * @brief Get the PersonId of the Person.
-     * The PersonId should correspond to the index in m_persons in the Model.
-     * @return The PersonId.
+     * @brief Get the LocalIndex of the Person.
+     * The LocalIndex should correspond to the index in m_persons in the Model.
+     * @return The LocalIndex.
      */
-    PersonId get_id() const;
+    LocalIndex get_index() const;
+
+    /**
+     * @brief Get the GlobalID of the Person.
+     * This ID is only relevant for the graph abm and otherwise corresponds to the LocalIndex.
+     * @return The GlobalID.
+     */
+    GlobalID get_global_id() const;
+
+    /**
+    * @brief Set the LocalIndex of the Person.
+    * The LocalIndex should correspond to the index in m_persons in model.
+    */
+    void set_index(LocalIndex index);
 
     /**
      * @brief Get index of Cell%s of the Person.
@@ -397,7 +438,7 @@ public:
             .add("rnd_go_to_school_hour", m_random_goto_school_hour)
             .add("mask", m_mask)
             .add("compliance", m_compliance)
-            .add("id", m_person_id)
+            .add("index", m_person_index)
             .add("cells", m_cells)
             .add("last_transport_mode", m_last_transport_mode)
             .add("rng_counter", m_rng_counter)
@@ -423,6 +464,7 @@ public:
 private:
     LocationId m_location; ///< Current Location of the Person.
     LocationType m_location_type; ///< Type of the current Location.
+    int m_location_model_id; ///< Model id of the current Location. Only used for Graph ABM.
     std::vector<LocationId> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the
     Person always visits the same Home or School etc. */
     std::vector<ProtectionEvent> m_vaccinations; ///< Vector with all vaccinations the Person has received.
@@ -437,11 +479,15 @@ private:
     Mask m_mask; ///< The Mask of the Person.
     std::vector<ScalarType>
         m_compliance; ///< Vector of compliance values for all #InterventionType%s. Values from 0 to 1.
-    PersonId m_person_id; ///< Id of the Person.
+    LocalIndex m_person_index; ///< LocalIndex of the Person. Corresponds to the index in m_persons in Model.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
     CustomIndexArray<TestResult, TestType> m_test_results; ///< CustomIndexArray for TestResults.
+    std::vector<int>
+        m_assigned_location_model_ids; ///< Vector with model ids of the assigned locations. Only used in graph abm.
+    GlobalID
+        m_global_id; ///< Unique identifier of a person. Is only relevant in graph abm, otherwise is equal to m_person_index.
 };
 
 } // namespace abm
@@ -451,8 +497,8 @@ template <>
 struct DefaultFactory<abm::Person> {
     static abm::Person create()
     {
-        return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::LocationId(), AgeGroup(0),
-                           abm::PersonId());
+        return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::LocationId(), 0, AgeGroup(0),
+                           abm::LocalIndex(), abm::GlobalID());
     }
 };
 

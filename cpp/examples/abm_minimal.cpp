@@ -55,7 +55,7 @@ int main()
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
     child.set_age_weight(age_group_0_to_4, 1);
-    child.set_age_weight(age_group_0_to_4, 1);
+    child.set_age_weight(age_group_5_to_14, 1);
 
     auto parent = mio::abm::HouseholdMember(num_age_groups); // A parent is 50/50% 15-34 or 35-59.
     parent.set_age_weight(age_group_15_to_34, 1);
@@ -130,7 +130,7 @@ int main()
 
     // Assign locations to the people
     for (auto& person : model.get_persons()) {
-        const auto id = person.get_id();
+        const auto id = person.get_index();
         //assign shop and event
         model.assign_location(id, event);
         model.assign_location(id, shop);
@@ -138,7 +138,7 @@ int main()
         model.assign_location(id, hospital);
         model.assign_location(id, icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == age_group_0_to_4) {
+        if (person.get_age() == age_group_5_to_14) {
             model.assign_location(id, school);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {

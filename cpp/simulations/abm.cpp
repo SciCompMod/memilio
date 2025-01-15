@@ -379,7 +379,7 @@ void create_assign_locations(mio::abm::Model& model)
     //Assign locations to the people
     auto persons = model.get_persons();
     for (auto& person : persons) {
-        const auto id = person.get_id();
+        const auto id = person.get_index();
         //assign shop and event
         model.assign_location(id, event);
         counter_event++;

@@ -52,12 +52,12 @@ TEST_F(TestLockdownRules, school_closure)
         .WillRepeatedly(testing::Return(1.0));
 
     // Set up two people with assigned locations (home and school)
-    auto p1 = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_5_to_14);
-    p1.set_assigned_location(home.get_type(), home.get_id());
-    p1.set_assigned_location(school.get_type(), school.get_id());
-    auto p2 = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_5_to_14);
-    p2.set_assigned_location(home.get_type(), home.get_id());
-    p2.set_assigned_location(school.get_type(), school.get_id());
+    auto p1 = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_5_to_14);
+    p1.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
+    p1.set_assigned_location(school.get_type(), school.get_id(), school.get_model_id());
+    auto p2 = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_5_to_14);
+    p2.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
+    p2.set_assigned_location(school.get_type(), school.get_id(), school.get_model_id());
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     params.get<mio::abm::AgeGroupGotoSchool>()                    = false;
@@ -101,9 +101,9 @@ TEST_F(TestLockdownRules, school_opening)
         .WillRepeatedly(testing::Return(1.0));
 
     // Set up one person with assigned locations (home and school)
-    auto p = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_5_to_14);
-    p.set_assigned_location(home.get_type(), home.get_id());
-    p.set_assigned_location(school.get_type(), school.get_id());
+    auto p = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_5_to_14);
+    p.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
+    p.set_assigned_location(school.get_type(), school.get_id(), school.get_model_id());
 
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
@@ -114,7 +114,7 @@ TEST_F(TestLockdownRules, school_opening)
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34] = true;
     params.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59] = true;
 
-     // Apply school closure, then reopening
+    // Apply school closure, then reopening
     mio::abm::set_school_closure(t_closing, 1., params);
     mio::abm::set_school_closure(t_opening, 0., params);
 
@@ -157,12 +157,14 @@ TEST_F(TestLockdownRules, home_office)
         .WillOnce(testing::Return(0.7))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto person1 = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_15_to_34);
-    auto person2 = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_15_to_34);
-    person1.set_assigned_location(home.get_type(), home.get_id());
-    person1.set_assigned_location(work.get_type(), work.get_id());
-    person2.set_assigned_location(home.get_type(), home.get_id());
-    person2.set_assigned_location(work.get_type(), work.get_id());
+    auto person1 =
+        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_15_to_34);
+    auto person2 =
+        mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_15_to_34);
+    person1.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
+    person1.set_assigned_location(work.get_type(), work.get_id(), work.get_model_id());
+    person2.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
+    person2.set_assigned_location(work.get_type(), work.get_id(), work.get_model_id());
 
     // Check that person1 goes to work and person2 stays at home.
     auto p1_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person1);
@@ -193,9 +195,9 @@ TEST_F(TestLockdownRules, no_home_office)
         .WillOnce(testing::Return(0.7))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto p = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_15_to_34);
-    p.set_assigned_location(home.get_type(), home.get_id());
-    p.set_assigned_location(work.get_type(), work.get_id());
+    auto p = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_15_to_34);
+    p.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
+    p.set_assigned_location(work.get_type(), work.get_id(), work.get_model_id());
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     params.get<mio::abm::AgeGroupGotoSchool>()                    = false;
@@ -225,9 +227,9 @@ TEST_F(TestLockdownRules, social_event_closure)
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location event(mio::abm::LocationType::SocialEvent, 1, num_age_groups);
-    auto p = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_5_to_14);
-    p.set_assigned_location(home.get_type(), home.get_id());
-    p.set_assigned_location(event.get_type(), event.get_id());
+    auto p = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_5_to_14);
+    p.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
+    p.set_assigned_location(event.get_type(), event.get_id(), event.get_model_id());
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
 
     // Close social events
@@ -250,9 +252,9 @@ TEST_F(TestLockdownRules, social_events_opening)
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location event(mio::abm::LocationType::SocialEvent, 1, num_age_groups);
-    auto p = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), age_group_5_to_14);
-    p.set_assigned_location(event.get_type(), event.get_id());
-    p.set_assigned_location(home.get_type(), home.get_id());
+    auto p = mio::abm::Person(this->get_rng(), home.get_type(), home.get_id(), home.get_model_id(), age_group_5_to_14);
+    p.set_assigned_location(event.get_type(), event.get_id(), event.get_model_id());
+    p.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
 
     // Close then open social events

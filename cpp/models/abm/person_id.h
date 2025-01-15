@@ -29,24 +29,46 @@ namespace mio
 namespace abm
 {
 
-/// Unique identifier for a Person within a Model.
-struct MEMILIO_ENABLE_EBO PersonId : public mio::TypeSafe<uint32_t, PersonId>, public OperatorComparison<PersonId> {
+/// Index for a Person within a Model.
+struct MEMILIO_ENABLE_EBO LocalIndex : public mio::TypeSafe<uint32_t, LocalIndex>,
+                                       public OperatorComparison<LocalIndex> {
+    /// @brief Create an Index.
+    LocalIndex(uint32_t index)
+        : mio::TypeSafe<uint32_t, LocalIndex>(index)
+    {
+    }
+
+    /// @brief Create an invalid Index.
+    LocalIndex()
+        : mio::TypeSafe<uint32_t, LocalIndex>(std::numeric_limits<uint32_t>::max())
+    {
+    }
+
+    /// @brief Value for invalid Indices.
+    const static LocalIndex invalid_index()
+    {
+        return LocalIndex();
+    }
+};
+
+/// Unique ID for a Person within a Model.
+struct MEMILIO_ENABLE_EBO GlobalID : public mio::TypeSafe<uint64_t, GlobalID>, public OperatorComparison<GlobalID> {
     /// @brief Create an ID.
-    PersonId(uint32_t id)
-        : mio::TypeSafe<uint32_t, PersonId>(id)
+    GlobalID(uint64_t id)
+        : mio::TypeSafe<uint64_t, GlobalID>(id)
     {
     }
 
     /// @brief Create an invalid ID.
-    PersonId()
-        : mio::TypeSafe<uint32_t, PersonId>(std::numeric_limits<uint32_t>::max())
+    GlobalID()
+        : mio::TypeSafe<uint64_t, GlobalID>(std::numeric_limits<uint64_t>::max())
     {
     }
 
     /// @brief Value for invalid IDs.
-    const static PersonId invalid_id()
+    const static GlobalID invalid_ID()
     {
-        return PersonId();
+        return GlobalID();
     }
 };
 

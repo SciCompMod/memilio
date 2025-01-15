@@ -1,7 +1,7 @@
-/* 
-* Copyright (C) 2020-2025 MEmilio
+/*
+* Copyright (C) 2020-2024 MEmilio
 *
-* Authors: Daniel Abele, Khoa Nguyen
+* Authors: Julia Bicker
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,12 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/simulation.h"
+
+#include "graph_abm/graph_abmodel.h"
 
 namespace mio
 {
-namespace abm
-{
 
-} // namespace abm
-} // namespace mio
+} //namespace mio

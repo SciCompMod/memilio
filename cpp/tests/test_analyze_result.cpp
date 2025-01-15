@@ -179,7 +179,7 @@ TEST(TestInterpolateGraph, basic)
     g.add_node(0, Model(1), 0.5);
     g.add_node(1, Model(1), 0.5);
     for (auto& n : g.nodes()) {
-        n.property.evolve(0.5, 4.0);
+        n.property.advance(0.5, 4.0);
     }
 
     auto interpolated = mio::interpolate_simulation_result(g);

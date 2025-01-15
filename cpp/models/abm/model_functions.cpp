@@ -102,7 +102,7 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
                                const Person& person, const Location& location, const TimePoint t, const TimeSpan dt)
 {
     if (person.get_location() != location.get_id()) {
-        mio::log_debug("In add_exposure_contribution: Person {} is not at Location {}", person.get_id().get(),
+        mio::log_debug("In add_exposure_contribution: Person {} is not at Location {}", person.get_global_id().get(),
                        location.get_id().get());
     }
 
@@ -133,14 +133,14 @@ bool change_location(Person& person, const Location& destination, const Transpor
     })); // make sure cell indices are valid
 
     if (person.get_location() != destination.get_id()) {
-        person.set_location(destination.get_type(), destination.get_id());
+        person.set_location(destination.get_type(), destination.get_id(), destination.get_model_id());
         person.get_cells() = cells;
         person.set_last_transport_mode(mode);
 
         return true;
     }
     else {
-        mio::log_debug("In change_location: Person {} already is at Location {}", person.get_id().get(),
+        mio::log_debug("In change_location: Person {} already is at Location {}", person.get_global_id().get(),
                        destination.get_id().get());
         return false;
     }

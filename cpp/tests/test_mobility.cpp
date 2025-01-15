@@ -81,7 +81,7 @@ TEST(TestMobility, compareNoMobilityWithSingleIntegration)
         1e-6);
 }
 
-TEST(TestMobility, nodeEvolve)
+TEST(TestMobility, nodeAdvance)
 {
     using Model = mio::osecir::Model<double>;
     Model model(1);
@@ -100,7 +100,7 @@ TEST(TestMobility, nodeEvolve)
     double dt = 0.5;
 
     mio::SimulationNode<mio::Simulation<double, Model>> node(model, t0);
-    node.evolve(t0, dt);
+    node.advance(t0, dt);
     ASSERT_DOUBLE_EQ(node.get_result().get_last_time(), t0 + dt);
     ASSERT_EQ(print_wrap(node.get_result().get_last_value()), print_wrap(node.get_last_state()));
 }
@@ -141,8 +141,8 @@ TEST(TestMobility, edgeApplyMobility)
               print_wrap((Eigen::VectorXd(10) << 990 + 99, 0, 0, 0, 10 + 1, 0, 0, 0, 0, 0).finished()));
 
     //returns
-    node1.evolve(t, 0.5);
-    node2.evolve(t, 0.5);
+    node1.advance(t, 0.5);
+    node2.advance(t, 0.5);
     t += 0.5;
     edge.apply_mobility(t, 0.5, node1, node2);
     auto v = node1.get_result().get_last_value();
@@ -159,8 +159,8 @@ TEST(TestMobility, edgeApplyMobility)
     EXPECT_DOUBLE_EQ(node2.get_result().get_last_value().sum(), 1000);
 
     //change node again
-    node1.evolve(t, 0.5);
-    node2.evolve(t, 0.5);
+    node1.advance(t, 0.5);
+    node2.advance(t, 0.5);
     t += 0.5;
     edge.apply_mobility(t, 0.5, node1, node2);
     EXPECT_DOUBLE_EQ(node1.get_result().get_last_value().sum(), 900);
