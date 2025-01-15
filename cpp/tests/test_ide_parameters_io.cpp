@@ -215,7 +215,7 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRunAgeRes)
 TEST(TestIDEParametersIo, ParametersIoRKIFailure)
 {
     // Define number of age groups.
-    size_t num_agegroups = 6;
+    size_t num_agegroups = 1;
     // Since we only have one age group, the corresponding index is set to 0.
     mio::AgeGroup group = 0;
 
@@ -236,8 +236,8 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
 
     // --- Case with empty RKI data file.
     auto start_date = mio::Date(2020, 06, 02);
-    auto status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(
-        model, dt, mio::read_confirmed_cases_data(mio::path_join(TEST_DATA_DIR, "test_empty_file.json")).value(),
+    auto status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(
+        model, dt, mio::read_confirmed_cases_noage(mio::path_join(TEST_DATA_DIR, "test_empty_file.json")).value(),
         start_date);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::InvalidFileFormat));

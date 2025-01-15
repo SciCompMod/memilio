@@ -20,6 +20,7 @@
 #ifndef IDE_INITIALFLOWS_H
 #define IDE_INITIALFLOWS_H
 
+#include "ide_secir/model.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/io/epi_data.h"
@@ -61,19 +62,27 @@ namespace isecir
 *
 * @param[in, out] model The model for which the initial flows should be computed.
 * @param[in] dt Time step size.
-* @param[in] path Path to the RKI file.
+* @param[in] rki_data Vector containing RKI data.
 * @param[in] date The start date of the simulation and the last time point of the TimeSeries used for initialization.
 * @param[in] scale_confirmed_cases Factor by which to scale the confirmed cases of rki data to consider unreported cases.
+* @tparam EntryType is expected to be ConfirmedCasesNoAgeEntry for data that is not age resolved and 
+*   ConfirmedCasesDataEntry for age resolved data. See also epi_data.h.
 * @returns Any io errors that happen during reading of the files.
 */
 
 template <typename EntryType>
-IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::vector<EntryType> rki_data, Date date,
-                                 ScalarType scale_confirmed_cases)
+IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::vector<EntryType> rki_data,
+                                 const Date date, const ScalarType scale_confirmed_cases)
 {
+    // Check if the correct EntryType was used.
+    if constexpr (std::is_same_v<EntryType, ConfirmedCasesDataEntry>) {
+        assert(model.get_num_age_groups() == EntryType::age_group_names.size());
+    }
+    else {
+        assert(model.get_num_age_groups() == 1);
+    }
 
     //--- Preparations ---
-
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
     });
