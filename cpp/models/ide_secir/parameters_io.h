@@ -72,14 +72,18 @@ namespace isecir
 
 template <typename EntryType>
 IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::vector<EntryType> rki_data,
-                                 const Date date, const ScalarType scale_confirmed_cases)
+                                 const Date date,
+                                 const mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases)
 {
+    // Check if scale_confirmed_cases has the right size.
+    assert(size_t(model.m_transitions[0].size() / mio::InfectionTransition::Count) == scale_confirmed_cases.size());
     // Check if the correct EntryType was used.
     if constexpr (std::is_same_v<EntryType, ConfirmedCasesDataEntry>) {
-        assert(model.get_num_age_groups() == EntryType::age_group_names.size());
+        assert(size_t(model.m_transitions[0].size() / mio::InfectionTransition::Count) ==
+               EntryType::age_group_names.size());
     }
     else {
-        assert(model.get_num_age_groups() == 1);
+        assert(size_t(model.m_transitions[0].size() / mio::InfectionTransition::Count) == 1);
     }
 
     //--- Preparations ---
@@ -233,19 +237,19 @@ IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::v
                 time_idx = model.m_transitions.get_time(i);
                 if (offset == int(std::floor(time_idx))) {
                     model.m_transitions[i][INStISyi] +=
-                        (1 - (time_idx - std::floor(time_idx))) * scale_confirmed_cases * entry.num_confirmed;
+                        (1 - (time_idx - std::floor(time_idx))) * scale_confirmed_cases[group] * entry.num_confirmed;
                 }
                 if (offset == int(std::ceil(time_idx))) {
                     model.m_transitions[i][INStISyi] +=
-                        (time_idx - std::floor(time_idx)) * scale_confirmed_cases * entry.num_confirmed;
+                        (time_idx - std::floor(time_idx)) * scale_confirmed_cases[group] * entry.num_confirmed;
                 }
                 if (offset == int(std::floor(time_idx - dt))) {
-                    model.m_transitions[i][INStISyi] -=
-                        (1 - (time_idx - dt - std::floor(time_idx - dt))) * scale_confirmed_cases * entry.num_confirmed;
+                    model.m_transitions[i][INStISyi] -= (1 - (time_idx - dt - std::floor(time_idx - dt))) *
+                                                        scale_confirmed_cases[group] * entry.num_confirmed;
                 }
                 if (offset == int(std::ceil(time_idx - dt))) {
-                    model.m_transitions[i][INStISyi] -=
-                        (time_idx - dt - std::floor(time_idx - dt)) * scale_confirmed_cases * entry.num_confirmed;
+                    model.m_transitions[i][INStISyi] -= (time_idx - dt - std::floor(time_idx - dt)) *
+                                                        scale_confirmed_cases[group] * entry.num_confirmed;
                 }
             }
 
@@ -275,7 +279,7 @@ IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::v
             }
 
             if (offset == 0) {
-                model.m_total_confirmed_cases[group] = scale_confirmed_cases * entry.num_confirmed;
+                model.m_total_confirmed_cases[group] = scale_confirmed_cases[group] * entry.num_confirmed;
             }
         }
     }

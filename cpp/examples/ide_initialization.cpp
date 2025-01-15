@@ -99,9 +99,11 @@ int main(int argc, char** argv)
         }
 
         std::vector<mio::ConfirmedCasesNoAgeEntry> rki_data = status_read_data.value();
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases =
+            mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 1.);
 
-        auto status =
-            mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(model, dt, rki_data, mio::Date(2020, 12, 24));
+        auto status = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(
+            model, dt, rki_data, mio::Date(2020, 12, 24), scale_confirmed_cases);
         if (!status) {
             std::cout << "Error: " << status.error().formatted_message();
             return -1;

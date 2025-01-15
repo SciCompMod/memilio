@@ -34,12 +34,6 @@ namespace mio
 {
 namespace isecir
 {
-// Forward declaration of Model and set_initial_flows() to be able to set default arguments.
-class Model;
-template <typename EntryType>
-IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::vector<EntryType> rki_data,
-                                 const Date date, const ScalarType scale_confirmed_cases = 1.);
-
 class Model
 {
     using ParameterSet = Parameters;
@@ -134,16 +128,6 @@ public:
     int get_initialization_method_compartments() const
     {
         return m_initialization_method;
-    }
-
-    /**
-     * @brief Getter for number of age groups.
-     *
-     * @return Returns number of age groups. 
-     */
-    size_t get_num_age_groups() const
-    {
-        return m_num_agegroups;
     }
 
     /**
@@ -375,8 +359,9 @@ private:
     // In set_initial_flows(), we compute initial flows based on RKI data using the (private) compute_flow() function
     // which is why it is defined as a friend function.
     template <typename EntryType>
-    friend IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::vector<EntryType> rki_data,
-                                            const Date date, ScalarType scale_confirmed_cases);
+    friend IOResult<void>
+    set_initial_flows(Model& model, const ScalarType dt, const std::vector<EntryType> rki_data, const Date date,
+                      const mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases);
 };
 
 } // namespace isecir
