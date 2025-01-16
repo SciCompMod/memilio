@@ -137,27 +137,25 @@ def post_mcmc_parameters(url, t, data_dir):
     # Get mcmc parameters and put it into the right format for the API.
     parameters_mcmc = get_mcmc_model_params(
         url, t, data_dir)
-    # Then we post the sceanrios as defined in post_to_db_scenarios with these parameters. 
-    post_to_db_scenarios(parameters_mcmc)
-
-
-    # TODO: Post scenarios like this once the request for getting a specific scenario works again. 
     
     # # list all scenarios
-    # scenarios = requests.get(url + "scenarios/", headers=header).json()
-    # parameters_mcmc = get_mcmc_model_params(
-    #     url, t, data_dir)
+    scenarios = requests.get(url + "scenarios/", headers=header).json()
     
-    # for scenario in scenarios:
-    #     # load full set of scenario data
-    #     scenario_data = requests.get(
-    #         url + "scenarios/" + scenario['id'], headers=header)
+    new_scenarios = []
+    
+    for scenario in scenarios:
+        # load full set of scenario data
+        scenario_data = requests.get(
+            url + "scenarios/" + scenario['id'], headers=header)
 
-    #     print(scenario_data.status_code)
-    #     print(scenario_data.reason)
+        if (scenario_data.status_code != 200):
+                print(scenario_data.status_code)
+                print(scenario_data.reason)
 
-    #     # Upload the model parameters to the scenario
-    #     scenario_data.json()['modelParameters'] = parameters_mcmc
+        # Upload the model parameters to the scenario
+        scenario_data.json()['modelParameters'] = parameters_mcmc
+
+        new_scenarios.append(scenario_data.json())
 
     #     # put 
     #     # response = requests.put(
@@ -165,13 +163,6 @@ def post_mcmc_parameters(url, t, data_dir):
     #     #     headers=header,
     #     #     json=scenario_data
     #     # )
-
-    #     # post
-    #     response = requests.post(
-    #         url + "scenarios/",
-    #         headers=header,
-    #         json=scenario_data
-    #     )
 
     #     # patch
     #     # updated_data = {
@@ -183,10 +174,21 @@ def post_mcmc_parameters(url, t, data_dir):
     #     #     json=updated_data
     #     # )
 
-    #     if response.status_code == 200:
-    #         print(f"Scenario {scenario['id']} updated successfully.")
-    #     else:
-    #         print(f"Failed to update scenario {scenario['id']}. Status code: {response.status_code}, Response: {response.text}")
+    # delete scenarios with old parameters
+    delete_scenarios()
+
+    # post scenarios with updated parameters
+    for scenario in new_scenarios:
+        response = requests.post(
+            url + "scenarios/",
+            headers=header,
+            json=scenario
+        )
+
+        if response.status_code == 200:
+            print(f"Scenario {scenario['id']} updated successfully.")
+        else:
+            print(f"Failed to update scenario {scenario['id']}. Status code: {response.status_code}, Response: {response.text}")
 
 
 
@@ -197,8 +199,8 @@ def main():
     # date_today = datetime.datetime.now().strftime("%Y-%m-%d")
     date_today = '2025-01-13'
 
-    #First delete current scenarios and then post again with mcmc parameters.
-    delete_scenarios()
+    # Update scenarios with mcmc parameters.
+    # delete_scenarios()
     post_mcmc_parameters(url, date_today, mcmc_dir)
 
 
