@@ -13,7 +13,7 @@ filename = 'data_secir_simple_90days_10k.pickle'
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
     os.path.dirname(os.path.realpath(path)))), 'data_paper')
-# path_data = '/home/schm_a45/Documents/Code/memilio_test/memilio/pycode/memilio-surrogatemodel/memilio/data_paper'
+path_data = '/localdata1/gnn_paper_2024/data_Iteration2/one_population/without_agegroups/'
 
 if not os.path.isfile(os.path.join(path_data, filename)):
     ValueError("no dataset found in path: " + path)
@@ -165,9 +165,11 @@ def SINGLE_lineplot_compartments_log_and_nolog(inputs_reversed, labels_reversed,
 
 # create boxplot for n input datasamples
 
-def boxplot_inputs():
-    file = open('/home/schm_a45/Documents/Code/memilio_test/memilio/pycode/memilio-surrogatemodel/memilio/data_paper/data_secir_simple_10k.pickle', 'rb')
-    file_I = open('/home/schm_a45/Documents/Code/memilio_test/memilio/pycode/memilio-surrogatemodel/memilio/data_paper/data_secir_simple_30days_I_based_10k.pickle', 'rb')
+def boxplot_inputs(days=60):
+    file = open(
+        f'/localdata1/gnn_paper_2024/data_Iteration2/one_population/without_agegroups/data_secir_simple_{days}days_10k.pickle', 'rb')
+    file_I = open(
+        f'/localdata1/gnn_paper_2024/data_Iteration2/one_population/without_agegroups/data_secir_simple_{days}days_I_based_10k.pickle', 'rb')
 
     data = pickle.load(file)
     data = np.expm1(data['inputs'])
@@ -196,11 +198,11 @@ def boxplot_inputs():
 
         d_df = pd.DataFrame(data=d)
         d_df = pd.melt(d_df.transpose(), var_name="Day")
-        d_df['type'] = 'b'
+        d_df['type'] = 'Initial'
 
         d_i_df = pd.DataFrame(data=d_i)
         d_i_df = pd.melt(d_i_df.transpose(), var_name="Day")
-        d_i_df['type'] = 'b_i'
+        d_i_df['type'] = 'I-based'
 
         # dw2_df = pd.DataFrame(data = dw2)
         # dw2_df = pd.melt(dw2_df.transpose(), var_name="Day")
@@ -215,13 +217,22 @@ def boxplot_inputs():
 
         handles, labels = ax.get_legend_handles_labels()
     fig.legend(handles, labels, loc='upper right', ncol=3,
-               bbox_to_anchor=(0.7, 1), frameon=False)
+               bbox_to_anchor=(0.7, 1.01), frameon=False)
     plt.tight_layout()
 
-    plt.savefig("boxplot_input_compartments_noagegroups_comparison.png")
+    plt.savefig(
+        f"boxplot_input_compartments_noagegroups_comparison.png")
 
 
-def boxplot_inputs_single(file):
+# boxplot_inputs(days=60)
+
+
+def boxplot_inputs_single(label='', days=60):
+
+    # file = open(
+    #     f'/localdata1/gnn_paper_2024/data_Iteration2/one_population/without_agegroups/data_secir_simple_{days}days_10k.pickle', 'rb')
+    file = open(
+        f'/localdata1/gnn_paper_2024/data_Iteration2/one_population/without_agegroups/data_secir_simple_{days}days_I_based_10k.pickle', 'rb')
 
     data = pickle.load(file)
     data = np.expm1(data['inputs'])
@@ -242,7 +253,7 @@ def boxplot_inputs_single(file):
 
         d_df = pd.DataFrame(data=d)
         d_df = pd.melt(d_df.transpose(), var_name="Day")
-        d_df['type'] = 'b'
+        d_df['type'] = label
 
         sns.boxplot(ax=ax, x='Day', y='value', data=d_df,
                     hue='type', palette='Set1', width=0.8, legend='auto')
@@ -255,6 +266,9 @@ def boxplot_inputs_single(file):
     plt.tight_layout()
 
     plt.savefig("boxplot_input_compartments_noagegroups_I_based.png")
+
+
+# boxplot_inputs_single()
 
 
 def heatmap_gridsearch_results(df_gridsearch, savename):

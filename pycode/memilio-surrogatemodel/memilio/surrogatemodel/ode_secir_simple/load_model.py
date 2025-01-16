@@ -17,8 +17,10 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
     os.path.dirname(os.path.realpath(path)))), 'data_paper')
 
+days = 30
+dpi = 300
 path_data = "/localdata1/gnn_paper_2024/data_Iteration2/one_population/without_agegroups"
-filename = "data_secir_simple_90days_I_based_10k.pickle"
+filename = f"data_secir_simple_{days}days_I_based_10k.pickle"
 
 # if not os.path.isfile(os.path.join(path_data, filename)):
 #    ValueError("no dataset found in path: " + path_data)
@@ -28,14 +30,14 @@ file = open(os.path.join(path_data, filename), 'rb')
 data = pickle.load(file)
 
 
-test_inputs = data['inputs'][int((0.8 * len(data['inputs']))):]
-test_labels = data['labels'][int((0.8 * len(data['labels']))):]
+test_inputs = data['inputs'][int(0.8 * len(data['inputs'])):]
+test_labels = data['labels'][int(0.8 * len(data['labels'])):]
 
 
 # load trained model
 # new_model = tf.keras.models.load_model('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple')
 new_model = tf.keras.models.load_model(
-    '/localdata1/gnn_paper_2024/data_Iteration2/saved_models/saved_models_secir_simple_paper/LSTM_90days_secirsimple_I_based_10k.h5')
+    f'/localdata1/gnn_paper_2024/data_Iteration2/saved_models/saved_models_secir_simple_paper/LSTM_{days}days_secirsimple_I_based_10k.h5')
 
 pred = new_model.predict(test_inputs)
 
@@ -268,30 +270,31 @@ def lineplots_pred_labels(pred_reversed, labels_reversed, num_plots):
         # Force scientific notation (e.g., x10^6)
         sci_formatter.set_powerlimits((6, 6))
 
-        for ax, state, pred, label, input_data in zip(
+        for ax, state, pred, label_data, input_data in zip(
                 axes, infectionstates, pred_reversed[i].transpose(),
                 labels_reversed[i].transpose(), np.expm1(np.asarray(test_inputs))[i].transpose()):
             pred_plot = np.insert(pred, 0, input_data[-1])
+            label_plot = np.insert(label_data, 0, input_data[-1])
             # Plot lines
             ax.plot(np.arange(1, 6), input_data,
                     color='black', label='Inputs', linewidth=3)
             ax.plot(np.arange(
-                6, pred_reversed.shape[1] + 6), label, color='red', label='Labels', linewidth=3)
+                5, pred_reversed.shape[1] + 6), label_plot, color='red', label='Labels', linewidth=3)
             ax.plot(np.arange(5, pred_reversed.shape[1] + 6), pred_plot, color='deepskyblue', label='Predictions',
                     linestyle='--', linewidth=2)
 
             # Compute and add annotation text
             not_log_mape = np.round(
-                100 * np.mean(abs((label - pred) / label)), 4)
+                100 * np.mean(abs((label_data - pred) / label_data)), 4)
             log_mape = np.round(
-                100 * np.mean(abs((np.log1p(label) - np.log1p(pred)) / np.log1p(label))), 4)
+                100 * np.mean(abs((np.log1p(label_data) - np.log1p(pred)) / np.log1p(label_data))), 4)
             # textstr = f"not log MAPE = {not_log_mape}%\nlog MAPE = {log_mape}%"
             textstr = '\n'.join((
-                'not log MAPE = ' +
-                str(np.round(100 * np.mean(abs((label - pred) / label)), 4)) + '%',
-                'log MAPE: ' +
+                'MAPE (log scale): ' +
                 str(np.round(
-                    100 * np.mean(abs((np.log1p(label) - np.log1p(pred)) / np.log1p(label))), 4)) + '%'
+                    100 * np.mean(abs((np.log1p(label_data) - np.log1p(pred)) / np.log1p(label_data))), 4)) + '%',
+                'MAPE (orig. scale): ' +
+                str(np.round(100 * np.mean(abs((label_data - pred) / label_data)), 4)) + '%'
             ))
             props = dict(boxstyle='round,pad=0.3',
                          facecolor='lightgray', edgecolor='black', alpha=0.8)
@@ -320,19 +323,23 @@ def lineplots_pred_labels(pred_reversed, labels_reversed, num_plots):
         print(f'Plot No. {i} saved')
 
 
-def histogram_mape_per_run(mape_per_run, savename):
+def plot_mape_per_run(mape_per_run, savename):
 
     plt.figure().clf()
 
     fig, ax = plt.subplots()
     # axs[0].ticklabel_format(style='plain')
-    ax.hist(mape_per_run, bins=100)
-    ax.set_xlabel('Test MAPE')
-    ax.set_ylabel('Frequency')
-    ax.set_title('Histogram for Test MAPE per run')
+    ax.plot(mape_per_run)
+    ax.set_ylabel('Test MAPE')
+    ax.set_xlabel('Run')
+    ax.grid()
+    # ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_title('Test MAPE per run')
     # ax.set_xticks(np.arange(0,3500000,500000))
 
-    plt.savefig(savename)
+    plt.savefig(
+        '/localdata1/gnn_paper_2024/images/MAPE_per_run/' + savename, dpi=dpi)
 
 
 def mape_log_original(num_plots, pred_reversed, labels_reversed, test_inputs):
@@ -344,7 +351,7 @@ def mape_log_original(num_plots, pred_reversed, labels_reversed, test_inputs):
         # Reset figure
         plt.clf()
         fig, axes = plt.subplots(
-            nrows=4, ncols=2, figsize=(10, 13), constrained_layout=True, dpi=300
+            nrows=4, ncols=2, figsize=(10, 13), constrained_layout=True, dpi=dpi
         )
         axes = axes.flatten()  # Flatten the array of subplots for easier iteration
 
@@ -387,7 +394,7 @@ def lineplots_pred_labels_selected_plot(pred_reversed, labels_reversed, plotID):
 
     plt.clf()
     fig, axes = plt.subplots(
-        nrows=4, ncols=2, figsize=(10, 13), constrained_layout=True, dpi=300
+        nrows=4, ncols=2, figsize=(10, 13), constrained_layout=True, dpi=dpi
     )
     axes = axes.flatten()  # Flatten the array of subplots for easier iteration
 
@@ -446,10 +453,15 @@ savename = 'secir_noagegroup_90days_I_based_MAPEs'
 lineplots_compartments(mape_per_day, mape_reversed_per_day, savename)
 
 
-savename_2 = 'secir_noagegroup_90days_I_based_MAPEs_two_axex'
-lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename_2)
+# savename_2 = 'secir_noagegroup_90days_I_based_MAPEs_two_axex'
+# lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename_2)
 
-lineplots_pred_labels(pred_reversed, labels_reversed, num_plots=100)
+# lineplots_pred_labels(pred_reversed, labels_reversed, num_plots=100)
 
-savename = 'histogram_mape_per_run_simpleNN.png'
-histogram_mape_per_run(mape_per_run, savename)
+
+title_add = f'_{days}d_Ibased_10k_noDamp.png'
+savename = 'mape_per_run_simpleNN_log_mape' + title_add
+plot_mape_per_run(mape_per_run, savename)
+
+savename = 'mape_per_run_simpleNN_nonlog_mape' + title_add
+plot_mape_per_run(mape_reversed_per_run, savename)
