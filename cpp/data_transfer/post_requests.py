@@ -144,13 +144,13 @@ def post_to_db_compartments():
 
 def post_to_db_groups():
     group_data = [
-        {"name": "age_0", "description": "0-4", "category": "age"},
-        {"name": "age_1", "description": "5-14", "category": "age"},
-        {"name": "age_2", "description": "15-34", "category": "age"},
-        {"name": "age_3", "description": "35-59", "category": "age"},
-        {"name": "age_4", "description": "60-79", "category": "age"},
-        {"name": "age_5", "description": "80+", "category": "age"} #,
-        # {"name": "total", "description": "Total population", "category": "age"}
+        {"name": "Group1", "description": "0-4", "category": "age"}, #0 bis 4
+        {"name": "Group2", "description": "5-14", "category": "age"}, #5-14
+        {"name": "Group3", "description": "15-34", "category": "age"}, #15-34
+        {"name": "Group4", "description": "35-59", "category": "age"}, #35-59
+        {"name": "Group5", "description": "60-79", "category": "age"}, #60 - 79
+        {"name": "Group6", "description": "80+", "category": "age"}, #80+
+        {"name": "Total", "description": "Total population", "category": "age"}
     ]
 
     for group in group_data:
@@ -329,10 +329,13 @@ def post_to_db_scenarios(modelparameters_entry={}, post=True):
     ) if nodelist["name"] == "all_counties"]
 
     # Get sorted list of groups
+    # TODO: Do this more carefully.
     get_groups = requests.get(url + "groups/", headers=header)
     group_ids = []
     for i, group in enumerate(get_groups.json()):
-        if group["name"] == f"age_{i}":
+        if group["name"] == f"Group{i+1}":
+            group_ids.append(group["id"])
+        elif group["name"] == f"Total":
             group_ids.append(group["id"])
 
     if (modelparameters_entry=={} and post):
@@ -514,7 +517,7 @@ def append_parameter_for_agegroup_total(param_dict):
     for key in list(param_dict.keys()):
 
         param_dict[key][0].append(np.dot(param_dict[key][0], share_of_agegroup))
-        param_dict[key][0].append(np.dot(param_dict[key][1], share_of_agegroup))
+        param_dict[key][1].append(np.dot(param_dict[key][1], share_of_agegroup))
 
     
 

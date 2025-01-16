@@ -200,7 +200,6 @@ def main():
     date_today = '2025-01-13'
 
     # Update scenarios with mcmc parameters.
-    # delete_scenarios()
     post_mcmc_parameters(url, date_today, mcmc_dir)
 
 
