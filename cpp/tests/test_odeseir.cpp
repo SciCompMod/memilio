@@ -365,9 +365,12 @@ TEST(TestSeir, get_flows)
 TEST(TestSeir, get_flows_two_agegroups)
 {
     mio::oseir::Model<double> model(2);
+    auto nb_groups = model.parameters.get_num_groups();
 
     constexpr double total_first_population  = 400;
     constexpr double total_second_population = 200;
+
+    auto& params = model.parameters;
 
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]  = 100;
@@ -386,9 +389,8 @@ TEST(TestSeir, get_flows_two_agegroups)
         model.parameters.get<mio::oseir::TransmissionProbabilityOnContact<double>>()[i] = 1;
     }
 
-    mio::ContactMatrixGroup& contact_matrix =
-        model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
-    contact_matrix[0].get_baseline().setConstant(1);
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::oseir::ContactPatterns<double>>();
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 1.0));
     model.check_constraints();
 
     auto dydt_default = Eigen::VectorXd(6);
