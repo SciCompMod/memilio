@@ -29,6 +29,9 @@ from itertools import combinations
 import memilio.simulation as mio
 import memilio.simulation.osecirvvs as osecirvvs
 
+from post_requests import post_to_db_scenarios
+from post_parameters import get_mcmc_model_params
+
 
 class Location(Enum):
     Home = 0
@@ -575,7 +578,7 @@ class Simulation:
 
         return graph
 
-    def run(self, num_days_sim, num_runs=10):
+    def run(self, num_days_sim, date_today, mcmc_dir,  num_runs=10):
         mio.set_log_level(mio.LogLevel.Warning)
 
         header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
@@ -594,14 +597,19 @@ class Simulation:
         # TODO: Assuming all parameters are equal for each scenarios.
         # Therefore, we only need to build the graph once?
 
+        parameters_mcmc = get_mcmc_model_params(
+        self.run_data_url, date_today, mcmc_dir)
+        scenarios = post_to_db_scenarios(parameters_mcmc, post=False)
+
         for scenario in scenarios:
             extrapolate = False
             if scenario['name'] == 'casedata':
                 extrapolate = True
 
             # load full set of scenario data
-            self.scenario_data = requests.get(
-                self.run_data_url + "scenarios/" + scenario['id'], headers=header).json()
+            # self.scenario_data = requests.get(
+            #     self.run_data_url + "scenarios/" + scenario['id'], headers=header).json()
+            self.scenario_data = scenario
 
             # for testing overwrite startDate and endDate
             # self.scenario_data['startDate'] = "2022-01-01"
@@ -649,7 +657,9 @@ if __name__ == "__main__":
     run_data_url = "http://localhost:8123/"
     # with open(scenario_data_path) as f:
     #     scenario_data = json.load(f)
+    mcmc_dir = os.path.join(cwd, "mcmc data")
+    date_today= '2025-01-13'
     sim = Simulation(
         data_dir=os.path.join(cwd, "data"),
         results_dir=os.path.join(cwd, "results_osecirvvs"), run_data_url=run_data_url)
-    sim.run(num_days_sim=30, num_runs=2)
+    sim.run(num_days_sim=30, date_today = date_today, mcmc_dir=mcmc_dir, num_runs=2)

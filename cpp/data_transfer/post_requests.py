@@ -309,7 +309,7 @@ def post_to_db_nodelist():
         print(post_response.status_code)
 
 
-def post_to_db_scenarios(modelparameters_entry={},   mcmc=False):
+def post_to_db_scenarios(modelparameters_entry={}, post=True):
     # Define start and end date for casedata scenario
     start_date_casedata = (datetime.datetime.now() -
                            datetime.timedelta(days=365)).strftime("%Y-%m-%d")
@@ -335,7 +335,7 @@ def post_to_db_scenarios(modelparameters_entry={},   mcmc=False):
         if group["name"] == f"age_{i}":
             group_ids.append(group["id"])
 
-    if not mcmc:
+    if (modelparameters_entry=={} and post):
 
         variantFactor = 1.4
         # Define dict that contains name of parameter and min and max values for all 6 age groups.
@@ -497,12 +497,15 @@ def post_to_db_scenarios(modelparameters_entry={},   mcmc=False):
             "percentiles": [25, 50, 75],
         })
 
-    for scenario in scenario_data:
-        post_response = requests.post(
-            url + "scenarios/", json=scenario, headers=header)
-        if (post_response.status_code != 200):
-            print(post_response.status_code)
-            print(post_response.reason)
+    if post: 
+        for scenario in scenario_data:
+            post_response = requests.post(
+                url + "scenarios/", json=scenario, headers=header)
+            if (post_response.status_code != 200):
+                print(post_response.status_code)
+                print(post_response.reason)
+
+    return scenario_data
 
 def append_parameter_for_agegroup_total(param_dict):
     # Append parameter value for age group "total". This additional parameter is computed by weighting the other 

@@ -138,7 +138,7 @@ def post_mcmc_parameters(url, t, data_dir):
     parameters_mcmc = get_mcmc_model_params(
         url, t, data_dir)
     # Then we post the sceanrios as defined in post_to_db_scenarios with these parameters. 
-    post_to_db_scenarios(parameters_mcmc, mcmc=True)
+    post_to_db_scenarios(parameters_mcmc)
 
 
     # TODO: Post scenarios like this once the request for getting a specific scenario works again. 
