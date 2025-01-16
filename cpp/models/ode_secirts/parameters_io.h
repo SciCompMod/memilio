@@ -354,7 +354,7 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
     std::vector<FP> denom_E(num_age_groups, 0.0);
     std::vector<FP> denom_I_NS(num_age_groups, 0.0);
     std::vector<FP> denom_I_Sy(num_age_groups, 0.0);
-    std::vector<FP> denom_I_Sev(num_age_groups, 0.0);
+    std::vector<FP> denom_I_Sev_Cr(num_age_groups, 0.0);
 
     /*----------- Naive immunity -----------*/
     for (size_t county = 0; county < model.size(); county++) {
@@ -391,7 +391,7 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
                          model[county]
                              .parameters.template get<ReducInfectedSymptomsImprovedImmunity<FP>>()[(AgeGroup)group]);
 
-            denom_I_Sev[group] =
+            denom_I_Sev_Cr[group] =
                 1 / (immunity_population[0][group] +
                      immunity_population[1][group] *
                          model[county].parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity<FP>>()[(
@@ -418,7 +418,12 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
                 immunity_population[0][i] * denom_I_Sy[i] * num_InfectedSymptoms[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsNaiveConfirmed}] = 0;
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSevereNaive}] =
-                immunity_population[0][i] * denom_I_Sev[i] * num_InfectedSevere[county][i];
+                immunity_population[0][i] * denom_I_Sev_Cr[i] * num_InfectedSevere[county][i];
+            // Only set the number of ICU patients here, if the date is not available in the data.
+            if (date < Date(2020, 4, 23) || date > Date(2024, 7, 21)) {
+                model[county].populations[{AgeGroup(i), InfectionState::InfectedCriticalNaive}] =
+                    immunity_population[0][i] * denom_I_Sev_Cr[i] * num_icu[county][i];
+            }
         }
         if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
             log_warning("No infections for unvaccinated reported on date " + std::to_string(date.year) + "-" +
@@ -462,7 +467,15 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
                 immunity_population[1][i] *
                 model[county]
                     .parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity<FP>>()[(AgeGroup)i] *
-                denom_I_Sev[i] * num_InfectedSevere[county][i];
+                denom_I_Sev_Cr[i] * num_InfectedSevere[county][i];
+            // Only set the number of ICU patients here, if the date is not available in the data.
+            if (date < Date(2020, 4, 23) || date > Date(2024, 7, 21)) {
+                model[county].populations[{AgeGroup(i), InfectionState::InfectedCriticalPartialImmunity}] =
+                    immunity_population[1][i] *
+                    model[county]
+                        .parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity<FP>>()[(AgeGroup)i] *
+                    denom_I_Sev_Cr[i] * num_icu[county][i];
+            }
             // the += is necessary because we already set the previous vaccinated individuals
             model[county].populations[{AgeGroup(i), InfectionState::TemporaryImmunePartialImmunity}] +=
                 immunity_population[1][i] *
@@ -511,7 +524,16 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
                 immunity_population[2][i] *
                 model[county]
                     .parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>()[(AgeGroup)i] *
-                denom_I_Sev[i] * num_InfectedSevere[county][i];
+                denom_I_Sev_Cr[i] * num_InfectedSevere[county][i];
+            // Only set the number of ICU patients here, if the date is not available in the data.
+            if (date < Date(2020, 4, 23) || date > Date(2024, 7, 21)) {
+                model[county].populations[{AgeGroup(i), InfectionState::InfectedCriticalImprovedImmunity}] =
+                    immunity_population[2][i] *
+                    model[county]
+                        .parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>()[(AgeGroup)i] *
+                    denom_I_Sev_Cr[i] * num_icu[county][i];
+            }
+
             // the += is necessary because we already set the previous vaccinated individuals
             model[county].populations[{AgeGroup(i), InfectionState::TemporaryImmuneImprovedImmunity}] +=
                 immunity_population[2][i] *
@@ -993,7 +1015,8 @@ IOResult<void> export_input_data_county_timeseries(
 
         // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
         // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
-        if (offset_day > Date(2020, 4, 23)) {
+        // DIVI dataset will no longer be updated from CW29 2024 on.
+        if (offset_day > Date(2020, 4, 23) || offset_day < Date(2024, 7, 21)) {
             BOOST_OUTCOME_TRY(details::set_divi_data(models, divi_data_path, counties, offset_day, scaling_factor_icu));
         }
         else {
@@ -1073,7 +1096,8 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
 
     // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
     // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
-    if (date > Date(2020, 4, 23)) {
+    // DIVI dataset will no longer be updated from CW29 2024 on.
+    if (offset_day > Date(2020, 4, 23) || offset_day < Date(2024, 7, 21)) {
         BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
                                                  county, date, scaling_factor_icu));
     }
@@ -1136,7 +1160,8 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
 
     // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
     // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
-    if (date > Date(2020, 4, 23)) {
+    // DIVI dataset will no longer be updated from CW29 2024 on.
+    if (offset_day > Date(2020, 4, 23) || offset_day < Date(2024, 7, 21)) {
         BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(data_dir, "critical_cases.json"), node_ids, date,
                                                  scaling_factor_icu));
     }
