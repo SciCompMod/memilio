@@ -76,10 +76,10 @@ def lineplots_compartments(mape_per_day, mape_reversed_per_day, savename):
         ax.plot(m, color='blue', label='Test MAPE scaled')
 
         ax.plot(mr, color='orange',
-                label='Test MAPE not scaled')
+                label='MAPE (log scale)')
 
         # ax.set_xlabel('Day')
-        ax.set_ylabel('Test MAPE')
+        ax.set_ylabel('MAPE (orig. scale)')
         ax.set_title(c, fontsize=10)
 
     ax7.set_xlabel('Day')
@@ -94,7 +94,7 @@ def lineplots_compartments(mape_per_day, mape_reversed_per_day, savename):
 
     fig.legend(lines[:2], line_labels[:2], loc='lower center')
     fig.suptitle(
-        'Test MAPE for scaled ('+str(np.round(np.mean(mape_per_day), 4))+'%) and unscaled data ('+str(np.round(np.mean(mape_reversed_per_day), 4))+'%)', fontsize=16)
+        'Test MAPE for log-scaled ('+str(np.round(np.mean(mape_per_day), 4))+'%) and unscaled data ('+str(np.round(np.mean(mape_reversed_per_day), 4))+'%)', fontsize=16)
 
     plt.savefig(savename)
 
@@ -288,7 +288,6 @@ def lineplots_pred_labels(pred_reversed, labels_reversed, num_plots):
                 100 * np.mean(abs((label_data - pred) / label_data)), 4)
             log_mape = np.round(
                 100 * np.mean(abs((np.log1p(label_data) - np.log1p(pred)) / np.log1p(label_data))), 4)
-            # textstr = f"not log MAPE = {not_log_mape}%\nlog MAPE = {log_mape}%"
             textstr = '\n'.join((
                 'MAPE (log scale): ' +
                 str(np.round(
@@ -383,9 +382,9 @@ def mape_log_original(num_plots, pred_reversed, labels_reversed, test_inputs):
     plt.clf()
     plt.figure(figsize=(5, 5))
     plt.scatter(df['log'], df['original'], s=3)
-    plt.xlabel('MAPE(log)')
-    plt.ylabel('MAPE (original)')
-    plt.savefig('SimpleNN_log_original_90days.png')
+    plt.xlabel('MAPE(log scale)')
+    plt.ylabel('MAPE (orig. scale)')
+    plt.savefig('SimpleNN_log_and_nonlog_90days.png')
 
 
 def lineplots_pred_labels_selected_plot(pred_reversed, labels_reversed, plotID):
@@ -403,7 +402,7 @@ def lineplots_pred_labels_selected_plot(pred_reversed, labels_reversed, plotID):
     # Force scientific notation (e.g., x10^6)
     sci_formatter.set_powerlimits((6, 6))
 
-    for ax, state, pred, label, input_data in zip(
+    for ax, state, pred, label_data, input_data in zip(
             axes, infectionstates, pred_reversed[plotID].transpose(),
             labels_reversed[plotID].transpose(), np.expm1(np.asarray(test_inputs))[plotID].transpose()):
 
@@ -411,16 +410,18 @@ def lineplots_pred_labels_selected_plot(pred_reversed, labels_reversed, plotID):
         ax.plot(np.arange(1, 6), input_data,
                 color='black', label='Inputs', linewidth=3)
         ax.plot(np.arange(
-                6, pred_reversed.shape[1] + 6), label, color='red', label='Labels', linewidth=3)
+                6, pred_reversed.shape[1] + 6), label_data, color='red', label='Labels', linewidth=3)
         ax.plot(np.arange(6, pred_reversed.shape[1] + 6), pred, color='blue', label='Predictions',
                 linestyle='--', linewidth=2)
 
         # Compute and add annotation text
-        not_log_mape = np.round(
-            100 * np.mean(abs((label - pred) / label)), 4)
-        log_mape = np.round(
-            100 * np.mean(abs((np.log1p(label) - np.log1p(pred)) / np.log1p(label))), 4)
-        textstr = f"not log MAPE = {not_log_mape}%\nlog MAPE = {log_mape}%"
+        textstr = '\n'.join((
+            'MAPE (log scale): ' +
+            str(np.round(
+                100 * np.mean(abs((np.log1p(label_data) - np.log1p(pred)) / np.log1p(label_data))), 4)) + '%',
+            'MAPE (orig. scale): ' +
+            str(np.round(100 * np.mean(abs((label_data - pred) / label_data)), 4)) + '%'
+        ))
         props = dict(boxstyle='round,pad=0.3',
                      facecolor='lightgray', edgecolor='black', alpha=0.8)
 
@@ -449,17 +450,16 @@ def lineplots_pred_labels_selected_plot(pred_reversed, labels_reversed, plotID):
     print(f'Plot No. {plotID} saved')
 
 
-savename = 'secir_noagegroup_90days_I_based_MAPEs'
+title_add = f'_{days}d_Ibased_10k_noDamp.png'
+savename = 'mape_per_day_simpleNN_log_and_nonlog_mape' + title_add
 lineplots_compartments(mape_per_day, mape_reversed_per_day, savename)
 
+savename = 'mape_per_day_simpleNN_log_and_nonlog_twoaxes_mape' + title_add
+lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename)
 
-# savename_2 = 'secir_noagegroup_90days_I_based_MAPEs_two_axex'
-# lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename_2)
-
-# lineplots_pred_labels(pred_reversed, labels_reversed, num_plots=100)
+lineplots_pred_labels(pred_reversed, labels_reversed, num_plots=100)
 
 
-title_add = f'_{days}d_Ibased_10k_noDamp.png'
 savename = 'mape_per_run_simpleNN_log_mape' + title_add
 plot_mape_per_run(mape_per_run, savename)
 
