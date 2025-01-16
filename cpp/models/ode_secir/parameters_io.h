@@ -361,7 +361,7 @@ IOResult<void> read_input_data_germany(std::vector<Model>& model, Date date,
                                        const std::string& dir)
 {
     // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (offset_day > Date(2020, 4, 23) || offset_day < Date(2024, 7, 21)) {
+    if (date > Date(2020, 4, 23) || date < Date(2024, 7, 21)) {
         BOOST_OUTCOME_TRY(
             details::set_divi_data(model, path_join(dir, "germany_divi.json"), {0}, date, scaling_factor_icu));
     }
@@ -389,7 +389,7 @@ IOResult<void> read_input_data_state(std::vector<Model>& model, Date date, std::
                                      const std::string& dir)
 {
     // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (offset_day > Date(2020, 4, 23) || offset_day < Date(2024, 7, 21)) {
+    if (date > Date(2020, 4, 23) || date < Date(2024, 7, 21)) {
         BOOST_OUTCOME_TRY(
             details::set_divi_data(model, path_join(dir, "state_divi.json"), state, date, scaling_factor_icu));
     }
@@ -420,7 +420,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
                                       const std::string& dir, int num_days = 0, bool export_time_series = false)
 {
     // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (offset_day > Date(2020, 4, 23) || offset_day < Date(2024, 7, 21)) {
+    if (date > Date(2020, 4, 23) || date < Date(2024, 7, 21)) {
         BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
                                                  county, date, scaling_factor_icu));
     }
@@ -463,7 +463,7 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
                                const std::string& data_dir, int num_days = 0, bool export_time_series = false)
 {
     // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (offset_day > Date(2020, 4, 23) || offset_day < Date(2024, 7, 21)) {
+    if (date > Date(2020, 4, 23) || date < Date(2024, 7, 21)) {
         BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(data_dir, "critical_cases.json"), node_ids, date,
                                                  scaling_factor_icu));
     }

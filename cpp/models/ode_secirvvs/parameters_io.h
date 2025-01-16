@@ -956,7 +956,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
     // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
     // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
     // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (offset_day > Date(2020, 4, 23) || offset_day < Date(2024, 7, 21)) {
+    if (date > Date(2020, 4, 23) || date < Date(2024, 7, 21)) {
         BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
                                                  county, date, scaling_factor_icu));
     }
@@ -1013,7 +1013,7 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
     // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
     // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
     // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (offset_day > Date(2020, 4, 23) || offset_day < Date(2024, 7, 21)) {
+    if (date > Date(2020, 4, 23) || date < Date(2024, 7, 21)) {
         BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(data_dir, "critical_cases.json"), node_ids, date,
                                                  scaling_factor_icu));
     }
