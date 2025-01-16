@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRVVS_PARAMETERS_H
-#define ODESECIRVVS_PARAMETERS_H
+#ifndef MIO_ODE_SECIRVVS_PARAMETERS_H
+#define MIO_ODE_SECIRVVS_PARAMETERS_H
 
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/dynamic_npis.h"
@@ -120,6 +120,38 @@ struct TestAndTraceCapacity {
 };
 
 /**
+ * @brief Multiplier for the test and trace capacity to determine when it is considered overloaded from cases without symptoms.
+ */
+template <typename FP = double>
+struct TestAndTraceCapacityMaxRiskNoSymptoms {
+    using Type = UncertainValue<FP>;
+    static Type get_default(AgeGroup)
+    {
+        return Type(2.0);
+    }
+    static std::string name()
+    {
+        return "TestAndTraceCapacityMaxRiskNoSymptoms";
+    }
+};
+
+/**
+ * @brief Multiplier for the test and trace capacity to determine when it is considered overloaded by symptomatic cases.
+ */
+template <typename FP = double>
+struct TestAndTraceCapacityMaxRiskSymptoms {
+    using Type = UncertainValue<FP>;
+    static Type get_default(AgeGroup)
+    {
+        return Type(15.0);
+    }
+    static std::string name()
+    {
+        return "TestAndTraceCapacityMaxRiskSymptoms";
+    }
+};
+
+/**
  * @brief the contact patterns within the society are modelled using an UncertainContactMatrix
  */
 template <typename FP = double>
@@ -136,7 +168,7 @@ struct ContactPatterns {
 };
 
 /**
- * @brief the NPIs that are enacted if certain infection thresholds are exceeded.
+ * @brief the NPIs that are enforced if certain infection thresholds are exceeded.
  */
 template <typename FP = double>
 struct DynamicNPIsInfectedSymptoms {
@@ -148,6 +180,22 @@ struct DynamicNPIsInfectedSymptoms {
     static std::string name()
     {
         return "DynamicNPIsInfectedSymptoms";
+    }
+};
+
+/**
+ * @brief The delay with which DynamicNPIs are implemented and enforced after exceedance of threshold.
+ */
+template <typename FP = double>
+struct DynamicNPIsImplementationDelay {
+    using Type = UncertainValue<FP>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return 0.;
+    }
+    static std::string name()
+    {
+        return "DynamicNPIsImplementationDelay";
     }
 };
 
@@ -415,7 +463,7 @@ struct DaysUntilEffectiveImprovedImmunity {
 * @brief Total number of first vaccinations up to the given day.
 */
 template <typename FP = double>
-struct DailyFirstVaccination {
+struct DailyPartialVaccinations {
     using Type = CustomIndexArray<FP, AgeGroup, SimulationDay>;
     static Type get_default(AgeGroup size)
     {
@@ -423,7 +471,7 @@ struct DailyFirstVaccination {
     }
     static std::string name()
     {
-        return "DailyFirstVaccination";
+        return "DailyPartialVaccinations";
     }
 };
 
@@ -431,7 +479,7 @@ struct DailyFirstVaccination {
 * @brief Total number of full vaccinations up to the given day.
 */
 template <typename FP = double>
-struct DailyFullVaccination {
+struct DailyFullVaccinations {
     using Type = CustomIndexArray<FP, AgeGroup, SimulationDay>;
     static Type get_default(AgeGroup size)
     {
@@ -439,7 +487,7 @@ struct DailyFullVaccination {
     }
     static std::string name()
     {
-        return "DailyFullVaccination";
+        return "DailyFullVaccinations";
     }
 };
 
@@ -573,19 +621,19 @@ struct InfectiousnessNewVariant {
 };
 
 template <typename FP = double>
-using ParametersBase =
-    ParameterSet<StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, ContactPatterns<FP>,
-                 DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>, TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>,
-                 TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
-                 RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>,
-                 RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>,
-                 SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>, VaccinationGap<FP>,
-                 DaysUntilEffectivePartialImmunity<FP>, DaysUntilEffectiveImprovedImmunity<FP>,
-                 DailyFullVaccination<FP>, DailyFirstVaccination<FP>, ReducExposedPartialImmunity<FP>,
-                 ReducExposedImprovedImmunity<FP>, ReducInfectedSymptomsPartialImmunity<FP>,
-                 ReducInfectedSymptomsImprovedImmunity<FP>, ReducInfectedSevereCriticalDeadPartialImmunity<FP>,
-                 ReducInfectedSevereCriticalDeadImprovedImmunity<FP>, ReducTimeInfectedMild<FP>,
-                 InfectiousnessNewVariant<FP>, StartDayNewVariant>;
+using ParametersBase = ParameterSet<
+    StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, TestAndTraceCapacityMaxRiskNoSymptoms<FP>,
+    TestAndTraceCapacityMaxRiskSymptoms<FP>, ContactPatterns<FP>, DynamicNPIsImplementationDelay<FP>,
+    DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>, TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>,
+    TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
+    RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
+    MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>,
+    VaccinationGap<FP>, DaysUntilEffectivePartialImmunity<FP>, DaysUntilEffectiveImprovedImmunity<FP>,
+    DailyFullVaccinations<FP>, DailyPartialVaccinations<FP>, ReducExposedPartialImmunity<FP>,
+    ReducExposedImprovedImmunity<FP>, ReducInfectedSymptomsPartialImmunity<FP>,
+    ReducInfectedSymptomsImprovedImmunity<FP>, ReducInfectedSevereCriticalDeadPartialImmunity<FP>,
+    ReducInfectedSevereCriticalDeadImprovedImmunity<FP>, ReducTimeInfectedMild<FP>, InfectiousnessNewVariant<FP>,
+    StartDayNewVariant>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.
@@ -682,6 +730,34 @@ public:
             log_warning("Constraint check: Parameter ICUCapacity changed from {} to {}",
                         this->template get<ICUCapacity<FP>>(), 0);
             this->template set<ICUCapacity<FP>>(0);
+            corrected = true;
+        }
+
+        if (this->template get<TestAndTraceCapacity<FP>>() < 0.0) {
+            log_warning("Constraint check: Parameter TestAndTraceCapacity changed from {} to {}",
+                        this->template get<TestAndTraceCapacity<FP>>(), 0);
+            this->template set<TestAndTraceCapacity<FP>>(0);
+            corrected = true;
+        }
+
+        if (this->template get<TestAndTraceCapacityMaxRiskSymptoms<FP>>() < 0.0) {
+            log_warning("Constraint check: Parameter TestAndTraceCapacityMaxRiskSymptoms changed from {} to {}",
+                        this->template get<TestAndTraceCapacityMaxRiskSymptoms<FP>>(), 0);
+            this->template set<TestAndTraceCapacityMaxRiskSymptoms<FP>>(0);
+            corrected = true;
+        }
+
+        if (this->template get<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>() < 0.0) {
+            log_warning("Constraint check: Parameter TestAndTraceCapacityMaxRiskNoSymptoms changed from {} to {}",
+                        this->template get<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(), 0);
+            this->template set<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>(0);
+            corrected = true;
+        }
+
+        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
+            log_warning("Constraint check: Parameter DynamicNPIsImplementationDelay changed from {} to {}",
+                        this->template get<DynamicNPIsImplementationDelay<FP>>(), 0);
+            this->template set<DynamicNPIsImplementationDelay<FP>>(0);
             corrected = true;
         }
 
@@ -789,7 +865,7 @@ public:
             }
 
             if (this->template get<DaysUntilEffectivePartialImmunity<FP>>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter DeathsPerCritical changed from {} to {}",
+                log_warning("Constraint check: Parameter DaysUntilEffectivePartialImmunity changed from {} to {}",
                             this->template get<DaysUntilEffectivePartialImmunity<FP>>()[i], 0);
                 this->template get<DaysUntilEffectivePartialImmunity<FP>>()[i] = 0;
                 corrected                                                      = true;
@@ -877,12 +953,32 @@ public:
     {
         const double tol_times = 1e-1; // accepted tolerance for compartment stays
         if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
-            log_error("Constraint check: Parameter m_seasonality smaller {} or larger {}", 0, 0.5);
+            log_error("Constraint check: Parameter Seasonality smaller {} or larger {}", 0, 0.5);
             return true;
         }
 
         if (this->template get<ICUCapacity<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter m_icu_capacity smaller {}", 0);
+            log_error("Constraint check: Parameter ICUCapacity smaller {}", 0);
+            return true;
+        }
+
+        if (this->template get<TestAndTraceCapacity<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter TestAndTraceCapacity smaller {}", 0);
+            return true;
+        }
+
+        if (this->template get<TestAndTraceCapacityMaxRiskSymptoms<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter TestAndTraceCapacityMaxRiskSymptoms smaller {}", 0);
+            return true;
+        }
+
+        if (this->template get<TestAndTraceCapacityMaxRiskNoSymptoms<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter TestAndTraceCapacityMaxRiskNoSymptoms smaller {}", 0);
+            return true;
+        }
+
+        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter DynamicNPIsImplementationDelay smaller {:d}", 0);
             return true;
         }
 
@@ -1056,10 +1152,10 @@ private:
     double m_commuter_nondetection    = 0.0;
     double m_start_commuter_detection = 0.0;
     double m_end_commuter_detection   = 0.0;
-    double m_end_dynamic_npis         = 0.0;
+    double m_end_dynamic_npis         = std::numeric_limits<double>::max();
 };
 
 } // namespace osecirvvs
 } // namespace mio
 
-#endif // ODESECIRVVS_PARAMETERS_H
+#endif // MIO_ODE_SECIRVVS_PARAMETERS_H

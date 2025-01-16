@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Martin J. Kuehn
 #
@@ -288,7 +288,7 @@ def extract_subframe_based_on_dates(df, start_date, end_date):
     return df_new
 
 
-def insert_column_by_map(df, col_to_map, new_col_name, map):
+def insert_column_by_map(df, col_to_map, new_col_name, map, new_col_dtype='object'):
     """! Adds a column to a given dataframe based on a mapping of values of a given column
 
     The mapping is defined by a list containing tupels of the form (new_value, old_value)
@@ -298,14 +298,19 @@ def insert_column_by_map(df, col_to_map, new_col_name, map):
     @param col_to_map column containing values to be mapped
     @param new_col_name name of the new column containing the mapped values
     @param map List of tuples of values in the column to be added and values in the given column
+    @param new_col_dtype String of dtype [Default: 'object'] for the new generated column
     @return dataframe df with column of state names correspomding to state ids
     """
     df_new = df[:]
     loc_new_col = df_new.columns.get_loc(col_to_map)+1
     df_new.insert(loc=loc_new_col, column=new_col_name,
                   value=df_new[col_to_map])
+    # Set dtype=object at new created column to prevent incompatible dtype errors
+    df_new[new_col_name] = df_new[new_col_name].astype('object')
     for item in map:
         df_new.loc[df_new[col_to_map] == item[1], [new_col_name]] = item[0]
+    # Set dtype of new column
+    df_new[new_col_name] = df_new[new_col_name].astype(new_col_dtype)
     return df_new
 
 
@@ -517,7 +522,7 @@ def fit_age_group_intervals(
                           age_share[0][1]:age_share[-1][1]+1])
             for age in age_share:
                 new_pop[age[1]] += pop_data[age[1]
-                                            ] / sum_pop * df_age_in.iloc[0][population_indx]
+                                            ] / sum_pop * df_age_in.iloc[0, population_indx]
 
             population_indx += 1
 

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Daniel Abele
 #
@@ -22,4 +22,29 @@
 The Python bindings to the MEmilio C++ library.
 """
 
-from memilio._simulation import *
+from memilio.simulation._simulation import *
+
+
+def __getattr__(attr):
+    """! The __getattr__ function is used here to implement lazy loading for the submodules within the memilio.simulation package. 
+    Submodules are only imported when they are first accessed, which can save memory and reduce startup time, if not all submodules 
+    are needed for every execution.
+    """
+    if attr == "abm":
+        import memilio.simulation.abm as abm
+        return abm
+    elif attr == "osir":
+        import memilio.simulation.osir as osir
+        return osir
+    elif attr == "oseir":
+        import memilio.simulation.oseir as oseir
+        return oseir
+    elif attr == "osecir":
+        import memilio.simulation.osecir as osecir
+        return osecir
+    elif attr == "osecirvvs":
+        import memilio.simulation.osecirvvs as osecirvvs
+        return osecirvvs
+
+    raise AttributeError("module {!r} has no attribute "
+                         "{!r}".format(__name__, attr))

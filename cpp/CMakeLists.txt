@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.13)
 
 project(memilio VERSION 1.0.0)
 
@@ -18,9 +18,18 @@ option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." ON)
 option(MEMILIO_BUILD_STATIC_LIBS "Build memilio as a static library." ON)
 option(MEMILIO_ENABLE_MPI "Build memilio with MPI." OFF)
 option(MEMILIO_ENABLE_OPENMP "Enable Multithreading with OpenMP." OFF)
+option(MEMILIO_ENABLE_WARNINGS "Build memilio with warnings." ON)
+option(MEMILIO_ENABLE_WARNINGS_AS_ERRORS "Build memilio with warnings as errors." ON)
 option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler" OFF)
+option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio" OFF)
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
+
+# try to treat AppleClang as Clang, but warn about missing support 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    message(WARNING "The compiler ID \"AppleClang\" is not supported, trying to compile with \"Clang\" options.")
+    set(CMAKE_CXX_COMPILER_ID "Clang")
+endif()
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -74,6 +83,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         message(STATUS "Coverage enabled")
         include(CodeCoverage)
         append_coverage_compiler_flags()
+        # In addition to standard flags, disable elision and inlining to prevent e.g. closing brackets being marked as
+        # uncovered.
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-elide-constructors -fno-default-inline")
         setup_target_for_coverage_lcov(
             NAME coverage
             EXECUTABLE memilio-test
@@ -103,15 +115,32 @@ endif((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND(CMAKE_CXX_COMPILER_VERSION VERS
 
 # define flags to enable most warnings and treat them as errors for different compilers
 # add flags to each target separately instead of globally so users have the choice to use their own flags
+if(MEMILIO_ENABLE_WARNINGS)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+            "/W4;")
+    else()
+        string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+            "-Wall;-Wextra;-Wshadow;--pedantic;")
+    endif()
+endif()
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "-Wno-unknown-warning;-Wno-pragmas;-Wall;-Wextra;-Werror;-Wshadow;--pedantic-errors;-Wno-deprecated-copy;-Wno-expansion-to-defined;-Wno-dangling-reference")
+    string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+        "-Wno-unknown-warning;-Wno-pragmas;-Wno-deprecated-copy;-Wno-expansion-to-defined;")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "-Wno-unknown-warning-option;-Wall;-Wextra;-Werror;-Wshadow;--pedantic-errors;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments")
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "/W4;/WX")
+    string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+        "-Wno-unknown-warning-option;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;")
+endif()
+
+if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+            "/WX")
+    else()
+        string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+            "-Werror")
+    endif()
 endif()
 
 # add parts of the project
@@ -122,8 +151,10 @@ add_subdirectory(memilio)
 if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/abm)
     add_subdirectory(models/ode_secir)
+    add_subdirectory(models/ode_secirts)
     add_subdirectory(models/ode_secirvvs)
     add_subdirectory(models/lct_secir)
+    add_subdirectory(models/glct_secir)
     add_subdirectory(models/ide_secir)
     add_subdirectory(models/ide_seir)
     add_subdirectory(models/ode_seir)
@@ -131,6 +162,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/ode_sir)
     add_subdirectory(models/sde_sir)
     add_subdirectory(models/sde_sirs)
+    add_subdirectory(models/sde_seirvv)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)

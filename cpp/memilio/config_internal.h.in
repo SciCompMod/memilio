@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -29,5 +29,6 @@
 #cmakedefine MEMILIO_HAS_JSONCPP
 #cmakedefine MEMILIO_ENABLE_MPI
 #cmakedefine MEMILIO_ENABLE_OPENMP
+#cmakedefine MEMILIO_ENABLE_PROFILING
 
 #endif

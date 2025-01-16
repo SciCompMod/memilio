@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Martin J. Kuehn
 #
@@ -144,11 +144,11 @@ def main():
 
     # Merge Eisenach and Wartbugkreis in Input Data if need be
     updateMobility2022(directory, mobility_file='twitter_scaled_1252')
-    updateMobility2022(directory, mobility_file='commuter_migration_scaled')
+    updateMobility2022(directory, mobility_file='commuter_mobility')
     # create federal states mobility matrix (not used in simulation for now)
     createFederalStatesMobility(directory, mobility_file='twitter_scaled_1252')
     createFederalStatesMobility(
-        directory, mobility_file='commuter_migration_scaled')
+        directory, mobility_file='commuter_mobility')
 
 
 if __name__ == "__main__":

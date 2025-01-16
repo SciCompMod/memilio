@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -289,15 +289,15 @@ auto make_contact_damping_matrix(V&& groups)
 }
 
 /**
- * Make migration coefficient damping vector from dampings by group.
- * Maps the vector of dampings by group onto a migration coefficient damping vector
+ * Make mobility coefficient damping vector from dampings by group.
+ * Maps the vector of dampings by group onto a mobility coefficient damping vector
  * [g_0, g_0, ..., g_1, g_1, ..., g_2, ...].
- * @param shape shape (i.e. size) of the migration coefficient vector.
+ * @param shape shape (i.e. size) of the mobility coefficient vector.
  * @param groups damping value weighted by group.
- * @return vector expression of migration coefficient damping.
+ * @return vector expression of mobility coefficient damping.
  */
 template <class V>
-auto make_migration_damping_vector(ColumnVectorShape shape, V&& groups)
+auto make_mobility_damping_vector(ColumnVectorShape shape, V&& groups)
 {
     return Eigen::VectorXd::NullaryExpr(shape.size(), [shape, groups = std::forward<V>(groups)](Eigen::Index i) {
         auto num_groups       = groups.size();

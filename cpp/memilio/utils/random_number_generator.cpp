@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -21,7 +21,7 @@
 
 namespace mio
 {
-    
+
 RandomNumberGenerator& thread_local_rng()
 {
     static thread_local auto rng = RandomNumberGenerator();

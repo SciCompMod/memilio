@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J Kuehn, Anna Wendler, Lena Ploetzke
 *
@@ -18,8 +18,6 @@
 * limitations under the License.
 */
 #include "ide_secir/simulation.h"
-#include "ide_secir/parameters.h"
-#include "ide_secir/infection_state.h"
 #include "ide_secir/model.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
@@ -32,8 +30,11 @@ namespace isecir
 
 void Simulation::advance(ScalarType tmax)
 {
-    mio::log_info("Simulating IDE-SECIR from t0 = {} until tmax = {} with dt = {}.",
+    mio::log_info("Simulating IDE-SECIR from t0 = {} until tmax = {} with dt = {} .",
                   m_model->m_transitions.get_last_time(), tmax, m_dt);
+    m_model->set_transitiondistributions_support_max(m_dt);
+    m_model->set_transitiondistributions_derivative(m_dt);
+    m_model->set_transitiondistributions_in_forceofinfection(m_dt);
     m_model->initial_compute_compartments(m_dt);
 
     // For every time step:

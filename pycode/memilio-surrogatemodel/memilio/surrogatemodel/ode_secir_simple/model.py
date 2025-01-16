@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Agatha Schmidt, Henrik Zunker
 #
@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-from memilio.simulation.secir import InfectionState
+from memilio.simulation.osecir import InfectionState
 from memilio.surrogatemodel.ode_secir_simple import network_architectures
 
 

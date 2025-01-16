@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Elisabeth Kluth, Daniel Abele
 *
@@ -18,10 +18,8 @@
 * limitations under the License.
 */
 #include "abm/trip_list.h"
-#include "abm/location.h"
 #include "abm/random_events.h"
-
-#include <numeric>
+#include "memilio/utils/stl_util.h"
 
 namespace mio
 {

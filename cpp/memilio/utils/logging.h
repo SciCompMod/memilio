@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin Siggel
 *
@@ -127,38 +127,24 @@ inline void log(LogLevel level, spdlog::string_view_t fmt, const Args&... args)
 
 } // namespace mio
 
-/**
- * @brief The fmt::formatter class provides formatting capabilities for the ad::gt1s<double>::type 
- * to help SPD log to handle it.
- */
-template <>
-struct fmt::formatter<ad::gt1s<double>::type> {
-    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin())
-    {
-        return ctx.end();
-    }
-    template <typename FormatContext>
-    auto format(const ad::gt1s<double>::type& input, FormatContext& ctx) -> decltype(ctx.out())
-    {
-        return format_to(ctx.out(), "{}", ad::value(input));
-    }
-};
+namespace ad
+{
+namespace internal
+{
 
 /**
- * @brief The fmt::formatter class provides formatting capabilities for the ad::ga1s<double>::type 
- * to help SPD log to handle it.
+ * @brief Format AD types (like ad::gt1s<double>::type) using their value for logging with spdlog.
+ *
+ * If derivative information is needed as well, use `ad::derivative(...)` or define a `fmt::formatter<...>`.
  */
-template <>
-struct fmt::formatter<ad::ga1s<double>::type> {
-    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin())
-    {
-        return ctx.end();
-    }
-    template <typename FormatContext>
-    auto format(const ad::ga1s<double>::type& input, FormatContext& ctx) -> decltype(ctx.out())
-    {
-        return format_to(ctx.out(), "{}", ad::value(input));
-    }
-};
+template <class FP, class DataHandler>
+const FP& format_as(const active_type<FP, DataHandler>& ad_type)
+{
+    // Note: the format_as function needs to be in the same namespace as the value it takes
+    return value(ad_type);
+}
+
+} // namespace internal
+} // namespace ad
 
 #endif // LOGGING_H

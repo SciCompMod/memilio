@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -26,6 +26,7 @@
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/utils/uncertain_value.h"
+#include <limits>
 
 namespace mio
 {
@@ -317,7 +318,7 @@ struct ContactPatterns {
 };
 
 /**
- * @brief the NPIs that are enacted if certain infection thresholds are exceeded.
+ * @brief the NPIs that are enforced if certain infection thresholds are exceeded.
  */
 template <typename FP = double>
 struct DynamicNPIsInfectedSymptoms {
@@ -329,6 +330,22 @@ struct DynamicNPIsInfectedSymptoms {
     static std::string name()
     {
         return "DynamicNPIsInfectedSymptoms";
+    }
+};
+
+/**
+ * @brief The delay with which DynamicNPIs are implemented and enforced after exceedance of threshold.
+ */
+template <typename FP = double>
+struct DynamicNPIsImplementationDelay {
+    using Type = UncertainValue<FP>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return 0.;
+    }
+    static std::string name()
+    {
+        return "DynamicNPIsImplementationDelay";
     }
 };
 
@@ -348,14 +365,31 @@ struct TestAndTraceCapacity {
     }
 };
 
+/**
+ * @brief Multiplier for the test and trace capacity to determine when it is considered overloaded.
+ */
+template <typename FP = double>
+struct TestAndTraceCapacityMaxRisk {
+    using Type = UncertainValue<FP>;
+    static Type get_default(AgeGroup)
+    {
+        return Type(5.0);
+    }
+    static std::string name()
+    {
+        return "TestAndTraceCapacityMaxRisk";
+    }
+};
+
 template <typename FP = double>
 using ParametersBase =
-    ParameterSet<StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, ContactPatterns<FP>,
-                 DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>, TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>,
-                 TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
-                 RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>,
-                 RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>,
-                 SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>>;
+    ParameterSet<StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, TestAndTraceCapacityMaxRisk<FP>,
+                 ContactPatterns<FP>, DynamicNPIsImplementationDelay<FP>, DynamicNPIsInfectedSymptoms<FP>,
+                 TimeExposed<FP>, TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>, TimeInfectedSevere<FP>,
+                 TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>, RelativeTransmissionNoSymptoms<FP>,
+                 RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
+                 MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>,
+                 DeathsPerCritical<FP>>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
@@ -414,6 +448,18 @@ public:
     }
 
     /**
+     * Time in simulation after which no dynamic NPIs are applied.
+     */
+    double& get_end_dynamic_npis()
+    {
+        return m_end_dynamic_npis;
+    }
+    double get_end_dynamic_npis() const
+    {
+        return m_end_dynamic_npis;
+    }
+
+    /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not.
      * Time spans cannot be negative and probabilities can only take values between [0,1].
      *
@@ -443,6 +489,27 @@ public:
                         this->template get<ICUCapacity<FP>>(), 0);
             this->template set<ICUCapacity<FP>>(0);
             corrected = true;
+        }
+
+        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
+            log_warning("Constraint check: Parameter DynamicNPIsImplementationDelay changed from {} to {}",
+                        this->template get<DynamicNPIsImplementationDelay<FP>>(), 0);
+            this->template set<DynamicNPIsImplementationDelay<FP>>(0);
+            corrected = true;
+        }
+
+        if (this->template get<TestAndTraceCapacity<FP>>() < 0.0) {
+            log_warning("Constraint check: Parameter TestAndTraceCapacity changed from {:0.4f} to {:d}",
+                        this->template get<TestAndTraceCapacity<FP>>(), 0);
+            this->template get<TestAndTraceCapacity<FP>>() = 0;
+            corrected                                      = true;
+        }
+
+        if (this->template get<TestAndTraceCapacityMaxRisk<FP>>() < 0.0) {
+            log_warning("Constraint check: Parameter TestAndTraceCapacityMaxRisk changed from {:0.4f} to {:d}",
+                        this->template get<TestAndTraceCapacityMaxRisk<FP>>(), 0);
+            this->template get<TestAndTraceCapacityMaxRisk<FP>>() = 0;
+            corrected                                             = true;
         }
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
@@ -567,6 +634,21 @@ public:
             return true;
         }
 
+        if (this->template get<TestAndTraceCapacity<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter TestAndTraceCapacity smaller {:d}", 0);
+            return true;
+        }
+
+        if (this->template get<TestAndTraceCapacityMaxRisk<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter TestAndTraceCapacityMaxRisk smaller {:d}", 0);
+            return true;
+        }
+
+        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter DynamicNPIsImplementationDelay smaller {:d}", 0);
+            return true;
+        }
+
         const double tol_times = 1e-1; // accepted tolerance for compartment stays
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
@@ -681,6 +763,7 @@ private:
     double m_commuter_nondetection    = 0.0;
     double m_start_commuter_detection = 0.0;
     double m_end_commuter_detection   = 0.0;
+    double m_end_dynamic_npis         = std::numeric_limits<double>::max();
 };
 
 /**

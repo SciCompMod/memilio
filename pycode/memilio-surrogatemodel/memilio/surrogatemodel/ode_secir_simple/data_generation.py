@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Agatha Schmidt, Henrik Zunker, Khoa Nguyen
 #
@@ -31,9 +31,9 @@ from sklearn.preprocessing import FunctionTransformer
 
 from memilio.simulation import (AgeGroup, ContactMatrix, Damping, LogLevel,
                                 UncertainContactMatrix, set_log_level)
-from memilio.simulation.secir import (Index_InfectionState,
-                                      InfectionState, Model, Simulation,
-                                      interpolate_simulation_result, simulate)
+from memilio.simulation.osecir import (Index_InfectionState,
+                                       InfectionState, Model, Simulation,
+                                       interpolate_simulation_result, simulate)
 
 
 def remove_confirmed_compartments(result_array):

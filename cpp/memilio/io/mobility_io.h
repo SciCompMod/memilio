@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Daniel Abele, Wadim Koslow, Martin J. Kuehn
+* Authors: Daniel Abele, Wadim Koslow, Henrik Zunker, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -22,6 +22,7 @@
 
 #include "memilio/io/json_serializer.h"
 #include "memilio/mobility/graph.h"
+#include "memilio/data/analyze_result.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 
 namespace mio
@@ -41,7 +42,7 @@ std::vector<std::string> split(const std::string& s, char delimiter);
 IOResult<int> count_lines(const std::string& filename);
 
 /**
- * @brief Reads formatted migration or contact data which is given in columns
+ * @brief Reads formatted mobility or contact data which is given in columns
  *          from_str	to_str	from_rs	    to_rs	count_abs
  *        and separated by tabs. Writes it into a NxN Eigen Matrix, 
  *        where N is the number of regions
@@ -50,7 +51,7 @@ IOResult<int> count_lines(const std::string& filename);
 IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename);
 
 /**
- * @brief Reads txt migration data or contact which is given by values only
+ * @brief Reads txt mobility data or contact which is given by values only
  *        and separated by spaces. Writes it into a NxN Eigen 
  *        Matrix, where N is the number of regions
  * @param filename name of file to be read
@@ -67,7 +68,7 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename);
  * @param ioflags flags that set the behavior of serialization; see mio::IOFlags
  */
 template <typename FP, class Model>
-IOResult<void> write_graph(const Graph<Model, MigrationParameters<FP>>& graph, const std::string& directory,
+IOResult<void> write_graph(const Graph<Model, MobilityParameters<FP>>& graph, const std::string& directory,
                            int ioflags = IOF_None)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
@@ -127,8 +128,8 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters<FP>>& graph, c
  * @param read_edges boolean value that decides whether the edges of the graph should also be read in.
  */
 template <typename FP, class Model>
-IOResult<Graph<Model, MigrationParameters<FP>>> read_graph(const std::string& directory, int ioflags = IOF_None,
-                                                           bool read_edges = true)
+IOResult<Graph<Model, MobilityParameters<FP>>> read_graph(const std::string& directory, int ioflags = IOF_None,
+                                                          bool read_edges = true)
 {
     std::string abs_path;
     if (!file_exists(directory, abs_path)) {
@@ -136,7 +137,7 @@ IOResult<Graph<Model, MigrationParameters<FP>>> read_graph(const std::string& di
         return failure(StatusCode::FileNotFound, directory);
     }
 
-    auto graph = Graph<Model, MigrationParameters<FP>>{};
+    auto graph = Graph<Model, MobilityParameters<FP>>{};
 
     //read nodes, as many as files are available
     for (auto inode = 0;; ++inode) {
@@ -175,7 +176,7 @@ IOResult<Graph<Model, MigrationParameters<FP>>> read_graph(const std::string& di
                                    edge_filename + ", EndNodeIndex not in range of number of graph nodes.");
                 }
                 BOOST_OUTCOME_TRY(auto&& parameters,
-                                  deserialize_json(e["Parameters"], Tag<MigrationParameters<FP>>{}, ioflags));
+                                  deserialize_json(e["Parameters"], Tag<MobilityParameters<FP>>{}, ioflags));
                 graph.add_edge(start_node_idx, end_node_idx, parameters);
             }
         }
@@ -185,6 +186,31 @@ IOResult<Graph<Model, MigrationParameters<FP>>> read_graph(const std::string& di
 }
 
 #endif //MEMILIO_HAS_JSONCPP
+#ifdef MEMILIO_HAS_HDF5
+/**
+ * @brief Save the results of the edges for a single graph simulation run.
+ * @param[in] results Simulation results per edge of the graph.
+ * @param[in] ids Identifiers for the start and end node of the edges.
+ * @param[in] filename Name of the file where the results will be saved.
+ * @return Any io errors that occur during writing of the files. 
+ */
+IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const std::vector<std::pair<int, int>>& ids,
+                          const std::string& filename);
+
+/**
+ * @brief Saves the results of a simulation for each edge in the graph.
+ * @param[in] ensemble_edges Simulation results for each run for each edge.
+ * @param[in] pairs_edges Identifiers for the start and end node of the edges.
+ * @param[in] result_dir Top level directory for all results of the parameter study.
+ * @param[in] save_single_runs [Default: true] Defines if single run results are written.
+ * @param[in] save_percentiles [Default: true] Defines if percentiles are written.
+ * @return Any io errors that occur during writing of the files.
+ */
+IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<double>>>& ensemble_edges,
+                          const std::vector<std::pair<int, int>>& pairs_edges, const fs::path& result_dir,
+                          bool save_single_runs = true, bool save_percentiles = true);
+
+#endif //MEMILIO_HAS_HDF5
 
 } // namespace mio
 

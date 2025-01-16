@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn, Martin Siggel, Henrik Zunker
 *
@@ -209,6 +209,25 @@ TEST(Testsir, get_derivatives)
     EXPECT_NEAR(dydt_default[0], -50, 1e-12);
     EXPECT_NEAR(dydt_default[1], 25, 1e-12);
     EXPECT_NEAR(dydt_default[2], 25, 1e-12);
+}
+
+// Test model initialization with total population of 0 and ensure get_flows returns no NaN values
+TEST(Testsir, population_zero_no_nan)
+{
+    // initialize simple model with total population 0
+    mio::osir::Model<double> model(1);
+    model.populations.set_total(0.0);
+
+    // call the get_derivatives function
+    auto dydt_default = Eigen::VectorXd(Eigen::Index(mio::osir::InfectionState::Count));
+    dydt_default.setZero();
+    auto y0 = model.get_initial_values();
+    model.get_derivatives(y0, y0, 0, dydt_default);
+
+    // check that there are now NaN values in dydt_default
+    for (int i = 0; i < dydt_default.size(); i++) {
+        EXPECT_FALSE(std::isnan(dydt_default[i]));
+    }
 }
 
 TEST(Testsir, Simulation)

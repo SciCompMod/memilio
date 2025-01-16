@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef LCTSECIR_INFECTIONSTATE_H
-#define LCTSECIR_INFECTIONSTATE_H
+#ifndef LCT_SECIR_INFECTIONSTATE_H
+#define LCT_SECIR_INFECTIONSTATE_H
 
 namespace mio
 {
@@ -43,7 +43,26 @@ enum class InfectionState
     Count              = 8
 };
 
+/**
+ * @brief The InfectionTransition enum describes the possible
+ * transitions of the infectious state of persons.
+ */
+enum class InfectionTransition
+{
+    SusceptibleToExposed                 = 0,
+    ExposedToInfectedNoSymptoms          = 1,
+    InfectedNoSymptomsToInfectedSymptoms = 2,
+    InfectedNoSymptomsToRecovered        = 3,
+    InfectedSymptomsToInfectedSevere     = 4,
+    InfectedSymptomsToRecovered          = 5,
+    InfectedSevereToInfectedCritical     = 6,
+    InfectedSevereToRecovered            = 7,
+    InfectedCriticalToDead               = 8,
+    InfectedCriticalToRecovered          = 9,
+    Count                                = 10
+};
+
 } // namespace lsecir
 } // namespace mio
 
-#endif
+#endif // LCT_SECIR_INFECTIONSTATE_H

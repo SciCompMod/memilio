@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors:
 #
@@ -454,7 +454,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         # change start-date of jh to 2020-01-22
         arg_dict_jh["start_date"] = date(2020, 1, 22)
 
-        arg_dict_popul = {**arg_dict_all, "username": None, "password": None}
+        arg_dict_popul = {**arg_dict_all}
 
         getVaccinationData.main()
         mock_vaccination.assert_called()

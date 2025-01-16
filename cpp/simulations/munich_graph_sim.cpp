@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Julia Bicker, Daniel Abele, Martin Kühn
 *
@@ -67,7 +67,7 @@ mio::IOResult<void> set_covid_parameters(mio::osecir::Parameters<double>& params
     return mio::success();
 }
 
-mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>& params_graph,
+mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
                               const mio::osecir::Parameters<double>& params, const fs::path& data_dir,
                               mio::Date start_date)
 {
@@ -102,13 +102,12 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model<double>, mio::Migrat
     return mio::success();
 }
 
-mio::IOResult<void> set_edges(mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>& params_graph,
+mio::IOResult<void> set_edges(mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
                               const fs::path& data_dir)
 {
-    auto migrating_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
-                                   mio::osecir::InfectionState::InfectedNoSymptoms,
-                                   mio::osecir::InfectionState::InfectedSymptoms,
-                                   mio::osecir::InfectionState::Recovered};
+    auto mobile_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
+                                mio::osecir::InfectionState::InfectedNoSymptoms,
+                                mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
     //mobility matrix has to be provided by the user as input and should have shape num_nodes x num_nodes
     BOOST_OUTCOME_TRY(auto&& mobility_data,
                       mio::read_mobility_plain(mio::path_join((data_dir).string(), "mobility_matrix.txt")));
@@ -120,13 +119,13 @@ mio::IOResult<void> set_edges(mio::Graph<mio::osecir::Model<double>, mio::Migrat
     for (size_t node_i = 0; node_i < params_graph.nodes().size(); ++node_i) {
         for (size_t node_j = 0; node_j < params_graph.nodes().size(); ++node_j) {
             auto& populations    = params_graph.nodes()[node_i].property.populations;
-            auto mobility_coeffs = mio::MigrationCoefficientGroup(1, populations.numel());
+            auto mobility_coeffs = mio::MobilityCoefficientGroup(1, populations.numel());
 
             auto coeff =
                 mobility_data(node_i, node_j) < 1 ? 0 : mobility_data(node_i, node_j) / populations.get_total();
 
             for (auto age = mio::AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
-                for (auto compartment : migrating_compartments) {
+                for (auto compartment : mobile_compartments) {
                     auto coeff_idx                               = populations.get_flat_index({age, compartment});
                     mobility_coeffs[0].get_baseline()[coeff_idx] = coeff;
                 }
@@ -142,7 +141,7 @@ mio::IOResult<void> set_edges(mio::Graph<mio::osecir::Model<double>, mio::Migrat
 /**
  *
 */
-mio::IOResult<mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>>
+mio::IOResult<mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>>
 get_graph(mio::Date start_date, const fs::path& data_dir)
 {
     const int num_age_groups = 1;
@@ -156,7 +155,7 @@ get_graph(mio::Date start_date, const fs::path& data_dir)
     contact_matrix.add_damping(0.7, mio::SimulationTime(30));
     contact_matrix.add_damping(0.1, mio::SimulationTime(50));
 
-    mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>> params_graph;
+    mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>> params_graph;
     BOOST_OUTCOME_TRY(set_nodes(params_graph, params, data_dir, start_date));
     BOOST_OUTCOME_TRY(set_edges(params_graph, data_dir));
 
@@ -179,7 +178,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     const auto num_days        = 90.0;
 
     //create or load graph
-    mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>> params_graph;
+    mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>> params_graph;
 
     if (mode == RunMode::Save) {
         BOOST_OUTCOME_TRY(auto&& created_graph, get_graph(start_date, data_dir));
@@ -197,7 +196,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     });
 
     //create simulation graph
-    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MigrationEdge<double>>
+    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MobilityEdge<double>>
         sim_graph;
 
     for (auto&& node : params_graph.nodes()) {
@@ -207,7 +206,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
         sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
     }
 
-    auto sim = mio::make_migration_sim(0.0, 0.5, std::move(sim_graph));
+    auto sim = mio::make_mobility_sim(0.0, 0.5, std::move(sim_graph));
     sim.advance(num_days);
 
     auto params = std::vector<mio::osecir::Model<double>>{};

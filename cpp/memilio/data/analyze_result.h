@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, David Kerkmann, Sascha Korf
 *
@@ -109,7 +109,7 @@ std::vector<TimeSeries<double>> ensemble_percentile(const std::vector<std::vecto
  */
 template <class Simulation, typename FP = double>
 std::vector<TimeSeries<double>>
-interpolate_simulation_result(const Graph<SimulationNode<Simulation>, MigrationEdge<FP>>& graph_result)
+interpolate_simulation_result(const Graph<SimulationNode<Simulation>, MobilityEdge<FP>>& graph_result)
 {
     std::vector<TimeSeries<double>> interpolated;
     interpolated.reserve(graph_result.nodes().size());

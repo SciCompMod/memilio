@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Khoa Nguyen
 *
@@ -20,15 +20,9 @@
 #ifndef CUSTOMINDEXARRAY_H
 #define CUSTOMINDEXARRAY_H
 
-#include "memilio/config.h"
-#include "memilio/math/eigen.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/utils/index.h"
 #include "memilio/utils/stl_util.h"
-
-#include <vector>
-#include <array>
-#include <numeric>
 
 namespace
 {
@@ -165,6 +159,14 @@ public:
     using Index             = ::mio::Index<Tags...>;
     using InternalArrayType = Eigen::Array<Type, Eigen::Dynamic, 1>;
 
+    /// @brief Create an empty CustomIndexArray with size 0. Use the resize member function to add entries.
+    explicit CustomIndexArray()
+        : m_dimensions(Index::Zero())
+        , m_numel(0)
+        , m_y()
+    {
+    }
+
     /**
      * @brief CustomIndexArray constructor, that initializes the array
      * to constant instances of `CustsomIndexArray::Type`.
@@ -233,26 +235,31 @@ public:
     }
 
     /**
-     * Resize all dimensions.
-     * @param new_dims new dimensions.
+     * @brief Resize all dimensions, invalidating entries.
+     * All entries of the CustomIndexArray should be reassigned a new value after a resize, as it may delete or reorder
+     * entries in an unexpected way. Newly added entries are default constructed.
+     * @param new_dims New dimensions.
      */
     void resize(Index new_dims)
     {
         m_dimensions = new_dims;
         m_numel      = product(m_dimensions);
-        m_y.conservativeResize(m_numel);
+        m_y.resize(m_numel);
     }
 
     /**
-     * Resize a single dimension.
-     * @param new dimension.
+     * Resize a single dimension, invalidating entries.
+     * All entries of the CustomIndexArray should be reassigned a new value after a resize, as it may delete or reorder
+     * entries in an unexpected way. Newly added entries are default constructed.
+     * @param new_dim New dimension size.
+     * @tparam Tag The dimension to resize.
      */
     template <class Tag>
     void resize(mio::Index<Tag> new_dim)
     {
         std::get<mio::Index<Tag>>(m_dimensions.indices) = new_dim;
         m_numel                                         = product(m_dimensions);
-        m_y.conservativeResize(m_numel);
+        m_y.resize(m_numel);
     }
 
     /**

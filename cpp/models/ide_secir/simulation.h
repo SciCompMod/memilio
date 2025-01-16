@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J Kuehn, Anna Wendler, Lena Ploetzke
 *
@@ -20,14 +20,11 @@
 #ifndef IDE_SECIR_SIMULATION_H
 #define IDE_SECIR_SIMULATION_H
 
-#include "ide_secir/parameters.h"
-#include "ide_secir/infection_state.h"
 #include "ide_secir/model.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include <memory>
 #include <cstdio>
-#include <iostream>
 
 namespace mio
 {
@@ -63,7 +60,7 @@ public:
      * Return the number of persons in all #InfectionState%s.
      * @return The result of the simulation.
      */
-    TimeSeries<double>& get_result()
+    TimeSeries<ScalarType> get_result()
     {
         return m_model->m_populations;
     }
@@ -73,7 +70,7 @@ public:
      * Return the number of persons in all #InfectionState%s.
      * @return The result of the simulation.
      */
-    const TimeSeries<double>& get_result() const
+    const TimeSeries<ScalarType>& get_result() const
     {
         return m_model->m_populations;
     }

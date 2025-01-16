@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding, Henrik Zunker
 *
@@ -58,7 +58,7 @@ public:
      * tmax must be greater than get_result().get_last_time_point().
      * @param[in] tmax Next stopping time of the simulation.
      */
-    Eigen::Ref<Vector<FP>> advance(FP tmax)
+    Eigen::Ref<Eigen::VectorX<FP>> advance(FP tmax)
     {
         // the derivfunktion (i.e. the lambda passed to m_integrator.advance below) requires that there are at least
         // as many entries in m_flow_result as in Base::m_result
@@ -132,7 +132,7 @@ protected:
         }
     }
 
-    Vector<FP> m_pop; ///< pre-allocated temporary, used in right_hand_side()
+    Eigen::VectorX<FP> m_pop; ///< pre-allocated temporary, used in right_hand_side()
 
 private:
     mio::TimeSeries<FP> m_flow_result; ///< flow result of the simulation

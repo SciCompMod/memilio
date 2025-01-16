@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Henrik Zunker
 *
@@ -69,10 +69,10 @@ mio::osecirvvs::Model<ScalarType> create_model(size_t num_agegroups, const Scala
     const size_t vacc_full                                                   = 5;
     model.parameters.get<mio::osecirvvs::ICUCapacity<ScalarType>>()          = 100;
     model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<ScalarType>>() = 0.0143;
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<ScalarType>>().resize(mio::SimulationDay(tmax));
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<ScalarType>>().array().setConstant(vacc_first);
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<ScalarType>>().resize(mio::SimulationDay(tmax));
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<ScalarType>>().array().setConstant(vacc_full);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<ScalarType>>().resize(mio::SimulationDay(tmax));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<ScalarType>>().array().setConstant(vacc_first);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<ScalarType>>().resize(mio::SimulationDay(tmax));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<ScalarType>>().array().setConstant(vacc_full);
 
     auto& contacts       = model.parameters.get<mio::osecirvvs::ContactPatterns<ScalarType>>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
@@ -118,7 +118,7 @@ auto create_simulation()
     mio::osecirvvs::Model model = create_model(cfg.num_agegroups, cfg.t_max);
 
     mio::Graph<mio::SimulationNode<mio::Simulation<ScalarType, mio::osecirvvs::Model<ScalarType>>>,
-               mio::MigrationEdge<ScalarType>>
+               mio::MobilityEdge<ScalarType>>
         g;
     for (size_t county_id = 0; county_id < cfg.num_regions; county_id++) {
         g.add_node(county_id, model, cfg.t0);
@@ -136,7 +136,7 @@ auto create_simulation()
         }
     }
 
-    return mio::make_migration_sim(cfg.t0, cfg.dt, std::move(g));
+    return mio::make_mobility_sim(cfg.t0, cfg.dt, std::move(g));
 }
 
 template <class Integrator>

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
 *
@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_LOCKDOWN_RULES_H
-#define EPI_ABM_LOCKDOWN_RULES_H
+#ifndef MIO_ABM_LOCKDOWN_RULES_H
+#define MIO_ABM_LOCKDOWN_RULES_H
 
 #include "abm/time.h"
 #include "abm/location_type.h"

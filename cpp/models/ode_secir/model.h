@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -76,8 +76,8 @@ public:
     {
     }
 
-    void get_flows(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
-                   Eigen::Ref<Vector<FP>> flows) const override
+    void get_flows(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
+                   Eigen::Ref<Eigen::VectorX<FP>> flows) const override
     {
         auto const& params   = this->parameters;
         AgeGroup n_agegroups = params.get_num_groups();
@@ -116,24 +116,25 @@ public:
                 //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
                 auto riskFromInfectedSymptomatic =
                     smoother_cosine(test_and_trace_required, params.template get<TestAndTraceCapacity<FP>>(),
-                                    params.template get<TestAndTraceCapacity<FP>>() * 5,
+                                    params.template get<TestAndTraceCapacity<FP>>() *
+                                        params.template get<TestAndTraceCapacityMaxRisk<FP>>(),
                                     params.template get<RiskOfInfectionFromSymptomatic<FP>>()[j],
                                     params.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[j]);
 
                 // effective contact rate by contact rate between groups i and j and damping j
-                double season_val =
+                ScalarType season_val =
                     (1 + params.template get<Seasonality<FP>>() *
                              sin(3.141592653589793 * ((params.template get<StartDay>() + t) / 182.5 + 0.5)));
-                double cont_freq_eff =
+                ScalarType cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                  static_cast<Eigen::Index>((size_t)j));
-                double Nj =
+                ScalarType Nj =
                     pop[Sj] + pop[Ej] + pop[INSj] + pop[ISyj] + pop[ISevj] + pop[ICrj] + pop[Rj]; // without died people
-                double divNj   = 1.0 / Nj; // precompute 1.0/Nj
-                double dummy_S = y[Si] * cont_freq_eff * divNj *
-                                 params.template get<TransmissionProbabilityOnContact<FP>>()[i] *
-                                 (params.template get<RelativeTransmissionNoSymptoms<FP>>()[j] * pop[INSj] +
-                                  riskFromInfectedSymptomatic * pop[ISyj]);
+                const ScalarType divNj = (Nj < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / Nj;
+                ScalarType dummy_S     = y[Si] * cont_freq_eff * divNj *
+                                     params.template get<TransmissionProbabilityOnContact<FP>>()[i] *
+                                     (params.template get<RelativeTransmissionNoSymptoms<FP>>()[j] * pop[INSj] +
+                                      riskFromInfectedSymptomatic * pop[ISyj]);
 
                 // Susceptible -> Exposed
                 flows[this->template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>({i})] +=
@@ -141,11 +142,11 @@ public:
             }
 
             // ICU capacity shortage is close
-            double criticalPerSevereAdjusted = smoother_cosine(
+            ScalarType criticalPerSevereAdjusted = smoother_cosine(
                 icu_occupancy, 0.90 * params.template get<ICUCapacity<FP>>(), params.template get<ICUCapacity<FP>>(),
                 params.template get<CriticalPerSevere<FP>>()[i], 0);
 
-            double deathsPerSevereAdjusted =
+            ScalarType deathsPerSevereAdjusted =
                 params.template get<CriticalPerSevere<FP>>()[i] - criticalPerSevereAdjusted;
 
             // Exposed -> InfectedNoSymptoms
@@ -252,7 +253,7 @@ class Simulation;
  * @tparam Base simulation type that uses a secir compartment model. see Simulation.
  */
 template <typename FP = ScalarType, class Base = mio::Simulation<FP, Model<FP>>>
-double get_infections_relative(const Simulation<FP, Base>& model, FP t, const Eigen::Ref<const Vector<FP>>& y);
+double get_infections_relative(const Simulation<FP, Base>& model, FP t, const Eigen::Ref<const Eigen::VectorX<FP>>& y);
 
 /**
  * specialization of compartment model simulation for secir models.
@@ -282,45 +283,57 @@ public:
      * @param tmax next stopping point of simulation
      * @return value at tmax
      */
-    Eigen::Ref<Vector<FP>> advance(FP tmax)
+    Eigen::Ref<Eigen::VectorX<FP>> advance(FP tmax)
     {
+        auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns<FP>>();
-        if (dyn_npis.get_thresholds().size() > 0) {
-            auto t        = BaseT::get_result().get_last_time();
-            const auto dt = dyn_npis.get_interval().get();
 
-            while (t < tmax) {
-                auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});
+        FP delay_npi_implementation; // delay which is needed to implement a NPI that is criterion-dependent
+        auto t        = BaseT::get_result().get_last_time();
+        const auto dt = dyn_npis.get_thresholds().size() > 0 ? dyn_npis.get_interval().get() : tmax;
 
-                BaseT::advance(t + dt_eff);
-                t = t + dt_eff;
+        while (t < tmax) {
+            auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});
 
+            BaseT::advance(t + dt_eff);
+            if (t > 0) {
+                delay_npi_implementation =
+                    this->get_model().parameters.template get<DynamicNPIsImplementationDelay<FP>>();
+            }
+            else { // DynamicNPIs for t=0 are 'misused' to be from-start NPIs. I.e., do not enforce delay.
+                delay_npi_implementation = 0;
+            }
+            t = t + dt_eff;
+
+            if (dyn_npis.get_thresholds().size() > 0) {
                 if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
-                    auto inf_rel =
-                        mio::osecir::get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
-                        dyn_npis.get_base_value();
-                    auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
-                    if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
-                        (exceeded_threshold->first > m_dynamic_npi.first ||
-                         t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
-                        auto t_end    = mio::SimulationTime(t + double(dyn_npis.get_duration()));
-                        m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
-                        mio::implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
-                                                    SimulationTime(t), t_end, [](auto& g) {
-                                                        return mio::make_contact_damping_matrix(g);
-                                                    });
-                    }
+                    if (t < t_end_dyn_npis) {
+                        auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
+                                       dyn_npis.get_base_value();
+                        auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
+                        if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
+                            (exceeded_threshold->first > m_dynamic_npi.first ||
+                             t > ScalarType(m_dynamic_npi.second))) { //old npi was weaker or is expired
 
+                            auto t_start  = SimulationTime(t + delay_npi_implementation);
+                            auto t_end    = t_start + SimulationTime(ScalarType(dyn_npis.get_duration()));
+                            m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
+                            implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
+                                                   t_start, t_end, [](auto& g) {
+                                                       return make_contact_damping_matrix(g);
+                                                   });
+                        }
+                    }
                     m_t_last_npi_check = t;
                 }
             }
+            else {
+                m_t_last_npi_check = t;
+            }
+        }
 
-            return this->get_result().get_last_value();
-        }
-        else {
-            return BaseT::advance(tmax);
-        }
+        return this->get_result().get_last_value();
     }
 
 private:
@@ -369,7 +382,8 @@ inline auto simulate_flows(FP t0, FP tmax, FP dt, const Model<FP>& model,
 
 //see declaration above.
 template <typename FP, class Base>
-double get_infections_relative(const Simulation<FP, Base>& sim, FP /* t*/, const Eigen::Ref<const Vector<FP>>& y)
+double get_infections_relative(const Simulation<FP, Base>& sim, FP /* t*/,
+                               const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
     double sum_inf = 0;
     for (auto i = AgeGroup(0); i < sim.get_model().parameters.get_num_groups(); ++i) {
@@ -454,15 +468,16 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
         }
         divN[(size_t)k] = 1 / temp;
 
-        riskFromInfectedSymptomatic[(size_t)k] =
-            smoother_cosine(test_and_trace_required, params.template get<TestAndTraceCapacity<FP>>(),
-                            (params.template get<TestAndTraceCapacity<FP>>()) * 5,
-                            params.template get<RiskOfInfectionFromSymptomatic<FP>>()[k],
-                            params.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[k]);
+        riskFromInfectedSymptomatic[(size_t)k] = smoother_cosine(
+            test_and_trace_required, params.template get<TestAndTraceCapacity<FP>>(),
+            (params.template get<TestAndTraceCapacity<FP>>()) * params.template get<TestAndTraceCapacityMaxRisk<FP>>(),
+            params.template get<RiskOfInfectionFromSymptomatic<FP>>()[k],
+            params.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[k]);
 
         for (mio::AgeGroup l = 0; l < (mio::AgeGroup)num_groups; l++) {
             if (test_and_trace_required < params.template get<TestAndTraceCapacity<FP>>() ||
-                test_and_trace_required > 5 * params.template get<TestAndTraceCapacity<FP>>()) {
+                test_and_trace_required > params.template get<TestAndTraceCapacityMaxRisk<FP>>() *
+                                              params.template get<TestAndTraceCapacity<FP>>()) {
                 riskFromInfectedSymptomatic_derivatives((size_t)k, (size_t)l) = 0;
             }
             else {
@@ -594,9 +609,9 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
 */
 
 template <typename FP, class Base>
-Vector<FP> get_reproduction_numbers(const Simulation<FP, Base>& sim)
+Eigen::VectorX<FP> get_reproduction_numbers(const Simulation<FP, Base>& sim)
 {
-    Vector<FP> temp(sim.get_result().get_num_time_points());
+    Eigen::VectorX<FP> temp(sim.get_result().get_num_time_points());
     for (int i = 0; i < sim.get_result().get_num_time_points(); i++) {
         temp[i] = get_reproduction_number((size_t)i, sim).value();
     }
@@ -635,18 +650,18 @@ IOResult<ScalarType> get_reproduction_number(ScalarType t_value, const Simulatio
 }
 
 /**
- * Get migration factors.
- * Used by migration graph simulation.
- * Like infection risk, migration of infected individuals is reduced if they are well isolated.
+ * Get mobility factors.
+ * Used by mobility graph simulation.
+ * Like infection risk, mobility of infected individuals is reduced if they are well isolated.
  * @param model the compartment model with initial values.
  * @param t current simulation time.
  * @param y current value of compartments.
- * @return vector expression, same size as y, with migration factors per compartment.
+ * @return vector expression, same size as y, with mobility factors per compartment.
  * @tparam FP floating point type, e.g., double.
  * @tparam Base simulation type that uses a secir compartment model; see Simulation.
  */
 template <typename FP = ScalarType, class Base = mio::Simulation<Model<FP>, FP>>
-auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Vector<FP>>& y)
+auto get_mobility_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
     auto& params = sim.get_model().parameters;
     //parameters as arrays
@@ -661,9 +676,11 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::R
     auto test_and_trace_required =
         ((1 - p_asymp) / params.template get<TimeInfectedNoSymptoms<FP>>().array().template cast<FP>() * y_INS.array())
             .sum();
-    auto test_and_trace_capacity     = double(params.template get<TestAndTraceCapacity<FP>>());
-    auto riskFromInfectedSymptomatic = smoother_cosine(test_and_trace_required, test_and_trace_capacity,
-                                                       test_and_trace_capacity * 5, p_inf.matrix(), p_inf_max.matrix());
+    auto test_and_trace_capacity          = double(params.template get<TestAndTraceCapacity<FP>>());
+    auto test_and_trace_capacity_max_risk = double(params.template get<TestAndTraceCapacityMaxRisk<FP>>());
+    auto riskFromInfectedSymptomatic =
+        smoother_cosine(test_and_trace_required, test_and_trace_capacity,
+                        test_and_trace_capacity * test_and_trace_capacity_max_risk, p_inf.matrix(), p_inf_max.matrix());
 
     //set factor for infected
     auto factors = Eigen::VectorXd::Ones(y.rows()).eval();
@@ -674,7 +691,7 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::R
 }
 
 template <typename FP = ScalarType, class Base = mio::Simulation<Model<FP>, FP>>
-auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> migrated, FP time)
+auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Eigen::VectorX<FP>> mobile_population, FP time)
 {
     auto& model       = sim.get_model();
     auto nondetection = 1.0;
@@ -689,14 +706,14 @@ auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> migrated, 
         auto ISyCi = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsConfirmed});
 
         //put detected commuters in their own compartment so they don't contribute to infections in their home node
-        sim.get_result().get_last_value()[INSi] -= migrated[INSi] * (1 - nondetection);
-        sim.get_result().get_last_value()[INSCi] += migrated[INSi] * (1 - nondetection);
-        sim.get_result().get_last_value()[ISyi] -= migrated[ISyi] * (1 - nondetection);
-        sim.get_result().get_last_value()[ISyCi] += migrated[ISyi] * (1 - nondetection);
+        sim.get_result().get_last_value()[INSi] -= mobile_population[INSi] * (1 - nondetection);
+        sim.get_result().get_last_value()[INSCi] += mobile_population[INSi] * (1 - nondetection);
+        sim.get_result().get_last_value()[ISyi] -= mobile_population[ISyi] * (1 - nondetection);
+        sim.get_result().get_last_value()[ISyCi] += mobile_population[ISyi] * (1 - nondetection);
 
         //reduce the number of commuters
-        migrated[ISyi] *= nondetection;
-        migrated[INSi] *= nondetection;
+        mobile_population[ISyi] *= nondetection;
+        mobile_population[INSi] *= nondetection;
     }
 }
 

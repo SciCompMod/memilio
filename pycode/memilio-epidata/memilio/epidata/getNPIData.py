@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Martin J. Kuehn
 #
@@ -619,8 +619,13 @@ def get_npi_data(fine_resolution=2,
         df_npis_combinations_pre = df_npis_combinations_pre[[
             'Variablenname', 'Massnahmenindex'] + [i for i in range(0, len(columns_used))]]
         # replace empty cells by zeros and x-marked cells by ones
-        df_npis_combinations_pre = df_npis_combinations_pre.replace(np.nan, 0)
-        df_npis_combinations_pre = df_npis_combinations_pre.replace('x', 1)
+        # This has to be done by replacing the values with the same dtype and then changing the dtype
+        # Pandas 3.0 will not allow downcasting with replace operations
+        df_npis_combinations_pre = df_npis_combinations_pre.replace(
+            np.nan, '0')
+        df_npis_combinations_pre = df_npis_combinations_pre.replace('x', '1')
+        df_npis_combinations_pre[df_npis_combinations_pre.columns[2:]
+                                 ] = df_npis_combinations_pre[df_npis_combinations_pre.columns[2:]].astype(int)
 
         # extract different NPI groups and store indices of NPIs belonging
         # to the different groups
@@ -905,25 +910,15 @@ def get_npi_data(fine_resolution=2,
         max_date + [max(dates_new),
                     pd.to_datetime(end_date)])
 
-    # create new data frame for all NPIs given in the columns,
-    # resolved by county and day
-    df_npis = pd.DataFrame(
-        columns=[dd.EngEng['date']] + [dd.EngEng['idCounty']] +
-        list(npis_final[dd.EngEng['npiCode']]))
-    # convert NPI data from object to int such that correlations can be
-    # computed
-    df_npis = df_npis.astype(dict(
-        zip(
-            [dd.EngEng['date']] + [dd.EngEng['idCounty']] +
-            list(npis_final[dd.EngEng['npiCode']]), ['str', 'int'] +
-            ['int' for i in npis_final[dd.EngEng['npiCode']]])))
-
     # iterate over countyIDs
     counters = np.zeros(4)  # time counter for output only
     countyidx = 0
-    # replace -99 ("not used anymore") by 0 ("not used")
-    # replace 2,3,4,5 ("mentioned in ...") by 1 ("mentioned")
-    df_npis_old.replace([-99, 2, 3, 4, 5], [0, 1, 1, 1, 1], inplace=True)
+
+    # Infer type of columns to be able to use replace with ints without downcasting.
+    df_npis_old = df_npis_old.infer_objects()
+    df_npis_old.replace([-99, 2, 3, 4, 5],
+                        [0, 1, 1, 1, 1], inplace=True)
+
     counter_cases_start = 0
 
     # setup dataframe for each maingroup, same format as df_npi_combinations
@@ -960,6 +955,9 @@ def get_npi_data(fine_resolution=2,
         if df_npis_combinations[maincode][1].columns.to_list() != list(
                 df_npis_combinations[maincode][0].keys()):
             raise gd.DataError('Error. Description and table do not match.')
+
+    # create new data frame for all NPIs
+    df_npis = pd.DataFrame()
 
     for countyID in counties_considered:
         cid = 0
@@ -1004,7 +1002,7 @@ def get_npi_data(fine_resolution=2,
 
         # get number of codes of one NPI (incidence indep. + dep.)
         # for fine_resolution=1, inc_codes=1, for fine_res=2, inc_codes=6
-        inc_codes = len(np.where(df_npis.columns.str.contains(
+        inc_codes = len(np.where(npis_final.NPI_code.str.contains(
             npis[dd.EngEng['npiCode']][0]))[0])
 
         # Consistency of incidence independent and dependent NPIs:
@@ -1406,7 +1404,7 @@ def plot_interaction_matrix(filename, directory):
 
     # invert color map elements for tab20c such that subcolors are shown
     # from light to dark
-    cmap = copy.copy(mpl.cm.get_cmap('tab20b'))
+    cmap = copy.copy(plt.get_cmap('tab20b'))
     colors = [
         cmap(i)
         for i in np.array(

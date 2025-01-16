@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow
 *
@@ -27,7 +27,7 @@ int main()
 
     const auto t0   = 0.;
     const auto tmax = 10.;
-    const auto dt   = 1.; //time step of migration, not integration
+    const auto dt   = 1.; //time step of mobility, not integration
 
     double cont_freq = 10; // see Polymod study
 

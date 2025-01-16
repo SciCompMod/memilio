@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Agatha Schmidt, Henrik Zunker
 #
@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 from memilio.surrogatemodel.ode_secir_groups import network_architectures
-from memilio.simulation.secir import InfectionState
+from memilio.simulation.osecir import InfectionState
 import os
 import pickle
 

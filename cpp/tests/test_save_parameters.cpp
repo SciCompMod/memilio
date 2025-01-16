@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow
 *
@@ -243,11 +243,10 @@ TEST(TestSaveParameters, read_graph_without_edges)
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
 
-    auto graph = mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>>();
+    auto graph = mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1,
-                   mio::MigrationParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
+    graph.add_edge(0, 1, mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
     TempFileRegister tmp_file_register;
     std::string tmp_results_dir = tmp_file_register.get_unique_path();
@@ -256,7 +255,7 @@ TEST(TestSaveParameters, read_graph_without_edges)
     std::vector<mio::osecir::Model<double>> models = {model, model};
     std::vector<int> ids                           = {0, 1};
     auto graph_no_edges =
-        mio::create_graph_without_edges<mio::osecir::Model<double>, mio::MigrationParameters<double>>(models, ids);
+        mio::create_graph_without_edges<mio::osecir::Model<double>, mio::MobilityParameters<double>>(models, ids);
     auto write_status = mio::write_graph(graph_no_edges, tmp_results_dir);
     ASSERT_THAT(print_wrap(write_status), IsSuccess());
 
@@ -426,7 +425,7 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.15);
 
-    mio::Graph<mio::osecir::Model<double>, mio::MigrationParameters<double>> graph;
+    mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>> graph;
     graph.add_node(0, model);
     graph.add_node(1, model);
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(model.populations.get_num_compartments(), 0.01));

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Kathrin Rack, Wadim Koslow, Martin J. Kuehn, Annette Lutz
 #
@@ -31,6 +31,7 @@ extrapolated in this script.
 # Imports
 import os
 from datetime import date
+from typing import Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -46,17 +47,25 @@ from memilio.epidata import progress_indicator
 pd.options.mode.copy_on_write = True
 
 
-def check_for_completeness(df, run_checks, merge_berlin=False, merge_eisenach=True):
+def check_for_completeness(df: pd.DataFrame,
+                           run_checks: bool,
+                           merge_berlin: bool = False,
+                           merge_eisenach: bool = True
+                           ):
     """! Checks if all counties are mentioned in the case data set
 
-   This check had to be added due to incomplete data downloads
-   It is checked if all all counties are part of the data.
-   If data is incomplete the data is downloaded from another source.
-   Note: There is no check if data for every day and every county is available (which can happen).
+    This check had to be added due to incomplete data downloads
+    It is checked if all counties are part of the data.
+    If data is incomplete the data is downloaded from another source.
+    Note: There is no check if data for every day and every county is available (which can happen).
 
-   @param df pandas dataframe to check
-   @return Boolean to say if data is complete or not
-   """
+    @param df pd.Dataframe. Dataframe to check
+    @param merge_berlin bool True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
+    @param merge_eisenach bool True or False. Defines if Eisenbach districts are kept separated or get merged. Default defined in defaultDict.
+    @param run_checks bool
+
+    @return Boolean to say if data is complete or not
+    """
     if run_checks:
         if not df.empty:
             return geoger.check_for_all_counties(
@@ -72,19 +81,13 @@ def check_for_completeness(df, run_checks, merge_berlin=False, merge_eisenach=Tr
         return True
 
 
-def get_case_data(read_data=dd.defaultDict['read_data'],
-                  file_format=dd.defaultDict['file_format'],
-                  out_folder=dd.defaultDict['out_folder'],
-                  start_date=dd.defaultDict['start_date'],
-                  end_date=dd.defaultDict['end_date'],
-                  impute_dates=dd.defaultDict['impute_dates'],
-                  moving_average=dd.defaultDict['moving_average'],
-                  split_berlin=dd.defaultDict['split_berlin'],
-                  rep_date=dd.defaultDict['rep_date'],
-                  files='All',
-                  **kwargs
-                  ):
-    """! Downloads the case data and provides different kind of structured data
+def fetch_case_data(
+    directory: str,
+    filename: str,
+    conf_obj,
+    read_data: bool = dd.defaultDict['read_data'],
+) -> pd.DataFrame:
+    """! Downloads the case data
 
     The data is read either from the internet or from a json file (CaseDataFull.json), stored in an earlier run.
     If the data is read from the internet, before changing anything the data is stored in CaseDataFull.json.
@@ -93,74 +96,30 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     The file is read in or stored at the folder "out_folder"/Germany/.
     To store and change the data we use pandas.
 
-    While working with the data
-    - the column names are changed to english depending on defaultDict
-    - a new column "Date" is defined.
-    - we are only interested in the values where the parameter NeuerFall, NeuerTodesfall, NeuGenesen are larger than 0.
-    The values, when these parameters are negative are just useful,
-    if one would want to get the difference to the previous day.
-    For details we refer to the above mentioned webpage.
-    - For all different parameters and different columns the values are added up for whole germany for every date
-    and the cumulative sum is calculated. Unless something else is mentioned.
-    - For Berlin all districts can be merged into one [Default]. Otherwise, Berlin is divided into multiple districts and
-        different file names are used.
-    - Following data is generated and written to the mentioned filename
-        - All infected (current and past) for whole germany are stored in "cases_infected"
-        - All deaths whole germany are stored in "cases_deaths"
-        - Infected, deaths and recovered for whole germany are stored in "cases_all_germany"
-        - Infected split for states are stored in "cases_infected_state"
-        - Infected, deaths and recovered split for states are stored in "cases_all_state"
-        - Infected split for counties are stored in "cases_infected_county(_split_berlin)"
-        - Infected, deaths and recovered split for county are stored in "cases_all_county(_split_berlin)"
-        - Infected, deaths and recovered split for gender are stored in "cases_all_gender"
-        - Infected, deaths and recovered split for state and gender are stored in "cases_all_state_gender"
-        - Infected, deaths and recovered split for county and gender are stored in "cases_all_county_gender(_split_berlin)"
-        - Infected, deaths and recovered split for age are stored in "cases_all_age"
-        - Infected, deaths and recovered split for state and age are stored in "cases_all_state_age"
-        - Infected, deaths and recovered split for county and age are stored in "cases_all_county_age(_split_berlin)"
+    @param directory str
+        Path to the output directory
+    @param filename str
+        Name of the full dataset filename
+    @param conf_obj
+        configuration object
+    @param read_data bool. Defines if data is read from file or downloaded. Default defined in defaultDict.
 
-    @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
-    @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param start_date Date of first date in dataframe. Default 2020-01-01.
-    @param end_date Date of last date in dataframe. Default defined in defaultDict.
-    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out effects of irregular reporting. Default defined in defaultDict.
-    @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
-    @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
-    @param files List of strings or 'All' or 'Plot'. Defnies which files should be provided (and plotted). Default 'All'.
+    @return df pd.Dataframe. Dataframe containing the downloaded case data
     """
-    conf = gd.Conf(out_folder, **kwargs)
-    out_folder = conf.path_to_use
-    no_raw = conf.no_raw
-    run_checks = conf.checks
-
-    if (files == 'All') or (files == ['All']):
-        files = ['infected', 'deaths', 'all_germany', 'infected_state',
-                 'all_state', 'infected_county', 'all_county', 'all_gender',
-                 'all_state_gender', 'all_county_gender', 'all_age',
-                 'all_state_age', 'all_county_age']
-    if (files == 'Plot') or (files == ['Plot']):
-        # only consider plotable files
-        files = ['infected', 'deaths', 'all_gender', 'all_age']
-    # handle error of passing a string of one file instead of a list
-    if isinstance(files, str):
-        files = [files]
-
-    directory = os.path.join(out_folder, 'Germany/')
-    gd.check_dir(directory)
-    filename = "CaseDataFull"
+    run_checks = conf_obj.checks
 
     complete = False
     path = os.path.join(directory + filename + ".json")
+
     try:
         url = "https://media.githubusercontent.com/media/robert-koch-institut/" + \
-            "SARS-CoV-2-Infektionen_in_Deutschland/main/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
+              "SARS-CoV-2-Infektionen_in_Deutschland/main/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
         df = gd.get_file(path, url, read_data, param_dict={},
-                         interactive=conf.interactive)
+                         interactive=conf_obj.interactive)
         complete = check_for_completeness(df, run_checks, merge_eisenach=True)
-    except:
+    except Exception as ex:
+        gd.default_print(verbosity_level="Warning",
+                         message=f"The data could not be downloaded. The following exception was thrown:\n{ex}")
         pass
     if complete:
         if not read_data:
@@ -175,9 +134,10 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         try:
             url = "https://opendata.arcgis.com/datasets/66876b81065340a4a48710b062319336_0.csv"
             # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
-            # utf_8_sig can identify those bytes as one sign and display it correctly
+            # utf_8_sig can identify those bytes as one sign and display it
+            # correctly
             df = gd.get_file(path, url, False, param_dict={
-                             "encoding": 'utf_8_sig'}, interactive=conf.interactive)
+                "encoding": 'utf_8_sig'}, interactive=conf_obj.interactive)
             complete = check_for_completeness(
                 df, run_checks, merge_eisenach=True)
         except:
@@ -186,11 +146,12 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             gd.default_print(
                 "Info", "Case data is still incomplete. Trying a third source.")
             try:
-                # If the data on github is not available we download the case data from rki from covid-19 datahub
-                url = "https://npgeo-de.maps.arcgis.com/sharing/rest/content/" +\
-                    "items/f10774f1c63e40168479a1feb6c7ca74/data"
+                # If the data on github is not available we download the case
+                # data from rki from covid-19 datahub
+                url = "https://npgeo-de.maps.arcgis.com/sharing/rest/content/" + \
+                      "items/f10774f1c63e40168479a1feb6c7ca74/data"
                 df = gd.get_file(path, url, False, param_dict={
-                                 "encoding": 'utf_8_sig'}, interactive=conf.interactive)
+                    "encoding": 'utf_8_sig'}, interactive=conf_obj.interactive)
                 df.rename(columns={'FID': "OBJECTID"}, inplace=True)
                 complete = check_for_completeness(
                     df, run_checks, merge_eisenach=True)
@@ -200,24 +161,58 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             raise FileNotFoundError(
                 "Something went wrong, dataframe is empty for csv and geojson!")
 
-        # drop columns that do not exist in data from github
+            # drop columns that do not exist in data from github
         df.drop(["Altersgruppe2", "Datenstand", "OBJECTID",
                  "Bundesland", "Landkreis"], axis=1, inplace=True)
-    with progress_indicator.Spinner(message='Preparing DataFrame'):
-        df = df.convert_dtypes()
 
-        # output data to not always download it
+    return df
+
+
+def preprocess_case_data(raw_df: pd.DataFrame,
+                         directory: str,
+                         filename: str,
+                         conf_obj,
+                         split_berlin: bool = dd.defaultDict['split_berlin'],
+                         rep_date: bool = dd.defaultDict['rep_date'],
+                         ) -> pd.DataFrame:
+    """! Preprocessing of the case data
+
+    While working with the data
+    - the column names are changed to english depending on defaultDict
+    - a new column "Date" is defined.
+    - we are only interested in the values where the parameter NeuerFall, NeuerTodesfall, NeuGenesen are larger than 0.
+    The values, when these parameters are negative are just useful,
+    if one would want to get the difference to the previous day.
+    For details we refer to the above mentioned webpage.
+    - For all different parameters and different columns the values are added up for whole germany for every date
+    and the cumulative sum is calculated. Unless something else is mentioned.
+    - For Berlin all districts can be merged into one [Default]. Otherwise, Berlin is divided into multiple districts and
+        different file names are used.
+
+    @param raw_df pd.Dataframe. Contains the downloaded or read raw case data
+    @param directory str
+        Path to the output directory
+    @param filename str
+        Name of the full dataset filename
+    @param conf_obj
+        configuration object
+    @param split_berlin bool. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
+    @param rep_date bool Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
+
+    @return df pd.Dataframe
+    """
+    no_raw = conf_obj.no_raw
+
+    with progress_indicator.Spinner(message='Preparing DataFrame'):
+        df = raw_df.convert_dtypes()
+
         if not no_raw:
             gd.write_dataframe(df, directory, filename, "json")
 
         # store dict values in parameter to not always call dict itself
-        Altersgruppe = dd.GerEng['Altersgruppe']
-        Geschlecht = dd.GerEng['Geschlecht']
         AnzahlFall = dd.GerEng['AnzahlFall']
         AnzahlGenesen = dd.GerEng['AnzahlGenesen']
         AnzahlTodesfall = dd.GerEng['AnzahlTodesfall']
-        IdBundesland = dd.GerEng['IdBundesland']
-        IdLandkreis = dd.GerEng['IdLandkreis']
 
         # translate column gender from German to English and standardize
         df.loc[df.Geschlecht == 'unbekannt', [
@@ -265,7 +260,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
 
         # get rid of unnecessary columns
         df.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen',
-                "IstErkrankungsbeginn", "Meldedatum", "Refdatum"], axis=1, inplace=True)
+                 "IstErkrankungsbeginn", "Meldedatum", "Refdatum"], axis=1, inplace=True)
 
         # merge Berlin counties
         if not split_berlin:
@@ -277,6 +272,80 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                          dd.EngEng['idState'],
                          dd.EngEng['ageRKI']])
 
+    return df
+
+
+def write_case_data(df: pd.DataFrame,
+                    directory: str,
+                    conf_obj,
+                    file_format: str = dd.defaultDict['file_format'],
+                    start_date: date = dd.defaultDict['start_date'],
+                    end_date: date = dd.defaultDict['end_date'],
+                    impute_dates: bool = dd.defaultDict['impute_dates'],
+                    moving_average: int = dd.defaultDict['moving_average'],
+                    split_berlin: bool = dd.defaultDict['split_berlin'],
+                    rep_date: bool = dd.defaultDict['rep_date'],
+                    files: str or list = 'All',
+                    ) -> None or dict:
+    """! Writing the different case data file.
+    Following data is generated and written to the mentioned filename
+        - All infected (current and past) for whole germany are stored in "cases_infected"
+        - All deaths whole germany are stored in "cases_deaths"
+        - Infected, deaths and recovered for whole germany are stored in "cases_all_germany"
+        - Infected split for states are stored in "cases_infected_state"
+        - Infected, deaths and recovered split for states are stored in "cases_all_state"
+        - Infected split for counties are stored in "cases_infected_county(_split_berlin)"
+        - Infected, deaths and recovered split for county are stored in "cases_all_county(_split_berlin)"
+        - Infected, deaths and recovered split for gender are stored in "cases_all_gender"
+        - Infected, deaths and recovered split for state and gender are stored in "cases_all_state_gender"
+        - Infected, deaths and recovered split for county and gender are stored in "cases_all_county_gender(_split_berlin)"
+        - Infected, deaths and recovered split for age are stored in "cases_all_age"
+        - Infected, deaths and recovered split for state and age are stored in "cases_all_state_age"
+        - Infected, deaths and recovered split for county and age are stored in "cases_all_county_age(_split_berlin)"
+
+    @param df pd.DataFrame
+        Processed dataframe
+    @param directory str
+        Path to the output directory
+    @param conf_obj
+        configuration object
+    @param file_format str
+        File format which is used for writing the data. Default defined in defaultDict.
+    @param start_date date
+        Date of first date in dataframe. Default 2020-01-01.
+    @param end_date date. Date of last date in dataframe. Default defined in defaultDict.
+    @param impute_dates bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param moving_average int Integers >=0. Applies an 'moving_average'-days moving average on all time series smooth out effects of irregular reporting. Default defined in defaultDict.
+    @param split_berlin bool True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
+    @param rep_date bool True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
+    @param files list. List of strings or 'All' or 'Plot'. Defines which files should be provided (and plotted). Default 'All'.
+
+    @return None
+    """
+
+    if (files == 'All') or (files == ['All']):
+        files = ['infected', 'deaths', 'all_germany', 'infected_state',
+                 'all_state', 'infected_county', 'all_county', 'all_gender',
+                 'all_state_gender', 'all_county_gender', 'all_age',
+                 'all_state_age', 'all_county_age']
+    if (files == 'Plot') or (files == ['Plot']):
+        # only consider plotable files
+        files = ['infected', 'deaths', 'all_gender', 'all_age']
+    # handle error of passing a string of one file instead of a list
+    if isinstance(files, str):
+        files = [files]
+    # dict for all files
+    # filename -> [groupby_list, .agg({}), groupby_index, groupby_cols,
+    # mod_cols]
+    Altersgruppe = dd.GerEng['Altersgruppe']
+    Geschlecht = dd.GerEng['Geschlecht']
+    AnzahlFall = dd.GerEng['AnzahlFall']
+    AnzahlGenesen = dd.GerEng['AnzahlGenesen']
+    AnzahlTodesfall = dd.GerEng['AnzahlTodesfall']
+    IdBundesland = dd.GerEng['IdBundesland']
+    IdLandkreis = dd.GerEng['IdLandkreis']
+    dateToUse = dd.EngEng['date']
+
     # dict for all files
     # filename -> [groupby_list, .agg({}), groupby_index, groupby_cols, mod_cols]
     dict_files = {
@@ -287,12 +356,14 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum"}, [IdBundesland],
                            {dd.EngEng["idState"]: geoger.get_state_ids()}, ['Confirmed']],
         'all_state': [[dateToUse, IdBundesland], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                      [IdBundesland], {dd.EngEng["idState"]: geoger.get_state_ids()},
+                      [IdBundesland], {dd.EngEng["idState"]
+                          : geoger.get_state_ids()},
                       ['Confirmed', 'Deaths', 'Recovered']],
         'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum"}, [IdLandkreis],
                             {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()}, ['Confirmed']],
         'all_county': [[dateToUse, IdLandkreis], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                       [IdLandkreis], {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique()},
+                       [IdLandkreis], {dd.EngEng["idCounty"]
+                           : df[dd.EngEng["idCounty"]].unique()},
                        ['Confirmed', 'Deaths', 'Recovered']],
         'all_gender': [[dateToUse, Geschlecht], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
                        [Geschlecht], {dd.EngEng["gender"]: list(
@@ -306,12 +377,13 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                              ['Confirmed', 'Deaths', 'Recovered']],
         'all_county_gender': [[dateToUse, IdLandkreis, Geschlecht],
                               {AnzahlFall: "sum", AnzahlTodesfall: "sum",
-                                  AnzahlGenesen: "sum"}, [IdLandkreis, Geschlecht],
+                               AnzahlGenesen: "sum"}, [IdLandkreis, Geschlecht],
                               {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique(
                               ), dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
                               ['Confirmed', 'Deaths', 'Recovered']],
         'all_age': [[dateToUse, Altersgruppe], {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"},
-                    [Altersgruppe], {dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
+                    [Altersgruppe], {dd.EngEng["ageRKI"]
+                        : df[dd.EngEng["ageRKI"]].unique()},
                     ['Confirmed', 'Deaths', 'Recovered']],
         'all_state_age': [[dateToUse, IdBundesland, Altersgruppe],
                           {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}, [
@@ -323,22 +395,25 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                            {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}, [
                                IdLandkreis, Altersgruppe],
                            {dd.EngEng["idCounty"]: df[dd.EngEng["idCounty"]].unique(),
-                           dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
+                            dd.EngEng["ageRKI"]: df[dd.EngEng["ageRKI"]].unique()},
                            ['Confirmed', 'Deaths', 'Recovered']]
     }
+    dict_of_datasets = dict()
+
     with progress_indicator.Spinner():
         for file in files:
             if file not in dict_files.keys():
-                raise gd.DataError('Error: File '+file+' cannot be written.')
+                raise gd.DataError('Error: File ' + file +
+                                   ' cannot be written.')
             # split berlin is only relevant for county level
-            if ('county' in file) and (split_berlin == True):
+            if ('county' in file) and (split_berlin is True):
                 split_berlin_local = True
             else:
                 # dont append _split_berlin to filename on germany/state level
                 split_berlin_local = False
             filename = 'cases_' + \
-                gd.append_filename(file, impute_dates,
-                                   moving_average, split_berlin_local, rep_date)
+                       gd.append_filename(file, impute_dates,
+                                          moving_average, split_berlin_local, rep_date)
             # sum over all columns defined in dict_files
             df_local = df.groupby(dict_files[file][0]).agg(dict_files[file][1])
 
@@ -363,58 +438,121 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
 
             df_local_cs = mdfs.extract_subframe_based_on_dates(
                 df_local_cs, start_date, end_date)
-            gd.write_dataframe(df_local_cs, directory, filename, file_format)
+            if not conf_obj.to_dataset:
+                gd.write_dataframe(df_local_cs, directory,
+                                   filename, file_format)
+            else:
+                dict_of_datasets.update({file: df_local_cs})
+        if conf_obj.to_dataset is True:
+            return dict_of_datasets
 
-            if conf.plot:
-                if file == 'infected':
-                    # make plot
-                    df_local_cs.plot(title='COVID-19 infections', grid=True,
-                                     style='-o')
-                    plt.tight_layout()
-                    plt.show()
 
-                if file == 'deaths':
-                    df_local_cs.plot(title='COVID-19 deaths', grid=True,
-                                     style='-o')
-                    plt.tight_layout()
-                    plt.show()
+def get_case_data(read_data: bool = dd.defaultDict['read_data'],
+                  out_folder: str = dd.defaultDict['out_folder'],
+                  file_format: str = dd.defaultDict['file_format'],
+                  start_date: date = dd.defaultDict['start_date'],
+                  end_date: date = dd.defaultDict['end_date'],
+                  impute_dates: bool = dd.defaultDict['impute_dates'],
+                  moving_average: int = dd.defaultDict['moving_average'],
+                  split_berlin: bool = dd.defaultDict['split_berlin'],
+                  rep_date: bool = dd.defaultDict['rep_date'],
+                  files: str or list = 'All',
+                  **kwargs
+                  ) -> Dict:
+    """! Wrapper function that downloads the case data and provides different kind of structured data into json files.
 
-                    df.agg({AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}) \
-                        .plot(title='COVID-19 infections, deaths, recovered', grid=True,
-                              kind='bar')
-                    plt.tight_layout()
-                    plt.show()
+    The data is read either from the internet or from a json file (CaseDataFull.json), stored in an earlier run.
+    If the data is read from the internet, before changing anything the data is stored in CaseDataFull.json.
+    If data should be downloaded, it is checked if data contains all counties.
+    If not a different source is tried.
+    The file is read in or stored at the folder "out_folder"/Germany/.
+    To store and change the data we use pandas.
 
-                if file == 'all_gender':
-                    df.groupby(Geschlecht).agg(
-                        {AnzahlFall: "sum", AnzahlTodesfall: "sum",
-                         AnzahlGenesen: "sum"}).plot(
-                        title='COVID-19 infections, deaths, recovered',
-                        grid=True, kind='bar')
-                    plt.tight_layout()
-                    plt.show()
+    While working with the data
+    - the column names are changed to english depending on defaultDict
+    - a new column "Date" is defined.
+    - we are only interested in the values where the parameter NeuerFall, NeuerTodesfall, NeuGenesen are larger than 0.
+    The values, when these parameters are negative are just useful,
+    if one would want to get the difference to the previous day.
+    For details we refer to the above mentioned webpage.
+    - For all different parameters and different columns the values are added up for whole germany for every date
+    and the cumulative sum is calculated. Unless something else is mentioned.
+    - For Berlin all districts can be merged into one [Default]. Otherwise, Berlin is divided into multiple districts and
+        different file names are used.
+    - Following data is generated and written to the mentioned filename
+        - All infected (current and past) for whole germany are stored in "cases_infected"
+        - All deaths whole germany are stored in "cases_deaths"
+        - Infected, deaths and recovered for whole germany are stored in "cases_all_germany"
+        - Infected split for states are stored in "cases_infected_state"
+        - Infected, deaths and recovered split for states are stored in "cases_all_state"
+        - Infected split for counties are stored in "cases_infected_county(_split_berlin)"
+        - Infected, deaths and recovered split for county are stored in "cases_all_county(_split_berlin)"
+        - Infected, deaths and recovered split for gender are stored in "cases_all_gender"
+        - Infected, deaths and recovered split for state and gender are stored in "cases_all_state_gender"
+        - Infected, deaths and recovered split for county and gender are stored in "cases_all_county_gender(_split_berlin)"
+        - Infected, deaths and recovered split for age are stored in "cases_all_age"
+        - Infected, deaths and recovered split for state and age are stored in "cases_all_state_age"
+        - Infected, deaths and recovered split for county and age are stored in "cases_all_county_age(_split_berlin)"
 
-                if file == 'all_age':
-                    df.groupby(Altersgruppe).agg(
-                        {AnzahlFall: "sum", AnzahlTodesfall: "sum", AnzahlGenesen: "sum"}).plot(
-                        title='COVID-19 infections, deaths, recovered for diff ages',
-                        grid=True, kind='bar')
-                    plt.tight_layout()
-                    plt.show()
+    @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
+    @param file_format File format which is used for writing the data. Default defined in defaultDict.
+    @param out_folder Folder where data is written to. Default defined in defaultDict.
+    @param start_date Date of first date in dataframe. Default 2020-01-01.
+    @param end_date Date of last date in dataframe. Default defined in defaultDict.
+    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out effects of irregular reporting. Default defined in defaultDict.
+    @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
+    @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
+    @param files List of strings or 'All' or 'Plot'. Defnies which files should be provided (and plotted). Default 'All'.
+    @param to_dataset bool True or False. Whether to return the dataframe as an object instead of json file.
+        If True - returns objects with dataframes
+        If False - write dataframes into files
+        Default defined in defaultDict.
 
-                    # Dead by "Altersgruppe":
-                    df_local = df.groupby(Altersgruppe).agg(
-                        {AnzahlTodesfall: "sum"})
+    @return None
+    """
 
-                    df_local.plot(title='COVID-19 deaths', grid=True,
-                                  kind='bar')
-                    plt.tight_layout()
-                    plt.show()
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+
+    directory = os.path.join(out_folder, 'Germany/')
+    gd.check_dir(directory)
+    filename = "CaseDataFull"
+
+    raw_df = fetch_case_data(
+        read_data=read_data,
+        directory=directory,
+        filename=filename,
+        conf_obj=conf,
+    )
+    preprocess_df = preprocess_case_data(
+        raw_df=raw_df,
+        split_berlin=split_berlin,
+        rep_date=rep_date,
+        conf_obj=conf,
+        filename=filename,
+        directory=directory,
+    )
+    datasets = write_case_data(
+        directory=directory,
+        df=preprocess_df,
+        file_format=file_format,
+        start_date=start_date,
+        end_date=end_date,
+        impute_dates=impute_dates,
+        moving_average=moving_average,
+        split_berlin=split_berlin,
+        rep_date=rep_date,
+        files=files,
+        conf_obj=conf
+    )
+    if conf.to_dataset is True:
+        return datasets
 
 
 def main():
     """! Main program entry."""
-
     arg_dict = gd.cli("cases")
     get_case_data(**arg_dict)
 

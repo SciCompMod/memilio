@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -21,10 +21,10 @@
 #define EPI_TIME_SERIES_H
 
 #include "memilio/io/io.h"
-#include "memilio/math/eigen.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/math/floating_point.h"
 
+#include <algorithm>
 #include <iterator>
 #include <vector>
 #include <ostream>
@@ -102,6 +102,38 @@ public:
         col.tail(expr.rows()) = expr;
     }
 
+    /**
+     * @brief Initialize a TimeSeries with a table.
+     * @param table Consists of a list of time points, each of the form (time, value_0, value_1, ..., value_n) for
+     *     some fixed n >= 0. 
+     */
+    TimeSeries(std::vector<std::vector<FP>> table)
+        : m_data() // resized in body
+        , m_num_time_points(table.size())
+    {
+        // check table sizes
+        assert(table.size() > 0 && "At least one entry is required to determine the number of elements.");
+        assert(std::all_of(table.begin(), table.end(),
+                           [&table](auto&& a) {
+                               return a.size() == table.front().size();
+                           }) &&
+               "All table entries must have the same size.");
+        // resize data. note that the table entries contain both time and values
+        m_data.resize(table.front().size(), 0); // set columns first so reserve allocates correctly
+        reserve(table.size()); // reserve needs to happen before setting the number of rows
+        m_data.resize(Eigen::NoChange, table.size()); // finalize resize by setting the rows
+        // sort table by time
+        std::sort(table.begin(), table.end(), [](auto&& a, auto&& b) {
+            return a[0] < b[0];
+        });
+        // assign table to data
+        for (Eigen::Index tp = 0; tp < m_data.cols(); tp++) {
+            for (Eigen::Index i = 0; i < m_data.rows(); i++) {
+                m_data(i, tp) = table[tp][i];
+            }
+        }
+    }
+
     /** copy ctor */
     TimeSeries(const TimeSeries& other)
         : m_data(other.get_num_elements() + 1, details::next_pow2(other.m_num_time_points))
@@ -147,6 +179,16 @@ public:
     /** move ctor and assignment */
     TimeSeries(TimeSeries&& other)            = default;
     TimeSeries& operator=(TimeSeries&& other) = default;
+
+    /// Check if the time is strictly monotonic increasing.
+    bool is_strictly_monotonic() const
+    {
+        const auto times = get_times();
+        auto time_itr    = times.begin();
+        return std::all_of(++times.begin(), times.end(), [&](const auto& t) {
+            return *(time_itr++) < t;
+        });
+    }
 
     /**
      * number of time points in the series
