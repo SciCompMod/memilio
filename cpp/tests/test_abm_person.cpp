@@ -46,12 +46,17 @@ TEST_F(TestPerson, init)
     EXPECT_EQ(person.get_location(), location.get_id());
     EXPECT_EQ(person.get_index(), mio::abm::LocalIndex::invalid_index());
 
-    // Verify copy constructor
-    auto copied_person = mio::abm::Person(person, mio::abm::LocalIndex(0), 0);
-    EXPECT_EQ(copied_person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
-    EXPECT_EQ(copied_person.get_location(), location.get_id());
-    EXPECT_EQ(copied_person.get_index(), mio::abm::LocalIndex(0));
-    EXPECT_EQ(copied_person.get_global_id(), 0);
+    // Verify copy constructors
+    auto copied_person1 = mio::abm::Person(person, mio::abm::LocalIndex(0), 0);
+    auto copied_person2 = mio::abm::Person(person, mio::abm::LocalIndex(1));
+    EXPECT_EQ(copied_person1.get_infection_state(t), mio::abm::InfectionState::Susceptible);
+    EXPECT_EQ(copied_person1.get_location(), location.get_id());
+    EXPECT_EQ(copied_person1.get_index(), mio::abm::LocalIndex(0));
+    EXPECT_EQ(copied_person1.get_global_id(), 0);
+    EXPECT_EQ(copied_person2.get_infection_state(t), mio::abm::InfectionState::Susceptible);
+    EXPECT_EQ(copied_person2.get_location(), location.get_id());
+    EXPECT_EQ(copied_person2.get_index(), mio::abm::LocalIndex(1));
+    EXPECT_EQ(copied_person2.get_global_id(), mio::abm::GlobalID::invalid_ID());
 }
 
 /**
