@@ -22,6 +22,7 @@
 #include "abm/lockdown_rules.h"
 #include "abm/parameters.h"
 #include "abm/person.h"
+#include "abm/person_id.h"
 #include "abm/simulation.h"
 #include "abm/model.h"
 #include "memilio/epidemiology/age_group.h"
@@ -221,9 +222,9 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
         count_of_titles++;
     }
 
-    std::map<uint32_t, mio::abm::LocationId> locations          = {};
-    std::map<uint32_t, mio::abm::LocalIndex> pids_data_to_model = {};
-    std::map<uint32_t, uint32_t> person_ids                     = {};
+    std::map<uint32_t, mio::abm::LocationId> locations        = {};
+    std::map<uint32_t, mio::abm::GlobalID> pids_data_to_model = {};
+    std::map<uint32_t, uint32_t> person_ids                   = {};
     std::map<uint32_t, std::pair<uint32_t, int>> locations_before;
     std::map<uint32_t, std::pair<uint32_t, int>> locations_after;
 
@@ -344,7 +345,7 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
         split_line(line, &row);
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
-        uint32_t person_data_id = row[index["puid"]];
+        uint64_t person_data_id = row[index["puid"]];
         if (person_ids.find(person_data_id) == person_ids.end())
             break;
 

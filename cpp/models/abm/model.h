@@ -71,6 +71,7 @@ public:
         , m_trip_list()
         , m_use_mobility_rules(true)
         , m_cemetery_id(add_location(LocationType::Cemetery))
+        , m_person_ids_equal_index(true)
     {
         assert(num_agegroups < MAX_NUM_AGE_GROUPS && "MAX_NUM_AGE_GROUPS exceeded.");
     }
@@ -85,6 +86,7 @@ public:
         , m_trip_list()
         , m_use_mobility_rules(true)
         , m_cemetery_id(add_location(LocationType::Cemetery))
+        , m_person_ids_equal_index(true)
     {
         parameters = params;
     }
@@ -108,6 +110,7 @@ public:
         , m_mobility_rules(other.m_mobility_rules)
         , m_cemetery_id(other.m_cemetery_id)
         , m_rng(other.m_rng)
+        , m_person_ids_equal_index(true)
     {
     }
     Model& operator=(const Model&) = default;
@@ -193,16 +196,16 @@ public:
      * @brief Add a Person to the Model.
      * @param[in] id The LocationID of the initial Location of the Person.
      * @param[in] age AgeGroup of the person.
-     * @return Index of the newly created Person.
+     * @return Id of the newly created Person.
      */
-    LocalIndex add_person(const LocationId id, AgeGroup age);
+    GlobalID add_person(const LocationId id, AgeGroup age);
 
     /**
      * @brief Adds a copy of a given Person to the Model.
      * @param[in] person The Person to copy from. 
-     * @return Index of the newly created Person.
+     * @return Id of the newly created Person.
      */
-    LocalIndex add_person(Person&& person);
+    GlobalID add_person(Person&& person);
 
     /**
      * @brief Get a range of all Location%s in the Model.
@@ -234,28 +237,16 @@ public:
     /**
      * @brief Find an assigned Location of a Person.
      * @param[in] type The #LocationType that specifies the assigned Location.
-     * @param[in] person LocalIndex of the Person.
+     * @param[in] person Id of the Person.
      * @return ID of the Location of LocationType type assigend to person.
      */
-    LocationId find_location(LocationType type, const LocalIndex person) const;
+    LocationId find_location(LocationType type, const GlobalID person) const;
 
     /**
      * @brief Assign a Location to a Person.
      * A Person can have at most one assigned Location of a certain LocationType.
      * Assigning another Location of an already assigned LocationType will replace the prior assignment.  
-     * @param[in] person The LocalIndex of the person this location will be assigned to.
-     * @param[in] location The LocationId of the Location.
-     */
-    void assign_location(LocalIndex person, LocationId location)
-    {
-        get_person(person).set_assigned_location(get_location(location).get_type(), location, m_id);
-    }
-
-    /**
-     * @brief Assign a Location to a Person.
-     * A Person can have at most one assigned Location of a certain LocationType.
-     * Assigning another Location of an already assigned LocationType will replace the prior assignment.  
-     * @param[in] person The GlobalID of the person this location will be assigned to.
+     * @param[in] person The Id of the person this location will be assigned to.
      * @param[in] location The LocationId of the Location.
      */
     void assign_location(GlobalID person, LocationId location)
@@ -368,49 +359,43 @@ public:
 
     /**
      * @brief Get a reference to a Person from this Model.
-     * @param[in] index A Person's LocalIndex in m_persons.
-     * @return A reference to the Person.
-     * @{
-     */
-    Person& get_person(LocalIndex index)
-    {
-        assert(index.get() < m_persons.size() && "Given LocalIndex is not in this Model.");
-        return m_persons[index.get()];
-    }
-
-    const Person& get_person(LocalIndex index) const
-    {
-        assert(index.get() < m_persons.size() && "Given LocalIndex is not in this Model.");
-        return m_persons[index.get()];
-    }
-
-    /**
-     * @brief Get a reference to a Person from this Model.
      * @param[in] global_id A Person's GlobalID.
      * @return A reference to the Person.
      */
     Person& get_person(GlobalID global_id)
     {
-        mio::log_warning("get_person is accessed by GlobalID instead of LocalIndex. Therefore m_persons is searched.");
-        auto it = std::find_if(m_persons.begin(), m_persons.end(), [global_id](auto& person) {
-            return person.get_global_id() == global_id;
-        });
-        if (it == m_persons.end()) {
-            log_error("Given Person is not in this Model.");
+        if (m_person_ids_equal_index) {
+            return m_persons[static_cast<uint32_t>(global_id.get())];
         }
-        return *it;
+        else {
+            mio::log_warning("get_person is accessed by GlobalID which does not align with the index of the person due "
+                             "to former removal of persons. Therefore m_persons is searched.");
+            auto it = std::find_if(m_persons.begin(), m_persons.end(), [global_id](auto& person) {
+                return person.get_global_id() == global_id;
+            });
+            if (it == m_persons.end()) {
+                log_error("Given Person is not in this Model.");
+            }
+            return *it;
+        }
     }
 
     const Person& get_person(GlobalID global_id) const
     {
-        mio::log_warning("get_person is accessed by unique id instead of LocalIndex. Therefore m_persons is searched.");
-        auto it = std::find_if(m_persons.begin(), m_persons.end(), [global_id](auto& person) {
-            return person.get_global_id() == global_id;
-        });
-        if (it == m_persons.end()) {
-            log_error("Given Person is not in this Model.");
+        if (m_person_ids_equal_index) {
+            return m_persons[static_cast<uint32_t>(global_id.get())];
         }
-        return *it;
+        else {
+            mio::log_warning("get_person is accessed by GlobalID which does not align with the index of the person due "
+                             "to former removal of persons. Therefore m_persons is searched.");
+            auto it = std::find_if(m_persons.begin(), m_persons.end(), [global_id](auto& person) {
+                return person.get_global_id() == global_id;
+            });
+            if (it == m_persons.end()) {
+                log_error("Given Person is not in this Model.");
+            }
+            return *it;
+        }
     }
 
     /**
@@ -444,12 +429,12 @@ public:
     // Change the Location of a Person. this requires that Location is part of this Model.
     /**
      * @brief Let a Person change to another Location.
-     * @param[in] person LocalIndex of a person from this Model.
+     * @param[in] person Id of a person from this Model.
      * @param[in] destination LocationId of the Location in this Model, which the Person should change to.
      * @param[in] mode The transport mode the person uses to change the Location.
      * @param[in] cells The cells within the destination the person should be in.
      */
-    inline void change_location(LocalIndex person, LocationId destination, TransportMode mode = TransportMode::Unknown,
+    inline void change_location(GlobalID person, LocationId destination, TransportMode mode = TransportMode::Unknown,
                                 const std::vector<uint32_t>& cells = {0})
     {
         LocationId origin = get_location(person).get_id();
@@ -467,11 +452,11 @@ public:
 
     /**
      * @brief Let a person interact with the population at its current location.
-     * @param[in] person LocalIndex of a person from this Model.
+     * @param[in] person Id of a person from this Model.
      * @param[in] t Time step of the simulation.
      * @param[in] dt Step size of the simulation.
      */
-    inline void interact(LocalIndex person, TimePoint t, TimeSpan dt)
+    inline void interact(GlobalID person, TimePoint t, TimeSpan dt)
     {
         if (!m_are_exposure_caches_valid) {
             // checking caches is only needed for external calls
@@ -479,10 +464,11 @@ public:
             compute_exposure_caches(t, dt);
             m_are_exposure_caches_valid = true;
         }
-        auto personal_rng = PersonalRandomNumberGenerator(m_rng, get_person(person));
-        mio::abm::interact(personal_rng, get_person(person), get_location(person),
-                           m_air_exposure_rates_cache[get_location(person).get_id().get()],
-                           m_contact_exposure_rates_cache[get_location(person).get_id().get()], t, dt, parameters);
+        auto& p           = get_person(person);
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, p);
+        mio::abm::interact(personal_rng, p, get_location(p.get_location()),
+                           m_air_exposure_rates_cache[p.get_location().get()],
+                           m_contact_exposure_rates_cache[p.get_location().get()], t, dt, parameters);
     }
 
     /**
@@ -508,18 +494,18 @@ public:
 
     /**
      * @brief Get a reference to the location of a person.
-     * @param[in] index LocalIndex of a person.
+     * @param[in] id Id of a person.
      * @return Reference to the Location.
      * @{
      */
-    inline Location& get_location(LocalIndex index)
+    inline Location& get_location(GlobalID id)
     {
-        return get_location(get_person(index).get_location());
+        return get_location(get_person(id).get_location());
     }
 
-    inline const Location& get_location(LocalIndex index) const
+    inline const Location& get_location(GlobalID id) const
     {
-        return get_location(get_person(index).get_location());
+        return get_location(get_person(id).get_location());
     }
     /** @} */
 
@@ -530,14 +516,14 @@ public:
      * @return Index of Person in m_persons vector.
      * @{
      */
-    LocalIndex get_person_index(GlobalID global_id) const
+    uint32_t get_person_index(GlobalID global_id) const
     {
         mio::log_debug("get_person_index is used leading to a search in m_persons.");
         auto it = std::find_if(m_persons.begin(), m_persons.end(), [global_id](auto& person) {
             return person.get_global_id() == global_id;
         });
         if (it == m_persons.end()) {
-            log_error("Given LocalIndex is not in this Model.");
+            log_error("Given GlobalID is not in this Model.");
             return std::numeric_limits<uint32_t>::max();
         }
         else {
@@ -595,6 +581,7 @@ protected:
     std::vector<MobilityRuleType> m_mobility_rules; ///< Rules that govern the mobility between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.
     RandomNumberGenerator m_rng; ///< Global random number generator
+    bool m_person_ids_equal_index;
 };
 
 } // namespace abm

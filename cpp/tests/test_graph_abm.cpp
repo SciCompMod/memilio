@@ -56,7 +56,7 @@ TEST(TestGraphAbm, test_advance_node)
     auto& home   = model.get_location(home_id);
     auto work    = mio::abm::Location(mio::abm::LocationType::Work, mio::abm::LocationId(0), size_t(1), 2);
     auto pid     = model.add_person(home_id, mio::AgeGroup(0));
-    auto index   = pid.get();
+    auto index   = model.get_person_index(pid);
     auto& p      = model.get_person(pid);
     p.set_assigned_location(home.get_type(), home.get_id(), home.get_model_id());
     p.set_assigned_location(work.get_type(), work.get_id(), 2);
@@ -148,9 +148,18 @@ TEST(TestGraphAbm, test_apply_mobility)
     EXPECT_EQ(node2.get_simulation().get_model().get_persons().size(), 0);
     EXPECT_EQ(node3.get_simulation().get_model().get_persons().size(), 0);
     EXPECT_EQ(node1.get_simulation().get_model().get_persons().size(), 5);
-    EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p2_id.get()], false);
-    EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p4_id.get()], false);
-    EXPECT_EQ(node1.get_simulation().get_model().get_activeness_statuses()[p5_id.get()], false);
+    EXPECT_EQ(node1.get_simulation()
+                  .get_model()
+                  .get_activeness_statuses()[node1.get_simulation().get_model().get_person_index(p2_id)],
+              false);
+    EXPECT_EQ(node1.get_simulation()
+                  .get_model()
+                  .get_activeness_statuses()[node1.get_simulation().get_model().get_person_index(p4_id)],
+              false);
+    EXPECT_EQ(node1.get_simulation()
+                  .get_model()
+                  .get_activeness_statuses()[node1.get_simulation().get_model().get_person_index(p5_id)],
+              false);
 
     mio::ABMMobilityEdge<MockHistory> edge;
     edge.apply_mobility(node1, node2, t);

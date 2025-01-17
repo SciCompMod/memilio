@@ -388,10 +388,10 @@ TEST_F(TestModel, evolveMobilityTrips)
     EXPECT_EQ(model.get_number_persons(hospital_id), 1);
 
     // Move all persons back to their home location to prepare for weekend trips.
-    model.change_location(p1.get_index(), home_id);
-    model.change_location(p1.get_index(), home_id);
-    model.change_location(p2.get_index(), home_id);
-    model.change_location(p5.get_index(), home_id);
+    model.change_location(p1.get_global_id(), home_id);
+    model.change_location(p1.get_global_id(), home_id);
+    model.change_location(p2.get_global_id(), home_id);
+    model.change_location(p5.get_global_id(), home_id);
 
     // Update the time to the weekend and reset the trip index.
     t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
@@ -538,15 +538,15 @@ TEST_F(TestModel, checkMobilityOfDeadPerson)
 
     // Check the dead person got burried and the severely infected person starts in Hospital
     model.evolve(t, dt);
-    EXPECT_EQ(model.get_location(p_dead.get_index()).get_type(), mio::abm::LocationType::Cemetery);
+    EXPECT_EQ(model.get_location(p_dead.get_global_id()).get_type(), mio::abm::LocationType::Cemetery);
     EXPECT_EQ(p_severe.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
-    EXPECT_EQ(model.get_location(p_severe.get_index()).get_type(), mio::abm::LocationType::Hospital);
+    EXPECT_EQ(model.get_location(p_severe.get_global_id()).get_type(), mio::abm::LocationType::Hospital);
 
     // Check the dead person is still in Cemetery and the severely infected person dies and got burried
     model.evolve(t + dt, dt);
-    EXPECT_EQ(model.get_location(p_dead.get_index()).get_type(), mio::abm::LocationType::Cemetery);
+    EXPECT_EQ(model.get_location(p_dead.get_global_id()).get_type(), mio::abm::LocationType::Cemetery);
     EXPECT_EQ(p_severe.get_infection_state(t + dt), mio::abm::InfectionState::Dead);
-    EXPECT_EQ(model.get_location(p_severe.get_index()).get_type(), mio::abm::LocationType::Cemetery);
+    EXPECT_EQ(model.get_location(p_severe.get_global_id()).get_type(), mio::abm::LocationType::Cemetery);
 }
 
 using TestModelTestingCriteria = RandomNumberTest;

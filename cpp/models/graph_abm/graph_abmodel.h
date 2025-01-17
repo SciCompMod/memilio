@@ -70,6 +70,9 @@ public:
     {
         Base::m_persons.erase(Base::m_persons.begin() + pos);
         Base::m_activeness_statuses.erase(Base::m_activeness_statuses.begin() + pos);
+        if (Base::m_person_ids_equal_index) {
+            Base::m_person_ids_equal_index = false;
+        }
     }
 
     void evolve(TimePoint t, TimeSpan dt)
@@ -79,16 +82,6 @@ public:
         Base::interaction(t, dt);
         log_info("Graph ABM Model mobility.");
         perform_mobility(t, dt);
-    }
-
-    void update_person_indices()
-    {
-        for (uint32_t i = 0; i < static_cast<uint32_t>(m_persons.size()); ++i) {
-            auto& person = m_persons[i];
-            if (person.get_index().get() != i) {
-                person.set_index(abm::LocalIndex{i});
-            }
-        }
     }
 
 private:
@@ -196,10 +189,10 @@ private:
                 }
             }
             else { //person moves to other world
-                Base::m_activeness_statuses[person_index.get()] = false;
+                Base::m_activeness_statuses[person_index] = false;
                 person.set_location(trip.destination_type, abm::LocationId::invalid_id(),
                                     std::numeric_limits<int>::max());
-                m_person_buffer.push_back(person_index.get());
+                m_person_buffer.push_back(person_index);
                 m_are_exposure_caches_valid       = false;
                 m_is_local_population_cache_valid = false;
             }

@@ -59,12 +59,9 @@ public:
      * 
      */
     explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
-                    int location_model_id, AgeGroup age, LocalIndex person_index = LocalIndex::invalid_index(),
-                    GlobalID global_id = GlobalID::invalid_ID());
+                    int location_model_id, AgeGroup age, GlobalID global_id = GlobalID::invalid_ID());
 
-    explicit Person(const Person& other, LocalIndex index);
-
-    explicit Person(const Person& other, LocalIndex index, GlobalID global_id);
+    explicit Person(const Person& other, GlobalID global_id);
 
     /**
      * @brief Compare two Person%s.
@@ -282,24 +279,10 @@ public:
     bool get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const TestParameters& params);
 
     /**
-     * @brief Get the LocalIndex of the Person.
-     * The LocalIndex should correspond to the index in m_persons in the Model.
-     * @return The LocalIndex.
-     */
-    LocalIndex get_index() const;
-
-    /**
      * @brief Get the GlobalID of the Person.
-     * This ID is only relevant for the graph abm and otherwise corresponds to the LocalIndex.
      * @return The GlobalID.
      */
     GlobalID get_global_id() const;
-
-    /**
-    * @brief Set the LocalIndex of the Person.
-    * The LocalIndex should correspond to the index in m_persons in model.
-    */
-    void set_index(LocalIndex index);
 
     /**
      * @brief Get index of Cell%s of the Person.
@@ -416,6 +399,15 @@ public:
     }
 
     /**
+     * @brief Get this persons index that is used for the RandomNumberGenerator.
+     * @see mio::abm::PersonalRandomNumberGenerator.
+     */
+    uint32_t get_rng_index()
+    {
+        return m_rng_index;
+    }
+
+    /**
      * @brief Get the latest #ProtectionType and its initial TimePoint of the Person.
      */
     ProtectionEvent get_latest_protection() const;
@@ -438,7 +430,6 @@ public:
             .add("rnd_go_to_school_hour", m_random_goto_school_hour)
             .add("mask", m_mask)
             .add("compliance", m_compliance)
-            .add("index", m_person_index)
             .add("cells", m_cells)
             .add("last_transport_mode", m_last_transport_mode)
             .add("rng_counter", m_rng_counter)
@@ -479,15 +470,14 @@ private:
     Mask m_mask; ///< The Mask of the Person.
     std::vector<ScalarType>
         m_compliance; ///< Vector of compliance values for all #InterventionType%s. Values from 0 to 1.
-    LocalIndex m_person_index; ///< LocalIndex of the Person. Corresponds to the index in m_persons in Model.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
     CustomIndexArray<TestResult, TestType> m_test_results; ///< CustomIndexArray for TestResults.
     std::vector<int>
         m_assigned_location_model_ids; ///< Vector with model ids of the assigned locations. Only used in graph abm.
-    GlobalID
-        m_global_id; ///< Unique identifier of a person. Is only relevant in graph abm, otherwise is equal to m_person_index.
+    GlobalID m_global_id; ///< Unique identifier of a person.
+    uint32_t m_rng_index;
 };
 
 } // namespace abm
@@ -498,7 +488,7 @@ struct DefaultFactory<abm::Person> {
     static abm::Person create()
     {
         return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::LocationId(), 0, AgeGroup(0),
-                           abm::LocalIndex(), abm::GlobalID());
+                           abm::GlobalID());
     }
 };
 

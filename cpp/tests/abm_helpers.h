@@ -103,10 +103,10 @@ mio::abm::Person make_test_person(mio::RandomNumberGenerator& rng, mio::abm::Loc
 /**
  * @brief Add a Person to the Model. Intended for simple use in tests.
  */
-mio::abm::LocalIndex add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id,
-                                     mio::AgeGroup age                        = age_group_15_to_34,
-                                     mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
-                                     mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
+mio::abm::GlobalID add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id,
+                                   mio::AgeGroup age                        = age_group_15_to_34,
+                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
+                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
 
 /// @brief Calls mio::abm::interact, but it computes the correct exposures for you.
 void interact_testing(mio::abm::PersonalRandomNumberGenerator& personal_rng, mio::abm::Person& person,

@@ -21,12 +21,13 @@
 #include "abm/personal_rng.h"
 #include "abm/person.h"
 #include "abm/person_id.h"
+#include <cstdint>
 
 namespace mio
 {
 namespace abm
 {
-PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(mio::Key<uint64_t> key, LocalIndex index,
+PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(mio::Key<uint64_t> key, uint32_t index,
                                                              mio::Counter<uint32_t>& counter)
     : m_key(key)
     , m_person_index(index)
@@ -35,7 +36,7 @@ PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(mio::Key<uint64_t> 
 }
 
 PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person)
-    : PersonalRandomNumberGenerator(rng.get_key(), person.get_index(), person.get_rng_counter())
+    : PersonalRandomNumberGenerator(rng.get_key(), person.get_rng_index(), person.get_rng_counter())
 {
 }
 

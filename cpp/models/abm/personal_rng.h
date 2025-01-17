@@ -52,10 +52,10 @@ public:
     /**
      * Creates a RandomNumberGenerator for a person.
      * @param key Key to be used by the generator.
-     * @param index LocalIndex of the Person.
+     * @param index index of the Person.
      * @param counter Reference to the Person's RNG Counter.
      */
-    PersonalRandomNumberGenerator(mio::Key<uint64_t> key, LocalIndex index, mio::Counter<uint32_t>& counter);
+    PersonalRandomNumberGenerator(mio::Key<uint64_t> key, uint32_t index, mio::Counter<uint32_t>& counter);
 
     /**
      * Creates a RandomNumberGenerator for a person.
@@ -78,7 +78,7 @@ public:
      */
     mio::Counter<uint64_t> get_counter() const
     {
-        return mio::rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(m_person_index.get()), m_counter);
+        return mio::rng_totalsequence_counter<uint64_t>(m_person_index, m_counter);
     }
 
     /**
@@ -91,7 +91,7 @@ public:
 
 private:
     mio::Key<uint64_t> m_key; ///< Global RNG Key
-    LocalIndex m_person_index; ///< LocalIndex of the Person
+    uint32_t m_person_index; ///< Index of the Person
     mio::Counter<uint32_t>& m_counter; ///< Reference to the Person's rng counter
 };
 
