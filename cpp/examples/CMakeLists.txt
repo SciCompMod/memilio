@@ -40,8 +40,9 @@ target_compile_options(ode_seir_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENA
 
 if (MEMILIO_ENABLE_OPENMP)
     add_executable(ode_seir_mobility_timing ode_seir_mobility_timing.cpp)
-    target_link_libraries(ode_seir_mobility_timing PRIVATE memilio ode_seir_mobility_improved)
+    target_link_libraries(ode_seir_mobility_timing PRIVATE memilio ode_seir_mobility_improved likwid stdc++)
     target_compile_options(ode_seir_mobility_timing PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    target_compile_definitions(ode_seir_mobility_timing PRIVATE "-DLIKWID_PERFMON")
 endif()
 
 add_executable(ode_seir_mobility_steps ode_seir_mobility_steps.cpp)
@@ -120,8 +121,9 @@ target_compile_options(graph_steps PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ER
 
 if (MEMILIO_ENABLE_OPENMP)
     add_executable(graph_timing graph_timing.cpp)
-    target_link_libraries(graph_timing PRIVATE memilio ode_seir)
+    target_link_libraries(graph_timing PRIVATE memilio ode_seir likwid stdc++)
     target_compile_options(graph_timing PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    target_compile_definitions(graph_timing PRIVATE "-DLIKWID_PERFMON")
 endif()
 
 add_executable(graph_stochastic_mobility_example graph_stochastic_mobility.cpp)

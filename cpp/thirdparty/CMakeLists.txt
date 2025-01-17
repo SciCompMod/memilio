@@ -96,7 +96,7 @@ if(MEMILIO_USE_BUNDLED_BOOST)
     add_library(boost INTERFACE)
     add_dependencies(boost boost-bootstrap)
     add_library(Boost::boost ALIAS boost)
-    target_include_directories(boost SYSTEM INTERFACE $<BUILD_INTERFACE:${boost_SOURCE_DIR}>)
+    target_include_directories(boost INTERFACE $<BUILD_INTERFACE:${boost_SOURCE_DIR}>)
     
     if (NOT MSVC)
         target_compile_options(boost INTERFACE "-Wno-c++20-attribute-extensions")
