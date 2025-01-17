@@ -244,14 +244,25 @@ TEST(TestLCTParametersIo, CheckScalingDIVI)
     EXPECT_NEAR(mio::lsecir::details::get_icu_from_divi_data(get_synthetic_divi_data(), mio::Date(2020, 5, 31)).value(),
                 0, 1e-6);
 
-    // Check that the function set_initial_values_from_reported_data calculates an initial value vector with the correct
-    // number of InfectedCritical individuals as defined by the DIVI data.
+    // Check that the function set_initial_values_from_reported_data WITHOUT DIVI data returns a different number of
+    // total InfectedCritical cases than the reported divi data. Otherwise the test case makes no sense.
     auto read_result =
         mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
             get_synthetic_rki_data_age(), model.populations, model.parameters, start_date, total_population,
-            std::vector<ScalarType>(num_agegroups, 1.), get_synthetic_divi_data());
+            std::vector<ScalarType>(num_agegroups, 1.));
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
     ScalarType total_InfectedCritical =
+        mio::lsecir::details::get_total_InfectedCritical_from_populations<Model::Populations>(model.populations);
+    ASSERT_NE(total_InfectedCritical, 50) << "The test does not work because the RKI data already lead to the value "
+                                             "from the DIVI data. Please change the synthetic test data.";
+
+    // Check that the function set_initial_values_from_reported_data WITH DIVI data calculates an initial value vector
+    // with the correct number of InfectedCritical individuals as defined by the DIVI data.
+    read_result = mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
+        get_synthetic_rki_data_age(), model.populations, model.parameters, start_date, total_population,
+        std::vector<ScalarType>(num_agegroups, 1.), get_synthetic_divi_data());
+    ASSERT_THAT(print_wrap(read_result), IsSuccess());
+    total_InfectedCritical =
         mio::lsecir::details::get_total_InfectedCritical_from_populations<Model::Populations>(model.populations);
     EXPECT_NEAR(total_InfectedCritical, 50, 1e-6);
 
