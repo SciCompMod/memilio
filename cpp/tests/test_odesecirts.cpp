@@ -1525,7 +1525,7 @@ TEST(TestOdeSECIRTS, set_divi_data_invalid_dates)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
-TEST(TestOdeSECIRVVS, set_confirmed_cases_data_with_ICU)
+TEST(TestOdeSECIRTS, set_confirmed_cases_data_with_ICU)
 {
     auto num_age_groups = 6;
     auto model          = mio::osecirts::Model<double>(num_age_groups);
