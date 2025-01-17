@@ -9,6 +9,7 @@ header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
 
 url = "http://localhost:8123/"
 
+
 def delete_scenarios():
     response = requests.get(url + "scenarios/", headers=header)
     ids = [compartment["id"] for compartment in response.json()]
@@ -20,6 +21,7 @@ def delete_scenarios():
             print(delete_response.reason)
 
     print(requests.get(url + "scenarios/", headers=header).json())
+
 
 def delete_interventions():
     response = requests.get(url + "interventions/templates/", headers=header)
@@ -33,6 +35,7 @@ def delete_interventions():
 
     print(requests.get(url + "interventions/templates/", headers=header).json())
 
+
 def delete_models():
     response = requests.get(url + "models/", headers=header)
     ids = [compartment["id"] for compartment in response.json()]
@@ -43,6 +46,7 @@ def delete_models():
             print(delete_response.reason)
 
     print(requests.get(url + "models/", headers=header).json())
+
 
 def delete_parameters():
     response = requests.get(url + "parameterdefinitions/", headers=header)
@@ -55,6 +59,7 @@ def delete_parameters():
             print(delete_response.reason)
 
     print(requests.get(url + "parameterdefinitions/", headers=header).json())
+
 
 def delete_nodelists():
     response = requests.get(url + "nodelists/", headers=header)
@@ -69,6 +74,7 @@ def delete_nodelists():
 
     print(requests.get(url + "nodelists/", headers=header).json())
 
+
 def delete_nodes():
     response = requests.get(url + "nodes/", headers=header)
     ids = [compartment["id"] for compartment in response.json()]
@@ -79,6 +85,7 @@ def delete_nodes():
             print(delete_response.reason)
 
     print(requests.get(url + "nodes/", headers=header).json())
+
 
 def delete_compartments():
     response = requests.get(url + "compartments/", headers=header)
@@ -103,6 +110,7 @@ def delete_groups():
             print(delete_response.reason)
 
     print(requests.get(url + "groups/", headers=header).json())
+
 
 def delete_everything_from_db():
     delete_scenarios()
@@ -144,12 +152,12 @@ def post_to_db_compartments():
 
 def post_to_db_groups():
     group_data = [
-        {"name": "Group1", "description": "0-4", "category": "age"}, #0 bis 4
-        {"name": "Group2", "description": "5-14", "category": "age"}, #5-14
-        {"name": "Group3", "description": "15-34", "category": "age"}, #15-34
-        {"name": "Group4", "description": "35-59", "category": "age"}, #35-59
-        {"name": "Group5", "description": "60-79", "category": "age"}, #60 - 79
-        {"name": "Group6", "description": "80+", "category": "age"}, #80+
+        {"name": "Group1", "description": "0-4", "category": "age"},  # 0 bis 4
+        {"name": "Group2", "description": "5-14", "category": "age"},  # 5-14
+        {"name": "Group3", "description": "15-34", "category": "age"},  # 15-34
+        {"name": "Group4", "description": "35-59", "category": "age"},  # 35-59
+        {"name": "Group5", "description": "60-79", "category": "age"},  # 60 - 79
+        {"name": "Group6", "description": "80+", "category": "age"},  # 80+
         {"name": "Total", "description": "Total population", "category": "age"}
     ]
 
@@ -338,46 +346,46 @@ def post_to_db_scenarios(modelparameters_entry={}, post=True):
         elif group["name"] == f"Total":
             group_ids.append(group["id"])
 
-    if (modelparameters_entry=={} and post):
+    if (modelparameters_entry == {} and post):
 
         variantFactor = 1.4
         # Define dict that contains name of parameter and min and max values for all 6 age groups.
         parameter_dict_default = {
-        "TimeExposed": [[2.67, 2.67, 2.67, 2.67, 2.67, 2.67], [4., 4., 4., 4., 4., 4.]],
-        "TimeInfectedNoSymptoms": [[1.2, 1.2, 1.2, 1.2, 1.2, 1.2], [2.53, 2.53, 2.53, 2.53, 2.53, 2.53]],
-        "TimeInfectedSymptoms": [[5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465], [8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085]],
-        "TimeInfectedSevere": [[
-            3.925, 3.925, 4.85, 6.4, 7.2, 9.], [6.075, 6.075, 7., 8.7, 9.8, 13.]],
-        "TimeInfectedCritical": [[4.95, 4.95, 4.86, 14.14, 14.4, 10.], [8.95, 8.95, 8.86, 20.58, 19.8, 13.2]],
-        "TransmissionProbabilityOnContact": [[
-            0.02 * variantFactor, 0.05 * variantFactor, 0.05 * variantFactor,
-            0.05 * variantFactor, 0.08 * variantFactor, 0.1 * variantFactor
-        ], [
-            0.04 * variantFactor, 0.07 * variantFactor, 0.07 * variantFactor,
-            0.07 * variantFactor, 0.10 * variantFactor, 0.15 * variantFactor
-        ]],
-        "RelativeTransmissionNoSymptoms": [[0.5, 0.5, 0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]],
-        "RiskOfInfectionFromSymptomatic": [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.2, 0.2, 0.2, 0.2, 0.2, 0.2]],
-        "MaxRiskOfInfectionFromSymptomatic": [[0.4, 0.4, 0.4, 0.4, 0.4, 0.4], [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]],
-        "RecoveredPerInfectedNoSymptoms": [[
-            0.2, 0.2, 0.15, 0.15, 0.15, 0.15], [
-            0.3, 0.3, 0.25, 0.25, 0.25, 0.25]],
-        "SeverePerInfectedSymptoms": [[
-            0.006, 0.006, 0.015, 0.049, 0.15, 0.20],  [
-            0.009, 0.009, 0.023, 0.074, 0.18, 0.25]],
-        "CriticalPerSevere": [[0.05, 0.05, 0.05, 0.10, 0.25, 0.35], [0.10, 0.10, 0.10, 0.20, 0.35, 0.45]],
-        "DeathsPerCritical": [[0.00, 0.00, 0.10, 0.10, 0.30, 0.5], [0.10, 0.10, 0.18, 0.18, 0.50, 0.7]],
-        "ReducedExposedPartialImmunity": [[0.75, 0.75, 0.75, 0.75, 0.75, 0.75], [0.85, 0.85, 0.85, 0.85, 0.85, 0.85]],
-        "ReducedExposedImprovedImmunity": [[0.281, 0.281, 0.281, 0.281, 0.281, 0.281], [0.381, 0.381, 0.381, 0.381, 0.381, 0.381]],
-        "ReducedInfectedSymptomsPartialImmunity": [[0.6, 0.6, 0.6, 0.6, 0.6, 0.6], [0.7, 0.7, 0.7, 0.7, 0.7, 0.7]],
-        "ReducedInfectedSymptomsImprovedImmunity": [[0.193, 0.193, 0.193, 0.193, 0.193, 0.193], [0.293, 0.293, 0.293, 0.293, 0.293, 0.293]],
-        "ReducedInfectedSevereCriticalDeadPartialImmunity": [[0.05, 0.05, 0.05, 0.05, 0.05, 0.05], [0.15, 0.15, 0.15, 0.15, 0.15, 0.15]],
-        "ReducedInfectedSevereCriticalDeadImprovedImmunity": [[0.041, 0.041, 0.041, 0.041, 0.041, 0.041], [0.141, 0.141, 0.141, 0.141, 0.141, 0.141]],
-        "ReducedTimeInfectedMild": [[1., 1., 1., 1., 1., 1.], [1., 1., 1., 1., 1., 1.]],
-        "Seasonality": [[0.1, 0.1, 0.1, 0.1, 0.1, 0.1], [0.3, 0.3, 0.3, 0.3, 0.3, 0.3]]}
+            "TimeExposed": [[2.67, 2.67, 2.67, 2.67, 2.67, 2.67], [4., 4., 4., 4., 4., 4.]],
+            "TimeInfectedNoSymptoms": [[1.2, 1.2, 1.2, 1.2, 1.2, 1.2], [2.53, 2.53, 2.53, 2.53, 2.53, 2.53]],
+            "TimeInfectedSymptoms": [[5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465], [8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085]],
+            "TimeInfectedSevere": [[
+                3.925, 3.925, 4.85, 6.4, 7.2, 9.], [6.075, 6.075, 7., 8.7, 9.8, 13.]],
+            "TimeInfectedCritical": [[4.95, 4.95, 4.86, 14.14, 14.4, 10.], [8.95, 8.95, 8.86, 20.58, 19.8, 13.2]],
+            "TransmissionProbabilityOnContact": [[
+                0.02 * variantFactor, 0.05 * variantFactor, 0.05 * variantFactor,
+                0.05 * variantFactor, 0.08 * variantFactor, 0.1 * variantFactor
+            ], [
+                0.04 * variantFactor, 0.07 * variantFactor, 0.07 * variantFactor,
+                0.07 * variantFactor, 0.10 * variantFactor, 0.15 * variantFactor
+            ]],
+            "RelativeTransmissionNoSymptoms": [[0.5, 0.5, 0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]],
+            "RiskOfInfectionFromSymptomatic": [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.2, 0.2, 0.2, 0.2, 0.2, 0.2]],
+            "MaxRiskOfInfectionFromSymptomatic": [[0.4, 0.4, 0.4, 0.4, 0.4, 0.4], [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]],
+            "RecoveredPerInfectedNoSymptoms": [[
+                0.2, 0.2, 0.15, 0.15, 0.15, 0.15], [
+                0.3, 0.3, 0.25, 0.25, 0.25, 0.25]],
+            "SeverePerInfectedSymptoms": [[
+                0.006, 0.006, 0.015, 0.049, 0.15, 0.20],  [
+                0.009, 0.009, 0.023, 0.074, 0.18, 0.25]],
+            "CriticalPerSevere": [[0.05, 0.05, 0.05, 0.10, 0.25, 0.35], [0.10, 0.10, 0.10, 0.20, 0.35, 0.45]],
+            "DeathsPerCritical": [[0.00, 0.00, 0.10, 0.10, 0.30, 0.5], [0.10, 0.10, 0.18, 0.18, 0.50, 0.7]],
+            "ReducedExposedPartialImmunity": [[0.75, 0.75, 0.75, 0.75, 0.75, 0.75], [0.85, 0.85, 0.85, 0.85, 0.85, 0.85]],
+            "ReducedExposedImprovedImmunity": [[0.281, 0.281, 0.281, 0.281, 0.281, 0.281], [0.381, 0.381, 0.381, 0.381, 0.381, 0.381]],
+            "ReducedInfectedSymptomsPartialImmunity": [[0.6, 0.6, 0.6, 0.6, 0.6, 0.6], [0.7, 0.7, 0.7, 0.7, 0.7, 0.7]],
+            "ReducedInfectedSymptomsImprovedImmunity": [[0.193, 0.193, 0.193, 0.193, 0.193, 0.193], [0.293, 0.293, 0.293, 0.293, 0.293, 0.293]],
+            "ReducedInfectedSevereCriticalDeadPartialImmunity": [[0.05, 0.05, 0.05, 0.05, 0.05, 0.05], [0.15, 0.15, 0.15, 0.15, 0.15, 0.15]],
+            "ReducedInfectedSevereCriticalDeadImprovedImmunity": [[0.041, 0.041, 0.041, 0.041, 0.041, 0.041], [0.141, 0.141, 0.141, 0.141, 0.141, 0.141]],
+            "ReducedTimeInfectedMild": [[1., 1., 1., 1., 1., 1.], [1., 1., 1., 1., 1., 1.]],
+            "Seasonality": [[0.1, 0.1, 0.1, 0.1, 0.1, 0.1], [0.3, 0.3, 0.3, 0.3, 0.3, 0.3]]}
 
-        # Append parameter value for age group "total". This is done by weighting the other parameter values according to 
-        # their share of the total population of Germany (using data from regionalstatistik). 
+        # Append parameter value for age group "total". This is done by weighting the other parameter values according to
+        # their share of the total population of Germany (using data from regionalstatistik).
 
         append_parameter_for_agegroup_total(parameter_dict_default)
         get_parameters = requests.get(
@@ -489,7 +497,7 @@ def post_to_db_scenarios(modelparameters_entry={}, post=True):
                 "coefficient": intervention["coefficient"]
             })
         scenario_data.append({
-            "name": f"Scenario {i+2}",
+            "name": f"Scenario{i+2}",
             "description": "",
             "startDate": f"{start_date_simulation}",
             "endDate": f"{end_date_simulation}",
@@ -500,7 +508,7 @@ def post_to_db_scenarios(modelparameters_entry={}, post=True):
             "percentiles": [25, 50, 75],
         })
 
-    if post: 
+    if post:
         for scenario in scenario_data:
             post_response = requests.post(
                 url + "scenarios/", json=scenario, headers=header)
@@ -510,16 +518,19 @@ def post_to_db_scenarios(modelparameters_entry={}, post=True):
 
     return scenario_data
 
+
 def append_parameter_for_agegroup_total(param_dict):
-    # Append parameter value for age group "total". This additional parameter is computed by weighting the other 
-    # parameter values according to their share of the total population of Germany (using data from regionalstatistik). 
-    share_of_agegroup = [0.04773178, 0.09029715, 0.22754236, 0.34473159, 0.21830716, 0.07138996]
+    # Append parameter value for age group "total". This additional parameter is computed by weighting the other
+    # parameter values according to their share of the total population of Germany (using data from regionalstatistik).
+    share_of_agegroup = [0.04773178, 0.09029715,
+                         0.22754236, 0.34473159, 0.21830716, 0.07138996]
     for key in list(param_dict.keys()):
 
-        param_dict[key][0].append(np.dot(param_dict[key][0], share_of_agegroup))
-        param_dict[key][1].append(np.dot(param_dict[key][1], share_of_agegroup))
+        param_dict[key][0].append(
+            np.dot(param_dict[key][0], share_of_agegroup))
+        param_dict[key][1].append(
+            np.dot(param_dict[key][1], share_of_agegroup))
 
-    
 
 def post_to_db():
     # Define all necessary data and post.
@@ -538,7 +549,7 @@ def main():
     delete_everything_from_db()
     print("Fill db.")
     post_to_db()
-    
+
 
 if __name__ == "__main__":
     main()
