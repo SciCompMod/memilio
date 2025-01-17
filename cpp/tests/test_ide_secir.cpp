@@ -146,23 +146,23 @@ TEST_F(ModelTestIdeSecir, compareWithPreviousRunTransitions)
     mio::isecir::Simulation sim(*model, dt);
     sim.advance(5);
 
-    auto flows = sim.get_transitions();
+    auto transitions = sim.get_transitions();
 
     size_t iter_0 = 0;
-    while (flows.get_time(iter_0) < compare[0][0]) {
+    while (transitions.get_time(iter_0) < compare[0][0]) {
         iter_0++;
     }
 
     for (size_t i = 0; i < compare.size(); i++) {
-        ASSERT_EQ(compare[i].size(), static_cast<size_t>(flows.get_num_elements()) + 1) << "at row " << i;
-        ASSERT_NEAR(flows.get_time(i + iter_0), compare[i][0], 1e-7) << "at row " << i;
+        ASSERT_EQ(compare[i].size(), static_cast<size_t>(transitions.get_num_elements()) + 1) << "at row " << i;
+        ASSERT_NEAR(transitions.get_time(i + iter_0), compare[i][0], 1e-7) << "at row " << i;
         for (size_t j = 1; j < compare[i].size(); j++) {
-            ASSERT_NEAR(flows.get_value(i + iter_0)[j - 1], compare[i][j], 1e-7) << " at row " << i;
+            ASSERT_NEAR(transitions.get_value(i + iter_0)[j - 1], compare[i][j], 1e-7) << " at row " << i;
         }
     }
 }
 
-// Check that the start time of the simulation is determined by the given time points for the flows.
+// Check that the start time of the simulation is determined by the given time points for the transitions.
 TEST(IdeSecir, checkStartTime)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -178,11 +178,11 @@ TEST(IdeSecir, checkStartTime)
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
-    // Create TimeSeries with num_transitions * num_agegroups elements where flows needed for simulation
+    // Create TimeSeries with num_transitions * num_agegroups elements where transitions needed for simulation
     // will be stored.
     mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
 
-    // Define flows that will be used for initialization.
+    // Define transitions that will be used for initialization.
     Vec vec_init = Vec::Constant(num_transitions * num_agegroups, 0.);
     vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
@@ -200,8 +200,8 @@ TEST(IdeSecir, checkStartTime)
     mio::isecir::Simulation sim(model, dt);
 
     // Check that the last time point of transitions is equal to t0.
-    mio::TimeSeries<ScalarType> flows = sim.get_transitions();
-    EXPECT_NEAR(t0, flows.get_last_time(), 1e-8);
+    mio::TimeSeries<ScalarType> transitions = sim.get_transitions();
+    EXPECT_NEAR(t0, transitions.get_last_time(), 1e-8);
 
     // Carry out simulation and check that first time point of resulting compartments is equal to t0.
     sim.advance(tmax);
@@ -269,18 +269,18 @@ TEST(IdeSecir, checkSimulationFunctions)
     // Carry out simulation.
     mio::isecir::Simulation sim(model, dt);
     sim.advance(tmax);
-    mio::TimeSeries<ScalarType> secihurd_simulated = sim.get_result();
-    mio::TimeSeries<ScalarType> flows_simulated    = sim.get_transitions();
+    mio::TimeSeries<ScalarType> secihurd_simulated    = sim.get_result();
+    mio::TimeSeries<ScalarType> transitions_simulated = sim.get_transitions();
 
     // Define vectors for compartments and flows with values from example
     // (calculated by hand, see internal Overleaf document).
     // TODO: Add link to material when published.
     Vec secihurd0((int)mio::isecir::InfectionState::Count);
     Vec secihurd1((int)mio::isecir::InfectionState::Count);
-    Vec flows1(num_transitions);
+    Vec transitions1(num_transitions);
     secihurd0 << 4995, 0.5, 0, 4, 0, 0, 4990.5, 10;
     secihurd1 << 4994.00020016, 0.49989992, 0.49994996, 0.12498749, 1.03124687, 0.25781172, 4993.45699802, 10.12890586;
-    flows1 << 0.99979984, 0.99989992, 0.24997498, 0.24997498, 2.06249374, 2.06249374, 0.51562344, 0.51562344,
+    transitions1 << 0.99979984, 0.99989992, 0.24997498, 0.24997498, 2.06249374, 2.06249374, 0.51562344, 0.51562344,
         0.12890586, 0.12890586;
 
     // Compare SECIHURD compartments at times 0 and 1.
@@ -289,9 +289,9 @@ TEST(IdeSecir, checkSimulationFunctions)
         EXPECT_NEAR(secihurd_simulated[1][i], secihurd1[i], 1e-8);
     }
 
-    // Compare flows at time 1.
+    // Compare transitions at time 1.
     for (Eigen::Index i = 0; i < num_transitions; i++) {
-        EXPECT_NEAR(flows_simulated[flows_simulated.get_num_time_points() - 1][i], flows1[i], 1e-8);
+        EXPECT_NEAR(transitions_simulated[transitions_simulated.get_num_time_points() - 1][i], transitions1[i], 1e-8);
     }
 }
 
@@ -311,7 +311,7 @@ TEST(IdeSecir, checkInitializations)
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
-    // Create TimeSeries with num_transitions elements where flows needed for simulation will be stored.
+    // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
     mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
     // Add initial time point to time series.
     init.add_time_point(-10, Vec::Constant(num_transitions, 3.0));
@@ -437,7 +437,7 @@ TEST(IdeSecir, testModelConstraints)
     // Set wrong initial data and use check_constraints().
     // Follow the same order as in check_constraints().
 
-    // --- Test with wrong size of the initial value vector for the flows.
+    // --- Test with wrong size of the initial value vector for the transitions.
     size_t num_agegroups = 1;
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
@@ -467,7 +467,7 @@ TEST(IdeSecir, testModelConstraints)
     // --- Test with negative number of deaths.
     // Create TimeSeries with num_transitions elements.
     mio::TimeSeries<ScalarType> init(num_transitions);
-    // Add time points for initialization of flows.
+    // Add time points for initialization of transitions.
     Vec vec_init                                                                 = Vec::Constant(num_transitions, 0.);
     vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = 10.0;
     init.add_time_point(-3, vec_init);
@@ -501,30 +501,30 @@ TEST(IdeSecir, testModelConstraints)
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
-    // Return true for not enough time points given for the initial flows.
+    // Return true for not enough time points given for the initial transitions.
     constraint_check = model.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
 
-    // --- Test with negative flows.
+    // --- Test with negative transitions.
     // Create TimeSeries with num_transitions elements.
-    mio::TimeSeries<ScalarType> init_negative_flows(num_transitions);
-    // Add time points for initialization of flows.
-    init_negative_flows.add_time_point(-3, vec_init);
-    while (init_negative_flows.get_last_time() < 0) {
-        init_negative_flows.add_time_point(init_negative_flows.get_last_time() + dt, (-1) * vec_init);
+    mio::TimeSeries<ScalarType> init_negative_transitions(num_transitions);
+    // Add time points for initialization of transitions.
+    init_negative_transitions.add_time_point(-3, vec_init);
+    while (init_negative_transitions.get_last_time() < 0) {
+        init_negative_transitions.add_time_point(init_negative_transitions.get_last_time() + dt, (-1) * vec_init);
     }
 
     // Initialize a model.
-    mio::isecir::Model model_negative_flows(std::move(init_negative_flows), N, deaths, num_agegroups);
+    mio::isecir::Model model_negative_transitions(std::move(init_negative_transitions), N, deaths, num_agegroups);
 
     // Return true for negative entries in the initial flows.
-    constraint_check = model_negative_flows.check_constraints(dt);
+    constraint_check = model_negative_transitions.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
 
-    // --- Test with last time point of flows not matching last time point of populations.
+    // --- Test with last time point of transitions not matching last time point of populations.
     // Create TimeSeries with num_transitions elements.
     mio::TimeSeries<ScalarType> init_different_last_time(num_transitions);
-    // Add enough time points for initialization of flows but with different last time point
+    // Add enough time points for initialization of transitions but with different last time point
     // than before so that it does not match last time point of populations (that was set in
     // when constructing model above).
     init_different_last_time.add_time_point(-4, vec_init);
@@ -534,7 +534,7 @@ TEST(IdeSecir, testModelConstraints)
 
     model.transitions = init_different_last_time;
 
-    // Return true for not last time points of compartments and flows not matching.
+    // Return true for not last time points of compartments and transitions not matching.
     constraint_check = model.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
 
@@ -719,10 +719,10 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
-    // Create TimeSeries with num_transitions elements where flows needed for simulation will be stored.
+    // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
     mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
 
-    // Add time points for initialization for flows.
+    // Add time points for initialization for transitions.
     Vec vec_init = Vec::Constant(num_transitions * num_agegroups, 0.);
     vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]      = 10.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] = 10.0;

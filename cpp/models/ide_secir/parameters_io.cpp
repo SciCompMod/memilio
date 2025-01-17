@@ -71,7 +71,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     // Get the number of AgeGroups.
     const size_t num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
 
-    // flows should be empty at the beginning.
+    // transitions should be empty at the beginning.
 
     if (model.transitions.get_num_time_points() > 0) {
         model.transitions = TimeSeries<ScalarType>(Eigen::Index(InfectionTransition::Count) * num_age_groups);
@@ -144,7 +144,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
 
     // Setting the entries in m_total_confirmed_cases to zero before overwriting it with the RKI data.
     model.total_confirmed_cases = CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
-    //--- Calculate the flow InfectedNoSymptomsToInfectedSymptoms using the RKI data and store in the flows object.---
+    //--- Calculate the flow InfectedNoSymptomsToInfectedSymptoms using the RKI data and store in the transitions object.---
     ScalarType min_offset_needed = std::ceil(
         model.transitions.get_time(0) -
         1); // Need -1 if first time point is integer and just the floor value if not, therefore use ceil and -1

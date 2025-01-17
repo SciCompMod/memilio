@@ -142,7 +142,7 @@ public:
 
     // ---- Public parameters. ----
     ParameterSet parameters{AgeGroup(m_num_agegroups)}; ///< ParameterSet of Model Parameters.
-    // Attention: populations and flows do not necessarily have the same number of time points due to the
+    // Attention: populations and transitions do not necessarily have the same number of time points due to the
     // initialization part.
     TimeSeries<ScalarType>
         transitions; ///< TimeSeries containing points of time and the corresponding number of individuals transitioning from
@@ -265,7 +265,7 @@ private:
     void flows_current_timestep(ScalarType dt);
 
     /**
-     * @brief Updates the values of one compartment using transitions.
+     * @brief Updates the values of one compartment using flows.
      *
      * New value is stored in populations. The value is calculated using the compartment size in the previous 
      * time step and the related flows of the current time step. 

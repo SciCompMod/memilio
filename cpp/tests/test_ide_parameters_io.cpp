@@ -105,7 +105,7 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
         EXPECT_NEAR(model.total_confirmed_cases[group], total_confirmed_cases_test[size_t(group)], 1e-4);
     }
 
-    // Compare flows at last time point with results from a previous run that are given here.
+    // Compare transitions at last time point with results from a previous run that are given here.
     Eigen::VectorX<ScalarType> compare(num_transitions * num_agegroups);
     compare << 336.428571428600, 328.285714285701, 162.000000000000, 163.071428571425, 80.130989648839, 79.803571428575,
         39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081, 1105.714285714297, 1069.857142857200,
