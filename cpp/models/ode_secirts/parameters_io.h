@@ -666,6 +666,12 @@ template <class Model, typename FP = double>
 IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
                              Date date, FP scaling_factor_icu)
 {
+    // DIVI dataset will no longer be updated from CW29 2024 on.
+    if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
+        log_warning("No DIVI data available for date: {}-{}-{}", date.day, date.month, date.year,
+                    ". ICU compartment will be set based on Case data.");
+        return success();
+    }
     std::vector<FP> sum_mu_I_U(vregion.size(), 0);
     std::vector<std::vector<FP>> mu_I_U{model.size()};
     for (size_t region = 0; region < vregion.size(); region++) {
@@ -1015,14 +1021,7 @@ IOResult<void> export_input_data_county_timeseries(
 
         // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
         // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
-        // DIVI dataset will no longer be updated from CW29 2024 on.
-        if (offset_day > Date(2020, 4, 23) || offset_day < Date(2024, 7, 21)) {
-            BOOST_OUTCOME_TRY(details::set_divi_data(models, divi_data_path, counties, offset_day, scaling_factor_icu));
-        }
-        else {
-            log_warning("No DIVI data available for for date: {}-{}-{}", offset_day.day, offset_day.month,
-                        offset_day.year);
-        }
+        BOOST_OUTCOME_TRY(details::set_divi_data(models, divi_data_path, counties, offset_day, scaling_factor_icu));
 
         BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(models, case_data, counties, offset_day, scaling_factor_inf,
                                                             immunity_population));
@@ -1096,14 +1095,8 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
 
     // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
     // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
-    // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (date > Date(2020, 4, 23) || date < Date(2024, 7, 21)) {
-        BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
-                                                 county, date, scaling_factor_icu));
-    }
-    else {
-        log_warning("No DIVI data available for this date");
-    }
+    BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "pydata/Germany", "county_divi_ma7.json"), county,
+                                             date, scaling_factor_icu));
 
     BOOST_OUTCOME_TRY(
         details::set_confirmed_cases_data(model, path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"),
@@ -1160,14 +1153,8 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
 
     // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
     // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
-    // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (date > Date(2020, 4, 23) || date < Date(2024, 7, 21)) {
-        BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(data_dir, "critical_cases.json"), node_ids, date,
-                                                 scaling_factor_icu));
-    }
-    else {
-        log_warning("No DIVI data available for this date");
-    }
+    BOOST_OUTCOME_TRY(
+        details::set_divi_data(model, path_join(data_dir, "critical_cases.json"), node_ids, date, scaling_factor_icu));
 
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(data_dir, "confirmed_cases.json"), node_ids,
                                                         date, scaling_factor_inf, immunity_population));

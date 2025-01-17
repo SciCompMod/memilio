@@ -194,6 +194,12 @@ template <typename FP = double>
 IOResult<void> set_divi_data(std::vector<Model<FP>>& model, const std::string& path, const std::vector<int>& vregion,
                              Date date, double scaling_factor_icu)
 {
+    // DIVI dataset will no longer be updated from CW29 2024 on.
+    if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
+        log_warning("No DIVI data available for date: {}-{}-{}", date.day, date.month, date.year,
+                    ". ICU compartment will be set based on Case data.");
+        return success();
+    }
     std::vector<double> sum_mu_I_U(vregion.size(), 0);
     std::vector<std::vector<double>> mu_I_U{model.size()};
     for (size_t region = 0; region < vregion.size(); region++) {
@@ -310,14 +316,7 @@ IOResult<void> export_input_data_county_timeseries(
     for (int t = 0; t <= num_days; ++t) {
         auto offset_day = offset_date_by_days(date, t);
 
-        // DIVI dataset will no longer be updated from CW29 2024 on.
-        if (offset_day > Date(2020, 4, 23) || offset_day < Date(2024, 7, 21)) {
-            BOOST_OUTCOME_TRY(details::set_divi_data(models, divi_data_path, region, offset_day, scaling_factor_icu));
-        }
-        else {
-            log_warning("No DIVI data available for date: {}-{}-{}", offset_day.day, offset_day.month, offset_day.year);
-        }
-
+        BOOST_OUTCOME_TRY(details::set_divi_data(models, divi_data_path, region, offset_day, scaling_factor_icu));
         BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(models, case_data, region, offset_day, scaling_factor_inf));
         BOOST_OUTCOME_TRY(details::set_population_data(models, num_population, region));
         for (size_t r = 0; r < region.size(); r++) {
@@ -360,14 +359,8 @@ IOResult<void> read_input_data_germany(std::vector<Model>& model, Date date,
                                        const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                        const std::string& dir)
 {
-    // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (date > Date(2020, 4, 23) || date < Date(2024, 7, 21)) {
-        BOOST_OUTCOME_TRY(
-            details::set_divi_data(model, path_join(dir, "germany_divi.json"), {0}, date, scaling_factor_icu));
-    }
-    else {
-        log_warning("No DIVI data available for this date");
-    }
+    BOOST_OUTCOME_TRY(
+        details::set_divi_data(model, path_join(dir, "germany_divi.json"), {0}, date, scaling_factor_icu));
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_age_ma7.json"), {0}, date,
                                                         scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), {0}));
@@ -388,15 +381,9 @@ IOResult<void> read_input_data_state(std::vector<Model>& model, Date date, std::
                                      const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                      const std::string& dir)
 {
-    // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (date > Date(2020, 4, 23) || date < Date(2024, 7, 21)) {
-        BOOST_OUTCOME_TRY(
-            details::set_divi_data(model, path_join(dir, "state_divi.json"), state, date, scaling_factor_icu));
-    }
-    else {
-        log_warning("No DIVI data available for this date");
-    }
 
+    BOOST_OUTCOME_TRY(
+        details::set_divi_data(model, path_join(dir, "state_divi.json"), state, date, scaling_factor_icu));
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_state_age_ma7.json"), state,
                                                         date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), state));
@@ -419,14 +406,8 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
                                       const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                       const std::string& dir, int num_days = 0, bool export_time_series = false)
 {
-    // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (date > Date(2020, 4, 23) || date < Date(2024, 7, 21)) {
-        BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
-                                                 county, date, scaling_factor_icu));
-    }
-    else {
-        log_warning("No DIVI data available for this date");
-    }
+    BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "pydata/Germany", "county_divi_ma7.json"), county,
+                                             date, scaling_factor_icu));
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(
         model, path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"), county, date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(
@@ -462,14 +443,8 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
                                const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                const std::string& data_dir, int num_days = 0, bool export_time_series = false)
 {
-    // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (date > Date(2020, 4, 23) || date < Date(2024, 7, 21)) {
-        BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(data_dir, "critical_cases.json"), node_ids, date,
-                                                 scaling_factor_icu));
-    }
-    else {
-        log_warning("No DIVI data available for this date");
-    }
+    BOOST_OUTCOME_TRY(
+        details::set_divi_data(model, path_join(data_dir, "critical_cases.json"), node_ids, date, scaling_factor_icu));
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(data_dir, "confirmed_cases.json"), node_ids,
                                                         date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(data_dir, "population_data.json"), node_ids));
