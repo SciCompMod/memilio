@@ -541,7 +541,11 @@ IOResult<ScalarType> get_icu_from_divi_data(const std::vector<DiviEntry>& divi_d
 * @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations. 
 *   This defines the number of age groups and the numbers of subcompartments.
 * @tparam Group The age group for which the entries of InfectedCritical should be scaled. 
+*   The function is called recursively for the groups. The total number in the InfectedCritical compartments is only 
+*   equal to infectedCritical_reported after the function call if Group is set to zero in the beginning.
+* @returns Any io errors that happen during the scaling.
 */
+template <class Populations, size_t Group = 0>
 IOResult<void> rescale_to_divi_data(Populations& populations, const ScalarType infectedCritical_reported,
                                     const ScalarType infectedCritical_populations)
 {
