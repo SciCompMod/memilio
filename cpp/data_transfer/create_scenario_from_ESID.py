@@ -29,8 +29,8 @@ from itertools import combinations
 import memilio.simulation as mio
 import memilio.simulation.osecirvvs as osecirvvs
 
-from post_requests import post_to_db_scenarios
-from post_parameters import get_mcmc_model_params
+from .post_requests import post_to_db_scenarios
+from .post_parameters import get_mcmc_model_params
 
 
 class Location(Enum):
