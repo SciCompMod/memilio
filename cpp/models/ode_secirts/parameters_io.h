@@ -100,7 +100,7 @@ IOResult<void> compute_confirmed_cases_data(
     std::vector<std::vector<FP>>& vnum_InfectedSevere, std::vector<std::vector<FP>>& vnum_icu,
     std::vector<std::vector<FP>>& vnum_death, std::vector<std::vector<FP>>& vnum_timm_i,
     std::vector<int> const& vregion, Date date, const std::vector<Model>& model,
-    const std::vector<FP>& scaling_factor_inf, const size_t layer, bool read_icu = false)
+    const std::vector<FP>& scaling_factor_inf, const size_t layer)
 {
     auto max_date_entry = std::max_element(case_data.begin(), case_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -211,17 +211,13 @@ IOResult<void> compute_confirmed_cases_data(
             }
             if (entry.date == offset_date_by_days(date, -t_InfectedSymptoms - t_InfectedSevere)) {
                 num_InfectedSevere[age] -= severePerInfectedSymptoms * scaling_factor_inf[age] * entry.num_confirmed;
-                if (read_icu) {
-                    num_icu[age] +=
-                        severePerInfectedSymptoms * criticalPerSevere * scaling_factor_inf[age] * entry.num_confirmed;
-                }
+                num_icu[age] +=
+                    severePerInfectedSymptoms * criticalPerSevere * scaling_factor_inf[age] * entry.num_confirmed;
             }
             if (entry.date == offset_date_by_days(date, -t_InfectedSymptoms - t_InfectedSevere - t_InfectedCritical)) {
                 num_death[age] += entry.num_deaths;
-                if (read_icu) {
-                    num_icu[age] -=
-                        severePerInfectedSymptoms * criticalPerSevere * scaling_factor_inf[age] * entry.num_confirmed;
-                }
+                num_icu[age] -=
+                    severePerInfectedSymptoms * criticalPerSevere * scaling_factor_inf[age] * entry.num_confirmed;
             }
             if (entry.date == offset_date_by_days(date, 0 - t_imm_interval_i)) {
                 num_imm[age] -= entry.num_confirmed;
@@ -305,13 +301,12 @@ IOResult<void> read_confirmed_cases_data(
     std::vector<std::vector<FP>>& vnum_InfectedNoSymptoms, std::vector<std::vector<FP>>& vnum_InfectedSymptoms,
     std::vector<std::vector<FP>>& vnum_InfectedSevere, std::vector<std::vector<FP>>& vnum_icu,
     std::vector<std::vector<FP>>& vnum_death, std::vector<std::vector<FP>>& vnum_timm_i,
-    const std::vector<Model>& model, const std::vector<FP>& scaling_factor_inf, const size_t layer,
-    bool read_icu = false)
+    const std::vector<Model>& model, const std::vector<FP>& scaling_factor_inf, const size_t layer)
 {
     BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(path));
     return compute_confirmed_cases_data(case_data, vnum_Exposed, vnum_InfectedNoSymptoms, vnum_InfectedSymptoms,
                                         vnum_InfectedSevere, vnum_icu, vnum_death, vnum_timm_i, vregion, date, model,
-                                        scaling_factor_inf, layer, read_icu);
+                                        scaling_factor_inf, layer);
 }
 
 /**
