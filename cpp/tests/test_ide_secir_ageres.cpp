@@ -142,7 +142,7 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
 
     // Compare flows at last time point with results from a previous run that are given here.
 
-    mio::TimeSeries<ScalarType> flows = sim.get_flows();
+    mio::TimeSeries<ScalarType> flows = sim.get_transitions();
     Eigen::VectorX<ScalarType> compare_flows(num_transitions * num_agegroups);
     compare_flows << 31.5370062111, 30.6497959470, 14.1231866958, 14.7543908776, 6.6982921386, 6.6982921386,
         3.1606794140, 3.1606794140, 1.4742153411, 1.4742153411, 31.5370062111, 29.5087817552, 14.7543908776,

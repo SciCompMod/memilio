@@ -84,7 +84,7 @@ int main(int argc, char** argv)
             init.add_time_point(init.get_last_time() + dt,
                                 Vec::Constant((int)mio::isecir::InfectionTransition::Count, 1. * dt));
         }
-        model.flows = init;
+        model.transitions = init;
     }
     else {
         // Use the real data for initialization.
@@ -100,8 +100,8 @@ int main(int argc, char** argv)
     sim.advance(2.);
 
     // Print results.
-    sim.get_flows().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"}, 16,
-                                8);
+    sim.get_transitions().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"},
+                                      16, 8);
 
     return 0;
 }

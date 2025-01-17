@@ -76,13 +76,13 @@ public:
     }
 
     /**
-     * @brief Get the computed flows between the different #InfectionState%s.
+     * @brief Get the computed transitions between the different #InfectionState%s.
      * 
-     * @return TimeSeries with stored flows calculated in the simulation.
+     * @return TimeSeries with stored transitions calculated in the simulation.
      */
-    TimeSeries<ScalarType> const& get_flows()
+    TimeSeries<ScalarType> const& get_transitions()
     {
-        return m_model->flows;
+        return m_model->transitions;
     }
 
     /**

@@ -42,7 +42,7 @@ public:
     /**
     * @brief Constructor to create an IDE-SECIR model.
     *
-    * @param[in, out] flows_init TimeSeries with the initial values of the number of individuals, 
+    * @param[in, out] transitions_init TimeSeries with the initial values of the number of individuals, 
     *   which transit within one timestep dt from one compartment to another.
     *   Possible transitions are specified in #InfectionTransition%s.
     *   Considered time points should have the distance dt. The last time point determines the start time t0 of the 
@@ -55,7 +55,7 @@ public:
     * @param[in] total_confirmed_cases_init A vector, containing the total confirmed cases at time t0 can be set if it 
     *   should be used for initialization, for every AgeGroup.
     */
-    Model(TimeSeries<ScalarType>&& flows_init, CustomIndexArray<ScalarType, AgeGroup> N_init,
+    Model(TimeSeries<ScalarType>&& transitions_init, CustomIndexArray<ScalarType, AgeGroup> N_init,
           CustomIndexArray<ScalarType, AgeGroup> deaths_init, size_t num_agegroups,
           CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases_init = CustomIndexArray<ScalarType, AgeGroup>());
 
@@ -67,7 +67,7 @@ public:
     bool check_constraints(ScalarType dt) const;
 
     /**
-    * @brief Returns a flat index for the TimeSeries flows which contains values for the InfectionTransitions.
+    * @brief Returns a flat index for the TimeSeries transitions which contains values for the InfectionTransitions.
     *
     * In the TimeSeries we store a vector for each time point. In this vector we store values for the different 
     * InfectionTransitions for every AgeGroup.
@@ -100,7 +100,7 @@ public:
     /**
      * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.
      *
-     * This determines how many initial values we need for the flows.
+     * This determines how many initial values we need for the transitions.
      * It may be possible to run the simulation with fewer time points than the value of the global support_max, 
      * but this number ensures that it is possible.
      *
@@ -145,7 +145,7 @@ public:
     // Attention: populations and flows do not necessarily have the same number of time points due to the
     // initialization part.
     TimeSeries<ScalarType>
-        flows; ///< TimeSeries containing points of time and the corresponding number of individuals transitioning from
+        transitions; ///< TimeSeries containing points of time and the corresponding number of individuals transitioning from
     // one InfectionState to another as defined in InfectionTransitions for every AgeGroup.
     TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
         // people in defined #InfectionState%s for every AgeGroup.
@@ -165,7 +165,7 @@ private:
      * @param[in] dt Time discretization step size.
      * @param[in] idx_InfectionState Specifies the considered #InfectionState
      * @param[in] group The AgeGroup for which we want to compute.
-     * @param[in] idx_IncomingFlow Specifies the index of the incoming flow to #InfectionState in flows. 
+     * @param[in] idx_IncomingFlow Specifies the index of the incoming flow to #InfectionState in transitions. 
      * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant TransitionDistribution, 
      *              related to a flow from the considered #InfectionState to any other #InfectionState.
      *              This index is also used for related probability.
@@ -240,10 +240,10 @@ private:
                       Eigen::Index current_time_index, AgeGroup group);
 
     /**
-     * @brief Computes size of a flow for the current last time value in flows.
+     * @brief Computes size of a flow for the current last time value in transitions.
      * 
      * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the current 
-     * last time value in flows. 
+     * last time value in transitions. 
      *
      * @param[in] idx_InfectionTransitions Specifies the considered flow from #InfectionTransition.
      * @param[in] idx_IncomingFlow Index of the flow in #InfectionTransition, which goes to the considered starting
@@ -256,16 +256,16 @@ private:
                       AgeGroup group);
 
     /**
-     * @brief Sets all required flows for the current last timestep in flows.
+     * @brief Sets all required flows for the current last timestep in transitions.
      *
-     * New values are stored in flows. Most values are computed via the function compute_flow().
+     * New values are stored in transitions. Most values are computed via the function compute_flow().
      *
      * @param[in] dt Time step.
      */
     void flows_current_timestep(ScalarType dt);
 
     /**
-     * @brief Updates the values of one compartment using flows.
+     * @brief Updates the values of one compartment using transitions.
      *
      * New value is stored in populations. The value is calculated using the compartment size in the previous 
      * time step and the related flows of the current time step. 
@@ -286,14 +286,14 @@ private:
     void update_compartments();
 
     /**
-     * @brief Computes force of infection for the current last time in flows.
+     * @brief Computes force of infection for the current last time in transitions.
      * 
      * Computed value is stored in m_forceofinfection.
      * 
      * @param[in] dt Time discretization step size.          
      * @param[in] initialization If true we are in the case of the initialization of the model. 
      *      For this we need forceofinfection at time point t0-dt and not at the current last time 
-     *      (given by flows) as in the other time steps.
+     *      (given by transitions) as in the other time steps.
      */
     void compute_forceofinfection(ScalarType dt, bool initialization = false);
 

@@ -119,10 +119,10 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
         80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081;
 
     mio::isecir::Simulation sim(model, dt);
-    ASSERT_EQ(compare.size(), model.flows.get_last_value().size());
+    ASSERT_EQ(compare.size(), model.transitions.get_last_value().size());
 
     for (int j = 0; j < compare.size(); j++) {
-        ASSERT_NEAR(compare[j], model.flows.get_last_value()[j], 1e-7);
+        ASSERT_NEAR(compare[j], model.transitions.get_last_value()[j], 1e-7);
     }
 }
 
@@ -172,8 +172,8 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
     for (size_t group = 0; group < num_agegroups; ++group) {
         int INStISy = model.get_transition_flat_index(
             (Eigen::Index)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms, group);
-        for (Eigen::Index i = 0; i < model.flows.get_num_time_points() - 2; i++) {
-            EXPECT_EQ(0., model.flows.get_value(i)[INStISy]);
+        for (Eigen::Index i = 0; i < model.transitions.get_num_time_points() - 2; i++) {
+            EXPECT_EQ(0., model.transitions.get_value(i)[INStISy]);
         }
     }
 

@@ -146,7 +146,7 @@ TEST_F(ModelTestIdeSecir, compareWithPreviousRunTransitions)
     mio::isecir::Simulation sim(*model, dt);
     sim.advance(5);
 
-    auto flows = sim.get_flows();
+    auto flows = sim.get_transitions();
 
     size_t iter_0 = 0;
     while (flows.get_time(iter_0) < compare[0][0]) {
@@ -200,7 +200,7 @@ TEST(IdeSecir, checkStartTime)
     mio::isecir::Simulation sim(model, dt);
 
     // Check that the last time point of transitions is equal to t0.
-    mio::TimeSeries<ScalarType> flows = sim.get_flows();
+    mio::TimeSeries<ScalarType> flows = sim.get_transitions();
     EXPECT_NEAR(t0, flows.get_last_time(), 1e-8);
 
     // Carry out simulation and check that first time point of resulting compartments is equal to t0.
@@ -270,7 +270,7 @@ TEST(IdeSecir, checkSimulationFunctions)
     mio::isecir::Simulation sim(model, dt);
     sim.advance(tmax);
     mio::TimeSeries<ScalarType> secihurd_simulated = sim.get_result();
-    mio::TimeSeries<ScalarType> flows_simulated    = sim.get_flows();
+    mio::TimeSeries<ScalarType> flows_simulated    = sim.get_transitions();
 
     // Define vectors for compartments and flows with values from example
     // (calculated by hand, see internal Overleaf document).
@@ -532,7 +532,7 @@ TEST(IdeSecir, testModelConstraints)
         init_different_last_time.add_time_point(init_different_last_time.get_last_time() + dt, vec_init);
     }
 
-    model.flows = init_different_last_time;
+    model.transitions = init_different_last_time;
 
     // Return true for not last time points of compartments and flows not matching.
     constraint_check = model.check_constraints(dt);
