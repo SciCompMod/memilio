@@ -570,6 +570,83 @@ TEST(TestOdeSECIRVVS, read_confirmed_cases)
     ASSERT_THAT(read, IsSuccess());
 }
 
+TEST(TestOdeSECIRVVS, set_divi_data_invalid_dates)
+{
+    mio::set_log_level(mio::LogLevel::off);
+    auto model = mio::osecirvvs::Model<double>(1);
+    model.populations.array().setConstant(1);
+    auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
+
+    // Test with date before DIVI dataset was available.
+    EXPECT_THAT(mio::osecirvvs::details::set_divi_data(model_vector, "", {1001}, {2019, 12, 01}, 1.0), IsSuccess());
+    // Assure that populations is the same as before.
+    EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
+
+    // Test with data after DIVI dataset was no longer updated.
+    EXPECT_THAT(mio::osecirvvs::details::set_divi_data(model_vector, "", {1001}, {2025, 12, 01}, 1.0), IsSuccess());
+    EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
+
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
+TEST(TestOdeSECIRVVS, set_confirmed_cases_data_with_ICU)
+{
+    auto num_age_groups = 6;
+    auto model          = mio::osecirvvs::Model<double>(num_age_groups);
+    model.populations.array().setConstant(1);
+
+    // read case data
+    auto case_data =
+        mio::read_confirmed_cases_data(mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json")).value();
+
+    // Change dates of the case data so that no ICU data is available at that time.
+    const auto t0 = mio::Date(2025, 1, 1);
+    auto day_add  = 0;
+    for (auto& entry : case_data) {
+        entry.date = offset_date_by_days(t0, day_add);
+        day_add++;
+    }
+
+    // ICU occupancy before function is called
+    auto ICU_before = std::vector<double>(size_t(num_age_groups) * 3, 0.0);
+    for (auto age_group = mio::AgeGroup(0); age_group < (mio::AgeGroup)num_age_groups; age_group++) {
+        ICU_before[(size_t)age_group] =
+            model.populations[{age_group, mio::osecirvvs::InfectionState::InfectedCriticalNaive}].value();
+        ICU_before[(size_t)age_group + 1] =
+            model.populations[{age_group, mio::osecirvvs::InfectionState::InfectedCriticalPartialImmunity}].value();
+        ICU_before[(size_t)age_group + 2] =
+            model.populations[{age_group, mio::osecirvvs::InfectionState::InfectedCriticalImprovedImmunity}].value();
+    }
+
+    // get day in mid of the data
+    auto mid_day = case_data[(size_t)case_data.size() / 2].date;
+
+    auto model_vector       = std::vector<mio::osecirvvs::Model<double>>{model};
+    auto scaling_factor_inf = std::vector<double>(size_t(model.parameters.get_num_groups()), 1.0);
+    EXPECT_THAT(
+        mio::osecirvvs::details::set_confirmed_cases_data(model_vector, case_data, {1002}, mid_day, scaling_factor_inf),
+        IsSuccess());
+
+    // Get new setted ICU compartment
+    auto ICU_after = std::vector<double>(size_t(num_age_groups) * 3, 0.0);
+    for (auto age_group = mio::AgeGroup(0); age_group < (mio::AgeGroup)num_age_groups; age_group++) {
+        ICU_after[(size_t)age_group] =
+            model_vector[0].populations[{age_group, mio::osecirvvs::InfectionState::InfectedCriticalNaive}].value();
+        ICU_after[(size_t)age_group + 1] =
+            model_vector[0]
+                .populations[{age_group, mio::osecirvvs::InfectionState::InfectedCriticalPartialImmunity}]
+                .value();
+        ICU_after[(size_t)age_group + 2] =
+            model_vector[0]
+                .populations[{age_group, mio::osecirvvs::InfectionState::InfectedCriticalImprovedImmunity}]
+                .value();
+    }
+    // Test if ICU was changed
+    EXPECT_NE(ICU_before, ICU_after);
+}
+
 TEST(TestOdeSECIRVVS, read_data)
 {
     auto num_age_groups = 6; //reading data requires RKI data age groups
@@ -1497,81 +1574,4 @@ TEST(TestOdeSECIRVVS, apply_variant_function)
     EXPECT_NEAR(
         sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)],
         0.4, 1e-10);
-}
-
-TEST(TestOdeSECIRVVS, set_divi_data_invalid_dates)
-{
-    mio::set_log_level(mio::LogLevel::off);
-    auto model = mio::osecirvvs::Model<double>(1);
-    model.populations.array().setConstant(1);
-    auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
-
-    // Test with date before DIVI dataset was available.
-    EXPECT_THAT(mio::osecirvvs::details::set_divi_data(model_vector, "", {1001}, {2019, 12, 01}, 1.0), IsSuccess());
-    // Assure that populations is the same as before.
-    EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
-                MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
-
-    // Test with data after DIVI dataset was no longer updated.
-    EXPECT_THAT(mio::osecirvvs::details::set_divi_data(model_vector, "", {1001}, {2025, 12, 01}, 1.0), IsSuccess());
-    EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
-                MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
-
-    mio::set_log_level(mio::LogLevel::warn);
-}
-
-TEST(TestOdeSECIRVVS, set_confirmed_cases_data_with_ICU)
-{
-    auto num_age_groups = 6;
-    auto model          = mio::osecirvvs::Model<double>(num_age_groups);
-    model.populations.array().setConstant(1);
-
-    // read case data
-    auto case_data =
-        mio::read_confirmed_cases_data(mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json")).value();
-
-    // Change dates of the case data so that no ICU data is available at that time.
-    const auto t0 = mio::Date(2025, 1, 1);
-    auto day_add  = 0;
-    for (auto& entry : case_data) {
-        entry.date = offset_date_by_days(t0, day_add);
-        day_add++;
-    }
-
-    // ICU occupancy before function is called
-    auto ICU_before = std::vector<double>(size_t(num_age_groups) * 3, 0.0);
-    for (auto age_group = mio::AgeGroup(0); age_group < (mio::AgeGroup)num_age_groups; age_group++) {
-        ICU_before[(size_t)age_group] =
-            model.populations[{age_group, mio::osecirvvs::InfectionState::InfectedCriticalNaive}].value();
-        ICU_before[(size_t)age_group + 1] =
-            model.populations[{age_group, mio::osecirvvs::InfectionState::InfectedCriticalPartialImmunity}].value();
-        ICU_before[(size_t)age_group + 2] =
-            model.populations[{age_group, mio::osecirvvs::InfectionState::InfectedCriticalImprovedImmunity}].value();
-    }
-
-    // get day in mid of the data
-    auto mid_day = case_data[(size_t)case_data.size() / 2].date;
-
-    auto model_vector       = std::vector<mio::osecirvvs::Model<double>>{model};
-    auto scaling_factor_inf = std::vector<double>(size_t(model.parameters.get_num_groups()), 1.0);
-    EXPECT_THAT(
-        mio::osecirvvs::details::set_confirmed_cases_data(model_vector, case_data, {1002}, mid_day, scaling_factor_inf),
-        IsSuccess());
-
-    // Get new setted ICU compartment
-    auto ICU_after = std::vector<double>(size_t(num_age_groups) * 3, 0.0);
-    for (auto age_group = mio::AgeGroup(0); age_group < (mio::AgeGroup)num_age_groups; age_group++) {
-        ICU_after[(size_t)age_group] =
-            model_vector[0].populations[{age_group, mio::osecirvvs::InfectionState::InfectedCriticalNaive}].value();
-        ICU_after[(size_t)age_group + 1] =
-            model_vector[0]
-                .populations[{age_group, mio::osecirvvs::InfectionState::InfectedCriticalPartialImmunity}]
-                .value();
-        ICU_after[(size_t)age_group + 2] =
-            model_vector[0]
-                .populations[{age_group, mio::osecirvvs::InfectionState::InfectedCriticalImprovedImmunity}]
-                .value();
-    }
-    // Test if ICU was changed
-    EXPECT_NE(ICU_before, ICU_after);
 }
