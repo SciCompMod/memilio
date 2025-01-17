@@ -486,7 +486,7 @@ TEST(IdeSecir, testModelConstraints)
     // --- Test with too few time points.
     // Create TimeSeries with num_transitions elements.
     mio::TimeSeries<ScalarType> init_few_timepoints(num_transitions);
-    // Add time points for initialization of flows.
+    // Add time points for initialization of transitions.
     init_few_timepoints.add_time_point(-3, vec_init);
     while (init_few_timepoints.get_last_time() < 0) {
         init_few_timepoints.add_time_point(init_few_timepoints.get_last_time() + dt, vec_init);
@@ -517,7 +517,7 @@ TEST(IdeSecir, testModelConstraints)
     // Initialize a model.
     mio::isecir::Model model_negative_transitions(std::move(init_negative_transitions), N, deaths, num_agegroups);
 
-    // Return true for negative entries in the initial flows.
+    // Return true for negative entries in the initial transitions.
     constraint_check = model_negative_transitions.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
 
@@ -815,10 +815,10 @@ TEST(IdeSecir, compareEquilibria)
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
-    // Create TimeSeries with num_transitions elements where flows needed for simulation will be stored.
+    // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
     mio::TimeSeries<ScalarType> init(num_transitions);
 
-    // Add time points for initialization for flows.
+    // Add time points for initialization for transitions.
     Vec vec_init = Vec::Constant(num_transitions * num_agegroups, 0.);
     vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]      = 10.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] = 10.0;
