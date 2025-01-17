@@ -425,7 +425,8 @@ class Simulation:
             )))
 
         model.parameters.StartDayNewVariant = parameter_values.get(
-            "StartDayNewVariant", mio.Date(2021, 6, 6).day_in_year
+            "StartDayNewVariant", mio.Date(
+                start_date.year, start_date.month, start_date.day).day_in_year
         )
 
     def set_contact_matrices(self, model):
@@ -653,7 +654,7 @@ if __name__ == "__main__":
     # with open(scenario_data_path) as f:
     #     scenario_data = json.load(f)
     mcmc_dir = os.path.join(cwd, "mcmc data")
-    date_today= '2025-01-13'
+    date_today = '2025-01-13'
     sim = Simulation(
         data_dir=os.path.join(cwd, "data"),
         results_dir=os.path.join(cwd, "results_osecirvvs"), run_data_url=run_data_url)
