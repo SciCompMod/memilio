@@ -238,19 +238,31 @@ TEST(TestLCTParametersIo, CheckScalingDIVI)
         model.parameters.get<mio::lsecir::DeathsPerCritical>()[i]              = 0.2;
     }
 
-    // Calculate initial value vector for subcompartments with RKI data.
+    // Check that the function get_icu_from_divi_data to get the DIVI data works as expected.
+    EXPECT_NEAR(mio::lsecir::details::get_icu_from_divi_data(get_synthetic_divi_data(), start_date).value(), 50, 1e-6);
+    // Check additionally for another date.
+    EXPECT_NEAR(mio::lsecir::details::get_icu_from_divi_data(get_synthetic_divi_data(), mio::Date(2020, 5, 31)).value(),
+                0, 1e-6);
+
+    // Check that the function set_initial_values_from_reported_data calculates an initial value vector with the correct
+    // number of InfectedCritical individuals as defined by the DIVI data.
     auto read_result =
         mio::lsecir::set_initial_values_from_reported_data<Model::Populations, mio::ConfirmedCasesDataEntry>(
             get_synthetic_rki_data_age(), model.populations, model.parameters, start_date, total_population,
             std::vector<ScalarType>(num_agegroups, 1.), get_synthetic_divi_data());
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
-    // Check that the function to get the DIVI data at a specific day works.
-    EXPECT_NEAR(mio::lsecir::details::get_icu_from_divi_data(get_synthetic_divi_data(), mio::Date(2020, 5, 31)).value(),
-                0, 1e-6);
-    // Check that the result of set_initial_values_from_reported_data() is scaled as expected.
-    EXPECT_NEAR(
-        mio::lsecir::details::get_total_InfectedCritical_from_populations<Model::Populations>(model.populations), 50,
-        1e-6);
+    ScalarType total_InfectedCritical =
+        mio::lsecir::details::get_total_InfectedCritical_from_populations<Model::Populations>(model.populations);
+    EXPECT_NEAR(total_InfectedCritical, 50, 1e-6);
+
+    // Check that the total number of individuals in each age group is not affected.
+    // Not tested in for loop as we need constexpr template arguments.
+    EXPECT_NEAR(model.populations.get_group_total<0>(), total_population[0], 1e-6);
+    EXPECT_NEAR(model.populations.get_group_total<1>(), total_population[1], 1e-6);
+    EXPECT_NEAR(model.populations.get_group_total<2>(), total_population[2], 1e-6);
+    EXPECT_NEAR(model.populations.get_group_total<3>(), total_population[3], 1e-6);
+    EXPECT_NEAR(model.populations.get_group_total<4>(), total_population[4], 1e-6);
+    EXPECT_NEAR(model.populations.get_group_total<5>(), total_population[5], 1e-6);
 
     // Check that we get an error if the date is not part of the input.
     // Deactivate temporarily log output for next tests.
@@ -284,7 +296,7 @@ TEST(TestLCTParametersIo, CheckRescaleToDIVIDataFunctionCases)
     // Check that we get an error if the input for the reported InfectedCritical cases is negative.
     auto status = mio::lsecir::details::rescale_to_divi_data<Populations>(pop, -50, 0);
     EXPECT_THAT(print_wrap(status), IsFailure(mio::StatusCode::InvalidValue));
-    // Check that we get an error as the number of Recovered should be less than zero after scaling.
+    // Check that we get an error if the number of Recovered is less than zero after scaling.
     status = mio::lsecir::details::rescale_to_divi_data<Populations>(pop, 50, 0);
     EXPECT_THAT(print_wrap(status), IsFailure(mio::StatusCode::InvalidValue));
     // Reactive log output.
