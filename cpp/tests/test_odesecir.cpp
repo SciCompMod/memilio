@@ -1434,5 +1434,26 @@ TEST_F(ModelTestOdeSecir, model_initialization_old_date)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
+TEST(TestOdeSecir, set_divi_data_invalid_dates)
+{
+    mio::set_log_level(mio::LogLevel::off);
+    auto model = mio::osecir::Model<double>(1);
+    model.populations.array().setConstant(1);
+    auto model_vector = std::vector<mio::osecir::Model<double>>{model};
+
+    // Test with date before DIVI dataset was available.
+    EXPECT_THAT(mio::osecir::details::set_divi_data(model_vector, "", {1001}, {2019, 12, 01}, 1.0), IsSuccess());
+    // Assure that populations is the same as before.
+    EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
+
+    // Test with data after DIVI dataset was no longer updated.
+    EXPECT_THAT(mio::osecir::details::set_divi_data(model_vector, "", {1001}, {2025, 12, 01}, 1.0), IsSuccess());
+    EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
+
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
 #endif
 #endif

@@ -178,7 +178,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSevereNaive}] =
                 num_InfectedSevere[county][i];
             // Only set the number of ICU patients here, if the date is not available in the data.
-            if (date < Date(2020, 4, 23) || date > Date(2024, 7, 21)) {
+            if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedCriticalNaive}] = num_icu[county][i];
             }
             model[county].populations[{AgeGroup(i), InfectionState::SusceptibleImprovedImmunity}] = num_rec[county][i];
@@ -277,7 +277,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSeverePartialImmunity}] =
                 num_InfectedSevere[county][i];
             // Only set the number of ICU patients here, if the date is not available in the data.
-            if (date < Date(2020, 4, 23) || date > Date(2024, 7, 21)) {
+            if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedCriticalPartialImmunity}] =
                     num_icu[county][i];
             }
@@ -365,7 +365,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSevereImprovedImmunity}] =
                 num_InfectedSevere[county][i];
             // Only set the number of ICU patients here, if the date is not available in the data.
-            if (date < Date(2020, 4, 23) || date > Date(2024, 7, 21)) {
+            if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedCriticalImprovedImmunity}] =
                     num_icu[county][i];
             }

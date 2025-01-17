@@ -135,7 +135,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
                 model[node].populations[{AgeGroup(i), InfectionState::InfectedSymptomsConfirmed}] = 0;
                 model[node].populations[{AgeGroup(i), InfectionState::InfectedSevere}] = num_InfectedSevere[node][i];
                 // Only set the number of ICU patients here, if the date is not available in the data.
-                if (date < Date(2020, 4, 23) || date > Date(2024, 7, 21)) {
+                if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
                     model[node].populations[{AgeGroup(i), InfectionState::InfectedCritical}] = num_icu[node][i];
                 }
                 model[node].populations[{AgeGroup(i), InfectionState::Dead}]      = num_death[node][i];
