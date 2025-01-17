@@ -29,10 +29,6 @@ from itertools import combinations
 import memilio.simulation as mio
 import memilio.simulation.osecirvvs as osecirvvs
 
-from .post_requests import post_to_db_scenarios
-from .post_parameters import get_mcmc_model_params
-
-
 class Location(Enum):
     Home = 0
     School = 1
@@ -637,7 +633,9 @@ class Simulation:
             save_single_runs = False
 
             res_dir_scenario = os.path.join(
-                self.results_dir, scenario['name'])
+                self.results_dir,
+                f'{scenario["name"]}_{scenario["id"]}'
+            )
 
             # create directory if it does not exist
             if not os.path.exists(res_dir_scenario):
