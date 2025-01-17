@@ -272,7 +272,7 @@ TEST(IdeSecir, checkSimulationFunctions)
     mio::TimeSeries<ScalarType> secihurd_simulated    = sim.get_result();
     mio::TimeSeries<ScalarType> transitions_simulated = sim.get_transitions();
 
-    // Define vectors for compartments and flows with values from example
+    // Define vectors for compartments and transitions with values from example
     // (calculated by hand, see internal Overleaf document).
     // TODO: Add link to material when published.
     Vec secihurd0((int)mio::isecir::InfectionState::Count);

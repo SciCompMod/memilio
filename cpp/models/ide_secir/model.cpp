@@ -236,7 +236,7 @@ void Model::initial_compute_compartments(ScalarType dt)
 {
     // The initialization method only affects the Susceptible and Recovered compartments.
     // It is possible to calculate the sizes of the other compartments in advance because only the initial values of
-    // the transition_idx are used.
+    // the transitions are used.
     initial_compute_compartments_infection(dt);
 
     // We store in two Booleans if there are Susceptibles or Recovered given for every age group.

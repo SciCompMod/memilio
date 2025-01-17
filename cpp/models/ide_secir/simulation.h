@@ -76,7 +76,7 @@ public:
     }
 
     /**
-     * @brief Get the computed transitions between the different #InfectionState%s.
+     * @brief Get the transitions between the different #InfectionState%s.
      * 
      * @return TimeSeries with stored transitions calculated in the simulation.
      */
