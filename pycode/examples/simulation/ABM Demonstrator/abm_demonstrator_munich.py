@@ -23,6 +23,7 @@ import os
 import sys
 import h5py
 import time
+import random
 
 import memilio.simulation as mio
 from memilio.simulation import abm
@@ -298,127 +299,6 @@ def read_txt(path):
     return pd.read_csv(path, sep='\t')
 
 
-def make_one_person_households(number_of_households):
-    # one-person household member
-    one_person_household_member = abm.HouseholdMember(num_age_groups)
-    # set weights for household member
-    one_person_household_member.set_age_weight(age_group_15_to_34, 4364)
-    one_person_household_member.set_age_weight(age_group_35_to_59, 7283)
-    one_person_household_member.set_age_weight(age_group_60_to_79, 4100)
-    one_person_household_member.set_age_weight(age_group_80_plus, 1800)
-
-    # create one-person household group
-    household_group = abm.HouseholdGroup()
-    for hh in range(int(number_of_households)):
-        household = abm.Household()
-        household.add_members(one_person_household_member, 1)
-        household_group.add_households(household, 1)
-
-    return household_group
-
-
-def make_multiple_person_households(household_size,
-                                    number_of_two_parent_households, number_of_one_parent_households,
-                                    number_of_other_households):
-
-    # members for multiple person households
-    child = abm.HouseholdMember(num_age_groups)
-    child.set_age_weight(age_group_0_to_4, 1)
-    child.set_age_weight(age_group_5_to_14, 1)
-
-    parent = abm.HouseholdMember(num_age_groups)
-    parent.set_age_weight(age_group_15_to_34, 2)
-    parent.set_age_weight(age_group_35_to_59, 2)
-    parent.set_age_weight(age_group_60_to_79, 1)
-
-    other = abm.HouseholdMember(num_age_groups)
-    other.set_age_weight(age_group_0_to_4, 5000)
-    other.set_age_weight(age_group_5_to_14, 6000)
-    other.set_age_weight(age_group_15_to_34, 14943)
-    other.set_age_weight(age_group_35_to_59, 22259)
-    other.set_age_weight(age_group_60_to_79, 11998)
-    other.set_age_weight(age_group_80_plus, 5038)
-
-    household_group = abm.HouseholdGroup()
-    # add two parent households
-    hh_two_parents = abm.Household()
-    hh_two_parents.add_members(child, household_size - 2)
-    hh_two_parents.add_members(parent, 2)
-    household_group.add_households(
-        hh_two_parents, number_of_two_parent_households)
-    # add one parent households
-    hh_one_parent = abm.Household()
-    hh_one_parent.add_members(child, household_size - 1)
-    hh_one_parent.add_members(parent, 1)
-    household_group.add_households(
-        hh_one_parent, number_of_one_parent_households)
-    # add other households
-    hh_other = abm.Household()
-    hh_other.add_members(parent, 1)
-    hh_other.add_members(other, household_size - 1)
-    household_group.add_households(hh_other, number_of_other_households)
-
-    return household_group
-
-
-def add_households(model, distribution, num_inhabitants):
-    household_sizes = np.zeros(len(distribution))
-    locationIds = []
-    new_index = len(model.locations)
-    # distribute inhabintants to households
-    while num_inhabitants > 0:
-        size = np.random.choice(
-            np.arange(0, len(distribution)), p=distribution)
-        household_sizes[size] += 1
-        num_inhabitants -= (size + 1)
-
-    # one-person household
-    one_person_household_group = make_one_person_households(household_sizes[0])
-    abm.add_household_group_to_model(model, one_person_household_group)
-
-    # two-person households
-    two_person_two_parents = int(0.85 * household_sizes[1])
-    two_person_one_parent = int(0.13 * household_sizes[1])
-    two_person_other = int(
-        household_sizes[1] - two_person_two_parents - two_person_one_parent)
-    two_person_household_group = make_multiple_person_households(2, two_person_two_parents,
-                                                                 two_person_one_parent, two_person_other)
-    abm.add_household_group_to_model(model, two_person_household_group)
-
-    # three-person households
-    three_person_two_parents = int(0.83 * household_sizes[2])
-    three_person_one_parent = int(0.13 * household_sizes[2])
-    three_person_other = int(
-        household_sizes[2] - three_person_two_parents - three_person_one_parent)
-    three_person_household_group = make_multiple_person_households(3, three_person_two_parents,
-                                                                   three_person_one_parent, three_person_other)
-    abm.add_household_group_to_model(model, three_person_household_group)
-
-    # four-person households
-    four_person_two_parents = int(0.93 * household_sizes[3])
-    four_person_one_parent = int(0.03 * household_sizes[3])
-    four_person_other = int(
-        household_sizes[3] - four_person_two_parents - four_person_one_parent)
-    four_person_household_group = make_multiple_person_households(4, four_person_two_parents,
-                                                                  four_person_one_parent, four_person_other)
-    abm.add_household_group_to_model(model, four_person_household_group)
-
-    # five-person households
-    five_person_two_parents = int(0.88 * household_sizes[4])
-    five_person_one_parent = int(0.05 * household_sizes[4])
-    five_person_other = int(
-        household_sizes[4] - five_person_two_parents - five_person_one_parent)
-    five_person_household_group = make_multiple_person_households(5, five_person_two_parents,
-                                                                  five_person_one_parent, five_person_other)
-    abm.add_household_group_to_model(model, five_person_household_group)
-
-    for hh in range(int(sum(household_sizes))):
-        locationIds.append(
-            (mio.abm.LocationId(new_index), abm.LocationType.Home))
-        new_index += 1
-    return locationIds
-
-
 def insert_locations_to_map(mapping, inputId, locations):
     map = LocationMapping()
     map.inputId = inputId
@@ -431,110 +311,6 @@ def insert_locations_to_map(mapping, inputId, locations):
             index = "0" + index
         map.modelId.append(type+index)
     mapping.append(map)
-    return mapping
-
-
-def create_locations_from_input(model, input_areas, household_distribution):
-    # map input area ids to corresponding abm location ids
-    mapping = []
-    # bools to make sure the model has a school and a hospital
-    has_school = False
-    has_hospital = False
-    for index, area in input_areas.iterrows():
-        locations = []
-        if ('residential' in area.type):
-            # area 'residential' corresponds to location type 'Home'
-            locations = add_households(
-                model, household_distribution, area.inhabitants)
-        elif (area.type == 'recreational'):
-            # area 'recreational' corresponds to location type 'SocialEvent'
-            location = model.add_location(abm.LocationType.SocialEvent)
-            # set maximum contacts and capacity for social events
-            model.get_location(
-                location).infection_parameters.MaximumContacts = 30.
-            model.get_location(location).set_capacity(30, 40, 0)
-            locations.append((model.get_location(location).id,
-                             model.get_location(location).type))
-        elif (area.type == 'shopping_business'):
-            # area 'shopping_business' corresponds to location type School, Hospital, BasicsShops, Work
-            if (not has_school):
-                # if model does not have a school yet, a school is added
-                location = model.add_location(abm.LocationType.School)
-                # set maximum contacts and capacity for school
-                model.get_location(
-                    location).infection_parameters.MaximumContacts = 40.
-                model.get_location(
-                    location).set_capacity(500, 2000, 0)
-                locations.append(
-                    (model.get_location(location).id, model.get_location(location).type))
-                has_school = True
-            elif (not has_hospital):
-                # if model does not have a hospital yet, a hospital and a icu is added
-                locHosp = model.add_location(abm.LocationType.Hospital)
-                # set maximum contacts and capacity for hospital
-                model.get_location(
-                    locHosp).infection_parameters.MaximumContacts = 5.
-                model.get_location(
-                    locHosp).set_capacity(300, 10000, 0)
-                locICU = model.add_location(abm.LocationType.ICU)
-                # set maximum contacts and capacity for icu
-                model.get_location(
-                    locICU).infection_parameters.MaximumContacts = 5.
-                model.get_location(
-                    locICU).set_capacity(30, 1000, 0)
-                locations.append(
-                    (model.get_location(locHosp).id, model.get_location(locHosp).type))
-                locations.append((model.get_location(locICU).id,
-                                 model.get_location(locICU).type))
-                has_hospital = True
-            else:
-                # when hospital and school has been added, the area 'shopping_business' is either
-                # transformed to location type BasicsShop or location type Work with same probability
-                type = np.random.choice(np.arange(0, 2), p=[0.5, 0.5])
-                if (type):
-                    location = model.add_location(abm.LocationType.BasicsShop)
-                    # set maximum contacts and capacity for basics shops
-                    model.get_location(
-                        location).infection_parameters.MaximumContacts = 20.
-                    model.get_location(
-                        location).set_capacity(100, 1000, 0)
-                    locations.append(
-                        (model.get_location(location).id, model.get_location(location).type))
-                else:
-                    location = model.add_location(abm.LocationType.Work)
-                    # set maximum contacts and capacity for work
-                    model.get_location(
-                        location).infection_parameters.MaximumContacts = 40.
-                    model.get_location(
-                        location).set_capacity(300, 2000, 0)
-                    locations.append(
-                        (model.get_location(location).id, model.get_location(location).type))
-        elif (area.type == 'university'):
-            # area 'university' corresponds to location type 'Work'
-            location = model.add_location(abm.LocationType.Work)
-            # set maximum contacts and capacity for work
-            model.get_location(
-                location).infection_parameters.MaximumContacts = 50.
-            model.get_location(
-                location).set_capacity(200, 4000, 0)
-            locations.append((model.get_location(location).id,
-                             model.get_location(location).type))
-        elif (area.type == 'mixed'):
-            # area 'mixed' corresponds either to location type 'Work' or location type 'Home' with same probability
-            type = np.random.choice(np.arange(0, 2), p=[0.5, 0.5])
-            if (type):
-                location = model.add_location(abm.LocationType.Work)
-                # set maximum contacts and capacity for work
-                model.get_location(
-                    location).infection_parameters.MaximumContacts = 40.
-                model.get_location(
-                    location).set_capacity(100, 2000, 0)
-                locations.append(
-                    (model.get_location(location).id, model.get_location(location).type))
-            else:
-                locations = add_households(
-                    model, household_distribution, area.inhabitants)
-        insert_locations_to_map(mapping, str(area.id), locations)
     return mapping
 
 
@@ -559,57 +335,6 @@ def find_all_locations_of_type(model, type):
         if (loc.type == type):
             locations.append(loc.id)
     return locations
-
-
-def assign_locations(model):
-    # get locations from model
-    schools = find_all_locations_of_type(model, abm.LocationType.School)
-    school_weights = [(1/len(schools)) for i in range(len(schools))]
-    hospitals = find_all_locations_of_type(model, abm.LocationType.Hospital)
-    hospital_weights = [(1/len(hospitals)) for i in range(len(hospitals))]
-    icus = find_all_locations_of_type(model, abm.LocationType.ICU)
-    icu_weights = [(1/len(icus)) for i in range(len(icus))]
-    workplaces = find_all_locations_of_type(model, abm.LocationType.Work)
-    workplace_weights = [(1/len(workplaces)) for i in range(len(workplaces))]
-    basic_shops = find_all_locations_of_type(
-        model, abm.LocationType.BasicsShop)
-    shop_weights = [(1/len(basic_shops)) for i in range(len(basic_shops))]
-    social_events = find_all_locations_of_type(
-        model, abm.LocationType.SocialEvent)
-    event_weights = [(1/len(social_events)) for i in range(len(social_events))]
-
-    # assign locations to agents
-    for person in model.persons:
-        shop = np.random.choice(np.arange(0, len(basic_shops)), p=shop_weights)
-        person.set_assigned_location(model.get_location(basic_shops[int(shop)]).type,
-                                     basic_shops[int(shop)])
-
-        hospital = np.random.choice(
-            np.arange(0, len(hospitals)), p=hospital_weights)
-        person.set_assigned_location(model.get_location(hospitals[int(hospital)]).type,
-                                     hospitals[int(hospital)])
-
-        icu = np.random.choice(np.arange(0, len(icus)), p=icu_weights)
-        person.set_assigned_location(model.get_location(icus[int(icu)]).type,
-                                     icus[int(icu)])
-
-        event = np.random.choice(
-            np.arange(0, len(social_events)), p=event_weights)
-        person.set_assigned_location(model.get_location(social_events[int(event)]).type,
-                                     social_events[int(event)])
-
-        # assign school to agents between 5 and 14 years
-        if (person.age == age_group_5_to_14):
-            school = np.random.choice(
-                np.arange(0, len(schools)), p=school_weights)
-            person.set_assigned_location(model.get_location(schools[int(school)]).type,
-                                         schools[int(school)])
-        # assign work to agents between 15 and 59
-        if (person.age == age_group_15_to_34 or person.age == age_group_35_to_59):
-            work = np.random.choice(
-                np.arange(0, len(workplaces)), p=workplace_weights)
-            person.set_assigned_location(model.get_location(workplaces[int(work)]).type,
-                                         workplaces[int(work)])
 
 
 def convert_loc_id_to_string(loc):
@@ -807,6 +532,503 @@ def write_results_to_h5(path, log):
     file.close()
 
 
+def age_to_age_group(age):
+    if (age < 5):
+        return age_group_0_to_4
+    elif (age < 15):
+        return age_group_5_to_14
+    elif (age < 35):
+        return age_group_15_to_34
+    elif (age < 60):
+        return age_group_35_to_59
+    elif (age < 80):
+        return age_group_60_to_79
+    else:
+        return age_group_80_plus
+
+
+def initialize_model2(model, trip_file):
+    start = time.time()
+    # This map has the puid from the trip df as key and the ABM PersonIds as values
+    person_map = {}
+    # Map for the locations. The keys are the location types. For every location type we have:
+    # - a dictionary with traffic zone ids as keys and as value
+    #   - a dictionary with huid/location_id from trip data as key and the ABM LocationId as value
+    location_map = {0: {}, 1: {}, 2: {}, 3: {}, 4: {}, 5: {}}
+
+    # Load the data
+    trip_df = pd.read_csv(trip_file)
+
+    # Preprocess data to avoid repeated filtering
+    # To create a person, the puid, the home location and a person's age is needed
+    pids_df = trip_df[['puid', 'huid', 'age']].drop_duplicates()
+    # Get the number of trips per location for each person sorted by traffic zone and location type
+    locs = trip_df.groupby(['puid', 'location_type', 'end_zone'])[
+        'loc_id_end'].value_counts().reset_index(name='count')
+    # Get all shops in the df
+    all_shops = trip_df[trip_df['location_type']
+                        == 4][['end_zone', 'loc_id_end']].drop_duplicates()
+    # Get all events in the df
+    all_events = trip_df[trip_df['location_type']
+                         == 3][['end_zone', 'loc_id_end']].drop_duplicates()
+    # Get all work places in the df
+    all_works = trip_df[trip_df['location_type']
+                        == 2][['end_zone', 'loc_id_end']].drop_duplicates()
+    # Get all schools in the df
+    all_schools = trip_df[trip_df['location_type']
+                          == 1][['end_zone', 'loc_id_end']].drop_duplicates()
+
+    # Create fast lookup dictionaries for home zones
+    # i.e. creates dictionary with loc_id as key and traffic zone id as value
+    start_zone_lookup = trip_df.set_index(
+        'loc_id_start')['start_zone'].to_dict()
+    end_zone_lookup = trip_df.set_index('loc_id_end')['end_zone'].to_dict()
+    for index, row in pids_df.iterrows():
+        if row['home_in_munich'] == 0:
+            continue
+        # Find home zone
+        home_zone = start_zone_lookup.get(
+            row['huid']) or end_zone_lookup.get(row['huid'])
+        if home_zone is None:
+            # print("Error: Home zone was not found")
+            continue
+
+        # Ensure home_zone is in integer format
+        # If it's a series take the first entry
+        if isinstance(home_zone, pd.Series):
+            home_zone = home_zone.iloc[0]
+
+        # Add home location to the model
+        if home_zone in location_map[0]:
+            # Home zone is in the location map already
+            home = location_map[0][home_zone].get(row['huid'])
+            if home is None:
+                # Home id is not in the location map/model
+                home = model.add_location(abm.LocationType.Home)
+                location_map[0][home_zone][row['huid']] = home
+        else:
+            # Home zone (and therefore also home id) is not in the location map/model
+            home = model.add_location(abm.LocationType.Home)
+            location_map[0][home_zone] = {row['huid']: home}
+
+        # Add the person to the model
+        p = model.add_person(home, age_to_age_group(row['age']))
+        person_map[row['puid']] = p
+
+        ### Assign shop ###
+        # Get all shops the person visits sorted by number of trips to that shop
+        shops = locs[(locs['puid'] == row['puid']) & (
+            locs['location_type'] == 4)].sort_values(by='count', ascending=False)
+
+        if shops.empty:
+            # No trips to shops
+            # Assign a shop in home zone
+            if home_zone in location_map[4]:
+                # Choose shop uniquely distributed from all shops in home zone
+                shop = random.choice(list(location_map[4][home_zone].values()))
+            else:
+                # Get all shops in home zone
+                shops_in_hz = all_shops[all_shops['end_zone'] == home_zone]
+                if not shops_in_hz.empty:
+                    # Shop in home zone exists
+                    shop_id = random.choice(list(shops_in_hz['loc_id_end']))
+                    shop = model.add_location(abm.LocationType.BasicsShop)
+                    location_map[4][home_zone] = {shop_id: shop}
+                else:
+                    print('Info: No shop in home zone was found in the data.')
+                    shop = model.add_location(abm.LocationType.BasicsShop)
+                    location_map[4][home_zone] = {'xx': shop}
+        else:
+            # Use the person's most frequently visited shop
+            shop_zone = shops.iloc[0]['end_zone']
+            shop_id = shops.iloc[0]['loc_id_end']
+            if shop_zone in location_map[4]:
+                # Traffic zone of most frequently visited shop already exists in location map
+                shop = location_map[4][shop_zone].get(shop_id)
+                if shop is None:
+                    # Shop id is not in the location map/model
+                    shop = model.add_location(abm.LocationType.BasicsShop)
+                    location_map[4][shop_zone][shop_id] = shop
+            else:
+                # Shop zone (and therefore also shop id) is not in the location map/model
+                shop = model.add_location(abm.LocationType.BasicsShop)
+                location_map[4][shop_zone] = {shop_id: shop}
+
+        # Assign the shop to the person
+        model.persons[p.index()].set_assigned_location(
+            abm.LocationType.BasicsShop, shop)
+
+        ### Assign event ###
+        # Get all events the person visits sorted by number of trips to that event
+        events = locs[(locs['puid'] == row['puid']) & (
+            locs['location_type'] == 3)].sort_values(by='count', ascending=False)
+
+        if events.empty:
+            # No trips to events
+            # Assign an event in home zone
+            if home_zone in location_map[3]:
+                # Choose event uniquely distributed from all events in home zone
+                event = random.choice(
+                    list(location_map[3][home_zone].values()))
+            else:
+                # Get all events in home zone
+                events_in_hz = all_events[all_events['end_zone'] == home_zone]
+                if not events_in_hz.empty:
+                    # Event in home zone exists
+                    event_id = random.choice(list(events_in_hz['loc_id_end']))
+                    event = model.add_location(abm.LocationType.SocialEvent)
+                    location_map[3][home_zone] = {event_id: event}
+                else:
+                    print('Info: No event in home zone was found in the data.')
+                    event = model.add_location(abm.LocationType.SocialEvent)
+                    location_map[3][home_zone] = {'xx': event}
+        else:
+            # Use the person's most frequently visited event
+            event_zone = events.iloc[0]['end_zone']
+            event_id = events.iloc[0]['loc_id_end']
+            if event_zone in location_map[3]:
+                # Traffic zone of most frequently visited event already exists in location map
+                event = location_map[3][event_zone].get(event_id)
+                if event is None:
+                    # Event id is not in the location map/model
+                    event = model.add_location(abm.LocationType.SocialEvent)
+                    location_map[3][event_zone][event_id] = event
+            else:
+                # Event zone (and therefore also event id) is not in the location map/model
+                event = model.add_location(abm.LocationType.SocialEvent)
+                location_map[3][event_zone] = {event_id: event}
+
+        # Assign the event to the person
+        model.persons[p.index()].set_assigned_location(
+            abm.LocationType.SocialEvent, event)
+
+        ### Assign work to ages 15 to 59###
+        if (model.persons[p.index()].age == age_group_15_to_34 or model.persons[p.index()].age == age_group_35_to_59):
+            # Get all work places the person visits sorted by number of trips to that work place
+            works = locs[(locs['puid'] == row['puid']) & (
+                locs['location_type'] == 2)].sort_values(by='count', ascending=False)
+
+            if works.empty:
+                # No trips to work places
+                # Assign a work place in home zone
+                if home_zone in location_map[2]:
+                    # Choose work place uniquely distributed from all work places in home zone
+                    work = random.choice(
+                        list(location_map[2][home_zone].values()))
+                else:
+                    # Get all work places in home zone
+                    works_in_hz = all_works[all_works['end_zone'] == home_zone]
+                    if not works_in_hz.empty:
+                        # Work place in home zone exists
+                        work_id = random.chioce(
+                            list(works_in_hz['loc_id_end']))
+                        work = model.add_location(abm.LocationType.Work)
+                        location_map[2][home_zone] = {work_id: work}
+                    else:
+                        print(
+                            'Info: No work place in home zone was found in the data.')
+                        work = model.add_location(abm.LocationType.Work)
+                        location_map[2][home_zone] = {'xx': work}
+            else:
+                # Use the person's most frequently visited work place
+                work_zone = works.iloc[0]['end_zone']
+                work_id = works.iloc[0]['loc_id_end']
+                if work_zone in location_map[2]:
+                    # Traffic zone of most frequently visited work place already exists in location map
+                    work = location_map[2][work_zone].get(work_id)
+                    if work is None:
+                        # Work id is not in the location map/model
+                        work = model.add_location(abm.LocationType.Work)
+                        location_map[2][work_zone][work_id] = work
+                else:
+                    # Work zone (and therefore also work id) is not in the location map/model
+                    work = model.add_location(abm.LocationType.Work)
+                    location_map[2][work_zone] = {work_id: work}
+
+            # Assign the work place to the person
+            model.persons[p.index()].set_assigned_location(
+                abm.LocationType.Work, work)
+
+        ### Assign school to ages 5 to 14###
+        if (model.persons[p.index()].age == age_group_5_to_14):
+            # Get all schools the person visits sorted by number of trips to that school
+            schools = locs[(locs['puid'] == row['puid']) & (
+                locs['location_type'] == 1)].sort_values(by='count', ascending=False)
+
+            if schools.empty:
+                # No trips to schools
+                # Assign a school in home zone
+                if home_zone in location_map[1]:
+                    # Choose school uniquely distributed from all schools in home zone
+                    school = random.choice(
+                        list(location_map[1][home_zone].values()))
+                else:
+                    # Get all schools in home zone
+                    schools_in_hz = all_schools[all_schools['end_zone']
+                                                == home_zone]
+                    if not schools_in_hz.empty:
+                        # School in home zone exists
+                        school_id = random.choice(
+                            list(schools_in_hz['loc_id_end']))
+                        school = model.add_location(abm.LocationType.School)
+                        location_map[1][home_zone] = {school_id: school}
+                    else:
+                        print(
+                            'Info: No school in home zone was found in the data.')
+                        school = model.add_location(abm.LocationType.School)
+                        location_map[1][home_zone] = {'xx': school}
+            else:
+                # Use the person's most frequently visited school
+                school_zone = schools.iloc[0]['end_zone']
+                school_id = schools.iloc[0]['loc_id_end']
+                if school_zone in location_map[1]:
+                    # Traffic zone of most frequently visited school already exists in location map
+                    school = location_map[1][school_zone].get(school_id)
+                    if school is None:
+                        # School id is not in the location map/model
+                        school = model.add_location(abm.LocationType.School)
+                        location_map[1][school_zone][school_id] = school
+                else:
+                    # School zone (and therefore also school id) is not in the location map/model
+                    school = model.add_location(abm.LocationType.School)
+                    location_map[1][school_zone] = {school_id: school}
+
+            # Assign the work place to the person
+            model.persons[p.index()].set_assigned_location(
+                abm.LocationType.School, school)
+    end = time.time()
+    print(f'Time to initialize model: {end - start} seconds')
+    print("Number of persons in model: ", len(model.persons))
+    print('Initialization complete.')
+
+
+def save_persons(model, trip_file):
+    start = time.time()
+    # Map for the locations. The keys are the location types. For every location type we have:
+    # - a dictionary with traffic zone ids as keys and as value
+    #   - a dictionary with huid/location_id from trip data as key and the ABM LocationId as value
+    location_map = {0: {}, 1: {}, 2: {}, 3: {}, 4: {}, 5: {}}
+
+    # Load the data
+    trip_df = pd.read_csv(trip_file)
+
+    # Preprocess data to avoid repeated filtering
+    # To create a person, the puid, the home location and a person's age is needed
+    pids_df = trip_df[['puid', 'huid', 'age',
+                       'home_in_munich']].drop_duplicates()
+    # Get the number of trips per location for each person sorted by traffic zone and location type
+    locs = trip_df.groupby(['puid', 'location_type', 'end_zone'])[
+        'loc_id_end'].value_counts().reset_index(name='count')
+    # Get all shops in the df
+    all_shops = trip_df[trip_df['location_type']
+                        == 4][['end_zone', 'loc_id_end']].drop_duplicates()
+    # Get all events in the df
+    all_events = trip_df[trip_df['location_type']
+                         == 3][['end_zone', 'loc_id_end']].drop_duplicates()
+    # Get all work places in the df
+    all_works = trip_df[trip_df['location_type']
+                        == 2][['end_zone', 'loc_id_end']].drop_duplicates()
+    # Get all schools in the df
+    all_schools = trip_df[trip_df['location_type']
+                          == 1][['end_zone', 'loc_id_end']].drop_duplicates()
+
+    # Create fast lookup dictionaries for home zones
+    # i.e. creates dictionary with loc_id as key and traffic zone id as value
+    start_zone_lookup = trip_df.set_index(
+        'loc_id_start')['start_zone'].to_dict()
+    end_zone_lookup = trip_df.set_index('loc_id_end')['end_zone'].to_dict()
+    persons = []
+    i = 1
+    for index, row in pids_df.iterrows():
+        print(i, '/', len(pids_df))
+        i += 1
+        if row['home_in_munich'] == 0:
+            continue
+        home_id = row['huid']
+        age = row['age']
+        # Find home zone
+        home_zone = start_zone_lookup.get(
+            row['huid']) or end_zone_lookup.get(row['huid'])
+        if home_zone is None:
+            print("Error: Home zone was not found")
+            continue
+
+        # Ensure home_zone is in integer format
+        # If it's a series take the first entry
+        if isinstance(home_zone, pd.Series):
+            home_zone = home_zone.iloc[0]
+
+        ### Assign shop ###
+        # Get all shops the person visits sorted by number of trips to that shop
+        shops = locs[(locs['puid'] == row['puid']) & (
+            locs['location_type'] == 4)].sort_values(by='count', ascending=False)
+
+        if shops.empty:
+            shop_zone = home_zone
+            # No trips to shops
+            # Assign a shop in home zone
+            if home_zone in location_map[4]:
+                # Choose shop uniquely distributed from all shops in home zone
+                shop_id = random.choice(
+                    list(location_map[4][home_zone].keys()))
+            else:
+                # Get all shops in home zone
+                shops_in_hz = all_shops[all_shops['end_zone'] == home_zone]
+                if not shops_in_hz.empty:
+                    # Shop in home zone exists
+                    shop_id = random.choice(list(shops_in_hz['loc_id_end']))
+                    location_map[4][home_zone] = {shop_id: shop_id}
+                else:
+                    print('Info: No shop in home zone was found in the data.')
+                    shop_id = -1
+        else:
+            # Use the person's most frequently visited shop
+            shop_zone = shops.iloc[0]['end_zone']
+            shop_id = shops.iloc[0]['loc_id_end']
+            if shop_zone in location_map[4]:
+                # Traffic zone of most frequently visited shop already exists in location map
+                shop = location_map[4][shop_zone].get(shop_id)
+                if shop is None:
+                    # Shop id is not in the location map/model
+                    location_map[4][shop_zone][shop_id] = shop_id
+            else:
+                # Shop zone (and therefore also shop id) is not in the location map/model
+                location_map[4][shop_zone] = {shop_id: shop_id}
+
+        ### Assign event ###
+        # Get all events the person visits sorted by number of trips to that event
+        events = locs[(locs['puid'] == row['puid']) & (
+            locs['location_type'] == 3)].sort_values(by='count', ascending=False)
+
+        if events.empty:
+            event_zone = home_zone
+            # No trips to events
+            # Assign an event in home zone
+            if home_zone in location_map[3]:
+                # Choose event uniquely distributed from all events in home zone
+                event_id = random.choice(
+                    list(location_map[3][home_zone].keys()))
+            else:
+                # Get all events in home zone
+                events_in_hz = all_events[all_events['end_zone'] == home_zone]
+                if not events_in_hz.empty:
+                    # Event in home zone exists
+                    event_id = random.choice(list(events_in_hz['loc_id_end']))
+                    location_map[3][home_zone] = {event_id: event_id}
+                else:
+                    print('Info: No event in home zone was found in the data.')
+                    event_id = -1
+        else:
+            # Use the person's most frequently visited event
+            event_zone = events.iloc[0]['end_zone']
+            event_id = events.iloc[0]['loc_id_end']
+            if event_zone in location_map[3]:
+                # Traffic zone of most frequently visited event already exists in location map
+                event = location_map[3][event_zone].get(event_id)
+                if event is None:
+                    # Event id is not in the location map/model
+                    location_map[3][event_zone][event_id] = event_id
+            else:
+                # Event zone (and therefore also event id) is not in the location map/model
+                location_map[3][event_zone] = {event_id: event_id}
+
+        work_zone = -2
+        work_id = -2
+        ### Assign work to ages 15 to 59###
+        if (row['age'] > 15 and row['age'] < 60):
+            # Get all work places the person visits sorted by number of trips to that work place
+            works = locs[(locs['puid'] == row['puid']) & (
+                locs['location_type'] == 2)].sort_values(by='count', ascending=False)
+
+            if works.empty:
+                work_zone = home_zone
+                # No trips to work places
+                # Assign a work place in home zone
+                if home_zone in location_map[2]:
+                    # Choose work place uniquely distributed from all work places in home zone
+                    work_id = random.choice(
+                        list(location_map[2][home_zone].keys()))
+                else:
+                    # Get all work places in home zone
+                    works_in_hz = all_works[all_works['end_zone'] == home_zone]
+                    if not works_in_hz.empty:
+                        # Work place in home zone exists
+                        work_id = random.choice(
+                            list(works_in_hz['loc_id_end']))
+                        location_map[2][home_zone] = {work_id: work_id}
+                    else:
+                        print(
+                            'Info: No work place in home zone was found in the data.')
+                        work_id = -1
+            else:
+                # Use the person's most frequently visited work place
+                work_zone = works.iloc[0]['end_zone']
+                work_id = works.iloc[0]['loc_id_end']
+                if work_zone in location_map[2]:
+                    # Traffic zone of most frequently visited work place already exists in location map
+                    work = location_map[2][work_zone].get(work_id)
+                    if work is None:
+                        # Work id is not in the location map/model
+                        location_map[2][work_zone][work_id] = work_id
+                else:
+                    # Work zone (and therefore also work id) is not in the location map/model
+                    location_map[2][work_zone] = {work_id: work_id}
+
+        school_zone = -2
+        school_id = -2
+        ### Assign school to ages 5 to 14###
+        if (row['age'] > 4 and row['age'] < 16):
+            # Get all schools the person visits sorted by number of trips to that school
+            schools = locs[(locs['puid'] == row['puid']) & (
+                locs['location_type'] == 1)].sort_values(by='count', ascending=False)
+
+            if schools.empty:
+                school_zone = home_zone
+                # No trips to schools
+                # Assign a school in home zone
+                if home_zone in location_map[1]:
+                    # Choose school uniquely distributed from all schools in home zone
+                    school_id = random.choice(
+                        list(location_map[1][home_zone].keys()))
+                else:
+                    # Get all schools in home zone
+                    schools_in_hz = all_schools[all_schools['end_zone']
+                                                == home_zone]
+                    if not schools_in_hz.empty:
+                        # School in home zone exists
+                        school_id = random.choice(
+                            list(schools_in_hz['loc_id_end']))
+                        location_map[1][home_zone] = {school_id: school_id}
+                    else:
+                        print(
+                            'Info: No school in home zone was found in the data.')
+                        school_id = -1
+            else:
+                # Use the person's most frequently visited school
+                school_zone = schools.iloc[0]['end_zone']
+                school_id = schools.iloc[0]['loc_id_end']
+                if school_zone in location_map[1]:
+                    # Traffic zone of most frequently visited school already exists in location map
+                    school = location_map[1][school_zone].get(school_id)
+                    if school is None:
+                        # School id is not in the location map/model
+                        location_map[1][school_zone][school_id] = school_id
+                else:
+                    # School zone (and therefore also school id) is not in the location map/model
+                    location_map[1][school_zone] = {school_id: school_id}
+        persons.append({'puid': row['puid'], 'age': age, 'home_zone': home_zone, 'home_id': home_id, 'shop_zone': shop_zone, 'shop_id': shop_id,
+                        'event_zone': event_zone, 'event_id': event_id, 'work_zone': work_zone, 'work_id': work_id,
+                        'school_zone': school_zone, 'school_id': school_id})
+    end = time.time()
+    print(f'Time to create person list: {end - start} seconds')
+    print("Number of persons in model: ", len(persons))
+    start = time.time()
+    df = pd.DataFrame(persons)
+    df.to_csv('persons.csv')
+    end = time.time()
+    print(f'Time to create and save person df: {end - start} seconds')
+
+
 def run_abm_simulation(sim_num):
     mio.set_log_level(mio.LogLevel.Off)
     input_path = sys.path[0] + '/input/'
@@ -817,41 +1039,45 @@ def run_abm_simulation(sim_num):
     t0 = abm.TimePoint(0)
     # end time point: simulation will run 14 days
     tmax = t0 + abm.days(14)
-    # read infection parameters
-    parameters = pd.read_csv(os.path.join(
-        input_path, 'parameter_table.csv'), index_col=0)
     # create simulation with starting timepoint and number of age groups
     sim = abm.Simulation(t0, num_age_groups)
-    # set seeds for simulation
-    abm.set_seeds(sim.model, sim_num)
-    # set infection parameters
-    sim.model.parameters = set_infection_parameters(parameters)
-    # set age groups that go to school and work
-    abm.set_AgeGroupGoToSchool(sim.model.parameters, age_group_5_to_14)
-    abm.set_AgeGroupGoToWork(sim.model.parameters, age_group_15_to_34)
-    abm.set_AgeGroupGoToWork(sim.model.parameters, age_group_35_to_59)
-    # assign initial infection states according to distribution
-    assign_infection_states(sim.model, t0, 0.002, 0.005,
-                            0.0029, 0.0001, 0.0, 0.0)
-    # output object
-    history = History()
-    # just used for debugging
-    # write_age_and_hh(sim.model, os.path.join(output_path, 'age_hh.txt'))
-    # advance simulation until tmax
-    sim.advance(tmax, history)
-    # results collected during the simulation
-    log = history.log
-    # write infection paths per agent to file
-    write_infection_paths_to_file(os.path.join(
-        output_path, str(sim_num) + '_infection_paths.txt'), sim.model, tmax)
-    # write compartment size per time step to file
-    write_compartments_to_file(sim.model, os.path.join(
-        output_path, str(sim_num) + '_comps.csv'), log[0])
-    start = time.time()
-    write_results_to_h5(os.path.join(
-        output_path, str(sim_num) + '_output.h5'), log)
-    end = time.time()
-    print(f'Time to write output h5: {end - start} seconds')
+    # initialize model
+    save_persons(sim.model, os.path.join(
+        input_path, 'muenchen_microscopic_result_modified.csv'))
+
+    # # read infection parameters
+    # parameters = pd.read_csv(os.path.join(
+    #     input_path, 'parameter_table.csv'), index_col=0)
+    # # set seeds for simulation
+    # abm.set_seeds(sim.model, sim_num)
+    # # set infection parameters
+    # sim.model.parameters = set_infection_parameters(parameters)
+    # # set age groups that go to school and work
+    # abm.set_AgeGroupGoToSchool(sim.model.parameters, age_group_5_to_14)
+    # abm.set_AgeGroupGoToWork(sim.model.parameters, age_group_15_to_34)
+    # abm.set_AgeGroupGoToWork(sim.model.parameters, age_group_35_to_59)
+    # # assign initial infection states according to distribution
+    # assign_infection_states(sim.model, t0, 0.002, 0.005,
+    #                         0.0029, 0.0001, 0.0, 0.0)
+    # # output object
+    # history = History()
+    # # just used for debugging
+    # # write_age_and_hh(sim.model, os.path.join(output_path, 'age_hh.txt'))
+    # # advance simulation until tmax
+    # sim.advance(tmax, history)
+    # # results collected during the simulation
+    # log = history.log
+    # # write infection paths per agent to file
+    # write_infection_paths_to_file(os.path.join(
+    #     output_path, str(sim_num) + '_infection_paths.txt'), sim.model, tmax)
+    # # write compartment size per time step to file
+    # write_compartments_to_file(sim.model, os.path.join(
+    #     output_path, str(sim_num) + '_comps.csv'), log[0])
+    # start = time.time()
+    # write_results_to_h5(os.path.join(
+    #     output_path, str(sim_num) + '_output.h5'), log)
+    # end = time.time()
+    # print(f'Time to write output h5: {end - start} seconds')
 
     print('done')
 
