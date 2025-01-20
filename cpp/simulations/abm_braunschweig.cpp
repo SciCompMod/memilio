@@ -222,11 +222,11 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
         count_of_titles++;
     }
 
-    std::map<uint32_t, mio::abm::LocationId> locations        = {};
-    std::map<uint32_t, mio::abm::GlobalID> pids_data_to_model = {};
-    std::map<uint32_t, uint32_t> person_ids                   = {};
-    std::map<uint32_t, std::pair<uint32_t, int>> locations_before;
-    std::map<uint32_t, std::pair<uint32_t, int>> locations_after;
+    std::map<uint64_t, mio::abm::LocationId> locations        = {};
+    std::map<uint64_t, mio::abm::GlobalID> pids_data_to_model = {};
+    std::map<uint64_t, uint64_t> person_ids                   = {};
+    std::map<uint64_t, std::pair<uint64_t, int>> locations_before;
+    std::map<uint64_t, std::pair<uint64_t, int>> locations_after;
 
     // For the model we need: Hospitals, ICUs (for both we just create one for now), Homes for each unique householdID, One Person for each person_id with respective age and home_id.
 
