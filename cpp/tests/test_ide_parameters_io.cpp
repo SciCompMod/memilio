@@ -27,6 +27,7 @@
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/utils/date.h"
+#include "memilio/utils/logging.h"
 #include "memilio/io/io.h"
 
 #include "test_data_dir.h"

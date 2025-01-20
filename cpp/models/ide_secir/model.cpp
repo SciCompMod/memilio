@@ -46,6 +46,11 @@ Model::Model(TimeSeries<ScalarType>&& init, CustomIndexArray<ScalarType, AgeGrou
     , m_num_agegroups{num_agegroups}
 
 {
+    // Assert that input arguments have the correct size regarding age groups.
+    assert((size_t)m_transitions.get_num_elements() == (size_t)InfectionTransition::Count * m_num_agegroups);
+    assert((size_t)m_total_confirmed_cases.size() == m_num_agegroups);
+    assert((size_t)m_N.size() == m_num_agegroups);
+
     if (m_transitions.get_num_time_points() > 0) {
         // Add first time point in m_populations according to last time point in m_transitions which is where we start
         // the simulation.

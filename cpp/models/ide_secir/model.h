@@ -369,9 +369,9 @@ private:
     // In set_initial_flows(), we compute initial flows based on RKI data using the (private) compute_flow() function
     // which is why it is defined as a friend function.
     template <typename EntryType>
-    friend IOResult<void>
-    set_initial_flows(Model& model, const ScalarType dt, const std::vector<EntryType> rki_data, const Date date,
-                      const mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases);
+    friend IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::vector<EntryType> rki_data,
+                                            const Date date,
+                                            const CustomIndexArray<ScalarType, AgeGroup> scale_confirmed_cases);
 };
 
 } // namespace isecir
