@@ -7,9 +7,19 @@ from itertools import combinations
 import numpy as np
 import memilio.epidata.geoModificationGermany as gMG
 
-from post_requests import post_to_db_scenarios, delete_scenarios
-
 header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
+
+def delete_scenarios():
+    response = requests.get(url + "scenarios/", headers=header)
+    ids = [compartment["id"] for compartment in response.json()]
+    for id in ids:
+        delete_response = requests.delete(
+            url + "scenarios/" + id, headers=header)
+        if (delete_response.status_code != 200):
+            print(delete_response.status_code)
+            print(delete_response.reason)
+
+    print(requests.get(url + "scenarios/", headers=header).json())
 
 
 def read_mcmc_data(data_dir):
