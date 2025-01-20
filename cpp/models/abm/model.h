@@ -359,19 +359,19 @@ public:
 
     /**
      * @brief Get a reference to a Person from this Model.
-     * @param[in] global_id A Person's PersonId.
+     * @param[in] person_id A Person's PersonId.
      * @return A reference to the Person.
      */
-    Person& get_person(PersonId global_id)
+    Person& get_person(PersonId person_id)
     {
         if (m_person_ids_equal_index) {
-            return m_persons[static_cast<uint32_t>(global_id.get())];
+            return m_persons[static_cast<uint32_t>(person_id.get())];
         }
         else {
             mio::log_warning("get_person is accessed by PersonId which does not align with the index of the person due "
                              "to former removal of persons. Therefore m_persons is searched.");
-            auto it = std::find_if(m_persons.begin(), m_persons.end(), [global_id](auto& person) {
-                return person.get_id() == global_id;
+            auto it = std::find_if(m_persons.begin(), m_persons.end(), [person_id](auto& person) {
+                return person.get_id() == person_id;
             });
             if (it == m_persons.end()) {
                 log_error("Given Person is not in this Model.");
@@ -380,16 +380,16 @@ public:
         }
     }
 
-    const Person& get_person(PersonId global_id) const
+    const Person& get_person(PersonId person_id) const
     {
         if (m_person_ids_equal_index) {
-            return m_persons[static_cast<uint32_t>(global_id.get())];
+            return m_persons[static_cast<uint32_t>(person_id.get())];
         }
         else {
             mio::log_warning("get_person is accessed by PersonId which does not align with the index of the person due "
                              "to former removal of persons. Therefore m_persons is searched.");
-            auto it = std::find_if(m_persons.begin(), m_persons.end(), [global_id](auto& person) {
-                return person.get_id() == global_id;
+            auto it = std::find_if(m_persons.begin(), m_persons.end(), [person_id](auto& person) {
+                return person.get_id() == person_id;
             });
             if (it == m_persons.end()) {
                 log_error("Given Person is not in this Model.");
@@ -503,16 +503,16 @@ public:
 
     /**
      * @brief Get index of person in m_persons.
-     * @param[in] id A person's unique PersonId. 
+     * @param[in] person_id A person's unique PersonId. 
      * First 32 bit are the Person's individual id and second 32 bit the Persons's home model id. 
      * @return Index of Person in m_persons vector.
      * @{
      */
-    uint32_t get_person_index(PersonId global_id) const
+    uint32_t get_person_index(PersonId person_id) const
     {
         mio::log_debug("get_person_index is used leading to a search in m_persons.");
-        auto it = std::find_if(m_persons.begin(), m_persons.end(), [global_id](auto& person) {
-            return person.get_id() == global_id;
+        auto it = std::find_if(m_persons.begin(), m_persons.end(), [person_id](auto& person) {
+            return person.get_id() == person_id;
         });
         if (it == m_persons.end()) {
             log_error("Given PersonId is not in this Model.");

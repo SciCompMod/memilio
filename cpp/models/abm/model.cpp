@@ -52,8 +52,8 @@ LocationId Model::add_location(LocationType type, uint32_t num_cells)
 
 PersonId Model::add_person(const LocationId id, AgeGroup age)
 {
-    PersonId global_id = (static_cast<int64_t>(m_id)) << 32 | static_cast<uint32_t>(m_persons.size());
-    return add_person(Person(m_rng, get_location(id).get_type(), id, m_id, age, global_id));
+    PersonId person_id = (static_cast<int64_t>(m_id)) << 32 | static_cast<uint32_t>(m_persons.size());
+    return add_person(Person(m_rng, get_location(id).get_type(), id, m_id, age, person_id));
 }
 
 PersonId Model::add_person(Person&& person)

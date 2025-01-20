@@ -171,8 +171,8 @@ TEST(TestGraphAbm, test_apply_mobility)
 
 TEST(TestGraphABM, test_graph_simulation)
 {
-    auto model1 = mio::GraphABModel(size_t(1), 1);
-    auto model2 = mio::GraphABModel(size_t(1), 2);
+    auto model1 = mio::GraphABModel(size_t(1), 0);
+    auto model2 = mio::GraphABModel(size_t(1), 1);
 
     mio::abm::TimePoint t0   = mio::abm::TimePoint(0);
     mio::abm::TimePoint tmax = t0 + mio::abm::days(5);
@@ -180,8 +180,8 @@ TEST(TestGraphABM, test_graph_simulation)
     mio::Graph<mio::ABMSimulationNode<MockHistory>, mio::ABMMobilityEdge<MockHistory>> graph;
     graph.add_node(model1.get_id(), MockHistory{}, t0, std::move(model1));
     graph.add_node(model2.get_id(), MockHistory{}, t0, std::move(model2));
-    graph.add_edge(0, 1);
-    graph.add_edge(1, 0);
+    graph.add_edge(model1.get_id(), model2.get_id());
+    graph.add_edge(model2.get_id(), model1.get_id());
 
     auto sim = mio::make_abm_graph_sim<MockHistory>(t0, mio::abm::hours(12), std::move(graph));
     sim.advance(tmax);
@@ -240,4 +240,23 @@ TEST(TestGraphABM, mask_compliance)
     //person should be at work and school
     EXPECT_EQ(p1.get_location_type(), mio::abm::LocationType::Work);
     EXPECT_EQ(p2.get_location_type(), mio::abm::LocationType::School);
+}
+
+TEST(TestGraphABM, test_get_person)
+{
+    auto model = mio::GraphABModel(size_t(2), 0, std::vector<mio::abm::Model::MobilityRuleType>{&mio::abm::go_to_work});
+    auto home  = model.add_location(mio::abm::LocationType::Home);
+    auto work  = model.add_location(mio::abm::LocationType::Work);
+    auto pid1  = model.add_person(home, mio::AgeGroup(0));
+    auto pid2  = model.add_person(work, mio::AgeGroup(1));
+
+    auto& p1 = model.get_person(pid1);
+    EXPECT_EQ(p1.get_location(), home);
+    EXPECT_EQ(p1.get_age(), mio::AgeGroup(0));
+    model.remove_person(model.get_person_index(pid1));
+    EXPECT_EQ(model.get_person_index(pid1), std::numeric_limits<uint32_t>::max());
+
+    auto& p2 = model.get_person(pid2);
+    EXPECT_EQ(p2.get_location(), work);
+    EXPECT_EQ(p2.get_age(), mio::AgeGroup(1));
 }

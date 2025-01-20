@@ -22,7 +22,9 @@
 #include "abm/person.h"
 #include "abm/model.h"
 #include "abm_helpers.h"
+#include "memilio/epidemiology/age_group.h"
 #include "random_number_test.h"
+#include <cstddef>
 
 using TestModel = RandomNumberTest;
 

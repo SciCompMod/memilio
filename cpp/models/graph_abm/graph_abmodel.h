@@ -75,6 +75,11 @@ public:
         }
     }
 
+    /** 
+     * @brief Evolve the Graph Model one time step.
+     * @param[in] t Current time.
+     * @param[in] dt Length of the time step.
+     */
     void evolve(TimePoint t, TimeSpan dt)
     {
         Base::begin_step(t, dt);

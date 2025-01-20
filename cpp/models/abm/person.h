@@ -59,16 +59,16 @@ public:
      * 
      */
     explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
-                    int location_model_id, AgeGroup age, PersonId global_id = PersonId::invalid_ID());
+                    int location_model_id, AgeGroup age, PersonId person_id = PersonId::invalid_ID());
 
-    explicit Person(const Person& other, PersonId global_id);
+    explicit Person(const Person& other, PersonId person_id);
 
     /**
      * @brief Compare two Person%s.
      */
     bool operator==(const Person& other) const
     {
-        return (m_global_id == other.m_global_id);
+        return (m_person_id == other.m_person_id);
     }
 
     /**
@@ -476,7 +476,7 @@ private:
     CustomIndexArray<TestResult, TestType> m_test_results; ///< CustomIndexArray for TestResults.
     std::vector<int>
         m_assigned_location_model_ids; ///< Vector with model ids of the assigned locations. Only used in graph abm.
-    PersonId m_global_id; ///< Unique identifier of a person.
+    PersonId m_person_id; ///< Unique identifier of a person.
     uint32_t m_rng_index;
 };
 
