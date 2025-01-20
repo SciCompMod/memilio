@@ -142,9 +142,9 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::init<uint32_t>(), py::arg("id"))
         .def("index", &mio::abm::LocationId::get);
 
-    pymio::bind_class<mio::abm::GlobalID, pymio::EnablePickling::Never>(m, "GlobalID")
+    pymio::bind_class<mio::abm::PersonId, pymio::EnablePickling::Never>(m, "PersonId")
         .def(py::init<uint64_t>(), py::arg("id"))
-        .def("index", &mio::abm::GlobalID::get);
+        .def("index", &mio::abm::PersonId::get);
 
     pymio::bind_class<mio::abm::Person, pymio::EnablePickling::Never>(m, "Person")
         .def("set_assigned_location", py::overload_cast<mio::abm::LocationType, mio::abm::LocationId, int>(
@@ -209,7 +209,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("add_person", py::overload_cast<mio::abm::LocationId, mio::AgeGroup>(&mio::abm::Model::add_person),
              py::arg("location_id"), py::arg("age_group"))
         .def("assign_location",
-             py::overload_cast<mio::abm::GlobalID, mio::abm::LocationId>(&mio::abm::Model::assign_location),
+             py::overload_cast<mio::abm::PersonId, mio::abm::LocationId>(&mio::abm::Model::assign_location),
              py::arg("person_id"), py::arg("location_id"))
         .def_property_readonly("locations", py::overload_cast<>(&mio::abm::Model::get_locations, py::const_),
                                py::keep_alive<1, 0>{}) //keep this model alive while contents are referenced in ranges

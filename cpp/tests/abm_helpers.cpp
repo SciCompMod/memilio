@@ -24,7 +24,7 @@
 
 mio::abm::Person make_test_person(mio::RandomNumberGenerator& rng, mio::abm::Location& location, mio::AgeGroup age,
                                   mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
-                                  mio::abm::Parameters params, mio::abm::GlobalID id)
+                                  mio::abm::Parameters params, mio::abm::PersonId id)
 {
     assert(age.get() < params.get_num_groups());
     mio::abm::Person p(rng, location.get_type(), location.get_id(), location.get_model_id(), age, id);
@@ -36,7 +36,7 @@ mio::abm::Person make_test_person(mio::RandomNumberGenerator& rng, mio::abm::Loc
     return p;
 }
 
-mio::abm::GlobalID add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id, mio::AgeGroup age,
+mio::abm::PersonId add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id, mio::AgeGroup age,
                                    mio::abm::InfectionState infection_state, mio::abm::TimePoint t)
 {
     return model.add_person(make_test_person(model.get_rng(), model.get_location(loc_id), age, infection_state, t,

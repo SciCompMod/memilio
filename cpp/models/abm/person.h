@@ -59,9 +59,9 @@ public:
      * 
      */
     explicit Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
-                    int location_model_id, AgeGroup age, GlobalID global_id = GlobalID::invalid_ID());
+                    int location_model_id, AgeGroup age, PersonId global_id = PersonId::invalid_ID());
 
-    explicit Person(const Person& other, GlobalID global_id);
+    explicit Person(const Person& other, PersonId global_id);
 
     /**
      * @brief Compare two Person%s.
@@ -279,10 +279,10 @@ public:
     bool get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const TestParameters& params);
 
     /**
-     * @brief Get the GlobalID of the Person.
-     * @return The GlobalID.
+     * @brief Get the PersonId of the Person.
+     * @return The PersonId.
      */
-    GlobalID get_global_id() const;
+    PersonId get_id() const;
 
     /**
      * @brief Get index of Cell%s of the Person.
@@ -476,7 +476,7 @@ private:
     CustomIndexArray<TestResult, TestType> m_test_results; ///< CustomIndexArray for TestResults.
     std::vector<int>
         m_assigned_location_model_ids; ///< Vector with model ids of the assigned locations. Only used in graph abm.
-    GlobalID m_global_id; ///< Unique identifier of a person.
+    PersonId m_global_id; ///< Unique identifier of a person.
     uint32_t m_rng_index;
 };
 
@@ -488,7 +488,7 @@ struct DefaultFactory<abm::Person> {
     static abm::Person create()
     {
         return abm::Person(thread_local_rng(), abm::LocationType::Count, abm::LocationId(), 0, AgeGroup(0),
-                           abm::GlobalID());
+                           abm::PersonId());
     }
 };
 

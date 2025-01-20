@@ -50,18 +50,18 @@ LocationId Model::add_location(LocationType type, uint32_t num_cells)
     return id;
 }
 
-GlobalID Model::add_person(const LocationId id, AgeGroup age)
+PersonId Model::add_person(const LocationId id, AgeGroup age)
 {
-    GlobalID global_id = (static_cast<int64_t>(m_id)) << 32 | static_cast<uint32_t>(m_persons.size());
+    PersonId global_id = (static_cast<int64_t>(m_id)) << 32 | static_cast<uint32_t>(m_persons.size());
     return add_person(Person(m_rng, get_location(id).get_type(), id, m_id, age, global_id));
 }
 
-GlobalID Model::add_person(Person&& person)
+PersonId Model::add_person(Person&& person)
 {
     assert(person.get_location() != LocationId::invalid_id() && "Added Person's location must be valid.");
     assert(person.get_location() < LocationId((uint32_t)m_locations.size()) &&
            "Added Person's location is not in Model.");
-    assert(person.get_global_id() != GlobalID::invalid_ID() && "Added Person's unique id must be valid.");
+    assert(person.get_id() != PersonId::invalid_ID() && "Added Person's unique id must be valid.");
     assert(person.get_age() < (AgeGroup)parameters.get_num_groups() && "Added Person's AgeGroup is too large.");
     person.set_assigned_location(LocationType::Cemetery, m_cemetery_id, m_id);
     m_persons.emplace_back(person);
@@ -70,7 +70,7 @@ GlobalID Model::add_person(Person&& person)
     if (m_is_local_population_cache_valid) {
         ++m_local_population_cache[new_person.get_location().get()];
     }
-    return new_person.get_global_id();
+    return new_person.get_id();
 }
 
 void Model::evolve(TimePoint t, TimeSpan dt)
@@ -329,7 +329,7 @@ auto Model::get_activeness_statuses() -> Range<std::pair<ActivenessIterator, Act
     return std::make_pair(m_activeness_statuses.begin(), m_activeness_statuses.end());
 }
 
-LocationId Model::find_location(LocationType type, const GlobalID person) const
+LocationId Model::find_location(LocationType type, const PersonId person) const
 {
     return find_location(type, get_person(person));
 }

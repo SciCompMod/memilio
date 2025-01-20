@@ -29,46 +29,24 @@ namespace mio
 namespace abm
 {
 
-/// Index for a Person within a Model.
-struct MEMILIO_ENABLE_EBO LocalIndex : public mio::TypeSafe<uint32_t, LocalIndex>,
-                                       public OperatorComparison<LocalIndex> {
-    /// @brief Create an Index.
-    LocalIndex(uint32_t index)
-        : mio::TypeSafe<uint32_t, LocalIndex>(index)
-    {
-    }
-
-    /// @brief Create an invalid Index.
-    LocalIndex()
-        : mio::TypeSafe<uint32_t, LocalIndex>(std::numeric_limits<uint32_t>::max())
-    {
-    }
-
-    /// @brief Value for invalid Indices.
-    const static LocalIndex invalid_index()
-    {
-        return LocalIndex();
-    }
-};
-
 /// Unique ID for a Person within a Model.
-struct MEMILIO_ENABLE_EBO GlobalID : public mio::TypeSafe<uint64_t, GlobalID>, public OperatorComparison<GlobalID> {
+struct MEMILIO_ENABLE_EBO PersonId : public mio::TypeSafe<uint64_t, PersonId>, public OperatorComparison<PersonId> {
     /// @brief Create an ID.
-    GlobalID(uint64_t id)
-        : mio::TypeSafe<uint64_t, GlobalID>(id)
+    PersonId(uint64_t id)
+        : mio::TypeSafe<uint64_t, PersonId>(id)
     {
     }
 
     /// @brief Create an invalid ID.
-    GlobalID()
-        : mio::TypeSafe<uint64_t, GlobalID>(std::numeric_limits<uint64_t>::max())
+    PersonId()
+        : mio::TypeSafe<uint64_t, PersonId>(std::numeric_limits<uint64_t>::max())
     {
     }
 
     /// @brief Value for invalid IDs.
-    const static GlobalID invalid_ID()
+    const static PersonId invalid_ID()
     {
-        return GlobalID();
+        return PersonId();
     }
 };
 

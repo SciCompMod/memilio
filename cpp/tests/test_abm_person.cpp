@@ -49,7 +49,7 @@ TEST_F(TestPerson, init)
     auto copied_person = mio::abm::Person(person, 0);
     EXPECT_EQ(copied_person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
     EXPECT_EQ(copied_person.get_location(), location.get_id());
-    EXPECT_EQ(copied_person.get_global_id(), 0);
+    EXPECT_EQ(copied_person.get_id(), 0);
 }
 
 /**

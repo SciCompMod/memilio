@@ -198,14 +198,14 @@ public:
      * @param[in] age AgeGroup of the person.
      * @return Id of the newly created Person.
      */
-    GlobalID add_person(const LocationId id, AgeGroup age);
+    PersonId add_person(const LocationId id, AgeGroup age);
 
     /**
      * @brief Adds a copy of a given Person to the Model.
      * @param[in] person The Person to copy from. 
      * @return Id of the newly created Person.
      */
-    GlobalID add_person(Person&& person);
+    PersonId add_person(Person&& person);
 
     /**
      * @brief Get a range of all Location%s in the Model.
@@ -240,7 +240,7 @@ public:
      * @param[in] person Id of the Person.
      * @return ID of the Location of LocationType type assigend to person.
      */
-    LocationId find_location(LocationType type, const GlobalID person) const;
+    LocationId find_location(LocationType type, const PersonId person) const;
 
     /**
      * @brief Assign a Location to a Person.
@@ -249,7 +249,7 @@ public:
      * @param[in] person The Id of the person this location will be assigned to.
      * @param[in] location The LocationId of the Location.
      */
-    void assign_location(GlobalID person, LocationId location)
+    void assign_location(PersonId person, LocationId location)
     {
         assign_location(get_person(person), location);
     }
@@ -359,19 +359,19 @@ public:
 
     /**
      * @brief Get a reference to a Person from this Model.
-     * @param[in] global_id A Person's GlobalID.
+     * @param[in] global_id A Person's PersonId.
      * @return A reference to the Person.
      */
-    Person& get_person(GlobalID global_id)
+    Person& get_person(PersonId global_id)
     {
         if (m_person_ids_equal_index) {
             return m_persons[static_cast<uint32_t>(global_id.get())];
         }
         else {
-            mio::log_warning("get_person is accessed by GlobalID which does not align with the index of the person due "
+            mio::log_warning("get_person is accessed by PersonId which does not align with the index of the person due "
                              "to former removal of persons. Therefore m_persons is searched.");
             auto it = std::find_if(m_persons.begin(), m_persons.end(), [global_id](auto& person) {
-                return person.get_global_id() == global_id;
+                return person.get_id() == global_id;
             });
             if (it == m_persons.end()) {
                 log_error("Given Person is not in this Model.");
@@ -380,16 +380,16 @@ public:
         }
     }
 
-    const Person& get_person(GlobalID global_id) const
+    const Person& get_person(PersonId global_id) const
     {
         if (m_person_ids_equal_index) {
             return m_persons[static_cast<uint32_t>(global_id.get())];
         }
         else {
-            mio::log_warning("get_person is accessed by GlobalID which does not align with the index of the person due "
+            mio::log_warning("get_person is accessed by PersonId which does not align with the index of the person due "
                              "to former removal of persons. Therefore m_persons is searched.");
             auto it = std::find_if(m_persons.begin(), m_persons.end(), [global_id](auto& person) {
-                return person.get_global_id() == global_id;
+                return person.get_id() == global_id;
             });
             if (it == m_persons.end()) {
                 log_error("Given Person is not in this Model.");
@@ -434,7 +434,7 @@ public:
      * @param[in] mode The transport mode the person uses to change the Location.
      * @param[in] cells The cells within the destination the person should be in.
      */
-    inline void change_location(GlobalID person, LocationId destination, TransportMode mode = TransportMode::Unknown,
+    inline void change_location(PersonId person, LocationId destination, TransportMode mode = TransportMode::Unknown,
                                 const std::vector<uint32_t>& cells = {0})
     {
         change_location(get_person(person), destination, mode, cells);
@@ -446,7 +446,7 @@ public:
      * @param[in] t Time step of the simulation.
      * @param[in] dt Step size of the simulation.
      */
-    inline void interact(GlobalID person, TimePoint t, TimeSpan dt)
+    inline void interact(PersonId person, TimePoint t, TimeSpan dt)
     {
         interact(get_person(person), t, dt);
     }
@@ -490,12 +490,12 @@ public:
      * @return Reference to the Location.
      * @{
      */
-    inline Location& get_location(GlobalID id)
+    inline Location& get_location(PersonId id)
     {
         return get_location(get_person(id).get_location());
     }
 
-    inline const Location& get_location(GlobalID id) const
+    inline const Location& get_location(PersonId id) const
     {
         return get_location(get_person(id).get_location());
     }
@@ -503,19 +503,19 @@ public:
 
     /**
      * @brief Get index of person in m_persons.
-     * @param[in] id A person's unique GlobalID. 
+     * @param[in] id A person's unique PersonId. 
      * First 32 bit are the Person's individual id and second 32 bit the Persons's home model id. 
      * @return Index of Person in m_persons vector.
      * @{
      */
-    uint32_t get_person_index(GlobalID global_id) const
+    uint32_t get_person_index(PersonId global_id) const
     {
         mio::log_debug("get_person_index is used leading to a search in m_persons.");
         auto it = std::find_if(m_persons.begin(), m_persons.end(), [global_id](auto& person) {
-            return person.get_global_id() == global_id;
+            return person.get_id() == global_id;
         });
         if (it == m_persons.end()) {
-            log_error("Given GlobalID is not in this Model.");
+            log_error("Given PersonId is not in this Model.");
             return std::numeric_limits<uint32_t>::max();
         }
         else {

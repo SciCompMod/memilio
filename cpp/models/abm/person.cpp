@@ -34,7 +34,7 @@ namespace abm
 {
 
 Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
-               int location_model_id, AgeGroup age, GlobalID global_id)
+               int location_model_id, AgeGroup age, PersonId global_id)
     : m_location(location_id)
     , m_location_type(location_type)
     , m_location_model_id(location_model_id)
@@ -57,7 +57,7 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     m_random_goto_school_hour = UniformDistribution<double>::get_instance()(rng);
 }
 
-Person::Person(const Person& other, GlobalID global_id)
+Person::Person(const Person& other, PersonId global_id)
     : Person(other)
 {
     m_global_id = global_id;
@@ -198,7 +198,7 @@ bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const T
     }
 }
 
-GlobalID Person::get_global_id() const
+PersonId Person::get_id() const
 {
     return m_global_id;
 }
