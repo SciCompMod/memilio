@@ -28,8 +28,11 @@
 #include "memilio/io/history.h"
 #include "memilio/utils/random_number_generator.h"
 #include "boost/filesystem.hpp"
+#include <cstddef>
 #include <fstream>
 #include <sstream>
+#include <string>
+#include <vector>
 
 namespace fs = boost::filesystem;
 
@@ -925,22 +928,191 @@ void write_location_mapping_to_file(std::string path, std::vector<LocationMappin
     myfile.close();
 }
 
+std::map<int, std::vector<std::string>> initialize_model(mio::abm::Model& model, std::string person_file)
+{
+
+    std::map<int, std::vector<std::string>> loc_area_mapping;
+    std::map<int, mio::abm::LocationId> locations;
+
+    const fs::path p = filename;
+    if (!fs::exists(p)) {
+        mio::log_error("Cannot read in data. File does not exist.");
+    }
+    // File pointer
+    std::fstream fin;
+
+    // Open an existing file
+    fin.open(filename, std::ios::in);
+    std::vector<int32_t> row;
+    std::vector<std::string> row_string;
+    std::string line;
+
+    // Read the Titles from the Data file
+    std::getline(fin, line);
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+    std::vector<std::string> titles;
+    boost::split(titles, line, boost::is_any_of(","));
+    uint32_t count_of_titles              = 0;
+    std::map<std::string, uint32_t> index = {};
+    for (auto const& title : titles) {
+        index.insert({title, count_of_titles});
+        row_string.push_back(title);
+        count_of_titles++;
+    }
+
+    while (std::getline(fin, line)) {
+        row.clear();
+
+        // read columns in this row
+        split_line(line, &row);
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
+        uint32_t age = row[index["age"]];
+
+        int home_id   = row[index["home_id"]];
+        int home_zone = row[index["home_zone"]];
+
+        auto iter_home = locations.find(home_id);
+        if (iter_home == locations.end()) {
+            home = model.add_location(mio::abm::LocationType::Home);
+            locations.insert({home_id, home});
+            std::string loc = "0" + std::to_string(mio::abm::LocationType::Home) + std::to_string(home.get());
+            auto zone_iter  = loc_area_mapping.find(home_zone);
+            if (zone_iter == loc_area_mapping.end()) {
+                loc_area_mapping.insert({home_zone, {loc}});
+            }
+            else {
+                loc_area_mapping[home_zone].push_back(loc);
+            }
+        }
+        else {
+            home = locations[home_id];
+        }
+        auto pid     = model.add_person(home, determine_age_group(age));
+        auto& person = model.get_person(pid);
+        person.set_assigned_location(mio::abm::LocationType::Home, home);
+
+        int shop_id   = row[index["shop_id"]];
+        int shop_zone = row[index["shop_zone"]];
+
+        auto iter_shop = locations.find(shop_id);
+        if (iter_shop == locations.end()) {
+            shop = model.add_location(mio::abm::LocationType::BasicsShop);
+            if (shop_id = !-1) {
+                locations.insert({shop_id, shop});
+            }
+            std::string loc = "0" + std::to_string(mio::abm::LocationType::BasicsShop) + std::to_string(shop.get());
+            auto zone_iter  = loc_area_mapping.find(shop_zone);
+            if (zone_iter == loc_area_mapping.end()) {
+                loc_area_mapping.insert({shop_zone, {loc}});
+            }
+            else {
+                loc_area_mapping[shop_zone].push_back(loc);
+            }
+        }
+        else {
+            shop = locations[shop_id];
+        }
+        person.set_assigned_location(mio::abm::LocationType::BasicsShop, shop);
+
+        int event_id   = row[index["event_id"]];
+        int event_zone = row[index["event_zone"]];
+
+        auto iter_event = locations.find(event_id);
+        if (iter_event == locations.end()) {
+            event = model.add_location(mio::abm::LocationType::SocialEvent);
+            if (event_id != -1) {
+                locations.insert({event_id, event});
+            }
+            std::string loc = "0" + std::to_string(mio::abm::LocationType::SocialEvent) + std::to_string(event.get());
+            auto zone_iter  = loc_area_mapping.find(event_zone);
+            if (zone_iter == loc_area_mapping.end()) {
+                loc_area_mapping.insert({event_zone, {loc}});
+            }
+            else {
+                loc_area_mapping[event_zone].push_back(loc);
+            }
+        }
+        else {
+            event = locations[event_id];
+        }
+        person.set_assigned_location(mio::abm::LocationType::SocialEvent, event);
+
+        if (person.get_age() == mio::AgeGroup(1)) {
+            int school_id   = row[index["school_id"]];
+            int school_zone = row[index["school_zone"]];
+
+            auto iter_school = locations.find(school_id);
+            if (iter_school == locations.end()) {
+                school = model.add_location(mio::abm::LocationType::School);
+                if (school_id != -1) {
+                    locations.insert({school_id, school});
+                }
+                std::string loc = "0" + std::to_string(mio::abm::LocationType::School) + std::to_string(school.get());
+                auto zone_iter  = loc_area_mapping.find(school_zone);
+                if (zone_iter == loc_area_mapping.end()) {
+                    loc_area_mapping.insert({school_zone, {loc}});
+                }
+                else {
+                    loc_area_mapping[school_zone].push_back(loc);
+                }
+            }
+            else {
+                school = locations[school_id];
+            }
+            person.set_assigned_location(mio::abm::LocationType::School, school);
+        }
+
+        if (person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) {
+            int work_id   = row[index["work_id"]];
+            int work_zone = row[index["work_zone"]];
+
+            auto iter_work = locations.find(work_id);
+            if (iter_work == locations.end()) {
+                work = model.add_location(mio::abm::LocationType::Work);
+                if (work_id != -1) {
+                    locations.insert({work_id, work});
+                }
+                std::string loc = "0" + std::to_string(mio::abm::LocationType::Work) + std::to_string(work.get());
+                auto zone_iter  = loc_area_mapping.find(work_zone);
+                if (zone_iter == loc_area_mapping.end()) {
+                    loc_area_mapping.insert({work_zone, {loc}});
+                }
+                else {
+                    loc_area_mapping[work_zone].push_back(loc);
+                }
+            }
+            else {
+                work = locations[work_id];
+            }
+            person.set_assigned_location(mio::abm::LocationType::Work, work);
+        }
+    }
+
+    return loc_area_mapping;
+}
+
 mio::IOResult<void> run(const fs::path& input_dir)
 {
     mio::set_log_level(mio::LogLevel::warn);
-    auto t0   = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(14); // End time per simulation
+    // auto t0   = mio::abm::TimePoint(0); // Start time per simulation
+    // auto tmax = mio::abm::TimePoint(0) + mio::abm::days(14); // End time per simulation
 
-    //mapping of input areas to abm locations
-    std::vector<LocationMapping> LocationIds;
-    //create sampled simulation
-    auto sim = create_sampled_simulation(t0, input_dir, LocationIds);
+    auto model = mio::abm::Model(size_t(6));
+    auto dict  = initialize_model(model, "../../pycode/examples/simulation/ABM Demonstrator/input/persons.csv");
 
-    //output object
-    mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime> history;
+    mio::unused(model);
+    mio::unused(dict);
+    // //mapping of input areas to abm locations
+    // std::vector<LocationMapping> LocationIds;
+    // //create sampled simulation
+    // auto sim = create_sampled_simulation(t0, input_dir, LocationIds);
 
-    //advance until tmax
-    sim.advance(tmax, history);
+    // //output object
+    // mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime> history;
+
+    // //advance until tmax
+    // sim.advance(tmax, history);
 
     // //output
     // auto logg = history.get_log();

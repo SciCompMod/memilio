@@ -34,7 +34,11 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/operators.h"
 #include <cstdint>
+#include <map>
 #include <type_traits>
+#include <vector>
+#include <fstream>
+#include <unordered_set>
 
 namespace py = pybind11;
 
@@ -96,6 +100,88 @@ std::pair<double, double> get_my_and_sigma(double mean, double std)
     double my    = log(mean * mean / sqrt(mean * mean + std * std));
     double sigma = sqrt(log(1 + std * std / (mean * mean)));
     return {my, sigma};
+}
+
+mio::AgeGroup determine_age_group(uint32_t age)
+{
+    if (age <= 4) {
+        return mio::AgeGroup(0);
+    }
+    else if (age <= 14) {
+        return mio::AgeGroup(1);
+    }
+    else if (age <= 34) {
+        return mio::AgeGroup(2);
+    }
+    else if (age <= 59) {
+        return mio::AgeGroup(3);
+    }
+    else if (age <= 79) {
+        return mio::AgeGroup(4);
+    }
+    else if (age > 79) {
+        return mio::AgeGroup(5);
+    }
+    else {
+        return mio::AgeGroup(0);
+    }
+}
+
+std::map<int, std::vector<std::string>> initialize_model(mio::abm::Model& model, std::string person_file)
+{
+
+    std::map<int, std::vector<std::string>> loc_area_mapping;
+    std::map<int, mio::abm::LocationId> locations;
+
+    const fs::path p = filename;
+    if (!fs::exists(p)) {
+        mio::log_error("Cannot read in data. File does not exist.");
+    }
+    // File pointer
+    std::fstream fin;
+
+    // Open an existing file
+    fin.open(filename, std::ios::in);
+    std::vector<int32_t> row;
+    std::vector<std::string> row_string;
+    std::string line;
+
+    // Read the Titles from the Data file
+    std::getline(fin, line);
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+    std::vector<std::string> titles;
+    boost::split(titles, line, boost::is_any_of(","));
+    uint32_t count_of_titles              = 0;
+    std::map<std::string, uint32_t> index = {};
+    for (auto const& title : titles) {
+        index.insert({title, count_of_titles});
+        row_string.push_back(title);
+        count_of_titles++;
+    }
+
+    while (std::getline(fin, line)) {
+        row.clear();
+
+        // read columns in this row
+        split_line(line, &row);
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
+        int home_id   = row[index["home_id"]];
+        int home_zone = row[index["home_zone"]];
+
+        uint32_t age = row[index["age"]];
+
+        auto iter_home = locations.find(home_id);
+        if (iter_home == locations.end()) {
+            home = model.add_location(mio::abm::LocationType::Home);
+            locations.insert({home_id, home});
+        }
+        else {
+            home = locations[home_id];
+        }
+        auto pid = model.add_person(home, determine_age_group(age));
+        model.get_person(pid).set_assigned_location(home);
+    }
 }
 
 PYBIND11_MODULE(_simulation_abm, m)
