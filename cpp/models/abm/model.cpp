@@ -29,6 +29,7 @@
 #include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"
 #include "memilio/utils/stl_util.h"
+#include <cassert>
 #include <cstdint>
 
 namespace mio
@@ -88,6 +89,8 @@ void Model::interaction(TimePoint t, TimeSpan dt)
     PRAGMA_OMP(parallel for)
     for (uint32_t person_index = 0; person_index < num_persons; ++person_index) {
         if (m_activeness_statuses[person_index]) {
+            assert(m_persons[person_index].get_location_model_id() == m_id &&
+                   "Person is not in this model but still active.");
             interact(m_persons[person_index], t, dt);
         }
     }
@@ -221,7 +224,8 @@ void Model::build_compute_local_population_cache() const
         } // implicit taskloop barrier
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_persons; i++) {
-            if (m_persons[i].get_location_model_id() == m_id && m_activeness_statuses[i]) {
+            if (m_activeness_statuses[i]) {
+                assert(m_persons[i].get_location_model_id() == m_id && "Person is not in this model but still active.");
                 ++m_local_population_cache[m_persons[i].get_location().get()];
             }
         } // implicit taskloop barrier
@@ -279,7 +283,8 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
         for (size_t i = 0; i < num_persons; ++i) {
             const Person& person = m_persons[i];
             const auto location  = person.get_location().get();
-            if (person.get_location_model_id() == m_id && m_activeness_statuses[i]) {
+            if (m_activeness_statuses[i]) {
+                assert(m_persons[i].get_location_model_id() == m_id && "Person is not in this model but still active.");
                 mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
                                                     m_contact_exposure_rates_cache[location], person,
                                                     get_location(person.get_location()), t, dt);
