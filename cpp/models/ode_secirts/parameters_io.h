@@ -415,7 +415,7 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSevereNaive}] =
                 immunity_population[0][i] * denom_I_Sev_Cr[i] * num_InfectedSevere[county][i];
             // Only set the number of ICU patients here, if the date is not available in the data.
-            if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
+            if (!is_divi_data_available(date)) {
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedCriticalNaive}] =
                     immunity_population[0][i] * denom_I_Sev_Cr[i] * num_icu[county][i];
             }
@@ -464,7 +464,7 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
                     .parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity<FP>>()[(AgeGroup)i] *
                 denom_I_Sev_Cr[i] * num_InfectedSevere[county][i];
             // Only set the number of ICU patients here, if the date is not available in the data.
-            if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
+            if (!is_divi_data_available(date)) {
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedCriticalPartialImmunity}] =
                     immunity_population[1][i] *
                     model[county]
@@ -521,7 +521,7 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
                     .parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>()[(AgeGroup)i] *
                 denom_I_Sev_Cr[i] * num_InfectedSevere[county][i];
             // Only set the number of ICU patients here, if the date is not available in the data.
-            if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
+            if (!is_divi_data_available(date)) {
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedCriticalImprovedImmunity}] =
                     immunity_population[2][i] *
                     model[county]
@@ -662,7 +662,7 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
                              Date date, FP scaling_factor_icu)
 {
     // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
+    if (!is_divi_data_available(date)) {
         log_warning("No DIVI data available for date: {}-{}-{}", date.day, date.month, date.year,
                     ". ICU compartment will be set based on Case data.");
         return success();

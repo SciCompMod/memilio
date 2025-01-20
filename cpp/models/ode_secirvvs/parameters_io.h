@@ -178,7 +178,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSevereNaive}] =
                 num_InfectedSevere[county][i];
             // Only set the number of ICU patients here, if the date is not available in the data.
-            if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
+            if (!is_divi_data_available(date)) {
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedCriticalNaive}] = num_icu[county][i];
             }
             model[county].populations[{AgeGroup(i), InfectionState::SusceptibleImprovedImmunity}] = num_rec[county][i];
@@ -277,7 +277,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSeverePartialImmunity}] =
                 num_InfectedSevere[county][i];
             // Only set the number of ICU patients here, if the date is not available in the data.
-            if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
+            if (!is_divi_data_available(date)) {
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedCriticalPartialImmunity}] =
                     num_icu[county][i];
             }
@@ -352,7 +352,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
                                                 t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
 
     for (size_t county = 0; county < model.size(); county++) {
-        // if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) > 0) {
         size_t num_groups = (size_t)model[county].parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; i++) {
             model[county].populations[{AgeGroup(i), InfectionState::ExposedImprovedImmunity}] = num_Exposed[county][i];
@@ -365,12 +364,11 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSevereImprovedImmunity}] =
                 num_InfectedSevere[county][i];
             // Only set the number of ICU patients here, if the date is not available in the data.
-            if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
+            if (!is_divi_data_available(date)) {
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedCriticalImprovedImmunity}] =
                     num_icu[county][i];
             }
         }
-        // }
         if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
             log_warning("No infections for vaccinated reported on date " + std::to_string(date.year) + "-" +
                         std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
@@ -429,7 +427,7 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
                              Date date, double scaling_factor_icu)
 {
     // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
+    if (!is_divi_data_available(date)) {
         log_warning("No DIVI data available for date: {}-{}-{}", date.day, date.month, date.year,
                     ". ICU compartment will be set based on Case data.");
         return success();

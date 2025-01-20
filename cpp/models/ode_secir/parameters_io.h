@@ -135,7 +135,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
                 model[node].populations[{AgeGroup(i), InfectionState::InfectedSymptomsConfirmed}] = 0;
                 model[node].populations[{AgeGroup(i), InfectionState::InfectedSevere}] = num_InfectedSevere[node][i];
                 // Only set the number of ICU patients here, if the date is not available in the data.
-                if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
+                if (!is_divi_data_available(date)) {
                     model[node].populations[{AgeGroup(i), InfectionState::InfectedCritical}] = num_icu[node][i];
                 }
                 model[node].populations[{AgeGroup(i), InfectionState::Dead}]      = num_death[node][i];
@@ -195,7 +195,7 @@ IOResult<void> set_divi_data(std::vector<Model<FP>>& model, const std::string& p
                              Date date, double scaling_factor_icu)
 {
     // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
+    if (!is_divi_data_available(date)) {
         log_warning("No DIVI data available for date: {}-{}-{}", date.day, date.month, date.year,
                     ". ICU compartment will be set based on Case data.");
         return success();

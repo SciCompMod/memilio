@@ -231,6 +231,18 @@ public:
 };
 
 /**
+ * @brief Checks if DIVI data is available for a given date.
+ * @param date The date to check.
+ * @return True if DIVI data is available, false otherwise.
+ */
+inline bool is_divi_data_available(const Date& date)
+{
+    static const Date divi_data_start(2020, 4, 23);
+    static const Date divi_data_end(2024, 7, 21);
+    return date >= divi_data_start && date <= divi_data_end;
+}
+
+/**
  * Deserialize a list of DiviEntry from json.
  * @param jsvalue Json value that contains DIVI data.
  * @return list of DiviEntry.

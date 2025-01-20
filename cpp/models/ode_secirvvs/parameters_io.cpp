@@ -82,11 +82,6 @@ IOResult<void> read_confirmed_cases_data(
         return failure(StatusCode::OutOfRange, "RKI data does not contain specified date.");
     }
 
-    bool read_icu = false;
-    if (date <= Date(2020, 4, 23) || date >= Date(2024, 7, 21)) {
-        read_icu = true;
-    }
-
     // shifts the initilization to the recent past if simulation starts
     // around current day and data of the future would be required.
     // Only needed for preinfection compartments, exposed and InfectedNoSymptoms.
@@ -141,14 +136,12 @@ IOResult<void> read_confirmed_cases_data(
             }
             if (entry.date == offset_date_by_days(date, -t_InfectedSymptoms[age] - t_InfectedSevere[age])) {
                 num_InfectedSevere[age] -= mu_I_H[age] * scaling_factor_inf[age] * entry.num_confirmed;
-                if (read_icu)
-                    num_icu[age] += mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * entry.num_confirmed;
+                num_icu[age] += mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * entry.num_confirmed;
             }
             if (entry.date ==
                 offset_date_by_days(date, -t_InfectedSymptoms[age] - t_InfectedSevere[age] - t_InfectedCritical[age])) {
                 num_death[age] += entry.num_deaths;
-                if (read_icu)
-                    num_icu[age] -= mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * entry.num_confirmed;
+                num_icu[age] -= mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * entry.num_confirmed;
             }
         }
     }
