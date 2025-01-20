@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -444,6 +444,7 @@ IOResult<void> set_vaccination_data_age_group_names(std::vector<const char*> nam
  * @brief returns a vector with the ids of all nodes.
  * @param[in] path directory to population data
  * @param[in] is_node_for_county boolean specifying whether the nodes should be counties or districts
+ * @param[in] rki_age_groups boolean specifying whether population data should be interpolated to rki age groups.
  * @return list of node ids.
  */
 IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_node_for_county, bool rki_age_groups = true);
@@ -456,7 +457,8 @@ class VaccinationDataEntry
 public:
     static std::vector<const char*> age_group_names;
 
-    double num_vaccinations_completed;
+    double num_vaccinations_partial, num_vaccinations_completed, num_vaccinations_refreshed_first,
+        num_vaccinations_refreshed_additional;
     Date date;
     AgeGroup age_group;
     boost::optional<regions::StateId> state_id;
@@ -466,16 +468,20 @@ public:
     template <class IoContext>
     static IOResult<VaccinationDataEntry> deserialize(IoContext& io)
     {
-        auto obj                        = io.expect_object("VaccinationDataEntry");
-        auto num_vaccinations_completed = obj.expect_element("Vacc_completed", Tag<double>{});
-        auto date                       = obj.expect_element("Date", Tag<StringDate>{});
-        auto age_group_str              = obj.expect_element("Age_RKI", Tag<std::string>{});
-        auto state_id                   = obj.expect_optional("ID_State", Tag<regions::StateId>{});
-        auto county_id                  = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
-        auto district_id                = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
+        auto obj                                   = io.expect_object("VaccinationDataEntry");
+        auto num_vaccinations_partial              = obj.expect_element("Vacc_partially", Tag<double>{});
+        auto num_vaccinations_completed            = obj.expect_element("Vacc_completed", Tag<double>{});
+        auto num_vaccinations_refreshed_first      = obj.expect_optional("Vacc_refreshed", Tag<double>{});
+        auto num_vaccinations_refreshed_additional = obj.expect_optional("Vacc_refreshed_2", Tag<double>{});
+        auto date                                  = obj.expect_element("Date", Tag<StringDate>{});
+        auto age_group_str                         = obj.expect_element("Age_RKI", Tag<std::string>{});
+        auto state_id                              = obj.expect_optional("ID_County", Tag<regions::StateId>{});
+        auto county_id                             = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
+        auto district_id                           = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
         return mio::apply(
             io,
-            [](auto nf, auto d, auto&& a_str, auto sid, auto cid, auto did) -> IOResult<VaccinationDataEntry> {
+            [](auto np, auto nc, auto n_refreshed_1, auto n_refreshed_2, auto d, auto&& a_str, auto sid, auto cid,
+               auto did) -> IOResult<VaccinationDataEntry> {
                 auto it = std::find(age_group_names.begin(), age_group_names.end(), a_str);
                 auto a  = AgeGroup(0);
                 if (it != age_group_names.end()) {
@@ -484,9 +490,14 @@ public:
                 else {
                     return failure(StatusCode::InvalidValue, "Invalid vaccination data age group.");
                 }
-                return success(VaccinationDataEntry{nf, d, a, sid, cid, did});
+                // Optional values are 0 if they do not exist.
+                auto n_refreshed_1_value = n_refreshed_1.value_or(0.0);
+                auto n_refreshed_2_value = n_refreshed_2.value_or(0.0);
+                return success(
+                    VaccinationDataEntry{np, nc, n_refreshed_1_value, n_refreshed_2_value, d, a, sid, cid, did});
             },
-            num_vaccinations_completed, date, age_group_str, state_id, county_id, district_id);
+            num_vaccinations_partial, num_vaccinations_completed, num_vaccinations_refreshed_first,
+            num_vaccinations_refreshed_additional, date, age_group_str, state_id, county_id, district_id);
     }
 };
 

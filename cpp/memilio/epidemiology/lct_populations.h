@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -123,7 +123,7 @@ public:
      * This can be used as initial conditions for the ODE solver.
      * @return Eigen::VectorXd of populations.
      */
-    inline Vector<FP> get_compartments() const
+    inline Eigen::VectorX<FP> get_compartments() const
     {
         return m_y.array().template cast<FP>();
     }

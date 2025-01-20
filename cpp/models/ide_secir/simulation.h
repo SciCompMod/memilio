@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J Kuehn, Anna Wendler, Lena Ploetzke
 *
@@ -60,7 +60,7 @@ public:
      * Return the number of persons in all #InfectionState%s.
      * @return The result of the simulation.
      */
-    TimeSeries<double>& get_result()
+    TimeSeries<ScalarType> get_result()
     {
         return m_model->m_populations;
     }
@@ -70,7 +70,7 @@ public:
      * Return the number of persons in all #InfectionState%s.
      * @return The result of the simulation.
      */
-    const TimeSeries<double>& get_result() const
+    const TimeSeries<ScalarType>& get_result() const
     {
         return m_model->m_populations;
     }

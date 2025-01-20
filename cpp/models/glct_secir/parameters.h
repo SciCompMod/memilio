@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -39,15 +39,15 @@ namespace glsecir
 
 /// @brief Vector with the probability to start in any of the subcompartments of the Exposed compartment.
 struct StartingProbabilitiesExposed {
-    using Type = Vector<ScalarType>;
+    using Type = Eigen::VectorX<ScalarType>;
     /** 
      * @brief Default parameters can be used to get an Erlang distributed stay time in the Exposed compartment.
      * @param[in] numExposed Number of subcompartments of the Exposed compartment.
      */
     static Type get_default(size_t numExposed)
     {
-        Vector<ScalarType> def = Vector<ScalarType>::Zero(numExposed);
-        def[0]                 = 1.;
+        Eigen::VectorX<ScalarType> def = Eigen::VectorX<ScalarType>::Zero(numExposed);
+        def[0]                         = 1.;
         return def;
     }
     static std::string name()
@@ -67,7 +67,7 @@ struct TransitionMatrixExposedToInfectedNoSymptoms {
     static Type get_default(size_t numExposed, ScalarType timeExposed = 1.)
     {
         Eigen::MatrixXd def =
-            Vector<ScalarType>::Constant(numExposed, -(ScalarType)numExposed / timeExposed).asDiagonal();
+            Eigen::VectorX<ScalarType>::Constant(numExposed, -(ScalarType)numExposed / timeExposed).asDiagonal();
         def.diagonal(1).setConstant((ScalarType)numExposed / timeExposed);
         return def;
     }
@@ -79,15 +79,15 @@ struct TransitionMatrixExposedToInfectedNoSymptoms {
 
 /// @brief Vector with the probability to start in any of the subcompartments of the InfectedNoSymptoms compartment.
 struct StartingProbabilitiesInfectedNoSymptoms {
-    using Type = Vector<ScalarType>;
+    using Type = Eigen::VectorX<ScalarType>;
     /**
      * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedNoSymptoms compartment.
      * @param[in] numInfectedNoSymptoms Number of subcompartments of the InfectedNoSymptoms compartment.
      */
     static Type get_default(size_t numInfectedNoSymptoms)
     {
-        Vector<ScalarType> def = Vector<ScalarType>::Zero(numInfectedNoSymptoms);
-        def[0]                 = 1.;
+        Eigen::VectorX<ScalarType> def = Eigen::VectorX<ScalarType>::Zero(numInfectedNoSymptoms);
+        def[0]                         = 1.;
         return def;
     }
     static std::string name()
@@ -110,7 +110,8 @@ struct TransitionMatrixInfectedNoSymptomsToInfectedSymptoms {
      */
     static Type get_default(size_t dimension, ScalarType time = 1.)
     {
-        Eigen::MatrixXd def = Vector<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        Eigen::MatrixXd def =
+            Eigen::VectorX<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
         def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
@@ -134,7 +135,8 @@ struct TransitionMatrixInfectedNoSymptomsToRecovered {
      */
     static Type get_default(size_t dimension, ScalarType time = 1.)
     {
-        Eigen::MatrixXd def = Vector<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        Eigen::MatrixXd def =
+            Eigen::VectorX<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
         def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
@@ -146,15 +148,15 @@ struct TransitionMatrixInfectedNoSymptomsToRecovered {
 
 /// @brief Vector with the probability to start in any of the subcompartments of the InfectedSymptoms compartment.
 struct StartingProbabilitiesInfectedSymptoms {
-    using Type = Vector<ScalarType>;
+    using Type = Eigen::VectorX<ScalarType>;
     /**
      * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedSymptoms compartment.
      * @param[in] numInfectedSymptoms Number of subcompartments of the InfectedSymptoms compartment.
      */
     static Type get_default(size_t numInfectedSymptoms)
     {
-        Vector<ScalarType> def = Vector<ScalarType>::Zero(numInfectedSymptoms);
-        def[0]                 = 1.;
+        Eigen::VectorX<ScalarType> def = Eigen::VectorX<ScalarType>::Zero(numInfectedSymptoms);
+        def[0]                         = 1.;
         return def;
     }
     static std::string name()
@@ -177,7 +179,8 @@ struct TransitionMatrixInfectedSymptomsToInfectedSevere {
      */
     static Type get_default(size_t dimension, ScalarType time = 1.)
     {
-        Eigen::MatrixXd def = Vector<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        Eigen::MatrixXd def =
+            Eigen::VectorX<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
         def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
@@ -201,7 +204,8 @@ struct TransitionMatrixInfectedSymptomsToRecovered {
      */
     static Type get_default(size_t dimension, ScalarType time = 1.)
     {
-        Eigen::MatrixXd def = Vector<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        Eigen::MatrixXd def =
+            Eigen::VectorX<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
         def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
@@ -213,15 +217,15 @@ struct TransitionMatrixInfectedSymptomsToRecovered {
 
 /// @brief Vector with the probability to start in any of the subcompartments of the InfectedSevere compartment.
 struct StartingProbabilitiesInfectedSevere {
-    using Type = Vector<ScalarType>;
+    using Type = Eigen::VectorX<ScalarType>;
     /**
      * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedSevere compartment.
      * @param[in] numInfectedSevere Number of subcompartments of the InfectedSevere compartment.
      */
     static Type get_default(size_t numInfectedSevere)
     {
-        Vector<ScalarType> def = Vector<ScalarType>::Zero(numInfectedSevere);
-        def[0]                 = 1.;
+        Eigen::VectorX<ScalarType> def = Eigen::VectorX<ScalarType>::Zero(numInfectedSevere);
+        def[0]                         = 1.;
         return def;
     }
     static std::string name()
@@ -244,7 +248,8 @@ struct TransitionMatrixInfectedSevereToInfectedCritical {
      */
     static Type get_default(size_t dimension, ScalarType time = 1.)
     {
-        Eigen::MatrixXd def = Vector<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        Eigen::MatrixXd def =
+            Eigen::VectorX<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
         def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
@@ -268,7 +273,8 @@ struct TransitionMatrixInfectedSevereToRecovered {
      */
     static Type get_default(size_t dimension, ScalarType time = 1.)
     {
-        Eigen::MatrixXd def = Vector<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        Eigen::MatrixXd def =
+            Eigen::VectorX<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
         def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
@@ -280,15 +286,15 @@ struct TransitionMatrixInfectedSevereToRecovered {
 
 /// @brief Vector with the probability to start in any of the subcompartments of the InfectedCritical compartment.
 struct StartingProbabilitiesInfectedCritical {
-    using Type = Vector<ScalarType>;
+    using Type = Eigen::VectorX<ScalarType>;
     /**
      * @brief Default parameters can be used to get an Erlang distributed stay time in InfectedCritical compartment.
      * @param[in] numInfectedCritical Number of subcompartments of the InfectedCritical compartment.
      */
     static Type get_default(size_t numInfectedCritical)
     {
-        Vector<ScalarType> def = Vector<ScalarType>::Zero(numInfectedCritical);
-        def[0]                 = 1.;
+        Eigen::VectorX<ScalarType> def = Eigen::VectorX<ScalarType>::Zero(numInfectedCritical);
+        def[0]                         = 1.;
         return def;
     }
     static std::string name()
@@ -311,7 +317,8 @@ struct TransitionMatrixInfectedCriticalToDead {
      */
     static Type get_default(size_t dimension, ScalarType time = 1.)
     {
-        Eigen::MatrixXd def = Vector<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        Eigen::MatrixXd def =
+            Eigen::VectorX<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
         def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
@@ -335,7 +342,8 @@ struct TransitionMatrixInfectedCriticalToRecovered {
      */
     static Type get_default(size_t dimension, ScalarType time = 1.)
     {
-        Eigen::MatrixXd def = Vector<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
+        Eigen::MatrixXd def =
+            Eigen::VectorX<ScalarType>::Constant(dimension, -(ScalarType)dimension / time).asDiagonal();
         def.diagonal(1).setConstant((ScalarType)dimension / time);
         return def;
     }
@@ -574,7 +582,7 @@ public:
         // --- Check that we have no flows back from one compartment to the previous one
         // (only in between of the subcompartments). ---
         if (((this->get<TransitionMatrixExposedToInfectedNoSymptoms>() *
-              Vector<ScalarType>::Ones(this->get<TransitionMatrixExposedToInfectedNoSymptoms>().rows()))
+              Eigen::VectorX<ScalarType>::Ones(this->get<TransitionMatrixExposedToInfectedNoSymptoms>().rows()))
                  .array() > 1e-10)
                 .any()) {
             log_warning(
@@ -583,7 +591,8 @@ public:
             return true;
         }
         if (((this->get<TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>() *
-              Vector<ScalarType>::Ones(this->get<TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>().rows()))
+              Eigen::VectorX<ScalarType>::Ones(
+                  this->get<TransitionMatrixInfectedNoSymptomsToInfectedSymptoms>().rows()))
                  .array() > 1e-10)
                 .any()) {
             log_warning("Constraint check: The entries of TransitionMatrixInfectedNoSymptomsToInfectedSymptoms lead to "
@@ -592,7 +601,7 @@ public:
             return true;
         }
         if (((this->get<TransitionMatrixInfectedNoSymptomsToRecovered>() *
-              Vector<ScalarType>::Ones(this->get<TransitionMatrixInfectedNoSymptomsToRecovered>().rows()))
+              Eigen::VectorX<ScalarType>::Ones(this->get<TransitionMatrixInfectedNoSymptomsToRecovered>().rows()))
                  .array() > 1e-10)
                 .any()) {
             log_warning(
@@ -601,7 +610,7 @@ public:
             return true;
         }
         if (((this->get<TransitionMatrixInfectedSymptomsToInfectedSevere>() *
-              Vector<ScalarType>::Ones(this->get<TransitionMatrixInfectedSymptomsToInfectedSevere>().rows()))
+              Eigen::VectorX<ScalarType>::Ones(this->get<TransitionMatrixInfectedSymptomsToInfectedSevere>().rows()))
                  .array() > 1e-10)
                 .any()) {
             log_warning(
@@ -610,7 +619,7 @@ public:
             return true;
         }
         if (((this->get<TransitionMatrixInfectedSymptomsToRecovered>() *
-              Vector<ScalarType>::Ones(this->get<TransitionMatrixInfectedSymptomsToRecovered>().rows()))
+              Eigen::VectorX<ScalarType>::Ones(this->get<TransitionMatrixInfectedSymptomsToRecovered>().rows()))
                  .array() > 1e-10)
                 .any()) {
             log_warning(
@@ -619,7 +628,7 @@ public:
             return true;
         }
         if (((this->get<TransitionMatrixInfectedSevereToInfectedCritical>() *
-              Vector<ScalarType>::Ones(this->get<TransitionMatrixInfectedSevereToInfectedCritical>().rows()))
+              Eigen::VectorX<ScalarType>::Ones(this->get<TransitionMatrixInfectedSevereToInfectedCritical>().rows()))
                  .array() > 1e-10)
                 .any()) {
             log_warning(
@@ -628,7 +637,7 @@ public:
             return true;
         }
         if (((this->get<TransitionMatrixInfectedSevereToRecovered>() *
-              Vector<ScalarType>::Ones(this->get<TransitionMatrixInfectedSevereToRecovered>().rows()))
+              Eigen::VectorX<ScalarType>::Ones(this->get<TransitionMatrixInfectedSevereToRecovered>().rows()))
                  .array() > 1e-10)
                 .any()) {
             log_warning("Constraint check: The entries of TransitionMatrixInfectedSevereToRecovered lead to a negative "
@@ -636,7 +645,7 @@ public:
             return true;
         }
         if (((this->get<TransitionMatrixInfectedCriticalToDead>() *
-              Vector<ScalarType>::Ones(this->get<TransitionMatrixInfectedCriticalToDead>().rows()))
+              Eigen::VectorX<ScalarType>::Ones(this->get<TransitionMatrixInfectedCriticalToDead>().rows()))
                  .array() > 1e-10)
                 .any()) {
             log_warning("Constraint check: The entries of TransitionMatrixInfectedCriticalToDead lead to a negative "
@@ -644,7 +653,7 @@ public:
             return true;
         }
         if (((this->get<TransitionMatrixInfectedCriticalToRecovered>() *
-              Vector<ScalarType>::Ones(this->get<TransitionMatrixInfectedCriticalToRecovered>().rows()))
+              Eigen::VectorX<ScalarType>::Ones(this->get<TransitionMatrixInfectedCriticalToRecovered>().rows()))
                  .array() > 1e-10)
                 .any()) {
             log_warning(
