@@ -67,13 +67,13 @@ public:
     bool check_constraints(ScalarType dt) const;
 
     /**
-    * @brief Returns a flat index for the TimeSeries transitions which contains values for the InfectionTransitions.
+    * @brief Returns a flat index for the TimeSeries transitions which contains values for the #InfectionTransition%s.
     *
     * In the TimeSeries we store a vector for each time point. In this vector we store values for the different 
-    * InfectionTransitions for every AgeGroup.
-    * This function is used to get the right index in this vector for a specific AgeGroup and InfectionTransition.
+    * #InfectionTransition%s for every AgeGroup.
+    * This function is used to get the right index in this vector for a specific AgeGroup and #InfectionTransition.
     *
-    * @param[in] transition_idx Index determining which InfectionTransition we want to evaluate.
+    * @param[in] transition_idx Index determining which #InfectionTransition we want to evaluate.
     * @param[in] agegroup The agegroup for which we want to evaluate.
     */
 
@@ -83,13 +83,13 @@ public:
     }
 
     /**
-    * @brief Returns a flat index for the TimeSeries populations which contains values for the InfectionStates.
+    * @brief Returns a flat index for the TimeSeries populations which contains values for the #InfectionState%s.
     *
     * In the TimeSeries we store a vector for each time point. In this vector we store values for the 
-    * different InfectionStates for every AgeGroup.
-    * This function is used to get the right index in this vector for a specific AgeGroup and InfectionState.
+    * different #InfectionState%s for every AgeGroup.
+    * This function is used to get the right index in this vector for a specific AgeGroup and #InfectionState.
     *
-    * @param[in] state_idx Index at which InfectionState we want to evaluate.
+    * @param[in] state_idx Index at which #InfectionState we want to evaluate.
     * @param[in] agegroup The agegroup for which we want to evaluate.
     */
     int get_state_flat_index(Eigen::Index state_idx, AgeGroup agegroup) const
@@ -146,7 +146,7 @@ public:
     // initialization part.
     TimeSeries<ScalarType>
         transitions; ///< TimeSeries containing points of time and the corresponding number of individuals transitioning from
-    // one InfectionState to another as defined in InfectionTransitions for every AgeGroup.
+    // one #InfectionState to another as defined in #InfectionTransition%s for every AgeGroup.
     TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
         // people in defined #InfectionState%s for every AgeGroup.
     CustomIndexArray<ScalarType, AgeGroup>
