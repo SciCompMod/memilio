@@ -97,8 +97,7 @@ private:
                     //run mobility rule and check if change of location can actually happen
                     auto target_type = rule(personal_rng, person, t, dt, parameters);
                     if (person.get_assigned_location_model_id(target_type) == Base::m_id) {
-                        const Location& target_location =
-                            Base::get_location(Base::find_location(target_type, person_index));
+                        const Location& target_location = Base::get_location(Base::find_location(target_type, person));
                         const LocationId current_location = person.get_location();
                         // the Person cannot move if they do not wear mask as required at targeted location
                         if (target_location.is_mask_required() &&
@@ -125,7 +124,7 @@ private:
                         else {
                             person.set_mask(MaskType::None, t);
                         }
-                        Base::change_location(person_index, target_location.get_id());
+                        Base::change_location(person, target_location.get_id());
                         return true;
                     }
                     else { //person moves to other world
@@ -175,7 +174,7 @@ private:
                     continue;
                 }
                 // all requirements are met, move to target location
-                change_location(person_index, target_location.get_id(), trip.trip_mode);
+                change_location(person, target_location.get_id(), trip.trip_mode);
                 // update worn mask to target location's requirements
                 if (target_location.is_mask_required()) {
                     // if the current MaskProtection level is lower than required, the Person changes mask

@@ -251,7 +251,7 @@ public:
      */
     void assign_location(GlobalID person, LocationId location)
     {
-        get_person(person).set_assigned_location(get_location(location).get_type(), location, m_id);
+        assign_location(get_person(person), location);
     }
 
     /**
@@ -437,17 +437,7 @@ public:
     inline void change_location(GlobalID person, LocationId destination, TransportMode mode = TransportMode::Unknown,
                                 const std::vector<uint32_t>& cells = {0})
     {
-        LocationId origin = get_location(person).get_id();
-        const bool has_changed_location =
-            mio::abm::change_location(get_person(person), get_location(destination), mode, cells);
-        // if the person has changed location, invalidate exposure caches but keep population caches valid
-        if (has_changed_location) {
-            m_are_exposure_caches_valid = false;
-            if (m_is_local_population_cache_valid) {
-                --m_local_population_cache[origin.get()];
-                ++m_local_population_cache[destination.get()];
-            }
-        }
+        change_location(get_person(person), destination, mode, cells);
     }
 
     /**
@@ -458,17 +448,7 @@ public:
      */
     inline void interact(GlobalID person, TimePoint t, TimeSpan dt)
     {
-        if (!m_are_exposure_caches_valid) {
-            // checking caches is only needed for external calls
-            // during simulation (i.e. in evolve()), the caches are computed in begin_step
-            compute_exposure_caches(t, dt);
-            m_are_exposure_caches_valid = true;
-        }
-        auto& p           = get_person(person);
-        auto personal_rng = PersonalRandomNumberGenerator(m_rng, p);
-        mio::abm::interact(personal_rng, p, get_location(p.get_location()),
-                           m_air_exposure_rates_cache[p.get_location().get()],
-                           m_contact_exposure_rates_cache[p.get_location().get()], t, dt, parameters);
+        interact(get_person(person), t, dt);
     }
 
     /**
@@ -482,6 +462,18 @@ public:
         assert(id != LocationId::invalid_id() && "Given LocationId must be valid.");
         assert(id < LocationId((uint32_t)m_locations.size()) && "Given LocationId is not in this Model.");
         return m_locations[id.get()];
+    }
+
+    /**
+     * @brief Assign a Location to a Person.
+     * A Person can have at most one assigned Location of a certain LocationType.
+     * Assigning another Location of an already assigned LocationType will replace the prior assignment.  
+     * @param[in] person reference to the Person the location will be assigned to.
+     * @param[in] location The LocationId of the Location.
+     */
+    void assign_location(Person& person, LocationId location)
+    {
+        person.set_assigned_location(get_location(location).get_type(), location, m_id);
     }
 
     Location& get_location(LocationId id)
@@ -557,6 +549,78 @@ protected:
      * @param[in] dt The duration of the simulation step.
      */
     void compute_exposure_caches(TimePoint t, TimeSpan dt);
+
+    // Change the Location of a Person. this requires that Location is part of this Model.
+    /**
+     * @brief Let a Person change to another Location.
+     * @param[in] person Reference to Person.
+     * @param[in] destination LocationId of the Location in this Model, which the Person should change to.
+     * @param[in] mode The transport mode the person uses to change the Location.
+     * @param[in] cells The cells within the destination the person should be in.
+     */
+    inline void change_location(Person& person, LocationId destination, TransportMode mode = TransportMode::Unknown,
+                                const std::vector<uint32_t>& cells = {0})
+    {
+        LocationId origin               = get_location(person).get_id();
+        const bool has_changed_location = mio::abm::change_location(person, get_location(destination), mode, cells);
+        // if the person has changed location, invalidate exposure caches but keep population caches valid
+        if (has_changed_location) {
+            m_are_exposure_caches_valid = false;
+            if (m_is_local_population_cache_valid) {
+                --m_local_population_cache[origin.get()];
+                ++m_local_population_cache[destination.get()];
+            }
+        }
+    }
+
+    /**
+     * @brief Get a reference to the location of a person.
+     * @param[in] person Reference to a Person.
+     * @return Reference to the Location.
+     * @{
+     */
+    inline Location& get_location(Person& person)
+    {
+        return get_location(person.get_location());
+    }
+
+    inline const Location& get_location(Person& person) const
+    {
+        return get_location(person.get_location());
+    }
+
+    /**
+     * @brief Find an assigned Location of a Person.
+     * @param[in] type The #LocationType that specifies the assigned Location.
+     * @param[in] person Reference to Person.
+     * @return ID of the Location of LocationType type assigend to person.
+     */
+    LocationId find_location(LocationType type, const Person& person) const
+    {
+        auto location_id = person.get_assigned_location(type);
+        assert(location_id != LocationId::invalid_id() && "The person has no assigned location of that type.");
+        return location_id;
+    }
+
+    /**
+     * @brief Let a person interact with the population at its current location.
+     * @param[in] person Reference to Person.
+     * @param[in] t Time step of the simulation.
+     * @param[in] dt Step size of the simulation.
+     */
+    inline void interact(Person& person, TimePoint t, TimeSpan dt)
+    {
+        if (!m_are_exposure_caches_valid) {
+            // checking caches is only needed for external calls
+            // during simulation (i.e. in evolve()), the caches are computed in begin_step
+            compute_exposure_caches(t, dt);
+            m_are_exposure_caches_valid = true;
+        }
+        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
+        mio::abm::interact(personal_rng, person, get_location(person.get_location()),
+                           m_air_exposure_rates_cache[person.get_location().get()],
+                           m_contact_exposure_rates_cache[person.get_location().get()], t, dt, parameters);
+    }
 
     mutable Eigen::Matrix<std::atomic_int_fast32_t, Eigen::Dynamic, 1>
         m_local_population_cache; ///< Current number of Persons in a given location.

@@ -86,9 +86,9 @@ void Model::interaction(TimePoint t, TimeSpan dt)
 {
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     PRAGMA_OMP(parallel for)
-    for (uint32_t person_id = 0; person_id < num_persons; ++person_id) {
-        if (m_activeness_statuses[person_id]) {
-            interact(person_id, t, dt);
+    for (uint32_t person_index = 0; person_index < num_persons; ++person_index) {
+        if (m_activeness_statuses[person_index]) {
+            interact(m_persons[person_index], t, dt);
         }
     }
 }
@@ -106,7 +106,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                 // run mobility rule and check if change of location can actually happen
                 auto target_type = rule(personal_rng, person, t, dt, parameters);
                 if (person.get_assigned_location_model_id(target_type) == m_id) {
-                    const Location& target_location = get_location(find_location(target_type, person.get_global_id()));
+                    const Location& target_location   = get_location(find_location(target_type, person));
                     const LocationId current_location = person.get_location();
 
                     // the Person cannot move if they do not wear mask as required at targeted location
@@ -135,7 +135,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                         person.set_mask(MaskType::None, t);
                     }
                     // all requirements are met, move to target location
-                    change_location(person.get_global_id(), target_location.get_id());
+                    change_location(person, target_location.get_id());
                     return true;
                 }
                 return false;
@@ -190,7 +190,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             continue;
         }
         // all requirements are met, move to target location
-        change_location(person.get_global_id(), target_location.get_id(), trip.trip_mode);
+        change_location(person, target_location.get_id(), trip.trip_mode);
         // update worn mask to target location's requirements
         if (target_location.is_mask_required()) {
             // if the current MaskProtection level is lower than required, the Person changes mask
@@ -331,9 +331,7 @@ auto Model::get_activeness_statuses() -> Range<std::pair<ActivenessIterator, Act
 
 LocationId Model::find_location(LocationType type, const GlobalID person) const
 {
-    auto location_id = get_person(person).get_assigned_location(type);
-    assert(location_id != LocationId::invalid_id() && "The person has no assigned location of that type.");
-    return location_id;
+    return find_location(type, get_person(person));
 }
 
 size_t Model::get_subpopulation_combined(TimePoint t, InfectionState s) const
