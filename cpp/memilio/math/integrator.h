@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -34,7 +34,8 @@ namespace mio
  * Function template to be integrated.
  */
 template <typename FP = double>
-using DerivFunction = std::function<void(Eigen::Ref<const mio::Vector<FP>> y, FP t, Eigen::Ref<mio::Vector<FP>> dydt)>;
+using DerivFunction =
+    std::function<void(Eigen::Ref<const Eigen::VectorX<FP>> y, FP t, Eigen::Ref<Eigen::VectorX<FP>> dydt)>;
 
 template <typename FP = double>
 class IntegratorCore
@@ -79,8 +80,8 @@ public:
      * @return Always true for nonadaptive methods.
      *     (If adaptive, returns whether the adaptive step sizing was successful.)
      */
-    virtual bool step(const DerivFunction<FP>& f, Eigen::Ref<const Vector<FP>> yt, FP& t, FP& dt,
-                      Eigen::Ref<Vector<FP>> ytp1) const = 0;
+    virtual bool step(const DerivFunction<FP>& f, Eigen::Ref<const Eigen::VectorX<FP>> yt, FP& t, FP& dt,
+                      Eigen::Ref<Eigen::VectorX<FP>> ytp1) const = 0;
 
     /**
      * @brief Access lower bound to the step size dt.
@@ -146,7 +147,7 @@ public:
      * @return A reference to the last value in the results time series.
      */
 
-    Eigen::Ref<Vector<FP>> advance(const DerivFunction<FP>& f, const FP tmax, FP& dt, TimeSeries<FP>& results)
+    Eigen::Ref<Eigen::VectorX<FP>> advance(const DerivFunction<FP>& f, const FP tmax, FP& dt, TimeSeries<FP>& results)
     {
         // hint at std functions for ADL
         using std::fabs;

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -46,10 +46,10 @@ TEST(TestLCTSecir, simulateDefault)
     ScalarType tmax = 1;
     ScalarType dt   = 0.1;
 
-    mio::Vector<ScalarType> init = mio::Vector<ScalarType>::Constant((Eigen::Index)InfState::Count, 15);
-    init[0]                      = 200;
-    init[3]                      = 50;
-    init[5]                      = 30;
+    Eigen::VectorX<ScalarType> init = Eigen::VectorX<ScalarType>::Constant((Eigen::Index)InfState::Count, 15);
+    init[0]                         = 200;
+    init[3]                         = 50;
+    init[5]                         = 30;
 
     Model model;
     for (size_t i = 0; i < LctState::Count; i++) {
@@ -77,10 +77,10 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     ScalarType dt   = 0.1;
 
     // Initialization vector for both models.
-    mio::Vector<ScalarType> init = mio::Vector<ScalarType>::Constant((Eigen::Index)InfState::Count, 15);
-    init[0]                      = 200;
-    init[3]                      = 50;
-    init[5]                      = 30;
+    Eigen::VectorX<ScalarType> init = Eigen::VectorX<ScalarType>::Constant((Eigen::Index)InfState::Count, 15);
+    init[0]                         = 200;
+    init[3]                         = 50;
+    init[5]                         = 30;
 
     // Define LCT model.
     Model model_lct;
@@ -239,10 +239,10 @@ TEST(TestLCTSecir, testEvalRightHandSide)
 
     // Compare the result of get_derivatives() with a hand calculated result.
     size_t num_subcompartments = LctState::Count;
-    mio::Vector<ScalarType> dydt(num_subcompartments);
+    Eigen::VectorX<ScalarType> dydt(num_subcompartments);
     model.get_derivatives(model.get_initial_values(), model.get_initial_values(), 0, dydt);
 
-    mio::Vector<ScalarType> compare(num_subcompartments);
+    Eigen::VectorX<ScalarType> compare(num_subcompartments);
     compare << -15.3409, -3.4091, 6.25, -17.5, 15, 0, 3.3052, 3.4483, -7.0417, 6.3158, -2.2906, -2.8169, 12.3899,
         1.6901;
 
@@ -316,10 +316,10 @@ TEST(TestLCTSecir, testEvalRightHandSideGroups)
     model.parameters.get<mio::lsecir::DeathsPerCritical>()[1]         = 0.5;
 
     // Compare the result of get_derivatives() with a hand calculated result.
-    mio::Vector<ScalarType> dydt(num_subcompartments);
+    Eigen::VectorX<ScalarType> dydt(num_subcompartments);
     model.get_derivatives(model.get_initial_values(), model.get_initial_values(), 0, dydt);
 
-    mio::Vector<ScalarType> compare(num_subcompartments);
+    Eigen::VectorX<ScalarType> compare(num_subcompartments);
     compare << -90.6818, 78.6818, 4, -4, 6, 0, -6.6, 4, -15.2, 12, -3.6, -4, 18.6, 0.8, -90.6818, 85.6818, -20, 12,
         -4.25, 2.25, 15, 0;
 
@@ -333,7 +333,7 @@ TEST(TestLCTSecir, testEvalRightHandSideGroups)
     result.add_time_point(1, model.get_initial_values() + dydt);
     mio::TimeSeries<ScalarType> population = model.calculate_compartments(result);
     // Sum of subcompartments in initial_population.
-    mio::Vector<ScalarType> compare_population0(2 * (size_t)InfState::Count);
+    Eigen::VectorX<ScalarType> compare_population0(2 * (size_t)InfState::Count);
     compare_population0 << 750, 50, 40, 50, 50, 30, 20, 10, 750, 10, 50, 1, 9, 0, 30, 100;
     ASSERT_EQ(compare_population0.size(), static_cast<size_t>(population.get_num_elements()));
     EXPECT_NEAR(result.get_time(0), population.get_time(0), 1e-7);
@@ -341,7 +341,7 @@ TEST(TestLCTSecir, testEvalRightHandSideGroups)
         EXPECT_NEAR(compare_population0[i], population.get_value(0)[i], 1e-3) << " at index " << i << ".\n";
     }
     // Sum of subcompartments in compare vector.
-    mio::Vector<ScalarType> compare_population1(2 * (size_t)InfState::Count);
+    Eigen::VectorX<ScalarType> compare_population1(2 * (size_t)InfState::Count);
     compare_population1 << -90.6818, 82.6818, 2, -2.6, -3.2, -7.6, 18.6, 0.8, -90.6818, 85.6818, -20, 12, -4.25, 2.25,
         15, 0;
     compare_population1 = compare_population0 + compare_population1;
@@ -403,11 +403,11 @@ TEST(TestLCTSecir, testEvalRightHandSideThreeGroupsEqual)
 
     // Compare the result of get_derivatives() with a hand calculated result.
 
-    mio::Vector<ScalarType> dydt(num_groups * num_subcompartments);
+    Eigen::VectorX<ScalarType> dydt(num_groups * num_subcompartments);
 
     model.get_derivatives(model.get_initial_values(), model.get_initial_values(), 0, dydt);
 
-    mio::Vector<ScalarType> compare(num_subcompartments);
+    Eigen::VectorX<ScalarType> compare(num_subcompartments);
     compare << -15.3409, -3.4091, 6.25, -17.5, 15, 0, 3.3052, 3.4483, -7.0417, 6.3158, -2.2906, -2.8169, 12.3899,
         1.6901;
     ScalarType sunum_groups = 0;
@@ -601,7 +601,7 @@ TEST_F(ModelTestLCTSecir, testCalculatePopWrongSize)
     size_t wrong_size = LctState::Count - 2;
     // Define TimeSeries with wrong_size elements.
     mio::TimeSeries<ScalarType> wrong_num_elements(wrong_size);
-    mio::Vector<ScalarType> vec_wrong_size = mio::Vector<ScalarType>::Ones(wrong_size);
+    Eigen::VectorX<ScalarType> vec_wrong_size = Eigen::VectorX<ScalarType>::Ones(wrong_size);
     wrong_num_elements.add_time_point(-10, vec_wrong_size);
     wrong_num_elements.add_time_point(-9, vec_wrong_size);
     // Call the calculate_compartments function with the TimeSeries with a wrong number of elements.

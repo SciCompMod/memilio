@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn, Martin Siggel, Daniel Abele
 *
@@ -226,6 +226,16 @@ private:
     FP m_value;
     std::unique_ptr<ParameterDistribution> m_dist;
 };
+
+/**
+ * @brief Format UncertainValues using their value for logging with spdlog.
+ */
+template <class FP>
+const FP& format_as(const UncertainValue<FP>& uv)
+{
+    // uses UncertainValue<FP>::operator const FP&() const
+    return uv;
+}
 
 // gtest printer
 // TODO: should be extended when UncertainValue gets operator== that compares distributions as well

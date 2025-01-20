@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -26,7 +26,6 @@
 #define MIO_CONFIG_H
 
 #include "memilio/config_internal.h"
-#include <type_traits>
 
 using ScalarType = double;
 

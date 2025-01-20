@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: David Kerkmann, Khoa Nguyen
 *
@@ -35,8 +35,8 @@ mio::abm::Person make_test_person(mio::RandomNumberGenerator& rng, mio::abm::Loc
     return p;
 }
 
-mio::abm::PersonId add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id,
-                                   mio::AgeGroup age, mio::abm::InfectionState infection_state, mio::abm::TimePoint t)
+mio::abm::PersonId add_test_person(mio::abm::Model& model, mio::abm::LocationId loc_id, mio::AgeGroup age,
+                                   mio::abm::InfectionState infection_state, mio::abm::TimePoint t)
 {
     return model.add_person(
         make_test_person(model.get_rng(), model.get_location(loc_id), age, infection_state, t, model.parameters));

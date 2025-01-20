@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
 *
@@ -50,8 +50,8 @@ public:
     {
     }
 
-    void get_flows(Eigen::Ref<const Vector<>> pop, Eigen::Ref<const Vector<>> y, ScalarType t,
-                   Eigen::Ref<Vector<>> flows) const
+    void get_flows(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop, Eigen::Ref<const Eigen::VectorX<ScalarType>> y,
+                   ScalarType t, Eigen::Ref<Eigen::VectorX<ScalarType>> flows) const
     {
         auto& params         = this->parameters;
         ScalarType coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *

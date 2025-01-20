@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke, Martin J. Kuehn
 *
@@ -49,14 +49,14 @@ Model::Model(TimeSeries<ScalarType>&& init, CustomIndexArray<ScalarType, AgeGrou
     if (m_transitions.get_num_time_points() > 0) {
         // Add first time point in m_populations according to last time point in m_transitions which is where we start
         // the simulation.
-        m_populations.add_time_point<mio::Vector<ScalarType>>(
+        m_populations.add_time_point<Eigen::VectorX<ScalarType>>(
             m_transitions.get_last_time(),
             TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionState::Count * m_num_agegroups, 0.));
     }
     else {
         // Initialize m_populations with zero as the first point of time if no data is provided for the transitions.
         // This can happen for example in the case of initialization with real data.
-        m_populations.add_time_point<mio::Vector<ScalarType>>(
+        m_populations.add_time_point<Eigen::VectorX<ScalarType>>(
             0, TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionState::Count * m_num_agegroups, 0.));
     }
 

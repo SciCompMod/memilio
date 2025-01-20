@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -68,8 +68,8 @@ public:
     {
     }
 
-    void get_flows(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
-                   Eigen::Ref<Vector<FP>> flows) const override
+    void get_flows(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
+                   Eigen::Ref<Eigen::VectorX<FP>> flows) const override
     {
         const Index<AgeGroup> age_groups = reduce_index<Index<AgeGroup>>(this->populations.size());
         const auto& params               = this->parameters;
@@ -80,7 +80,7 @@ public:
             const size_t Ii = this->populations.get_flat_index({i, InfectionState::Infected});
 
             for (auto j : make_index_range(age_groups)) {
-                const size_t Sj = this->populations.get_flat_index({i, InfectionState::Susceptible});
+                const size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
                 const size_t Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
                 const size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
                 const size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});

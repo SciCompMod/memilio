@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -106,8 +106,8 @@ public:
     {
     }
 
-    void get_flows(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
-                   Eigen::Ref<Vector<FP>> flows) const override
+    void get_flows(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
+                   Eigen::Ref<Eigen::VectorX<FP>> flows) const override
     {
         auto const& params   = this->parameters;
         AgeGroup n_agegroups = params.get_num_groups();
@@ -554,7 +554,7 @@ class Simulation;
 * @tparam Base simulation type that uses a secir compartment model. see Simulation.
 */
 template <typename FP = ScalarType, class Base = mio::Simulation<FP, Model<FP>>>
-FP get_infections_relative(const Simulation<FP, Base>& model, FP t, const Eigen::Ref<const Vector<FP>>& y);
+FP get_infections_relative(const Simulation<FP, Base>& model, FP t, const Eigen::Ref<const Eigen::VectorX<FP>>& y);
 
 /**
  * specialization of compartment model simulation for the SECIRVVS model.
@@ -665,7 +665,7 @@ public:
      * @param tmax next stopping point of simulation
      * @return value at tmax
      */
-    Eigen::Ref<Vector<FP>> advance(FP tmax)
+    Eigen::Ref<Eigen::VectorX<FP>> advance(FP tmax)
     {
         auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
@@ -786,7 +786,7 @@ inline auto simulate_flows(FP t0, FP tmax, FP dt, const Model<FP>& model,
 
 //see declaration above.
 template <typename FP, class Base>
-FP get_infections_relative(const Simulation<FP, Base>& sim, FP /*t*/, const Eigen::Ref<const Vector<FP>>& y)
+FP get_infections_relative(const Simulation<FP, Base>& sim, FP /*t*/, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
     FP sum_inf = 0;
     for (auto i = AgeGroup(0); i < sim.get_model().parameters.get_num_groups(); ++i) {
@@ -815,7 +815,7 @@ FP get_infections_relative(const Simulation<FP, Base>& sim, FP /*t*/, const Eige
  * @tparam Base simulation type that uses a secir compartment model. see Simulation.
  */
 template <typename FP = double, class Base = mio::Simulation<Model<FP>, FP>>
-auto get_mobility_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Vector<FP>>& y)
+auto get_mobility_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 
 {
     auto& params = sim.get_model().parameters;
@@ -857,7 +857,7 @@ auto get_mobility_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Re
 }
 
 template <typename FP = double, class Base = mio::Simulation<Model<FP>, FP>>
-auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> mobile_population, FP time)
+auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Eigen::VectorX<FP>> mobile_population, FP time)
 {
     auto& model       = sim.get_model();
     auto nondetection = 1.0;

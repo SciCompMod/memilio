@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -106,7 +106,7 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
     }
 
     // Compare transitions at last time point with results from a previous run that are given here.
-    mio::Vector<ScalarType> compare(num_transitions * num_agegroups);
+    Eigen::VectorX<ScalarType> compare(num_transitions * num_agegroups);
     compare << 336.428571428600, 328.285714285701, 162.000000000000, 163.071428571425, 80.130989648839, 79.803571428575,
         39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081, 1105.714285714297, 1069.857142857200,
         515.714285714250, 163.071428571425, 80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415,
