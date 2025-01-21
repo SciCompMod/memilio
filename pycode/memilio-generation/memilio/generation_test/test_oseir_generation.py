@@ -80,6 +80,8 @@ class TestOseirGeneration(unittest.TestCase):
         generator.create_substitutions(irdata)
         generator.generate_files(irdata)
 
+        self.maxDiff = None
+
         with open(os.path.join(irdata.target_folder, "test_oseir.py")) as result:
             self.assertEqual(result.read(), self.expected_test_oseir_py)
         with open(os.path.join(irdata.target_folder, "test_oseir.cpp")) as result:
