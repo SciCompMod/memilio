@@ -233,7 +233,7 @@ public:
 /**
  * @brief Checks if DIVI data is available for a given date.
  * @param date The date to check.
- * @return True if DIVI data is available, false otherwise.
+ * @return True if date is within 2020-04-23 and 2024-07-21, false otherwise.
  */
 inline bool is_divi_data_available(const Date& date)
 {
