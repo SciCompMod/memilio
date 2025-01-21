@@ -663,7 +663,7 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
 {
     // DIVI dataset will no longer be updated from CW29 2024 on.
     if (!is_divi_data_available(date)) {
-        log_warning("No DIVI data available for date: {}-{}-{}", date.day, date.month, date.year,
+        log_warning("No DIVI data available for date: {}-{}-{}", date.year, date.month, date.day,
                     ". ICU compartment will be set based on Case data.");
         return success();
     }
