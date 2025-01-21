@@ -106,11 +106,34 @@ struct Date {
     //@}
 
     /**
+     * Formats the date into a string in ISO format (YYYY-MM-DD).
+     * @return A string representing the date in ISO format.
+     */
+    std::string to_iso_string() const
+    {
+        std::ostringstream oss;
+        oss << std::setw(4) << std::setfill('0') << year << '-' << std::setw(2) << std::setfill('0') << month << '-'
+            << std::setw(2) << std::setfill('0') << day;
+        return oss.str();
+    }
+
+    /**
      * gtest printer.
      */
     friend void PrintTo(const Date& self, std::ostream* os)
     {
         *os << self.year << "." << self.month << "." << self.day;
+    }
+
+    /**
+     * Overload for stream operator to use the ISO format.
+     * @param os Output stream.
+     * @param date Date to output.
+     * @return Reference to the output stream.
+     */
+    friend std::ostream& operator<<(std::ostream& os, const Date& date)
+    {
+        return os << date.to_iso_string();
     }
 
     /**
