@@ -54,7 +54,7 @@ class Scanner:
             self.config.optional.get("libclang_library_path"))
 
         file_path = os.path.abspath("dict.json")
-        with open(file_path, "r") as file:
+        with open(file_path) as file:
             self.dict = json.load(
                 file, object_hook=lambda d: SimpleNamespace(**d))
 
