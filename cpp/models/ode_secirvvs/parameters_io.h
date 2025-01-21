@@ -196,8 +196,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
 
         // }
         if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
-            log_warning("No infections for unvaccinated reported on date " + std::to_string(date.year) + "-" +
-                        std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
+            log_warning("No infections for unvaccinated reported on date " + date.to_iso_string() + " for region " +
                         std::to_string(region[county]) + ". Population data has not been set.");
         }
     }
@@ -284,9 +283,8 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
         }
         // }
         if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
-            log_warning("No infections for partially vaccinated reported on date " + std::to_string(date.year) + "-" +
-                        std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
-                        std::to_string(region[county]) + ". Population data has not been set.");
+            log_warning("No infections for partially vaccinated reported on date " + date.to_iso_string() +
+                        " for region " + std::to_string(region[county]) + ". Population data has not been set.");
         }
     }
 
@@ -370,8 +368,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
             }
         }
         if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
-            log_warning("No infections for vaccinated reported on date " + std::to_string(date.year) + "-" +
-                        std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
+            log_warning("No infections for vaccinated reported on date " + date.to_iso_string() + " for region " +
                         std::to_string(region[county]) + ". Population data has not been set.");
         }
     }
@@ -428,7 +425,7 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
 {
     // DIVI dataset will no longer be updated from CW29 2024 on.
     if (!is_divi_data_available(date)) {
-        log_warning("No DIVI data available for date: {}-{}-{}", date.year, date.month, date.day,
+        log_warning("No DIVI data available for date: {}", date.to_iso_string(),
                     ". ICU compartment will be set based on Case data.");
         return success();
     }
