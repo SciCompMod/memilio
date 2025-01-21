@@ -202,16 +202,16 @@ void compute_initial_flows_for_ide_from_ode(mio::osecir::Model<ScalarType>& mode
     std::cout << "Computing initial flows. \n";
 
     // Use t_window=t0_ide to get flows from t0 onwards.
-    get_flows_from_ode_compartments(model_ode, compartments, model_ide.m_transitions, t0_ide, t0_ide, dt_ide);
+    get_flows_from_ode_compartments(model_ode, compartments, model_ide.transitions, t0_ide, t0_ide, dt_ide);
     ScalarType dt_ode = compartments.get_time(1) - compartments.get_time(0);
     // Remove time series from previous run and set initial values in populations.
-    if (model_ide.m_populations.get_num_time_points() > 0) {
-        model_ide.m_populations = mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionState::Count);
+    if (model_ide.populations.get_num_time_points() > 0) {
+        model_ide.populations = mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionState::Count);
     }
-    model_ide.m_populations.add_time_point<Eigen::VectorXd>(
-        model_ide.m_transitions.get_last_time(),
+    model_ide.populations.add_time_point<Eigen::VectorXd>(
+        model_ide.transitions.get_last_time(),
         mio::TimeSeries<ScalarType>::Vector::Constant((int)mio::isecir::InfectionState::Count, 0));
-    model_ide.m_populations[0][Eigen::Index(mio::isecir::InfectionState::Dead)] =
+    model_ide.populations[0][Eigen::Index(mio::isecir::InfectionState::Dead)] =
         compartments[(Eigen::Index)compartments.get_num_time_points() -
                      (Eigen::Index)((compartments.get_last_time() - t0_ide) / dt_ode) - 1]
                     [(Eigen::Index)mio::osecir::InfectionState::Dead];
