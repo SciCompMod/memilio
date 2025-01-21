@@ -26,6 +26,7 @@
 #include "memilio/config.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/custom_index_array.h"
+#include "memilio/utils/date.h"
 #include "memilio/utils/time_series.h"
 
 #include "vector"
@@ -37,9 +38,9 @@ namespace isecir
 // Forward declaration of friend classes/functions of Model.
 class Model;
 class Simulation;
-template <typename DataEntry>
-IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date,
-                                 ScalarType scale_confirmed_cases);
+template <typename EntryType>
+IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::vector<EntryType> rki_data,
+                                 const Date date, const CustomIndexArray<ScalarType, AgeGroup> scale_confirmed_cases);
 
 class Model
 {
