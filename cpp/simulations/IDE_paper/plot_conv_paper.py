@@ -325,12 +325,13 @@ def compute_order_of_convergence(errors, timesteps_ide, flows=False):
 
 
 def main():
+    # Paths are valid if file is executed e.g. in memilio/cpp/simulations/IDE_paper.
     # Path where simulation results (generated with ide_convergence_rate.cpp) are stored. 
     result_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/simulation_results/convergence/")
 
     # Path where plots will be stored. 
-    save_dir =  os.path.join(os.path.dirname(
+    plot_dir =  os.path.join(os.path.dirname(
         __file__), "../../..", "data/plots/convergence/")
 
     # The ODE model was simulated using a fixed step size dt=10^{-ode_exponent}.
@@ -339,10 +340,10 @@ def main():
     # as for very small step sizes used for the simulation, the number of time points stored gets very big.
     save_exponent = 4
     # The IDE model was simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
-    exponents_ide = [1, 2, 3, 4]
+    ide_exponents = [1, 2, 3, 4]
     # Calculate time steps resulting from exponents_ide.
     timesteps_ide = []
-    for exp in exponents_ide:
+    for exp in ide_exponents:
         timesteps_ide.append(pow(10, -exp))
 
     # Plot compartments and flows.
@@ -353,7 +354,7 @@ def main():
         groundtruth = read_groundtruth(result_dir, ode_exponent, save_exponent, flow_bool)
 
         # Read results from IDE simulations.
-        results = read_data(result_dir, ode_exponent, exponents_ide, flow_bool)
+        results = read_data(result_dir, ode_exponent, ide_exponents, flow_bool)
 
         # Compute relative L2 error norm of IDE results compared to groundtruth.
         relerrors_l2 = compute_relerror_norm_l2(
@@ -361,9 +362,9 @@ def main():
 
         # Plot convergence of all compartments/flows in one plot, respectively.
         plot_convergence_oneplot(
-            relerrors_l2, timesteps_ide, flow_bool, save_dir)
+            relerrors_l2, timesteps_ide, flow_bool, plot_dir)
         # Plot convergence of all compartments/flows separately.
-        plot_convergence(relerrors_l2, timesteps_ide,  flow_bool, save_dir)
+        plot_convergence(relerrors_l2, timesteps_ide,  flow_bool, plot_dir)
 
         # # Determine order of convergence
         # order = compute_order_of_convergence(

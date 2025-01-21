@@ -19,6 +19,7 @@
 */
 #include "memilio/config.h"
 #include "memilio/epidemiology/state_age_function.h"
+#include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/io.h"
@@ -30,7 +31,6 @@
 #include "ide_secir/parameters_io.h"
 #include "ide_secir/simulation.h"
 
-#include "memilio/epidemiology/contact_matrix.h"
 #include "ode_secir/model.h"
 #include "ode_secir/infection_state.h"
 #include "ode_secir/parameters.h"
@@ -48,8 +48,8 @@ using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
                                                           {"dt", 0.01},
                                                           {"total_population", 83155031.},
-                                                          {"total_confirmed_cases", 0.}, // set by RKI data
-                                                          {"deaths", 0.}, // set by RKI data
+                                                          {"total_confirmed_cases", 0.}, // Will be set by RKI data.
+                                                          {"deaths", 0.}, // Will be set by RKI data.
                                                           {"TimeExposed", 4.5},
                                                           {"TimeInfectedNoSymptoms", 2.527617},
                                                           {"TimeInfectedSymptoms", 7.889900},
@@ -211,8 +211,7 @@ void set_npi_october(mio::ContactMatrixGroup& contact_matrices, mio::Date start_
  * @param[in] start_date Start date of the simulation.
  * @returns Any io errors that happen during reading of the input files.
  */
-mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(const boost::filesystem::path& data_dir,
-                                                               mio::Date start_date)
+mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(std::string contact_data_dir, mio::Date start_date)
 {
     // Files in data_dir are containing contact matrices with 6 agegroups. We use this to compute a contact pattern without division of age groups.
     // Age group sizes are calculated using table number 12411-04-02-4-B from www.regionalstatistik.de for the date 31.12.2020.
@@ -224,11 +223,9 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(const boost::file
     // Load and set minimum and baseline contacts for each contact location.
     for (auto&& contact_location : contact_locations) {
         BOOST_OUTCOME_TRY(auto&& baseline,
-                          mio::read_mobility_plain(
-                              (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
+                          mio::read_mobility_plain(contact_data_dir + "baseline_" + contact_location.second + ".txt"));
         BOOST_OUTCOME_TRY(auto&& minimum,
-                          mio::read_mobility_plain(
-                              (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
+                          mio::read_mobility_plain(contact_data_dir + ("minimum_" + contact_location.second + ".txt")));
         ScalarType base = 0;
         ScalarType min  = 0;
         for (int i = 0; i < numagegroups; i++) {
@@ -295,7 +292,7 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices_simplified(mio::D
 */
 mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>>
 simulate_ide_model(mio::Date start_date, ScalarType simulation_time, mio::ContactMatrixGroup contact_matrices,
-                   const boost::filesystem::path& data_dir, std::string save_dir = "")
+                   std::string reported_data_dir, std::string save_dir = "")
 
 {
     // Initialize model.
@@ -397,7 +394,7 @@ simulate_ide_model(mio::Date start_date, ScalarType simulation_time, mio::Contac
                                                          simulation_parameter["scale_confirmed_cases"]);
 
     // Set initial flows according to RKI data.
-    std::string path_rki = mio::path_join((data_dir / "pydata" / "Germany").string(), "cases_all_germany_ma7.json");
+    std::string path_rki                                = reported_data_dir + "cases_all_germany_ma7.json";
     std::vector<mio::ConfirmedCasesNoAgeEntry> rki_data = mio::read_confirmed_cases_noage(path_rki).value();
 
     mio::IOResult<void> init_flows = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(
@@ -407,7 +404,6 @@ simulate_ide_model(mio::Date start_date, ScalarType simulation_time, mio::Contac
 
     // Simulate.
     mio::isecir::Simulation sim(model_ide, simulation_parameter["dt"]);
-
     sim.advance(simulation_time);
 
     // Save results.
@@ -545,17 +541,20 @@ mio::IOResult<void> simulate_ode_model(mio::Date start_date, ScalarType simulati
 int main(int argc, char** argv)
 {
     // Paths are valid if file is executed e.g. in memilio/build/bin.
-    std::string data_dir_string = "../../data";
-    std::string save_dir        = "../../data/simulation_results/covid_scenario/";
+    // Directory where necessary data is stored.
+    std::string data_dir = "../../data/";
+    // Directory where results will be stored. If this string is empty, results will not be saved.
+    std::string result_dir = "../../data/simulation_results/covid_inspired_scenario/";
 
     mio::Date start_date(2020, 10, 01);
 
     ScalarType simulation_time = 45;
 
+    // TODO: Check if we want to keep this and if so, add comment.
     if (argc == 9) {
 
-        data_dir_string                        = argv[1];
-        save_dir                               = argv[2];
+        data_dir                               = argv[1];
+        result_dir                             = argv[2];
         start_date                             = mio::Date(std::stoi(argv[3]), std::stoi(argv[4]), std::stoi(argv[5]));
         simulation_time                        = std::stod(argv[6]);
         simulation_parameter["dt"]             = std::stod(argv[7]);
@@ -566,17 +565,18 @@ int main(int argc, char** argv)
     }
 
     // Make folder if not existent yet.
-    boost::filesystem::path dir(save_dir);
+    boost::filesystem::path dir(result_dir);
     boost::filesystem::create_directories(dir);
 
-    const boost::filesystem::path data_dir = data_dir_string;
+    std::string contact_data_dir  = data_dir + "contacts/";
+    std::string reported_data_dir = data_dir + "pydata/Germany/";
 
     // Set contact matrices.
-    mio::ContactMatrixGroup contact_matrices = define_contact_matrices(data_dir, start_date).value();
+    mio::ContactMatrixGroup contact_matrices = define_contact_matrices(contact_data_dir, start_date).value();
     // mio::ContactMatrixGroup contact_matrices = define_contact_matrices_simplified(start_date).value();
 
     // Run IDE simulation.
-    auto result_ide = simulate_ide_model(start_date, simulation_time, contact_matrices, data_dir, save_dir);
+    auto result_ide = simulate_ide_model(start_date, simulation_time, contact_matrices, reported_data_dir, result_dir);
     if (!result_ide) {
         printf("%s\n", result_ide.error().formatted_message().c_str());
         return -1;
@@ -586,7 +586,7 @@ int main(int argc, char** argv)
     Vector init_compartments = result_ide.value()[0].get_value(0);
 
     // Run ODE simulation.
-    auto result_ode = simulate_ode_model(start_date, simulation_time, init_compartments, contact_matrices, save_dir);
+    auto result_ode = simulate_ode_model(start_date, simulation_time, init_compartments, contact_matrices, result_dir);
     if (!result_ode) {
         printf("%s\n", result_ode.error().formatted_message().c_str());
         return -1;

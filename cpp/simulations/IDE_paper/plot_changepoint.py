@@ -106,13 +106,13 @@ if __name__ == '__main__':
     result_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/simulation_results/changepoints/")
     # Path where plots will be stored. 
-    save_dir =  os.path.join(os.path.dirname(
+    plot_dir =  os.path.join(os.path.dirname(
         __file__), "../../..", "data/plots/changepoints/")
 
     plot_changepoint([os.path.join(result_dir, f"changepoint_ode_0.5_12_0.0100_flows"),
                      os.path.join(result_dir, f"changepoint_ide_0.5_12_0.0100_flows")],
-                     fileending="0.5_12_0.0100", save_dir=save_dir)
+                     fileending="0.5_12_0.0100", save_dir=plot_dir)
 
     plot_changepoint([os.path.join(result_dir, f"changepoint_ode_2.0_12_0.0100_flows"),
                      os.path.join(result_dir, f"changepoint_ide_2.0_12_0.0100_flows")],
-                     fileending="2.0_12_0.0100", save_dir=save_dir)
+                     fileending="2.0_12_0.0100", save_dir=plot_dir)

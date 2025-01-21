@@ -384,7 +384,8 @@ mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType cont
 
 int main()
 {
-    // Paths are valid if file is executed e.g. in memilio/build/bin.
+    // Directory where results will be stored. If this string is empty, results will not be saved.
+    // Path is valid if file is executed e.g. in memilio/build/bin.
     std::string save_dir = "../../data/simulation_results/changepoints/";
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);

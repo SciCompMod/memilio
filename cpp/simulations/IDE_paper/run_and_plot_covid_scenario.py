@@ -22,65 +22,70 @@ import os
 import pandas as pd
 
 from get_lognormal_parameters import get_lognormal_parameters
-from plot_real_scenario import plot_new_infections, plot_infectedsymptoms_deaths, plot_icu, get_scale_contacts, get_scale_confirmed_cases
+from plot_real_scenario import plot_daily_new_transmissions, plot_infectedsymptoms_deaths, plot_icu, get_scale_contacts, get_scale_confirmed_cases
 
 
-def run_real_scenario(data_dir, save_dir, start_date, simulation_time, timestep,  scale_contacts):
+def run_real_scenario(result_dir, data_dir, start_date, simulation_time, timestep, scale_contacts):
 
     year = start_date.split("-")[0]
     month = start_date.split("-")[1]
     day = start_date.split("-")[2]
 
-    subprocess.call([f"./build/bin/ide_covid_scenario", data_dir, save_dir,
+    subprocess.call([f"./../../../build/bin/ide_covid_scenario", data_dir, result_dir,
                      f"{year}", f"{month}", f"{day}", f"{simulation_time}", f"{timestep}", f"{scale_contacts}"])
 
 
-def contact_scaling(save_dir, start_date, simulation_time, timestep):
+def contact_scaling(result_dir, reported_data_dir, start_date, simulation_time, timestep):
     scale_contacts = get_scale_contacts([os.path.join(
-        save_dir, f"ide_{start_date}_{simulation_time}_{timestep}_flows")], pd.Timestamp(start_date), simulation_time)
+        result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_flows")], reported_data_dir, pd.Timestamp(start_date), simulation_time)
 
     return scale_contacts
 
 
-def confirmed_cases_scaling(save_dir, start_date, simulation_time, timestep):
+def confirmed_cases_scaling(result_dir, reported_data_dir, start_date, simulation_time, timestep):
     scale_confirmed_cases = get_scale_confirmed_cases([os.path.join(
-        save_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")], pd.Timestamp(start_date))
+        result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],reported_data_dir,  pd.Timestamp(start_date))
 
     return scale_confirmed_cases
 
 
-def plot_real_scenario(save_dir, plot_dir, start_date, simulation_time, timestep):
-    plot_new_infections([os.path.join(save_dir, f"ode_{start_date}_{simulation_time}_{timestep}_flows"),
-                        os.path.join(save_dir, f"ide_{start_date}_{simulation_time}_{timestep}_flows")],
+def plot_covid_inspired_scenario(result_dir, data_dir, plot_dir, start_date, simulation_time, timestep):
+    plot_daily_new_transmissions([os.path.join(result_dir, f"ode_{start_date}_{simulation_time}_{timestep}_flows"),
+                        os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_flows")], data_dir,
                         pd.Timestamp(start_date), simulation_time,
-                        fileending=f"{start_date}_{simulation_time}_{timestep}", save=True, save_dir=plot_dir)
+                        fileending=f"{start_date}_{simulation_time}_{timestep}", save_dir=plot_dir)
 
-    plot_infectedsymptoms_deaths([os.path.join(save_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
-                                  os.path.join(save_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
+    plot_infectedsymptoms_deaths([os.path.join(result_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
+                                  os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
+                                  data_dir, 
                                  pd.Timestamp(
                                      start_date), simulation_time,
-                                 fileending=f"{start_date}_{simulation_time}_{timestep}", save=True, save_dir=plot_dir)
+                                 fileending=f"{start_date}_{simulation_time}_{timestep}",  save_dir=plot_dir)
 
-    plot_icu([os.path.join(save_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
-              os.path.join(save_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
-             pd.Timestamp(start_date), simulation_time,  fileending=f"{start_date}_{simulation_time}_{timestep}", save=True, save_dir=plot_dir)
+    plot_icu([os.path.join(result_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
+              os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
+              data_dir, 
+             pd.Timestamp(start_date), simulation_time,  fileending=f"{start_date}_{simulation_time}_{timestep}", save_dir=plot_dir)
 
 
-def run_scenario(data_dir, save_dir, plot_dir, start_date, simulation_time, timestep):
+def run_scenario(result_dir, data_dir, plot_dir, start_date, simulation_time, timestep):
+    reported_data_dir = data_dir + "/pydata/Germany/"
     # First run the simulation with a contact scaling of 1.
     scale_contacts = 1.
     scale_confirmed_cases = 1.
-    run_real_scenario(data_dir, save_dir, start_date, simulation_time,
+    run_real_scenario(result_dir, data_dir, start_date, simulation_time,
                       timestep, scale_contacts)
     # Then determine contact scaling such that IDE results and RKI new infections match at first timestep.
     scale_contacts = contact_scaling(
-        save_dir, start_date, simulation_time, timestep)
-    # scale_confirmed_cases=confirmed_cases_scaling(save_dir, start_date, simulation_time, timestep)
+        result_dir, reported_data_dir, start_date, simulation_time, timestep)
+    scale_confirmed_cases=confirmed_cases_scaling(result_dir, reported_data_dir, start_date, simulation_time, timestep)
     print(scale_confirmed_cases)
     # Run simulation with new contact scaling.
-    run_real_scenario(data_dir, save_dir, start_date, simulation_time,
+    run_real_scenario(result_dir, data_dir, start_date, simulation_time,
                       timestep, scale_contacts)
-    plot_real_scenario(save_dir, plot_dir, start_date,
+
+    
+    plot_covid_inspired_scenario(result_dir, reported_data_dir, plot_dir, start_date,
                        simulation_time, timestep)
 
 
@@ -88,11 +93,24 @@ def october_scenario(timestep):
     start_date = '2020-10-1'
     simulation_time = 45
 
-    data_dir = "./data"
-    save_dir = f"./results/real/"
-    plot_dir = f"./plots/covid_scenario/{start_date}/"
+    # data_dir = "./data"
+    # result_dir = f"./results/real/"
+    # plot_dir = f"./plots/covid_scenario/{start_date}/"
 
-    run_scenario(data_dir, save_dir, plot_dir, start_date, simulation_time,
+        # Paths are valid if file is executed e.g. in memilio/cpp/simulations/IDE_paper.
+    # Path where simulation results (generated with ide_real_scenario.cpp) are stored. 
+    result_dir = os.path.join(os.path.dirname(
+        __file__), "../../..", "data/simulation_results/covid_inspired_scenario/")
+    
+    # Path where data for contacts and reported data is stored.
+    data_dir =  os.path.join(os.path.dirname(
+        __file__), "../../..", "data/")
+    
+    # Path where plots will be stored. 
+    plot_dir =  os.path.join(os.path.dirname(
+        __file__), "../../..", "data/plots/covid_inspired_scenario/")
+
+    run_scenario(result_dir, data_dir, plot_dir, start_date, simulation_time,
                  timestep)
 
 
@@ -104,5 +122,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()

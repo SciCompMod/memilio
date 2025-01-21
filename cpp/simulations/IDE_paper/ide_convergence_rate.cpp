@@ -266,7 +266,8 @@ mio::TimeSeries<ScalarType> remove_time_points(const mio::TimeSeries<ScalarType>
 * @returns Any io errors that happen. 
 */
 mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarType ode_exponent,
-                                         ScalarType ide_exponent, ScalarType save_exponent, std::string result_dir)
+                                         std::vector<ScalarType> ide_exponents, ScalarType save_exponent,
+                                         std::string result_dir)
 {
     /**********************************
     *         ODE simulation          *
@@ -380,141 +381,148 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
     /**********************************
     *         IDE simulation          *
     **********************************/
+    if (!ide_exponents.empty()) {
+        // Set up IDE model.
 
-    // Start IDE model simulation at half of tmax.
-    ScalarType t0_ide = (tmax - t0) / 2.;
-    // Number of deaths will be set according to the ODE model later in the function where also the transitions are calculated.
-    ScalarType deaths_init_value = 0.;
+        // Start IDE model simulation at half of tmax.
+        ScalarType t0_ide = (tmax - t0) / 2.;
+        // Number of deaths will be set according to the ODE model later in the function where also the transitions are calculated.
+        ScalarType deaths_init_value = 0.;
 
-    // Initialize model.
-    mio::TimeSeries<ScalarType> init_transitions((int)mio::isecir::InfectionTransition::Count);
-    size_t num_agegroups = 1;
-    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_population =
-        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups),
-                                                         simulation_parameter["total_population"]);
-    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
-        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), deaths_init_value);
-    mio::isecir::Model model_ide(std::move(init_transitions), total_population, deaths, num_agegroups);
+        // Initialize model.
+        mio::TimeSeries<ScalarType> init_transitions((int)mio::isecir::InfectionTransition::Count);
+        size_t num_agegroups = 1;
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_population =
+            mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups),
+                                                             simulation_parameter["total_population"]);
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+            mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), deaths_init_value);
+        mio::isecir::Model model_ide(std::move(init_transitions), total_population, deaths, num_agegroups);
 
-    // Set parameters.
-    // Contact matrix; contact_matrix was already defined for ODE.
-    model_ide.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+        // Set parameters.
+        // Contact matrix; contact_matrix was already defined for ODE.
+        model_ide.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    // To compare with the ODE model we use ExponentialSurvivalFunctions functions as TransitionDistributions.
-    // We set the parameters so that they correspond to the above ODE model.
-    mio::ExponentialSurvivalFunction exponential(10.0);
-    mio::StateAgeFunctionWrapper delaydistribution(exponential);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib((int)mio::isecir::InfectionTransition::Count,
-                                                               delaydistribution);
-    // ExposedToInfectedNoSymptoms
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_distribution_parameter(
-        1. / model_ode.parameters.get<mio::osecir::TimeExposed<ScalarType>>()[(mio::AgeGroup)0]);
-    // InfectedNoSymptomsToInfectedSymptoms
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-        .set_distribution_parameter(
-            1. / model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0]);
-    // InfectedNoSymptomsToRecovered
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered].set_distribution_parameter(
-        1. / model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0]);
-    // InfectedSymptomsToInfectedSevere
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]
-        .set_distribution_parameter(
+        // To compare with the ODE model we use ExponentialSurvivalFunctions functions as TransitionDistributions.
+        // We set the parameters so that they correspond to the above ODE model.
+        mio::ExponentialSurvivalFunction exponential(10.0);
+        mio::StateAgeFunctionWrapper delaydistribution(exponential);
+        std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib((int)mio::isecir::InfectionTransition::Count,
+                                                                   delaydistribution);
+        // ExposedToInfectedNoSymptoms
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_distribution_parameter(
+            1. / model_ode.parameters.get<mio::osecir::TimeExposed<ScalarType>>()[(mio::AgeGroup)0]);
+        // InfectedNoSymptomsToInfectedSymptoms
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
+            .set_distribution_parameter(
+                1. / model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0]);
+        // InfectedNoSymptomsToRecovered
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]
+            .set_distribution_parameter(
+                1. / model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0]);
+        // InfectedSymptomsToInfectedSevere
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]
+            .set_distribution_parameter(
+                1. / model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0]);
+        // InfectedSymptomsToRecovered
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered].set_distribution_parameter(
             1. / model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0]);
-    // InfectedSymptomsToRecovered
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered].set_distribution_parameter(
-        1. / model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0]);
-    // InfectedSevereToInfectedCritical
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]
-        .set_distribution_parameter(
+        // InfectedSevereToInfectedCritical
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]
+            .set_distribution_parameter(
+                1. / model_ode.parameters.get<mio::osecir::TimeInfectedSevere<ScalarType>>()[(mio::AgeGroup)0]);
+        // InfectedSevereToRecovered
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered].set_distribution_parameter(
             1. / model_ode.parameters.get<mio::osecir::TimeInfectedSevere<ScalarType>>()[(mio::AgeGroup)0]);
-    // InfectedSevereToRecovered
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered].set_distribution_parameter(
-        1. / model_ode.parameters.get<mio::osecir::TimeInfectedSevere<ScalarType>>()[(mio::AgeGroup)0]);
-    // InfectedCriticalToDead
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead].set_distribution_parameter(
-        1. / model_ode.parameters.get<mio::osecir::TimeInfectedCritical<ScalarType>>()[(mio::AgeGroup)0]);
-    // InfectedCriticalToRecovered
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_distribution_parameter(
-        1. / model_ode.parameters.get<mio::osecir::TimeInfectedCritical<ScalarType>>()[(mio::AgeGroup)0]);
+        // InfectedCriticalToDead
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead].set_distribution_parameter(
+            1. / model_ode.parameters.get<mio::osecir::TimeInfectedCritical<ScalarType>>()[(mio::AgeGroup)0]);
+        // InfectedCriticalToRecovered
+        vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_distribution_parameter(
+            1. / model_ode.parameters.get<mio::osecir::TimeInfectedCritical<ScalarType>>()[(mio::AgeGroup)0]);
 
-    model_ide.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
+        model_ide.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
-    // Set probabilities.
-    std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.);
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] =
-        1 - model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0];
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] =
-        model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0];
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere)] =
-        model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0];
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)] =
-        1 - model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0];
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical)] =
-        model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0];
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToRecovered)] =
-        1 - model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0];
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)] =
-        model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0];
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)] =
-        1 - model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0];
+        // Set probabilities.
+        std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.);
+        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
+        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
+        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] =
+            1 - model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0];
+        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] =
+            model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0];
+        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere)] =
+            model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0];
+        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)] =
+            1 - model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0];
+        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical)] =
+            model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0];
+        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToRecovered)] =
+            1 - model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0];
+        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)] =
+            model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0];
+        vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)] =
+            1 - model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0];
 
-    model_ide.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
+        model_ide.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
-    // Set further parameters.
-    mio::ConstantFunction constfunc_proboncontact(
-        model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()[(mio::AgeGroup)0]);
-    mio::StateAgeFunctionWrapper proboncontact(constfunc_proboncontact);
-    model_ide.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(proboncontact);
+        // Set further parameters.
+        mio::ConstantFunction constfunc_proboncontact(
+            model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()[(mio::AgeGroup)0]);
+        mio::StateAgeFunctionWrapper proboncontact(constfunc_proboncontact);
+        model_ide.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(proboncontact);
 
-    mio::ConstantFunction constfunc_reltransnosympt(
-        model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()[(mio::AgeGroup)0]);
-    mio::StateAgeFunctionWrapper reltransnosympt(constfunc_reltransnosympt);
-    model_ide.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(reltransnosympt);
+        mio::ConstantFunction constfunc_reltransnosympt(
+            model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()[(mio::AgeGroup)0]);
+        mio::StateAgeFunctionWrapper reltransnosympt(constfunc_reltransnosympt);
+        model_ide.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(reltransnosympt);
 
-    mio::ConstantFunction constfunc_riskofinf(
-        model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[(mio::AgeGroup)0]);
-    mio::StateAgeFunctionWrapper riskofinf(constfunc_riskofinf);
-    model_ide.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(riskofinf);
+        mio::ConstantFunction constfunc_riskofinf(
+            model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[(mio::AgeGroup)0]);
+        mio::StateAgeFunctionWrapper riskofinf(constfunc_riskofinf);
+        model_ide.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(riskofinf);
 
-    // for (ScalarType ide_exponent : ide_exponents) {
+        // Compute initial flows and simulate for each ide_exponent.
+        for (ScalarType ide_exponent : ide_exponents) {
 
-    // The IDE model is simulated using a fixed step size dt=10^{-ide_exponent}.
-    ScalarType dt_ide = pow(10, -ide_exponent);
+            // The IDE model is simulated using a fixed step size dt=10^{-ide_exponent}.
+            ScalarType dt_ide = pow(10, -ide_exponent);
 
-    // Compute initial flows from results of ODE simulation and set initial values for populations.
-    compute_initial_flows_for_ide_from_ode(model_ode, model_ide, secihurd_ode, t0_ide, dt_ide);
+            // Compute initial flows from results of ODE simulation and set initial values for populations.
+            compute_initial_flows_for_ide_from_ode(model_ode, model_ide, secihurd_ode, t0_ide, dt_ide);
 
-    model_ide.check_constraints(dt_ide);
+            model_ide.check_constraints(dt_ide);
 
-    // Carry out simulation.
-    std::cout << "Starting simulation with IDE model. \n";
-    mio::isecir::Simulation sim(model_ide, dt_ide);
-    sim.advance(tmax);
+            // Carry out simulation.
+            std::cout << "Starting simulation with IDE model. \n";
+            mio::isecir::Simulation sim(model_ide, dt_ide);
+            sim.advance(tmax);
 
-    std::cout << "Initialization method of the IDE model: " << sim.get_model().get_initialization_method_compartments()
-              << "\n";
-    if (!result_dir.empty()) {
-        // Save compartments.
-        mio::TimeSeries<ScalarType> secihurd_ide = sim.get_result();
-        auto save_result_status_ide =
-            mio::save_result({secihurd_ide}, {0}, 1,
-                             result_dir + "result_ide_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
-                                 "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
-        // Save flows.
-        mio::TimeSeries<ScalarType> secihurd_ide_flows = sim.get_transitions();
-        auto save_result_status_ide_flows =
-            mio::save_result({remove_time_points(secihurd_ide_flows, dt_ide, 1. / dt_ide)}, {0}, 1,
-                             result_dir + "result_ide_flows_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
-                                 "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
-        if (save_result_status_ide && save_result_status_ide_flows) {
-            std::cout << "Successfully saved the IDE simulation results. \n\n";
-        }
-        else {
-            std::cout << "Error occured while saving the IDE simulation results. \n";
-            return mio::failure(mio::StatusCode::InvalidValue,
-                                "Error occured while saving the IDE simulation results.");
+            std::cout << "Initialization method of the IDE model: "
+                      << sim.get_model().get_initialization_method_compartments() << "\n";
+
+            if (!result_dir.empty()) {
+                // Save compartments.
+                mio::TimeSeries<ScalarType> secihurd_ide = sim.get_result();
+                auto save_result_status_ide =
+                    mio::save_result({secihurd_ide}, {0}, 1,
+                                     result_dir + "result_ide_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
+                                         "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
+                // Save flows.
+                mio::TimeSeries<ScalarType> secihurd_ide_flows = sim.get_transitions();
+                auto save_result_status_ide_flows =
+                    mio::save_result({remove_time_points(secihurd_ide_flows, dt_ide, 1. / dt_ide)}, {0}, 1,
+                                     result_dir + "result_ide_flows_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
+                                         "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
+                if (save_result_status_ide && save_result_status_ide_flows) {
+                    std::cout << "Successfully saved the IDE simulation results. \n\n";
+                }
+                else {
+                    std::cout << "Error occured while saving the IDE simulation results. \n";
+                    return mio::failure(mio::StatusCode::InvalidValue,
+                                        "Error occured while saving the IDE simulation results.");
+                }
+            }
         }
     }
     return mio::success();
@@ -523,6 +531,7 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
 int main()
 {
     // Directory where results will be stored. If this string is empty, results will not be saved.
+    // Path is valid if file is executed e.g. in memilio/build/bin.
     std::string result_dir = "../../data/simulation_results/convergence/";
 
     // General set up.
@@ -536,14 +545,11 @@ int main()
     // The IDE model will be simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
     std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
 
-    for (ScalarType ide_exponent : ide_exponents) {
-        mio::IOResult<void> result =
-            simulate_ode_and_ide(t0, tmax, ode_exponent, ide_exponent, save_exponent, result_dir);
+    mio::IOResult<void> result = simulate_ode_and_ide(t0, tmax, ode_exponent, ide_exponents, save_exponent, result_dir);
 
-        if (!result) {
-            printf("%s\n", result.error().formatted_message().c_str());
-            return -1;
-        }
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+        return -1;
     }
 
     return 0;
