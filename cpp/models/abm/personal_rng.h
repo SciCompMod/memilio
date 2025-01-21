@@ -22,7 +22,7 @@
 #define MIO_ABM_PERSONAL_RNG_H
 
 #include "memilio/utils/random_number_generator.h"
-#include "abm/person_id.h"
+#include "models/abm/person_id.h"
 
 namespace mio
 {

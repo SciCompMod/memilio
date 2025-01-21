@@ -136,11 +136,17 @@ TEST_F(TestPerson, quarantine)
         .WillOnce(testing::Return(0.6)) // goto_school_hour
         .WillRepeatedly(testing::Return(1.0)); // ViralLoad draws
 
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>> mock_logNorm_dist;
+
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(7);
     auto dt        = mio::abm::hours(1);
-    infection_parameters
-        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
-        0.5 * dt.days();
+    EXPECT_CALL(mock_logNorm_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(1))
+        .WillOnce(testing::Return(1.0)) // TimeInfectedNoSymptomsToSymptoms
+        .WillOnce(testing::Return(1.0)) //IncubationTime
+        .WillOnce(testing::Return(0.5 * dt.days())) // TimeInfectedSymptomsToRecovered
+        .WillRepeatedly(testing::Return(1.0));
+
     infection_parameters.get<mio::abm::AgeGroupGotoSchool>().set_multiple({age_group_5_to_14}, true);
     infection_parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
 

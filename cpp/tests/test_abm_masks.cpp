@@ -64,7 +64,6 @@ TEST_F(TestMasks, changeMask)
     EXPECT_EQ(mask.get_type(), mio::abm::MaskType::Surgical);
     EXPECT_EQ(mask.get_time_used(t), mio::abm::hours(0));
 }
-
 /**
  * @brief Test mask protection during person interactions.
  */
@@ -72,8 +71,9 @@ TEST_F(TestMasks, maskProtection)
 {
     mio::abm::Parameters params(num_age_groups);
 
-    // Set incubation period to two days so that newly infected person is still exposed
-    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 2.;
+    // set time for state transition to two days so that the newly infected person is still exposed
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>> mock_logNorm_dist;
+    EXPECT_CALL(mock_logNorm_dist.get_mock(), invoke).WillRepeatedly(testing::Return(2));
 
     // Setup location and persons for the test
     auto t = mio::abm::TimePoint(0);

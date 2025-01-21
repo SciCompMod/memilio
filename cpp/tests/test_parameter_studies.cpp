@@ -185,7 +185,7 @@ TEST(ParameterStudies, test_normal_distribution)
     parameter_dist_normal_1.log_stddev_changes(false); // only avoid warning output in tests
 
     double std_dev_demanded = parameter_dist_normal_1.get_standard_dev();
-    parameter_dist_normal_1.get_sample();
+    parameter_dist_normal_1.get_sample(mio::thread_local_rng());
 
     EXPECT_GE(std_dev_demanded, parameter_dist_normal_1.get_standard_dev());
 
@@ -210,14 +210,14 @@ TEST(ParameterStudies, test_normal_distribution)
 
     // check that sampling only occurs in boundaries
     for (int i = 0; i < 1000; i++) {
-        double val = parameter_dist_normal_2.get_sample();
+        double val = parameter_dist_normal_2.get_sample(mio::thread_local_rng());
         EXPECT_GE(parameter_dist_normal_2.get_upper_bound() + 1e-10, val);
         EXPECT_LE(parameter_dist_normal_2.get_lower_bound() - 1e-10, val);
     }
 
-    //degenerate case: ub == lb
-    mio::ParameterDistributionNormal dist3(3.0, 3.0, 3.0, 0.0);
-    EXPECT_EQ(dist3.get_sample(), 3.0);
+    //degenerate case: ub == lb //For MSVC the normal distribution cannot have a value of 0.0 for sigma
+    mio::ParameterDistributionNormal dist3(0.999999999 * 3.0, 1.000000001 * 3.0, 3.0, 0.00000001);
+    EXPECT_NEAR(dist3.get_sample(mio::thread_local_rng()), 3.0, 1e-07);
 }
 
 TEST(ParameterStudies, test_uniform_distribution)
@@ -232,7 +232,7 @@ TEST(ParameterStudies, test_uniform_distribution)
 
     // check that sampling only occurs in boundaries
     for (int i = 0; i < 1000; i++) {
-        double val = parameter_dist_unif.get_sample();
+        double val = parameter_dist_unif.get_sample(mio::thread_local_rng());
         EXPECT_GE(parameter_dist_unif.get_upper_bound() + 1e-10, val);
         EXPECT_LE(parameter_dist_unif.get_lower_bound() - 1e-10, val);
     }
@@ -246,20 +246,20 @@ TEST(ParameterStudies, test_predefined_samples)
 
     // set predefined sample (can be out of [min,max]) and get it
     parameter_dist_unif.add_predefined_sample(2);
-    double var = parameter_dist_unif.get_sample();
+    double var = parameter_dist_unif.get_sample(mio::thread_local_rng());
     EXPECT_EQ(var, 2);
 
     // predefined sample was deleted, get real sample which cannot be 2 due to [min,max]
-    var = parameter_dist_unif.get_sample();
+    var = parameter_dist_unif.get_sample(mio::thread_local_rng());
     EXPECT_NE(var, 2);
 
     // set predefined sample (can be out of [min,max]) and get it
     parameter_dist_normal.add_predefined_sample(2);
-    var = parameter_dist_normal.get_sample();
+    var = parameter_dist_normal.get_sample(mio::thread_local_rng());
     EXPECT_EQ(var, 2);
 
     // predefined sample was deleted, get real sample which cannot be 2 due to [min,max]
-    var = parameter_dist_normal.get_sample();
+    var = parameter_dist_normal.get_sample(mio::thread_local_rng());
     EXPECT_NE(var, 2);
 }
 
