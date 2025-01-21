@@ -443,9 +443,9 @@ public:
         return m_time_since_transmission;
     };
 
-private:
     void change_time_since_transmission(const TimeSpan dt, TimePoint t);
 
+private:
     LocationId m_location; ///< Current Location of the Person.
     LocationType m_location_type; ///< Type of the current Location.
     std::vector<LocationId> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the

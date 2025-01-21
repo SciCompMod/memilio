@@ -863,10 +863,10 @@ def run_abm_simulation(sim_num):
     print(f'Time to write output h5: {end - start} seconds')
     start = time.time()
     # write simulation results to txt file
-    write_results_to_file(os.path.join(
-        output_path, str(sim_num) + '_output.txt'), log)
-    end = time.time()
-    print(f'Time to write output txt: {end - start} seconds')
+    # write_results_to_file(os.path.join(
+    #     output_path, str(sim_num) + '_output.txt'), log)
+    # end = time.time()
+    # print(f'Time to write output txt: {end - start} seconds')
     # write location mapping to txt file
     write_location_mapping_to_file(
         os.path.join(output_path, str(sim_num) + '_location_mapping.txt'), mapping)

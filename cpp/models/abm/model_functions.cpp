@@ -96,6 +96,7 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
         }
     }
     person.add_time_at_location(dt);
+    person.change_time_since_transmission(dt, t);
 }
 
 void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExposureRates& local_contact_exposure,
