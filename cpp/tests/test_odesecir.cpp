@@ -1492,7 +1492,7 @@ TEST_F(ModelTestOdeSecir, set_confirmed_cases_data_with_ICU)
 
     // Since, TimeInfectedCritical is 1, the number of ICU cases is the difference of confirmed cases between two days, which is 1.
     // We only have an entry for age group 2. All other age groups should be zero.
-    for (int i = 0; i < 6; ++i) {
+    for (size_t i = 0; i < num_age_groups; ++i) {
         const auto expected_value = (i == 2) ? 1.0 : 0.0;
         const auto actual_value =
             model_vector[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedCritical}].value();

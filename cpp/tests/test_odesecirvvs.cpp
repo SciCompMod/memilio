@@ -593,8 +593,8 @@ TEST(TestOdeSECIRVVS, set_divi_data_invalid_dates)
 
 TEST(TestOdeSECIRVVS, set_confirmed_cases_data_with_ICU)
 {
-    auto num_age_groups = 6;
-    auto model          = mio::osecirvvs::Model<double>(num_age_groups);
+    const auto num_age_groups = 6;
+    auto model                = mio::osecirvvs::Model<double>(num_age_groups);
     model.populations.array().setConstant(1);
 
     // set params
@@ -632,7 +632,7 @@ TEST(TestOdeSECIRVVS, set_confirmed_cases_data_with_ICU)
 
     // Since, TimeInfectedCritical is 1, the number of ICU cases is the difference of confirmed cases between two days, which is 1.
     // We only have an entry for age group 2. All other age groups should be zero.
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < num_age_groups; ++i) {
         const auto expected_value = (i == 2) ? 1.0 : 0.0;
 
         auto actual_value_naive =
