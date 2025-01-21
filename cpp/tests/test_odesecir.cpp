@@ -1457,42 +1457,47 @@ TEST(TestOdeSecir, set_divi_data_invalid_dates)
 
 TEST_F(ModelTestOdeSecir, set_confirmed_cases_data_with_ICU)
 {
+    // set params
+    for (auto age_group = mio::AgeGroup(0); age_group < (mio::AgeGroup)num_age_groups; age_group++) {
+        model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[age_group]         = 1.0;
+        model.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[age_group] = 1.0;
+        model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[age_group]      = 1.0;
+        model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[age_group]        = 1.0;
+        model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[age_group]      = 1.0;
+    }
+
     // read case data
     auto case_data =
         mio::read_confirmed_cases_data(mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json")).value();
 
     // Change dates of the case data so that no ICU data is available at that time.
+    // Also, increase the number of confirmed cases by 1 each day.
     const auto t0 = mio::Date(2025, 1, 1);
     auto day_add  = 0;
     for (auto& entry : case_data) {
-        entry.date = offset_date_by_days(t0, day_add);
+        entry.date          = offset_date_by_days(t0, day_add);
+        entry.num_confirmed = day_add;
         day_add++;
-    }
-
-    // ICU occupancy before function is called
-    auto ICU_before = std::vector<double>(size_t(num_age_groups), 0.0);
-    for (auto age_group = mio::AgeGroup(0); age_group < (mio::AgeGroup)num_age_groups; age_group++) {
-        ICU_before[(size_t)age_group] =
-            model.populations[{age_group, mio::osecir::InfectionState::InfectedCritical}].value();
     }
 
     // get day in mid of the data
     auto mid_day = case_data[(size_t)case_data.size() / 2].date;
 
+    // calculate ICU values using set_confirmed_cases_data
     auto model_vector       = std::vector<mio::osecir::Model<double>>{model};
     auto scaling_factor_inf = std::vector<double>(size_t(model.parameters.get_num_groups()), 1.0);
     EXPECT_THAT(
         mio::osecir::details::set_confirmed_cases_data(model_vector, case_data, {1002}, mid_day, scaling_factor_inf),
         IsSuccess());
 
-    // Get new setted ICU compartment
-    auto ICU_after = std::vector<double>(size_t(num_age_groups), 0.0);
-    for (auto age_group = mio::AgeGroup(0); age_group < (mio::AgeGroup)num_age_groups; age_group++) {
-        ICU_after[(size_t)age_group] =
-            model_vector[0].populations[{age_group, mio::osecir::InfectionState::InfectedCritical}].value();
+    // Since, TimeInfectedCritical is 1, the number of ICU cases is the difference of confirmed cases between two days, which is 1.
+    // We only have an entry for age group 2. All other age groups should be zero.
+    for (int i = 0; i < 6; ++i) {
+        const auto expected_value = (i == 2) ? 1.0 : 0.0;
+        const auto actual_value =
+            model_vector[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedCritical}].value();
+        EXPECT_NEAR(actual_value, expected_value, 1e-10);
     }
-    // Test if ICU was changed
-    EXPECT_NE(ICU_before, ICU_after);
 }
 
 #endif
