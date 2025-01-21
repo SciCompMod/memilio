@@ -48,14 +48,10 @@ TEST_F(TestLocation, getId)
     EXPECT_EQ(location.get_id(), mio::abm::LocationId(0));
 }
 
-/**
- * @brief Test that the computation of space per person relative to capacity works correctly.
- */
 TEST_F(TestLocation, computeSpacePerPersonRelative)
 {
     using testing::Return;
 
-    // Create a location of type Home with 3 cells.
     mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 3);
     home.set_capacity(4, 264, 0); // Capacity for Cell 1
     home.set_capacity(2, 132, 1); // Capacity for Cell 2

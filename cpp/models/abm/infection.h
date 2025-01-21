@@ -110,6 +110,18 @@ public:
     InfectionState get_infection_state(TimePoint t) const;
 
     /**
+     * @brief Get the starting time  of the Infection.
+     * @return starting time point of the Infection.
+     */
+    TimePoint get_infection_start() const;
+
+    /**
+     * @brief Get the end time  of the Infection.
+     * @return End time point of the Infection i.e. time point of recovery or death.
+     */
+    TimePoint get_infection_end() const;
+
+    /**
      * @brief Set the Infection to detected.
      */
     void set_detected();
@@ -135,6 +147,14 @@ public:
             .add("log_norm_beta", m_log_norm_beta)
             .add("detected", m_detected);
     }
+
+    /**
+     * @brief Get the the time in #InfectionState. 
+     * If the infection state is not part of the infection course, the time is zero.
+     * @param[in] state InfectionState of the query.
+     * @return TimeSpan spent in state.
+     */
+    TimeSpan get_time_in_state(InfectionState state);
 
 private:
     friend DefaultFactory<Infection>;
@@ -184,6 +204,7 @@ private:
     ScalarType m_log_norm_alpha,
         m_log_norm_beta; ///< Parameters for the infectivity mapping, which is modelled through an invlogit function.
     bool m_detected; ///< Whether an Infection is detected or not.
+    TimeSpan m_time_is_infected;
 };
 
 } // namespace abm
