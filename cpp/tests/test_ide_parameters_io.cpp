@@ -96,13 +96,13 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
     std::vector<ScalarType> deaths = {
         1, 2.471428571455, 26.34999999999, 603.621428571465, 3972.41428571431, 7668.84999999998};
 
-    std::vector<ScalarType> total_confirmed_cases = {10269.2857142857, 29615.8571428571, 185321.571428571,
-                                                     215386.428571429, 77163.5714285714, 35588.4285714286};
+    std::vector<ScalarType> total_confirmed_cases_test = {10269.2857142857, 29615.8571428571, 185321.571428571,
+                                                          215386.428571429, 77163.5714285714, 35588.4285714286};
 
     for (mio::AgeGroup group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
         int Di = model.get_state_flat_index((Eigen::Index)mio::isecir::InfectionState::Dead, group);
-        EXPECT_NEAR(model.m_populations.get_value(0)[Di], deaths[size_t(group)], 1e-4);
-        EXPECT_NEAR(model.m_total_confirmed_cases[group], total_confirmed_cases[size_t(group)], 1e-4);
+        EXPECT_NEAR(model.populations.get_value(0)[Di], deaths[size_t(group)], 1e-4);
+        EXPECT_NEAR(model.total_confirmed_cases[group], total_confirmed_cases_test[size_t(group)], 1e-4);
     }
 
     // Compare transitions at last time point with results from a previous run that are given here.
@@ -119,10 +119,10 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
         80.130989648839, 79.803571428575, 39.476374533415, 39.476374533415, 19.550404043081, 19.550404043081;
 
     mio::isecir::Simulation sim(model, dt);
-    ASSERT_EQ(compare.size(), model.m_transitions.get_last_value().size());
+    ASSERT_EQ(compare.size(), model.transitions.get_last_value().size());
 
     for (int j = 0; j < compare.size(); j++) {
-        ASSERT_NEAR(compare[j], model.m_transitions.get_last_value()[j], 1e-7);
+        ASSERT_NEAR(compare[j], model.transitions.get_last_value()[j], 1e-7);
     }
 }
 
@@ -172,8 +172,8 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
     for (size_t group = 0; group < num_agegroups; ++group) {
         int INStISy = model.get_transition_flat_index(
             (Eigen::Index)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms, group);
-        for (Eigen::Index i = 0; i < model.m_transitions.get_num_time_points() - 2; i++) {
-            EXPECT_EQ(0., model.m_transitions.get_value(i)[INStISy]);
+        for (Eigen::Index i = 0; i < model.transitions.get_num_time_points() - 2; i++) {
+            EXPECT_EQ(0., model.transitions.get_value(i)[INStISy]);
         }
     }
 

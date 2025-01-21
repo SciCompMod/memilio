@@ -84,7 +84,7 @@ int main(int argc, char** argv)
             init.add_time_point(init.get_last_time() + dt,
                                 Vec::Constant((int)mio::isecir::InfectionTransition::Count, 1. * dt));
         }
-        model.m_transitions = init;
+        model.transitions = init;
     }
     else {
         // Use the real data for initialization.

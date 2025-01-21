@@ -42,7 +42,7 @@ public:
     /**
     * @brief Constructor to create an IDE-SECIR model.
     *
-    * @param[in, out] init TimeSeries with the initial values of the number of individuals, 
+    * @param[in, out] transitions_init TimeSeries with the initial values of the number of individuals, 
     *   which transit within one timestep dt from one compartment to another.
     *   Possible transitions are specified in #InfectionTransition%s.
     *   Considered time points should have the distance dt. The last time point determines the start time t0 of the 
@@ -50,14 +50,14 @@ public:
     *   The time history must reach a certain point in the past so that the simulation can be performed.
     *   A warning is displayed if the condition is violated.
     * @param[in] N_init A vector, containing the populations of the considered region, for every AgeGroup.
-    * @param[in] deaths A vector, containing the total number of deaths at time t0, for every AgeGroup.
+    * @param[in] deaths_init A vector, containing the total number of deaths at time t0, for every AgeGroup.
     * @param[in] num_agegroups The number of AgeGroups.
-    * @param[in] total_confirmed_cases A vector, containing the total confirmed cases at time t0 can be set if it 
+    * @param[in] total_confirmed_cases_init A vector, containing the total confirmed cases at time t0 can be set if it 
     *   should be used for initialization, for every AgeGroup.
     */
-    Model(TimeSeries<ScalarType>&& init, CustomIndexArray<ScalarType, AgeGroup> N_init,
-          CustomIndexArray<ScalarType, AgeGroup> deaths, size_t num_agegroups,
-          CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases = CustomIndexArray<ScalarType, AgeGroup>());
+    Model(TimeSeries<ScalarType>&& transitions_init, CustomIndexArray<ScalarType, AgeGroup> N_init,
+          CustomIndexArray<ScalarType, AgeGroup> deaths_init, size_t num_agegroups,
+          CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases_init = CustomIndexArray<ScalarType, AgeGroup>());
 
     // ---- Additional functionality such as constraint checking, setters and getters, etc. ----
     /**
@@ -67,13 +67,13 @@ public:
     bool check_constraints(ScalarType dt) const;
 
     /**
-    * @brief Returns a flat index for the InfectionTransition TimeSeries.
+    * @brief Returns a flat index for the TimeSeries transitions which contains values for the #InfectionTransition%s.
     *
-    * In the TimeSeries we store a vector for each time point. In this vector we store the different 
+    * In the TimeSeries we store a vector for each time point. In this vector we store values for the different 
     * #InfectionTransition%s for every AgeGroup.
-    * This function is used to get the right index in this vector for a specific AgeGroup and InfectionTransition.
+    * This function is used to get the right index in this vector for a specific AgeGroup and #InfectionTransition.
     *
-    * @param[in] transition_idx Index determining which InfectionTransition we want to evaluate.
+    * @param[in] transition_idx Index determining which #InfectionTransition we want to evaluate.
     * @param[in] agegroup The agegroup for which we want to evaluate.
     */
 
@@ -83,13 +83,13 @@ public:
     }
 
     /**
-    * @brief Returns a flat index for the InfectionState TimeSeries.
+    * @brief Returns a flat index for the TimeSeries populations which contains values for the #InfectionState%s.
     *
-    * In the TimeSeries we store a vector for each time point. In this vector we store the different InfectionStates 
-    * for every AgeGroup.
-    * This function is used to get the right index in this vector for a specific AgeGroup and InfectionState.
+    * In the TimeSeries we store a vector for each time point. In this vector we store values for the 
+    * different #InfectionState%s for every AgeGroup.
+    * This function is used to get the right index in this vector for a specific AgeGroup and #InfectionState.
     *
-    * @param[in] state_idx Index at which InfectionState we want to evaluate.
+    * @param[in] state_idx Index at which #InfectionState we want to evaluate.
     * @param[in] agegroup The agegroup for which we want to evaluate.
     */
     int get_state_flat_index(Eigen::Index state_idx, AgeGroup agegroup) const
@@ -100,7 +100,7 @@ public:
     /**
      * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.
      *
-     * This determines how many initial values we need for the flows.
+     * This determines how many initial values we need for the transitions.
      * It may be possible to run the simulation with fewer time points than the value of the global support_max, 
      * but this number ensures that it is possible.
      *
@@ -142,15 +142,15 @@ public:
 
     // ---- Public parameters. ----
     ParameterSet parameters{AgeGroup(m_num_agegroups)}; ///< ParameterSet of Model Parameters.
-    // Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the
+    // Attention: populations and transitions do not necessarily have the same number of time points due to the
     // initialization part.
     TimeSeries<ScalarType>
-        m_transitions; ///< TimeSeries containing points of time and the corresponding number of transitions for every
-    // AgeGroup.
-    TimeSeries<ScalarType> m_populations; ///< TimeSeries containing points of time and the corresponding number of
+        transitions; ///< TimeSeries containing points of time and the corresponding number of individuals transitioning from
+    // one #InfectionState to another as defined in #InfectionTransition%s for every AgeGroup.
+    TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
         // people in defined #InfectionState%s for every AgeGroup.
     CustomIndexArray<ScalarType, AgeGroup>
-        m_total_confirmed_cases; ///< CustomIndexArray that contains the total number of confirmed cases at time t0 for every AgeGroup.
+        total_confirmed_cases; ///< CustomIndexArray that contains the total number of confirmed cases at time t0 for every AgeGroup.
 
 private:
     // ---- Functionality to calculate the sizes of the compartments for time t0. ----
@@ -165,7 +165,7 @@ private:
      * @param[in] dt Time discretization step size.
      * @param[in] idx_InfectionState Specifies the considered #InfectionState
      * @param[in] group The AgeGroup for which we want to compute.
-     * @param[in] idx_IncomingFlow Specifies the index of the incoming flow to #InfectionState in m_transitions. 
+     * @param[in] idx_IncomingFlow Specifies the index of the incoming flow to #InfectionState in transitions. 
      * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant TransitionDistribution, 
      *              related to a flow from the considered #InfectionState to any other #InfectionState.
      *              This index is also used for related probability.
@@ -185,7 +185,7 @@ private:
      *
      * The values for the compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and 
      * InfectedCritical for time t_0 are calculated using the initial data in form of flows.
-     * Calculated values are stored in m_populations.
+     * Calculated values are stored in populations.
      * 
      * @param[in] dt Time discretization step size.
      */
@@ -214,10 +214,10 @@ private:
 
     // ---- Functionality for the iterations of a simulation. ----
     /**
-    * @brief Computes number of Susceptible%s for the current last time in m_populations.
+    * @brief Computes number of Susceptible%s for the current last time in populations.
     *
     * Number is computed using previous number of Susceptible%s and the force of infection (also from previous timestep).
-    * Number is stored at the matching index in m_populations.
+    * Number is stored at the matching index in populations.
     * @param[in] dt Time discretization step size.    
     */
     void compute_susceptibles(ScalarType dt);
@@ -240,10 +240,10 @@ private:
                       Eigen::Index current_time_index, AgeGroup group);
 
     /**
-     * @brief Computes size of a flow for the current last time value in m_transitions.
+     * @brief Computes size of a flow for the current last time value in transitions.
      * 
      * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the current 
-     * last time value in m_transitions. 
+     * last time value in transitions. 
      *
      * @param[in] idx_InfectionTransitions Specifies the considered flow from #InfectionTransition.
      * @param[in] idx_IncomingFlow Index of the flow in #InfectionTransition, which goes to the considered starting
@@ -256,9 +256,9 @@ private:
                       AgeGroup group);
 
     /**
-     * @brief Sets all required flows for the current last timestep in m_transitions.
+     * @brief Sets all required flows for the current last timestep in transitions.
      *
-     * New values are stored in m_transitions. Most values are computed via the function compute_flow().
+     * New values are stored in transitions. Most values are computed via the function compute_flow().
      *
      * @param[in] dt Time step.
      */
@@ -267,7 +267,7 @@ private:
     /**
      * @brief Updates the values of one compartment using flows.
      *
-     * New value is stored in m_populations. The value is calculated using the compartment size in the previous 
+     * New value is stored in populations. The value is calculated using the compartment size in the previous 
      * time step and the related flows of the current time step. 
      * Therefore the flows of the current time step should be calculated before using this function.
      */
@@ -278,7 +278,7 @@ private:
     /**
      * @brief Updates the values of all compartments except Susceptible at initialization.
      *
-     * New values are stored in m_populations. The values are calculated using the compartment size in the previous 
+     * New values are stored in populations. The values are calculated using the compartment size in the previous 
      * time step and the related flows of the current time step. 
      * Therefore the flows of the current time step should be calculated before using this function.
      * 
@@ -286,14 +286,14 @@ private:
     void update_compartments();
 
     /**
-     * @brief Computes force of infection for the current last time in m_transitions.
+     * @brief Computes force of infection for the current last time in transitions.
      * 
      * Computed value is stored in m_forceofinfection.
      * 
      * @param[in] dt Time discretization step size.          
      * @param[in] initialization If true we are in the case of the initialization of the model. 
      *      For this we need forceofinfection at time point t0-dt and not at the current last time 
-     *      (given by m_transitions) as in the other time steps.
+     *      (given by transitions) as in the other time steps.
      */
     void compute_forceofinfection(ScalarType dt, bool initialization = false);
 

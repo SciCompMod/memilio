@@ -30,18 +30,18 @@ namespace isecir
 
 void Simulation::advance(ScalarType tmax)
 {
-    mio::log_info("Simulating IDE-SECIR from t0 = {} until tmax = {} with dt = {} .",
-                  m_model->m_transitions.get_last_time(), tmax, m_dt);
+    mio::log_info("Simulating IDE-SECIR from t0 = {} until tmax = {} with dt = {}.",
+                  m_model->transitions.get_last_time(), tmax, m_dt);
     m_model->set_transitiondistributions_support_max(m_dt);
     m_model->set_transitiondistributions_derivative(m_dt);
     m_model->set_transitiondistributions_in_forceofinfection(m_dt);
     m_model->initial_compute_compartments(m_dt);
 
     // For every time step:
-    while (m_model->m_transitions.get_last_time() < tmax - m_dt / 2) {
+    while (m_model->transitions.get_last_time() < tmax - m_dt / 2) {
 
-        m_model->m_transitions.add_time_point(m_model->m_transitions.get_last_time() + m_dt);
-        m_model->m_populations.add_time_point(m_model->m_populations.get_last_time() + m_dt);
+        m_model->transitions.add_time_point(m_model->transitions.get_last_time() + m_dt);
+        m_model->populations.add_time_point(m_model->populations.get_last_time() + m_dt);
 
         // compute Susceptibles:
         m_model->compute_susceptibles(m_dt);
