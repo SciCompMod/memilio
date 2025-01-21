@@ -30,7 +30,7 @@ from matplotlib.transforms import Affine2D
 
 def read_groundtruth(data_dir, ode_exponent, save_exponent, flows=False):
     """ Read groundtruth from data. We define the groundtruth as the results obtained by the ODE model with timestep dt=1e-6.
-    
+
     @param[in] data_dir Directory where h5 files are stored. 
     @param[in] ode_exponent Exponent that determines time step size via dt =10^{-ode_exponent}.
     @param[in] save_exponent The results of the ODE model were saved using the step size 10^{-save_exponent}.
@@ -80,7 +80,7 @@ def read_data(data_dir, ode_exponent, exponents_ide, flows=False):
     At the moment we are only storing results of the IDE model here. There
     we have an array that contains all results for SECIHURD for all time points
     for each time step size that is investigated.
-    
+
     @param[in] data_dir Directory where h5 files are stored. 
     @param[in] ode_exponent Exponent that determines time step size of ODE simulation via dt =10^{-ode_exponent}.
     @param[in] exponents_ide List of considered exponents that determine time step size of IDE simulation via 
@@ -123,7 +123,7 @@ def read_data(data_dir, ode_exponent, exponents_ide, flows=False):
 
 def compute_l2_norm(timeseries, timestep):
     """ Computes L2 norm of a time series.
-    
+
     @param[in] timeseries Considered timeseries.
     @param[in] Time step size. 
     @returns Norm.
@@ -135,7 +135,7 @@ def compute_l2_norm(timeseries, timestep):
 def compute_relerror_norm_l2(groundtruth, results, save_exponent, timesteps_ide, flows=False):
     """ Computes relative L2 norm of the difference between time series from ODE and time series
     from IDE for all compartments/flows.
-    
+
     @param[in] groundtruth Result obtained with ODE model.
     @param[in] results Results obtained with IDE model fordifferent time step sizes. 
     @param[in] save_exponent The results of the ODE model were saved using the step size 10^{-save_exponent}.
@@ -177,7 +177,7 @@ def compute_relerror_norm_l2(groundtruth, results, save_exponent, timesteps_ide,
 
 def plot_convergence(errors, timesteps_ide, flows=False, save_dir=""):
     """ Plots errors against timesteps with a subplot for each compartment /flow.
-    
+
     @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
     @param[in] timesteps_ide List of time steps used in IDE simulations.
     @param[in] flows Bool that determines whether we consider flows or compartments. Default is False. 
@@ -241,7 +241,7 @@ def plot_convergence(errors, timesteps_ide, flows=False, save_dir=""):
 
 def plot_convergence_oneplot(errors, timesteps_ide, flows=False, save_dir=""):
     """ Plot errors against timesteps. This function creates one plot to depict all compartments/flows, respectively.
-    
+
     @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
     @param[in] timesteps_ide List of time steps used in IDE simulations.
     @param[in] flows Bool that determines whether we consider flows or compartments. Default is False. 
@@ -305,7 +305,7 @@ def plot_convergence_oneplot(errors, timesteps_ide, flows=False, save_dir=""):
 
 def compute_order_of_convergence(errors, timesteps_ide, flows=False):
     """ Compute order of convergence between two consecutive time step sizes.
-    
+
     @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
     @param[in] timesteps_ide List of time steps used in IDE simulations.
     @param[in] flows Bool that determines whether we consider flows or compartments. Default is False. 
@@ -326,12 +326,12 @@ def compute_order_of_convergence(errors, timesteps_ide, flows=False):
 
 def main():
     # Paths are valid if file is executed e.g. in memilio/cpp/simulations/IDE_paper.
-    # Path where simulation results (generated with ide_convergence_rate.cpp) are stored. 
+    # Path where simulation results (generated with ide_convergence_rate.cpp) are stored.
     result_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/simulation_results/convergence/")
 
-    # Path where plots will be stored. 
-    plot_dir =  os.path.join(os.path.dirname(
+    # Path where plots will be stored.
+    plot_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/plots/convergence/")
 
     # The ODE model was simulated using a fixed step size dt=10^{-ode_exponent}.
@@ -351,7 +351,8 @@ def main():
 
     for flow_bool in flow_bools:
         # Read groundtruth (from ODE model).
-        groundtruth = read_groundtruth(result_dir, ode_exponent, save_exponent, flow_bool)
+        groundtruth = read_groundtruth(
+            result_dir, ode_exponent, save_exponent, flow_bool)
 
         # Read results from IDE simulations.
         results = read_data(result_dir, ode_exponent, ide_exponents, flow_bool)

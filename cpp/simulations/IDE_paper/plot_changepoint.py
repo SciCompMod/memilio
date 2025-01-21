@@ -53,7 +53,6 @@ def plot_changepoint(files, fileending="", save_dir=""):
 
         data = h5file[list(h5file.keys())[0]]
 
-        
         # As there should be only one Group, total is the simulation result.
         total = data['Total'][:, :]
 
@@ -65,7 +64,7 @@ def plot_changepoint(files, fileending="", save_dir=""):
         # Get indices where dates are >=0.
         indices = np.where(dates >= 0)
 
-        # Plot data.        
+        # Plot data.
         # ODE
         if file == 0:
             # Transform cumulative flows to absolute flows,
@@ -78,7 +77,7 @@ def plot_changepoint(files, fileending="", save_dir=""):
             # Transform from flows over time interval to flows at time points.
             ax.plot(dates[1:], total[1:, 0]/np.diff(dates), label=legendplot[file],
                     color=colors[file], linestyle=linestyles[file])
-                
+
         h5file.close()
 
         ax.set_xlim(left=0, right=tmax)
@@ -102,11 +101,11 @@ def plot_changepoint(files, fileending="", save_dir=""):
 
 if __name__ == '__main__':
     # Paths are valid if script is executed e.g. in memilio/cpp/simulations/IDE_paper
-    # Path where simulation results (generated with ide_changepoints.cpp) are stored. 
+    # Path where simulation results (generated with ide_changepoints.cpp) are stored.
     result_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/simulation_results/changepoints/")
-    # Path where plots will be stored. 
-    plot_dir =  os.path.join(os.path.dirname(
+    # Path where plots will be stored.
+    plot_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/plots/changepoints/")
 
     plot_changepoint([os.path.join(result_dir, f"changepoint_ode_0.5_12_0.0100_flows"),

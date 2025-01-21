@@ -39,10 +39,11 @@ parameters = {
     'TimeInfectedCriticalToDead': 10.7,
     'InfectedSymptomsPerInfectedNoSymptoms': 0.793099,
     'SeverePerInfectedSymptoms': 0.078643,
-    'start_date': pd.Timestamp('2020.10.01') ,
+    'start_date': pd.Timestamp('2020.10.01'),
     'end_date': pd.Timestamp('2020.10.01') + pd.DateOffset(days=45),
     'scaleConfirmed': 1.
 }
+
 
 def load_data(file, start_date, simulation_time):
     """ Loads RKI data and computes the number of mildly symptomatic individuals (stored in column 'InfectedSymptoms'), 
@@ -63,10 +64,10 @@ def load_data(file, start_date, simulation_time):
     df = pd.read_json(file)
     df = df.drop(columns=['Recovered'])
 
-    # Define df_result where we will store the results of the computations. 
+    # Define df_result where we will store the results of the computations.
     df_result = df.copy()
     df_result = df_result[(df['Date'] >= parameters['start_date'])
-              & (df['Date'] <= parameters['end_date'])]
+                          & (df['Date'] <= parameters['end_date'])]
     df_result = df_result.reset_index()
     df_result = df_result.drop(columns=['index', 'Confirmed', 'Deaths'])
 
@@ -108,7 +109,7 @@ def load_data(file, start_date, simulation_time):
                                                          & (df['Date'] <= parameters['end_date'] + pd.DateOffset(days=math.floor(parameters['TimeInfectedNoSymptomsToInfectedSymptoms'] + parameters['TimeExposed'] - 1)))].to_numpy()
     df_result['NewInfectionsDay'] = help_newE / \
         parameters['InfectedSymptomsPerInfectedNoSymptoms']
-    
+
     return df_result
 
 
@@ -145,7 +146,7 @@ def get_scale_contacts(files, reported_data_dir, start_date, simulation_time):
     # Date index referring to first time step of IDE simulation.
     date_idx = int(-simulation_time / timestep)
 
-    # Get daily new transmissions from IDE simulation results. 
+    # Get daily new transmissions from IDE simulation results.
     new_transmissions_ide = total[date_idx, 0] / timestep
     print(f"IDE new infections on {dates[date_idx]}: ", new_transmissions_ide)
 
@@ -309,7 +310,8 @@ def plot_infectedsymptoms_deaths(
     datafile = os.path.join(reported_data_dir, "cases_all_germany.json")
     data_rki = load_data(datafile, start_date, simulation_time)
 
-    datafile_ma7 = os.path.join(reported_data_dir,  "cases_all_germany_ma7.json")
+    datafile_ma7 = os.path.join(
+        reported_data_dir,  "cases_all_germany_ma7.json")
     data_rki_ma7 = load_data(datafile_ma7, start_date,
                              simulation_time)
 
@@ -490,16 +492,16 @@ def plot_icu(files, reported_data_dir, start_date, simulation_time, fileending="
 
 def main():
     # Paths are valid if file is executed e.g. in memilio/cpp/simulations/IDE_paper.
-    # Path where simulation results (generated with ide_real_scenario.cpp) are stored. 
+    # Path where simulation results (generated with ide_real_scenario.cpp) are stored.
     result_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/simulation_results/covid_inspired_scenario/")
-    
+
     # Path where RKI and DIVI data are stored.
-    reported_data_dir =  os.path.join(os.path.dirname(
+    reported_data_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/pydata/Germany/")
-    
-    # Path where plots will be stored. 
-    plot_dir =  os.path.join(os.path.dirname(
+
+    # Path where plots will be stored.
+    plot_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/plots/covid_inspired_scenario/")
 
     # Define start_date, simulation_time and timestep.
@@ -509,22 +511,23 @@ def main():
 
     # Plot daily new transmissions.
     plot_daily_new_transmissions([os.path.join(result_dir, f"ode_{start_date}_{simulation_time}_{timestep}_flows"),
-                        os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_flows")], reported_data_dir,
-                        pd.Timestamp(start_date), simulation_time,
-                        fileending=f"{start_date}_{simulation_time}_{timestep}",save_dir=plot_dir)
+                                  os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_flows")], reported_data_dir,
+                                 pd.Timestamp(start_date), simulation_time,
+                                 fileending=f"{start_date}_{simulation_time}_{timestep}", save_dir=plot_dir)
 
-    # Plot mildly symptomatic and dead individuals. 
+    # Plot mildly symptomatic and dead individuals.
     plot_infectedsymptoms_deaths([os.path.join(result_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
                                   os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")], reported_data_dir,
                                  pd.Timestamp(
                                      start_date), simulation_time,
                                  fileending=f"{start_date}_{simulation_time}_{timestep}", save_dir=plot_dir)
 
-    # Plot ICU patients. 
+    # Plot ICU patients.
     plot_icu([os.path.join(result_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
               os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
-              reported_data_dir,
+             reported_data_dir,
              pd.Timestamp(start_date), simulation_time, fileending=f"{start_date}_{simulation_time}_{timestep}", save_dir=plot_dir)
+
 
 if __name__ == '__main__':
     main()

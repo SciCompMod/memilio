@@ -11,7 +11,8 @@ def get_df_daily(data_dir):
     @returns Dataframe with daily data on confirmed cases and deaths.
     """
     # Read file.
-    datafile = os.path.join(data_dir, "pydata", "Germany", "cases_all_age_all_dates.json")
+    datafile = os.path.join(data_dir, "pydata", "Germany",
+                            "cases_all_age_all_dates.json")
     df = pd.read_json(datafile)
 
     # Create df_daily, where daily confirmed (and daily deaths) will be stored.
@@ -101,10 +102,10 @@ def plot(data_dir, start_dates, T_IH, T_HU, T_U, save_dir=""):
     agegroups = ['A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+']
 
     # Get proportions per age group for June and Ocotber scenario and corresponding share of total population.
-    proportions_june = get_relevant_confirmed_cases(data_dir, 
-        start_dates[0], T_IH, T_HU, T_U)
-    proportions_october = get_relevant_confirmed_cases(data_dir, 
-        start_dates[1], T_IH, T_HU, T_U)
+    proportions_june = get_relevant_confirmed_cases(data_dir,
+                                                    start_dates[0], T_IH, T_HU, T_U)
+    proportions_october = get_relevant_confirmed_cases(data_dir,
+                                                       start_dates[1], T_IH, T_HU, T_U)
     population_per_agegroup = get_proportional_population_per_agegroup()
 
     proportions = [proportions_june,
@@ -138,15 +139,15 @@ def plot(data_dir, start_dates, T_IH, T_HU, T_U, save_dir=""):
 
 
 def main():
-    # Path where file with RKI case data is stored. 
+    # Path where file with RKI case data is stored.
     data_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/")
-    
-    # Path where plots will be stored. 
-    save_dir =  os.path.join(os.path.dirname(
+
+    # Path where plots will be stored.
+    save_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/plots/")
 
-    # Mean stay times according to Covasim paper. 
+    # Mean stay times according to Covasim paper.
     T_IH = 6.6
     T_HU = 1.5
     T_U = 15.230258
@@ -154,6 +155,7 @@ def main():
     start_dates = ["2020-06-01", "2020-10-01"]
 
     plot(data_dir, start_dates, T_IH, T_HU, T_U, save_dir)
+
 
 if __name__ == "__main__":
     main()
