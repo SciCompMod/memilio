@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke, Martin J. Kuehn
 *
@@ -46,6 +46,10 @@ Model::Model(TimeSeries<ScalarType>&& init, CustomIndexArray<ScalarType, AgeGrou
     , m_num_agegroups{num_agegroups}
 
 {
+    // Assert that input arguments for the total population have the correct size regarding
+    // age groups.
+    assert((size_t)m_N.size() == m_num_agegroups);
+
     if (m_transitions.get_num_time_points() > 0) {
         // Add first time point in m_populations according to last time point in m_transitions which is where we start
         // the simulation.
@@ -116,6 +120,12 @@ bool Model::check_constraints(ScalarType dt) const
     if (m_populations.get_num_time_points() != 1) {
         log_error("The TimeSeries for the compartments contains more than one time point. It is unclear how to "
                   "initialize.");
+        return true;
+    }
+
+    if ((size_t)m_total_confirmed_cases.size() > 0 && (size_t)m_total_confirmed_cases.size() != m_num_agegroups) {
+        log_error("A variable given for model initialization is not valid. Number of elements in "
+                  "total_confirmed_cases does not match the number of age groups.");
         return true;
     }
 

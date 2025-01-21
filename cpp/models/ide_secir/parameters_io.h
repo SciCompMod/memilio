@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke, Anna Wendler
 *
@@ -28,8 +28,13 @@
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "ide_secir/model.h"
+#include "ide_secir/infection_state.h"
+
+#include "memilio/epidemiology/age_group.h"
+#include "memilio/io/epi_data.h"
 #include "memilio/io/io.h"
 #include "memilio/utils/date.h"
+#include "memilio/utils/logging.h"
 
 #include <string>
 
@@ -37,44 +42,6 @@ namespace mio
 {
 namespace isecir
 {
-template <class T, std::enable_if_t<std::is_same<ConfirmedCasesNoAgeEntry, T>::value, int>* = nullptr>
-IOResult<std::vector<T>> f(std::string const& path)
-{
-    BOOST_OUTCOME_TRY(auto&& rki_data_read, mio::read_confirmed_cases_noage(path));
-    return rki_data_read;
-}
-
-template <class T, std::enable_if_t<std::is_same<ConfirmedCasesDataEntry, T>::value, int>* = nullptr>
-IOResult<std::vector<T>> f(std::string const& path)
-{
-    BOOST_OUTCOME_TRY(auto&& rki_data_read, mio::read_confirmed_cases_data(path));
-    return rki_data_read;
-}
-
-template <class T, std::enable_if_t<std::is_same<ConfirmedCasesNoAgeEntry, T>::value, int>* = nullptr>
-size_t g()
-{
-    return 1;
-}
-
-template <class T, std::enable_if_t<std::is_same<ConfirmedCasesDataEntry, T>::value, int>* = nullptr>
-size_t g()
-{
-    return T::age_group_names.size();
-}
-
-template <class T, std::enable_if_t<std::is_same<ConfirmedCasesNoAgeEntry, T>::value, int>* = nullptr>
-AgeGroup h(T entry)
-{
-    unused(entry);
-    return AgeGroup(0);
-}
-
-template <class T, std::enable_if_t<std::is_same<ConfirmedCasesDataEntry, T>::value, int>* = nullptr>
-AgeGroup h(T entry)
-{
-    return entry.age_group;
-}
 
 /**
 * @brief Computes a TimeSeries of flows to provide initial data for an IDE-SECIR model with data from RKI.
@@ -102,48 +69,51 @@ AgeGroup h(T entry)
 *
 * @param[in, out] model The model for which the initial flows should be computed.
 * @param[in] dt Time step size.
-* @param[in] path Path to the RKI file.
+* @param[in] rki_data Vector containing RKI data.
 * @param[in] date The start date of the simulation and the last time point of the TimeSeries used for initialization.
-* @param[in] scale_confirmed_cases Factor by which to scale the confirmed cases of rki data to consider unreported cases.
+* @param[in] scale_confirmed_cases Vector with factor(s for each age group) by which to scale the confirmed cases of 
+*   rki_data to consider unreported cases.
+* @tparam EntryType is expected to be ConfirmedCasesNoAgeEntry for data that is not age resolved and 
+*   ConfirmedCasesDataEntry for age resolved data. See also epi_data.h.
 * @returns Any io errors that happen during reading of the files.
 */
 
-template <typename DataEntry>
-IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date,
-                                 ScalarType scale_confirmed_cases)
+template <typename EntryType>
+IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::vector<EntryType> rki_data,
+                                 const Date date, const CustomIndexArray<ScalarType, AgeGroup> scale_confirmed_cases)
 {
+    // Check if scale_confirmed_cases has the right size (= number of age groups).
+    assert(model.get_num_agegroups() == (size_t)scale_confirmed_cases.size());
+    // Check if the correct EntryType was used.
+    if constexpr (std::is_same_v<EntryType, ConfirmedCasesDataEntry>) {
+        assert(model.get_num_agegroups() == (size_t)EntryType::age_group_names.size());
+    }
+    else {
+        assert(model.get_num_agegroups() == 1);
+    }
 
     //--- Preparations ---
-    // Try to get RKI data from path.
-    std::vector<DataEntry> rki_data = f<DataEntry>(path).value();
-
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
     });
     if (max_date_entry == rki_data.end()) {
         log_error("RKI data file is empty.");
-        return failure(StatusCode::InvalidFileFormat, path + ", file is empty.");
+        return failure(StatusCode::InvalidFileFormat, "RKI data file is empty.");
     }
     auto max_date = max_date_entry->date;
     if (max_date < date) {
         log_error("Specified date does not exist in RKI data.");
-        return failure(StatusCode::OutOfRange, path + ", specified date does not exist in RKI data.");
+        return failure(StatusCode::OutOfRange, "Specified date does not exist in RKI data.");
     }
-    auto min_date_entry = std::min_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
-        return a.date < b.date;
-    });
-    auto min_date       = min_date_entry->date;
 
     // Get (global) support_max to determine how many flows in the past we have to compute.
     ScalarType global_support_max         = model.get_global_support_max(dt);
     Eigen::Index global_support_max_index = Eigen::Index(std::ceil(global_support_max / dt));
 
     // Get the number of AgeGroups.
-    const size_t num_age_groups = g<DataEntry>();
-    std::cout << "num age groups: " << num_age_groups << std::endl;
+    const size_t num_age_groups = model.get_num_agegroups();
 
     // m_transitions should be empty at the beginning.
-
     if (model.m_transitions.get_num_time_points() > 0) {
         model.m_transitions = TimeSeries<ScalarType>(Eigen::Index(InfectionTransition::Count) * num_age_groups);
     }
@@ -153,7 +123,9 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
             0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count * num_age_groups, 0));
     }
 
-    // The first time we need is -4 * global_support_max.
+    // The first time we need is -4 * global_support_max because we need values for
+    // InfectedNoSymptomsToInfectedSymptoms on this time window to compute all consecutive transitions on the time
+    // window from -global_support_max to 0.
     Eigen::Index start_shift = 4 * global_support_max_index;
     // The last time needed is dependent on the mean stay time in the Exposed compartment and
     // the mean stay time of asymptomatic individuals in InfectedNoSymptoms.
@@ -231,8 +203,15 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
     ScalarType time_idx           = 0;
 
     for (auto&& entry : rki_data) {
-        int offset     = get_offset_in_days(entry.date, date);
-        AgeGroup group = h<DataEntry>(entry);
+        int offset = get_offset_in_days(entry.date, date);
+
+        // Get the index regarding the age group.
+        // If we don't have age resolution and use EntryType=ConfirmedCasesNoAge, the index is set to 1.
+        // If we consider multiple age groups and use EntryType=ConfirmedCasesDataEntry, it is determined accordingly.
+        AgeGroup group = AgeGroup(0);
+        if constexpr (std::is_same_v<EntryType, ConfirmedCasesDataEntry>) {
+            group = entry.age_group;
+        }
 
         if ((offset >= min_offset_needed) && (offset <= max_offset_needed)) {
             if (offset == min_offset_needed) {
@@ -256,19 +235,19 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
                 time_idx = model.m_transitions.get_time(i);
                 if (offset == int(std::floor(time_idx))) {
                     model.m_transitions[i][INStISyi] +=
-                        (1 - (time_idx - std::floor(time_idx))) * scale_confirmed_cases * entry.num_confirmed;
+                        (1 - (time_idx - std::floor(time_idx))) * scale_confirmed_cases[group] * entry.num_confirmed;
                 }
                 if (offset == int(std::ceil(time_idx))) {
                     model.m_transitions[i][INStISyi] +=
-                        (time_idx - std::floor(time_idx)) * scale_confirmed_cases * entry.num_confirmed;
+                        (time_idx - std::floor(time_idx)) * scale_confirmed_cases[group] * entry.num_confirmed;
                 }
                 if (offset == int(std::floor(time_idx - dt))) {
-                    model.m_transitions[i][INStISyi] -=
-                        (1 - (time_idx - dt - std::floor(time_idx - dt))) * scale_confirmed_cases * entry.num_confirmed;
+                    model.m_transitions[i][INStISyi] -= (1 - (time_idx - dt - std::floor(time_idx - dt))) *
+                                                        scale_confirmed_cases[group] * entry.num_confirmed;
                 }
                 if (offset == int(std::ceil(time_idx - dt))) {
-                    model.m_transitions[i][INStISyi] -=
-                        (time_idx - dt - std::floor(time_idx - dt)) * scale_confirmed_cases * entry.num_confirmed;
+                    model.m_transitions[i][INStISyi] -= (time_idx - dt - std::floor(time_idx - dt)) *
+                                                        scale_confirmed_cases[group] * entry.num_confirmed;
                 }
             }
 
@@ -298,16 +277,21 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
             }
 
             if (offset == 0) {
-                model.m_total_confirmed_cases[group] = scale_confirmed_cases * entry.num_confirmed;
+                model.m_total_confirmed_cases[group] = scale_confirmed_cases[group] * entry.num_confirmed;
             }
         }
     }
 
     if (!max_offset_needed_avail) {
         log_error("Necessary range of dates needed to compute initial values does not exist in RKI data.");
-        return failure(StatusCode::OutOfRange, path + ", necessary range of dates does not exist in RKI data.");
+        return failure(StatusCode::OutOfRange, "Necessary range of dates does not exist in RKI data.");
     }
     if (!min_offset_needed_avail) {
+        auto min_date_entry = std::min_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
+            return a.date < b.date;
+        });
+        auto min_date       = min_date_entry->date;
+
         std::string min_date_string =
             std::to_string(min_date.day) + "." + std::to_string(min_date.month) + "." + std::to_string(min_date.year);
         // Get first date that is needed.
@@ -320,7 +304,7 @@ IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const&
                     ". Missing dates were set to 0.");
     }
 
-    //--- Calculate the flows "after" InfectedNoSymptomsToInfectedSymptoms. ---
+    //--- Calculate the flows "after" InfectedNoSymptomsToInfectedSymptoms (that were set above using rki_data). ---
     // Set m_support_max_vector and m_derivative_vector in the model which is needed for the following computations.
     model.set_transitiondistributions_support_max(dt);
     model.set_transitiondistributions_derivative(dt);

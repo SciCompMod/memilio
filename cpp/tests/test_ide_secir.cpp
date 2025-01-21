@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke, Anna Wendler
 *
@@ -474,6 +474,7 @@ TEST(IdeSecir, testModelConstraints)
     while (init.get_last_time() < 0) {
         init.add_time_point(init.get_last_time() + dt, vec_init);
     }
+
     deaths[mio::AgeGroup(0)] = -10;
 
     // Initialize a model.
@@ -554,13 +555,28 @@ TEST(IdeSecir, testModelConstraints)
     constraint_check = model.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
 
-    // --- Correct wrong setup so that next check can go through.
+    // --- Test with wrong size of total_confirmed_cases.
     // Create TimeSeries with num_compartments elements.
     mio::TimeSeries<ScalarType> correct_populations(num_compartments);
     // Add one time point.
     correct_populations.add_time_point(1, vec_populations);
 
     model.m_populations = correct_populations;
+
+    // Create total_confirmed_cases with wrong size regarding the number of age groups.
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_confirmed_cases_wrong_size =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups + 1), 100.);
+
+    model.m_total_confirmed_cases = total_confirmed_cases_wrong_size;
+
+    constraint_check = model.check_constraints(dt);
+    EXPECT_TRUE(constraint_check);
+
+    // --- Correct wrong setup so that next check can go through.
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> correct_total_confirmed_cases =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 100.);
+
+    model.m_total_confirmed_cases = correct_total_confirmed_cases;
 
     constraint_check = model.check_constraints(dt);
     EXPECT_FALSE(constraint_check);
