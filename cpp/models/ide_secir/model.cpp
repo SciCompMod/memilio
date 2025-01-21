@@ -75,7 +75,7 @@ bool Model::check_constraints(ScalarType dt) const
 {
 
     if (!((size_t)transitions.get_num_elements() == (size_t)InfectionTransition::Count * m_num_agegroups)) {
-        log_error("A variable given for model construction is not valid. Number of elements in vector of"
+        log_error("A variable given for model construction is not valid. Number of elements in vector of "
                   "transitions does not match the required number.");
         return true;
     }
@@ -125,9 +125,18 @@ bool Model::check_constraints(ScalarType dt) const
     }
 
     if ((size_t)total_confirmed_cases.size() > 0 && (size_t)total_confirmed_cases.size() != m_num_agegroups) {
-        log_error("A variable given for model initialization is not valid. Number of elements in "
-                  "total_confirmed_cases does not match the number of age groups.");
+        log_error("Initialization failed. Number of elements in total_confirmed_cases does not match the number "
+                  "of age groups.");
         return true;
+    }
+
+    if ((size_t)total_confirmed_cases.size() > 0) {
+        for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+            if (total_confirmed_cases[group] < 0) {
+                log_error("Initialization failed. One or more value of total_confirmed_cases is less than zero.");
+                return true;
+            }
+        }
     }
 
     return parameters.check_constraints();

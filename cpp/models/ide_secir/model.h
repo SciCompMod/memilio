@@ -34,6 +34,13 @@ namespace mio
 {
 namespace isecir
 {
+// Forward declaration of friend classes/functions of Model.
+class Model;
+class Simulation;
+template <typename DataEntry>
+IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date,
+                                 ScalarType scale_confirmed_cases);
+
 class Model
 {
     using ParameterSet = Parameters;

@@ -572,6 +572,16 @@ TEST(IdeSecir, testModelConstraints)
     constraint_check = model.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
 
+    // --- Test with negative value in total_confirmed_cases.
+    // Create total_confirmed_cases with wrong size regarding the number of age groups.
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_confirmed_cases_negative =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), -100.);
+
+    model.total_confirmed_cases = total_confirmed_cases_negative;
+
+    constraint_check = model.check_constraints(dt);
+    EXPECT_TRUE(constraint_check);
+
     // --- Correct wrong setup so that next check can go through.
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> correct_total_confirmed_cases =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 100.);
