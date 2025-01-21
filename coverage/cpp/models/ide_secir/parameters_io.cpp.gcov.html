@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-17 12:16:22</td>
+            <td class="headerValue">2025-01-21 10:37:43</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">3</td>
@@ -133,14 +133,14 @@
 <a name="71"><span class="lineNum">      71 </span>            :     // Get the number of AgeGroups.</a>
 <a name="72"><span class="lineNum">      72 </span><span class="lineCov">          3 :     const size_t num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();</span></a>
 <a name="73"><span class="lineNum">      73 </span>            : </a>
-<a name="74"><span class="lineNum">      74 </span>            :     // m_transitions should be empty at the beginning.</a>
+<a name="74"><span class="lineNum">      74 </span>            :     // transitions should be empty at the beginning.</a>
 <a name="75"><span class="lineNum">      75 </span>            : </a>
-<a name="76"><span class="lineNum">      76 </span><span class="lineCov">          3 :     if (model.m_transitions.get_num_time_points() &gt; 0) {</span></a>
-<a name="77"><span class="lineNum">      77 </span><span class="lineCov">          2 :         model.m_transitions = TimeSeries&lt;ScalarType&gt;(Eigen::Index(InfectionTransition::Count) * num_age_groups);</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">          3 :     if (model.transitions.get_num_time_points() &gt; 0) {</span></a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineCov">          2 :         model.transitions = TimeSeries&lt;ScalarType&gt;(Eigen::Index(InfectionTransition::Count) * num_age_groups);</span></a>
 <a name="78"><span class="lineNum">      78 </span>            :     }</a>
-<a name="79"><span class="lineNum">      79 </span><span class="lineCov">          3 :     if (model.m_populations.get_time(0) != 0) {</span></a>
-<a name="80"><span class="lineNum">      80 </span><span class="lineCov">          1 :         model.m_populations.remove_last_time_point();</span></a>
-<a name="81"><span class="lineNum">      81 </span><span class="lineCov">          2 :         model.m_populations.add_time_point&lt;Eigen::VectorXd&gt;(</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">          3 :     if (model.populations.get_time(0) != 0) {</span></a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineCov">          1 :         model.populations.remove_last_time_point();</span></a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineCov">          2 :         model.populations.add_time_point&lt;Eigen::VectorXd&gt;(</span></a>
 <a name="82"><span class="lineNum">      82 </span><span class="lineCov">          2 :             0, TimeSeries&lt;ScalarType&gt;::Vector::Constant((int)InfectionState::Count * num_age_groups, 0));</span></a>
 <a name="83"><span class="lineNum">      83 </span>            :     }</a>
 <a name="84"><span class="lineNum">      84 </span>            : </a>
@@ -163,8 +163,8 @@
 <a name="101"><span class="lineNum">     101 </span>            : </a>
 <a name="102"><span class="lineNum">     102 </span><span class="lineCov">         21 :     for (AgeGroup group = AgeGroup(0); group &lt; AgeGroup(num_age_groups); group++) {</span></a>
 <a name="103"><span class="lineNum">     103 </span>            :         // Set the Dead compartment to 0 so that RKI data can be added correctly.</a>
-<a name="104"><span class="lineNum">     104 </span><span class="lineCov">         18 :         int Di                     = model.get_state_flat_index(Eigen::Index(InfectionState::Dead), group);</span></a>
-<a name="105"><span class="lineNum">     105 </span><span class="lineCov">         18 :         model.m_populations[0][Di] = 0;</span></a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineCov">         18 :         int Di                   = model.get_state_flat_index(Eigen::Index(InfectionState::Dead), group);</span></a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineCov">         18 :         model.populations[0][Di] = 0;</span></a>
 <a name="106"><span class="lineNum">     106 </span>            : </a>
 <a name="107"><span class="lineNum">     107 </span><span class="lineCov">         18 :         mean_ExposedToInfectedNoSymptoms[group] =</span></a>
 <a name="108"><span class="lineNum">     108 </span>            :             model.parameters</a>
@@ -200,17 +200,17 @@
 <a name="138"><span class="lineNum">     138 </span>            :     // Create TimeSeries with zeros. The index of time zero is start_shift.</a>
 <a name="139"><span class="lineNum">     139 </span><span class="lineCov">         66 :     for (Eigen::Index i = -start_shift; i &lt;= last_time_index_needed; i++) {</span></a>
 <a name="140"><span class="lineNum">     140 </span>            :         // Add time point.</a>
-<a name="141"><span class="lineNum">     141 </span><span class="lineCov">        126 :         model.m_transitions.add_time_point(</span></a>
+<a name="141"><span class="lineNum">     141 </span><span class="lineCov">        126 :         model.transitions.add_time_point(</span></a>
 <a name="142"><span class="lineNum">     142 </span><span class="lineCov">        126 :             i * dt, TimeSeries&lt;ScalarType&gt;::Vector::Constant((size_t)InfectionTransition::Count * num_age_groups, 0.));</span></a>
 <a name="143"><span class="lineNum">     143 </span>            :     }</a>
 <a name="144"><span class="lineNum">     144 </span>            : </a>
 <a name="145"><span class="lineNum">     145 </span>            :     // Setting the entries in m_total_confirmed_cases to zero before overwriting it with the RKI data.</a>
-<a name="146"><span class="lineNum">     146 </span><span class="lineCov">          3 :     model.m_total_confirmed_cases = CustomIndexArray&lt;ScalarType, AgeGroup&gt;(AgeGroup(num_age_groups), 0.);</span></a>
-<a name="147"><span class="lineNum">     147 </span>            :     //--- Calculate the flow InfectedNoSymptomsToInfectedSymptoms using the RKI data and store in the m_transitions object.---</a>
+<a name="146"><span class="lineNum">     146 </span><span class="lineCov">          3 :     model.total_confirmed_cases = CustomIndexArray&lt;ScalarType, AgeGroup&gt;(AgeGroup(num_age_groups), 0.);</span></a>
+<a name="147"><span class="lineNum">     147 </span>            :     //--- Calculate the flow InfectedNoSymptomsToInfectedSymptoms using the RKI data and store in the transitions object.---</a>
 <a name="148"><span class="lineNum">     148 </span><span class="lineCov">          3 :     ScalarType min_offset_needed = std::ceil(</span></a>
-<a name="149"><span class="lineNum">     149 </span><span class="lineCov">          3 :         model.m_transitions.get_time(0) -</span></a>
+<a name="149"><span class="lineNum">     149 </span><span class="lineCov">          3 :         model.transitions.get_time(0) -</span></a>
 <a name="150"><span class="lineNum">     150 </span>            :         1); // Need -1 if first time point is integer and just the floor value if not, therefore use ceil and -1</a>
-<a name="151"><span class="lineNum">     151 </span><span class="lineCov">          3 :     ScalarType max_offset_needed = std::ceil(model.m_transitions.get_last_time());</span></a>
+<a name="151"><span class="lineNum">     151 </span><span class="lineCov">          3 :     ScalarType max_offset_needed = std::ceil(model.transitions.get_last_time());</span></a>
 <a name="152"><span class="lineNum">     152 </span><span class="lineCov">          3 :     bool min_offset_needed_avail = false;</span></a>
 <a name="153"><span class="lineNum">     153 </span><span class="lineCov">          3 :     bool max_offset_needed_avail = false;</span></a>
 <a name="154"><span class="lineNum">     154 </span>            : </a>
@@ -232,31 +232,31 @@
 <a name="170"><span class="lineNum">     170 </span>            :             }</a>
 <a name="171"><span class="lineNum">     171 </span>            :             // Smallest index for which the entry is needed.</a>
 <a name="172"><span class="lineNum">     172 </span><span class="lineCov">        150 :             idx_needed_first =</span></a>
-<a name="173"><span class="lineNum">     173 </span><span class="lineCov">        150 :                 Eigen::Index(std::max(std::floor((offset - model.m_transitions.get_time(0) - 1) / dt), 0.));</span></a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">        150 :                 Eigen::Index(std::max(std::floor((offset - model.transitions.get_time(0) - 1) / dt), 0.));</span></a>
 <a name="174"><span class="lineNum">     174 </span>            :             // Biggest index for which the entry is needed.</a>
-<a name="175"><span class="lineNum">     175 </span><span class="lineCov">        150 :             idx_needed_last = Eigen::Index(std::min(std::ceil((offset - model.m_transitions.get_time(0) + 1) / dt),</span></a>
-<a name="176"><span class="lineNum">     176 </span><span class="lineCov">        300 :                                                     double(model.m_transitions.get_num_time_points() - 1)));</span></a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineCov">        150 :             idx_needed_last = Eigen::Index(std::min(std::ceil((offset - model.transitions.get_time(0) + 1) / dt),</span></a>
+<a name="176"><span class="lineNum">     176 </span><span class="lineCov">        300 :                                                     double(model.transitions.get_num_time_points() - 1)));</span></a>
 <a name="177"><span class="lineNum">     177 </span>            : </a>
 <a name="178"><span class="lineNum">     178 </span><span class="lineCov">        300 :             int INStISyi = model.get_transition_flat_index(</span></a>
 <a name="179"><span class="lineNum">     179 </span><span class="lineCov">        150 :                 Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), group);</span></a>
 <a name="180"><span class="lineNum">     180 </span>            : </a>
 <a name="181"><span class="lineNum">     181 </span><span class="lineCov">        804 :             for (Eigen::Index i = idx_needed_first; i &lt;= idx_needed_last; i++) {</span></a>
 <a name="182"><span class="lineNum">     182 </span>            : </a>
-<a name="183"><span class="lineNum">     183 </span><span class="lineCov">        654 :                 time_idx = model.m_transitions.get_time(i);</span></a>
+<a name="183"><span class="lineNum">     183 </span><span class="lineCov">        654 :                 time_idx = model.transitions.get_time(i);</span></a>
 <a name="184"><span class="lineNum">     184 </span><span class="lineCov">        654 :                 if (offset == int(std::floor(time_idx))) {</span></a>
-<a name="185"><span class="lineNum">     185 </span><span class="lineCov">        528 :                     model.m_transitions[i][INStISyi] +=</span></a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineCov">        528 :                     model.transitions[i][INStISyi] +=</span></a>
 <a name="186"><span class="lineNum">     186 </span><span class="lineCov">        264 :                         (1 - (time_idx - std::floor(time_idx))) * scale_confirmed_cases * entry.num_confirmed;</span></a>
 <a name="187"><span class="lineNum">     187 </span>            :                 }</a>
 <a name="188"><span class="lineNum">     188 </span><span class="lineCov">        654 :                 if (offset == int(std::ceil(time_idx))) {</span></a>
-<a name="189"><span class="lineNum">     189 </span><span class="lineCov">        528 :                     model.m_transitions[i][INStISyi] +=</span></a>
+<a name="189"><span class="lineNum">     189 </span><span class="lineCov">        528 :                     model.transitions[i][INStISyi] +=</span></a>
 <a name="190"><span class="lineNum">     190 </span><span class="lineCov">        264 :                         (time_idx - std::floor(time_idx)) * scale_confirmed_cases * entry.num_confirmed;</span></a>
 <a name="191"><span class="lineNum">     191 </span>            :                 }</a>
 <a name="192"><span class="lineNum">     192 </span><span class="lineCov">        654 :                 if (offset == int(std::floor(time_idx - dt))) {</span></a>
-<a name="193"><span class="lineNum">     193 </span><span class="lineCov">        528 :                     model.m_transitions[i][INStISyi] -=</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">        528 :                     model.transitions[i][INStISyi] -=</span></a>
 <a name="194"><span class="lineNum">     194 </span><span class="lineCov">        264 :                         (1 - (time_idx - dt - std::floor(time_idx - dt))) * scale_confirmed_cases * entry.num_confirmed;</span></a>
 <a name="195"><span class="lineNum">     195 </span>            :                 }</a>
 <a name="196"><span class="lineNum">     196 </span><span class="lineCov">        654 :                 if (offset == int(std::ceil(time_idx - dt))) {</span></a>
-<a name="197"><span class="lineNum">     197 </span><span class="lineCov">        528 :                     model.m_transitions[i][INStISyi] -=</span></a>
+<a name="197"><span class="lineNum">     197 </span><span class="lineCov">        528 :                     model.transitions[i][INStISyi] -=</span></a>
 <a name="198"><span class="lineNum">     198 </span><span class="lineCov">        264 :                         (time_idx - dt - std::floor(time_idx - dt)) * scale_confirmed_cases * entry.num_confirmed;</span></a>
 <a name="199"><span class="lineNum">     199 </span>            :                 }</a>
 <a name="200"><span class="lineNum">     200 </span>            :             }</a>
@@ -267,7 +267,7 @@
 <a name="205"><span class="lineNum">     205 </span><span class="lineCov">        300 :             if (offset ==</span></a>
 <a name="206"><span class="lineNum">     206 </span><span class="lineCov">        300 :                 std::floor(-mean_InfectedSymptomsToInfectedSevere[group] -</span></a>
 <a name="207"><span class="lineNum">     207 </span><span class="lineCov">        150 :                            mean_InfectedSevereToInfectedCritical[group] - mean_InfectedCriticalToDead[group])) {</span></a>
-<a name="208"><span class="lineNum">     208 </span><span class="lineCov">         12 :                 model.m_populations[0][Di] +=</span></a>
+<a name="208"><span class="lineNum">     208 </span><span class="lineCov">         12 :                 model.populations[0][Di] +=</span></a>
 <a name="209"><span class="lineNum">     209 </span><span class="lineCov">         12 :                     (1 -</span></a>
 <a name="210"><span class="lineNum">     210 </span><span class="lineCov">         12 :                      (-mean_InfectedSymptomsToInfectedSevere[group] - mean_InfectedSevereToInfectedCritical[group] -</span></a>
 <a name="211"><span class="lineNum">     211 </span><span class="lineCov">         12 :                       mean_InfectedCriticalToDead[group] -</span></a>
@@ -278,7 +278,7 @@
 <a name="216"><span class="lineNum">     216 </span><span class="lineCov">        300 :             if (offset ==</span></a>
 <a name="217"><span class="lineNum">     217 </span><span class="lineCov">        300 :                 std::ceil(-mean_InfectedSymptomsToInfectedSevere[group] - mean_InfectedSevereToInfectedCritical[group] -</span></a>
 <a name="218"><span class="lineNum">     218 </span><span class="lineCov">        150 :                           mean_InfectedCriticalToDead[group])) {</span></a>
-<a name="219"><span class="lineNum">     219 </span><span class="lineCov">         12 :                 model.m_populations[0][Di] +=</span></a>
+<a name="219"><span class="lineNum">     219 </span><span class="lineCov">         12 :                 model.populations[0][Di] +=</span></a>
 <a name="220"><span class="lineNum">     220 </span><span class="lineCov">         12 :                     (-mean_InfectedSymptomsToInfectedSevere[group] - mean_InfectedSevereToInfectedCritical[group] -</span></a>
 <a name="221"><span class="lineNum">     221 </span><span class="lineCov">         12 :                      mean_InfectedCriticalToDead[group] -</span></a>
 <a name="222"><span class="lineNum">     222 </span><span class="lineCov">         12 :                      std::floor(-mean_InfectedSymptomsToInfectedSevere[group] -</span></a>
@@ -287,7 +287,7 @@
 <a name="225"><span class="lineNum">     225 </span>            :             }</a>
 <a name="226"><span class="lineNum">     226 </span>            : </a>
 <a name="227"><span class="lineNum">     227 </span><span class="lineCov">        150 :             if (offset == 0) {</span></a>
-<a name="228"><span class="lineNum">     228 </span><span class="lineCov">         18 :                 model.m_total_confirmed_cases[group] = scale_confirmed_cases * entry.num_confirmed;</span></a>
+<a name="228"><span class="lineNum">     228 </span><span class="lineCov">         18 :                 model.total_confirmed_cases[group] = scale_confirmed_cases * entry.num_confirmed;</span></a>
 <a name="229"><span class="lineNum">     229 </span>            :             }</a>
 <a name="230"><span class="lineNum">     230 </span>            :         }</a>
 <a name="231"><span class="lineNum">     231 </span>            :     }</a>
@@ -359,10 +359,10 @@
 <a name="297"><span class="lineNum">     297 </span><span class="lineCov">         24 :         int INStISyi = model.get_transition_flat_index(</span></a>
 <a name="298"><span class="lineNum">     298 </span><span class="lineCov">         12 :             Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), group);</span></a>
 <a name="299"><span class="lineNum">     299 </span><span class="lineCov">        120 :         for (Eigen::Index i = -2 * global_support_max_index; i &lt;= 0; i++) {</span></a>
-<a name="300"><span class="lineNum">     300 </span><span class="lineCov">        108 :             model.m_transitions[i + start_shift][EtINSi] =</span></a>
+<a name="300"><span class="lineNum">     300 </span><span class="lineCov">        108 :             model.transitions[i + start_shift][EtINSi] =</span></a>
 <a name="301"><span class="lineNum">     301 </span><span class="lineCov">        216 :                 (1 / model.parameters.get&lt;TransitionProbabilities&gt;()[group][Eigen::Index(</span></a>
 <a name="302"><span class="lineNum">     302 </span><span class="lineCov">        216 :                          InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]) *</span></a>
-<a name="303"><span class="lineNum">     303 </span><span class="lineCov">        216 :                 model.m_transitions[i + start_shift + index_shift_mean][INStISyi];</span></a>
+<a name="303"><span class="lineNum">     303 </span><span class="lineCov">        216 :                 model.transitions[i + start_shift + index_shift_mean][INStISyi];</span></a>
 <a name="304"><span class="lineNum">     304 </span>            :         }</a>
 <a name="305"><span class="lineNum">     305 </span>            : </a>
 <a name="306"><span class="lineNum">     306 </span>            :         // Compute flow SusceptibleToExposed for -global_support_max, ..., 0.</a>
@@ -373,10 +373,10 @@
 <a name="311"><span class="lineNum">     311 </span><span class="lineCov">         12 :         int StEi = model.get_transition_flat_index(Eigen::Index(InfectionTransition::SusceptibleToExposed), group);</span></a>
 <a name="312"><span class="lineNum">     312 </span>            : </a>
 <a name="313"><span class="lineNum">     313 </span><span class="lineCov">         72 :         for (Eigen::Index i = -global_support_max_index; i &lt;= 0; i++) {</span></a>
-<a name="314"><span class="lineNum">     314 </span><span class="lineCov">         60 :             model.m_transitions[i + start_shift][StEi] =</span></a>
+<a name="314"><span class="lineNum">     314 </span><span class="lineCov">         60 :             model.transitions[i + start_shift][StEi] =</span></a>
 <a name="315"><span class="lineNum">     315 </span><span class="lineCov">        120 :                 (1 / model.parameters.get&lt;TransitionProbabilities&gt;()[group][Eigen::Index(</span></a>
 <a name="316"><span class="lineNum">     316 </span><span class="lineCov">        120 :                          InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]) *</span></a>
-<a name="317"><span class="lineNum">     317 </span><span class="lineCov">        120 :                 model.m_transitions[i + start_shift + index_shift_mean][INStISyi];</span></a>
+<a name="317"><span class="lineNum">     317 </span><span class="lineCov">        120 :                 model.transitions[i + start_shift + index_shift_mean][INStISyi];</span></a>
 <a name="318"><span class="lineNum">     318 </span>            :         }</a>
 <a name="319"><span class="lineNum">     319 </span>            : </a>
 <a name="320"><span class="lineNum">     320 </span>            :         // InfectedNoSymptomsToRecovered for -global_support_max, ..., 0.</a>
@@ -390,10 +390,10 @@
 <a name="328"><span class="lineNum">     328 </span>            :     }</a>
 <a name="329"><span class="lineNum">     329 </span>            : </a>
 <a name="330"><span class="lineNum">     330 </span>            :     // At the end of the calculation, delete all time points that are not required for the simulation.</a>
-<a name="331"><span class="lineNum">     331 </span><span class="lineCov">          2 :     auto transition_copy(model.m_transitions);</span></a>
-<a name="332"><span class="lineNum">     332 </span><span class="lineCov">          2 :     model.m_transitions = TimeSeries&lt;ScalarType&gt;(Eigen::Index(InfectionTransition::Count) * num_age_groups);</span></a>
+<a name="331"><span class="lineNum">     331 </span><span class="lineCov">          2 :     auto transitions_copy(model.transitions);</span></a>
+<a name="332"><span class="lineNum">     332 </span><span class="lineCov">          2 :     model.transitions = TimeSeries&lt;ScalarType&gt;(Eigen::Index(InfectionTransition::Count) * num_age_groups);</span></a>
 <a name="333"><span class="lineNum">     333 </span><span class="lineCov">         12 :     for (Eigen::Index i = -global_support_max_index; i &lt;= 0; i++) {</span></a>
-<a name="334"><span class="lineNum">     334 </span><span class="lineCov">         10 :         model.m_transitions.add_time_point(i * dt, transition_copy.get_value(i + start_shift));</span></a>
+<a name="334"><span class="lineNum">     334 </span><span class="lineCov">         10 :         model.transitions.add_time_point(i * dt, transitions_copy.get_value(i + start_shift));</span></a>
 <a name="335"><span class="lineNum">     335 </span>            :     }</a>
 <a name="336"><span class="lineNum">     336 </span>            : </a>
 <a name="337"><span class="lineNum">     337 </span><span class="lineCov">          4 :     return mio::success();</span></a>

@@ -7292,12 +7292,13 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 pd.options.mode.copy_on_write = True
 
 
-def read_population_data(ref_year):
-    &#34;&#34;&#34;! Reads Population data from regionalstatistik.de
+def getMobilityFromFile(directory, mobility_file):
+    &#34;&#34;&#34;! Gets a mobility matrix that is written in a plain txt file
+    under the given directory into a pandas data frame.
 
-    A request is made to regionalstatistik.de and the StringIO is read in as a csv into the dataframe format.
-    @param ref_year [Default: None] or year (jjjj) convertible to str. Reference year.
-    @return DataFrame
+    @param directory Path to folder where data is read.
+    @param mobility_file Mobility matrix file which has to be updated.
+    @return Mobility matrix data frame.
     &#34;&#34;&#34;</pre></td>
             </tr>
             

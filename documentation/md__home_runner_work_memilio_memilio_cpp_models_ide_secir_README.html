@@ -96,7 +96,7 @@ $(function() {
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">$N$   </td><td class="markdownTableBodyNone"><code>m_N</code>   </td><td class="markdownTableBodyNone">Total population.    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">$D$   </td><td class="markdownTableBodyNone">Entry of <code>m_populations</code>   </td><td class="markdownTableBodyNone">Number of dead people.    </td></tr>
+<td class="markdownTableBodyNone">$D$   </td><td class="markdownTableBodyNone">Entry of <code>populations</code>   </td><td class="markdownTableBodyNone">Number of dead people.    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">$\mu_{z_1}^{z_2}$   </td><td class="markdownTableBodyNone"><code>TransitionProbabilities</code>   </td><td class="markdownTableBodyNone">Probability of transitioning from compartment $z_1$ to compartment $z_2$.    </td></tr>
 <tr class="markdownTableRowOdd">
@@ -116,8 +116,8 @@ Initialization</h1>
 <li>There are various options for initializing a fictional scenario. Regardless of the approach, you must provide a history of values for the transitions and additional information to compute the initial distribution of the population in the compartments. This information must be of the following type: <br  />
 <ul>
 <li>You can state the number of total confirmed cases <code>total_confirmed_cases</code> at time $t_0$. The number of recovered people is set accordingly and the remaining values are derived in the model before starting the simulation.</li>
-<li>You can set the number of people in the <code>Susceptible</code> compartment at time $t_0$ via <code>m_populations</code>. Initial values of the other compartments are derived in the model before starting the simulation.</li>
-<li>You can set the number of people in the <code>Recovered</code> compartment at time $t_0$ via <code>m_populations</code>. Initial values of the other compartments are derived in the model before starting the simulation.</li>
+<li>You can set the number of people in the <code>Susceptible</code> compartment at time $t_0$ via <code>populations</code>. Initial values of the other compartments are derived in the model before starting the simulation.</li>
+<li>You can set the number of people in the <code>Recovered</code> compartment at time $t_0$ via <code>populations</code>. Initial values of the other compartments are derived in the model before starting the simulation.</li>
 <li>If none of the above is used, the force of infection formula and the values for the initial transitions are used consistently with the numerical scheme proposed in <a href="https://doi.org/10.3934/jcd.2021029">Messina et al (2022)</a> to set the <code>Susceptible</code>s. </li>
 </ul>
 </li>

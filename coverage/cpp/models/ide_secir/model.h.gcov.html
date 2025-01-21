@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-17 12:16:22</td>
+            <td class="headerValue">2025-01-21 10:37:43</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">4</td>
@@ -104,7 +104,7 @@
 <a name="42"><span class="lineNum">      42 </span>            :     /**</a>
 <a name="43"><span class="lineNum">      43 </span>            :     * @brief Constructor to create an IDE-SECIR model.</a>
 <a name="44"><span class="lineNum">      44 </span>            :     *</a>
-<a name="45"><span class="lineNum">      45 </span>            :     * @param[in, out] init TimeSeries with the initial values of the number of individuals, </a>
+<a name="45"><span class="lineNum">      45 </span>            :     * @param[in, out] transitions_init TimeSeries with the initial values of the number of individuals, </a>
 <a name="46"><span class="lineNum">      46 </span>            :     *   which transit within one timestep dt from one compartment to another.</a>
 <a name="47"><span class="lineNum">      47 </span>            :     *   Possible transitions are specified in #InfectionTransition%s.</a>
 <a name="48"><span class="lineNum">      48 </span>            :     *   Considered time points should have the distance dt. The last time point determines the start time t0 of the </a>
@@ -112,14 +112,14 @@
 <a name="50"><span class="lineNum">      50 </span>            :     *   The time history must reach a certain point in the past so that the simulation can be performed.</a>
 <a name="51"><span class="lineNum">      51 </span>            :     *   A warning is displayed if the condition is violated.</a>
 <a name="52"><span class="lineNum">      52 </span>            :     * @param[in] N_init A vector, containing the populations of the considered region, for every AgeGroup.</a>
-<a name="53"><span class="lineNum">      53 </span>            :     * @param[in] deaths A vector, containing the total number of deaths at time t0, for every AgeGroup.</a>
+<a name="53"><span class="lineNum">      53 </span>            :     * @param[in] deaths_init A vector, containing the total number of deaths at time t0, for every AgeGroup.</a>
 <a name="54"><span class="lineNum">      54 </span>            :     * @param[in] num_agegroups The number of AgeGroups.</a>
-<a name="55"><span class="lineNum">      55 </span>            :     * @param[in] total_confirmed_cases A vector, containing the total confirmed cases at time t0 can be set if it </a>
+<a name="55"><span class="lineNum">      55 </span>            :     * @param[in] total_confirmed_cases_init A vector, containing the total confirmed cases at time t0 can be set if it </a>
 <a name="56"><span class="lineNum">      56 </span>            :     *   should be used for initialization, for every AgeGroup.</a>
 <a name="57"><span class="lineNum">      57 </span>            :     */</a>
-<a name="58"><span class="lineNum">      58 </span>            :     Model(TimeSeries&lt;ScalarType&gt;&amp;&amp; init, CustomIndexArray&lt;ScalarType, AgeGroup&gt; N_init,</a>
-<a name="59"><span class="lineNum">      59 </span>            :           CustomIndexArray&lt;ScalarType, AgeGroup&gt; deaths, size_t num_agegroups,</a>
-<a name="60"><span class="lineNum">      60 </span>            :           CustomIndexArray&lt;ScalarType, AgeGroup&gt; total_confirmed_cases = CustomIndexArray&lt;ScalarType, AgeGroup&gt;());</a>
+<a name="58"><span class="lineNum">      58 </span>            :     Model(TimeSeries&lt;ScalarType&gt;&amp;&amp; transitions_init, CustomIndexArray&lt;ScalarType, AgeGroup&gt; N_init,</a>
+<a name="59"><span class="lineNum">      59 </span>            :           CustomIndexArray&lt;ScalarType, AgeGroup&gt; deaths_init, size_t num_agegroups,</a>
+<a name="60"><span class="lineNum">      60 </span>            :           CustomIndexArray&lt;ScalarType, AgeGroup&gt; total_confirmed_cases_init = CustomIndexArray&lt;ScalarType, AgeGroup&gt;());</a>
 <a name="61"><span class="lineNum">      61 </span>            : </a>
 <a name="62"><span class="lineNum">      62 </span>            :     // ---- Additional functionality such as constraint checking, setters and getters, etc. ----</a>
 <a name="63"><span class="lineNum">      63 </span>            :     /**</a>
@@ -129,13 +129,13 @@
 <a name="67"><span class="lineNum">      67 </span>            :     bool check_constraints(ScalarType dt) const;</a>
 <a name="68"><span class="lineNum">      68 </span>            : </a>
 <a name="69"><span class="lineNum">      69 </span>            :     /**</a>
-<a name="70"><span class="lineNum">      70 </span>            :     * @brief Returns a flat index for the InfectionTransition TimeSeries.</a>
+<a name="70"><span class="lineNum">      70 </span>            :     * @brief Returns a flat index for the TimeSeries transitions which contains values for the #InfectionTransition%s.</a>
 <a name="71"><span class="lineNum">      71 </span>            :     *</a>
-<a name="72"><span class="lineNum">      72 </span>            :     * In the TimeSeries we store a vector for each time point. In this vector we store the different </a>
+<a name="72"><span class="lineNum">      72 </span>            :     * In the TimeSeries we store a vector for each time point. In this vector we store values for the different </a>
 <a name="73"><span class="lineNum">      73 </span>            :     * #InfectionTransition%s for every AgeGroup.</a>
-<a name="74"><span class="lineNum">      74 </span>            :     * This function is used to get the right index in this vector for a specific AgeGroup and InfectionTransition.</a>
+<a name="74"><span class="lineNum">      74 </span>            :     * This function is used to get the right index in this vector for a specific AgeGroup and #InfectionTransition.</a>
 <a name="75"><span class="lineNum">      75 </span>            :     *</a>
-<a name="76"><span class="lineNum">      76 </span>            :     * @param[in] transition_idx Index determining which InfectionTransition we want to evaluate.</a>
+<a name="76"><span class="lineNum">      76 </span>            :     * @param[in] transition_idx Index determining which #InfectionTransition we want to evaluate.</a>
 <a name="77"><span class="lineNum">      77 </span>            :     * @param[in] agegroup The agegroup for which we want to evaluate.</a>
 <a name="78"><span class="lineNum">      78 </span>            :     */</a>
 <a name="79"><span class="lineNum">      79 </span>            : </a>
@@ -145,13 +145,13 @@
 <a name="83"><span class="lineNum">      83 </span>            :     }</a>
 <a name="84"><span class="lineNum">      84 </span>            : </a>
 <a name="85"><span class="lineNum">      85 </span>            :     /**</a>
-<a name="86"><span class="lineNum">      86 </span>            :     * @brief Returns a flat index for the InfectionState TimeSeries.</a>
+<a name="86"><span class="lineNum">      86 </span>            :     * @brief Returns a flat index for the TimeSeries populations which contains values for the #InfectionState%s.</a>
 <a name="87"><span class="lineNum">      87 </span>            :     *</a>
-<a name="88"><span class="lineNum">      88 </span>            :     * In the TimeSeries we store a vector for each time point. In this vector we store the different InfectionStates </a>
-<a name="89"><span class="lineNum">      89 </span>            :     * for every AgeGroup.</a>
-<a name="90"><span class="lineNum">      90 </span>            :     * This function is used to get the right index in this vector for a specific AgeGroup and InfectionState.</a>
+<a name="88"><span class="lineNum">      88 </span>            :     * In the TimeSeries we store a vector for each time point. In this vector we store values for the </a>
+<a name="89"><span class="lineNum">      89 </span>            :     * different #InfectionState%s for every AgeGroup.</a>
+<a name="90"><span class="lineNum">      90 </span>            :     * This function is used to get the right index in this vector for a specific AgeGroup and #InfectionState.</a>
 <a name="91"><span class="lineNum">      91 </span>            :     *</a>
-<a name="92"><span class="lineNum">      92 </span>            :     * @param[in] state_idx Index at which InfectionState we want to evaluate.</a>
+<a name="92"><span class="lineNum">      92 </span>            :     * @param[in] state_idx Index at which #InfectionState we want to evaluate.</a>
 <a name="93"><span class="lineNum">      93 </span>            :     * @param[in] agegroup The agegroup for which we want to evaluate.</a>
 <a name="94"><span class="lineNum">      94 </span>            :     */</a>
 <a name="95"><span class="lineNum">      95 </span><span class="lineCov">       1919 :     int get_state_flat_index(Eigen::Index state_idx, AgeGroup agegroup) const</span></a>
@@ -162,7 +162,7 @@
 <a name="100"><span class="lineNum">     100 </span>            :     /**</a>
 <a name="101"><span class="lineNum">     101 </span>            :      * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.</a>
 <a name="102"><span class="lineNum">     102 </span>            :      *</a>
-<a name="103"><span class="lineNum">     103 </span>            :      * This determines how many initial values we need for the flows.</a>
+<a name="103"><span class="lineNum">     103 </span>            :      * This determines how many initial values we need for the transitions.</a>
 <a name="104"><span class="lineNum">     104 </span>            :      * It may be possible to run the simulation with fewer time points than the value of the global support_max, </a>
 <a name="105"><span class="lineNum">     105 </span>            :      * but this number ensures that it is possible.</a>
 <a name="106"><span class="lineNum">     106 </span>            :      *</a>
@@ -204,15 +204,15 @@
 <a name="142"><span class="lineNum">     142 </span>            : </a>
 <a name="143"><span class="lineNum">     143 </span>            :     // ---- Public parameters. ----</a>
 <a name="144"><span class="lineNum">     144 </span>            :     ParameterSet parameters{AgeGroup(m_num_agegroups)}; ///&lt; ParameterSet of Model Parameters.</a>
-<a name="145"><span class="lineNum">     145 </span>            :     // Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the</a>
+<a name="145"><span class="lineNum">     145 </span>            :     // Attention: populations and transitions do not necessarily have the same number of time points due to the</a>
 <a name="146"><span class="lineNum">     146 </span>            :     // initialization part.</a>
 <a name="147"><span class="lineNum">     147 </span>            :     TimeSeries&lt;ScalarType&gt;</a>
-<a name="148"><span class="lineNum">     148 </span>            :         m_transitions; ///&lt; TimeSeries containing points of time and the corresponding number of transitions for every</a>
-<a name="149"><span class="lineNum">     149 </span>            :     // AgeGroup.</a>
-<a name="150"><span class="lineNum">     150 </span>            :     TimeSeries&lt;ScalarType&gt; m_populations; ///&lt; TimeSeries containing points of time and the corresponding number of</a>
+<a name="148"><span class="lineNum">     148 </span>            :         transitions; ///&lt; TimeSeries containing points of time and the corresponding number of individuals transitioning from</a>
+<a name="149"><span class="lineNum">     149 </span>            :     // one #InfectionState to another as defined in #InfectionTransition%s for every AgeGroup.</a>
+<a name="150"><span class="lineNum">     150 </span>            :     TimeSeries&lt;ScalarType&gt; populations; ///&lt; TimeSeries containing points of time and the corresponding number of</a>
 <a name="151"><span class="lineNum">     151 </span>            :         // people in defined #InfectionState%s for every AgeGroup.</a>
 <a name="152"><span class="lineNum">     152 </span>            :     CustomIndexArray&lt;ScalarType, AgeGroup&gt;</a>
-<a name="153"><span class="lineNum">     153 </span>            :         m_total_confirmed_cases; ///&lt; CustomIndexArray that contains the total number of confirmed cases at time t0 for every AgeGroup.</a>
+<a name="153"><span class="lineNum">     153 </span>            :         total_confirmed_cases; ///&lt; CustomIndexArray that contains the total number of confirmed cases at time t0 for every AgeGroup.</a>
 <a name="154"><span class="lineNum">     154 </span>            : </a>
 <a name="155"><span class="lineNum">     155 </span>            : private:</a>
 <a name="156"><span class="lineNum">     156 </span>            :     // ---- Functionality to calculate the sizes of the compartments for time t0. ----</a>
@@ -227,7 +227,7 @@
 <a name="165"><span class="lineNum">     165 </span>            :      * @param[in] dt Time discretization step size.</a>
 <a name="166"><span class="lineNum">     166 </span>            :      * @param[in] idx_InfectionState Specifies the considered #InfectionState</a>
 <a name="167"><span class="lineNum">     167 </span>            :      * @param[in] group The AgeGroup for which we want to compute.</a>
-<a name="168"><span class="lineNum">     168 </span>            :      * @param[in] idx_IncomingFlow Specifies the index of the incoming flow to #InfectionState in m_transitions. </a>
+<a name="168"><span class="lineNum">     168 </span>            :      * @param[in] idx_IncomingFlow Specifies the index of the incoming flow to #InfectionState in transitions. </a>
 <a name="169"><span class="lineNum">     169 </span>            :      * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant TransitionDistribution, </a>
 <a name="170"><span class="lineNum">     170 </span>            :      *              related to a flow from the considered #InfectionState to any other #InfectionState.</a>
 <a name="171"><span class="lineNum">     171 </span>            :      *              This index is also used for related probability.</a>
@@ -247,7 +247,7 @@
 <a name="185"><span class="lineNum">     185 </span>            :      *</a>
 <a name="186"><span class="lineNum">     186 </span>            :      * The values for the compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and </a>
 <a name="187"><span class="lineNum">     187 </span>            :      * InfectedCritical for time t_0 are calculated using the initial data in form of flows.</a>
-<a name="188"><span class="lineNum">     188 </span>            :      * Calculated values are stored in m_populations.</a>
+<a name="188"><span class="lineNum">     188 </span>            :      * Calculated values are stored in populations.</a>
 <a name="189"><span class="lineNum">     189 </span>            :      * </a>
 <a name="190"><span class="lineNum">     190 </span>            :      * @param[in] dt Time discretization step size.</a>
 <a name="191"><span class="lineNum">     191 </span>            :      */</a>
@@ -276,10 +276,10 @@
 <a name="214"><span class="lineNum">     214 </span>            : </a>
 <a name="215"><span class="lineNum">     215 </span>            :     // ---- Functionality for the iterations of a simulation. ----</a>
 <a name="216"><span class="lineNum">     216 </span>            :     /**</a>
-<a name="217"><span class="lineNum">     217 </span>            :     * @brief Computes number of Susceptible%s for the current last time in m_populations.</a>
+<a name="217"><span class="lineNum">     217 </span>            :     * @brief Computes number of Susceptible%s for the current last time in populations.</a>
 <a name="218"><span class="lineNum">     218 </span>            :     *</a>
 <a name="219"><span class="lineNum">     219 </span>            :     * Number is computed using previous number of Susceptible%s and the force of infection (also from previous timestep).</a>
-<a name="220"><span class="lineNum">     220 </span>            :     * Number is stored at the matching index in m_populations.</a>
+<a name="220"><span class="lineNum">     220 </span>            :     * Number is stored at the matching index in populations.</a>
 <a name="221"><span class="lineNum">     221 </span>            :     * @param[in] dt Time discretization step size.    </a>
 <a name="222"><span class="lineNum">     222 </span>            :     */</a>
 <a name="223"><span class="lineNum">     223 </span>            :     void compute_susceptibles(ScalarType dt);</a>
@@ -302,10 +302,10 @@
 <a name="240"><span class="lineNum">     240 </span>            :                       Eigen::Index current_time_index, AgeGroup group);</a>
 <a name="241"><span class="lineNum">     241 </span>            : </a>
 <a name="242"><span class="lineNum">     242 </span>            :     /**</a>
-<a name="243"><span class="lineNum">     243 </span>            :      * @brief Computes size of a flow for the current last time value in m_transitions.</a>
+<a name="243"><span class="lineNum">     243 </span>            :      * @brief Computes size of a flow for the current last time value in transitions.</a>
 <a name="244"><span class="lineNum">     244 </span>            :      * </a>
 <a name="245"><span class="lineNum">     245 </span>            :      * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the current </a>
-<a name="246"><span class="lineNum">     246 </span>            :      * last time value in m_transitions. </a>
+<a name="246"><span class="lineNum">     246 </span>            :      * last time value in transitions. </a>
 <a name="247"><span class="lineNum">     247 </span>            :      *</a>
 <a name="248"><span class="lineNum">     248 </span>            :      * @param[in] idx_InfectionTransitions Specifies the considered flow from #InfectionTransition.</a>
 <a name="249"><span class="lineNum">     249 </span>            :      * @param[in] idx_IncomingFlow Index of the flow in #InfectionTransition, which goes to the considered starting</a>
@@ -318,9 +318,9 @@
 <a name="256"><span class="lineNum">     256 </span>            :                       AgeGroup group);</a>
 <a name="257"><span class="lineNum">     257 </span>            : </a>
 <a name="258"><span class="lineNum">     258 </span>            :     /**</a>
-<a name="259"><span class="lineNum">     259 </span>            :      * @brief Sets all required flows for the current last timestep in m_transitions.</a>
+<a name="259"><span class="lineNum">     259 </span>            :      * @brief Sets all required flows for the current last timestep in transitions.</a>
 <a name="260"><span class="lineNum">     260 </span>            :      *</a>
-<a name="261"><span class="lineNum">     261 </span>            :      * New values are stored in m_transitions. Most values are computed via the function compute_flow().</a>
+<a name="261"><span class="lineNum">     261 </span>            :      * New values are stored in transitions. Most values are computed via the function compute_flow().</a>
 <a name="262"><span class="lineNum">     262 </span>            :      *</a>
 <a name="263"><span class="lineNum">     263 </span>            :      * @param[in] dt Time step.</a>
 <a name="264"><span class="lineNum">     264 </span>            :      */</a>
@@ -329,7 +329,7 @@
 <a name="267"><span class="lineNum">     267 </span>            :     /**</a>
 <a name="268"><span class="lineNum">     268 </span>            :      * @brief Updates the values of one compartment using flows.</a>
 <a name="269"><span class="lineNum">     269 </span>            :      *</a>
-<a name="270"><span class="lineNum">     270 </span>            :      * New value is stored in m_populations. The value is calculated using the compartment size in the previous </a>
+<a name="270"><span class="lineNum">     270 </span>            :      * New value is stored in populations. The value is calculated using the compartment size in the previous </a>
 <a name="271"><span class="lineNum">     271 </span>            :      * time step and the related flows of the current time step. </a>
 <a name="272"><span class="lineNum">     272 </span>            :      * Therefore the flows of the current time step should be calculated before using this function.</a>
 <a name="273"><span class="lineNum">     273 </span>            :      */</a>
@@ -340,7 +340,7 @@
 <a name="278"><span class="lineNum">     278 </span>            :     /**</a>
 <a name="279"><span class="lineNum">     279 </span>            :      * @brief Updates the values of all compartments except Susceptible at initialization.</a>
 <a name="280"><span class="lineNum">     280 </span>            :      *</a>
-<a name="281"><span class="lineNum">     281 </span>            :      * New values are stored in m_populations. The values are calculated using the compartment size in the previous </a>
+<a name="281"><span class="lineNum">     281 </span>            :      * New values are stored in populations. The values are calculated using the compartment size in the previous </a>
 <a name="282"><span class="lineNum">     282 </span>            :      * time step and the related flows of the current time step. </a>
 <a name="283"><span class="lineNum">     283 </span>            :      * Therefore the flows of the current time step should be calculated before using this function.</a>
 <a name="284"><span class="lineNum">     284 </span>            :      * </a>
@@ -348,14 +348,14 @@
 <a name="286"><span class="lineNum">     286 </span>            :     void update_compartments();</a>
 <a name="287"><span class="lineNum">     287 </span>            : </a>
 <a name="288"><span class="lineNum">     288 </span>            :     /**</a>
-<a name="289"><span class="lineNum">     289 </span>            :      * @brief Computes force of infection for the current last time in m_transitions.</a>
+<a name="289"><span class="lineNum">     289 </span>            :      * @brief Computes force of infection for the current last time in transitions.</a>
 <a name="290"><span class="lineNum">     290 </span>            :      * </a>
 <a name="291"><span class="lineNum">     291 </span>            :      * Computed value is stored in m_forceofinfection.</a>
 <a name="292"><span class="lineNum">     292 </span>            :      * </a>
 <a name="293"><span class="lineNum">     293 </span>            :      * @param[in] dt Time discretization step size.          </a>
 <a name="294"><span class="lineNum">     294 </span>            :      * @param[in] initialization If true we are in the case of the initialization of the model. </a>
 <a name="295"><span class="lineNum">     295 </span>            :      *      For this we need forceofinfection at time point t0-dt and not at the current last time </a>
-<a name="296"><span class="lineNum">     296 </span>            :      *      (given by m_transitions) as in the other time steps.</a>
+<a name="296"><span class="lineNum">     296 </span>            :      *      (given by transitions) as in the other time steps.</a>
 <a name="297"><span class="lineNum">     297 </span>            :      */</a>
 <a name="298"><span class="lineNum">     298 </span>            :     void compute_forceofinfection(ScalarType dt, bool initialization = false);</a>
 <a name="299"><span class="lineNum">     299 </span>            : </a>
