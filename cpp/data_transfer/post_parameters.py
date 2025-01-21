@@ -9,7 +9,7 @@ import memilio.epidata.geoModificationGermany as gMG
 
 header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
 
-def delete_scenarios():
+def delete_scenarios(url):
     response = requests.get(url + "scenarios/", headers=header)
     ids = [compartment["id"] for compartment in response.json()]
     for id in ids:
@@ -185,7 +185,7 @@ def post_mcmc_parameters(url, t, data_dir):
     #     # )
 
     # delete scenarios with old parameters
-    delete_scenarios()
+    delete_scenarios(url)
 
     # post scenarios with updated parameters
     for scenario in new_scenarios:
