@@ -391,11 +391,17 @@ simulate_ide_model(mio::Date start_date, ScalarType simulation_time, mio::Contac
 
     model_ide.set_tol_for_support_max(1e-6);
 
+    // Set scale_confirmed_cases.
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups),
+                                                         simulation_parameter["scale_confirmed_cases"]);
+
     // Set initial flows according to RKI data.
     std::string path_rki = mio::path_join((data_dir / "pydata" / "Germany").string(), "cases_all_germany_ma7.json");
+    std::vector<mio::ConfirmedCasesNoAgeEntry> rki_data = mio::read_confirmed_cases_noage(path_rki).value();
 
     mio::IOResult<void> init_flows = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(
-        model_ide, simulation_parameter["dt"], path_rki, start_date, simulation_parameter["scale_confirmed_cases"]);
+        model_ide, simulation_parameter["dt"], rki_data, start_date, scale_confirmed_cases);
 
     model_ide.check_constraints(simulation_parameter["dt"]);
 
