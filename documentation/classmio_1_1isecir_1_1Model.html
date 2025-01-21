@@ -92,6 +92,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a7caa0099fbcbf2a4dde3f6912885fee7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1isecir_1_1Model.html#a7caa0099fbcbf2a4dde3f6912885fee7">get_initialization_method_compartments</a> () const</td></tr>
 <tr class="memdesc:a7caa0099fbcbf2a4dde3f6912885fee7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the index of the automatically selected initialization method.  <a href="classmio_1_1isecir_1_1Model.html#a7caa0099fbcbf2a4dde3f6912885fee7">More...</a><br /></td></tr>
 <tr class="separator:a7caa0099fbcbf2a4dde3f6912885fee7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac5d0b722b228bed9024a8ef5ba568400"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1isecir_1_1Model.html#ac5d0b722b228bed9024a8ef5ba568400">get_num_agegroups</a> () const</td></tr>
+<tr class="memdesc:ac5d0b722b228bed9024a8ef5ba568400"><td class="mdescLeft">&#160;</td><td class="mdescRight">Getter for number of age groups.  <a href="classmio_1_1isecir_1_1Model.html#ac5d0b722b228bed9024a8ef5ba568400">More...</a><br /></td></tr>
+<tr class="separator:ac5d0b722b228bed9024a8ef5ba568400"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3328b24408a25661e384aa93cde4c7a1"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1isecir_1_1Model.html#a3328b24408a25661e384aa93cde4c7a1">get_state_flat_index</a> (Eigen::Index state_idx, <a class="el" href="structmio_1_1AgeGroup.html">AgeGroup</a> agegroup) const</td></tr>
 <tr class="memdesc:a3328b24408a25661e384aa93cde4c7a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a flat index for the <a class="el" href="classmio_1_1TimeSeries.html" title="stores vectors of values at time points (or some other abstract variable) the value at each time poin...">TimeSeries</a> populations which contains values for the <a class="el" href="namespacemio_1_1isecir.html#a4765e077a33191fc1125ca33a6ad8697" title="The InfectionState enum describes the possible categories for the infectious state of persons.">InfectionState</a>s.  <a href="classmio_1_1isecir_1_1Model.html#a3328b24408a25661e384aa93cde4c7a1">More...</a><br /></td></tr>
 <tr class="separator:a3328b24408a25661e384aa93cde4c7a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -196,8 +199,9 @@ Private Attributes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
-<tr class="memitem:a0176fc6ed10f3467cb3a0f9491f52e3a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemio.html#ae556a666d14183eb2bf3a3efc11551ec">IOResult</a>&lt; void &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1isecir_1_1Model.html#a0176fc6ed10f3467cb3a0f9491f52e3a">set_initial_flows</a> (<a class="el" href="classmio_1_1isecir_1_1Model.html">Model</a> &amp;model, <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> dt, std::string const &amp;path, <a class="el" href="structmio_1_1Date.html">Date</a> date, <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> scale_confirmed_cases)</td></tr>
-<tr class="separator:a0176fc6ed10f3467cb3a0f9491f52e3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab30eff29ba0ec128aff7f28a6774a953"><td class="memTemplParams" colspan="2">template&lt;typename EntryType &gt; </td></tr>
+<tr class="memitem:ab30eff29ba0ec128aff7f28a6774a953"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacemio.html#ae556a666d14183eb2bf3a3efc11551ec">IOResult</a>&lt; void &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classmio_1_1isecir_1_1Model.html#ab30eff29ba0ec128aff7f28a6774a953">set_initial_flows</a> (<a class="el" href="classmio_1_1isecir_1_1Model.html">Model</a> &amp;model, const <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> dt, const std::vector&lt; EntryType &gt; rki_data, const <a class="el" href="structmio_1_1Date.html">Date</a> date, const <a class="el" href="classmio_1_1CustomIndexArray.html">CustomIndexArray</a>&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>, <a class="el" href="structmio_1_1AgeGroup.html">AgeGroup</a> &gt; scale_confirmed_cases)</td></tr>
+<tr class="separator:ab30eff29ba0ec128aff7f28a6774a953"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeb51e0a4c44d4192cfbdb79598859172"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1isecir_1_1Model.html#aeb51e0a4c44d4192cfbdb79598859172">Simulation</a></td></tr>
 <tr class="separator:aeb51e0a4c44d4192cfbdb79598859172"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -673,6 +677,26 @@ Friends</h2></td></tr>
 
 </div>
 </div>
+<a id="ac5d0b722b228bed9024a8ef5ba568400"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac5d0b722b228bed9024a8ef5ba568400">&#9670;&nbsp;</a></span>get_num_agegroups()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t mio::isecir::Model::get_num_agegroups </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Getter for number of age groups. </p>
+<dl class="section return"><dt>Returns</dt><dd>Returns number of age groups. </dd></dl>
+
+</div>
+</div>
 <a id="a3328b24408a25661e384aa93cde4c7a1"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3328b24408a25661e384aa93cde4c7a1">&#9670;&nbsp;</a></span>get_state_flat_index()</h2>
 
@@ -1032,11 +1056,13 @@ Friends</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Friends And Related Function Documentation</h2>
-<a id="a0176fc6ed10f3467cb3a0f9491f52e3a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0176fc6ed10f3467cb3a0f9491f52e3a">&#9670;&nbsp;</a></span>set_initial_flows</h2>
+<a id="ab30eff29ba0ec128aff7f28a6774a953"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab30eff29ba0ec128aff7f28a6774a953">&#9670;&nbsp;</a></span>set_initial_flows</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;typename EntryType &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1050,25 +1076,25 @@ Friends</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&#160;</td>
           <td class="paramname"><em>dt</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::string const &amp;&#160;</td>
-          <td class="paramname"><em>path</em>, </td>
+          <td class="paramtype">const std::vector&lt; EntryType &gt;&#160;</td>
+          <td class="paramname"><em>rki_data</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="structmio_1_1Date.html">Date</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="structmio_1_1Date.html">Date</a>&#160;</td>
           <td class="paramname"><em>date</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="classmio_1_1CustomIndexArray.html">CustomIndexArray</a>&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>, <a class="el" href="structmio_1_1AgeGroup.html">AgeGroup</a> &gt;&#160;</td>
           <td class="paramname"><em>scale_confirmed_cases</em>&#160;</td>
         </tr>
         <tr>

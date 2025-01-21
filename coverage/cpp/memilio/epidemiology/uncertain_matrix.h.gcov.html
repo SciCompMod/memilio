@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-21 13:38:54</td>
+            <td class="headerValue">2025-01-21 15:18:18</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">21</td>
@@ -110,22 +110,22 @@
 <a name="48"><span class="lineNum">      48 </span>            :     {</a>
 <a name="49"><span class="lineNum">      49 </span><span class="lineCov">       1088 :     }</span></a>
 <a name="50"><span class="lineNum">      50 </span>            : </a>
-<a name="51"><span class="lineNum">      51 </span><span class="lineCov">       1171 :     UncertainContactMatrix(const ContactMatrixGroup&amp; cont_freq)</span></a>
-<a name="52"><span class="lineNum">      52 </span><span class="lineCov">       1171 :         : m_cont_freq(cont_freq)</span></a>
-<a name="53"><span class="lineNum">      53 </span><span class="lineCov">       1171 :         , m_dampings()</span></a>
-<a name="54"><span class="lineNum">      54 </span><span class="lineCov">       2342 :         , m_school_holiday_damping(0.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {},</span></a>
-<a name="55"><span class="lineNum">      55 </span><span class="lineCov">       1171 :                                    Eigen::VectorXd::Zero(cont_freq.get_num_groups()))</span></a>
-<a name="56"><span class="lineNum">      56 </span><span class="lineCov">       1171 :         , m_school_holidays()</span></a>
+<a name="51"><span class="lineNum">      51 </span><span class="lineCov">       1174 :     UncertainContactMatrix(const ContactMatrixGroup&amp; cont_freq)</span></a>
+<a name="52"><span class="lineNum">      52 </span><span class="lineCov">       1174 :         : m_cont_freq(cont_freq)</span></a>
+<a name="53"><span class="lineNum">      53 </span><span class="lineCov">       1174 :         , m_dampings()</span></a>
+<a name="54"><span class="lineNum">      54 </span><span class="lineCov">       2348 :         , m_school_holiday_damping(0.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {},</span></a>
+<a name="55"><span class="lineNum">      55 </span><span class="lineCov">       1174 :                                    Eigen::VectorXd::Zero(cont_freq.get_num_groups()))</span></a>
+<a name="56"><span class="lineNum">      56 </span><span class="lineCov">       1174 :         , m_school_holidays()</span></a>
 <a name="57"><span class="lineNum">      57 </span>            :     {</a>
-<a name="58"><span class="lineNum">      58 </span><span class="lineCov">       1171 :     }</span></a>
+<a name="58"><span class="lineNum">      58 </span><span class="lineCov">       1174 :     }</span></a>
 <a name="59"><span class="lineNum">      59 </span>            : </a>
 <a name="60"><span class="lineNum">      60 </span>            :     /**</a>
 <a name="61"><span class="lineNum">      61 </span>            :      * @brief Conversion to const ContactMatrix reference by returning the </a>
 <a name="62"><span class="lineNum">      62 </span>            :      *        ContactMatrix contained in UncertainContactMatrix</a>
 <a name="63"><span class="lineNum">      63 </span>            :      */</a>
-<a name="64"><span class="lineNum">      64 </span><span class="lineCov">     380322 :     operator ContactMatrixGroup const &amp;() const</span></a>
+<a name="64"><span class="lineNum">      64 </span><span class="lineCov">     385020 :     operator ContactMatrixGroup const &amp;() const</span></a>
 <a name="65"><span class="lineNum">      65 </span>            :     {</a>
-<a name="66"><span class="lineNum">      66 </span><span class="lineCov">     380322 :         return m_cont_freq;</span></a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineCov">     385020 :         return m_cont_freq;</span></a>
 <a name="67"><span class="lineNum">      67 </span>            :     }</a>
 <a name="68"><span class="lineNum">      68 </span>            : </a>
 <a name="69"><span class="lineNum">      69 </span>            :     /**</a>

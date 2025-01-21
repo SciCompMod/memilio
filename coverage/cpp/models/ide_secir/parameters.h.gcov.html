@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-21 13:38:54</td>
+            <td class="headerValue">2025-01-21 15:18:18</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">10</td>
@@ -114,14 +114,14 @@
 <a name="52"><span class="lineNum">      52 </span>            : struct TransitionDistributions {</a>
 <a name="53"><span class="lineNum">      53 </span>            : </a>
 <a name="54"><span class="lineNum">      54 </span>            :     using Type = CustomIndexArray&lt;std::vector&lt;StateAgeFunctionWrapper&gt;, AgeGroup&gt;;</a>
-<a name="55"><span class="lineNum">      55 </span><span class="lineCov">         22 :     static Type get_default(AgeGroup size)</span></a>
+<a name="55"><span class="lineNum">      55 </span><span class="lineCov">         24 :     static Type get_default(AgeGroup size)</span></a>
 <a name="56"><span class="lineNum">      56 </span>            :     {</a>
-<a name="57"><span class="lineNum">      57 </span><span class="lineCov">         22 :         SmootherCosine smoothcos(2.0);</span></a>
-<a name="58"><span class="lineNum">      58 </span><span class="lineCov">         22 :         StateAgeFunctionWrapper delaydistribution(smoothcos);</span></a>
-<a name="59"><span class="lineNum">      59 </span><span class="lineCov">         22 :         std::vector&lt;StateAgeFunctionWrapper&gt; state_age_function_vector((int)InfectionTransition::Count,</span></a>
-<a name="60"><span class="lineNum">      60 </span><span class="lineCov">         44 :                                                                        delaydistribution);</span></a>
-<a name="61"><span class="lineNum">      61 </span><span class="lineCov">         44 :         return Type(size, state_age_function_vector);</span></a>
-<a name="62"><span class="lineNum">      62 </span><span class="lineCov">         22 :     }</span></a>
+<a name="57"><span class="lineNum">      57 </span><span class="lineCov">         24 :         SmootherCosine smoothcos(2.0);</span></a>
+<a name="58"><span class="lineNum">      58 </span><span class="lineCov">         24 :         StateAgeFunctionWrapper delaydistribution(smoothcos);</span></a>
+<a name="59"><span class="lineNum">      59 </span><span class="lineCov">         24 :         std::vector&lt;StateAgeFunctionWrapper&gt; state_age_function_vector((int)InfectionTransition::Count,</span></a>
+<a name="60"><span class="lineNum">      60 </span><span class="lineCov">         48 :                                                                        delaydistribution);</span></a>
+<a name="61"><span class="lineNum">      61 </span><span class="lineCov">         48 :         return Type(size, state_age_function_vector);</span></a>
+<a name="62"><span class="lineNum">      62 </span><span class="lineCov">         24 :     }</span></a>
 <a name="63"><span class="lineNum">      63 </span>            : </a>
 <a name="64"><span class="lineNum">      64 </span>            :     static std::string name()</a>
 <a name="65"><span class="lineNum">      65 </span>            :     {</a>
@@ -136,14 +136,14 @@
 <a name="74"><span class="lineNum">      74 </span>            :     /*For consistency, also define TransitionProbabilities for each transition in #InfectionTransition. </a>
 <a name="75"><span class="lineNum">      75 </span>            :     Transition Probabilities should be set to 1 if there is no possible other flow from starting compartment.*/</a>
 <a name="76"><span class="lineNum">      76 </span>            :     using Type = CustomIndexArray&lt;std::vector&lt;ScalarType&gt;, AgeGroup&gt;;</a>
-<a name="77"><span class="lineNum">      77 </span><span class="lineCov">         22 :     static Type get_default(AgeGroup size)</span></a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineCov">         24 :     static Type get_default(AgeGroup size)</span></a>
 <a name="78"><span class="lineNum">      78 </span>            :     {</a>
-<a name="79"><span class="lineNum">      79 </span><span class="lineCov">         44 :         std::vector&lt;ScalarType&gt; probs((int)InfectionTransition::Count, 0.5);</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">         48 :         std::vector&lt;ScalarType&gt; probs((int)InfectionTransition::Count, 0.5);</span></a>
 <a name="80"><span class="lineNum">      80 </span>            :         // Set the following probablities to 1 as there is no other option to go anywhere else.</a>
-<a name="81"><span class="lineNum">      81 </span><span class="lineCov">         22 :         probs[Eigen::Index(InfectionTransition::SusceptibleToExposed)]        = 1;</span></a>
-<a name="82"><span class="lineNum">      82 </span><span class="lineCov">         22 :         probs[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;</span></a>
-<a name="83"><span class="lineNum">      83 </span><span class="lineCov">         44 :         return Type(size, probs);</span></a>
-<a name="84"><span class="lineNum">      84 </span><span class="lineCov">         22 :     }</span></a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineCov">         24 :         probs[Eigen::Index(InfectionTransition::SusceptibleToExposed)]        = 1;</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">         24 :         probs[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;</span></a>
+<a name="83"><span class="lineNum">      83 </span><span class="lineCov">         48 :         return Type(size, probs);</span></a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">         24 :     }</span></a>
 <a name="85"><span class="lineNum">      85 </span>            : </a>
 <a name="86"><span class="lineNum">      86 </span>            :     static std::string name()</a>
 <a name="87"><span class="lineNum">      87 </span>            :     {</a>
@@ -157,13 +157,13 @@
 <a name="95"><span class="lineNum">      95 </span>            : struct ContactPatterns {</a>
 <a name="96"><span class="lineNum">      96 </span>            :     using Type = UncertainContactMatrix&lt;double&gt;;</a>
 <a name="97"><span class="lineNum">      97 </span>            : </a>
-<a name="98"><span class="lineNum">      98 </span><span class="lineCov">         22 :     static Type get_default(AgeGroup size)</span></a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineCov">         24 :     static Type get_default(AgeGroup size)</span></a>
 <a name="99"><span class="lineNum">      99 </span>            :     {</a>
-<a name="100"><span class="lineNum">     100 </span><span class="lineCov">         22 :         ContactMatrixGroup contact_matrix = ContactMatrixGroup(1, static_cast&lt;Eigen::Index&gt;((size_t)size));</span></a>
-<a name="101"><span class="lineNum">     101 </span><span class="lineCov">         66 :         contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(static_cast&lt;Eigen::Index&gt;((size_t)size),</span></a>
-<a name="102"><span class="lineNum">     102 </span><span class="lineCov">         66 :                                                                          static_cast&lt;Eigen::Index&gt;((size_t)size), 10.));</span></a>
-<a name="103"><span class="lineNum">     103 </span><span class="lineCov">         44 :         return Type(contact_matrix);</span></a>
-<a name="104"><span class="lineNum">     104 </span><span class="lineCov">         22 :     }</span></a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineCov">         24 :         ContactMatrixGroup contact_matrix = ContactMatrixGroup(1, static_cast&lt;Eigen::Index&gt;((size_t)size));</span></a>
+<a name="101"><span class="lineNum">     101 </span><span class="lineCov">         72 :         contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(static_cast&lt;Eigen::Index&gt;((size_t)size),</span></a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineCov">         72 :                                                                          static_cast&lt;Eigen::Index&gt;((size_t)size), 10.));</span></a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineCov">         48 :         return Type(contact_matrix);</span></a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineCov">         24 :     }</span></a>
 <a name="105"><span class="lineNum">     105 </span>            :     static std::string name()</a>
 <a name="106"><span class="lineNum">     106 </span>            :     {</a>
 <a name="107"><span class="lineNum">     107 </span>            :         return &quot;ContactPatterns&quot;;</a>
@@ -175,11 +175,11 @@
 <a name="113"><span class="lineNum">     113 </span>            : */</a>
 <a name="114"><span class="lineNum">     114 </span>            : struct TransmissionProbabilityOnContact {</a>
 <a name="115"><span class="lineNum">     115 </span>            :     using Type = CustomIndexArray&lt;StateAgeFunctionWrapper, AgeGroup&gt;;</a>
-<a name="116"><span class="lineNum">     116 </span><span class="lineCov">         22 :     static Type get_default(AgeGroup size)</span></a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineCov">         24 :     static Type get_default(AgeGroup size)</span></a>
 <a name="117"><span class="lineNum">     117 </span>            :     {</a>
-<a name="118"><span class="lineNum">     118 </span><span class="lineCov">         22 :         ConstantFunction constfunc(1.0);</span></a>
-<a name="119"><span class="lineNum">     119 </span><span class="lineCov">         44 :         return Type(size, constfunc);</span></a>
-<a name="120"><span class="lineNum">     120 </span><span class="lineCov">         22 :     }</span></a>
+<a name="118"><span class="lineNum">     118 </span><span class="lineCov">         24 :         ConstantFunction constfunc(1.0);</span></a>
+<a name="119"><span class="lineNum">     119 </span><span class="lineCov">         48 :         return Type(size, constfunc);</span></a>
+<a name="120"><span class="lineNum">     120 </span><span class="lineCov">         24 :     }</span></a>
 <a name="121"><span class="lineNum">     121 </span>            :     static std::string name()</a>
 <a name="122"><span class="lineNum">     122 </span>            :     {</a>
 <a name="123"><span class="lineNum">     123 </span>            :         return &quot;TransmissionProbabilityOnContact&quot;;</a>
@@ -192,11 +192,11 @@
 <a name="130"><span class="lineNum">     130 </span>            : struct RelativeTransmissionNoSymptoms {</a>
 <a name="131"><span class="lineNum">     131 </span>            : </a>
 <a name="132"><span class="lineNum">     132 </span>            :     using Type = CustomIndexArray&lt;StateAgeFunctionWrapper, AgeGroup&gt;;</a>
-<a name="133"><span class="lineNum">     133 </span><span class="lineCov">         22 :     static Type get_default(AgeGroup size)</span></a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineCov">         24 :     static Type get_default(AgeGroup size)</span></a>
 <a name="134"><span class="lineNum">     134 </span>            :     {</a>
-<a name="135"><span class="lineNum">     135 </span><span class="lineCov">         22 :         ConstantFunction constfunc(1.0);</span></a>
-<a name="136"><span class="lineNum">     136 </span><span class="lineCov">         44 :         return Type(size, constfunc);</span></a>
-<a name="137"><span class="lineNum">     137 </span><span class="lineCov">         22 :     }</span></a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineCov">         24 :         ConstantFunction constfunc(1.0);</span></a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">         48 :         return Type(size, constfunc);</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineCov">         24 :     }</span></a>
 <a name="138"><span class="lineNum">     138 </span>            :     static std::string name()</a>
 <a name="139"><span class="lineNum">     139 </span>            :     {</a>
 <a name="140"><span class="lineNum">     140 </span>            :         return &quot;RelativeTransmissionNoSymptoms&quot;;</a>
@@ -208,11 +208,11 @@
 <a name="146"><span class="lineNum">     146 </span>            : */</a>
 <a name="147"><span class="lineNum">     147 </span>            : struct RiskOfInfectionFromSymptomatic {</a>
 <a name="148"><span class="lineNum">     148 </span>            :     using Type = CustomIndexArray&lt;StateAgeFunctionWrapper, AgeGroup&gt;;</a>
-<a name="149"><span class="lineNum">     149 </span><span class="lineCov">         22 :     static Type get_default(AgeGroup size)</span></a>
+<a name="149"><span class="lineNum">     149 </span><span class="lineCov">         24 :     static Type get_default(AgeGroup size)</span></a>
 <a name="150"><span class="lineNum">     150 </span>            :     {</a>
-<a name="151"><span class="lineNum">     151 </span><span class="lineCov">         22 :         ConstantFunction constfunc(1.0);</span></a>
-<a name="152"><span class="lineNum">     152 </span><span class="lineCov">         44 :         return Type(size, constfunc);</span></a>
-<a name="153"><span class="lineNum">     153 </span><span class="lineCov">         22 :     }</span></a>
+<a name="151"><span class="lineNum">     151 </span><span class="lineCov">         24 :         ConstantFunction constfunc(1.0);</span></a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineCov">         48 :         return Type(size, constfunc);</span></a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineCov">         24 :     }</span></a>
 <a name="154"><span class="lineNum">     154 </span>            :     static std::string name()</a>
 <a name="155"><span class="lineNum">     155 </span>            :     {</a>
 <a name="156"><span class="lineNum">     156 </span>            :         return &quot;RiskOfInfectionFromSymptomatic&quot;;</a>
@@ -230,9 +230,9 @@
 <a name="168"><span class="lineNum">     168 </span>            :  */</a>
 <a name="169"><span class="lineNum">     169 </span>            : struct StartDay {</a>
 <a name="170"><span class="lineNum">     170 </span>            :     using Type = ScalarType;</a>
-<a name="171"><span class="lineNum">     171 </span><span class="lineCov">         22 :     static Type get_default(AgeGroup)</span></a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">         24 :     static Type get_default(AgeGroup)</span></a>
 <a name="172"><span class="lineNum">     172 </span>            :     {</a>
-<a name="173"><span class="lineNum">     173 </span><span class="lineCov">         22 :         return 0.;</span></a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">         24 :         return 0.;</span></a>
 <a name="174"><span class="lineNum">     174 </span>            :     }</a>
 <a name="175"><span class="lineNum">     175 </span>            :     static std::string name()</a>
 <a name="176"><span class="lineNum">     176 </span>            :     {</a>
@@ -247,9 +247,9 @@
 <a name="185"><span class="lineNum">     185 </span>            :  */</a>
 <a name="186"><span class="lineNum">     186 </span>            : struct Seasonality {</a>
 <a name="187"><span class="lineNum">     187 </span>            :     using Type = ScalarType;</a>
-<a name="188"><span class="lineNum">     188 </span><span class="lineCov">         22 :     static Type get_default(AgeGroup)</span></a>
+<a name="188"><span class="lineNum">     188 </span><span class="lineCov">         24 :     static Type get_default(AgeGroup)</span></a>
 <a name="189"><span class="lineNum">     189 </span>            :     {</a>
-<a name="190"><span class="lineNum">     190 </span><span class="lineCov">         22 :         return Type(0.);</span></a>
+<a name="190"><span class="lineNum">     190 </span><span class="lineCov">         24 :         return Type(0.);</span></a>
 <a name="191"><span class="lineNum">     191 </span>            :     }</a>
 <a name="192"><span class="lineNum">     192 </span>            :     static std::string name()</a>
 <a name="193"><span class="lineNum">     193 </span>            :     {</a>
@@ -268,11 +268,11 @@
 <a name="206"><span class="lineNum">     206 </span>            : class Parameters : public ParametersBase</a>
 <a name="207"><span class="lineNum">     207 </span>            : {</a>
 <a name="208"><span class="lineNum">     208 </span>            : public:</a>
-<a name="209"><span class="lineNum">     209 </span><span class="lineCov">         22 :     Parameters(AgeGroup num_agegroups)</span></a>
-<a name="210"><span class="lineNum">     210 </span><span class="lineCov">         22 :         : ParametersBase(num_agegroups)</span></a>
-<a name="211"><span class="lineNum">     211 </span><span class="lineCov">         22 :         , m_num_groups{num_agegroups}</span></a>
+<a name="209"><span class="lineNum">     209 </span><span class="lineCov">         24 :     Parameters(AgeGroup num_agegroups)</span></a>
+<a name="210"><span class="lineNum">     210 </span><span class="lineCov">         24 :         : ParametersBase(num_agegroups)</span></a>
+<a name="211"><span class="lineNum">     211 </span><span class="lineCov">         24 :         , m_num_groups{num_agegroups}</span></a>
 <a name="212"><span class="lineNum">     212 </span>            :     {</a>
-<a name="213"><span class="lineNum">     213 </span><span class="lineCov">         22 :     }</span></a>
+<a name="213"><span class="lineNum">     213 </span><span class="lineCov">         24 :     }</span></a>
 <a name="214"><span class="lineNum">     214 </span>            : </a>
 <a name="215"><span class="lineNum">     215 </span>            :     /**</a>
 <a name="216"><span class="lineNum">     216 </span>            :      * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error.</a>

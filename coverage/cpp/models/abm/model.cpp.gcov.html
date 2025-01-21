@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-21 13:38:54</td>
+            <td class="headerValue">2025-01-21 15:18:18</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">25</td>
@@ -162,25 +162,25 @@
 <a name="100"><span class="lineNum">     100 </span>            : </a>
 <a name="101"><span class="lineNum">     101 </span><span class="lineCov">       2772 :         auto try_mobility_rule = [&amp;](auto rule) -&gt; bool {</span></a>
 <a name="102"><span class="lineNum">     102 </span>            :             // run mobility rule and check if change of location can actually happen</a>
-<a name="103"><span class="lineNum">     103 </span><span class="lineCov">      45963 :             auto target_type                  = rule(personal_rng, person, t, dt, parameters);</span></a>
-<a name="104"><span class="lineNum">     104 </span><span class="lineCov">      26433 :             const Location&amp; target_location   = get_location(find_location(target_type, person_id));</span></a>
-<a name="105"><span class="lineNum">     105 </span><span class="lineCov">      26271 :             const LocationId current_location = person.get_location();</span></a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineCov">      45954 :             auto target_type                  = rule(personal_rng, person, t, dt, parameters);</span></a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineCov">      26595 :             const Location&amp; target_location   = get_location(find_location(target_type, person_id));</span></a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineCov">      26460 :             const LocationId current_location = person.get_location();</span></a>
 <a name="106"><span class="lineNum">     106 </span>            : </a>
 <a name="107"><span class="lineNum">     107 </span>            :             // the Person cannot move if they do not wear mask as required at targeted location</a>
-<a name="108"><span class="lineNum">     108 </span><span class="lineCov">       8829 :             if (target_location.is_mask_required() &amp;&amp; !person.is_compliant(personal_rng, InterventionType::Mask)) {</span></a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineCov">       8892 :             if (target_location.is_mask_required() &amp;&amp; !person.is_compliant(personal_rng, InterventionType::Mask)) {</span></a>
 <a name="109"><span class="lineNum">     109 </span><span class="lineCov">          9 :                 return false;</span></a>
 <a name="110"><span class="lineNum">     110 </span>            :             }</a>
 <a name="111"><span class="lineNum">     111 </span>            :             // the Person cannot move if the capacity of targeted Location is reached</a>
-<a name="112"><span class="lineNum">     112 </span><span class="lineCov">       8937 :             if (target_location.get_id() == current_location ||</span></a>
-<a name="113"><span class="lineNum">     113 </span><span class="lineCov">        378 :                 get_number_persons(target_location.get_id()) &gt;= target_location.get_capacity().persons) {</span></a>
-<a name="114"><span class="lineNum">     114 </span><span class="lineCov">       8568 :                 return false;</span></a>
+<a name="112"><span class="lineNum">     112 </span><span class="lineCov">       8973 :             if (target_location.get_id() == current_location ||</span></a>
+<a name="113"><span class="lineNum">     113 </span><span class="lineCov">        324 :                 get_number_persons(target_location.get_id()) &gt;= target_location.get_capacity().persons) {</span></a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">       8658 :                 return false;</span></a>
 <a name="115"><span class="lineNum">     115 </span>            :             }</a>
 <a name="116"><span class="lineNum">     116 </span>            :             // the Person cannot move if the performed TestingStrategy is positive</a>
-<a name="117"><span class="lineNum">     117 </span><span class="lineCov">        720 :             if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {</span></a>
+<a name="117"><span class="lineNum">     117 </span><span class="lineCov">        612 :             if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {</span></a>
 <a name="118"><span class="lineNum">     118 </span><span class="lineCov">         18 :                 return false;</span></a>
 <a name="119"><span class="lineNum">     119 </span>            :             }</a>
 <a name="120"><span class="lineNum">     120 </span>            :             // update worn mask to target location's requirements</a>
-<a name="121"><span class="lineNum">     121 </span><span class="lineCov">        162 :             if (target_location.is_mask_required()) {</span></a>
+<a name="121"><span class="lineNum">     121 </span><span class="lineCov">        135 :             if (target_location.is_mask_required()) {</span></a>
 <a name="122"><span class="lineNum">     122 </span>            :                 // if the current MaskProtection level is lower than required, the Person changes mask</a>
 <a name="123"><span class="lineNum">     123 </span><span class="lineCov">         45 :                 if (parameters.get&lt;MaskProtection&gt;()[person.get_mask().get_type()] &lt;</span></a>
 <a name="124"><span class="lineNum">     124 </span><span class="lineCov">         18 :                     parameters.get&lt;MaskProtection&gt;()[target_location.get_required_mask()]) {</span></a>
@@ -188,11 +188,11 @@
 <a name="126"><span class="lineNum">     126 </span>            :                 }</a>
 <a name="127"><span class="lineNum">     127 </span>            :             }</a>
 <a name="128"><span class="lineNum">     128 </span>            :             else {</a>
-<a name="129"><span class="lineNum">     129 </span><span class="lineCov">        612 :                 person.set_mask(MaskType::None, t);</span></a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineCov">        504 :                 person.set_mask(MaskType::None, t);</span></a>
 <a name="130"><span class="lineNum">     130 </span>            :             }</a>
 <a name="131"><span class="lineNum">     131 </span>            :             // all requirements are met, move to target location</a>
-<a name="132"><span class="lineNum">     132 </span><span class="lineCov">        486 :             change_location(person_id, target_location.get_id());</span></a>
-<a name="133"><span class="lineNum">     133 </span><span class="lineCov">        162 :             return true;</span></a>
+<a name="132"><span class="lineNum">     132 </span><span class="lineCov">        405 :             change_location(person_id, target_location.get_id());</span></a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineCov">        135 :             return true;</span></a>
 <a name="134"><span class="lineNum">     134 </span><span class="lineCov">       2772 :         };</span></a>
 <a name="135"><span class="lineNum">     135 </span>            : </a>
 <a name="136"><span class="lineNum">     136 </span>            :         // run mobility rules one after the other if the corresponding location type exists</a>
@@ -205,8 +205,8 @@
 <a name="143"><span class="lineNum">     143 </span><span class="lineCov">       5400 :                 (has_locations({LocationType::School, LocationType::Home}) &amp;&amp; try_mobility_rule(&amp;go_to_school)) ||</span></a>
 <a name="144"><span class="lineNum">     144 </span><span class="lineCov">       5373 :                 (has_locations({LocationType::Work, LocationType::Home}) &amp;&amp; try_mobility_rule(&amp;go_to_work)) ||</span></a>
 <a name="145"><span class="lineNum">     145 </span><span class="lineCov">       5355 :                 (has_locations({LocationType::BasicsShop, LocationType::Home}) &amp;&amp; try_mobility_rule(&amp;go_to_shop)) ||</span></a>
-<a name="146"><span class="lineNum">     146 </span><span class="lineCov">      13473 :                 (has_locations({LocationType::SocialEvent, LocationType::Home}) &amp;&amp; try_mobility_rule(&amp;go_to_event)) ||</span></a>
-<a name="147"><span class="lineNum">     147 </span><span class="lineCov">       5292 :                 (has_locations({LocationType::Home}) &amp;&amp; try_mobility_rule(&amp;go_to_quarantine));</span></a>
+<a name="146"><span class="lineNum">     146 </span><span class="lineCov">      13500 :                 (has_locations({LocationType::SocialEvent, LocationType::Home}) &amp;&amp; try_mobility_rule(&amp;go_to_event)) ||</span></a>
+<a name="147"><span class="lineNum">     147 </span><span class="lineCov">       5319 :                 (has_locations({LocationType::Home}) &amp;&amp; try_mobility_rule(&amp;go_to_quarantine));</span></a>
 <a name="148"><span class="lineNum">     148 </span>            :         }</a>
 <a name="149"><span class="lineNum">     149 </span>            :         else {</a>
 <a name="150"><span class="lineNum">     150 </span>            :             // no daily routine mobility, just infection related</a>
@@ -367,11 +367,11 @@
 <a name="305"><span class="lineNum">     305 </span><span class="lineCov">         81 :     return std::make_pair(m_persons.begin(), m_persons.end());</span></a>
 <a name="306"><span class="lineNum">     306 </span>            : }</a>
 <a name="307"><span class="lineNum">     307 </span>            : </a>
-<a name="308"><span class="lineNum">     308 </span><span class="lineCov">       8838 : LocationId Model::find_location(LocationType type, const PersonId person) const</span></a>
+<a name="308"><span class="lineNum">     308 </span><span class="lineCov">       8901 : LocationId Model::find_location(LocationType type, const PersonId person) const</span></a>
 <a name="309"><span class="lineNum">     309 </span>            : {</a>
-<a name="310"><span class="lineNum">     310 </span><span class="lineCov">       8838 :     auto location_id = get_person(person).get_assigned_location(type);</span></a>
-<a name="311"><span class="lineNum">     311 </span><span class="lineCov">       8838 :     assert(location_id != LocationId::invalid_id() &amp;&amp; &quot;The person has no assigned location of that type.&quot;);</span></a>
-<a name="312"><span class="lineNum">     312 </span><span class="lineCov">      17676 :     return location_id;</span></a>
+<a name="310"><span class="lineNum">     310 </span><span class="lineCov">       8901 :     auto location_id = get_person(person).get_assigned_location(type);</span></a>
+<a name="311"><span class="lineNum">     311 </span><span class="lineCov">       8901 :     assert(location_id != LocationId::invalid_id() &amp;&amp; &quot;The person has no assigned location of that type.&quot;);</span></a>
+<a name="312"><span class="lineNum">     312 </span><span class="lineCov">      17802 :     return location_id;</span></a>
 <a name="313"><span class="lineNum">     313 </span>            : }</a>
 <a name="314"><span class="lineNum">     314 </span>            : </a>
 <a name="315"><span class="lineNum">     315 </span><span class="lineCov">          9 : size_t Model::get_subpopulation_combined(TimePoint t, InfectionState s) const</span></a>
