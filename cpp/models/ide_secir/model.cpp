@@ -46,8 +46,12 @@ Model::Model(TimeSeries<ScalarType>&& transitions_init, CustomIndexArray<ScalarT
     , m_num_agegroups{num_agegroups}
 
 {
+    // Assert that input arguments for the total population have the correct size regarding
+    // age groups.
+    assert((size_t)m_N.size() == m_num_agegroups);
+
     if (transitions.get_num_time_points() > 0) {
-        // Add first time point in populations according to last time point in transitions which is where we start
+        // Add first time point in m_populations according to last time point in m_transitions which is where we start
         // the simulation.
         populations.add_time_point<Eigen::VectorX<ScalarType>>(
             transitions.get_last_time(),
@@ -71,7 +75,7 @@ bool Model::check_constraints(ScalarType dt) const
 {
 
     if (!((size_t)transitions.get_num_elements() == (size_t)InfectionTransition::Count * m_num_agegroups)) {
-        log_error("A variable given for model construction is not valid. Number of elements in vector of"
+        log_error("A variable given for model construction is not valid. Number of elements in vector of "
                   "transitions does not match the required number.");
         return true;
     }
@@ -118,6 +122,21 @@ bool Model::check_constraints(ScalarType dt) const
         log_error("The TimeSeries for the compartments contains more than one time point. It is unclear how to "
                   "initialize.");
         return true;
+    }
+
+    if ((size_t)total_confirmed_cases.size() > 0 && (size_t)total_confirmed_cases.size() != m_num_agegroups) {
+        log_error("Initialization failed. Number of elements in total_confirmed_cases does not match the number "
+                  "of age groups.");
+        return true;
+    }
+
+    if ((size_t)total_confirmed_cases.size() > 0) {
+        for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+            if (total_confirmed_cases[group] < 0) {
+                log_error("Initialization failed. One or more value of total_confirmed_cases is less than zero.");
+                return true;
+            }
+        }
     }
 
     return parameters.check_constraints();

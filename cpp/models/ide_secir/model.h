@@ -26,6 +26,7 @@
 #include "memilio/config.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/custom_index_array.h"
+#include "memilio/utils/date.h"
 #include "memilio/utils/time_series.h"
 
 #include "vector"
@@ -34,6 +35,13 @@ namespace mio
 {
 namespace isecir
 {
+// Forward declaration of friend classes/functions of Model.
+class Model;
+class Simulation;
+template <typename EntryType>
+IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::vector<EntryType> rki_data,
+                                 const Date date, const CustomIndexArray<ScalarType, AgeGroup> scale_confirmed_cases);
+
 class Model
 {
     using ParameterSet = Parameters;
@@ -128,6 +136,16 @@ public:
     int get_initialization_method_compartments() const
     {
         return m_initialization_method;
+    }
+
+    /**
+     * @brief Getter for number of age groups.
+     *
+     * @return Returns number of age groups. 
+     */
+    size_t get_num_agegroups() const
+    {
+        return m_num_agegroups;
     }
 
     /**
@@ -358,8 +376,10 @@ private:
     friend class Simulation;
     // In set_initial_flows(), we compute initial flows based on RKI data using the (private) compute_flow() function
     // which is why it is defined as a friend function.
-    friend IOResult<void> set_initial_flows(Model& model, ScalarType dt, std::string const& path, Date date,
-                                            ScalarType scale_confirmed_cases);
+    template <typename EntryType>
+    friend IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::vector<EntryType> rki_data,
+                                            const Date date,
+                                            const CustomIndexArray<ScalarType, AgeGroup> scale_confirmed_cases);
 };
 
 } // namespace isecir
