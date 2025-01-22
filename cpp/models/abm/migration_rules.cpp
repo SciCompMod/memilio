@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "abm/migration_rules.h"
+#include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/random_events.h"
@@ -111,6 +112,7 @@ LocationType go_to_event(Person::RandomNumberGenerator& rng, const Person& perso
     auto current_loc = person.get_location().get_type();
     //leave
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
+        params.get<mio::abm::AgeGroupGotoSocialEvent>()[person.get_age()] &&
         ((t.day_of_week() <= 4 && t.hour_of_day() >= 19) || (t.day_of_week() >= 5 && t.hour_of_day() >= 10)) &&
         !person.is_in_quarantine(t, params)) {
         return random_transition(rng, current_loc, dt,
