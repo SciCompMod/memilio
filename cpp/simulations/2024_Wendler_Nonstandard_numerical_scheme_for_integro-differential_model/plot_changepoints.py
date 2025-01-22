@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Anna Wendler, Lena Ploetzke
 #
@@ -100,7 +100,9 @@ def plot_changepoint(files, fileending="", save_dir=""):
 
 
 if __name__ == '__main__':
-    # Paths are valid if script is executed e.g. in memilio/cpp/simulations/IDE_paper
+    # Paths are valid if script is executed e.g. in 
+    # memilio/cpp/simulations/2024_Wendler_Nonstandard_numerical_scheme_for_integro-differential_model.
+
     # Path where simulation results (generated with ide_changepoints.cpp) are stored.
     result_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/simulation_results/changepoints/")

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Anna Wendler
 #
@@ -584,7 +584,9 @@ def main():
     simulation_time = 45
     timestep = "0.0100"
 
-    # Paths are valid if file is executed e.g. in memilio/cpp/simulations/IDE_paper.
+    # Paths are valid if script is executed e.g. in 
+    # memilio/cpp/simulations/2024_Wendler_Nonstandard_numerical_scheme_for_integro-differential_model.
+
     # Path where simulation results (generated with ide_covid_inspired_scenario.cpp) are stored.
     result_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/simulation_results/covid_inspired_scenario/")

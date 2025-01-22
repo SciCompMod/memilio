@@ -1,3 +1,22 @@
+#############################################################################
+# Copyright (C) 2020-2025 MEmilio
+#
+# Authors: Anna Wendler
+#
+# Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#############################################################################
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -87,7 +106,7 @@ def get_relevant_confirmed_cases(data_dir, start_date, T_IH, T_HU, T_U):
     return dailyconfirmed_per_agegroup
 
 
-def plot(data_dir, start_dates, T_IH, T_HU, T_U, save_dir=""):
+def plot_proportions_per_age_group(data_dir, start_dates, T_IH, T_HU, T_U, save_dir=""):
     """ Plots proportions per age groups in confirmed cases that we expect in ICU compartment at the start_dates as 
     well as the proportion per age group of the total population of Germany. 
 
@@ -139,6 +158,9 @@ def plot(data_dir, start_dates, T_IH, T_HU, T_U, save_dir=""):
 
 
 def main():
+    # Paths are valid if script is executed e.g. in 
+    # memilio/cpp/simulations/2024_Wendler_Nonstandard_numerical_scheme_for_integro-differential_model.
+
     # Path where file with RKI case data is stored.
     data_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/")
@@ -154,7 +176,7 @@ def main():
 
     start_dates = ["2020-06-01", "2020-10-01"]
 
-    plot(data_dir, start_dates, T_IH, T_HU, T_U, save_dir)
+    plot_proportions_per_age_group(data_dir, start_dates, T_IH, T_HU, T_U, save_dir)
 
 
 if __name__ == "__main__":
