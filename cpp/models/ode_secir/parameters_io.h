@@ -143,9 +143,8 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
             }
         }
         else {
-            log_warning("No infections reported on date " + std::to_string(date.year) + "-" +
-                        std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
-                        std::to_string(region[node]) + ". Population data has not been set.");
+            log_warning("No infections reported on date {} for region {}. Population data has not been set.", date,
+                        region[node]);
         }
     }
     return success();
@@ -196,8 +195,9 @@ IOResult<void> set_divi_data(std::vector<Model<FP>>& model, const std::string& p
 {
     // DIVI dataset will no longer be updated from CW29 2024 on.
     if (!is_divi_data_available(date)) {
-        log_warning("No DIVI data available for date: {}-{}-{}", date.year, date.month, date.day,
-                    ". ICU compartment will be set based on Case data.");
+        log_warning("No DIVI data available for date: {}. "
+                    "ICU compartment will be set based on Case data.",
+                    date);
         return success();
     }
     std::vector<double> sum_mu_I_U(vregion.size(), 0);
