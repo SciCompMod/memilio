@@ -144,7 +144,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
         }
         else {
             log_warning("No infections reported on date {} for region {}. Population data has not been set.", date,
-                        region[county]);
+                        region[node]);
         }
     }
     return success();
