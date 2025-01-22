@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-21 15:18:18</td>
+            <td class="headerValue">2025-01-22 09:13:13</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">8</td>
@@ -98,10 +98,10 @@
 <a name="36"><span class="lineNum">      36 </span>            : class observer_ptr</a>
 <a name="37"><span class="lineNum">      37 </span>            : {</a>
 <a name="38"><span class="lineNum">      38 </span>            : public:</a>
-<a name="39"><span class="lineNum">      39 </span><span class="lineCov">       1738 :     observer_ptr(T* p)</span></a>
-<a name="40"><span class="lineNum">      40 </span><span class="lineCov">       1738 :         : m_raw_ptr(p)</span></a>
+<a name="39"><span class="lineNum">      39 </span><span class="lineCov">       1756 :     observer_ptr(T* p)</span></a>
+<a name="40"><span class="lineNum">      40 </span><span class="lineCov">       1756 :         : m_raw_ptr(p)</span></a>
 <a name="41"><span class="lineNum">      41 </span>            :     {</a>
-<a name="42"><span class="lineNum">      42 </span><span class="lineCov">       1738 :     }</span></a>
+<a name="42"><span class="lineNum">      42 </span><span class="lineCov">       1756 :     }</span></a>
 <a name="43"><span class="lineNum">      43 </span>            : </a>
 <a name="44"><span class="lineNum">      44 </span>            :     observer_ptr(const observer_ptr&amp; other) = default;</a>
 <a name="45"><span class="lineNum">      45 </span>            : </a>
@@ -116,9 +116,9 @@
 <a name="54"><span class="lineNum">      54 </span>            :     /**</a>
 <a name="55"><span class="lineNum">      55 </span>            :      * @brief Returns a raw pointer to the watched object</a>
 <a name="56"><span class="lineNum">      56 </span>            :      */</a>
-<a name="57"><span class="lineNum">      57 </span><span class="lineCov">       1287 :     T* get() const</span></a>
+<a name="57"><span class="lineNum">      57 </span><span class="lineCov">       1305 :     T* get() const</span></a>
 <a name="58"><span class="lineNum">      58 </span>            :     {</a>
-<a name="59"><span class="lineNum">      59 </span><span class="lineCov">       1287 :         return m_raw_ptr;</span></a>
+<a name="59"><span class="lineNum">      59 </span><span class="lineCov">       1305 :         return m_raw_ptr;</span></a>
 <a name="60"><span class="lineNum">      60 </span>            :     }</a>
 <a name="61"><span class="lineNum">      61 </span>            : </a>
 <a name="62"><span class="lineNum">      62 </span><span class="lineCov">          1 :     T* operator-&gt;() const</span></a>

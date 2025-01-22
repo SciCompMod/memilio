@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-21 15:18:18</td>
+            <td class="headerValue">2025-01-22 09:13:13</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">10</td>
@@ -208,26 +208,26 @@
 <a name="146"><span class="lineNum">     146 </span>            :     /**</a>
 <a name="147"><span class="lineNum">     147 </span>            :      * @brief Reset the current index to 0.</a>
 <a name="148"><span class="lineNum">     148 </span>            :      */</a>
-<a name="149"><span class="lineNum">     149 </span><span class="lineCov">         54 :     void reset_index()</span></a>
+<a name="149"><span class="lineNum">     149 </span><span class="lineCov">         72 :     void reset_index()</span></a>
 <a name="150"><span class="lineNum">     150 </span>            :     {</a>
-<a name="151"><span class="lineNum">     151 </span><span class="lineCov">         54 :         m_current_index = 0;</span></a>
-<a name="152"><span class="lineNum">     152 </span><span class="lineCov">         54 :     }</span></a>
+<a name="151"><span class="lineNum">     151 </span><span class="lineCov">         72 :         m_current_index = 0;</span></a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineCov">         72 :     }</span></a>
 <a name="153"><span class="lineNum">     153 </span>            : </a>
 <a name="154"><span class="lineNum">     154 </span>            :     /**</a>
 <a name="155"><span class="lineNum">     155 </span>            :      * @brief Get the length of the TripList.</a>
 <a name="156"><span class="lineNum">     156 </span>            :      * @param weekend Whether the Trip%s during the week or on the weekend are used.</a>
 <a name="157"><span class="lineNum">     157 </span>            :      */</a>
-<a name="158"><span class="lineNum">     158 </span><span class="lineCov">        756 :     size_t num_trips(bool weekend = false) const</span></a>
+<a name="158"><span class="lineNum">     158 </span><span class="lineCov">        774 :     size_t num_trips(bool weekend = false) const</span></a>
 <a name="159"><span class="lineNum">     159 </span>            :     {</a>
-<a name="160"><span class="lineNum">     160 </span><span class="lineCov">        756 :         return weekend ? m_trips_weekend.size() : m_trips_weekday.size();</span></a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineCov">        774 :         return weekend ? m_trips_weekend.size() : m_trips_weekday.size();</span></a>
 <a name="161"><span class="lineNum">     161 </span>            :     }</a>
 <a name="162"><span class="lineNum">     162 </span>            : </a>
 <a name="163"><span class="lineNum">     163 </span>            :     /**</a>
 <a name="164"><span class="lineNum">     164 </span>            :      * @brief Get the current index.</a>
 <a name="165"><span class="lineNum">     165 </span>            :      */</a>
-<a name="166"><span class="lineNum">     166 </span><span class="lineCov">        945 :     uint32_t get_current_index() const</span></a>
+<a name="166"><span class="lineNum">     166 </span><span class="lineCov">        963 :     uint32_t get_current_index() const</span></a>
 <a name="167"><span class="lineNum">     167 </span>            :     {</a>
-<a name="168"><span class="lineNum">     168 </span><span class="lineCov">        945 :         return m_current_index;</span></a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineCov">        963 :         return m_current_index;</span></a>
 <a name="169"><span class="lineNum">     169 </span>            :     }</a>
 <a name="170"><span class="lineNum">     170 </span>            : </a>
 <a name="171"><span class="lineNum">     171 </span>            :     /// This method is used by the default serialization feature.</a>

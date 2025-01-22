@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-21 15:18:18</td>
+            <td class="headerValue">2025-01-22 09:13:13</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">82</td>
@@ -103,9 +103,9 @@
 <a name="41"><span class="lineNum">      41 </span>            : */</a>
 <a name="42"><span class="lineNum">      42 </span>            : struct StartDay {</a>
 <a name="43"><span class="lineNum">      43 </span>            :     using Type = double;</a>
-<a name="44"><span class="lineNum">      44 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup)</span></a>
+<a name="44"><span class="lineNum">      44 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup)</span></a>
 <a name="45"><span class="lineNum">      45 </span>            :     {</a>
-<a name="46"><span class="lineNum">      46 </span><span class="lineCov">        274 :         return 0.;</span></a>
+<a name="46"><span class="lineNum">      46 </span><span class="lineCov">        292 :         return 0.;</span></a>
 <a name="47"><span class="lineNum">      47 </span>            :     }</a>
 <a name="48"><span class="lineNum">      48 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="49"><span class="lineNum">      49 </span>            :     {</a>
@@ -121,9 +121,9 @@
 <a name="59"><span class="lineNum">      59 </span>            : */</a>
 <a name="60"><span class="lineNum">      60 </span>            : struct StartDayNewVariant {</a>
 <a name="61"><span class="lineNum">      61 </span>            :     using Type = double;</a>
-<a name="62"><span class="lineNum">      62 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup)</span></a>
+<a name="62"><span class="lineNum">      62 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup)</span></a>
 <a name="63"><span class="lineNum">      63 </span>            :     {</a>
-<a name="64"><span class="lineNum">      64 </span><span class="lineCov">        274 :         return std::numeric_limits&lt;double&gt;::max();</span></a>
+<a name="64"><span class="lineNum">      64 </span><span class="lineCov">        292 :         return std::numeric_limits&lt;double&gt;::max();</span></a>
 <a name="65"><span class="lineNum">      65 </span>            :     }</a>
 <a name="66"><span class="lineNum">      66 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="67"><span class="lineNum">      67 </span>            :     {</a>
@@ -139,9 +139,9 @@
 <a name="77"><span class="lineNum">      77 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="78"><span class="lineNum">      78 </span>            : struct Seasonality {</a>
 <a name="79"><span class="lineNum">      79 </span>            :     using Type = UncertainValue&lt;FP&gt;;</a>
-<a name="80"><span class="lineNum">      80 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup)</span></a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup)</span></a>
 <a name="81"><span class="lineNum">      81 </span>            :     {</a>
-<a name="82"><span class="lineNum">      82 </span><span class="lineCov">        274 :         return Type(0.);</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">        292 :         return Type(0.);</span></a>
 <a name="83"><span class="lineNum">      83 </span>            :     }</a>
 <a name="84"><span class="lineNum">      84 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="85"><span class="lineNum">      85 </span>            :     {</a>
@@ -155,9 +155,9 @@
 <a name="93"><span class="lineNum">      93 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="94"><span class="lineNum">      94 </span>            : struct ICUCapacity {</a>
 <a name="95"><span class="lineNum">      95 </span>            :     using Type = UncertainValue&lt;FP&gt;;</a>
-<a name="96"><span class="lineNum">      96 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup)</span></a>
+<a name="96"><span class="lineNum">      96 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup)</span></a>
 <a name="97"><span class="lineNum">      97 </span>            :     {</a>
-<a name="98"><span class="lineNum">      98 </span><span class="lineCov">        274 :         return Type(std::numeric_limits&lt;FP&gt;::max());</span></a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineCov">        292 :         return Type(std::numeric_limits&lt;FP&gt;::max());</span></a>
 <a name="99"><span class="lineNum">      99 </span>            :     }</a>
 <a name="100"><span class="lineNum">     100 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="101"><span class="lineNum">     101 </span>            :     {</a>
@@ -171,9 +171,9 @@
 <a name="109"><span class="lineNum">     109 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="110"><span class="lineNum">     110 </span>            : struct TestAndTraceCapacity {</a>
 <a name="111"><span class="lineNum">     111 </span>            :     using Type = UncertainValue&lt;FP&gt;;</a>
-<a name="112"><span class="lineNum">     112 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup)</span></a>
+<a name="112"><span class="lineNum">     112 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup)</span></a>
 <a name="113"><span class="lineNum">     113 </span>            :     {</a>
-<a name="114"><span class="lineNum">     114 </span><span class="lineCov">        274 :         return Type(std::numeric_limits&lt;FP&gt;::max());</span></a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">        292 :         return Type(std::numeric_limits&lt;FP&gt;::max());</span></a>
 <a name="115"><span class="lineNum">     115 </span>            :     }</a>
 <a name="116"><span class="lineNum">     116 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="117"><span class="lineNum">     117 </span>            :     {</a>
@@ -187,9 +187,9 @@
 <a name="125"><span class="lineNum">     125 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="126"><span class="lineNum">     126 </span>            : struct TestAndTraceCapacityMaxRiskNoSymptoms {</a>
 <a name="127"><span class="lineNum">     127 </span>            :     using Type = UncertainValue&lt;FP&gt;;</a>
-<a name="128"><span class="lineNum">     128 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup)</span></a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup)</span></a>
 <a name="129"><span class="lineNum">     129 </span>            :     {</a>
-<a name="130"><span class="lineNum">     130 </span><span class="lineCov">        274 :         return Type(2.0);</span></a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineCov">        292 :         return Type(2.0);</span></a>
 <a name="131"><span class="lineNum">     131 </span>            :     }</a>
 <a name="132"><span class="lineNum">     132 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="133"><span class="lineNum">     133 </span>            :     {</a>
@@ -203,9 +203,9 @@
 <a name="141"><span class="lineNum">     141 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="142"><span class="lineNum">     142 </span>            : struct TestAndTraceCapacityMaxRiskSymptoms {</a>
 <a name="143"><span class="lineNum">     143 </span>            :     using Type = UncertainValue&lt;FP&gt;;</a>
-<a name="144"><span class="lineNum">     144 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup)</span></a>
+<a name="144"><span class="lineNum">     144 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup)</span></a>
 <a name="145"><span class="lineNum">     145 </span>            :     {</a>
-<a name="146"><span class="lineNum">     146 </span><span class="lineCov">        274 :         return Type(15.0);</span></a>
+<a name="146"><span class="lineNum">     146 </span><span class="lineCov">        292 :         return Type(15.0);</span></a>
 <a name="147"><span class="lineNum">     147 </span>            :     }</a>
 <a name="148"><span class="lineNum">     148 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="149"><span class="lineNum">     149 </span>            :     {</a>
@@ -219,9 +219,9 @@
 <a name="157"><span class="lineNum">     157 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="158"><span class="lineNum">     158 </span>            : struct ContactPatterns {</a>
 <a name="159"><span class="lineNum">     159 </span>            :     using Type = UncertainContactMatrix&lt;FP&gt;;</a>
-<a name="160"><span class="lineNum">     160 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="161"><span class="lineNum">     161 </span>            :     {</a>
-<a name="162"><span class="lineNum">     162 </span><span class="lineCov">        274 :         return Type(1, static_cast&lt;Eigen::Index&gt;((size_t)size));</span></a>
+<a name="162"><span class="lineNum">     162 </span><span class="lineCov">        292 :         return Type(1, static_cast&lt;Eigen::Index&gt;((size_t)size));</span></a>
 <a name="163"><span class="lineNum">     163 </span>            :     }</a>
 <a name="164"><span class="lineNum">     164 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="165"><span class="lineNum">     165 </span>            :     {</a>
@@ -235,9 +235,9 @@
 <a name="173"><span class="lineNum">     173 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="174"><span class="lineNum">     174 </span>            : struct DynamicNPIsInfectedSymptoms {</a>
 <a name="175"><span class="lineNum">     175 </span>            :     using Type = DynamicNPIs&lt;FP&gt;;</a>
-<a name="176"><span class="lineNum">     176 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup /*size*/)</span></a>
+<a name="176"><span class="lineNum">     176 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup /*size*/)</span></a>
 <a name="177"><span class="lineNum">     177 </span>            :     {</a>
-<a name="178"><span class="lineNum">     178 </span><span class="lineCov">        274 :         return {};</span></a>
+<a name="178"><span class="lineNum">     178 </span><span class="lineCov">        292 :         return {};</span></a>
 <a name="179"><span class="lineNum">     179 </span>            :     }</a>
 <a name="180"><span class="lineNum">     180 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="181"><span class="lineNum">     181 </span>            :     {</a>
@@ -251,9 +251,9 @@
 <a name="189"><span class="lineNum">     189 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="190"><span class="lineNum">     190 </span>            : struct DynamicNPIsImplementationDelay {</a>
 <a name="191"><span class="lineNum">     191 </span>            :     using Type = UncertainValue&lt;FP&gt;;</a>
-<a name="192"><span class="lineNum">     192 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup /*size*/)</span></a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup /*size*/)</span></a>
 <a name="193"><span class="lineNum">     193 </span>            :     {</a>
-<a name="194"><span class="lineNum">     194 </span><span class="lineCov">        274 :         return 0.;</span></a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineCov">        292 :         return 0.;</span></a>
 <a name="195"><span class="lineNum">     195 </span>            :     }</a>
 <a name="196"><span class="lineNum">     196 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="197"><span class="lineNum">     197 </span>            :     {</a>
@@ -267,9 +267,9 @@
 <a name="205"><span class="lineNum">     205 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="206"><span class="lineNum">     206 </span>            : struct TimeExposed {</a>
 <a name="207"><span class="lineNum">     207 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="208"><span class="lineNum">     208 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="208"><span class="lineNum">     208 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="209"><span class="lineNum">     209 </span>            :     {</a>
-<a name="210"><span class="lineNum">     210 </span><span class="lineCov">        548 :         return Type(size, 1.);</span></a>
+<a name="210"><span class="lineNum">     210 </span><span class="lineCov">        584 :         return Type(size, 1.);</span></a>
 <a name="211"><span class="lineNum">     211 </span>            :     }</a>
 <a name="212"><span class="lineNum">     212 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="213"><span class="lineNum">     213 </span>            :     {</a>
@@ -284,9 +284,9 @@
 <a name="222"><span class="lineNum">     222 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="223"><span class="lineNum">     223 </span>            : struct TimeInfectedNoSymptoms {</a>
 <a name="224"><span class="lineNum">     224 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="225"><span class="lineNum">     225 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="225"><span class="lineNum">     225 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="226"><span class="lineNum">     226 </span>            :     {</a>
-<a name="227"><span class="lineNum">     227 </span><span class="lineCov">        548 :         return Type(size, 1.);</span></a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">        584 :         return Type(size, 1.);</span></a>
 <a name="228"><span class="lineNum">     228 </span>            :     }</a>
 <a name="229"><span class="lineNum">     229 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="230"><span class="lineNum">     230 </span>            :     {</a>
@@ -301,9 +301,9 @@
 <a name="239"><span class="lineNum">     239 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="240"><span class="lineNum">     240 </span>            : struct TimeInfectedSymptoms {</a>
 <a name="241"><span class="lineNum">     241 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="242"><span class="lineNum">     242 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="242"><span class="lineNum">     242 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="243"><span class="lineNum">     243 </span>            :     {</a>
-<a name="244"><span class="lineNum">     244 </span><span class="lineCov">        548 :         return Type(size, 1.);</span></a>
+<a name="244"><span class="lineNum">     244 </span><span class="lineCov">        584 :         return Type(size, 1.);</span></a>
 <a name="245"><span class="lineNum">     245 </span>            :     }</a>
 <a name="246"><span class="lineNum">     246 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="247"><span class="lineNum">     247 </span>            :     {</a>
@@ -318,9 +318,9 @@
 <a name="256"><span class="lineNum">     256 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="257"><span class="lineNum">     257 </span>            : struct TimeInfectedSevere {</a>
 <a name="258"><span class="lineNum">     258 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="259"><span class="lineNum">     259 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="259"><span class="lineNum">     259 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="260"><span class="lineNum">     260 </span>            :     {</a>
-<a name="261"><span class="lineNum">     261 </span><span class="lineCov">        548 :         return Type(size, 1.);</span></a>
+<a name="261"><span class="lineNum">     261 </span><span class="lineCov">        584 :         return Type(size, 1.);</span></a>
 <a name="262"><span class="lineNum">     262 </span>            :     }</a>
 <a name="263"><span class="lineNum">     263 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="264"><span class="lineNum">     264 </span>            :     {</a>
@@ -335,9 +335,9 @@
 <a name="273"><span class="lineNum">     273 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="274"><span class="lineNum">     274 </span>            : struct TimeInfectedCritical {</a>
 <a name="275"><span class="lineNum">     275 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="276"><span class="lineNum">     276 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="276"><span class="lineNum">     276 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="277"><span class="lineNum">     277 </span>            :     {</a>
-<a name="278"><span class="lineNum">     278 </span><span class="lineCov">        548 :         return Type(size, 1.);</span></a>
+<a name="278"><span class="lineNum">     278 </span><span class="lineCov">        584 :         return Type(size, 1.);</span></a>
 <a name="279"><span class="lineNum">     279 </span>            :     }</a>
 <a name="280"><span class="lineNum">     280 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="281"><span class="lineNum">     281 </span>            :     {</a>
@@ -351,9 +351,9 @@
 <a name="289"><span class="lineNum">     289 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="290"><span class="lineNum">     290 </span>            : struct TransmissionProbabilityOnContact {</a>
 <a name="291"><span class="lineNum">     291 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="292"><span class="lineNum">     292 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="292"><span class="lineNum">     292 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="293"><span class="lineNum">     293 </span>            :     {</a>
-<a name="294"><span class="lineNum">     294 </span><span class="lineCov">        548 :         return Type(size, 1.);</span></a>
+<a name="294"><span class="lineNum">     294 </span><span class="lineCov">        584 :         return Type(size, 1.);</span></a>
 <a name="295"><span class="lineNum">     295 </span>            :     }</a>
 <a name="296"><span class="lineNum">     296 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="297"><span class="lineNum">     297 </span>            :     {</a>
@@ -367,9 +367,9 @@
 <a name="305"><span class="lineNum">     305 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="306"><span class="lineNum">     306 </span>            : struct RelativeTransmissionNoSymptoms {</a>
 <a name="307"><span class="lineNum">     307 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="308"><span class="lineNum">     308 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="308"><span class="lineNum">     308 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="309"><span class="lineNum">     309 </span>            :     {</a>
-<a name="310"><span class="lineNum">     310 </span><span class="lineCov">        548 :         return Type(size, 1.);</span></a>
+<a name="310"><span class="lineNum">     310 </span><span class="lineCov">        584 :         return Type(size, 1.);</span></a>
 <a name="311"><span class="lineNum">     311 </span>            :     }</a>
 <a name="312"><span class="lineNum">     312 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="313"><span class="lineNum">     313 </span>            :     {</a>
@@ -383,9 +383,9 @@
 <a name="321"><span class="lineNum">     321 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="322"><span class="lineNum">     322 </span>            : struct RecoveredPerInfectedNoSymptoms {</a>
 <a name="323"><span class="lineNum">     323 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="324"><span class="lineNum">     324 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="324"><span class="lineNum">     324 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="325"><span class="lineNum">     325 </span>            :     {</a>
-<a name="326"><span class="lineNum">     326 </span><span class="lineCov">        548 :         return Type(size, 0.);</span></a>
+<a name="326"><span class="lineNum">     326 </span><span class="lineCov">        584 :         return Type(size, 0.);</span></a>
 <a name="327"><span class="lineNum">     327 </span>            :     }</a>
 <a name="328"><span class="lineNum">     328 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="329"><span class="lineNum">     329 </span>            :     {</a>
@@ -399,9 +399,9 @@
 <a name="337"><span class="lineNum">     337 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="338"><span class="lineNum">     338 </span>            : struct RiskOfInfectionFromSymptomatic {</a>
 <a name="339"><span class="lineNum">     339 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="340"><span class="lineNum">     340 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="340"><span class="lineNum">     340 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="341"><span class="lineNum">     341 </span>            :     {</a>
-<a name="342"><span class="lineNum">     342 </span><span class="lineCov">        548 :         return Type(size, 1.);</span></a>
+<a name="342"><span class="lineNum">     342 </span><span class="lineCov">        584 :         return Type(size, 1.);</span></a>
 <a name="343"><span class="lineNum">     343 </span>            :     }</a>
 <a name="344"><span class="lineNum">     344 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="345"><span class="lineNum">     345 </span>            :     {</a>
@@ -415,9 +415,9 @@
 <a name="353"><span class="lineNum">     353 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="354"><span class="lineNum">     354 </span>            : struct MaxRiskOfInfectionFromSymptomatic {</a>
 <a name="355"><span class="lineNum">     355 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="356"><span class="lineNum">     356 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="356"><span class="lineNum">     356 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="357"><span class="lineNum">     357 </span>            :     {</a>
-<a name="358"><span class="lineNum">     358 </span><span class="lineCov">        548 :         return Type(size, 0.);</span></a>
+<a name="358"><span class="lineNum">     358 </span><span class="lineCov">        584 :         return Type(size, 0.);</span></a>
 <a name="359"><span class="lineNum">     359 </span>            :     }</a>
 <a name="360"><span class="lineNum">     360 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="361"><span class="lineNum">     361 </span>            :     {</a>
@@ -431,9 +431,9 @@
 <a name="369"><span class="lineNum">     369 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="370"><span class="lineNum">     370 </span>            : struct SeverePerInfectedSymptoms {</a>
 <a name="371"><span class="lineNum">     371 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="372"><span class="lineNum">     372 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="372"><span class="lineNum">     372 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="373"><span class="lineNum">     373 </span>            :     {</a>
-<a name="374"><span class="lineNum">     374 </span><span class="lineCov">        548 :         return Type(size, 0.);</span></a>
+<a name="374"><span class="lineNum">     374 </span><span class="lineCov">        584 :         return Type(size, 0.);</span></a>
 <a name="375"><span class="lineNum">     375 </span>            :     }</a>
 <a name="376"><span class="lineNum">     376 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="377"><span class="lineNum">     377 </span>            :     {</a>
@@ -447,9 +447,9 @@
 <a name="385"><span class="lineNum">     385 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="386"><span class="lineNum">     386 </span>            : struct CriticalPerSevere {</a>
 <a name="387"><span class="lineNum">     387 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="388"><span class="lineNum">     388 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="388"><span class="lineNum">     388 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="389"><span class="lineNum">     389 </span>            :     {</a>
-<a name="390"><span class="lineNum">     390 </span><span class="lineCov">        548 :         return Type(size, 0.);</span></a>
+<a name="390"><span class="lineNum">     390 </span><span class="lineCov">        584 :         return Type(size, 0.);</span></a>
 <a name="391"><span class="lineNum">     391 </span>            :     }</a>
 <a name="392"><span class="lineNum">     392 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="393"><span class="lineNum">     393 </span>            :     {</a>
@@ -463,9 +463,9 @@
 <a name="401"><span class="lineNum">     401 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="402"><span class="lineNum">     402 </span>            : struct DeathsPerCritical {</a>
 <a name="403"><span class="lineNum">     403 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="404"><span class="lineNum">     404 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="404"><span class="lineNum">     404 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="405"><span class="lineNum">     405 </span>            :     {</a>
-<a name="406"><span class="lineNum">     406 </span><span class="lineCov">        548 :         return Type(size, 0.);</span></a>
+<a name="406"><span class="lineNum">     406 </span><span class="lineCov">        584 :         return Type(size, 0.);</span></a>
 <a name="407"><span class="lineNum">     407 </span>            :     }</a>
 <a name="408"><span class="lineNum">     408 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="409"><span class="lineNum">     409 </span>            :     {</a>
@@ -479,9 +479,9 @@
 <a name="417"><span class="lineNum">     417 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="418"><span class="lineNum">     418 </span>            : struct VaccinationGap {</a>
 <a name="419"><span class="lineNum">     419 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="420"><span class="lineNum">     420 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="420"><span class="lineNum">     420 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="421"><span class="lineNum">     421 </span>            :     {</a>
-<a name="422"><span class="lineNum">     422 </span><span class="lineCov">        548 :         return Type(size, 49.0);</span></a>
+<a name="422"><span class="lineNum">     422 </span><span class="lineCov">        584 :         return Type(size, 49.0);</span></a>
 <a name="423"><span class="lineNum">     423 </span>            :     }</a>
 <a name="424"><span class="lineNum">     424 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="425"><span class="lineNum">     425 </span>            :     {</a>
@@ -495,9 +495,9 @@
 <a name="433"><span class="lineNum">     433 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="434"><span class="lineNum">     434 </span>            : struct DaysUntilEffectivePartialImmunity {</a>
 <a name="435"><span class="lineNum">     435 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="436"><span class="lineNum">     436 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="436"><span class="lineNum">     436 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="437"><span class="lineNum">     437 </span>            :     {</a>
-<a name="438"><span class="lineNum">     438 </span><span class="lineCov">        548 :         return Type(size, 14.0);</span></a>
+<a name="438"><span class="lineNum">     438 </span><span class="lineCov">        584 :         return Type(size, 14.0);</span></a>
 <a name="439"><span class="lineNum">     439 </span>            :     }</a>
 <a name="440"><span class="lineNum">     440 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="441"><span class="lineNum">     441 </span>            :     {</a>
@@ -511,9 +511,9 @@
 <a name="449"><span class="lineNum">     449 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="450"><span class="lineNum">     450 </span>            : struct DaysUntilEffectiveImprovedImmunity {</a>
 <a name="451"><span class="lineNum">     451 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="452"><span class="lineNum">     452 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="452"><span class="lineNum">     452 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="453"><span class="lineNum">     453 </span>            :     {</a>
-<a name="454"><span class="lineNum">     454 </span><span class="lineCov">        548 :         return Type(size, 7.0);</span></a>
+<a name="454"><span class="lineNum">     454 </span><span class="lineCov">        584 :         return Type(size, 7.0);</span></a>
 <a name="455"><span class="lineNum">     455 </span>            :     }</a>
 <a name="456"><span class="lineNum">     456 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="457"><span class="lineNum">     457 </span>            :     {</a>
@@ -527,9 +527,9 @@
 <a name="465"><span class="lineNum">     465 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="466"><span class="lineNum">     466 </span>            : struct DailyPartialVaccinations {</a>
 <a name="467"><span class="lineNum">     467 </span>            :     using Type = CustomIndexArray&lt;FP, AgeGroup, SimulationDay&gt;;</a>
-<a name="468"><span class="lineNum">     468 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="468"><span class="lineNum">     468 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="469"><span class="lineNum">     469 </span>            :     {</a>
-<a name="470"><span class="lineNum">     470 </span><span class="lineCov">        274 :         return Type({size, SimulationDay(0)});</span></a>
+<a name="470"><span class="lineNum">     470 </span><span class="lineCov">        292 :         return Type({size, SimulationDay(0)});</span></a>
 <a name="471"><span class="lineNum">     471 </span>            :     }</a>
 <a name="472"><span class="lineNum">     472 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="473"><span class="lineNum">     473 </span>            :     {</a>
@@ -543,9 +543,9 @@
 <a name="481"><span class="lineNum">     481 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="482"><span class="lineNum">     482 </span>            : struct DailyFullVaccinations {</a>
 <a name="483"><span class="lineNum">     483 </span>            :     using Type = CustomIndexArray&lt;FP, AgeGroup, SimulationDay&gt;;</a>
-<a name="484"><span class="lineNum">     484 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="484"><span class="lineNum">     484 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="485"><span class="lineNum">     485 </span>            :     {</a>
-<a name="486"><span class="lineNum">     486 </span><span class="lineCov">        274 :         return Type({size, SimulationDay(0)});</span></a>
+<a name="486"><span class="lineNum">     486 </span><span class="lineCov">        292 :         return Type({size, SimulationDay(0)});</span></a>
 <a name="487"><span class="lineNum">     487 </span>            :     }</a>
 <a name="488"><span class="lineNum">     488 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="489"><span class="lineNum">     489 </span>            :     {</a>
@@ -559,9 +559,9 @@
 <a name="497"><span class="lineNum">     497 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="498"><span class="lineNum">     498 </span>            : struct ReducExposedPartialImmunity {</a>
 <a name="499"><span class="lineNum">     499 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="500"><span class="lineNum">     500 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="500"><span class="lineNum">     500 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="501"><span class="lineNum">     501 </span>            :     {</a>
-<a name="502"><span class="lineNum">     502 </span><span class="lineCov">        548 :         return Type(size, 1.);</span></a>
+<a name="502"><span class="lineNum">     502 </span><span class="lineCov">        584 :         return Type(size, 1.);</span></a>
 <a name="503"><span class="lineNum">     503 </span>            :     }</a>
 <a name="504"><span class="lineNum">     504 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="505"><span class="lineNum">     505 </span>            :     {</a>
@@ -575,9 +575,9 @@
 <a name="513"><span class="lineNum">     513 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="514"><span class="lineNum">     514 </span>            : struct ReducExposedImprovedImmunity {</a>
 <a name="515"><span class="lineNum">     515 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="516"><span class="lineNum">     516 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="516"><span class="lineNum">     516 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="517"><span class="lineNum">     517 </span>            :     {</a>
-<a name="518"><span class="lineNum">     518 </span><span class="lineCov">        548 :         return Type(size, 1.);</span></a>
+<a name="518"><span class="lineNum">     518 </span><span class="lineCov">        584 :         return Type(size, 1.);</span></a>
 <a name="519"><span class="lineNum">     519 </span>            :     }</a>
 <a name="520"><span class="lineNum">     520 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="521"><span class="lineNum">     521 </span>            :     {</a>
@@ -591,9 +591,9 @@
 <a name="529"><span class="lineNum">     529 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="530"><span class="lineNum">     530 </span>            : struct ReducInfectedSymptomsPartialImmunity {</a>
 <a name="531"><span class="lineNum">     531 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="532"><span class="lineNum">     532 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="532"><span class="lineNum">     532 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="533"><span class="lineNum">     533 </span>            :     {</a>
-<a name="534"><span class="lineNum">     534 </span><span class="lineCov">        548 :         return Type(size, 1.);</span></a>
+<a name="534"><span class="lineNum">     534 </span><span class="lineCov">        584 :         return Type(size, 1.);</span></a>
 <a name="535"><span class="lineNum">     535 </span>            :     }</a>
 <a name="536"><span class="lineNum">     536 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="537"><span class="lineNum">     537 </span>            :     {</a>
@@ -607,9 +607,9 @@
 <a name="545"><span class="lineNum">     545 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="546"><span class="lineNum">     546 </span>            : struct ReducInfectedSymptomsImprovedImmunity {</a>
 <a name="547"><span class="lineNum">     547 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="548"><span class="lineNum">     548 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="548"><span class="lineNum">     548 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="549"><span class="lineNum">     549 </span>            :     {</a>
-<a name="550"><span class="lineNum">     550 </span><span class="lineCov">        548 :         return Type(size, 1.);</span></a>
+<a name="550"><span class="lineNum">     550 </span><span class="lineCov">        584 :         return Type(size, 1.);</span></a>
 <a name="551"><span class="lineNum">     551 </span>            :     }</a>
 <a name="552"><span class="lineNum">     552 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="553"><span class="lineNum">     553 </span>            :     {</a>
@@ -624,9 +624,9 @@
 <a name="562"><span class="lineNum">     562 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="563"><span class="lineNum">     563 </span>            : struct ReducInfectedSevereCriticalDeadPartialImmunity {</a>
 <a name="564"><span class="lineNum">     564 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="565"><span class="lineNum">     565 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="565"><span class="lineNum">     565 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="566"><span class="lineNum">     566 </span>            :     {</a>
-<a name="567"><span class="lineNum">     567 </span><span class="lineCov">        548 :         return Type(size, 1.);</span></a>
+<a name="567"><span class="lineNum">     567 </span><span class="lineCov">        584 :         return Type(size, 1.);</span></a>
 <a name="568"><span class="lineNum">     568 </span>            :     }</a>
 <a name="569"><span class="lineNum">     569 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="570"><span class="lineNum">     570 </span>            :     {</a>
@@ -640,9 +640,9 @@
 <a name="578"><span class="lineNum">     578 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="579"><span class="lineNum">     579 </span>            : struct ReducInfectedSevereCriticalDeadImprovedImmunity {</a>
 <a name="580"><span class="lineNum">     580 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="581"><span class="lineNum">     581 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="581"><span class="lineNum">     581 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="582"><span class="lineNum">     582 </span>            :     {</a>
-<a name="583"><span class="lineNum">     583 </span><span class="lineCov">        548 :         return Type(size, 1.);</span></a>
+<a name="583"><span class="lineNum">     583 </span><span class="lineCov">        584 :         return Type(size, 1.);</span></a>
 <a name="584"><span class="lineNum">     584 </span>            :     }</a>
 <a name="585"><span class="lineNum">     585 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="586"><span class="lineNum">     586 </span>            :     {</a>
@@ -656,9 +656,9 @@
 <a name="594"><span class="lineNum">     594 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="595"><span class="lineNum">     595 </span>            : struct ReducTimeInfectedMild {</a>
 <a name="596"><span class="lineNum">     596 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="597"><span class="lineNum">     597 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="597"><span class="lineNum">     597 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="598"><span class="lineNum">     598 </span>            :     {</a>
-<a name="599"><span class="lineNum">     599 </span><span class="lineCov">        548 :         return Type(size, 0.5);</span></a>
+<a name="599"><span class="lineNum">     599 </span><span class="lineCov">        584 :         return Type(size, 0.5);</span></a>
 <a name="600"><span class="lineNum">     600 </span>            :     }</a>
 <a name="601"><span class="lineNum">     601 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="602"><span class="lineNum">     602 </span>            :     {</a>
@@ -672,9 +672,9 @@
 <a name="610"><span class="lineNum">     610 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="611"><span class="lineNum">     611 </span>            : struct InfectiousnessNewVariant {</a>
 <a name="612"><span class="lineNum">     612 </span>            :     using Type = CustomIndexArray&lt;FP, AgeGroup&gt;;</a>
-<a name="613"><span class="lineNum">     613 </span><span class="lineCov">        274 :     static Type get_default(AgeGroup size)</span></a>
+<a name="613"><span class="lineNum">     613 </span><span class="lineCov">        292 :     static Type get_default(AgeGroup size)</span></a>
 <a name="614"><span class="lineNum">     614 </span>            :     {</a>
-<a name="615"><span class="lineNum">     615 </span><span class="lineCov">        548 :         return Type(size, 1.0);</span></a>
+<a name="615"><span class="lineNum">     615 </span><span class="lineCov">        584 :         return Type(size, 1.0);</span></a>
 <a name="616"><span class="lineNum">     616 </span>            :     }</a>
 <a name="617"><span class="lineNum">     617 </span><span class="lineCov">          2 :     static std::string name()</span></a>
 <a name="618"><span class="lineNum">     618 </span>            :     {</a>
@@ -704,15 +704,15 @@
 <a name="642"><span class="lineNum">     642 </span>            : class Parameters : public ParametersBase&lt;FP&gt;</a>
 <a name="643"><span class="lineNum">     643 </span>            : {</a>
 <a name="644"><span class="lineNum">     644 </span>            : public:</a>
-<a name="645"><span class="lineNum">     645 </span><span class="lineCov">        274 :     Parameters(AgeGroup num_agegroups)</span></a>
+<a name="645"><span class="lineNum">     645 </span><span class="lineCov">        292 :     Parameters(AgeGroup num_agegroups)</span></a>
 <a name="646"><span class="lineNum">     646 </span>            :         : ParametersBase&lt;FP&gt;(num_agegroups)</a>
-<a name="647"><span class="lineNum">     647 </span><span class="lineCov">        274 :         , m_num_groups{num_agegroups}</span></a>
+<a name="647"><span class="lineNum">     647 </span><span class="lineCov">        292 :         , m_num_groups{num_agegroups}</span></a>
 <a name="648"><span class="lineNum">     648 </span>            :     {</a>
-<a name="649"><span class="lineNum">     649 </span><span class="lineCov">        274 :     }</span></a>
+<a name="649"><span class="lineNum">     649 </span><span class="lineCov">        292 :     }</span></a>
 <a name="650"><span class="lineNum">     650 </span>            : </a>
-<a name="651"><span class="lineNum">     651 </span><span class="lineCov">      10654 :     AgeGroup get_num_groups() const</span></a>
+<a name="651"><span class="lineNum">     651 </span><span class="lineCov">      10699 :     AgeGroup get_num_groups() const</span></a>
 <a name="652"><span class="lineNum">     652 </span>            :     {</a>
-<a name="653"><span class="lineNum">     653 </span><span class="lineCov">      10654 :         return m_num_groups;</span></a>
+<a name="653"><span class="lineNum">     653 </span><span class="lineCov">      10699 :         return m_num_groups;</span></a>
 <a name="654"><span class="lineNum">     654 </span>            :     }</a>
 <a name="655"><span class="lineNum">     655 </span>            : </a>
 <a name="656"><span class="lineNum">     656 </span>            :     /**</a>

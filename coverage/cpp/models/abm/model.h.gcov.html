@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-21 15:18:18</td>
+            <td class="headerValue">2025-01-22 09:13:13</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">21</td>
@@ -121,14 +121,14 @@
 <a name="59"><span class="lineNum">      59 </span>            :      * @brief Create a Model.</a>
 <a name="60"><span class="lineNum">      60 </span>            :      * @param[in] num_agegroups The number of AgeGroup%s in the simulated Model. Must be less than MAX_NUM_AGE_GROUPS.</a>
 <a name="61"><span class="lineNum">      61 </span>            :      */</a>
-<a name="62"><span class="lineNum">      62 </span><span class="lineCov">        199 :     Model(size_t num_agegroups)</span></a>
-<a name="63"><span class="lineNum">      63 </span><span class="lineCov">        199 :         : parameters(num_agegroups)</span></a>
-<a name="64"><span class="lineNum">      64 </span><span class="lineCov">        199 :         , m_trip_list()</span></a>
-<a name="65"><span class="lineNum">      65 </span><span class="lineCov">        199 :         , m_use_mobility_rules(true)</span></a>
-<a name="66"><span class="lineNum">      66 </span><span class="lineCov">        398 :         , m_cemetery_id(add_location(LocationType::Cemetery))</span></a>
+<a name="62"><span class="lineNum">      62 </span><span class="lineCov">        208 :     Model(size_t num_agegroups)</span></a>
+<a name="63"><span class="lineNum">      63 </span><span class="lineCov">        208 :         : parameters(num_agegroups)</span></a>
+<a name="64"><span class="lineNum">      64 </span><span class="lineCov">        208 :         , m_trip_list()</span></a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineCov">        208 :         , m_use_mobility_rules(true)</span></a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineCov">        416 :         , m_cemetery_id(add_location(LocationType::Cemetery))</span></a>
 <a name="67"><span class="lineNum">      67 </span>            :     {</a>
-<a name="68"><span class="lineNum">      68 </span><span class="lineCov">        199 :         assert(num_agegroups &lt; MAX_NUM_AGE_GROUPS &amp;&amp; &quot;MAX_NUM_AGE_GROUPS exceeded.&quot;);</span></a>
-<a name="69"><span class="lineNum">      69 </span><span class="lineCov">        199 :     }</span></a>
+<a name="68"><span class="lineNum">      68 </span><span class="lineCov">        208 :         assert(num_agegroups &lt; MAX_NUM_AGE_GROUPS &amp;&amp; &quot;MAX_NUM_AGE_GROUPS exceeded.&quot;);</span></a>
+<a name="69"><span class="lineNum">      69 </span><span class="lineCov">        208 :     }</span></a>
 <a name="70"><span class="lineNum">      70 </span>            : </a>
 <a name="71"><span class="lineNum">      71 </span>            :     /**</a>
 <a name="72"><span class="lineNum">      72 </span>            :      * @brief Create a Model.</a>
@@ -330,9 +330,9 @@
 <a name="268"><span class="lineNum">     268 </span>            :     * @brief Check if at least one Location with a specified LocationType exists.</a>
 <a name="269"><span class="lineNum">     269 </span>            :     * @return True if there is at least one Location of LocationType `type`. False otherwise.</a>
 <a name="270"><span class="lineNum">     270 </span>            :     */</a>
-<a name="271"><span class="lineNum">     271 </span><span class="lineCov">      28890 :     bool has_location(LocationType type) const</span></a>
+<a name="271"><span class="lineNum">     271 </span><span class="lineCov">      28701 :     bool has_location(LocationType type) const</span></a>
 <a name="272"><span class="lineNum">     272 </span>            :     {</a>
-<a name="273"><span class="lineNum">     273 </span><span class="lineCov">      28890 :         return m_has_locations[size_t(type)];</span></a>
+<a name="273"><span class="lineNum">     273 </span><span class="lineCov">      28701 :         return m_has_locations[size_t(type)];</span></a>
 <a name="274"><span class="lineNum">     274 </span>            :     }</a>
 <a name="275"><span class="lineNum">     275 </span>            : </a>
 <a name="276"><span class="lineNum">     276 </span>            :     /**</a>
@@ -342,11 +342,11 @@
 <a name="280"><span class="lineNum">     280 </span>            :     * @return True if there is at least one Location of every LocationType in `location_types`. False otherwise.</a>
 <a name="281"><span class="lineNum">     281 </span>            :     */</a>
 <a name="282"><span class="lineNum">     282 </span>            :     template &lt;class C = std::initializer_list&lt;LocationType&gt;&gt;</a>
-<a name="283"><span class="lineNum">     283 </span><span class="lineCov">      24147 :     bool has_locations(const C&amp; location_types) const</span></a>
+<a name="283"><span class="lineNum">     283 </span><span class="lineCov">      24030 :     bool has_locations(const C&amp; location_types) const</span></a>
 <a name="284"><span class="lineNum">     284 </span>            :     {</a>
-<a name="285"><span class="lineNum">     285 </span><span class="lineCov">      81927 :         return std::all_of(location_types.begin(), location_types.end(), [&amp;](auto loc) {</span></a>
-<a name="286"><span class="lineNum">     286 </span><span class="lineCov">      57780 :             return has_location(loc);</span></a>
-<a name="287"><span class="lineNum">     287 </span><span class="lineCov">      24147 :         });</span></a>
+<a name="285"><span class="lineNum">     285 </span><span class="lineCov">      81432 :         return std::all_of(location_types.begin(), location_types.end(), [&amp;](auto loc) {</span></a>
+<a name="286"><span class="lineNum">     286 </span><span class="lineCov">      57402 :             return has_location(loc);</span></a>
+<a name="287"><span class="lineNum">     287 </span><span class="lineCov">      24030 :         });</span></a>
 <a name="288"><span class="lineNum">     288 </span>            :     }</a>
 <a name="289"><span class="lineNum">     289 </span>            : </a>
 <a name="290"><span class="lineNum">     290 </span>            :     /**</a>
@@ -394,16 +394,16 @@
 <a name="332"><span class="lineNum">     332 </span>            :      * @return A reference to the Person.</a>
 <a name="333"><span class="lineNum">     333 </span>            :      * @{</a>
 <a name="334"><span class="lineNum">     334 </span>            :      */</a>
-<a name="335"><span class="lineNum">     335 </span><span class="lineCov">      18864 :     Person&amp; get_person(PersonId id)</span></a>
+<a name="335"><span class="lineNum">     335 </span><span class="lineCov">      19197 :     Person&amp; get_person(PersonId id)</span></a>
 <a name="336"><span class="lineNum">     336 </span>            :     {</a>
-<a name="337"><span class="lineNum">     337 </span><span class="lineCov">      18864 :         assert(id.get() &lt; m_persons.size() &amp;&amp; &quot;Given PersonId is not in this Model.&quot;);</span></a>
-<a name="338"><span class="lineNum">     338 </span><span class="lineCov">      18864 :         return m_persons[id.get()];</span></a>
+<a name="337"><span class="lineNum">     337 </span><span class="lineCov">      19197 :         assert(id.get() &lt; m_persons.size() &amp;&amp; &quot;Given PersonId is not in this Model.&quot;);</span></a>
+<a name="338"><span class="lineNum">     338 </span><span class="lineCov">      19197 :         return m_persons[id.get()];</span></a>
 <a name="339"><span class="lineNum">     339 </span>            :     }</a>
 <a name="340"><span class="lineNum">     340 </span>            : </a>
-<a name="341"><span class="lineNum">     341 </span><span class="lineCov">       8901 :     const Person&amp; get_person(PersonId id) const</span></a>
+<a name="341"><span class="lineNum">     341 </span><span class="lineCov">       8784 :     const Person&amp; get_person(PersonId id) const</span></a>
 <a name="342"><span class="lineNum">     342 </span>            :     {</a>
-<a name="343"><span class="lineNum">     343 </span><span class="lineCov">       8901 :         assert(id.get() &lt; m_persons.size() &amp;&amp; &quot;Given PersonId is not in this Model.&quot;);</span></a>
-<a name="344"><span class="lineNum">     344 </span><span class="lineCov">       8901 :         return m_persons[id.get()];</span></a>
+<a name="343"><span class="lineNum">     343 </span><span class="lineCov">       8784 :         assert(id.get() &lt; m_persons.size() &amp;&amp; &quot;Given PersonId is not in this Model.&quot;);</span></a>
+<a name="344"><span class="lineNum">     344 </span><span class="lineCov">       8784 :         return m_persons[id.get()];</span></a>
 <a name="345"><span class="lineNum">     345 </span>            :     }</a>
 <a name="346"><span class="lineNum">     346 </span>            :     /** @} */</a>
 <a name="347"><span class="lineNum">     347 </span>            : </a>
@@ -426,12 +426,12 @@
 <a name="364"><span class="lineNum">     364 </span>            :      * @param[in] location A LocationId from the Model.</a>
 <a name="365"><span class="lineNum">     365 </span>            :      * @return Number of Person%s in the location.</a>
 <a name="366"><span class="lineNum">     366 </span>            :      */</a>
-<a name="367"><span class="lineNum">     367 </span><span class="lineCov">        288 :     size_t get_number_persons(LocationId location) const</span></a>
+<a name="367"><span class="lineNum">     367 </span><span class="lineCov">        387 :     size_t get_number_persons(LocationId location) const</span></a>
 <a name="368"><span class="lineNum">     368 </span>            :     {</a>
-<a name="369"><span class="lineNum">     369 </span><span class="lineCov">        288 :         if (!m_is_local_population_cache_valid) {</span></a>
+<a name="369"><span class="lineNum">     369 </span><span class="lineCov">        387 :         if (!m_is_local_population_cache_valid) {</span></a>
 <a name="370"><span class="lineNum">     370 </span><span class="lineNoCov">          0 :             build_compute_local_population_cache();</span></a>
 <a name="371"><span class="lineNum">     371 </span>            :         }</a>
-<a name="372"><span class="lineNum">     372 </span><span class="lineCov">        288 :         return m_local_population_cache[location.get()];</span></a>
+<a name="372"><span class="lineNum">     372 </span><span class="lineCov">        387 :         return m_local_population_cache[location.get()];</span></a>
 <a name="373"><span class="lineNum">     373 </span>            :     }</a>
 <a name="374"><span class="lineNum">     374 </span>            : </a>
 <a name="375"><span class="lineNum">     375 </span>            :     // Change the Location of a Person. this requires that Location is part of this Model.</a>
@@ -442,21 +442,21 @@
 <a name="380"><span class="lineNum">     380 </span>            :      * @param[in] mode The transport mode the person uses to change the Location.</a>
 <a name="381"><span class="lineNum">     381 </span>            :      * @param[in] cells The cells within the destination the person should be in.</a>
 <a name="382"><span class="lineNum">     382 </span>            :      */</a>
-<a name="383"><span class="lineNum">     383 </span><span class="lineCov">        333 :     inline void change_location(PersonId person, LocationId destination, TransportMode mode = TransportMode::Unknown,</span></a>
+<a name="383"><span class="lineNum">     383 </span><span class="lineCov">        432 :     inline void change_location(PersonId person, LocationId destination, TransportMode mode = TransportMode::Unknown,</span></a>
 <a name="384"><span class="lineNum">     384 </span>            :                                 const std::vector&lt;uint32_t&gt;&amp; cells = {0})</a>
 <a name="385"><span class="lineNum">     385 </span>            :     {</a>
-<a name="386"><span class="lineNum">     386 </span><span class="lineCov">        333 :         LocationId origin = get_location(person).get_id();</span></a>
+<a name="386"><span class="lineNum">     386 </span><span class="lineCov">        432 :         LocationId origin = get_location(person).get_id();</span></a>
 <a name="387"><span class="lineNum">     387 </span>            :         const bool has_changed_location =</a>
-<a name="388"><span class="lineNum">     388 </span><span class="lineCov">        333 :             mio::abm::change_location(get_person(person), get_location(destination), mode, cells);</span></a>
+<a name="388"><span class="lineNum">     388 </span><span class="lineCov">        432 :             mio::abm::change_location(get_person(person), get_location(destination), mode, cells);</span></a>
 <a name="389"><span class="lineNum">     389 </span>            :         // if the person has changed location, invalidate exposure caches but keep population caches valid</a>
-<a name="390"><span class="lineNum">     390 </span><span class="lineCov">        333 :         if (has_changed_location) {</span></a>
-<a name="391"><span class="lineNum">     391 </span><span class="lineCov">        324 :             m_are_exposure_caches_valid = false;</span></a>
-<a name="392"><span class="lineNum">     392 </span><span class="lineCov">        324 :             if (m_is_local_population_cache_valid) {</span></a>
-<a name="393"><span class="lineNum">     393 </span><span class="lineCov">        324 :                 --m_local_population_cache[origin.get()];</span></a>
-<a name="394"><span class="lineNum">     394 </span><span class="lineCov">        324 :                 ++m_local_population_cache[destination.get()];</span></a>
+<a name="390"><span class="lineNum">     390 </span><span class="lineCov">        432 :         if (has_changed_location) {</span></a>
+<a name="391"><span class="lineNum">     391 </span><span class="lineCov">        423 :             m_are_exposure_caches_valid = false;</span></a>
+<a name="392"><span class="lineNum">     392 </span><span class="lineCov">        423 :             if (m_is_local_population_cache_valid) {</span></a>
+<a name="393"><span class="lineNum">     393 </span><span class="lineCov">        423 :                 --m_local_population_cache[origin.get()];</span></a>
+<a name="394"><span class="lineNum">     394 </span><span class="lineCov">        423 :                 ++m_local_population_cache[destination.get()];</span></a>
 <a name="395"><span class="lineNum">     395 </span>            :             }</a>
 <a name="396"><span class="lineNum">     396 </span>            :         }</a>
-<a name="397"><span class="lineNum">     397 </span><span class="lineCov">        333 :     }</span></a>
+<a name="397"><span class="lineNum">     397 </span><span class="lineCov">        432 :     }</span></a>
 <a name="398"><span class="lineNum">     398 </span>            : </a>
 <a name="399"><span class="lineNum">     399 </span>            :     /**</a>
 <a name="400"><span class="lineNum">     400 </span>            :      * @brief Let a person interact with the population at its current location.</a>
@@ -464,19 +464,19 @@
 <a name="402"><span class="lineNum">     402 </span>            :      * @param[in] t Time step of the simulation.</a>
 <a name="403"><span class="lineNum">     403 </span>            :      * @param[in] dt Step size of the simulation.</a>
 <a name="404"><span class="lineNum">     404 </span>            :      */</a>
-<a name="405"><span class="lineNum">     405 </span><span class="lineCov">       2772 :     inline void interact(PersonId person, TimePoint t, TimeSpan dt)</span></a>
+<a name="405"><span class="lineNum">     405 </span><span class="lineCov">       2790 :     inline void interact(PersonId person, TimePoint t, TimeSpan dt)</span></a>
 <a name="406"><span class="lineNum">     406 </span>            :     {</a>
-<a name="407"><span class="lineNum">     407 </span><span class="lineCov">       2772 :         if (!m_are_exposure_caches_valid) {</span></a>
+<a name="407"><span class="lineNum">     407 </span><span class="lineCov">       2790 :         if (!m_are_exposure_caches_valid) {</span></a>
 <a name="408"><span class="lineNum">     408 </span>            :             // checking caches is only needed for external calls</a>
 <a name="409"><span class="lineNum">     409 </span>            :             // during simulation (i.e. in evolve()), the caches are computed in begin_step</a>
 <a name="410"><span class="lineNum">     410 </span><span class="lineNoCov">          0 :             compute_exposure_caches(t, dt);</span></a>
 <a name="411"><span class="lineNum">     411 </span><span class="lineNoCov">          0 :             m_are_exposure_caches_valid = true;</span></a>
 <a name="412"><span class="lineNum">     412 </span>            :         }</a>
-<a name="413"><span class="lineNum">     413 </span><span class="lineCov">       2772 :         auto personal_rng = PersonalRandomNumberGenerator(m_rng, get_person(person));</span></a>
-<a name="414"><span class="lineNum">     414 </span><span class="lineCov">       8316 :         mio::abm::interact(personal_rng, get_person(person), get_location(person),</span></a>
-<a name="415"><span class="lineNum">     415 </span><span class="lineCov">       5544 :                            m_air_exposure_rates_cache[get_location(person).get_id().get()],</span></a>
-<a name="416"><span class="lineNum">     416 </span><span class="lineCov">       8316 :                            m_contact_exposure_rates_cache[get_location(person).get_id().get()], t, dt, parameters);</span></a>
-<a name="417"><span class="lineNum">     417 </span><span class="lineCov">       2772 :     }</span></a>
+<a name="413"><span class="lineNum">     413 </span><span class="lineCov">       2790 :         auto personal_rng = PersonalRandomNumberGenerator(m_rng, get_person(person));</span></a>
+<a name="414"><span class="lineNum">     414 </span><span class="lineCov">       8370 :         mio::abm::interact(personal_rng, get_person(person), get_location(person),</span></a>
+<a name="415"><span class="lineNum">     415 </span><span class="lineCov">       5580 :                            m_air_exposure_rates_cache[get_location(person).get_id().get()],</span></a>
+<a name="416"><span class="lineNum">     416 </span><span class="lineCov">       8370 :                            m_contact_exposure_rates_cache[get_location(person).get_id().get()], t, dt, parameters);</span></a>
+<a name="417"><span class="lineNum">     417 </span><span class="lineCov">       2790 :     }</span></a>
 <a name="418"><span class="lineNum">     418 </span>            : </a>
 <a name="419"><span class="lineNum">     419 </span>            :     /**</a>
 <a name="420"><span class="lineNum">     420 </span>            :      * @brief Get a reference to a location in this Model.</a>
@@ -491,11 +491,11 @@
 <a name="429"><span class="lineNum">     429 </span>            :         return m_locations[id.get()];</a>
 <a name="430"><span class="lineNum">     430 </span>            :     }</a>
 <a name="431"><span class="lineNum">     431 </span>            : </a>
-<a name="432"><span class="lineNum">     432 </span><span class="lineCov">      23418 :     Location&amp; get_location(LocationId id)</span></a>
+<a name="432"><span class="lineNum">     432 </span><span class="lineCov">      23607 :     Location&amp; get_location(LocationId id)</span></a>
 <a name="433"><span class="lineNum">     433 </span>            :     {</a>
-<a name="434"><span class="lineNum">     434 </span><span class="lineCov">      23418 :         assert(id != LocationId::invalid_id() &amp;&amp; &quot;Given LocationId must be valid.&quot;);</span></a>
-<a name="435"><span class="lineNum">     435 </span><span class="lineCov">      23418 :         assert(id &lt; LocationId((uint32_t)m_locations.size()) &amp;&amp; &quot;Given LocationId is not in this Model.&quot;);</span></a>
-<a name="436"><span class="lineNum">     436 </span><span class="lineCov">      23418 :         return m_locations[id.get()];</span></a>
+<a name="434"><span class="lineNum">     434 </span><span class="lineCov">      23607 :         assert(id != LocationId::invalid_id() &amp;&amp; &quot;Given LocationId must be valid.&quot;);</span></a>
+<a name="435"><span class="lineNum">     435 </span><span class="lineCov">      23607 :         assert(id &lt; LocationId((uint32_t)m_locations.size()) &amp;&amp; &quot;Given LocationId is not in this Model.&quot;);</span></a>
+<a name="436"><span class="lineNum">     436 </span><span class="lineCov">      23607 :         return m_locations[id.get()];</span></a>
 <a name="437"><span class="lineNum">     437 </span>            :     }</a>
 <a name="438"><span class="lineNum">     438 </span>            :     /** @} */</a>
 <a name="439"><span class="lineNum">     439 </span>            : </a>
@@ -505,9 +505,9 @@
 <a name="443"><span class="lineNum">     443 </span>            :      * @return Reference to the Location.</a>
 <a name="444"><span class="lineNum">     444 </span>            :      * @{</a>
 <a name="445"><span class="lineNum">     445 </span>            :      */</a>
-<a name="446"><span class="lineNum">     446 </span><span class="lineCov">      11457 :     inline Location&amp; get_location(PersonId id)</span></a>
+<a name="446"><span class="lineNum">     446 </span><span class="lineCov">      11655 :     inline Location&amp; get_location(PersonId id)</span></a>
 <a name="447"><span class="lineNum">     447 </span>            :     {</a>
-<a name="448"><span class="lineNum">     448 </span><span class="lineCov">      11457 :         return get_location(get_person(id).get_location());</span></a>
+<a name="448"><span class="lineNum">     448 </span><span class="lineCov">      11655 :         return get_location(get_person(id).get_location());</span></a>
 <a name="449"><span class="lineNum">     449 </span>            :     }</a>
 <a name="450"><span class="lineNum">     450 </span>            : </a>
 <a name="451"><span class="lineNum">     451 </span>            :     inline const Location&amp; get_location(PersonId id) const</a>

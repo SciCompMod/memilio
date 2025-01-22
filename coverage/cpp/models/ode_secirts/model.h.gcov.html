@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-21 15:18:18</td>
+            <td class="headerValue">2025-01-22 09:13:13</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">15</td>
@@ -167,15 +167,15 @@
 <a name="105"><span class="lineNum">     105 </span>            :     using typename Base::ParameterSet;</a>
 <a name="106"><span class="lineNum">     106 </span>            :     using typename Base::Populations;</a>
 <a name="107"><span class="lineNum">     107 </span>            : </a>
-<a name="108"><span class="lineNum">     108 </span><span class="lineCov">        208 :     Model(const Populations&amp; pop, const ParameterSet&amp; params)</span></a>
-<a name="109"><span class="lineNum">     109 </span><span class="lineCov">        208 :         : Base(pop, params)</span></a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineCov">        226 :     Model(const Populations&amp; pop, const ParameterSet&amp; params)</span></a>
+<a name="109"><span class="lineNum">     109 </span><span class="lineCov">        226 :         : Base(pop, params)</span></a>
 <a name="110"><span class="lineNum">     110 </span>            :     {</a>
-<a name="111"><span class="lineNum">     111 </span><span class="lineCov">        208 :     }</span></a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineCov">        226 :     }</span></a>
 <a name="112"><span class="lineNum">     112 </span>            : </a>
-<a name="113"><span class="lineNum">     113 </span><span class="lineCov">        208 :     Model(int num_agegroups)</span></a>
-<a name="114"><span class="lineNum">     114 </span><span class="lineCov">        208 :         : Model(Populations({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet(AgeGroup(num_agegroups)))</span></a>
+<a name="113"><span class="lineNum">     113 </span><span class="lineCov">        226 :     Model(int num_agegroups)</span></a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">        226 :         : Model(Populations({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet(AgeGroup(num_agegroups)))</span></a>
 <a name="115"><span class="lineNum">     115 </span>            :     {</a>
-<a name="116"><span class="lineNum">     116 </span><span class="lineCov">        208 :     }</span></a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineCov">        226 :     }</span></a>
 <a name="117"><span class="lineNum">     117 </span>            : </a>
 <a name="118"><span class="lineNum">     118 </span><span class="lineCov">       3933 :     void get_flows(Eigen::Ref&lt;const Eigen::VectorX&lt;FP&gt;&gt; pop, Eigen::Ref&lt;const Eigen::VectorX&lt;FP&gt;&gt; y, FP t,</span></a>
 <a name="119"><span class="lineNum">     119 </span>            :                    Eigen::Ref&lt;Eigen::VectorX&lt;FP&gt;&gt; flows) const override</a>
