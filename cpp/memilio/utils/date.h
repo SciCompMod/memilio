@@ -28,7 +28,6 @@
 #include <numeric>
 #include <algorithm>
 #include <cassert>
-#include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/fmt/fmt.h>
 
