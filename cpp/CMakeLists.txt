@@ -174,7 +174,7 @@ endif()
 
 if(MEMILIO_BUILD_SIMULATIONS)
     add_subdirectory(simulations)
-    add_subdirectory(simulations/IDE_paper)
+    add_subdirectory(simulations/2024_Wendler_Nonstandard_numerical_scheme_for_integro-differential_model)
 endif()
 
 if(MEMILIO_BUILD_BENCHMARKS)

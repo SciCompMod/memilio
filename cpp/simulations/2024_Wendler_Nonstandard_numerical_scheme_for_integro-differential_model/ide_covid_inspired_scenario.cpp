@@ -550,7 +550,11 @@ int main(int argc, char** argv)
 
     ScalarType simulation_time = 45;
 
-    // TODO: Check if we want to keep this and if so, add comment.
+    // To adjust the parameter scale_contacts so that the IDE simualtion results match the reported data in the
+    // beginning, we run the scenario twice. First we run it with scale_contacts = 1, then we compute the adjusted
+    // parameter and run the scenario again with this adjusted scale_contacts. For this, we want to run this script
+    // from the command line with corresponding arguments as defined here. For more details, see
+    // run_and_plot_covid_inspired_scenario.py.
     if (argc == 9) {
 
         data_dir                               = argv[1];
@@ -560,8 +564,8 @@ int main(int argc, char** argv)
         simulation_parameter["dt"]             = std::stod(argv[7]);
         simulation_parameter["scale_contacts"] = std::stod(argv[8]);
 
-        std::cout << std::setprecision(10) << "Contact scaling: " << simulation_parameter["scale_contacts"]
-                  << std::endl;
+        std::cout << std::setprecision(10) << "Scenario is run with a contact scaling of "
+                  << simulation_parameter["scale_contacts"] << ".\n";
     }
 
     // Make folder if not existent yet.

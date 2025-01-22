@@ -55,6 +55,7 @@ def load_data(file, start_date, simulation_time):
     @param[in] file Path to the RKI data file for whole Germany. Can be downloaded eg via pycode/memilio-epidata/memilio/epidata/getCaseData.py.
     @param[in] start_date Start date of interest. 
     @param[in] simulation_time Number of days to be simulated.
+    @returns df_result Dataframe containing processed RKI data.
     """
     # Set start date and end date according to input arguments.
     parameters['start_date'] = start_date
@@ -113,109 +114,37 @@ def load_data(file, start_date, simulation_time):
     return df_result
 
 
-def get_scale_contacts(files, reported_data_dir, start_date, simulation_time):
-    """ Gets the scaling factor for the contacts so that the simulation results obtained with the IDE model match the
-    reported number of daily new transmissions (as calculated in load_data()).
-
-    @param[in] file Expects file with IDE simulation results for flows. 
-    @param[in] data_dir Directory where RKI data is stored. 
-    @param[in] start_date Start date of interest. 
-    @param[in] simulation_time Number of days to be simulated.
-    """
-
-    datafile = os.path.join(reported_data_dir, "cases_all_germany.json")
-    data_rki = load_data(datafile, start_date, simulation_time)
-
-    # Load IDE data.
-    for file in range(len(files)):
-        h5file = h5py.File(str(files[file]) + '.h5', 'r')
-
-        if (len(list(h5file.keys())) > 1):
-            raise gd.DataError("File should contain one dataset.")
-        if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
-            raise gd.DataError("Expected only one group.")
-
-        data = h5file[list(h5file.keys())[0]]
-
-        # As there should be only one Group, total is the simulation result
-        total = data['Total'][:, :]
-
-        dates = data['Time'][:]
-        timestep = np.diff(dates)[0]
-
-    # Date index referring to first time step of IDE simulation.
-    date_idx = int(-simulation_time / timestep)
-
-    # Get daily new transmissions from IDE simulation results.
-    new_transmissions_ide = total[date_idx, 0] / timestep
-    print(f"IDE new infections on {dates[date_idx]}: ", new_transmissions_ide)
-
-    # Get daily new transmissions from RKI data at first timestep.
-    new_transmissions_rki = data_rki[data_rki["Date"] == start_date]["NewInfectionsDay"].values[0] + timestep * (data_rki[data_rki["Date"] == start_date + pd.DateOffset(
-        days=1)]["NewInfectionsDay"].values[0] - data_rki[data_rki["Date"] == start_date]["NewInfectionsDay"].values[0])
-    print(f"Expected new infections at {timestep}: {new_transmissions_rki}")
-
-    # Compute scaling factor for contacts.
-    scale_contacts = new_transmissions_rki/new_transmissions_ide
-
-    return scale_contacts
-
-
-def get_scale_confirmed_cases(files, reported_data_dir, start_date):
-    for file in range(len(files)):
-        # load data
-        h5file = h5py.File(str(files[file]) + '.h5', 'r')
-
-        if (len(list(h5file.keys())) > 1):
-            raise gd.DataError("File should contain one dataset.")
-        if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
-            raise gd.DataError("Expected only one group.")
-
-        data = h5file[list(h5file.keys())[0]]
-
-        if len(data['Total'][0]) == 8:
-            # As there should be only one Group, total is the simulation result
-            total = data['Total'][:, :]
-        elif len(data['Total'][0]) == 10:
-            # in ODE there are two compartments we don't use, throw these out
-            total = data['Total'][:, [0, 1, 2, 4, 6, 7, 8, 9]]
-
-        dates = data['Time'][:]
-
-    icu_ide = total[:, 5][0]
-    print(f"ICU in IDE on {start_date}: ",
-          total[:, 5][0])
-
-    datafile_icu = os.path.join(reported_data_dir, "germany_divi.json")
-
-    df = pd.read_json(datafile_icu)
-
-    icu_divi = df[df["Date"] == start_date]["ICU"].values[0]
-    print(f"ICU from DIVI (ma7)  on {start_date}: ",
-          df[df["Date"] == start_date]["ICU"].values[0])
-
-    scale_confirmed_cases = icu_divi/icu_ide
-
-    return scale_confirmed_cases
-
 
 def plot_daily_new_transmissions(files, reported_data_dir, start_date, simulation_time, fileending="", save_dir=""):
+    """ Plots the number of daily new transmissions obtained by simulations with an ODE and an IDE model as well as 
+    the number of daily new transmissions extracted from RKI data.
 
+    @param[in] files Expects list of two files with ODE and IDE simulation results for flows, respectively, in this order.
+    @param[in] reported_data_dir Directory that contains files with RKI data.
+    @param[in] start_date Start date of the simulations.
+    @param[in] simulation_time Duration of the simulation.
+    @param[in] fileending String that further specifies filename of plot. 
+    @param[in] Directory where plot will be stored. If this is not set, the plot will not be stored. 
+    """
+    # Read RKI data.
     datafile = os.path.join(reported_data_dir, "cases_all_germany.json")
     data_rki = load_data(datafile, start_date, simulation_time)
-
+    
+    # Add results to plot.
     fig, ax = plt.subplots()
 
-    ax.scatter(np.linspace(0, simulation_time, simulation_time + 1),
-               data_rki["NewInfectionsDay"], marker="x",  s=20, color='gray', label="Extrapolated RKI data")
-
     legendplot = list(["ODE", "IDE"])
-    # helmholtzdarkblue, helmholtzclaim
+
+    # Define colors, we use helmholtzdarkblue and helmholtzclaim.
     colors = [(0, 40 / 255, 100 / 255), (20 / 255, 200 / 255, 255 / 255)]
     linestyles = ['-', '-']
-    # add results to plot
+
+    # Plot RKI data.
+    ax.scatter(np.linspace(0, simulation_time, simulation_time + 1),
+               data_rki["NewInfectionsDay"], marker="x",  s=20, color='gray', label="Extrapolated RKI data")
+    
+    # Read simulation results. 
     for file in range(len(files)):
-        # load data
         h5file = h5py.File(str(files[file]) + '.h5', 'r')
 
         if (len(list(h5file.keys())) > 1):
@@ -225,59 +154,49 @@ def plot_daily_new_transmissions(files, reported_data_dir, start_date, simulatio
 
         data = h5file[list(h5file.keys())[0]]
 
-        # As there should be only one Group, total is the simulation result
+        # As there is only one Group, total is the simulation result.
         total = data['Total'][:, :]
 
         dates = data['Time'][:]
         timestep = np.diff(dates)[0]
 
-        # get indices where dates are >=0
-        # indices = np.where(dates >= 0)
-        # plot data
+        # Plot simulation results. 
         # ODE
         if file == 0:
-            print(f"New infections from RKI  on {start_date}: ",
-                  data_rki[data_rki["Date"] == start_date]["NewInfectionsDay"].values[0])
-            print(f"Expected new infections at {timestep}: ",
+            # Print expected results after first timestep according to RKI (computed by linear extrapolation).
+            print("")
+            print(f"Expected new transmissions (based on RKI reports) at time {timestep}: ",
                   data_rki[data_rki["Date"] == start_date]["NewInfectionsDay"].values[0] + timestep * (data_rki[data_rki["Date"] == start_date + pd.DateOffset(days=1)]["NewInfectionsDay"].values[0] - data_rki[data_rki["Date"] == start_date]["NewInfectionsDay"].values[0]))
-
-            print(f"New infections from RKI  on {start_date + pd.DateOffset(days=1)}: ",
-                  data_rki[data_rki["Date"] == start_date + pd.DateOffset(days=1)]["NewInfectionsDay"].values[0])
-            # transform cumulative flows to flows absolute flows
-            # then transform from flows over time interval to flows at time
-            # points
+            
+            # The ODE simulation yields cumulative flows. For comparison with IDE model, we first transform cumulative 
+            # flows to flows per time interval. Then we transform from flows over time interval to flows at time
+            # points and add these to plot. 
             ax.plot(dates[1:], np.diff(total[:, 0]) / np.diff(dates), label=legendplot[file],
                     color=colors[file], linestyle=linestyles[file])
 
+            # Print simulation result after first timestep.
             date_idx = 1
-            print(f"ODE new infections at dates {dates[date_idx]}: ", (np.diff(
+            print(f"ODE new transmissions at time {dates[date_idx]}: ", (np.diff(
                 total[:, 0]) / np.diff(dates))[date_idx - 1])
-            date_idx = int(1 / np.diff(dates)[0])
-            print(f"ODE new infections on {dates[date_idx]}: ", (np.diff(
-                total[:, 0]) / np.diff(dates))[date_idx - 1])
-
+           
         # IDE
         elif file == 1:
-            # transform from flows over time interval to flows at time points
+            # The IDE simulation yields flows per time interval. We transform these flows per time interval to flows at 
+            # time points and add these to plot. 
             ax.plot(dates[1:], total[1:, 0] / np.diff(dates), label=legendplot[file],
                     color=colors[file], linestyle=linestyles[file])
 
-            date_idx = int(-simulation_time / timestep - 1)
+            # Print simulation result after first timestep. 
+            date_idx = math.floor(-simulation_time / timestep)
             print(
-                f"IDE new infections on {dates[date_idx]}: ", total[date_idx, 0] / timestep)
-            date_idx = int(-simulation_time / timestep)
-            print(
-                f"IDE new infections on {dates[date_idx]}: ", total[date_idx, 0] / timestep)
-            date_idx = int(-(simulation_time - 1) / timestep - 1)
-            print(
-                f"IDE new infections at {dates[date_idx]}: ", total[date_idx, 0] / timestep)
+                f"IDE new transmissions at time {dates[date_idx]}: ", total[date_idx, 0] / timestep)
+            print("")
 
         h5file.close()
 
+    # Adjust plot.
     ax.set_xlim(left=0, right=simulation_time)
     ax.set_ylim(bottom=0)
-    if start_date == pd.Timestamp("2020-6-1"):
-        ax.set_ylim(bottom=0, top=1000)
     ax.grid(True, linestyle='--', alpha=0.5)
     ax.legend(fontsize=12)
 
@@ -296,7 +215,7 @@ def plot_daily_new_transmissions(files, reported_data_dir, start_date, simulatio
 
     plt.tight_layout()
 
-    # save result
+    # Save result.
     if save_dir != "":
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
@@ -306,35 +225,46 @@ def plot_daily_new_transmissions(files, reported_data_dir, start_date, simulatio
 
 def plot_infectedsymptoms_deaths(
         files, reported_data_dir, start_date, simulation_time, fileending="", save_dir=""):
+    """ Plots the number of mildly symptomatic individuals and deaths obtained by simulations with an ODE and an IDE model as well as 
+    the respective number extracted from RKI data.
 
+    @param[in] files Expects list of two files with ODE and IDE simulation results for compartments, respectively, in 
+        this order.
+    @param[in] reported_data_dir Directory that contains files with RKI data.
+    @param[in] start_date Start date of the simulations.
+    @param[in] simulation_time Duration of the simulation.
+    @param[in] fileending String that further specifies filename of plot. 
+    @param[in] Directory where plot will be stored. If this is not set, the plot will not be stored. 
+    """
+    # Define compartment_name and compartment_indices of InfectedSymptoms and Deaths in simulation results.
+    compartment_names = ["InfectedSymptoms", "Deaths"]
+    compartment_indices = [3,7]
+
+    # Read RKI data.
     datafile = os.path.join(reported_data_dir, "cases_all_germany.json")
     data_rki = load_data(datafile, start_date, simulation_time)
 
-    datafile_ma7 = os.path.join(
-        reported_data_dir,  "cases_all_germany_ma7.json")
-    data_rki_ma7 = load_data(datafile_ma7, start_date,
-                             simulation_time)
+    # Add results to plot.
 
     legendplot = list(["ODE", "IDE"])
-    # helmholtzdarkblue, helmholtzclaim
+    # Define colors, we use helmholtzdarkblue and helmholtzclaim.
     colors = [(0, 40 / 255, 100 / 255), (20 / 255, 200 / 255, 255 / 255)]
     linestyles = ['-', '-']
-    # add results to plot
 
-    compartments = [["InfectedSymptoms", 3], ["Deaths", 7]]
+    for i, compartment in enumerate(compartment_names):
 
-    for compartment in range(len(compartments)):
-
-        print(f"{compartments[compartment][0]} from RKI on {start_date}: ",
-              data_rki_ma7[data_rki["Date"] == start_date][compartments[compartment][0]].values[0])
+        # Print number of individuals in respective compartment at start_date according to RKI data.
+        print(f"{compartment} from RKI on {start_date.strftime('%Y-%m-%d')}: ",
+              data_rki[data_rki["Date"] == start_date][compartment].values[0])
 
         fig, ax = plt.subplots()
 
+        # Plot RKI data.
         ax.scatter(np.linspace(0, simulation_time, simulation_time + 1),
-                   data_rki[compartments[compartment][0]], marker="x",  s=20, color='gray', label="Extrapolated RKI data")
+                   data_rki[compartment], marker="x",  s=20, color='gray', label="Extrapolated RKI data")
 
+        # Read simulation results.
         for file in range(len(files)):
-            # load data
             h5file = h5py.File(str(files[file]) + '.h5', 'r')
 
             if (len(list(h5file.keys())) > 1):
@@ -345,29 +275,33 @@ def plot_infectedsymptoms_deaths(
             data = h5file[list(h5file.keys())[0]]
 
             if len(data['Total'][0]) == 8:
-                # As there should be only one Group, total is the simulation
+                # As there is one Group, total is the simulation
                 # result
                 total = data['Total'][:, :]
             elif len(data['Total'][0]) == 10:
-                # in ODE there are two compartments we don't use, throw these
-                # out
+                # In ODE there are two compartments we do not use, throw these
+                # out.
                 total = data['Total'][:, [0, 1, 2, 4, 6, 7, 8, 9]]
 
             dates = data['Time'][:]
 
-            ax.plot(dates, total[:, compartments[compartment][1]], label=legendplot[file],
+            # Plot simulation results.
+            ax.plot(dates, total[:, compartment_indices[i]], label=legendplot[file],
                     color=colors[file], linestyle=linestyles[file])
 
             if file == 0:
-                print(f"{compartments[compartment][0]} in ODE on {start_date}: ",
-                      total[:, compartments[compartment][1]][0])
+                print(f"{compartment} in ODE on {start_date.strftime('%Y-%m-%d')}: ",
+                      total[:, compartment_indices[i]][0])
 
             if file == 1:
-                print(f"{compartments[compartment][0]} in IDE on {start_date}: ",
-                      total[:, compartments[compartment][1]][0])
+                print(f"{compartment} in IDE on {start_date.strftime('%Y-%m-%d')}: ",
+                      total[:, compartment_indices[i]][0])
 
             h5file.close()
+        
+        print("")
 
+        # Adjust plot.
         ax.set_xlim(left=0, right=simulation_time)
         ax.grid(True, linestyle='--', alpha=0.5)
         ax.legend(fontsize=12)
@@ -391,108 +325,148 @@ def plot_infectedsymptoms_deaths(
                             top=None, wspace=None, hspace=0.6)
         plt.tight_layout()
 
-        # save result
-        if save_dir != "":
-            if not os.path.isdir(save_dir):
-                os.makedirs(save_dir)
-            plt.savefig(save_dir + f"{compartments[compartment][0]}_{fileending}.png",
-                        bbox_inches='tight', dpi=500)
-
-
-def plot_icu(files, reported_data_dir, start_date, simulation_time, fileending="", save_dir=""):
-
-    # datafile_icu_ma7 = os.path.join(os.path.dirname(
-    #     __file__), "..", "data", "pydata", "Germany", "germany_divi_ma7.json")
-
-    datafile_icu = os.path.join(reported_data_dir,  "germany_divi.json")
-
-    df = pd.read_json(datafile_icu)
-    # data_icu_ma7 = load_data(datafile_icu_ma7, start_date, simulation_time)
-
-    # print("Infectedsymptoms from RKI (ma7)  on 1.10.2020: ", data_rki_ma7[data_rki_ma7["Date"]=="2020-10-01"]["InfectedSymptoms"].values[0])
-
-    # helmholtzdarkblue, helmholtzclaim
-    legendplot = list(["ODE", "IDE"])
-    colors = [(0, 40 / 255, 100 / 255), (20 / 255, 200 / 255, 255 / 255)]
-    linestyles = ['-', '-']
-    # add results to plot
-
-    compartments = [["InfectedCritical", 5]]
-
-    for compartment in range(len(compartments)):
-
-        print(f"{compartments[compartment][0]} from DIVI (ma7)  on {start_date}: ",
-              df[df["Date"] == start_date]["ICU"].values[0])
-
-        fig, ax = plt.subplots()
-
-        ax.scatter(np.linspace(0, simulation_time, simulation_time + 1),
-                   df[(df["Date"] >= start_date) & (df["Date"] <= start_date + pd.DateOffset(days=simulation_time))]["ICU"], marker="x",  s=20, color='gray', label="DIVI data")
-
-        for file in range(len(files)):
-            # load data
-            h5file = h5py.File(str(files[file]) + '.h5', 'r')
-
-            if (len(list(h5file.keys())) > 1):
-                raise gd.DataError("File should contain one dataset.")
-            if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
-                raise gd.DataError("Expected only one group.")
-
-            data = h5file[list(h5file.keys())[0]]
-
-            if len(data['Total'][0]) == 8:
-                # As there should be only one Group, total is the simulation result.
-                total = data['Total'][:, :]
-            elif len(data['Total'][0]) == 10:
-                # In ODE model there are two compartments we do not use, throw these out.
-                total = data['Total'][:, [0, 1, 2, 4, 6, 7, 8, 9]]
-
-            dates = data['Time'][:]
-
-            ax.plot(dates, total[:, compartments[compartment][1]], label=legendplot[file],
-                    color=colors[file], linestyle=linestyles[file])
-
-            if file == 0:
-                print(f"{compartments[compartment][0]} in ODE on {start_date}: ",
-                      total[:, compartments[compartment][1]][0])
-
-            if file == 1:
-                print(f"{compartments[compartment][0]} in IDE on {start_date}: ",
-                      total[:, compartments[compartment][1]][0])
-
-            h5file.close()
-
-        ax.set_xlim(left=0, right=simulation_time)
-        ax.grid(True, linestyle='--', alpha=0.5)
-        ax.legend(fontsize=12)
-
-        # Define x-ticks.
-        datelist = np.array(pd.date_range(parameters["start_date"].date(),
-                                          periods=simulation_time+1, freq='D').strftime('%m-%d').tolist())
-        tick_range = (np.arange(int((simulation_time) / 5) + 1) * 5)
-        plt.xticks(tick_range, datelist[tick_range],
-                   rotation=45, fontsize=12)
-        plt.xticks(np.arange(simulation_time), minor=True)
-
-        fig.supxlabel('Date')
-        fig.supylabel(
-            f'ICU patients')
-        plt.subplots_adjust(left=None, bottom=None, right=None,
-                            top=None, wspace=None, hspace=0.6)
-
-        plt.tight_layout()
-
         # Save result.
         if save_dir != "":
             if not os.path.isdir(save_dir):
                 os.makedirs(save_dir)
-            plt.savefig(save_dir + f"{compartments[compartment][0]}_{fileending}.png",
+            plt.savefig(save_dir + f"{compartment}_{fileending}.png",
                         bbox_inches='tight', dpi=500)
+
+
+def plot_icu(files, reported_data_dir, start_date, simulation_time, fileending="", save_dir=""):
+    """ Plots the number of ICU patients obtained by simulations with an ODE and an IDE model as well as 
+    the number of ICU patients as reported by DIVI.
+
+    @param[in] files Expects list of two files with ODE and IDE simulation results for flows, respectively, in this order.
+    @param[in] reported_data_dir Directory that contains files with DIVI data.
+    @param[in] start_date Start date of the simulations.
+    @param[in] simulation_time Duration of the simulation.
+    @param[in] fileending String that further specifies filename of plot. 
+    @param[in] Directory where plot will be stored. If this is not set, the plot will not be stored. 
+    """
+
+    # Define compartment_name and compartment_index of InfectedCritical in simulation results. 
+    compartment_name = "InfectedCritical"
+    compartment_idx = 5
+
+    # Read DIVI data.
+    datafile_divi = os.path.join(reported_data_dir,  "germany_divi.json")
+    df = pd.read_json(datafile_divi)
+
+    # Print number of ICU patients at start_date according to DIVI data. 
+    print(f"{compartment_name} from DIVI on {start_date.strftime('%Y-%m-%d')}: ",
+            df[df["Date"] == start_date]["ICU"].values[0])
+
+    # Add results to plot.
+    fig, ax = plt.subplots()
+
+    legendplot = list(["ODE", "IDE"])
+    # Define colors, we use helmholtzdarkblue and helmholtzclaim.
+    colors = [(0, 40 / 255, 100 / 255), (20 / 255, 200 / 255, 255 / 255)]
+    linestyles = ['-', '-']
+
+    # Plot DIVI data.
+    ax.scatter(np.linspace(0, simulation_time, simulation_time + 1),
+                df[(df["Date"] >= start_date) & (df["Date"] <= start_date + pd.DateOffset(days=simulation_time))]["ICU"], marker="x",  s=20, color='gray', label="DIVI data")
+
+    # Read simulation results. 
+    for file in range(len(files)):
+        h5file = h5py.File(str(files[file]) + '.h5', 'r')
+
+        if (len(list(h5file.keys())) > 1):
+            raise gd.DataError("File should contain one dataset.")
+        if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
+            raise gd.DataError("Expected only one group.")
+
+        data = h5file[list(h5file.keys())[0]]
+
+        if len(data['Total'][0]) == 8:
+            # As there should be only one Group, total is the simulation result.
+            total = data['Total'][:, :]
+        elif len(data['Total'][0]) == 10:
+            # In ODE model there are two compartments we do not use, throw these out.
+            total = data['Total'][:, [0, 1, 2, 4, 6, 7, 8, 9]]
+
+        dates = data['Time'][:]
+
+        # Plot simulation results. 
+        ax.plot(dates, total[:, compartment_idx], label=legendplot[file],
+                color=colors[file], linestyle=linestyles[file])
+
+        if file == 0:
+            # Print number of ICU patients at start_date according to ODE simulation. 
+            print(f"{compartment_name} in ODE on {start_date.strftime('%Y-%m-%d')}: ",
+                    total[:, compartment_idx][0])
+
+        if file == 1:
+            # Print number of ICU patients at start_date according to IDE simulation. 
+            print(f"{compartment_name} in IDE on {start_date.strftime('%Y-%m-%d')}: ",
+                    total[:, compartment_idx][0])
+
+        h5file.close()
+    
+    print("")
+
+    # Adjust plot. 
+    ax.set_xlim(left=0, right=simulation_time)
+    ax.grid(True, linestyle='--', alpha=0.5)
+    ax.legend(fontsize=12)
+
+    # Define x-ticks.
+    datelist = np.array(pd.date_range(parameters["start_date"].date(),
+                                        periods=simulation_time+1, freq='D').strftime('%m-%d').tolist())
+    tick_range = (np.arange(int((simulation_time) / 5) + 1) * 5)
+    plt.xticks(tick_range, datelist[tick_range],
+                rotation=45, fontsize=12)
+    plt.xticks(np.arange(simulation_time), minor=True)
+
+    fig.supxlabel('Date')
+    fig.supylabel(
+        f'ICU patients')
+    plt.subplots_adjust(left=None, bottom=None, right=None,
+                        top=None, wspace=None, hspace=0.6)
+
+    plt.tight_layout()
+
+    # Save result.
+    if save_dir != "":
+        if not os.path.isdir(save_dir):
+            os.makedirs(save_dir)
+        plt.savefig(save_dir + f"{compartment_name}_{fileending}.png",
+                    bbox_inches='tight', dpi=500)
+
+def plot_covid_inspired_scenario(result_dir, data_dir, plot_dir, start_date, simulation_time, timestep):
+    """ Plots daily new transmissions, the number of mildly symptomatic indiciduals and deaths as well as the number
+    of ICU patients. See the respective functions for further details. 
+
+    @param[in] result_dir Directory where simiulation results are stored.
+    @param[in] data_dir Directory where folders with data on contacts and reported data are located. 
+    @param[in] plot_dir Directory where plots will be stored.
+    @param[in] start_date Start date of the simulations.
+    @param[in] simulation_time Duration of the simulation.
+    @param[in] timestep Time step used for the simulations. 
+    """
+    plot_daily_new_transmissions([os.path.join(result_dir, f"ode_{start_date}_{simulation_time}_{timestep}_flows"),
+                                  os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_flows")], data_dir,
+                                 pd.Timestamp(start_date), simulation_time,
+                                 fileending=f"{start_date}_{simulation_time}_{timestep}", save_dir=plot_dir)
+
+    plot_infectedsymptoms_deaths([os.path.join(result_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
+                                  os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
+                                 data_dir,
+                                 pd.Timestamp(
+                                     start_date), simulation_time,
+                                 fileending=f"{start_date}_{simulation_time}_{timestep}",  save_dir=plot_dir)
+
+    plot_icu([os.path.join(result_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
+              os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
+             data_dir,
+             pd.Timestamp(start_date), simulation_time,  fileending=f"{start_date}_{simulation_time}_{timestep}", save_dir=plot_dir)
 
 
 def main():
     # Paths are valid if file is executed e.g. in memilio/cpp/simulations/IDE_paper.
-    # Path where simulation results (generated with ide_real_scenario.cpp) are stored.
+    # Path where simulation results (generated with ide_covid_inspired_scenario.cpp) are stored.
     result_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/simulation_results/covid_inspired_scenario/")
 
@@ -509,24 +483,9 @@ def main():
     simulation_time = 45
     timestep = "0.0100"
 
-    # Plot daily new transmissions.
-    plot_daily_new_transmissions([os.path.join(result_dir, f"ode_{start_date}_{simulation_time}_{timestep}_flows"),
-                                  os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_flows")], reported_data_dir,
-                                 pd.Timestamp(start_date), simulation_time,
-                                 fileending=f"{start_date}_{simulation_time}_{timestep}", save_dir=plot_dir)
+    plot_covid_inspired_scenario(result_dir, reported_data_dir, plot_dir, start_date,
+                                 simulation_time, timestep)
 
-    # Plot mildly symptomatic and dead individuals.
-    plot_infectedsymptoms_deaths([os.path.join(result_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
-                                  os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")], reported_data_dir,
-                                 pd.Timestamp(
-                                     start_date), simulation_time,
-                                 fileending=f"{start_date}_{simulation_time}_{timestep}", save_dir=plot_dir)
-
-    # Plot ICU patients.
-    plot_icu([os.path.join(result_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
-              os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
-             reported_data_dir,
-             pd.Timestamp(start_date), simulation_time, fileending=f"{start_date}_{simulation_time}_{timestep}", save_dir=plot_dir)
 
 
 if __name__ == '__main__':
