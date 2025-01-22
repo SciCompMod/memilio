@@ -202,3 +202,13 @@ TEST(TestDate, streamOutput)
     oss5 << mio::Date(2020, 2, 29);
     EXPECT_EQ(oss5.str(), "2020-02-29");
 }
+
+TEST(TestDate, formatViaFmt)
+{
+    EXPECT_EQ(fmt::format("{}", mio::Date(2020, 9, 2)), "2020-09-02");
+    EXPECT_EQ(fmt::format("{}", mio::Date(2021, 8, 30)), "2021-08-30");
+    EXPECT_EQ(fmt::format("{}", mio::Date(2021, 1, 1)), "2021-01-01");
+    EXPECT_EQ(fmt::format("{}", mio::Date(2020, 2, 29)), "2020-02-29");
+    EXPECT_EQ(fmt::format("{}", mio::Date(2021, 3, 4)), "2021-03-04");
+    EXPECT_EQ(fmt::format("Todays date is: {}", mio::Date(2021, 12, 31)), "Todays date is: 2021-12-31");
+}
