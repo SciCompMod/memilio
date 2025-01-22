@@ -25,7 +25,11 @@ def get_lognormal_parameters(mean, std):
     """
     Compute shape and scale parameters to use in lognormal distribution for given mean and standard deviation. 
     The lognormal distribution we consider in state_age_function.h is based on the implementation in scipy and the parameters 
-    shape and scale are defined accordingly. 
+    shape and scale are defined accordingly.
+
+    @param[in] mean Mean of the distribution.
+    @param[in] std Standard deviation of the distribution.
+    @returns Shape and scale parameter of lognormal distribution. 
     """
     variance = std**2
 
@@ -57,7 +61,7 @@ def get_weighted_mean(prob_1, stay_time_1, stay_time_2):
     return weighted_mean
 
 
-if __name__ == '__main__':
+def main():
     shape, scale = get_lognormal_parameters(2.183, 1.052)
     print(f"{shape:.12f}", f"{scale:.12f}")
 
@@ -72,3 +76,7 @@ if __name__ == '__main__':
 
     weighted_mean = get_weighted_mean(0.387803, 10.7, 18.1)
     print(f"{weighted_mean:.6f}")
+
+
+if __name__ == '__main__':
+    main()
