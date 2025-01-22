@@ -5,7 +5,10 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
+#include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <ostream>
 #include <string>
 #include <iostream>
@@ -19,9 +22,61 @@
 #include "abm/simulation.h"
 #include "abm/time.h"
 #include "abm/world.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/io/history.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/random_number_generator.h"
+
+// #define ADD_OVERFLOW_LOCATIONS
+
+constexpr std::string_view loc_type_name(mio::abm::LocationType t)
+{
+    using mio::abm::LocationType;
+    switch (t) {
+    case LocationType::Home:
+        return "Home";
+    case LocationType::BasicsShop:
+        return "BasicsShop";
+    case LocationType::Car:
+        return "Car";
+    case LocationType::Cemetery:
+        return "Cemetery";
+    case LocationType::Hospital:
+        return "Hospital";
+    case LocationType::ICU:
+        return "ICU";
+    case LocationType::PublicTransport:
+        return "PublicTransport";
+    case LocationType::TransportWithoutContact:
+        return "TransportWithoutContact";
+    case LocationType::School:
+        return "School";
+    case LocationType::Work:
+        return "Work";
+    case LocationType::SocialEvent:
+        return "SocialEvent";
+    case LocationType::Count:
+        return "InvalidValueCount";
+    default:
+        return "InvalidValue";
+    }
+}
+
+const std::string_view age_group_name(const mio::AgeGroup& a)
+{
+    switch (a.get()) {
+    case 0:
+        return "age_group_0_to_4";
+    case 1:
+        return "age_group_5_to_24";
+    case 2:
+        return "age_group_25_to_64";
+    case 3:
+        return "age_group_65_plus";
+    default:
+        return "InvalidValue";
+    }
+}
 
 struct LocationPerPersonLogger : public mio::LogAlways {
     using Type = std::pair<mio::abm::TimePoint, std::vector<uint32_t>>;
@@ -39,11 +94,27 @@ struct LocationPerPersonLogger : public mio::LogAlways {
     std::vector<uint32_t> location_per_person;
 };
 
+struct LocationSizesLogger : public mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, std::vector<uint32_t>>;
+
+    Type log(const mio::abm::Simulation& sim)
+    {
+        persons_per_location.resize(sim.get_world().get_locations().size());
+        std::transform(sim.get_world().get_locations().begin(), sim.get_world().get_locations().end(),
+                       persons_per_location.begin(), [](const mio::abm::Location& l) {
+                           return l.get_number_persons();
+                       });
+        return std::pair(sim.get_time(), persons_per_location);
+    }
+
+    std::vector<uint32_t> persons_per_location;
+};
+
 void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
                          const std::vector<LocationPerPersonLogger::Type>& loclog)
 {
     std::bitset<(uint32_t)mio::abm::LocationType::Count> missing_loc_types;
-    out << "# Hour, PersonId1, PersonId2, Intensity\n";
+    out << "# Hour, PersonId1, PersonId2, Intensity, LocationId, LocationType\n";
     for (size_t t = 1; t < loclog.size(); t++) { // iterate over time points
         for (size_t p = 0; p < loclog[t].second.size(); p++) { // iterate over population
             assert(loclog[t].second[p] != mio::abm::INVALID_LOCATION_INDEX);
@@ -57,16 +128,20 @@ void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
             assert(p_loc != loc.get_assigned_persons().end());
             // write out all contacts with a positive intensity
             for (size_t contact = 0; contact < loc.get_assigned_persons().size(); contact++) {
-                if (loc.get_assigned_persons()[contact] == mio::abm::INVALID_PERSON_ID ||
-                    loc.get_assigned_persons()[contact] == p) {
+                const auto contact_id = loc.get_assigned_persons()[contact];
+                if (contact_id == mio::abm::INVALID_PERSON_ID || contact_id == p) {
                     // skip loops (contact with oneself) and filler entries (invalid ids)
                     continue;
                 }
+                if (loclog[t].second[contact_id] != loc.get_index()) {
+                    // skip false contacts, i.e. ones that are not at p's location
+                    continue;
+                }
                 const auto& t_matrix = loc.get_contact_matrices()[loclog[t].first.hour_of_day()];
-                const auto intensity = t_matrix(p_loc - loc.get_assigned_persons().begin(), contact);
+                const auto intensity = t_matrix(std::distance(loc.get_assigned_persons().begin(), p_loc), contact);
                 if (intensity > 0) {
-                    out << loclog[t].first.hours() << ", " << p << ", " << loc.get_assigned_persons()[contact] << ", "
-                        << intensity << "\n";
+                    out << loclog[t].first.hours() << ", " << p << ", " << contact_id << ", " << intensity << ", "
+                        << loc.get_index() << ", " << loc_type_name(loc.get_type()) << "\n";
                 }
             }
         }
@@ -74,7 +149,8 @@ void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
     if (missing_loc_types.any()) {
         for (uint32_t i = 0; i < (uint32_t)mio::abm::LocationType::Count; i++) {
             if (missing_loc_types[i]) {
-                mio::log_warning("Missing contact matrix for a Location of type: {}", i);
+                mio::log_warning("Missing contact matrix for a Location of type: {}",
+                                 loc_type_name((mio::abm::LocationType)i));
             }
         }
     }
@@ -101,15 +177,29 @@ mio::IOResult<mio::abm::HourlyContactMatrix> read_hourly_contact_matrix(const st
     // possible EOF here
     // read csv
     while (std::getline(file, reader)) {
-        int status = sscanf(reader.c_str(), "%i,%i,%i,%lf\n", &t, &row, &col, &val);
+        const auto fmt_string = "%i,%i,%i,%lf\n";
+        const int status      = sscanf(reader.c_str(), fmt_string, &t, &row, &col, &val);
 
         if (status != 4) {
-            return mio::failure(mio::StatusCode::InvalidFileFormat,
-                                "Unexpected format while reading " + csv_file + ". Line reads \"" + reader + "\"");
+            return mio::failure(mio::StatusCode::InvalidFileFormat, "Unexpected format while reading " + csv_file +
+                                                                        ". Expexted \"" + fmt_string +
+                                                                        "\". Line reads \"" + reader + "\"\n");
         }
 
+        // collect matrix_entries until t hits the next hour
         if (t > current_hour) {
-            size_t n          = std::round(std::sqrt(matrix_entries.size()));
+            const double exact_sqrt = std::sqrt((double)matrix_entries.size());
+            if (std::ceil(exact_sqrt) != std::floor(exact_sqrt)) {
+                return mio::failure(mio::StatusCode::InvalidFileFormat, "Unexpected format while reading " + csv_file +
+                                                                            ". Matrix at t=" + std::to_string(t) +
+                                                                            " is not square.\n");
+            }
+            const size_t n = (size_t)exact_sqrt;
+            if (current_hour > 1 && (size_t)hcm[current_hour - 1].cols() != n) {
+                return mio::failure(mio::StatusCode::InvalidFileFormat,
+                                    "Unexpected format while reading " + csv_file + ". Matrix at t=" +
+                                        std::to_string(current_hour) + " differs in size from prior matrix.\n");
+            }
             hcm[current_hour] = Eigen::MatrixXd(n, n);
             for (size_t i = 0; i < matrix_entries.size(); i++) {
                 hcm[current_hour].data()[i] = matrix_entries[i];
@@ -121,7 +211,7 @@ mio::IOResult<mio::abm::HourlyContactMatrix> read_hourly_contact_matrix(const st
         matrix_entries.push_back(val);
     }
 
-    size_t n          = std::round(std::sqrt(matrix_entries.size()));
+    const size_t n    = std::round(std::sqrt(matrix_entries.size()));
     hcm[current_hour] = Eigen::MatrixXd(n, n);
     for (size_t i = 0; i < matrix_entries.size(); i++) {
         hcm[current_hour].data()[i] = matrix_entries[i];
@@ -151,6 +241,41 @@ void assign_contact_matrix(mio::abm::World& world, mio::abm::LocationId location
     }
 
     world.get_individualized_location(location).assign_contact_matrices(res.value(), assigned_persons_for_location);
+}
+
+void assign_contact_matrix(mio::abm::World& world, mio::abm::LocationId location, std::string base_path,
+                           std::string type_of_location, unsigned location_capacity, unsigned time_step_in_minutes)
+{
+    const std::filesystem::path file_dir =
+        mio::path_join(base_path, type_of_location, "num_nodes=" + std::to_string(location_capacity),
+                       "time=" + std::to_string(time_step_in_minutes));
+
+    if (!std::filesystem::exists(file_dir)) {
+        mio::log(mio::LogLevel::critical, "Cannot find directory \"{}\"", file_dir.string());
+        exit(1);
+    }
+
+    const int num_files =
+        (int)std::distance(std::filesystem::directory_iterator(file_dir), std::filesystem::directory_iterator());
+
+    if (num_files == 0) {
+        mio::log(mio::LogLevel::critical, "No files in directory \"{}\"", file_dir.string());
+        exit(1);
+    }
+
+    int file_choice = mio::UniformIntDistribution<int>::get_instance()(world.get_rng(), 0, num_files - 1);
+
+    auto file_itr = std::filesystem::directory_iterator(file_dir);
+    for (int i = 0; i < file_choice; i++) {
+        ++file_itr;
+    }
+
+    const std::string file_name = file_itr->path().string();
+
+    mio::log_info("Picked file {} for location {} of type {}.", file_name, location.index,
+                  loc_type_name(location.type));
+
+    assign_contact_matrix(world, location, file_name, location_capacity);
 }
 
 const static Eigen::MatrixXd& full_home_contact_matrix()
@@ -227,21 +352,31 @@ void assign_home_contact_matrix(mio::abm::World& world, mio::abm::Location& home
 
 int main()
 {
+    mio::set_log_level(mio::LogLevel::warn);
+
     size_t num_age_groups         = 4;
     const auto age_group_0_to_4   = mio::AgeGroup(0);
     const auto age_group_5_to_24  = mio::AgeGroup(1);
     const auto age_group_25_to_64 = mio::AgeGroup(2);
     const auto age_group_65_plus  = mio::AgeGroup(3);
 
+    const unsigned time_step_in_minutes = 60;
+    std::string contacts_path =
+        // "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/contacts/microcontacts/24h_networks_csv";
+        "/home/schm_r6/Documents/memilio_contact_networks";
+    // "/localdata2/dial_mo/Graphs/24h_networks_csv";
+
     std::cout << "Base home contact matrix:\n" << full_home_contact_matrix() << "\n";
 
     // Create the world with 4 age groups.
     auto world = mio::abm::World(num_age_groups);
 
-    world.parameters.get<mio::abm::AgeGroupGotoSchool>()                    = false;
-    world.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_24] = true;
-    world.parameters.get<mio::abm::AgeGroupGotoWork>()                      = false;
-    world.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_25_to_64]  = true;
+    world.parameters.get<mio::abm::AgeGroupGotoSchool>()                        = false;
+    world.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_24]     = true;
+    world.parameters.get<mio::abm::AgeGroupGotoWork>()                          = false;
+    world.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_25_to_64]      = true;
+    world.parameters.get<mio::abm::AgeGroupGotoSocialEvent>()                   = true;
+    world.parameters.get<mio::abm::AgeGroupGotoSocialEvent>()[age_group_0_to_4] = false;
 
     world.parameters.get<mio::abm::BasicShoppingRate>()[age_group_0_to_4]   = 0.1;
     world.parameters.get<mio::abm::BasicShoppingRate>()[age_group_5_to_24]  = 0.5;
@@ -251,7 +386,7 @@ int main()
     // Setup the world
 
     //1. Households
-    int n_households = 100; // we do 100 Households -> 50/30/15/5 split for 1/2/3/4 person households
+    int n_households = 500;
     auto child       = mio::abm::HouseholdMember(num_age_groups); // A child is 25/75% 0-4 or 5-24.
     child.set_age_weight(age_group_0_to_4, 1);
     child.set_age_weight(age_group_5_to_24, 3);
@@ -265,9 +400,9 @@ int main()
     // One-person household
     auto onePersonHousehold_group = mio::abm::HouseholdGroup();
     auto onePersonHousehold_full  = mio::abm::Household();
-    onePersonHousehold_full.add_members(parent, 3);
-    onePersonHousehold_full.add_members(grandparent, 1);
-    onePersonHousehold_group.add_households(onePersonHousehold_full, n_households * 0.5);
+    onePersonHousehold_full.add_members(parent, 1);
+    // onePersonHousehold_full.add_members(grandparent, 1);
+    onePersonHousehold_group.add_households(onePersonHousehold_full, n_households * 0.4);
 
     // Two-person household with two parents.
     auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
@@ -281,14 +416,14 @@ int main()
     auto threePersonHousehold_full  = mio::abm::Household();
     threePersonHousehold_full.add_members(child, 1);
     threePersonHousehold_full.add_members(parent, 2);
-    threePersonHousehold_group.add_households(threePersonHousehold_full, n_households * 0.15);
+    threePersonHousehold_group.add_households(threePersonHousehold_full, n_households * 0.2);
 
     // Four-person household with two parents and two children.
     auto fourPersonHousehold_group = mio::abm::HouseholdGroup();
     auto fourPersonHousehold_full  = mio::abm::Household();
     fourPersonHousehold_full.add_members(child, 2);
     fourPersonHousehold_full.add_members(parent, 2);
-    fourPersonHousehold_group.add_households(fourPersonHousehold_full, n_households * 0.05);
+    fourPersonHousehold_group.add_households(fourPersonHousehold_full, n_households * 0.1);
 
     add_household_group_to_world(world, onePersonHousehold_group);
     add_household_group_to_world(world, twoPersonHousehold_group);
@@ -297,55 +432,55 @@ int main()
 
     //2. Schools
     std::vector<mio::abm::LocationId> schools;
-    const std::vector<int> school_sizes{60, 60};
-    std::vector<std::string> school_files{"highschool_60_60.csv", "primaryschool_60_60.csv"};
+    const std::vector<int> school_sizes{100, 200};
     for (auto size : school_sizes) {
         schools.push_back(world.add_location(mio::abm::LocationType::School));
         world.get_individualized_location(schools.back())
             .get_infection_parameters()
             .set<mio::abm::MaximumContacts>(size);
     }
-    // auto school_other = world.add_location(mio::abm::LocationType::School);
-    // world.get_individualized_location(school_other).get_infection_parameters().set<mio::abm::MaximumContacts>(1000);
 
     //3. Workplaces
     std::vector<mio::abm::LocationId> works;
-    const std::vector<int> work_sizes{20, 20, 15, 15, 15, 15, 15, 5, 100};
-    std::vector<std::string> work_files{"office_20_20.csv", "office_20_20.csv", "office_15_15.csv",
-                                        "office_15_15.csv", "office_15_15.csv", "office_15_15.csv",
-                                        "office_15_15.csv", "office_5_5.csv",   "office_100_100.csv"};
+    const std::vector<int> work_sizes{10, 10, 10, 10, 10, 10, 10, 10, 10,  10,  20,
+                                      20, 20, 20, 30, 30, 30, 50, 50, 100, 100, 100};
     for (auto size : work_sizes) {
         works.push_back(world.add_location(mio::abm::LocationType::Work));
         world.get_individualized_location(works.back()).get_infection_parameters().set<mio::abm::MaximumContacts>(size);
     }
-    // auto work_other = world.add_location(mio::abm::LocationType::Work);
-    // world.get_individualized_location(work_other).get_infection_parameters().set<mio::abm::MaximumContacts>(1000);
 
     //4. Social Events
-    // Maximum contacs limit the number of people that a person can infect while being at this location.
-    auto event = world.add_location(mio::abm::LocationType::SocialEvent);
-    world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
+    std::vector<mio::abm::LocationId> social_events;
+    // note that the required event capacity varies, since children may be in agegroup 0, which is excluded from events
+    const std::vector<int> social_event_sizes = {90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 15, 30};
+
+    for (auto size : social_event_sizes) {
+        social_events.push_back(world.add_location(mio::abm::LocationType::SocialEvent));
+        world.get_individualized_location(social_events.back())
+            .get_infection_parameters()
+            .set<mio::abm::MaximumContacts>(size);
+    }
 
     //5. Shops
     std::vector<mio::abm::LocationId> shops;
-    const std::vector<int> shop_sizes{5, 5, 5, 5, 5, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30};
-    std::vector<std::string> shop_files(5, "supermarked_5_5.csv");
-    shop_files.resize(shop_sizes.size(), "supermarked_30_30.csv");
+    const std::vector<int> shop_sizes{20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 40, 40, 40, 40, 40,
+                                      40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+                                      40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40};
+
     for (auto size : shop_sizes) {
         shops.push_back(world.add_location(mio::abm::LocationType::BasicsShop));
         world.get_individualized_location(shops.back()).get_infection_parameters().set<mio::abm::MaximumContacts>(size);
     }
-    // auto shop_other = world.add_location(mio::abm::LocationType::BasicsShop);
-    // world.get_individualized_location(shop_other).get_infection_parameters().set<mio::abm::MaximumContacts>(1000);
 
     //6. Hospitals
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
-    world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    // Add ICU with 5 maximum contacs.
+    world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    // Add ICU with 10 maximum contacts.
     auto icu = world.add_location(mio::abm::LocationType::ICU);
-    world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
 
-    std::vector<double> infection_distribution{0.5, 0.3, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0};
+    // Infection distribution remains unchanged
+    std::vector<double> infection_distribution{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     for (auto& person : world.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
             mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
@@ -356,24 +491,38 @@ int main()
         }
     }
 
-    // Assign locations to the people
+    // Assign shared locations to the people
     for (auto& person : world.get_persons()) {
-        //assign shop and event
-        person.set_assigned_location(event);
         //assign hospital and ICU
         person.set_assigned_location(hospital);
         person.set_assigned_location(icu);
-        //assign work/school to people depending on their age
     }
 
-    // Assign people to a random school or workplace, and a shop
-    // int num_assignees_school_other = 0;
-    // int num_assignees_work_other   = 0;
-    // int num_assignees_shop_other   = 0;
+#ifdef ADD_OVERFLOW_LOCATIONS
+    mio::log_warning("Using overflow locations without contact matrix!");
+
+    auto social_event_other = world.add_location(mio::abm::LocationType::SocialEvent);
+    auto school_other       = world.add_location(mio::abm::LocationType::School);
+    auto work_other         = world.add_location(mio::abm::LocationType::Work);
+    auto shop_other         = world.add_location(mio::abm::LocationType::BasicsShop);
+
+    std::cout << "\"other\" location ids:\n"
+              << "  " << loc_type_name(social_event_other.type) << ": " << social_event_other.index << "\n"
+              << "  " << loc_type_name(school_other.type) << ": " << school_other.index << "\n"
+              << "  " << loc_type_name(work_other.type) << ": " << work_other.index << "\n"
+              << "  " << loc_type_name(shop_other.type) << ": " << shop_other.index << "\n";
+
+    // Assign people to a randomized locations
+    int num_assignees_school_other       = 0;
+    int num_assignees_work_other         = 0;
+    int num_assignees_shop_other         = 0;
+    int num_assignees_social_event_other = 0;
+#endif
 
     std::vector<double> school_dist{school_sizes.begin(), school_sizes.end()};
     std::vector<double> work_dist{work_sizes.begin(), work_sizes.end()};
     std::vector<double> shop_dist{shop_sizes.begin(), shop_sizes.end()};
+    std::vector<double> social_event_dist{social_event_sizes.begin(), social_event_sizes.end()};
 
     auto rng = world.get_rng();
     for (auto& person : world.get_persons()) {
@@ -385,9 +534,13 @@ int main()
                 --school_dist[school];
             }
             else {
-                assert(false && "School capacity too low.");
-                // person.set_assigned_location(school_other);
-                // ++num_assignees_school_other;
+#ifdef ADD_OVERFLOW_LOCATIONS
+                person.set_assigned_location(school_other);
+                ++num_assignees_school_other;
+#else
+                mio::log(mio::LogLevel::critical, "School capacity too low.");
+                return 1;
+#endif
             }
         }
         //to the workplaces
@@ -398,9 +551,13 @@ int main()
                 --work_dist[work];
             }
             else {
-                assert(false && "Work capacity too low.");
-                // person.set_assigned_location(work_other);
-                // ++num_assignees_work_other;
+#ifdef ADD_OVERFLOW_LOCATIONS
+                person.set_assigned_location(work_other);
+                ++num_assignees_work_other;
+#else
+                mio::log(mio::LogLevel::critical, "Work capacity too low.");
+                return 1;
+#endif
             }
         }
 
@@ -411,36 +568,65 @@ int main()
             --shop_dist[shop];
         }
         else {
-            assert(false && "Shop capacity too low.");
-            // person.set_assigned_location(shop_other);
-            // ++num_assignees_shop_other;
+#ifdef ADD_OVERFLOW_LOCATIONS
+            person.set_assigned_location(shop_other);
+            ++num_assignees_shop_other;
+#else
+            mio::log(mio::LogLevel::critical, "Shop capacity too low.");
+            return 1;
+#endif
+        }
+
+        //to social events
+        if (person.get_age() != age_group_0_to_4) {
+            if (std::accumulate(social_event_dist.begin(), social_event_dist.end(), 0) > 0) {
+                auto event = mio::DiscreteDistribution<size_t>::get_instance()(rng, social_event_dist);
+                person.set_assigned_location(social_events[event]);
+                --social_event_dist[event];
+            }
+            else {
+#ifdef ADD_OVERFLOW_LOCATIONS
+                person.set_assigned_location(social_event_other);
+                ++num_assignees_social_event_other;
+#else
+                mio::log(mio::LogLevel::critical, "Social event capacity too low.");
+                return 1;
+#endif
+            }
         }
     }
-    // std::cout << "Assignees in school_other: " << num_assignees_school_other << "\n"
-    //           << "Assignees in work_other: " << num_assignees_work_other << "\n"
-    //           << "Assignees in shop_other: " << num_assignees_shop_other << "\n";
+
+#ifdef ADD_OVERFLOW_LOCATIONS
+    std::cout << "Assignees in school_other: " << num_assignees_school_other << "\n"
+              << "Assignees in work_other: " << num_assignees_work_other << "\n"
+              << "Assignees in shop_other: " << num_assignees_shop_other << "\n"
+              << "Assignees in social_event_other: " << num_assignees_social_event_other << "\n";
+#endif
 
     // Load contact matrices
-    std::string contacts_path =
-        // "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/contacts/microcontacts/24h_networks_csv";
-        "/home/schm_r6/Documents/24h_networks_csv";
-
     for (auto& location : world.get_locations()) {
         if (location.get_type() == mio::abm::LocationType::Home) {
             assign_home_contact_matrix(world, location);
         }
     }
     for (size_t i = 0; i < works.size(); i++) {
-        assign_contact_matrix(world, works[i], mio::path_join(contacts_path, work_files.at(i)), work_sizes.at(i));
-    }
-    for (size_t i = 0; i < schools.size(); i++) {
-        assign_contact_matrix(world, schools[i], mio::path_join(contacts_path, school_files.at(i)), school_sizes.at(i));
-    }
-    for (size_t i = 0; i < shops.size(); i++) {
-        assign_contact_matrix(world, shops[i], mio::path_join(contacts_path, shop_files.at(i)), shop_sizes.at(i));
+        assign_contact_matrix(world, works[i], contacts_path, "office", work_sizes[i], time_step_in_minutes);
     }
 
-    // Run the simulation
+    for (size_t i = 0; i < schools.size(); i++) {
+        assign_contact_matrix(world, schools[i], contacts_path, "highschool", school_sizes[i], time_step_in_minutes);
+    }
+
+    for (size_t i = 0; i < shops.size(); i++) {
+        assign_contact_matrix(world, shops[i], contacts_path, "supermarked", shop_sizes[i], time_step_in_minutes);
+    }
+
+    for (size_t i = 0; i < social_events.size(); i++) {
+        assign_contact_matrix(world, social_events[i], contacts_path, "gallery", social_event_sizes[i],
+                              time_step_in_minutes);
+    }
+
+    // Run the simulatio
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = t0 + mio::abm::days(10);
     world.parameters.check_constraints();
@@ -448,7 +634,7 @@ int main()
     // Create a history object to store the time series of the infection states.
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
-    mio::History<mio::DataWriterToMemory, LocationPerPersonLogger> loclog;
+    mio::History<mio::DataWriterToMemory, LocationPerPersonLogger, LocationSizesLogger> loclog;
     // Run the simulation until tmax with the history object.
     sim.advance(tmax, historyTimeSeries, loclog);
 
@@ -456,6 +642,55 @@ int main()
         std::ofstream contactfile("micro_abm_contacts.csv");
         write_contacts_flat(contactfile, sim.get_world(), std::get<0>(loclog.get_log()));
         std::cout << "Contacts written to micro_abm_contacts.csv" << std::endl;
+    }
+
+    {
+        std::ofstream outfile("debug_location-sizes.csv");
+        for (auto& loc_sizes : std::get<1>(loclog.get_log())) {
+            outfile << "t=" << loc_sizes.first.hours() << ": ";
+            auto max = std::max_element(loc_sizes.second.begin(), loc_sizes.second.end());
+            // print out maximum as well as ID and type
+            outfile << "max=" << *max
+                    << " argmax id=" << std::distance(loc_sizes.second.begin(), loc_sizes.second.begin())
+                    << " argmax type="
+                    << loc_type_name(
+                           sim.get_world().get_locations()[std::distance(loc_sizes.second.begin(), max)].get_type())
+                    << " all=";
+            // print out all locations
+            for (auto& loc_size : loc_sizes.second) {
+                outfile << loc_size << " ";
+            }
+            outfile << "\n";
+        }
+        std::cout << "Debug: Current Location population written to debug_location-sizes.csv\n";
+    }
+
+    {
+        std::ofstream outfile("metadata_location-props.csv");
+        outfile << "# LocationID, LocationType (Value), LocationType (Name)\n";
+        for (auto& location : sim.get_world().get_locations()) {
+            outfile << location.get_index() << ", " << (uint32_t)location.get_type() << ", "
+                    << loc_type_name(location.get_type()) << "\n";
+        }
+        std::cout << "Metadata: Location info written to metadata_location-props.csv\n";
+    }
+
+    {
+        std::ofstream outfile("metadata_person-props.csv");
+        outfile << "# PersonID, AgeGroup (Value), AgeGroup (Name), Assigned LocationID (Home), Assigned LocationID "
+                   "(School), Assigned LocationID (Work), Assigned LocationID (SocialEvent), Assigned LocationID "
+                   "(BasicsShop), Assigned LocationID (Hospital), Assigned LocationID (ICU), Assigned LocationID "
+                   "(Car), Assigned LocationID (PublicTransport), Assigned LocationID (TransportWithoutContact), "
+                   "Assigned LocationID (Cemetery)\n";
+        for (auto& person : sim.get_world().get_persons()) {
+            outfile << person.get_person_id() << ", " << person.get_age().get() << ", "
+                    << age_group_name(person.get_age());
+            for (auto id : person.get_assigned_locations()) {
+                outfile << ", " << id;
+            }
+            outfile << "\n";
+        }
+        std::cout << "Metadata: Person info written to metadata_person-props.csv\n";
     }
 
     {

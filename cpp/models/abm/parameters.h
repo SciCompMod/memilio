@@ -659,6 +659,19 @@ struct AgeGroupGotoWork {
     }
 };
 
+struct AgeGroupGotoSocialEvent {
+    using Type = CustomIndexArray<bool, AgeGroup>;
+    static Type get_default(AgeGroup num_agegroups)
+    {
+        auto a = Type(num_agegroups, false);
+        return a;
+    }
+    static std::string name()
+    {
+        return "AgeGroupGotoSocialEvent";
+    }
+};
+
 using ParametersBase =
     ParameterSet<IncubationPeriod, TimeInfectedNoSymptomsToSymptoms, TimeInfectedNoSymptomsToRecovered,
                  TimeInfectedSymptomsToSevere, TimeInfectedSymptomsToRecovered, TimeInfectedSevereToCritical,
@@ -668,8 +681,8 @@ using ParametersBase =
                  DetectInfection, MaskProtection, InfectionRateFromViralShed, MobilityRestrictionParameter,
                  AerosolTransmissionRates, LockdownDate, QuarantineDuration, SocialEventRate, BasicShoppingRate,
                  WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum,
-                 GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor,
-                 SeverityProtectionFactor, HighViralLoadProtectionFactor, TestData>;
+                 GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork, AgeGroupGotoSocialEvent,
+                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor, TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
