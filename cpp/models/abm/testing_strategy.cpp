@@ -167,7 +167,6 @@ void TestingStrategy::update_location_testing_schemes(
 
     if (std::find(m_update_ts_scheduler.begin(), m_update_ts_scheduler.end(), t) != m_update_ts_scheduler.end()) {
         std::cout << "Updating testing schemes at time " << t.days() << std::endl;
-#pragma omp parallel for
         for (auto i = size_t(0); i < locations.size(); ++i) {
             auto& location = locations[i];
             auto loc_id    = location.get_index();
