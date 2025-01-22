@@ -21,6 +21,7 @@
 #define EPI_UTILS_DATE_H
 
 #include "memilio/io/io.h"
+#include "memilio/utils/logging.h"
 #include <string>
 #include <iostream>
 #include <tuple>
@@ -28,8 +29,6 @@
 #include <numeric>
 #include <algorithm>
 #include <cassert>
-#include <spdlog/fmt/ostr.h>
-#include <spdlog/fmt/fmt.h>
 
 namespace mio
 {
@@ -180,6 +179,15 @@ struct Date {
     static constexpr std::array<int, 12> month_lengths           = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     static constexpr std::array<int, 12> month_lengths_leap_year = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 };
+
+/**
+ * @brief Format date objects using the ISO notation for logging with spdlog.
+ * @param d date object.
+ */
+inline std::string format_as(const mio::Date& d)
+{
+    return d.to_iso_string();
+}
 
 /**
  * @brief Computes the length of a month for a given date.
@@ -351,46 +359,5 @@ inline int get_offset_in_days(Date date1, Date date2)
 }
 
 } // end namespace mio
-
-namespace fmt
-{
-/**
- * @brief Specialization of the fmt::formatter template for mio::Date.
- *
- * This struct describes how the fmt library should parse and format
- * a mio::Date object. The parse function is trivial, as we do not need to 
- * handle any custom format specifiers. The format function uses
- * mio::Date::to_iso_string function to return a string in ISO format (YYYY-MM-DD).
- */
-template <>
-struct formatter<mio::Date> {
-    /**
-     * @brief Parses the format specification for mio::Date (ignores any specifiers).
-     *
-     * @tparam ParseContext The context type used by fmt.
-     * @param ctx The parse context which gives access to the format string.
-     * @return The beginning of the context.
-     */
-    template <typename ParseContext>
-    constexpr auto parse(ParseContext& ctx)
-    {
-        return ctx.begin();
-    }
-
-    /**
-     * @brief Formats the given date using the ISO representation (YYYY-MM-DD).
-     *
-     * @tparam FormatContext The context type used by fmt for generating the formatted output.
-     * @param d The date object to be formatted.
-     * @param ctx The format context.
-     * @return An iterator to the end of the output range where the formatted data was written.
-     */
-    template <typename FormatContext>
-    auto format(const mio::Date& d, FormatContext& ctx) const
-    {
-        return format_to(ctx.out(), "{}", d.to_iso_string());
-    }
-};
-} // namespace fmt
 
 #endif // EPI_UTILS_DATE_H
