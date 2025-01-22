@@ -25,7 +25,6 @@
 #include "ide_secir/infection_state.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/io/epi_data.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/date.h"
 #include "memilio/utils/time_series.h"

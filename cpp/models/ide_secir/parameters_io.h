@@ -21,9 +21,6 @@
 #define IDE_INITIALFLOWS_H
 
 #include "memilio/config.h"
-#include "memilio/epidemiology/age_group.h"
-#include "memilio/io/epi_data.h"
-#include <vector>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
