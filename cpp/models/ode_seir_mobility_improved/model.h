@@ -57,20 +57,22 @@ public:
             params.template get<CommutingStrengths<>>().get_cont_freq_mat().get_matrix_at(t);
         const Index<AgeGroup> n_age_groups = reduce_index<Index<AgeGroup>>(params.get_num_agegroups());
         const Index<Region> n_regions      = reduce_index<Index<Region>>(params.get_num_regions());
+
+        Eigen::MatrixXd infectious_share_per_region = Eigen::MatrixXd::Zero((size_t)n_regions, (size_t)n_age_groups);
+        for (size_t age_i = 0; age_i < (size_t)n_age_groups; age_i++) {
+            for (size_t region_n = 0; region_n < (size_t)n_regions; region_n++) {
+                for (size_t region_m = 0; region_m < (size_t)n_regions; region_m++) {
+                    infectious_share_per_region(region_n, age_i) +=
+                        commuting_strengths(region_m, region_n) *
+                        pop[population.get_flat_index({Region(region_m), AgeGroup(age_i), InfectionState::Infected})];
+                }
+                infectious_share_per_region(region_n, age_i) /=
+                    m_population_after_commuting[{Region(region_n), AgeGroup(age_i)}];
+            }
+        }
+        Eigen::MatrixXd infections_due_commuting = commuting_strengths * infectious_share_per_region;
         for (size_t age_i = 0; age_i < (size_t)n_age_groups; age_i++) {
             for (size_t age_j = 0; age_j < (size_t)n_age_groups; age_j++) {
-                Eigen::VectorXd infectious_share_per_region = Eigen::VectorXd::Zero((size_t)n_regions);
-                for (size_t region_n = 0; region_n < (size_t)n_regions; region_n++) {
-                    for (size_t region_m = 0; region_m < (size_t)n_regions; region_m++) {
-                        infectious_share_per_region(region_n) +=
-                            commuting_strengths(region_m, region_n) *
-                            pop[population.get_flat_index(
-                                {Region(region_m), AgeGroup(age_j), InfectionState::Infected})];
-                    }
-                    infectious_share_per_region(region_n) /=
-                        m_population_after_commuting[{Region(region_n), AgeGroup(age_j)}];
-                }
-                Eigen::VectorXd infections_due_commuting = commuting_strengths * infectious_share_per_region;
                 for (size_t region_n = 0; region_n < (size_t)n_regions; region_n++) {
                     const size_t Ejn =
                         population.get_flat_index({Region(region_n), AgeGroup(age_j), InfectionState::Exposed});
@@ -89,7 +91,7 @@ public:
 
                     flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(
                         {Region(region_n), AgeGroup(age_i)})] +=
-                        (pop[Ijn] * Nj_inv + infections_due_commuting(region_n)) * coeffStoI *
+                        (pop[Ijn] * Nj_inv + infections_due_commuting(region_n, age_j)) * coeffStoI *
                         y[population.get_flat_index({Region(region_n), AgeGroup(age_i), InfectionState::Susceptible})];
                 }
             }
