@@ -261,10 +261,10 @@ def parameterset_wrapper(intermed_repr: IntermediateRepresentation) -> str:
 
     return (
         "py::class_<{namespace}Parameters<"+ScalarType(
-            intermed_repr)+">, pymio::EnablePickling::Required, {namespace}{parameterset}<"+ScalarType(intermed_repr)+">>(m, \"Parameters\");\n"
-        "\t\t.def(py::init<mio::AgeGroup>());\n"
+            intermed_repr)+">, pymio::EnablePickling::Required, {namespace}{parameterset}<"+ScalarType(intermed_repr)+">>(m, \"Parameters\")\n"
+        "\t\t.def(py::init<mio::AgeGroup>())\n"
         "\t\t.def(\"check_constraints\", &{namespace}Parameters<" +
-        ScalarType(intermed_repr)+">::check_constraints);\n"
+        ScalarType(intermed_repr)+">::check_constraints)\n"
         "\t\t.def(\"apply_constraints\", &{namespace}Parameters<" +
         ScalarType(intermed_repr)+">::apply_constraints);\n"
     ).format(

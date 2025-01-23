@@ -63,9 +63,6 @@ class TestOseirGeneration(unittest.TestCase):
             "target_folder": self.test_dir.name,
             "optional": {
                 "libclang_library_path": ""
-                # "simulation_name": "",
-                # "age_group": False,
-                # "parameterset_wrapper": True
             }
         }
 

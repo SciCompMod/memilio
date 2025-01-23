@@ -50,7 +50,7 @@ class IntermediateRepresentation:
     model_base: list = field(default_factory=list)
     population_groups: list = field(default_factory=list)
     include_list: list = field(default_factory=list)
-    # agegroup auslesen aus ast und nicht mehr per flag setzten, genauso wie parametersetwrapper
+
     age_group: dict = field(default_factory=dict)
 
     def set_attribute(self: Self, attribute_name: str, value: Any) -> None:

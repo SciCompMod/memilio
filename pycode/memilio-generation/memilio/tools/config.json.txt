@@ -1,4 +1,4 @@
-[
+[  
     {
         "source_file": "${memilio_SOURCE_DIR}/models/ode_seir/model.cpp",
         "namespace": "mio::oseir::",

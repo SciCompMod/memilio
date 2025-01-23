@@ -3,7 +3,6 @@
     "model": "Model",
     "agegroup": "AgeGroup",
     "empty": "",
-    "parameterspace": "/parameter_space.cpp",
     "simulation": "Simulation",
     "flowmodel": "FlowModel",
     "compartmentalmodel": "CompartmentaModel",
@@ -11,5 +10,6 @@
     "infectionstatefile": "infection_state.h",
     "parameterspacefile": "parameter_space.h",
     "analyzeresultfile": "analyze_result.h",
-    "namespace": "namespace"
+    "namespace": "namespace",
+    "mio": "mio"
 }

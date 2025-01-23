@@ -79,20 +79,12 @@ class Scanner:
 
         @param intermed_repr Dataclass used for saving the extracted model features.
         """
-        config = self.config
+        source_file = self.config.source_file
+        model_folder = os.path.dirname(source_file)
+        parameter_space_file = os.path.join(
+            model_folder, self.dict.parameterspacefile)
 
-        s_file = getattr(config, "source_file")
-
-        path = pathlib.Path(s_file)
-
-        path_vor_parameter_space = path.parent
-
-        vor_parameter_space = str(path_vor_parameter_space)
-
-        new_path_source_file = vor_parameter_space + self.dict.parameterspace
-
-        if (os.path.isfile(new_path_source_file)):
-
+        if (os.path.isfile(parameter_space_file)):
             intermed_repr.has_draw_sample = True
 
     def find_node(self: Self, node: Cursor,
@@ -199,7 +191,7 @@ class Scanner:
             if self.dict.flowmodel in base_name:
                 intermed_repr.is_flowmodel = True
 
-            if self.dict.compartmentalmodel in base_name and "mio" in node.semantic_parent.spelling:
+            if self.dict.compartmentalmodel in base_name and self.dict.mio in node.semantic_parent.spelling:
                 intermed_repr.is_compartmentalmodel = True
 
             intermed_repr.model_base.append(

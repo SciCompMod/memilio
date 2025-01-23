@@ -48,15 +48,15 @@ namespace py = pybind11;
 namespace pymio{
 //specialization of pretty_name
 template <>
-std::string pretty_name<mio::oseir:: AgeGroup>()
+std::string pretty_name<mio::oseir::AgeGroup>()
 {
-   return " AgeGroup";
+   return "AgeGroup";
 }
 
 template <>
-std::string pretty_name<mio::oseir:: InfectionState>()
+std::string pretty_name<mio::oseir::InfectionState>()
 {
-   return " InfectionState";
+   return "InfectionState";
 }
 
 } // namespace pymio
@@ -79,16 +79,16 @@ PYBIND11_MODULE(_simulation_test_oseir, m)
 
     pymio::bind_ParameterSet<mio::oseir::ParametersBase<double>, pymio::EnablePickling::Required>(m, "ParametersBase");
 
-    py::class_<mio::oseir::Parameters<double>, pymio::EnablePickling::Required, mio::oseir::ParametersBase<double>>(m, "Parameters");
-		.def(py::init<mio::AgeGroup>());
-		.def("check_constraints", &mio::oseir::Parameters<double>::check_constraints);
+    py::class_<mio::oseir::Parameters<double>, pymio::EnablePickling::Required, mio::oseir::ParametersBase<double>>(m, "Parameters")
+		.def(py::init<mio::AgeGroup>())
+		.def("check_constraints", &mio::oseir::Parameters<double>::check_constraints)
 		.def("apply_constraints", &mio::oseir::Parameters<double>::apply_constraints);
 
    
     pymio::bind_Population(m, "Populations", mio::Tag<mio::oseir::Model<double>::Populations>{});
    
     pymio::bind_CompartmentalModel<FlowModel<FP, mio::oseir::InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, mio::oseir::Flows>, CompartmentalModel<FP, Comp, Pop, Params>>(m, "ModelBase");
-    py::class_<mio::oseir::Model<double>, pymio::EnablePickling::Required, FlowModel<FP, mio::oseir::InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, mio::oseir::Flows>, CompartmentalModel<FP, Comp, Pop, Params>>(m, "Model");
+    py::class_<mio::oseir::Model<double>, pymio::EnablePickling::Required, FlowModel<FP, mio::oseir::InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, mio::oseir::Flows>, CompartmentalModel<FP, Comp, Pop, Params>>(m, "Model")
     
         .def(py::init<int>(), py::arg("num_agegroups"));
 
