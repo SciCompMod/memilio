@@ -56,6 +56,7 @@ int main()
     x[0]                 = 1.0; // start at x=1.0, p=0.0
     x[1]                 = 0.0;
     ad::derivative(x[0]) = 1.0; // compute derivative with respect to x[0] (scalar tangent-linear mode)
+    ad::derivative(x[0]) = 0.0;
 
     auto t0    = time_type(0.0); // initial time
     auto t_end = time_type(10.0); // stop time

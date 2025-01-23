@@ -180,7 +180,10 @@ void Infection::draw_infection_course_forward(PersonalRandomNumberGenerator& rng
         case InfectionState::InfectedSevere:
             // roll out next infection step
             v = uniform_dist(rng);
-            if (v < 0.5) { // TODO: subject to change
+            if (v < 0.25) { // TODO: subject to change
+                time_period = days(params.get<SevereToDead>()[{m_virus_variant, age}]); // TODO: subject to change
+                next_state  = InfectionState::Dead;
+            } else if  (v < 0.5) { // TODO: subject to change
                 time_period = days(params.get<SevereToCritical>()[{m_virus_variant, age}]); // TODO: subject to change
                 next_state  = InfectionState::InfectedCritical;
             }
@@ -271,8 +274,15 @@ TimePoint Infection::draw_infection_course_backward(PersonalRandomNumberGenerato
             break;
 
         case InfectionState::Dead:
-            time_period    = days(params.get<CriticalToDead>()[{m_virus_variant, age}]); // TODO: subject to change
-            previous_state = InfectionState::InfectedCritical;
+            v = uniform_dist(rng);
+            if (v < 0.5) {
+                time_period = days(params.get<SevereToDead>()[{m_virus_variant, age}]); // TODO: subject to change
+                previous_state = InfectionState::InfectedSevere;
+            }
+            else {
+                time_period    = days(params.get<CriticalToDead>()[{m_virus_variant, age}]); // TODO: subject to change
+                previous_state = InfectionState::InfectedCritical;
+            }
             break;
 
         default:

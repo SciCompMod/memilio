@@ -133,6 +133,18 @@ struct SevereToRecovered {
     }
 };
 
+struct SevereToDead {
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type({VirusVariant::Count, size}, 1.);
+    }
+    static std::string name()
+    {
+        return "SevereToDead";
+    }
+};
+
 struct CriticalToRecovered {
     using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -551,7 +563,7 @@ struct AgeGroupGotoWork {
 
 using ParametersBase =
     ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
-                 InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
+                 InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered, SevereToDead,
                  CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
                  InfectivityDistributions, DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate,
                  QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
@@ -689,6 +701,12 @@ public:
                 if (this->get<SevereToRecovered>()[{virus_variant, age_group}] < 0.0) {
                     log_error("Constraint check: Parameter SevereToRecovered of age group {:.0f} smaller than {:d}",
                               (size_t)age_group, 0);
+                    return true;
+                }
+
+                if (this->get<SevereToDead>()[{VirusVariant::Wildtype, age_group}] < 0.0) {
+                    log_error("Constraint check: Parameter SevereToDead of age group {:.0f} smaller than {:d}",
+                            (size_t)age_group, 0);
                     return true;
                 }
 
