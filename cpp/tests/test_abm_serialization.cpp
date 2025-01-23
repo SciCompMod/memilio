@@ -214,6 +214,8 @@ TEST(TestAbmSerialization, Person)
         mio::serialize_json(mio::CustomIndexArray<mio::abm::TestResult, mio::abm::TestType>{}).value();
     reference_json["time_at_location"]["seconds"] = Json::Int(i++);
     reference_json["vaccinations"]                = Json::Value(Json::arrayValue);
+    reference_json["id"]                          = Json::UInt(i++);
+    reference_json["rng_index"]                   = Json::UInt(i++);
 
     test_json_serialization<mio::abm::Person>(reference_json);
 }

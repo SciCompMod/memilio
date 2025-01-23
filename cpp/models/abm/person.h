@@ -433,7 +433,9 @@ public:
             .add("cells", m_cells)
             .add("last_transport_mode", m_last_transport_mode)
             .add("rng_counter", m_rng_counter)
-            .add("test_results", m_test_results);
+            .add("test_results", m_test_results)
+            .add("id", m_person_id)
+            .add("rng_index", m_rng_index);
     }
 
     /**
