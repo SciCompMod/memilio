@@ -698,8 +698,8 @@ TEST_F(TestModel, checkParameterConstraints)
     params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 5.;
     params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]         = -6.;
     EXPECT_TRUE(params.check_constraints());
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 6.;
-    params.get<mio::abm::SevereToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]      = -7.;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 6.;
+    params.get<mio::abm::SevereToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]     = -7.;
     EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::SevereToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]      = 7.;
     params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = -8.;
@@ -1000,13 +1000,14 @@ TEST_F(TestModel, personCanDieInHospital)
 {
     using testing::Return;
 
-    auto t     = mio::abm::TimePoint(0);
-    auto dt    = mio::abm::days(1);
-    auto model = mio::abm::Model(num_age_groups);
+    auto t          = mio::abm::TimePoint(0);
+    auto dt         = mio::abm::days(1);
+    auto model      = mio::abm::Model(num_age_groups);
     model.get_rng() = this->get_rng();
 
     // Time to go from infected with symptoms to severe infection is 1 day(dt).
-    model.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 1;
+    model.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
+        1;
     // Time to go from severe infection to critical is 1 day(dt).
     model.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 1;
     // Time to go from severe infection to dead is 1 day(dt).
@@ -1028,10 +1029,10 @@ TEST_F(TestModel, personCanDieInHospital)
     add_test_person(model, home_id, age_group_60_to_79, mio::abm::InfectionState::Dead, t + dt);
 
     auto& p_severe = model.get_persons()[0];
-    p_severe.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id);
-    p_severe.set_assigned_location(mio::abm::LocationType::ICU, icu_id);
-    p_severe.set_assigned_location(mio::abm::LocationType::Home, home_id);
-    p_severe.set_assigned_location(mio::abm::LocationType::Work, work_id);
+    p_severe.set_assigned_location(mio::abm::LocationType::Hospital, hospital_id, model.get_id());
+    p_severe.set_assigned_location(mio::abm::LocationType::ICU, icu_id, model.get_id());
+    p_severe.set_assigned_location(mio::abm::LocationType::Home, home_id, model.get_id());
+    p_severe.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
 
     // Check the infection course goes from InfectedSymptoms to Severe to Dead and skips Critical
     EXPECT_EQ(p_severe.get_infection_state(t - dt), mio::abm::InfectionState::InfectedSymptoms);
