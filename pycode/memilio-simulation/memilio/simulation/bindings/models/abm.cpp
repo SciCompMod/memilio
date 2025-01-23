@@ -17,30 +17,35 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
-//Includes from pymio
+#include "abm/infection_state.h"
 #include "abm/location_id.h"
 #include "abm/location_type.h"
+#include "abm/time.h"
+#include "memilio/io/io.h"
+#include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/logging.h"
 #include "pybind_util.h"
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
 #include "utils/index.h"
-
-//Includes from MEmilio
 #include "abm/simulation.h"
 #include "abm/household.h"
 #include "abm/personal_rng.h"
 #include "boost/filesystem.hpp"
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
+#include "memilio/io/hdf5_cpp.h"
 
 #include "pybind11/attr.h"
 #include "pybind11/cast.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/operators.h"
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <map>
+#include <string>
 #include <type_traits>
 #include <vector>
 #include <fstream>
@@ -174,8 +179,182 @@ void split_line(std::string string, std::vector<int32_t>* row)
     });
 }
 
-std::map<int, std::vector<std::string>> initialize_model(mio::abm::Model& model, std::string person_file,
-                                                         size_t num_hospitals)
+void write_infection_paths(std::string filename, mio::abm::Model& model, mio::abm::TimePoint tmax)
+{
+    auto file = fopen(filename.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::warn, "Could not open file {}", filename);
+    }
+    else {
+        fprintf(file, "Agent_id S E I_ns I_sy I_sev I_cri R D\n");
+        for (auto& person : model.get_persons()) {
+            fprintf(file, "%d ", person.get_id().get());
+            if (person.get_infection_state(tmax) == mio::abm::InfectionState::Susceptible) {
+                fprintf(file, "%.14f ", tmax.hours());
+                for (auto i = 0; i < static_cast<int>(mio::abm::InfectionState::Count); ++i) {
+                    fprintf(file, "0 ");
+                }
+            }
+            else {
+                auto time_S = std::max(
+                    {person.get_infection().get_infection_start() - mio::abm::TimePoint(0), mio::abm::TimeSpan(0)});
+                auto time_E    = person.get_infection().get_time_in_state(mio::abm::InfectionState::Exposed);
+                auto time_INS  = person.get_infection().get_time_in_state(mio::abm::InfectionState::InfectedNoSymptoms);
+                auto time_ISy  = person.get_infection().get_time_in_state(mio::abm::InfectionState::InfectedSymptoms);
+                auto time_ISev = person.get_infection().get_time_in_state(mio::abm::InfectionState::InfectedSevere);
+                auto time_ICri = person.get_infection().get_time_in_state(mio::abm::InfectionState::InfectedCritical);
+                auto time_R    = mio::abm::TimePoint(0);
+                auto time_D    = mio::abm::TimePoint(0);
+                auto t_Infected = time_E + time_INS + time_ISy + time_ISev + time_ICri;
+                if (person.get_infection_state(tmax) == mio::abm::InfectionState::Recovered) {
+                    if (time_S.hours() == 0) {
+                        time_R =
+                            tmax - t_Infected + (person.get_infection().get_infection_start() - mio::abm::TimePoint(0));
+                    }
+                    else {
+                        time_R = tmax - time_S - t_Infected;
+                    }
+                }
+                else if (person.get_infection_state(tmax) == mio::abm::InfectionState::Dead) {
+                    if (time_S.hours() == 0) {
+                        time_D =
+                            tmax - t_Infected + (person.get_infection().get_infection_start() - mio::abm::TimePoint(0));
+                    }
+                    else {
+                        time_D = tmax - time_S - t_Infected;
+                    }
+                }
+                fprintf(file, "%.14f ", time_S.hours());
+                fprintf(file, "%.14f ", time_E.hours());
+                fprintf(file, "%.14f ", time_INS.hours());
+                fprintf(file, "%.14f ", time_ISy.hours());
+                fprintf(file, "%.14f ", time_ISev.hours());
+                fprintf(file, "%.14f ", time_ICri.hours());
+                fprintf(file, "%.14f ", time_R.hours());
+                fprintf(file, "%.14f ", time_D.hours());
+            }
+            fprintf(file, "\n");
+        }
+        fclose(file);
+    }
+}
+
+void write_compartments(std::string filename, mio::abm::Model& model,
+                        mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
+                                     LogPersonsPerLocationAndInfectionTime, LogAgentIds>& history)
+{
+    auto file = fopen(filename.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::warn, "Could not open file {}", filename);
+    }
+    else {
+        auto log = history.get_log();
+        auto tps = std::get<0>(log);
+        fprintf(file, "t S E Ins Isy Isev Icri R D\n");
+        for (auto t = size_t(0); t < tps.size(); ++t) {
+            auto tp = mio::abm::TimePoint(0) + mio::abm::hours(t);
+            fprintf(file, "%.14f ", tps[t]);
+            std::vector<int> comps(static_cast<size_t>(mio::abm::InfectionState::Count));
+            for (auto& person : model.get_persons()) {
+                auto state = person.get_infection_state(tp);
+                comps[static_cast<size_t>(state)] += 1;
+            }
+            for (auto c : comps) {
+                fprintf(file, "%d ", c);
+            }
+            fprintf(file, "\n");
+        }
+        fclose(file);
+    }
+}
+
+std::string loc_to_string(mio::abm::LocationId loc_id, mio::abm::LocationType type)
+{
+    return "0" + std::to_string(static_cast<int>(type)) + std::to_string(loc_id.get());
+}
+
+int time_since_transmission(mio::abm::TimeSpan t)
+{
+    return t.days() > 1000 ? -1 : t.hours();
+}
+
+#ifdef MEMILIO_HAS_HDF5
+mio::IOResult<void> write_h5(std::string filename,
+                             mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
+                                          LogPersonsPerLocationAndInfectionTime, LogAgentIds>& history)
+{
+    // create hdf5 file
+    mio::H5File file{H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)};
+    MEMILIO_H5_CHECK(file.id, mio::StatusCode::FileNotFound, filename);
+    // get agents ids
+    auto log          = history.get_log();
+    auto agent_ids    = std::get<3>(log)[0];
+    auto logPerPerson = std::get<2>(log);
+    for (auto& id : agent_ids) {
+        auto group_name = std::to_string(id.get());
+        mio::H5Group agent_h5group{H5Gcreate(file.id, group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
+        MEMILIO_H5_CHECK(agent_h5group.id, mio::StatusCode::UnknownError,
+                         "H5Group could not be created for agent (" + group_name + ")");
+        const int num_timepoints = static_cast<int>(logPerPerson.size());
+        // Dimension for both data sets
+        hsize_t dims_t[] = {static_cast<hsize_t>(num_timepoints)};
+        // DataSpace for both data sets
+        mio::H5DataSpace dspace_t{H5Screate_simple(1, dims_t, NULL)};
+        MEMILIO_H5_CHECK(dspace_t.id, mio::StatusCode::UnknownError, "DataSpace could not be created.");
+        std::vector<char*> LocIds(num_timepoints);
+        std::vector<int> tsm(num_timepoints);
+        for (int t = 0; t < num_timepoints; ++t) {
+            std::string s =
+                loc_to_string(std::get<0>(logPerPerson[t][id.get()]), std::get<1>(logPerPerson[t][id.get()]));
+            LocIds[t] = new char[s.size()];
+            strcpy(LocIds[t], s.c_str());
+            tsm[t] = time_since_transmission(std::get<3>(logPerPerson[t][id.get()]));
+        }
+        // string dim
+        hsize_t str_dim[1] = {LocIds.size()};
+        mio::H5DataSpace dspace_str{H5Screate_simple(1, str_dim, NULL)};
+
+        hid_t datatype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(datatype, H5T_VARIABLE);
+
+        mio::H5DataSet dset_LocIds{
+            H5Dcreate(agent_h5group.id, "LocIds", datatype, dspace_str.id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
+        MEMILIO_H5_CHECK(dset_LocIds.id, mio::StatusCode::UnknownError, "LocId DataSet could not be created (LocIds).");
+        MEMILIO_H5_CHECK(H5Dwrite(dset_LocIds.id, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, LocIds.data()),
+                         mio::StatusCode::UnknownError, "LocId data could not be written.");
+        for (int t = 0; t < num_timepoints; ++t) {
+            delete[] LocIds[t];
+        }
+        mio::H5DataSet dset_tsm{H5Dcreate(agent_h5group.id, "timeSinceTransmission", H5T_NATIVE_INT, dspace_t.id,
+                                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
+        MEMILIO_H5_CHECK(dset_tsm.id, mio::StatusCode::UnknownError,
+                         "TST DataSet could not be created (timeSinceTransmission).");
+        MEMILIO_H5_CHECK(H5Dwrite(dset_tsm.id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, tsm.data()),
+                         mio::StatusCode::UnknownError, "TST data could not be written.");
+    }
+    return mio::success();
+}
+#endif
+
+void write_mapping_to_file(std::string filename, std::map<int, std::vector<std::string>>& mapping)
+{
+    auto file = fopen(filename.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::warn, "Could not open file {}", filename);
+    }
+    else {
+        for (auto it = mapping.begin(); it != mapping.end(); it++) {
+            fprintf(file, "%d", it->first);
+            for (auto s : it->second) {
+                fprintf(file, " %s", s.c_str());
+            }
+            fprintf(file, "\n");
+        }
+        fclose(file);
+    }
+}
+
+void initialize_model(mio::abm::Model& model, std::string person_file, size_t num_hospitals, std::string outfile)
 {
     // Mapping of ABM locations to traffic areas/cells
     // - each traffic area is mapped to a vector containing strings with LocationType and LocationId
@@ -384,15 +563,14 @@ std::map<int, std::vector<std::string>> initialize_model(mio::abm::Model& model,
             }
             // Assign work location to person
             person.set_assigned_location(mio::abm::LocationType::Work, work);
-
-            // Assign Hospital and ICU
-            std::vector<mio::abm::LocationId>::iterator randItHosp = hospitals.begin();
-            std::advance(randItHosp, std::rand() % hospitals.size());
-            person.set_assigned_location(mio::abm::LocationType::Hospital, *randItHosp);
-            std::vector<mio::abm::LocationId>::iterator randItIcu = icus.begin();
-            std::advance(randItIcu, std::rand() % icus.size());
-            person.set_assigned_location(mio::abm::LocationType::Hospital, *randItIcu);
         }
+        // Assign Hospital and ICU
+        std::vector<mio::abm::LocationId>::iterator randItHosp = hospitals.begin();
+        std::advance(randItHosp, std::rand() % hospitals.size());
+        person.set_assigned_location(mio::abm::LocationType::Hospital, *randItHosp);
+        std::vector<mio::abm::LocationId>::iterator randItIcu = icus.begin();
+        std::advance(randItIcu, std::rand() % icus.size());
+        person.set_assigned_location(mio::abm::LocationType::ICU, *randItIcu);
     }
 
     // Add hospitals to Mapping
@@ -402,9 +580,9 @@ std::map<int, std::vector<std::string>> initialize_model(mio::abm::Model& model,
         loc_area_mapping[it->first].push_back("0" + std::to_string(static_cast<int>(mio::abm::LocationType::Hospital)) +
                                               std::to_string(hospitals[i].get()));
         loc_area_mapping[it->first].push_back("0" + std::to_string(static_cast<int>(mio::abm::LocationType::ICU)) +
-                                              std::to_string(hospitals[i].get()));
+                                              std::to_string(icus[i].get()));
     }
-    return loc_area_mapping;
+    write_mapping_to_file(outfile, loc_area_mapping);
 }
 
 PYBIND11_MODULE(_simulation_abm, m)
@@ -797,6 +975,24 @@ PYBIND11_MODULE(_simulation_abm, m)
         py::return_value_policy::reference_internal);
 
     m.def("initialize_model", &initialize_model, py::return_value_policy::reference_internal);
+    m.def("save_infection_paths", &write_infection_paths, py::return_value_policy::reference_internal);
+    m.def("save_comp_output", &write_compartments, py::return_value_policy::reference_internal);
+
+#ifdef MEMILIO_HAS_HDF5
+    m.def(
+        "write_h5",
+        [](std::string filename, mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
+                                              LogPersonsPerLocationAndInfectionTime, LogAgentIds>& history) {
+            auto res = write_h5(filename, history);
+            if (res == mio::success()) {
+                return 0;
+            }
+            else {
+                return 1;
+            }
+        },
+        py::return_value_policy::reference_internal);
+#endif
 
     m.attr("__version__") = "dev";
 }

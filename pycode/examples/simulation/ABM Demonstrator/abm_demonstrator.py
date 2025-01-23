@@ -725,11 +725,11 @@ def write_infection_paths_to_file(path, model, tmax):
                 if (person.infection_state(tmax) == abm.InfectionState.Dead):
                     time_infected = time_E + time_INS + time_ISy + time_ISev + time_ICri
                     if (time_S.hours == 0):
-                        time_R = tmax - \
+                        time_D = tmax - \
                             (time_infected +
                              (person.infection.get_infection_start() - abm.TimePoint(0)))
                     else:
-                        time_R = tmax - time_S - time_infected
+                        time_D = tmax - time_S - time_infected
                 line += str(time_S.hours) + " " + str(time_E.hours) + " " + str(time_INS.hours) + " " + str(time_ISy.hours) + " " \
                     + str(time_ISev.hours) + " " + str(time_ICri.hours) + \
                     " " + str(time_R.hours) + " " + \
