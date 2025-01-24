@@ -2,12 +2,12 @@
 
 # -- Project information
 
-project = 'Lumache'
-copyright = '2021, Graziella'
-author = 'Graziella'
+project = 'MEmilio'
+copyright = 'Copyright (C) 2020-2025 MEmilio'
+author = ''
 
-release = '0.1'
-version = '0.1.0'
+release = ''
+version = '1.3.0'
 
 # -- General configuration
 

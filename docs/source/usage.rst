@@ -6,17 +6,16 @@ Usage
 Installation
 ------------
 
-To use Lumache, first install it using pip:
+To use MEmilio, first install it using ...
 
 .. code-block:: console
 
-   (.venv) $ pip install lumache
+   c++ init
 
-Creating recipes
+C++ Tutorial
 ----------------
 
-To retrieve a list of random ingredients,
-you can use the ``lumache.get_random_ingredients()`` function:
+TBD
 
 .. autofunction:: lumache.get_random_ingredients
 
@@ -28,7 +27,6 @@ will raise an exception.
 
 For example:
 
->>> import lumache
->>> lumache.get_random_ingredients()
-['shells', 'gorgonzola', 'parsley']
+>>> import memilio.epidata import progress_indicator
+
 
