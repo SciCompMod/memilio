@@ -30,6 +30,10 @@ templates_path = ['_templates']
 # -- Options for HTML output
 
 html_theme = 'furo'
+html_logo = "memilio-small.png"
+html_theme_options = {
+    "sidebar_hide_name": True,
+}
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
