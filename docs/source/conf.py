@@ -3,7 +3,7 @@
 # -- Project information
 
 project = 'MEmilio'
-copyright = 'Copyright (C) 2020-2025 MEmilio'
+copyright = '2020-2025 MEmilio'
 author = ''
 
 release = ''
