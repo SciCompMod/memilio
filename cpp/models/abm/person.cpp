@@ -50,6 +50,7 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     , m_assigned_location_model_ids((int)LocationType::Count)
     , m_person_id(person_id)
     , m_rng_index(static_cast<uint32_t>(person_id.get()))
+    , m_rng_key(rng.get_key())
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
     m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);

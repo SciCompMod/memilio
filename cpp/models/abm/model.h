@@ -616,7 +616,7 @@ protected:
             compute_exposure_caches(t, dt);
             m_are_exposure_caches_valid = true;
         }
-        auto personal_rng = PersonalRandomNumberGenerator(m_rng, person);
+        auto personal_rng = PersonalRandomNumberGenerator(person);
         mio::abm::interact(personal_rng, person, get_location(person.get_location()),
                            m_air_exposure_rates_cache[person.get_location().get()],
                            m_contact_exposure_rates_cache[person.get_location().get()], t, dt, parameters);

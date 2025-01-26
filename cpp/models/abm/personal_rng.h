@@ -59,11 +59,9 @@ public:
 
     /**
      * Creates a RandomNumberGenerator for a person.
-     * Uses the same key as another RandomNumberGenerator.
-     * @param rng RandomNumberGenerator who's key will be used.
      * @param person Reference to the Person who's counter will be used.
      */
-    PersonalRandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person);
+    PersonalRandomNumberGenerator(Person& person);
 
     /**
      * @return Get the key.

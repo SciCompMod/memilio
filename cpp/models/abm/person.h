@@ -408,6 +408,15 @@ public:
     }
 
     /**
+     * @brief Get this person's key that is used for the RandomNumberGenerator.
+     * @see mio::abm::PersonalRandomNumberGenerator.
+     */
+    mio::Key<uint64_t> get_rng_key()
+    {
+        return m_rng_key;
+    }
+
+    /**
      * @brief Get the latest #ProtectionType and its initial TimePoint of the Person.
      */
     ProtectionEvent get_latest_protection() const;
@@ -479,7 +488,8 @@ private:
     std::vector<int>
         m_assigned_location_model_ids; ///< Vector with model ids of the assigned locations. Only used in graph abm.
     PersonId m_person_id; ///< Unique identifier of a person.
-    uint32_t m_rng_index;
+    uint32_t m_rng_index; ///< Index for PersonalRandomNumberGenerator.
+    mio::Key<uint64_t> m_rng_key; ///< Key for PersonalRandomNumberGenerator
 };
 
 } // namespace abm

@@ -35,8 +35,8 @@ PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(mio::Key<uint64_t> 
 {
 }
 
-PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person)
-    : PersonalRandomNumberGenerator(rng.get_key(), person.get_rng_index(), person.get_rng_counter())
+PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(Person& person)
+    : PersonalRandomNumberGenerator(person.get_rng_key(), person.get_rng_index(), person.get_rng_counter())
 {
 }
 
