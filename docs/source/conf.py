@@ -9,6 +9,11 @@ author = ''
 release = ''
 version = '1.3.0'
 
+import sys
+
+sys.path.append("../ext/breathe")
+
+
 # -- General configuration
 
 extensions = [
@@ -18,6 +23,7 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx_copybutton',
+    'breathe',
 ]
 
 intersphinx_mapping = {
@@ -27,6 +33,9 @@ intersphinx_mapping = {
 intersphinx_disabled_domains = ['std']
 
 templates_path = ['_templates']
+
+breathe_projects = {"MEmilio": "../xml"}
+breathe_default_project = "MEmilio"
 
 # -- Options for HTML output
 
@@ -50,3 +59,4 @@ html_theme_options = {
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
+
