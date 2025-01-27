@@ -7,3 +7,4 @@ MEmilio containst multiple different models. They are explained on the following
     :titlesonly:
     
     sdesir
+    sdeseir
