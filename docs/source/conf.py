@@ -18,11 +18,6 @@ if read_the_docs_build:
      subprocess.call('cd ..; doxygen', shell=True)
 
 
-import sys
-
-sys.path.append("../ext/breathe")
-
-
 # -- General configuration
 
 extensions = [
