@@ -24,6 +24,8 @@ import sys
 import h5py
 import time
 import random
+import geopandas
+import json
 
 import memilio.simulation as mio
 from memilio.simulation import abm
@@ -774,6 +776,35 @@ def save_persons(trip_file):
     print(f'Time to create and save person df: {end - start} seconds')
 
 
+def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file):
+    with open(mapping_path) as f:
+        d = dict(x.rstrip().split(None, 1) for x in f)
+    areas = geopandas.read_file(wastewater_path)
+    new_dict = {}
+    for traffic_cell_id in d.keys():
+        if traffic_cell_id[:4] != '9162':
+            new_key = 'x' + traffic_cell_id
+            new_dict[new_key] = d[traffic_cell_id].split(' ')
+        else:
+            Id_tan = np.unique(
+                areas[areas['id_n'] == int(traffic_cell_id)]['ID_TAN'])
+            for loc in d[traffic_cell_id].split(' '):
+                new_key = str(random.choice(Id_tan))
+                if (new_key in new_dict):
+                    new_dict[new_key].append(loc)
+                else:
+                    new_dict[new_key] = [loc]
+    with open(new_file, 'w') as f:
+        for id in new_dict:
+            line = id + " "
+            for loc in new_dict[id]:
+                line += loc + " "
+            f.write(line)
+            f.write('\n')
+        f.close()
+    print(' ')
+
+
 def run_abm_simulation(sim_num):
     input_path = sys.path[0] + '/input/'
     output_path = sys.path[0] + '/output/'
@@ -806,6 +837,16 @@ def run_abm_simulation(sim_num):
                             0.0029, 0.0001, 0.0, 0.0)
     end_init = time.time()
     print(f'Time for model initialization: {end_init - start_init} seconds')
+
+    # map locations to TAN areas
+    start_map = time.time()
+    map_traffic_cell_to_wastewater_area(os.path.join(
+        output_path, str(sim_num) + '_mapping.txt'), os.path.join(input_path, '_AusgangDLR/München_Flächen_bearb.shp'), os.path.join(
+        output_path, str(sim_num) + '_mapping_tan.txt'))
+    end_map = time.time()
+    print(
+        f'Time for mapping locations to TAN areas: {end_map - start_map} seconds')
+
     # output object
     history = History()
     start_advance = time.time()
@@ -814,8 +855,6 @@ def run_abm_simulation(sim_num):
     end_advance = time.time()
     print(
         f'Time for advancing simulation: {end_advance - start_advance} seconds')
-    # results collected during the simulation
-    # log = history.log
     # write infection paths per agent to file
     start_o1 = time.time()
     abm.save_infection_paths(os.path.join(
