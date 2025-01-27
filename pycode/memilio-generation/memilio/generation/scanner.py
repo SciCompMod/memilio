@@ -25,14 +25,13 @@ from __future__ import annotations
 
 import os
 from typing import TYPE_CHECKING, Any, Callable
-import pathlib
 
 from clang.cindex import *
 from typing_extensions import Self
 
 from memilio.generation import IntermediateRepresentation, utility
-import json
-from types import SimpleNamespace
+
+from memilio.generation.default_generation_dict import default_dict
 
 
 if TYPE_CHECKING:
@@ -51,12 +50,12 @@ class Scanner:
         """
         self.config = conf
         utility.try_set_libclang_path(
-            self.config.optional.get("libclang_library_path"))
-
-        file_path = os.path.abspath("dict.json")
-        with open(file_path) as file:
-            self.dict = json.load(
-                file, object_hook=lambda d: SimpleNamespace(**d))
+            self.config.libclang_library_path)
+        source_file = self.config.source_file
+        from_folder = os.path.basename(os.path.dirname(source_file))
+        self.python_module_name = "o" + from_folder.split("_")[1]
+        self.namespace = default_dict["mio"] + \
+            "::" + self.python_module_name + "::"
 
     def extract_results(self: Self, root_cursor: Cursor) -> IntermediateRepresentation:
         """! Extract the information of the abstract syntax tree and save them in the dataclass intermed_repr.
@@ -65,7 +64,7 @@ class Scanner:
         @param root_cursor Represents the root node of the abstract syntax tree as a Cursor object from libclang.
         @return Information extracted from the model saved as an IntermediateRepresentation.
         """
-        if self.config.model_class != self.dict.model:
+        if self.config.model_class != default_dict["model"]:
             raise AssertionError("set a model name")
 
         intermed_repr = IntermediateRepresentation()
@@ -82,7 +81,7 @@ class Scanner:
         source_file = self.config.source_file
         model_folder = os.path.dirname(source_file)
         parameter_space_file = os.path.join(
-            model_folder, self.dict.parameterspacefile)
+            model_folder, default_dict["parameterspacefile"])
 
         if (os.path.isfile(parameter_space_file)):
             intermed_repr.has_draw_sample = True
@@ -98,7 +97,7 @@ class Scanner:
         """
         if node.kind == CursorKind.NAMESPACE:
             namespace = (namespace + node.spelling + "::")
-        elif namespace == self.config.namespace:
+        elif namespace == self.namespace:
             self.switch_node_kind(node.kind)(node, intermed_repr)
 
         for n in node.get_children():
@@ -134,7 +133,7 @@ class Scanner:
         @param node Current node represented as a Cursor object.
         @param intermed_repr Dataclass used for saving the extracted model features.
         """
-        if node.spelling.strip() != self.dict.empty:
+        if node.spelling.strip() != default_dict["emptystring"]:
             intermed_repr.enum_populations[node.spelling] = []
 
     def check_enum_const(
@@ -165,7 +164,7 @@ class Scanner:
             self.check_model_includes(node, intermed_repr)
             self.check_age_group(node, intermed_repr)
 
-        elif (node.spelling == self.dict.simulation):
+        elif (node.spelling == default_dict["simulation"]):
             intermed_repr.simulation = True
 
         elif (intermed_repr.has_age_group and self.config.parameterset + "<FP>" in [base.spelling for base in node.get_children()]):
@@ -188,10 +187,10 @@ class Scanner:
             base_name = base.spelling
             base_type = base.type
 
-            if self.dict.flowmodel in base_name:
+            if default_dict["flowmodel"] in base_name:
                 intermed_repr.is_flowmodel = True
 
-            if self.dict.compartmentalmodel in base_name and self.dict.mio in node.semantic_parent.spelling:
+            if default_dict["compartmentalmodel"] in base_name and default_dict["mio"] in node.semantic_parent.spelling:
                 intermed_repr.is_compartmentalmodel = True
 
             intermed_repr.model_base.append(
@@ -224,19 +223,19 @@ class Scanner:
         intermed_repr.include_list.append(filepaths[1])
 
         intermed_repr.include_list.append(
-            filepaths[1].replace(self.dict.modelfile, self.dict.empty) + self.dict.infectionstatefile)
+            filepaths[1].replace(default_dict["modelfile"], default_dict["emptystring"]) + default_dict["infectionstatefile"])
 
         for file in os.listdir(filepaths[0]):
-            if file == self.dict.parameterspacefile:
+            if file == default_dict["parameterspacefile"]:
                 intermed_repr.include_list.append(filepaths[1].replace(
-                    self.dict.modelfile, self.dict.empty) +
-                    self.dict.parameterspacefile)
-            elif file == self.dict.analyzeresultfile:
+                    default_dict["modelfile"], default_dict["emptystring"]) +
+                    default_dict["parameterspacefile"])
+            elif file == default_dict["analyzeresultfile"]:
                 model_has_analyze_results = True
 
         if model_has_analyze_results:
             intermed_repr.include_list.append(
-                filepaths[1].replace(self.dict.modelfile, self.dict.empty) + self.dict.analyzeresultfile)
+                filepaths[1].replace(default_dict["modelfile"], default_dict["emptystring"]) + default_dict["analyzeresultfile"])
         else:
             intermed_repr.include_list.append("memilio/data/analyze_result.h")
 
@@ -254,7 +253,7 @@ class Scanner:
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
                 continue
             for base_template_arg in base.get_children():
-                if (base_template_arg.kind == CursorKind.TYPE_REF and self.dict.agegroup in base_template_arg.spelling):
+                if (base_template_arg.kind == CursorKind.TYPE_REF and default_dict["agegroup"] in base_template_arg.spelling):
                     intermed_repr.has_age_group = True
                     for child in base_template_arg.get_definition().get_children():
                         if child.kind == CursorKind.CXX_BASE_SPECIFIER:
@@ -274,8 +273,8 @@ class Scanner:
         @param node Current node represented as a Cursor object.
         @param intermed_repr Dataclass used for saving the extracted model features.
         """
-        if intermed_repr.model_class == self.dict.model:
-            if node.spelling.startswith(self.dict.model) and ('<' in node.spelling and '>' in node.spelling):
+        if intermed_repr.model_class == default_dict["model"]:
+            if node.spelling.startswith(default_dict["model"]) and ('<' in node.spelling and '>' in node.spelling):
                 init = {"type": [], "name": []}
                 for arg in node.get_arguments():
                     tokens = []
@@ -313,7 +312,7 @@ class Scanner:
 
         population_groups = []
         for value in intermed_repr.model_base[0:]:
-            if self.dict.flowmodel in value[0]:
+            if default_dict["flowmodel"] in value[0]:
                 start = value[0].find("Populations<")
                 end = value[0].find(">", start)
 
@@ -334,11 +333,10 @@ class Scanner:
 
                 intermed_repr.enum_populations = new_enum
 
-        intermed_repr.set_attribute("namespace", self.config.namespace)
         intermed_repr.set_attribute(
-            "python_module_name", self.config.python_module_name)
+            "namespace", self.namespace)
+        intermed_repr.set_attribute(
+            "python_module_name", self.python_module_name)
         intermed_repr.set_attribute("target_folder", self.config.target_folder)
         intermed_repr.set_attribute(
             "python_generation_module_path", self.config.python_generation_module_path)
-
-        intermed_repr.check_complete_data(self.config.optional)

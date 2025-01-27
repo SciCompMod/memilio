@@ -1,8 +1,7 @@
-{
-    "explanantion": "Most of the strings used in the scanner.py are listed in this dictionary. If the scanner.py is updated, all new strings should be added here.",
+default_dict = {
     "model": "Model",
     "agegroup": "AgeGroup",
-    "empty": "",
+    "emptystring": "",
     "simulation": "Simulation",
     "flowmodel": "FlowModel",
     "compartmentalmodel": "CompartmentaModel",
