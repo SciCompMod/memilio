@@ -535,8 +535,8 @@ auto get_mobility_factors(const SimulationNode<Sim>& node, double t, const Eigen
  * detect a get_mobility_factors function for the Model type.
  */
 template <class Sim>
-using test_commuters_expr_t = decltype(
-    test_commuters(std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
+using test_commuters_expr_t = decltype(test_commuters(
+    std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
 
 /**
  * Test persons when moving from their source node.
@@ -662,6 +662,20 @@ void apply_mobility(FP t, FP dt, MobilityEdge<FP>& mobilityEdge, SimulationNode<
 }
 
 /**
+ * edge functor for simulation without mobility.
+ */
+template <typename FP, class Sim>
+void no_mobility(FP t, FP dt, MobilityEdge<FP>& mobilityEdge, SimulationNode<Sim>& node_from,
+                 SimulationNode<Sim>& node_to)
+{
+    unused(t);
+    unused(dt);
+    unused(mobilityEdge);
+    unused(node_from);
+    unused(node_to);
+}
+
+/**
  * create a mobility-based simulation.
  * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
  * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node. 
@@ -687,6 +701,34 @@ make_mobility_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MobilityEdge<FP>>&& g
     return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>,
                           static_cast<void (*)(FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
                               &apply_mobility<FP, Sim>));
+}
+
+/** @} */
+
+/**
+ * create a mobility-based simulation.
+ * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
+ * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node. 
+ * Returns are adjusted based on the development in the target node. 
+ * @param t0 start time of the simulation
+ * @param dt time step between mobility
+ * @param graph set up for mobility-based simulation
+ * @{
+ */
+template <typename FP, class Sim>
+GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>>
+make_no_mobility_sim(FP t0, FP dt, const Graph<SimulationNode<Sim>, MobilityEdge<FP>>& graph)
+{
+    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>,
+
+                          &no_mobility<FP, Sim>);
+}
+
+template <typename FP, class Sim>
+GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>>
+make_no_mobility_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MobilityEdge<FP>>&& graph)
+{
+    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>, &no_mobility<FP, Sim>);
 }
 
 /** @} */
