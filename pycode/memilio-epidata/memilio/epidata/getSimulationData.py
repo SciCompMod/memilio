@@ -54,7 +54,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
                         split_berlin=dd.defaultDict['split_berlin'],
                         rep_date=dd.defaultDict['rep_date'],
                         sanitize_data=dd.defaultDict['sanitize_data'],
-                        ref_year = 2022,
+                        ref_year=2022,
                         **kwargs
                         ):
     """! Downloads all data from external sources
@@ -103,8 +103,8 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     arg_dict_divi = {**arg_dict_all, **arg_dict_data_download}
 
     arg_dict_mobility = {**arg_dict_all, **arg_dict_data_download,
-                         "ref_year": ref_year}   
-    
+                         "ref_year": ref_year}
+
     try:
         getCaseData.get_case_data(**arg_dict_cases)
     except Exception as exp:
@@ -128,28 +128,34 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     except Exception as exp:
         gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('vaccination')
-      
+
     try:
         getCommuterMobility.get_commuter_data(**arg_dict_mobility)
     except Exception as exp:
         gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('commuter mobility')
-    
+
     try:
         mobility_dir = os.path.join(out_folder, 'Germany/mobility/')
-        transformMobilityData.updateMobility2022(mobility_dir, mobility_file='twitter_scaled_1252')
-        if(ref_year < 2022):
-            transformMobilityData.updateMobility2022(mobility_dir, mobility_file=f'commuter_mobility_{ref_year}')
+        transformMobilityData.updateMobility2022(
+            mobility_dir, mobility_file='twitter_scaled_1252')
+        if (ref_year < 2022):
+            transformMobilityData.updateMobility2022(
+                mobility_dir, mobility_file=f'commuter_mobility_{ref_year}')
         # rename commuter mobility file
-        os.rename(f'{mobility_dir}/commuter_mobility_{ref_year}.txt', f'{mobility_dir}/commuter_mobility.txt')
+        os.rename(f'{mobility_dir}/commuter_mobility_{ref_year}.txt',
+                  f'{mobility_dir}/commuter_mobility.txt')
     except Exception as exp:
         gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('transform mobility')
+
 
 def main():
     """! Main program entry."""
 
     arg_dict = gd.cli("sim")
+    arg_dict['moving_average'] = 7
+    arg_dict['no_raw'] = True
     get_simulation_data(**arg_dict)
 
 
