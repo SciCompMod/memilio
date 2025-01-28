@@ -18,12 +18,15 @@
 * limitations under the License.
 */
 
+#include <cmath>
 #include <cstddef>
 #include <gtest/gtest.h>
 #include "smm/model.h"
 #include "smm/parameters.h"
 #include "smm/simulation.h"
 #include "abm_helpers.h"
+#include <iostream>
+#include <numeric>
 #include <vector>
 
 enum class InfectionState
@@ -167,5 +170,73 @@ TEST(TestSMMSimulation, advance)
     EXPECT_EQ(sim.get_result().get_value(2)[static_cast<size_t>(InfectionState::S)], 1);
     EXPECT_EQ(sim.get_result().get_value(2)[static_cast<size_t>(InfectionState::I)], 0);
     EXPECT_EQ(sim.get_result().get_value(2)[static_cast<size_t>(InfectionState::R)], 2);
+}
+
+TEST(TestSMMSimulation, stopsAtTmax)
+{
+    using Model = mio::smm::Model<2, InfectionState>;
+
+    Model model;
+
+    // Initialize adoption and transition rates
+    std::vector<mio::smm::AdoptionRate<InfectionState>> adoption_rates;
+    std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates;
+
+    adoption_rates.push_back({InfectionState::S,
+                              InfectionState::E,
+                              mio::smm::Region(0),
+                              0.1,
+                              {InfectionState::C, InfectionState::I},
+                              {1, 0.5}});
+
+    transition_rates.push_back({InfectionState::R, mio::smm::Region(1), mio::smm::Region(0), 0.01});
+
+    model.parameters.get<mio::smm::AdoptionRates<InfectionState>>()   = adoption_rates;
+    model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
+
+    auto sim = mio::Simulation<double, Model>(model, 0.0, 0.1);
+    sim.advance(30.);
+    EXPECT_EQ(sim.get_result().get_num_time_points(), 2);
     EXPECT_EQ(sim.get_result().get_last_time(), 30.);
+}
+
+TEST(TestSMMSimulation, covergence)
+{
+    using Model = mio::smm::Model<2, InfectionState>;
+
+    // only set one rate for smm
+    std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates(
+        1, {InfectionState::S, mio::smm::Region(0), mio::smm::Region(1), 0.1});
+
+    size_t num_runs = 100000;
+    std::vector<double> S_r0(num_runs);
+    std::vector<double> S_r1(num_runs);
+
+    for (size_t n = 0; n < num_runs; ++n) {
+        Model model;
+
+        model.populations[{mio::smm::Region(0), InfectionState::S}] = 100;
+        model.populations[{mio::smm::Region(0), InfectionState::E}] = 0;
+        model.populations[{mio::smm::Region(0), InfectionState::C}] = 0;
+        model.populations[{mio::smm::Region(0), InfectionState::I}] = 0;
+        model.populations[{mio::smm::Region(0), InfectionState::R}] = 0;
+        model.populations[{mio::smm::Region(0), InfectionState::D}] = 0;
+
+        model.populations[{mio::smm::Region(1), InfectionState::S}]       = 0;
+        model.populations[{mio::smm::Region(1), InfectionState::E}]       = 0;
+        model.populations[{mio::smm::Region(1), InfectionState::C}]       = 0;
+        model.populations[{mio::smm::Region(1), InfectionState::I}]       = 0;
+        model.populations[{mio::smm::Region(1), InfectionState::R}]       = 0;
+        model.populations[{mio::smm::Region(1), InfectionState::D}]       = 0;
+        model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
+        auto sim = mio::Simulation<double, Model>(model, 0.0, 1.0);
+        sim.advance(1.);
+        S_r0[n] = sim.get_model().populations[{mio::smm::Region(0), InfectionState::S}];
+        S_r1[n] = sim.get_model().populations[{mio::smm::Region(1), InfectionState::S}];
+    }
+    double mean_Sr0 = std::accumulate(S_r0.begin(), S_r0.end(), 0.0) / num_runs;
+    double mean_Sr1 = std::accumulate(S_r1.begin(), S_r1.end(), 0.0) / num_runs;
+
+    EXPECT_EQ(std::round(mean_Sr0), 90);
+    EXPECT_EQ(std::round(mean_Sr1), 10);
 }
