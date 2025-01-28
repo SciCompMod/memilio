@@ -1,10 +1,10 @@
 # Versions of the bundled libraries
 # If you like to upgrade, just change the number
-set(MEMILIO_EIGEN_VERSION "3.3.9")
-set(MEMILIO_SPDLOG_VERSION "1.11.0")
+set(MEMILIO_EIGEN_VERSION "3.4.0")
+set(MEMILIO_SPDLOG_VERSION "1.15.0")
 set(MEMILIO_BOOST_VERSION "1.84.0")
 set(MEMILIO_MINIMAL_BOOST_VERSION "1.76.0")
-set(MEMILIO_JSONCPP_VERSION "1.9.5")
+set(MEMILIO_JSONCPP_VERSION "1.9.6")
 set(MEMILIO_RANDOM123_VERSION "v1.14.0")
 set(MEMILIO_IPOPT_VERSION "3.14.12")
 
@@ -58,7 +58,7 @@ if(MEMILIO_USE_BUNDLED_EIGEN)
     endif()
 
     add_library(eigen INTERFACE)
-    target_include_directories(eigen INTERFACE ${eigen_SOURCE_DIR})
+    target_include_directories(eigen SYSTEM INTERFACE ${eigen_SOURCE_DIR})
     add_library(Eigen3::Eigen ALIAS eigen)
 else()
     find_package(Eigen3 ${MEMILIO_EIGEN_VERSION} REQUIRED NO_MODULE)
@@ -98,8 +98,12 @@ if(MEMILIO_USE_BUNDLED_BOOST)
     add_library(Boost::boost ALIAS boost)
     target_include_directories(boost SYSTEM INTERFACE $<BUILD_INTERFACE:${boost_SOURCE_DIR}>)
     
-    if (NOT MSVC)
-        target_compile_options(boost INTERFACE "-Wno-c++20-attribute-extensions")
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14)
+            target_compile_options(boost INTERFACE "-Wno-c++20-attribute-extensions")
+        else()
+            target_compile_options(boost INTERFACE "-Wno-c++20-extensions")
+        endif()
     endif()
 
     add_library(boost_disable_autolink INTERFACE)

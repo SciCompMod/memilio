@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRVVS_PARAMETER_SPACE_H
-#define ODESECIRVVS_PARAMETER_SPACE_H
+#ifndef MIO_ODE_SECIRVVS_PARAMETER_SPACE_H
+#define MIO_ODE_SECIRVVS_PARAMETER_SPACE_H
 
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/logging.h"
@@ -199,14 +199,14 @@ Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityPa
         auto local_icu_capacity = node_model.parameters.template get<ICUCapacity<FP>>();
         auto local_tnt_capacity = node_model.parameters.template get<TestAndTraceCapacity<FP>>();
         auto local_holidays     = node_model.parameters.template get<ContactPatterns<FP>>().get_school_holidays();
-        auto local_daily_v1     = node_model.parameters.template get<DailyFirstVaccination<FP>>();
-        auto local_daily_v2     = node_model.parameters.template get<DailyFullVaccination<FP>>();
+        auto local_daily_v1     = node_model.parameters.template get<DailyPartialVaccinations<FP>>();
+        auto local_daily_v2     = node_model.parameters.template get<DailyFullVaccinations<FP>>();
         node_model.parameters   = shared_params_model.parameters;
         node_model.parameters.template get<ICUCapacity<FP>>()                           = local_icu_capacity;
         node_model.parameters.template get<TestAndTraceCapacity<FP>>()                  = local_tnt_capacity;
         node_model.parameters.template get<ContactPatterns<FP>>().get_school_holidays() = local_holidays;
-        node_model.parameters.template get<DailyFirstVaccination<FP>>()                 = local_daily_v1;
-        node_model.parameters.template get<DailyFullVaccination<FP>>()                  = local_daily_v2;
+        node_model.parameters.template get<DailyPartialVaccinations<FP>>()              = local_daily_v1;
+        node_model.parameters.template get<DailyFullVaccinations<FP>>()                 = local_daily_v2;
 
         node_model.parameters.template get<ContactPatterns<FP>>().make_matrix();
         node_model.apply_constraints();
@@ -226,4 +226,4 @@ Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityPa
 } // namespace osecirvvs
 } // namespace mio
 
-#endif // ODESECIRVVS_PARAMETER_SPACE_H
+#endif // MIO_ODE_SECIRVVS_PARAMETER_SPACE_H

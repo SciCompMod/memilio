@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke
 *
@@ -22,7 +22,9 @@
 #include "ide_secir/infection_state.h"
 #include "ide_secir/simulation.h"
 #include "memilio/config.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/math/eigen.h"
+#include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/state_age_function.h"
@@ -32,18 +34,23 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax   = 10;
-    ScalarType N      = 10000;
-    ScalarType deaths = 13.10462213;
-    ScalarType dt     = 1e-2;
+    size_t num_agegroups = 1;
+
+    ScalarType tmax = 10;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 13.10462213);
+    ScalarType dt = 1.;
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
-    // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
-    mio::TimeSeries<ScalarType> init(num_transitions);
+    // Create TimeSeries with num_transitions * num_agegroups elements where transitions needed for simulation will be
+    // stored.
+    mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
 
     // Add time points for initialization of transitions.
-    Vec vec_init(num_transitions);
+    Vec vec_init(num_transitions * num_agegroups);
     vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
     vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
@@ -54,7 +61,8 @@ int main()
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
-    vec_init                                                                              = vec_init * dt;
+
+    vec_init = vec_init * dt;
     // Add initial time point to time series.
     init.add_time_point(-10, vec_init);
     // Add further time points until time 0.
@@ -63,11 +71,13 @@ int main()
     }
 
     // Initialize model.
-    mio::isecir::Model model(std::move(init), N, deaths);
+    mio::isecir::Model model(std::move(init), N, deaths, num_agegroups);
 
-    // Uncomment one of these lines to use a different method to initialize the model using the TimeSeries init.
-    // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
-    // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
+    // Uncomment one of the two lines to use a different method to initialize the model using the TimeSeries init.
+    // Initialization method with Susceptibles.
+    // model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
+    // Initialization method with Recovered.
+    // model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] = 0;
 
     // Set working parameters.
     mio::SmootherCosine smoothcos(2.0);
@@ -77,23 +87,26 @@ int main()
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_distribution_parameter(-1.);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
         .set_distribution_parameter(4.0);
-    model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
+
+    model.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(0)] = vec_delaydistrib;
 
     std::vector<ScalarType> vec_prob(num_transitions, 0.5);
     // The following probabilities must be 1, as there is no other way to go.
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
-    model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
+    model.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)]        = vec_prob;
 
-    mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, num_agegroups);
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
     mio::ExponentialSurvivalFunction exponential(0.5);
     mio::StateAgeFunctionWrapper prob(exponential);
-    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
-    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
+
+    model.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)] = prob;
+    model.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]   = prob;
+    model.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)]   = prob;
+
     model.parameters.set<mio::isecir::Seasonality>(0.1);
     // Start the simulation on the 40th day of a year (i.e. in February).
     model.parameters.set<mio::isecir::StartDay>(40);
@@ -104,8 +117,10 @@ int main()
     mio::isecir::Simulation sim(model, dt);
     sim.advance(tmax);
 
-    auto interpolated_results = mio::interpolate_simulation_result(sim.get_result(), dt / 2);
+    auto interpolated_results = mio::interpolate_simulation_result(sim.get_result(), dt / 2.);
+
     interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
     // Uncomment this line to print the transitions.
-    // sim.get_transitions().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"}, 16, 8);
+    // sim.get_transitions().print_table(
+    //     {"S->E 1", "E->C 1", "C->I 1", "C->R 1", "I->H 1", "I->R 1", "H->U 1", "H->R 1", "U->D 1", "U->R 1"}, 16, 8);
 }

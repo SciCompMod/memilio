@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke
 *
@@ -22,6 +22,7 @@
 #define STATEAGEFUNCTION_H
 
 #include "memilio/config.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/math/smoother.h"
 #include "memilio/math/floating_point.h"
@@ -811,6 +812,10 @@ protected:
  */
 struct StateAgeFunctionWrapper {
 
+    StateAgeFunctionWrapper()
+        : m_function(mio::SmootherCosine(1.0).clone())
+    {
+    }
     /**
      * @brief Constructs a new StateAgeFunctionWrapper object
      * 

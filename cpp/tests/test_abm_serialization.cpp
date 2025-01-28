@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: René Schmieding
 *
@@ -32,6 +32,8 @@
 #include "models/abm/person.h"
 #include "models/abm/trip_list.h"
 #include "models/abm/model.h"
+#include <bitset>
+#include <cstddef>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -125,12 +127,12 @@ TEST(TestAbmSerialization, TestingScheme)
     unsigned i = 1; // counter s.t. members have different values
 
     Json::Value testing_criteria;
-    std::vector<bool> ages_bits(mio::abm::MAX_NUM_AGE_GROUPS, false);
-    ages_bits[i++]                     = true;
-    testing_criteria["ages"]["bitset"] = mio::serialize_json(ages_bits).value();
-    std::vector<bool> inf_st_bits((size_t)mio::abm::InfectionState::Count, false);
-    inf_st_bits[i++]                               = true;
-    testing_criteria["infection_states"]["bitset"] = mio::serialize_json(inf_st_bits).value();
+    std::bitset<mio::abm::MAX_NUM_AGE_GROUPS> ages_bits{}; // initialize to false
+    ages_bits[i++]           = true;
+    testing_criteria["ages"] = mio::serialize_json(ages_bits).value();
+    std::bitset<(size_t)mio::abm::InfectionState::Count> inf_st_bits{}; // initialize to false
+    inf_st_bits[i++]                     = true;
+    testing_criteria["infection_states"] = mio::serialize_json(inf_st_bits).value();
 
     Json::Value test_parameters;
     test_parameters["sensitivity"]              = mio::serialize_json(mio::UncertainValue<double>{(double)i++}).value();

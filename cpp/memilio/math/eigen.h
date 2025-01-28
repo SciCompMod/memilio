@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -20,31 +20,9 @@
 #ifndef MIO_UTILS_EIGEN_H
 #define MIO_UTILS_EIGEN_H
 
-#include "memilio/config.h"
-#include "memilio/utils/compiler_diagnostics.h"
-
-/* this file wraps includes from eigen3 library to disable warnings. */
-
-//C4996: some std functions that have been deprecated in c++17; maybe fixed in new eigen versions?
-MSVC_WARNING_DISABLE_PUSH(4996)
-
-GCC_CLANG_DIAGNOSTIC(push)
-GCC_CLANG_DIAGNOSTIC(ignored "-Wint-in-bool-context")
-GCC_CLANG_DIAGNOSTIC(ignored "-Wshadow")
+// this file wraps includes from eigen3 library to disable warnings
+// Eigen is treated as a system library through cmake since #1168, so ALL warnings within the library are disabled
 
 #include <Eigen/Core>
-
-GCC_CLANG_DIAGNOSTIC(pop)
-
-MSVC_WARNING_POP()
-
-namespace mio
-{
-
-/// A vector of type FP from the Eigen library
-template <class FP = ScalarType>
-using Vector = Eigen::Matrix<FP, Eigen::Dynamic, 1>;
-
-} // namespace mio
 
 #endif // MIO_UTILS_EIGEN_H

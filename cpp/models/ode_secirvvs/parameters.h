@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESECIRVVS_PARAMETERS_H
-#define ODESECIRVVS_PARAMETERS_H
+#ifndef MIO_ODE_SECIRVVS_PARAMETERS_H
+#define MIO_ODE_SECIRVVS_PARAMETERS_H
 
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/dynamic_npis.h"
@@ -463,7 +463,7 @@ struct DaysUntilEffectiveImprovedImmunity {
 * @brief Total number of first vaccinations up to the given day.
 */
 template <typename FP = double>
-struct DailyFirstVaccination {
+struct DailyPartialVaccinations {
     using Type = CustomIndexArray<FP, AgeGroup, SimulationDay>;
     static Type get_default(AgeGroup size)
     {
@@ -471,7 +471,7 @@ struct DailyFirstVaccination {
     }
     static std::string name()
     {
-        return "DailyFirstVaccination";
+        return "DailyPartialVaccinations";
     }
 };
 
@@ -479,7 +479,7 @@ struct DailyFirstVaccination {
 * @brief Total number of full vaccinations up to the given day.
 */
 template <typename FP = double>
-struct DailyFullVaccination {
+struct DailyFullVaccinations {
     using Type = CustomIndexArray<FP, AgeGroup, SimulationDay>;
     static Type get_default(AgeGroup size)
     {
@@ -487,7 +487,7 @@ struct DailyFullVaccination {
     }
     static std::string name()
     {
-        return "DailyFullVaccination";
+        return "DailyFullVaccinations";
     }
 };
 
@@ -629,7 +629,7 @@ using ParametersBase = ParameterSet<
     RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
     MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>,
     VaccinationGap<FP>, DaysUntilEffectivePartialImmunity<FP>, DaysUntilEffectiveImprovedImmunity<FP>,
-    DailyFullVaccination<FP>, DailyFirstVaccination<FP>, ReducExposedPartialImmunity<FP>,
+    DailyFullVaccinations<FP>, DailyPartialVaccinations<FP>, ReducExposedPartialImmunity<FP>,
     ReducExposedImprovedImmunity<FP>, ReducInfectedSymptomsPartialImmunity<FP>,
     ReducInfectedSymptomsImprovedImmunity<FP>, ReducInfectedSevereCriticalDeadPartialImmunity<FP>,
     ReducInfectedSevereCriticalDeadImprovedImmunity<FP>, ReducTimeInfectedMild<FP>, InfectiousnessNewVariant<FP>,
@@ -1158,4 +1158,4 @@ private:
 } // namespace osecirvvs
 } // namespace mio
 
-#endif // ODESECIRVVS_PARAMETERS_H
+#endif // MIO_ODE_SECIRVVS_PARAMETERS_H

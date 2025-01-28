@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.13)
 
 project(memilio VERSION 1.0.0)
 
@@ -23,6 +23,12 @@ option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires 
 option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio" OFF)
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
+
+# try to treat AppleClang as Clang, but warn about missing support 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    message(WARNING "The compiler ID \"AppleClang\" is not supported, trying to compile with \"Clang\" options.")
+    set(CMAKE_CXX_COMPILER_ID "Clang")
+endif()
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -144,6 +150,7 @@ add_subdirectory(memilio)
 if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/abm)
     add_subdirectory(models/ode_secir)
+    add_subdirectory(models/ode_secirts)
     add_subdirectory(models/ode_secirvvs)
     add_subdirectory(models/lct_secir)
     add_subdirectory(models/glct_secir)

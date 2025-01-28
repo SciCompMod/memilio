@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -92,7 +92,7 @@ struct ScopedMockDistribution {
 /**
  * @brief Create a Person without a Model object. Intended for simple use in tests.
  */
-mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup age = age_group_15_to_34,
+mio::abm::Person make_test_person(mio::RandomNumberGenerator& rng, mio::abm::Location& location, mio::AgeGroup age = age_group_15_to_34,
                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0),
                                   mio::abm::Parameters params              = mio::abm::Parameters(num_age_groups));

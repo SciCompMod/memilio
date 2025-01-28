@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -19,72 +19,95 @@
 */
 #include "abm/person.h"
 #include "abm_helpers.h"
-#include "memilio/utils/random_number_generator.h"
+#include "random_number_test.h"
 
-TEST(TestMasks, init)
+using TestMasks = RandomNumberTest;
+
+/**
+ * @brief Test initialization of a Mask object.
+ */
+TEST_F(TestMasks, init)
 {
     auto t    = mio::abm::TimePoint(0);
     auto mask = mio::abm::Mask(mio::abm::MaskType::Count, t);
+    // Test that the mask's time used is initially zero
     EXPECT_EQ(mask.get_time_used(t).seconds(), 0.);
 }
 
-TEST(TestMasks, getType)
+/**
+ * @brief Test getting the MaskType from a Mask object.
+ */
+TEST_F(TestMasks, getType)
 {
     auto t    = mio::abm::TimePoint(0);
     auto mask = mio::abm::Mask(mio::abm::MaskType::Community, t);
     auto type = mask.get_type();
+    // Test the mask's type
     EXPECT_EQ(type, mio::abm::MaskType::Community);
 }
 
-TEST(TestMasks, changeMask)
+/**
+ * @brief Test changing the type of a mask and resetting the time used.
+ */
+TEST_F(TestMasks, changeMask)
 {
     auto t    = mio::abm::TimePoint(2 * 60 * 60);
     auto mask = mio::abm::Mask(mio::abm::MaskType::Community, mio::abm::TimePoint(0));
+    // Test initial mask type and time used
     EXPECT_EQ(mask.get_type(), mio::abm::MaskType::Community);
     EXPECT_EQ(mask.get_time_used(t), mio::abm::hours(2));
 
+    // Change the mask type and reset usage time
     mask.change_mask(mio::abm::MaskType::Surgical, t);
+
+    // Test that the mask type is updated and the time used is reset to zero
     EXPECT_EQ(mask.get_type(), mio::abm::MaskType::Surgical);
     EXPECT_EQ(mask.get_time_used(t), mio::abm::hours(0));
 }
 
-TEST(TestMasks, maskProtection)
+/**
+ * @brief Test mask protection during person interactions.
+ */
+TEST_F(TestMasks, maskProtection)
 {
-    auto rng = mio::RandomNumberGenerator();
     mio::abm::Parameters params(num_age_groups);
 
-    // set incubation period to two days so that the newly infected person is still exposed
+    // Set incubation period to two days so that newly infected person is still exposed
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 2.;
 
-    //setup location with some chance of exposure
+    // Setup location and persons for the test
     auto t = mio::abm::TimePoint(0);
     mio::abm::Location infection_location(mio::abm::LocationType::School, 0, num_age_groups);
-    auto susc_person1 =
-        mio::abm::Person(rng, infection_location.get_type(), infection_location.get_id(), age_group_15_to_34);
-    auto susc_person2 =
-        mio::abm::Person(rng, infection_location.get_type(), infection_location.get_id(), age_group_15_to_34);
-    auto infected1 = make_test_person(infection_location, age_group_15_to_34,
+    // Two susceptible persons, one with a mask, one without
+    auto susc_person1 = mio::abm::Person(this->get_rng(), infection_location.get_type(), infection_location.get_id(),
+                                         age_group_15_to_34);
+    auto susc_person2 = mio::abm::Person(this->get_rng(), infection_location.get_type(), infection_location.get_id(),
+                                         age_group_15_to_34);
+    // Infected person interacting with susceptible persons
+    auto infected1 = make_test_person(this->get_rng(), infection_location, age_group_15_to_34,
                                       mio::abm::InfectionState::InfectedSymptoms, t, params); // infected 7 days prior
 
-    //cache precomputed results
+    // Cache precomputed results for 1-day intervals
     auto dt = mio::abm::days(1);
     // susc_person1 wears a mask, default protection is 1
     susc_person1.set_mask(mio::abm::MaskType::FFP2, t);
     // susc_person2 does not wear a mask
     susc_person2.set_mask(mio::abm::MaskType::None, t);
 
-    //mock so person 2 will get infected
+    // Mock so person 2 will get infected and person 1 will not
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
-
+    // Person 1 interaction with full protection
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillOnce(testing::Return(1));
-    auto p1_rng = mio::abm::PersonalRandomNumberGenerator(rng, susc_person1);
+    auto p1_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), susc_person1);
     interact_testing(p1_rng, susc_person1, infection_location, {susc_person1, susc_person2, infected1}, t, dt, params);
+    // Person 2 interaction without protection
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillOnce(testing::Return(0.5));
-    auto p2_rng = mio::abm::PersonalRandomNumberGenerator(rng, susc_person2);
+    auto p2_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), susc_person2);
     interact_testing(p2_rng, susc_person2, infection_location, {susc_person1, susc_person2, infected1}, t, dt, params);
 
-    // The person susc_person1 should have full protection against an infection, susc_person2 not
+    // susc_person1 (with mask) should remain susceptible
     EXPECT_EQ(susc_person1.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);
+    // susc_person2 (without mask) should be exposed
     EXPECT_EQ(susc_person2.get_infection_state(t + dt), mio::abm::InfectionState::Exposed);
 }
