@@ -318,14 +318,14 @@ mio::IOResult<void> write_h5(std::string filename,
         H5Tset_size(datatype, H5T_VARIABLE);
 
         mio::H5DataSet dset_LocIds{
-            H5Dcreate(agent_h5group.id, "LocIds", datatype, dspace_str.id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
+            H5Dcreate(agent_h5group.id, "loc_ids", datatype, dspace_str.id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
         MEMILIO_H5_CHECK(dset_LocIds.id, mio::StatusCode::UnknownError, "LocId DataSet could not be created (LocIds).");
         MEMILIO_H5_CHECK(H5Dwrite(dset_LocIds.id, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, LocIds.data()),
                          mio::StatusCode::UnknownError, "LocId data could not be written.");
         for (int t = 0; t < num_timepoints; ++t) {
             delete[] LocIds[t];
         }
-        mio::H5DataSet dset_tsm{H5Dcreate(agent_h5group.id, "timeSinceTransmission", H5T_NATIVE_INT, dspace_t.id,
+        mio::H5DataSet dset_tsm{H5Dcreate(agent_h5group.id, "time_since_transm", H5T_NATIVE_INT, dspace_t.id,
                                           H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
         MEMILIO_H5_CHECK(dset_tsm.id, mio::StatusCode::UnknownError,
                          "TST DataSet could not be created (timeSinceTransmission).");
