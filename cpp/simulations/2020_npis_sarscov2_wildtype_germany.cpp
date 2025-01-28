@@ -485,6 +485,8 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     const auto& read_function_edges = mio::read_mobility_plain;
     const auto& node_id_function    = mio::get_node_ids;
 
+    const auto mobility_data_dir = mio::path_join(data_dir / "pydata" / "Germany" / "Mobility").string();
+
     const auto& set_node_function =
         mio::set_nodes<mio::osecir::TestAndTraceCapacity<double>, mio::osecir::ContactPatterns<double>,
                        mio::osecir::Model<double>, mio::MobilityParameters<double>, mio::osecir::Parameters<double>,
@@ -497,7 +499,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
                           mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"),
                           true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
                           scaling_factor_icu, tnt_capacity_factor, 0, false, true));
-    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, mobile_compartments, contact_locations.size(),
+    BOOST_OUTCOME_TRY(set_edge_function(mobility_data_dir, params_graph, mobile_compartments, contact_locations.size(),
                                         read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.},
                                         {}));
 

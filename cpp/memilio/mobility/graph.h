@@ -335,16 +335,15 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
  */
 template <class ContactLocation, class Model, class MobilityParams, class MobilityCoefficientGroup,
           class InfectionState, class ReadFunction>
-IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MobilityParams>& params_graph,
+IOResult<void> set_edges(const fs::path& mobility_data_dir, Graph<Model, MobilityParams>& params_graph,
                          std::initializer_list<InfectionState>& mobile_compartments, size_t contact_locations_size,
                          ReadFunction&& read_func, std::vector<ScalarType> commuting_weights,
                          std::vector<std::vector<size_t>> indices_of_saved_edges = {})
 {
     // mobility between nodes
-    BOOST_OUTCOME_TRY(auto&& mobility_data_commuter,
-                      read_func((data_dir / "mobility" / "commuter_mobility.txt").string()));
+    BOOST_OUTCOME_TRY(auto&& mobility_data_commuter, read_func((mobility_data_dir / "commuter_mobility.txt").string()));
     BOOST_OUTCOME_TRY(auto&& mobility_data_twitter,
-                      read_func((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
+                      read_func((mobility_data_dir / "twitter_scaled_1252.txt").string()));
     if (mobility_data_commuter.rows() != Eigen::Index(params_graph.nodes().size()) ||
         mobility_data_commuter.cols() != Eigen::Index(params_graph.nodes().size()) ||
         mobility_data_twitter.rows() != Eigen::Index(params_graph.nodes().size()) ||

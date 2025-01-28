@@ -433,6 +433,9 @@ class Simulation:
             self.data_dir, "pydata", "Germany",
             "county_current_population.json")
 
+        mobility_data_dir = os.path.join(
+            self.data_dir, "pydata", "Germany", "Mobility")
+
         mio.osecir.set_nodes(
             model.parameters,
             mio.Date(self.start_date.year,
@@ -443,7 +446,7 @@ class Simulation:
             scaling_factor_icu, tnt_capacity_factor, 0, False)
 
         mio.osecir.set_edges(
-            self.data_dir, graph, len(Location))
+            mobility_data_dir, graph, len(Location))
 
         return graph
 
