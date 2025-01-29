@@ -485,7 +485,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     const auto& read_function_edges = mio::read_mobility_plain;
     const auto& node_id_function    = mio::get_node_ids;
 
-    const auto mobility_data_dir = mio::path_join(data_dir / "pydata" / "Germany" / "Mobility").string();
+    const std::string mobility_data_dir = mio::path_join(data_dir / "pydata" / "Germany" / "Mobility");
 
     const auto& set_node_function =
         mio::set_nodes<mio::osecir::TestAndTraceCapacity<double>, mio::osecir::ContactPatterns<double>,

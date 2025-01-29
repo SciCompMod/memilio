@@ -54,7 +54,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
                         split_berlin=dd.defaultDict['split_berlin'],
                         rep_date=dd.defaultDict['rep_date'],
                         sanitize_data=dd.defaultDict['sanitize_data'],
-                        ref_year=2022,
+                        ref_year=dd.defaultDict['ref_year'],
                         **kwargs
                         ):
     """! Downloads all data from external sources

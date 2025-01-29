@@ -564,10 +564,10 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
     // graph of counties with populations and local parameters
     // and mobility between counties
     mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph;
-    const auto& read_function_nodes = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<double>>;
-    const auto& read_function_edges = mio::read_mobility_plain;
-    const auto& node_id_function    = mio::get_node_ids;
-    const auto mobility_data_dir    = mio::path_join(data_dir / "pydata" / "Germany" / "Mobility").string();
+    const auto& read_function_nodes     = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<double>>;
+    const auto& read_function_edges     = mio::read_mobility_plain;
+    const auto& node_id_function        = mio::get_node_ids;
+    const std::string mobility_data_dir = mio::path_join(data_dir / "pydata" / "Germany" / "Mobility");
 
     const auto& set_node_function =
         mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
