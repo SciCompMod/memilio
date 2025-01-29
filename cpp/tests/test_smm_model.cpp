@@ -197,8 +197,8 @@ TEST(TestSMMSimulation, stopsAtTmax)
 
     transition_rates.push_back({InfectionState::R, mio::smm::Region(1), mio::smm::Region(0), 0.01});
 
-    model.parameters.get<mio::smm::AdoptionRates<InfectionState>>()   = adoption_rates;
-    model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
+    // model.parameters.get<mio::smm::AdoptionRates<InfectionState>>()   = adoption_rates;
+    // model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
 
     //Simulate for 30 days
     // auto sim = mio::Simulation<double, Model>(model, 0.0, 0.1);
