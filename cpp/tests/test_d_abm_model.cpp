@@ -59,13 +59,23 @@ TEST(TestQuadWell, adoptionRate)
 {
     QuadWellModel<InfectionState>::Agent a1{Eigen::Vector2d{-1, 1}, InfectionState::S};
     QuadWellModel<InfectionState>::Agent a2{Eigen::Vector2d{-1.2, 1}, InfectionState::I};
-    QuadWellModel<InfectionState> qw({a1, a2}, {{InfectionState::S,
-                                                 InfectionState::E,
-                                                 mio::dabm::Region(0),
-                                                 0.1,
-                                                 {InfectionState::C, InfectionState::I},
-                                                 {1, 0.5}}});
+    QuadWellModel<InfectionState>::Agent a3{Eigen::Vector2d{1, 1}, InfectionState::I};
+    QuadWellModel<InfectionState>::Agent a4{Eigen::Vector2d{-1.1, 1}, InfectionState::I};
+    QuadWellModel<InfectionState> qw({a1, a2, a3}, {{InfectionState::S,
+                                                     InfectionState::E,
+                                                     mio::dabm::Region(0),
+                                                     0.1,
+                                                     {InfectionState::C, InfectionState::I},
+                                                     {1, 0.5}}});
+    QuadWellModel<InfectionState> qw1({a1, a2, a3, a4}, {{InfectionState::S,
+                                                          InfectionState::E,
+                                                          mio::dabm::Region(0),
+                                                          0.1,
+                                                          {InfectionState::C, InfectionState::I},
+                                                          {1, 0.5}}});
     EXPECT_EQ(qw.adoption_rate(a1, InfectionState::E), 0.025);
+    EXPECT_EQ(qw.adoption_rate(a2, InfectionState::E), 0.0);
+    EXPECT_EQ(qw1.adoption_rate(a1, InfectionState::E), 1. / 30.);
 }
 
 TEST(TestQuadWell, move)
