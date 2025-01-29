@@ -35,13 +35,13 @@ def put_scenario(scenario_id, zip_file, url):
     fileobj = open(zip_file, 'rb')
     put_response = requests.put(url + "scenarios/" + scenario_id, headers=header,
                                 files={"file": (zip_file, fileobj)})
-    print(put_response.status_code)
+    log.info(f'Put HTTP response code for scenario {scenario_id} was {put_response.status_code}')
 
 def put_scenarios(path_to_scenario_results, url):
     scenarios = requests.get(url + "scenarios/", headers=header).json()
     for scenario in scenarios:
         real_path_to_scenario_results = path_to_scenario_results #+ f"{scenario['name']}_{scenario['id']}/"
-        if not os.path.exists(real_path_to_scenario_results+ f"{scenario['name']}_{scenario['id']}/"):
+        if not os.path.exists(real_path_to_scenario_results+ f"/{scenario['name']}_{scenario['id']}/"):
             continue
         if scenario["name"]=="casedata":
             percentiles=['p50']
