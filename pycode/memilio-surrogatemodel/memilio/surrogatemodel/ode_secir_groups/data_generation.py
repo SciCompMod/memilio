@@ -34,6 +34,9 @@ from memilio.simulation.osecir import (Index_InfectionState,
                                        InfectionState, Model,
                                        interpolate_simulation_result, simulate)
 
+from memilio.surrogatemodel.utils_surrogatemodel import (
+    getBaselineMatrix, getMinimumMatrix, get_population)
+
 
 def interpolate_age_groups(data_entry):
     """! Interpolates the age groups from the population data into the age groups used in the simulation. 
@@ -214,7 +217,8 @@ def generate_data(
     days = input_width + label_width - 1
 
     # Load population data
-    population = get_population(path_population)
+    # population = get_population(path_population)
+    population = get_population()
 
     # show progess in terminal for longer runs
     # Due to the random structure, there's currently no need to shuffle the data
@@ -256,61 +260,6 @@ def generate_data(
     return data
 
 
-def getBaselineMatrix():
-    """! loads the baselinematrix
-    """
-
-    baseline_contact_matrix0 = os.path.join(
-        "./data/contacts/baseline_home.txt")
-    baseline_contact_matrix1 = os.path.join(
-        "./data/contacts/baseline_school_pf_eig.txt")
-    baseline_contact_matrix2 = os.path.join(
-        "./data/contacts/baseline_work.txt")
-    baseline_contact_matrix3 = os.path.join(
-        "./data/contacts/baseline_other.txt")
-
-    baseline = np.loadtxt(baseline_contact_matrix0) \
-        + np.loadtxt(baseline_contact_matrix1) + \
-        np.loadtxt(baseline_contact_matrix2) + \
-        np.loadtxt(baseline_contact_matrix3)
-
-    return baseline
-
-
-def getMinimumMatrix():
-    """! loads the minimum matrix
-    """
-
-    minimum_contact_matrix0 = os.path.join(
-        "./data/contacts/minimum_home.txt")
-    minimum_contact_matrix1 = os.path.join(
-        "./data/contacts/minimum_school_pf_eig.txt")
-    minimum_contact_matrix2 = os.path.join(
-        "./data/contacts/minimum_work.txt")
-    minimum_contact_matrix3 = os.path.join(
-        "./data/contacts/minimum_other.txt")
-
-    minimum = np.loadtxt(minimum_contact_matrix0) \
-        + np.loadtxt(minimum_contact_matrix1) + \
-        np.loadtxt(minimum_contact_matrix2) + \
-        np.loadtxt(minimum_contact_matrix3)
-
-    return minimum
-
-
-def get_population(path):
-    """! read population data in list from dataset
-    @param path Path to the dataset containing the population data
-    """
-
-    with open(path) as f:
-        data = json.load(f)
-    population = []
-    for data_entry in data:
-        population.append(interpolate_age_groups(data_entry))
-    return population
-
-
 if __name__ == "__main__":
     # Store data relative to current file two levels higher.
     path = os.path.dirname(os.path.realpath(__file__))
@@ -322,6 +271,6 @@ if __name__ == "__main__":
 
     input_width = 5
     label_width = 30
-    num_runs = 10000
+    num_runs = 10
     data = generate_data(num_runs, path_output, path_population, input_width,
-                         label_width)
+                         label_width, save_data=True)

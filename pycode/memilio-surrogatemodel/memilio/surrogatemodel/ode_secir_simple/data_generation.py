@@ -35,13 +35,7 @@ from memilio.simulation.osecir import (Index_InfectionState,
                                        InfectionState, Model, Simulation,
                                        interpolate_simulation_result, simulate)
 
-
-def remove_confirmed_compartments(result_array):
-    sum_inf_no_symp = np.sum(result_array[:, [2, 3]], axis=1)
-    sum_inf_symp = np.sum(result_array[:, [2, 3]], axis=1)
-    result_array[:, 2] = sum_inf_no_symp
-    result_array[:, 4] = sum_inf_symp
-    return np.delete(result_array, [3, 5], axis=1)
+from memilio.surrogatemodel.utils_surrogatemodel import remove_confirmed_compartments
 
 
 def run_secir_simple_simulation(days):
@@ -121,13 +115,11 @@ def run_secir_simple_simulation(days):
     result_array = result.as_ndarray()
 
     result_array = remove_confirmed_compartments(
-        result_array[1:, :].transpose())
-
-    dataset = []
+        result_array[1:, :].transpose(), 1)
 
     dataset_entries = copy.deepcopy(result_array)
 
-    return dataset_entries.tolist()
+    return dataset_entries
 
 
 def generate_data(
@@ -205,6 +197,6 @@ if __name__ == "__main__":
 
     input_width = 5
     label_width = 30
-    num_runs = 1000
+    num_runs = 10000
     data = generate_data(num_runs, path_data, input_width,
-                         label_width)
+                         label_width, save_data=True)
