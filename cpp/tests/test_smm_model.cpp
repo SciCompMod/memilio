@@ -188,14 +188,14 @@ TEST(TestSMMSimulation, stopsAtTmax)
     std::vector<mio::smm::AdoptionRate<InfectionState>> adoption_rates;
     std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates;
 
-    adoption_rates.push_back({InfectionState::S,
-                              InfectionState::E,
-                              mio::smm::Region(0),
-                              0.1,
-                              {InfectionState::C, InfectionState::I},
-                              {1, 0.5}});
+    // adoption_rates.push_back({InfectionState::S,
+    //                           InfectionState::E,
+    //                           mio::smm::Region(0),
+    //                           0.1,
+    //                           {InfectionState::C, InfectionState::I},
+    //                           {1, 0.5}});
 
-    transition_rates.push_back({InfectionState::R, mio::smm::Region(1), mio::smm::Region(0), 0.01});
+    // transition_rates.push_back({InfectionState::R, mio::smm::Region(1), mio::smm::Region(0), 0.01});
 
     // model.parameters.get<mio::smm::AdoptionRates<InfectionState>>()   = adoption_rates;
     // model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
