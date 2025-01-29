@@ -131,7 +131,7 @@ target_link_libraries(history_example PRIVATE memilio)
 target_compile_options(history_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(dabm_example d_abm.cpp)
-target_link_libraries(dabm_example PRIVATE memilio dabm)
+target_link_libraries(dabm_example PRIVATE memilio d_abm)
 target_compile_options(dabm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(smm_example smm.cpp)
