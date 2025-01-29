@@ -29,6 +29,7 @@ from itertools import combinations
 import memilio.simulation as mio
 import memilio.simulation.osecirvvs as osecirvvs
 
+
 class Location(Enum):
     Home = 0
     School = 1
@@ -604,8 +605,8 @@ class Simulation:
                 self.run_data_url + "scenarios/" + scenario['id'], headers=header).json()
 
             # for testing overwrite startDate and endDate
-            # self.scenario_data['startDate'] = "2022-01-01"
-            # self.scenario_data['endDate'] = "2022-01-31"
+            # self.scenario_data['startDate'] = "2024-12-22"
+            # self.scenario_data['endDate'] = "2024-01-01"
 
             graph = self.get_graph(extrapolate)
 
@@ -643,7 +644,7 @@ class Simulation:
 
             osecirvvs.save_results(
                 ensemble_results, ensemble_params, node_ids, res_dir_scenario,
-                save_single_runs, save_percentiles, 0, True)
+                save_single_runs, save_percentiles, num_days_sim, True)
 
 
 if __name__ == "__main__":
@@ -656,4 +657,4 @@ if __name__ == "__main__":
     sim = Simulation(
         data_dir=os.path.join(cwd, "data"),
         results_dir=os.path.join(cwd, "results_osecirvvs"), run_data_url=run_data_url)
-    sim.run(num_days_sim=30, num_runs=2)
+    sim.run(num_days_sim=30, num_runs=3)
