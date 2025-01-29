@@ -42,8 +42,10 @@ enum class InfectionState
 
 TEST(TestQuadWell, well)
 {
-    auto well = well_index(Eigen::Vector2d{-1, 1});
-    EXPECT_EQ(well, size_t(0));
+    EXPECT_EQ(well_index(Eigen::Vector2d{-1, 1}), size_t(0));
+    EXPECT_EQ(well_index(Eigen::Vector2d{1, 1}), size_t(1));
+    EXPECT_EQ(well_index(Eigen::Vector2d{-1, -1}), size_t(2));
+    EXPECT_EQ(well_index(Eigen::Vector2d{1, -1}), size_t(3));
 }
 
 TEST(TestQuadWell, adopt)
@@ -82,6 +84,7 @@ TEST(TestQuadWell, move)
 {
     QuadWellModel<InfectionState>::Agent a1{Eigen::Vector2d{-1.2, 1}, InfectionState::S};
     QuadWellModel<InfectionState>::Agent a2{Eigen::Vector2d{-1.2, 1}, InfectionState::I};
+    //Sigma is set to 0, thus movement is only given by the function gradient
     QuadWellModel<InfectionState> qw({a1, a2}, {}, 0.1, 0., {InfectionState::I});
     qw.move(0, 0.1, a1);
     qw.move(0, 0.1, a2);
