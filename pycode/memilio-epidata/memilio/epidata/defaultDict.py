@@ -52,6 +52,7 @@ defaultDict = {
     'no_raw': False,
     'rep_date': False,
     'sanitize_data': 1,
+    'ref_year': 2022
 }
 
 # The following dict EngEng makes sure that for all

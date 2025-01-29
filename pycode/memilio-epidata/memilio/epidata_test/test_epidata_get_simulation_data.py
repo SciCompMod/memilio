@@ -37,12 +37,14 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
 
+    @patch('memilio.epidata.transformMobilityData.updateMobility2022')
+    @patch('memilio.epidata.getCommuterMobility.get_commuter_data')
     @patch('memilio.epidata.getVaccinationData.get_vaccination_data')
     @patch('memilio.epidata.getDIVIData.get_divi_data')
     @patch('memilio.epidata.getCaseData.get_case_data')
     @patch('memilio.epidata.getPopulationData.get_population_data')
     def test_get_call_sub_functions(self, mock_popul, mock_cases,
-                                    mock_divi, mock_vaccination):
+                                    mock_divi, mock_vaccination, mock_mobility, mock_mobility_update):
 
         [read_data, file_format, out_folder, no_raw, start_date, end_date,
          impute_dates, moving_average, make_plot, split_berlin, rep_date] = [
@@ -87,6 +89,9 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
             **arg_dict_all, **arg_dict_data_download,
             "sanitize_data": dd.defaultDict['sanitize_data']}
 
+        arg_dict_mobility = {**arg_dict_all, **arg_dict_data_download,
+                             "ref_year": dd.defaultDict['ref_year']}
+
         mock_popul.assert_called()
         mock_popul.assert_called_with(**arg_dict_all)
 
@@ -98,6 +103,13 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
 
         mock_vaccination.assert_called()
         mock_vaccination.assert_called_with(**arg_dict_vaccination)
+
+        mock_mobility.assert_called()
+        mock_mobility.assert_called_with(**arg_dict_mobility)
+
+        mock_mobility_update.assert_called()
+        mock_mobility_update.assert_called_with(
+            self.path + '/Germany/mobility/', mobility_file='twitter_scaled_1252')
 
     @patch('builtins.print')
     @patch('memilio.epidata.getVaccinationData.get_vaccination_data')
