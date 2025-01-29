@@ -44,6 +44,12 @@ public:
     {
     }
 
+    /**
+     * @brief Calculate the current rate of the given adoption.
+     * @param[in] rate A adoption rate from this model.
+     * @param[in] x The current state of the model.
+     * @return Current value of the adoption rate.
+     */
     ScalarType evaluate(const AdoptionRate<Status>& rate, const Eigen::VectorXd& x) const
     {
         assert(rate.influences.size() == rate.factors.size());
@@ -67,12 +73,19 @@ public:
         }
     }
 
+    /**
+     * @brief Calculate the current rate of the given transition.
+     * @param[in] rate A transition rate from this model.
+     * @param[in] x The current state of the model.
+     * @return Current value of the transition rate.
+     */
     ScalarType evaluate(const TransitionRate<Status>& rate, const Eigen::VectorXd& x) const
     {
         const auto source = this->populations.get_flat_index({rate.from, rate.status});
         return rate.factor * x[source];
     }
 
+    /// @brief Access the random number generator used for simulating this model.
     mio::RandomNumberGenerator& get_rng()
     {
         return m_rng;

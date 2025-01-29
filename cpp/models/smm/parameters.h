@@ -58,6 +58,10 @@ struct AdoptionRates {
     }
 };
 
+/**
+ * @brief Struct defining a possible regional transition in a Model based on Poisson Processes.
+ * @tparam Status An infection state enum.
+ */
 template <class Status>
 struct TransitionRate {
     Status status; // i

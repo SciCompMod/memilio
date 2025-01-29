@@ -29,6 +29,7 @@
 
 using Position = Eigen::Vector2d;
 
+/// @brief Get the index of the well containing the given position.
 inline size_t well_index(const Position& p)
 {
     // 0|1

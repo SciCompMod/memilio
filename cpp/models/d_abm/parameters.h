@@ -28,7 +28,7 @@ namespace mio
 {
 namespace dabm
 {
-// yet another "curiously recuring template pattern"
+/// @biref Index for enumerating subsections (cities, counties, etc.) of the modelled area.
 struct Region : public mio::Index<Region> {
     Region(const size_t num_regions)
         : mio::Index<Region>(num_regions)
@@ -36,8 +36,13 @@ struct Region : public mio::Index<Region> {
     }
 };
 
-// the AdoptionRate is considered to be of second order, if there are any "influences" with corresponding "factors".
-// "from" is always an influence, scaled by "factor".
+/**
+ * @brief Struct defining a possible status adoption in a Model based on Poisson Processes.
+ * The AdoptionRate is considered to be of second order, if there are any "influences" with corresponding "factors".
+ * In the d_abm and smm simulations, "from" is implicitly an influence, scaled by "factor". This is multiplied by
+ * the sum over all "influences" scaled by their respective "factors".
+ * @tparam Status An infection state enum.
+ */
 template <class Status>
 struct AdoptionRate {
     Status from; // i
