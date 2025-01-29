@@ -39,11 +39,12 @@ std::string setup(int argc, char** argv, const std::string data_dir)
             mio::log_warning("No arguments given.");
         }
         std::cout << "Using default file twitter_scaled_1252 in data/mobility." << std::endl;
-        std::cout << "Usage: read_graph MOBILITY_FILE" << "\n\n";
+        std::cout << "Usage: read_graph MOBILITY_FILE"
+                  << "\n\n";
         std::cout << "This example performs a simulation based on twitter "
                      "mobility data."
                   << std::endl;
-        return mio::path_join(data_dir, "mobility", "twitter_scaled_1252.txt");
+        return mio::path_join(data_dir, "pydata", "Germany", "mobility", "twitter_scaled_1252.txt");
     }
 }
 
