@@ -183,6 +183,7 @@ TEST(TestSMMSimulation, stopsAtTmax)
     using Model = mio::smm::Model<2, InfectionState>;
 
     Model model;
+    model.populations[{mio::smm::Region(0), InfectionState::S}] = 1;
 
     //Set adoption and spatial transition rates
     std::vector<mio::smm::AdoptionRate<InfectionState>> adoption_rates;
