@@ -177,36 +177,36 @@ TEST(TestSMMSimulation, advance)
     EXPECT_EQ(sim.get_result().get_value(2)[static_cast<size_t>(InfectionState::R)], 2);
 }
 
-// TEST(TestSMMSimulation, stopsAtTmax)
-// {
-//     using testing::Return;
-//     using Model = mio::smm::Model<2, InfectionState>;
+TEST(TestSMMSimulation, stopsAtTmax)
+{
+    using testing::Return;
+    using Model = mio::smm::Model<2, InfectionState>;
 
-//     Model model;
+    Model model;
 
-//     //Set adoption and spatial transition rates
-//     std::vector<mio::smm::AdoptionRate<InfectionState>> adoption_rates;
-//     std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates;
+    //Set adoption and spatial transition rates
+    std::vector<mio::smm::AdoptionRate<InfectionState>> adoption_rates;
+    std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates;
 
-//     adoption_rates.push_back({InfectionState::S,
-//                               InfectionState::E,
-//                               mio::smm::Region(0),
-//                               0.1,
-//                               {InfectionState::C, InfectionState::I},
-//                               {1, 0.5}});
+    adoption_rates.push_back({InfectionState::S,
+                              InfectionState::E,
+                              mio::smm::Region(0),
+                              0.1,
+                              {InfectionState::C, InfectionState::I},
+                              {1, 0.5}});
 
-//     transition_rates.push_back({InfectionState::R, mio::smm::Region(1), mio::smm::Region(0), 0.01});
+    transition_rates.push_back({InfectionState::R, mio::smm::Region(1), mio::smm::Region(0), 0.01});
 
-//     // model.parameters.get<mio::smm::AdoptionRates<InfectionState>>()   = adoption_rates;
-//     // model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
+    model.parameters.get<mio::smm::AdoptionRates<InfectionState>>()   = adoption_rates;
+    model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
 
-//     //Simulate for 30 days
-//     // auto sim = mio::Simulation<double, Model>(model, 0.0, 0.1);
-//     // sim.advance(30.);
-//     // //As model populations are all zero only t0 and tmax should be logged
-//     // EXPECT_EQ(sim.get_result().get_num_time_points(), 2);
-//     // EXPECT_EQ(sim.get_result().get_last_time(), 30.);
-// }
+    //Simulate for 30 days
+    auto sim = mio::Simulation<double, Model>(model, 0.0, 0.1);
+    sim.advance(30.);
+    //As model populations are all zero only t0 and tmax should be logged
+    EXPECT_EQ(sim.get_result().get_num_time_points(), 2);
+    EXPECT_EQ(sim.get_result().get_last_time(), 30.);
+}
 
 // TEST(TestSMMSimulation, covergence)
 // {
