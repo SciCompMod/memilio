@@ -63,31 +63,21 @@ class TestOseirGeneration(unittest.TestCase):
     def setUp(self, try_get_compilation_database_path_mock):
         try_get_compilation_database_path_mock.return_value = self.build_dir.name
         config_json = {
-            "skbuild_path_to_database": "",
+
             "python_generation_module_path": self.project_path + "/pycode/memilio-generation",
+            "skbuild_path_to_database": "",
             "libclang_library_path": ""
 
         }
 
-        pkg = importlib_resources.files("memilio.generation")
-        with importlib_resources.as_file(pkg.joinpath('../tools/config.json')) as path:
-            with open(path) as file:
-                conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
+        conf = ScannerConfig.from_dict(config_json)
 
-        home_dir = os.path.expanduser("~")
-
-        relative_path = path.relative_to(home_dir)
-
-        user_specific_folder = relative_path.parts[0]
-
-        home_and_user_folder = os.path.join(home_dir, user_specific_folder)
-
-        conf.source_file = home_and_user_folder + \
-            "/memilio/cpp/models/ode_seir/model.cpp"
+        conf.source_file = self.project_path + \
+            "/pycode/memilio-generation/memilio/cpp/models/ode_seir/model.cpp"
 
         # Could be any target folder
-        conf.target_folder = home_and_user_folder + \
-            "/memilio/pycode/memilio-generation/../memilio-generation/memilio/tools"
+        conf.target_folder = self.project_path + \
+            "/memilio/pycode/memilio-generation/../memilio-generation/memilio/generation_test"
         self.scanner = Scanner(conf)
         self.ast = AST(conf)
 
