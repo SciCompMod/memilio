@@ -408,7 +408,7 @@ public:
     }
 
     /**
-     * @brief Get this person's key that is used for the RandomNumberGenerator.
+     * @brief Get this Person's key that is used for the RandomNumberGenerator.
      * @see mio::abm::PersonalRandomNumberGenerator.
      */
     mio::Key<uint64_t> get_rng_key()
