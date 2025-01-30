@@ -117,8 +117,8 @@ public:
         }
         // copy last result, if no event occurs between last_result_time and tmax
         if (last_result_time < tmax) {
-            const auto& val = m_result.get_last_value();
-            m_result.add_time_point(tmax, val);
+            m_result.add_time_point(tmax);
+            m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
         }
         return m_result.get_last_value();
     }

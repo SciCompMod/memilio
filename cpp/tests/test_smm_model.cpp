@@ -203,83 +203,83 @@ TEST(TestSMMSimulation, stopsAtTmax)
     //Simulate for 30 days
     auto sim = mio::Simulation<double, Model>(model, 0.0, 0.1);
     sim.advance(30.);
-    // //As model populations are all zero only t0 and tmax should be logged
-    // EXPECT_EQ(sim.get_result().get_num_time_points(), 2);
-    // EXPECT_EQ(sim.get_result().get_last_time(), 30.);
+    //As model populations are all zero only t0 and tmax should be logged
+    EXPECT_EQ(sim.get_result().get_num_time_points(), 2);
+    EXPECT_EQ(sim.get_result().get_last_time(), 30.);
 }
 
-// TEST(TestSMMSimulation, covergence)
-// {
-//     using testing::Return;
-//     using Model = mio::smm::Model<2, InfectionState>;
+TEST(TestSMMSimulation, covergence)
+{
+    using testing::Return;
+    using Model = mio::smm::Model<2, InfectionState>;
 
-//     double pop1      = 1000;
-//     double pop2      = 10000;
-//     size_t num_runs1 = 100;
-//     size_t num_runs2 = 10000;
-//     double rate      = 0.01;
+    double pop1      = 1000;
+    double pop2      = 10000;
+    size_t num_runs1 = 100;
+    size_t num_runs2 = 10000;
+    double rate      = 0.01;
 
-//     //Only set one spatial transition rate
-//     std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates(
-//         1, {InfectionState::S, mio::smm::Region(0), mio::smm::Region(1), rate});
+    //Only set one spatial transition rate
+    std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates(
+        1, {InfectionState::S, mio::smm::Region(0), mio::smm::Region(1), rate});
 
-//     std::vector<double> transitions1(num_runs1);
-//     std::vector<double> transitions2(num_runs2);
+    std::vector<double> transitions1(num_runs1);
+    std::vector<double> transitions2(num_runs2);
 
-//     //First try 100 unit-time step simulation with 1000 agents
-//     for (size_t n = 0; n < num_runs1; ++n) {
-//         Model model;
+    //First try 100 unit-time step simulation with 1000 agents
+    for (size_t n = 0; n < num_runs1; ++n) {
+        Model model;
 
-//         model.populations[{mio::smm::Region(0), InfectionState::S}] = pop1;
-//         model.populations[{mio::smm::Region(0), InfectionState::E}] = 0;
-//         model.populations[{mio::smm::Region(0), InfectionState::C}] = 0;
-//         model.populations[{mio::smm::Region(0), InfectionState::I}] = 0;
-//         model.populations[{mio::smm::Region(0), InfectionState::R}] = 0;
-//         model.populations[{mio::smm::Region(0), InfectionState::D}] = 0;
+        model.populations[{mio::smm::Region(0), InfectionState::S}] = pop1;
+        model.populations[{mio::smm::Region(0), InfectionState::E}] = 0;
+        model.populations[{mio::smm::Region(0), InfectionState::C}] = 0;
+        model.populations[{mio::smm::Region(0), InfectionState::I}] = 0;
+        model.populations[{mio::smm::Region(0), InfectionState::R}] = 0;
+        model.populations[{mio::smm::Region(0), InfectionState::D}] = 0;
 
-//         model.populations[{mio::smm::Region(1), InfectionState::S}]       = 0;
-//         model.populations[{mio::smm::Region(1), InfectionState::E}]       = 0;
-//         model.populations[{mio::smm::Region(1), InfectionState::C}]       = 0;
-//         model.populations[{mio::smm::Region(1), InfectionState::I}]       = 0;
-//         model.populations[{mio::smm::Region(1), InfectionState::R}]       = 0;
-//         model.populations[{mio::smm::Region(1), InfectionState::D}]       = 0;
-//         model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
-//         model.get_rng().seed({static_cast<uint32_t>(n)});
-//         auto sim = mio::Simulation<double, Model>(model, 0.0, 1.0);
-//         sim.advance(1.);
-//         transitions1[n] = sim.get_model().populations[{mio::smm::Region(1), InfectionState::S}];
-//     }
+        model.populations[{mio::smm::Region(1), InfectionState::S}]       = 0;
+        model.populations[{mio::smm::Region(1), InfectionState::E}]       = 0;
+        model.populations[{mio::smm::Region(1), InfectionState::C}]       = 0;
+        model.populations[{mio::smm::Region(1), InfectionState::I}]       = 0;
+        model.populations[{mio::smm::Region(1), InfectionState::R}]       = 0;
+        model.populations[{mio::smm::Region(1), InfectionState::D}]       = 0;
+        model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
+        model.get_rng().seed({static_cast<uint32_t>(n)});
+        auto sim = mio::Simulation<double, Model>(model, 0.0, 1.0);
+        sim.advance(1.);
+        transitions1[n] = sim.get_model().populations[{mio::smm::Region(1), InfectionState::S}];
+    }
 
-//     //Then try 10000 unit-time step simulation with 10000 agents
-//     for (size_t n = 0; n < num_runs2; ++n) {
-//         Model model;
+    //Then try 10000 unit-time step simulation with 10000 agents
+    for (size_t n = 0; n < num_runs2; ++n) {
+        Model model;
 
-//         model.populations[{mio::smm::Region(0), InfectionState::S}] = pop2;
-//         model.populations[{mio::smm::Region(0), InfectionState::E}] = 0;
-//         model.populations[{mio::smm::Region(0), InfectionState::C}] = 0;
-//         model.populations[{mio::smm::Region(0), InfectionState::I}] = 0;
-//         model.populations[{mio::smm::Region(0), InfectionState::R}] = 0;
-//         model.populations[{mio::smm::Region(0), InfectionState::D}] = 0;
+        model.populations[{mio::smm::Region(0), InfectionState::S}] = pop2;
+        model.populations[{mio::smm::Region(0), InfectionState::E}] = 0;
+        model.populations[{mio::smm::Region(0), InfectionState::C}] = 0;
+        model.populations[{mio::smm::Region(0), InfectionState::I}] = 0;
+        model.populations[{mio::smm::Region(0), InfectionState::R}] = 0;
+        model.populations[{mio::smm::Region(0), InfectionState::D}] = 0;
 
-//         model.populations[{mio::smm::Region(1), InfectionState::S}]       = 0;
-//         model.populations[{mio::smm::Region(1), InfectionState::E}]       = 0;
-//         model.populations[{mio::smm::Region(1), InfectionState::C}]       = 0;
-//         model.populations[{mio::smm::Region(1), InfectionState::I}]       = 0;
-//         model.populations[{mio::smm::Region(1), InfectionState::R}]       = 0;
-//         model.populations[{mio::smm::Region(1), InfectionState::D}]       = 0;
-//         model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
-//         model.get_rng().seed({static_cast<uint32_t>(n)});
-//         auto sim = mio::Simulation<double, Model>(model, 0.0, 1.0);
-//         sim.advance(1.);
-//         transitions2[n] = sim.get_model().populations[{mio::smm::Region(1), InfectionState::S}];
-//     }
-//     //The number of transitions from region 0 to region 1 should be approx. rate * pop in region 0
-//     double rel_diff1 =
-//         std::abs(rate * pop1 - std::abs(std::accumulate(transitions1.begin(), transitions1.end(), 0.0) / num_runs1)) /
-//         (rate * pop1);
-//     double rel_diff2 =
-//         std::abs(rate * pop2 - std::abs(std::accumulate(transitions2.begin(), transitions2.end(), 0.0) / num_runs2)) /
-//         (rate * pop2);
+        model.populations[{mio::smm::Region(1), InfectionState::S}]       = 0;
+        model.populations[{mio::smm::Region(1), InfectionState::E}]       = 0;
+        model.populations[{mio::smm::Region(1), InfectionState::C}]       = 0;
+        model.populations[{mio::smm::Region(1), InfectionState::I}]       = 0;
+        model.populations[{mio::smm::Region(1), InfectionState::R}]       = 0;
+        model.populations[{mio::smm::Region(1), InfectionState::D}]       = 0;
+        model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
+        model.get_rng().seed({static_cast<uint32_t>(n)});
+        auto sim = mio::Simulation<double, Model>(model, 0.0, 1.0);
+        sim.advance(1.);
+        transitions2[n] = sim.get_model().populations[{mio::smm::Region(1), InfectionState::S}];
+    }
+    //The number of transitions from region 0 to region 1 should be approx. rate * pop in region 0
+    double rel_diff1 =
+        std::abs(rate * pop1 - std::abs(std::accumulate(transitions1.begin(), transitions1.end(), 0.0) / num_runs1)) /
+        (rate * pop1);
+    double rel_diff2 =
+        std::abs(rate * pop2 - std::abs(std::accumulate(transitions2.begin(), transitions2.end(), 0.0) / num_runs2)) /
+        (rate * pop2);
 
-//     EXPECT_GE(rel_diff1, rel_diff2);
-// }
+    EXPECT_GE(rel_diff1, rel_diff2);
+}
