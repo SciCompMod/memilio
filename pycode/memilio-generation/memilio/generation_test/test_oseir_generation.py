@@ -73,11 +73,10 @@ class TestOseirGeneration(unittest.TestCase):
         conf = ScannerConfig.from_dict(config_json)
 
         conf.source_file = self.project_path + \
-            "/pycode/memilio-generation/memilio/cpp/models/ode_seir/model.cpp"
+            "/cpp/models/ode_seir/model.cpp"
 
         # Could be any target folder
-        conf.target_folder = self.project_path + \
-            "/memilio/pycode/memilio-generation/../memilio-generation/memilio/generation_test"
+        conf.target_folder = self.test_dir.name
         self.scanner = Scanner(conf)
         self.ast = AST(conf)
 
