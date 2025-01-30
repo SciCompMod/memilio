@@ -400,7 +400,7 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
         mio::isecir::Model model_ide(std::move(init_transitions), total_population, deaths, num_agegroups);
 
         // Set parameters.
-        // Contact matrix; contact_matrix was already defined for ODE.
+        // contact_matrix was already defined for ODE.
         model_ide.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
         // To compare with the ODE model we use ExponentialSurvivalFunctions functions as TransitionDistributions.

@@ -68,10 +68,10 @@ def run_covid_inspired_scenario(result_dir, data_dir, start_date, simulation_tim
 
 def get_scale_contacts(files, reported_data_dir, start_date, simulation_time):
     """ Gets the scaling factor for the contacts so that the simulation results obtained with the IDE model match the
-    reported number of daily new transmissions (as calculated in load_data()).
+    reported number of daily new transmissions (as calculated in load_data() below).
 
     @param[in] file Expects file with IDE simulation results for flows. 
-    @param[in] data_dir Directory where RKI data is stored. 
+    @param[in] reported_data_dir Directory where RKI data is stored. 
     @param[in] start_date Start date of interest. 
     @param[in] simulation_time Number of days to be simulated.
     @returns scale_contacts Scaling factor for contacts to scale IDE results to RKI data.
@@ -201,7 +201,7 @@ def plot_daily_new_transmissions(files, reported_data_dir, start_date, simulatio
     @param[in] start_date Start date of the simulations.
     @param[in] simulation_time Duration of the simulation.
     @param[in] fileending String that further specifies filename of plot. 
-    @param[in] Directory where plot will be stored. If this is not set, the plot will not be stored. 
+    @param[in] save_dir Directory where plot will be stored. If this is not set, the plot will not be stored. 
     """
     # Read RKI data.
     datafile = os.path.join(
@@ -312,7 +312,7 @@ def plot_infectedsymptoms_deaths(
     @param[in] start_date Start date of the simulations.
     @param[in] simulation_time Duration of the simulation.
     @param[in] fileending String that further specifies filename of plot. 
-    @param[in] Directory where plot will be stored. If this is not set, the plot will not be stored. 
+    @param[in] save_dir Directory where plot will be stored. If this is not set, the plot will not be stored. 
     """
     # Define compartment_name and compartment_indices of InfectedSymptoms and Deaths in simulation results.
     compartment_names = ["InfectedSymptoms", "Deaths"]
@@ -421,7 +421,7 @@ def plot_icu(files, reported_data_dir, start_date, simulation_time, fileending="
     @param[in] start_date Start date of the simulations.
     @param[in] simulation_time Duration of the simulation.
     @param[in] fileending String that further specifies filename of plot. 
-    @param[in] Directory where plot will be stored. If this is not set, the plot will not be stored. 
+    @param[in] save_dir Directory where plot will be stored. If this is not set, the plot will not be stored. 
     """
 
     # Define compartment_name and compartment_index of InfectedCritical in simulation results.

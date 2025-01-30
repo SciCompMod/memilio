@@ -57,7 +57,7 @@ int main()
     /** Here, the parameter for the probability of transitioning from the ICU compartment to the Dead compartment 
      without age resolution is calculated based on the values in the Covasim paper (https://doi.org/10.1371/journal.pcbi.1009149).
     First, we calculate a weighted average time across the age groups.
-    If other probabilites than required are given, we calculate the right probabilities.
+    If other probabilities than required are given, we calculate the right probabilities.
     */
 
     // Age group sizes are calculated using table number 12411-04-02-4-B from www.regionalstatistik.de for the date 31.12.2020.

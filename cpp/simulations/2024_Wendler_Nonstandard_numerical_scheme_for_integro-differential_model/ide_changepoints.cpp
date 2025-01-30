@@ -39,7 +39,7 @@
 
 using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 
-// Used parameters
+// Parameters for the simulation.
 std::map<std::string, ScalarType> simulation_parameter = {
     {"t0", 0.},
     {"dt", 0.01},
@@ -89,7 +89,7 @@ mio::UncertainContactMatrix<ScalarType> scale_contact_matrix(ScalarType contact_
 }
 
 /**
-* @brief Function to compute the initial flows needed for the IDE model where we assume that we have a constant number 
+* @brief Function to compute the initial flows needed for the IDE model, where we assume that we have a constant number 
 * of new transmissions.  
 *
 * @returns TimeSeries containing intitial flows. 
@@ -286,7 +286,7 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ide_model(ScalarType contact
 mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType contact_scaling, ScalarType tmax,
                                        std::string save_dir = "")
 {
-    // Use ODE FlowModel.
+    // Use ODE FlowModel with one age group.
     mio::osecir::Model model_ode(1);
 
     // Set initial values for compartments.

@@ -77,7 +77,7 @@ def read_groundtruth(data_dir, ode_exponent, save_exponent, flows=False):
 
 def read_data(data_dir, ode_exponent, exponents_ide, flows=False):
     """ Read data into a dict, where the keys correspond to the respective model.
-    At the moment we are only storing results of the IDE model here. There
+    At the moment we are only storing results of the IDE model here. There,
     we have an array that contains all results for SECIHURD for all time points
     for each time step size that is investigated.
 
@@ -125,7 +125,7 @@ def compute_l2_norm(timeseries, timestep):
     """ Computes L2 norm of a time series.
 
     @param[in] timeseries Considered timeseries.
-    @param[in] Time step size. 
+    @param[in] timestep Time step size. 
     @returns Norm.
     """
     norm = np.sqrt(timestep * np.sum(timeseries**2))
@@ -137,7 +137,7 @@ def compute_relerror_norm_l2(groundtruth, results, save_exponent, timesteps_ide,
     from IDE for all compartments/flows.
 
     @param[in] groundtruth Result obtained with ODE model.
-    @param[in] results Results obtained with IDE model fordifferent time step sizes. 
+    @param[in] results Results obtained with IDE model for different time step sizes. 
     @param[in] save_exponent The results of the ODE model were saved using the step size 10^{-save_exponent}.
     @param[in] timesteps_ide List of time steps used in IDE simulations.
     @param[in] flows Bool that determines whether we consider flows or compartments. Default is False. 

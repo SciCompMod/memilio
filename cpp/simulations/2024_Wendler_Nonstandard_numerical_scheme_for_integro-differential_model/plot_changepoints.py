@@ -41,7 +41,7 @@ def plot_changepoint(files, fileending="", save_dir=""):
     # Define colors, we use helmholtzdarkblue, helmholtzclaim.
     colors = [(0, 40/255, 100/255), (20/255, 200/255, 255/255)]
     linestyles = ['-', '--']
-    # Add results to plot-
+    # Add results to plot.
     for file in range(len(files)):
         # Load data.
         h5file = h5py.File(str(files[file]) + '.h5', 'r')

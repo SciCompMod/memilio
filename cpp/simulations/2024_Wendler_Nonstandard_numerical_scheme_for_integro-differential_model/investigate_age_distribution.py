@@ -54,7 +54,7 @@ def get_df_daily(data_dir):
 
 def get_proportional_population_per_agegroup():
     """
-    Computed the proportion of each age group compared to the total population.
+    Computes the proportion of each age group compared to the total population.
     """
     # Population from Table 12411-04-02-4-B from regionalstatistik.de, data from 31.12.2020.
     population_per_agegroup = np.array(
