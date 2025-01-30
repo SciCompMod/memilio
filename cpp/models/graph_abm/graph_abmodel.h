@@ -70,9 +70,7 @@ public:
     {
         Base::m_persons.erase(Base::m_persons.begin() + pos);
         Base::m_activeness_statuses.erase(Base::m_activeness_statuses.begin() + pos);
-        if (Base::m_person_ids_equal_index) {
-            Base::m_person_ids_equal_index = false;
-        }
+        Base::m_person_ids_equal_index = false;
     }
 
     /** 

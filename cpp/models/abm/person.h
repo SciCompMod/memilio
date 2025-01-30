@@ -483,13 +483,13 @@ private:
         m_compliance; ///< Vector of compliance values for all #InterventionType%s. Values from 0 to 1.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
-    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
     CustomIndexArray<TestResult, TestType> m_test_results; ///< CustomIndexArray for TestResults.
     std::vector<int>
         m_assigned_location_model_ids; ///< Vector with model ids of the assigned locations. Only used in graph abm.
     PersonId m_person_id; ///< Unique identifier of a person.
-    uint32_t m_rng_index; ///< Index for PersonalRandomNumberGenerator.
     mio::Key<uint64_t> m_rng_key; ///< Key for PersonalRandomNumberGenerator
+    uint32_t m_rng_index; ///< Index for PersonalRandomNumberGenerator.
+    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
 };
 
 } // namespace abm
