@@ -19,12 +19,20 @@
 #############################################################################
 
 import os
+import sys
 import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
 
 from memilio.generation import Generator, Scanner, ScannerConfig, AST
+
+if sys.version_info >= (3, 9):
+    # For python 3.9 and newer
+    import importlib.resources as importlib_resources
+else:
+    # For older python versions
+    import importlib_resources
 
 
 class TestOseirGeneration(unittest.TestCase):
@@ -61,7 +69,25 @@ class TestOseirGeneration(unittest.TestCase):
 
         }
 
-        conf = ScannerConfig.from_dict(config_json)
+        pkg = importlib_resources.files("memilio.generation")
+        with importlib_resources.as_file(pkg.joinpath('../tools/config.json')) as path:
+            with open(path) as file:
+                conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
+
+        home_dir = os.path.expanduser("~")
+
+        relative_path = path.relative_to(home_dir)
+
+        user_specific_folder = relative_path.parts[0]
+
+        home_and_user_folder = os.path.join(home_dir, user_specific_folder)
+
+        conf.source_file = home_and_user_folder + \
+            "/memilio/cpp/models/ode_seir/model.cpp"
+
+        # Could be any target folder
+        conf.target_folder = home_and_user_folder + \
+            "/memilio/pycode/memilio-generation/../memilio-generation/memilio/tools"
         self.scanner = Scanner(conf)
         self.ast = AST(conf)
 
