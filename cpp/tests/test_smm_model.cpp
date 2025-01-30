@@ -200,8 +200,8 @@ TEST(TestSMMSimulation, stopsAtTmax)
     model.parameters.get<mio::smm::AdoptionRates<InfectionState>>()   = adoption_rates;
     model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
 
-    // //Simulate for 30 days
-    // auto sim = mio::Simulation<double, Model>(model, 0.0, 0.1);
+    //Simulate for 30 days
+    auto sim = mio::Simulation<double, Model>(model, 0.0, 0.1);
     // sim.advance(30.);
     // //As model populations are all zero only t0 and tmax should be logged
     // EXPECT_EQ(sim.get_result().get_num_time_points(), 2);
