@@ -399,7 +399,7 @@ public:
     }
 
     /**
-     * @brief Get this persons index that is used for the RandomNumberGenerator.
+     * @brief Get this Person's index that is used for the RandomNumberGenerator.
      * @see mio::abm::PersonalRandomNumberGenerator.
      */
     uint32_t get_rng_index()
