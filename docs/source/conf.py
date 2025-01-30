@@ -10,6 +10,7 @@ release = ''
 version = '1.3.0'
 
 import subprocess, os
+import memilio
 
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -28,6 +29,8 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx_copybutton',
     'breathe',
+    'exhale',
+    'hoverxref.extension'
 ]
 
 intersphinx_mapping = {
@@ -40,6 +43,16 @@ templates_path = ['_templates']
 
 breathe_projects = {"MEmilio": "../xml"}
 breathe_default_project = "MEmilio"
+
+exhale_args = {
+     "containmentFolder":   "./api",
+     "rootFileName":        "library_root.rst",
+     "doxygenStripFromPath":    "..",
+     "rootFileTitle":       "C++ API",
+     "createTreeView":      True,
+     "contentsDirectives":    False,
+}
+hoverxref_auto_ref = True
 
 # -- Options for HTML output
 
