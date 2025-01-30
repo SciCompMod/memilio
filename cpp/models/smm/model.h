@@ -25,21 +25,23 @@
 #include "smm/parameters.h"
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
+#include "memilio/geography/regions.h"
 
 namespace mio
 {
 namespace smm
 {
 template <size_t regions, class Status>
-class Model : public mio::CompartmentalModel<ScalarType, Status, mio::Populations<ScalarType, Region, Status>,
-                                             ParametersBase<Status>>
+class Model
+    : public mio::CompartmentalModel<ScalarType, Status, mio::Populations<ScalarType, mio::regions::Region, Status>,
+                                     ParametersBase<Status>>
 {
-    using Base = mio::CompartmentalModel<ScalarType, Status, mio::Populations<ScalarType, Region, Status>,
+    using Base = mio::CompartmentalModel<ScalarType, Status, mio::Populations<ScalarType, mio::regions::Region, Status>,
                                          ParametersBase<Status>>;
 
 public:
     Model()
-        : Base(typename Base::Populations({static_cast<Region>(regions), Status::Count}, 0.),
+        : Base(typename Base::Populations({static_cast<mio::regions::Region>(regions), Status::Count}, 0.),
                typename Base::ParameterSet())
     {
     }
@@ -52,7 +54,6 @@ public:
      */
     ScalarType evaluate(const AdoptionRate<Status>& rate, const Eigen::VectorXd& x) const
     {
-        assert(rate.influences.size() == rate.factors.size());
         const auto& pop   = this->populations;
         const auto source = pop.get_flat_index({rate.region, rate.from});
         // determine order and calculate rate
@@ -67,7 +68,8 @@ public:
             // accumulate influences
             ScalarType influences = 0.0;
             for (size_t i = 0; i < rate.influences.size(); i++) {
-                influences += rate.factors[i] * x[pop.get_flat_index({rate.region, rate.influences[i]})];
+                influences +=
+                    rate.influences[i].factor * x[pop.get_flat_index({rate.region, rate.influences[i].status})];
             }
             return (N > 0) ? (rate.factor * x[source] * influences / N) : 0;
         }

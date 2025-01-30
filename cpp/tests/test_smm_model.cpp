@@ -26,6 +26,7 @@
 #include "smm/parameters.h"
 #include "smm/simulation.h"
 #include "abm_helpers.h"
+#include "memilio/epidemiology/adoption_rate.h"
 #include <iostream>
 #include <numeric>
 #include <vector>
@@ -49,22 +50,21 @@ TEST(TestSMM, evaluateAdoptionRate)
     Model model;
 
     //Set adoption rates
-    std::vector<mio::smm::AdoptionRate<InfectionState>> adoption_rates;
+    std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
     adoption_rates.push_back({InfectionState::S,
                               InfectionState::E,
-                              mio::smm::Region(0),
+                              mio::regions::Region(0),
                               0.1,
-                              {InfectionState::C, InfectionState::I},
-                              {1, 0.5}});
-    adoption_rates.push_back({InfectionState::E, InfectionState::C, mio::smm::Region(0), 0.2, {}, {}});
+                              {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
+    adoption_rates.push_back({InfectionState::E, InfectionState::C, mio::regions::Region(0), 0.2, {}});
 
     //Initialize model populations
-    model.populations[{mio::smm::Region(0), InfectionState::S}] = 50;
-    model.populations[{mio::smm::Region(0), InfectionState::E}] = 10;
-    model.populations[{mio::smm::Region(0), InfectionState::C}] = 5;
-    model.populations[{mio::smm::Region(0), InfectionState::I}] = 0;
-    model.populations[{mio::smm::Region(0), InfectionState::R}] = 0;
-    model.populations[{mio::smm::Region(0), InfectionState::D}] = 0;
+    model.populations[{mio::regions::Region(0), InfectionState::S}] = 50;
+    model.populations[{mio::regions::Region(0), InfectionState::E}] = 10;
+    model.populations[{mio::regions::Region(0), InfectionState::C}] = 5;
+    model.populations[{mio::regions::Region(0), InfectionState::I}] = 0;
+    model.populations[{mio::regions::Region(0), InfectionState::R}] = 0;
+    model.populations[{mio::regions::Region(0), InfectionState::D}] = 0;
 
     EXPECT_EQ(model.evaluate(adoption_rates[0], model.populations.get_compartments()), 5. / 13.);
     EXPECT_EQ(model.evaluate(adoption_rates[1], model.populations.get_compartments()), 2.);
@@ -77,23 +77,23 @@ TEST(TestSMM, evaluateTransitionRate)
 
     Model model;
     //Initialize model populations
-    model.populations[{mio::smm::Region(0), InfectionState::S}] = 50;
-    model.populations[{mio::smm::Region(0), InfectionState::E}] = 10;
-    model.populations[{mio::smm::Region(0), InfectionState::C}] = 5;
-    model.populations[{mio::smm::Region(0), InfectionState::I}] = 0;
-    model.populations[{mio::smm::Region(0), InfectionState::R}] = 0;
-    model.populations[{mio::smm::Region(0), InfectionState::D}] = 0;
+    model.populations[{mio::regions::Region(0), InfectionState::S}] = 50;
+    model.populations[{mio::regions::Region(0), InfectionState::E}] = 10;
+    model.populations[{mio::regions::Region(0), InfectionState::C}] = 5;
+    model.populations[{mio::regions::Region(0), InfectionState::I}] = 0;
+    model.populations[{mio::regions::Region(0), InfectionState::R}] = 0;
+    model.populations[{mio::regions::Region(0), InfectionState::D}] = 0;
 
-    model.populations[{mio::smm::Region(1), InfectionState::S}] = 55;
-    model.populations[{mio::smm::Region(1), InfectionState::E}] = 10;
-    model.populations[{mio::smm::Region(1), InfectionState::C}] = 0;
-    model.populations[{mio::smm::Region(1), InfectionState::I}] = 0;
-    model.populations[{mio::smm::Region(1), InfectionState::R}] = 0;
-    model.populations[{mio::smm::Region(1), InfectionState::D}] = 0;
+    model.populations[{mio::regions::Region(1), InfectionState::S}] = 55;
+    model.populations[{mio::regions::Region(1), InfectionState::E}] = 10;
+    model.populations[{mio::regions::Region(1), InfectionState::C}] = 0;
+    model.populations[{mio::regions::Region(1), InfectionState::I}] = 0;
+    model.populations[{mio::regions::Region(1), InfectionState::R}] = 0;
+    model.populations[{mio::regions::Region(1), InfectionState::D}] = 0;
     //Set transition rates
     std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates;
-    transition_rates.push_back({InfectionState::S, mio::smm::Region(0), mio::smm::Region(1), 0.01});
-    transition_rates.push_back({InfectionState::E, mio::smm::Region(1), mio::smm::Region(0), 0.1});
+    transition_rates.push_back({InfectionState::S, mio::regions::Region(0), mio::regions::Region(1), 0.01});
+    transition_rates.push_back({InfectionState::E, mio::regions::Region(1), mio::regions::Region(0), 0.1});
 
     EXPECT_EQ(model.evaluate(transition_rates[0], model.populations.get_compartments()), 0.5);
     EXPECT_EQ(model.evaluate(transition_rates[1], model.populations.get_compartments()), 1.);
@@ -106,36 +106,35 @@ TEST(TestSMMSimulation, advance)
 
     Model model;
     //Initialize model populations
-    model.populations[{mio::smm::Region(0), InfectionState::S}] = 1;
-    model.populations[{mio::smm::Region(0), InfectionState::E}] = 0;
-    model.populations[{mio::smm::Region(0), InfectionState::C}] = 0;
-    model.populations[{mio::smm::Region(0), InfectionState::I}] = 1;
-    model.populations[{mio::smm::Region(0), InfectionState::R}] = 0;
-    model.populations[{mio::smm::Region(0), InfectionState::D}] = 0;
+    model.populations[{mio::regions::Region(0), InfectionState::S}] = 1;
+    model.populations[{mio::regions::Region(0), InfectionState::E}] = 0;
+    model.populations[{mio::regions::Region(0), InfectionState::C}] = 0;
+    model.populations[{mio::regions::Region(0), InfectionState::I}] = 1;
+    model.populations[{mio::regions::Region(0), InfectionState::R}] = 0;
+    model.populations[{mio::regions::Region(0), InfectionState::D}] = 0;
 
-    model.populations[{mio::smm::Region(1), InfectionState::S}] = 0;
-    model.populations[{mio::smm::Region(1), InfectionState::E}] = 0;
-    model.populations[{mio::smm::Region(1), InfectionState::C}] = 0;
-    model.populations[{mio::smm::Region(1), InfectionState::I}] = 0;
-    model.populations[{mio::smm::Region(1), InfectionState::R}] = 1;
-    model.populations[{mio::smm::Region(1), InfectionState::D}] = 0;
+    model.populations[{mio::regions::Region(1), InfectionState::S}] = 0;
+    model.populations[{mio::regions::Region(1), InfectionState::E}] = 0;
+    model.populations[{mio::regions::Region(1), InfectionState::C}] = 0;
+    model.populations[{mio::regions::Region(1), InfectionState::I}] = 0;
+    model.populations[{mio::regions::Region(1), InfectionState::R}] = 1;
+    model.populations[{mio::regions::Region(1), InfectionState::D}] = 0;
     //Set adoption and transition rates
-    std::vector<mio::smm::AdoptionRate<InfectionState>> adoption_rates;
+    std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
     std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates;
 
     adoption_rates.push_back({InfectionState::S,
                               InfectionState::E,
-                              mio::smm::Region(0),
+                              mio::regions::Region(0),
                               0.1,
-                              {InfectionState::C, InfectionState::I},
-                              {1, 0.5}});
-    adoption_rates.push_back({InfectionState::E, InfectionState::C, mio::smm::Region(0), 1.0 / 5., {}, {}});
-    adoption_rates.push_back({InfectionState::C, InfectionState::R, mio::smm::Region(0), 0.2 / 3., {}, {}});
-    adoption_rates.push_back({InfectionState::C, InfectionState::I, mio::smm::Region(0), 0.8 / 3., {}, {}});
-    adoption_rates.push_back({InfectionState::I, InfectionState::R, mio::smm::Region(0), 0.99 / 5., {}, {}});
-    adoption_rates.push_back({InfectionState::I, InfectionState::D, mio::smm::Region(0), 0.01 / 5., {}, {}});
+                              {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
+    adoption_rates.push_back({InfectionState::E, InfectionState::C, mio::regions::Region(0), 1.0 / 5., {}});
+    adoption_rates.push_back({InfectionState::C, InfectionState::R, mio::regions::Region(0), 0.2 / 3., {}});
+    adoption_rates.push_back({InfectionState::C, InfectionState::I, mio::regions::Region(0), 0.8 / 3., {}});
+    adoption_rates.push_back({InfectionState::I, InfectionState::R, mio::regions::Region(0), 0.99 / 5., {}});
+    adoption_rates.push_back({InfectionState::I, InfectionState::D, mio::regions::Region(0), 0.01 / 5., {}});
 
-    transition_rates.push_back({InfectionState::R, mio::smm::Region(1), mio::smm::Region(0), 0.01});
+    transition_rates.push_back({InfectionState::R, mio::regions::Region(1), mio::regions::Region(0), 0.01});
 
     model.parameters.get<mio::smm::AdoptionRates<InfectionState>>()   = adoption_rates;
     model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
@@ -185,17 +184,16 @@ TEST(TestSMMSimulation, stopsAtTmax)
     Model model;
 
     //Set adoption and spatial transition rates
-    std::vector<mio::smm::AdoptionRate<InfectionState>> adoption_rates;
+    std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
     std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates;
 
     adoption_rates.push_back({InfectionState::S,
                               InfectionState::E,
-                              mio::smm::Region(0),
+                              mio::regions::Region(0),
                               0.1,
-                              {InfectionState::C, InfectionState::I},
-                              {1, 0.5}});
+                              {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
 
-    transition_rates.push_back({InfectionState::R, mio::smm::Region(1), mio::smm::Region(0), 0.01});
+    transition_rates.push_back({InfectionState::R, mio::regions::Region(1), mio::regions::Region(0), 0.01});
 
     model.parameters.get<mio::smm::AdoptionRates<InfectionState>>()   = adoption_rates;
     model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
@@ -221,7 +219,7 @@ TEST(TestSMMSimulation, covergence)
 
     //Only set one spatial transition rate
     std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates(
-        1, {InfectionState::S, mio::smm::Region(0), mio::smm::Region(1), rate});
+        1, {InfectionState::S, mio::regions::Region(0), mio::regions::Region(1), rate});
 
     std::vector<double> transitions1(num_runs1);
     std::vector<double> transitions2(num_runs2);
@@ -230,48 +228,48 @@ TEST(TestSMMSimulation, covergence)
     for (size_t n = 0; n < num_runs1; ++n) {
         Model model;
 
-        model.populations[{mio::smm::Region(0), InfectionState::S}] = pop1;
-        model.populations[{mio::smm::Region(0), InfectionState::E}] = 0;
-        model.populations[{mio::smm::Region(0), InfectionState::C}] = 0;
-        model.populations[{mio::smm::Region(0), InfectionState::I}] = 0;
-        model.populations[{mio::smm::Region(0), InfectionState::R}] = 0;
-        model.populations[{mio::smm::Region(0), InfectionState::D}] = 0;
+        model.populations[{mio::regions::Region(0), InfectionState::S}] = pop1;
+        model.populations[{mio::regions::Region(0), InfectionState::E}] = 0;
+        model.populations[{mio::regions::Region(0), InfectionState::C}] = 0;
+        model.populations[{mio::regions::Region(0), InfectionState::I}] = 0;
+        model.populations[{mio::regions::Region(0), InfectionState::R}] = 0;
+        model.populations[{mio::regions::Region(0), InfectionState::D}] = 0;
 
-        model.populations[{mio::smm::Region(1), InfectionState::S}]       = 0;
-        model.populations[{mio::smm::Region(1), InfectionState::E}]       = 0;
-        model.populations[{mio::smm::Region(1), InfectionState::C}]       = 0;
-        model.populations[{mio::smm::Region(1), InfectionState::I}]       = 0;
-        model.populations[{mio::smm::Region(1), InfectionState::R}]       = 0;
-        model.populations[{mio::smm::Region(1), InfectionState::D}]       = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::S}]   = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::E}]   = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::C}]   = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::I}]   = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::R}]   = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::D}]   = 0;
         model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
         model.get_rng().seed({static_cast<uint32_t>(n)});
         auto sim = mio::Simulation<double, Model>(model, 0.0, 1.0);
         sim.advance(1.);
-        transitions1[n] = sim.get_model().populations[{mio::smm::Region(1), InfectionState::S}];
+        transitions1[n] = sim.get_model().populations[{mio::regions::Region(1), InfectionState::S}];
     }
 
     //Then try 10000 unit-time step simulation with 10000 agents
     for (size_t n = 0; n < num_runs2; ++n) {
         Model model;
 
-        model.populations[{mio::smm::Region(0), InfectionState::S}] = pop2;
-        model.populations[{mio::smm::Region(0), InfectionState::E}] = 0;
-        model.populations[{mio::smm::Region(0), InfectionState::C}] = 0;
-        model.populations[{mio::smm::Region(0), InfectionState::I}] = 0;
-        model.populations[{mio::smm::Region(0), InfectionState::R}] = 0;
-        model.populations[{mio::smm::Region(0), InfectionState::D}] = 0;
+        model.populations[{mio::regions::Region(0), InfectionState::S}] = pop2;
+        model.populations[{mio::regions::Region(0), InfectionState::E}] = 0;
+        model.populations[{mio::regions::Region(0), InfectionState::C}] = 0;
+        model.populations[{mio::regions::Region(0), InfectionState::I}] = 0;
+        model.populations[{mio::regions::Region(0), InfectionState::R}] = 0;
+        model.populations[{mio::regions::Region(0), InfectionState::D}] = 0;
 
-        model.populations[{mio::smm::Region(1), InfectionState::S}]       = 0;
-        model.populations[{mio::smm::Region(1), InfectionState::E}]       = 0;
-        model.populations[{mio::smm::Region(1), InfectionState::C}]       = 0;
-        model.populations[{mio::smm::Region(1), InfectionState::I}]       = 0;
-        model.populations[{mio::smm::Region(1), InfectionState::R}]       = 0;
-        model.populations[{mio::smm::Region(1), InfectionState::D}]       = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::S}]   = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::E}]   = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::C}]   = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::I}]   = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::R}]   = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::D}]   = 0;
         model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
         model.get_rng().seed({static_cast<uint32_t>(n)});
         auto sim = mio::Simulation<double, Model>(model, 0.0, 1.0);
         sim.advance(1.);
-        transitions2[n] = sim.get_model().populations[{mio::smm::Region(1), InfectionState::S}];
+        transitions2[n] = sim.get_model().populations[{mio::regions::Region(1), InfectionState::S}];
     }
     //The number of transitions from region 0 to region 1 should be approx. rate * pop in region 0
     double rel_diff1 =

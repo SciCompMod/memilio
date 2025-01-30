@@ -22,33 +22,19 @@
 #define MIO_SMM_PARAMETERS_H
 
 #include "memilio/config.h"
-#include "memilio/utils/index.h"
+#include "memilio/geography/regions.h"
 #include "memilio/utils/parameter_set.h"
+#include "memilio/epidemiology/adoption_rate.h"
 
 namespace mio
 {
 namespace smm
 {
 
-struct Region : public mio::Index<Region> {
-    Region(const size_t num_regions)
-        : mio::Index<Region>(num_regions)
-    {
-    }
-};
-
-// the AdoptionRate is considered to be of second order, if there are any "influences" with corresponding "factors".
-// "from" is always an influence, scaled by "factor".
-template <class Status>
-struct AdoptionRate {
-    Status from; // i
-    Status to; // j
-    Region region; // k
-    ScalarType factor; // gammahat_{ij}^k
-    std::vector<Status> influences;
-    std::vector<ScalarType> factors;
-};
-
+/**
+ * @brief A vector of AdoptionRate%s, see mio::AdoptionRate
+ * @tparam Status An infection state enum.
+ */
 template <class Status>
 struct AdoptionRates {
     using Type = std::vector<AdoptionRate<Status>>;
@@ -65,8 +51,8 @@ struct AdoptionRates {
 template <class Status>
 struct TransitionRate {
     Status status; // i
-    Region from; // k
-    Region to; // l
+    mio::regions::Region from; // k
+    mio::regions::Region to; // l
     ScalarType factor; // lambda_i^{kl}
 };
 

@@ -24,6 +24,7 @@
 #include "memilio/math/eigen.h"
 #include "d_abm/parameters.h"
 #include "memilio/utils/random_number_generator.h"
+#include "memilio/epidemiology/adoption_rate.h"
 #include <string>
 #include <vector>
 
@@ -50,7 +51,7 @@ public:
         Status status;
     };
 
-    QuadWellModel(const std::vector<Agent>& agents, const typename mio::dabm::AdoptionRates<Status>::Type& rates,
+    QuadWellModel(const std::vector<Agent>& agents, const std::vector<mio::AdoptionRate<Status>>& rates,
                   double contact_radius = 0.4, double sigma = 0.4, std::vector<Status> non_moving_states = {})
         : populations(agents)
         , m_contact_radius(contact_radius)
@@ -94,8 +95,8 @@ public:
                     if (is_contact(agent, contact)) {
                         num_contacts++;
                         for (size_t i = 0; i < adoption_rate.influences.size(); i++) {
-                            if (contact.status == adoption_rate.influences[i]) {
-                                influences += adoption_rate.factors[i];
+                            if (contact.status == adoption_rate.influences[i].status) {
+                                influences += adoption_rate.influences[i].factor;
                             }
                         }
                     }
@@ -151,7 +152,7 @@ public:
         return m_number_transitions;
     }
 
-    std::map<std::tuple<mio::dabm::Region, Status, Status>, mio::dabm::AdoptionRate<Status>>& get_adoption_rates()
+    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<Status>>& get_adoption_rates()
     {
         return m_adoption_rates;
     }
@@ -189,7 +190,7 @@ private:
         return -2 <= p[0] && p[0] <= 2 && -2 <= p[1] && p[1] <= 2;
     }
 
-    std::map<std::tuple<mio::dabm::Region, Status, Status>, mio::dabm::AdoptionRate<Status>> m_adoption_rates;
+    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<Status>> m_adoption_rates;
     double m_contact_radius;
     double m_sigma;
     std::vector<Status> m_non_moving_states;

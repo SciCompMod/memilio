@@ -23,6 +23,7 @@
 #include "d_abm/parameters.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/data/analyze_result.h"
+#include "memilio/epidemiology/adoption_rate.h"
 #include <vector>
 
 enum class InfectionState
@@ -55,19 +56,18 @@ int main()
     }
 
     //Set adoption rates
-    std::vector<mio::dabm::AdoptionRate<InfectionState>> adoption_rates;
+    std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
     for (size_t region = 0; region < 4; ++region) {
         adoption_rates.push_back({InfectionState::S,
                                   InfectionState::E,
-                                  mio::dabm::Region(region),
+                                  mio::regions::Region(region),
                                   0.1,
-                                  {InfectionState::C, InfectionState::I},
-                                  {1, 0.5}});
-        adoption_rates.push_back({InfectionState::E, InfectionState::C, mio::dabm::Region(region), 1.0 / 5., {}, {}});
-        adoption_rates.push_back({InfectionState::C, InfectionState::R, mio::dabm::Region(region), 0.2 / 3., {}, {}});
-        adoption_rates.push_back({InfectionState::C, InfectionState::I, mio::dabm::Region(region), 0.8 / 3., {}, {}});
-        adoption_rates.push_back({InfectionState::I, InfectionState::R, mio::dabm::Region(region), 0.99 / 5., {}, {}});
-        adoption_rates.push_back({InfectionState::I, InfectionState::D, mio::dabm::Region(region), 0.01 / 5., {}, {}});
+                                  {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
+        adoption_rates.push_back({InfectionState::E, InfectionState::C, mio::regions::Region(region), 1.0 / 5., {}});
+        adoption_rates.push_back({InfectionState::C, InfectionState::R, mio::regions::Region(region), 0.2 / 3., {}});
+        adoption_rates.push_back({InfectionState::C, InfectionState::I, mio::regions::Region(region), 0.8 / 3., {}});
+        adoption_rates.push_back({InfectionState::I, InfectionState::R, mio::regions::Region(region), 0.99 / 5., {}});
+        adoption_rates.push_back({InfectionState::I, InfectionState::D, mio::regions::Region(region), 0.01 / 5., {}});
     }
 
     //Set interaction radius and noise term of the diffusion process

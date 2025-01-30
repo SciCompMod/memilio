@@ -21,4 +21,7 @@
 
 namespace mio
 {
+namespace dabm
+{
+} // namespace dabm
 } // namespace mio

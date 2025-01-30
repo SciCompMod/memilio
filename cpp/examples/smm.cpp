@@ -21,6 +21,7 @@
 #include "smm/simulation.h"
 #include "smm/parameters.h"
 #include "memilio/data/analyze_result.h"
+#include "memilio/epidemiology/adoption_rate.h"
 
 enum class InfectionState
 {
@@ -46,30 +47,29 @@ int main()
     Model model;
     //Population are distributed uniformly to the four regions
     for (size_t r = 0; r < num_regions; ++r) {
-        model.populations[{mio::smm::Region(r), InfectionState::S}] =
+        model.populations[{mio::regions::Region(r), InfectionState::S}] =
             (1000 - numE - numC - numI - numR - numD) / num_regions;
-        model.populations[{mio::smm::Region(r), InfectionState::E}] = numE / num_regions;
-        model.populations[{mio::smm::Region(r), InfectionState::C}] = numC / num_regions;
-        model.populations[{mio::smm::Region(r), InfectionState::I}] = numI / num_regions;
-        model.populations[{mio::smm::Region(r), InfectionState::R}] = numR / num_regions;
-        model.populations[{mio::smm::Region(r), InfectionState::D}] = numD / num_regions;
+        model.populations[{mio::regions::Region(r), InfectionState::E}] = numE / num_regions;
+        model.populations[{mio::regions::Region(r), InfectionState::C}] = numC / num_regions;
+        model.populations[{mio::regions::Region(r), InfectionState::I}] = numI / num_regions;
+        model.populations[{mio::regions::Region(r), InfectionState::R}] = numR / num_regions;
+        model.populations[{mio::regions::Region(r), InfectionState::D}] = numD / num_regions;
     }
 
     //Set infection state adoption and spatial transition rates
-    std::vector<mio::smm::AdoptionRate<InfectionState>> adoption_rates;
+    std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
     std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates;
     for (size_t r = 0; r < num_regions; ++r) {
         adoption_rates.push_back({InfectionState::S,
                                   InfectionState::E,
-                                  mio::smm::Region(r),
+                                  mio::regions::Region(r),
                                   0.1,
-                                  {InfectionState::C, InfectionState::I},
-                                  {1, 0.5}});
-        adoption_rates.push_back({InfectionState::E, InfectionState::C, mio::smm::Region(r), 1.0 / 5., {}, {}});
-        adoption_rates.push_back({InfectionState::C, InfectionState::R, mio::smm::Region(r), 0.2 / 3., {}, {}});
-        adoption_rates.push_back({InfectionState::C, InfectionState::I, mio::smm::Region(r), 0.8 / 3., {}, {}});
-        adoption_rates.push_back({InfectionState::I, InfectionState::R, mio::smm::Region(r), 0.99 / 5., {}, {}});
-        adoption_rates.push_back({InfectionState::I, InfectionState::D, mio::smm::Region(r), 0.01 / 5., {}, {}});
+                                  {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
+        adoption_rates.push_back({InfectionState::E, InfectionState::C, mio::regions::Region(r), 1.0 / 5., {}});
+        adoption_rates.push_back({InfectionState::C, InfectionState::R, mio::regions::Region(r), 0.2 / 3., {}});
+        adoption_rates.push_back({InfectionState::C, InfectionState::I, mio::regions::Region(r), 0.8 / 3., {}});
+        adoption_rates.push_back({InfectionState::I, InfectionState::R, mio::regions::Region(r), 0.99 / 5., {}});
+        adoption_rates.push_back({InfectionState::I, InfectionState::D, mio::regions::Region(r), 0.01 / 5., {}});
     }
 
     //Agents in infection state D do not transition
@@ -77,8 +77,10 @@ int main()
         for (size_t i = 0; i < num_regions; ++i) {
             for (size_t j = 0; j < num_regions; ++j)
                 if (i != j) {
-                    transition_rates.push_back({InfectionState(s), mio::smm::Region(i), mio::smm::Region(j), 0.01});
-                    transition_rates.push_back({InfectionState(s), mio::smm::Region(j), mio::smm::Region(i), 0.01});
+                    transition_rates.push_back(
+                        {InfectionState(s), mio::regions::Region(i), mio::regions::Region(j), 0.01});
+                    transition_rates.push_back(
+                        {InfectionState(s), mio::regions::Region(j), mio::regions::Region(i), 0.01});
                 }
         }
     }

@@ -23,6 +23,7 @@
 #include "d_abm/model.h"
 #include "d_abm/simulation.h"
 #include "memilio/utils/random_number_generator.h"
+#include "memilio/geography/regions.h"
 #include "abm_helpers.h"
 #include <cstddef>
 #include <gtest/gtest.h>
@@ -65,16 +66,14 @@ TEST(TestQuadWell, adoptionRate)
     QuadWellModel<InfectionState>::Agent a4{Eigen::Vector2d{-1.1, 1}, InfectionState::I};
     QuadWellModel<InfectionState> qw({a1, a2, a3}, {{InfectionState::S,
                                                      InfectionState::E,
-                                                     mio::dabm::Region(0),
+                                                     mio::regions::Region(0),
                                                      0.1,
-                                                     {InfectionState::C, InfectionState::I},
-                                                     {1, 0.5}}});
+                                                     {{InfectionState::C, 1}, {InfectionState::I, 0.5}}}});
     QuadWellModel<InfectionState> qw1({a1, a2, a3, a4}, {{InfectionState::S,
                                                           InfectionState::E,
-                                                          mio::dabm::Region(0),
+                                                          mio::regions::Region(0),
                                                           0.1,
-                                                          {InfectionState::C, InfectionState::I},
-                                                          {1, 0.5}}});
+                                                          {{InfectionState::C, 1}, {InfectionState::I, 0.5}}}});
     EXPECT_EQ(qw.adoption_rate(a1, InfectionState::E), 0.025);
     EXPECT_EQ(qw.adoption_rate(a2, InfectionState::E), 0.0);
     EXPECT_EQ(qw1.adoption_rate(a1, InfectionState::E), 1. / 30.);
@@ -111,19 +110,18 @@ TEST(TestDABMSimulation, advance)
     QuadWellModel<InfectionState>::Agent a1{Eigen::Vector2d{-1, 1}, InfectionState::S};
     QuadWellModel<InfectionState>::Agent a2{Eigen::Vector2d{-1, 1}, InfectionState::R};
     QuadWellModel<InfectionState>::Agent a3{Eigen::Vector2d{-1, 1}, InfectionState::I};
-    std::vector<mio::dabm::AdoptionRate<InfectionState>> adoption_rates;
+    std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
     for (size_t region = 0; region < 4; ++region) {
         adoption_rates.push_back({InfectionState::S,
                                   InfectionState::E,
-                                  mio::dabm::Region(region),
+                                  mio::regions::Region(region),
                                   0.1,
-                                  {InfectionState::C, InfectionState::I},
-                                  {1, 0.5}});
-        adoption_rates.push_back({InfectionState::E, InfectionState::C, mio::dabm::Region(region), 1.0 / 5., {}, {}});
-        adoption_rates.push_back({InfectionState::C, InfectionState::R, mio::dabm::Region(region), 0.2 / 3., {}, {}});
-        adoption_rates.push_back({InfectionState::C, InfectionState::I, mio::dabm::Region(region), 0.8 / 3., {}, {}});
-        adoption_rates.push_back({InfectionState::I, InfectionState::R, mio::dabm::Region(region), 0.99 / 5., {}, {}});
-        adoption_rates.push_back({InfectionState::I, InfectionState::D, mio::dabm::Region(region), 0.01 / 5., {}, {}});
+                                  {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
+        adoption_rates.push_back({InfectionState::E, InfectionState::C, mio::regions::Region(region), 1.0 / 5., {}});
+        adoption_rates.push_back({InfectionState::C, InfectionState::R, mio::regions::Region(region), 0.2 / 3., {}});
+        adoption_rates.push_back({InfectionState::C, InfectionState::I, mio::regions::Region(region), 0.8 / 3., {}});
+        adoption_rates.push_back({InfectionState::I, InfectionState::R, mio::regions::Region(region), 0.99 / 5., {}});
+        adoption_rates.push_back({InfectionState::I, InfectionState::D, mio::regions::Region(region), 0.01 / 5., {}});
     }
     Model model({a1, a2, a3}, adoption_rates, 0.4, 0.0, {InfectionState::D});
     auto sim = mio::Simulation<double, Model>(model, 0.0, 0.1);
