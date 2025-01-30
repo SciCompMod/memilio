@@ -4,7 +4,7 @@
 **MEmilio** is a framework that ..
 
 Check out the :doc:`usage` section for further information, including
-how to :ref:`installation` the project.
+how to :hoverxref:`installation` the project.
 
 .. note::
 

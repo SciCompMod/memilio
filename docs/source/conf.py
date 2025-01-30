@@ -28,6 +28,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx_copybutton',
     'breathe',
+    'hoverxref.extension',
 ]
 
 intersphinx_mapping = {
