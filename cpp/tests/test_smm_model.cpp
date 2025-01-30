@@ -202,7 +202,7 @@ TEST(TestSMMSimulation, stopsAtTmax)
 
     //Simulate for 30 days
     auto sim = mio::Simulation<double, Model>(model, 0.0, 0.1);
-    // sim.advance(30.);
+    sim.advance(30.);
     // //As model populations are all zero only t0 and tmax should be logged
     // EXPECT_EQ(sim.get_result().get_num_time_points(), 2);
     // EXPECT_EQ(sim.get_result().get_last_time(), 30.);
