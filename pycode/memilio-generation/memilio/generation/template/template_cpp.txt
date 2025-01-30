@@ -30,26 +30,31 @@ PYBIND11_MODULE(_simulation_${python_module_name}, m)
     ${population_enums}
 
     ${parameterset_indexing}
-    pymio::bind_ParameterSet<${namespace}${parameterset}>(m, "${parameterset}");
+    pymio::bind_ParameterSet<${namespace}${parameterset}<${ScalarType}>, pymio::EnablePickling::Required>(m, "${parameterset}");
 
     ${parameterset_wrapper}
-    using Populations = ${population};
-    pymio::bind_Population(m, "Population", mio::Tag<${namespace}${model_class_name}::Populations>{});
-    ${age_group}
+   
+    pymio::bind_Population(m, "Populations", mio::Tag<${namespace}${model_class_name}<${ScalarType}>::${population}>{});
+   
     pymio::bind_CompartmentalModel<${model_base_templates}>(m, "${model_class_name}Base");
-    py::class_<${namespace}${model_class_name}, ${model_base}>(m, "${model_class_name}")
+    py::class_<${namespace}${model_class_name}<${ScalarType}>, pymio::EnablePickling::Required, ${model_base_templates}>(m, "${model_class_name}");
+    
     ${model_init}
 
     ${simulation}
+    ${draw_sample}
+    m.def("interpolate_simulation_result",
+        static_cast<mio::TimeSeries<${ScalarType}> (*)(const mio::TimeSeries<${ScalarType}>&, const ${ScalarType})>(
+            &mio::interpolate_simulation_result),
+        py::arg("ts"), py::arg("abs_tol") = 1e-14);
 
-    m.def(
-        "simulate",
-        [](double t0, double tmax, double dt, const ${namespace}${model_class_name}& model) {
-            return mio::simulate(t0, tmax, dt, model);
-        },
-        "Simulates a ${model_class_name} from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+    m.def("interpolate_simulation_result",
+        static_cast<mio::TimeSeries<${ScalarType}> (*)(const mio::TimeSeries<${ScalarType}>&, const std::vector<${ScalarType}>&)>(
+            &mio::interpolate_simulation_result),
+        py::arg("ts"), py::arg("interpolation_times"));
+
+    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<${ScalarType}>>);
     
-    ${simulation_graph}
 
     m.attr("__version__") = "dev";
 }
