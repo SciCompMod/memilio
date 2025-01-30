@@ -32,25 +32,24 @@ class IntermediateRepresentation:
     """
     Dataclass storing the model features. Serves as interface between Scanner and Generator.
     """
-    namespace: str = None
+    namespace: str = ""
     model_class: str = ""
-    python_module_name: str = None
-    parameterset: str = None
-    parameterset_wrapper: str = None
+    python_module_name: str = ""
+    parameterset: str = ""
+    parameterset_wrapper: str = ""
     simulation: bool = False
     is_compartmentalmodel: bool = False
     is_flowmodel: bool = False
     has_age_group: bool = False
     has_draw_sample: bool = False
     scalartype: str = "double"
-    python_generation_module_path: str = None
-    target_folder: str = None
+    python_generation_module_path: str = ""
+    target_folder: str = ""
     enum_populations: dict = field(default_factory=dict)
     model_init: list = field(default_factory=list)
     model_base: list = field(default_factory=list)
     population_groups: list = field(default_factory=list)
     include_list: list = field(default_factory=list)
-
     age_group: dict = field(default_factory=dict)
 
     def set_attribute(self: Self, attribute_name: str, value: Any) -> None:
