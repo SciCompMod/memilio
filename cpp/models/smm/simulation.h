@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
 *
 * Authors: René Schmieding, Julia Bicker
 *
@@ -28,18 +28,27 @@
 
 namespace mio
 {
+
+namespace smm
+{
+
+/**
+ * @brief A specialized Simulation for mio::smm::Model.
+ * @tparam regions The number of regions.
+ * @tparam Status An infection state enum.
+ */
 template <size_t regions, class Status>
-class Simulation<ScalarType, smm::Model<regions, Status>>
+class Simulation
 {
 public:
 public:
     using Model = smm::Model<regions, Status>;
 
     /**
-     * @brief setup the simulation with an ODE solver
-     * @param[in] model: An instance of a compartmental model
-     * @param[in] t0 start time
-     * @param[in] dt initial step size of integration
+     * @brief Set up the simulation for a Stochastic Metapopulation Model.
+     * @param[in] model An instance of mio::smm::Model.
+     * @param[in] t0 Start time.
+     * @param[in] dt Initial Step size.
      */
     Simulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 1.)
         : m_dt(dt)
@@ -65,9 +74,9 @@ public:
     }
 
     /**
-     * @brief advance simulation to tmax
-     * tmax must be greater than get_result().get_last_time_point()
-     * @param tmax next stopping point of simulation
+     * @brief Advance simulation to tmax.
+     * This function performs a Gillespie algorithm.
+     * @param tmax Next stopping point of simulation.
      */
     Eigen::Ref<Eigen::VectorXd> advance(ScalarType tmax)
     {
@@ -124,49 +133,50 @@ public:
     }
 
     /**
-     * @brief get_result returns the final simulation result
-     * @return a TimeSeries to represent the final simulation result
+     * @brief Returns the final simulation result.
+     * @return A TimeSeries to represent the final simulation result.
      */
     TimeSeries<ScalarType>& get_result()
     {
         return m_result;
     }
-
-    /**
-     * @brief get_result returns the final simulation result
-     * @return a TimeSeries to represent the final simulation result
-     */
     const TimeSeries<ScalarType>& get_result() const
     {
         return m_result;
     }
 
     /**
-     * @brief returns the simulation model used in simulation
+     * @brief Returns the model used in the simulation.
      */
     const Model& get_model() const
     {
         return *m_model;
     }
-
-    /**
-     * @brief returns the simulation model used in simulation
-     */
     Model& get_model()
     {
         return *m_model;
     }
 
 private:
+    /**
+     * @brief Returns the model's transition rates.
+     */
     inline constexpr const typename smm::TransitionRates<Status>::Type& transition_rates()
     {
         return m_model->parameters.template get<smm::TransitionRates<Status>>();
     }
+
+    /**
+     * @brief Returns the model's adoption rates.
+     */
     inline constexpr const typename smm::AdoptionRates<Status>::Type& adoption_rates()
     {
         return m_model->parameters.template get<smm::AdoptionRates<Status>>();
     }
 
+    /**
+     * @brief Calculate current values for m_current_rates and m_waiting_times.
+     */
     inline void update_current_rates_and_waiting_times()
     {
         size_t i = 0; // shared index for iterating both rates
@@ -185,21 +195,27 @@ private:
             i++;
         }
     }
+
+    /**
+     * @brief Get next event i.e. event with the smallest waiting time.
+     */
     inline size_t determine_next_event()
     {
         return std::distance(m_waiting_times.begin(), std::min_element(m_waiting_times.begin(), m_waiting_times.end()));
     }
 
-    ScalarType m_dt;
-    std::unique_ptr<Model> m_model;
-    mio::TimeSeries<ScalarType> m_result;
+    ScalarType m_dt; ///< Initial step size
+    std::unique_ptr<Model> m_model; ///< Pointer to the model used in the simulation.
+    mio::TimeSeries<ScalarType> m_result; ///< Result time series.
 
-    std::vector<ScalarType> m_internal_time; // internal times of all poisson processes (aka T_k)
-    std::vector<ScalarType> m_tp_next_event; // internal time points of next event i after m_internal[i] (aka P_k)
-    std::vector<ScalarType> m_waiting_times; // external times between m_internal_time and m_tp_next_event
-    std::vector<ScalarType> m_current_rates; // current values of both types of rates
+    std::vector<ScalarType> m_internal_time; ///< Internal times of all poisson processes (aka T_k).
+    std::vector<ScalarType> m_tp_next_event; ///< Internal time points of next event i after m_internal[i] (aka P_k).
+    std::vector<ScalarType> m_waiting_times; ///< External times between m_internal_time and m_tp_next_event.
+    std::vector<ScalarType>
+        m_current_rates; ///< Current values of both types of rates i.e. adoption and transition rates.
 };
 
+} //namespace smm
 } // namespace mio
 
 #endif

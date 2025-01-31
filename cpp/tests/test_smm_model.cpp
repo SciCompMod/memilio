@@ -153,7 +153,7 @@ TEST(TestSMMSimulation, advance)
         .WillOnce(Return(0.0031)) //spatial transition event 1->0
         .WillRepeatedly(testing::Return(1.0));
 
-    auto sim = mio::Simulation<double, Model>(model, 0.0, 0.1);
+    auto sim = mio::smm::Simulation(model, 0.0, 0.1);
     sim.advance(30.);
     //initial values
     EXPECT_EQ(sim.get_result().get_value(0)[static_cast<size_t>(InfectionState::S)], 1);
@@ -199,7 +199,7 @@ TEST(TestSMMSimulation, stopsAtTmax)
     model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
 
     //Simulate for 30 days
-    auto sim = mio::Simulation<double, Model>(model, 0.0, 0.1);
+    auto sim = mio::smm::Simulation(model, 0.0, 0.1);
     sim.advance(30.);
     //As model populations are all zero only t0 and tmax should be logged
     EXPECT_EQ(sim.get_result().get_num_time_points(), 2);
@@ -243,7 +243,7 @@ TEST(TestSMMSimulation, covergence)
         model.populations[{mio::regions::Region(1), InfectionState::D}]   = 0;
         model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
         model.get_rng().seed({static_cast<uint32_t>(n)});
-        auto sim = mio::Simulation<double, Model>(model, 0.0, 1.0);
+        auto sim = mio::smm::Simulation(model, 0.0, 1.0);
         sim.advance(1.);
         transitions1[n] = sim.get_model().populations[{mio::regions::Region(1), InfectionState::S}];
     }
@@ -267,7 +267,7 @@ TEST(TestSMMSimulation, covergence)
         model.populations[{mio::regions::Region(1), InfectionState::D}]   = 0;
         model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
         model.get_rng().seed({static_cast<uint32_t>(n)});
-        auto sim = mio::Simulation<double, Model>(model, 0.0, 1.0);
+        auto sim = mio::smm::Simulation(model, 0.0, 1.0);
         sim.advance(1.);
         transitions2[n] = sim.get_model().populations[{mio::regions::Region(1), InfectionState::S}];
     }

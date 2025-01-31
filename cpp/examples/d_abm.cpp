@@ -78,7 +78,7 @@ int main()
     double tmax = 30.;
 
     Model model(agents, adoption_rates, interaction_radius, noise, {InfectionState::D});
-    auto sim = mio::Simulation<double, Model>(model, 0.0, dt);
+    auto sim = mio::dabm::Simulation(model, 0.0, dt);
     sim.advance(tmax);
 
     auto interpolated_results = mio::interpolate_simulation_result(sim.get_result());

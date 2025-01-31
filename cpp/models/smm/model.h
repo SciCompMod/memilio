@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
 *
 * Authors: René Schmieding, Julia Bicker
 *
@@ -31,6 +31,12 @@ namespace mio
 {
 namespace smm
 {
+
+/**
+ * @brief Stochastic Metapopulation Model.
+ * @tparam regions Number of regions.
+ * @tparam Status An infection state enum.
+ */
 template <size_t regions, class Status>
 class Model
     : public mio::CompartmentalModel<ScalarType, Status, mio::Populations<ScalarType, mio::regions::Region, Status>,
@@ -48,7 +54,7 @@ public:
 
     /**
      * @brief Calculate the current rate of the given adoption.
-     * @param[in] rate A adoption rate from this model.
+     * @param[in] rate An adoption rate from this model.
      * @param[in] x The current state of the model.
      * @return Current value of the adoption rate.
      */
@@ -76,7 +82,7 @@ public:
     }
 
     /**
-     * @brief Calculate the current rate of the given transition.
+     * @brief Calculate the current rate of the given spatial transition.
      * @param[in] rate A transition rate from this model.
      * @param[in] x The current state of the model.
      * @return Current value of the transition rate.
@@ -87,14 +93,17 @@ public:
         return rate.factor * x[source];
     }
 
-    /// @brief Access the random number generator used for simulating this model.
+    /**
+    * Get the RandomNumberGenerator used by this Model for random events.
+    * @return The random number generator.
+    */
     mio::RandomNumberGenerator& get_rng()
     {
         return m_rng;
     }
 
 private:
-    mio::RandomNumberGenerator m_rng;
+    mio::RandomNumberGenerator m_rng; ///< Model's random number generator.
 };
 
 } //namespace smm

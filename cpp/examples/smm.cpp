@@ -91,7 +91,7 @@ int main()
     double dt   = 0.1;
     double tmax = 30.;
 
-    auto sim = mio::Simulation<double, Model>(model, 0.0, dt);
+    auto sim = mio::smm::Simulation(model, 0.0, dt);
     sim.advance(tmax);
 
     auto interpolated_results = mio::interpolate_simulation_result(sim.get_result());

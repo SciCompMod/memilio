@@ -111,6 +111,7 @@ TEST(TestDABMSimulation, advance)
     QuadWellModel<InfectionState>::Agent a2{Eigen::Vector2d{-1, 1}, InfectionState::R};
     QuadWellModel<InfectionState>::Agent a3{Eigen::Vector2d{-1, 1}, InfectionState::I};
     std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
+    //Add adoption rates for every region
     for (size_t region = 0; region < 4; ++region) {
         adoption_rates.push_back({InfectionState::S,
                                   InfectionState::E,
@@ -124,13 +125,13 @@ TEST(TestDABMSimulation, advance)
         adoption_rates.push_back({InfectionState::I, InfectionState::D, mio::regions::Region(region), 0.01 / 5., {}});
     }
     Model model({a1, a2, a3}, adoption_rates, 0.4, 0.0, {InfectionState::D});
-    auto sim = mio::Simulation<double, Model>(model, 0.0, 0.1);
-    //Setup so first adoption event will be in second time step
+    auto sim = mio::dabm::Simulation(model, 0.0, 0.1);
+    //Setup such that first adoption event will be in second time step
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke)
         .Times(testing::AtLeast(1))
-        .WillOnce(Return(0.0226))
+        .WillOnce(Return(0.0226)) // Waiting time for first adoption rate.
         .WillRepeatedly(testing::Return(1.0));
     //Setup so first adoption event will be the transition of a3 from I to R
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;

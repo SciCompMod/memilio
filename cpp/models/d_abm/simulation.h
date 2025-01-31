@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
 *
 * Authors: René Schmieding, Julia Bicker
 *
@@ -29,14 +29,27 @@
 namespace mio
 {
 
+namespace dabm
+{
+
+/**
+ * @brief A specialized Simulation for mio::dabm::Model.
+ * @tparam Implementation A class implementing all functions and types marked with the using keyword in Model, see dabm::Model.
+ */
 template <class Implementation>
-class Simulation<ScalarType, dabm::Model<Implementation>>
+class Simulation
 {
     using Status = typename Implementation::Status;
 
 public:
     using Model = dabm::Model<Implementation>;
 
+    /**
+     * @brief Set up the simulation for a diffusive ABM.
+     * @param[in] model An instance of mio::dabm::Model.
+     * @param[in] t0 Start time.
+     * @param[in] dt Step size of integration.
+     */
     Simulation(const Model& model, ScalarType t0 = 0, ScalarType dt = 0.1)
         : m_t0(t0)
         , m_dt(dt)
@@ -48,6 +61,11 @@ public:
         m_current_events.reserve(m_model->populations.size());
     }
 
+    /**
+     * @brief Advance simulation to tmax.
+     * This function performs a temporal Gillespie.
+     * @param tmax Next stopping point of simulation.
+     */
     void advance(const ScalarType t_max)
     {
         // draw time until an adoption takes place
@@ -87,50 +105,43 @@ public:
         }
     }
 
-    void set_integrator(std::shared_ptr<IntegratorCore<ScalarType>> /*integrator*/)
-    {
-    }
-
     /**
-     * @brief get_result returns the final simulation result
-     * @return a TimeSeries to represent the final simulation result
+     * @brief Returns the final simulation result.
+     * @return A TimeSeries to represent the final simulation result.
      */
     TimeSeries<ScalarType>& get_result()
     {
         return m_result;
     }
-
-    /**
-     * @brief get_result returns the final simulation result
-     * @return a TimeSeries to represent the final simulation result
-     */
     const TimeSeries<ScalarType>& get_result() const
     {
         return m_result;
     }
 
     /**
-     * @brief returns the simulation model used in simulation
+     * @brief Returns the model used in the simulation.
      */
     const Model& get_model() const
     {
         return *m_model;
     }
-
-    /**
-     * @brief returns the simulation model used in simulation
-     */
     Model& get_model()
     {
         return *m_model;
     }
 
 private:
+    /**
+     * @brief Struct defining an adoption event for an agent and target infection state.
+     */
     struct Event {
         typename Model::Agent& agent;
         Status new_status;
     };
-    /// @brief calculate values for m_current_rates and m_current_events
+
+    /**
+     * @brief Calculate current values for m_current_rates and m_current_events.
+     */
     inline void compute_current_rates_and_events()
     {
         m_current_rates.clear();
@@ -150,13 +161,13 @@ private:
         }
     }
 
-    ScalarType m_t0, m_dt;
-    std::unique_ptr<Model> m_model;
-    std::vector<ScalarType> m_current_rates;
-    std::vector<Event> m_current_events; // contains an event corresponding to each rate in m_current_rates
-    mio::TimeSeries<ScalarType> m_result;
+    ScalarType m_t0, m_dt; ///< Start time of the simulation and integration step size.
+    std::unique_ptr<Model> m_model; ///< Pointer to the model used in the simulation.
+    std::vector<ScalarType> m_current_rates; ///< Current adoption rates.
+    std::vector<Event> m_current_events; ///< Contains an event corresponding to each rate in m_current_rates.
+    mio::TimeSeries<ScalarType> m_result; ///< Result time series.
 };
-
+} //namespace dabm
 } // namespace mio
 
 #endif
