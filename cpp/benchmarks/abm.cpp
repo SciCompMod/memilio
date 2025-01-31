@@ -1,8 +1,27 @@
+/* 
+* Copyright (C) 2020-2025 MEmilio
+*
+* Authors: Daniel Abele
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #include "abm/simulation.h"
 
 #include "benchmark/benchmark.h"
 
-mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<uint32_t> seeds)
+mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list<uint32_t> seeds)
 {
     auto rng = mio::RandomNumberGenerator();
     rng.seed(seeds);
@@ -26,7 +45,7 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
         auto age    = mio::AgeGroup(mio::UniformIntDistribution<size_t>::get_instance()(
             model.get_rng(), size_t(0), model.parameters.get_num_groups() - 1));
         auto person = model.add_person(home, age);
-        model.assign_location(person, home);
+        model.assign_location(uint32_t(i), home);
         home_size++;
     }
 
@@ -40,16 +59,16 @@ mio::abm::Simulation make_simulation(size_t num_persons, std::initializer_list<u
         std::generate(locs.begin(), locs.end(), [&] {
             return model.add_location(loc_type);
         });
-        for (auto& person : model.get_persons()) {
+        for (size_t p = 0; p < num_persons; ++p) {
             auto loc_idx =
                 mio::UniformIntDistribution<size_t>::get_instance()(model.get_rng(), size_t(0), num_locs - 1);
-            model.assign_location(person.get_id(), locs[loc_idx]);
+            model.assign_location(uint32_t(p), locs[loc_idx]);
         }
     }
 
     //infections and masks
     for (auto& person : model.get_persons()) {
-        auto prng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
+        auto prng = mio::abm::PersonalRandomNumberGenerator(person);
         //some % of people are infected, large enough to have some infection activity without everyone dying
         auto pct_infected = 0.05;
         if (mio::UniformDistribution<double>::get_instance()(prng, 0.0, 1.0) < pct_infected) {

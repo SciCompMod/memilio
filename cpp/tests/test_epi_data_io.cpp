@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -295,6 +295,15 @@ TEST(TestEpiDataIo, read_divi_data)
     ASSERT_EQ(divi_data[3].district_id, mio::regions::DistrictId(1235));
     ASSERT_EQ(divi_data[3].date, mio::Date(2022, 04, 25));
     ASSERT_EQ(divi_data[3].num_icu, 0.35437);
+}
+
+TEST(TestEpiDataIo, is_divi_data_available)
+{
+    EXPECT_FALSE(mio::is_divi_data_available(mio::Date(2020, 4, 22))); // Before start
+    EXPECT_FALSE(mio::is_divi_data_available(mio::Date(2024, 7, 22))); // After end
+    EXPECT_TRUE(mio::is_divi_data_available(mio::Date(2020, 4, 23))); // Start date
+    EXPECT_TRUE(mio::is_divi_data_available(mio::Date(2022, 1, 1))); // Inside range
+    EXPECT_TRUE(mio::is_divi_data_available(mio::Date(2024, 7, 21))); // End date
 }
 
 TEST(TestEpiDataIo, read_confirmed_cases_data)
