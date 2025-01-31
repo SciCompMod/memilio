@@ -40,9 +40,9 @@ struct Influence {
 
 /**
  * @brief Struct defining a possible status adoption in a Model based on Poisson Processes.
- * The AdoptionRate is considered to be of second-order, if there are any "influences" with corresponding "factors".
+ * The AdoptionRate is considered to be of second-order if there are any "influences".
  * In the d_abm and smm simulations, "from" is implicitly an influence, scaled by "factor". This is multiplied by
- * the sum over all "influences" scaled by their respective "factors".
+ * the sum over all "influences", which scale their "status" with the respective "factor".
  * @tparam Status An infection state enum.
  */
 template <class Status>
