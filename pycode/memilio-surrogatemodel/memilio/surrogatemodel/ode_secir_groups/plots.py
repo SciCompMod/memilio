@@ -276,14 +276,26 @@ savename = 'boxplot_withagegroups_I_based_10k_'
 boxplot_inputs_single(file_path, savename)
 
 # HEATMAP
-filename = 'gridsearch_data_secir_groups_30days_Germany_10k_nodamp.csv'
-# filename = 'gridserach_secir_groups_30days_I_based_Germany_10k_nodamp.csv'
+ibased = True
+age_groups = True
+if ibased:
+    filename = 'gridserach_secir_groups_30days_I_based_Germany_10k_nodamp.csv'
+else:
+    filename = 'gridsearch_data_secir_groups_30days_Germany_10k_nodamp.csv'
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
     os.path.dirname(os.path.realpath(path)))), 'secir_groups_grid_search_paper')
 filepath = os.path.join(path_data, filename)
 df = pd.DataFrame(data=pd.read_csv(filepath))
-savename = "NODAMP_heatmap_secir_withagegroups_30days_10k_paper.png"
+title_groups_add = "noagegroups"
+if age_groups:
+    title_groups_add = "withagegroups"
+
+if ibased:
+    title_add = title_groups_add + '_30d_Ibased_10k_noDamp.png'
+else:
+    title_add = title_groups_add + '_30d_initial_10k_noDamp.png'
+savename = "heatmap_secir_withagegroups" + title_add
 # NODAMP_heatmap_secir_withagegroups_30days_I_based_10k_paper
 
 heatmap_gridsearch_results(df, savename)

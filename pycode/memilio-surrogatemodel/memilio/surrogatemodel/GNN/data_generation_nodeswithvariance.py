@@ -115,7 +115,7 @@ def get_graph(num_groups, data_dir, mobility_directory):
 
     mio.osecir.set_edges(
         os.path.dirname(os.path.realpath(
-            (mobility_directory))), graph, len(Location))
+            mobility_directory)), graph, len(Location))
 
     return graph
 
@@ -216,9 +216,9 @@ def run_secir_groups_simulation(days, graph, num_groups=6):
         graph.get_node(node_indx).property.populations = model.populations
 
     study = ParameterStudy(graph, 0, days, dt=0.5, num_runs=1)
-    start_time = time.time()
+    start_time = time.perf_counter()
     study.run()
-    print("Simulation took: ", time.time() - start_time)
+    runtime = time.perf_counter() - start_time
 
     graph_run = study.run()[0]
     results = interpolate_simulation_result(graph_run)
@@ -229,7 +229,7 @@ def run_secir_groups_simulation(days, graph, num_groups=6):
 
     dataset_entry = copy.deepcopy(results)
 
-    return dataset_entry
+    return dataset_entry, runtime
 
 
 def generate_data(
@@ -257,10 +257,14 @@ def generate_data(
     # Due to the random structure, theres currently no need to shuffle the data
     bar = Bar('Number of Runs done', max=num_runs)
 
+    times = []
+
     for _ in range(num_runs):
 
-        data_run = run_secir_groups_simulation(
+        data_run, t_run = run_secir_groups_simulation(
             days_sum, graph)
+
+        times.append(t_run)
 
         inputs = np.asarray(data_run).transpose(1, 0, 2)[: input_width]
         data["inputs"].append(inputs)
@@ -271,6 +275,10 @@ def generate_data(
         bar.next()
 
     bar.finish()
+
+    # print median and average runtime
+    print(
+        f"For Days = {days}, AVG runtime: {np.mean(times)}s, Median runtime: {np.median(times)}s")
 
     if save_data:
 
@@ -293,18 +301,14 @@ def generate_data(
 
 if __name__ == "__main__":
 
-    path = os.path.dirname(os.path.realpath(__file__))
-    path_data = os.path.join(
-        os.path.dirname(
-            os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'data_GNN_paper')
+    path = os.getcwd()
     # path_output = '/localdata1/gnn_paper_2024/data_Iteration2/GNNs'
-    path_output = '/hpc_data/schm_a45/data_paper/'
-    data_dir = os.path.join(os.getcwd(), 'memilio/data')
+    path_output = os.path.join(os.getcwd(), 'saves')
+    data_dir = os.path.join(os.getcwd(), 'data')
 
     input_width = 5
     days = 30
-    num_runs = 10000
+    num_runs = 100
     random.seed(10)
     generate_data(num_runs, data_dir,  path_output, input_width,
-                  days, save_data=True)
+                  days, save_data=False)

@@ -50,21 +50,22 @@ tf.config.threading.set_inter_op_parallelism_threads(16)
 
 # file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
 file = open(
-    '/hpc_data/schm_a45/data_paper/GNN_data_30days_nodeswithvariance_5k.pickle', 'rb')
+    '/localdata1/gnn_paper_2024/data/GNNs/GNN_data_90days_nodeswithvariance_3damp_1k.pickle', 'rb')
+
 data = pickle.load(file)
 
 
 # len_dataset = data_secir['inputs'][0].shape[0]
-#len_dataset = 800*5
+# len_dataset = 800*5
 # numer_of_nodes = np.asarray(data_secir['inputs']).shape[0]
 numer_of_nodes = 400
 
 
 # Split the data: 80% will be used for grid search with cross-validation, and the remaining 20% is withheld for testing
-inputs_grid_search = data['inputs'][:int((0.8 * len(data['inputs'])))]
-labels_grid_search = data['labels'][:int((0.8 * len(data['labels'])))]
-inputs_withhold = data['inputs'][int((0.8 * len(data['inputs']))):]
-labels_withhold = data['labels'][int((0.8 * len(data['labels']))):]
+inputs_grid_search = data['inputs'][:int(0.8 * len(data['inputs']))]
+labels_grid_search = data['labels'][:int(0.8 * len(data['labels']))]
+inputs_withhold = data['inputs'][int(0.8 * len(data['inputs'])):]
+labels_withhold = data['labels'][int(0.8 * len(data['labels'])):]
 
 len_dataset = len(inputs_grid_search)
 
@@ -83,7 +84,7 @@ new_labels = np.asarray(labels_grid_search.transpose(0, 3, 1, 2)).reshape(
 n_days = int(new_labels.shape[2]/48)
 
 path = os.path.dirname(os.path.realpath(__file__))
-path_data = '/home/schm_a45/Documents/Code/memilio_test/memilio/data/mobility'
+path_data = '/localdata1/zunk_he/memilio/data/mobility'
 commuter_file = open(os.path.join(
     path_data, 'commuter_mobility.txt'), 'rb')
 commuter_data = pd.read_csv(commuter_file, sep=" ", header=None)
@@ -98,7 +99,7 @@ node_features = new_inputs
 node_labels = new_labels
 
 
-layers = [ARMAConv, GCNConv, APPNPConv, GATConv]
+layers = [GCNConv, APPNPConv, GATConv]
 # layers = [ARMAConv]
 number_of_layers = [1, 2, 3]
 # number_of_layers = [2,3,4]
@@ -114,7 +115,7 @@ for l in layers:
 df = pd.DataFrame(
     columns=['layer', 'number_of_layers', 'number_of_neurons',
              'learning_rate', 'kfold_train',
-             'kfold_val', 'kfold_test', 'training_time', 'all_testscores', 'all_val_scores', 'all_trainscores'])
+             'kfold_val', 'kfold_test', 'training_time', 'all_testscores', 'test_rescaled', 'all_val_scores', 'all_trainscores'])
 
 
 def train_and_evaluate_model(
@@ -154,9 +155,9 @@ def train_and_evaluate_model(
                 self.conv1 = layer(number_of_n, activation='relu')
                 self.dense = Dense(data.n_labels, activation="linear")
 
-            def call(self, inputs):
+            def call(self, inputs, mask=None):
                 x, a = inputs
-                a = np.asarray(a)
+                a = tf.convert_to_tensor(a, dtype=tf.float32)
 
                 x = self.conv1([x, a])
 
@@ -172,7 +173,7 @@ def train_and_evaluate_model(
                 self.conv2 = layer(number_of_n, activation='relu')
                 self.dense = Dense(data.n_labels, activation="linear")
 
-            def call(self, inputs):
+            def call(self, inputs, mask=None):
                 x, a = inputs
                 a = np.asarray(a)
 
@@ -193,7 +194,7 @@ def train_and_evaluate_model(
                 self.conv3 = layer(number_of_n, activation='relu')
                 self.dense = Dense(data.n_labels, activation="linear")
 
-            def call(self, inputs):
+            def call(self, inputs, mask=None):
                 x, a = inputs
                 a = np.asarray(a)
 
@@ -215,7 +216,7 @@ def train_and_evaluate_model(
                 self.conv4 = layer(number_of_n, activation='relu')
                 self.dense = Dense(data.n_labels, activation="linear")
 
-            def call(self, inputs):
+            def call(self, inputs, mask=None):
                 x, a = inputs
                 a = np.asarray(a)
 
@@ -239,7 +240,7 @@ def train_and_evaluate_model(
                 self.conv5 = layer(number_of_n, activation='relu')
                 self.dense = Dense(data.n_labels, activation="linear")
 
-            def call(self, inputs):
+            def call(self, inputs, mask=None):
                 x, a = inputs
                 a = np.asarray(a)
 
@@ -258,6 +259,7 @@ def train_and_evaluate_model(
     loss_fn = MeanAbsolutePercentageError()
 
     def train_step(inputs, target):
+        optimizer = Adam(learning_rate=learning_rate)
         with tf.GradientTape() as tape:
             predictions = model(inputs, training=True)
             loss = loss_fn(target, predictions) + sum(model.losses)
@@ -365,7 +367,7 @@ def train_and_evaluate_model(
                 if val_loss < best_val_loss:
                     best_val_loss = val_loss
                     patience = es_patience
-                    print("New best val_loss {:.3f}".format(val_loss))
+                    print(f"New best val_loss {val_loss:.3f}")
                     best_weights = model.get_weights()
                 else:
                     patience -= 1
@@ -410,17 +412,17 @@ def train_and_evaluate_model(
     # plt.savefig('losses'+str(layer)+'.png')
 
     # print out stats
-    print("Best train losses: {} ".format(train_losses))
-    print("Best validation losses: {}".format(val_losses))
-    print("Test values: {}".format(test_scores))
+    print(f"Best train losses: {train_losses} ")
+    print(f"Best validation losses: {val_losses}")
+    print(f"Test values: {test_scores}")
     print("--------------------------------------------")
-    print("K-Fold Train Score:{}".format(np.mean(train_losses)))
-    print("K-Fold Validation Score:{}".format(np.mean(val_losses)))
-    print("K-Fold Test Score: {}".format(np.mean(test_scores)))
-    print("K-Fold ORIGINAL DATA Test Score: {}".format(np.mean(test_rescaled)))
+    print(f"K-Fold Train Score:{np.mean(train_losses)}")
+    print(f"K-Fold Validation Score:{np.mean(val_losses)}")
+    print(f"K-Fold Test Score: {np.mean(test_scores)}")
+    print(f"K-Fold ORIGINAL DATA Test Score: {np.mean(test_rescaled)}")
 
-    print("Time for training: {:.4f} seconds".format(elapsed))
-    print("Time for training: {:.4f} minutes".format(elapsed/60))
+    print(f"Time for training: {elapsed:.4f} seconds")
+    print(f"Time for training: {elapsed/60:.4f} minutes")
 
     df.loc[len(df.index)] = [layer, number_of_layer, number_of_n,
                              learning_rate, np.mean(train_losses),
@@ -443,7 +445,7 @@ def train_and_evaluate_model(
 
 start_hyper = time.perf_counter()
 epochs = 1500
-filename = '/GNN_gridsearch_withCV_nodeswithvariance_5k.csv'
+filename = '/GNN_gridsearch_withCV_90days_nodeswithvariance_3damp.csv'
 for param in parameters:
     train_and_evaluate_model(epochs, 0.001, param)
 

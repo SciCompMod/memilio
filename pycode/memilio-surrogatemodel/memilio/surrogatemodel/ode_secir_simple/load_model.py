@@ -17,9 +17,9 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
     os.path.dirname(os.path.realpath(path)))), 'data_paper')
 
-days = 30
+days = 90
 dpi = 300
-path_data = "/localdata1/gnn_paper_2024/data_Iteration2/one_population/without_agegroups"
+path_data = "/localdata1/gnn_paper_2024/data/one_population/without_agegroups"
 filename = f"data_secir_simple_{days}days_I_based_10k.pickle"
 
 # if not os.path.isfile(os.path.join(path_data, filename)):
@@ -37,7 +37,7 @@ test_labels = data['labels'][int(0.8 * len(data['labels'])):]
 # load trained model
 # new_model = tf.keras.models.load_model('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple')
 new_model = tf.keras.models.load_model(
-    f'/localdata1/gnn_paper_2024/data_Iteration2/saved_models/saved_models_secir_simple_paper/LSTM_{days}days_secirsimple_I_based_10k.h5')
+    f'/localdata1/gnn_paper_2024/data/results/saved_models/saved_models_secir_simple_paper//LSTM_{days}days_secirsimple_I_based_10k.h5')
 
 pred = new_model.predict(test_inputs)
 
@@ -91,12 +91,15 @@ def lineplots_compartments(mape_per_day, mape_reversed_per_day, savename):
         Line, Label = ax.get_legend_handles_labels()
         lines.extend(Line)
         line_labels.extend(Label)
+        # log scale
+        ax.set_yscale('log')
 
     fig.legend(lines[:2], line_labels[:2], loc='lower center')
     fig.suptitle(
         'Test MAPE for log-scaled ('+str(np.round(np.mean(mape_per_day), 4))+'%) and unscaled data ('+str(np.round(np.mean(mape_reversed_per_day), 4))+'%)', fontsize=16)
 
-    plt.savefig(savename)
+    plot_dir = '/localdata1/gnn_paper_2024/images/lineplots_MAPE_per_day/no_agegroups/'
+    plt.savefig(os.path.join(plot_dir, savename))
 
 
 def lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename):
@@ -138,7 +141,8 @@ def lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename
     fig.suptitle(
         'Test MAPE for scaled ('+str(np.round(np.mean(mape_per_day), 4))+'%) and unscaled data ('+str(np.round(np.mean(mape_reversed_per_day), 4))+'%)', fontsize=16)
 
-    plt.savefig(savename)
+    plot_dir = '/localdata1/gnn_paper_2024/images/lineplots_MAPE_per_day/no_agegroups/'
+    plt.savefig(os.path.join(plot_dir, savename))
 
 
 # def lineplots_pred_labels(pred_reversed, labels_reversed, num_plots):
@@ -253,13 +257,11 @@ def lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename
 #         plt.savefig("/localdata1/gnn_paper_2024/images/pred_labels_trajectories/no_agegroups_90days_I_based_pred_labels_withinput/compartment_lines_noagegroups_90days_I_based_pred_labels_10k_paper_no" + str(i) + ".png")
 
 
-def lineplots_pred_labels(pred_reversed, labels_reversed, num_plots):
+def lineplots_pred_labels(pred_reversed, labels_reversed, savename,  num_plots):
     infectionstates = ['Susceptible', 'Exposed', 'InfectedNoSymptoms',
                        'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
 
     for i in range(num_plots):
-        # Reset figure
-        plt.clf()
         fig, axes = plt.subplots(
             nrows=4, ncols=2, figsize=(10, 13), constrained_layout=True, dpi=300
         )
@@ -298,9 +300,9 @@ def lineplots_pred_labels(pred_reversed, labels_reversed, num_plots):
             props = dict(boxstyle='round,pad=0.3',
                          facecolor='lightgray', edgecolor='black', alpha=0.8)
 
-            # Dynamically position the text box in the upper-right corner
-            ax.text(0.95, 0.95, textstr, transform=ax.transAxes, fontsize=10,
-                    verticalalignment='top', horizontalalignment='right', bbox=props)
+            # Dynamically position the text box in the upper-left corner
+            ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=10,
+                    verticalalignment='top', horizontalalignment='left', bbox=props)
 
             # Configure axes
             ax.set_ylabel('Number of individuals')
@@ -317,7 +319,11 @@ def lineplots_pred_labels(pred_reversed, labels_reversed, num_plots):
                    ncol=3, frameon=False, fontsize=10)
 
         # Save the figure
-        save_path = f"/localdata1/gnn_paper_2024/images/pred_labels_trajectories/no_agegroups_90days_I_based_pred_labels_withinput_2/compartment_lines_noagegroups_90days_I_based_pred_labels_10k_paper_no{i}.png"
+        plot_dir = f"/localdata1/gnn_paper_2024/images/lineplots_compartments/no_agegroups/secir_noagegroup_{days}days_I_based/"
+        # check if dir exists
+        if not os.path.exists(plot_dir):
+            os.makedirs(plot_dir)
+        save_path = plot_dir + f"compartment_lines_no{i}.png"
         plt.savefig(save_path, bbox_inches='tight')
         print(f'Plot No. {i} saved')
 
@@ -384,7 +390,7 @@ def mape_log_original(num_plots, pred_reversed, labels_reversed, test_inputs):
     plt.scatter(df['log'], df['original'], s=3)
     plt.xlabel('MAPE(log scale)')
     plt.ylabel('MAPE (orig. scale)')
-    plt.savefig('SimpleNN_log_and_nonlog_90days.png')
+    plt.savefig(f'SimpleNN_log_and_nonlog_{days}days.png')
 
 
 def lineplots_pred_labels_selected_plot(pred_reversed, labels_reversed, plotID):
@@ -454,12 +460,16 @@ title_add = f'_{days}d_Ibased_10k_noDamp.png'
 savename = 'mape_per_day_simpleNN_log_and_nonlog_mape' + title_add
 lineplots_compartments(mape_per_day, mape_reversed_per_day, savename)
 
-savename = 'mape_per_day_simpleNN_log_and_nonlog_twoaxes_mape' + title_add
-lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename)
 
-lineplots_pred_labels(pred_reversed, labels_reversed, num_plots=100)
+savename_2 = 'mape_per_day_simpleNN_log_and_nonlog_twoaxes_mape' + title_add
+lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename_2)
+
+savename_3 = f'compartments_secir_noagegroup_{days}days_I_based' + title_add
+lineplots_pred_labels(pred_reversed, labels_reversed,
+                      savename_3,  num_plots=50)
 
 
+title_add = f'_{days}d_Ibased_10k_noDamp.png'
 savename = 'mape_per_run_simpleNN_log_mape' + title_add
 plot_mape_per_run(mape_per_run, savename)
 

@@ -25,8 +25,9 @@ from spektral.utils.convolution import normalized_laplacian, rescale_laplacian
 #    'data_GNN_paper')
 
 # file = open(os.path.join(path_data, 'GNN_data_30days_10k.pickle'), 'rb')
+days = '90'
 file = open(
-    '/hpc_data/schm_a45/data_paper/GNN_data_30days_nodeswithvariance_3damp_1k.pickle', 'rb')
+    f'/localdata1/gnn_paper_2024/data/GNNs//GNN_data_{days}days_nodeswithvariance_3damp_1k.pickle', 'rb')
 data_secir = pickle.load(file)
 
 len_dataset = data_secir['inputs'].shape[0]
@@ -162,8 +163,6 @@ def get_test_statistic(loader, model):
     path = os.path.dirname(os.path.realpath(__file__))
     file_path = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'testing_paper')
-    # file_path = '/localdata1/gnn_paper_2024/data_Iteration2/results/testing'
-    path_models = '/hpc_data/schm_a45/data_paper/'
 
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
@@ -340,7 +339,7 @@ def train_and_evaluate_model(
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 patience = es_patience
-                print("New best val_loss {:.3f}".format(val_loss))
+                print(f"New best val_loss {val_loss:.3f}")
                 best_weights = model.get_weights()
             else:
                 patience -= 1
@@ -374,17 +373,17 @@ def train_and_evaluate_model(
     elapsed = time.perf_counter() - start
 
     # print out stats
-    print("Best train losses: {} ".format(train_losses))
-    print("Best validation losses: {}".format(val_losses))
-    print("Test values: {}".format(test_scores))
+    print(f"Best train losses: {train_losses} ")
+    print(f"Best validation losses: {val_losses}")
+    print(f"Test values: {test_scores}")
     print("--------------------------------------------")
-    print("Train Score:{}".format(np.mean(train_losses)))
-    print("Validation Score:{}".format(np.mean(val_losses)))
-    print("Test Score (log): {}".format(np.mean(test_scores)))
-    print("Test Score (orig.): {}".format(np.mean(test_scores_r)))
+    print(f"Train Score:{np.mean(train_losses)}")
+    print(f"Validation Score:{np.mean(val_losses)}")
+    print(f"Test Score (log): {np.mean(test_scores)}")
+    print(f"Test Score (orig.): {np.mean(test_scores_r)}")
 
-    print("Time for training: {:.4f} seconds".format(elapsed))
-    print("Time for training: {:.4f} minutes".format(elapsed/60))
+    print(f"Time for training: {elapsed:.4f} seconds")
+    print(f"Time for training: {elapsed/60:.4f} minutes")
 
     # Ensure that save_name has the .pickle extension
     if not save_name.endswith('.pickle'):
@@ -429,9 +428,12 @@ def train_and_evaluate_model(
 
 start_hyper = time.perf_counter()
 epochs = 1500
-filename = '/GNN_30days_nodeswithvariance_1k_3Damp_test2.csv'  # name for df
-filename_df = 'GNN_30days_nodeswithvariance_1k_3Damp_test2.csv'  # name for df
-save_name = 'GNN_30days_nodeswithvariance_1k_3Damp_test2'  # name for model
+# name for df
+filename = f'/GNN_{days}days_nodeswithvariance_1k_3Damp_test2.csv'
+# name for df
+filename_df = f'GNN_{days}days_nodeswithvariance_1k_3Damp_test2.csv'
+# name for model
+save_name = f'GNN_{days}days_nodeswithvariance_1k_3Damp_test2'
 # for param in parameters:
 train_and_evaluate_model(epochs, 0.001, parameters,
                          save_name, filename, filename_df)

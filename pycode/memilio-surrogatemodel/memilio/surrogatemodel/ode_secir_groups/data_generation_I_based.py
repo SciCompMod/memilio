@@ -256,22 +256,20 @@ def generate_data(
             os.mkdir(path_out)
 
         # save dict to json file
-        with open(os.path.join(path_out, 'data_secir_groups_30days_I_based_Germany_10k_new.pickle'), 'wb') as f:
+        with open(os.path.join(path_out, f'data_secir_groups_{label_width}days_I_based_Germany_100k.pickle'), 'wb') as f:
             pickle.dump(data, f)
     return data
 
 
 if __name__ == "__main__":
     # Store data relative to current file two levels higher.
-    path = os.path.dirname(os.path.realpath(__file__))
-    path_output = os.path.join(os.path.dirname(os.path.realpath(
-        os.path.dirname(os.path.realpath(path)))), 'data_paper')
+    cwd = os.getcwd()
+    path_output = os.path.join(cwd, "saves")
 
-    path_population = os.path.abspath(
-        r"memilio//data//pydata//Germany//county_current_population.json")
+    path_population = cwd + "//data//pydata//Germany//county_current_population.json"
 
     input_width = 5
-    label_width = 30
-    num_runs = 100
+    label_width = 90
+    num_runs = 100000
     data = generate_data(num_runs, path_output, path_population, input_width,
                          label_width)

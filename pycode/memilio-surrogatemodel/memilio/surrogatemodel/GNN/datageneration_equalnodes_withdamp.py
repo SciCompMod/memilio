@@ -115,7 +115,7 @@ def get_graph(num_groups, data_dir, mobility_directory):
 
     mio.osecir.set_edges(
         os.path.dirname(os.path.realpath(
-            (mobility_directory))), graph, len(Location))
+            mobility_directory)), graph, len(Location))
 
     return graph
 
@@ -228,9 +228,7 @@ def run_secir_groups_simulation(days, damping_days, graph, num_groups=6):
         graph.get_node(node_indx).property.populations = model.populations
 
     study = ParameterStudy(graph, 0, days, dt=0.5, num_runs=1)
-    start_time = time.time()
     study.run()
-    print("Simulation took: ", time.time() - start_time)
 
     graph_run = study.run()[0]
     results = interpolate_simulation_result(graph_run)
@@ -309,7 +307,7 @@ def generate_data(
             os.mkdir(path)
 
         # save dict to json file
-        with open(os.path.join(path, 'GNN_data_30days_samenodes_2damp_1k_new2.pickle'), 'wb') as f:
+        with open(os.path.join(path, 'GNN_data_30days_samenodes_2damp_1k.pickle'), 'wb') as f:
             pickle.dump(all_data, f)
 
     return data
@@ -400,13 +398,9 @@ def generate_dampings_withshadowdamp(number_of_dampings, days, min_distance, min
 
 if __name__ == "__main__":
 
-    path = os.path.dirname(os.path.realpath(__file__))
-    path_data = os.path.join(
-        os.path.dirname(
-            os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'data_GNN_paper')
-    path_output = '/hpc_data/schm_a45/data_paper'
-    data_dir = os.path.join(os.getcwd(), 'memilio/data')
+    path = os.getcwd()
+    data_dir = os.path.join(path, 'data')
+    path_output = os.path.join(path, 'saves')
 
     input_width = 5
     number_of_dampings = 2
