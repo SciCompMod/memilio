@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-22 09:13:13</td>
+            <td class="headerValue">2025-01-31 15:59:05</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">44</td>
@@ -362,10 +362,10 @@
 <a name="300"><span class="lineNum">     300 </span><span class="lineCov">      12525 :         int i        = 0;</span></a>
 <a name="301"><span class="lineNum">     301 </span><span class="lineCov">      12525 :         int retries  = 10;</span></a>
 <a name="302"><span class="lineNum">     302 </span><span class="lineCov">      12525 :         double rnumb = m_distribution(thread_local_rng());</span></a>
-<a name="303"><span class="lineNum">     303 </span><span class="lineCov">      12609 :         while ((rnumb &gt; m_upper_bound || rnumb &lt; m_lower_bound) &amp;&amp; i &lt; retries) {</span></a>
-<a name="304"><span class="lineNum">     304 </span><span class="lineCov">         84 :             rnumb = m_distribution(thread_local_rng());</span></a>
-<a name="305"><span class="lineNum">     305 </span><span class="lineCov">         84 :             i++;</span></a>
-<a name="306"><span class="lineNum">     306 </span><span class="lineCov">         84 :             if (i == retries) {</span></a>
+<a name="303"><span class="lineNum">     303 </span><span class="lineCov">      12562 :         while ((rnumb &gt; m_upper_bound || rnumb &lt; m_lower_bound) &amp;&amp; i &lt; retries) {</span></a>
+<a name="304"><span class="lineNum">     304 </span><span class="lineCov">         37 :             rnumb = m_distribution(thread_local_rng());</span></a>
+<a name="305"><span class="lineNum">     305 </span><span class="lineCov">         37 :             i++;</span></a>
+<a name="306"><span class="lineNum">     306 </span><span class="lineCov">         37 :             if (i == retries) {</span></a>
 <a name="307"><span class="lineNum">     307 </span><span class="lineNoCov">          0 :                 log_warning(&quot;Not successfully sampled within [min,max].&quot;);</span></a>
 <a name="308"><span class="lineNum">     308 </span><span class="lineNoCov">          0 :                 if (rnumb &gt; m_upper_bound) {</span></a>
 <a name="309"><span class="lineNum">     309 </span><span class="lineNoCov">          0 :                     rnumb = m_upper_bound;</span></a>

@@ -37,11 +37,11 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-22 09:13:13</td>
+            <td class="headerValue">2025-01-31 15:59:05</td>
             <td></td>
             <td class="headerItem">Functions:</td>
-            <td class="headerCovTableEntry">460</td>
-            <td class="headerCovTableEntry">460</td>
+            <td class="headerCovTableEntry">462</td>
+            <td class="headerCovTableEntry">462</td>
             <td class="headerCovTableEntryHi">100.0 %</td>
           </tr>
           <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
@@ -112,11 +112,11 @@
 <a name="50"><span class="lineNum">      50 </span>            :      * @param n A string literal. </a>
 <a name="51"><span class="lineNum">      51 </span>            :      * @param v A non-const lvalue reference to the value. </a>
 <a name="52"><span class="lineNum">      52 </span>            :      */</a>
-<a name="53"><span class="lineNum">      53 </span><span class="lineCov">       2761 :     explicit NamedRef(const char* n, Reference v)</span></a>
-<a name="54"><span class="lineNum">      54 </span><span class="lineCov">       2761 :         : name(n)</span></a>
-<a name="55"><span class="lineNum">      55 </span><span class="lineCov">       2761 :         , value(v)</span></a>
+<a name="53"><span class="lineNum">      53 </span><span class="lineCov">       2779 :     explicit NamedRef(const char* n, Reference v)</span></a>
+<a name="54"><span class="lineNum">      54 </span><span class="lineCov">       2779 :         : name(n)</span></a>
+<a name="55"><span class="lineNum">      55 </span><span class="lineCov">       2779 :         , value(v)</span></a>
 <a name="56"><span class="lineNum">      56 </span>            :     {</a>
-<a name="57"><span class="lineNum">      57 </span><span class="lineCov">       2761 :     }</span></a>
+<a name="57"><span class="lineNum">      57 </span><span class="lineCov">       2779 :     }</span></a>
 <a name="58"><span class="lineNum">      58 </span>            : };</a>
 <a name="59"><span class="lineNum">      59 </span>            : </a>
 <a name="60"><span class="lineNum">      60 </span>            : namespace details</a>
@@ -132,10 +132,10 @@
 <a name="70"><span class="lineNum">      70 </span>            : </a>
 <a name="71"><span class="lineNum">      71 </span>            : /// Add a name-value pair to an io object.</a>
 <a name="72"><span class="lineNum">      72 </span>            : template &lt;class IOObject, class Member&gt;</a>
-<a name="73"><span class="lineNum">      73 </span><span class="lineCov">       1575 : void add_named_ref(IOObject&amp; obj, const NamedRef&lt;Member&gt; named_ref)</span></a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineCov">       1584 : void add_named_ref(IOObject&amp; obj, const NamedRef&lt;Member&gt; named_ref)</span></a>
 <a name="74"><span class="lineNum">      74 </span>            : {</a>
-<a name="75"><span class="lineNum">      75 </span><span class="lineCov">       1575 :     obj.add_element(named_ref.name, named_ref.value);</span></a>
-<a name="76"><span class="lineNum">      76 </span><span class="lineCov">       1575 : }</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">       1584 :     obj.add_element(named_ref.name, named_ref.value);</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">       1584 : }</span></a>
 <a name="77"><span class="lineNum">      77 </span>            : </a>
 <a name="78"><span class="lineNum">      78 </span>            : /// Unpack all name-value pairs from the tuple and add them to a new io object with the given name.</a>
 <a name="79"><span class="lineNum">      79 </span>            : template &lt;class IOContext, class... Members&gt;</a>
@@ -147,9 +147,9 @@
 <a name="85"><span class="lineNum">      85 </span>            : </a>
 <a name="86"><span class="lineNum">      86 </span>            : /// Retrieve a name-value pair from an io object.</a>
 <a name="87"><span class="lineNum">      87 </span>            : template &lt;class IOObject, class Member&gt;</a>
-<a name="88"><span class="lineNum">      88 </span><span class="lineCov">       1170 : IOResult&lt;Member&gt; expect_named_ref(IOObject&amp; obj, const NamedRef&lt;Member&gt; named_ref)</span></a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineCov">       1179 : IOResult&lt;Member&gt; expect_named_ref(IOObject&amp; obj, const NamedRef&lt;Member&gt; named_ref)</span></a>
 <a name="89"><span class="lineNum">      89 </span>            : {</a>
-<a name="90"><span class="lineNum">      90 </span><span class="lineCov">       1170 :     return obj.expect_element(named_ref.name, Tag&lt;Member&gt;{});</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">       1179 :     return obj.expect_element(named_ref.name, Tag&lt;Member&gt;{});</span></a>
 <a name="91"><span class="lineNum">      91 </span>            : }</a>
 <a name="92"><span class="lineNum">      92 </span>            : </a>
 <a name="93"><span class="lineNum">      93 </span>            : /// Read an io object and its members from the io context using the given names and assign the values to a.</a>
@@ -160,14 +160,14 @@
 <a name="98"><span class="lineNum">      98 </span><span class="lineCov">       1431 :     auto obj = io.expect_object(name);</span></a>
 <a name="99"><span class="lineNum">      99 </span>            : </a>
 <a name="100"><span class="lineNum">     100 </span>            :     // we cannot use expect_named_ref directly in apply, as function arguments have no guarantueed order of evaluation</a>
-<a name="101"><span class="lineNum">     101 </span><span class="lineCov">       1647 :     std::tuple&lt;IOResult&lt;Members&gt;...&gt; results{expect_named_ref(obj, named_refs)...};</span></a>
+<a name="101"><span class="lineNum">     101 </span><span class="lineCov">       1656 :     std::tuple&lt;IOResult&lt;Members&gt;...&gt; results{expect_named_ref(obj, named_refs)...};</span></a>
 <a name="102"><span class="lineNum">     102 </span>            : </a>
 <a name="103"><span class="lineNum">     103 </span>            :     return apply(</a>
 <a name="104"><span class="lineNum">     104 </span>            :         io,</a>
 <a name="105"><span class="lineNum">     105 </span><span class="lineCov">       1575 :         [&amp;a, &amp;named_refs...](const Members&amp;... result_values) {</span></a>
 <a name="106"><span class="lineNum">     106 </span>            :             // if all results are successfully deserialized, they are unpacked into result_values</a>
 <a name="107"><span class="lineNum">     107 </span>            :             // then all class variables are overwritten (via the named_refs) with these values</a>
-<a name="108"><span class="lineNum">     108 </span><span class="lineCov">       1170 :             ((named_refs.value = result_values), ...);</span></a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineCov">       1179 :             ((named_refs.value = result_values), ...);</span></a>
 <a name="109"><span class="lineNum">     109 </span><span class="lineCov">        729 :             return a;</span></a>
 <a name="110"><span class="lineNum">     110 </span>            :         },</a>
 <a name="111"><span class="lineNum">     111 </span><span class="lineCov">        954 :         results);</span></a>
@@ -210,9 +210,9 @@
 <a name="148"><span class="lineNum">     148 </span>            :      * @return A Members object with all previous class members and the newly added one.  </a>
 <a name="149"><span class="lineNum">     149 </span>            :      */</a>
 <a name="150"><span class="lineNum">     150 </span>            :     template &lt;class T&gt;</a>
-<a name="151"><span class="lineNum">     151 </span><span class="lineCov">       2761 :     [[nodiscard]] Members&lt;ValueTypes..., T&gt; add(const char* member_name, T&amp; member)</span></a>
+<a name="151"><span class="lineNum">     151 </span><span class="lineCov">       2779 :     [[nodiscard]] Members&lt;ValueTypes..., T&gt; add(const char* member_name, T&amp; member)</span></a>
 <a name="152"><span class="lineNum">     152 </span>            :     {</a>
-<a name="153"><span class="lineNum">     153 </span><span class="lineCov">       2761 :         return Members&lt;ValueTypes..., T&gt;{name, std::tuple_cat(named_refs, std::tuple(NamedRef{member_name, member}))};</span></a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineCov">       2779 :         return Members&lt;ValueTypes..., T&gt;{name, std::tuple_cat(named_refs, std::tuple(NamedRef{member_name, member}))};</span></a>
 <a name="154"><span class="lineNum">     154 </span>            :     }</a>
 <a name="155"><span class="lineNum">     155 </span>            : </a>
 <a name="156"><span class="lineNum">     156 </span>            :     const char* name; ///&lt; Name of the class.</a>
@@ -224,11 +224,11 @@
 <a name="162"><span class="lineNum">     162 </span>            :      * @param[in] class_name Name of a class.</a>
 <a name="163"><span class="lineNum">     163 </span>            :      * @param[in] named_references Tuple of added class Members.</a>
 <a name="164"><span class="lineNum">     164 </span>            :      */</a>
-<a name="165"><span class="lineNum">     165 </span><span class="lineCov">       2761 :     Members(const char* class_name, std::tuple&lt;NamedRef&lt;ValueTypes&gt;...&gt; named_references)</span></a>
-<a name="166"><span class="lineNum">     166 </span><span class="lineCov">       2761 :         : name(class_name)</span></a>
-<a name="167"><span class="lineNum">     167 </span><span class="lineCov">       2761 :         , named_refs(named_references)</span></a>
+<a name="165"><span class="lineNum">     165 </span><span class="lineCov">       2779 :     Members(const char* class_name, std::tuple&lt;NamedRef&lt;ValueTypes&gt;...&gt; named_references)</span></a>
+<a name="166"><span class="lineNum">     166 </span><span class="lineCov">       2779 :         : name(class_name)</span></a>
+<a name="167"><span class="lineNum">     167 </span><span class="lineCov">       2779 :         , named_refs(named_references)</span></a>
 <a name="168"><span class="lineNum">     168 </span>            :     {</a>
-<a name="169"><span class="lineNum">     169 </span><span class="lineCov">       2761 :     }</span></a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineCov">       2779 :     }</span></a>
 <a name="170"><span class="lineNum">     170 </span>            : };</a>
 <a name="171"><span class="lineNum">     171 </span>            : </a>
 <a name="172"><span class="lineNum">     172 </span>            : /**</a>

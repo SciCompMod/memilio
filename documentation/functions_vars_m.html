@@ -72,6 +72,9 @@ $(function() {
 <li>m_accumulated_dampings_cached
 : <a class="el" href="classmio_1_1Dampings.html#a979402774ec1c3c35f678abf2c9ae053">mio::Dampings&lt; D &gt;</a>
 </li>
+<li>m_activeness_statuses
+: <a class="el" href="classmio_1_1abm_1_1Model.html#a23f1b1bff83d415e41006861e2ea7392">mio::abm::Model</a>
+</li>
 <li>m_age
 : <a class="el" href="classmio_1_1abm_1_1Person.html#ab24eb933ea6fa73f6a17c064c7383a06">mio::abm::Person</a>
 </li>
@@ -86,6 +89,9 @@ $(function() {
 </li>
 <li>m_are_exposure_caches_valid
 : <a class="el" href="classmio_1_1abm_1_1Model.html#a5f298d2fff59fee795703875204fba83">mio::abm::Model</a>
+</li>
+<li>m_assigned_location_model_ids
+: <a class="el" href="classmio_1_1abm_1_1Person.html#ad44e38496c9c9b7dcc7bc02221f79eba">mio::abm::Person</a>
 </li>
 <li>m_assigned_locations
 : <a class="el" href="classmio_1_1abm_1_1Person.html#a478882eb180fabea9b1819f08ec01903">mio::abm::Person</a>
@@ -182,8 +188,8 @@ $(function() {
 : <a class="el" href="structmio_1_1StateAgeFunction.html#a96e92e3d84be7e07931c3607c2be3011">mio::StateAgeFunction</a>
 </li>
 <li>m_dt
-: <a class="el" href="classmio_1_1abm_1_1Simulation.html#a15af748eafed0b32a50f1bf9c31b18ec">mio::abm::Simulation</a>
-, <a class="el" href="classmio_1_1GraphSimulationBase.html#a483b9447d2554ad43e5187767ffef24f">mio::GraphSimulationBase&lt; Graph, edge_f &gt;</a>
+: <a class="el" href="classmio_1_1abm_1_1Simulation.html#a8836b93c75d53951a7331bd96fa1b9db">mio::abm::Simulation&lt; M &gt;</a>
+, <a class="el" href="classmio_1_1GraphSimulationBase.html#a8e3b9d113ecbebefffc1cc31f9dd0c67">mio::GraphSimulationBase&lt; Graph, Timepoint, Timespan, edge_f, node_f &gt;</a>
 , <a class="el" href="classmio_1_1isecir_1_1Simulation.html#a93f0ec16d2579a2ea49ad42043cffaac">mio::isecir::Simulation</a>
 , <a class="el" href="classmio_1_1iseir_1_1Model.html#af451a091cc67704597c247f6eeac8dfe">mio::iseir::Model&lt; FP &gt;</a>
 , <a class="el" href="classmio_1_1lsecir_1_1Initializer.html#a8ee570046236685a7679eacc049dcb31">mio::lsecir::Initializer&lt; Model &gt;</a>
@@ -217,7 +223,7 @@ $(function() {
 : <a class="el" href="classmio_1_1IOStatus.html#ab87cb9abb5a24b684f274c881691f4e7">mio::IOStatus</a>
 </li>
 <li>m_edge_func
-: <a class="el" href="classmio_1_1GraphSimulationBase.html#adbef2a25d8bc3a2418121de5d37b4144">mio::GraphSimulationBase&lt; Graph, edge_f &gt;</a>
+: <a class="el" href="classmio_1_1GraphSimulationBase.html#a3befae233c4819f04a5151b0ad9c47c7">mio::GraphSimulationBase&lt; Graph, Timepoint, Timespan, edge_f, node_f &gt;</a>
 </li>
 <li>m_edges
 : <a class="el" href="classmio_1_1Graph.html#a8aacb09613a40ccec079b90b3b827473">mio::Graph&lt; NodePropertyT, EdgePropertyT &gt;</a>
@@ -266,7 +272,7 @@ $(function() {
 : <a class="el" href="classmio_1_1abm_1_1Location.html#ac0233d5f747fac127b534c9842a9cd2d">mio::abm::Location</a>
 </li>
 <li>m_graph
-: <a class="el" href="classmio_1_1GraphSimulationBase.html#ad8cc8ad76b9c0c6c203148d8fca68c8b">mio::GraphSimulationBase&lt; Graph, edge_f &gt;</a>
+: <a class="el" href="classmio_1_1GraphSimulationBase.html#a72b812f906d8f8048e33d429414954ca">mio::GraphSimulationBase&lt; Graph, Timepoint, Timespan, edge_f, node_f &gt;</a>
 , <a class="el" href="classmio_1_1ParameterStudy.html#af65939411eb18ae302df0ef09cf23e3b">mio::ParameterStudy&lt; S &gt;</a>
 </li>
 <li>m_groups
@@ -274,6 +280,9 @@ $(function() {
 </li>
 <li>m_has_locations
 : <a class="el" href="classmio_1_1abm_1_1Model.html#ac8bf36d684b5ef01f3f5263311197fc2">mio::abm::Model</a>
+</li>
+<li>m_history
+: <a class="el" href="classmio_1_1ABMSimulationNode.html#a6a0433255a1ec85f744e7056c5ce974f">mio::ABMSimulationNode&lt; History &gt;</a>
 </li>
 <li>m_home_isolation_start
 : <a class="el" href="classmio_1_1abm_1_1Person.html#a64f58fb08eff6fa2a9a4845029f41c67">mio::abm::Person</a>
@@ -289,6 +298,7 @@ $(function() {
 </li>
 <li>m_id
 : <a class="el" href="classmio_1_1abm_1_1Location.html#a203db1d0024045a7f45e6c0059235ce5">mio::abm::Location</a>
+, <a class="el" href="classmio_1_1abm_1_1Model.html#a82dd467011500576301d42de422ae9af">mio::abm::Model</a>
 </li>
 <li>m_index
 : <a class="el" href="classmio_1_1IndexRange_1_1MultiIndexIterator.html#a23740d0a04ef9f64d976515fb4e0c470">mio::IndexRange&lt; MultiIndex &gt;::MultiIndexIterator</a>
@@ -354,6 +364,9 @@ $(function() {
 : <a class="el" href="classmio_1_1abm_1_1Person.html#aeed290c489416bb8c59008efa8d1e1f3">mio::abm::Person</a>
 , <a class="el" href="structmio_1_1StateAgeFunction.html#a9e517fc83faafbe5f8858ef429834204">mio::StateAgeFunction</a>
 </li>
+<li>m_location_model_id
+: <a class="el" href="classmio_1_1abm_1_1Person.html#a190d4b46420eccce990a194e25fdd6b9">mio::abm::Person</a>
+</li>
 <li>m_location_to_schemes_map
 : <a class="el" href="classmio_1_1abm_1_1TestingStrategy.html#a0fbf90ed408880738acd943233237c95">mio::abm::TestingStrategy</a>
 </li>
@@ -408,13 +421,16 @@ $(function() {
 : <a class="el" href="classmio_1_1MobilityEdge.html#a1193df725a80e0fe2233045fce19eda1">mio::MobilityEdge&lt; FP &gt;</a>
 </li>
 <li>m_mobility_rules
-: <a class="el" href="classmio_1_1abm_1_1Model.html#aa080fe9d528c36e643448596eb277da3">mio::abm::Model</a>
+: <a class="el" href="classmio_1_1abm_1_1Model.html#aa27e88c9c52269ac4bfd907a624cce59">mio::abm::Model</a>
 </li>
 <li>m_model
-: <a class="el" href="classmio_1_1abm_1_1Simulation.html#aef4209115f0401e2f09e3e053cea90d9">mio::abm::Simulation</a>
+: <a class="el" href="classmio_1_1abm_1_1Simulation.html#a4e1fbf7668265fbdf1bf4211edf4a4fe">mio::abm::Simulation&lt; M &gt;</a>
 , <a class="el" href="classmio_1_1isecir_1_1Simulation.html#af162c87f68cb72c955f3c8dce897fdd8">mio::isecir::Simulation</a>
 , <a class="el" href="classmio_1_1lsecir_1_1Initializer.html#a16fe1bc8c77cb71306d80d432cb3547c">mio::lsecir::Initializer&lt; Model &gt;</a>
 , <a class="el" href="classmio_1_1Simulation.html#a3d179787d869470767c99debfa170c55">mio::Simulation&lt; FP, M &gt;</a>
+</li>
+<li>m_model_id
+: <a class="el" href="classmio_1_1abm_1_1Location.html#aac7350aedf3b30628ea35506092404e2">mio::abm::Location</a>
 </li>
 <li>m_msg
 : <a class="el" href="classmio_1_1IOStatus.html#a7ad56602dbab764453bed7fa33e8f27b">mio::IOStatus</a>
@@ -424,7 +440,7 @@ $(function() {
 , <a class="el" href="classmio_1_1iseir_1_1Model.html#ab289fce4ef3a5394cce3366af453ef62">mio::iseir::Model&lt; FP &gt;</a>
 </li>
 <li>m_node_func
-: <a class="el" href="classmio_1_1GraphSimulationBase.html#a24bcc73294f3d4efb102521b6aef5767">mio::GraphSimulationBase&lt; Graph, edge_f &gt;</a>
+: <a class="el" href="classmio_1_1GraphSimulationBase.html#a2a286bbc97135dfc358f8326c41d40e2">mio::GraphSimulationBase&lt; Graph, Timepoint, Timespan, edge_f, node_f &gt;</a>
 </li>
 <li>m_nodes
 : <a class="el" href="classmio_1_1Graph.html#a46413b09f2053efcf83a9bd77635186f">mio::Graph&lt; NodePropertyT, EdgePropertyT &gt;</a>
@@ -462,9 +478,17 @@ $(function() {
 , <a class="el" href="classmio_1_1MobilityEdge.html#a640ead543570c0ae9a7711ba907363a0">mio::MobilityEdge&lt; FP &gt;</a>
 , <a class="el" href="classmio_1_1MobilityEdgeStochastic.html#a1edec6e05e7d117f851d443bacca9ffa">mio::MobilityEdgeStochastic</a>
 </li>
+<li>m_person_buffer
+: <a class="el" href="classmio_1_1GraphABModel.html#a50c7d7527ff819bfb6262be290aa982e">mio::GraphABModel</a>
+</li>
 <li>m_person_id
 : <a class="el" href="classmio_1_1abm_1_1Person.html#a80667f0173626da6a902f0b262865988">mio::abm::Person</a>
-, <a class="el" href="classmio_1_1abm_1_1PersonalRandomNumberGenerator.html#a44d25163b502e8b31884cb363af711b8">mio::abm::PersonalRandomNumberGenerator</a>
+</li>
+<li>m_person_ids_equal_index
+: <a class="el" href="classmio_1_1abm_1_1Model.html#a4b085d38dfdf6ad8a8bf08ae8d4efad2">mio::abm::Model</a>
+</li>
+<li>m_person_index
+: <a class="el" href="classmio_1_1abm_1_1PersonalRandomNumberGenerator.html#a5a440a0265e44d0e7ee8ce3a327453c6">mio::abm::PersonalRandomNumberGenerator</a>
 </li>
 <li>m_persons
 : <a class="el" href="classmio_1_1abm_1_1Model.html#aea708f48b45a52bc22da59bd84b257d4">mio::abm::Model</a>
@@ -537,6 +561,12 @@ $(function() {
 <li>m_rng_counter
 : <a class="el" href="classmio_1_1abm_1_1Person.html#a3c21da850d0922534f38025f945bc877">mio::abm::Person</a>
 </li>
+<li>m_rng_index
+: <a class="el" href="classmio_1_1abm_1_1Person.html#a3c0fe8e830efab89139bfe3d386ffcfd">mio::abm::Person</a>
+</li>
+<li>m_rng_key
+: <a class="el" href="classmio_1_1abm_1_1Person.html#a91fa0b470c881a7bc4cd0d02ef7a7070">mio::abm::Person</a>
+</li>
 <li>m_rows
 : <a class="el" href="classmio_1_1ColumnVectorShape.html#a36a595a0a40133a3f7fa5ec613117e8e">mio::ColumnVectorShape</a>
 , <a class="el" href="classmio_1_1RectMatrixShape.html#ae520a863b74d24d32db14a948e771979">mio::RectMatrixShape</a>
@@ -563,7 +593,8 @@ $(function() {
 : <a class="el" href="classmio_1_1Dampings.html#aef61541bb44e0d95ea4aa8369c9efe65">mio::Dampings&lt; D &gt;</a>
 </li>
 <li>m_simulation
-: <a class="el" href="classmio_1_1SimulationNode.html#af63978be5b017fd635077a4dfc96c0c3">mio::SimulationNode&lt; Sim &gt;</a>
+: <a class="el" href="classmio_1_1ABMSimulationNode.html#ab3ed8e6810ecb5fd3f1926034f364274">mio::ABMSimulationNode&lt; History &gt;</a>
+, <a class="el" href="classmio_1_1SimulationNode.html#af63978be5b017fd635077a4dfc96c0c3">mio::SimulationNode&lt; Sim &gt;</a>
 </li>
 <li>m_size
 : <a class="el" href="classmio_1_1Span.html#a7816e88b1f14023b471bb8e6bfe2be2e">mio::Span&lt; T &gt;</a>
@@ -603,8 +634,8 @@ $(function() {
 : <a class="el" href="structmio_1_1StateAgeFunction.html#a4982979d884fab781c0df7508fe801cc">mio::StateAgeFunction</a>
 </li>
 <li>m_t
-: <a class="el" href="classmio_1_1abm_1_1Simulation.html#a0c253c28793b5fd8ca0f4b33951f2b07">mio::abm::Simulation</a>
-, <a class="el" href="classmio_1_1GraphSimulationBase.html#a4611c204dd81a522731ba89dfda0eb36">mio::GraphSimulationBase&lt; Graph, edge_f &gt;</a>
+: <a class="el" href="classmio_1_1abm_1_1Simulation.html#a470d118d4f304a4fe8bdcf58d9f5e51b">mio::abm::Simulation&lt; M &gt;</a>
+, <a class="el" href="classmio_1_1GraphSimulationBase.html#af5bc90bf6148a1603da2db124fecdc4e">mio::GraphSimulationBase&lt; Graph, Timepoint, Timespan, edge_f, node_f &gt;</a>
 , <a class="el" href="classmio_1_1TypeSafe.html#aabefcd3c29bd841e143bf534b68f22c6">mio::TypeSafe&lt; T, Derived &gt;</a>
 </li>
 <li>m_t0

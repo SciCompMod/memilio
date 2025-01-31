@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-22 09:13:13</td>
+            <td class="headerValue">2025-01-31 15:59:05</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">7</td>
@@ -94,81 +94,81 @@
 <a name="32"><span class="lineNum">      32 </span>            : namespace abm</a>
 <a name="33"><span class="lineNum">      33 </span>            : {</a>
 <a name="34"><span class="lineNum">      34 </span>            : </a>
-<a name="35"><span class="lineNum">      35 </span><span class="lineCov">       1989 : ScalarType daily_transmissions_by_contacts(const ContactExposureRates&amp; rates, const CellIndex cell_index,</span></a>
+<a name="35"><span class="lineNum">      35 </span><span class="lineCov">       2051 : ScalarType daily_transmissions_by_contacts(const ContactExposureRates&amp; rates, const CellIndex cell_index,</span></a>
 <a name="36"><span class="lineNum">      36 </span>            :                                            const VirusVariant virus, const AgeGroup age_receiver,</a>
 <a name="37"><span class="lineNum">      37 </span>            :                                            const LocalInfectionParameters&amp; params)</a>
 <a name="38"><span class="lineNum">      38 </span>            : {</a>
-<a name="39"><span class="lineNum">      39 </span><span class="lineCov">       1989 :     assert(age_receiver &lt; rates.size&lt;AgeGroup&gt;());</span></a>
-<a name="40"><span class="lineNum">      40 </span><span class="lineCov">       1989 :     ScalarType prob = 0;</span></a>
-<a name="41"><span class="lineNum">      41 </span><span class="lineCov">      13923 :     for (AgeGroup age_transmitter(0); age_transmitter &lt; rates.size&lt;AgeGroup&gt;(); ++age_transmitter) {</span></a>
-<a name="42"><span class="lineNum">      42 </span><span class="lineCov">      11934 :         prob +=</span></a>
-<a name="43"><span class="lineNum">      43 </span><span class="lineCov">      23868 :             rates[{cell_index, virus, age_transmitter}] * params.get&lt;ContactRates&gt;()[{age_receiver, age_transmitter}];</span></a>
+<a name="39"><span class="lineNum">      39 </span><span class="lineCov">       2051 :     assert(age_receiver &lt; rates.size&lt;AgeGroup&gt;());</span></a>
+<a name="40"><span class="lineNum">      40 </span><span class="lineCov">       2051 :     ScalarType prob = 0;</span></a>
+<a name="41"><span class="lineNum">      41 </span><span class="lineCov">      14102 :     for (AgeGroup age_transmitter(0); age_transmitter &lt; rates.size&lt;AgeGroup&gt;(); ++age_transmitter) {</span></a>
+<a name="42"><span class="lineNum">      42 </span><span class="lineCov">      12051 :         prob +=</span></a>
+<a name="43"><span class="lineNum">      43 </span><span class="lineCov">      24102 :             rates[{cell_index, virus, age_transmitter}] * params.get&lt;ContactRates&gt;()[{age_receiver, age_transmitter}];</span></a>
 <a name="44"><span class="lineNum">      44 </span>            :     }</a>
-<a name="45"><span class="lineNum">      45 </span><span class="lineCov">       1989 :     return prob;</span></a>
+<a name="45"><span class="lineNum">      45 </span><span class="lineCov">       2051 :     return prob;</span></a>
 <a name="46"><span class="lineNum">      46 </span>            : }</a>
 <a name="47"><span class="lineNum">      47 </span>            : </a>
-<a name="48"><span class="lineNum">      48 </span><span class="lineCov">       1989 : ScalarType daily_transmissions_by_air(const AirExposureRates&amp; rates, const CellIndex cell_index,</span></a>
+<a name="48"><span class="lineNum">      48 </span><span class="lineCov">       2051 : ScalarType daily_transmissions_by_air(const AirExposureRates&amp; rates, const CellIndex cell_index,</span></a>
 <a name="49"><span class="lineNum">      49 </span>            :                                       const VirusVariant virus, const Parameters&amp; global_params)</a>
 <a name="50"><span class="lineNum">      50 </span>            : {</a>
-<a name="51"><span class="lineNum">      51 </span><span class="lineCov">       3978 :     return rates[{cell_index, virus}] * global_params.get&lt;AerosolTransmissionRates&gt;()[{virus}];</span></a>
+<a name="51"><span class="lineNum">      51 </span><span class="lineCov">       4102 :     return rates[{cell_index, virus}] * global_params.get&lt;AerosolTransmissionRates&gt;()[{virus}];</span></a>
 <a name="52"><span class="lineNum">      52 </span>            : }</a>
 <a name="53"><span class="lineNum">      53 </span>            : </a>
-<a name="54"><span class="lineNum">      54 </span><span class="lineCov">       2835 : void interact(PersonalRandomNumberGenerator&amp; personal_rng, Person&amp; person, const Location&amp; location,</span></a>
+<a name="54"><span class="lineNum">      54 </span><span class="lineCov">       2897 : void interact(PersonalRandomNumberGenerator&amp; personal_rng, Person&amp; person, const Location&amp; location,</span></a>
 <a name="55"><span class="lineNum">      55 </span>            :               const AirExposureRates&amp; local_air_exposure, const ContactExposureRates&amp; local_contact_exposure,</a>
 <a name="56"><span class="lineNum">      56 </span>            :               const TimePoint t, const TimeSpan dt, const Parameters&amp; global_parameters)</a>
 <a name="57"><span class="lineNum">      57 </span>            : {</a>
 <a name="58"><span class="lineNum">      58 </span>            :     // make sure all dimensions are set correctly and all indices are valid</a>
-<a name="59"><span class="lineNum">      59 </span><span class="lineCov">       2835 :     assert(location.get_cells().size() == local_air_exposure.size&lt;CellIndex&gt;().get());</span></a>
-<a name="60"><span class="lineNum">      60 </span><span class="lineCov">       2835 :     assert(location.get_cells().size() == local_contact_exposure.size&lt;CellIndex&gt;().get());</span></a>
-<a name="61"><span class="lineNum">      61 </span><span class="lineCov">       2835 :     assert(local_contact_exposure.size&lt;VirusVariant&gt;() == local_air_exposure.size&lt;VirusVariant&gt;());</span></a>
-<a name="62"><span class="lineNum">      62 </span><span class="lineCov">       2835 :     assert(local_contact_exposure.size&lt;VirusVariant&gt;() == VirusVariant::Count);</span></a>
-<a name="63"><span class="lineNum">      63 </span><span class="lineCov">       2835 :     assert(local_contact_exposure.size&lt;AgeGroup&gt;().get() == global_parameters.get_num_groups());</span></a>
-<a name="64"><span class="lineNum">      64 </span><span class="lineCov">       2835 :     assert(person.get_age() &lt; local_contact_exposure.size&lt;AgeGroup&gt;());</span></a>
-<a name="65"><span class="lineNum">      65 </span><span class="lineCov">       5670 :     assert(std::all_of(person.get_cells().begin(), person.get_cells().end(), [&amp;](const auto&amp; cell) {</span></a>
+<a name="59"><span class="lineNum">      59 </span><span class="lineCov">       2897 :     assert(location.get_cells().size() == local_air_exposure.size&lt;CellIndex&gt;().get());</span></a>
+<a name="60"><span class="lineNum">      60 </span><span class="lineCov">       2897 :     assert(location.get_cells().size() == local_contact_exposure.size&lt;CellIndex&gt;().get());</span></a>
+<a name="61"><span class="lineNum">      61 </span><span class="lineCov">       2897 :     assert(local_contact_exposure.size&lt;VirusVariant&gt;() == local_air_exposure.size&lt;VirusVariant&gt;());</span></a>
+<a name="62"><span class="lineNum">      62 </span><span class="lineCov">       2897 :     assert(local_contact_exposure.size&lt;VirusVariant&gt;() == VirusVariant::Count);</span></a>
+<a name="63"><span class="lineNum">      63 </span><span class="lineCov">       2897 :     assert(local_contact_exposure.size&lt;AgeGroup&gt;().get() == global_parameters.get_num_groups());</span></a>
+<a name="64"><span class="lineNum">      64 </span><span class="lineCov">       2897 :     assert(person.get_age() &lt; local_contact_exposure.size&lt;AgeGroup&gt;());</span></a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineCov">       5794 :     assert(std::all_of(person.get_cells().begin(), person.get_cells().end(), [&amp;](const auto&amp; cell) {</span></a>
 <a name="66"><span class="lineNum">      66 </span>            :         return cell &lt; location.get_cells().size();</a>
 <a name="67"><span class="lineNum">      67 </span>            :     }));</a>
 <a name="68"><span class="lineNum">      68 </span>            : </a>
-<a name="69"><span class="lineNum">      69 </span><span class="lineCov">       2835 :     if (person.get_infection_state(t) == InfectionState::Susceptible) {</span></a>
-<a name="70"><span class="lineNum">      70 </span><span class="lineCov">       1989 :         auto&amp; local_parameters = location.get_infection_parameters();</span></a>
+<a name="69"><span class="lineNum">      69 </span><span class="lineCov">       2897 :     if (person.get_infection_state(t) == InfectionState::Susceptible) {</span></a>
+<a name="70"><span class="lineNum">      70 </span><span class="lineCov">       2051 :         auto&amp; local_parameters = location.get_infection_parameters();</span></a>
 <a name="71"><span class="lineNum">      71 </span>            :         // TODO: we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells</a>
-<a name="72"><span class="lineNum">      72 </span><span class="lineCov">       1989 :         auto age_receiver          = person.get_age();</span></a>
-<a name="73"><span class="lineNum">      73 </span><span class="lineCov">       1989 :         ScalarType mask_protection = person.get_mask_protective_factor(global_parameters);</span></a>
-<a name="74"><span class="lineNum">      74 </span><span class="lineCov">       1989 :         assert(person.get_cells().size() &amp;&amp; &quot;Person is in multiple cells. Interact logic is incorrect at the moment.&quot;);</span></a>
-<a name="75"><span class="lineNum">      75 </span><span class="lineCov">       3978 :         for (auto cell_index : person.get_cells()) {</span></a>
-<a name="76"><span class="lineNum">      76 </span><span class="lineCov">       1989 :             std::pair&lt;VirusVariant, ScalarType&gt; local_indiv_trans_prob[static_cast&lt;uint32_t&gt;(VirusVariant::Count)];</span></a>
-<a name="77"><span class="lineNum">      77 </span><span class="lineCov">       3978 :             for (uint32_t v = 0; v != static_cast&lt;uint32_t&gt;(VirusVariant::Count); ++v) {</span></a>
-<a name="78"><span class="lineNum">      78 </span><span class="lineCov">       1989 :                 VirusVariant virus = static_cast&lt;VirusVariant&gt;(v);</span></a>
-<a name="79"><span class="lineNum">      79 </span><span class="lineCov">       1989 :                 ScalarType local_indiv_trans_prob_v =</span></a>
-<a name="80"><span class="lineNum">      80 </span><span class="lineCov">       1989 :                     (std::min(local_parameters.get&lt;MaximumContacts&gt;(),</span></a>
-<a name="81"><span class="lineNum">      81 </span><span class="lineCov">       3978 :                               daily_transmissions_by_contacts(local_contact_exposure, cell_index, virus, age_receiver,</span></a>
-<a name="82"><span class="lineNum">      82 </span><span class="lineCov">       1989 :                                                               local_parameters)) +</span></a>
-<a name="83"><span class="lineNum">      83 </span><span class="lineCov">       3978 :                      daily_transmissions_by_air(local_air_exposure, cell_index, virus, global_parameters)) *</span></a>
-<a name="84"><span class="lineNum">      84 </span><span class="lineCov">       3978 :                     dt.days() * (1 - mask_protection) * (1 - person.get_protection_factor(t, virus, global_parameters));</span></a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineCov">       2051 :         auto age_receiver          = person.get_age();</span></a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineCov">       2051 :         ScalarType mask_protection = person.get_mask_protective_factor(global_parameters);</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">       2051 :         assert(person.get_cells().size() &amp;&amp; &quot;Person is in multiple cells. Interact logic is incorrect at the moment.&quot;);</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">       4102 :         for (auto cell_index : person.get_cells()) {</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">       2051 :             std::pair&lt;VirusVariant, ScalarType&gt; local_indiv_trans_prob[static_cast&lt;uint32_t&gt;(VirusVariant::Count)];</span></a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineCov">       4102 :             for (uint32_t v = 0; v != static_cast&lt;uint32_t&gt;(VirusVariant::Count); ++v) {</span></a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineCov">       2051 :                 VirusVariant virus = static_cast&lt;VirusVariant&gt;(v);</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">       2051 :                 ScalarType local_indiv_trans_prob_v =</span></a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineCov">       2051 :                     (std::min(local_parameters.get&lt;MaximumContacts&gt;(),</span></a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineCov">       4102 :                               daily_transmissions_by_contacts(local_contact_exposure, cell_index, virus, age_receiver,</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">       2051 :                                                               local_parameters)) +</span></a>
+<a name="83"><span class="lineNum">      83 </span><span class="lineCov">       4102 :                      daily_transmissions_by_air(local_air_exposure, cell_index, virus, global_parameters)) *</span></a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">       4102 :                     dt.days() * (1 - mask_protection) * (1 - person.get_protection_factor(t, virus, global_parameters));</span></a>
 <a name="85"><span class="lineNum">      85 </span>            : </a>
-<a name="86"><span class="lineNum">      86 </span><span class="lineCov">       1989 :                 local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);</span></a>
+<a name="86"><span class="lineNum">      86 </span><span class="lineCov">       2051 :                 local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);</span></a>
 <a name="87"><span class="lineNum">      87 </span>            :             }</a>
 <a name="88"><span class="lineNum">      88 </span>            :             VirusVariant virus =</a>
-<a name="89"><span class="lineNum">      89 </span><span class="lineCov">       1989 :                 random_transition(personal_rng, VirusVariant::Count, dt,</span></a>
-<a name="90"><span class="lineNum">      90 </span><span class="lineCov">       1989 :                                   local_indiv_trans_prob); // use VirusVariant::Count for no virus submission</span></a>
-<a name="91"><span class="lineNum">      91 </span><span class="lineCov">       1989 :             if (virus != VirusVariant::Count) {</span></a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineCov">       2051 :                 random_transition(personal_rng, VirusVariant::Count, dt,</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">       2051 :                                   local_indiv_trans_prob); // use VirusVariant::Count for no virus submission</span></a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineCov">       2051 :             if (virus != VirusVariant::Count) {</span></a>
 <a name="92"><span class="lineNum">      92 </span><span class="lineCov">         54 :                 person.add_new_infection(Infection(personal_rng, virus, age_receiver, global_parameters, t + dt / 2,</span></a>
 <a name="93"><span class="lineNum">      93 </span><span class="lineCov">         27 :                                                    mio::abm::InfectionState::Exposed, person.get_latest_protection(),</span></a>
 <a name="94"><span class="lineNum">      94 </span>            :                                                    false)); // Starting time in first approximation</a>
 <a name="95"><span class="lineNum">      95 </span>            :             }</a>
 <a name="96"><span class="lineNum">      96 </span>            :         }</a>
 <a name="97"><span class="lineNum">      97 </span>            :     }</a>
-<a name="98"><span class="lineNum">      98 </span><span class="lineCov">       2835 :     person.add_time_at_location(dt);</span></a>
-<a name="99"><span class="lineNum">      99 </span><span class="lineCov">       2835 : }</span></a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineCov">       2897 :     person.add_time_at_location(dt);</span></a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineCov">       2897 : }</span></a>
 <a name="100"><span class="lineNum">     100 </span>            : </a>
-<a name="101"><span class="lineNum">     101 </span><span class="lineCov">       2907 : void add_exposure_contribution(AirExposureRates&amp; local_air_exposure, ContactExposureRates&amp; local_contact_exposure,</span></a>
+<a name="101"><span class="lineNum">     101 </span><span class="lineCov">       2969 : void add_exposure_contribution(AirExposureRates&amp; local_air_exposure, ContactExposureRates&amp; local_contact_exposure,</span></a>
 <a name="102"><span class="lineNum">     102 </span>            :                                const Person&amp; person, const Location&amp; location, const TimePoint t, const TimeSpan dt)</a>
 <a name="103"><span class="lineNum">     103 </span>            : {</a>
-<a name="104"><span class="lineNum">     104 </span><span class="lineCov">       2907 :     if (person.get_location() != location.get_id()) {</span></a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineCov">       2969 :     if (person.get_location() != location.get_id()) {</span></a>
 <a name="105"><span class="lineNum">     105 </span><span class="lineNoCov">          0 :         mio::log_debug(&quot;In add_exposure_contribution: Person {} is not at Location {}&quot;, person.get_id().get(),</span></a>
 <a name="106"><span class="lineNum">     106 </span><span class="lineNoCov">          0 :                        location.get_id().get());</span></a>
 <a name="107"><span class="lineNum">     107 </span>            :     }</a>
 <a name="108"><span class="lineNum">     108 </span>            : </a>
-<a name="109"><span class="lineNum">     109 </span><span class="lineCov">       2907 :     if (person.is_infected(t)) {</span></a>
+<a name="109"><span class="lineNum">     109 </span><span class="lineCov">       2969 :     if (person.is_infected(t)) {</span></a>
 <a name="110"><span class="lineNum">     110 </span><span class="lineCov">        855 :         auto&amp; infection = person.get_infection();</span></a>
 <a name="111"><span class="lineNum">     111 </span><span class="lineCov">        855 :         auto virus      = infection.get_virus_variant();</span></a>
 <a name="112"><span class="lineNum">     112 </span><span class="lineCov">        855 :         auto age        = person.get_age();</span></a>
@@ -185,21 +185,21 @@
 <a name="123"><span class="lineNum">     123 </span><span class="lineCov">       1710 :             local_contact_exposure[{cell, virus, age}] += infection.get_infectivity(t + dt / 2);</span></a>
 <a name="124"><span class="lineNum">     124 </span>            :         }</a>
 <a name="125"><span class="lineNum">     125 </span>            :     }</a>
-<a name="126"><span class="lineNum">     126 </span><span class="lineCov">       2907 : }</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineCov">       2969 : }</span></a>
 <a name="127"><span class="lineNum">     127 </span>            : </a>
-<a name="128"><span class="lineNum">     128 </span><span class="lineCov">        477 : bool change_location(Person&amp; person, const Location&amp; destination, const TransportMode mode,</span></a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineCov">        427 : bool change_location(Person&amp; person, const Location&amp; destination, const TransportMode mode,</span></a>
 <a name="129"><span class="lineNum">     129 </span>            :                      const std::vector&lt;uint32_t&gt;&amp; cells)</a>
 <a name="130"><span class="lineNum">     130 </span>            : {</a>
-<a name="131"><span class="lineNum">     131 </span><span class="lineCov">        972 :     assert(std::all_of(cells.begin(), cells.end(), [&amp;](const auto&amp; cell) {</span></a>
+<a name="131"><span class="lineNum">     131 </span><span class="lineCov">        872 :     assert(std::all_of(cells.begin(), cells.end(), [&amp;](const auto&amp; cell) {</span></a>
 <a name="132"><span class="lineNum">     132 </span>            :         return cell &lt; destination.get_cells().size();</a>
 <a name="133"><span class="lineNum">     133 </span>            :     })); // make sure cell indices are valid</a>
 <a name="134"><span class="lineNum">     134 </span>            : </a>
-<a name="135"><span class="lineNum">     135 </span><span class="lineCov">        477 :     if (person.get_location() != destination.get_id()) {</span></a>
-<a name="136"><span class="lineNum">     136 </span><span class="lineCov">        459 :         person.set_location(destination.get_type(), destination.get_id());</span></a>
-<a name="137"><span class="lineNum">     137 </span><span class="lineCov">        459 :         person.get_cells() = cells;</span></a>
-<a name="138"><span class="lineNum">     138 </span><span class="lineCov">        459 :         person.set_last_transport_mode(mode);</span></a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineCov">        427 :     if (person.get_location() != destination.get_id()) {</span></a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">        409 :         person.set_location(destination.get_type(), destination.get_id(), destination.get_model_id());</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineCov">        409 :         person.get_cells() = cells;</span></a>
+<a name="138"><span class="lineNum">     138 </span><span class="lineCov">        409 :         person.set_last_transport_mode(mode);</span></a>
 <a name="139"><span class="lineNum">     139 </span>            : </a>
-<a name="140"><span class="lineNum">     140 </span><span class="lineCov">        459 :         return true;</span></a>
+<a name="140"><span class="lineNum">     140 </span><span class="lineCov">        409 :         return true;</span></a>
 <a name="141"><span class="lineNum">     141 </span>            :     }</a>
 <a name="142"><span class="lineNum">     142 </span>            :     else {</a>
 <a name="143"><span class="lineNum">     143 </span><span class="lineCov">         18 :         mio::log_debug(&quot;In change_location: Person {} already is at Location {}&quot;, person.get_id().get(),</span></a>

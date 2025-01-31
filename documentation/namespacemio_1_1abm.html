@@ -205,7 +205,7 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Random number generator of individual persons.  <a href="classmio_1_1abm_1_1PersonalRandomNumberGenerator.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1PersonId.html">PersonId</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique identifier for a <a class="el" href="classmio_1_1abm_1_1Person.html" title="Agents in the simulated Model that can carry and spread the Infection.">Person</a> within a <a class="el" href="classmio_1_1abm_1_1Model.html" title="The Model of the Simulation.">Model</a>.  <a href="structmio_1_1abm_1_1PersonId.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique ID for a <a class="el" href="classmio_1_1abm_1_1Person.html" title="Agents in the simulated Model that can carry and spread the Infection.">Person</a> within a <a class="el" href="classmio_1_1abm_1_1Model.html" title="The Model of the Simulation.">Model</a>.  <a href="structmio_1_1abm_1_1PersonId.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1ProtectionEvent.html">ProtectionEvent</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A tuple of <a class="el" href="namespacemio_1_1abm.html#a3bf2b22aabaa39684a4ef82d9a064649" title="ProtectionType in ABM.">ProtectionType</a> and #TimePoint.  <a href="structmio_1_1abm_1_1ProtectionEvent.html#details">More...</a><br /></td></tr>
@@ -384,6 +384,7 @@ Enumerations</h2></td></tr>
 &#160;&#160;<a class="el" href="namespacemio_1_1abm.html#a57d768cc04c782f46491781226920ff9adb6ea77c7cd8a86b17014c3b688fd1a1">Walking</a>
 , <a class="el" href="namespacemio_1_1abm.html#a57d768cc04c782f46491781226920ff9a6311ae17c1ee52b36e68aaf4ad066387">Other</a>
 , <a class="el" href="namespacemio_1_1abm.html#a57d768cc04c782f46491781226920ff9a88183b946cc5f0e8c96b2e66e1c74a7e">Unknown</a>
+, <a class="el" href="namespacemio_1_1abm.html#a57d768cc04c782f46491781226920ff9ae93f994f01c537c4e2f7d8528c3eb5e9">Count</a>
 <br />
  }</td></tr>
 <tr class="memdesc:a57d768cc04c782f46491781226920ff9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mode of Transport.  <a href="namespacemio_1_1abm.html#a57d768cc04c782f46491781226920ff9">More...</a><br /></td></tr>
@@ -496,8 +497,6 @@ Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
-<tr class="memitem:a76378fd1909958798084acb78abad563"><td class="memItemLeft" align="right" valign="top">static constexpr uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio_1_1abm.html#a76378fd1909958798084acb78abad563">INVALID_PERSON_ID</a> = std::numeric_limits&lt;uint32_t&gt;::<a class="el" href="namespacemio.html#a97f6645c13faf4749f34d7e6e191f9ac">max</a>()</td></tr>
-<tr class="separator:a76378fd1909958798084acb78abad563"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ae22e9ec56cc7f9b4d4e5a6507afdb8"><td class="memItemLeft" align="right" valign="top">constexpr const int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio_1_1abm.html#a8ae22e9ec56cc7f9b4d4e5a6507afdb8">MAX_NUM_AGE_GROUPS</a> = 64</td></tr>
 <tr class="memdesc:a8ae22e9ec56cc7f9b4d4e5a6507afdb8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum number of age groups allowed in the model.  <a href="namespacemio_1_1abm.html#a8ae22e9ec56cc7f9b4d4e5a6507afdb8">More...</a><br /></td></tr>
 <tr class="separator:a8ae22e9ec56cc7f9b4d4e5a6507afdb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -821,6 +820,7 @@ Variables</h2></td></tr>
 <tr><td class="fieldname"><a id="a57d768cc04c782f46491781226920ff9adb6ea77c7cd8a86b17014c3b688fd1a1"></a>Walking&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a57d768cc04c782f46491781226920ff9a6311ae17c1ee52b36e68aaf4ad066387"></a>Other&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a57d768cc04c782f46491781226920ff9a88183b946cc5f0e8c96b2e66e1c74a7e"></a>Unknown&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a57d768cc04c782f46491781226920ff9ae93f994f01c537c4e2f7d8528c3eb5e9"></a>Count&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -2099,28 +2099,6 @@ template&lt;class RNG , class T , size_t NumTransitions&gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Variable Documentation</h2>
-<a id="a76378fd1909958798084acb78abad563"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a76378fd1909958798084acb78abad563">&#9670;&nbsp;</a></span>INVALID_PERSON_ID</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">constexpr uint32_t mio::abm::INVALID_PERSON_ID = std::numeric_limits&lt;uint32_t&gt;::<a class="el" href="namespacemio.html#a97f6645c13faf4749f34d7e6e191f9ac">max</a>()</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a8ae22e9ec56cc7f9b4d4e5a6507afdb8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8ae22e9ec56cc7f9b4d4e5a6507afdb8">&#9670;&nbsp;</a></span>MAX_NUM_AGE_GROUPS</h2>
 

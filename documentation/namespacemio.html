@@ -119,6 +119,12 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1ABMMobilityEdge.html">ABMMobilityEdge</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents the mobility between two nodes.  <a href="classmio_1_1ABMMobilityEdge.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1ABMSimulationNode.html">ABMSimulationNode</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents the ABM simulation in one node of the ABM graph model.  <a href="classmio_1_1ABMSimulationNode.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1AgeGroup.html">AgeGroup</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="structmio_1_1AgeGroup.html" title="The AgeGroup struct is used as a dynamically sized tag for all age dependent categories.">AgeGroup</a> struct is used as a dynamically sized tag for all age dependent categories.  <a href="structmio_1_1AgeGroup.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -247,6 +253,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1Graph.html">Graph</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">generic graph structure  <a href="classmio_1_1Graph.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1GraphABModel.html">GraphABModel</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1GraphSimulation.html">GraphSimulation</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -575,7 +583,7 @@ Typedefs</h2></td></tr>
 <tr class="memdesc:a80210db6ffedf10320c0d446a1742894"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is std::true_type if C is a STL compatible container.  <a href="namespacemio.html#a80210db6ffedf10320c0d446a1742894">More...</a><br /></td></tr>
 <tr class="separator:a80210db6ffedf10320c0d446a1742894"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af918281e925e421849516633eb4c40b2"><td class="memTemplParams" colspan="2">template&lt;typename FP , class Model &gt; </td></tr>
-<tr class="memitem:af918281e925e421849516633eb4c40b2"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#af918281e925e421849516633eb4c40b2">is_flow_model</a> = std::integral_constant&lt; bool,(<a class="el" href="structmio_1_1is__expression__valid.html">is_expression_valid</a>&lt; <a class="el" href="namespacemio.html#aeaed6bffc432c06ce2821efa997c7fd8">get_derivatives_expr_t</a>, FP, Model &gt;::value &amp;&amp;<a class="el" href="structmio_1_1is__expression__valid.html">is_expression_valid</a>&lt; <a class="el" href="namespacemio.html#a2c10d2b1417d39deb9f4f441a028ea1f">get_flows_expr_t</a>, FP, Model &gt;::value &amp;&amp;<a class="el" href="structmio_1_1is__expression__valid.html">is_expression_valid</a>&lt; <a class="el" href="namespacemio.html#a50a9f43414f52d9d662060c7ff5890b5">get_initial_flows_expr_t</a>, FP, Model &gt;::value &amp;&amp;<a class="el" href="namespacemio.html#aaa77289cb9025f32de474165e897655e">is_compartment_model</a>&lt; FP, Model &gt;::value)&gt;</td></tr>
+<tr class="memitem:af918281e925e421849516633eb4c40b2"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#af918281e925e421849516633eb4c40b2">is_flow_model</a> = std::integral_constant&lt; bool,(<a class="el" href="structmio_1_1is__expression__valid.html">is_expression_valid</a>&lt; <a class="el" href="namespacemio.html#aeaed6bffc432c06ce2821efa997c7fd8">get_derivatives_expr_t</a>, FP, <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a> &gt;::value &amp;&amp;<a class="el" href="structmio_1_1is__expression__valid.html">is_expression_valid</a>&lt; <a class="el" href="namespacemio.html#a2c10d2b1417d39deb9f4f441a028ea1f">get_flows_expr_t</a>, FP, <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a> &gt;::value &amp;&amp;<a class="el" href="structmio_1_1is__expression__valid.html">is_expression_valid</a>&lt; <a class="el" href="namespacemio.html#a50a9f43414f52d9d662060c7ff5890b5">get_initial_flows_expr_t</a>, FP, <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a> &gt;::value &amp;&amp;<a class="el" href="namespacemio.html#aaa77289cb9025f32de474165e897655e">is_compartment_model</a>&lt; FP, <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a> &gt;::value)&gt;</td></tr>
 <tr class="memdesc:af918281e925e421849516633eb4c40b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Template meta function to check if a type is a valid flow model.  <a href="namespacemio.html#af918281e925e421849516633eb4c40b2">More...</a><br /></td></tr>
 <tr class="separator:af918281e925e421849516633eb4c40b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6a13de5a1cf9acb4db85042f9bc948ea"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
@@ -632,10 +640,10 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a2f858e287c3935240954cf75cf53cfeb"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a2f858e287c3935240954cf75cf53cfeb">Tag</a> = boost::outcome_v2::in_place_type_t&lt; T &gt;</td></tr>
 <tr class="memdesc:a2f858e287c3935240954cf75cf53cfeb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type that is used for overload resolution.  <a href="namespacemio.html#a2f858e287c3935240954cf75cf53cfeb">More...</a><br /></td></tr>
 <tr class="separator:a2f858e287c3935240954cf75cf53cfeb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab139fe68c2e45522c9700c13f4517cae"><td class="memTemplParams" colspan="2">template&lt;class Sim &gt; </td></tr>
-<tr class="memitem:ab139fe68c2e45522c9700c13f4517cae"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#ab139fe68c2e45522c9700c13f4517cae">test_commuters_expr_t</a> = decltype(<a class="el" href="namespacemio.html#adb526164db4b433fe9e65133f20edd3d">test_commuters</a>(std::declval&lt; Sim &amp; &gt;(), std::declval&lt; Eigen::Ref&lt; const Eigen::VectorXd &gt; &amp; &gt;(), std::declval&lt; double &gt;()))</td></tr>
-<tr class="memdesc:ab139fe68c2e45522c9700c13f4517cae"><td class="mdescLeft">&#160;</td><td class="mdescRight">detect a get_mobility_factors function for the Model type.  <a href="namespacemio.html#ab139fe68c2e45522c9700c13f4517cae">More...</a><br /></td></tr>
-<tr class="separator:ab139fe68c2e45522c9700c13f4517cae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9114c7ed6467f9e2babbe5c9a2c03747"><td class="memTemplParams" colspan="2">template&lt;class Sim &gt; </td></tr>
+<tr class="memitem:a9114c7ed6467f9e2babbe5c9a2c03747"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a9114c7ed6467f9e2babbe5c9a2c03747">test_commuters_expr_t</a> = decltype(<a class="el" href="namespacemio.html#adb526164db4b433fe9e65133f20edd3d">test_commuters</a>(std::declval&lt; Sim &amp; &gt;(), std::declval&lt; Eigen::Ref&lt; const Eigen::VectorXd &gt; &amp; &gt;(), std::declval&lt; double &gt;()))</td></tr>
+<tr class="memdesc:a9114c7ed6467f9e2babbe5c9a2c03747"><td class="mdescLeft">&#160;</td><td class="mdescRight">detect a get_mobility_factors function for the Model type.  <a href="namespacemio.html#a9114c7ed6467f9e2babbe5c9a2c03747">More...</a><br /></td></tr>
+<tr class="separator:a9114c7ed6467f9e2babbe5c9a2c03747"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49caa280ba5357645388c8cb56d4da17"><td class="memTemplParams" colspan="2">template&lt;std::size_t Index, class... Types&gt; </td></tr>
 <tr class="memitem:a49caa280ba5357645388c8cb56d4da17"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a49caa280ba5357645388c8cb56d4da17">type_at_index_t</a> = typename <a class="el" href="structmio_1_1type__at__index.html">type_at_index</a>&lt; <a class="el" href="classmio_1_1Index.html">Index</a>, Types... &gt;::type</td></tr>
 <tr class="memdesc:a49caa280ba5357645388c8cb56d4da17"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type at the Index-th position in the list Types.  <a href="namespacemio.html#a49caa280ba5357645388c8cb56d4da17">More...</a><br /></td></tr>
@@ -711,10 +719,22 @@ Functions</h2></td></tr>
 <tr class="memitem:aee4a248956bde1057171ea901504e5e3"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#aee4a248956bde1057171ea901504e5e3">abs_max</a> (T v1, T v2)</td></tr>
 <tr class="memdesc:aee4a248956bde1057171ea901504e5e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">maximum absolute value of two numbers.  <a href="namespacemio.html#aee4a248956bde1057171ea901504e5e3">More...</a><br /></td></tr>
 <tr class="separator:aee4a248956bde1057171ea901504e5e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53354b26aeb9eb9cd5bf546119c65667"><td class="memTemplParams" colspan="2">template&lt;class... History&gt; </td></tr>
+<tr class="memitem:a53354b26aeb9eb9cd5bf546119c65667"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a53354b26aeb9eb9cd5bf546119c65667">advance_model</a> (<a class="el" href="classmio_1_1abm_1_1TimePoint.html">abm::TimePoint</a> t, <a class="el" href="classmio_1_1abm_1_1TimeSpan.html">abm::TimeSpan</a> dt, <a class="el" href="classmio_1_1ABMSimulationNode.html">ABMSimulationNode</a>&lt; History... &gt; &amp;node)</td></tr>
+<tr class="memdesc:a53354b26aeb9eb9cd5bf546119c65667"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="structmio_1_1Node.html" title="represents a node of the graph">Node</a> functor for abm graph simulation.  <a href="namespacemio.html#a53354b26aeb9eb9cd5bf546119c65667">More...</a><br /></td></tr>
+<tr class="separator:a53354b26aeb9eb9cd5bf546119c65667"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a417e19d8ce08391ccc9a5f7ce3e0d238"><td class="memTemplParams" colspan="2">template&lt;class Sim &gt; </td></tr>
+<tr class="memitem:a417e19d8ce08391ccc9a5f7ce3e0d238"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a417e19d8ce08391ccc9a5f7ce3e0d238">advance_model</a> (double t, double dt, <a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt; &amp;node)</td></tr>
+<tr class="memdesc:a417e19d8ce08391ccc9a5f7ce3e0d238"><td class="mdescLeft">&#160;</td><td class="mdescRight">edge functor for mobility-based simulation.  <a href="namespacemio.html#a417e19d8ce08391ccc9a5f7ce3e0d238">More...</a><br /></td></tr>
+<tr class="separator:a417e19d8ce08391ccc9a5f7ce3e0d238"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a24d87651a07c02cb6bd9c27a6518069e"><td class="memTemplParams" colspan="2">template&lt;class DampingExpression , class DampingSamplings , class F &gt; </td></tr>
 <tr class="memitem:a24d87651a07c02cb6bd9c27a6518069e"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a24d87651a07c02cb6bd9c27a6518069e">apply_dampings</a> (DampingExpression &amp;damping_expression, const DampingSamplings &amp;dampings, F make_matrix)</td></tr>
 <tr class="memdesc:a24d87651a07c02cb6bd9c27a6518069e"><td class="mdescLeft">&#160;</td><td class="mdescRight">add sampled dampings to a damping expression.  <a href="namespacemio.html#a24d87651a07c02cb6bd9c27a6518069e">More...</a><br /></td></tr>
 <tr class="separator:a24d87651a07c02cb6bd9c27a6518069e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1ad0d867475e33172827e2bb10636dd"><td class="memTemplParams" colspan="2">template&lt;class... History&gt; </td></tr>
+<tr class="memitem:ad1ad0d867475e33172827e2bb10636dd"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#ad1ad0d867475e33172827e2bb10636dd">apply_mobility</a> (<a class="el" href="classmio_1_1abm_1_1TimePoint.html">abm::TimePoint</a> t, <a class="el" href="classmio_1_1abm_1_1TimeSpan.html">abm::TimeSpan</a>, <a class="el" href="classmio_1_1ABMMobilityEdge.html">ABMMobilityEdge</a>&lt; History... &gt; &amp;edge, <a class="el" href="classmio_1_1ABMSimulationNode.html">ABMSimulationNode</a>&lt; History... &gt; &amp;node_from, <a class="el" href="classmio_1_1ABMSimulationNode.html">ABMSimulationNode</a>&lt; History... &gt; &amp;node_to)</td></tr>
+<tr class="memdesc:ad1ad0d867475e33172827e2bb10636dd"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="structmio_1_1Edge.html" title="represents an edge of the graph">Edge</a> functor for abm graph simulation.  <a href="namespacemio.html#ad1ad0d867475e33172827e2bb10636dd">More...</a><br /></td></tr>
+<tr class="separator:ad1ad0d867475e33172827e2bb10636dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade4d17436ecfc6e5c257b723f3f8c405"><td class="memTemplParams" colspan="2">template&lt;typename FP , class Sim &gt; </td></tr>
 <tr class="memitem:ade4d17436ecfc6e5c257b723f3f8c405"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#ade4d17436ecfc6e5c257b723f3f8c405">apply_mobility</a> (FP t, FP dt, <a class="el" href="classmio_1_1MobilityEdge.html">MobilityEdge</a>&lt; FP &gt; &amp;mobilityEdge, <a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt; &amp;node_from, <a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt; &amp;node_to)</td></tr>
 <tr class="memdesc:ade4d17436ecfc6e5c257b723f3f8c405"><td class="mdescLeft">&#160;</td><td class="mdescRight">edge functor for mobility-based simulation.  <a href="namespacemio.html#ade4d17436ecfc6e5c257b723f3f8c405">More...</a><br /></td></tr>
@@ -831,10 +851,6 @@ Functions</h2></td></tr>
 <tr class="memitem:a9be9ff17fb76c68d0a1e6c2463164dcd"><td class="memTemplItemLeft" align="right" valign="top">constexpr std::array&lt; T, size_t(T::Count)&gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a9be9ff17fb76c68d0a1e6c2463164dcd">enum_members</a> ()</td></tr>
 <tr class="memdesc:a9be9ff17fb76c68d0a1e6c2463164dcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get an std::array that contains all members of an enum class.  <a href="namespacemio.html#a9be9ff17fb76c68d0a1e6c2463164dcd">More...</a><br /></td></tr>
 <tr class="separator:a9be9ff17fb76c68d0a1e6c2463164dcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aebf8e2a8ccea82f3bbd91c3d479d1094"><td class="memTemplParams" colspan="2">template&lt;class Sim &gt; </td></tr>
-<tr class="memitem:aebf8e2a8ccea82f3bbd91c3d479d1094"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#aebf8e2a8ccea82f3bbd91c3d479d1094">evolve_model</a> (double t, double dt, <a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt; &amp;node)</td></tr>
-<tr class="memdesc:aebf8e2a8ccea82f3bbd91c3d479d1094"><td class="mdescLeft">&#160;</td><td class="mdescRight">edge functor for mobility-based simulation.  <a href="namespacemio.html#aebf8e2a8ccea82f3bbd91c3d479d1094">More...</a><br /></td></tr>
-<tr class="separator:aebf8e2a8ccea82f3bbd91c3d479d1094"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad5b7d8afd9adadd58170682f0d6e4240"><td class="memTemplParams" colspan="2">template&lt;class SuperIndex , class SubIndex &gt; </td></tr>
 <tr class="memitem:ad5b7d8afd9adadd58170682f0d6e4240"><td class="memTemplItemLeft" align="right" valign="top">SuperIndex&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#ad5b7d8afd9adadd58170682f0d6e4240">extend_index</a> (const SubIndex &amp;index, size_t fill_value=0)</td></tr>
 <tr class="memdesc:ad5b7d8afd9adadd58170682f0d6e4240"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a SuperIndex by copying values from SubIndex, filling new categories with fill_value.  <a href="namespacemio.html#ad5b7d8afd9adadd58170682f0d6e4240">More...</a><br /></td></tr>
@@ -990,6 +1006,10 @@ Functions</h2></td></tr>
 <tr class="memitem:a4c57c15f2d7d146f3eba791912465106"><td class="memTemplItemLeft" align="right" valign="top">Eigen::Index&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a4c57c15f2d7d146f3eba791912465106">major_size</a> (M &amp;&amp;m)</td></tr>
 <tr class="memdesc:a4c57c15f2d7d146f3eba791912465106"><td class="mdescLeft">&#160;</td><td class="mdescRight">number of rows (columns) of a row (column) major matrix.  <a href="namespacemio.html#a4c57c15f2d7d146f3eba791912465106">More...</a><br /></td></tr>
 <tr class="separator:a4c57c15f2d7d146f3eba791912465106"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e2c35a0c697dfef367f948a6c06541f"><td class="memTemplParams" colspan="2">template&lt;class... History&gt; </td></tr>
+<tr class="memitem:a3e2c35a0c697dfef367f948a6c06541f"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classmio_1_1GraphSimulation.html">GraphSimulation</a>&lt; <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1ABMSimulationNode.html">ABMSimulationNode</a>&lt; History... &gt;, <a class="el" href="classmio_1_1ABMMobilityEdge.html">ABMMobilityEdge</a>&lt; History... &gt; &gt;, <a class="el" href="classmio_1_1abm_1_1TimePoint.html">abm::TimePoint</a>, <a class="el" href="classmio_1_1abm_1_1TimeSpan.html">abm::TimeSpan</a>, void(*)(<a class="el" href="classmio_1_1abm_1_1TimePoint.html">mio::abm::TimePoint</a>, <a class="el" href="classmio_1_1abm_1_1TimeSpan.html">mio::abm::TimeSpan</a>, <a class="el" href="classmio_1_1ABMMobilityEdge.html">mio::ABMMobilityEdge</a>&lt; History... &gt; &amp;, <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; History... &gt; &amp;, <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; History... &gt; &amp;), void(*)(<a class="el" href="classmio_1_1abm_1_1TimePoint.html">mio::abm::TimePoint</a>, <a class="el" href="classmio_1_1abm_1_1TimeSpan.html">mio::abm::TimeSpan</a>, <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; History... &gt; &amp;)&gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a3e2c35a0c697dfef367f948a6c06541f">make_abm_graph_sim</a> (<a class="el" href="classmio_1_1abm_1_1TimePoint.html">abm::TimePoint</a> t0, <a class="el" href="classmio_1_1abm_1_1TimeSpan.html">abm::TimeSpan</a> dt, <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1ABMSimulationNode.html">ABMSimulationNode</a>&lt; History... &gt;, <a class="el" href="classmio_1_1ABMMobilityEdge.html">ABMMobilityEdge</a>&lt; History... &gt;&gt; &amp;&amp;graph)</td></tr>
+<tr class="memdesc:a3e2c35a0c697dfef367f948a6c06541f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates an abm graph simulation.  <a href="namespacemio.html#a3e2c35a0c697dfef367f948a6c06541f">More...</a><br /></td></tr>
+<tr class="separator:a3e2c35a0c697dfef367f948a6c06541f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c9f267ac11fbfcb48a6642dbbd60dba"><td class="memTemplParams" colspan="2">template&lt;class V &gt; </td></tr>
 <tr class="memitem:a4c9f267ac11fbfcb48a6642dbbd60dba"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a4c9f267ac11fbfcb48a6642dbbd60dba">make_contact_damping_matrix</a> (V &amp;&amp;groups)</td></tr>
 <tr class="memdesc:a4c9f267ac11fbfcb48a6642dbbd60dba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Make a contact damping matrix from dampings by group.  <a href="namespacemio.html#a4c9f267ac11fbfcb48a6642dbbd60dba">More...</a><br /></td></tr>
@@ -1000,9 +1020,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a531d453fb999299bf5437b66a2996d4b"><td class="memItemLeft" align="right" valign="top">std::error_code&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio.html#a531d453fb999299bf5437b66a2996d4b">make_error_code</a> (<a class="el" href="namespacemio.html#a2799d348d433018d5b183d75bfbdd699">StatusCode</a> e)</td></tr>
 <tr class="memdesc:a531d453fb999299bf5437b66a2996d4b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert StatusCode to std::error_code.  <a href="namespacemio.html#a531d453fb999299bf5437b66a2996d4b">More...</a><br /></td></tr>
 <tr class="separator:a531d453fb999299bf5437b66a2996d4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8728c0a245610c228f5746d8b8607a52"><td class="memTemplParams" colspan="2">template&lt;typename FP , class Graph , class NodeF , class EdgeF &gt; </td></tr>
-<tr class="memitem:a8728c0a245610c228f5746d8b8607a52"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a8728c0a245610c228f5746d8b8607a52">make_graph_sim</a> (FP t0, FP dt, <a class="el" href="classmio_1_1Graph.html">Graph</a> &amp;&amp;g, NodeF &amp;&amp;node_func, EdgeF &amp;&amp;edge_func)</td></tr>
-<tr class="separator:a8728c0a245610c228f5746d8b8607a52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27322c7317a3009b61c2280cb12144ef"><td class="memTemplParams" colspan="2">template&lt;typename Timepoint , class Timespan , class Graph , class NodeF , class EdgeF &gt; </td></tr>
+<tr class="memitem:a27322c7317a3009b61c2280cb12144ef"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a27322c7317a3009b61c2280cb12144ef">make_graph_sim</a> (Timepoint t0, Timespan dt, <a class="el" href="classmio_1_1Graph.html">Graph</a> &amp;&amp;g, NodeF &amp;&amp;node_func, EdgeF &amp;&amp;edge_func)</td></tr>
+<tr class="separator:a27322c7317a3009b61c2280cb12144ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8bbdf3fcd0a42bff2a78978703924783"><td class="memTemplParams" colspan="2">template&lt;typename FP , class Graph , class NodeF , class EdgeF &gt; </td></tr>
 <tr class="memitem:a8bbdf3fcd0a42bff2a78978703924783"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a8bbdf3fcd0a42bff2a78978703924783">make_graph_sim_stochastic</a> (FP t0, FP dt, <a class="el" href="classmio_1_1Graph.html">Graph</a> &amp;&amp;g, NodeF &amp;&amp;node_func, EdgeF &amp;&amp;edge_func)</td></tr>
 <tr class="separator:a8bbdf3fcd0a42bff2a78978703924783"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1045,14 +1065,14 @@ Functions</h2></td></tr>
 <tr class="memitem:a5af4730337dd5d430e3d09e4a88c09b5"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a5af4730337dd5d430e3d09e4a88c09b5"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if_t&lt; <a class="el" href="namespacemio.html#af8c639c34c4df5647f084fefb48afc6e">has_eq_op</a>&lt; T &gt;::value, bool &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a5af4730337dd5d430e3d09e4a88c09b5">operator!=</a> (const <a class="el" href="structmio_1_1Node.html">Node</a>&lt; T &gt; &amp;n1, const <a class="el" href="structmio_1_1Node.html">Node</a>&lt; T &gt; &amp;n2)</td></tr>
 <tr class="separator:a5af4730337dd5d430e3d09e4a88c09b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5b8d13d4bfbc6ab42cccb685cafdc5fe"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:a5b8d13d4bfbc6ab42cccb685cafdc5fe"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if_t&lt; <a class="el" href="namespacemio.html#a828f9a1016d1048d5d3e67dcc5ff4e8f">has_ostream_op</a>&lt; T &gt;::value, std::ostream &amp; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a5b8d13d4bfbc6ab42cccb685cafdc5fe">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="structmio_1_1Edge.html">Edge</a>&lt; T &gt; &amp;e)</td></tr>
-<tr class="memdesc:a5b8d13d4bfbc6ab42cccb685cafdc5fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">out stream operator for edges if edge property type has stream operator defined  <a href="namespacemio.html#a5b8d13d4bfbc6ab42cccb685cafdc5fe">More...</a><br /></td></tr>
-<tr class="separator:a5b8d13d4bfbc6ab42cccb685cafdc5fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a58db8b765e525595174fe5b502bf85"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a9a58db8b765e525595174fe5b502bf85"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if_t&lt;!<a class="el" href="namespacemio.html#a828f9a1016d1048d5d3e67dcc5ff4e8f">has_ostream_op</a>&lt; T &gt;::value, std::ostream &amp; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a9a58db8b765e525595174fe5b502bf85">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="structmio_1_1Edge.html">Edge</a>&lt; T &gt; &amp;e)</td></tr>
 <tr class="memdesc:a9a58db8b765e525595174fe5b502bf85"><td class="mdescLeft">&#160;</td><td class="mdescRight">out stream operator for edges if edge property type does not have stream operator defined  <a href="namespacemio.html#a9a58db8b765e525595174fe5b502bf85">More...</a><br /></td></tr>
 <tr class="separator:a9a58db8b765e525595174fe5b502bf85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b8d13d4bfbc6ab42cccb685cafdc5fe"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a5b8d13d4bfbc6ab42cccb685cafdc5fe"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if_t&lt; <a class="el" href="namespacemio.html#a828f9a1016d1048d5d3e67dcc5ff4e8f">has_ostream_op</a>&lt; T &gt;::value, std::ostream &amp; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a5b8d13d4bfbc6ab42cccb685cafdc5fe">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="structmio_1_1Edge.html">Edge</a>&lt; T &gt; &amp;e)</td></tr>
+<tr class="memdesc:a5b8d13d4bfbc6ab42cccb685cafdc5fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">out stream operator for edges if edge property type has stream operator defined  <a href="namespacemio.html#a5b8d13d4bfbc6ab42cccb685cafdc5fe">More...</a><br /></td></tr>
+<tr class="separator:a5b8d13d4bfbc6ab42cccb685cafdc5fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2d44315af9f65cbb43ea90af7f1fae30"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a2d44315af9f65cbb43ea90af7f1fae30"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if_t&lt; <a class="el" href="namespacemio.html#af8c639c34c4df5647f084fefb48afc6e">has_eq_op</a>&lt; T &gt;::value, bool &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a2d44315af9f65cbb43ea90af7f1fae30">operator==</a> (const <a class="el" href="structmio_1_1Edge.html">Edge</a>&lt; T &gt; &amp;e1, const <a class="el" href="structmio_1_1Edge.html">Edge</a>&lt; T &gt; &amp;e2)</td></tr>
 <tr class="memdesc:a2d44315af9f65cbb43ea90af7f1fae30"><td class="mdescLeft">&#160;</td><td class="mdescRight">comparison operator if edge property type is equality comparable  <a href="namespacemio.html#a2d44315af9f65cbb43ea90af7f1fae30">More...</a><br /></td></tr>
@@ -1101,7 +1121,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:afa85830d7050b8ecdc6d2ae664b74290"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the distance between two SECIR simulation results.  <a href="namespacemio.html#afa85830d7050b8ecdc6d2ae664b74290">More...</a><br /></td></tr>
 <tr class="separator:afa85830d7050b8ecdc6d2ae664b74290"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a721ec86366e54b94f1d34bfbf6c8a806"><td class="memTemplParams" colspan="2">template&lt;class InfectionState &gt; </td></tr>
-<tr class="memitem:a721ec86366e54b94f1d34bfbf6c8a806"><td class="memTemplItemLeft" align="right" valign="top">double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a721ec86366e54b94f1d34bfbf6c8a806">result_distance_2norm</a> (const std::vector&lt; <a class="el" href="classmio_1_1TimeSeries.html">mio::TimeSeries</a>&lt; double &gt;&gt; &amp;result1, const std::vector&lt; <a class="el" href="classmio_1_1TimeSeries.html">mio::TimeSeries</a>&lt; double &gt;&gt; &amp;result2, InfectionState compartment)</td></tr>
+<tr class="memitem:a721ec86366e54b94f1d34bfbf6c8a806"><td class="memTemplItemLeft" align="right" valign="top">double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a721ec86366e54b94f1d34bfbf6c8a806">result_distance_2norm</a> (const std::vector&lt; <a class="el" href="classmio_1_1TimeSeries.html">mio::TimeSeries</a>&lt; double &gt;&gt; &amp;result1, const std::vector&lt; <a class="el" href="classmio_1_1TimeSeries.html">mio::TimeSeries</a>&lt; double &gt;&gt; &amp;result2, <a class="el" href="namespacemio_1_1abm.html#ad1ae0779f53a827b524e1f0925b9d704">InfectionState</a> compartment)</td></tr>
 <tr class="memdesc:a721ec86366e54b94f1d34bfbf6c8a806"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the distance between two compartment model simulation results in one compartment.  <a href="namespacemio.html#a721ec86366e54b94f1d34bfbf6c8a806">More...</a><br /></td></tr>
 <tr class="separator:a721ec86366e54b94f1d34bfbf6c8a806"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a27a24b9e6cb629e04e9613446f07d6ba"><td class="memTemplParams" colspan="2">template&lt;class IOContext , class T &gt; </td></tr>
@@ -1141,25 +1161,25 @@ Functions</h2></td></tr>
 <tr class="memdesc:ad6e3cf3f2cc4c651d581573f57331229"><td class="mdescLeft">&#160;</td><td class="mdescRight">serialize an enum value as its underlying type.  <a href="namespacemio.html#ad6e3cf3f2cc4c651d581573f57331229">More...</a><br /></td></tr>
 <tr class="separator:ad6e3cf3f2cc4c651d581573f57331229"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a668e602375cc7ce5456440b204214b2f"><td class="memTemplParams" colspan="2">template&lt;class ContactLocation , class Model , class MobilityParams , class MobilityCoefficientGroup , class InfectionState , class ReadFunction &gt; </td></tr>
-<tr class="memitem:a668e602375cc7ce5456440b204214b2f"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacemio.html#ae556a666d14183eb2bf3a3efc11551ec">IOResult</a>&lt; void &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a668e602375cc7ce5456440b204214b2f">set_edges</a> (const fs::path &amp;data_dir, <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; Model, MobilityParams &gt; &amp;params_graph, std::initializer_list&lt; InfectionState &gt; &amp;mobile_compartments, size_t contact_locations_size, ReadFunction &amp;&amp;read_func, std::vector&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt; commuting_weights, std::vector&lt; std::vector&lt; size_t &gt;&gt; indices_of_saved_edges={})</td></tr>
+<tr class="memitem:a668e602375cc7ce5456440b204214b2f"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacemio.html#ae556a666d14183eb2bf3a3efc11551ec">IOResult</a>&lt; void &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a668e602375cc7ce5456440b204214b2f">set_edges</a> (const fs::path &amp;data_dir, <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a>, MobilityParams &gt; &amp;params_graph, std::initializer_list&lt; <a class="el" href="namespacemio_1_1abm.html#ad1ae0779f53a827b524e1f0925b9d704">InfectionState</a> &gt; &amp;mobile_compartments, size_t contact_locations_size, ReadFunction &amp;&amp;read_func, std::vector&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt; commuting_weights, std::vector&lt; std::vector&lt; size_t &gt;&gt; indices_of_saved_edges={})</td></tr>
 <tr class="memdesc:a668e602375cc7ce5456440b204214b2f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the graph edges.  <a href="namespacemio.html#a668e602375cc7ce5456440b204214b2f">More...</a><br /></td></tr>
 <tr class="separator:a668e602375cc7ce5456440b204214b2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac76d1d8f469ab547ed1ceb5e8c96f271"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio.html#ac76d1d8f469ab547ed1ceb5e8c96f271">set_log_level</a> (<a class="el" href="namespacemio.html#a67881790c6dfd8c058d27e5f1fe24220">LogLevel</a> level)</td></tr>
 <tr class="memdesc:ac76d1d8f469ab547ed1ceb5e8c96f271"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the verbosity of the logger.  <a href="namespacemio.html#ac76d1d8f469ab547ed1ceb5e8c96f271">More...</a><br /></td></tr>
 <tr class="separator:ac76d1d8f469ab547ed1ceb5e8c96f271"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a93c2926892b5c83c3b64a816a8a42f52"><td class="memTemplParams" colspan="2">template&lt;class TestAndTrace , class ContactPattern , class Model , class MobilityParams , class Parameters , class ReadFunction , class NodeIdFunction , typename FP  = double&gt; </td></tr>
-<tr class="memitem:a93c2926892b5c83c3b64a816a8a42f52"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacemio.html#ae556a666d14183eb2bf3a3efc11551ec">IOResult</a>&lt; void &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a93c2926892b5c83c3b64a816a8a42f52">set_nodes</a> (const Parameters &amp;params, <a class="el" href="structmio_1_1Date.html">Date</a> start_date, <a class="el" href="structmio_1_1Date.html">Date</a> end_date, const fs::path &amp;data_dir, const std::string &amp;population_data_path, bool is_node_for_county, <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; Model, MobilityParams &gt; &amp;params_graph, ReadFunction &amp;&amp;read_func, NodeIdFunction &amp;&amp;node_func, const std::vector&lt; double &gt; &amp;scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor, int num_days=0, bool export_time_series=false, bool rki_age_groups=true)</td></tr>
+<tr class="memitem:a93c2926892b5c83c3b64a816a8a42f52"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacemio.html#ae556a666d14183eb2bf3a3efc11551ec">IOResult</a>&lt; void &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a93c2926892b5c83c3b64a816a8a42f52">set_nodes</a> (const <a class="el" href="classmio_1_1abm_1_1Parameters.html">Parameters</a> &amp;params, <a class="el" href="structmio_1_1Date.html">Date</a> start_date, <a class="el" href="structmio_1_1Date.html">Date</a> end_date, const fs::path &amp;data_dir, const std::string &amp;population_data_path, bool is_node_for_county, <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a>, MobilityParams &gt; &amp;params_graph, ReadFunction &amp;&amp;read_func, NodeIdFunction &amp;&amp;node_func, const std::vector&lt; double &gt; &amp;scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor, int num_days=0, bool export_time_series=false, bool rki_age_groups=true)</td></tr>
 <tr class="memdesc:a93c2926892b5c83c3b64a816a8a42f52"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the graph nodes for counties or districts.  <a href="namespacemio.html#a93c2926892b5c83c3b64a816a8a42f52">More...</a><br /></td></tr>
 <tr class="separator:a93c2926892b5c83c3b64a816a8a42f52"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9109ed83aaeea1ebec958b6ac8cb48dd"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio.html#a9109ed83aaeea1ebec958b6ac8cb48dd">set_ostream_format</a> (std::ostream &amp;out, size_t width, size_t precision, char fill=' ')</td></tr>
 <tr class="memdesc:a9109ed83aaeea1ebec958b6ac8cb48dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds manipulators for width, (fixed) precision and fill character to an ostream.  <a href="namespacemio.html#a9109ed83aaeea1ebec958b6ac8cb48dd">More...</a><br /></td></tr>
 <tr class="separator:a9109ed83aaeea1ebec958b6ac8cb48dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3499af5a1a20a34bd86d9f8e77726695"><td class="memTemplParams" colspan="2">template&lt;typename FP , class Model , class Sim  = Simulation&lt;FP, Model&gt;&gt; </td></tr>
-<tr class="memitem:a3499af5a1a20a34bd86d9f8e77726695"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classmio_1_1TimeSeries.html">TimeSeries</a>&lt; FP &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a3499af5a1a20a34bd86d9f8e77726695">simulate</a> (FP t0, FP tmax, FP dt, Model const &amp;model, std::shared_ptr&lt; <a class="el" href="classmio_1_1IntegratorCore.html">IntegratorCore</a>&lt; FP &gt;&gt; integrator=nullptr)</td></tr>
+<tr class="memitem:a3499af5a1a20a34bd86d9f8e77726695"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classmio_1_1TimeSeries.html">TimeSeries</a>&lt; FP &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a3499af5a1a20a34bd86d9f8e77726695">simulate</a> (FP t0, FP tmax, FP dt, <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a> const &amp;model, std::shared_ptr&lt; <a class="el" href="classmio_1_1IntegratorCore.html">IntegratorCore</a>&lt; FP &gt;&gt; integrator=nullptr)</td></tr>
 <tr class="memdesc:a3499af5a1a20a34bd86d9f8e77726695"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run a <a class="el" href="classmio_1_1Simulation.html" title="A class for the simulation of a compartment model.">Simulation</a> of a <a class="el" href="structmio_1_1CompartmentalModel.html" title="CompartmentalModel is a template for a compartmental model for an array of initial populations and a ...">CompartmentalModel</a>.  <a href="namespacemio.html#a3499af5a1a20a34bd86d9f8e77726695">More...</a><br /></td></tr>
 <tr class="separator:a3499af5a1a20a34bd86d9f8e77726695"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8afba1cbb39d8db247a597ae45d226c1"><td class="memTemplParams" colspan="2">template&lt;typename FP , class Model , class Sim  = FlowSimulation&lt;FP, Model&gt;&gt; </td></tr>
-<tr class="memitem:a8afba1cbb39d8db247a597ae45d226c1"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classmio_1_1TimeSeries.html">TimeSeries</a>&lt; FP &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a8afba1cbb39d8db247a597ae45d226c1">simulate_flows</a> (FP t0, FP tmax, FP dt, Model const &amp;model, std::shared_ptr&lt; <a class="el" href="classmio_1_1IntegratorCore.html">IntegratorCore</a>&lt; FP &gt;&gt; integrator=nullptr)</td></tr>
+<tr class="memitem:a8afba1cbb39d8db247a597ae45d226c1"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classmio_1_1TimeSeries.html">TimeSeries</a>&lt; FP &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a8afba1cbb39d8db247a597ae45d226c1">simulate_flows</a> (FP t0, FP tmax, FP dt, <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a> const &amp;model, std::shared_ptr&lt; <a class="el" href="classmio_1_1IntegratorCore.html">IntegratorCore</a>&lt; FP &gt;&gt; integrator=nullptr)</td></tr>
 <tr class="memdesc:a8afba1cbb39d8db247a597ae45d226c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run a <a class="el" href="classmio_1_1FlowSimulation.html" title="A class for the simulation of a flow model.">FlowSimulation</a> of a <a class="el" href="classmio_1_1FlowModel.html" title="A FlowModel is a CompartmentalModel defined by the flows between compartments.">FlowModel</a>.  <a href="namespacemio.html#a8afba1cbb39d8db247a597ae45d226c1">More...</a><br /></td></tr>
 <tr class="separator:a8afba1cbb39d8db247a597ae45d226c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aad68521b3c371e12d598418900b3049d"><td class="memTemplParams" colspan="2">template&lt;class M , std::enable_if_t&lt; is_dynamic_matrix&lt; M &gt;::value, int &gt;  = 0&gt; </td></tr>
@@ -1213,14 +1233,14 @@ Functions</h2></td></tr>
 <tr class="memdesc:a7a1113315d1670235546be67f2c3a03e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate a function with zero or more unpacked IOResults as arguments.  <a href="namespacemio.html#a7a1113315d1670235546be67f2c3a03e">More...</a><br /></td></tr>
 <tr class="separator:a7a1113315d1670235546be67f2c3a03e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
-<tr class="memitem:aac94268f13cb6d9b527d75e67acea580"><td class="memTemplParams" colspan="2">template&lt;typename FP , class Sim &gt; </td></tr>
-<tr class="memitem:aac94268f13cb6d9b527d75e67acea580"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classmio_1_1GraphSimulation.html">GraphSimulation</a>&lt; <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt;, <a class="el" href="classmio_1_1MobilityEdge.html">MobilityEdge</a>&lt; FP &gt; &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#aac94268f13cb6d9b527d75e67acea580">make_mobility_sim</a> (FP t0, FP dt, const <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt;, <a class="el" href="classmio_1_1MobilityEdge.html">MobilityEdge</a>&lt; FP &gt;&gt; &amp;graph)</td></tr>
-<tr class="memdesc:aac94268f13cb6d9b527d75e67acea580"><td class="mdescLeft">&#160;</td><td class="mdescRight">create a mobility-based simulation.  <a href="namespacemio.html#aac94268f13cb6d9b527d75e67acea580">More...</a><br /></td></tr>
-<tr class="separator:aac94268f13cb6d9b527d75e67acea580"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4bb7ace587f7d0c7be569cca9bec0275"><td class="memTemplParams" colspan="2">template&lt;typename FP , class Sim &gt; </td></tr>
-<tr class="memitem:a4bb7ace587f7d0c7be569cca9bec0275"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classmio_1_1GraphSimulation.html">GraphSimulation</a>&lt; <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt;, <a class="el" href="classmio_1_1MobilityEdge.html">MobilityEdge</a>&lt; FP &gt; &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a4bb7ace587f7d0c7be569cca9bec0275">make_mobility_sim</a> (FP t0, FP dt, <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt;, <a class="el" href="classmio_1_1MobilityEdge.html">MobilityEdge</a>&lt; FP &gt;&gt; &amp;&amp;graph)</td></tr>
-<tr class="memdesc:a4bb7ace587f7d0c7be569cca9bec0275"><td class="mdescLeft">&#160;</td><td class="mdescRight">create a mobility-based simulation.  <a href="namespacemio.html#a4bb7ace587f7d0c7be569cca9bec0275">More...</a><br /></td></tr>
-<tr class="separator:a4bb7ace587f7d0c7be569cca9bec0275"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a20b1e8438c5bd14fe6e52bde42d2b03a"><td class="memTemplParams" colspan="2">template&lt;typename FP , class Sim &gt; </td></tr>
+<tr class="memitem:a20b1e8438c5bd14fe6e52bde42d2b03a"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classmio_1_1GraphSimulation.html">GraphSimulation</a>&lt; <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt;, <a class="el" href="classmio_1_1MobilityEdge.html">MobilityEdge</a>&lt; FP &gt; &gt;, FP, FP, void(*)(double, double, <a class="el" href="classmio_1_1MobilityEdge.html">mio::MobilityEdge</a>&lt;&gt; &amp;, <a class="el" href="classmio_1_1SimulationNode.html">mio::SimulationNode</a>&lt; Sim &gt; &amp;, <a class="el" href="classmio_1_1SimulationNode.html">mio::SimulationNode</a>&lt; Sim &gt; &amp;), void(*)(double, double, <a class="el" href="classmio_1_1SimulationNode.html">mio::SimulationNode</a>&lt; Sim &gt; &amp;)&gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a20b1e8438c5bd14fe6e52bde42d2b03a">make_mobility_sim</a> (FP t0, FP dt, const <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt;, <a class="el" href="classmio_1_1MobilityEdge.html">MobilityEdge</a>&lt; FP &gt;&gt; &amp;graph)</td></tr>
+<tr class="memdesc:a20b1e8438c5bd14fe6e52bde42d2b03a"><td class="mdescLeft">&#160;</td><td class="mdescRight">create a mobility-based simulation.  <a href="namespacemio.html#a20b1e8438c5bd14fe6e52bde42d2b03a">More...</a><br /></td></tr>
+<tr class="separator:a20b1e8438c5bd14fe6e52bde42d2b03a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78c6e94e0cdbdaed104f8f0cf478f6d7"><td class="memTemplParams" colspan="2">template&lt;typename FP , class Sim &gt; </td></tr>
+<tr class="memitem:a78c6e94e0cdbdaed104f8f0cf478f6d7"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classmio_1_1GraphSimulation.html">GraphSimulation</a>&lt; <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt;, <a class="el" href="classmio_1_1MobilityEdge.html">MobilityEdge</a>&lt; FP &gt; &gt;, FP, FP, void(*)(double, double, <a class="el" href="classmio_1_1MobilityEdge.html">mio::MobilityEdge</a>&lt;&gt; &amp;, <a class="el" href="classmio_1_1SimulationNode.html">mio::SimulationNode</a>&lt; Sim &gt; &amp;, <a class="el" href="classmio_1_1SimulationNode.html">mio::SimulationNode</a>&lt; Sim &gt; &amp;), void(*)(double, double, <a class="el" href="classmio_1_1SimulationNode.html">mio::SimulationNode</a>&lt; Sim &gt; &amp;)&gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a78c6e94e0cdbdaed104f8f0cf478f6d7">make_mobility_sim</a> (FP t0, FP dt, <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt;, <a class="el" href="classmio_1_1MobilityEdge.html">MobilityEdge</a>&lt; FP &gt;&gt; &amp;&amp;graph)</td></tr>
+<tr class="memdesc:a78c6e94e0cdbdaed104f8f0cf478f6d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">create a mobility-based simulation.  <a href="namespacemio.html#a78c6e94e0cdbdaed104f8f0cf478f6d7">More...</a><br /></td></tr>
+<tr class="separator:a78c6e94e0cdbdaed104f8f0cf478f6d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
 <tr class="memitem:a89528a592fbccb36b6a669d4dc15deec"><td class="memTemplParams" colspan="2">template&lt;class Sim &gt; </td></tr>
 <tr class="memitem:a89528a592fbccb36b6a669d4dc15deec"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classmio_1_1GraphSimulationStochastic.html">GraphSimulationStochastic</a>&lt; <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt;, <a class="el" href="classmio_1_1MobilityEdgeStochastic.html">MobilityEdgeStochastic</a> &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a89528a592fbccb36b6a669d4dc15deec">make_mobility_sim</a> (double t0, double dt, const <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt;, <a class="el" href="classmio_1_1MobilityEdgeStochastic.html">MobilityEdgeStochastic</a> &gt; &amp;graph)</td></tr>
@@ -1885,7 +1905,7 @@ template&lt;class C &gt; </div>
 template&lt;typename FP , class Model &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="namespacemio.html#af918281e925e421849516633eb4c40b2">mio::is_flow_model</a> = typedef std::integral_constant&lt;bool, (<a class="el" href="structmio_1_1is__expression__valid.html">is_expression_valid</a>&lt;<a class="el" href="namespacemio.html#aeaed6bffc432c06ce2821efa997c7fd8">get_derivatives_expr_t</a>, FP, Model&gt;::value &amp;&amp; <a class="el" href="structmio_1_1is__expression__valid.html">is_expression_valid</a>&lt;<a class="el" href="namespacemio.html#a2c10d2b1417d39deb9f4f441a028ea1f">get_flows_expr_t</a>, FP, Model&gt;::value &amp;&amp; <a class="el" href="structmio_1_1is__expression__valid.html">is_expression_valid</a>&lt;<a class="el" href="namespacemio.html#a50a9f43414f52d9d662060c7ff5890b5">get_initial_flows_expr_t</a>, FP, Model&gt;::value &amp;&amp; <a class="el" href="namespacemio.html#aaa77289cb9025f32de474165e897655e">is_compartment_model</a>&lt;FP, Model&gt;::value)&gt;</td>
+          <td class="memname">using <a class="el" href="namespacemio.html#af918281e925e421849516633eb4c40b2">mio::is_flow_model</a> = typedef std::integral_constant&lt;bool, (<a class="el" href="structmio_1_1is__expression__valid.html">is_expression_valid</a>&lt;<a class="el" href="namespacemio.html#aeaed6bffc432c06ce2821efa997c7fd8">get_derivatives_expr_t</a>, FP, <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a>&gt;::value &amp;&amp; <a class="el" href="structmio_1_1is__expression__valid.html">is_expression_valid</a>&lt;<a class="el" href="namespacemio.html#a2c10d2b1417d39deb9f4f441a028ea1f">get_flows_expr_t</a>, FP, <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a>&gt;::value &amp;&amp; <a class="el" href="structmio_1_1is__expression__valid.html">is_expression_valid</a>&lt;<a class="el" href="namespacemio.html#a50a9f43414f52d9d662060c7ff5890b5">get_initial_flows_expr_t</a>, FP, <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a>&gt;::value &amp;&amp; <a class="el" href="namespacemio.html#aaa77289cb9025f32de474165e897655e">is_compartment_model</a>&lt;FP, <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a>&gt;::value)&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -2177,8 +2197,8 @@ template&lt;class T &gt; </div>
 </div><!-- fragment --> 
 </div>
 </div>
-<a id="ab139fe68c2e45522c9700c13f4517cae"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab139fe68c2e45522c9700c13f4517cae">&#9670;&nbsp;</a></span>test_commuters_expr_t</h2>
+<a id="a9114c7ed6467f9e2babbe5c9a2c03747"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9114c7ed6467f9e2babbe5c9a2c03747">&#9670;&nbsp;</a></span>test_commuters_expr_t</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -2186,7 +2206,7 @@ template&lt;class T &gt; </div>
 template&lt;class Sim &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="namespacemio.html#ab139fe68c2e45522c9700c13f4517cae">mio::test_commuters_expr_t</a> = typedef decltype( <a class="el" href="namespacemio.html#adb526164db4b433fe9e65133f20edd3d">test_commuters</a>(std::declval&lt;Sim&amp;&gt;(), std::declval&lt;Eigen::Ref&lt;const Eigen::VectorXd&gt;&amp;&gt;(), std::declval&lt;double&gt;()))</td>
+          <td class="memname">using <a class="el" href="namespacemio.html#a9114c7ed6467f9e2babbe5c9a2c03747">mio::test_commuters_expr_t</a> = typedef decltype(<a class="el" href="namespacemio.html#adb526164db4b433fe9e65133f20edd3d">test_commuters</a>( std::declval&lt;Sim&amp;&gt;(), std::declval&lt;Eigen::Ref&lt;const Eigen::VectorXd&gt;&amp;&gt;(), std::declval&lt;double&gt;()))</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -2447,6 +2467,92 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
+<a id="a53354b26aeb9eb9cd5bf546119c65667"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a53354b26aeb9eb9cd5bf546119c65667">&#9670;&nbsp;</a></span>advance_model() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class... History&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void mio::advance_model </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classmio_1_1abm_1_1TimePoint.html">abm::TimePoint</a>&#160;</td>
+          <td class="paramname"><em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classmio_1_1abm_1_1TimeSpan.html">abm::TimeSpan</a>&#160;</td>
+          <td class="paramname"><em>dt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classmio_1_1ABMSimulationNode.html">ABMSimulationNode</a>&lt; History... &gt; &amp;&#160;</td>
+          <td class="paramname"><em>node</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p><a class="el" href="structmio_1_1Node.html" title="represents a node of the graph">Node</a> functor for abm graph simulation. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classmio_1_1ABMSimulationNode.html#af2c02b38e3d48c48f457f00b289f32ad" title="advances the simulation in this node by t+dt and logs information in History object(s)">ABMSimulationNode::advance</a> </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">t</td><td>Time point the functor is applied. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">dt</td><td>Time interval the node is advanced. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">node</td><td><a class="el" href="classmio_1_1ABMSimulationNode.html" title="Represents the ABM simulation in one node of the ABM graph model.">ABMSimulationNode</a> to which the functor is applied. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a417e19d8ce08391ccc9a5f7ce3e0d238"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a417e19d8ce08391ccc9a5f7ce3e0d238">&#9670;&nbsp;</a></span>advance_model() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Sim &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void mio::advance_model </td>
+          <td>(</td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>dt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt; &amp;&#160;</td>
+          <td class="paramname"><em>node</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>edge functor for mobility-based simulation. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classmio_1_1SimulationNode.html#a2f0e39ec36b57bc400ce3d0f7963bcbc">SimulationNode::advance</a> </dd></dl>
+
+</div>
+</div>
 <a id="a3cd34c233549e8b0e086c67fd82809d3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3cd34c233549e8b0e086c67fd82809d3">&#9670;&nbsp;</a></span>apply() <span class="overload">[1/2]</span></h2>
 
@@ -2605,8 +2711,68 @@ template&lt;class DampingExpression , class DampingSamplings , class F &gt; </di
 
 </div>
 </div>
+<a id="ad1ad0d867475e33172827e2bb10636dd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad1ad0d867475e33172827e2bb10636dd">&#9670;&nbsp;</a></span>apply_mobility() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class... History&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void mio::apply_mobility </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classmio_1_1abm_1_1TimePoint.html">abm::TimePoint</a>&#160;</td>
+          <td class="paramname"><em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classmio_1_1abm_1_1TimeSpan.html">abm::TimeSpan</a>&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classmio_1_1ABMMobilityEdge.html">ABMMobilityEdge</a>&lt; History... &gt; &amp;&#160;</td>
+          <td class="paramname"><em>edge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classmio_1_1ABMSimulationNode.html">ABMSimulationNode</a>&lt; History... &gt; &amp;&#160;</td>
+          <td class="paramname"><em>node_from</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classmio_1_1ABMSimulationNode.html">ABMSimulationNode</a>&lt; History... &gt; &amp;&#160;</td>
+          <td class="paramname"><em>node_to</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p><a class="el" href="structmio_1_1Edge.html" title="represents an edge of the graph">Edge</a> functor for abm graph simulation. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classmio_1_1ABMMobilityEdge.html#ac51de0d832ee7ac8c8a35e4249dad30d" title="Exchanges persons via the edge.">ABMMobilityEdge::apply_mobility</a> The attribute dt is required by the <a class="el" href="classmio_1_1GraphSimulation.html">GraphSimulation</a> class and therefore an input argument of the function. However it is not used in <a class="el" href="classmio_1_1ABMMobilityEdge.html#ac51de0d832ee7ac8c8a35e4249dad30d" title="Exchanges persons via the edge.">ABMMobilityEdge::apply_mobility</a>. </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">t</td><td>Time point the functor is applied. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">edge</td><td><a class="el" href="classmio_1_1ABMMobilityEdge.html" title="Represents the mobility between two nodes.">ABMMobilityEdge</a> for which the functor is applied. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">node_from</td><td><a class="el" href="structmio_1_1Edge.html" title="represents an edge of the graph">Edge</a> start node. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">node_to</td><td><a class="el" href="structmio_1_1Edge.html" title="represents an edge of the graph">Edge</a> end node. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="ade4d17436ecfc6e5c257b723f3f8c405"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ade4d17436ecfc6e5c257b723f3f8c405">&#9670;&nbsp;</a></span>apply_mobility() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ade4d17436ecfc6e5c257b723f3f8c405">&#9670;&nbsp;</a></span>apply_mobility() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -2657,7 +2823,7 @@ template&lt;typename FP , class Sim &gt; </div>
 </div>
 </div>
 <a id="a2a66f914e02a28f9b33c7acea466ecdf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2a66f914e02a28f9b33c7acea466ecdf">&#9670;&nbsp;</a></span>apply_mobility() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a2a66f914e02a28f9b33c7acea466ecdf">&#9670;&nbsp;</a></span>apply_mobility() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -3744,45 +3910,6 @@ template&lt;class T &gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Array of all members of the enum class not including T::Count. </dd></dl>
-
-</div>
-</div>
-<a id="aebf8e2a8ccea82f3bbd91c3d479d1094"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aebf8e2a8ccea82f3bbd91c3d479d1094">&#9670;&nbsp;</a></span>evolve_model()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class Sim &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void mio::evolve_model </td>
-          <td>(</td>
-          <td class="paramtype">double&#160;</td>
-          <td class="paramname"><em>t</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double&#160;</td>
-          <td class="paramname"><em>dt</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt; Sim &gt; &amp;&#160;</td>
-          <td class="paramname"><em>node</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>edge functor for mobility-based simulation. </p>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classmio_1_1SimulationNode.html#a9a8c41cc352e8e1122fe80304768f951">SimulationNode::evolve</a> </dd></dl>
 
 </div>
 </div>
@@ -5484,6 +5611,52 @@ template&lt;class M &gt; </div>
 
 </div>
 </div>
+<a id="a3e2c35a0c697dfef367f948a6c06541f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3e2c35a0c697dfef367f948a6c06541f">&#9670;&nbsp;</a></span>make_abm_graph_sim()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class... History&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classmio_1_1GraphSimulation.html">GraphSimulation</a>&lt;<a class="el" href="classmio_1_1Graph.html">Graph</a>&lt;<a class="el" href="classmio_1_1ABMSimulationNode.html">ABMSimulationNode</a>&lt;History...&gt;, <a class="el" href="classmio_1_1ABMMobilityEdge.html">ABMMobilityEdge</a>&lt;History...&gt; &gt;, <a class="el" href="classmio_1_1abm_1_1TimePoint.html">abm::TimePoint</a>, <a class="el" href="classmio_1_1abm_1_1TimeSpan.html">abm::TimeSpan</a>, void (*)(<a class="el" href="classmio_1_1abm_1_1TimePoint.html">mio::abm::TimePoint</a>, <a class="el" href="classmio_1_1abm_1_1TimeSpan.html">mio::abm::TimeSpan</a>, <a class="el" href="classmio_1_1ABMMobilityEdge.html">mio::ABMMobilityEdge</a>&lt;History...&gt;&amp;, <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt;History...&gt;&amp;, <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt;History...&gt;&amp;), void (*)(<a class="el" href="classmio_1_1abm_1_1TimePoint.html">mio::abm::TimePoint</a>, <a class="el" href="classmio_1_1abm_1_1TimeSpan.html">mio::abm::TimeSpan</a>, <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt;History...&gt;&amp;)&gt; mio::make_abm_graph_sim </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classmio_1_1abm_1_1TimePoint.html">abm::TimePoint</a>&#160;</td>
+          <td class="paramname"><em>t0</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classmio_1_1abm_1_1TimeSpan.html">abm::TimeSpan</a>&#160;</td>
+          <td class="paramname"><em>dt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1ABMSimulationNode.html">ABMSimulationNode</a>&lt; History... &gt;, <a class="el" href="classmio_1_1ABMMobilityEdge.html">ABMMobilityEdge</a>&lt; History... &gt;&gt; &amp;&amp;&#160;</td>
+          <td class="paramname"><em>graph</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Creates an abm graph simulation. </p>
+<p>Every dt time step for each edge the persons that want to change to a location in another node are removed from the model in their former location's node and added to the model of the new location. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">t0</td><td>Start time point of the simulation. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">dt</td><td>Step between mobility on edges. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">graph</td><td><a class="el" href="classmio_1_1Graph.html" title="generic graph structure">Graph</a> for simulation. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a4c9f267ac11fbfcb48a6642dbbd60dba"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4c9f267ac11fbfcb48a6642dbbd60dba">&#9670;&nbsp;</a></span>make_contact_damping_matrix()</h2>
 
@@ -5555,24 +5728,24 @@ template&lt;class V &gt; </div>
 
 </div>
 </div>
-<a id="a8728c0a245610c228f5746d8b8607a52"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8728c0a245610c228f5746d8b8607a52">&#9670;&nbsp;</a></span>make_graph_sim()</h2>
+<a id="a27322c7317a3009b61c2280cb12144ef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a27322c7317a3009b61c2280cb12144ef">&#9670;&nbsp;</a></span>make_graph_sim()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename FP , class Graph , class NodeF , class EdgeF &gt; </div>
+template&lt;typename Timepoint , class Timespan , class Graph , class NodeF , class EdgeF &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">auto mio::make_graph_sim </td>
           <td>(</td>
-          <td class="paramtype">FP&#160;</td>
+          <td class="paramtype">Timepoint&#160;</td>
           <td class="paramname"><em>t0</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">FP&#160;</td>
+          <td class="paramtype">Timespan&#160;</td>
           <td class="paramname"><em>dt</em>, </td>
         </tr>
         <tr>
@@ -5818,8 +5991,8 @@ template&lt;class Sim &gt; </div>
 
 </div>
 </div>
-<a id="aac94268f13cb6d9b527d75e67acea580"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aac94268f13cb6d9b527d75e67acea580">&#9670;&nbsp;</a></span>make_mobility_sim() <span class="overload">[3/4]</span></h2>
+<a id="a20b1e8438c5bd14fe6e52bde42d2b03a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a20b1e8438c5bd14fe6e52bde42d2b03a">&#9670;&nbsp;</a></span>make_mobility_sim() <span class="overload">[3/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -5827,7 +6000,7 @@ template&lt;class Sim &gt; </div>
 template&lt;typename FP , class Sim &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classmio_1_1GraphSimulation.html">GraphSimulation</a>&lt;<a class="el" href="classmio_1_1Graph.html">Graph</a>&lt;<a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt;Sim&gt;, <a class="el" href="classmio_1_1MobilityEdge.html">MobilityEdge</a>&lt;FP&gt; &gt; &gt; mio::make_mobility_sim </td>
+          <td class="memname"><a class="el" href="classmio_1_1GraphSimulation.html">GraphSimulation</a>&lt;<a class="el" href="classmio_1_1Graph.html">Graph</a>&lt;<a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt;Sim&gt;, <a class="el" href="classmio_1_1MobilityEdge.html">MobilityEdge</a>&lt;FP&gt; &gt;, FP, FP, void (*)(double, double, <a class="el" href="classmio_1_1MobilityEdge.html">mio::MobilityEdge</a>&lt;&gt;&amp;, <a class="el" href="classmio_1_1SimulationNode.html">mio::SimulationNode</a>&lt;Sim&gt;&amp;, <a class="el" href="classmio_1_1SimulationNode.html">mio::SimulationNode</a>&lt;Sim&gt;&amp;), void (*)(double, double, <a class="el" href="classmio_1_1SimulationNode.html">mio::SimulationNode</a>&lt;Sim&gt;&amp;)&gt; mio::make_mobility_sim </td>
           <td>(</td>
           <td class="paramtype">FP&#160;</td>
           <td class="paramname"><em>t0</em>, </td>
@@ -5864,8 +6037,8 @@ template&lt;typename FP , class Sim &gt; </div>
 
 </div>
 </div>
-<a id="a4bb7ace587f7d0c7be569cca9bec0275"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4bb7ace587f7d0c7be569cca9bec0275">&#9670;&nbsp;</a></span>make_mobility_sim() <span class="overload">[4/4]</span></h2>
+<a id="a78c6e94e0cdbdaed104f8f0cf478f6d7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a78c6e94e0cdbdaed104f8f0cf478f6d7">&#9670;&nbsp;</a></span>make_mobility_sim() <span class="overload">[4/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -5873,7 +6046,7 @@ template&lt;typename FP , class Sim &gt; </div>
 template&lt;typename FP , class Sim &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classmio_1_1GraphSimulation.html">GraphSimulation</a>&lt;<a class="el" href="classmio_1_1Graph.html">Graph</a>&lt;<a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt;Sim&gt;, <a class="el" href="classmio_1_1MobilityEdge.html">MobilityEdge</a>&lt;FP&gt; &gt; &gt; mio::make_mobility_sim </td>
+          <td class="memname"><a class="el" href="classmio_1_1GraphSimulation.html">GraphSimulation</a>&lt;<a class="el" href="classmio_1_1Graph.html">Graph</a>&lt;<a class="el" href="classmio_1_1SimulationNode.html">SimulationNode</a>&lt;Sim&gt;, <a class="el" href="classmio_1_1MobilityEdge.html">MobilityEdge</a>&lt;FP&gt; &gt;, FP, FP, void (*)(double, double, <a class="el" href="classmio_1_1MobilityEdge.html">mio::MobilityEdge</a>&lt;&gt;&amp;, <a class="el" href="classmio_1_1SimulationNode.html">mio::SimulationNode</a>&lt;Sim&gt;&amp;, <a class="el" href="classmio_1_1SimulationNode.html">mio::SimulationNode</a>&lt;Sim&gt;&amp;), void (*)(double, double, <a class="el" href="classmio_1_1SimulationNode.html">mio::SimulationNode</a>&lt;Sim&gt;&amp;)&gt; mio::make_mobility_sim </td>
           <td>(</td>
           <td class="paramtype">FP&#160;</td>
           <td class="paramname"><em>t0</em>, </td>
@@ -6221,40 +6394,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="a5b8d13d4bfbc6ab42cccb685cafdc5fe"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5b8d13d4bfbc6ab42cccb685cafdc5fe">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">std::enable_if_t&lt;<a class="el" href="namespacemio.html#a828f9a1016d1048d5d3e67dcc5ff4e8f">has_ostream_op</a>&lt;T&gt;::value, std::ostream&amp;&gt; mio::operator&lt;&lt; </td>
-          <td>(</td>
-          <td class="paramtype">std::ostream &amp;&#160;</td>
-          <td class="paramname"><em>os</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="structmio_1_1Edge.html">Edge</a>&lt; T &gt; &amp;&#160;</td>
-          <td class="paramname"><em>e</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>out stream operator for edges if edge property type has stream operator defined </p>
-
-</div>
-</div>
 <a id="a9a58db8b765e525595174fe5b502bf85"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9a58db8b765e525595174fe5b502bf85">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a9a58db8b765e525595174fe5b502bf85">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -6282,6 +6423,38 @@ template&lt;class T &gt; </div>
 </div><div class="memdoc">
 
 <p>out stream operator for edges if edge property type does not have stream operator defined </p>
+
+</div>
+</div>
+<a id="a5b8d13d4bfbc6ab42cccb685cafdc5fe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b8d13d4bfbc6ab42cccb685cafdc5fe">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">std::enable_if_t&lt;<a class="el" href="namespacemio.html#a828f9a1016d1048d5d3e67dcc5ff4e8f">has_ostream_op</a>&lt;T&gt;::value, std::ostream&amp;&gt; mio::operator&lt;&lt; </td>
+          <td>(</td>
+          <td class="paramtype">std::ostream &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structmio_1_1Edge.html">Edge</a>&lt; T &gt; &amp;&#160;</td>
+          <td class="paramname"><em>e</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>out stream operator for edges if edge property type has stream operator defined </p>
 
 </div>
 </div>
@@ -6777,7 +6950,7 @@ template&lt;class InfectionState &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">InfectionState&#160;</td>
+          <td class="paramtype"><a class="el" href="namespacemio_1_1abm.html#ad1ae0779f53a827b524e1f0925b9d704">InfectionState</a>&#160;</td>
           <td class="paramname"><em>compartment</em>&#160;</td>
         </tr>
         <tr>
@@ -7237,13 +7410,13 @@ template&lt;class ContactLocation , class Model , class MobilityParams , class M
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; Model, MobilityParams &gt; &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a>, MobilityParams &gt; &amp;&#160;</td>
           <td class="paramname"><em>params_graph</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::initializer_list&lt; InfectionState &gt; &amp;&#160;</td>
+          <td class="paramtype">std::initializer_list&lt; <a class="el" href="namespacemio_1_1abm.html#ad1ae0779f53a827b524e1f0925b9d704">InfectionState</a> &gt; &amp;&#160;</td>
           <td class="paramname"><em>mobile_compartments</em>, </td>
         </tr>
         <tr>
@@ -7325,7 +7498,7 @@ template&lt;class TestAndTrace , class ContactPattern , class Model , class Mobi
         <tr>
           <td class="memname"><a class="el" href="namespacemio.html#ae556a666d14183eb2bf3a3efc11551ec">IOResult</a>&lt;void&gt; mio::set_nodes </td>
           <td>(</td>
-          <td class="paramtype">const Parameters &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="classmio_1_1abm_1_1Parameters.html">Parameters</a> &amp;&#160;</td>
           <td class="paramname"><em>params</em>, </td>
         </tr>
         <tr>
@@ -7361,7 +7534,7 @@ template&lt;class TestAndTrace , class ContactPattern , class Model , class Mobi
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; Model, MobilityParams &gt; &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a>, MobilityParams &gt; &amp;&#160;</td>
           <td class="paramname"><em>params_graph</em>, </td>
         </tr>
         <tr>
@@ -7525,7 +7698,7 @@ template&lt;typename FP , class Model , class Sim  = Simulation&lt;FP, Model&gt;
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Model const &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classmio_1_1abm_1_1Model.html">Model</a> const &amp;&#160;</td>
           <td class="paramname"><em>model</em>, </td>
         </tr>
         <tr>
@@ -7594,7 +7767,7 @@ template&lt;typename FP , class Model , class Sim  = FlowSimulation&lt;FP, Model
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Model const &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classmio_1_1abm_1_1Model.html">Model</a> const &amp;&#160;</td>
           <td class="paramname"><em>model</em>, </td>
         </tr>
         <tr>

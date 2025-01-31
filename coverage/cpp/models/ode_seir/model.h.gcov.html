@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-22 09:13:13</td>
+            <td class="headerValue">2025-01-31 15:59:05</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">5</td>
@@ -130,38 +130,38 @@
 <a name="68"><span class="lineNum">      68 </span>            :     {</a>
 <a name="69"><span class="lineNum">      69 </span><span class="lineCov">        156 :     }</span></a>
 <a name="70"><span class="lineNum">      70 </span>            : </a>
-<a name="71"><span class="lineNum">      71 </span><span class="lineCov">     386001 :     void get_flows(Eigen::Ref&lt;const Eigen::VectorX&lt;FP&gt;&gt; pop, Eigen::Ref&lt;const Eigen::VectorX&lt;FP&gt;&gt; y, FP t,</span></a>
+<a name="71"><span class="lineNum">      71 </span><span class="lineCov">     386217 :     void get_flows(Eigen::Ref&lt;const Eigen::VectorX&lt;FP&gt;&gt; pop, Eigen::Ref&lt;const Eigen::VectorX&lt;FP&gt;&gt; y, FP t,</span></a>
 <a name="72"><span class="lineNum">      72 </span>            :                    Eigen::Ref&lt;Eigen::VectorX&lt;FP&gt;&gt; flows) const override</a>
 <a name="73"><span class="lineNum">      73 </span>            :     {</a>
-<a name="74"><span class="lineNum">      74 </span><span class="lineCov">     386001 :         const Index&lt;AgeGroup&gt; age_groups = reduce_index&lt;Index&lt;AgeGroup&gt;&gt;(this-&gt;populations.size());</span></a>
-<a name="75"><span class="lineNum">      75 </span><span class="lineCov">     386001 :         const auto&amp; params               = this-&gt;parameters;</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">     386217 :         const Index&lt;AgeGroup&gt; age_groups = reduce_index&lt;Index&lt;AgeGroup&gt;&gt;(this-&gt;populations.size());</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">     386217 :         const auto&amp; params               = this-&gt;parameters;</span></a>
 <a name="76"><span class="lineNum">      76 </span>            : </a>
-<a name="77"><span class="lineNum">      77 </span><span class="lineCov">    1158012 :         for (auto i : make_index_range(age_groups)) {</span></a>
-<a name="78"><span class="lineNum">      78 </span><span class="lineCov">     386010 :             const size_t Si = this-&gt;populations.get_flat_index({i, InfectionState::Susceptible});</span></a>
-<a name="79"><span class="lineNum">      79 </span><span class="lineCov">     386010 :             const size_t Ei = this-&gt;populations.get_flat_index({i, InfectionState::Exposed});</span></a>
-<a name="80"><span class="lineNum">      80 </span><span class="lineCov">     386010 :             const size_t Ii = this-&gt;populations.get_flat_index({i, InfectionState::Infected});</span></a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineCov">    1158660 :         for (auto i : make_index_range(age_groups)) {</span></a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineCov">     386226 :             const size_t Si = this-&gt;populations.get_flat_index({i, InfectionState::Susceptible});</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">     386226 :             const size_t Ei = this-&gt;populations.get_flat_index({i, InfectionState::Exposed});</span></a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineCov">     386226 :             const size_t Ii = this-&gt;populations.get_flat_index({i, InfectionState::Infected});</span></a>
 <a name="81"><span class="lineNum">      81 </span>            : </a>
-<a name="82"><span class="lineNum">      82 </span><span class="lineCov">    1158048 :             for (auto j : make_index_range(age_groups)) {</span></a>
-<a name="83"><span class="lineNum">      83 </span><span class="lineCov">     386028 :                 const size_t Sj = this-&gt;populations.get_flat_index({j, InfectionState::Susceptible});</span></a>
-<a name="84"><span class="lineNum">      84 </span><span class="lineCov">     386028 :                 const size_t Ej = this-&gt;populations.get_flat_index({j, InfectionState::Exposed});</span></a>
-<a name="85"><span class="lineNum">      85 </span><span class="lineCov">     386028 :                 const size_t Ij = this-&gt;populations.get_flat_index({j, InfectionState::Infected});</span></a>
-<a name="86"><span class="lineNum">      86 </span><span class="lineCov">     386028 :                 const size_t Rj = this-&gt;populations.get_flat_index({j, InfectionState::Recovered});</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">    1158696 :             for (auto j : make_index_range(age_groups)) {</span></a>
+<a name="83"><span class="lineNum">      83 </span><span class="lineCov">     386244 :                 const size_t Sj = this-&gt;populations.get_flat_index({j, InfectionState::Susceptible});</span></a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">     386244 :                 const size_t Ej = this-&gt;populations.get_flat_index({j, InfectionState::Exposed});</span></a>
+<a name="85"><span class="lineNum">      85 </span><span class="lineCov">     386244 :                 const size_t Ij = this-&gt;populations.get_flat_index({j, InfectionState::Infected});</span></a>
+<a name="86"><span class="lineNum">      86 </span><span class="lineCov">     386244 :                 const size_t Rj = this-&gt;populations.get_flat_index({j, InfectionState::Recovered});</span></a>
 <a name="87"><span class="lineNum">      87 </span>            : </a>
-<a name="88"><span class="lineNum">      88 </span><span class="lineCov">     386028 :                 const ScalarType Nj    = pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj];</span></a>
-<a name="89"><span class="lineNum">      89 </span><span class="lineCov">     386028 :                 const ScalarType divNj = (Nj &lt; Limits&lt;ScalarType&gt;::zero_tolerance()) ? 0.0 : 1.0 / Nj;</span></a>
-<a name="90"><span class="lineNum">      90 </span><span class="lineCov">     386028 :                 const ScalarType coeffStoE =</span></a>
-<a name="91"><span class="lineNum">      91 </span><span class="lineCov">     772056 :                     params.template get&lt;ContactPatterns&lt;FP&gt;&gt;().get_cont_freq_mat().get_matrix_at(t)(i.get(), j.get()) *</span></a>
-<a name="92"><span class="lineNum">      92 </span><span class="lineCov">     386028 :                     params.template get&lt;TransmissionProbabilityOnContact&lt;FP&gt;&gt;()[i] * divNj;</span></a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineCov">     386244 :                 const ScalarType Nj    = pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj];</span></a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineCov">     386244 :                 const ScalarType divNj = (Nj &lt; Limits&lt;ScalarType&gt;::zero_tolerance()) ? 0.0 : 1.0 / Nj;</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">     386244 :                 const ScalarType coeffStoE =</span></a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineCov">     772488 :                     params.template get&lt;ContactPatterns&lt;FP&gt;&gt;().get_cont_freq_mat().get_matrix_at(t)(i.get(), j.get()) *</span></a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineCov">     386244 :                     params.template get&lt;TransmissionProbabilityOnContact&lt;FP&gt;&gt;()[i] * divNj;</span></a>
 <a name="93"><span class="lineNum">      93 </span>            : </a>
-<a name="94"><span class="lineNum">      94 </span><span class="lineCov">     386028 :                 flows[Base::template get_flat_flow_index&lt;InfectionState::Susceptible, InfectionState::Exposed&gt;(i)] +=</span></a>
-<a name="95"><span class="lineNum">      95 </span><span class="lineCov">     386028 :                     coeffStoE * y[Si] * pop[Ij];</span></a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineCov">     386244 :                 flows[Base::template get_flat_flow_index&lt;InfectionState::Susceptible, InfectionState::Exposed&gt;(i)] +=</span></a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineCov">     386244 :                     coeffStoE * y[Si] * pop[Ij];</span></a>
 <a name="96"><span class="lineNum">      96 </span>            :             }</a>
-<a name="97"><span class="lineNum">      97 </span><span class="lineCov">     386010 :             flows[Base::template get_flat_flow_index&lt;InfectionState::Exposed, InfectionState::Infected&gt;(i)] =</span></a>
-<a name="98"><span class="lineNum">      98 </span><span class="lineCov">     386010 :                 (1.0 / params.template get&lt;TimeExposed&lt;FP&gt;&gt;()[i]) * y[Ei];</span></a>
-<a name="99"><span class="lineNum">      99 </span><span class="lineCov">     386010 :             flows[Base::template get_flat_flow_index&lt;InfectionState::Infected, InfectionState::Recovered&gt;(i)] =</span></a>
-<a name="100"><span class="lineNum">     100 </span><span class="lineCov">     386010 :                 (1.0 / params.template get&lt;TimeInfected&lt;FP&gt;&gt;()[i]) * y[Ii];</span></a>
+<a name="97"><span class="lineNum">      97 </span><span class="lineCov">     386226 :             flows[Base::template get_flat_flow_index&lt;InfectionState::Exposed, InfectionState::Infected&gt;(i)] =</span></a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineCov">     386226 :                 (1.0 / params.template get&lt;TimeExposed&lt;FP&gt;&gt;()[i]) * y[Ei];</span></a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineCov">     386226 :             flows[Base::template get_flat_flow_index&lt;InfectionState::Infected, InfectionState::Recovered&gt;(i)] =</span></a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineCov">     386226 :                 (1.0 / params.template get&lt;TimeInfected&lt;FP&gt;&gt;()[i]) * y[Ii];</span></a>
 <a name="101"><span class="lineNum">     101 </span>            :         }</a>
-<a name="102"><span class="lineNum">     102 </span><span class="lineCov">     386001 :     }</span></a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineCov">     386217 :     }</span></a>
 <a name="103"><span class="lineNum">     103 </span>            : </a>
 <a name="104"><span class="lineNum">     104 </span>            :     /**</a>
 <a name="105"><span class="lineNum">     105 </span>            :     *@brief Computes the reproduction number at a given index time of the Model output obtained by the Simulation.</a>

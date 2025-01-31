@@ -37,12 +37,12 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-22 09:13:13</td>
+            <td class="headerValue">2025-01-31 15:59:05</td>
             <td></td>
             <td class="headerItem">Functions:</td>
-            <td class="headerCovTableEntry">97</td>
-            <td class="headerCovTableEntry">181</td>
-            <td class="headerCovTableEntryLo">53.6 %</td>
+            <td class="headerCovTableEntry">104</td>
+            <td class="headerCovTableEntry">197</td>
+            <td class="headerCovTableEntryLo">52.8 %</td>
           </tr>
           <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
         </table>
@@ -61,11 +61,11 @@
     </tr>
     <tr>
               <td class="coverFn"><a href="graph.h.gcov.html#47">mio::InEdgeBase::InEdgeBase(unsigned long)</a></td>
-              <td class="coverFnHi">523</td>
+              <td class="coverFnHi">525</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="graph.h.gcov.html#40">mio::OutEdgeBase::OutEdgeBase(unsigned long)</a></td>
-              <td class="coverFnHi">563</td>
+              <td class="coverFnHi">565</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="graph.h.gcov.html#408">auto mio::create_graph_without_edges&lt;mio::abm::Model, mio::MobilityParameters&lt;double&gt; &gt;(std::vector&lt;mio::abm::Model, std::allocator&lt;mio::abm::Model&gt; &gt; const&amp;, std::vector&lt;int, std::allocator&lt;int&gt; &gt; const&amp;)</a></td>
@@ -94,6 +94,14 @@
     <tr>
               <td class="coverFn"><a href="graph.h.gcov.html#83">mio::Edge&lt;mio::MobilityEdge&lt;double&gt; &gt;::Edge&lt;mio::MobilityParameters&lt;double&gt;&amp;&gt;(unsigned long, unsigned long, mio::MobilityParameters&lt;double&gt;&amp;)</a></td>
               <td class="coverFnHi">15</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#83">mio::Edge&lt;mio::ABMMobilityEdge&lt;MockHistory&gt; &gt;::Edge&lt;&gt;(unsigned long, unsigned long)</a></td>
+              <td class="coverFnHi">2</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#83">mio::Edge&lt;mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt;::Edge&lt;&gt;(unsigned long, unsigned long)</a></td>
+              <td class="coverFnLo">0</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="graph.h.gcov.html#83">mio::Edge&lt;mio::MobilityParameters&lt;double&gt; &gt;::Edge&lt;Eigen::CwiseNullaryOp&lt;Eigen::internal::scalar_constant_op&lt;double&gt;, Eigen::Matrix&lt;double, -1, 1, 0, -1, 1&gt; &gt; const&gt;(unsigned long, unsigned long, Eigen::CwiseNullaryOp&lt;Eigen::internal::scalar_constant_op&lt;double&gt;, Eigen::Matrix&lt;double, -1, 1, 0, -1, 1&gt; &gt; const&amp;&amp;)</a></td>
@@ -168,6 +176,14 @@
               <td class="coverFnLo">0</td>
             </tr>
     <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#68">mio::Node&lt;mio::ABMSimulationNode&lt;MockHistory&gt; &gt;::Node&lt;MockHistory, mio::abm::TimePoint&amp;, mio::GraphABModel&gt;(int, MockHistory&amp;&amp;, mio::abm::TimePoint&amp;, mio::GraphABModel&amp;&amp;)</a></td>
+              <td class="coverFnHi">2</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#68">mio::Node&lt;mio::ABMSimulationNode&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt;::Node&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt;, mio::abm::TimePoint&amp;, mio::GraphABModel&gt;(int, mio::History&lt;mio::DataWriterToMemory, Logger&gt;&amp;&amp;, mio::abm::TimePoint&amp;, mio::GraphABModel&amp;&amp;)</a></td>
+              <td class="coverFnLo">0</td>
+            </tr>
+    <tr>
               <td class="coverFn"><a href="graph.h.gcov.html#68">mio::Node&lt;mio::abm::Model&gt;::Node&lt;mio::abm::Model const&amp;&gt;(int, mio::abm::Model const&amp;)</a></td>
               <td class="coverFnLo">0</td>
             </tr>
@@ -229,11 +245,11 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="graph.h.gcov.html#198">mio::Graph&lt;mio::SimulationNode&lt;mio::Simulation&lt;double, mio::oseir::Model&lt;double&gt; &gt; &gt;, mio::MobilityEdgeStochastic&gt;::edges()</a></td>
-              <td class="coverFnHi">504</td>
+              <td class="coverFnHi">558</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="graph.h.gcov.html#182">mio::Graph&lt;mio::SimulationNode&lt;mio::Simulation&lt;double, mio::oseir::Model&lt;double&gt; &gt; &gt;, mio::MobilityEdgeStochastic&gt;::nodes()</a></td>
-              <td class="coverFnHi">2178</td>
+              <td class="coverFnHi">2412</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="graph.h.gcov.html#167">mio::Edge&lt;mio::MobilityEdgeStochastic&gt;&amp; mio::Graph&lt;mio::SimulationNode&lt;mio::Simulation&lt;double, mio::oseir::Model&lt;double&gt; &gt; &gt;, mio::MobilityEdgeStochastic&gt;::add_edge&lt;Eigen::CwiseNullaryOp&lt;Eigen::internal::scalar_constant_op&lt;double&gt;, Eigen::Matrix&lt;double, -1, 1, 0, -1, 1&gt; &gt; const&gt;(unsigned long, unsigned long, Eigen::CwiseNullaryOp&lt;Eigen::internal::scalar_constant_op&lt;double&gt;, Eigen::Matrix&lt;double, -1, 1, 0, -1, 1&gt; &gt; const&amp;&amp;)</a></td>
@@ -333,6 +349,38 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="graph.h.gcov.html#157">mio::Node&lt;mio::SimulationNode&lt;mio::osecirvvs::Simulation&lt;double, mio::Simulation&lt;double, mio::osecirvvs::Model&lt;double&gt; &gt; &gt; &gt; &gt;&amp; mio::Graph&lt;mio::SimulationNode&lt;mio::osecirvvs::Simulation&lt;double, mio::Simulation&lt;double, mio::osecirvvs::Model&lt;double&gt; &gt; &gt; &gt;, mio::MobilityEdge&lt;double&gt; &gt;::add_node&lt;mio::osecirvvs::Model&lt;double&gt;&amp;, double&amp;, double&amp;&gt;(int, mio::osecirvvs::Model&lt;double&gt;&amp;, double&amp;, double&amp;)</a></td>
+              <td class="coverFnLo">0</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#198">mio::Graph&lt;mio::ABMSimulationNode&lt;MockHistory&gt;, mio::ABMMobilityEdge&lt;MockHistory&gt; &gt;::edges()</a></td>
+              <td class="coverFnHi">10</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#182">mio::Graph&lt;mio::ABMSimulationNode&lt;MockHistory&gt;, mio::ABMMobilityEdge&lt;MockHistory&gt; &gt;::nodes()</a></td>
+              <td class="coverFnHi">50</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#167">mio::Edge&lt;mio::ABMMobilityEdge&lt;MockHistory&gt; &gt;&amp; mio::Graph&lt;mio::ABMSimulationNode&lt;MockHistory&gt;, mio::ABMMobilityEdge&lt;MockHistory&gt; &gt;::add_edge&lt;&gt;(unsigned long, unsigned long)</a></td>
+              <td class="coverFnHi">2</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#157">mio::Node&lt;mio::ABMSimulationNode&lt;MockHistory&gt; &gt;&amp; mio::Graph&lt;mio::ABMSimulationNode&lt;MockHistory&gt;, mio::ABMMobilityEdge&lt;MockHistory&gt; &gt;::add_node&lt;MockHistory, mio::abm::TimePoint&amp;, mio::GraphABModel&gt;(int, MockHistory&amp;&amp;, mio::abm::TimePoint&amp;, mio::GraphABModel&amp;&amp;)</a></td>
+              <td class="coverFnHi">2</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#198">mio::Graph&lt;mio::ABMSimulationNode&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt;, mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt;::edges()</a></td>
+              <td class="coverFnLo">0</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#182">mio::Graph&lt;mio::ABMSimulationNode&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt;, mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt;::nodes()</a></td>
+              <td class="coverFnLo">0</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#167">mio::Edge&lt;mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt;&amp; mio::Graph&lt;mio::ABMSimulationNode&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt;, mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt;::add_edge&lt;&gt;(unsigned long, unsigned long)</a></td>
+              <td class="coverFnLo">0</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#157">mio::Node&lt;mio::ABMSimulationNode&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt;&amp; mio::Graph&lt;mio::ABMSimulationNode&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt;, mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt;::add_node&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt;, mio::abm::TimePoint&amp;, mio::GraphABModel&gt;(int, mio::History&lt;mio::DataWriterToMemory, Logger&gt;&amp;&amp;, mio::abm::TimePoint&amp;, mio::GraphABModel&amp;&amp;)</a></td>
               <td class="coverFnLo">0</td>
             </tr>
     <tr>
@@ -489,7 +537,7 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="graph.h.gcov.html#54">mio::EdgeBase::EdgeBase(unsigned long, unsigned long)</a></td>
-              <td class="coverFnHi">523</td>
+              <td class="coverFnHi">525</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="graph.h.gcov.html#336">boost::outcome_v2::basic_result&lt;void, mio::IOStatus, boost::outcome_v2::policy::all_narrow&gt; mio::set_edges&lt;ContactLocation, mio::osecir::Model&lt;double&gt;, mio::MobilityParameters&lt;double&gt;, mio::DampingMatrixExpressionGroup&lt;mio::DampingMatrixExpression&lt;mio::Dampings&lt;mio::Damping&lt;mio::ColumnVectorShape&gt; &gt; &gt; &gt;, mio::osecir::InfectionState, boost::outcome_v2::basic_result&lt;Eigen::Matrix&lt;double, -1, -1, 0, -1, -1&gt;, mio::IOStatus, boost::outcome_v2::policy::all_narrow&gt; (&amp;)(std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const&amp;)&gt;(boost::filesystem::path const&amp;, mio::Graph&lt;mio::osecir::Model&lt;double&gt;, mio::MobilityParameters&lt;double&gt; &gt;&amp;, std::initializer_list&lt;mio::osecir::InfectionState&gt;&amp;, unsigned long, boost::outcome_v2::basic_result&lt;Eigen::Matrix&lt;double, -1, -1, 0, -1, -1&gt;, mio::IOStatus, boost::outcome_v2::policy::all_narrow&gt; (&amp;)(std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const&amp;), std::vector&lt;double, std::allocator&lt;double&gt; &gt;, std::vector&lt;std::vector&lt;unsigned long, std::allocator&lt;unsigned long&gt; &gt;, std::allocator&lt;std::vector&lt;unsigned long, std::allocator&lt;unsigned long&gt; &gt; &gt; &gt;)</a></td>
@@ -637,6 +685,22 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="graph.h.gcov.html#172">auto mio::Graph&lt;mio::SimulationNode&lt;mio::osecirvvs::Simulation&lt;double, mio::Simulation&lt;double, mio::osecirvvs::Model&lt;double&gt; &gt; &gt; &gt;, mio::MobilityEdge&lt;double&gt; &gt;::add_edge&lt;mio::MobilityParameters&lt;double&gt;&amp;&gt;(unsigned long, unsigned long, mio::MobilityParameters&lt;double&gt;&amp;)::{lambda(auto:1&amp;&amp;, auto:2&amp;&amp;)#1}::operator()&lt;mio::Edge&lt;mio::MobilityEdge&lt;double&gt; &gt;&amp;, mio::Edge&lt;mio::MobilityEdge&lt;double&gt; &gt; const&amp;&gt;(mio::Edge&lt;mio::MobilityEdge&lt;double&gt; &gt;&amp;, mio::Edge&lt;mio::MobilityEdge&lt;double&gt; &gt; const&amp;) const</a></td>
+              <td class="coverFnLo">0</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#172">auto mio::Graph&lt;mio::ABMSimulationNode&lt;MockHistory&gt;, mio::ABMMobilityEdge&lt;MockHistory&gt; &gt;::add_edge&lt;&gt;(unsigned long, unsigned long)::{lambda(auto:1&amp;&amp;, auto:2&amp;&amp;)#1}::operator()&lt;mio::Edge&lt;mio::ABMMobilityEdge&lt;MockHistory&gt; &gt; const&amp;, mio::Edge&lt;mio::ABMMobilityEdge&lt;MockHistory&gt; &gt;&amp;&gt;(mio::Edge&lt;mio::ABMMobilityEdge&lt;MockHistory&gt; &gt; const&amp;, mio::Edge&lt;mio::ABMMobilityEdge&lt;MockHistory&gt; &gt;&amp;) const</a></td>
+              <td class="coverFnLo">0</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#172">auto mio::Graph&lt;mio::ABMSimulationNode&lt;MockHistory&gt;, mio::ABMMobilityEdge&lt;MockHistory&gt; &gt;::add_edge&lt;&gt;(unsigned long, unsigned long)::{lambda(auto:1&amp;&amp;, auto:2&amp;&amp;)#1}::operator()&lt;mio::Edge&lt;mio::ABMMobilityEdge&lt;MockHistory&gt; &gt;&amp;, mio::Edge&lt;mio::ABMMobilityEdge&lt;MockHistory&gt; &gt; const&amp;&gt;(mio::Edge&lt;mio::ABMMobilityEdge&lt;MockHistory&gt; &gt;&amp;, mio::Edge&lt;mio::ABMMobilityEdge&lt;MockHistory&gt; &gt; const&amp;) const</a></td>
+              <td class="coverFnHi">1</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#172">auto mio::Graph&lt;mio::ABMSimulationNode&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt;, mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt;::add_edge&lt;&gt;(unsigned long, unsigned long)::{lambda(auto:1&amp;&amp;, auto:2&amp;&amp;)#1}::operator()&lt;mio::Edge&lt;mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt; const&amp;, mio::Edge&lt;mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt;&amp;&gt;(mio::Edge&lt;mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt; const&amp;, mio::Edge&lt;mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt;&amp;) const</a></td>
+              <td class="coverFnLo">0</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="graph.h.gcov.html#172">auto mio::Graph&lt;mio::ABMSimulationNode&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt;, mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt;::add_edge&lt;&gt;(unsigned long, unsigned long)::{lambda(auto:1&amp;&amp;, auto:2&amp;&amp;)#1}::operator()&lt;mio::Edge&lt;mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt;&amp;, mio::Edge&lt;mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt; const&amp;&gt;(mio::Edge&lt;mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt;&amp;, mio::Edge&lt;mio::ABMMobilityEdge&lt;mio::History&lt;mio::DataWriterToMemory, Logger&gt; &gt; &gt; const&amp;) const</a></td>
               <td class="coverFnLo">0</td>
             </tr>
     <tr>

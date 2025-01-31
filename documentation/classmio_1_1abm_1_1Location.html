@@ -98,6 +98,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a599845a0346ae8b711af9cb669be6158"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structmio_1_1abm_1_1LocationId.html">LocationId</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1abm_1_1Location.html#a599845a0346ae8b711af9cb669be6158">get_id</a> () const</td></tr>
 <tr class="memdesc:a599845a0346ae8b711af9cb669be6158"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the location's identifier in a <a class="el" href="classmio_1_1abm_1_1Model.html" title="The Model of the Simulation.">Model</a>.  <a href="classmio_1_1abm_1_1Location.html#a599845a0346ae8b711af9cb669be6158">More...</a><br /></td></tr>
 <tr class="separator:a599845a0346ae8b711af9cb669be6158"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7b48dc40de8371c658511aaab7b8ed25"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1abm_1_1Location.html#a7b48dc40de8371c658511aaab7b8ed25">get_model_id</a> () const</td></tr>
+<tr class="memdesc:a7b48dc40de8371c658511aaab7b8ed25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the model id the location is in.  <a href="classmio_1_1abm_1_1Location.html#a7b48dc40de8371c658511aaab7b8ed25">More...</a><br /></td></tr>
+<tr class="separator:a7b48dc40de8371c658511aaab7b8ed25"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a89be8bc2e68dcd8aa414adac5dd42dcf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemio_1_1abm.html#ae5dfbb686f6e9d6e642193be9af23424">MaskType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1abm_1_1Location.html#a89be8bc2e68dcd8aa414adac5dd42dcf">get_required_mask</a> () const</td></tr>
 <tr class="memdesc:a89be8bc2e68dcd8aa414adac5dd42dcf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the type of <a class="el" href="classmio_1_1abm_1_1Mask.html" title="Reduces the probability that a Person becomes infected.">Mask</a> that is demanded when entering this <a class="el" href="classmio_1_1abm_1_1Location.html" title="All Locations in the simulated Model where Persons gather.">Location</a>.  <a href="classmio_1_1abm_1_1Location.html#a89be8bc2e68dcd8aa414adac5dd42dcf">More...</a><br /></td></tr>
 <tr class="separator:a89be8bc2e68dcd8aa414adac5dd42dcf"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -107,12 +110,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6a45ff704998dd20a189dea0bbf3573e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1abm_1_1Location.html#a6a45ff704998dd20a189dea0bbf3573e">is_mask_required</a> () const</td></tr>
 <tr class="memdesc:a6a45ff704998dd20a189dea0bbf3573e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the information whether masks are required to enter this <a class="el" href="classmio_1_1abm_1_1Location.html" title="All Locations in the simulated Model where Persons gather.">Location</a>.  <a href="classmio_1_1abm_1_1Location.html#a6a45ff704998dd20a189dea0bbf3573e">More...</a><br /></td></tr>
 <tr class="separator:a6a45ff704998dd20a189dea0bbf3573e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a075a9126f6c4bee055af6885c58d3756"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1abm_1_1Location.html#a075a9126f6c4bee055af6885c58d3756">Location</a> (const <a class="el" href="classmio_1_1abm_1_1Location.html">Location</a> &amp;other, <a class="el" href="structmio_1_1abm_1_1LocationId.html">LocationId</a> id)</td></tr>
-<tr class="memdesc:a075a9126f6c4bee055af6885c58d3756"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a copy of a <a class="el" href="classmio_1_1abm_1_1Location.html" title="All Locations in the simulated Model where Persons gather.">Location</a> with a new ID.  <a href="classmio_1_1abm_1_1Location.html#a075a9126f6c4bee055af6885c58d3756">More...</a><br /></td></tr>
-<tr class="separator:a075a9126f6c4bee055af6885c58d3756"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abb12dc02b4f0dd2f81a112a3bb430a28"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1abm_1_1Location.html#abb12dc02b4f0dd2f81a112a3bb430a28">Location</a> (<a class="el" href="namespacemio_1_1abm.html#a83bc98ab43329c10fe9a6e683f2e1d0f">LocationType</a> loc_type, <a class="el" href="structmio_1_1abm_1_1LocationId.html">LocationId</a> loc_id, size_t num_agegroups=1, uint32_t num_cells=1)</td></tr>
-<tr class="memdesc:abb12dc02b4f0dd2f81a112a3bb430a28"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classmio_1_1abm_1_1Location.html" title="All Locations in the simulated Model where Persons gather.">Location</a> with provided parameters.  <a href="classmio_1_1abm_1_1Location.html#abb12dc02b4f0dd2f81a112a3bb430a28">More...</a><br /></td></tr>
-<tr class="separator:abb12dc02b4f0dd2f81a112a3bb430a28"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af441ec99e559bf8744fba9a804f08150"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1abm_1_1Location.html#af441ec99e559bf8744fba9a804f08150">Location</a> (const <a class="el" href="classmio_1_1abm_1_1Location.html">Location</a> &amp;other, <a class="el" href="structmio_1_1abm_1_1LocationId.html">LocationId</a> id, int model_id=0)</td></tr>
+<tr class="memdesc:af441ec99e559bf8744fba9a804f08150"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a copy of a <a class="el" href="classmio_1_1abm_1_1Location.html" title="All Locations in the simulated Model where Persons gather.">Location</a> with a new ID.  <a href="classmio_1_1abm_1_1Location.html#af441ec99e559bf8744fba9a804f08150">More...</a><br /></td></tr>
+<tr class="separator:af441ec99e559bf8744fba9a804f08150"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7035bb3c39896666b0f21cbebd010dec"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1abm_1_1Location.html#a7035bb3c39896666b0f21cbebd010dec">Location</a> (<a class="el" href="namespacemio_1_1abm.html#a83bc98ab43329c10fe9a6e683f2e1d0f">LocationType</a> loc_type, <a class="el" href="structmio_1_1abm_1_1LocationId.html">LocationId</a> loc_id, size_t num_agegroups=1, int model_id=0, uint32_t num_cells=1)</td></tr>
+<tr class="memdesc:a7035bb3c39896666b0f21cbebd010dec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classmio_1_1abm_1_1Location.html" title="All Locations in the simulated Model where Persons gather.">Location</a> with provided parameters.  <a href="classmio_1_1abm_1_1Location.html#a7035bb3c39896666b0f21cbebd010dec">More...</a><br /></td></tr>
+<tr class="separator:a7035bb3c39896666b0f21cbebd010dec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1c40b555cbbf3f768c024b5fa8d47d1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1abm_1_1Location.html#ab1c40b555cbbf3f768c024b5fa8d47d1">operator!=</a> (const <a class="el" href="classmio_1_1abm_1_1Location.html">Location</a> &amp;other) const</td></tr>
 <tr class="separator:ab1c40b555cbbf3f768c024b5fa8d47d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac2337907f1cbe07c08b15a20f1a60107"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1abm_1_1Location.html#ac2337907f1cbe07c08b15a20f1a60107">operator==</a> (const <a class="el" href="classmio_1_1abm_1_1Location.html">Location</a> &amp;other) const</td></tr>
@@ -153,6 +156,9 @@ Private Attributes</h2></td></tr>
 <tr class="memitem:a203db1d0024045a7f45e6c0059235ce5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structmio_1_1abm_1_1LocationId.html">LocationId</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1abm_1_1Location.html#a203db1d0024045a7f45e6c0059235ce5">m_id</a></td></tr>
 <tr class="memdesc:a203db1d0024045a7f45e6c0059235ce5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique identifier for the <a class="el" href="classmio_1_1abm_1_1Location.html" title="All Locations in the simulated Model where Persons gather.">Location</a> in the <a class="el" href="classmio_1_1abm_1_1Model.html" title="The Model of the Simulation.">Model</a> owning it.  <a href="classmio_1_1abm_1_1Location.html#a203db1d0024045a7f45e6c0059235ce5">More...</a><br /></td></tr>
 <tr class="separator:a203db1d0024045a7f45e6c0059235ce5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac7350aedf3b30628ea35506092404e2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1abm_1_1Location.html#aac7350aedf3b30628ea35506092404e2">m_model_id</a></td></tr>
+<tr class="memdesc:aac7350aedf3b30628ea35506092404e2"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classmio_1_1abm_1_1Model.html" title="The Model of the Simulation.">Model</a> id the location is in. Only used for ABM graph model or hybrid graph model.  <a href="classmio_1_1abm_1_1Location.html#aac7350aedf3b30628ea35506092404e2">More...</a><br /></td></tr>
+<tr class="separator:aac7350aedf3b30628ea35506092404e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad38964b0fd7605c91e2b28568b4408a2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemio_1_1abm.html#a077a3f74d15c9375f590e6fa444aa23f">LocalInfectionParameters</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1abm_1_1Location.html#ad38964b0fd7605c91e2b28568b4408a2">m_parameters</a></td></tr>
 <tr class="memdesc:ad38964b0fd7605c91e2b28568b4408a2"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classmio_1_1abm_1_1Infection.html">Infection</a> parameters for the <a class="el" href="classmio_1_1abm_1_1Location.html" title="All Locations in the simulated Model where Persons gather.">Location</a>.  <a href="classmio_1_1abm_1_1Location.html#ad38964b0fd7605c91e2b28568b4408a2">More...</a><br /></td></tr>
 <tr class="separator:ad38964b0fd7605c91e2b28568b4408a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -166,8 +172,8 @@ Private Attributes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>All <a class="el" href="classmio_1_1abm_1_1Location.html" title="All Locations in the simulated Model where Persons gather.">Location</a>s in the simulated <a class="el" href="classmio_1_1abm_1_1Model.html" title="The Model of the Simulation.">Model</a> where <a class="el" href="classmio_1_1abm_1_1Person.html" title="Agents in the simulated Model that can carry and spread the Infection.">Person</a>s gather. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="abb12dc02b4f0dd2f81a112a3bb430a28"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abb12dc02b4f0dd2f81a112a3bb430a28">&#9670;&nbsp;</a></span>Location() <span class="overload">[1/3]</span></h2>
+<a id="a7035bb3c39896666b0f21cbebd010dec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7035bb3c39896666b0f21cbebd010dec">&#9670;&nbsp;</a></span>Location() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -196,6 +202,12 @@ Private Attributes</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>model_id</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">uint32_t&#160;</td>
           <td class="paramname"><em>num_cells</em> = <code>1</code>&#160;</td>
         </tr>
@@ -218,6 +230,7 @@ Private Attributes</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">loc_type</td><td>The <a class="el" href="namespacemio_1_1abm.html#a83bc98ab43329c10fe9a6e683f2e1d0f" title="Type of a Location.">LocationType</a>. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">loc_id</td><td>The index of the <a class="el" href="classmio_1_1abm_1_1Location.html" title="All Locations in the simulated Model where Persons gather.">Location</a> in the <a class="el" href="classmio_1_1abm_1_1Model.html" title="The Model of the Simulation.">Model</a>. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">num_agegroups</td><td>[Default: 1] The number of age groups in the model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">model_id</td><td>[Default: 0] The model id the <a class="el" href="classmio_1_1abm_1_1Location.html" title="All Locations in the simulated Model where Persons gather.">Location</a> is in. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">num_cells</td><td>[Default: 1] The number of <a class="el" href="structmio_1_1abm_1_1Cell.html" title="The Location can be split up into several Cells.">Cell</a>s in which the <a class="el" href="classmio_1_1abm_1_1Location.html" title="All Locations in the simulated Model where Persons gather.">Location</a> is divided. </td></tr>
   </table>
   </dd>
@@ -225,8 +238,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a075a9126f6c4bee055af6885c58d3756"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a075a9126f6c4bee055af6885c58d3756">&#9670;&nbsp;</a></span>Location() <span class="overload">[2/3]</span></h2>
+<a id="af441ec99e559bf8744fba9a804f08150"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af441ec99e559bf8744fba9a804f08150">&#9670;&nbsp;</a></span>Location() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -244,7 +257,13 @@ Private Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="structmio_1_1abm_1_1LocationId.html">LocationId</a>&#160;</td>
-          <td class="paramname"><em>id</em>&#160;</td>
+          <td class="paramname"><em>id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>model_id</em> = <code>0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -439,6 +458,26 @@ Private Attributes</h2></td></tr>
 
 <p>Get the <a class="el" href="classmio_1_1abm_1_1Location.html" title="All Locations in the simulated Model where Persons gather.">Location</a> specific <a class="el" href="classmio_1_1abm_1_1Infection.html">Infection</a> parameters. </p>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classmio_1_1abm_1_1Parameters.html" title="Parameters of the simulation that are the same everywhere within the Model.">Parameters</a> of the <a class="el" href="classmio_1_1abm_1_1Infection.html">Infection</a> that are specific to this <a class="el" href="classmio_1_1abm_1_1Location.html" title="All Locations in the simulated Model where Persons gather.">Location</a>. </dd></dl>
+
+</div>
+</div>
+<a id="a7b48dc40de8371c658511aaab7b8ed25"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7b48dc40de8371c658511aaab7b8ed25">&#9670;&nbsp;</a></span>get_model_id()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int mio::abm::Location::get_model_id </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the model id the location is in. </p>
+<p>Is only relevant for graph ABM or hybrid model. </p><dl class="section return"><dt>Returns</dt><dd><a class="el" href="classmio_1_1abm_1_1Model.html" title="The Model of the Simulation.">Model</a> id of the location </dd></dl>
 
 </div>
 </div>
@@ -728,6 +767,30 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Unique identifier for the <a class="el" href="classmio_1_1abm_1_1Location.html" title="All Locations in the simulated Model where Persons gather.">Location</a> in the <a class="el" href="classmio_1_1abm_1_1Model.html" title="The Model of the Simulation.">Model</a> owning it. </p>
+
+</div>
+</div>
+<a id="aac7350aedf3b30628ea35506092404e2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aac7350aedf3b30628ea35506092404e2">&#9670;&nbsp;</a></span>m_model_id</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int mio::abm::Location::m_model_id</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classmio_1_1abm_1_1Model.html" title="The Model of the Simulation.">Model</a> id the location is in. Only used for ABM graph model or hybrid graph model. </p>
 
 </div>
 </div>

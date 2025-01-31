@@ -81,9 +81,9 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1GraphSimulation.html">mio::GraphSimulation&lt; Graph &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1GraphSimulation.html">mio::GraphSimulation&lt; Graph, Timepoint, Timespan, edge_f, node_f &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1GraphSimulationBase.html">mio::GraphSimulationBase&lt; Graph, edge_f &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1GraphSimulationBase.html">mio::GraphSimulationBase&lt; Graph, Timepoint, Timespan, edge_f, node_f &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">abstract simulation on a graph with alternating node and edge actions  <a href="classmio_1_1GraphSimulationBase.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1GraphSimulationStochastic.html">mio::GraphSimulationStochastic&lt; Graph &gt;</a></td></tr>
@@ -97,9 +97,9 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a8728c0a245610c228f5746d8b8607a52"><td class="memTemplParams" colspan="2">template&lt;typename FP , class Graph , class NodeF , class EdgeF &gt; </td></tr>
-<tr class="memitem:a8728c0a245610c228f5746d8b8607a52"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a8728c0a245610c228f5746d8b8607a52">mio::make_graph_sim</a> (FP t0, FP dt, Graph &amp;&amp;g, NodeF &amp;&amp;node_func, EdgeF &amp;&amp;edge_func)</td></tr>
-<tr class="separator:a8728c0a245610c228f5746d8b8607a52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27322c7317a3009b61c2280cb12144ef"><td class="memTemplParams" colspan="2">template&lt;typename Timepoint , class Timespan , class Graph , class NodeF , class EdgeF &gt; </td></tr>
+<tr class="memitem:a27322c7317a3009b61c2280cb12144ef"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a27322c7317a3009b61c2280cb12144ef">mio::make_graph_sim</a> (Timepoint t0, Timespan dt, Graph &amp;&amp;g, NodeF &amp;&amp;node_func, EdgeF &amp;&amp;edge_func)</td></tr>
+<tr class="separator:a27322c7317a3009b61c2280cb12144ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8bbdf3fcd0a42bff2a78978703924783"><td class="memTemplParams" colspan="2">template&lt;typename FP , class Graph , class NodeF , class EdgeF &gt; </td></tr>
 <tr class="memitem:a8bbdf3fcd0a42bff2a78978703924783"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a8bbdf3fcd0a42bff2a78978703924783">mio::make_graph_sim_stochastic</a> (FP t0, FP dt, Graph &amp;&amp;g, NodeF &amp;&amp;node_func, EdgeF &amp;&amp;edge_func)</td></tr>
 <tr class="separator:a8bbdf3fcd0a42bff2a78978703924783"><td class="memSeparator" colspan="2">&#160;</td></tr>

@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-22 09:13:13</td>
+            <td class="headerValue">2025-01-31 15:59:05</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">7</td>
@@ -116,16 +116,16 @@
 <a name="54"><span class="lineNum">      54 </span><span class="lineCov">       1350 : constexpr mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_location)</span></a>
 <a name="55"><span class="lineNum">      55 </span>            : {</a>
 <a name="56"><span class="lineNum">      56 </span><span class="lineCov">       1350 :     switch (current_location) {</span></a>
-<a name="57"><span class="lineNum">      57 </span><span class="lineCov">        684 :     case mio::abm::LocationType::Home:</span></a>
-<a name="58"><span class="lineNum">      58 </span><span class="lineCov">        684 :         return mio::abm::ActivityType::Home;</span></a>
+<a name="57"><span class="lineNum">      57 </span><span class="lineCov">        756 :     case mio::abm::LocationType::Home:</span></a>
+<a name="58"><span class="lineNum">      58 </span><span class="lineCov">        756 :         return mio::abm::ActivityType::Home;</span></a>
 <a name="59"><span class="lineNum">      59 </span><span class="lineCov">         18 :     case mio::abm::LocationType::Work:</span></a>
 <a name="60"><span class="lineNum">      60 </span><span class="lineCov">         18 :         return mio::abm::ActivityType::Workplace;</span></a>
 <a name="61"><span class="lineNum">      61 </span><span class="lineNoCov">          0 :     case mio::abm::LocationType::School:</span></a>
 <a name="62"><span class="lineNum">      62 </span><span class="lineNoCov">          0 :         return mio::abm::ActivityType::Education;</span></a>
-<a name="63"><span class="lineNum">      63 </span><span class="lineCov">         54 :     case mio::abm::LocationType::SocialEvent:</span></a>
-<a name="64"><span class="lineNum">      64 </span><span class="lineCov">         54 :         return mio::abm::ActivityType::Leisure;</span></a>
-<a name="65"><span class="lineNum">      65 </span><span class="lineCov">        108 :     case mio::abm::LocationType::BasicsShop:</span></a>
-<a name="66"><span class="lineNum">      66 </span><span class="lineCov">        108 :         return mio::abm::ActivityType::Shopping;</span></a>
+<a name="63"><span class="lineNum">      63 </span><span class="lineCov">         18 :     case mio::abm::LocationType::SocialEvent:</span></a>
+<a name="64"><span class="lineNum">      64 </span><span class="lineCov">         18 :         return mio::abm::ActivityType::Leisure;</span></a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineCov">         72 :     case mio::abm::LocationType::BasicsShop:</span></a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineCov">         72 :         return mio::abm::ActivityType::Shopping;</span></a>
 <a name="67"><span class="lineNum">      67 </span><span class="lineCov">         18 :     case mio::abm::LocationType::ICU:</span></a>
 <a name="68"><span class="lineNum">      68 </span><span class="lineCov">         18 :         return mio::abm::ActivityType::OtherActivity;</span></a>
 <a name="69"><span class="lineNum">      69 </span><span class="lineCov">         18 :     case mio::abm::LocationType::Hospital:</span></a>
@@ -153,7 +153,7 @@
 <a name="91"><span class="lineNum">      91 </span>            :      * -# The number of cells in the location.</a>
 <a name="92"><span class="lineNum">      92 </span>            :      * -# The capacity of the location.</a>
 <a name="93"><span class="lineNum">      93 </span>            :     */</a>
-<a name="94"><span class="lineNum">      94 </span><span class="lineCov">          9 :     static Type log(const mio::abm::Simulation&amp; sim)</span></a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineCov">          9 :     static Type log(const mio::abm::Simulation&lt;&gt;&amp; sim)</span></a>
 <a name="95"><span class="lineNum">      95 </span>            :     {</a>
 <a name="96"><span class="lineNum">      96 </span><span class="lineCov">          9 :         Type location_information{};</span></a>
 <a name="97"><span class="lineNum">      97 </span><span class="lineCov">         90 :         for (auto&amp; location : sim.get_model().get_locations()) {</span></a>
@@ -182,7 +182,7 @@
 <a name="120"><span class="lineNum">     120 </span>            :      * -# The index of the home location.</a>
 <a name="121"><span class="lineNum">     121 </span>            :      * -# The age group of the person.</a>
 <a name="122"><span class="lineNum">     122 </span>            :     */</a>
-<a name="123"><span class="lineNum">     123 </span><span class="lineCov">          9 :     static Type log(const mio::abm::Simulation&amp; sim)</span></a>
+<a name="123"><span class="lineNum">     123 </span><span class="lineCov">          9 :     static Type log(const mio::abm::Simulation&lt;&gt;&amp; sim)</span></a>
 <a name="124"><span class="lineNum">     124 </span>            :     {</a>
 <a name="125"><span class="lineNum">     125 </span><span class="lineCov">          9 :         Type person_information{};</span></a>
 <a name="126"><span class="lineNum">     126 </span><span class="lineCov">          9 :         person_information.reserve(sim.get_model().get_persons().size());</span></a>
@@ -212,7 +212,7 @@
 <a name="150"><span class="lineNum">     150 </span>            :      * -# The activity type.</a>
 <a name="151"><span class="lineNum">     151 </span>            :      * -# The infection state.</a>
 <a name="152"><span class="lineNum">     152 </span>            :      */</a>
-<a name="153"><span class="lineNum">     153 </span><span class="lineCov">        450 :     static Type log(const mio::abm::Simulation&amp; sim)</span></a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineCov">        450 :     static Type log(const mio::abm::Simulation&lt;&gt;&amp; sim)</span></a>
 <a name="154"><span class="lineNum">     154 </span>            :     {</a>
 <a name="155"><span class="lineNum">     155 </span><span class="lineCov">        450 :         Type mobility_data{};</span></a>
 <a name="156"><span class="lineNum">     156 </span><span class="lineCov">       1800 :         for (Person p : sim.get_model().get_persons()) {</span></a>
@@ -234,7 +234,7 @@
 <a name="172"><span class="lineNum">     172 </span>            :      * @param[in] sim The simulation of the abm.</a>
 <a name="173"><span class="lineNum">     173 </span>            :      * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.</a>
 <a name="174"><span class="lineNum">     174 </span>            :      */</a>
-<a name="175"><span class="lineNum">     175 </span><span class="lineCov">        684 :     static Type log(const mio::abm::Simulation&amp; sim)</span></a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineCov">        684 :     static Type log(const mio::abm::Simulation&lt;&gt;&amp; sim)</span></a>
 <a name="176"><span class="lineNum">     176 </span>            :     {</a>
 <a name="177"><span class="lineNum">     177 </span>            : </a>
 <a name="178"><span class="lineNum">     178 </span><span class="lineCov">        684 :         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));</span></a>
@@ -292,8 +292,8 @@
 <a name="230"><span class="lineNum">     230 </span><span class="lineCov">        216 :             auto&amp; current_state_vec = std::get&lt;index_of_type_v&lt;Logger, Loggers...&gt;&gt;(data).front();</span></a>
 <a name="231"><span class="lineNum">     231 </span><span class="lineCov">        864 :             for (auto i = 0; i &lt; (int)current_state_vec.size(); i++) {</span></a>
 <a name="232"><span class="lineNum">     232 </span><span class="lineCov">        648 :                 if (std::get&lt;1&gt;(t[i]) != std::get&lt;1&gt;(current_state_vec[i])) {</span></a>
-<a name="233"><span class="lineNum">     233 </span><span class="lineCov">        180 :                     std::get&lt;1&gt;(current_state_vec[i]) = std::get&lt;1&gt;(t[i]);</span></a>
-<a name="234"><span class="lineNum">     234 </span><span class="lineCov">        180 :                     diff_vector.push_back(t[i]);</span></a>
+<a name="233"><span class="lineNum">     233 </span><span class="lineCov">        126 :                     std::get&lt;1&gt;(current_state_vec[i]) = std::get&lt;1&gt;(t[i]);</span></a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineCov">        126 :                     diff_vector.push_back(t[i]);</span></a>
 <a name="235"><span class="lineNum">     235 </span>            :                 }</a>
 <a name="236"><span class="lineNum">     236 </span>            :             }</a>
 <a name="237"><span class="lineNum">     237 </span><span class="lineCov">        216 :             std::get&lt;index_of_type_v&lt;Logger, Loggers...&gt;&gt;(data).push_back(diff_vector);</span></a>
