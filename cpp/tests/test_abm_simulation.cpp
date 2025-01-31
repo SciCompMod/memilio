@@ -17,10 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/location_type.h"
 #include "abm_helpers.h"
 #include "abm/common_abm_loggers.h"
 #include "matchers.h"
 #include "memilio/io/history.h"
+#include <cstdint>
 
 TEST(TestSimulation, advance_random)
 {
@@ -98,13 +100,20 @@ TEST(TestSimulation, advanceWithCommonHistory)
     mio::abm::TripList& trip_list = model.get_trip_list();
 
     // We add trips for person two to test the history and if it is working correctly
-    mio::abm::Trip trip1(person2, mio::abm::TimePoint(0) + mio::abm::hours(2), work_id);
-    mio::abm::Trip trip2(person2, mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id);
-    mio::abm::Trip trip3(person2, mio::abm::TimePoint(0) + mio::abm::hours(4), hospital_id);
-    mio::abm::Trip trip4(person2, mio::abm::TimePoint(0) + mio::abm::hours(5), social_id);
-    mio::abm::Trip trip5(person2, mio::abm::TimePoint(0) + mio::abm::hours(6), basics_id);
-    mio::abm::Trip trip6(person2, mio::abm::TimePoint(0) + mio::abm::hours(7), public_id);
-    mio::abm::Trip trip7(person2, mio::abm::TimePoint(0) + mio::abm::hours(8), home_id);
+    mio::abm::Trip trip1(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id,
+                         home_id, mio::abm::LocationType::Work);
+    mio::abm::Trip trip2(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id,
+                         home_id, mio::abm::LocationType::ICU);
+    mio::abm::Trip trip3(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(4), hospital_id,
+                         home_id, mio::abm::LocationType::Hospital);
+    mio::abm::Trip trip4(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(5), social_id,
+                         home_id, mio::abm::LocationType::SocialEvent);
+    mio::abm::Trip trip5(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(6), basics_id,
+                         home_id, mio::abm::LocationType::BasicsShop);
+    mio::abm::Trip trip6(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(7), public_id,
+                         home_id, mio::abm::LocationType::PublicTransport);
+    mio::abm::Trip trip7(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(8), home_id,
+                         home_id, mio::abm::LocationType::Home);
 
     trip_list.add_trip(trip1);
     trip_list.add_trip(trip2);

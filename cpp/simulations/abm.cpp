@@ -448,7 +448,7 @@ void assign_infection_state(mio::abm::Model& model, mio::abm::TimePoint t, doubl
 {
     auto persons = model.get_persons();
     for (auto& person : persons) {
-        auto rng             = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
+        auto rng             = mio::abm::PersonalRandomNumberGenerator(person);
         auto infection_state = determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob,
                                                          infected_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
