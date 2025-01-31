@@ -21,7 +21,9 @@
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/io.h"
+#include "memilio/math/floating_point.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/math/eigen.h"
 
 #include "ide_secir/model.h"
 #include "ide_secir/infection_state.h"
@@ -33,11 +35,11 @@
 #include "ode_secir/parameters.h"
 
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
-#include "ode_secir/infection_state.h"
 #include <string>
 #include <map>
 
-using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
+using Vector        = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
+using InfTransition = mio::isecir::InfectionTransition;
 
 // Parameters for the simulation.
 std::map<std::string, ScalarType> simulation_parameter = {
@@ -62,7 +64,9 @@ std::map<std::string, ScalarType> simulation_parameter = {
     {"cont_freq", 3.114219}}; // Computed so that we obtain constant new infections at beginning of simulation.
 
 /**
-* @brief Function to scale the contact matrix according to factor contact_scaling after two days.  
+* @brief Function to scale the contact matrix according to factor contact_scaling after two days. The contact matrix
+* is a 1x1 matrix in our case as we do notconsider age groups in this simulation. The initial contact matrix is set 
+* using the parameter cont_freq. 
 *
 * @param[in] contact_scaling Factor that is applied to contact matrix after two days. 
 * @returns Scaled contact matrix.
@@ -98,7 +102,7 @@ mio::TimeSeries<ScalarType> get_initial_flows()
 {
     // The initialization vector for the IDE model is calculated by defining transitions.
     // Create TimeSeries with num_transitions elements.
-    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+    int num_transitions = (int)InfTransition::Count;
     mio::TimeSeries<ScalarType> init(num_transitions);
 
     // Add time points for initialization of transitions.
@@ -107,37 +111,37 @@ mio::TimeSeries<ScalarType> get_initial_flows()
     SusceptiblesToExposed and derive matching values for the other flows.*/
     // 7-Tage-Inzidenz at 15.10.2020 was 34.1, see https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Okt_2020/2020-10-15-de.pdf?__blob=publicationFile.
     ScalarType SusceptibleToExposed_const = (34.1 / 7.) * simulation_parameter["total_population"] / 100000.;
-    Eigen::VectorXd init_transitions(num_transitions);
-    init_transitions[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]        = SusceptibleToExposed_const;
-    init_transitions[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = SusceptibleToExposed_const;
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] =
+    Vector init_transitions(num_transitions);
+    init_transitions[(int)InfTransition::SusceptibleToExposed]        = SusceptibleToExposed_const;
+    init_transitions[(int)InfTransition::ExposedToInfectedNoSymptoms] = SusceptibleToExposed_const;
+    init_transitions[(int)InfTransition::InfectedNoSymptomsToInfectedSymptoms] =
         SusceptibleToExposed_const * simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"];
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered] =
+    init_transitions[(int)InfTransition::InfectedNoSymptomsToRecovered] =
         SusceptibleToExposed_const * (1 - simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"]);
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] =
-        init_transitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
+    init_transitions[(int)InfTransition::InfectedSymptomsToInfectedSevere] =
+        init_transitions[(int)InfTransition::InfectedNoSymptomsToInfectedSymptoms] *
         simulation_parameter["SeverePerInfectedSymptoms"];
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered] =
-        init_transitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
+    init_transitions[(int)InfTransition::InfectedSymptomsToRecovered] =
+        init_transitions[(int)InfTransition::InfectedNoSymptomsToInfectedSymptoms] *
         (1 - simulation_parameter["SeverePerInfectedSymptoms"]);
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical] =
-        init_transitions[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] *
+    init_transitions[(int)InfTransition::InfectedSevereToInfectedCritical] =
+        init_transitions[(int)InfTransition::InfectedSymptomsToInfectedSevere] *
         simulation_parameter["CriticalPerSevere"];
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered] =
-        init_transitions[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] *
+    init_transitions[(int)InfTransition::InfectedSevereToRecovered] =
+        init_transitions[(int)InfTransition::InfectedSymptomsToInfectedSevere] *
         (1 - simulation_parameter["CriticalPerSevere"]);
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead] =
-        init_transitions[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical] *
+    init_transitions[(int)InfTransition::InfectedCriticalToDead] =
+        init_transitions[(int)InfTransition::InfectedSevereToInfectedCritical] *
         simulation_parameter["DeathsPerCritical"];
-    init_transitions[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered] =
-        init_transitions[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical] *
+    init_transitions[(int)InfTransition::InfectedCriticalToRecovered] =
+        init_transitions[(int)InfTransition::InfectedSevereToInfectedCritical] *
         (1 - simulation_parameter["DeathsPerCritical"]);
     init_transitions = init_transitions * simulation_parameter["dt"];
 
     // Add initial time point to time series.
     init.add_time_point(-350, init_transitions);
     // Add further time points until time 0 with constant values.
-    while (init.get_last_time() < simulation_parameter["t0"] - 1e-3) {
+    while (mio::floating_point_less<ScalarType>((ScalarType)init.get_last_time(), 0., 1e-8)) {
         init.add_time_point(init.get_last_time() + simulation_parameter["dt"], init_transitions);
     }
     return init;
@@ -145,12 +149,13 @@ mio::TimeSeries<ScalarType> get_initial_flows()
 
 /**
 * @brief Function that simulates from time 0 until tmax using an IDE model where we apply a contact scaling after
-* two days.   
+* two days. The simulation results will be saved in the folder save_dir as .h5 files.    
 *
-* @param[in] contact_scaling Factor that is applied to contact matrix after two days. 
+* @param[in] contact_scaling Factor that is applied to the contact matrix after two days. 
 * @param[in] tmax Time up to which we simulate. 
-* @param[in] save_dir Directory where simulation results will be stored. 
-* @returns Any io errors that happen.
+* @param[in] save_dir Directory where simulation results will be saved. Default is an empty string leading to the 
+* results not being saved. 
+* @returns Any io errors that happen or the simulation results for the compartments.
 */
 mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ide_model(ScalarType contact_scaling, ScalarType tmax,
                                                               std::string save_dir = "")
@@ -172,65 +177,59 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ide_model(ScalarType contact
     // Set TransitionDistributions.
     mio::ConstantFunction initialfunc(0);
     mio::StateAgeFunctionWrapper delaydistributioninit(initialfunc);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib((int)mio::isecir::InfectionTransition::Count,
-                                                               delaydistributioninit);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib((int)InfTransition::Count, delaydistributioninit);
     // ExposedToInfectedNoSymptoms
     mio::LognormSurvivalFunction survivalExposedToInfectedNoSymptoms(0.32459285, 0, 4.26907484);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_state_age_function(
+    vec_delaydistrib[(int)InfTransition::ExposedToInfectedNoSymptoms].set_state_age_function(
         survivalExposedToInfectedNoSymptoms);
     // InfectedNoSymptomsToInfectedSymptoms
     mio::LognormSurvivalFunction survivalInfectedNoSymptomsToInfectedSymptoms(0.71587510, 0, 0.85135303);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-        .set_state_age_function(survivalInfectedNoSymptomsToInfectedSymptoms);
+    vec_delaydistrib[(int)InfTransition::InfectedNoSymptomsToInfectedSymptoms].set_state_age_function(
+        survivalInfectedNoSymptomsToInfectedSymptoms);
     // InfectedNoSymptomsToRecovered
     mio::LognormSurvivalFunction survivalInfectedNoSymptomsToRecovered(0.24622068, 0, 7.7611400);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered].set_state_age_function(
+    vec_delaydistrib[(int)InfTransition::InfectedNoSymptomsToRecovered].set_state_age_function(
         survivalInfectedNoSymptomsToRecovered);
     // InfectedSymptomsToInfectedSevere
     mio::LognormSurvivalFunction survivalInfectedSymptomsToInfectedSevere(0.66258947, 0, 5.29920733);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere].set_state_age_function(
+    vec_delaydistrib[(int)InfTransition::InfectedSymptomsToInfectedSevere].set_state_age_function(
         survivalInfectedSymptomsToInfectedSevere);
     // InfectedSymptomsToRecovered
     mio::LognormSurvivalFunction survivalInfectedSymptomsToRecovered(0.24622068, 0, 7.76114000);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered].set_state_age_function(
+    vec_delaydistrib[(int)InfTransition::InfectedSymptomsToRecovered].set_state_age_function(
         survivalInfectedSymptomsToRecovered);
     // InfectedSevereToInfectedCritical
     mio::LognormSurvivalFunction survivalInfectedSevereToInfectedCritical(1.01076765, 0, 0.90000000);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical].set_state_age_function(
+    vec_delaydistrib[(int)InfTransition::InfectedSevereToInfectedCritical].set_state_age_function(
         survivalInfectedSevereToInfectedCritical);
     // InfectedSevereToRecovered
     mio::LognormSurvivalFunction survivalInfectedSevereToRecovered(0.33816427, 0, 17.09411753);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered].set_state_age_function(
+    vec_delaydistrib[(int)InfTransition::InfectedSevereToRecovered].set_state_age_function(
         survivalInfectedSevereToRecovered);
     // InfectedCriticalToDead
     mio::LognormSurvivalFunction survivalInfectedCriticalToDead(0.42819924, 0, 9.76267505);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead].set_state_age_function(
-        survivalInfectedCriticalToDead);
+    vec_delaydistrib[(int)InfTransition::InfectedCriticalToDead].set_state_age_function(survivalInfectedCriticalToDead);
     // InfectedCriticalToRecovered
     mio::LognormSurvivalFunction survivalInfectedCriticalToRecovered(0.33816427, 0, 17.09411753);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_state_age_function(
+    vec_delaydistrib[(int)InfTransition::InfectedCriticalToRecovered].set_state_age_function(
         survivalInfectedCriticalToRecovered);
 
     model_ide.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
     // Set other parameters.
-    std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 1.);
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] =
+    std::vector<ScalarType> vec_prob((int)InfTransition::Count, 1.);
+    vec_prob[Eigen::Index(InfTransition::InfectedNoSymptomsToInfectedSymptoms)] =
         simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"];
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] =
+    vec_prob[Eigen::Index(InfTransition::InfectedNoSymptomsToRecovered)] =
         1 - simulation_parameter["InfectedSymptomsPerInfectedNoSymptoms"];
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere)] =
+    vec_prob[Eigen::Index(InfTransition::InfectedSymptomsToInfectedSevere)] =
         simulation_parameter["SeverePerInfectedSymptoms"];
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)] =
+    vec_prob[Eigen::Index(InfTransition::InfectedSymptomsToRecovered)] =
         1 - simulation_parameter["SeverePerInfectedSymptoms"];
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical)] =
-        simulation_parameter["CriticalPerSevere"];
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToRecovered)] =
-        1 - simulation_parameter["CriticalPerSevere"];
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)] =
-        simulation_parameter["DeathsPerCritical"];
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)] =
-        1 - simulation_parameter["DeathsPerCritical"];
+    vec_prob[Eigen::Index(InfTransition::InfectedSevereToInfectedCritical)] = simulation_parameter["CriticalPerSevere"];
+    vec_prob[Eigen::Index(InfTransition::InfectedSevereToRecovered)]   = 1 - simulation_parameter["CriticalPerSevere"];
+    vec_prob[Eigen::Index(InfTransition::InfectedCriticalToDead)]      = simulation_parameter["DeathsPerCritical"];
+    vec_prob[Eigen::Index(InfTransition::InfectedCriticalToRecovered)] = 1 - simulation_parameter["DeathsPerCritical"];
 
     model_ide.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
@@ -267,20 +266,25 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ide_model(ScalarType contact
         std::string filename_ide_compartments = filename_ide + "_compartments.h5";
         mio::IOResult<void> save_result_status_c =
             mio::save_result({sim.get_result()}, {0}, 1, filename_ide_compartments);
+
+        if (!save_result_status_f && !save_result_status_c) {
+            return mio::failure(mio::StatusCode::UnknownError, "Error while saving results.");
+        }
     }
 
-    // Return vector with initial compartments.
+    // Return results (i.e. compartments) of the simulations.
     return mio::success(sim.get_result());
 }
 
 /**
 * @brief Function that simulates from time 0 until tmax using an ODE model where we apply a contact scaling after
-* two days.   
+* two days. The simulation results will be stored in the folder save_dir as .h5 files.   
 *
 * @param[in] init_compartments Vector containing initial values for the compartments. 
 * @param[in] contact_scaling Factor that is applied to contact matrix after two days. 
 * @param[in] tmax Time up to which we simulate. 
-* @param[in] save_dir Directory where simulation results will be stored. 
+* @param[in] save_dir Directory where simulation results will be stored. Default is an empty string leading to the 
+* results not being saved.
 * @returns Any io errors that happen.
 */
 mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType contact_scaling, ScalarType tmax,
@@ -344,7 +348,7 @@ mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType cont
     // Choose ICUCapacity very large so that CriticalPerSevereAdjusted = CriticalPerSevere and deathsPerSevereAdjusted = 0.
     model_ode.parameters.get<mio::osecir::ICUCapacity<ScalarType>>() = std::numeric_limits<ScalarType>::max();
 
-    // Set Seasonality=0 so that cont_freq_eff is equal to contact_matrix.
+    // If Seasonality=0, then cont_freq_eff is equal to the contact frequency as defined in contact_matrix.
     model_ode.parameters.set<mio::osecir::Seasonality<ScalarType>>(simulation_parameter["Seasonality"]);
 
     model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = scale_contact_matrix(contact_scaling);
@@ -377,6 +381,10 @@ mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType cont
         std::string filename_ode_compartments = filename_ode + "_compartments.h5";
         mio::IOResult<void> save_result_status_c =
             mio::save_result({results_ode[0]}, {0}, 1, filename_ode_compartments);
+
+        if (!save_result_status_f && !save_result_status_c) {
+            return mio::failure(mio::StatusCode::UnknownError, "Error while saving results.");
+        }
     }
 
     return mio::success();
@@ -391,9 +399,11 @@ int main()
     boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directories(dir);
 
+    // Define tmax for both scenarios.
+    ScalarType tmax = 12;
+
     // Changepoint scenario with halving of contacts after two days.
     ScalarType contact_scaling = 0.5;
-    ScalarType tmax            = 12;
 
     auto result_ide = simulate_ide_model(contact_scaling, tmax, save_dir);
     if (!result_ide) {
@@ -412,7 +422,6 @@ int main()
 
     // Changepoint scenario with doubling of contacts after two days.
     contact_scaling = 2.;
-    tmax            = 12;
 
     result_ide = simulate_ide_model(contact_scaling, tmax, save_dir);
     if (!result_ide) {

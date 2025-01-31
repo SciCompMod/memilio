@@ -44,7 +44,7 @@
 
 using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 
-// Used parameters.
+// Parameters for the simulation.
 std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
                                                           {"dt", 0.01},
                                                           {"total_population", 83155031.},
@@ -209,7 +209,7 @@ void set_npi_october(mio::ContactMatrixGroup& contact_matrices, mio::Date start_
  * 
  * @param[in] data_dir Directory to files with minimum and baseline contact matrices.
  * @param[in] start_date Start date of the simulation.
- * @returns Any io errors that happen during reading of the input files.
+ * @returns Any io errors that happen during reading of the input filesor contact matrices.
  */
 mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(std::string contact_data_dir, mio::Date start_date)
 {
@@ -243,7 +243,7 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(std::string conta
 
     // ----- Add NPIs to the contact matrices. -----
     // Set of NPIs for October.
-    if (start_date == mio::Date(2020, 10, 1)) {
+    if (start_date < mio::Date(2020, 10, 1)) {
         set_npi_october(contact_matrices, start_date, simulation_parameter["lockdown_hard"]);
     }
 
@@ -251,8 +251,7 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(std::string conta
 }
 
 /**
- * @brief Set the contact pattern of parameters for a model without division in age groups without using the 
- * age-resolved contact_matrices.
+ * @brief Set the contact matrix for the simulation without using the age-resolved contact_matrices.
  *
  * In case of only one age group the contact matrix reduces to a 1x1 matrix. 
  * Instead of using contact matrices from files in the data directory for different locations as in the function
@@ -261,7 +260,7 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(std::string conta
  * of NPIs on Oct 24, 2020. 
  *
  * @param[in] start_date Start date of the simulation.
- * @returns Any io errors that happen during reading of the input files.
+ * @returns Any io errors that happen during reading of the input files or contact matrices.
  */
 mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices_simplified(mio::Date start_date)
 {
@@ -284,15 +283,17 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices_simplified(mio::D
 * @brief Simulates using an IDE model. 
 *
 * @param[in] start_date Start date of the simulation 
-* @param[in] simulation_time Duration of the simulation.
+* @param[in] tmax Time up to which we simulate. 
 * @param[in] contact_matrices Contact matrices used. 
-* @param[in] data_dir Directory to files with minimum and baseline contact matrices and reported data from RKI.
-* @param[in] save_dir Directory where simulation results will be stored. 
-* @returns Any IO errros that happen.
+* @param[in] reported_data_dir Directory to files with reported data from RKI.
+* @param[in] save_dir Directory where simulation results will be saved. Default is an empty string leading to the 
+* results not being saved. 
+* @returns Any IO errros that happen or vector with simulation results.
 */
-mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>>
-simulate_ide_model(mio::Date start_date, ScalarType simulation_time, mio::ContactMatrixGroup contact_matrices,
-                   std::string reported_data_dir, std::string save_dir = "")
+mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>> simulate_ide_model(mio::Date start_date, ScalarType tmax,
+                                                                           mio::ContactMatrixGroup contact_matrices,
+                                                                           std::string reported_data_dir,
+                                                                           std::string save_dir = "")
 
 {
     // Initialize model.
@@ -404,11 +405,11 @@ simulate_ide_model(mio::Date start_date, ScalarType simulation_time, mio::Contac
 
     // Simulate.
     mio::isecir::Simulation sim(model_ide, simulation_parameter["dt"]);
-    sim.advance(simulation_time);
+    sim.advance(tmax);
 
     // Save results.
     if (!save_dir.empty()) {
-        std::string tmax_string  = std::to_string(simulation_time);
+        std::string tmax_string  = std::to_string(tmax);
         std::string dt_string    = std::to_string(simulation_parameter["dt"]);
         std::string filename_ide = save_dir + "ide_" + std::to_string(start_date.year) + "-" +
                                    std::to_string(start_date.month) + "-" + std::to_string(start_date.day) + "_" +
@@ -431,17 +432,18 @@ simulate_ide_model(mio::Date start_date, ScalarType simulation_time, mio::Contac
 /**
 * @brief Simulates using an ODE model. 
 *
-* We need intial values for the compartments as input. With this, we can make the starting conditions equivalent to an
+* We need initial values for the compartments as input. With this, we can make the starting conditions equivalent to an
 * the previously simulated results using an IDE model. 
 *
 * @param[in] start_date Start date of the simulation 
-* @param[in] simulation_time Duration of the simulation.
+* @param[in] tmax Time up to which we simulate. 
 * @param[in] init_compartments Vector containing initial values for compartments. 
 * @param[in] contact_matrices Contact matrices used. 
-* @param[in] save_dir Directory where simulation results will be stored. 
+* @param[in] save_dir Directory where simulation results will be saved. Default is an empty string leading to the 
+* results not being saved. 
 * @returns Any IO errros that happen.
 */
-mio::IOResult<void> simulate_ode_model(mio::Date start_date, ScalarType simulation_time, Vector init_compartments,
+mio::IOResult<void> simulate_ode_model(mio::Date start_date, ScalarType tmax, Vector init_compartments,
                                        mio::ContactMatrixGroup contact_matrices, std::string save_dir = "")
 {
     // Use ODE FlowModel.
@@ -517,15 +519,15 @@ mio::IOResult<void> simulate_ode_model(mio::Date start_date, ScalarType simulati
 
     // Simulate.
     std::vector<mio::TimeSeries<ScalarType>> results_ode = mio::osecir::simulate_flows<ScalarType>(
-        simulation_parameter["t0"], simulation_time, simulation_parameter["dt"], model_ode, integrator);
+        simulation_parameter["t0"], tmax, simulation_parameter["dt"], model_ode, integrator);
 
     // Save results.
     if (!save_dir.empty()) {
-        std::string simulation_time_string = std::to_string(simulation_time);
-        std::string dt_string              = std::to_string(simulation_parameter["dt"]);
-        std::string filename_ode           = save_dir + "ode_" + std::to_string(start_date.year) + "-" +
+        std::string tmax_string  = std::to_string(tmax);
+        std::string dt_string    = std::to_string(simulation_parameter["dt"]);
+        std::string filename_ode = save_dir + "ode_" + std::to_string(start_date.year) + "-" +
                                    std::to_string(start_date.month) + "-" + std::to_string(start_date.day) + "_" +
-                                   simulation_time_string.substr(0, simulation_time_string.find(".")) + "_" +
+                                   tmax_string.substr(0, tmax_string.find(".")) + "_" +
                                    dt_string.substr(0, dt_string.find(".") + 5);
 
         std::string filename_ode_flows           = filename_ode + "_flows.h5";
@@ -548,7 +550,7 @@ int main(int argc, char** argv)
 
     mio::Date start_date(2020, 10, 01);
 
-    ScalarType simulation_time = 45;
+    ScalarType tmax = 45;
 
     // To adjust the parameter scale_contacts so that the IDE simualtion results match the reported data in the
     // beginning, we run the scenario twice. First we run it with scale_contacts = 1, then we compute the adjusted
@@ -560,7 +562,7 @@ int main(int argc, char** argv)
         data_dir                               = argv[1];
         result_dir                             = argv[2];
         start_date                             = mio::Date(std::stoi(argv[3]), std::stoi(argv[4]), std::stoi(argv[5]));
-        simulation_time                        = std::stod(argv[6]);
+        tmax                                   = std::stod(argv[6]);
         simulation_parameter["dt"]             = std::stod(argv[7]);
         simulation_parameter["scale_contacts"] = std::stod(argv[8]);
 
@@ -575,12 +577,13 @@ int main(int argc, char** argv)
     std::string contact_data_dir  = data_dir + "contacts/";
     std::string reported_data_dir = data_dir + "pydata/Germany/";
 
-    // Set contact matrices.
+    // Set contact matrices by averaging over age-resolved contact patterns.
     mio::ContactMatrixGroup contact_matrices = define_contact_matrices(contact_data_dir, start_date).value();
+    // We can also define the contact_matrices by directly setting the contact_frequency.
     // mio::ContactMatrixGroup contact_matrices = define_contact_matrices_simplified(start_date).value();
 
     // Run IDE simulation.
-    auto result_ide = simulate_ide_model(start_date, simulation_time, contact_matrices, reported_data_dir, result_dir);
+    auto result_ide = simulate_ide_model(start_date, tmax, contact_matrices, reported_data_dir, result_dir);
     if (!result_ide) {
         printf("%s\n", result_ide.error().formatted_message().c_str());
         return -1;
@@ -590,7 +593,7 @@ int main(int argc, char** argv)
     Vector init_compartments = result_ide.value()[0].get_value(0);
 
     // Run ODE simulation.
-    auto result_ode = simulate_ode_model(start_date, simulation_time, init_compartments, contact_matrices, result_dir);
+    auto result_ode = simulate_ode_model(start_date, tmax, init_compartments, contact_matrices, result_dir);
     if (!result_ode) {
         printf("%s\n", result_ode.error().formatted_message().c_str());
         return -1;

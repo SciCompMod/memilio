@@ -31,6 +31,7 @@
 #include "ide_secir/model.h"
 #include "ide_secir/simulation.h"
 
+#include "boost/filesystem.hpp"
 #include <iostream>
 #include <string>
 
@@ -42,7 +43,7 @@
 * can be determined numerically with the ODE model with a high accuracy as ground truth.
 */
 
-// Used parameters.
+// Parameters for the simulation.
 std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
                                                           {"total_population", 10000.},
                                                           {"TimeExposed", 1.4},
@@ -199,7 +200,6 @@ void compute_initial_flows_for_ide_from_ode(mio::osecir::Model<ScalarType>& mode
                                             mio::TimeSeries<ScalarType> compartments, ScalarType t0_ide,
                                             ScalarType dt_ide)
 {
-    std::cout << "Computing initial flows. \n";
 
     // Use t_window=t0_ide to get flows from t0 onwards.
     get_flows_from_ode_compartments(model_ode, compartments, model_ide.transitions, t0_ide, t0_ide, dt_ide);
@@ -218,24 +218,25 @@ void compute_initial_flows_for_ide_from_ode(mio::osecir::Model<ScalarType>& mode
 }
 
 /**
-* @brief Function to remove time points from some simulation results so that not every point has to be saved afterwards.
+* @brief Function to postprocess simulation results before saving. This allows to remove some time points from the 
+* simulation results so that not every point has to be saved afterwards. Furthermore, in the case of flows, we can 
+* scale the results so that we store the values at time points (\hat{sigma}) instead of flows over a time interval 
+* (\tilde{sigma}) as used in the simulation.
 *
 * @param[in] simulation_result TimeSeries containing simulation results. Can contain compartments or flows.
 * @param[in] saving_dt Step size in between the time points of the TimeSeries with less time points.
 *   This should be a multiple of the time step size used in simulation_results.
-* @param[in] scale Factor by which the TimeSeries values should be scaled.
-* @returns TimeSeries with simulation results where some time points have been removed. 
+* @param[in] scale_flows Factor by which the TimeSeries values of flows are scaled to obtain flows at time points. 
+* @returns TimeSeries with simulation results where some time points have been removed and/or scaled. 
 */
-mio::TimeSeries<ScalarType> remove_time_points(const mio::TimeSeries<ScalarType>& simulation_result,
-                                               ScalarType saving_dt, ScalarType scale = 1.)
+mio::TimeSeries<ScalarType> postprocess_timeseries(const mio::TimeSeries<ScalarType>& simulation_result,
+                                                   ScalarType saving_dt, ScalarType scale_flows = 1.)
 {
     mio::TimeSeries<ScalarType> removed(simulation_result.get_num_elements());
     ScalarType time = simulation_result.get_time(0);
-    removed.add_time_point(time, scale * simulation_result[0]);
-    time += saving_dt;
-    for (int i = 1; i < simulation_result.get_num_time_points(); i++) {
+    for (int i = 0; i < simulation_result.get_num_time_points(); i++) {
         if (mio::floating_point_greater_equal(simulation_result.get_time(i), time, 1e-8)) {
-            removed.add_time_point(simulation_result.get_time(i), scale * simulation_result[i]);
+            removed.add_time_point(simulation_result.get_time(i), scale_flows * simulation_result[i]);
             time += saving_dt;
         }
     }
@@ -256,18 +257,19 @@ mio::TimeSeries<ScalarType> remove_time_points(const mio::TimeSeries<ScalarType>
 * However, we assume that the time step size of the IDE model is a multiple of the one of the ODE model.
 *
 * @param[in] t0 Start time of the ODE simulation. 
-* @param[in] tmax Maximal time for which we simulate.
+* @param[in] tmax Time up to which we simulate. 
 * @param[in] ode_exponent The ODE model is simulated using a fixed step size dt=10^{-ode_exponent}.
 * @param[in] ide_exponents The IDE model is simulated using fixed step sizes dt=10^{-ide_exponent} for ide_exponent in 
 * ide_exponents.
 * @param[in] save_exponent The results of the ODE model will be saved using the step size 10^{-save_exponent}, should 
 * not be larger than the maximum ide_exponent.
-* @param[in] result_dir Directory where simulation results will be stored. 
+* @param[in] save_dir Directory where simulation results will be saved. Default is an empty string leading to the 
+* results not being saved. 
 * @returns Any io errors that happen. 
 */
 mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarType ode_exponent,
                                          std::vector<ScalarType> ide_exponents, ScalarType save_exponent,
-                                         std::string result_dir)
+                                         std::string save_dir = "")
 {
     /**********************************
     *         ODE simulation          *
@@ -278,29 +280,27 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
 
     mio::osecir::Model<ScalarType> model_ode(1);
 
-    // Set initial values for compartments.
-    ScalarType nb_exp_t0 = 20, nb_car_t0 = 20, nb_inf_t0 = 3, nb_hosp_t0 = 1, nb_icu_t0 = 1, nb_rec_t0 = 10,
-               nb_dead_t0 = 0;
+    // Set initial values for compartments. These values are not set realistically as we are considering a synthetic
+    //scenario here.
 
     model_ode.populations.set_total(simulation_parameter["total_population"]);
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]                     = nb_exp_t0;
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}]          = nb_car_t0;
+    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]                     = 20;
+    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}]          = 20;
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]            = nb_inf_t0;
+    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]            = 3;
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}]              = nb_hosp_t0;
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}]            = nb_icu_t0;
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]                   = nb_rec_t0;
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]                        = nb_dead_t0;
+    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}]              = 1;
+    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}]            = 1;
+    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]                   = 10;
+    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]                        = 0;
     model_ode.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                     simulation_parameter["total_population"]);
 
     // Set parameters.
-    ScalarType cont_freq = simulation_parameter["cont_freq"];
-    // Set Seasonality=0 so that cont_freq_eff is equal to contact_matrix.
+    // If Seasonality=0, then cont_freq_eff is equal to the contact frequency as defined in contact_matrix.
     model_ode.parameters.set<mio::osecir::Seasonality<ScalarType>>(simulation_parameter["Seasonality"]);
     mio::ContactMatrixGroup& contact_matrix = model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, simulation_parameter["cont_freq"]));
     model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = mio::UncertainContactMatrix(contact_matrix);
 
     // Parameters needed to determine transition rates.
@@ -350,13 +350,13 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
     mio::TimeSeries<ScalarType> secihurd_ode =
         mio::osecir::simulate<ScalarType>(t0, tmax, dt_ode, model_ode, integrator);
 
-    if (!result_dir.empty() && save_exponent > 0) {
+    if (!save_dir.empty() && save_exponent > 0) {
         // Create result directory if not existent yet.
-        boost::filesystem::path res_dir(result_dir);
+        boost::filesystem::path res_dir(save_dir);
         boost::filesystem::create_directory(res_dir);
         auto save_result_status_ode =
-            mio::save_result({remove_time_points(secihurd_ode, pow(10, -save_exponent))}, {0}, 1,
-                             result_dir + "result_ode_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + "_savefrequency" +
+            mio::save_result({postprocess_timeseries(secihurd_ode, pow(10, -save_exponent))}, {0}, 1,
+                             save_dir + "result_ode_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + "_savefrequency" +
                                  fmt::format("{:.0f}", save_exponent) + ".h5");
 
         // Compute flows from ODE result to store results.
@@ -365,8 +365,8 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
         mio::TimeSeries<ScalarType> secihurd_ode_flows((int)mio::isecir::InfectionTransition::Count);
         get_flows_from_ode_compartments(model_ode, secihurd_ode, secihurd_ode_flows, tmax, tmax - t0);
         auto save_result_status_ode_flows =
-            mio::save_result({remove_time_points(secihurd_ode_flows, pow(10, -save_exponent), 1. / dt_ode)}, {0}, 1,
-                             result_dir + "result_ode_flows_dt=1e-" + fmt::format("{:.0f}", ode_exponent) +
+            mio::save_result({postprocess_timeseries(secihurd_ode_flows, pow(10, -save_exponent), 1. / dt_ode)}, {0}, 1,
+                             save_dir + "result_ode_flows_dt=1e-" + fmt::format("{:.0f}", ode_exponent) +
                                  "_savefrequency" + fmt::format("{:.0f}", save_exponent) + ".h5");
 
         if (save_result_status_ode && save_result_status_ode_flows) {
@@ -501,18 +501,18 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
             std::cout << "Initialization method of the IDE model: "
                       << sim.get_model().get_initialization_method_compartments() << "\n";
 
-            if (!result_dir.empty()) {
+            if (!save_dir.empty()) {
                 // Save compartments.
                 mio::TimeSeries<ScalarType> secihurd_ide = sim.get_result();
                 auto save_result_status_ide =
                     mio::save_result({secihurd_ide}, {0}, 1,
-                                     result_dir + "result_ide_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
+                                     save_dir + "result_ide_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
                                          "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
                 // Save flows.
                 mio::TimeSeries<ScalarType> secihurd_ide_flows = sim.get_transitions();
                 auto save_result_status_ide_flows =
-                    mio::save_result({remove_time_points(secihurd_ide_flows, dt_ide, 1. / dt_ide)}, {0}, 1,
-                                     result_dir + "result_ide_flows_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
+                    mio::save_result({postprocess_timeseries(secihurd_ide_flows, dt_ide, 1. / dt_ide)}, {0}, 1,
+                                     save_dir + "result_ide_flows_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
                                          "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
                 if (save_result_status_ide && save_result_status_ide_flows) {
                     std::cout << "Successfully saved the IDE simulation results. \n\n";
