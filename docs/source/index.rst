@@ -1,5 +1,5 @@
 **MEmilio** - a high performance Modular EpideMIcs simuLatIOn software
-===================================
+==========================================================================
 
 **MEmilio** is a framework that ..
 
@@ -14,9 +14,10 @@ Contents
 --------
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 1
 
    usage
    models
-   api
+   pythonapi
+   cppapi
 

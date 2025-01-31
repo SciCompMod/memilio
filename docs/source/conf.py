@@ -9,7 +9,7 @@ author = ''
 release = ''
 version = '1.3.0'
 
-import subprocess, os
+import subprocess, os, sys
 
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -17,6 +17,8 @@ if read_the_docs_build:
 
      subprocess.call('cd ..; doxygen', shell=True)
 
+# import memilio
+sys.path.insert(0, os.path.abspath('../../pycode'))
 
 # -- General configuration
 
@@ -26,6 +28,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.napoleon',
     'sphinx_copybutton',
     'breathe',
     'hoverxref.extension',
@@ -42,6 +45,7 @@ templates_path = ['_templates']
 breathe_projects = {"MEmilio": "../xml"}
 breathe_default_project = "MEmilio"
 
+templates_path = ['_templates']
 # -- Options for HTML output
 
 html_theme = 'furo'
