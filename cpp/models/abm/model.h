@@ -362,40 +362,14 @@ public:
      * @param[in] person_id A Person's PersonId.
      * @return A reference to the Person.
      */
-    Person& get_person(PersonId person_id)
-    {
-        if (m_person_ids_equal_index) {
-            return m_persons[static_cast<uint32_t>(person_id.get())];
-        }
-        else {
-            mio::log_warning("get_person is accessed by PersonId which does not align with the index of the person due "
-                             "to former removal of persons. Therefore m_persons is searched.");
-            auto it = std::find_if(m_persons.begin(), m_persons.end(), [person_id](auto& person) {
-                return person.get_id() == person_id;
-            });
-            if (it == m_persons.end()) {
-                log_error("Given Person is not in this Model.");
-            }
-            return *it;
-        }
-    }
-
     const Person& get_person(PersonId person_id) const
     {
-        if (m_person_ids_equal_index) {
-            return m_persons[static_cast<uint32_t>(person_id.get())];
-        }
-        else {
-            mio::log_warning("get_person is accessed by PersonId which does not align with the index of the person due "
-                             "to former removal of persons. Therefore m_persons is searched.");
-            auto it = std::find_if(m_persons.begin(), m_persons.end(), [person_id](auto& person) {
-                return person.get_id() == person_id;
-            });
-            if (it == m_persons.end()) {
-                log_error("Given Person is not in this Model.");
-            }
-            return *it;
-        }
+        return get_person_impl(*this, person_id);
+    }
+
+    Person& get_person(PersonId person_id)
+    {
+        return get_person_impl(*this, person_id);
     }
 
     /**
@@ -620,6 +594,32 @@ protected:
         mio::abm::interact(personal_rng, person, get_location(person.get_location()),
                            m_air_exposure_rates_cache[person.get_location().get()],
                            m_contact_exposure_rates_cache[person.get_location().get()], t, dt, parameters);
+    }
+
+    /**
+     * @brief Implementation of Model::get_person. 
+     * This function needs to use a template as otherwise std::is_const would be false.
+     * @param[in] m Model in which the person_id is searched for.
+     * @param[in] person_id A Person's PersonId.
+     * @return A reference to the Person.
+     */
+    template <class M>
+    static std::conditional_t<std::is_const_v<M>, const Person&, Person&> get_person_impl(M& m, PersonId person_id)
+    {
+        if (m.m_person_ids_equal_index) {
+            return m.m_persons[static_cast<uint32_t>(person_id.get())];
+        }
+        else {
+            mio::log_warning("get_person is accessed by PersonId which does not align with the index of the person due "
+                             "to former removal of persons. Therefore m_persons is searched.");
+            auto it = std::find_if(m.m_persons.begin(), m.m_persons.end(), [person_id](auto& person) {
+                return person.get_id() == person_id;
+            });
+            if (it == m.m_persons.end()) {
+                log_error("Given Person is not in this Model.");
+            }
+            return *it;
+        };
     }
 
     mutable Eigen::Matrix<std::atomic_int_fast32_t, Eigen::Dynamic, 1>
