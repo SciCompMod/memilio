@@ -48,6 +48,6 @@ An example can be found in `examples/sde_seirvv.cpp <https://github.com/SciCompM
 
 
 Overview of the ``sseirvv`` namespace:
-------------------------------------
+-----------------------------------------
 
 .. doxygennamespace:: mio::sseirvv
