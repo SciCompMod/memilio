@@ -598,15 +598,17 @@ protected:
 
     /**
      * @brief Implementation of Model::get_person. 
-     * This function needs to use a template as otherwise std::is_const would be false.
-     * @param[in] m Model in which the person_id is searched for.
+     * This function needs to use a template to deduce whether the model and returned person should be const.
+     * @param[in] m A reference to `*this`, so we can access m_persons.
      * @param[in] person_id A Person's PersonId.
-     * @return A reference to the Person.
+     * @return A reference to the Person with matching ID.
      */
     template <class M>
     static std::conditional_t<std::is_const_v<M>, const Person&, Person&> get_person_impl(M& m, PersonId person_id)
     {
         if (m.m_person_ids_equal_index) {
+            assert(static_cast<uint32_t>(person_id.get()) < m.m_persons.size() &&
+                   "Given PersonId is not in this Model.");
             return m.m_persons[static_cast<uint32_t>(person_id.get())];
         }
         else {
@@ -615,9 +617,7 @@ protected:
             auto it = std::find_if(m.m_persons.begin(), m.m_persons.end(), [person_id](auto& person) {
                 return person.get_id() == person_id;
             });
-            if (it == m.m_persons.end()) {
-                log_error("Given Person is not in this Model.");
-            }
+            assert(it != m.m_persons.end() && "Given PersonId is not in this Model.");
             return *it;
         };
     }
