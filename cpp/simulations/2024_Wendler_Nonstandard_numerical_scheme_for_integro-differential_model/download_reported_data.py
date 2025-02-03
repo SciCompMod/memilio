@@ -33,7 +33,7 @@ def main():
     if not os.path.isdir(data_folder):
         os.makedirs(data_folder)
 
-    # Download data in format required.
+    # Download data in required format.
     # Download case data with moving_average = 0 for plotting the reported data.
     getCaseData.get_case_data(read_data=False,
                               file_format=dd.defaultDict['file_format'],
@@ -48,7 +48,7 @@ def main():
                               rep_date=dd.defaultDict['rep_date'],
                               files='All'
                               )
-    # Download case data with moving_average = 0 for initializing the IDE model in the COVID-19 inspired scenario.
+    # Download case data with moving_average = 7 for initializing the IDE model in the COVID-19 inspired scenario.
     getCaseData.get_case_data(read_data=False,
                               file_format=dd.defaultDict['file_format'],
                               out_folder=data_folder,

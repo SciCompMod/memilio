@@ -44,12 +44,13 @@ parameters = {
 }
 
 
-def run_covid_inspired_scenario(result_dir, data_dir, start_date, simulation_time, timestep, scale_contacts):
+def run_covid_inspired_scenario(result_dir, contact_data_dir, reported_data_dir,  start_date, simulation_time, timestep, scale_contacts):
     """ Run the Covid inspired scenarias defined in ide_covid_inspired_scenario.cpp with the here defined paths and
     parameters.
 
     @param[in] result_dir Directory where simiulation results are stored.
-    @param[in] data_dir Directory where folders with data on contacts and reported data are located. 
+    @param[in] contact_data_dir Directory where folder with data on contacts is located. 
+    @param[in] reported_data_dir Directory where folder with reported data is located. 
     @param[in] start_date Start date of the simulations.
     @param[in] simulation_time Duration of the simulation.
     @param[in] timestep Time step used for the simulations. 
@@ -59,7 +60,7 @@ def run_covid_inspired_scenario(result_dir, data_dir, start_date, simulation_tim
     month = start_date.split("-")[1]
     day = start_date.split("-")[2]
 
-    subprocess.call([f"./../../../build/bin/ide_covid_inspired_scenario", data_dir, result_dir,
+    subprocess.call([f"./../../../build/bin/ide_covid_inspired_scenario", contact_data_dir, reported_data_dir,  result_dir,
                      f"{year}", f"{month}", f"{day}", f"{simulation_time}", f"{timestep}", f"{scale_contacts}"])
 
 
@@ -77,7 +78,7 @@ def get_scale_contacts(files, reported_data_dir, start_date, simulation_time):
 
     datafile = os.path.join(
         reported_data_dir, "cases_all_germany_all_dates.json")
-    data_rki = load_data(datafile, start_date, simulation_time)
+    data_rki = load_data(datafile)
 
     # Load IDE data.
     for file in range(len(files)):
@@ -121,7 +122,7 @@ def get_scale_contacts(files, reported_data_dir, start_date, simulation_time):
     return scale_contacts
 
 
-def load_data(file, start_date, simulation_time):
+def load_data(file):
     """ Loads RKI data and computes the number of mildly symptomatic individuals (stored in column 'InfectedSymptoms'), 
     the number of dead individuals (stored in column 'Deaths') and the number of daily new transmissions (stored in 
     column 'NewInfectionsDay') using scales, dates etc. from the dictionary parameters.
@@ -129,8 +130,6 @@ def load_data(file, start_date, simulation_time):
     See also cpp/models/ide_secir/parameters_io.h.
 
     @param[in] file Path to the RKI data file for whole Germany. Can be downloaded eg via pycode/memilio-epidata/memilio/epidata/getCaseData.py.
-    @param[in] start_date Start date of interest. 
-    @param[in] simulation_time Number of days to be simulated.
     @returns df_result Dataframe containing processed RKI data.
     """
     # Read data into df that will be used for computations below.
@@ -194,13 +193,15 @@ def plot_daily_new_transmissions(files, reported_data_dir, start_date, simulatio
     @param[in] reported_data_dir Directory that contains files with RKI data.
     @param[in] start_date Start date of the simulations.
     @param[in] simulation_time Duration of the simulation.
-    @param[in] fileending String that further specifies filename of plot. 
-    @param[in] save_dir Directory where plot will be stored. If this is not set, the plot will not be stored. 
+    @param[in] fileending String that further specifies filename of plot. Default is an empty string leading to no further 
+        specification.
+    @param[in] save_dir Directory where plot will be stored. Default is an empty string leading to the plot not being 
+        saved.
     """
     # Read RKI data.
     datafile = os.path.join(
         reported_data_dir, "cases_all_germany_all_dates.json")
-    data_rki = load_data(datafile, start_date, simulation_time)
+    data_rki = load_data(datafile)
 
     # Add results to plot.
     fig, ax = plt.subplots()
@@ -305,8 +306,10 @@ def plot_infectedsymptoms_deaths(
     @param[in] reported_data_dir Directory that contains files with RKI data.
     @param[in] start_date Start date of the simulations.
     @param[in] simulation_time Duration of the simulation.
-    @param[in] fileending String that further specifies filename of plot. 
-    @param[in] save_dir Directory where plot will be stored. If this is not set, the plot will not be stored. 
+    @param[in] fileending String that further specifies filename of plot. Default is an empty string leading to no further 
+        specification.
+    @param[in] save_dir Directory where plot will be stored. Default is an empty string leading to the plot not being 
+        saved.
     """
     # Define compartment_name and compartment_indices of InfectedSymptoms and Deaths in simulation results.
     compartment_names = ["InfectedSymptoms", "Deaths"]
@@ -315,7 +318,7 @@ def plot_infectedsymptoms_deaths(
     # Read RKI data.
     datafile = os.path.join(
         reported_data_dir, "cases_all_germany_all_dates.json")
-    data_rki = load_data(datafile, start_date, simulation_time)
+    data_rki = load_data(datafile)
 
     # Add results to plot.
 
@@ -411,12 +414,14 @@ def plot_icu(files, reported_data_dir, start_date, simulation_time, fileending="
     the number of ICU patients as reported by DIVI.
 
     @param[in] files Expects list of two files with ODE and IDE simulation results for compartments, respectively, in 
-    this order.
+        this order.
     @param[in] reported_data_dir Directory that contains files with DIVI data.
     @param[in] start_date Start date of the simulations.
     @param[in] simulation_time Duration of the simulation.
-    @param[in] fileending String that further specifies filename of plot. 
-    @param[in] save_dir Directory where plot will be stored. If this is not set, the plot will not be stored. 
+    @param[in] fileending String that further specifies filename of plot. Default is an empty string leading to no further 
+        specification.
+    @param[in] save_dir Directory where plot will be stored. Default is an empty string leading to the plot not being 
+        saved.
     """
 
     # Define compartment_name and compartment_index of InfectedCritical in simulation results.
@@ -511,36 +516,36 @@ def plot_icu(files, reported_data_dir, start_date, simulation_time, fileending="
                     bbox_inches='tight', dpi=500)
 
 
-def plot_covid_inspired_scenario(result_dir, data_dir, plot_dir, start_date, simulation_time, timestep):
+def plot_covid_inspired_scenario(result_dir, reported_data_dir, plot_dir, start_date, simulation_time, timestep):
     """ Plots daily new transmissions, the number of mildly symptomatic indiciduals and deaths as well as the number
     of ICU patients. See the respective functions for further details. 
 
     @param[in] result_dir Directory where simiulation results are stored.
-    @param[in] data_dir Directory where folders with data on contacts and reported data are located. 
+    @param[in] reported_data_dir Directory where folder reported data is located. 
     @param[in] plot_dir Directory where plots will be stored.
     @param[in] start_date Start date of the simulations.
     @param[in] simulation_time Duration of the simulation.
     @param[in] timestep Time step used for the simulations. 
     """
     plot_daily_new_transmissions([os.path.join(result_dir, f"ode_{start_date}_{simulation_time}_{timestep}_flows"),
-                                  os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_flows")], data_dir,
+                                  os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_flows")], reported_data_dir,
                                  pd.Timestamp(start_date), simulation_time,
                                  fileending=f"{start_date}_{simulation_time}_{timestep}", save_dir=plot_dir)
 
     plot_infectedsymptoms_deaths([os.path.join(result_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
                                   os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
-                                 data_dir,
+                                 reported_data_dir,
                                  pd.Timestamp(
                                      start_date), simulation_time,
                                  fileending=f"{start_date}_{simulation_time}_{timestep}",  save_dir=plot_dir)
 
     plot_icu([os.path.join(result_dir, f"ode_{start_date}_{simulation_time}_{timestep}_compartments"),
               os.path.join(result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_compartments")],
-             data_dir,
+             reported_data_dir,
              pd.Timestamp(start_date), simulation_time,  fileending=f"{start_date}_{simulation_time}_{timestep}", save_dir=plot_dir)
 
 
-def run_and_plot_scenario_with_adjusted_contact_scaling(result_dir, data_dir, plot_dir, start_date, simulation_time, timestep):
+def run_and_plot_scenario_with_adjusted_contact_scaling(result_dir, contact_data_dir, reported_data_dir, plot_dir, start_date, simulation_time, timestep):
     """ Here, we run the scenario with a contact scaling that is adjusted to the data as reported by RKI.
     For this, we first run the scenario with a contact sclaing of 1. We then compare the IDE simulation results with
     the reported data at the first time step. Based on this, we compute the contact scaling such that the IDE 
@@ -548,7 +553,8 @@ def run_and_plot_scenario_with_adjusted_contact_scaling(result_dir, data_dir, pl
     and plot the results. 
 
     @param[in] result_dir Directory where simiulation results are stored.
-    @param[in] data_dir Directory where folders with data on contacts and reported data are located. 
+    @param[in] contact_data_dir Directory where folder with data on contacts is located. 
+    @param[in] reported_data_dir Directory where folder with reported data is located. 
     @param[in] plot_dir Directory where plots will be stored.
     @param[in] start_date Start date of the simulations.
     @param[in] simulation_time Duration of the simulation.
@@ -556,17 +562,15 @@ def run_and_plot_scenario_with_adjusted_contact_scaling(result_dir, data_dir, pl
     """
     # First run the simulation with a contact scaling of 1.
     scale_contacts = 1.
-    run_covid_inspired_scenario(result_dir, data_dir, start_date, simulation_time,
+    run_covid_inspired_scenario(result_dir, contact_data_dir, reported_data_dir, start_date, simulation_time,
                                 timestep, scale_contacts)
 
     # Then determine contact scaling such that IDE results and RKI new transmissions match at first timestep.
-    reported_data_dir = data_dir + "/pydata/Germany/"
-
     scale_contacts = get_scale_contacts([os.path.join(
         result_dir, f"ide_{start_date}_{simulation_time}_{timestep}_flows")], reported_data_dir, pd.Timestamp(start_date), simulation_time)
 
     # Run simulation with new contact scaling.
-    run_covid_inspired_scenario(result_dir, data_dir, start_date, simulation_time,
+    run_covid_inspired_scenario(result_dir, contact_data_dir, reported_data_dir, start_date, simulation_time,
                                 timestep, scale_contacts)
 
     plot_covid_inspired_scenario(result_dir, reported_data_dir, plot_dir, start_date,
@@ -586,15 +590,19 @@ def main():
     result_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/simulation_results/covid_inspired_scenario/")
 
-    # Path where data for contacts and reported data is stored.
-    data_dir = os.path.join(os.path.dirname(
-        __file__), "../../..", "data/")
+    # Path where data for contacts is stored.
+    contact_data_dir = os.path.join(os.path.dirname(
+        __file__), "../../..", "data/contacts/")
+
+    # Path where reported data is stored.
+    reported_data_dir = os.path.join(os.path.dirname(
+        __file__), "../../..", "data/pydata/Germany/")
 
     # Path where plots will be stored.
     plot_dir = os.path.join(os.path.dirname(
         __file__), "../../..", "data/plots/covid_inspired_scenario/")
 
-    run_and_plot_scenario_with_adjusted_contact_scaling(result_dir, data_dir, plot_dir, start_date, simulation_time,
+    run_and_plot_scenario_with_adjusted_contact_scaling(result_dir, contact_data_dir, reported_data_dir, plot_dir, start_date, simulation_time,
                                                         timestep)
 
 

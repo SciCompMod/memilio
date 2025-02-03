@@ -27,10 +27,11 @@ int main()
     calculated based on the values in the paper "Assessment of effective mitigation and prediction of the spread of 
     SARS-CoV-2 in Germany using demographic information and spatial resolution" 
     (https://doi.org/10.1016/j.mbs.2021.108648).
-    We do this by calculating a weighted average time across the age groups. Here, we use 6 age groups as in the 
-    reported data by RKI.
+    We do this by calculating a weighted average across the age groups. Here, we use 6 age groups according to the 
+    paper.
     */
 
+    // Age group sizes are calculated using table number 12411-04-02-4-B from www.regionalstatistik.de for the date 31.12.2020.
     double age_group_sizes[] = {3969138, 7508662, 18921292, 28666166, 18153339, 5936434};
     int total                = 83155031;
     int numagegroups         = 6;
@@ -56,10 +57,11 @@ int main()
     std::cout << "InfectedCriticalPerInfectedSevere: " << resultInfectedCriticalPerInfectedSevere << std::endl;
 
     /** Here, the parameter for the probability of transitioning from the ICU compartment to the Dead compartment 
-     without age resolution is calculated based on the values in the Covasim paper (https://doi.org/10.1371/journal.pcbi.1009149).
-    First, we calculate a weighted average time across the age groups.
-    If other probabilities than required are given, we calculate the right probabilities.
-    In the following we use 10 age groups according to the Covasim paper. 
+    without age resolution is calculated based on the values in the Covasim paper (https://doi.org/10.1371/journal.pcbi.1009149).
+    We do this by calculating a weighted average across the age groups. In the following, we use 10 age groups 
+    according to the Covasim paper.
+    In the paper, probabilities for other transitions than required for our model are given, hence we calculate the 
+    probabilities for the necessary transitions as described below.
     */
 
     // Age group sizes are calculated using table number 12411-04-02-4-B from www.regionalstatistik.de for the date 31.12.2020.

@@ -90,7 +90,7 @@ void get_flows_per_time_interval_from_cumulative_flows(mio::osecir::Model<Scalar
     assert(mio::floating_point_equal(std::fmod(dt_target, dt_ode), 0., mio::Limits<ScalarType>::zero_tolerance()));
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
-    // Check that the TimeSeries flows is empty as expected.
+    // Check that the TimeSeries flows_per_interval is empty as expected.
     if (flows_per_interval.get_num_time_points() > 0) {
         flows_per_interval = mio::TimeSeries<ScalarType>(num_transitions);
     }
@@ -228,7 +228,7 @@ mio::TimeSeries<ScalarType> postprocess_timeseries(const mio::TimeSeries<ScalarT
 
 * The time step size of ODE and IDE simulation can be chosen independently. A vector containing the desired 
 * ide_exponents is passed for which an IDE simulation is run. If an empty vector is passed, only an ODE simulation is 
-* run, e.g., to create a ground truth
+* run, e.g., to create a ground truth.
 * However, we assume that the time step size of the IDE model is a multiple of the one of the ODE model.
 *
 * @param[in] t0 Start time of the ODE simulation. 

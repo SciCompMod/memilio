@@ -26,13 +26,15 @@ import matplotlib.pyplot as plt
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
-def plot_changepoint(files, fileending="", save_dir=""):
+def plot_changepoint(files, fileending, save_dir=""):
     """
     Plots the result of the changepoint simulation.
 
     @param[in] files Expects list of two files with ODE and IDE simulation results for flows, respectively, in this order. 
-    @param[in] fileending Determines file ending of saved plot.
-    @param[in] save_dir Directory where plot will be stored.
+    @param[in] fileending Determines file ending of saved plot. Default is an empty string leading to no further 
+        specification.
+    @param[in] save_dir Directory where plot will be stored. Default is an empty string leading to the plot not being 
+        saved.
     """
 
     fig, ax = plt.subplots()
@@ -100,7 +102,7 @@ def plot_changepoint(files, fileending="", save_dir=""):
 
 
 if __name__ == '__main__':
-    # Paths are valid if script is executed e.g. in 
+    # Paths are valid if script is executed e.g. in
     # memilio/cpp/simulations/2024_Wendler_Nonstandard_numerical_scheme_for_integro-differential_model.
 
     # Path where simulation results (generated with ide_changepoints.cpp) are stored.

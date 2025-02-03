@@ -65,7 +65,7 @@ std::map<std::string, ScalarType> simulation_parameter = {
 
 /**
 * @brief Function to scale the contact matrix according to factor contact_scaling after two days. The contact matrix
-* is a 1x1 matrix in our case as we do notconsider age groups in this simulation. The initial contact matrix is set 
+* is a 1x1 matrix in our case as we do not consider age groups in this simulation. The initial contact matrix is set 
 * using the parameter cont_freq. 
 *
 * @param[in] contact_scaling Factor that is applied to contact matrix after two days. 
@@ -267,12 +267,12 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ide_model(ScalarType contact
         mio::IOResult<void> save_result_status_c =
             mio::save_result({sim.get_result()}, {0}, 1, filename_ide_compartments);
 
-        if (!save_result_status_f && !save_result_status_c) {
+        if (!save_result_status_f || !save_result_status_c) {
             return mio::failure(mio::StatusCode::UnknownError, "Error while saving results.");
         }
     }
 
-    // Return results (i.e. compartments) of the simulations.
+    // Return results (i.e. compartments) of the simulation.
     return mio::success(sim.get_result());
 }
 
@@ -314,7 +314,7 @@ mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType cont
     model_ode.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                     simulation_parameter["total_population"]);
 
-    // Set working parameters.
+    // Set mean stay times.
     model_ode.parameters.get<mio::osecir::TimeExposed<ScalarType>>()[(mio::AgeGroup)0] =
         simulation_parameter["TimeExposed"];
     model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
@@ -382,7 +382,7 @@ mio::IOResult<void> simulate_ode_model(Vector init_compartments, ScalarType cont
         mio::IOResult<void> save_result_status_c =
             mio::save_result({results_ode[0]}, {0}, 1, filename_ode_compartments);
 
-        if (!save_result_status_f && !save_result_status_c) {
+        if (!save_result_status_f || !save_result_status_c) {
             return mio::failure(mio::StatusCode::UnknownError, "Error while saving results.");
         }
     }

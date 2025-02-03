@@ -43,8 +43,6 @@ def get_lognormal_parameters(mean, std):
     mean_lognorm, variance_lognorm = lognorm.stats(
         shape, loc=0, scale=scale, moments='mv')
 
-    mean_test = np.exp(scale**2/2)
-
     if np.abs(mean_lognorm-mean) > 1e-8:
         print('Distribution does not have expected mean value.')
 

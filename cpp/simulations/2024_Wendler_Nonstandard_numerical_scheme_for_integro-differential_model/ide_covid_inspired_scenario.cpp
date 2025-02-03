@@ -543,8 +543,9 @@ mio::IOResult<void> simulate_ode_model(mio::Date start_date, ScalarType tmax, Ve
 int main(int argc, char** argv)
 {
     // Paths are valid if file is executed e.g. in memilio/build/bin.
-    // Directory where necessary data is stored.
-    std::string data_dir = "../../data/";
+    // Directory where contact data is stored.
+    std::string contact_data_dir  = "../../data/contacts/";
+    std::string reported_data_dir = "../../pydata/Germany/";
     // Directory where results will be stored. If this string is empty, results will not be saved.
     std::string result_dir = "../../data/simulation_results/covid_inspired_scenario/";
 
@@ -552,19 +553,20 @@ int main(int argc, char** argv)
 
     ScalarType tmax = 45;
 
-    // To adjust the parameter scale_contacts so that the IDE simualtion results match the reported data in the
+    // To adjust the parameter scale_contacts so that the IDE simulation results match the reported data in the
     // beginning, we run the scenario twice. First we run it with scale_contacts = 1, then we compute the adjusted
     // parameter and run the scenario again with this adjusted scale_contacts. For this, we want to run this script
     // from the command line with corresponding arguments as defined here. For more details, see
     // run_and_plot_covid_inspired_scenario.py.
-    if (argc == 9) {
+    if (argc == 10) {
 
-        data_dir                               = argv[1];
-        result_dir                             = argv[2];
-        start_date                             = mio::Date(std::stoi(argv[3]), std::stoi(argv[4]), std::stoi(argv[5]));
-        tmax                                   = std::stod(argv[6]);
-        simulation_parameter["dt"]             = std::stod(argv[7]);
-        simulation_parameter["scale_contacts"] = std::stod(argv[8]);
+        contact_data_dir                       = argv[1];
+        reported_data_dir                      = argv[2];
+        result_dir                             = argv[3];
+        start_date                             = mio::Date(std::stoi(argv[4]), std::stoi(argv[5]), std::stoi(argv[6]));
+        tmax                                   = std::stod(argv[7]);
+        simulation_parameter["dt"]             = std::stod(argv[8]);
+        simulation_parameter["scale_contacts"] = std::stod(argv[9]);
 
         std::cout << std::setprecision(10) << "Scenario is run with a contact scaling of "
                   << simulation_parameter["scale_contacts"] << ".\n";
@@ -573,9 +575,6 @@ int main(int argc, char** argv)
     // Make folder if not existent yet.
     boost::filesystem::path dir(result_dir);
     boost::filesystem::create_directories(dir);
-
-    std::string contact_data_dir  = data_dir + "contacts/";
-    std::string reported_data_dir = data_dir + "pydata/Germany/";
 
     // Set contact matrices by averaging over age-resolved contact patterns.
     mio::ContactMatrixGroup contact_matrices = define_contact_matrices(contact_data_dir, start_date).value();

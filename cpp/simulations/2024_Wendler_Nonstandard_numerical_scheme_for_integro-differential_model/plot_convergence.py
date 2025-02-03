@@ -61,7 +61,7 @@ def read_groundtruth(data_dir, ode_exponent, save_exponent, flows=False):
             # As there should be only one Group, total is the simulation result
             results[model].append(data['Total'][:, :])
         elif len(data['Total'][0]) == 10:
-            # in ODE there are two compartments we don't use, throw these out
+            # In ODE there are two compartments we don't use, throw these out
             results[model].append(
                 data['Total'][:, [0, 1, 2, 4, 6, 7, 8, 9]])
         else:
@@ -79,7 +79,7 @@ def read_data(data_dir, ode_exponent, exponents_ide, flows=False):
     """ Read data into a dict, where the keys correspond to the respective model.
     At the moment we are only storing results of the IDE model here. There, we have an array that contains all results 
     obtained with the IDE model for all time points for each time step size that is investigated. The results can 
-    either compartments or flows as indicated by the flag 'flows'.
+    either be compartments or flows as indicated by the flag 'flows'.
 
     @param[in] data_dir Directory where h5 files are stored. 
     @param[in] ode_exponent Exponent that determines time step size of ODE simulation via dt =10^{-ode_exponent}.
@@ -181,7 +181,8 @@ def plot_convergence(errors, timesteps_ide, flows=False, save_dir=""):
     @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
     @param[in] timesteps_ide List of time steps used in IDE simulations.
     @param[in] flows Bool that determines whether we consider flows or compartments. Default is False. 
-    @param[in] save_dir Directory where plot will be stored.
+    @param[in] save_dir Directory where plot will be stored. Default is an empty string leading to the plot not being 
+        saved.
     """
     # Define subplots and labels.
     if flows:
@@ -200,7 +201,7 @@ def plot_convergence(errors, timesteps_ide, flows=False, save_dir=""):
         labels = [
             r"$\Vert \widehat{Z}_{\text{IDE}} - \widehat{Z}_{\text{ODE}}\Vert_{2,\text{rel}}$", r"$\mathcal{O}(\Delta t)$"]
 
-    # helmholtzdarkblue, helmholtzclaim
+    # Define colors, we use helmholtzdarkblue and helmholtzclaim.
     colors = [(0, 40/255, 100/255), (20/255, 200/255, 255/255)]
 
     for i in range(num_plots):
@@ -245,7 +246,8 @@ def plot_convergence_oneplot(errors, timesteps_ide, flows=False, save_dir=""):
     @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
     @param[in] timesteps_ide List of time steps used in IDE simulations.
     @param[in] flows Bool that determines whether we consider flows or compartments. Default is False. 
-    @param[in] save_dir Directory where plot will be stored.
+    @param[in] save_dir Directory where plot will be stored. Default is an empty string leading to the plot not being 
+        saved.
     """
     plt.figure()
 

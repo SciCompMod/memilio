@@ -73,7 +73,8 @@ def get_relevant_confirmed_cases(data_dir, start_date, T_IH, T_HU, T_U):
     @param[in] start_date Start date of interest. 
     @param[in] T_IH Mean stay time in Infected compartment before transitioning to Hospitalized. 
     @param[in] T_HU Mean stay time in Hospitalized compartment before transitioning to ICU.
-    @param[in] T_U Mean stay time in ICU; this is the average given by mu_U^D*T_U^D + (1-mu_U^D)*T_U^R.
+    @param[in] T_U Mean stay time in ICU; this is the average given by mu_U^D*T_U^D + (1-mu_U^D)*T_U^R with mu being 
+        the respective transition probabilities. 
     """
     # Get dataframe with daily confirmed cases.
     df = get_df_daily(data_dir)
@@ -115,8 +116,10 @@ def plot_proportions_per_age_group(data_dir, start_dates, T_IH, T_HU, T_U, save_
     @param[in] start_dates List of start dates.
     @param[in] T_IH Mean stay time in Infected compartment before transitioning to Hospitalized. 
     @param[in] T_HU Mean stay time in Hospitalized compartment before transitioning to ICU.
-    @param[in] T_U Mean stay time in ICU.
-    @param[in] save_dir Directory where plot will be stored.
+    @param[in] T_U Mean stay time in ICU; this is the average given by mu_U^D*T_U^D + (1-mu_U^D)*T_U^R with mu being 
+        the respective transition probabilities. 
+    @param[in] save_dir Directory where plot will be stored. Default is an empty string leading to the plot not being 
+        saved.
     """
 
     agegroups = ['A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+']
