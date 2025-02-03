@@ -62,31 +62,37 @@ std::map<std::string, ScalarType> simulation_parameter = {{"t0", 0.},
                                                           {"cont_freq", 1.}};
 
 /**
-* @brief Takes the compartments of an ODE simulation and computes the respective flows. 
+* @brief Takes the cumulative flows of an ODE simulation and computes the respective flows per time interval, i.e. 
+* $\tilde{sigma}.
 *
 * With t_max and t_window, it can be determined for which time window the flows will be computed. 
 * By default, we compute the flows with the same time step size.
 * It is also possible to compute the corresponding flows for a bigger time step which can be given by dt_target.
 *
 * @param[in] model_ode ODE-SECIR model used.
-* @param[in] compartments TimeSeries containing compartments from an ODE simulation. 
+* @param[in] cumulative_flows TimeSeries containing cumulative flows from an ODE simulation. 
 *           The time steps must be equidistant.
-* @param[out] flows TimeSeries where the computed flows will be stored. 
+* @param[out] flows_per_interval TimeSeries where the computed flows per time interval will be stored. 
 * @param[in] t_max Maximal time for which the flows are computed.
 * @param[in] t_window Time window before t_max for which flows will be computed.
 * @param[in] dt_target Time step size used for the resulting TimeSeries flows. 
 *       Default is the time step size of the ODE simulation result compartments. 
 *       dt_target should be a multiple of the step size used for the simulation result in compartments.
 */
-void get_flows_from_ode_compartments(mio::osecir::Model<ScalarType>& model_ode,
-                                     mio::TimeSeries<ScalarType> compartments, mio::TimeSeries<ScalarType>& flows,
-                                     ScalarType t_max, ScalarType t_window, ScalarType dt_target = 0.)
+void get_flows_per_time_interval_from_cumulative_flows(mio::osecir::Model<ScalarType>& model_ode,
+                                                       mio::TimeSeries<ScalarType> cumulative_flows,
+                                                       mio::TimeSeries<ScalarType>& flows_per_interval,
+                                                       ScalarType t_max, ScalarType t_window, ScalarType dt_target = 0.)
 {
-    ScalarType dt_ode   = compartments.get_time(1) - compartments.get_time(0);
+    ScalarType dt_ode = cumulative_flows.get_time(1) - cumulative_flows.get_time(0);
+
+    // Assert that dt_target is a multiple of dt_ode.
+    assert(mio::floating_point_equal(std::fmod(dt_target, dt_ode), 0., mio::Limits<ScalarType>::zero_tolerance()));
+
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
     // Check that the TimeSeries flows is empty as expected.
-    if (flows.get_num_time_points() > 0) {
-        flows = mio::TimeSeries<ScalarType>(num_transitions);
+    if (flows_per_interval.get_num_time_points() > 0) {
+        flows_per_interval = mio::TimeSeries<ScalarType>(num_transitions);
     }
     // If dt_target is not set, use dt_ode.
     if (dt_target < 1e-10) {
@@ -100,91 +106,55 @@ void get_flows_from_ode_compartments(mio::osecir::Model<ScalarType>& model_ode,
     Eigen::Index t_window_index = Eigen::Index(std::ceil(t_window / dt_target));
     Eigen::Index t_max_index    = Eigen::Index(std::ceil(t_max / dt_target));
 
+    // Define flow indices to access (cumulative) flows from ODE simulation.
+    std::vector<size_t> flow_indices_ode = {
+        model_ode.get_flat_flow_index<mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed>(
+            {mio::AgeGroup(0)}),
+        model_ode.get_flat_flow_index<mio::osecir::InfectionState::Exposed,
+                                      mio::osecir::InfectionState::InfectedNoSymptoms>({mio::AgeGroup(0)}),
+        model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedNoSymptoms,
+                                      mio::osecir::InfectionState::InfectedSymptoms>({mio::AgeGroup(0)}),
+        model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedNoSymptoms,
+                                      mio::osecir::InfectionState::Recovered>({mio::AgeGroup(0)}),
+        model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedSymptoms,
+                                      mio::osecir::InfectionState::InfectedSevere>({mio::AgeGroup(0)}),
+        model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedSymptoms,
+                                      mio::osecir::InfectionState::Recovered>({mio::AgeGroup(0)}),
+        model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedSevere,
+                                      mio::osecir::InfectionState::InfectedCritical>({mio::AgeGroup(0)}),
+        model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedSevere,
+                                      mio::osecir::InfectionState::Recovered>({mio::AgeGroup(0)}),
+        model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedCritical, mio::osecir::InfectionState::Dead>(
+            {mio::AgeGroup(0)}),
+        model_ode.get_flat_flow_index<mio::osecir::InfectionState::InfectedCritical,
+                                      mio::osecir::InfectionState::Recovered>({mio::AgeGroup(0)})};
+
     Eigen::Index flows_start_index = t_max_index - t_window_index + 1;
 
-    // Add time points to TimeSeries flows and set flow Susceptible to Exposed.
     for (Eigen::Index i = flows_start_index; i <= t_max_index; i++) {
-        flows.add_time_point(i * dt_target, mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0));
-        flows.get_last_value()[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)] +=
-            compartments[(Eigen::Index)(scale_timesteps * (i - 1))]
-                        [(Eigen::Index)mio::osecir::InfectionState::Susceptible] -
-            compartments[(Eigen::Index)(scale_timesteps * i)][(Eigen::Index)mio::osecir::InfectionState::Susceptible];
-    }
+        // Add time point.
+        flows_per_interval.add_time_point(i * dt_target,
+                                          mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0));
 
-    // --- Compute flows as combination of change in compartments and previously computed flows.
-    // Flow from Exposed to InfectedNoSymptoms.
-    for (Eigen::Index i = flows_start_index; i <= t_max_index; i++) {
-        flows[i - flows_start_index][(Eigen::Index)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] =
-            compartments[(Eigen::Index)(scale_timesteps * (i - 1))]
-                        [(Eigen::Index)mio::osecir::InfectionState::Exposed] -
-            compartments[(Eigen::Index)(scale_timesteps * i)][(Eigen::Index)mio::osecir::InfectionState::Exposed] +
-            flows[i - flows_start_index][(Eigen::Index)mio::isecir::InfectionTransition::SusceptibleToExposed];
-    }
-    ScalarType out_flow = 0;
-    // Flow from InfectedNoSymptoms to InfectedSymptoms and from InfectedNoSymptoms to Recovered.
-    for (Eigen::Index i = flows_start_index; i <= t_max_index; i++) {
-        out_flow =
-            compartments[(Eigen::Index)(scale_timesteps * (i - 1))]
-                        [(Eigen::Index)mio::osecir::InfectionState::InfectedNoSymptoms] -
-            compartments[(Eigen::Index)(scale_timesteps * i)]
-                        [(Eigen::Index)mio::osecir::InfectionState::InfectedNoSymptoms] +
-            flows[i - flows_start_index][(Eigen::Index)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms];
-        flows[i -
-              flows_start_index][(Eigen::Index)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] =
-            (1 -
-             model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0]) *
-            out_flow;
-        flows[i - flows_start_index][(Eigen::Index)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered] =
-            model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] *
-            out_flow;
-    }
-    // Flow from InfectedSymptoms to InfectedSevere and from InfectedSymptoms to Recovered.
-    for (Eigen::Index i = flows_start_index; i <= t_max_index; i++) {
-        out_flow = compartments[(Eigen::Index)(scale_timesteps * (i - 1))]
-                               [(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms] -
-                   compartments[(Eigen::Index)(scale_timesteps * i)]
-                               [(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms] +
-                   flows[i - flows_start_index]
-                        [(Eigen::Index)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms];
-        flows[i - flows_start_index][(Eigen::Index)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] =
-            model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0] * out_flow;
-        flows[i - flows_start_index][(Eigen::Index)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered] =
-            (1 - model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0]) *
-            out_flow;
-    }
-    // Flow from InfectedSevere to InfectedCritical and from InfectedSevere to Recovered.
-    for (Eigen::Index i = flows_start_index; i <= t_max_index; i++) {
-        out_flow = compartments[(Eigen::Index)(scale_timesteps * (i - 1))]
-                               [(Eigen::Index)mio::osecir::InfectionState::InfectedSevere] -
-                   compartments[(Eigen::Index)(scale_timesteps * i)]
-                               [(Eigen::Index)mio::osecir::InfectionState::InfectedSevere] +
-                   flows[i - flows_start_index]
-                        [(Eigen::Index)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere];
-        flows[i - flows_start_index][(Eigen::Index)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical] =
-            model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0] * out_flow;
-        flows[i - flows_start_index][(Eigen::Index)mio::isecir::InfectionTransition::InfectedSevereToRecovered] =
-            (1 - model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0]) * out_flow;
-    }
-    // Flow from InfectedCritical to Dead and from InfectedCritical to Recovered.
-    for (Eigen::Index i = flows_start_index; i <= t_max_index; i++) {
-        out_flow = compartments[(Eigen::Index)(scale_timesteps * (i - 1))]
-                               [(Eigen::Index)mio::osecir::InfectionState::InfectedCritical] -
-                   compartments[(Eigen::Index)(scale_timesteps * i)]
-                               [(Eigen::Index)mio::osecir::InfectionState::InfectedCritical] +
-                   flows[i - flows_start_index]
-                        [(Eigen::Index)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical];
-        flows[i - flows_start_index][(Eigen::Index)mio::isecir::InfectionTransition::InfectedCriticalToDead] =
-            model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0] * out_flow;
-        flows[i - flows_start_index][(Eigen::Index)mio::isecir::InfectionTransition::InfectedCriticalToRecovered] =
-            (1 - model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0]) * out_flow;
+        // Compute flows per time interval from cumulative flows for every transition.
+        for (Eigen::Index transition = 0; transition < (Eigen::Index)mio::isecir::InfectionTransition::Count;
+             transition++) {
+            flows_per_interval.get_last_value()[transition] =
+                cumulative_flows[(Eigen::Index)(scale_timesteps * i)][flow_indices_ode[transition]] -
+                cumulative_flows[(Eigen::Index)(scale_timesteps * (i - 1))][flow_indices_ode[transition]];
+        }
     }
 }
 
 /**
-* @brief Computes the inital flows that are needed for an IDE simulation given we have the compartments from an ODE 
-* simulation for an adequate time window before t0_ide. 
+* @brief Computes the initial flows (defined per time interval) that are needed for an IDE simulation given simulation 
+* results obtained with an ODE model (containing results for both compartments and cumulative flows) for an adequate 
+* time window before t0_ide.
+* 
+* The results of the ODE model can be obtained uing the simulate_flows() function returning both compartments and 
+* cumulative flows. 
 *
-* Here we assume, that the ODE and the IDE model are matching, i.e. that the parameters of the IDE model are chosen 
+* Here, we assume that the ODE and the IDE model are matching, i.e. that the parameters of the IDE model are chosen 
 * such that the continous version reduces to the ODE model. This is achieved by choosing exponentially distributed 
 * transitions with the corresponding mean stay times etc. 
 * The time step size of ODE and IDE simulation can be chosen independently.
@@ -192,18 +162,23 @@ void get_flows_from_ode_compartments(mio::osecir::Model<ScalarType>& model_ode,
 *
 * @param[in] model_ode ODE model that is used.
 * @param[in] model_ide IDE model that is used.
-* @param[in] compartments TimeSeries containing compartments from a simulation with model_ode. 
+* @param[in] results_ode Vector of TimeSeries containing results obtained from a simulation with model_ode; first entry 
+* contains compartments and second entry contains cumulative flows. 
 * @param[in] t0_ide Start time of IDE simulation that we want to compute initial flows for. 
 * @param[in] dt_ide Time step size of IDE simulation. 
 */
 void compute_initial_flows_for_ide_from_ode(mio::osecir::Model<ScalarType>& model_ode, mio::isecir::Model& model_ide,
-                                            mio::TimeSeries<ScalarType> compartments, ScalarType t0_ide,
+                                            std::vector<mio::TimeSeries<ScalarType>> results_ode, ScalarType t0_ide,
                                             ScalarType dt_ide)
 {
+    mio::TimeSeries<ScalarType> compartments_ode     = results_ode[0];
+    mio::TimeSeries<ScalarType> cumulative_flows_ode = results_ode[1];
 
     // Use t_window=t0_ide to get flows from t0 onwards.
-    get_flows_from_ode_compartments(model_ode, compartments, model_ide.transitions, t0_ide, t0_ide, dt_ide);
-    ScalarType dt_ode = compartments.get_time(1) - compartments.get_time(0);
+    get_flows_per_time_interval_from_cumulative_flows(model_ode, cumulative_flows_ode, model_ide.transitions, t0_ide,
+                                                      t0_ide, dt_ide);
+    ScalarType dt_ode = compartments_ode.get_time(1) - compartments_ode.get_time(0);
+
     // Remove time series from previous run and set initial values in populations.
     if (model_ide.populations.get_num_time_points() > 0) {
         model_ide.populations = mio::TimeSeries<ScalarType>((int)mio::isecir::InfectionState::Count);
@@ -212,9 +187,9 @@ void compute_initial_flows_for_ide_from_ode(mio::osecir::Model<ScalarType>& mode
         model_ide.transitions.get_last_time(),
         mio::TimeSeries<ScalarType>::Vector::Constant((int)mio::isecir::InfectionState::Count, 0));
     model_ide.populations[0][Eigen::Index(mio::isecir::InfectionState::Dead)] =
-        compartments[(Eigen::Index)compartments.get_num_time_points() -
-                     (Eigen::Index)((compartments.get_last_time() - t0_ide) / dt_ode) - 1]
-                    [(Eigen::Index)mio::osecir::InfectionState::Dead];
+        compartments_ode[(Eigen::Index)compartments_ode.get_num_time_points() -
+                         (Eigen::Index)((compartments_ode.get_last_time() - t0_ide) / dt_ode) - 1]
+                        [(Eigen::Index)mio::osecir::InfectionState::Dead];
 }
 
 /**
@@ -347,27 +322,35 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
     integrator->set_abs_tolerance(1e-1);
 
     std::cout << "Starting simulation with ODE model. \n";
-    mio::TimeSeries<ScalarType> secihurd_ode =
-        mio::osecir::simulate<ScalarType>(t0, tmax, dt_ode, model_ode, integrator);
+
+    // Vector that contains ODE simulation results. First entry contains values for compartments, second entry contains
+    // values for cumulative flows.
+    std::vector<mio::TimeSeries<ScalarType>> results_ode =
+        mio::osecir::simulate_flows<ScalarType>(t0, tmax, dt_ode, model_ode, integrator);
 
     if (!save_dir.empty() && save_exponent > 0) {
         // Create result directory if not existent yet.
         boost::filesystem::path res_dir(save_dir);
         boost::filesystem::create_directory(res_dir);
+
+        // Save compartments.
         auto save_result_status_ode =
-            mio::save_result({postprocess_timeseries(secihurd_ode, pow(10, -save_exponent))}, {0}, 1,
+            mio::save_result({postprocess_timeseries(results_ode[0], pow(10, -save_exponent))}, {0}, 1,
                              save_dir + "result_ode_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + "_savefrequency" +
                                  fmt::format("{:.0f}", save_exponent) + ".h5");
 
-        // Compute flows from ODE result to store results.
-        // Note that we are computing \tilde{\sigma} here. To be able to compare flows between different timesteps (of ODE and IDE)
-        // we need to divide by dt to get \hat{\sigma}. This is done while saving the results.
-        mio::TimeSeries<ScalarType> secihurd_ode_flows((int)mio::isecir::InfectionTransition::Count);
-        get_flows_from_ode_compartments(model_ode, secihurd_ode, secihurd_ode_flows, tmax, tmax - t0);
-        auto save_result_status_ode_flows =
-            mio::save_result({postprocess_timeseries(secihurd_ode_flows, pow(10, -save_exponent), 1. / dt_ode)}, {0}, 1,
-                             save_dir + "result_ode_flows_dt=1e-" + fmt::format("{:.0f}", ode_exponent) +
-                                 "_savefrequency" + fmt::format("{:.0f}", save_exponent) + ".h5");
+        // Compute flows per time interval from cumulative flows of ODE simulation, i.e. we are computing \tilde{\sigma}
+        // here.
+        mio::TimeSeries<ScalarType> flows_per_timestep_ode((int)mio::isecir::InfectionTransition::Count);
+        get_flows_per_time_interval_from_cumulative_flows(model_ode, results_ode[1], flows_per_timestep_ode, tmax,
+                                                          tmax - t0);
+        // Save flows.
+        // To be able to compare flows between different time step sizes (of ODE and IDE) we need to divide by dt to get
+        // \hat{\sigma}. This is done while saving the results.
+        auto save_result_status_ode_flows = mio::save_result(
+            {postprocess_timeseries(flows_per_timestep_ode, pow(10, -save_exponent), 1. / dt_ode)}, {0}, 1,
+            save_dir + "result_ode_flows_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + "_savefrequency" +
+                fmt::format("{:.0f}", save_exponent) + ".h5");
 
         if (save_result_status_ode && save_result_status_ode_flows) {
             std::cout << "Successfully saved the ODE simulation results. \n\n";
@@ -489,7 +472,7 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
             ScalarType dt_ide = pow(10, -ide_exponent);
 
             // Compute initial flows from results of ODE simulation and set initial values for populations.
-            compute_initial_flows_for_ide_from_ode(model_ode, model_ide, secihurd_ode, t0_ide, dt_ide);
+            compute_initial_flows_for_ide_from_ode(model_ode, model_ide, results_ode, t0_ide, dt_ide);
 
             model_ide.check_constraints(dt_ide);
 
@@ -509,6 +492,8 @@ mio::IOResult<void> simulate_ode_and_ide(ScalarType t0, ScalarType tmax, ScalarT
                                      save_dir + "result_ide_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
                                          "_init_dt_ode=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
                 // Save flows.
+                // To be able to compare flows between different timesteps (of ODE and IDE) we need to divide by dt to get
+                // \hat{\sigma}. This is done while saving the results.
                 mio::TimeSeries<ScalarType> secihurd_ide_flows = sim.get_transitions();
                 auto save_result_status_ide_flows =
                     mio::save_result({postprocess_timeseries(secihurd_ide_flows, dt_ide, 1. / dt_ide)}, {0}, 1,
