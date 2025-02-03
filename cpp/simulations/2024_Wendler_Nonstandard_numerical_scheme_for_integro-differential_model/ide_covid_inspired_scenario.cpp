@@ -209,7 +209,7 @@ void set_npi_october(mio::ContactMatrixGroup& contact_matrices, mio::Date start_
  * 
  * @param[in] data_dir Directory to files with minimum and baseline contact matrices.
  * @param[in] start_date Start date of the simulation.
- * @returns Any io errors that happen during reading of the input filesor contact matrices.
+ * @returns Any io errors that happen during reading of the input files or contact matrices.
  */
 mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(std::string contact_data_dir, mio::Date start_date)
 {
@@ -243,7 +243,7 @@ mio::IOResult<mio::ContactMatrixGroup> define_contact_matrices(std::string conta
 
     // ----- Add NPIs to the contact matrices. -----
     // Set of NPIs for October.
-    if (start_date < mio::Date(2020, 10, 1)) {
+    if (start_date <= mio::Date(2020, 10, 1)) {
         set_npi_october(contact_matrices, start_date, simulation_parameter["lockdown_hard"]);
     }
 
