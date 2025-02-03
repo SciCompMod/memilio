@@ -21,9 +21,6 @@
 //Includes from pymio
 #include "pybind_util.h"
 #include "compartments/flow_simulation.h"
-#include "compartments/simulation.h"
-#include "compartments/compartmentalmodel.h"
-#include "epidemiology/populations.h"
 #include "epidemiology/age_group.h"
 #include "utils/parameter_set.h"
 #include "utils/custom_index_array.h"
@@ -47,12 +44,6 @@ namespace py = pybind11;
 
 namespace pymio{
 //specialization of pretty_name
-template <>
-std::string pretty_name<mio::oseir::AgeGroup>()
-{
-   return "AgeGroup";
-}
-
 template <>
 std::string pretty_name<mio::oseir::InfectionState>()
 {
@@ -88,7 +79,7 @@ PYBIND11_MODULE(_simulation_test_oseir, m)
     pymio::bind_Population(m, "Populations", mio::Tag<mio::oseir::Model<double>::Populations>{});
    
     pymio::bind_CompartmentalModel<FlowModel<FP, mio::oseir::InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, mio::oseir::Flows>, CompartmentalModel<FP, Comp, Pop, Params>>(m, "ModelBase");
-    py::class_<mio::oseir::Model<double>, pymio::EnablePickling::Required, FlowModel<FP, mio::oseir::InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, mio::oseir::Flows>, CompartmentalModel<FP, Comp, Pop, Params>>(m, "Model")
+    py::class_<mio::oseir::Model<double>, pymio::EnablePickling::Required, FlowModel<FP, mio::oseir::InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, mio::oseir::Flows>, CompartmentalModel<FP, Comp, Pop, Params>>(m, "Model");
     
         .def(py::init<int>(), py::arg("num_agegroups"));
 

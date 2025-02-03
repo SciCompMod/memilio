@@ -76,9 +76,9 @@ class TestOseirGeneration(unittest.TestCase):
             "/cpp/models/ode_seir/model.cpp"
 
         # Could be any target folder
-        conf.target_folder = self.project_path + \
-            "pycode/memilio-generation/memilio/generation-test"
+        conf.target_folder = self.test_dir.name
         self.scanner = Scanner(conf)
+        self.scanner.python_module_name = "test_oseir"
         self.ast = AST(conf)
 
     def test_clean_oseir(self):
