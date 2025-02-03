@@ -25,9 +25,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from get_lognormal_parameters import get_lognormal_parameters
-# from plot_covid_inspired_scenario import load_data, plot_covid_inspired_scenario
-
 # Define parameters used for simulation, also used for plotting reported data.
 parameters = {
     'TimeExposed': 4.5,
@@ -67,8 +64,9 @@ def run_covid_inspired_scenario(result_dir, data_dir, start_date, simulation_tim
 
 
 def get_scale_contacts(files, reported_data_dir, start_date, simulation_time):
-    """ Gets the scaling factor for the contacts so that the simulation results obtained with the IDE model match the
-    reported number of daily new transmissions (as calculated in load_data() below).
+    """ Gets the scaling factor for the contacts so that after the first time step of the simulation, the simulation 
+    results obtained with the IDE model match the (interpolated) reported number of daily new transmissions (as calculated in 
+    load_data() below).
 
     @param[in] file Expects file with IDE simulation results for flows. 
     @param[in] reported_data_dir Directory where RKI data is stored. 
@@ -135,10 +133,6 @@ def load_data(file, start_date, simulation_time):
     @param[in] simulation_time Number of days to be simulated.
     @returns df_result Dataframe containing processed RKI data.
     """
-    # Set start date and end date according to input arguments.
-    parameters['start_date'] = start_date
-    parameters['end_date'] = start_date + pd.DateOffset(days=simulation_time)
-
     # Read data into df that will be used for computations below.
     df = pd.read_json(file)
     df = df.drop(columns=['Recovered'])
@@ -416,7 +410,8 @@ def plot_icu(files, reported_data_dir, start_date, simulation_time, fileending="
     """ Plots the number of ICU patients obtained by simulations with an ODE and an IDE model as well as 
     the number of ICU patients as reported by DIVI.
 
-    @param[in] files Expects list of two files with ODE and IDE simulation results for flows, respectively, in this order.
+    @param[in] files Expects list of two files with ODE and IDE simulation results for compartments, respectively, in 
+    this order.
     @param[in] reported_data_dir Directory that contains files with DIVI data.
     @param[in] start_date Start date of the simulations.
     @param[in] simulation_time Duration of the simulation.
@@ -584,7 +579,7 @@ def main():
     simulation_time = 45
     timestep = "0.0100"
 
-    # Paths are valid if script is executed e.g. in 
+    # Paths are valid if script is executed e.g. in
     # memilio/cpp/simulations/2024_Wendler_Nonstandard_numerical_scheme_for_integro-differential_model.
 
     # Path where simulation results (generated with ide_covid_inspired_scenario.cpp) are stored.

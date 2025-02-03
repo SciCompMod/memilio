@@ -66,13 +66,14 @@ def get_proportional_population_per_agegroup():
 
 
 def get_relevant_confirmed_cases(data_dir, start_date, T_IH, T_HU, T_U):
-    """Gets the confirmed cases per age group for the relevant time frame that is determined by T_IH, T_HU and T_U.
+    """Gets the confirmed cases per age group as reported by RKI for the relevant time frame that is determined by 
+    T_IH, T_HU and T_U.
 
     @param[in] data_dir Directory where file with RKI data is stored.
     @param[in] start_date Start date of interest. 
     @param[in] T_IH Mean stay time in Infected compartment before transitioning to Hospitalized. 
     @param[in] T_HU Mean stay time in Hospitalized compartment before transitioning to ICU.
-    @param[in] T_U Mean stay time in ICU.
+    @param[in] T_U Mean stay time in ICU; this is the average given by mu_U^D*T_U^D + (1-mu_U^D)*T_U^R.
     """
     # Get dataframe with daily confirmed cases.
     df = get_df_daily(data_dir)
@@ -158,7 +159,7 @@ def plot_proportions_per_age_group(data_dir, start_dates, T_IH, T_HU, T_U, save_
 
 
 def main():
-    # Paths are valid if script is executed e.g. in 
+    # Paths are valid if script is executed e.g. in
     # memilio/cpp/simulations/2024_Wendler_Nonstandard_numerical_scheme_for_integro-differential_model.
 
     # Path where file with RKI case data is stored.
@@ -176,7 +177,8 @@ def main():
 
     start_dates = ["2020-06-01", "2020-10-01"]
 
-    plot_proportions_per_age_group(data_dir, start_dates, T_IH, T_HU, T_U, save_dir)
+    plot_proportions_per_age_group(
+        data_dir, start_dates, T_IH, T_HU, T_U, save_dir)
 
 
 if __name__ == "__main__":

@@ -77,9 +77,9 @@ def read_groundtruth(data_dir, ode_exponent, save_exponent, flows=False):
 
 def read_data(data_dir, ode_exponent, exponents_ide, flows=False):
     """ Read data into a dict, where the keys correspond to the respective model.
-    At the moment we are only storing results of the IDE model here. There,
-    we have an array that contains all results for SECIHURD for all time points
-    for each time step size that is investigated.
+    At the moment we are only storing results of the IDE model here. There, we have an array that contains all results 
+    obtained with the IDE model for all time points for each time step size that is investigated. The results can 
+    either compartments or flows as indicated by the flag 'flows'.
 
     @param[in] data_dir Directory where h5 files are stored. 
     @param[in] ode_exponent Exponent that determines time step size of ODE simulation via dt =10^{-ode_exponent}.
@@ -325,7 +325,7 @@ def compute_order_of_convergence(errors, timesteps_ide, flows=False):
 
 
 def main():
-    # Paths are valid if script is executed e.g. in 
+    # Paths are valid if script is executed e.g. in
     # memilio/cpp/simulations/2024_Wendler_Nonstandard_numerical_scheme_for_integro-differential_model.
 
     # Path where simulation results (generated with ide_convergence_rate.cpp) are stored.
@@ -369,11 +369,11 @@ def main():
         # Plot convergence of all compartments/flows separately.
         plot_convergence(relerrors_l2, timesteps_ide,  flow_bool, plot_dir)
 
-        # # Determine order of convergence
-        # order = compute_order_of_convergence(
-        #     relerrors_l2, timesteps_ide, flow_bool)
+        # Determine order of convergence
+        order = compute_order_of_convergence(
+            relerrors_l2, timesteps_ide, flow_bool)
 
-        # print('Orders of convergence: ', order)
+        print('Orders of convergence: ', order)
 
 
 if __name__ == '__main__':
