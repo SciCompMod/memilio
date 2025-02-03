@@ -3,6 +3,7 @@ import os
 from zipfile import ZipFile
 
 import logging
+import time
 log = logging.getLogger(__file__)
 
 header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
@@ -37,7 +38,7 @@ def put_scenario(scenario_id, zip_file, url):
                                 files={"file": (zip_file, fileobj)})
     log.info(f'Put HTTP response code for scenario {scenario_id} was {put_response.status_code}')
 
-def put_scenarios(path_to_scenario_results, url):
+def put_scenarios(path_to_scenario_results, url, delay=10):
     scenarios = requests.get(url + "scenarios/", headers=header).json()
     for scenario in scenarios:
         real_path_to_scenario_results = path_to_scenario_results #+ f"{scenario['name']}_{scenario['id']}/"
@@ -53,6 +54,8 @@ def put_scenarios(path_to_scenario_results, url):
         # path_to_data = os.path.join(path_to_scenario_results)
         
         put_scenario(scenario['id'], zip_file=zip_file, url=url)
+        time.sleep(delay)
+
         
 
 def main():
