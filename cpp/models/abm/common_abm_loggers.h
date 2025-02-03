@@ -91,7 +91,7 @@ struct LogLocationInformation : mio::LogOnce {
      * -# The number of cells in the location.
      * -# The capacity of the location.
     */
-    static Type log(const mio::abm::Simulation& sim)
+    static Type log(const mio::abm::Simulation<>& sim)
     {
         Type location_information{};
         for (auto& location : sim.get_model().get_locations()) {
@@ -120,7 +120,7 @@ struct LogPersonInformation : mio::LogOnce {
      * -# The index of the home location.
      * -# The age group of the person.
     */
-    static Type log(const mio::abm::Simulation& sim)
+    static Type log(const mio::abm::Simulation<>& sim)
     {
         Type person_information{};
         person_information.reserve(sim.get_model().get_persons().size());
@@ -150,7 +150,7 @@ struct LogDataForMobility : mio::LogAlways {
      * -# The activity type.
      * -# The infection state.
      */
-    static Type log(const mio::abm::Simulation& sim)
+    static Type log(const mio::abm::Simulation<>& sim)
     {
         Type mobility_data{};
         for (Person p : sim.get_model().get_persons()) {
@@ -172,7 +172,7 @@ struct LogInfectionState : mio::LogAlways {
      * @param[in] sim The simulation of the abm.
      * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
      */
-    static Type log(const mio::abm::Simulation& sim)
+    static Type log(const mio::abm::Simulation<>& sim)
     {
 
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));

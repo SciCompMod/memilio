@@ -92,7 +92,7 @@ public:
         return m_t0;
     }
 
-    void evolve(double t, double dt)
+    void advance(double t, double dt)
     {
         m_simulation.advance(t + dt);
         m_last_state = m_simulation.get_result().get_last_value();
@@ -535,8 +535,8 @@ auto get_mobility_factors(const SimulationNode<Sim>& node, double t, const Eigen
  * detect a get_mobility_factors function for the Model type.
  */
 template <class Sim>
-using test_commuters_expr_t = decltype(
-    test_commuters(std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
+using test_commuters_expr_t = decltype(test_commuters(
+    std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
 
 /**
  * Test persons when moving from their source node.
@@ -642,12 +642,12 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
 
 /**
  * edge functor for mobility-based simulation.
- * @see SimulationNode::evolve
+ * @see SimulationNode::advance
  */
 template <class Sim>
-void evolve_model(double t, double dt, SimulationNode<Sim>& node)
+void advance_model(double t, double dt, SimulationNode<Sim>& node)
 {
-    node.evolve(t, dt);
+    node.advance(t, dt);
 }
 
 /**
@@ -672,19 +672,24 @@ void apply_mobility(FP t, FP dt, MobilityEdge<FP>& mobilityEdge, SimulationNode<
  * @{
  */
 template <typename FP, class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>>
+GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
+                void (*)(double, double, mio::MobilityEdge<>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
+                void (*)(double, double, mio::SimulationNode<Sim>&)>
 make_mobility_sim(FP t0, FP dt, const Graph<SimulationNode<Sim>, MobilityEdge<FP>>& graph)
 {
-    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>,
+    return make_graph_sim(t0, dt, graph, static_cast<void (*)(FP, FP, SimulationNode<Sim>&)>(&advance_model<Sim>),
                           static_cast<void (*)(FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
                               &apply_mobility<FP, Sim>));
 }
 
 template <typename FP, class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>>
+GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
+                void (*)(double, double, mio::MobilityEdge<>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
+                void (*)(double, double, mio::SimulationNode<Sim>&)>
 make_mobility_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MobilityEdge<FP>>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>,
+    return make_graph_sim(t0, dt, std::move(graph),
+                          static_cast<void (*)(FP, FP, SimulationNode<Sim>&)>(&advance_model<Sim>),
                           static_cast<void (*)(FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
                               &apply_mobility<FP, Sim>));
 }

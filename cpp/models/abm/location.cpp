@@ -27,12 +27,13 @@ namespace mio
 namespace abm
 {
 
-Location::Location(LocationType loc_type, LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
+Location::Location(LocationType loc_type, LocationId loc_id, size_t num_agegroups, int model_id, uint32_t num_cells)
     : m_type(loc_type)
     , m_id(loc_id)
     , m_parameters(num_agegroups)
     , m_cells(num_cells)
     , m_required_mask(MaskType::None)
+    , m_model_id(model_id)
 {
     assert(num_cells > 0 && "Number of cells has to be larger than 0.");
 }
