@@ -29,9 +29,12 @@
 
 int main()
 {
-    const auto t0            = 0.;
-    const auto tmax          = 10.;
-    const auto dt_graph      = 5.; //time step of Mobility, daily Mobility every second step
+    const auto t0   = 0.;
+    const auto tmax = 10.;
+
+    // Time step of graph simulation, after evry time step the simulation are restarted in every node.
+    const auto dt_graph = 5.;
+    // Time step of IDE solver.
     const auto dt_ide_solver = 0.5;
 
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -107,14 +110,16 @@ int main()
 
     model.check_constraints(dt_ide_solver);
 
-    //two identical groups
+    // Two identical groups-
     auto model_group1 = model;
     auto model_group2 = model;
 
+    // Set up graph with two nodes and no edges.
     mio::Graph<mio::SimulationNode<mio::isecir::Simulation>, mio::MobilityEdge<ScalarType>> g;
     g.add_node(1001, model_group1, dt_ide_solver);
     g.add_node(1002, model_group2, dt_ide_solver);
 
+    // Simulate without using mobility,
     auto sim = mio::make_no_mobility_sim(t0, dt_graph, std::move(g));
 
     sim.advance(tmax);

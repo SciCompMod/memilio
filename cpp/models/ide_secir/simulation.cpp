@@ -32,9 +32,7 @@ void Simulation::advance(ScalarType tmax)
 {
     mio::log_info("Simulating IDE-SECIR from t0 = {} until tmax = {} with dt = {}.",
                   m_model->transitions.get_last_time(), tmax, m_dt);
-    m_model->set_transitiondistributions_support_max(m_dt);
-    m_model->set_transitiondistributions_derivative(m_dt);
-    m_model->set_transitiondistributions_in_forceofinfection(m_dt);
+
     m_model->initial_compute_compartments(m_dt);
 
     // For every time step:

@@ -662,7 +662,7 @@ void apply_mobility(FP t, FP dt, MobilityEdge<FP>& mobilityEdge, SimulationNode<
 }
 
 /**
- * edge functor for simulation without mobility.
+ * Edge functor for simulation without mobility.
  */
 template <typename FP, class Sim>
 void no_mobility(FP t, FP dt, MobilityEdge<FP>& mobilityEdge, SimulationNode<Sim>& node_from,
@@ -706,13 +706,10 @@ make_mobility_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MobilityEdge<FP>>&& g
 /** @} */
 
 /**
- * create a mobility-based simulation.
- * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
- * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node. 
- * Returns are adjusted based on the development in the target node. 
- * @param t0 start time of the simulation
- * @param dt time step between mobility
- * @param graph set up for mobility-based simulation
+ * Create a graph simulation without mobility.
+ * @param t0 Start time of the simulation.
+ * @param dt Time step of the graph simulation where the simulation in the nodes is restarted after every time step.
+ * @param graph Set up for graph-based simulation.
  * @{
  */
 template <typename FP, class Sim>
