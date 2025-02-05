@@ -12,3 +12,8 @@ The Model class needs an Implementation class as template argument which provide
 ## Simulation
 
 The simulation runs in discrete time steps. In every step we advance the model until the next infection state adoption event, then adopt the corresponding agent's infection state and draw a new waiting time until the next adoption event. If the waiting time until the next adoption event is bigger than the remaining time in the time step, we advance the model until the end of the time step.
+
+For a detailed description and application of the model, see:
+
+- Bicker J, Schmieding R, et al. (2025) Hybrid metapopulation agent-based epidemiological models for efficient insight on the individual scale: A contribution to green computing.
+Infectious Disease Modelling, Volume 10, Issue 2. https://doi.org/10.1016/j.idm.2024.12.015

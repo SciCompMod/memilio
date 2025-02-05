@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ADOPTIONRATE_H
-#define ADOPTIONRATE_H
+#ifndef MIO_EPI_ADOPTIONRATE_H
+#define MIO_EPI_ADOPTIONRATE_H
 
 #include "memilio/utils/index.h"
 #include "memilio/config.h"
@@ -51,7 +51,7 @@ struct AdoptionRate {
     Status to; // j
     mio::regions::Region region; // k
     ScalarType factor; // gammahat_{ij}^k
-    std::vector<Influence<Status>> influences;
+    std::vector<Influence<Status>> influences; // influences[tau] = ( Psi_{i,j,tau} , gamma_{i,j,tau} )
 };
 
 } // namespace mio

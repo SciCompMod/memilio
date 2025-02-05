@@ -43,6 +43,7 @@ enum class InfectionState
 
 TEST(TestQuadWell, well)
 {
+    //Test whether the well indices are calculated correctly
     EXPECT_EQ(well_index(Eigen::Vector2d{-1, 1}), size_t(0));
     EXPECT_EQ(well_index(Eigen::Vector2d{1, 1}), size_t(1));
     EXPECT_EQ(well_index(Eigen::Vector2d{-1, -1}), size_t(2));
@@ -51,6 +52,7 @@ TEST(TestQuadWell, well)
 
 TEST(TestQuadWell, adopt)
 {
+    //Test adopt function i.e. if agent adopts the given status
     QuadWellModel<InfectionState>::Agent agent{Eigen::Vector2d{-1, 1}, InfectionState::S};
     QuadWellModel<InfectionState> qw({agent}, {});
     EXPECT_EQ(agent.status, InfectionState::S);
@@ -60,43 +62,66 @@ TEST(TestQuadWell, adopt)
 
 TEST(TestQuadWell, adoptionRate)
 {
+    //Test whether adoption rates are calculated correctly.
+    //First-order adoption rates are given by:
+    // rate.factor * N(rate.from, rate.region)
+    // with N(from, region) the number of agents in Region "region" having infection state "from"
+    //Second-order adoption rates are given by:
+    // rate.factor * N(rate.from, rate.region)/total_pop * sum (over all rate.influences) influence.factor * N_contact(influence.status, rate.region)
+    // with N_contact(status, region) the number of agents in Region "region" having infection state "status" that are within the contact radius
+
+    //Agents in region 0
     QuadWellModel<InfectionState>::Agent a1{Eigen::Vector2d{-1, 1}, InfectionState::S};
     QuadWellModel<InfectionState>::Agent a2{Eigen::Vector2d{-1.2, 1}, InfectionState::I};
+    //Agent in region 1
     QuadWellModel<InfectionState>::Agent a3{Eigen::Vector2d{1, 1}, InfectionState::I};
+    //Agent in region 0
     QuadWellModel<InfectionState>::Agent a4{Eigen::Vector2d{-1.1, 1}, InfectionState::I};
+    //Initialize model without fourth agent
     QuadWellModel<InfectionState> qw({a1, a2, a3}, {{InfectionState::S,
                                                      InfectionState::E,
                                                      mio::regions::Region(0),
                                                      0.1,
                                                      {{InfectionState::C, 1}, {InfectionState::I, 0.5}}}});
+    //Initialize model with all agents
     QuadWellModel<InfectionState> qw1({a1, a2, a3, a4}, {{InfectionState::S,
                                                           InfectionState::E,
                                                           mio::regions::Region(0),
                                                           0.1,
                                                           {{InfectionState::C, 1}, {InfectionState::I, 0.5}}}});
+    //a1 only has contact to a2 as a3 is in another region
     EXPECT_EQ(qw.adoption_rate(a1, InfectionState::E), 0.025);
+    //There is no rate from I to E, hence rate for a2 is 0
     EXPECT_EQ(qw.adoption_rate(a2, InfectionState::E), 0.0);
+    //a1 now has contact to a2 and a4 (both status I) which increases the rate
     EXPECT_EQ(qw1.adoption_rate(a1, InfectionState::E), 1. / 30.);
 }
 
 TEST(TestQuadWell, move)
 {
+    //Test evaluation of diffusion process with euler-maruyama integration
     QuadWellModel<InfectionState>::Agent a1{Eigen::Vector2d{-1.2, 1}, InfectionState::S};
     QuadWellModel<InfectionState>::Agent a2{Eigen::Vector2d{-1.2, 1}, InfectionState::I};
     //Sigma is set to 0, thus movement is only given by the function gradient
+    //Set I as non-moving state
     QuadWellModel<InfectionState> qw({a1, a2}, {}, 0.1, 0., {InfectionState::I});
     qw.move(0, 0.1, a1);
     qw.move(0, 0.1, a2);
+    //a1 moves in direction of the function gradient
     EXPECT_EQ(a1.position[0], -0.9888);
     EXPECT_EQ(a1.position[1], 1);
+    //As a2 has infection state I, it does not move
     EXPECT_EQ(a2.position[0], -1.2);
     EXPECT_EQ(a2.position[1], 1);
 }
 
 TEST(TestQuadWell, setNonMovingRegions)
 {
+    //Test non-moving regions
+    //a1 is in region 0
     QuadWellModel<InfectionState>::Agent a1{Eigen::Vector2d{-1.2, 1}, InfectionState::S};
     QuadWellModel<InfectionState> qw({a1}, {});
+    //Set region 0 as non-moving regions
     qw.set_non_moving_regions({0});
     qw.move(0, 0.1, a1);
     EXPECT_EQ(a1.position[0], -1.2);
@@ -105,6 +130,7 @@ TEST(TestQuadWell, setNonMovingRegions)
 
 TEST(TestDABMSimulation, advance)
 {
+    //Test whether temporal Gillespie algorithm calculates events in the correct order
     using testing::Return;
     using Model = mio::dabm::Model<QuadWellModel<InfectionState>>;
     QuadWellModel<InfectionState>::Agent a1{Eigen::Vector2d{-1, 1}, InfectionState::S};
@@ -131,7 +157,7 @@ TEST(TestDABMSimulation, advance)
         mock_exponential_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke)
         .Times(testing::AtLeast(1))
-        .WillOnce(Return(0.0226)) // Waiting time for first adoption rate.
+        .WillOnce(Return(0.0226)) // Waiting time for first adoption rate
         .WillRepeatedly(testing::Return(1.0));
     //Setup so first adoption event will be the transition of a3 from I to R
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;

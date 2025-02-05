@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef QUAD_WELL_H
-#define QUAD_WELL_H
+#ifndef MIO_D_ABM_QUAD_WELL_H
+#define MIO_D_ABM_QUAD_WELL_H
 
 #include "memilio/math/eigen.h"
 #include "d_abm/parameters.h"
