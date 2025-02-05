@@ -312,16 +312,17 @@ class Scanner:
 
         population_groups = []
         for value in intermed_repr.model_base[0:]:
-            if default_dict["flowmodel"] in value[0]:
+            if default_dict["flowmodel"] in value[0].strip():
                 start = value[0].find("Populations<")
                 end = value[0].find(">", start)
 
                 if start != -1 and end != -1:
                     populations_part = value[0][start + 11:end]
                     population_groups = [
-                        part.strip("<>").split("::")[-1]
+                        part.strip(" <>").split("::")[-1]
                         for part in populations_part.split(",")
                     ]
+
         intermed_repr.population_groups = population_groups
 
         new_enum = {}
