@@ -139,10 +139,11 @@ void simulate(ScalarType tol, ScalarType tmax)
 
     auto result_graph = std::move(sim).get_graph();
 
-    for (auto&& node : result_graph.nodes()) {
-        std::cout << " \"Steps Region " << node.id << "\": " << node.property.get_result().get_num_time_points() - 1
-                  << "," << std::endl;
-    }
+    std::cout << " \"Regions\": " << number_regions << "," << std::endl;
+    std::cout << " \"Steps Hotspot\": " << result_graph.nodes()[0].property.get_result().get_num_time_points() - 1
+              << "," << std::endl;
+    std::cout << " \"Steps other Regions\": "
+              << result_graph.nodes()[99].property.get_result().get_num_time_points() - 1;
 }
 
 int main(int argc, char** argv)
@@ -157,7 +158,7 @@ int main(int argc, char** argv)
 
     std::cout << "{ \"Absolute tolerance\": " << tol << ", " << std::endl;
     simulate(tol, tmax);
-    std::cout << "\n}," << std::endl;
+    std::cout << "}," << std::endl;
 
     return 0;
 }
