@@ -4,7 +4,7 @@
 
 namespace mio
 {
-namespace oseirmobilityimproved
+namespace oseirmetapop
 {
 
 /**
@@ -20,7 +20,7 @@ enum class InfectionState
     Count
 };
 
-} // namespace oseirmobilityimproved
+} // namespace oseirmetapop
 } // namespace mio
 
 #endif // ODESEIR_INFECTIONSTATE_H

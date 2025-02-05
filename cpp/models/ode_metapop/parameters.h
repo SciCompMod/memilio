@@ -14,7 +14,7 @@
 
 namespace mio
 {
-namespace oseirmobilityimproved
+namespace oseirmetapop
 {
 
 /****************************************************
@@ -255,7 +255,7 @@ private:
     AgeGroup m_num_agegroups;
 };
 
-} // namespace oseirmobilityimproved
+} // namespace oseirmetapop
 } // namespace mio
 
 #endif // SEIR_PARAMETERS_H

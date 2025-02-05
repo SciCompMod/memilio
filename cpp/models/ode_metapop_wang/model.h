@@ -17,7 +17,7 @@ GCC_CLANG_DIAGNOSTIC(pop)
 
 namespace mio
 {
-namespace oseirmobility
+namespace oseirmetapopwang
 {
 
 /********************
@@ -210,7 +210,7 @@ public:
     }
 };
 
-} // namespace oseirmobility
+} // namespace oseirmetapopwang
 } // namespace mio
 
 #endif // ODESEIRMOBILITY_MODEL_H

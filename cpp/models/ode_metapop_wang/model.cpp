@@ -3,8 +3,8 @@
 
 namespace mio
 {
-namespace oseirmobility
+namespace oseirmetapopwang
 {
 
-} // namespace oseirmobility
+} // namespace oseirmetapopwang
 } // namespace mio

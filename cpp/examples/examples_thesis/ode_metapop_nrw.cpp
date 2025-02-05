@@ -18,22 +18,22 @@
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_covid_parameters(mio::oseirmobilityimproved::Parameters<double>& params)
+mio::IOResult<void> set_covid_parameters(mio::oseirmetapop::Parameters<double>& params)
 {
-    params.template set<mio::oseirmobilityimproved::TimeExposed<>>(3.335);
-    params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(0)] = 8.0096875;
-    params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(1)] = 8.0096875;
-    params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(2)] = 8.2182;
-    params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(3)] = 8.1158;
-    params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(4)] = 8.033;
-    params.get<mio::oseirmobilityimproved::TimeInfected<>>()[mio::AgeGroup(5)] = 7.985;
+    params.template set<mio::oseirmetapop::TimeExposed<>>(3.335);
+    params.get<mio::oseirmetapop::TimeInfected<>>()[mio::AgeGroup(0)] = 8.0096875;
+    params.get<mio::oseirmetapop::TimeInfected<>>()[mio::AgeGroup(1)] = 8.0096875;
+    params.get<mio::oseirmetapop::TimeInfected<>>()[mio::AgeGroup(2)] = 8.2182;
+    params.get<mio::oseirmetapop::TimeInfected<>>()[mio::AgeGroup(3)] = 8.1158;
+    params.get<mio::oseirmetapop::TimeInfected<>>()[mio::AgeGroup(4)] = 8.033;
+    params.get<mio::oseirmetapop::TimeInfected<>>()[mio::AgeGroup(5)] = 7.985;
 
-    params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(0)] = 0.03;
-    params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(1)] = 0.06;
-    params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(2)] = 0.06;
-    params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(3)] = 0.06;
-    params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(4)] = 0.09;
-    params.get<mio::oseirmobilityimproved::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(5)] = 0.175;
+    params.get<mio::oseirmetapop::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(0)] = 0.03;
+    params.get<mio::oseirmetapop::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(1)] = 0.06;
+    params.get<mio::oseirmetapop::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(2)] = 0.06;
+    params.get<mio::oseirmetapop::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(3)] = 0.06;
+    params.get<mio::oseirmetapop::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(4)] = 0.09;
+    params.get<mio::oseirmetapop::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(5)] = 0.175;
     printf("Setting epidemiological parameters successful.\n");
     return mio::success();
 }
@@ -62,8 +62,7 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
  * @param params Object that the contact matrices will be added to.
  * @returns any io errors that happen during reading of the files.
  */
-mio::IOResult<void> set_contact_matrices(const fs::path& data_dir,
-                                         mio::oseirmobilityimproved::Parameters<double>& params)
+mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::oseirmetapop::Parameters<double>& params)
 {
     //TODO: io error handling
     auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_agegroups()));
@@ -77,15 +76,14 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir,
         contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
         contact_matrices[size_t(contact_location.first)].get_minimum()  = minimum;
     }
-    params.get<mio::oseirmobilityimproved::ContactPatterns<double>>() =
-        mio::UncertainContactMatrix<double>(contact_matrices);
+    params.get<mio::oseirmetapop::ContactPatterns<double>>() = mio::UncertainContactMatrix<double>(contact_matrices);
 
     printf("Setting contact matrices successful.\n");
     return mio::success();
 }
 
 template <typename FP = ScalarType>
-mio::IOResult<void> set_population_data(mio::oseirmobilityimproved::Model<FP>& model, const fs::path& data_dir)
+mio::IOResult<void> set_population_data(mio::oseirmetapop::Model<FP>& model, const fs::path& data_dir)
 {
     BOOST_OUTCOME_TRY(
         auto&& node_ids,
@@ -106,8 +104,8 @@ mio::IOResult<void> set_population_data(mio::oseirmobilityimproved::Model<FP>& m
         if (it != node_ids.end()) {
             auto region_idx = size_t(it - node_ids.begin());
             for (size_t age = 0; age < (size_t)model.parameters.get_num_agegroups(); age++) {
-                model.populations[{mio::oseirmobilityimproved::Region(region_idx), mio::AgeGroup(age),
-                                   mio::oseirmobilityimproved::InfectionState::Susceptible}] =
+                model.populations[{mio::oseirmetapop::Region(region_idx), mio::AgeGroup(age),
+                                   mio::oseirmetapop::InfectionState::Susceptible}] =
                     entry.population[mio::AgeGroup(age)];
             }
         }
@@ -118,11 +116,11 @@ mio::IOResult<void> set_population_data(mio::oseirmobilityimproved::Model<FP>& m
 }
 
 template <typename FP = ScalarType>
-mio::IOResult<void> set_mobility_weights(mio::oseirmobilityimproved::Model<FP>& model, const fs::path& data_dir)
+mio::IOResult<void> set_mobility_weights(mio::oseirmetapop::Model<FP>& model, const fs::path& data_dir)
 {
     size_t number_regions = (size_t)model.parameters.get_num_regions();
     if (number_regions == 1) {
-        model.parameters.template get<mio::oseirmobilityimproved::CommutingStrengths<>>()
+        model.parameters.template get<mio::oseirmetapop::CommutingStrengths<>>()
             .get_cont_freq_mat()[0]
             .get_baseline()
             .setConstant(1.0);
@@ -141,14 +139,13 @@ mio::IOResult<void> set_mobility_weights(mio::oseirmobilityimproved::Model<FP>& 
         }
 
         for (size_t county_idx_i = 0; county_idx_i < number_regions; ++county_idx_i) {
-            auto population_i = model.populations.get_group_total(mio::oseirmobilityimproved::Region(county_idx_i));
+            auto population_i = model.populations.get_group_total(mio::oseirmetapop::Region(county_idx_i));
             mobility_data_commuter.row(county_idx_i) /= population_i;
             mobility_data_commuter(county_idx_i, county_idx_i) =
                 1 - mobility_data_commuter.rowwise().sum()(county_idx_i);
         }
-        model.parameters.template get<mio::oseirmobilityimproved::CommutingStrengths<>>()
-            .get_cont_freq_mat()[0]
-            .get_baseline() = mobility_data_commuter;
+        model.parameters.template get<mio::oseirmetapop::CommutingStrengths<>>().get_cont_freq_mat()[0].get_baseline() =
+            mobility_data_commuter;
 
         printf("Setting mobility weights successful.\n");
         return mio::success();
@@ -156,8 +153,7 @@ mio::IOResult<void> set_mobility_weights(mio::oseirmobilityimproved::Model<FP>& 
 }
 
 template <typename FP = ScalarType>
-mio::IOResult<void> set_parameters_and_population(mio::oseirmobilityimproved::Model<FP>& model,
-                                                  const fs::path& data_dir)
+mio::IOResult<void> set_parameters_and_population(mio::oseirmetapop::Model<FP>& model, const fs::path& data_dir)
 {
     auto& populations = model.populations;
     auto& parameters  = model.parameters;
@@ -166,10 +162,9 @@ mio::IOResult<void> set_parameters_and_population(mio::oseirmobilityimproved::Mo
     size_t number_age_groups = (size_t)parameters.get_num_agegroups();
 
     BOOST_OUTCOME_TRY(set_population_data(model, data_dir));
-    populations[{mio::oseirmobilityimproved::Region(27), mio::AgeGroup(4),
-                 mio::oseirmobilityimproved::InfectionState::Susceptible}] -= 100;
-    populations[{mio::oseirmobilityimproved::Region(27), mio::AgeGroup(4),
-                 mio::oseirmobilityimproved::InfectionState::Exposed}] += 100;
+    populations[{mio::oseirmetapop::Region(27), mio::AgeGroup(4), mio::oseirmetapop::InfectionState::Susceptible}] -=
+        100;
+    populations[{mio::oseirmetapop::Region(27), mio::AgeGroup(4), mio::oseirmetapop::InfectionState::Exposed}] += 100;
 
     BOOST_OUTCOME_TRY(set_mobility_weights(model, data_dir));
 
@@ -178,22 +173,21 @@ mio::IOResult<void> set_parameters_and_population(mio::oseirmobilityimproved::Mo
     BOOST_OUTCOME_TRY(set_covid_parameters(parameters));
 
     mio::ContactMatrixGroup& commuting_strengths =
-        parameters.template get<mio::oseirmobilityimproved::CommutingStrengths<>>().get_cont_freq_mat();
+        parameters.template get<mio::oseirmetapop::CommutingStrengths<>>().get_cont_freq_mat();
 
     auto& population_after_commuting = model.m_population_after_commuting;
     for (size_t region_n = 0; region_n < number_regions; ++region_n) {
         for (size_t age = 0; age < number_age_groups; ++age) {
             double population_n = 0;
-            for (size_t state = 0; state < (size_t)mio::oseirmobilityimproved::InfectionState::Count; state++) {
-                population_n += populations[{mio::oseirmobilityimproved::Region(region_n), mio::AgeGroup(age),
-                                             mio::oseirmobilityimproved::InfectionState(state)}];
+            for (size_t state = 0; state < (size_t)mio::oseirmetapop::InfectionState::Count; state++) {
+                population_n += populations[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age),
+                                             mio::oseirmetapop::InfectionState(state)}];
             }
-            population_after_commuting[{mio::oseirmobilityimproved::Region(region_n), mio::AgeGroup(age)}] +=
-                population_n;
+            population_after_commuting[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age)}] += population_n;
             for (size_t region_m = 0; region_m < number_regions; ++region_m) {
-                population_after_commuting[{mio::oseirmobilityimproved::Region(region_n), mio::AgeGroup(age)}] -=
+                population_after_commuting[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age)}] -=
                     commuting_strengths[0].get_baseline()(region_n, region_m) * population_n;
-                population_after_commuting[{mio::oseirmobilityimproved::Region(region_m), mio::AgeGroup(age)}] +=
+                population_after_commuting[{mio::oseirmetapop::Region(region_m), mio::AgeGroup(age)}] +=
                     commuting_strengths[0].get_baseline()(region_n, region_m) * population_n;
             }
         }
@@ -215,9 +209,9 @@ int main()
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    const std::string& data_dir = "";
+    const std::string& data_dir = "/home/gers_ca/code/memilio/data";
 
-    mio::oseirmobilityimproved::Model<ScalarType> model(number_regions, number_age_groups);
+    mio::oseirmetapop::Model<ScalarType> model(number_regions, number_age_groups);
     auto result_prepare_simulation = set_parameters_and_population(model, data_dir);
 
     // std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator = std::make_shared<mio::EulerIntegratorCore<>>();
@@ -229,6 +223,5 @@ int main()
 
     auto result = mio::interpolate_simulation_result(result_from_sim);
 
-    auto save_result_status =
-        mio::save_result({result}, {1}, number_regions * number_age_groups, "ode_result_nrw_adaptive.h5");
+    auto save_result_status = mio::save_result({result}, {1}, number_regions * number_age_groups, "ode_result_nrw.h5");
 }

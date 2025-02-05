@@ -6,7 +6,7 @@
 
 namespace mio
 {
-namespace oseirmobility
+namespace oseirmetapopwang
 {
 
 /**
@@ -20,7 +20,7 @@ struct Region : public Index<Region> {
     }
 };
 
-} // namespace oseirmobility
+} // namespace oseirmetapopwang
 } // namespace mio
 
 #endif

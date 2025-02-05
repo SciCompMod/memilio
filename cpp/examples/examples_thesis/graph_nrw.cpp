@@ -31,28 +31,20 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
  * @param params Object that the contact matrices will be added to.
  * @returns any io errors that happen during reading of the files.
  */
-mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::oseir::Parameters<double>& params,
-                                         bool synthetic_population)
+mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::oseir::Parameters<double>& params)
 {
-    if (!synthetic_population) {
-        //TODO: io error handling
-        auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
-        for (auto&& contact_location : contact_locations) {
-            BOOST_OUTCOME_TRY(auto&& baseline,
-                              mio::read_mobility_plain(
-                                  (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
-            BOOST_OUTCOME_TRY(auto&& minimum,
-                              mio::read_mobility_plain(
-                                  (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
-            contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
-            contact_matrices[size_t(contact_location.first)].get_minimum()  = minimum;
-        }
-        params.get<mio::oseir::ContactPatterns<double>>() = mio::UncertainContactMatrix<double>(contact_matrices);
+    auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
+    for (auto&& contact_location : contact_locations) {
+        BOOST_OUTCOME_TRY(auto&& baseline,
+                          mio::read_mobility_plain(
+                              (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
+        BOOST_OUTCOME_TRY(auto&& minimum,
+                          mio::read_mobility_plain(
+                              (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
+        contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
+        contact_matrices[size_t(contact_location.first)].get_minimum()  = minimum;
     }
-    else {
-        mio::ContactMatrixGroup& contact_matrix = params.get<mio::oseir::ContactPatterns<>>().get_cont_freq_mat();
-        contact_matrix[0].get_baseline().setConstant(7.95 / (size_t)params.get_num_groups());
-    }
+    params.get<mio::oseir::ContactPatterns<double>>() = mio::UncertainContactMatrix<double>(contact_matrices);
 
     printf("Setting contact matrices successful.\n");
     return mio::success();
@@ -64,29 +56,22 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::oseir::P
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_covid_parameters(mio::oseir::Parameters<double>& params, bool synthetic_population)
+mio::IOResult<void> set_covid_parameters(mio::oseir::Parameters<double>& params)
 {
     params.template set<mio::oseir::TimeExposed<>>(3.335);
-    if (!synthetic_population) {
-        params.get<mio::oseir::TimeInfected<>>()[mio::AgeGroup(0)] = 8.0096875;
-        params.get<mio::oseir::TimeInfected<>>()[mio::AgeGroup(1)] = 8.0096875;
-        params.get<mio::oseir::TimeInfected<>>()[mio::AgeGroup(2)] = 8.2182;
-        params.get<mio::oseir::TimeInfected<>>()[mio::AgeGroup(3)] = 8.1158;
-        params.get<mio::oseir::TimeInfected<>>()[mio::AgeGroup(4)] = 8.033;
-        params.get<mio::oseir::TimeInfected<>>()[mio::AgeGroup(5)] = 7.985;
+    params.get<mio::oseir::TimeInfected<>>()[mio::AgeGroup(0)] = 8.0096875;
+    params.get<mio::oseir::TimeInfected<>>()[mio::AgeGroup(1)] = 8.0096875;
+    params.get<mio::oseir::TimeInfected<>>()[mio::AgeGroup(2)] = 8.2182;
+    params.get<mio::oseir::TimeInfected<>>()[mio::AgeGroup(3)] = 8.1158;
+    params.get<mio::oseir::TimeInfected<>>()[mio::AgeGroup(4)] = 8.033;
+    params.get<mio::oseir::TimeInfected<>>()[mio::AgeGroup(5)] = 7.985;
 
-        params.get<mio::oseir::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(0)] = 0.03;
-        params.get<mio::oseir::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(1)] = 0.06;
-        params.get<mio::oseir::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(2)] = 0.06;
-        params.get<mio::oseir::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(3)] = 0.06;
-        params.get<mio::oseir::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(4)] = 0.09;
-        params.get<mio::oseir::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(5)] = 0.175;
-    }
-    else {
-        params.template set<mio::oseir::TimeInfected<>>(8.097612257);
-
-        params.template set<mio::oseir::TransmissionProbabilityOnContact<>>(0.07333);
-    }
+    params.get<mio::oseir::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(0)] = 0.03;
+    params.get<mio::oseir::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(1)] = 0.06;
+    params.get<mio::oseir::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(2)] = 0.06;
+    params.get<mio::oseir::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(3)] = 0.06;
+    params.get<mio::oseir::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(4)] = 0.09;
+    params.get<mio::oseir::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(5)] = 0.175;
 
     printf("Setting epidemiological parameters successful.\n");
     return mio::success();
@@ -140,47 +125,18 @@ set_population_data(const fs::path& data_dir, mio::oseir::Parameters<double>& pa
     return mio::success(nodes);
 }
 
-mio::IOResult<std::vector<mio::oseir::Model<double>>>
-set_synthetic_population_data(mio::oseir::Parameters<double>& params)
-{
-    size_t number_regions = 53;
-
-    std::vector<mio::oseir::Model<double>> nodes(number_regions,
-                                                 mio::oseir::Model(int(size_t(params.get_num_groups()))));
-
-    mio::Populations<double, mio::AgeGroup, mio::oseir::InfectionState> population(
-        {params.get_num_groups(), mio::oseir::InfectionState::Count});
-
-    for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-        population[{i, mio::oseir::InfectionState::Susceptible}] = 1000000;
-    }
-    for (auto& node : nodes) {
-        node.parameters  = params;
-        node.populations = population;
-    }
-    for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-        nodes[0].populations[{i, mio::oseir::InfectionState::Exposed}]     = 100;
-        nodes[0].populations[{i, mio::oseir::InfectionState::Susceptible}] = 999900;
-    }
-
-    return mio::success(nodes);
-}
-
 mio::IOResult<void> run(const fs::path& data_dir, double t0, double tmax, double dt)
 {
     mio::set_log_level(mio::LogLevel::off);
     // global parameters
-    bool synthetic_population = false;
-    const int num_age_groups  = 6;
-    if (num_age_groups != 6) {
-        synthetic_population = true;
-    }
+    const int num_age_groups = 6;
+
     mio::oseir::Parameters<double> params(num_age_groups);
 
-    BOOST_OUTCOME_TRY(set_covid_parameters(params, synthetic_population));
+    BOOST_OUTCOME_TRY(set_covid_parameters(params));
 
     // set contact matrix
-    BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params, synthetic_population));
+    BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
 
     // graph of counties with populations and local parameters
     // and mobility between counties
@@ -191,20 +147,11 @@ mio::IOResult<void> run(const fs::path& data_dir, double t0, double tmax, double
         mio::get_node_ids((data_dir / "pydata" / "Germany" / "county_current_population_nrw.json").string(), true,
                           true));
 
-    if (synthetic_population) {
-        BOOST_OUTCOME_TRY(auto&& nodes, set_synthetic_population_data(params));
-        for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
-            params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
-        }
-        printf("Setting synthetic population successful.\n");
+    BOOST_OUTCOME_TRY(auto&& nodes, set_population_data(data_dir, params, node_ids));
+    for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
+        params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
     }
-    else {
-        BOOST_OUTCOME_TRY(auto&& nodes, set_population_data(data_dir, params, node_ids));
-        for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
-            params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
-        }
-        printf("Setting population from data successful.\n");
-    }
+    printf("Setting population from data successful.\n");
 
     BOOST_OUTCOME_TRY(auto&& mobility_data_commuter,
                       mio::read_mobility_plain((data_dir / "mobility" / "commuter_mobility_nrw.txt").string()));
@@ -227,10 +174,6 @@ mio::IOResult<void> run(const fs::path& data_dir, double t0, double tmax, double
         }
     }
 
-    // for (auto& node : params_graph.nodes()) {
-    //     node.property.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore<ScalarType>>());
-    // }
-
     auto sim = mio::make_mobility_sim(t0, dt, std::move(params_graph));
 
     printf("Start Simulation\n");
@@ -244,7 +187,7 @@ mio::IOResult<void> run(const fs::path& data_dir, double t0, double tmax, double
         return n.id;
     });
 
-    auto save_result_status = save_result(result, county_ids, num_age_groups, "graph_result_nrw_adaptive.h5");
+    auto save_result_status = save_result(result, county_ids, num_age_groups, "graph_result_nrw.h5");
 
     return mio::success();
 }
@@ -255,7 +198,7 @@ int main()
     const auto tmax = 100.;
     const auto dt   = 0.5; //time step of mobility, daily mobility every second step
 
-    const std::string& data_dir = "";
+    const std::string& data_dir = "/home/gers_ca/code/memilio/data";
 
     auto result = run(data_dir, t0, tmax, dt);
 

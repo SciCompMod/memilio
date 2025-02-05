@@ -26,13 +26,13 @@ void calculate_basic_reproduction_number(size_t number_regions, ScalarType tmax)
     ScalarType dt                = 0.1;
     ScalarType number_age_groups = 6;
 
-    mio::oseirmobility::Model<ScalarType> model(number_regions, number_age_groups);
+    mio::oseirmetapopwang::Model<ScalarType> model(number_regions, number_age_groups);
     auto& population = model.populations;
 
     for (size_t j = 0; j < number_age_groups; j++) {
         for (size_t i = 0; i < number_regions; i++) {
-            population[{mio::oseirmobility::Region(i), mio::AgeGroup(j),
-                        mio::oseirmobility::InfectionState::Susceptible}] = 10000;
+            population[{mio::oseirmetapopwang::Region(i), mio::AgeGroup(j),
+                        mio::oseirmetapopwang::InfectionState::Susceptible}] = 10000;
         }
     }
 
@@ -44,17 +44,17 @@ void calculate_basic_reproduction_number(size_t number_regions, ScalarType tmax)
     for (size_t county_idx_i = 0; county_idx_i < number_regions; ++county_idx_i) {
         mobility_data_commuter(county_idx_i, county_idx_i) = 1 - mobility_data_commuter.rowwise().sum()(county_idx_i);
     }
-    model.parameters.template get<mio::oseirmobility::CommutingStrengths<>>().get_cont_freq_mat()[0].get_baseline() =
+    model.parameters.template get<mio::oseirmetapopwang::CommutingStrengths<>>().get_cont_freq_mat()[0].get_baseline() =
         mobility_data_commuter;
 
     mio::ContactMatrixGroup& contact_matrix =
-        model.parameters.template get<mio::oseirmobility::ContactPatterns<>>().get_cont_freq_mat();
+        model.parameters.template get<mio::oseirmetapopwang::ContactPatterns<>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline() = get_contact_matrix();
 
     for (size_t j = 0; j < number_age_groups; j++) {
-        model.parameters.template get<mio::oseirmobility::TimeExposed<>>()[mio::AgeGroup(j)]  = TimeExposed[j];
-        model.parameters.template get<mio::oseirmobility::TimeInfected<>>()[mio::AgeGroup(j)] = TimeInfected[j];
-        model.parameters.template get<mio::oseirmobility::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(j)] =
+        model.parameters.template get<mio::oseirmetapopwang::TimeExposed<>>()[mio::AgeGroup(j)]  = TimeExposed[j];
+        model.parameters.template get<mio::oseirmetapopwang::TimeInfected<>>()[mio::AgeGroup(j)] = TimeInfected[j];
+        model.parameters.template get<mio::oseirmetapopwang::TransmissionProbabilityOnContact<>>()[mio::AgeGroup(j)] =
             TransmissionProbabilityOnContact[j];
     }
 

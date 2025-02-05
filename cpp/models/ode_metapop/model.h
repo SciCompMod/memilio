@@ -17,7 +17,7 @@ GCC_CLANG_DIAGNOSTIC(pop)
 
 namespace mio
 {
-namespace oseirmobilityimproved
+namespace oseirmetapop
 {
 
 /********************
@@ -206,9 +206,9 @@ public:
     }
 
     mio::Populations<FP, Region, AgeGroup> m_population_after_commuting;
-}; // namespace oseirmobilityimproved
+}; // namespace oseirmetapop
 
-} // namespace oseirmobilityimproved
+} // namespace oseirmetapop
 } // namespace mio
 
 #endif // ODESEIRMOBILITY_MODEL_H
