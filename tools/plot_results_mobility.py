@@ -35,7 +35,8 @@ def plot_map_nrw(data: pd.DataFrame,
              dpi: int = 300,
              outercolor='white',
              log_scale=False,
-             cmap='viridis'):
+             cmap='viridis', 
+             fontsize=10):
     """! Plots region-specific information onto a interactive html map and
     returning svg and png image. Allows the comparisons of a variable list of
     data sets.
@@ -134,25 +135,25 @@ def plot_map_nrw(data: pd.DataFrame,
         ax = fig.add_subplot(gs[1, i])
         if log_scale:
             map_data.plot(data_columns[i], ax=ax, legend=False,
-                          norm=norm, cmap=cmap)
+                          norm=norm, cmap=cmap, edgecolor='black', linewidth=0.1)
 
         elif cax is not None:
             map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True,
-                          vmin=scale_colors[0], vmax=scale_colors[1], cmap=cmap)
+                          vmin=scale_colors[0], vmax=scale_colors[1], cmap=cmap, edgecolor='black', linewidth=0.1)
         else:
             # Do not plot colorbar.
             map_data.plot(data_columns[i], ax=ax, legend=False,
-                          vmin=scale_colors[0], vmax=scale_colors[1], cmap=cmap)
+                          vmin=scale_colors[0], vmax=scale_colors[1], cmap=cmap, edgecolor='black', linewidth=0.1)
 
-        ax.set_title(legend[i], fontsize=9)
+        ax.set_title(legend[i], fontsize=fontsize)
         ax.set_axis_off()
 
     if plot_colorbar:
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])
         cbar = fig.colorbar(sm, cax=cax)
-        # cbar.set_ticks([scale_colors[0], scale_colors[1]])
-        # cbar.set_ticklabels([f'{scale_colors[0]:.3e}', f'{scale_colors[1]:.3e}'], fontsize=7)
+        cbar.set_ticks([scale_colors[0], scale_colors[1]])
+        cbar.set_ticklabels([f'{scale_colors[0]:.3e}', f'{scale_colors[1]:.3e}'], fontsize=7)
 
     plt.subplots_adjust(bottom=0.1, left=0.1)
     plt.tight_layout()
@@ -161,8 +162,17 @@ def plot_map_nrw(data: pd.DataFrame,
 
 def plot_maps(files, output_dir, legend, name=''):
 
-    min_val = 10e-6
-    max_val = 0.4
+    dfs = {}
+    min_vals = []
+    max_vals = []
+
+    for date in range(10, 101, 20):
+        dfs[date] = extract_nrw_data_and_combine(files=files, date=date, relative=True)
+        min_vals.append(dfs[date].drop(columns='Region').min().min())
+        max_vals.append(dfs[date].drop(columns='Region').max().max())
+
+    min_val = min(min_vals)
+    max_val = max(max_vals)
 
     cmap = 'viridis'
     norm = mcolors.LogNorm(vmin=min_val, vmax=max_val)
@@ -170,26 +180,26 @@ def plot_maps(files, output_dir, legend, name=''):
     sm.set_array([])
     cbar_fig, cax = plt.subplots(figsize=(12, 1))
     cbar = plt.colorbar(sm, orientation='horizontal', cax=cax)
-    cbar.ax.tick_params(labelsize=10)
-    cbar.set_ticks([min_val, max_val])
-    cbar.ax.xaxis.set_major_formatter(FormatStrFormatter('%.5f'))
+    cbar.ax.tick_params(labelsize=12)
+    # cbar.set_ticks([min_val, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, max_val])
+    # cbar.ax.xaxis.set_major_formatter(FormatStrFormatter('%.5f'))
+    plt.tight_layout()
     plt.subplots_adjust(bottom=0.3)
     plt.savefig(os.path.join(output_dir, 'colorbar.png'), dpi=300)
     plt.close()
 
     for date in range(10, 101, 20):
-        dfs_all = extract_nrw_data_and_combine(files=files, date=date)
-
         plot_map_nrw(
-            dfs_all, scale_colors=[min_val, max_val],
+            dfs[date], scale_colors=[min_val, max_val],
             legend=legend,
             title='NRW - Simulation Day '+str(date), plot_colorbar=False,
             output_path=output_dir,
             fig_name=name+str(date), dpi=900,
             outercolor='white', 
-            log_scale=True)
+            log_scale=True, 
+            fontsize=13)
         
-def plot_difference_2D(files, output_dir):
+def plot_difference(files, output_dir):
     fig = plt.figure()
 
     df_dif = pd.DataFrame(columns=['Time', 'difference', 'absolute value'])
@@ -202,41 +212,76 @@ def plot_difference_2D(files, output_dir):
     for date in range(100):
         dfs_all = extract_nrw_data_and_combine(files=files, date=date, relative=False)
         df_dif.loc[date,'difference'] = (dfs_all[dfs_all.columns[1]] - dfs_all[dfs_all.columns[2]]).sum() / total_population
-        df_dif.loc[date,'absolute value'] = abs(dfs_all[dfs_all.columns[1]] - dfs_all[dfs_all.columns[2]]).sum() / total_population
+        df_dif.loc[date,'absolute value'] = (dfs_all[dfs_all.columns[1]] - dfs_all[dfs_all.columns[2]]).abs().sum() / total_population
         
-    # df_dif.set_index('Time', inplace=True)
-    df_dif['difference'].plot(label='Difference')
-    df_dif['absolute value'].plot(label='Difference in absolute value')
+    df_dif['difference'].plot(label='Relative difference')
+    df_dif['absolute value'].plot(label='Relative difference in absolute value')
+    plt.xlim(left=0., right=101.)
+    plt.tight_layout()
     plt.legend()
     plt.grid(linestyle='--')
     plt.savefig(os.path.join(output_dir, 'difference2D.png'))
     plt.close()
 
     
-def plot_difference(files, output_dir):
-    fig = plt.figure()
+def plot_difference_maps(files, output_dir):
 
-    df_dif = pd.DataFrame(columns=['Region'])
+    df_dif1 = pd.DataFrame(columns=['Region'])
+    df_dif2 = pd.DataFrame(columns=['Region'])
+
+    for date in range(10, 51, 10):
+        dfs_all = extract_nrw_data_and_combine(files=files, date=date, relative=True)
+        df_dif1['Region'] = dfs_all['Region']
+        df_dif1['Count (rel)' + str(date)] = dfs_all[dfs_all.columns[1]] - dfs_all[dfs_all.columns[2]]
 
     for date in range(60, 101, 10):
         dfs_all = extract_nrw_data_and_combine(files=files, date=date, relative=True)
-        df_dif['Region'] = dfs_all['Region']
-        
+        df_dif2['Region'] = dfs_all['Region']
 
-        df_dif['Count (rel)' + str(date)] = dfs_all[dfs_all.columns[1]] - dfs_all[dfs_all.columns[2]]
-    
-        # df_dif = df_dif[df_dif['Count (rel)' + str(date)] > 0]
 
-    min_val = df_dif.drop(columns=['Region']).min().min()
-    max_val = df_dif.drop(columns=['Region']).max().max()
+        df_dif2['Count (rel)' + str(date)] = dfs_all[dfs_all.columns[1]] - dfs_all[dfs_all.columns[2]]
+
+
+    min_val1 = df_dif1.drop(columns=['Region']).min().min()
+    max_val1 = df_dif1.drop(columns=['Region']).max().max()
+    min_val2 = df_dif2.drop(columns=['Region']).min().min()
+    max_val2 = df_dif2.drop(columns=['Region']).max().max()
+    min_val = min(min_val1, min_val2)
+    max_val = max(max_val1, max_val2)
     maximum_abs = abs(max([min_val, max_val], key=abs))
 
+    cmap = 'seismic'
+    norm = mcolors.TwoSlopeNorm(vmin=-maximum_abs, vmax=maximum_abs, vcenter=0)
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cbar_fig, cax = plt.subplots(figsize=(12, 1))
+    cbar = plt.colorbar(sm, orientation='horizontal', cax=cax)
+    ticks = np.linspace(-maximum_abs, maximum_abs, 10)
+    cbar.ax.tick_params(labelsize=13)
+    cbar.set_ticks(ticks)
+    cbar.ax.xaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.3)
+    plt.savefig(os.path.join(output_dir, 'colorbar_difference.png'), dpi=900)
+    plt.close()
+
     plot_map_nrw(
-        df_dif, scale_colors=[-maximum_abs, maximum_abs],
-        legend=['Day ' + str(date) for date in range(60, 101, 10)],
-        title='Difference between ODE and graph-based model', plot_colorbar=True,
+        df_dif1, scale_colors=[-maximum_abs, maximum_abs],
+        legend=['Day ' + str(date) for date in range(10, 51, 10)],
+        title='', plot_colorbar=False,
         output_path=output_dir,
-        fig_name="difference", dpi=900,
+        fig_name="difference10-50", dpi=900,
+        outercolor='white', 
+        log_scale=False,
+        cmap='seismic', 
+        fontsize=17)
+    
+    plot_map_nrw(
+        df_dif2, scale_colors=[-maximum_abs, maximum_abs],
+        legend=['Day ' + str(date) for date in range(60, 101, 10)],
+        title='', plot_colorbar=False,
+        output_path=output_dir,
+        fig_name="difference60-100", dpi=900,
         outercolor='white', 
         log_scale=False,
         cmap='seismic')
@@ -249,7 +294,7 @@ def extract_nrw_data_and_combine(files, date, relative=True):
     i = 0
     for file in files.values():
         model_type = os.path.basename(file).split('_')[0]
-        if model_type == 'ode': # result file of equation-based model has to be first
+        if model_type == 'ode': 
             df = pm.extract_data(
                 file, region_spec=None, column=None, date=date,
                 filters={'Group': filter_age, 'InfectionState': [2]},
@@ -319,22 +364,26 @@ def plot_total_compartment(files, output_dir, legend, compartment = 'Infected', 
             dates = h5file['1']['Time'][:]
             data = h5file['1']['Total'][:,compartments[compartment]]
             ax.plot(dates, data, label=legend[file_idx], linewidth=2, color=colors[file_idx])
-            ax.set_ylim(bottom=0.)
+            ax.set_title(compartment, fontsize=8)
+            # ax.set_ylim(bottom=0.)
             ax.set_xlim(left=0., right=dates.max()+1)
         else:
             df = pd.DataFrame()
             regions = list(h5file.keys())
+            population=0
             for i in range(len(regions)):
+                for comp in compartments.keys():
+                    population += h5file[regions[i]]['Total'][:, compartments[comp]]
                 df['Region'+str(i)] = h5file[regions[i]]['Total'][:, compartments[compartment]]
             df['Total'] = df.sum(axis=1)
             df['Time'] = h5file[regions[0]]['Time'][:] # hardcoded
-            ax.plot(df['Time'], df['Total'], label=legend[file_idx], linewidth=1.2, color=colors[file_idx])
+            ax.plot(df['Time'], df['Total'], label=legend[file_idx], linewidth=1.5, color=colors[file_idx], linestyle='--')
+            ax.set_title(compartment, fontsize=8)
             ax.set_ylim(bottom=0.)
             ax.set_xlim(left=0., right=df['Time'].max()+1)
-            # ax.legend()
 
         file_idx = file_idx+1
-
+    ax.tick_params(labelsize=7, )
     plt.tight_layout()
     if print_legend:
         plt.legend()  
@@ -359,27 +408,21 @@ def compare_compartments(files, output_dir, legend):
 
 if __name__ == '__main__':
 
-    results_euler = {'Model B': 'cpp/build/ode_result_paper_nrw_euler', 
-                     'Model C': 'cpp/build/ode_result_nrw_euler',
-                   'Model D': 'cpp/build/graph_result_nrw_euler'}
-    results_adaptive = {'Model B': 'cpp/build/ode_result_paper_nrw_adaptive',
-                        'Model C': 'cpp/build/ode_result_nrw_adaptive',
-                   'Model D': 'cpp/build/graph_result_nrw_adaptive'}
-    files_compare_solver = {'Data set 1': 'cpp/build/ode_result_nrw_euler',
-                            'Data set 2': 'cpp/build/ode_result_nrw_adaptive',
-                            'Data set 3': 'cpp/build/graph_result_nrw_euler',
-                            'Data set 4': 'cpp/build/graph_result_nrw_adaptive'}
+    results = {'Model B': 'results/ode_result_wang_nrw',
+                        'Model C': 'results/ode_result_nrw',
+                   'Model D': 'results/graph_result_nrw'}
+
     file_format = 'h5'
 
-    models = ['Model B',
-              'Model C',
-              'Model D']
+    models = ['Model B (ODE)',
+              'Model C (ODE)',
+              'Model D (Graph-ODE)']
 
     plot_dir = os.path.join(os.path.dirname(__file__), '../Plots')
     
-    plot_maps(files=results_adaptive, output_dir=plot_dir, legend=models, name='NRWAdaptiveDay')
-    # plot_difference_2D(files={key: value for key, value in results_adaptive.items() if key in {
-    # 'Model C', 'Model D'}}, output_dir=plot_dir)
-    compare_compartments(files=results_adaptive, output_dir=plot_dir,  legend=models)
-    # plot_total_compartment(files=results_adaptive, output_dir=plot_dir,  legend=models, 
-    #                        compartment='Infected', name='infectives', title='Total infectives')
+    plot_maps(files=results, output_dir=plot_dir, legend=models, name='NRWAdaptiveDay')
+    plot_difference_maps(files={key: value for key, value in results.items() if key in {
+        'Model C', 'Model D'}}, output_dir=plot_dir)
+    plot_difference(files={key: value for key, value in results.items() if key in {
+    'Model C', 'Model D'}}, output_dir=plot_dir)
+    compare_compartments(files=results, output_dir=plot_dir,  legend=models)
