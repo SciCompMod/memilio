@@ -5,7 +5,6 @@
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/compartments/simulation.h"
 
-#include <likwid-marker.h>
 #include <omp.h>
 
 bool age_groups = false;
@@ -129,13 +128,11 @@ double simulate_runtime(size_t number_regions, ScalarType tmax)
 
     set_parameters_and_population(params_graph, number_regions);
 
-    auto sim        = mio::make_mobility_sim(t0, dt, std::move(params_graph));
-    
-    LIKWID_MARKER_START("simulate");
+    auto sim = mio::make_mobility_sim(t0, dt, std::move(params_graph));
+
     auto start_time = omp_get_wtime();
     sim.advance(tmax);
     auto end_time = omp_get_wtime();
-    LIKWID_MARKER_STOP("simulate");
 
     return end_time - start_time;
 }
@@ -156,7 +153,7 @@ void simulate(size_t number_regions, ScalarType tmax)
 int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::off);
-    const ScalarType tmax = 100;
+    const ScalarType tmax = 20;
     size_t warm_up        = 10;
     size_t num_runs       = 100;
     size_t num_regions    = 10;
@@ -174,12 +171,10 @@ int main(int argc, char** argv)
 
     // Runs with timing.
     ScalarType total = 0;
-    LIKWID_MARKER_INIT;
     for (size_t i = 0; i < num_runs; i++) {
         double run_time = simulate_runtime(num_regions, tmax);
         total += run_time;
     }
-    LIKWID_MARKER_CLOSE;
     std::cout << "\"Time\": " << total / num_runs << "\n}," << std::endl;
 
     return 0;

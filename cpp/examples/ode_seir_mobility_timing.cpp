@@ -26,7 +26,6 @@
 #include "models/ode_seir_mobility_improved/parameters.h"
 #include "models/ode_seir_mobility_improved/regions.h"
 
-#include <likwid-marker.h>
 #include <omp.h>
 
 bool age_groups = false;
@@ -170,20 +169,16 @@ void simulate(size_t num_warm_up_runs, size_t num_runs, size_t number_regions, S
 
     // Runs with timing.
     ScalarType total = 0;
-    LIKWID_MARKER_INIT;
     for (size_t i = 0; i < num_runs; i++) {
-        LIKWID_MARKER_START("simulate");
         double runtime = simulate_runtime(t0, tmax, dt, model, integrator);
         total += runtime;
-        LIKWID_MARKER_STOP("simulate");
     }
-    LIKWID_MARKER_CLOSE;    
     std::cout << "\"Time\": " << total / num_runs << "\n}," << std::endl;
 }
 
 int main(int argc, char** argv)
 {
-    const ScalarType tmax = 100;
+    const ScalarType tmax = 20;
     size_t warm_up        = 10;
     size_t num_runs       = 100;
     size_t num_regions    = 10;
