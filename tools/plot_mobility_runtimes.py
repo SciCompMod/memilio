@@ -11,27 +11,6 @@ fontsize_legends = 12
 
 models = ['Model C (ODE)', 'Model D (Graph-ODE)']
 
-def plot_runtime(file, name=''):
-    fig = plt.figure()
-    df = pd.read_json(file)
-
-    plt.plot(df["Regions"], df["Time"],
-             linestyle='--', marker='o', linewidth=1.2)
-    plt.ylim(bottom=df['Time'].min())
-    plt.xlim(left=df["Regions"].min()-1, right=df["Regions"].max()+1)
-    plt.xlabel('Number of regions', fontsize=fontsize_labels)
-    plt.ylabel('Run time [seconds]', fontsize=fontsize_labels)
-    plt.yticks(fontsize=fontsize_legends)
-    plt.xticks(fontsize=fontsize_legends)
-    plt.grid(True, linestyle='--')
-    plt.tight_layout()
-
-    plot_dir = os.path.join(os.path.dirname(__file__), '../Plots')
-    if name is None:
-        name = os.path.splitext(os.path.basename(file))[0]
-    plt.savefig(os.path.join(plot_dir, name), bbox_inches='tight', dpi=500)
-    plt.close()
-
 def plot_flops(name='number_flops'):
     fig, ax = plt.subplots()
 
