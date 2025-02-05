@@ -81,7 +81,7 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
                               daily_transmissions_by_contacts(local_contact_exposure, cell_index, virus, age_receiver,
                                                               local_parameters)) +
                      daily_transmissions_by_air(local_air_exposure, cell_index, virus, global_parameters)) *
-                    dt.days() * (1 - mask_protection) * (1 - person.get_protection_factor(t, virus, global_parameters));
+                    (1 - mask_protection) * (1 - person.get_protection_factor(t, virus, global_parameters));
 
                 local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
             }
@@ -100,7 +100,8 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
 }
 
 void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExposureRates& local_contact_exposure,
-                               const Person& person, const Location& location, const TimePoint t, const TimeSpan dt)
+                               const Person& person, const Location& location, const TimePoint t, const TimeSpan dt,
+                               const Parameters& global_parameters)
 {
     if (person.get_location() != location.get_id()) {
         mio::log_debug("In add_exposure_contribution: Person {} is not at Location {}", person.get_id().get(),
@@ -119,9 +120,11 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
                     location.get_cells()[cell.get()].compute_space_per_person_relative();
             }
             else {
-                local_air_exposure[{cell, virus}] += infection.get_infectivity(t + dt / 2);
+                local_air_exposure[{cell, virus}] += global_parameters.get<InfectionRateFromViralShed>()[{virus}] *
+                                                     infection.get_infectivity(t + dt / 2);
             }
-            local_contact_exposure[{cell, virus, age}] += infection.get_infectivity(t + dt / 2);
+            local_contact_exposure[{cell, virus, age}] +=
+                global_parameters.get<InfectionRateFromViralShed>()[{virus}] * infection.get_infectivity(t + dt / 2);
         }
     }
 }

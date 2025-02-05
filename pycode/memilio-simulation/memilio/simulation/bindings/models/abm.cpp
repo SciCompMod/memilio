@@ -678,6 +678,7 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::abm::VirusVariant, mio::AgeGroup>(
         m, "_AgeParameterArray");
     pymio::bind_CustomIndexArray<mio::abm::TestParameters, mio::abm::TestType>(m, "_TestData");
+    pymio::bind_CustomIndexArray<double, mio::abm::VirusVariant>(m, "_InfectionRateArray");
     pymio::bind_Index<mio::abm::ProtectionType>(m, "ProtectionTypeIndex");
     pymio::bind_ParameterSet<mio::abm::ParametersBase, pymio::EnablePickling::Never>(m, "ParametersBase");
     pymio::bind_class<mio::abm::Parameters, pymio::EnablePickling::Never, mio::abm::ParametersBase>(m, "Parameters")
@@ -801,6 +802,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("assign_location", &mio::abm::Model::assign_location, py::arg("person_id"), py::arg("location_id"))
         .def("get_location", py::overload_cast<mio::abm::LocationId>(&mio::abm::Model::get_location, py::const_),
              py::return_value_policy::reference_internal)
+        .def("add_infection_rate_damping", &mio::abm::Model::add_infection_rate_damping, py::arg("t"),
+             py::arg("factor"))
         .def("get_rng", &mio::abm::Model::get_rng, py::return_value_policy::reference_internal)
         .def_property_readonly("locations", py::overload_cast<>(&mio::abm::Model::get_locations, py::const_),
                                py::keep_alive<1, 0>{}) //keep this model alive while contents are referenced in ranges

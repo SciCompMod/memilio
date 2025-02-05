@@ -24,7 +24,9 @@
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/mobility_rules.h"
+#include "abm/virus_variant.h"
 #include "memilio/epidemiology/age_group.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"
 #include "memilio/utils/stl_util.h"
@@ -262,6 +264,36 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
         } // implicit taskloop barrier
         // here is an implicit (and needed) barrier from parallel for
 
+        //apply infection rate dampings
+        auto& dampings = parameters.get<InfectionRateDampings>();
+        if (!dampings.empty()) {
+            auto& a = parameters.get<InfectionRateFromViralShed>()[{VirusVariant(0)}];
+            mio::unused(a);
+            // We want to go through the dampings vector and get the last entry that is smaller than t
+            auto it = std::upper_bound(dampings.begin(), dampings.end(), t,
+                                       [](TimePoint tp, const std::pair<TimePoint, double>& p) {
+                                           return tp < p.first;
+                                       });
+            if (it > dampings.begin() + 1) { //new damping has to be applied
+                if (it != dampings.begin() + 2) {
+                    mio::log_error("Error: At least one ABM Damping was skipped.");
+                }
+                else {
+                    //first remove old damping
+                    double old_factor = dampings.begin()->second;
+                    for (auto virus = int(VirusVariant(0)); virus != int(VirusVariant::Count); ++virus) {
+                        parameters.get<InfectionRateFromViralShed>()[{VirusVariant(virus)}] *= 1. / old_factor;
+                    }
+                    //Remove old damping
+                    dampings.erase(dampings.begin());
+                    //Apply new damping
+                    for (auto virus = int(VirusVariant(0)); virus != int(VirusVariant::Count); ++virus) {
+                        parameters.get<InfectionRateFromViralShed>()[{VirusVariant(virus)}] *= dampings.begin()->second;
+                    }
+                }
+            }
+        }
+
         // 2) add all contributions from each person
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_persons; ++i) {
@@ -269,7 +301,7 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
             const auto location  = person.get_location().get();
             mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
                                                 m_contact_exposure_rates_cache[location], person,
-                                                get_location(person.get_id()), t, dt);
+                                                get_location(person.get_id()), t, dt, parameters);
         } // implicit taskloop barrier
     } // implicit single barrier
 }

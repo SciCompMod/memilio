@@ -36,16 +36,6 @@ from memilio.simulation.abm import Infection
 
 import pandas as pd
 
-# class used to map input areas to abm locations
-
-
-class LocationMapping:
-
-    def __init__(self):
-        self.inputId = None
-        self.modelId = []
-
-
 # number of age groups
 num_age_groups = 6
 age_group_0_to_4 = AgeGroup(0)
@@ -56,26 +46,11 @@ age_group_60_to_79 = AgeGroup(4)
 age_group_80_plus = AgeGroup(5)
 
 
-def age_group_to_string(age_group):
-    if (age_group == age_group_0_to_4):
-        return "0"
-    elif (age_group == age_group_5_to_15):
-        return "1"
-    elif (age_group == age_group_16_to_34):
-        return "2"
-    elif (age_group == age_group_35_to_59):
-        return "3"
-    elif (age_group == age_group_60_to_79):
-        return "4"
-    elif (age_group == age_group_80_plus):
-        return "5"
-    else:
-        return "AgeGroup not found"
-
-
 def set_infection_parameters(parameters):
 
     infection_params = abm.Parameters(num_age_groups)
+
+    infection_params.InfectionRateFromViralShed[VirusVariant.Wildtype] = 0.1
 
     # AgeGroup 0-4
     abm.set_incubationPeriod(
@@ -296,26 +271,6 @@ def set_infection_parameters(parameters):
     return infection_params
 
 
-def read_txt(path):
-    # read input file and save it in a pd.Dataframe
-    return pd.read_csv(path, sep='\t')
-
-
-def insert_locations_to_map(mapping, inputId, locations):
-    map = LocationMapping()
-    map.inputId = inputId
-    for loc in locations:
-        type = str(int(loc[1]))
-        index = str(loc[0].index())
-        if int(loc[1]) < 10:
-            type = "0" + type
-        if loc[0].index() < 10:
-            index = "0" + index
-        map.modelId.append(type+index)
-    mapping.append(map)
-    return mapping
-
-
 def assign_infection_states(model, t0, exposed_pct, infected_no_symptoms_pct, infected_symptoms_pct,
                             infected_severe_pct, infected_critical_pct, recovered_pct):
     susceptible_pct = 1 - exposed_pct - infected_no_symptoms_pct - \
@@ -329,224 +284,6 @@ def assign_infection_states(model, t0, exposed_pct, infected_no_symptoms_pct, in
         if (abm.InfectionState(infection_state) != abm.InfectionState.Susceptible):
             person.add_new_infection(Infection(
                 model, person, VirusVariant.Wildtype, t0, abm.InfectionState(infection_state), False), t0)
-
-
-def find_all_locations_of_type(model, type):
-    locations = []
-    for loc in model.locations:
-        if (loc.type == type):
-            locations.append(loc.id)
-    return locations
-
-
-def convert_loc_id_to_string(loc):
-    type = str(int(loc[1]))
-    index = str(loc[0].index())
-    if int(loc[1]) < 10:
-        type = "0" + type
-    if int(loc[0].index()) < 10:
-        index = "0" + index
-
-    return type + index
-
-
-def get_agents_per_location(loc_id, agents):
-    agents_per_loc = []
-    for a in agents:
-        if (int(a[1]) == int(loc_id[1]) and a[0].index() == loc_id[0].index()):
-            agents_per_loc.append(a)
-    return agents_per_loc
-
-
-def write_results_to_file(path, log):
-    location_ids = log[1][0]
-    time_points = log[0]
-    agents = log[2]
-    with open(path, 'w') as f:
-        for location_id_index in range(len(location_ids)):
-            line = convert_loc_id_to_string(
-                location_ids[location_id_index]) + " " + str(len(time_points))
-            for t in range(len(time_points)):
-                agents_per_loc = get_agents_per_location(
-                    location_ids[location_id_index], agents[t])
-                line += " " + str(time_points[t]) + \
-                    " " + str(len(agents_per_loc))
-                for a in agents_per_loc:
-                    if (a[3].days > 1000):
-                        time_since_transmission = -1.0
-                    else:
-                        time_since_transmission = a[3].hours
-                    line += " " + str(a[2].index()) + " " + \
-                        str(time_since_transmission)
-            f.write(line)
-            f.write('\n')
-    f.close()
-
-
-def convert_infection_state_to_string(infection_state):
-    if (infection_state == abm.InfectionState.Susceptible):
-        return "S"
-    elif (infection_state == abm.InfectionState.Exposed):
-        return "E"
-    elif (infection_state == abm.InfectionState.InfectedNoSymptoms):
-        return "I_ns"
-    elif (infection_state == abm.InfectionState.InfectedSymptoms):
-        return "I_sy"
-    elif (infection_state == abm.InfectionState.InfectedSevere):
-        return "I_sev"
-    elif (infection_state == abm.InfectionState.InfectedCritical):
-        return "I_cri"
-    elif (infection_state == abm.InfectionState.Recovered):
-        return "R"
-    elif (infection_state == abm.InfectionState.Dead):
-        return "D"
-    else:
-        raise Exception("Infection state not found")
-
-
-def write_infection_paths_to_file_states(path, log):
-    agent_ids = [log[2][0][i][1] for i in range(len(log[2][0]))]
-    with open(path, 'w') as f:
-        for id in agent_ids:
-            line = str(id) + " "
-            for t in range(len(log[2])):
-                line += convert_infection_state_to_string(
-                    log[2][t][id][3]) + " "
-            f.write(line)
-            f.write('\n')
-    f.close()
-
-
-def write_infection_paths_to_file(path, model, tmax):
-    with open(path, 'w') as f:
-        f.write("Agent_id S E I_ns I_sy I_sev I_cri R D\n")
-        for person in model.persons:
-            line = str(int(person.id.index())) + " "
-            if person.infection_state(tmax) == abm.InfectionState.Susceptible:
-                line += str(int(tmax.hours)) + " "
-                for i in range(int(abm.InfectionState.Count)-1):
-                    line += "0 "
-            else:
-                time_S = max(
-                    person.infection.get_infection_start() - abm.TimePoint(0), abm.TimeSpan(0))
-                time_E = person.infection.get_time_in_state(
-                    abm.InfectionState.Exposed)
-                time_INS = person.infection.get_time_in_state(
-                    abm.InfectionState.InfectedNoSymptoms)
-                time_ISy = person.infection.get_time_in_state(
-                    abm.InfectionState.InfectedSymptoms)
-                time_ISev = person.infection.get_time_in_state(
-                    abm.InfectionState.InfectedSevere)
-                time_ICri = person.infection.get_time_in_state(
-                    abm.InfectionState.InfectedCritical)
-                time_R = abm.TimePoint(0)
-                time_D = abm.TimePoint(0)
-                if (person.infection_state(tmax) == abm.InfectionState.Recovered):
-                    time_infected = time_E + time_INS + time_ISy + time_ISev + time_ICri
-                    if (time_S.hours == 0):
-                        time_R = tmax - \
-                            (time_infected +
-                             (person.infection.get_infection_start() - abm.TimePoint(0)))
-                    else:
-                        time_R = tmax - time_S - time_infected
-                if (person.infection_state(tmax) == abm.InfectionState.Dead):
-                    time_infected = time_E + time_INS + time_ISy + time_ISev + time_ICri
-                    if (time_S.hours == 0):
-                        time_D = tmax - \
-                            (time_infected +
-                             (person.infection.get_infection_start() - abm.TimePoint(0)))
-                    else:
-                        time_D = tmax - time_S - time_infected
-                line += str(time_S.hours) + " " + str(time_E.hours) + " " + str(time_INS.hours) + " " + str(time_ISy.hours) + " " \
-                    + str(time_ISev.hours) + " " + str(time_ICri.hours) + \
-                    " " + str(time_R.hours) + " " + \
-                    str(time_D.hours) + " "
-            f.write(line)
-            f.write('\n')
-    f.close()
-
-
-def write_location_mapping_to_file(path, mapping):
-    with open(path, 'w') as f:
-        for id in mapping:
-            line = id.inputId + " "
-            for modelId in id.modelId:
-                line += modelId + " "
-            f.write(line)
-            f.write('\n')
-        f.close()
-
-
-def set_sim_result_at_start(sim):
-    for location in sim.model.locations:
-        result = sim.result.get_last_value()
-        result += location.population.get_last_value()
-
-
-def write_age_and_hh(model, path):
-    with open(path, 'w') as f:
-        for person in model.persons:
-            line = str(person.id) + " " + age_group_to_string(person.age) + " " + \
-                str(person.assigned_location(abm.LocationType.Home))
-            f.write(line)
-            f.write('\n')
-        f.close()
-
-
-def write_compartments_to_file(model, path, timepoints):
-    with open(path, 'w') as f:
-        f.write("t S E Ins Isy Isev Icri R D\n")
-        for t in range(len(timepoints)):
-            tp = abm.TimePoint(0) + abm.hours(t)
-            line = str(timepoints[t]) + " "
-            comps = np.zeros(int(abm.InfectionState.Count))
-            for person in model.persons:
-                state = person.infection_state(tp)
-                comps[int(state)] += 1
-            for c in comps:
-                line += str(c) + " "
-            f.write(line)
-            f.write('\n')
-        f.close()
-
-
-def convert_time_since_transmission(time):
-    if (time.days > 1000):
-        return -1.0
-    else:
-        return time.hours
-
-
-def write_results_to_h5(path, log):
-    file = h5py.File(path, 'w')
-    result_list = []
-    for agent in log[3][0]:
-        gr = file.create_group(str(agent.index()))
-        loc_ids = np.array([convert_loc_id_to_string((log[2][t][agent.index()][0], log[2][t][agent.index()][1]))
-                           for t in range(len(log[2]))], dtype=np.str_)
-        time_since_transm = np.array([convert_time_since_transmission(
-            log[2][t][agent.index()][3]) for t in range(len(log[2]))], dtype=np.float64)
-        ds = gr.create_dataset('loc_ids', shape=len(
-            loc_ids), dtype=h5py.string_dtype())
-        ds[:] = loc_ids
-        gr.create_dataset("time_since_transm",
-                          data=time_since_transm, dtype=np.float64)
-    file.close()
-
-
-def age_to_age_group(age):
-    if (age < 5):
-        return age_group_0_to_4
-    elif (age < 15):
-        return age_group_5_to_15
-    elif (age < 35):
-        return age_group_16_to_34
-    elif (age < 60):
-        return age_group_35_to_59
-    elif (age < 80):
-        return age_group_60_to_79
-    else:
-        return age_group_80_plus
 
 
 def save_persons(trip_file):
@@ -807,7 +544,7 @@ def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file)
 
 def run_abm_simulation(sim_num):
     input_path = sys.path[0] + '/input/'
-    output_path = sys.path[0] + '/output/'
+    output_path = sys.path[0] + '/output/w_damping/'
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(sim_num)
     # starting time point
@@ -832,6 +569,9 @@ def run_abm_simulation(sim_num):
     abm.set_AgeGroupGoToSchool(sim.model.parameters, age_group_5_to_15)
     abm.set_AgeGroupGoToWork(sim.model.parameters, age_group_16_to_34)
     abm.set_AgeGroupGoToWork(sim.model.parameters, age_group_35_to_59)
+    # add dampings
+    sim.model.add_infection_rate_damping(
+        abm.TimePoint(abm.days(5).seconds), 0.0)
     # assign initial infection states according to distribution
     assign_infection_states(sim.model, t0, 0.002, 0.005,
                             0.0029, 0.0001, 0.0, 0.0)
@@ -886,5 +626,5 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     # set LogLevel
     mio.abm.set_log_level_warn()
-    for i in range(1, 2):
+    for i in range(0, 1):
         run_abm_simulation(i, **args.__dict__)

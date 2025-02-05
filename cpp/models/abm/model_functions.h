@@ -63,9 +63,11 @@ ScalarType daily_transmissions_by_air(const AirExposureRates& rates, const CellI
  * @param[in] location The person's current location.
  * @param[in] t Current Simulation time.
  * @param[in] dt Length of the current Simulation time step.
+ * @param[in] global_parameters Parameters of the Model.
  */
 void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExposureRates& local_contact_exposure,
-                               const Person& person, const Location& location, const TimePoint t, const TimeSpan dt);
+                               const Person& person, const Location& location, const TimePoint t, const TimeSpan dt,
+                               const Parameters& global_parameters);
 
 /**
  * @brief Let a Person interact with the population at its current Location, possibly getting infected.

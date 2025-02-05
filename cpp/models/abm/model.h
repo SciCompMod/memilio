@@ -32,10 +32,12 @@
 #include "abm/random_events.h"
 #include "abm/testing_strategy.h"
 #include "memilio/epidemiology/age_group.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 
 #include <bitset>
+#include <utility>
 #include <vector>
 
 namespace mio
@@ -453,6 +455,11 @@ public:
         return get_location(get_person(id).get_location());
     }
     /** @} */
+
+    void add_infection_rate_damping(TimePoint t, double factor)
+    {
+        parameters.get<InfectionRateDampings>().push_back(std::make_pair(t, factor));
+    }
 
 private:
     /**

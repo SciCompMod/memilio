@@ -36,6 +36,8 @@
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/contact_matrix.h"
+#include <utility>
+#include <vector>
 
 namespace mio
 {
@@ -368,6 +370,21 @@ struct InfectionRateFromViralShed {
     static std::string name()
     {
         return "InfectionRateFromViralShed";
+    }
+};
+
+/**
+ * @brief Determines dampings on the infection rate. The dampings are used as a linear factor.
+*/
+struct InfectionRateDampings {
+    using Type = std::vector<std::pair<TimePoint, double>>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return Type(std::vector<std::pair<TimePoint, double>>{std::make_pair(TimePoint(0), 1.)}); //Julia
+    }
+    static std::string name()
+    {
+        return "InfectionRateDampings";
     }
 };
 
@@ -719,12 +736,12 @@ using ParametersBase =
                  TimeInfectedSevereToRecovered, TimeInfectedCriticalToDead, TimeInfectedCriticalToRecovered,
                  SymptomsPerInfectedNoSymptoms, SeverePerInfectedSymptoms, CriticalPerInfectedSevere,
                  DeathsPerInfectedCritical, ViralLoadDistributions, InfectivityDistributions, VirusShedFactor,
-                 DetectInfection, MaskProtection, InfectionRateFromViralShed, AerosolTransmissionRates, LockdownDate,
-                 QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
-                 GotoWorkTimeMaximum, ReturnFromWorkTimeMinimum, ReturnFromWorkTimeMaximum, GotoSchoolTimeMinimum,
-                 GotoSchoolTimeMaximum, ReturnFromSchoolTimeMinimum, ReturnFromSchoolTimeMaximum, AgeGroupGotoSchool,
-                 AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor,
-                 TestData>;
+                 DetectInfection, MaskProtection, InfectionRateFromViralShed, InfectionRateDampings,
+                 AerosolTransmissionRates, LockdownDate, QuarantineDuration, SocialEventRate, BasicShoppingRate,
+                 WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum, ReturnFromWorkTimeMinimum,
+                 ReturnFromWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, ReturnFromSchoolTimeMinimum,
+                 ReturnFromSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor,
+                 SeverityProtectionFactor, HighViralLoadProtectionFactor, TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
