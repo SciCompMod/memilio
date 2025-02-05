@@ -1,5 +1,5 @@
 
-#include "ode_seir_mobility/model.h"
+#include "ode_metapop_wang/model.h"
 
 namespace mio
 {

@@ -30,9 +30,9 @@ add_executable(sde_sir_example sde_sir.cpp)
 target_link_libraries(sde_sir_example PRIVATE memilio sde_sir)
 target_compile_options(sde_sir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(ode_metapop_liu_nrw examples_thesis/ode_metapop_liu_nrw.cpp)
-target_link_libraries(ode_metapop_liu_nrw PRIVATE memilio ode_seir_mobility)
-target_compile_options(ode_metapop_liu_nrw PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+add_executable(ode_metapop_wang_nrw examples_thesis/ode_metapop_wang_nrw.cpp)
+target_link_libraries(ode_metapop_wang_nrw PRIVATE memilio ode_seir_mobility)
+target_compile_options(ode_metapop_wang_nrw PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 if (MEMILIO_ENABLE_OPENMP)
     add_executable(ode_metapop_timing examples_thesis/ode_metapop_timing.cpp)

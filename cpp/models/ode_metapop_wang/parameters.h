@@ -7,7 +7,7 @@
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/utils/custom_index_array.h"
-#include "models/ode_seir_mobility/regions.h"
+#include "models/ode_metapop_wang/regions.h"
 
 #include <vector>
 

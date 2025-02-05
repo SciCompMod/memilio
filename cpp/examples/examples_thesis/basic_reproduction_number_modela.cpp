@@ -1,6 +1,4 @@
-
 #include "models/ode_seir/model.h"
-#include "models/ode_seir_mobility/model.h"
 
 #include "memilio/math/euler.h"
 #include "memilio/compartments/simulation.h"
