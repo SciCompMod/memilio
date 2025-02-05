@@ -186,7 +186,7 @@ int main()
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    const std::string& data_dir = "/home/gers_ca/code/memilio/data";
+    const std::string& data_dir = "";
 
     mio::oseirmetapopwang::Model<ScalarType> model(number_regions, number_age_groups);
     auto result_prepare_simulation = set_parameters_and_population(model, data_dir);

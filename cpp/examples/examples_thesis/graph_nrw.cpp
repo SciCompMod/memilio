@@ -198,7 +198,7 @@ int main()
     const auto tmax = 100.;
     const auto dt   = 0.5; //time step of mobility, daily mobility every second step
 
-    const std::string& data_dir = "/home/gers_ca/code/memilio/data";
+    const std::string& data_dir = "";
 
     auto result = run(data_dir, t0, tmax, dt);
 
