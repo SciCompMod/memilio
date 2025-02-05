@@ -4,9 +4,9 @@
 
 #include "memilio/compartments/flow_model.h"
 #include "memilio/epidemiology/populations.h"
-#include "models/ode_seir_mobility_improved/infection_state.h"
-#include "models/ode_seir_mobility_improved/parameters.h"
-#include "models/ode_seir_mobility_improved/regions.h"
+#include "models/ode_metapop/infection_state.h"
+#include "models/ode_metapop/parameters.h"
+#include "models/ode_metapop/regions.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/time_series.h"
 

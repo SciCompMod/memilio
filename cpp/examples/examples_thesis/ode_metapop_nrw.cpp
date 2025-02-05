@@ -4,10 +4,10 @@
 #include "memilio/utils/logging.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/io/mobility_io.h"
-#include "models/ode_seir_mobility_improved/infection_state.h"
-#include "models/ode_seir_mobility_improved/model.h"
-#include "models/ode_seir_mobility_improved/parameters.h"
-#include "models/ode_seir_mobility_improved/regions.h"
+#include "models/ode_metapop/infection_state.h"
+#include "models/ode_metapop/model.h"
+#include "models/ode_metapop/parameters.h"
+#include "models/ode_metapop/regions.h"
 #include "memilio/io/io.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/epi_data.h"
@@ -230,5 +230,5 @@ int main()
     auto result = mio::interpolate_simulation_result(result_from_sim);
 
     auto save_result_status =
-        mio::save_result({result}, {1}, number_regions * number_age_groups, "ode_result_nrw_adaptive_test.h5");
+        mio::save_result({result}, {1}, number_regions * number_age_groups, "ode_result_nrw_adaptive.h5");
 }

@@ -1,34 +1,14 @@
-/* 
-* Copyright (C) 2020-2024 MEmilio
-*
-* Authors: Carlotta Gerstein
-*
-* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
 
 #include "memilio/compartments/simulation.h"
-#include "memilio/math/euler.h"
 #include "memilio/utils/custom_index_array.h"
-#include "models/ode_seir_mobility_improved/infection_state.h"
-#include "models/ode_seir_mobility_improved/model.h"
-#include "models/ode_seir_mobility_improved/parameters.h"
-#include "models/ode_seir_mobility_improved/regions.h"
+#include "models/ode_metapop/infection_state.h"
+#include "models/ode_metapop/model.h"
+#include "models/ode_metapop/parameters.h"
+#include "models/ode_metapop/regions.h"
 
 #include <omp.h>
 
-bool age_groups = false;
+bool age_groups = true;
 
 template <typename FP>
 void set_contact_matrix(mio::oseirmobilityimproved::Model<FP>& model)
@@ -107,14 +87,14 @@ void set_parameters_and_population(mio::oseirmobilityimproved::Model<FP>& model)
     size_t number_age_groups = (size_t)parameters.get_num_agegroups();
     for (size_t j = 0; j < number_age_groups; j++) {
         for (size_t i = 0; i < number_regions; i++) {
-            populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(j),
-                         mio::oseirmobilityimproved::InfectionState::Susceptible}] = 60000;
+            model.populations[{mio::oseirmobilityimproved::Region(i), mio::AgeGroup(j),
+                               mio::oseirmobilityimproved::InfectionState::Susceptible}] = 10000;
         }
     }
-    populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
-                 mio::oseirmobilityimproved::InfectionState::Exposed}] += 100;
-    populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
-                 mio::oseirmobilityimproved::InfectionState::Susceptible}] -= 100;
+    model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
+                       mio::oseirmobilityimproved::InfectionState::Exposed}] += 100;
+    model.populations[{mio::oseirmobilityimproved::Region(0), mio::AgeGroup(0),
+                       mio::oseirmobilityimproved::InfectionState::Susceptible}] -= 100;
     set_mobility_weights(model);
 
     set_contact_matrix(model);
@@ -144,11 +124,12 @@ void set_parameters_and_population(mio::oseirmobilityimproved::Model<FP>& model)
     }
 }
 
-void simulate(size_t num_warm_up_runs, size_t num_runs, size_t number_regions, ScalarType tmax)
+void simulate(ScalarType tol, ScalarType tmax)
 {
     mio::set_log_level(mio::LogLevel::off);
     ScalarType t0                = 0.;
     ScalarType dt                = 0.1;
+    size_t number_regions        = 100;
     ScalarType number_age_groups = 1;
     if (age_groups) {
         number_age_groups = 6;
@@ -156,37 +137,25 @@ void simulate(size_t num_warm_up_runs, size_t num_runs, size_t number_regions, S
 
     mio::oseirmobilityimproved::Model<ScalarType> model(number_regions, number_age_groups);
     set_parameters_and_population(model);
+    using DefaultIntegratorCore =
+        mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>;
 
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator = std::make_shared<mio::EulerIntegratorCore<>>();
+    std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator = std::make_shared<DefaultIntegratorCore>(tol);
+    std::cout << "{ \"Absolute tolerance\": " << tol << ", " << std::endl;
 
-    std::cout << "{ \"Regions\": " << number_regions << ", " << std::endl;
-
-    // Warm up runs.
-    for (size_t i = 0; i < num_warm_up_runs; i++) {
-        simulate(t0, tmax, dt, model, integrator);
-    }
     auto result = simulate(t0, tmax, dt, model, integrator);
-
-    // Runs with timing.
-    ScalarType total = 0;
-    for (size_t i = 0; i < num_runs; i++) {
-        double runtime = simulate_runtime(t0, tmax, dt, model, integrator);
-        total += runtime;
-    }
-    std::cout << "\"Time\": " << total / num_runs << "\n}," << std::endl;
+    std::cout << "\"Steps\": " << result.get_num_time_points() - 1 << "}," << std::endl;
 }
 
 int main(int argc, char** argv)
 {
-    const ScalarType tmax = 20;
-    size_t warm_up        = 10;
-    size_t num_runs       = 100;
-    size_t num_regions    = 10;
-    if (argc > 3) {
-        warm_up     = std::stod(argv[1]);
-        num_runs    = std::stod(argv[2]);
-        num_regions = std::stod(argv[3]);
+    const ScalarType tmax = 10;
+    ScalarType tol        = 1e-12;
+
+    if (argc > 1) {
+        tol = std::stod(argv[1]);
     }
-    simulate(warm_up, num_runs, num_regions, tmax);
+
+    simulate(tol, tmax);
     return 0;
 }
