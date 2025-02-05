@@ -91,7 +91,7 @@ def compare_runtime_and_flops(files, name=''):
     x = np.linspace(0, 400, 400)
     
     ax2.plot(x, flops_equation_based(x), linewidth=2, color='darkblue', label='FLOP Model C')
-    ax2.plot(x, flops_graph_based(x), linewidth=2, color='#e02313', label='FLOP Model D')
+    ax2.plot(x, flops_graph_based(x), linewidth=2, color='#9C180D', label='FLOP Model D')
     ax2.set_ylabel('Number of FLOP', fontsize=fontsize_labels)
     ax2.set_ylim(bottom=0.)
 

@@ -351,7 +351,7 @@ def extract_nrw_data_and_combine(files, date, relative=True):
 
 def plot_total_compartment(files, output_dir, legend, compartment = 'Infected', name='', ax=None, print_legend=True):
 
-    colors = ['#1f77b4', '#2ca02c', '#ff7f0e']
+    colors = ['#2ca02c', '#ff7f0e', '#9C180D']
     file_idx = 0
     if ax is None:
         fig, ax = plt.subplots()
@@ -420,9 +420,9 @@ if __name__ == '__main__':
 
     plot_dir = os.path.join(os.path.dirname(__file__), '../Plots')
     
-    plot_maps(files=results, output_dir=plot_dir, legend=models, name='NRWAdaptiveDay')
-    plot_difference_maps(files={key: value for key, value in results.items() if key in {
-        'Model C', 'Model D'}}, output_dir=plot_dir)
-    plot_difference(files={key: value for key, value in results.items() if key in {
-    'Model C', 'Model D'}}, output_dir=plot_dir)
+    # plot_maps(files=results, output_dir=plot_dir, legend=models, name='NRWAdaptiveDay')
+    # plot_difference_maps(files={key: value for key, value in results.items() if key in {
+    #     'Model C', 'Model D'}}, output_dir=plot_dir)
+    # plot_difference(files={key: value for key, value in results.items() if key in {
+    # 'Model C', 'Model D'}}, output_dir=plot_dir)
     compare_compartments(files=results, output_dir=plot_dir,  legend=models)
