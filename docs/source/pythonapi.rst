@@ -10,3 +10,6 @@ Python API
 
     memilio.generation
     memilio.epidata
+    memilio.simulation
+    memilio.surrogatemodel
+    memilio.plot

@@ -42,6 +42,20 @@ intersphinx_disabled_domains = ['std']
 
 templates_path = ['_templates']
 
+hoverxref_auto_ref = True
+hoverxref_roles = ["term"]
+hoverxref_domains = ["py"]
+hoverxref_role_types = {
+    "hoverxref": "tooltip",
+    "ref": "tooltip",
+    "term": "tooltip",
+    "obj": "tooltip",
+    "func": "tooltip",
+    "mod": "tooltip",
+    "meth": "tooltip",
+    "class": "tooltip",
+}
+
 breathe_projects = {"MEmilio": "../xml"}
 breathe_default_project = "MEmilio"
 
