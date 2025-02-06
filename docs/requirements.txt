@@ -4,4 +4,8 @@ furo
 sphinx-copybutton
 breathe
 sphinx-hoverxref
-file:pycode/memilio-epidata
+pycode/memilio-epidata
+pycode/memilio-generation
+pycode/memilio-plot
+pycode/memilio-simulation
+pycode/memilio-surrogatemodel
