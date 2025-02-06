@@ -17,8 +17,8 @@ if read_the_docs_build:
 
      subprocess.call('cd ..; doxygen', shell=True)
 
-# import memilio
-sys.path.insert(0, os.path.abspath('../../pycode'))
+import memilio
+# sys.path.insert(0, os.path.abspath('../../pycode'))
 
 # -- General configuration
 
