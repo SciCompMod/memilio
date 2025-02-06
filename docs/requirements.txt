@@ -4,6 +4,7 @@ furo
 sphinx-copybutton
 breathe
 sphinx-hoverxref
+libmagic
 pycode/memilio-epidata
 pycode/memilio-generation
 pycode/memilio-plot
