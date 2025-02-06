@@ -1,6 +1,7 @@
 import requests
 import os
 from zipfile import ZipFile
+from pathlib import PurePath
 
 import logging
 import time
@@ -18,6 +19,7 @@ def write_zip(path_to_saved_zips, zipped_name, percentiles=['p50'], case_data=Fa
     @param[in] percentiles. List[str]
     @param[in] case_data Flag to distinguish between casedata and scenarios.
     """
+    print(path_to_saved_zips)
     log.info(path_to_saved_zips)
 
     zipfile = os.path.join(path_to_saved_zips, zipped_name + ".zip")
@@ -26,9 +28,10 @@ def write_zip(path_to_saved_zips, zipped_name, percentiles=['p50'], case_data=Fa
             if case_data:
                 # The results from the casedata scenario are stored in a directory above path_to_saved_zips which is
                 # why we are adapting the path here. (We go up twice because path ends with "/".)
-                real_path_to_data = os.path.dirname(
-                    os.path.dirname(path_to_saved_zips))
-
+                path_parts = PurePath(path_to_saved_zips).parts[0:-1]
+                real_path_to_data = os.path.join(*path_parts)
+                print(real_path_to_data)
+                log.info(real_path_to_data)
             else:
                 # Scenario results are stored  in subfolder of path_to_saved_zips specified by scenario id and name.
                 real_path_to_data = os.path.join(
