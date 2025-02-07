@@ -520,8 +520,9 @@ def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file)
     new_dict = {}
     for traffic_cell_id in d.keys():
         if traffic_cell_id[:4] != '9162':
-            new_key = 'x' + traffic_cell_id
-            new_dict[new_key] = d[traffic_cell_id].split(' ')
+            continue
+            # new_key = 'x' + traffic_cell_id
+            # new_dict[new_key] = d[traffic_cell_id].split(' ')
         else:
             Id_tan = np.unique(
                 areas[areas['id_n'] == int(traffic_cell_id)]['ID_TAN'])
@@ -544,7 +545,7 @@ def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file)
 
 def run_abm_simulation(sim_num):
     input_path = sys.path[0] + '/input/'
-    output_path = sys.path[0] + '/output/w_damping/'
+    output_path = sys.path[0] + '/output/'
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(sim_num)
     # starting time point
@@ -627,4 +628,4 @@ if __name__ == "__main__":
     # set LogLevel
     mio.abm.set_log_level_warn()
     for i in range(0, 1):
-        run_abm_simulation(i, **args.__dict__)
+        run_abm_simulation(1, **args.__dict__)
