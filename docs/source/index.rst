@@ -20,4 +20,5 @@ Contents
    models
    pythonapi
    cppapi
+   api/library_root
 
