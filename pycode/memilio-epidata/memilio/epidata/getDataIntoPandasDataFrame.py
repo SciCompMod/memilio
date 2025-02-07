@@ -176,7 +176,7 @@ def user_choice(message, default=False):
 def download_file(
         url, chunk_size=1024, timeout=None, progress_function=None,
         verify=True):
-    """! Download a file using GET over HTTP.
+    """ Download a file using GET over HTTP.
 
     :param url: Full url of the file to download.
     :param chunk_size: Number of Bytes downloaded at once. Only used when a
@@ -245,7 +245,7 @@ def download_file(
 
 
 def extract_zip(file, **param_dict):
-    """! reads a zip file and returns a list of dataframes for every file in the zip folder.
+    """ reads a zip file and returns a list of dataframes for every file in the zip folder.
     If only one file is readable for func_to_use a single dataframe is returned instead of a list with one entry.
 
     :param file: String. Path to Zipfile to read.
@@ -272,7 +272,7 @@ def get_file(
         filepath='', url='', read_data=dd.defaultDict['read_data'],
         param_dict={},
         interactive=False):
-    """! Loads data from filepath and stores it in a pandas dataframe.
+    """ Loads data from filepath and stores it in a pandas dataframe.
     If data can't be read from given filepath the user is asked whether the file should be downloaded from the given url or not.
     Uses the progress indicator to give feedback.
 
@@ -351,7 +351,7 @@ def get_file(
 
 
 def cli(what):
-    """! Defines command line interface
+    """ Defines command line interface
     
     The function parameter "what" is used as a dictionary key.
     The return of the dictionary is either a list of a string and a list of keywords.
@@ -533,7 +533,7 @@ def cli(what):
 def append_filename(
         filename='', impute_dates=False, moving_average=0, split_berlin=False,
         rep_date=False):
-    """! Creates consistent file names for all output.
+    """ Creates consistent file names for all output.
 
     :param filename:  (Default value = '')
     :param impute_dates:  (Default value = False)
@@ -557,7 +557,7 @@ def append_filename(
 
 
 def check_dir(directory):
-    """! Checks existence and creates folder
+    """ Checks existence and creates folder
     
     It is checked if the folder given in the parameter "directory" exists.
     If it does not exist it is created.
@@ -572,7 +572,7 @@ def check_dir(directory):
 
 
 def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
-    """! Writes pandas dataframe to file
+    """ Writes pandas dataframe to file
     
     This routine writes a pandas dataframe to a file in a given format.
     The filename is given without ending.

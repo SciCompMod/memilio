@@ -38,7 +38,7 @@ pd.options.mode.copy_on_write = True
 
 
 def verify_sorted(countykey_list):
-    """! verify that read countykey_list is sorted
+    """ verify that read countykey_list is sorted
 
     :param countykey_list: List of county regional keys
 
@@ -54,7 +54,7 @@ def verify_sorted(countykey_list):
 
 
 def assign_geographical_entities(countykey_list, govkey_list, run_checks):
-    """! Assigns counties to governing regions based on key comparison and creates list of governing regions per state.
+    """ Assigns counties to governing regions based on key comparison and creates list of governing regions per state.
     
     Only works with sorted key lists.
     
@@ -140,7 +140,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                       setup_dict='',
                       ref_year=2022,
                       **kwargs):
-    """! Computes DataFrame of commuter mobility patterns based on the Federal
+    """ Computes DataFrame of commuter mobility patterns based on the Federal
     Agency of Work data.
     
     Keyword arguments:
@@ -520,7 +520,7 @@ def commuter_sanity_checks(df):
 def get_neighbors_mobility(
         countyid, direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
         out_folder=dd.defaultDict['out_folder'], ref_year=2022, **kwargs):
-    """! Returns the neighbors of a particular county ID depening on the
+    """ Returns the neighbors of a particular county ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
     
@@ -585,7 +585,7 @@ def get_neighbors_mobility(
 def get_neighbors_mobility_all(
         direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
         out_folder=dd.defaultDict['out_folder'], ref_year=2022):
-    """! Returns the neighbors of all counties ID depening on the
+    """ Returns the neighbors of all counties ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
     
@@ -624,7 +624,7 @@ def get_neighbors_mobility_all(
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
     arg_dict = gd.cli("commuter_official")
     ref_year = 2022

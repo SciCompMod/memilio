@@ -91,7 +91,7 @@ def fetch_case_data(
     conf_obj,
     read_data: bool = dd.defaultDict['read_data'],
 ) -> pd.DataFrame:
-    """! Downloads the case data
+    """ Downloads the case data
     
     The data is read either from the internet or from a json file (CaseDataFull.json), stored in an earlier run.
     If the data is read from the internet, before changing anything the data is stored in CaseDataFull.json.
@@ -181,7 +181,7 @@ def preprocess_case_data(raw_df: pd.DataFrame,
                          split_berlin: bool = dd.defaultDict['split_berlin'],
                          rep_date: bool = dd.defaultDict['rep_date'],
                          ) -> pd.DataFrame:
-    """! Preprocessing of the case data
+    """ Preprocessing of the case data
     
     While working with the data
     - the column names are changed to english depending on defaultDict
@@ -297,7 +297,7 @@ def write_case_data(df: pd.DataFrame,
                     rep_date: bool = dd.defaultDict['rep_date'],
                     files: str or list = 'All',
                     ) -> None or dict:
-    """! Writing the different case data file.
+    """ Writing the different case data file.
     Following data is generated and written to the mentioned filename
         - All infected (current and past) for whole germany are stored in "cases_infected"
         - All deaths whole germany are stored in "cases_deaths"
@@ -478,7 +478,7 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
                   files: str or list = 'All',
                   **kwargs
                   ) -> Dict:
-    """! Wrapper function that downloads the case data and provides different kind of structured data into json files.
+    """ Wrapper function that downloads the case data and provides different kind of structured data into json files.
     
     The data is read either from the internet or from a json file (CaseDataFull.json), stored in an earlier run.
     If the data is read from the internet, before changing anything the data is stored in CaseDataFull.json.
@@ -582,7 +582,7 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
     arg_dict = gd.cli("cases")
     get_case_data(**arg_dict)
 

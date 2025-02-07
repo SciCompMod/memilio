@@ -60,7 +60,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
                         sanitize_data=dd.defaultDict['sanitize_data'],
                         **kwargs
                         ):
-    """! Downloads all data from external sources
+    """ Downloads all data from external sources
     
     The functions which are called are:
     - getCaseData.get_case_data
@@ -131,7 +131,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
     arg_dict = gd.cli("sim")
     get_simulation_data(**arg_dict)

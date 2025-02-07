@@ -694,7 +694,7 @@ IntermediateRegionIDsToCountyIDs = {
 
 
 def invert_dict(dict_to_invert):
-    """! Inverts the roles of keys and values of dictionary to create
+    """ Inverts the roles of keys and values of dictionary to create
     a new dictionary where the previous keys are the values and vice versa.
 
     :param dict_to_invert: Dictionary.

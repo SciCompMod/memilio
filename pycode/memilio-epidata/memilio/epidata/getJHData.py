@@ -43,7 +43,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
                 end_date=dd.defaultDict['end_date'],
                 impute_dates=dd.defaultDict['impute_dates'],
                 **kwargs):
-    """! Download data from John Hopkins University
+    """ Download data from John Hopkins University
     
        Data is either downloaded and afterwards stored or loaded from a stored filed.
        The file is "FullData_JohnHopkins.json"
@@ -155,7 +155,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
     arg_dict = gd.cli("jh")
     get_jh_data(**arg_dict)

@@ -48,7 +48,7 @@ CountyMerging = {
 
 
 def get_state_ids(zfill=False):
-    """"! Get list of federal state IDs sorted according to state ID.
+    """" Get list of federal state IDs sorted according to state ID.
 
     :param zfill: Default: False] Defines whether state IDs are zero-filled to
         two digits and returned as a string or returned as an integer.
@@ -63,7 +63,7 @@ def get_state_ids(zfill=False):
 
 
 def get_state_names():
-    """"! Get list of federal state names sorted according to state ID.
+    """" Get list of federal state names sorted according to state ID.
 
 
     :returns: List of federal names sorted according to state ID.
@@ -73,7 +73,7 @@ def get_state_names():
 
 
 def get_state_names_and_ids(zfill=False):
-    """"! Get list of federal state names and IDs sorted according to state ID.
+    """" Get list of federal state names and IDs sorted according to state ID.
 
     :param zfill: Default: False] Defines whether state IDs are zero-filled to
         two digits and returned as a string or returned as an integer.
@@ -86,7 +86,7 @@ def get_state_names_and_ids(zfill=False):
 
 
 def get_stateid_to_name():
-    """"! Returns a hash map from federal state ID to state name.
+    """" Returns a hash map from federal state ID to state name.
 
 
     :returns: hash map from federal state ID to state name.
@@ -96,7 +96,7 @@ def get_stateid_to_name():
 
 
 def insert_names_of_states(df, state_id_col=dd.EngEng["idState"]):
-    """! Adds a column with names of states given a dataframe with state ids
+    """ Adds a column with names of states given a dataframe with state ids
 
     :param df: dataframe with state ids and missing state names
     :param state_id_col: column name of the column containing the state ids (Default value = dd.EngEng["idState"])
@@ -112,7 +112,7 @@ def insert_names_of_states(df, state_id_col=dd.EngEng["idState"]):
 
 
 def get_county_ids(merge_berlin=True, merge_eisenach=True, zfill=False):
-    """"! Get list of county IDs sorted according to county ID.
+    """" Get list of county IDs sorted according to county ID.
 
     :param merge_berlin: Default: True] Defines whether the different districts
         are listed separately or combined as one entity 'Berlin'.
@@ -142,7 +142,7 @@ def get_county_ids(merge_berlin=True, merge_eisenach=True, zfill=False):
 
 
 def get_county_names(merge_berlin=True, merge_eisenach=True):
-    """"! Get list of county names sorted according to county ID.
+    """" Get list of county names sorted according to county ID.
 
     :param merge_berlin: Default: True] Defines whether the different districts
         are listed separately or combined as one entity 'Berlin'.
@@ -157,7 +157,7 @@ def get_county_names(merge_berlin=True, merge_eisenach=True):
 
 def get_county_names_and_ids(
         merge_berlin=True, merge_eisenach=True, zfill=False):
-    """"! Get list of county names and IDs sorted according to county ID.
+    """" Get list of county names and IDs sorted according to county ID.
 
     :param merge_berlin: Default: True] Defines whether the different districts
         are listed separately or combined as one entity 'Berlin'.
@@ -178,7 +178,7 @@ def get_county_names_and_ids(
 
 
 def get_countyid_to_name():
-    """"! Returns a hash map from county ID to county name.
+    """" Returns a hash map from county ID to county name.
 
 
     :returns: hash map from county ID to county name.
@@ -189,7 +189,7 @@ def get_countyid_to_name():
 
 def insert_names_of_counties(
         df, county_id_col=dd.EngEng["idCounty"], merge_berlin=True):
-    """! Adds a column with names of counties given a dataframe with state ids
+    """ Adds a column with names of counties given a dataframe with state ids
 
     :param df: dataframe with county ids and missing county names
     :param county_id_col: column name of the column containing the county ids (Default value = dd.EngEng["idCounty"])
@@ -207,7 +207,7 @@ def insert_names_of_counties(
 
 def check_for_all_counties(
         unique_county_list, merge_berlin=True, merge_eisenach=True):
-    """! Checks if all states are mentioned
+    """ Checks if all states are mentioned
     
     This function checks if all counties are available in the list provided.
     If data is incomplete this function returns false and a parent function may
@@ -248,7 +248,7 @@ def check_for_all_counties(
 
 def get_countyid_to_stateid_map(
         merge_berlin=True, merge_eisenach=True, zfill=False):
-    """! Creates a hash map from county IDs to state IDs
+    """ Creates a hash map from county IDs to state IDs
 
     :param merge_berlin: Default: True] Defines whether the different districts
         are listed separately or combined as one entity 'Berlin'.
@@ -270,7 +270,7 @@ def get_countyid_to_stateid_map(
 
 
 def get_stateid_to_countyids_map(merge_eisenach=True, zfill=False):
-    """! Creates a hash map from state IDs to lists of county IDs
+    """ Creates a hash map from state IDs to lists of county IDs
 
     :param merge_eisenach: Default: True] Defines whether the counties
         'Wartburgkreis' and 'Eisenach' are listed separately or combined
@@ -291,7 +291,7 @@ def get_stateid_to_countyids_map(merge_eisenach=True, zfill=False):
 
 
 def get_governing_regions(strict=True):
-    """! Creates a sorted list of governing regions which may simply be
+    """ Creates a sorted list of governing regions which may simply be
     federal states or intermediate regions which themselves are a real
     subset of a federal state and to which a certain number of counties
     is attributed.
@@ -329,7 +329,7 @@ def get_governing_regions(strict=True):
 
 
 def get_official_county_table():
-    """! Downloads a table with information on all German counties from destatis.
+    """ Downloads a table with information on all German counties from destatis.
 
 
     :returns: County table with essential columns.
@@ -360,7 +360,7 @@ def get_official_county_table():
 
 
 def get_nuts3_county_id_map():
-    """! Downloads county list file from destatis and creates hash map from
+    """ Downloads county list file from destatis and creates hash map from
     NUTS3 ID to county ID.
 
 
@@ -389,7 +389,7 @@ def get_nuts3_county_id_map():
 
 
 def create_intermediateregion_level(merge_eisenach=True):
-    """! Creates region information based on county aggregation level which is
+    """ Creates region information based on county aggregation level which is
     finer than federal state aggregation and based on mobility.
     The new regions aggregate a certain level of counties. For more
     information, see the following references.
@@ -435,7 +435,7 @@ def create_intermediateregion_level(merge_eisenach=True):
 
 
 def get_intermediateregion_ids(merge_ulm=True, zfill=False):
-    """"! Get list of intermediate region IDs sorted according to ID.
+    """" Get list of intermediate region IDs sorted according to ID.
 
     :param merge_ulm: Combines region of Ulm (32) with region of Stuttgart (30). (Default value = True)
     :param zfill: Default: False] Defines whether IDs are zero-filled to
@@ -453,7 +453,7 @@ def get_intermediateregion_ids(merge_ulm=True, zfill=False):
 
 
 def get_intermediateregion_names(merge_ulm=True):
-    """"! Get list of intermediate region names sorted according to ID.
+    """" Get list of intermediate region names sorted according to ID.
 
     :param merge_ulm: Combines region of Ulm (32) with region of Stuttgart (30). (Default value = True)
     :returns: List of intermediate region names sorted according to ID.
@@ -468,7 +468,7 @@ def get_intermediateregion_names(merge_ulm=True):
 
 
 def get_intermediateregion_names_and_ids(merge_ulm=True, zfill=False):
-    """"! Get list of intermediate region names and IDs sorted according to ID.
+    """" Get list of intermediate region names and IDs sorted according to ID.
 
     :param merge_ulm: Combines region of Ulm (32) with region of Stuttgart (30). (Default value = True)
     :param zfill: Default: False] Defines whether IDs are zero-filled to
@@ -487,7 +487,7 @@ def get_intermediateregion_names_and_ids(merge_ulm=True, zfill=False):
 
 
 def get_intermediateregion_to_name(merge_ulm=True):
-    """"! Returns a hash map from federal state ID to state name.
+    """" Returns a hash map from federal state ID to state name.
 
     :param merge_ulm: Combines region of Ulm (32) with region of Stuttgart (30). (Default value = True)
     :returns: hash map from federal state ID to state name.
@@ -503,7 +503,7 @@ def get_intermediateregion_to_name(merge_ulm=True):
 
 def get_countyid_to_intermediateregionid_map(merge_ulm=True,
                                              merge_eisenach=True, zfill=False):
-    """! Creates a hash map from county IDs to intermediate region IDs
+    """ Creates a hash map from county IDs to intermediate region IDs
 
     :param merge_ulm: Combines region of Ulm (32) with region of Stuttgart (30). (Default value = True)
     :param merge_eisenach: Default: True] Defines whether the counties
@@ -541,7 +541,7 @@ def get_countyid_to_intermediateregionid_map(merge_ulm=True,
 
 def get_intermediateregionid_to_countyids_map(
         merge_ulm=True, merge_eisenach=True, zfill=False):
-    """! Creates a hash map from intermediate region IDs to lists of county IDs
+    """ Creates a hash map from intermediate region IDs to lists of county IDs
 
     :param merge_ulm: Combines region of Ulm (32) with region of Stuttgart (30). (Default value = True)
     :param merge_eisenach: Default: True] Defines whether the counties
@@ -584,7 +584,7 @@ def merge_df_counties(
         df, merged_id, separated_ids, sorting=[dd.EngEng['date']],
         columns=dd.EngEng['date'],
         method='sum'):
-    """! Merges the data frame data of different local entities such as the districts of Berlin or
+    """ Merges the data frame data of different local entities such as the districts of Berlin or
     counties that were merged on political decision in between.
 
     :param df: Original pandas dataframe.
@@ -649,7 +649,7 @@ def merge_df_counties_all(
         df, sorting=[dd.EngEng['date']],
         columns=dd.EngEng['date'],
         method='sum'):
-    """! Merges the data frame data of different local entities such as the districts
+    """ Merges the data frame data of different local entities such as the districts
     of Berlin or counties that were merged on political decision in between according
     to the lists provided in the dictionary geoModificationGermany.CountyMerging.
 

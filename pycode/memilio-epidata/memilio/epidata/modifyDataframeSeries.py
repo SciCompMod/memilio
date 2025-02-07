@@ -38,7 +38,7 @@ pd.options.mode.copy_on_write = True
 def impute_and_reduce_df(
         df_old, group_by_cols, mod_cols, impute='forward', moving_average=0,
         min_date='', max_date='', start_w_firstval=False):
-    """! Impute missing dates of dataframe time series and optionally calculates a moving average of the data.
+    """ Impute missing dates of dataframe time series and optionally calculates a moving average of the data.
     Extracts Dates between min and max date.
 
     :param df_old: old pandas dataframe
@@ -212,7 +212,7 @@ def impute_and_reduce_df(
 def split_column_based_on_values(
         df_to_split, column_to_split, column_vals_name, groupby_list,
         column_identifiers_to_names_dict, compute_cumsum):
-    """! Splits a column in a dataframe into separate columns. For each unique value that appears in a selected column,
+    """ Splits a column in a dataframe into separate columns. For each unique value that appears in a selected column,
     all corresponding values in another column are transfered to a new column. If required, cumulative sum is calculated in new generated columns.
 
     :param df_to_split: global pandas dataframe
@@ -265,7 +265,7 @@ def split_column_based_on_values(
 
 
 def extract_subframe_based_on_dates(df, start_date, end_date):
-    """! Removes all data with date lower than start date or higher than end date.
+    """ Removes all data with date lower than start date or higher than end date.
     
     Returns the Dataframe with only dates between start date and end date.
     Resets the Index of the Dataframe.
@@ -291,7 +291,7 @@ def extract_subframe_based_on_dates(df, start_date, end_date):
 
 
 def insert_column_by_map(df, col_to_map, new_col_name, map, new_col_dtype='object'):
-    """! Adds a column to a given dataframe based on a mapping of values of a given column
+    """ Adds a column to a given dataframe based on a mapping of values of a given column
     
     The mapping is defined by a list containing tupels of the form (new_value, old_value)
     where old_value is a value in the col_to_map and new_value the value
@@ -319,7 +319,7 @@ def insert_column_by_map(df, col_to_map, new_col_name, map, new_col_dtype='objec
 
 
 def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
-    """! Creates a mapping from given intervals to new desired intervals
+    """ Creates a mapping from given intervals to new desired intervals
 
     :param from_lower_bounds: lower bounds of original intervals
     :param to_lower_bounds: desired lower bounds of new intervals
@@ -389,7 +389,7 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
 
 def fit_age_group_intervals(
         df_age_in, age_out, df_population=None, max_age=100):
-    """! Creates a mapping from given intervals to new desired intervals. Provide all intervals as "x-y".
+    """ Creates a mapping from given intervals to new desired intervals. Provide all intervals as "x-y".
          Boundary age groups can be provided with "<x" or ">y". Minimum and maximum are then taken as 0 and 99, respectively.
         Example:
         If df_population is set, we can use this data set to best interpolate

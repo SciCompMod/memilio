@@ -36,7 +36,7 @@ from typing_extensions import Self
 
 
 class AST:
-    """! Create the ast and assign ids.
+    """ Create the ast and assign ids.
     Functions for getting nodes and node ids.
 
 
@@ -51,7 +51,7 @@ class AST:
         self.translation_unit = self.create_ast()
 
     def create_ast(self: Self) -> TranslationUnit:
-        """! Create an abstract syntax tree for the main model.cpp file with a corresponding CompilationDatabase.
+        """ Create an abstract syntax tree for the main model.cpp file with a corresponding CompilationDatabase.
         A compile_commands.json is required (automatically generated in the build process).
 
         :param self: Self: 
@@ -108,7 +108,7 @@ class AST:
         return translation_unit
 
     def _assing_ast_with_ids(self, cursor: Cursor) -> None:
-        """! Traverse the AST and assign a unique ID to each node during traversal.
+        """ Traverse the AST and assign a unique ID to each node during traversal.
 
         :param cursor: The current node (Cursor) in the AST to traverse.
         :param cursor: Cursor: 
@@ -136,7 +136,7 @@ class AST:
         return self.translation_unit.cursor
 
     def get_node_id(self, cursor: Cursor) -> int:
-        """! Returns the id of the current node.
+        """ Returns the id of the current node.
         
         Extracs the key from the current cursor from the dictonary id_to_val
 
@@ -152,7 +152,7 @@ class AST:
         raise IndexError(f"Cursor {cursor} is out of bounds.")
 
     def get_node_by_index(self, index: int) -> Cursor:
-        """! Returns the node at the specified index position.
+        """ Returns the node at the specified index position.
 
         :param index: Node_id from the ast.
         :param index: int: 

@@ -54,7 +54,7 @@ def fetch_divi_data(
         read_data: bool = dd.defaultDict['read_data'],
         file_format: str = dd.defaultDict['file_format'],
 ) -> pd.DataFrame:
-    """! Downloads or reads the DIVI ICU data and writes them in different files.
+    """ Downloads or reads the DIVI ICU data and writes them in different files.
     
     If it does not already exist, the folder Germany is generated in the given out_folder.
     If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
@@ -103,7 +103,7 @@ def preprocess_divi_data(df_raw: pd.DataFrame,
                          impute_dates: bool = dd.defaultDict['impute_dates'],
                          moving_average: int = dd.defaultDict['moving_average'],
                          ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """! Processing of the downloaded data
+    """ Processing of the downloaded data
         * the columns are renamed to English and the state and county names are added.
 
     :param df_raw: pd.DataFrame
@@ -189,7 +189,7 @@ def write_divi_data(df: pd.DataFrame,
                     impute_dates: bool = dd.defaultDict['impute_dates'],
                     moving_average: int = dd.defaultDict['moving_average'],
                     ) -> Dict:
-    """! Write the divi data into json files
+    """ Write the divi data into json files
     
     Three kinds of structuring of the data are done.
     We obtain the chronological sequence of ICU and ICU_ventilated
@@ -266,7 +266,7 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
                   moving_average: int = dd.defaultDict['moving_average'],
                   **kwargs
                   ):
-    """! Downloads or reads the DIVI ICU data and writes them in different files.
+    """ Downloads or reads the DIVI ICU data and writes them in different files.
     
     Available data starts from 2020-04-24.
     If the given start_date is earlier, it is changed to this date and a warning is printed.
@@ -344,7 +344,7 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
 
 
 def divi_data_sanity_checks(df: pd.DataFrame) -> None:
-    """! Checks the sanity of the divi_data dataframe
+    """ Checks the sanity of the divi_data dataframe
     
     Checks if type of the given data is a dataframe
     Checks if the headers of the dataframe are those which are needed

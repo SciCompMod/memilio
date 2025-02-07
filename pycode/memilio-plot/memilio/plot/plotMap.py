@@ -35,7 +35,7 @@ from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 def print_manual_download(filename, url):
-    """! Prints message to ask the user to manually download a file.
+    """ Prints message to ask the user to manually download a file.
 
     :param filename: 
     :param url: 
@@ -48,7 +48,7 @@ def print_manual_download(filename, url):
 
 
 def merge_eisenach(map_data: geopandas.GeoDataFrame):
-    """! Merges geometries for Eisenach with Wartburgkreis of Geopandas
+    """ Merges geometries for Eisenach with Wartburgkreis of Geopandas
     dataframe.
 
     :param map_data: geopandas.GeoDataFrame: 
@@ -237,7 +237,7 @@ def extract_time_steps(file, file_format='json'):
 
 
 def scale_dataframe_relative(df, age_groups, df_population):
-    """! Scales a population-related data frame relative to the size of the
+    """ Scales a population-related data frame relative to the size of the
     local populations or subpopulations (e.g., if not all age groups are
     considered).
     
@@ -287,7 +287,7 @@ def scale_dataframe_relative(df, age_groups, df_population):
 
 # Save interactive html files.
 def save_interactive(col, filename, map_data, scale_colors):
-    """! Plots region-specific information in an interactive html map.
+    """ Plots region-specific information in an interactive html map.
 
     :param col: The column that will be plotted.
     :param filename: Filename with path that determines the output directory.
@@ -309,7 +309,7 @@ def plot_map(data: pd.DataFrame,
              dpi: int = 300,
              outercolor='white',
              log_scale=False):
-    """! Plots region-specific information onto a interactive html map and
+    """ Plots region-specific information onto a interactive html map and
     returning svg and png image. Allows the comparisons of a variable list of
     data sets.
 

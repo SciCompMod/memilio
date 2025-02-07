@@ -41,7 +41,7 @@ pd.options.mode.copy_on_write = True
 
 
 def hospit_sanity_checks(df):
-    """! Checks the sanity of the hospitalization_data dataframe
+    """ Checks the sanity of the hospitalization_data dataframe
     
     Checks if type of the given data is a dataframe
     Checks if the headers of the dataframe are those which are needed
@@ -70,7 +70,7 @@ def hospit_sanity_checks(df):
 
 
 def get_hospitailzations_per_day(seven_days_values):
-    """! Gets the daily cases of hospitalizations from the seven day sum.
+    """ Gets the daily cases of hospitalizations from the seven day sum.
     
     A zero filled array is created where the one day data is stored.
     For each calculated daily case the copied array is adjusted to include only the remaining values.
@@ -144,7 +144,7 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
                              moving_average=dd.defaultDict['moving_average'],
                              **kwargs
                              ):
-    """! Downloads or reads the RKI hospitalization data and writes them in different files.
+    """ Downloads or reads the RKI hospitalization data and writes them in different files.
     
     Available data starts from 2020-03-01.
     If it does not already exist, the folder Germany is generated in the given out_folder.
@@ -270,7 +270,7 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
     arg_dict = gd.cli('hospitalization')
     get_hospitalization_data(**arg_dict)
 

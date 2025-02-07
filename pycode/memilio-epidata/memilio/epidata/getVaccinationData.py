@@ -84,7 +84,7 @@ def sanity_checks(df):
 def compute_vaccination_ratios(
         age_group_list, vaccinations_table, vacc_column, region_column,
         population, merge_2022=True):
-    """! Computes vaccination ratios based on the number of vaccinations
+    """ Computes vaccination ratios based on the number of vaccinations
     and the corresponding population data
 
     :param age_group_list: List of age groups considered.
@@ -117,7 +117,7 @@ def compute_vaccination_ratios(
 
 def sanitizing_average_regions(
         df, to_county_map, age_groups, column_names, age_population):
-    """! Vaccinations in all regions are split up per population of its counties.
+    """ Vaccinations in all regions are split up per population of its counties.
     This is done by summing up all vaccinations in this region and divide this by the population ratios.
     This is done for every age group and number of vaccination seperately.
     A new dataframme is created where the new data is stored.
@@ -170,7 +170,7 @@ def sanitizing_average_regions(
 
 def sanitizing_extrapolation_mobility(
         df, age_groups, column_names, age_population, neighbors_mobility):
-    """! ATTENTION: DO NOT USE! ONLY FOR BACKWARD STABILITY AND DEVELOPMENT PURPOSES.
+    """ ATTENTION: DO NOT USE! ONLY FOR BACKWARD STABILITY AND DEVELOPMENT PURPOSES.
     Distributes vaccinations of a county to connected counties if a lot more vaccinations than the federal state average were reported at the newest date.
     Thus for different max dates data for a specific date can be different.
     The average vaccination ratio per age group is only computed for completed vaccinations.
@@ -399,7 +399,7 @@ def extrapolate_age_groups_vaccinations(
         df_data, population_all_ages, unique_age_groups_old,
         unique_age_groups_new, column_names, age_old_to_all_ages_indices,
         min_all_ages, all_ages_to_age_new_share):
-    """! Original age groups (05-11, 12-17, 18-59, 60+) are replaced by infection data age groups
+    """ Original age groups (05-11, 12-17, 18-59, 60+) are replaced by infection data age groups
     (0-4, 5-14, 15-34, 35-59, 60-79, 80+). For every county the vacinations of old age groups are split to infection
     data age groups by its population ratio.
     For every age group and county a new dataframe is created. After the extrapolation all subframes are merged together.
@@ -527,7 +527,7 @@ def process_vaccination_data(
         moving_average: int = dd.defaultDict['moving_average'],
         sanitize_data: int = dd.defaultDict['sanitize_data']
 ) -> dict:
-    """! Processes downloaded raw data
+    """ Processes downloaded raw data
     While working with the data
     - the column names are changed to English depending on defaultDict
     - The column "Date" provides information on the date of each data point given in the corresponding columns.
@@ -905,7 +905,7 @@ def write_vaccination_data(dict_data: dict,
                            impute_dates: bool = True,
                            moving_average: int = dd.defaultDict['moving_average'],
                            ) -> None or Tuple:
-    """! Writes the vaccination data
+    """ Writes the vaccination data
     The data is exported in three different ways:
         - all_county_vacc: Resolved per county by grouping all original age groups (05-11, 12-17, 18-59, 60+)
         - all_county_agevacc_vacc: Resolved per county and original age group (05-11, 12-17, 18-59, 60+)
@@ -1207,7 +1207,7 @@ def get_vaccination_data(
         impute_dates: bool = True,
         **kwargs
 ):
-    """! Downloads the RKI vaccination data and provides different kind of structured data.
+    """ Downloads the RKI vaccination data and provides different kind of structured data.
     
     The data is read from the internet.
     The file is read in or stored at the folder "out_folder"/Germany/.
@@ -1303,7 +1303,7 @@ def get_vaccination_data(
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
     arg_dict = gd.cli("vaccination")
     get_vaccination_data(**arg_dict)

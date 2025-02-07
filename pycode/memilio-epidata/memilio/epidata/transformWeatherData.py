@@ -43,7 +43,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
                          merge_eisenach=False,
                          **kwargs
                          ):
-    """! ...
+    """ ...
 
     :param file_format: File format which is used for writing the data.
         Default defined in defaultDict.
@@ -201,7 +201,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
     # arg_dict = gd.cli("testing")
     transformWeatherData(read_data=False, moving_average=30)

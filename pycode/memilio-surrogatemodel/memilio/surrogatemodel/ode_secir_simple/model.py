@@ -32,7 +32,7 @@ from memilio.surrogatemodel.ode_secir_simple import network_architectures
 def plot_compartment_prediction_model(
         inputs, labels, model=None, plot_compartment='InfectedSymptoms',
         max_subplots=8):
-    """! Plot prediction of the model and label for one compartment.
+    """ Plot prediction of the model and label for one compartment.
     
     If model is none, we just plot the inputs and labels for the selected compartment without any predictions.
 
@@ -89,7 +89,7 @@ def plot_compartment_prediction_model(
 
 
 def network_fit(path, model, max_epochs=30, early_stop=500, plot=True):
-    """! Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
+    """ Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
 
     :param path: path of the dataset.
     :param model: Keras sequential model.
@@ -138,7 +138,7 @@ def network_fit(path, model, max_epochs=30, early_stop=500, plot=True):
 
 
 def plot_losses(history):
-    """! Plots the losses of the model training.
+    """ Plots the losses of the model training.
 
     :param history: model training history.
 
@@ -156,7 +156,7 @@ def plot_losses(history):
 
 
 def get_test_statistic(test_inputs, test_labels, model):
-    """! Calculates the mean absolute percentage error based on the test dataset.
+    """ Calculates the mean absolute percentage error based on the test dataset.
 
     :param test_inputs: inputs from test data.
     :param test_labels: labels (output) from test data.
@@ -184,7 +184,7 @@ def get_test_statistic(test_inputs, test_labels, model):
 
 def split_data(inputs, labels, split_train=0.7,
                split_valid=0.2, split_test=0.1):
-    """! Split data set in training, validation and testing data sets.
+    """ Split data set in training, validation and testing data sets.
 
     :param inputs: input dataset
     :param labels: label dataset

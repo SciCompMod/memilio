@@ -37,7 +37,7 @@ pd.options.mode.copy_on_write = True
 
 
 def download_testing_data():
-    """! Downloads the Sars-CoV-2 test data sets from RKI on country
+    """ Downloads the Sars-CoV-2 test data sets from RKI on country
     and federal state level. Information on federal state level do not sum
     up to country-wide information since less laboratories are participating.
 
@@ -75,7 +75,7 @@ def download_testing_data():
 
 
 def transform_weeks_to_dates(df_test):
-    """! Transforms the calender weeks of the two data frames obtained from
+    """ Transforms the calender weeks of the two data frames obtained from
         RKI sources to dates in the middle of the corresponding week
         (i.e., Thursdays).
 
@@ -119,7 +119,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
                      impute_dates=dd.defaultDict['impute_dates'],
                      moving_average=dd.defaultDict['moving_average'],
                      **kwargs):
-    """! Downloads the RKI testing data and provides positive rates of
+    """ Downloads the RKI testing data and provides positive rates of
     testing data in different ways. Since positive rates also implicitly
     provide information on testing numbers while the opposite is
     not necessarily true without having additional information,
@@ -327,7 +327,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
     arg_dict = gd.cli("testing")
     get_testing_data(**arg_dict)

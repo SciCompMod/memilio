@@ -132,7 +132,7 @@ class TestCommuterMobility(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
     @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
     def test_commuter_data(self, mock_input, mock_popul):
-        """! Tests mobility data by some randomly chosen tests.
+        """ Tests mobility data by some randomly chosen tests.
 
         :param mock_input: 
         :param mock_popul: 

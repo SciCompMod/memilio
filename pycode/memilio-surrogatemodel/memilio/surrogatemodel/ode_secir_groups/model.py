@@ -31,7 +31,7 @@ import tensorflow as tf
 def plot_compartment_prediction_model(
         inputs, labels, modeltype,  model=None,
         plot_compartment='InfectedSymptoms', max_subplots=8):
-    """! Plot prediction of the model and label for one compartment. The average of all age groups is plotted.
+    """ Plot prediction of the model and label for one compartment. The average of all age groups is plotted.
     
     If model is none, we just plot the inputs and labels for the selected compartment without any predictions.
 
@@ -139,7 +139,7 @@ def plot_compartment_prediction_model(
 
 def network_fit(
         path, model, modeltype, max_epochs=30, early_stop=500, plot=True):
-    """! Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
+    """ Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
 
     :param path: path of the dataset.
     :param model: Keras sequential model.
@@ -311,7 +311,7 @@ def network_fit(
 
 
 def plot_losses(history):
-    """! Plots the losses of the model training.
+    """ Plots the losses of the model training.
 
     :param history: model training history.
 
@@ -329,7 +329,7 @@ def plot_losses(history):
 
 
 def get_test_statistic(test_inputs, test_labels, model):
-    """! Calculates the mean absolute percentage error based on the test dataset.
+    """ Calculates the mean absolute percentage error based on the test dataset.
 
     :param test_inputs: inputs from test data.
     :param test_labels: labels (output) from test data.
@@ -360,7 +360,7 @@ def get_test_statistic(test_inputs, test_labels, model):
 
 def split_data(inputs, labels, split_train=0.7,
                split_valid=0.2, split_test=0.1):
-    """! Split data set in training, validation and testing data sets.
+    """ Split data set in training, validation and testing data sets.
 
     :param inputs: input dataset
     :param labels: label dataset
@@ -400,7 +400,7 @@ def split_data(inputs, labels, split_train=0.7,
 
 
 def flat_input(input):
-    """! Flatten input dimension
+    """ Flatten input dimension
 
     :param input: input array
 
@@ -411,7 +411,7 @@ def flat_input(input):
 
 def split_contact_matrices(contact_matrices, split_train=0.7,
                            split_valid=0.2, split_test=0.1):
-    """! Split dampings in train, valid and test
+    """ Split dampings in train, valid and test
 
     :param contact_matrices: contact matrices
     :param labels: label dataset
@@ -442,7 +442,7 @@ def split_contact_matrices(contact_matrices, split_train=0.7,
 
 def split_damping_days(damping_days, split_train=0.7,
                        split_valid=0.2, split_test=0.1):
-    """! Split damping days in train, valid and test
+    """ Split damping days in train, valid and test
 
     :param damping_days: damping days
     :param split_train: ratio of train datasets (Default value = 0.7)
@@ -471,7 +471,7 @@ def split_damping_days(damping_days, split_train=0.7,
 
 
 def get_input_dim_lstm(path):
-    """! Extract the dimensiond of the input data
+    """ Extract the dimensiond of the input data
 
     :param path: path to the data
 

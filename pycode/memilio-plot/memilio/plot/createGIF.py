@@ -36,7 +36,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def create_plot_map(day, filename, files_input, output_path, compartments,  file_format='h5', relative=False,  age_groups={0: '0-4', 1: '5-14', 2: '15-34', 3: '35-59', 4: '60-79', 5: '80+'}):
-    """! Plots region-specific information for a single day of the simulation.
+    """ Plots region-specific information for a single day of the simulation.
 
     :param day: Day of the simulation.
     :param filename: Name of the file to be created.
@@ -118,7 +118,7 @@ def create_plot_map(day, filename, files_input, output_path, compartments,  file
 
 def create_gif_map_plot(input_data, output_dir, compartments, filename="simulation", relative=True, age_groups={0: '0-4', 1: '5-14', 2: '15-34',
                                                                                                                 3: '35-59', 4: '60-79', 5: '80+'}):
-    """! Creates a gif of the simulation results by calling create_plot_map for each day of the simulation and then
+    """ Creates a gif of the simulation results by calling create_plot_map for each day of the simulation and then
     storing the single plots in a temporary directory. Currently only works for the results created by the parameter study.
 
     :param input_data: Path to the input data. The Path should contain a file called 'Results' which contains

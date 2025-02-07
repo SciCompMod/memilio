@@ -40,7 +40,7 @@ pd.options.mode.copy_on_write = True
 def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
              start_npi_cols, npi_incid_start, start_date_validation,
              end_date_validation, fine_resolution):
-    """! Validates the transformed NPI data based on read in NPI data list.
+    """ Validates the transformed NPI data based on read in NPI data list.
     Also works for incidence-dependent NPIs as long as no activation or lifting
     delay is used.
 
@@ -120,7 +120,7 @@ def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
 
 
 def print_manual_download(filename, url):
-    """! Print download message to ask the user manually download a file.
+    """ Print download message to ask the user manually download a file.
 
     :param filename: 
     :param url: 
@@ -134,7 +134,7 @@ def print_manual_download(filename, url):
 
 
 def read_files(directory, fine_resolution, run_checks):
-    """! Reads files from local directory and returns data in dataframes
+    """ Reads files from local directory and returns data in dataframes
 
     :param directory: Directory where data is loaded from.
     :param fine_resolution: 2 [Default] or 0 or 1. Defines which categories
@@ -283,7 +283,7 @@ def read_files(directory, fine_resolution, run_checks):
 def activate_npis_based_on_incidence(
         local_incid, npi_lifting_days_threshold, npi_activation_days_threshold,
         incid_threshold):
-    """!
+    """
     Computes an activation vector according to a given incidence threshold,
     observed incidence and activation or lifting delays.
     
@@ -380,7 +380,7 @@ def activate_npis_based_on_incidence(
 
 def drop_codes_and_categories(
         npi_codes_prior, npi_codes_prior_desc, df_npis_old, fine_resolution):
-    """! Drops codes and categories from original data frame if they are not
+    """ Drops codes and categories from original data frame if they are not
     used.
 
     :param npi_codes_prior: NPI codes read from description sheet.
@@ -504,7 +504,7 @@ def get_npi_data(fine_resolution=2,
                  npi_lifting_days_threshold=5,
                  **kwargs
                  ):
-    """! Loads a certain resolution of recorded NPI data from
+    """ Loads a certain resolution of recorded NPI data from
     the Corona Datenplattform and extracts the counties asked for and
     activates the NPIs if they are incidence dependent.
     
@@ -1322,7 +1322,7 @@ def get_npi_data(fine_resolution=2,
 
 
 def count_code_multiplicities(df_npis_input, df_count, counties_considered, initial_data_frame=True):
-    """! Count for all pairs of NPI codes how many times they were
+    """ Count for all pairs of NPI codes how many times they were
     mentioned at the same day in the initial data frame.
 
     :param df_npis_input: 
@@ -1386,7 +1386,7 @@ def count_code_multiplicities(df_npis_input, df_count, counties_considered, init
 
 
 def save_interaction_matrix(df_interactions, filename, directory):
-    """! Saves interaction matrices for all subcodes in provided main codes.
+    """ Saves interaction matrices for all subcodes in provided main codes.
 
     :param df_interactions: 
     :param filename: 
@@ -1405,7 +1405,7 @@ def save_interaction_matrix(df_interactions, filename, directory):
 
 
 def plot_interaction_matrix(filename, directory):
-    """! Reads interaction matrices from hard drive and writes heatmap plots
+    """ Reads interaction matrices from hard drive and writes heatmap plots
          to hard drive. Separates diagonal and offdiagonal entries as
          interactions inside one NPI are counted for all incidence dependent
          sublevels while between NPIs only one interaction is counted if more
@@ -1512,7 +1512,7 @@ def plot_interaction_matrix(filename, directory):
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
     # arg_dict = gd.cli("testing")
     df = get_npi_data(start_date=date(2020, 1, 1),

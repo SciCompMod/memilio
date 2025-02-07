@@ -40,7 +40,7 @@ pd.options.mode.copy_on_write = True
 
 
 def read_population_data(ref_year):
-    """! Reads Population data from regionalstatistik.de
+    """ Reads Population data from regionalstatistik.de
     
     A request is made to regionalstatistik.de and the StringIO is read in as a csv into the dataframe format.
 
@@ -67,7 +67,7 @@ def read_population_data(ref_year):
 
 
 def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_format: str, merge_eisenach: bool, ref_year):
-    """! Writes population dataframe into directory with new column names and age groups
+    """ Writes population dataframe into directory with new column names and age groups
 
     :param df_pop: Population data DataFrame to be exported
     :param directory: Directory where data is written to.
@@ -149,7 +149,7 @@ def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_forma
 
 
 def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
-    """! Assigns population data of all counties of old dataframe in new created dataframe
+    """ Assigns population data of all counties of old dataframe in new created dataframe
     
     In df_pop_raw there might be additional information like federal states,
     governing regions etc. which is not necessary for the dataframe.
@@ -221,7 +221,7 @@ def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
 
 
 def test_total_population(df_pop, age_cols):
-    """! Tests if total population matches expectation
+    """ Tests if total population matches expectation
 
     :param df_pop: Population Dataframe with all counties
     :param age_cols: All age groups in DataFram
@@ -244,7 +244,7 @@ def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
                           ref_year=None,
                           **kwargs
                           ) -> pd.DataFrame:
-    """! Downloads or reads the population data.
+    """ Downloads or reads the population data.
     If it does not already exist, the folder Germany is generated in the given out_folder.
     If read_data == True and the file "FullData_population.json" exists, the data is read form this file
     and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
@@ -280,7 +280,7 @@ def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
 def preprocess_population_data(df_pop_raw: pd.DataFrame,
                                merge_eisenach: bool = True,
                                ) -> pd.DataFrame:
-    """! Processing of the downloaded data
+    """ Processing of the downloaded data
         * the columns are renamed to English and the state and county names are added.
 
     :param df_pop_raw: pd.DataFrame. A Dataframe containing input population data
@@ -342,7 +342,7 @@ def write_population_data(df_pop: pd.DataFrame,
                           merge_eisenach: bool = True,
                           ref_year=None
                           ) -> None or pd.DataFrame:
-    """! Write the population data into json files
+    """ Write the population data into json files
     Three kinds of structuring of the data are done.
     We obtain the chronological sequence of ICU and ICU_ventilated
     stored in the files "county_population".json", "state_population.json" and "germany_population.json"
@@ -375,7 +375,7 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
                         ref_year=None,
                         **kwargs
                         ):
-    """! Download age-stratified population data for the German counties.
+    """ Download age-stratified population data for the German counties.
     
     The data we use is:
     Official 'Bevölkerungsfortschreibung' 12411-02-03-4:
@@ -438,7 +438,7 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
     arg_dict = gd.cli("population")
     get_population_data(**arg_dict)

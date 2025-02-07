@@ -50,7 +50,7 @@ def remove_confirmed_compartments(result_array):
 
 
 def run_secir_simple_simulation(days):
-    """! Uses an ODE SECIR model allowing for asymptomatic infection. The model is not stratified by region or demographic properties such as age.
+    """ Uses an ODE SECIR model allowing for asymptomatic infection. The model is not stratified by region or demographic properties such as age.
     Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
 
     :param Days: Describes how many days we simulate within a single run.
@@ -140,7 +140,7 @@ def run_secir_simple_simulation(days):
 def generate_data(
         num_runs, path, input_width, label_width, normalize=True,
         save_data=True):
-    """! Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
+    """ Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
     Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
     
     In general, we have 10 different compartments. However, we aggregate the InfectedNoSymptoms and InfectedSymptomsNoConfirmed compartments. The same

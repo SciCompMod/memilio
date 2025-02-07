@@ -37,7 +37,7 @@ def plot_multiple_series(
         x, y, legend, title='', xlabel='', ylabel='', linewidth=1,
         xticks_idx='default', loc_legend='upper left', fig_size=(10, 6), plot_outside=True, fig_name='customPlot',
         path_rel='figures/', dpi=300, outercolor='white', innercolor='white'):
-    """! Plots a variable number of time series data on the same time window
+    """ Plots a variable number of time series data on the same time window
     inside one plot.
 
     :param x: x values to plot.

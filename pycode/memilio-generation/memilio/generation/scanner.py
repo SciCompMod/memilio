@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 
 class Scanner:
-    """! Analyze the model and extract the needed information."""
+    """ Analyze the model and extract the needed information."""
 
     def __init__(self: Self, conf: ScannerConfig) -> None:
         """
@@ -50,7 +50,7 @@ class Scanner:
             self.config.optional.get("libclang_library_path"))
 
     def extract_results(self: Self, root_cursor: Cursor) -> IntermediateRepresentation:
-        """! Extract the information of the abstract syntax tree and save them in the dataclass intermed_repr.
+        """ Extract the information of the abstract syntax tree and save them in the dataclass intermed_repr.
         Call find_node to visit all nodes of abstract syntax tree and finalize to finish the extraction.
 
         :param root_cursor: Represents the root node of the abstract syntax tree as a Cursor object from libclang.
@@ -66,7 +66,7 @@ class Scanner:
 
     def find_node(self: Self, node: Cursor,
                   intermed_repr: IntermediateRepresentation, namespace: str = "") -> None:
-        """! Recursively walk over every node of an abstract syntax tree. Save the namespace the node is in.
+        """ Recursively walk over every node of an abstract syntax tree. Save the namespace the node is in.
         Call check_node_kind for extracting information from the nodes.
 
         :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
@@ -89,7 +89,7 @@ class Scanner:
     def switch_node_kind(self: Self, kind: CursorKind) -> Callable[[Any,
                                                                    IntermediateRepresentation],
                                                                    None]:
-        """! Dictionary to map CursorKind to methods. Works like a switch.
+        """ Dictionary to map CursorKind to methods. Works like a switch.
 
         :param Underlying: kind of the current node.
         :param self: Self: 
@@ -113,7 +113,7 @@ class Scanner:
     def check_enum(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Inspect the nodes of kind ENUM_DECL and write needed information into intermed_repr.
+        """ Inspect the nodes of kind ENUM_DECL and write needed information into intermed_repr.
         Information: Name of Enum
 
         :param node: Current node represented as a Cursor object.
@@ -129,7 +129,7 @@ class Scanner:
     def check_enum_const(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Inspect the nodes of kind ENUM_CONSTANT_DECL and write needed information into intermed_repr.
+        """ Inspect the nodes of kind ENUM_CONSTANT_DECL and write needed information into intermed_repr.
         Information: Keys of an Enum
 
         :param node: Current node represented as a Cursor object.
@@ -146,7 +146,7 @@ class Scanner:
     def check_class(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Inspect the nodes of kind CLASS_DECL and write information
+        """ Inspect the nodes of kind CLASS_DECL and write information
         (model_class, model_base, simulation_class, parameterset_wrapper) into intermed_repr.
 
         :param node: Current node represented as a Cursor object.
@@ -171,7 +171,7 @@ class Scanner:
     def check_model_base(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Helper function to retreive the model base.
+        """ Helper function to retreive the model base.
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
@@ -189,7 +189,7 @@ class Scanner:
     def check_base_specifier(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Not used yet.
+        """ Not used yet.
         Inspect nodes which represent base specifier.
         For now this is handled by the parent node, which represents the class.
 
@@ -203,7 +203,7 @@ class Scanner:
     def check_model_includes(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Helper function to retrieve the model specific includes needed for pybind.
+        """ Helper function to retrieve the model specific includes needed for pybind.
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
@@ -238,7 +238,7 @@ class Scanner:
     def check_age_group(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Inspect the nodes of kind CLASS_DECL with the name defined in
+        """ Inspect the nodes of kind CLASS_DECL with the name defined in
         config.age_group and write needed information into intermed_repr.
         Information: age_group
 
@@ -267,7 +267,7 @@ class Scanner:
     def check_constructor(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Inspect the nodes of kind CONSTRUCTOR and write needed information into intermed_repr.
+        """ Inspect the nodes of kind CONSTRUCTOR and write needed information into intermed_repr.
         Information: intermed_repr.init
 
         :param node: Current node represented as a Cursor object.
@@ -290,7 +290,7 @@ class Scanner:
     def check_type_alias(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Inspect the nodes of kind TYPE_ALIAS_DECL and write needed information into intermed_repr.
+        """ Inspect the nodes of kind TYPE_ALIAS_DECL and write needed information into intermed_repr.
         Information: intermed_repr.parameterset
 
         :param node: Current node represented as a Cursor object.
@@ -316,7 +316,7 @@ class Scanner:
         pass
 
     def finalize(self: Self, intermed_repr: IntermediateRepresentation) -> None:
-        """! Finalize the IntermediateRepresenation as last step of the Scanner.
+        """ Finalize the IntermediateRepresenation as last step of the Scanner.
         Write needed information from config into intermed_repr,
         delet unnecesary enums and check for missing model features.
 

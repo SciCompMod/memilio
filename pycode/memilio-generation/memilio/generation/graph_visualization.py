@@ -27,10 +27,10 @@ from memilio.generation.ast import AST
 
 
 class Visualization:
-    """! Class for plotting the abstract syntax tree in different formats."""
+    """ Class for plotting the abstract syntax tree in different formats."""
     @staticmethod
     def output_ast_terminal(ast: AST, cursor: Cursor) -> None:
-        """! Output the abstract syntax tree to terminal.
+        """ Output the abstract syntax tree to terminal.
 
         :param ast: ast object from AST class.
         :param cursor: The current node of the AST as a cursor object from libclang.
@@ -54,7 +54,7 @@ class Visualization:
 
     @staticmethod
     def output_ast_png(cursor: Cursor, max_depth: int, output_file_name: str = 'ast_graph') -> None:
-        """! Output the abstract syntax tree to a .png. Set the starting node and the max depth.
+        """ Output the abstract syntax tree to a .png. Set the starting node and the max depth.
         
         To save the abstract syntax tree as an png with a starting node and a depth u cann use the following command
         
@@ -88,7 +88,7 @@ class Visualization:
 
     @staticmethod
     def output_ast_formatted(ast: AST, cursor: Cursor, output_file_name: str = 'ast_formated.txt') -> None:
-        """!Output the abstract syntax tree to a file.
+        """Output the abstract syntax tree to a file.
 
         :param ast: ast object from AST class.
         :param cursor: The current node of the AST as a cursor object from libclang.
@@ -114,7 +114,7 @@ class Visualization:
 
 
 def indent(level: int) -> str:
-    """! Create an indentation based on the level.
+    """ Create an indentation based on the level.
 
     :param level: int: 
 
@@ -123,12 +123,12 @@ def indent(level: int) -> str:
 
 
 def newline() -> str:
-    """! Create a new line."""
+    """ Create a new line."""
     return '\n'
 
 
 def _output_cursor_and_children(cursor: Cursor, ast: AST, writer: Callable[[int, str], None], level: int = 0) -> None:
-    """!Generic function to output the cursor and its children with a specified writer.
+    """Generic function to output the cursor and its children with a specified writer.
 
     :param cursor: The current node of the AST as a libclang cursor object.
     :param ast: AST object from the AST class.
@@ -163,7 +163,7 @@ def _output_cursor_and_children(cursor: Cursor, ast: AST, writer: Callable[[int,
 
 
 def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph, max_d: int, current_d: int, parent_node: str = None) -> None:
-    """! Output the cursor and its children as a graph using Graphviz.
+    """ Output the cursor and its children as a graph using Graphviz.
 
     :param cursor: The current node of the AST as a Cursor object from libclang.
     :param graph: Graphviz Digraph object where the nodes and edges will be added.
