@@ -43,7 +43,7 @@ class Scanner:
         """
         Basic Constructor of Scanner class.
 
-        @param conf ScannerConfig dataclass with the configurations.
+        :param conf: ScannerConfig dataclass with the configurations.
         """
         self.config = conf
         utility.try_set_libclang_path(
