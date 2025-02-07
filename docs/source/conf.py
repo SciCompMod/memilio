@@ -57,6 +57,15 @@ hoverxref_role_types = {
     "class": "tooltip",
 }
 
+exhale_args = {
+     "containmentFolder":   "./api",
+     "rootFileName":        "library_root.rst",
+     "doxygenStripFromPath":    "..",
+     "rootFileTitle":       "C++ API",
+     "createTreeView":      True,
+     "contentsDirectives":    False,
+}
+
 breathe_projects = {"MEmilio": "../xml"}
 breathe_default_project = "MEmilio"
 
