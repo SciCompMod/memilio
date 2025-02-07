@@ -332,15 +332,15 @@ int main()
     timing::TimerRegistrar::get_instance().print_on_exit();
 
     volatile int ctr = 0;
-    int N            = 10000;
+    int N            = 1000;
     (void)ctr;
     const auto load = [&] {
-        ++ctr;
-        // std::this_thread::sleep_for(std::chrono::milliseconds(3));
+        // ++ctr;
+        std::this_thread::sleep_for(std::chrono::milliseconds(3));
     };
 
     DEBUG("*** main post setup")
-    std::cout << "Num threads: " << mio::get_num_threads() << "\n";
+    std::cout << "Num threads: " << mio::get_omp_num_threads() << "\n";
 
     {
         timing::ScopedTimer<timer_name_hw> timer_hw;
@@ -374,7 +374,7 @@ int main()
         }
     }
 
-    timing::TimerRegistrar::get_instance().print_timers();
+    // timing::TimerRegistrar::get_instance().print_timers();
 
     DEBUG("*** exit main")
 }

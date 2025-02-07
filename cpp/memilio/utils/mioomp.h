@@ -30,7 +30,16 @@
 namespace mio
 {
 
-inline int get_num_threads()
+inline int get_omp_thread_id()
+{
+#ifdef MEMILIO_ENABLE_OPENMP
+    return omp_get_thread_num();
+#else
+    return 0;
+#endif
+}
+
+inline int get_omp_num_threads()
 {
 #ifdef MEMILIO_ENABLE_OPENMP
     return omp_get_num_threads();
