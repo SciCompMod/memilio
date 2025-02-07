@@ -1232,7 +1232,7 @@ def get_vaccination_data(
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
 
-    directory = os.path.join(out_folder, 'Germany/')
+    directory = os.path.join(out_folder, 'Germany', 'pydata')
     gd.check_dir(directory)
 
     filename = "RKIVaccFull"

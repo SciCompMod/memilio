@@ -340,7 +340,7 @@ def write_population_data(df_pop: pd.DataFrame,
 
     @return None
     """
-    directory = os.path.join(out_folder, 'Germany')
+    directory = os.path.join(out_folder, 'Germany', 'pydata')
     df_pop_export = export_population_dataframe(
         df_pop, directory, file_format, merge_eisenach, ref_year)
     return df_pop_export
