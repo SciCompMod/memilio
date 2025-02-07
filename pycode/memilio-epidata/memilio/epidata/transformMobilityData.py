@@ -34,9 +34,10 @@ def getMobilityFromFile(directory, mobility_file):
     """! Gets a mobility matrix that is written in a plain txt file
     under the given directory into a pandas data frame.
 
-    @param directory Path to folder where data is read.
-    @param mobility_file Mobility matrix file which has to be updated.
-    @return Mobility matrix data frame.
+    :param directory: Path to folder where data is read.
+    :param mobility_file: Mobility matrix file which has to be updated.
+    :returns: Mobility matrix data frame.
+
     """
     mobility_matrix = pd.read_csv(
         os.path.join(directory + mobility_file + '.txt'),
@@ -50,9 +51,10 @@ def createFederalStatesMobility(directory, mobility_file):
     county mobility. If mobility matrix dimensions are different from the
     number of German counties, nothing is done.
 
-    @param directory Path to folder where data is read and written.
-    @param mobility_file Mobility matrix file which has to be updated.
-    @return State-aggregated mobility matrix if input matrix is sized correctly, zero otherwise.
+    :param directory: Path to folder where data is read and written.
+    :param mobility_file: Mobility matrix file which has to be updated.
+    :returns: State-aggregated mobility matrix if input matrix is sized correctly, zero otherwise.
+
     """
     mobility_matrix = getMobilityFromFile(directory, mobility_file)
 
@@ -102,9 +104,10 @@ def updateMobility2022(directory, mobility_file):
     become one single county by July 2021. If mobility matrix dimension is different
     from 401x401, nothing is done.
 
-    @param directory Path to folder where data is read and written.
-    @param mobility_file Mobility matrix file which has to be updated.
-    @return Reduced mobility matrix or input mobility matrix if matrix was already reduced.
+    :param directory: Path to folder where data is read and written.
+    :param mobility_file: Mobility matrix file which has to be updated.
+    :returns: Reduced mobility matrix or input mobility matrix if matrix was already reduced.
+
     """
     mobility_matrix = getMobilityFromFile(directory, mobility_file)
 

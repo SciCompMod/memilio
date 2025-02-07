@@ -43,17 +43,21 @@ def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
     """! Validates the transformed NPI data based on read in NPI data list.
     Also works for incidence-dependent NPIs as long as no activation or lifting
     delay is used.
-    @param df_npis_old Original data frame.
-    @param df_npis New NPI data frame with potential activation of incidence-
+
+    :param df_npis_old: Original data frame.
+    :param df_npis: New NPI data frame with potential activation of incidence-
         dependent NPIs.
-    @param df_infec_rki Case data for incidence comparison.
-    @param countyID CountyID of county to be validated.
-    @@param npiCode NPI Code of code to be validated.
-    @param start_npi_cols Index of column where NPI information start in
+    :param df_infec_rki: Case data for incidence comparison.
+    :param countyID: CountyID of county to be validated.
+    :param npiCode: NPI Code of code to be validated.
+    :param start_npi_cols: Index of column where NPI information start in
         original data frame.
-    @param npi_incid_start Minimum incidence for activation of NPI codes.
-    @param start_date_validation Start date for validation.
-    @param end_date_validation End date for validation.
+    :param npi_incid_start: Minimum incidence for activation of NPI codes.
+    :param start_date_validation: Start date for validation.
+    :param end_date_validation: End date for validation.
+    :param npiCode: 
+    :param fine_resolution: 
+
     """
 
     if fine_resolution == 2:
@@ -116,7 +120,12 @@ def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
 
 
 def print_manual_download(filename, url):
-    """! Print download message to ask the user manually download a file. """
+    """! Print download message to ask the user manually download a file.
+
+    :param filename: 
+    :param url: 
+
+    """
 
     gd.default_print("Error",
                      'This script needs manual downloading of files. Please register'
@@ -127,15 +136,17 @@ def print_manual_download(filename, url):
 def read_files(directory, fine_resolution, run_checks):
     """! Reads files from local directory and returns data in dataframes
 
-    @param directory Directory where data is loaded from.
-    @param fine_resolution 2 [Default] or 0 or 1. Defines which categories
+    :param directory: Directory where data is loaded from.
+    :param fine_resolution: 2 [Default] or 0 or 1. Defines which categories
         are considered.
         If '2' is set, all the subcategories (~1200) are considered.
         If '1' is set, all incidence levels of subcategories are merged and
             ~200 NPIs are considered.
         If '0' is chosen only the main, summarizing categories (~20) are used.
-    @return Data frames df_npis_old (Decreed, encoded NPIs for all German
+    :param run_checks: 
+    :returns: Data frames df_npis_old (Decreed, encoded NPIs for all German
         counties) and df_npis_desc (Description of NPIs)
+
     """
     if fine_resolution > 0:
         try:
@@ -275,12 +286,12 @@ def activate_npis_based_on_incidence(
     """!
     Computes an activation vector according to a given incidence threshold,
     observed incidence and activation or lifting delays.
-
+    
     In order for incidence-dependent NPIs to become active, the incidence
     has to exceed the threshold for npi_activation_days_threshold many days.
     For a formerly active NPI to be lifted, the incidence has to be below
     the threshold for npi_lifting_days_threshold many days.
-
+    
     If one of the former cases holds true, then the activation or lifting happens
     two days after the satisfaction of the criterion. This is in accordance with
     case reporting that can only happen after the day has finished (a 'delay' of one
@@ -289,19 +300,19 @@ def activate_npis_based_on_incidence(
     day but only on the next day (another delay of one day). Hence,
     the incidence-dependent NPI is activated or lifted two days after the threshold
     is/is not anymore exceeded, additionally considering the number of consecutive
-    days to implement or lift (see second paragraph above). 
-
+    days to implement or lift (see second paragraph above).
+    
     Please see the examples for a better understanding.
-
+    
     Example 1 (Threshold=3.5):
     local_incid=pd.Series([2, 4, 2, 4, 2, 2, 4, 4, 2, 4, 2, 2, 2, 2])
     Yesterdays incidence is over the threshold on following days:
     [?, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0]
-
+    
     Yesterday for first day is not known. Thus, first day's boolean
     is always set to the same boolean as second day's boolean.
     [0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0]
-
+    
     With yesterdays incidence over threshold on days:
     [0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0]
     Example 1a) ... and npi_lifting_days_threshold=2, npi_activation_days_threshold=1,
@@ -309,10 +320,10 @@ def activate_npis_based_on_incidence(
     int_active then is:
     [0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0]
     Example 1b) ... and npi_lifting_days_threshold=3, npi_activation_days_threshold=2,
-    the NPI will be activated on day 10 (and would be lifted on day 15; 
+    the NPI will be activated on day 10 (and would be lifted on day 15;
     which is not in the vector anymore), i.e., int_active then is:
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
-
+    
     Example 2:
     With yesterday's incidence over threshold on days:
     [1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0]
@@ -320,17 +331,19 @@ def activate_npis_based_on_incidence(
     the NPI will be activated on day 2 and lifted on day 14, i.e.,
     int_active then is:
     [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0]
-
+    
     Please also note that the first column will always returned as false
     so the dataframe should not start with dates where NPIs are implemented.
     For the Corona Datenplattform frame which starts from 2020-03-01
     this is no problem for the first days as there were no NPIs.
-    @param local_incid Incidence observed in local region.
-    @param npi_lifting_days_threshold Number of days for the incidence to be
+
+    :param local_incid: Incidence observed in local region.
+    :param npi_lifting_days_threshold: Number of days for the incidence to be
         lower than threshold to lift the NPI.
-    @param npi_activation_days_threshold Number of days the incidence threshold
+    :param npi_activation_days_threshold: Number of days the incidence threshold
         is exceeded before activation of the NPI.
-    @param incid_threshold Threshold to be considered.
+    :param incid_threshold: Threshold to be considered.
+
     """
 
     if npi_lifting_days_threshold < 1 or npi_activation_days_threshold < 1:
@@ -370,17 +383,18 @@ def drop_codes_and_categories(
     """! Drops codes and categories from original data frame if they are not
     used.
 
-    @param npi_codes_prior NPI codes read from description sheet.
-    @param npi_codes_prior_desc NPI code descriptions read from description sheet.
-    @param df_npis_old Original data frame with encoding (decreed, yes or no)
+    :param npi_codes_prior: NPI codes read from description sheet.
+    :param npi_codes_prior_desc: NPI code descriptions read from description sheet.
+    :param df_npis_old: Original data frame with encoding (decreed, yes or no)
         for different NPIs
-    @param fine_resolution 2 [Default] or 0 or 1. Defines which categories
+    :param fine_resolution: 2 [Default] or 0 or 1. Defines which categories
         are considered.
         If '2' is set, all the subcategories (~1200) are considered.
         If '1' is set, all incidence levels of subcategories are merged and
             ~200 NPIs are considered.
         If '0' is chosen only the main, summarizing categories (~20) are used.
-    @return Returns dropped codes, prior codes and reduced original data frame.
+    :returns: Returns dropped codes, prior codes and reduced original data frame.
+
     """
     if fine_resolution > 0:
 
@@ -445,6 +459,13 @@ def drop_codes_and_categories(
 
 
 def npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre):
+    """
+
+    :param df_npis_old: 
+    :param df_npis_desc: 
+    :param df_npis_combinations_pre: 
+
+    """
     # Check if all counties are in df_npis_old
     if not np.array_equal(df_npis_old.ID_County.unique().astype(int), np.array(geoger.get_county_ids(merge_eisenach=False)).astype(int)):
         raise gd.DataError('Not all counties found in DataFrame.')
@@ -486,16 +507,16 @@ def get_npi_data(fine_resolution=2,
     """! Loads a certain resolution of recorded NPI data from
     the Corona Datenplattform and extracts the counties asked for and
     activates the NPIs if they are incidence dependent.
-
+    
     Results' data frames will be stored in the directory as:
         -fine_resolution=2: germany_counties_npi_subcat
         -fine_resolution=1: germany_counties_npi_subcat_incgrouped
         -fine_resolution=0: germany_counties_npi_maincat
-
+    
     Needs the files 'cases_all_county_all_dates_repdate.json' and
     'county_current_population.json' which can be created by the functions
     getCasesData.py (with argument --rep-date) and getPopulationData.py.
-
+    
     Please manually download
     - kr_massnahmen_unterkategorien.csv
     - datensatzbeschreibung_massnahmen.xlsx
@@ -505,26 +526,29 @@ def get_npi_data(fine_resolution=2,
     from https://www.corona-datenplattform.de/dataset/massnahmen_oberkategorien_kreise
     and move it to the *directory*-path mentioned in the beginning of the function.
 
-    @param fine_resolution 2 [Default] or 0 or 1. Defines which categories
+    :param fine_resolution: 2 [Default] or 0 or 1. Defines which categories
         are considered.
         If '2' is set, all the subcategories (~1200) are considered.
         If '1' is set, all incidence levels of subcategories are merged and
             ~200 NPIs are considered.
         If '0' is chosen only the main, summarizing categories (~20) are used.
-    @param file_format File format which is used for writing the data.
+    :param file_format: File format which is used for writing the data.
         Default defined in defaultDict.
-    @param out_folder Path to folder where data is written in folder
-        out_folder/Germany.
-    @param start_date [Default = '', taken from read data] Start date
+    :param out_folder: Path to folder where data is written in folder
+        out_folder/Germany. (Default value = dd.defaultDict['out_folder'])
+    :param start_date: Default = '', taken from read data] Start date
         of stored data frames.
-    @param end_date [Default = '', taken from read data] End date of
+    :param end_date: Default = '', taken from read data] End date of
         stored data frames.
-    @param counties_considered [Default: 'All']. Either 'All' or a list of
+    :param counties_considered: Default: 'All']. Either 'All' or a list of
         county IDs from 1001 to 16xxx.
-    @param npi_activation_days_threshold [Default: 3]. Defines necessary number
+    :param npi_activation_days_threshold: Default: 3]. Defines necessary number
          of days exceeding case incidence threshold to activate NPIs.
-    @param npi_alifting_days_threshold [Default: 5]. Defines necessary number
+    :param npi_alifting_days_threshold: Default: 5]. Defines necessary number
          of days below case incidence threshold threshold to lift NPIs.
+    :param npi_lifting_days_threshold:  (Default value = 5)
+    :param **kwargs: 
+
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
@@ -1301,13 +1325,11 @@ def count_code_multiplicities(df_npis_input, df_count, counties_considered, init
     """! Count for all pairs of NPI codes how many times they were
     mentioned at the same day in the initial data frame.
 
-    @param[in] df_npis_input Initial data frame read from Corona Datenplattform.
-    @param[in,out] df_count Dictionnary of main NPI codes with empty interaction
-         matrix (to be filled) for all codes under main code in df_count[maincode][1].
-    @param[in] counties_considered County IDs for which initial data frame is 
-        considered.
-    @param[in] initial_data_frame Defines where initial data frame structure is 
-        input.
+    :param df_npis_input: 
+    :param df_count: 
+    :param counties_considered: 
+    :param initial_data_frame:  (Default value = True)
+
     """
     for county in counties_considered:
         df_local = df_npis_input[df_npis_input[dd.EngEng['idCounty']] == county]
@@ -1366,10 +1388,10 @@ def count_code_multiplicities(df_npis_input, df_count, counties_considered, init
 def save_interaction_matrix(df_interactions, filename, directory):
     """! Saves interaction matrices for all subcodes in provided main codes.
 
-    @param[in] df_interactions Dictionnary of main NPI codes with interaction
-         matrix for all subcodes under main code in df_interactions[maincode][1].
-    @param[in] filename Filename to store result.
-    @param[in] directory Directory where to save data.
+    :param df_interactions: 
+    :param filename: 
+    :param directory: 
+
     """
 
     writer = pd.ExcelWriter(
@@ -1384,13 +1406,14 @@ def save_interaction_matrix(df_interactions, filename, directory):
 
 def plot_interaction_matrix(filename, directory):
     """! Reads interaction matrices from hard drive and writes heatmap plots
-         to hard drive. Separates diagonal and offdiagonal entries as 
+         to hard drive. Separates diagonal and offdiagonal entries as
          interactions inside one NPI are counted for all incidence dependent
          sublevels while between NPIs only one interaction is counted if more
          than one sublevel is mentioned on each of the sides.
 
-    @param[in] filename Filename to read results from.
-    @param[in] directory Directory where to read and save data.
+    :param filename: 
+    :param directory: 
+
     """
     target_directory = os.path.join(directory, 'heatmaps_' + filename)
     if not os.path.exists(target_directory):

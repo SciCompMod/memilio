@@ -697,7 +697,8 @@ def invert_dict(dict_to_invert):
     """! Inverts the roles of keys and values of dictionary to create
     a new dictionary where the previous keys are the values and vice versa.
 
-    @param dict_to_invert Dictionary.
-    @return Inverted dictionary.
+    :param dict_to_invert: Dictionary.
+    :returns: Inverted dictionary.
+
     """
     return {val: key for key, val in dict_to_invert.items()}

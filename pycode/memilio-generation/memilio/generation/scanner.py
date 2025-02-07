@@ -37,8 +37,7 @@ if TYPE_CHECKING:
 
 
 class Scanner:
-    """! Analyze the model and extract the needed information.
-    """
+    """! Analyze the model and extract the needed information."""
 
     def __init__(self: Self, conf: ScannerConfig) -> None:
         """
@@ -54,8 +53,11 @@ class Scanner:
         """! Extract the information of the abstract syntax tree and save them in the dataclass intermed_repr.
         Call find_node to visit all nodes of abstract syntax tree and finalize to finish the extraction.
 
-        @param root_cursor Represents the root node of the abstract syntax tree as a Cursor object from libclang.
-        @return Information extracted from the model saved as an IntermediateRepresentation. 
+        :param root_cursor: Represents the root node of the abstract syntax tree as a Cursor object from libclang.
+        :param self: Self: 
+        :param root_cursor: Cursor: 
+        :returns: Information extracted from the model saved as an IntermediateRepresentation.
+
         """
         intermed_repr = IntermediateRepresentation()
         self.find_node(root_cursor, intermed_repr)
@@ -67,9 +69,14 @@ class Scanner:
         """! Recursively walk over every node of an abstract syntax tree. Save the namespace the node is in.
         Call check_node_kind for extracting information from the nodes.
 
-        @param node Represents the current node of the abstract syntax tree as a Cursor object from libclang.
-        @param intermed_repr Dataclass used for saving the extracted model features.
-        @param namespace [Default = ""] Namespace of the current node.
+        :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        :param namespace: Default = ""] Namespace of the current node.
+        :param self: Self: 
+        :param node: Cursor: 
+        :param intermed_repr: IntermediateRepresentation: 
+        :param namespace: str:  (Default value = "")
+
         """
         if node.kind == CursorKind.NAMESPACE:
             namespace = (namespace + node.spelling + "::")
@@ -84,8 +91,11 @@ class Scanner:
                                                                    None]:
         """! Dictionary to map CursorKind to methods. Works like a switch.
 
-        @param Underlying kind of the current node.
-        @return Appropriate method for the given kind.
+        :param Underlying: kind of the current node.
+        :param self: Self: 
+        :param kind: CursorKind: 
+        :returns: Appropriate method for the given kind.
+
         """
         switch = {
             CursorKind.ENUM_DECL: self.check_enum,
@@ -106,8 +116,12 @@ class Scanner:
         """! Inspect the nodes of kind ENUM_DECL and write needed information into intermed_repr.
         Information: Name of Enum
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        :param self: Self: 
+        :param node: Cursor: 
+        :param intermed_repr: IntermediateRepresentation: 
+
         """
         if node.spelling.strip() != "":  # alternative self.folder in node.location.file.name:
             intermed_repr.enum_populations[node.spelling] = []
@@ -118,8 +132,12 @@ class Scanner:
         """! Inspect the nodes of kind ENUM_CONSTANT_DECL and write needed information into intermed_repr.
         Information: Keys of an Enum
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        :param self: Self: 
+        :param node: Cursor: 
+        :param intermed_repr: IntermediateRepresentation: 
+
         """
         if node.semantic_parent.spelling in intermed_repr.enum_populations.keys():
             key = node.semantic_parent.spelling
@@ -128,11 +146,15 @@ class Scanner:
     def check_class(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Inspect the nodes of kind CLASS_DECL and write information 
+        """! Inspect the nodes of kind CLASS_DECL and write information
         (model_class, model_base, simulation_class, parameterset_wrapper) into intermed_repr.
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        :param self: Self: 
+        :param node: Cursor: 
+        :param intermed_repr: IntermediateRepresentation: 
+
         """
         if node.spelling == self.config.model_class:
             intermed_repr.model_class = node.spelling
@@ -151,8 +173,12 @@ class Scanner:
             intermed_repr: IntermediateRepresentation) -> None:
         """! Helper function to retreive the model base.
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        :param self: Self: 
+        :param node: Cursor: 
+        :param intermed_repr: IntermediateRepresentation: 
+
         """
         for base in node.get_children():
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
@@ -166,6 +192,11 @@ class Scanner:
         """! Not used yet.
         Inspect nodes which represent base specifier.
         For now this is handled by the parent node, which represents the class.
+
+        :param self: Self: 
+        :param node: Cursor: 
+        :param intermed_repr: IntermediateRepresentation: 
+
         """
         pass
 
@@ -174,8 +205,12 @@ class Scanner:
             intermed_repr: IntermediateRepresentation) -> None:
         """! Helper function to retrieve the model specific includes needed for pybind.
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        :param self: Self: 
+        :param node: Cursor: 
+        :param intermed_repr: IntermediateRepresentation: 
+
         """
         filepath = node.location.file.name
         filepaths = filepath.split("../")
@@ -203,12 +238,16 @@ class Scanner:
     def check_age_group(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """! Inspect the nodes of kind CLASS_DECL with the name defined in 
+        """! Inspect the nodes of kind CLASS_DECL with the name defined in
         config.age_group and write needed information into intermed_repr.
         Information: age_group
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        :param self: Self: 
+        :param node: Cursor: 
+        :param intermed_repr: IntermediateRepresentation: 
+
         """
         for base in node.get_children():
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
@@ -231,8 +270,12 @@ class Scanner:
         """! Inspect the nodes of kind CONSTRUCTOR and write needed information into intermed_repr.
         Information: intermed_repr.init
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        :param self: Self: 
+        :param node: Cursor: 
+        :param intermed_repr: IntermediateRepresentation: 
+
         """
         if node.spelling == intermed_repr.model_class:
             init = {"type": [], "name": []}
@@ -250,8 +293,12 @@ class Scanner:
         """! Inspect the nodes of kind TYPE_ALIAS_DECL and write needed information into intermed_repr.
         Information: intermed_repr.parameterset
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        :param node: Current node represented as a Cursor object.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        :param self: Self: 
+        :param node: Cursor: 
+        :param intermed_repr: IntermediateRepresentation: 
+
         """
         if node.spelling == self.config.parameterset:
             intermed_repr.parameterset = node.spelling
@@ -259,7 +306,13 @@ class Scanner:
     def check_struct(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """ Not used yet."""
+        """Not used yet.
+
+        :param self: Self: 
+        :param node: Cursor: 
+        :param intermed_repr: IntermediateRepresentation: 
+
+        """
         pass
 
     def finalize(self: Self, intermed_repr: IntermediateRepresentation) -> None:
@@ -267,7 +320,10 @@ class Scanner:
         Write needed information from config into intermed_repr,
         delet unnecesary enums and check for missing model features.
 
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        :param self: Self: 
+        :param intermed_repr: IntermediateRepresentation: 
+
         """
         # remove unnecesary enum
         population_groups = []

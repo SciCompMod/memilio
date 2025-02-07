@@ -44,27 +44,31 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
                 impute_dates=dd.defaultDict['impute_dates'],
                 **kwargs):
     """! Download data from John Hopkins University
-
-   Data is either downloaded and afterwards stored or loaded from a stored filed.
-   The file is "FullData_JohnHopkins.json"
-
-   Working with the data includes
-   - rename columns such that "/" is deleted, e.g Country/Region becomes CountryRegion
-   - data of all countries together are written to a file
-   - download the data from following countries in a separate file
-   and are stored in the according folders with the country name
+    
+       Data is either downloaded and afterwards stored or loaded from a stored filed.
+       The file is "FullData_JohnHopkins.json"
+    
+       Working with the data includes
+       - rename columns such that "/" is deleted, e.g Country/Region becomes CountryRegion
+       - data of all countries together are written to a file
+       - download the data from following countries in a separate file
+       and are stored in the according folders with the country name
        - Germany, SouthKorea, Spain, France, Italy, US, China
-   - furthermore, all countries, for which provinces are added, are written to a file
+       - furthermore, all countries, for which provinces are added, are written to a file
 
-    @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
-    @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param start_date Date of first date in dataframe. Default defined in defaultDict.
-    @param end_date Date of last date in dataframe. Default defined in defaultDict.
-    @param impute_dates [Currently not used] True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    @param moving_average [Currently not used] Integers >=0. Applies an 'moving_average'-days moving average on all time series
+    :param read_data: True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
+    :param file_format: File format which is used for writing the data. Default defined in defaultDict.
+    :param out_folder: Folder where data is written to. Default defined in defaultDict.
+    :param start_date: Date of first date in dataframe. Default defined in defaultDict.
+    :param end_date: Date of last date in dataframe. Default defined in defaultDict.
+    :param impute_dates: Currently not used] True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    :param moving_average: Currently not used] Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
-   """
+    :param 1: 
+    :param 22): 
+    :param **kwargs: 
+
+    """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
     no_raw = conf.no_raw

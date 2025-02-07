@@ -39,7 +39,9 @@ pd.options.mode.copy_on_write = True
 
 def verify_sorted(countykey_list):
     """! verify that read countykey_list is sorted
-    @param countykey_list List of county regional keys
+
+    :param countykey_list: List of county regional keys
+
     """
     countykey_list_is_sorted = np.all(np.array(
         # this checks if it is sorted
@@ -53,18 +55,17 @@ def verify_sorted(countykey_list):
 
 def assign_geographical_entities(countykey_list, govkey_list, run_checks):
     """! Assigns counties to governing regions based on key comparison and creates list of governing regions per state.
-
+    
     Only works with sorted key lists.
-
+    
     Keyword arguments:
-    @param setup_dict dictionary with necessary values
-    @param countykey_list List of county regional keys.
-    @param govkey_list List of governing regions regional keys.
 
-    @return countykey2govkey Hash map from county regional keys to governing region regional keys.
-    @return countykey2localnumlist Hash map from county regional keys to local numbered list (per governing region).
-    @return gov_county_table Table of county regional keys per governing region.
-    @return state_gov_table Table of governing region regional keys per federal state.
+    :param setup_dict: dictionary with necessary values
+    :param countykey_list: List of county regional keys.
+    :param govkey_list: List of governing regions regional keys.
+    :param run_checks: 
+    :returns: countykey2govkey Hash map from county regional keys to governing region regional keys.
+
     """
     if run_checks:
         if verify_sorted(countykey_list) == False:
@@ -141,23 +142,26 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                       **kwargs):
     """! Computes DataFrame of commuter mobility patterns based on the Federal
     Agency of Work data.
-
+    
     Keyword arguments:
-    @param read_data True or False. Defines if data is read from file or downloaded.
+
+    :param read_data: True or False. Defines if data is read from file or downloaded.
         Only for population data. Commuter data is always downloaded. Default defined in defaultDict.
-    @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param setup_dict dictionary with necessary values:
+    :param file_format: File format which is used for writing the data. Default defined in defaultDict.
+    :param out_folder: Folder where data is written to. Default defined in defaultDict.
+    :param setup_dict: dictionary with necessary values:
         'path': String with datapath where mobility files can be found
         'abs_tol': tolerated undetected people
-        'rel_tol': relative Tolerance to undetected people
-    @param ref_year Year between 2013 and 2022 that specifies where the data should be taken from.
+        'rel_tol': relative Tolerance to undetected people (Default value = '')
+    :param ref_year: Year between 2013 and 2022 that specifies where the data should be taken from.
         Default value is 2022.
-    @return df_commuter_mobility DataFrame of commuter mobility.
+    :param **kwargs: 
+    :returns: df_commuter_mobility DataFrame of commuter mobility.
         df_commuter_mobility[i][j]= number of commuters from county with county-id i to county with county-id j
     In commuter mobility files is a cumulative value per county for number of commuters from whole Germany given.
     The printed errors are refering to the absolute and relative errors from included numbers per county in DataFrame and
     this cumulative values.
+
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
@@ -499,6 +503,11 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
 
 
 def commuter_sanity_checks(df):
+    """
+
+    :param df: 
+
+    """
     # Dataframe should be of squared form
     if len(df.index) != len(df.columns):
         raise gd.DataError("Error. Dataframe should be of squared form.")
@@ -511,34 +520,36 @@ def commuter_sanity_checks(df):
 def get_neighbors_mobility(
         countyid, direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
         out_folder=dd.defaultDict['out_folder'], ref_year=2022, **kwargs):
-    '''! Returns the neighbors of a particular county ID depening on the
+    """! Returns the neighbors of a particular county ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
-
+    
     The parameters absolute and relative tolerance decide which connections and
     neighbors are returned. If tol_comb='or', only one of this two criteria
-    has to be satisfied to count the edges. If 'and' is chosen, both criteria 
+    has to be satisfied to count the edges. If 'and' is chosen, both criteria
     have to be satisfied.
 
-    @param countyid ID of the county where mobility is considered and for which
+    :param countyid: ID of the county where mobility is considered and for which
         neighbors have to be returned.
-    @param direction 'both' [Default], 'in', or 'out'. Defines whether 'both' or  
+    :param direction: both' [Default], 'in', or 'out'. Defines whether 'both' or
         'in' or 'out' commuters only are considered.
-    @param abs_tol Minimum number of commuters to count the connection.
-    @param rel_tol Relative tolerance with respect to the strongest connection 
-        of the county to count the connections.
-    @param tol_comb Defines whether absolute and relative thresholds are
+    :param abs_tol: Minimum number of commuters to count the connection. (Default value = 0)
+    :param rel_tol: Relative tolerance with respect to the strongest connection
+        of the county to count the connections. (Default value = 0)
+    :param tol_comb: Defines whether absolute and relative thresholds are
         combined such that only one criterion has to be satisfied ('or') or
-        both ('and').
-    @param merge_eisenach [Default: True] Defines whether the counties
+        both ('and'). (Default value = 'or')
+    :param merge_eisenach: Default: True] Defines whether the counties
         'Wartburgkreis' and 'Eisenach' are listed separately or combined
         as one entity 'Wartburgkreis'.
-    @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param ref_year Year between 2013 and 2022 that specifies where the data should be taken from.
+    :param out_folder: Folder where data is written to. Default defined in defaultDict.
+    :param ref_year: Year between 2013 and 2022 that specifies where the data should be taken from.
         Default value is 2022.
-    @return Neighbors of the county with respect to mobility and the number of 
+    :param **kwargs: 
+    :returns: Neighbors of the county with respect to mobility and the number of
         commuters from and to the neighbors.
-    '''
+
+    """
     # This is not very nice either to have the same file with either Eisenach merged or not...
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
@@ -574,27 +585,29 @@ def get_neighbors_mobility(
 def get_neighbors_mobility_all(
         direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
         out_folder=dd.defaultDict['out_folder'], ref_year=2022):
-    '''! Returns the neighbors of all counties ID depening on the
+    """! Returns the neighbors of all counties ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
-
+    
     The parameters absolute and relative tolerance decide which connections and
     neighbors are returned. If tol_comb='or', only one of this two criteria
-    has to be satisfied to count the edges. If 'and' is chosen, both criteria 
+    has to be satisfied to count the edges. If 'and' is chosen, both criteria
     have to be satisfied.
 
-    @param direction 'both' [Default], 'in', or 'out'. Defines whether 'both' or  
+    :param direction: both' [Default], 'in', or 'out'. Defines whether 'both' or
         'in' or 'out' commuters only are considered.
-    @param abs_tol Minimum number of commuters to count the connection.
-    @param rel_tol Relative tolerance with respect to the strongest connection 
-        of the county to count the connections.
-    @param tol_comb Defines whether absolute and relative thresholds are
+    :param abs_tol: Minimum number of commuters to count the connection. (Default value = 0)
+    :param rel_tol: Relative tolerance with respect to the strongest connection
+        of the county to count the connections. (Default value = 0)
+    :param tol_comb: Defines whether absolute and relative thresholds are
         combined such that only one criterion has to be satisfied ('or') or
-        both ('and')
-    @param ref_year Year between 2013 and 2022 that specifies where the data should be taken from.
+        both ('and') (Default value = 'or')
+    :param ref_year: Year between 2013 and 2022 that specifies where the data should be taken from.
         Default value is 2022.
-    @return Neighbors of all counties with respect to mobility.
-    '''
+    :param out_folder:  (Default value = dd.defaultDict['out_folder'])
+    :returns: Neighbors of all counties with respect to mobility.
+
+    """
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
     countyids = geoger.get_county_ids()
