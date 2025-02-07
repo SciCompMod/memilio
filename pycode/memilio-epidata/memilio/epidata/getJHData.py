@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2025 MEmilio
+# Copyright (C) 2020-2024 MEmilio
 #
 # Authors: Kathrin Rack
 #
@@ -67,6 +67,27 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
    """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
+    # Generate folders if needed
+    directory_ger = os.path.join(out_folder, 'Germany', 'pydata')
+    directory_es = os.path.join(out_folder, 'Spain', 'pydata')
+    directory_fr = os.path.join(out_folder, 'France', 'pydata')
+    directory_it = os.path.join(out_folder, 'Italy', 'pydata')
+    directory_us = os.path.join(out_folder, 'US', 'pydata')
+    directory_rok = os.path.join(out_folder, 'SouthKorea', 'pydata')
+    directory_prc = os.path.join(out_folder, 'China', 'pydata')
+    directory_glb = os.path.join(out_folder, 'Global', 'pydata')
+    # dictionary of countries
+    countries = {
+        "Germany": directory_ger,
+        "Spain": directory_es,
+        "France": directory_fr,
+        "Italy": directory_it,
+        "US": directory_us,
+        "SouthKorea": directory_rok,
+        "China": directory_prc,
+    }
+    gd.check_dir(directory_glb)
+
     no_raw = conf.no_raw
     if start_date < date(2020, 1, 22):
         gd.default_print("Warning", "First data available on 2020-01-22. "
@@ -81,7 +102,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
                      interactive=conf.interactive)
 
     if not no_raw:
-        gd.write_dataframe(df, out_folder, filename, "json")
+        gd.write_dataframe(df, directory_glb, filename, "json")
 
     df.rename({'Country/Region': 'CountryRegion',
               'Province/State': 'ProvinceState'}, axis=1, inplace=True)
@@ -94,32 +115,12 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
     df.loc[df['CountryRegion'] == "Korea, South",
            ['CountryRegion']] = 'SouthKorea'
 
-    # Generate folders if needed
-    directory_ger = os.path.join(out_folder, 'Germany/')
-    directory_es = os.path.join(out_folder, 'Spain/')
-    directory_fr = os.path.join(out_folder, 'France/')
-    directory_it = os.path.join(out_folder, 'Italy/')
-    directory_us = os.path.join(out_folder, 'US/')
-    directory_rok = os.path.join(out_folder, 'SouthKorea/')
-    directory_prc = os.path.join(out_folder, 'China/')
-
-    # dictionary of countries
-    countries = {
-        "Germany": directory_ger,
-        "Spain": directory_es,
-        "France": directory_fr,
-        "Italy": directory_it,
-        "US": directory_us,
-        "SouthKorea": directory_rok,
-        "China": directory_prc,
-    }
-
     ########### Countries ##########################
 
     gb = df.groupby(['CountryRegion', 'Date']).agg(
         {"Confirmed": "sum", "Recovered": "sum", "Deaths": "sum"})
 
-    gd.write_dataframe(gb.reset_index(), out_folder,
+    gd.write_dataframe(gb.reset_index(), directory_glb,
                        "all_countries_jh", file_format)
 
     for key in countries:
@@ -140,7 +141,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
     gb = dfD.groupby(['CountryRegion', 'ProvinceState', 'Date']).agg(
         {"Confirmed": "sum", "Recovered": "sum", "Deaths": "sum"})
 
-    gd.write_dataframe(gb.reset_index(), out_folder,
+    gd.write_dataframe(gb.reset_index(), directory_glb,
                        "all_provincestate_jh", file_format)
 
     # TODO: How to handle empty values which become NaN in the beginnin but after woking on the data its just 0.0

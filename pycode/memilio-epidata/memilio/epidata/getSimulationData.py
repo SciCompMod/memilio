@@ -137,14 +137,9 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
 
     try:
         mobility_dir = os.path.join(out_folder, 'Germany/mobility/')
-        transformMobilityData.updateMobility2022(
-            mobility_dir, mobility_file='twitter_scaled_1252')
         if (ref_year < 2022):
             transformMobilityData.updateMobility2022(
                 mobility_dir, mobility_file=f'commuter_mobility_{ref_year}')
-        # rename commuter mobility file
-        os.rename(f'{mobility_dir}/commuter_mobility_{ref_year}.txt',
-                  f'{mobility_dir}/commuter_mobility.txt')
     except Exception as exp:
         gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('transform mobility')
