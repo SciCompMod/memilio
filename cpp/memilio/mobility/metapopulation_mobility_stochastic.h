@@ -227,7 +227,7 @@ GraphSimulationStochastic<Graph<SimulationNode<Sim>, MobilityEdgeStochastic>>
 make_mobility_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MobilityEdgeStochastic>& graph)
 {
     return make_graph_sim_stochastic(
-        t0, dt, graph, &evolve_model<Sim>,
+        t0, dt, graph, &advance_model<Sim>,
         static_cast<void (*)(MobilityEdgeStochastic&, size_t, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
             &apply_mobility<Sim, MobilityEdgeStochastic>));
 }
@@ -237,7 +237,7 @@ GraphSimulationStochastic<Graph<SimulationNode<Sim>, MobilityEdgeStochastic>>
 make_mobility_sim(double t0, double dt, Graph<SimulationNode<Sim>, MobilityEdgeStochastic>&& graph)
 {
     return make_graph_sim_stochastic(
-        t0, dt, std::move(graph), &evolve_model<Sim>,
+        t0, dt, std::move(graph), &advance_model<Sim>,
         static_cast<void (*)(MobilityEdgeStochastic&, size_t, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
             &apply_mobility<Sim, MobilityEdgeStochastic>));
 }

@@ -32,7 +32,7 @@ using TestLocation = RandomNumberTest;
 TEST_F(TestLocation, initCell)
 {
     // Create a location of type PublicTransport with 2 cells.
-    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
+    mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 0, 2);
     // Verify that the number of cells created is as expected (2).
     EXPECT_EQ(location.get_cells().size(), 2);
 }
@@ -56,7 +56,7 @@ TEST_F(TestLocation, computeSpacePerPersonRelative)
     using testing::Return;
 
     // Create a location of type Home with 3 cells.
-    mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 3);
+    mio::abm::Location home(mio::abm::LocationType::Home, 0, 6, 0, 3);
     home.set_capacity(4, 264, 0); // Capacity for Cell 1
     home.set_capacity(2, 132, 1); // Capacity for Cell 2
     home.set_capacity(0, 0, 2); // Capacity for Cell 3
@@ -112,7 +112,7 @@ TEST_F(TestLocation, interact)
     auto susceptible =
         make_test_person(this->get_rng(), location, age, mio::abm::InfectionState::Susceptible, t, params);
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.5)); // Probability of no infection
-    auto person_rng = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), susceptible);
+    auto person_rng = mio::abm::PersonalRandomNumberGenerator(susceptible);
     interact_testing(person_rng, susceptible, location, local_population, t, dt, params);
     EXPECT_EQ(susceptible.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);
 
