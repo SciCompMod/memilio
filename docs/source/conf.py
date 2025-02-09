@@ -31,7 +31,8 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx_copybutton',
     'breathe',
-    'hoverxref.extension',
+    'exhale',
+    'hoverxref.extension'
 ]
 
 intersphinx_mapping = {
@@ -54,6 +55,15 @@ hoverxref_role_types = {
     "mod": "tooltip",
     "meth": "tooltip",
     "class": "tooltip",
+}
+
+exhale_args = {
+     "containmentFolder":   "./api",
+     "rootFileName":        "library_root.rst",
+     "doxygenStripFromPath":    "..",
+     "rootFileTitle":       "C++ API",
+     "createTreeView":      True,
+     "contentsDirectives":    False,
 }
 
 breathe_projects = {"MEmilio": "../xml"}

@@ -28,8 +28,10 @@ from memilio.simulation.osir import Model, simulate
 
 
 class Test_osir_integration(unittest.TestCase):
+    """ """
 
     def setUp(self):
+        """ """
 
         model = Model(1)
         A0 = AgeGroup(0)
@@ -53,12 +55,14 @@ class Test_osir_integration(unittest.TestCase):
         self.model = model
 
     def test_simulate_simple(self):
+        """ """
         result = simulate(t0=0., tmax=100., dt=0.1, model=self.model)
         self.assertAlmostEqual(result.get_time(0), 0.)
         self.assertAlmostEqual(result.get_time(1), 0.1)
         self.assertAlmostEqual(result.get_last_time(), 100.)
 
     def test_check_constraints_parameters(self):
+        """ """
 
         model = Model(1)
         A0 = AgeGroup(0)

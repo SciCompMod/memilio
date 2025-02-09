@@ -29,6 +29,7 @@ from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
+    """ """
     test_df1 = pd.DataFrame(
         {
             'Date':
@@ -102,9 +103,11 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         'test_col_str': ['N', 'B']})
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     def test_impute_and_reduce_df(self):
+        """ """
 
         group_by_cols = {'ID': sorted(set(self.test_df1['ID'].unique()))}
         mod_cols = ['test_col1', 'test_col3']
@@ -361,6 +364,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
             1 + 2 / 3)
 
     def test_split_column_based_on_values(self):
+        """ """
         col_names_vacc_data = [
             'Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe', 'Impfschutz',
             'Anzahl']
@@ -424,6 +428,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
             self.assertIn(new_column_names[i], df_split.columns)
 
     def test_split_column_based_on_values_compute_cumsum(self):
+        """ """
         df_to_split = pd.DataFrame(
             {'Date': 3 *
              (['2022-05-11' for i in range(0, 16)] +
@@ -485,6 +490,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
             return_2)
 
     def test_extract_subframe_based_on_dates(self):
+        """ """
         test_df = self.df_dates.copy()
         # test with start and end value in dataframe
         extracted_df = mdfs.extract_subframe_based_on_dates(
@@ -503,6 +509,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         pd.testing.assert_frame_equal(extracted_df, self.df_dates_result)
 
     def test_insert_column_by_map(self):
+        """ """
         old_cols = self.test_df1.columns.to_list()
 
         # test with integer mapping
@@ -528,6 +535,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         pd.testing.assert_series_equal(df['inserted_col'], self.df_str_map_col)
 
     def test_extract_subframe_based_on_dates_single_date(self):
+        """ """
         # test if only dates from 2021-09-09 are returned
         extracted_df = mdfs.extract_subframe_based_on_dates(
             self.date_df, date(2021, 9, 9),
@@ -535,6 +543,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         pd.testing.assert_frame_equal(self.test_date_df2, extracted_df)
 
     def test_extract_subframe_based_on_dates_multiple_dates(self):
+        """ """
         # test if only dates from 2021-09-12 to 2021-09-14 are returned
         extracted_df = mdfs.extract_subframe_based_on_dates(
             self.date_df, date(2021, 9, 12),
@@ -542,6 +551,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         pd.testing.assert_frame_equal(self.test_date_df1, extracted_df)
 
     def test_interval_mapping(self):
+        """ """
         # testing refinement
         from_lower_bounds1 = [0, 3, 6, 15, 18, 25, 30, 40, 50, 65, 74, 100]
         to_lower_bounds1 = [0, 3, 5, 6, 12, 15, 18, 25, 30, 35, 40, 50, 60, 65,
@@ -614,6 +624,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
                 self.assertAlmostEqual(test_val[0], calculated_val[0])
 
     def test_fit_age_group_intervals(self):
+        """ """
         df_age_in_1 = pd.DataFrame(
             columns=["1-10 years", "11-60 years", "61-99 years"],
             data=[[4, 10, 8]])

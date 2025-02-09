@@ -26,7 +26,9 @@ import memilio.simulation.osecir as osecir
 
 
 class Test_Mobility(unittest.TestCase):
+    """ """
     def test_params(self):
+        """ """
         coeffs = mio.MobilityCoefficientGroup(1, 10)
         coeffs[0] = mio.MobilityCoefficients(np.ones(10))
         coeffs[0].add_damping(mio.MobilityDamping(0.5 * np.ones(10), t=1.0))
@@ -37,6 +39,7 @@ class Test_Mobility(unittest.TestCase):
                         == 0.5 * np.ones(10)).all())
 
     def test_params_graph(self):
+        """ """
         graph = osecir.ModelGraph()
         graph.add_node(0, osecir.Model(1))
         graph.add_node(1, osecir.Model(1))
@@ -47,6 +50,7 @@ class Test_Mobility(unittest.TestCase):
         self.assertEqual(graph.get_num_out_edges(1), 0)
 
     def test_sim_graph(self):
+        """ """
         graph = osecir.MobilityGraph()
         graph.add_node(0, osecir.Model(1), 0, 0.1)
         graph.add_node(1, osecir.Model(1), 0)
@@ -57,6 +61,7 @@ class Test_Mobility(unittest.TestCase):
         self.assertEqual(graph.get_num_out_edges(1), 0)
 
     def test_mobility_sim(self):
+        """ """
         graph = osecir.MobilityGraph()
         graph.add_node(0, osecir.Model(1), 0, 0.1)
         graph.add_node(1, osecir.Model(1), 0)

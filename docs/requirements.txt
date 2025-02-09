@@ -9,3 +9,4 @@ pycode/memilio-generation
 pycode/memilio-plot
 pycode/memilio-simulation
 pycode/memilio-surrogatemodel
+exhale

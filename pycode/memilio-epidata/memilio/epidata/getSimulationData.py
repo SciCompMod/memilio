@@ -37,6 +37,11 @@ from memilio.epidata import getDIVIData, getPopulationData, getVaccinationData
 
 
 def print_error(text):
+    """
+
+    :param text: 
+
+    """
     gd.default_print('Error', 'Something went wrong while getting ' + text +
                      ' data. This was likely caused by a changed file format'
                      ' of the source material. Please report this as an issue. ' + text +
@@ -55,26 +60,29 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
                         sanitize_data=dd.defaultDict['sanitize_data'],
                         **kwargs
                         ):
-    """! Downloads all data from external sources
-
+    """ Downloads all data from external sources
+    
     The functions which are called are:
     - getCaseData.get_case_data
     - getPopulationData.get_population_data
     - getVaccinationData.get_vaccination_data
     - getDIVIData.get_divi_data
-
+    
     Keyword arguments:
-    @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
-    @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param start_date Date of first date in dataframe. Default 2020-01-01.
-    @param end_date Date of last date in dataframe. Default defined in defaultDict.
-    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
+
+    :param read_data: True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
+    :param file_format: File format which is used for writing the data. Default defined in defaultDict.
+    :param out_folder: Folder where data is written to. Default defined in defaultDict.
+    :param start_date: Date of first date in dataframe. Default 2020-01-01.
+    :param end_date: Date of last date in dataframe. Default defined in defaultDict.
+    :param impute_dates: True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    :param moving_average: Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
-    @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
-    @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
-    @param sanitize_data Value in {0,1,2,3}. Redistributes cases of every county either based on regions' ratios or on thresholds and population.
+    :param split_berlin: True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
+    :param rep_date: True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
+    :param sanitize_data: Value in {0,1,2,3}. Redistributes cases of every county either based on regions' ratios or on thresholds and population. (Default value = dd.defaultDict['sanitize_data'])
+    :param **kwargs: 
+
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
@@ -123,7 +131,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
     arg_dict = gd.cli("sim")
     get_simulation_data(**arg_dict)

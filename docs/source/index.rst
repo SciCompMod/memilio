@@ -19,5 +19,5 @@ Contents
    usage
    models
    pythonapi
-   cppapi
+   api/library_root
 

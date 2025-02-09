@@ -27,6 +27,7 @@ import memilio.plot.createGIF as mp
 
 
 class Location(Enum):
+    """ """
     Home = 0
     School = 1
     Work = 2
@@ -34,6 +35,7 @@ class Location(Enum):
 
 
 class Intervention(Enum):
+    """ """
     Home = 0
     SchoolClosure = 1
     HomeOffice = 2
@@ -43,6 +45,7 @@ class Intervention(Enum):
 
 
 class InterventionLevel(Enum):
+    """ """
     Main = 0
     PhysicalDistanceAndMasks = 1
     SeniorAwareness = 2
@@ -50,6 +53,7 @@ class InterventionLevel(Enum):
 
 
 class Simulation:
+    """ """
 
     def __init__(self, data_dir, results_dir):
         self.num_groups = 6
@@ -71,7 +75,20 @@ class Simulation:
             self.start_date = mio.Date(2021, 6, 6)
 
     def set_covid_parameters(self, model):
+        """
+
+        :param model: 
+
+        """
         def array_assign_uniform_distribution(param, min, max, num_groups=6):
+            """
+
+            :param param: 
+            :param min: 
+            :param max: 
+            :param num_groups:  (Default value = 6)
+
+            """
             if isinstance(
                     min, (int, float)) and isinstance(
                         max, (int, float)):
@@ -253,6 +270,11 @@ class Simulation:
         model.parameters.StartDayNewVariant = mio.Date(2021, 6, 6).day_in_year
 
     def set_contact_matrices(self, model):
+        """
+
+        :param model: 
+
+        """
         contact_matrices = mio.ContactMatrixGroup(
             len(list(Location)), self.num_groups)
         locations = ["home", "school_pf_eig", "work", "other"]
@@ -267,6 +289,12 @@ class Simulation:
         model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
 
     def set_npis(self, params, end_date):
+        """
+
+        :param params: 
+        :param end_date: 
+
+        """
         contacts = params.ContactPatterns
         dampings = contacts.dampings
 
@@ -300,6 +328,17 @@ class Simulation:
         def damping_helper(
                 t, min, max, damping_level, type, location,
                 group_weights=group_weights_all):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+            :param damping_level: 
+            :param type: 
+            :param location: 
+            :param group_weights:  (Default value = group_weights_all)
+
+            """
             v = mio.UncertainValue(0.5 * (max + min))
             v.set_distribution(mio.ParameterDistributionUniform(min, max))
             return mio.DampingSampling(
@@ -311,42 +350,112 @@ class Simulation:
                 group_weights=group_weights)
 
         def contacts_at_home(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_main, typ_home, [loc_home])
 
         def school_closure(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_main, typ_school, [loc_school])
 
         def home_office(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_main, typ_homeoffice, [loc_work])
 
         def social_events(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_main, typ_gathering, [loc_other])
 
         def social_events_work(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_main, typ_gathering, [loc_work])
 
         def physical_distancing_home(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_pd_and_masks, typ_distance, [loc_home])
 
         def physical_distancing_school(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_pd_and_masks, typ_distance, [loc_school])
 
         def physical_distancing_work(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_pd_and_masks, typ_distance, [loc_work])
 
         def physical_distancing_other(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_pd_and_masks, typ_distance, [loc_other])
 
         def senior_awareness(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_seniors, typ_senior, [loc_home, loc_other],
                 group_weights_seniors)
@@ -494,6 +603,11 @@ class Simulation:
                                                                             [Location.School.value], group_weights_all)
 
     def get_graph(self, end_date):
+        """
+
+        :param end_date: 
+
+        """
         model = osecirvvs.Model(self.num_groups)
         self.set_covid_parameters(model)
         self.set_contact_matrices(model)
@@ -522,6 +636,14 @@ class Simulation:
         return graph
 
     def run(self, num_days_sim, num_runs=10, save_graph=True, create_gif=True):
+        """
+
+        :param num_days_sim: 
+        :param num_runs:  (Default value = 10)
+        :param save_graph:  (Default value = True)
+        :param create_gif:  (Default value = True)
+
+        """
         mio.set_log_level(mio.LogLevel.Warning)
         end_date = self.start_date + num_days_sim
 

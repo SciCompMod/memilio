@@ -29,9 +29,7 @@ from typing_extensions import Self
 
 @dataclass
 class IntermediateRepresentation:
-    """
-    Dataclass storing the model features. Serves as interface between Scanner and Generator.
-    """
+    """Dataclass storing the model features. Serves as interface between Scanner and Generator."""
     namespace: str = None
     model_class: str = None
     python_module_name: str = None
@@ -48,21 +46,28 @@ class IntermediateRepresentation:
     age_group: dict = field(default_factory=dict)
 
     def set_attribute(self: Self, attribute_name: str, value: Any) -> None:
-        """
-        Setter for the attributes of this class.
+        """Setter for the attributes of this class.
 
-        @param attribute_name Name of the attribute in IntermediateRepresentation to be set.
-        @param value Value the attribute is set to. Needs to be of right type.
+        :param attribute_name: Name of the attribute in IntermediateRepresentation to be set.
+        :param value: Value the attribute is set to. Needs to be of right type.
+        :param self: Self: 
+        :param attribute_name: str: 
+        :param value: Any: 
+
         """
         self.__setattr__(attribute_name, value)
 
     def check_complete_data(self: Self, optional: Dict
                             [str, Union[str, bool]]) -> None:
-        """
-        Check for missing data in the IntermediateRepresentation. 
+        """Check for missing data in the IntermediateRepresentation.
         Called by the Scanner as last step of the data extraction.
 
-        @param optional Dictionary of the optional data from the config.json.
+        :param optional: Dictionary of the optional data from the config.json.
+        :param self: Self: 
+        :param optional: Dict[str: 
+        :param Union[str: 
+        :param bool]]: 
+
         """
         assert (self.model_class != None), "set a model name"
         assert (self.namespace != None), "set a model namespace"
