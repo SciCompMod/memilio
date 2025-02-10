@@ -253,7 +253,7 @@ def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
             'Warning', 'Read_data is not supportet for getPopulationData.py. Setting read_data = False')
         read_data = False
 
-    directory = os.path.join(out_folder, 'Germany')
+    directory = os.path.join(out_folder, 'Germany', 'pydata')
     gd.check_dir(directory)
 
     df_pop_raw, ref_year = read_population_data(ref_year)

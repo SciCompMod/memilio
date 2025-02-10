@@ -105,29 +105,29 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     arg_dict_mobility = {**arg_dict_all, **arg_dict_data_download,
                          "ref_year": ref_year}
 
-    try:
-        getCaseData.get_case_data(**arg_dict_cases)
-    except Exception as exp:
-        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
-        print_error('case')
+    # try:
+    #     getCaseData.get_case_data(**arg_dict_cases)
+    # except Exception as exp:
+    #     gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
+    #     print_error('case')
 
-    try:
-        getPopulationData.get_population_data(**arg_dict_all)
-    except Exception as exp:
-        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
-        print_error('population')
+    # try:
+    #     getPopulationData.get_population_data(**arg_dict_all)
+    # except Exception as exp:
+    #     gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
+    #     print_error('population')
 
-    try:
-        getDIVIData.get_divi_data(**arg_dict_divi)
-    except Exception as exp:
-        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
-        print_error('DIVI')
+    # try:
+    #     getDIVIData.get_divi_data(**arg_dict_divi)
+    # except Exception as exp:
+    #     gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
+    #     print_error('DIVI')
 
-    try:
-        getVaccinationData.get_vaccination_data(**arg_dict_vacc)
-    except Exception as exp:
-        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
-        print_error('vaccination')
+    # try:
+    #     getVaccinationData.get_vaccination_data(**arg_dict_vacc)
+    # except Exception as exp:
+    #     gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
+    #     print_error('vaccination')
 
     try:
         getCommuterMobility.get_commuter_data(**arg_dict_mobility)

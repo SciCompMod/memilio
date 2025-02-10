@@ -211,7 +211,8 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
     # This is not very nice either to have the same file with either Eisenach merged or not...
     if read_data:
-        population = pd.read_json(directory+'county_current_population.json')
+        population = pd.read_json(os.path.join(
+            directory, 'pydata', 'county_current_population.json'))
     else:
         population = gPd.get_population_data(
             out_folder=out_folder, merge_eisenach=True, read_data=read_data)
@@ -540,7 +541,7 @@ def get_neighbors_mobility(
         commuters from and to the neighbors.
     '''
     # This is not very nice either to have the same file with either Eisenach merged or not...
-    directory = os.path.join(out_folder, 'Germany/')
+    directory = os.path.join(out_folder, 'Germany', 'mobility')
     gd.check_dir(directory)
     try:
         commuter = gd.get_file(os.path.join(
@@ -595,8 +596,6 @@ def get_neighbors_mobility_all(
         Default value is 2022.
     @return Neighbors of all counties with respect to mobility.
     '''
-    directory = os.path.join(out_folder, 'Germany/')
-    gd.check_dir(directory)
     countyids = geoger.get_county_ids()
     neighbors_table = []
     # TODO: performance has to be improved

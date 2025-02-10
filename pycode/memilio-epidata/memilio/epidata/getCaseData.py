@@ -93,7 +93,7 @@ def fetch_case_data(
     If the data is read from the internet, before changing anything the data is stored in CaseDataFull.json.
     If data should be downloaded, it is checked if data contains all counties.
     If not a different source is tried.
-    The file is read in or stored at the folder "out_folder"/Germany/.
+    The file is read in or stored at the folder "out_folder"/Germany/pydata.
     To store and change the data we use pandas.
 
     @param directory str
@@ -465,7 +465,7 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
     If the data is read from the internet, before changing anything the data is stored in CaseDataFull.json.
     If data should be downloaded, it is checked if data contains all counties.
     If not a different source is tried.
-    The file is read in or stored at the folder "out_folder"/Germany/.
+    The file is read in or stored at the folder "out_folder"/Germany/pydata.
     To store and change the data we use pandas.
 
     While working with the data

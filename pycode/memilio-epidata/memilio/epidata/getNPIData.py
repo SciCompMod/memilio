@@ -546,7 +546,7 @@ def get_npi_data(fine_resolution=2,
         counties_considered = [counties_considered]
 
     directory = out_folder
-    directory = os.path.join(directory, 'Germany/')
+    directory = os.path.join(directory, 'Germany', 'pydata')
     gd.check_dir(directory)
 
     # read manual downloaded files from directory
