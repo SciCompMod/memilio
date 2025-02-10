@@ -569,7 +569,7 @@ class Simulation:
             start_date,
             end_date, self.data_dir,
             path_population_data, True, graph, scaling_factor_infected,
-            scaling_factor_icu, tnt_capacity_factor, end_date - start_date, extrapolate)
+            scaling_factor_icu, tnt_capacity_factor, end_date - start_date - 1, extrapolate)
 
         osecirvvs.set_edges(
             self.data_dir, graph, len(Location))
