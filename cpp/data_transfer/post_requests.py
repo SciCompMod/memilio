@@ -320,12 +320,14 @@ def post_to_db_nodelist():
 def post_to_db_scenarios(modelparameters_entry={}, post=True):
     # Define start and end date for casedata scenario
     start_date_casedata = (datetime.datetime.now() -
-                           datetime.timedelta(days=31)).strftime("%Y-%m-%d")
-    end_date_casedata = datetime.datetime.now().strftime("%Y-%m-%d")
+                           datetime.timedelta(days=32)).strftime("%Y-%m-%d")
+    end_date_casedata = (datetime.datetime.now() -
+                         datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     # Define start and end date of simulation
-    start_date_simulation = datetime.datetime.now().strftime("%Y-%m-%d")
+    start_date_simulation = (datetime.datetime.now() -
+                             datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     end_date_simulation = (datetime.datetime.now() +
-                           datetime.timedelta(days=31)).strftime("%Y-%m-%d")
+                           datetime.timedelta(days=30)).strftime("%Y-%m-%d")
 
     # Get ids of model, nodelist and interventions
     get_models = requests.get(url + "models/", headers=header)
