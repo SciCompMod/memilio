@@ -13,7 +13,7 @@ filename = 'data_secir_simple_90days_10k.pickle'
 path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
     os.path.dirname(os.path.realpath(path)))), 'data_paper')
-path_data = '/localdata1/gnn_paper_2024/data_Iteration2/one_population/without_agegroups/'
+path_data = '/localdata1/gnn_paper_2024/data/one_population/without_agegroups/'
 
 if not os.path.isfile(os.path.join(path_data, filename)):
     ValueError("no dataset found in path: " + path)
@@ -167,9 +167,9 @@ def SINGLE_lineplot_compartments_log_and_nolog(inputs_reversed, labels_reversed,
 
 def boxplot_inputs(days=60):
     file = open(
-        f'/localdata1/gnn_paper_2024/data_Iteration2/one_population/without_agegroups/data_secir_simple_{days}days_10k.pickle', 'rb')
+        f'/localdata1/gnn_paper_2024/data/one_population/without_agegroups/data_secir_simple_{days}days_10k.pickle', 'rb')
     file_I = open(
-        f'/localdata1/gnn_paper_2024/data_Iteration2/one_population/without_agegroups/data_secir_simple_{days}days_I_based_10k.pickle', 'rb')
+        f'/localdata1/gnn_paper_2024/data/one_population/without_agegroups/data_secir_simple_{days}days_I_based_10k.pickle', 'rb')
 
     data = pickle.load(file)
     data = np.expm1(data['inputs'])
@@ -198,11 +198,11 @@ def boxplot_inputs(days=60):
 
         d_df = pd.DataFrame(data=d)
         d_df = pd.melt(d_df.transpose(), var_name="Day")
-        d_df['type'] = 'Initial'
+        d_df['type'] = 'Outbreak'
 
         d_i_df = pd.DataFrame(data=d_i)
         d_i_df = pd.melt(d_i_df.transpose(), var_name="Day")
-        d_i_df['type'] = 'I-based'
+        d_i_df['type'] = 'Persistent threat'
 
         # dw2_df = pd.DataFrame(data = dw2)
         # dw2_df = pd.melt(dw2_df.transpose(), var_name="Day")
@@ -224,7 +224,7 @@ def boxplot_inputs(days=60):
         f"boxplot_input_compartments_noagegroups_comparison.png")
 
 
-# boxplot_inputs(days=60)
+boxplot_inputs(days=60)
 
 
 def boxplot_inputs_single(label='', days=60):
@@ -232,7 +232,7 @@ def boxplot_inputs_single(label='', days=60):
     # file = open(
     #     f'/localdata1/gnn_paper_2024/data_Iteration2/one_population/without_agegroups/data_secir_simple_{days}days_10k.pickle', 'rb')
     file = open(
-        f'/localdata1/gnn_paper_2024/data_Iteration2/one_population/without_agegroups/data_secir_simple_{days}days_I_based_10k.pickle', 'rb')
+        f'/localdata1/gnn_paper_2024/data/one_population/without_agegroups/data_secir_simple_{days}days_I_based_10k.pickle', 'rb')
 
     data = pickle.load(file)
     data = np.expm1(data['inputs'])
@@ -268,7 +268,7 @@ def boxplot_inputs_single(label='', days=60):
     plt.savefig("boxplot_input_compartments_noagegroups_I_based.png")
 
 
-# boxplot_inputs_single()
+boxplot_inputs_single()
 
 
 def heatmap_gridsearch_results(df_gridsearch, savename):
@@ -351,15 +351,15 @@ def plot_optimizer():
     plt.savefig("secir_simple_optimizer.png")
 
 
-filename = 'dataframe_withgroups_30days_Germany_10k_nodamp_new'
+# filename = 'dataframe_withgroups_30days_Germany_10k_nodamp_new'
 
-path = os.path.dirname(os.path.realpath(__file__))
-path_data = os.path.join(os.path.dirname(os.path.realpath(
-    os.path.dirname(os.path.realpath(path)))), 'secir_groups_grid_search_paper')
-filepath = os.path.join(path_data, filename)
-df = pd.DataFrame(data=pd.read_csv(filepath))
-savename = "heatmap_secir_simple_withagegroups_30days_10k_paper.png"
-heatmap_gridsearch_results(df, savename)
+# path = os.path.dirname(os.path.realpath(__file__))
+# path_data = os.path.join(os.path.dirname(os.path.realpath(
+#     os.path.dirname(os.path.realpath(path)))), 'secir_groups_grid_search_paper')
+# filepath = os.path.join(path_data, filename)
+# df = pd.DataFrame(data=pd.read_csv(filepath))
+# savename = "heatmap_secir_simple_withagegroups_30days_10k_paper.png"
+# heatmap_gridsearch_results(df, savename)
 
 
-plot_optimizer()
+# plot_optimizer()

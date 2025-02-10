@@ -42,6 +42,113 @@ mape_reversed_per_day = 100 * \
     np.mean(abs((labels_reversed - pred_reversed)/labels_reversed), axis=0)
 
 
+def mape_per_day_compartments_per_agegroup_dual_axis(mape_per_day, mape_reversed_per_day, age_groups, savename):
+    infectionstates = ['Susceptible', 'Exposed', 'InfectedNoSymptoms',
+                       'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
+
+    num_age_groups = len(age_groups)
+    num_compartments = len(infectionstates)
+
+    # Reshape MAPE data into (days, num_age_groups, num_compartments)
+    reshaped_mape = mape_per_day.reshape(
+        days, num_age_groups, num_compartments)
+    reshaped_mape_reversed = mape_reversed_per_day.reshape(
+        days, num_age_groups, num_compartments)
+
+    for group_idx, group in enumerate(age_groups):
+        plt.clf()
+        fig, axes = plt.subplots(nrows=4, ncols=2, sharey=False, figsize=(
+            10, 13), constrained_layout=True)
+        axes = axes.flatten()
+
+        # Extract MAPE values for the current age group
+        mape_group = reshaped_mape[:, group_idx, :]
+        mape_reversed_group = reshaped_mape_reversed[:, group_idx, :]
+
+        for ax, compartment, m, mr in zip(axes, infectionstates, mape_group.T, mape_reversed_group.T):
+            # Primary y-axis (scaled MAPE)
+            ax.plot(m, color='blue', label='MAPE (scaled)')
+            ax.set_ylabel('MAPE (Scaled)', color='blue')
+            ax.tick_params(axis='y', labelcolor='blue')
+            ax.set_title(compartment, fontsize=10)
+
+            # Secondary y-axis (log scale MAPE)
+            ax2 = ax.twinx()
+            ax2.plot(mr, color='red', label='MAPE (log scale)')
+            ax2.set_ylabel('MAPE (Log Scale)', color='red')
+            ax2.tick_params(axis='y', labelcolor='red')
+            ax2.set_yscale('log')
+
+        # Set x-axis labels for the last row only
+        axes[-2].set_xlabel('Day')
+        axes[-1].set_xlabel('Day')
+
+        # Collect legend handles and labels
+        lines, labels = [], []
+        for ax in fig.axes:
+            for line, label in zip(*ax.get_legend_handles_labels()):
+                if label not in labels:  # Ensure unique legend entries
+                    lines.append(line)
+                    labels.append(label)
+
+        fig.legend(lines, labels, loc='lower center',
+                   ncol=2, bbox_to_anchor=(0.5, -0.05))
+        fig.suptitle(
+            f'MAPE for Age Group {group}: Scaled ({np.round(np.mean(mape_group), 4)}%) | Log ({np.round(np.mean(mape_reversed_group), 4)}%)', fontsize=14)
+
+        # Save plot in a directory specific to the age group
+        plot_dir = f"/localdata1/gnn_paper_2024/images/without_spatial_res/lineplots_MAPE_per_day/with_agegroups/secir_with_agegroup_{days}days_I_based/"
+        os.makedirs(plot_dir, exist_ok=True)
+        save_path = os.path.join(plot_dir, savename + f"_group_{group}.png")
+        plt.savefig(save_path, bbox_inches='tight')
+        print(f"Saved MAPE plot for age group {group} at: {save_path}")
+
+        plt.close(fig)
+
+    # Create a mean plot for all age groups
+    plt.clf()
+    fig, axes = plt.subplots(nrows=4, ncols=2, sharey=False, figsize=(
+        10, 13), constrained_layout=True)
+    axes = axes.flatten()
+
+    mean_mape = np.mean(reshaped_mape, axis=1)
+    mean_mape_reversed = np.mean(reshaped_mape_reversed, axis=1)
+
+    for ax, compartment, m, mr in zip(axes, infectionstates, mean_mape.T, mean_mape_reversed.T):
+        ax.plot(m, color='blue', label='Mean MAPE (scaled)')
+        ax.set_ylabel('MAPE (Scaled)', color='blue')
+        ax.tick_params(axis='y', labelcolor='blue')
+        ax.set_title(compartment, fontsize=10)
+
+        ax2 = ax.twinx()
+        ax2.plot(mr, color='red', label='Mean MAPE (log scale)')
+        ax2.set_ylabel('MAPE (Log Scale)', color='red')
+        ax2.tick_params(axis='y', labelcolor='red')
+        ax2.set_yscale('log')
+
+    axes[-2].set_xlabel('Day')
+    axes[-1].set_xlabel('Day')
+
+    lines, labels = [], []
+    for ax in fig.axes:
+        for line, label in zip(*ax.get_legend_handles_labels()):
+            if label not in labels:
+                lines.append(line)
+                labels.append(label)
+
+    fig.legend(lines, labels, loc='lower center',
+               ncol=2, bbox_to_anchor=(0.5, -0.05))
+    fig.suptitle(
+        f'Mean MAPE across Age Groups: Scaled ({np.round(np.mean(mean_mape), 4)}%) | Log ({np.round(np.mean(mean_mape_reversed), 4)}%)', fontsize=14)
+
+    mean_plot_dir = f"/localdata1/gnn_paper_2024/images/without_spatial_res/lineplots_MAPE_per_day/with_agegroups/secir_with_agegroup_{days}days_I_based/"
+    os.makedirs(mean_plot_dir, exist_ok=True)
+    mean_save_path = os.path.join(mean_plot_dir, savename + "_mean.png")
+    plt.savefig(mean_save_path, bbox_inches='tight')
+    print(f"Saved mean MAPE plot at: {mean_save_path}")
+    plt.close(fig)
+
+
 def mape_per_day_compartments_per_agegroup(mape_per_day, mape_reversed_per_day, age_groups, savename):
 
     infectionstates = ['Susceptible', 'Exposed', 'InfectedNoSymptoms',
@@ -85,7 +192,7 @@ def mape_per_day_compartments_per_agegroup(mape_per_day, mape_reversed_per_day, 
             f'MAPE for Age Group {group}: Log ({np.round(np.mean(mape_group), 4)}%) | Orig. ({np.round(np.mean(mape_reversed_group), 4)}%)', fontsize=14)
 
         # Save plot in a directory specific to the age group
-        plot_dir = f"/localdata1/gnn_paper_2024/images/lineplots_MAPE_per_day/with_agegroups/secir_with_agegroup_{days}days_I_based/"
+        plot_dir = f"/localdata1/gnn_paper_2024/images/without_spatial_res/lineplots_MAPE_per_day/with_agegroups/secir_with_agegroup_{days}days_I_based/"
         os.makedirs(plot_dir, exist_ok=True)
         save_path = os.path.join(
             plot_dir, savename + "_group_" + group + ".png")
@@ -122,7 +229,7 @@ def lineplots_pred_labels_per_agegroup(pred_reversed, labels_reversed, test_inpu
             labels_group = reshaped_labels[i, :, group_idx, :]
             inputs_group = reshaped_inputs[i, :, group_idx, :]
 
-            # scientific notation
+            # Scientific notation
             sci_formatter = ScalarFormatter(useMathText=True)
             sci_formatter.set_powerlimits((6, 6))
 
@@ -144,16 +251,12 @@ def lineplots_pred_labels_per_agegroup(pred_reversed, labels_reversed, test_inpu
                 log_mape = np.round(
                     100 * np.mean(abs((np.log1p(label_data) - np.log1p(pred)) / np.log1p(label_data))), 4)
 
-                textstr = '\n'.join((
-                    f'MAPE (log scale): {log_mape}%',
-                    f'MAPE (orig. scale): {not_log_mape}%'
-                ))
-
+                textstr = '\n'.join(
+                    (f'MAPE (log scale): {log_mape}%', f'MAPE (orig. scale): {not_log_mape}%'))
                 props = dict(boxstyle='round,pad=0.3',
                              facecolor='lightgray', edgecolor='black', alpha=0.8)
                 ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=10,
                         verticalalignment='top', horizontalalignment='left', bbox=props)
-
                 ax.set_ylabel('Number of individuals')
                 ax.set_title(state)
                 ax.yaxis.set_major_formatter(sci_formatter)
@@ -166,17 +269,49 @@ def lineplots_pred_labels_per_agegroup(pred_reversed, labels_reversed, test_inpu
             fig.legend(lines, labels, loc='lower center',
                        ncol=3, frameon=False, fontsize=10)
 
-            # Save plo
-            plot_dir = f"/localdata1/gnn_paper_2024/images/lineplots_compartments/with_agegroups/secir_with_agegroup_{days}days_I_based/"
+            # Save plot
+            plot_dir = f"/localdata1/gnn_paper_2024/images/without_spatial_res/lineplots_compartments/with_agegroups/secir_with_agegroup_{days}days_I_based/"
             os.makedirs(plot_dir, exist_ok=True)
 
             save_path = os.path.join(
                 plot_dir, f"pred_labels_group_{group}_plot_{i}.png")
             plt.savefig(save_path, bbox_inches='tight')
-            print(
-                f"Saved {group} Plot Nr {i}")
+            print(f"Saved {group} Plot Nr {i}")
+            plt.close(fig)
 
-            plt.close(fig)  # Close figure to prevent memory issues
+        # Create summed plot across all groups
+        summed_pred = np.sum(reshaped_pred[i, :, :, :], axis=1)
+        summed_labels = np.sum(reshaped_labels[i, :, :, :], axis=1)
+        summed_inputs = np.sum(reshaped_inputs[i, :, :, :], axis=1)
+
+        fig, axes = plt.subplots(nrows=4, ncols=2, figsize=(
+            10, 13), constrained_layout=True, dpi=300)
+        axes = axes.flatten()
+
+        for ax, state, pred, label_data, input_data in zip(axes, infectionstates, summed_pred.T, summed_labels.T, summed_inputs.T):
+            pred_plot = np.insert(pred, 0, input_data[-1])
+            label_plot = np.insert(label_data, 0, input_data[-1])
+
+            ax.plot(np.arange(1, 6),
+                    input_data[:5], color='black', label='Inputs', linewidth=3)
+            ax.plot(np.arange(5, days + 6), label_plot,
+                    color='red', label='Labels', linewidth=3)
+            ax.plot(np.arange(5, days + 6), pred_plot, color='deepskyblue',
+                    label='Predictions', linestyle='--', linewidth=2)
+            ax.set_title(state)
+            ax.set_ylabel('Number of individuals')
+            ax.yaxis.set_major_formatter(sci_formatter)
+
+        axes[-2].set_xlabel('Day')
+        axes[-1].set_xlabel('Day')
+
+        fig.legend(lines, labels, loc='lower center',
+                   ncol=3, frameon=False, fontsize=10)
+        summed_save_path = os.path.join(
+            plot_dir, f"pred_labels_summed_plot_{i}.png")
+        plt.savefig(summed_save_path, bbox_inches='tight')
+        print(f"Saved Summed Plot Nr {i}")
+        plt.close(fig)
 
 
 # def SINGLE_lineplot_per_group(inputs_reversed, labels_reversed, num_plots, input_width, label_width):
@@ -389,7 +524,7 @@ def heatmap_activation_optimiizer(filename, filename_2):
     cbar = ax.figure.colorbar(im, ax=ax, **cbar_kw)
     cbar.ax.set_ylabel('MAPE', rotation=-90, va="bottom")
 
-    ax.set_title("Activation anf Optimizer for LSTM")
+    ax.set_title("Activation and Optimizer for LSTM")
     fig.tight_layout()
     plt.show()
     plt.savefig("heatmap_activation_optimizer_LSTM_GroupsNN_I_based.png")
@@ -402,10 +537,14 @@ age_groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
 # mape_per_day_compartments_per_agegroup(
 #     mape_per_day, mape_reversed_per_day, age_groups, savename)
 
+# savename_2 = 'mape_per_day_GroupsNN_log_and_nonlog_twoaxes_mape' + title_add
+# mape_per_day_compartments_per_agegroup_dual_axis(
+#     mape_per_day, mape_reversed_per_day, age_groups, savename_2)
 
-savename_2 = f'compartments_secir_noagegroup_{days}days_I_based' + title_add
+
+savename_3 = f'compartments_secir_noagegroup_{days}days_I_based' + title_add
 lineplots_pred_labels_per_agegroup(pred_reversed, labels_reversed,
-                                   test_inputs, age_groups, 50, savename_2)
+                                   test_inputs, age_groups, 20, savename_3)
 
 # # BOXPLOT INPUTS
 # file_path = '/home/schm_a45/Documents/Code/memilio_test/memilio/pycode/memilio-surrogatemodel/memilio/data_paper/data_secir_groups_30days_I_based_Germany_10k.pickle'
@@ -433,7 +572,7 @@ lineplots_pred_labels_per_agegroup(pred_reversed, labels_reversed,
 # else:
 #     title_add = title_groups_add + '_30d_initial_10k_noDamp.png'
 # savename = "heatmap_secir_withagegroups" + title_add
-# # NODAMP_heatmap_secir_withagegroups_30days_I_based_10k_paper
+# # heatmap_secir_withagegroups_30days_I_based_10k_paper
 
 # heatmap_gridsearch_results(df, savename)
 

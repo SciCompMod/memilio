@@ -95,10 +95,11 @@ def lineplots_compartments(mape_per_day, mape_reversed_per_day, savename):
         ax.set_yscale('log')
 
     fig.legend(lines[:2], line_labels[:2], loc='lower center')
+    fig.subplots_adjust(bottom=0.85)
     fig.suptitle(
         'Test MAPE for log-scaled ('+str(np.round(np.mean(mape_per_day), 4))+'%) and unscaled data ('+str(np.round(np.mean(mape_reversed_per_day), 4))+'%)', fontsize=16)
 
-    plot_dir = '/localdata1/gnn_paper_2024/images/lineplots_MAPE_per_day/no_agegroups/'
+    plot_dir = '/localdata1/gnn_paper_2024/images/without_spatial_res/lineplots_MAPE_per_day/no_agegroups/'
     plt.savefig(os.path.join(plot_dir, savename))
 
 
@@ -120,7 +121,7 @@ def lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename
 
         # Create a secondary y-axis for the second line (mape_reversed_per_day)
         ax2 = ax.twinx()
-        ax2.plot(mr, color='orange', label='Test MAPE not scaled')
+        ax2.plot(mr, color='red', label='Test MAPE not scaled')
         ax2.set_ylabel('Test MAPE (Not Scaled)', color='red')
         ax2.tick_params(axis='y', labelcolor='red')
 
@@ -137,11 +138,12 @@ def lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename
                 lines.append(line)
                 labels.append(label)
 
-    fig.legend(lines, labels, loc='lower center')
+    fig.legend(lines, labels, ncols=2, loc='lower center',
+               bbox_to_anchor=(0.5, -0.01))
     fig.suptitle(
         'Test MAPE for scaled ('+str(np.round(np.mean(mape_per_day), 4))+'%) and unscaled data ('+str(np.round(np.mean(mape_reversed_per_day), 4))+'%)', fontsize=16)
 
-    plot_dir = '/localdata1/gnn_paper_2024/images/lineplots_MAPE_per_day/no_agegroups/'
+    plot_dir = '/localdata1/gnn_paper_2024/images/without_spatial_res/lineplots_MAPE_per_day/no_agegroups/'
     plt.savefig(os.path.join(plot_dir, savename))
 
 
@@ -458,7 +460,7 @@ def lineplots_pred_labels_selected_plot(pred_reversed, labels_reversed, plotID):
 
 title_add = f'_{days}d_Ibased_10k_noDamp.png'
 savename = 'mape_per_day_simpleNN_log_and_nonlog_mape' + title_add
-lineplots_compartments(mape_per_day, mape_reversed_per_day, savename)
+# lineplots_compartments(mape_per_day, mape_reversed_per_day, savename)
 
 
 savename_2 = 'mape_per_day_simpleNN_log_and_nonlog_twoaxes_mape' + title_add
