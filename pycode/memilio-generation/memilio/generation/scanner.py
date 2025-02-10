@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file scanner.py
-@brief Analyze the model and extract the needed information. Information get passed to the IntermediateRepresenation.
+:strong:`scanner.py`
+Analyze the model and extract the needed information. Information get passed to the IntermediateRepresenation.
 """
 from __future__ import annotations
 

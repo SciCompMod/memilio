@@ -18,11 +18,12 @@
 # limitations under the License.
 #############################################################################
 """
-@file defaultDict.py
+:strong:`defaultDict.py`
 
-@brief Defines global parameter, lists and dictionaries
+Defines global parameter, lists and dictionaries
 
 Dictionaries define values which are globally used and should be everywhere the same
+
 - defaultDict defined default values for the function parameter
 
 This dictionary ensures that in case of calling the functions

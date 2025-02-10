@@ -18,9 +18,9 @@
 # limitations under the License.
 #############################################################################
 """
-@file geoModificationGermany.py
+:strong:`geoModificationGermany.py`
 
-@brief Provides methods to return lists of local entities such as federal states
+Provides methods to return lists of local entities such as federal states
     and counties and geographical merging criteria.
 """
 import os

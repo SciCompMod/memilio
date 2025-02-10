@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file modifyDataframeSeries.py
-@brief Tools for modifying data frame series like imputing zeros for unknown dates,
+:strong:`modifyDataframeSeries.py`
+Tools for modifying data frame series like imputing zeros for unknown dates,
     copying previous values, and/or computing moving averages
 """
 import itertools

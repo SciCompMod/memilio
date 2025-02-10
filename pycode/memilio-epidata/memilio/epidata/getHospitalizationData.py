@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file getHospitalizationData.py
-@brief Downloads the hospitalization data of the Robert Koch-Institute (RKI) and provides it in different ways.
+:strong:`getHospitalizationData.py`
+Downloads the hospitalization data of the Robert Koch-Institute (RKI) and provides it in different ways.
 
 The raw hospitalization data can be found at
 https://github.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland

@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file intermediate_representation.py
-@brief Dataclass to represent the needed information of a model. Interface between the scanner and generator.
+:strong:`intermediate_representation.py`
+Dataclass to represent the needed information of a model. Interface between the scanner and generator.
 """
 from dataclasses import dataclass, field
 from typing import Any, Dict, Union

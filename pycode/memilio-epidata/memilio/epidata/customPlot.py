@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file customPlot.py
-@brief Plots time series data as provided by the scripts.
+:strong:`customPlot.py`
+Plots time series data as provided by the scripts.
 """
 import os
 

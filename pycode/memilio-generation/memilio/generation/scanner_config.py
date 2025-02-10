@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file scanner_config.py
-@brief Dataclass to import the configurations from the config.json.
+:strong:`scanner_config.py`
+Dataclass to import the configurations from the config.json.
 """
 import os
 from dataclasses import dataclass, field

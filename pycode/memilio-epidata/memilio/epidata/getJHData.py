@@ -18,9 +18,9 @@
 # limitations under the License.
 #############################################################################
 """
-@file getJHData.py
+:strong:`getJHData.py`
 
-@brief Download data from John Hopkins University
+Download data from John Hopkins University
 """
 
 import os

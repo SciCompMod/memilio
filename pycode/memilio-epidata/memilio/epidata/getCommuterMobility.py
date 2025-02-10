@@ -18,9 +18,9 @@
 # limitations under the License.
 #############################################################################
 """
-@file getCommuterMobility.py
+:strong:`getCommuterMobility.py`
 
-@brief gets data related to county mobility from "Bundesagentur fuer Arbeit"
+gets data related to county mobility from "Bundesagentur fuer Arbeit"
 """
 import collections
 import os

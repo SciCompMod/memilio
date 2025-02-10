@@ -18,10 +18,11 @@
 # limitations under the License.
 #############################################################################
 """
-@file getDataIntoPandasDataFrame.py
-@brief Tools to convert data to pandas dataframes
+:strong:`getDataIntoPandasDataFrame.py`
+Tools to convert data to pandas dataframes
 
 This tool contains
+
 - load excel format
 - load csv format
 - organizes the command line interface

@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file ast.py
-@brief Create the ast and assign ids. Get ids and nodes. 
+:strong:`ast.py`
+Create the ast and assign ids. Get ids and nodes. 
 """
 import subprocess
 import tempfile

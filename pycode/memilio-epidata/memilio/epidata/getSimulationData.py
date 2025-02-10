@@ -18,11 +18,12 @@
 # limitations under the License.
 #############################################################################
 """
-@file getSimulationData.py
+:strong:`getSimulationData.py`
 
-@brief Executes all data downloads which belong to the epidata package and downloads external data
+Executes all data downloads which belong to the epidata package and downloads external data
 
 The functions which are called are:
+
 - getCaseData.get_case_data
 - getPopulationData.get_population_data
 - getVacccinationData.get_vaccination_data

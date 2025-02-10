@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file generator.py
-@brief Generate the model specific python bindings code with the information given by the IntermediateRepresantation.
+:strong:`generator.py`
+Generate the model specific python bindings code with the information given by the IntermediateRepresantation.
 """
 from __future__ import annotations
 

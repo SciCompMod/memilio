@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file getCaseData.py
-@brief Downloads the case data of the Robert Koch-Institute (RKI) and provides it in different ways.
+:strong:`getCaseData.py`
+Downloads the case data of the Robert Koch-Institute (RKI) and provides it in different ways.
 
 The raw case data we download can be found at
 https://github.com/robert-koch-institut/SARS-CoV-2-Infektionen_in_Deutschland

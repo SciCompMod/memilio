@@ -18,9 +18,9 @@
 # limitations under the License.
 #############################################################################
 """
-@file getDIVIData.py
+:strong:`getDIVIData.py`
 
-@brief Data of the DIVI
+Data of the DIVI
 about Sars-CoV2 is downloaded.
 This data contains the number of Covid19 patients in intensive care
 and the number of those that are additionally ventilated.
@@ -28,6 +28,7 @@ and the number of those that are additionally ventilated.
 DIVI - Deutsche interdisziplinäre Vereinigung für Intensiv- und Notfallmedizin
 
 data explanation:
+
 - reporting_hospitals is the number of reporting hospitals
 - ICU is the number of covid patients in reporting hospitals
 - ICU_ventilated is the number of ventilated covid patients in reporting hospitals

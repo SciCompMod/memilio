@@ -18,9 +18,9 @@
 # limitations under the License.
 #############################################################################
 """
-@file getPopulationData.py
+:strong:`getPopulationData.py`
 
-@brief Downloads data about population statistic
+Downloads data about population statistic
 
 """
 import warnings

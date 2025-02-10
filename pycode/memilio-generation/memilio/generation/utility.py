@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file utility.py
-@brief Additional functions used for the code generation.
+:strong:`utility.py`
+Additional functions used for the code generation.
 """
 import os
 import subprocess
