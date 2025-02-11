@@ -239,7 +239,7 @@ void Model::compute_S_deriv(ScalarType dt)
     compute_S_deriv(dt, time_point_index);
 }
 
-void Model::compute_I_and_R(ScalarType dt, size_t t0_index)
+void Model::compute_I_and_R(ScalarType dt, size_t t0_index, bool enforce_mass_conservation)
 {
     size_t num_time_points_simulated = populations.get_num_time_points() - t0_index;
 
@@ -290,6 +290,15 @@ void Model::compute_I_and_R(ScalarType dt, size_t t0_index)
 
     populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] =
         populations[t0_index][(Eigen::Index)InfectionState::Recovered] + dt * (sum_part1_R + sum_part2_R);
+
+    if (enforce_mass_conservation) {
+        ScalarType mass_conservation_scaling =
+            (m_N - populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible]) /
+            (populations.get_last_value()[(Eigen::Index)InfectionState::Infected] +
+             populations.get_last_value()[(Eigen::Index)InfectionState::Recovered]);
+        populations.get_last_value()[(Eigen::Index)InfectionState::Infected] *= mass_conservation_scaling;
+        populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] *= mass_conservation_scaling;
+    }
 }
 
 void Model::compute_S_deriv_centered(ScalarType dt, size_t time_point_index)
@@ -304,7 +313,8 @@ void Model::compute_S_deriv_centered(ScalarType dt, size_t time_point_index)
         (12 * dt);
 }
 
-void Model::compute_I_and_R_centered(ScalarType dt, size_t t0_index, size_t time_point_index)
+void Model::compute_I_and_R_centered(ScalarType dt, size_t t0_index, size_t time_point_index,
+                                     bool enforce_mass_conservation)
 {
     size_t num_time_points_simulated = time_point_index + m_gregory_order;
 
@@ -355,6 +365,17 @@ void Model::compute_I_and_R_centered(ScalarType dt, size_t t0_index, size_t time
 
     populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Recovered] =
         populations[t0_index][(Eigen::Index)InfectionState::Recovered] + dt * (sum_part1_R + sum_part2_R);
+
+    if (enforce_mass_conservation) {
+        ScalarType mass_conservation_scaling =
+            (m_N - populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Susceptible]) /
+            (populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Infected] +
+             populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Recovered]);
+
+        // std::cout << "mass_conservation_scaling: " << mass_conservation_scaling << std::endl;
+        populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Infected] *= mass_conservation_scaling;
+        populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Recovered] *= mass_conservation_scaling;
+    }
 }
 
 } // namespace isir

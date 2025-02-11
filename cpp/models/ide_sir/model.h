@@ -63,8 +63,9 @@ public:
 
     void compute_S_deriv_centered(ScalarType dt, size_t time_point_index);
 
-    void compute_I_and_R(ScalarType dt, size_t t0_index);
-    void compute_I_and_R_centered(ScalarType dt, size_t t0_index, size_t time_point_index);
+    void compute_I_and_R(ScalarType dt, size_t t0_index, bool enforce_mass_conservation = true);
+    void compute_I_and_R_centered(ScalarType dt, size_t t0_index, size_t time_point_index,
+                                  bool enforce_mass_conservation = true);
 
     size_t get_gregory_order()
     {

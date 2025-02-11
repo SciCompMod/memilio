@@ -88,8 +88,6 @@ void Simulation::advance2(ScalarType tmax)
         // Compute Susceptibles.
         m_model->compute_S(m_model->populations.get_last_value()[(size_t)InfectionState::Susceptible], m_dt,
                            m_model->get_totalpop(), t0_index);
-
-        // std::cout << "Total pop: " << m_model->populations.get_last_value().sum() << std::endl;
     }
 
     // Then compute derivative of S based on centered finite difference and with this I and R.
@@ -108,7 +106,7 @@ void Simulation::advance2(ScalarType tmax)
             size_t time_point_index_flows = m_model->flows.get_num_time_points() - 1;
             m_model->compute_I_and_R_centered(m_dt, t0_index, time_point_index_flows);
         }
-        std::cout << "Total pop: " << m_model->populations[time_point_index_populations].sum() << std::endl;
+        // std::cout << "Total pop: " << m_model->populations[time_point_index_populations].sum() << std::endl;
     }
 }
 
