@@ -516,7 +516,7 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
 
-    directory = os.path.join(out_folder, 'Germany', 'pydata')
+    directory = os.path.join(out_folder, 'Germany', 'pydata/')
     gd.check_dir(directory)
     filename = "CaseDataFull"
 
