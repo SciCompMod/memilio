@@ -29,29 +29,51 @@ namespace mio
 namespace isir
 {
 
+using Vec = mio::TimeSeries<ScalarType>::Vector;
+
 void Simulation::advance(ScalarType tmax)
 {
+    // using Vec = mio::TimeSeries<ScalarType>::Vector;
+
     mio::log_info("Simulating IDE-SIR from t0 = {} until tmax = {} with dt = {}.", m_model->populations.get_last_time(),
                   tmax, m_dt);
 
     // For every time step:
-    using Vec = mio::TimeSeries<ScalarType>::Vector;
+    // m_model->compute_S_deriv(m_dt);
+
+    size_t t0_index = m_model->m_finite_difference_order;
+
+    for (size_t i = 0; i < m_model->populations.get_num_time_points() - t0_index; i++) {
+        m_model->flows.add_time_point(i * m_dt,
+                                      TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
+        m_model->compute_S_deriv(m_dt, i + t0_index);
+    }
+
+    // std::cout << "Last time in flows: " << m_model->flows.get_last_time() << std::endl;
+    std::cout << "Total pop: " << m_model->populations.get_last_value().sum() << std::endl;
     while (m_model->populations.get_last_time() < tmax - 1e-10) {
+        // std::cout << "Time at beginning of advance: " << m_model->populations.get_last_time() << std::endl;
 
-        m_solver.compute_S(m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible],
-                           m_model->populations, m_dt, m_model->parameters, m_model->get_totalpop());
-
+        // Add new time points to populations and flows.
         m_model->populations.add_time_point(m_model->populations.get_last_time() + m_dt,
                                             Vec::Constant((size_t)InfectionState::Count, 0.));
-        m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] =
-            m_solver.m_pop.get_last_value()[(Eigen::Index)InfectionState::Susceptible];
-        m_solver.m_pop = m_model->populations;
+        m_model->flows.add_time_point(m_model->flows.get_last_time() + m_dt,
+                                      TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
+
+        m_model->compute_S(m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible], m_dt,
+                           m_model->get_totalpop(), t0_index);
+
+        m_model->compute_S_deriv(m_dt);
+
+        m_model->compute_I_and_R(m_dt, t0_index);
+
+        std::cout << "Total pop: " << m_model->populations.get_last_value().sum() << std::endl;
     }
 }
 
-TimeSeries<ScalarType> simulate(ScalarType tmax, ScalarType dt, Model const& m_model, size_t gregory_order)
+TimeSeries<ScalarType> simulate(ScalarType tmax, ScalarType dt, Model const& m_model)
 {
-    Simulation sim(m_model, dt, gregory_order);
+    Simulation sim(m_model, dt);
     sim.advance(tmax);
     return sim.get_result();
 }

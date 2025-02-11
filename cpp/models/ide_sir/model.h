@@ -44,9 +44,20 @@ public:
     *   simulation. 
     * @param[in] N_init Total population.
     */
-    Model(TimeSeries<ScalarType>&& populations_init, ScalarType N_init);
+    Model(TimeSeries<ScalarType>&& populations_init, ScalarType N_init, size_t gregory_order,
+          size_t finite_difference_order);
 
     ScalarType get_totalpop() const;
+
+    ScalarType fixed_point_function(ScalarType s, ScalarType dt, ScalarType N, size_t t0_index);
+
+    void compute_S(ScalarType s_init, ScalarType dt, ScalarType N, size_t t0_index, ScalarType tol = 1e-10,
+                   size_t max_iterations = 100);
+
+    void compute_S_deriv(ScalarType dt, size_t time_point_index);
+    void compute_S_deriv(ScalarType dt);
+
+    void compute_I_and_R(ScalarType dt, size_t t0_index);
 
     // ---- Public parameters. ----
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
@@ -54,10 +65,13 @@ public:
     // initialization part.
     TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
         // people in defined #InfectionState%s for every AgeGroup.
+    TimeSeries<ScalarType> flows;
+    size_t m_finite_difference_order;
 
 private:
     // ---- Private parameters. ----
     ScalarType m_N; ///< Vector containing the total population size of the considered region for every AgeGroup.
+    size_t m_gregory_order;
 };
 
 } // namespace isir

@@ -21,7 +21,6 @@
 #define IDE_SIR_SIMULATION_H
 
 #include "ide_sir/model.h"
-#include "ide_sir/gregory_solver.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include <cstdio>
@@ -43,10 +42,11 @@ public:
      * @param[in] model An instance of the IDE model.
      * @param[in] dt Step size of numerical solver.
      */
-    Simulation(Model const& model, ScalarType dt, size_t gregory_order)
+    Simulation(Model const& model, ScalarType dt)
         : m_model(std::make_unique<Model>(model))
         , m_dt(dt)
-        , m_solver(GregorySolver(m_model->populations, m_model->parameters, gregory_order))
+    // , m_solver(std::make_unique<GregorySolver>(
+    //       GregorySolver(model.populations, model.flows, model.parameters, gregory_order)))
     {
     }
 
@@ -76,15 +76,15 @@ public:
         return m_model->populations;
     }
 
-    // /**
-    //  * @brief Get the transitions between the different #InfectionState%s.
-    //  *
-    //  * @return TimeSeries with stored transitions calculated in the simulation.
-    //  */
-    // TimeSeries<ScalarType> const& get_transitions()
-    // {
-    //     return m_model->transitions;
-    // }
+    /**
+     * @brief Get the transitions between the different #InfectionState%s.
+     *
+     * @return TimeSeries with stored transitions calculated in the simulation.
+     */
+    TimeSeries<ScalarType> const& get_flows()
+    {
+        return m_model->flows;
+    }
 
     /**
      * @brief returns the simulation model used in simulation.
@@ -114,7 +114,6 @@ public:
 private:
     std::unique_ptr<Model> m_model; ///< Unique pointer to the Model simulated.
     ScalarType m_dt; ///< Time step used for numerical computations in simulation.
-    GregorySolver m_solver;
 };
 
 /**

@@ -5,8 +5,6 @@ add_library(ide_sir
     simulation.h
     simulation.cpp
     parameters.h
-    gregory_solver.h 
-    gregory_solver.cpp
 )
 target_link_libraries(ide_sir PUBLIC memilio)
 target_include_directories(ide_sir PUBLIC

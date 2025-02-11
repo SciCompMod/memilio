@@ -25,34 +25,35 @@
 #include "memilio/config.h"
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/utils/time_series.h"
-#include "ode_secir/parameters.h"
 
 int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax      = 4.;
-    ScalarType dt        = 1.;
-    size_t gregory_order = 2;
+    ScalarType tmax                = 10.;
+    ScalarType dt                  = 1.;
+    size_t gregory_order           = 2;
+    size_t finite_difference_order = 4;
 
     Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
-    vec_init[(size_t)mio::isir::InfectionState::Susceptible] = 900000;
-    vec_init[(size_t)mio::isir::InfectionState::Infected]    = 1;
-    vec_init[(size_t)mio::isir::InfectionState::Recovered]   = 900;
+    vec_init[(size_t)mio::isir::InfectionState::Susceptible] = 10000.;
+    vec_init[(size_t)mio::isir::InfectionState::Infected]    = 0.;
+    vec_init[(size_t)mio::isir::InfectionState::Recovered]   = 90.;
 
     ScalarType N = vec_init.sum();
 
     mio::TimeSeries<ScalarType> init_populations((int)mio::isir::InfectionState::Count);
 
-    init_populations.add_time_point(0., vec_init);
-    while (init_populations.get_last_time() < (gregory_order - 1) * dt - 1e-6) {
+    // TODO: it would be sufficient to have finite_difference_order of time steps before gregory_order
+    init_populations.add_time_point(-(ScalarType)finite_difference_order * dt, vec_init);
+    while (init_populations.get_last_time() < gregory_order - 1 - 1e-6) {
         init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
     }
 
     // Initialize model.
-    mio::isir::Model model(std::move(init_populations), N);
+    mio::isir::Model model(std::move(init_populations), N, gregory_order, finite_difference_order);
 
-    mio::ExponentialSurvivalFunction exp(9.);
+    mio::ExponentialSurvivalFunction exp(1 / 9.);
     mio::StateAgeFunctionWrapper dist(exp);
     std::vector<mio::StateAgeFunctionWrapper> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
     model.parameters.get<mio::isir::TransitionDistributions>() = vec_dist;
@@ -60,10 +61,13 @@ int main()
     mio::ConstantFunction constfunc(0.1);
     mio::StateAgeFunctionWrapper const_wrapper(constfunc);
     model.parameters.get<mio::isir::TransmissionProbabilityOnContact>() = const_wrapper;
+    model.parameters.get<mio::isir::RiskOfInfectionFromSymptomatic>()   = const_wrapper;
 
     // Carry out simulation.
-    mio::isir::Simulation sim(model, dt, gregory_order);
+    mio::isir::Simulation sim(model, dt);
     sim.advance(tmax);
 
     sim.get_result().print_table({"S", "I", "R"}, 16, 8);
+
+    sim.get_flows().print_table();
 }
