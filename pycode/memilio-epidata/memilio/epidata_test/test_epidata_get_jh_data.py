@@ -95,7 +95,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
 
         # Test case where file does not exist
         file = "FullData_JohnHopkins.json"
-        file_with_path = os.path.join(out_folder, file)
+        file_with_path = os.path.join(out_folder, "Global", "pydata", file)
 
         with self.assertRaises(FileNotFoundError) as error:
             gJHD.get_jh_data(read_data=read_data, file_format=file_format,
@@ -108,7 +108,8 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         # Test case where file exists
 
         # write files which should be read in by program
-        self.write_jh_data(out_folder)
+        directory_glb = os.path.join(out_folder, 'Global', 'pydata/')
+        self.write_jh_data(directory_glb)
 
         # check if expected file is written
         self.assertEqual(len(os.listdir(self.path)), 1)
@@ -118,15 +119,16 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
 
         # check if expected files are written
         # 7 country-folders+3 all countries-files
-        self.assertEqual(len(os.listdir(self.path)), 3 + 7)
+        self.assertEqual(sorted(os.listdir(self.path)), sorted(['Germany', 'Spain', 'France', 'Global',
+                                                                'Italy', 'US', 'SouthKorea', 'China']))
         # check if files are written in folders
-        directory_ger = os.path.join(out_folder, 'Germany/')
-        directory_es = os.path.join(out_folder, 'Spain/')
-        directory_fr = os.path.join(out_folder, 'France/')
-        directory_it = os.path.join(out_folder, 'Italy/')
-        directory_us = os.path.join(out_folder, 'US/')
-        directory_rok = os.path.join(out_folder, 'SouthKorea/')
-        directory_prc = os.path.join(out_folder, 'China/')
+        directory_ger = os.path.join(out_folder, 'Germany', 'pydata/')
+        directory_es = os.path.join(out_folder, 'Spain', 'pydata/')
+        directory_fr = os.path.join(out_folder, 'France', 'pydata/')
+        directory_it = os.path.join(out_folder, 'Italy', 'pydata/')
+        directory_us = os.path.join(out_folder, 'US', 'pydata/')
+        directory_rok = os.path.join(out_folder, 'SouthKorea', 'pydata/')
+        directory_prc = os.path.join(out_folder, 'China', 'pydata/')
         self.assertEqual(len(os.listdir(directory_ger)), 1)
         self.assertEqual(len(os.listdir(directory_es)), 1)
         self.assertEqual(len(os.listdir(directory_fr)), 1)
@@ -163,7 +165,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
                          ["Recovered"].item(), 30)
 
         # test all_countries_jh file
-        f_read = os.path.join(self.path, "all_countries_jh.json")
+        f_read = os.path.join(directory_glb, "all_countries_jh.json")
         df = pd.read_json(f_read)
 
         data_list = df.columns.values.tolist()
@@ -200,7 +202,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
             42 + 6 + 65 + 20 + 40)
 
         # test all_provincestate_jh file
-        f_read = os.path.join(self.path, "all_provincestate_jh.json")
+        f_read = os.path.join(directory_glb, "all_provincestate_jh.json")
         df = pd.read_json(f_read)
 
         data_list = df.columns.values.tolist()
@@ -227,10 +229,10 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         [read_data, file_format, out_folder, no_raw] \
             = [True, "json", self.path, False]
 
-        gD.check_dir(out_folder)
-
         # write files which should be read in by program
-        self.write_jh_data(out_folder)
+        directory_glb = os.path.join(out_folder, 'Global', 'pydata/')
+        gD.check_dir(directory_glb)
+        self.write_jh_data(directory_glb)
 
         # define start and end date
         test_start_date = date(2020, 12, 22)
@@ -243,14 +245,14 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
             end_date=test_end_date)
 
         # read in german data
-        directory_ger = os.path.join(out_folder, 'Germany/')
+        directory_ger = os.path.join(out_folder, 'Germany', 'pydata/')
         f_read = os.path.join(directory_ger, "whole_country_Germany_jh.json")
         df_test_start_end_date = pd.read_json(f_read)
 
         # do the same without the date constraints
         gJHD.get_jh_data(read_data=read_data, file_format=file_format,
                          out_folder=out_folder, no_raw=no_raw)
-        directory_ger = os.path.join(out_folder, 'Germany/')
+        directory_ger = os.path.join(out_folder, 'Germany', 'pydata/')
         f_read = os.path.join(directory_ger, "whole_country_Germany_jh.json")
         df_test = pd.read_json(f_read)
 

@@ -175,7 +175,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = False
         files = 'Plot'
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         self.write_case_data_arcgis(directory)
@@ -236,7 +236,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         files = ['all_county', 'all_county_gender',
                  'all_state', 'all_germany', 'infected', 'deaths']
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         # write file
@@ -340,7 +340,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = False
         files = ['all_germany', 'infected', 'deaths', 'all_state']
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         # write file
@@ -487,7 +487,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = False
         files = ['all_germany']
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         gcd.get_case_data(
@@ -572,7 +572,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = False
         files = ['all_county']
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         # write file
@@ -618,7 +618,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = False
         files = ['infected_county']
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         # write file
@@ -656,7 +656,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = False
         files = 'All'
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         mock_file.return_value = pd.read_json(io.StringIO(
@@ -732,7 +732,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = True
         files = 'Plot'
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         gcd.get_case_data(
@@ -759,7 +759,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = False
         files = ['all_germany']
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         # write file
