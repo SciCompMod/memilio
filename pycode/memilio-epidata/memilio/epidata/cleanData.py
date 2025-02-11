@@ -68,16 +68,14 @@ def clean_data(
     if txt:
         file_types.append("txt")
 
-    # TODO: get list from other packages which data they write.
-    # Otherwise when changing anything this tool has to be changes as well
-
+    countries = ['Germany', 'Spain', 'France', 'Global',
+                 'Italy', 'US', 'SouthKorea', 'China']
     if all_data:
+        # Each country's data is stored under a "pydata" subfolder.
+        directories = [os.path.join(country, 'pydata')
+                       for country in countries]
 
-        # TODO: make general dictionary with all countries used
-        directories = ['Germany/', 'Spain/', 'France/',
-                       'Italy/', 'US/', 'SouthKorea/', 'China/']
-
-        # delete files in directory
+        # Delete files in each of these directories
         for cdir in directories:
             directory = os.path.join(out_path, cdir)
 
@@ -92,20 +90,27 @@ def clean_data(
                                      os.path.join(directory, item))
                     os.remove(os.path.join(directory, item))
 
-            # delete directories if empty
+            # Delete the directory if it is empty
             try:
                 os.rmdir(directory)
             except OSError:
                 continue
             gd.default_print("Info", "Deleting directory " + directory)
 
-        # delete further jh files
-        files = []
+            # Check if the parent directory is now empty and delete it if so.
+            parent_directory = os.path.dirname(directory)
+            try:
+                os.rmdir(parent_directory)
+                gd.default_print(
+                    "Info", "Deleting empty parent directory " + parent_directory)
+            except OSError:
+                pass
+
+        # Also delete any additional .json or .h5 files directly in out_path
         try:
             files = os.listdir(out_path)
         except FileNotFoundError:
-            pass
-
+            files = []
         for item in files:
             if item.endswith(".json") or item.endswith(".h5"):
                 gd.default_print("Info", "Deleting file " +
@@ -114,57 +119,57 @@ def clean_data(
 
     else:
         for ending in file_types:
-            # john hopkins data has to be removed from different directories
+            # Delete John Hopkins data from the different directories
             if john_hopkins:
-                # TODO: make general dictionary with all countries used
-                directories = ['Germany/', 'Spain/', 'France/',
-                               'Italy/', 'US/', 'SouthKorea/', 'China/']
+                directories = [os.path.join(country, 'pydata')
+                               for country in countries]
 
-                # delete files in directory
                 for cdir in directories:
                     directory = os.path.join(out_path, cdir)
-
                     try:
                         files = os.listdir(directory)
                     except FileNotFoundError:
                         continue
 
                     for item in files:
-                        if item.endswith(ending) and "_jh" in item:
-                            gd.default_print("Info", "Deleting file " +
-                                             os.path.join(directory, item))
+                        if item.endswith(ending) and ("_jh" in item or "JohnHopkins" in item):
+                            gd.default_print(
+                                "Info", "Deleting file " + os.path.join(directory, item))
                             os.remove(os.path.join(directory, item))
 
-                    # delete directories
+                    # Delete the directory if it is empty
                     try:
                         os.rmdir(directory)
                     except OSError:
                         continue
-
                     gd.default_print("Info", "Deleting directory " + directory)
 
-                # delete further jh files
-                files = []
+                    # Check if the parent directory is now empty and delete it if so.
+                    parent_directory = os.path.dirname(directory)
+                    try:
+                        os.rmdir(parent_directory)
+                        gd.default_print(
+                            "Info", "Deleting empty parent directory " + parent_directory)
+                    except OSError:
+                        pass
+
+                # Delete additional John Hopkins files in the out_path folder
                 try:
                     files = os.listdir(out_path)
                 except FileNotFoundError:
-                    pass
-
+                    files = []
                 for item in files:
-                    if item.endswith(ending):
-                        if "_jh" in item or "JohnHopkins" in item:
-                            gd.default_print(
-                                "Info", "Deleting file " + os.path.join(out_path, item))
-                            os.remove(os.path.join(out_path, item))
+                    if item.endswith(ending) and ("_jh" in item or "JohnHopkins" in item):
+                        gd.default_print(
+                            "Info", "Deleting file " + os.path.join(out_path, item))
+                        os.remove(os.path.join(out_path, item))
 
-            # other data is stored in the same folder
-
-            directory = os.path.join(out_path, 'Germany/')
-            files = []
+            # Other data is stored in Germany's "pydata" folder.
+            directory = os.path.join(out_path, 'Germany', 'pydata')
             try:
                 files = os.listdir(directory)
             except FileNotFoundError:
-                pass
+                files = []
 
             filenames = []
 
@@ -173,7 +178,7 @@ def clean_data(
             vaccination_filenames = ["vacc", "Vacc"]
             population_filenames = ["Popul", "popul",
                                     "county_table", "reg_key", "zensus"]
-            commuter_filenames = ["bfa", 'commuter']
+            commuter_filenames = ["bfa", "commuter"]
             testing_filenames = ["testpos"]
             hospitalization_filenames = ["hospit", "Hospit"]
 
@@ -194,20 +199,26 @@ def clean_data(
 
             for item in files:
                 if item.endswith(ending):
-
                     for file in filenames:
                         if file in item:
-                            gd.default_print("Info",
-                                             "Deleting file " + os.path.join(
-                                                 directory, item))
+                            gd.default_print(
+                                "Info", "Deleting file " + os.path.join(directory, item))
                             os.remove(os.path.join(directory, item))
+            # Try to remove the directory if it is empty
+            try:
+                os.rmdir(directory)
+                gd.default_print("Info", "Deleting directory " + directory)
+            except OSError:
+                pass
 
-                # delete directory if empty
-                try:
-                    os.rmdir(directory)
-                    gd.default_print("Info", "Deleting directory " + directory)
-                except OSError:
-                    pass
+            # Check if the parent directory is now empty and delete it if so.
+            parent_directory = os.path.dirname(directory)
+            try:
+                os.rmdir(parent_directory)
+                gd.default_print(
+                    "Info", "Deleting empty parent directory " + parent_directory)
+            except OSError:
+                pass
 
             if filenames == []:
                 gd.default_print(
