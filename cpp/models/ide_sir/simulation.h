@@ -54,6 +54,8 @@ public:
      */
     void advance(ScalarType tmax);
 
+    void advance2(ScalarType tmax);
+
     /**
      * @brief Get the result of the simulation.
      * Return the number of persons in all #InfectionState%s.

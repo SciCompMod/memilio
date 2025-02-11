@@ -61,7 +61,15 @@ public:
     void compute_S_deriv(ScalarType dt, size_t time_point_index);
     void compute_S_deriv(ScalarType dt);
 
+    void compute_S_deriv_centered(ScalarType dt, size_t time_point_index);
+
     void compute_I_and_R(ScalarType dt, size_t t0_index);
+    void compute_I_and_R_centered(ScalarType dt, size_t t0_index, size_t time_point_index);
+
+    size_t get_gregory_order()
+    {
+        return m_gregory_order;
+    }
 
     // ---- Public parameters. ----
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.

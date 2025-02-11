@@ -241,11 +241,6 @@ void Model::compute_S_deriv(ScalarType dt)
 
 void Model::compute_I_and_R(ScalarType dt, size_t t0_index)
 {
-    // Get gregory weights.
-    std::vector<Eigen::MatrixX<ScalarType>> vec_gregoryweights = get_gregoryweights(m_gregory_order);
-    Eigen::MatrixX<ScalarType> gregoryWeights_sigma            = vec_gregoryweights[0];
-    Eigen::MatrixX<ScalarType> gregoryWeights_omega            = vec_gregoryweights[1];
-
     size_t num_time_points_simulated = populations.get_num_time_points() - t0_index;
 
     // Compute I and R.
@@ -294,6 +289,71 @@ void Model::compute_I_and_R(ScalarType dt, size_t t0_index)
     populations.get_last_value()[(Eigen::Index)InfectionState::Infected] = dt * (sum_part1_I + sum_part2_I);
 
     populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] =
+        populations[t0_index][(Eigen::Index)InfectionState::Recovered] + dt * (sum_part1_R + sum_part2_R);
+}
+
+void Model::compute_S_deriv_centered(ScalarType dt, size_t time_point_index)
+{
+    // std::cout << "time in populations: " << populations.get_time(time_point_index) << std::endl;
+    // Compute S' with a centered finite difference scheme of fourth order, flow from S to I is then given by -S'.
+    flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+        -(1 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
+          8 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
+          8 * populations[time_point_index + 1][(Eigen::Index)InfectionState::Susceptible] -
+          1 * populations[time_point_index + 2][(Eigen::Index)InfectionState::Susceptible]) /
+        (12 * dt);
+}
+
+void Model::compute_I_and_R_centered(ScalarType dt, size_t t0_index, size_t time_point_index)
+{
+    size_t num_time_points_simulated = time_point_index + m_gregory_order;
+
+    // Compute I and R.
+    ScalarType sum_part1_I = 0;
+    ScalarType sum_part1_R = 0;
+    size_t row_index, column_index;
+    for (size_t j = 0; j < std::min(m_gregory_order, time_point_index); j++) {
+        if (num_time_points_simulated - m_gregory_order < m_gregory_order) {
+            row_index = num_time_points_simulated - m_gregory_order;
+        }
+        else {
+            row_index = m_gregory_order - 1;
+        }
+        column_index = j;
+
+        ScalarType state_age = (num_time_points_simulated - j) * dt;
+
+        sum_part1_I += sum_part1_term(row_index, column_index, state_age,
+                                      flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected]);
+
+        sum_part1_R += sum_part1_term(row_index, column_index, state_age,
+                                      flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected], true);
+    }
+
+    ScalarType sum_part2_I = 0;
+    ScalarType sum_part2_R = 0;
+
+    size_t weight_index;
+    for (size_t j = m_gregory_order; j < time_point_index; j++) {
+        if (num_time_points_simulated - j <= m_gregory_order) {
+            weight_index = num_time_points_simulated - j;
+        }
+        else {
+            weight_index = m_gregory_order;
+        }
+
+        ScalarType state_age = (num_time_points_simulated - j) * dt;
+
+        sum_part2_I +=
+            sum_part2_term(weight_index, state_age, flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected]);
+
+        sum_part2_R += sum_part2_term(weight_index, state_age,
+                                      flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected], true);
+    }
+
+    populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Infected] = dt * (sum_part1_I + sum_part2_I);
+
+    populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Recovered] =
         populations[t0_index][(Eigen::Index)InfectionState::Recovered] + dt * (sum_part1_R + sum_part2_R);
 }
 

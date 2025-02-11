@@ -56,7 +56,7 @@ void Simulation::advance(ScalarType tmax)
                                       TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
 
         // Compute Susceptibles.
-        m_model->compute_S(m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible], m_dt,
+        m_model->compute_S(m_model->populations.get_last_value()[(size_t)InfectionState::Susceptible], m_dt,
                            m_model->get_totalpop(), t0_index);
 
         // Compute flow from S to I via derivative of S.
@@ -66,6 +66,49 @@ void Simulation::advance(ScalarType tmax)
         m_model->compute_I_and_R(m_dt, t0_index);
 
         std::cout << "Total pop: " << m_model->populations.get_last_value().sum() << std::endl;
+    }
+}
+
+void Simulation::advance2(ScalarType tmax)
+{
+
+    mio::log_info("Simulating IDE-SIR from t0 = {} until tmax = {} with dt = {} with centered difference.",
+                  m_model->populations.get_last_time(), tmax, m_dt);
+
+    size_t t0_index = m_model->m_finite_difference_order;
+
+    std::cout << "Total pop: " << m_model->populations.get_last_value().sum() << std::endl;
+    // Compute only values for S until tmax.
+    while (m_model->populations.get_last_time() < tmax - 1e-10) {
+
+        // Add new time points to populations and flows.
+        m_model->populations.add_time_point(m_model->populations.get_last_time() + m_dt,
+                                            Vec::Constant((size_t)InfectionState::Count, 0.));
+
+        // Compute Susceptibles.
+        m_model->compute_S(m_model->populations.get_last_value()[(size_t)InfectionState::Susceptible], m_dt,
+                           m_model->get_totalpop(), t0_index);
+
+        // std::cout << "Total pop: " << m_model->populations.get_last_value().sum() << std::endl;
+    }
+
+    // Then compute derivative of S based on centered finite difference and with this I and R.
+    for (size_t i = 0; i < size_t(m_model->populations.get_num_time_points() - t0_index - 2); i++) {
+        m_model->flows.add_time_point(i * m_dt,
+                                      TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
+        // std::cout << "Time in flows: " << m_model->flows.get_last_time() << std::endl;
+
+        // Compute flow from S to I via derivative of S.
+        size_t time_point_index_populations = m_model->flows.get_num_time_points() + t0_index - 1;
+        // std::cout << "Time in pop: " << m_model->populations.get_time(time_point_index_populations) << std::endl;
+        m_model->compute_S_deriv_centered(m_dt, time_point_index_populations);
+
+        if (i >= m_model->get_gregory_order()) {
+            // Compute Infected and Recovered.
+            size_t time_point_index_flows = m_model->flows.get_num_time_points() - 1;
+            m_model->compute_I_and_R_centered(m_dt, t0_index, time_point_index_flows);
+        }
+        std::cout << "Total pop: " << m_model->populations[time_point_index_populations].sum() << std::endl;
     }
 }
 

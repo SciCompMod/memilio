@@ -37,12 +37,13 @@ int main()
 
     Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
     vec_init[(size_t)mio::isir::InfectionState::Susceptible] = 10000.;
-    vec_init[(size_t)mio::isir::InfectionState::Infected]    = 0.;
-    vec_init[(size_t)mio::isir::InfectionState::Recovered]   = 90.;
+    // Scheme currently only works if Infected=0 in the beginning.
+    vec_init[(size_t)mio::isir::InfectionState::Infected]  = 0.;
+    vec_init[(size_t)mio::isir::InfectionState::Recovered] = 90.;
 
     ScalarType N = vec_init.sum();
 
-    mio::TimeSeries<ScalarType> init_populations((int)mio::isir::InfectionState::Count);
+    mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
 
     // TODO: it would be sufficient to have finite_difference_order of time steps before gregory_order
     init_populations.add_time_point(-(ScalarType)finite_difference_order * dt, vec_init);
@@ -65,7 +66,7 @@ int main()
 
     // Carry out simulation.
     mio::isir::Simulation sim(model, dt);
-    sim.advance(tmax);
+    sim.advance2(tmax);
 
     sim.get_result().print_table({"S", "I", "R"}, 16, 8);
 
