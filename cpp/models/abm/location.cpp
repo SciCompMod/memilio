@@ -20,6 +20,7 @@
 #include "abm/mask_type.h"
 #include "abm/mask.h"
 #include "abm/location.h"
+#include "abm/person.h"
 #include "abm/random_events.h"
 #include "abm/infection.h"
 #include "memilio/utils/random_number_generator.h"
@@ -171,6 +172,15 @@ void Location::interact(Person::RandomNumberGenerator& rng, Person& person, Time
 {
 
     if (m_hourly_contact_matrices[0].size() != 0) {
+        if (m_dynamic_assignment) {
+            size_t i = 0;
+            for (; i < m_persons.size() && i < m_assigned_persons.size(); i++) {
+                m_assigned_persons[i] = m_persons[i]->get_person_id();
+            }
+            for (; i < m_assigned_persons.size(); i++) {
+                m_assigned_persons[i] = INVALID_PERSON_ID;
+            }
+        }
         interact_micro(rng, person, t, dt, global_params);
         return;
     }

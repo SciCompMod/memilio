@@ -221,7 +221,7 @@ bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParam
     }
 }
 
-uint32_t Person::get_person_id()
+uint32_t Person::get_person_id() const
 {
     return m_person_id;
 }

@@ -432,10 +432,17 @@ public:
         m_geographical_location = location;
     }
 
-    void assign_contact_matrices(HourlyContactMatrix contact_matrices, std::vector<uint32_t> assigned_persons)
+    void assign_contact_matrices(HourlyContactMatrix contact_matrices, std::vector<uint32_t> assigned_persons,
+                                 bool dynamic_assignment)
     {
         m_hourly_contact_matrices = contact_matrices;
         m_assigned_persons        = assigned_persons;
+        m_dynamic_assignment      = dynamic_assignment;
+    }
+
+    bool is_contact_matrix_assignment_dynamic() const
+    {
+        return m_dynamic_assignment;
     }
 
     const HourlyContactMatrix& get_contact_matrices() const
@@ -448,7 +455,7 @@ public:
         return m_assigned_persons;
     }
 
-    const auto& get_persons()
+    const auto& get_persons() const
     {
         return m_persons;
     }
@@ -466,7 +473,8 @@ private:
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
     HourlyContactMatrix m_hourly_contact_matrices; ///< Contact matrices for the Location.
-    std::vector<uint32_t> m_assigned_persons;
+    mutable std::vector<uint32_t> m_assigned_persons;
+    bool m_dynamic_assignment = false;
 };
 
 } // namespace abm

@@ -357,7 +357,7 @@ public:
      * The PersonID should correspond to the index in m_persons in world.
      * @return The PersonID.
      */
-    uint32_t get_person_id();
+    uint32_t get_person_id() const;
 
     /**
      * @brief Get index of Cell%s of the Person.
