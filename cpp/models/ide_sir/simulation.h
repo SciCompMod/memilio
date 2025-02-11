@@ -45,8 +45,6 @@ public:
     Simulation(Model const& model, ScalarType dt)
         : m_model(std::make_unique<Model>(model))
         , m_dt(dt)
-    // , m_solver(std::make_unique<GregorySolver>(
-    //       GregorySolver(model.populations, model.flows, model.parameters, gregory_order)))
     {
     }
 

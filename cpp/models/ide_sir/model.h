@@ -49,6 +49,10 @@ public:
 
     ScalarType get_totalpop() const;
 
+    ScalarType sum_part1_term(size_t row_index, size_t column_index, ScalarType state_age, ScalarType input,
+                              bool recovered = false);
+    ScalarType sum_part2_term(size_t weight_index, ScalarType state_age, ScalarType input, bool recovered = false);
+
     ScalarType fixed_point_function(ScalarType s, ScalarType dt, ScalarType N, size_t t0_index);
 
     void compute_S(ScalarType s_init, ScalarType dt, ScalarType N, size_t t0_index, ScalarType tol = 1e-10,

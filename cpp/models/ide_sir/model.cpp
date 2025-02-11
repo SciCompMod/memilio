@@ -77,6 +77,63 @@ ScalarType Model::get_totalpop() const
     return m_N;
 }
 
+ScalarType Model::sum_part1_term(size_t row_index, size_t column_index, ScalarType state_age, ScalarType input,
+                                 bool recovered)
+{
+
+    std::vector<Eigen::MatrixX<ScalarType>> vec_gregoryweights = get_gregoryweights(m_gregory_order);
+    Eigen::MatrixX<ScalarType> gregoryWeights_sigma            = vec_gregoryweights[0];
+
+    ScalarType sum_part1_term;
+    if (!recovered) {
+        sum_part1_term =
+            gregoryWeights_sigma(row_index, column_index) *
+            parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
+            parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
+                state_age) *
+            input;
+    }
+    else {
+        sum_part1_term =
+            gregoryWeights_sigma(row_index, column_index) *
+            parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
+            (1 - parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
+                     state_age)) *
+            input;
+    }
+
+    // std::cout << "Gregory weight in sum1: " << gregoryWeights_sigma(row_index, column_index) * scale_gregory_weights
+    //           << std::endl;
+
+    return sum_part1_term;
+}
+
+ScalarType Model::sum_part2_term(size_t weight_index, ScalarType state_age, ScalarType input, bool recovered)
+{
+    std::vector<Eigen::MatrixX<ScalarType>> vec_gregoryweights = get_gregoryweights(m_gregory_order);
+    Eigen::MatrixX<ScalarType> gregoryWeights_omega            = vec_gregoryweights[1];
+
+    ScalarType sum_part2_term;
+    if (!recovered) {
+        sum_part2_term =
+            gregoryWeights_omega(weight_index) * parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
+            parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
+                state_age) *
+            input;
+    }
+    else {
+        sum_part2_term =
+            gregoryWeights_omega(weight_index) * parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
+            (1 - parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
+                     state_age)) *
+            input;
+    }
+    // std::cout << "Gregory weight in sum2: " << gregoryWeights_omega(weight_index) * scale_gregory_weights
+    //           << std::endl;
+
+    return sum_part2_term;
+}
+
 ScalarType Model::fixed_point_function(ScalarType s, ScalarType dt, ScalarType N, size_t t0_index)
 {
     // TODO: Do this in a private function of Simulation class? Or solver class?
@@ -110,17 +167,10 @@ ScalarType Model::fixed_point_function(ScalarType s, ScalarType dt, ScalarType N
         column_index = j;
 
         ScalarType state_age = (num_time_points_simulated - j) * dt;
-        // std::cout << "State age: " << state_age << std::endl;
 
         sum_part1 +=
-            gregoryWeights_sigma(row_index, column_index) *
-            parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
-            parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
-                state_age) *
-            (N - populations.get_value(j + t0_index)[(Eigen::Index)InfectionState::Susceptible]);
-        // std::cout << "Time in sum 1: " << populations.get_time(j + t0_index) << std::endl;
-        // std::cout << "Gregory weight in sum1: " << gregoryWeights_sigma(row_index, column_index) * scale_gregory_weights
-        //           << std::endl;
+            sum_part1_term(row_index, column_index, state_age,
+                           (N - populations.get_value(j + t0_index)[(Eigen::Index)InfectionState::Susceptible]));
     }
 
     ScalarType sum_part2 = 0;
@@ -136,12 +186,8 @@ ScalarType Model::fixed_point_function(ScalarType s, ScalarType dt, ScalarType N
         ScalarType state_age = (num_time_points_simulated - j) * dt;
 
         sum_part2 +=
-            gregoryWeights_omega(weight_index) * parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
-            parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
-                state_age) *
-            (N - populations.get_value(j + t0_index)[(Eigen::Index)InfectionState::Susceptible]);
-        // std::cout << "Gregory weight in sum2: " << gregoryWeights_omega(weight_index) * scale_gregory_weights
-        //           << std::endl;
+            sum_part2_term(weight_index, state_age,
+                           (N - populations.get_value(j + t0_index)[(Eigen::Index)InfectionState::Susceptible]));
     }
 
     return S_init * std::exp(-prefactor * (sum_init + sum_part1 + sum_part2));
@@ -150,8 +196,6 @@ ScalarType Model::fixed_point_function(ScalarType s, ScalarType dt, ScalarType N
 void Model::compute_S(ScalarType s_init, ScalarType dt, ScalarType N, size_t t0_index, ScalarType tol,
                       size_t max_iterations)
 {
-    // std::cout << "t0: " << populations.get_time(t0_index) << std::endl;
-    ;
     size_t iter_counter = 0;
     while (iter_counter < max_iterations) {
 
@@ -202,10 +246,11 @@ void Model::compute_I_and_R(ScalarType dt, size_t t0_index)
     Eigen::MatrixX<ScalarType> gregoryWeights_sigma            = vec_gregoryweights[0];
     Eigen::MatrixX<ScalarType> gregoryWeights_omega            = vec_gregoryweights[1];
 
-    // Compute I.
     size_t num_time_points_simulated = populations.get_num_time_points() - t0_index;
 
-    ScalarType sum_part1 = 0;
+    // Compute I and R.
+    ScalarType sum_part1_I = 0;
+    ScalarType sum_part1_R = 0;
     size_t row_index, column_index;
     for (size_t j = 0; j < m_gregory_order; j++) {
         if (num_time_points_simulated - m_gregory_order + t0_index < m_gregory_order) {
@@ -218,14 +263,16 @@ void Model::compute_I_and_R(ScalarType dt, size_t t0_index)
 
         ScalarType state_age = (num_time_points_simulated - j) * dt;
 
-        sum_part1 +=
-            gregoryWeights_sigma(row_index, column_index) *
-            parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
-                state_age) *
-            flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected];
+        sum_part1_I += sum_part1_term(row_index, column_index, state_age,
+                                      flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected]);
+
+        sum_part1_R += sum_part1_term(row_index, column_index, state_age,
+                                      flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected], true);
     }
 
-    ScalarType sum_part2 = 0;
+    ScalarType sum_part2_I = 0;
+    ScalarType sum_part2_R = 0;
+
     size_t weight_index;
     for (size_t j = m_gregory_order; j < num_time_points_simulated; j++) {
         if (num_time_points_simulated - j + t0_index <= m_gregory_order) {
@@ -237,64 +284,17 @@ void Model::compute_I_and_R(ScalarType dt, size_t t0_index)
 
         ScalarType state_age = (num_time_points_simulated - j) * dt;
 
-        sum_part2 +=
-            gregoryWeights_omega(weight_index) *
-            parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
-                state_age) *
-            flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected];
-        // std::cout << "Gregory weight in sum2: " << gregoryWeights_omega(weight_index) * scale_gregory_weights
-        //           << std::endl;
+        sum_part2_I +=
+            sum_part2_term(weight_index, state_age, flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected]);
+
+        sum_part2_R += sum_part2_term(weight_index, state_age,
+                                      flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected], true);
     }
 
-    // std::cout << "Computed I at time " << populations.get_last_time() << std::endl;
-    // std::cout << "Sum: " << sum_part1 + sum_part2 << std::endl;
-
-    populations.get_last_value()[(Eigen::Index)InfectionState::Infected] = dt * (sum_part1 + sum_part2);
-
-    // Compute R.
-    // size_t num_time_points = populations.get_num_time_points();
-
-    sum_part1 = 0;
-    for (size_t j = 0; j < m_gregory_order; j++) {
-        if (num_time_points_simulated - m_gregory_order + t0_index < m_gregory_order) {
-            row_index = num_time_points_simulated - m_gregory_order + t0_index;
-        }
-        else {
-            row_index = m_gregory_order - 1;
-        }
-        column_index = j;
-
-        ScalarType state_age = (num_time_points_simulated - j) * dt;
-
-        sum_part1 +=
-            gregoryWeights_sigma(row_index, column_index) *
-            (1 - parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
-                     state_age)) *
-            flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected];
-    }
-
-    sum_part2 = 0;
-    for (size_t j = m_gregory_order; j < num_time_points_simulated; j++) {
-        if (num_time_points_simulated - j + t0_index <= m_gregory_order) {
-            weight_index = num_time_points_simulated - j + t0_index;
-        }
-        else {
-            weight_index = m_gregory_order;
-        }
-
-        ScalarType state_age = (num_time_points_simulated - j) * dt;
-
-        sum_part2 +=
-            gregoryWeights_omega(weight_index) *
-            (1 - parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
-                     state_age)) *
-            flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected];
-        // std::cout << "Gregory weight in sum2: " << gregoryWeights_omega(weight_index) * scale_gregory_weights
-        //           << std::endl;
-    }
+    populations.get_last_value()[(Eigen::Index)InfectionState::Infected] = dt * (sum_part1_I + sum_part2_I);
 
     populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] =
-        populations[t0_index][(Eigen::Index)InfectionState::Recovered] + dt * (sum_part1 + sum_part2);
+        populations[t0_index][(Eigen::Index)InfectionState::Recovered] + dt * (sum_part1_R + sum_part2_R);
 }
 
 } // namespace isir
