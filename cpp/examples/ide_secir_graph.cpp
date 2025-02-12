@@ -29,13 +29,13 @@
 
 int main()
 {
-    const auto t0   = 0.;
-    const auto tmax = 10.;
+    const ScalarType t0   = 0.;
+    const ScalarType tmax = 10.;
 
-    // Time step of graph simulation, after evry time step the simulation are restarted in every node.
-    const auto dt_graph = 5.;
+    // Time step of graph simulation, after evry time step the simulation is restarted in every node.
+    const ScalarType dt_graph = 5.;
     // Time step of IDE solver.
-    const auto dt_ide_solver = 0.5;
+    const ScalarType dt_ide_solver = 0.5;
 
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
@@ -46,7 +46,7 @@ int main()
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 13.10462213);
 
-    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+    size_t num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
     // Create TimeSeries with num_transitions * num_agegroups elements where transitions needed for simulation will be
     // stored.
@@ -54,22 +54,22 @@ int main()
 
     // Add time points for initialization of transitions.
     Vec vec_init(num_transitions * num_agegroups);
-    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
-    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
+    vec_init[(size_t)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
+    vec_init[(size_t)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
+    vec_init[(size_t)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
+    vec_init[(size_t)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
+    vec_init[(size_t)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
+    vec_init[(size_t)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
+    vec_init[(size_t)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
+    vec_init[(size_t)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
+    vec_init[(size_t)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
+    vec_init[(size_t)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
 
     vec_init = vec_init * dt_ide_solver;
     // Add initial time point to time series.
     init.add_time_point(-10, vec_init);
-    // Add further time points until time 0.
-    while (init.get_last_time() < -dt_ide_solver / 2) {
+    // Add further time points until time t0.
+    while (init.get_last_time() < t0 - dt_ide_solver / 2) {
         init.add_time_point(init.get_last_time() + dt_ide_solver, vec_init);
     }
 
@@ -110,20 +110,21 @@ int main()
 
     model.check_constraints(dt_ide_solver);
 
-    // Two identical groups-
-    auto model_group1 = model;
-    auto model_group2 = model;
+    // Two identical models.
+    auto model1 = model;
+    auto model2 = model;
 
     // Set up graph with two nodes and no edges.
     mio::Graph<mio::SimulationNode<mio::isecir::Simulation>, mio::MobilityEdge<ScalarType>> g;
-    g.add_node(1001, model_group1, dt_ide_solver);
-    g.add_node(1002, model_group2, dt_ide_solver);
+    g.add_node(1001, model1, dt_ide_solver);
+    g.add_node(1002, model2, dt_ide_solver);
 
-    // Simulate without using mobility,
+    // Simulate without any mobility between the nodes.
     auto sim = mio::make_no_mobility_sim(t0, dt_graph, std::move(g));
 
     sim.advance(tmax);
 
+    // Print results of first node.
     auto& node_0  = sim.get_graph().nodes()[0];
     auto result_0 = node_0.property.get_result();
     result_0.print_table();

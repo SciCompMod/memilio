@@ -662,20 +662,6 @@ void apply_mobility(FP t, FP dt, MobilityEdge<FP>& mobilityEdge, SimulationNode<
 }
 
 /**
- * Edge functor for simulation without mobility.
- */
-template <typename FP, class Sim>
-void no_mobility(FP t, FP dt, MobilityEdge<FP>& mobilityEdge, SimulationNode<Sim>& node_from,
-                 SimulationNode<Sim>& node_to)
-{
-    unused(t);
-    unused(dt);
-    unused(mobilityEdge);
-    unused(node_from);
-    unused(node_to);
-}
-
-/**
  * create a mobility-based simulation.
  * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
  * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node. 
@@ -718,14 +704,15 @@ make_no_mobility_sim(FP t0, FP dt, const Graph<SimulationNode<Sim>, MobilityEdge
 {
     return make_graph_sim(t0, dt, graph, &evolve_model<Sim>,
 
-                          &no_mobility<FP, Sim>);
+                          [](FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&) {});
 }
 
 template <typename FP, class Sim>
 GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>>
 make_no_mobility_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MobilityEdge<FP>>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>, &no_mobility<FP, Sim>);
+    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>,
+                          [](FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&) {});
 }
 
 /** @} */
