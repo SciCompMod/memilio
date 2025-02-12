@@ -698,26 +698,34 @@ make_mobility_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MobilityEdge<FP>>&& g
 
 /**
  * Create a graph simulation without mobility.
+ * After each time step of the graph simulation, the simulation is restarted in each node without any exchange between
+ * the nodes. 
  * @param t0 Start time of the simulation.
- * @param dt Time step of the graph simulation where the simulation in the nodes is restarted after every time step.
+ * @param dt Time step of the graph simulation.
  * @param graph Set up for graph-based simulation.
  * @{
  */
 template <typename FP, class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>>
+GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
+                void (*)(double, double, mio::MobilityEdge<>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
+                void (*)(double, double, mio::SimulationNode<Sim>&)>
 make_no_mobility_sim(FP t0, FP dt, const Graph<SimulationNode<Sim>, MobilityEdge<FP>>& graph)
 {
-    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>,
-
-                          [](FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&) {});
+    return make_graph_sim(t0, dt, graph, static_cast<void (*)(FP, FP, SimulationNode<Sim>&)>(&advance_model<Sim>),
+                          static_cast<void (*)(FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
+                              [](FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&) {}));
 }
 
 template <typename FP, class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>>
+GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
+                void (*)(double, double, mio::MobilityEdge<>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
+                void (*)(double, double, mio::SimulationNode<Sim>&)>
 make_no_mobility_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MobilityEdge<FP>>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>,
-                          [](FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&) {});
+    return make_graph_sim(t0, dt, std::move(graph),
+                          static_cast<void (*)(FP, FP, SimulationNode<Sim>&)>(&advance_model<Sim>),
+                          static_cast<void (*)(FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
+                              [](FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&) {}));
 }
 
 /** @} */
