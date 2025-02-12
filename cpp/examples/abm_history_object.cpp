@@ -140,7 +140,7 @@ int main()
     // The infection states are chosen randomly.
     auto persons = model.get_persons();
     for (auto& person : persons) {
-        auto rng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
+        auto rng = mio::abm::PersonalRandomNumberGenerator(person);
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)
@@ -176,14 +176,14 @@ int main()
 
     struct LogTimePoint : mio::LogAlways {
         using Type = double;
-        static Type log(const mio::abm::Simulation& sim)
+        static Type log(const mio::abm::Simulation<>& sim)
         {
             return sim.get_time().hours();
         }
     };
     struct LogLocationIds : mio::LogOnce {
         using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
-        static Type log(const mio::abm::Simulation& sim)
+        static Type log(const mio::abm::Simulation<>& sim)
         {
             Type location_ids{};
             for (auto& location : sim.get_model().get_locations()) {
