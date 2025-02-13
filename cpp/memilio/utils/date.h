@@ -107,8 +107,8 @@ struct Date {
     //@}
 
     /**
-     * Formats the date into a string in ISO format (YYYY-MM-DD).
-     * @return A string representing the date in ISO format.
+     * Formats the date into a string in ISO 8601 format (YYYY-MM-DD).
+     * @return A string representing the date in ISO 8601 format.
      */
     std::string to_iso_string() const
     {
@@ -127,7 +127,7 @@ struct Date {
     }
 
     /**
-     * Overload for stream operator to use the ISO format.
+     * Overload for stream operator to use the ISO 8601 format.
      * @param os Output stream.
      * @param date Date to output.
      * @return Reference to the output stream.
