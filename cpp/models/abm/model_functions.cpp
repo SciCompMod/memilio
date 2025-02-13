@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann, Rene Schmieding
 *
@@ -132,7 +132,7 @@ bool change_location(Person& person, const Location& destination, const Transpor
     })); // make sure cell indices are valid
 
     if (person.get_location() != destination.get_id()) {
-        person.set_location(destination.get_type(), destination.get_id());
+        person.set_location(destination.get_type(), destination.get_id(), destination.get_model_id());
         person.get_cells() = cells;
         person.set_last_transport_mode(mode);
 

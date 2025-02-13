@@ -157,6 +157,21 @@ struct TimeInfectedSevereToRecovered {
 };
 
 /**
+ * @brief Time that a Person is hospitalized before dying in day unit
+ */
+struct TimeInfectedSevereToDead {
+    using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type({VirusVariant::Count, size}, AbstractParameterDistribution(ParameterDistributionLogNormal(1., 1.)));
+    }
+    static std::string name()
+    {
+        return "TimeInfectedSevereToDead";
+    }
+};
+
+/**
  * @brief Time that a Person is treated by ICU before dying in day unit
  */
 struct TimeInfectedCriticalToDead {
@@ -228,6 +243,21 @@ struct CriticalPerInfectedSevere {
     static std::string name()
     {
         return "CriticalPerInfectedSevere";
+    }
+};
+
+/**
+* @brief the percentage of dead cases per hospitalized cases
+*/
+struct DeathsPerInfectedSevere {
+    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type({VirusVariant::Count, size}, .1);
+    }
+    static std::string name()
+    {
+        return "DeathsPerInfectedSevere";
     }
 };
 
@@ -646,13 +676,14 @@ struct AgeGroupGotoWork {
 using ParametersBase =
     ParameterSet<IncubationPeriod, TimeInfectedNoSymptomsToSymptoms, TimeInfectedNoSymptomsToRecovered,
                  TimeInfectedSymptomsToSevere, TimeInfectedSymptomsToRecovered, TimeInfectedSevereToCritical,
-                 TimeInfectedSevereToRecovered, TimeInfectedCriticalToDead, TimeInfectedCriticalToRecovered,
-                 SymptomsPerInfectedNoSymptoms, SeverePerInfectedSymptoms, CriticalPerInfectedSevere,
-                 DeathsPerInfectedCritical, ViralLoadDistributions, InfectivityDistributions, VirusShedFactor,
-                 DetectInfection, MaskProtection, AerosolTransmissionRates, LockdownDate, QuarantineDuration,
-                 SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
-                 GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
-                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor, TestData>;
+                 TimeInfectedSevereToRecovered, TimeInfectedSevereToDead, TimeInfectedCriticalToDead,
+                 TimeInfectedCriticalToRecovered, SymptomsPerInfectedNoSymptoms, SeverePerInfectedSymptoms,
+                 CriticalPerInfectedSevere, DeathsPerInfectedSevere, DeathsPerInfectedCritical, ViralLoadDistributions,
+                 InfectivityDistributions, VirusShedFactor, DetectInfection, MaskProtection, AerosolTransmissionRates,
+                 LockdownDate, QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio,
+                 GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum,
+                 AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor,
+                 HighViralLoadProtectionFactor, TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
@@ -803,6 +834,15 @@ public:
                     return true;
                 }
 
+                if (this->get<TimeInfectedSevereToDead>()[{v, i}].params()[0] < 0.0) {
+                    log_error("Constraint check: Mean of parameter TimeInfectedSevereToDead of virus "
+                              "variant {} "
+                              "and age group {:.0f} smaller "
+                              "than {:d}",
+                              (uint32_t)v, (size_t)i, 0);
+                    return true;
+                }
+
                 if (this->get<TimeInfectedCriticalToDead>()[{v, i}].params()[0] < 0.0) {
                     log_error("Constraint check: Mean of parameter TimeInfectedCriticalToDead of virus variant {} "
                               "and age group {:.0f} smaller "
@@ -840,6 +880,14 @@ public:
                     this->get<CriticalPerInfectedSevere>()[{v, i}] > 1.0) {
                     log_error("Constraint check: Parameter CriticalPerInfectedSevere of virus variant {} and age group "
                               "{:.0f} smaller than {:d} or larger than {:d}",
+                              (uint32_t)v, (size_t)i, 0, 1);
+                    return true;
+                }
+
+                if (this->get<DeathsPerInfectedSevere>()[{v, i}] < 0.0 ||
+                    this->get<DeathsPerInfectedSevere>()[{v, i}] > 1.0) {
+                    log_error("Constraint check: Parameter DeathsPerInfectedSevere of age group {:.0f} smaller than "
+                              "{:d} or larger than {:d}",
                               (uint32_t)v, (size_t)i, 0, 1);
                     return true;
                 }

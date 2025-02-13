@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Sascha Korf, Carlotta Gerstein
 *
@@ -23,6 +23,7 @@
 #include "abm/parameters.h"
 #include "abm/parameters.h"
 #include "abm/person.h"
+#include "abm/person_id.h"
 #include "abm/simulation.h"
 #include "abm/model.h"
 #include "memilio/utils/parameter_distribution_wrapper.h"
@@ -34,6 +35,7 @@
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
 
+#include <cstdint>
 #include <fstream>
 #include <vector>
 #include <iostream>
@@ -90,7 +92,7 @@ void assign_infection_state(mio::abm::Model& model, mio::abm::TimePoint t, doubl
 {
     auto persons = model.get_persons();
     for (auto& person : persons) {
-        auto rng             = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
+        auto rng             = mio::abm::PersonalRandomNumberGenerator(person);
         auto infection_state = determine_infection_state(rng, exposed_prob, infected_no_symptoms_prob,
                                                          infected_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible)
@@ -223,11 +225,11 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
         count_of_titles++;
     }
 
-    std::map<uint32_t, mio::abm::LocationId> locations        = {};
-    std::map<uint32_t, mio::abm::PersonId> pids_data_to_model = {};
-    std::map<uint32_t, uint32_t> person_ids                   = {};
-    std::map<uint32_t, std::pair<uint32_t, int>> locations_before;
-    std::map<uint32_t, std::pair<uint32_t, int>> locations_after;
+    std::map<uint64_t, mio::abm::LocationId> locations        = {};
+    std::map<uint64_t, mio::abm::PersonId> pids_data_to_model = {};
+    std::map<uint64_t, uint64_t> person_ids                   = {};
+    std::map<uint64_t, std::pair<uint64_t, int>> locations_before;
+    std::map<uint64_t, std::pair<uint64_t, int>> locations_after;
 
     // For the model we need: Hospitals, ICUs (for both we just create one for now), Homes for each unique householdID, One Person for each person_id with respective age and home_id.
 
@@ -346,7 +348,7 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
         split_line(line, &row);
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
-        uint32_t person_data_id = row[index["puid"]];
+        uint64_t person_data_id = row[index["puid"]];
         if (person_ids.find(person_data_id) == person_ids.end())
             break;
 
@@ -386,9 +388,10 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
             // For trips where the start location is not known use Home instead
             start_location = model.get_person(pid_itr->second).get_assigned_location(mio::abm::LocationType::Home);
         }
-        model.get_trip_list().add_trip(mio::abm::Trip(
-            pid_itr->second, mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location, start_location,
-            mio::abm::TransportMode(transport_mode), mio::abm::ActivityType(acticity_end)));
+        model.get_trip_list().add_trip(
+            mio::abm::Trip(static_cast<uint64_t>(pid_itr->first),
+                           mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location, start_location,
+                           mio::abm::TransportMode(transport_mode), mio::abm::LocationType(acticity_end)));
     }
     model.get_trip_list().use_weekday_trips_on_weekend();
 }
@@ -514,6 +517,13 @@ void set_parameters(mio::abm::Parameters params)
     // Set each parameter for vaccinated people including personal infection and vaccine protection levels.
     // Summary: https://doi.org/10.1038/s41577-021-00550-x,
 
+    //0-4
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.161;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]     = 0.001;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]     = 0.015;
+    params.get<mio::abm::DeathsPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]       = 0.001;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]     = 0.001;
+
     // Protection of reinfection is the same for all age-groups, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5, https://doi.org/10.1038/s41591-021-01377-8
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_0_to_4,
@@ -563,6 +573,13 @@ void set_parameters(mio::abm::Parameters params)
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {450, 0.5}}};
 
+    //5-14
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.161;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]     = 0.001;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]     = 0.015;
+    params.get<mio::abm::DeathsPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]       = 0.001;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]     = 0.001;
+
     // Protection of reinfection is the same for all age-groups, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5, https://doi.org/10.1038/s41591-021-01377-8
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_5_to_14,
@@ -611,6 +628,14 @@ void set_parameters(mio::abm::Parameters params)
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {450, 0.5}}};
 
+    //15-34
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        0.179;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.001;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.013;
+    params.get<mio::abm::DeathsPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}]   = 0.021;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.021;
+
     // Set up personal infection and vaccine protection levels, based on: https://doi.org/10.1038/s41577-021-00550-x, https://doi.org/10.1038/s41591-021-01377-8
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_15_to_34,
                                                        mio::abm::VirusVariant::Wildtype}] = {
@@ -657,6 +682,13 @@ void set_parameters(mio::abm::Parameters params)
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {180, 0.90}, {450, 0.5}}};
 
+    //35-59
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+        0.179;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.003;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.02;
+    params.get<mio::abm::DeathsPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}]   = 0.008;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.008;
     // Protection of reinfection is the same for all age-groups, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5, https://doi.org/10.1038/s41591-021-01377-8
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_35_to_59,
@@ -756,6 +788,13 @@ void set_parameters(mio::abm::Parameters params)
         mio::TimeSeriesFunctorType::LinearInterpolation,
         {{0, 0.5}, {30, 0.91}, {60, 0.86}, {90, 0.91}, {120, 0.94}, {150, 0.95}, {180, 0.90}, {450, 0.5}}};
 
+    //80+
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] =
+        0.179;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.012;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.036;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.052;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.052;
     // Protection of reinfection is the same for all age-groups, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5, https://doi.org/10.1038/s41591-021-01377-8
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::NaturalInfection, age_group_80_plus,
@@ -809,8 +848,8 @@ void set_parameters(mio::abm::Parameters params)
  * Create a sampled simulation with start time t0.
  * @param t0 The start time of the Simulation.
  */
-mio::abm::Simulation create_sampled_simulation(const std::string& input_file, const mio::abm::TimePoint& t0,
-                                               int max_num_persons)
+mio::abm::Simulation<> create_sampled_simulation(const std::string& input_file, const mio::abm::TimePoint& t0,
+                                                 int max_num_persons)
 {
     // Assumed percentage of infection state at the beginning of the simulation.
     ScalarType exposed_prob = 0.005, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,

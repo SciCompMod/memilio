@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: David Kerkmann, Khoa Nguyen
 * Authors: David Kerkmann, Khoa Nguyen
@@ -22,6 +22,7 @@
 #include "abm/location_type.h"
 #include "abm/parameters.h"
 #include "abm/person.h"
+#include "abm/person_id.h"
 #include "abm_helpers.h"
 #include "random_number_test.h"
 
@@ -42,7 +43,7 @@ TEST_F(TestInfection, init)
     //set up a personal RNG for infections
     //uses uniformdistribution but result doesn't matter, so init before the mock
     auto counter = mio::Counter<uint32_t>(0);
-    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), mio::abm::PersonId(0), counter);
+    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), 0, counter);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>>
@@ -137,7 +138,7 @@ TEST_F(TestInfection, init)
 TEST_F(TestInfection, getInfectionState)
 {
     auto counter = mio::Counter<uint32_t>(0);
-    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), mio::abm::PersonId(0), counter);
+    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), 0, counter);
     auto params  = mio::abm::Parameters(num_age_groups);
     auto t       = mio::abm::TimePoint(0);
 
@@ -157,7 +158,7 @@ TEST_F(TestInfection, getInfectionState)
 TEST_F(TestInfection, drawInfectionCourseForward)
 {
     auto counter = mio::Counter<uint32_t>(0);
-    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), mio::abm::PersonId(0), counter);
+    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), 0, counter);
     auto params  = mio::abm::Parameters(num_age_groups);
     params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.;
     auto t = mio::abm::TimePoint(0);
@@ -166,14 +167,27 @@ TEST_F(TestInfection, drawInfectionCourseForward)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>>
         mock_logNormal_dist;
     EXPECT_CALL(mock_logNormal_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(1))
-        .WillRepeatedly(testing::Return(0.8)); // Recovered
-    auto infection = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
-                                         mio::abm::InfectionState::InfectedCritical,
-                                         {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, true);
+        .Times(testing::Exactly(6)) // First five draws for viral load
+        .WillRepeatedly(testing::Return(0.8)); // Sixth draw: Recovered draw in drawInfectionCourseForward
+    auto infection1 = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
+                                          mio::abm::InfectionState::InfectedCritical,
+                                          {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, true);
     // Test state transitions from Critical to Recovered
-    EXPECT_EQ(infection.get_infection_state(t), mio::abm::InfectionState::InfectedCritical);
-    EXPECT_EQ(infection.get_infection_state(t + mio::abm::days(1)), mio::abm::InfectionState::Recovered);
+    EXPECT_EQ(infection1.get_infection_state(t), mio::abm::InfectionState::InfectedCritical);
+    EXPECT_EQ(infection1.get_infection_state(t + mio::abm::days(1)), mio::abm::InfectionState::Recovered);
+
+    // Mock death transition
+    params.get<mio::abm::TimeInfectedSevereToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(1.));
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::Exactly(6)) // First five draws for viral load
+        .WillRepeatedly(testing::Return(0.2)); // Sixth draw: Dead draw in drawInfectionCourseForward
+    auto infection2 = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
+                                          mio::abm::InfectionState::InfectedSevere,
+                                          {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, true);
+    EXPECT_EQ(infection2.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
+    EXPECT_EQ(infection2.get_infection_state(t + mio::abm::days(1)), mio::abm::InfectionState::Dead);
 }
 
 /**
@@ -181,10 +195,10 @@ TEST_F(TestInfection, drawInfectionCourseForward)
  */
 TEST_F(TestInfection, drawInfectionCourseBackward)
 {
-    auto counter = mio::Counter<uint32_t>(0);
-    auto prng    = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), mio::abm::PersonId(0), counter);
-    auto t       = mio::abm::TimePoint(1);
-    auto dt      = mio::abm::days(1);
+    auto counter                = mio::Counter<uint32_t>(0);
+    auto prng                   = mio::abm::PersonalRandomNumberGenerator(this->get_rng().get_key(), 0, counter);
+    auto t                      = mio::abm::TimePoint(1);
+    auto dt                     = mio::abm::days(1);
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
 
     auto virus_variant_test = mio::abm::VirusVariant::Wildtype;
@@ -287,7 +301,8 @@ TEST_F(TestInfection, getPersonalProtectiveFactor)
     const ScalarType eps = 1e-4;
 
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
-    auto person   = mio::abm::Person(this->get_rng(), location.get_type(), location.get_id(), age_group_15_to_34);
+    auto person   = mio::abm::Person(this->get_rng(), location.get_type(), location.get_id(), location.get_model_id(),
+                                     age_group_15_to_34);
     person.add_new_vaccination(mio::abm::ProtectionType::GenericVaccine, mio::abm::TimePoint(0));
     auto latest_protection = person.get_latest_protection();
 

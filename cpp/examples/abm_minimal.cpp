@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Khoa Nguyen
 *
@@ -56,7 +56,7 @@ int main()
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
     child.set_age_weight(age_group_0_to_4, 1);
-    child.set_age_weight(age_group_0_to_4, 1);
+    child.set_age_weight(age_group_5_to_14, 1);
 
     auto parent = mio::abm::HouseholdMember(num_age_groups); // A parent is 50/50% 15-34 or 35-59.
     parent.set_age_weight(age_group_15_to_34, 1);
@@ -122,7 +122,7 @@ int main()
     for (auto& person : model.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
             mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
-        auto rng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
+        auto rng = mio::abm::PersonalRandomNumberGenerator(person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          model.parameters, start_date, infection_state));
@@ -139,7 +139,7 @@ int main()
         model.assign_location(id, hospital);
         model.assign_location(id, icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == age_group_0_to_4) {
+        if (person.get_age() == age_group_5_to_14) {
             model.assign_location(id, school);
         }
         if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {

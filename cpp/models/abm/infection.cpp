@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: David Kerkmann, Sascha Korf, Khoa Nguyen
 *
@@ -19,6 +19,7 @@
 */
 
 #include "abm/infection.h"
+#include "abm/parameters.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include <math.h>
 
@@ -193,6 +194,12 @@ void Infection::draw_infection_course_forward(PersonalRandomNumberGenerator& rng
                 time_in_state = params.get<TimeInfectedSevereToCritical>()[{m_virus_variant, age}];
                 time_period   = days(time_in_state.get(rng));
             }
+            else if (p < params.get<CriticalPerInfectedSevere>()[{m_virus_variant, age}] +
+                             params.get<DeathsPerInfectedSevere>()[{m_virus_variant, age}]) {
+                next_state    = InfectionState::Dead;
+                time_in_state = params.get<TimeInfectedSevereToDead>()[{m_virus_variant, age}];
+                time_period   = days(time_in_state.get(rng));
+            }
             else {
                 next_state    = InfectionState::Recovered;
                 time_in_state = params.get<TimeInfectedSevereToRecovered>()[{m_virus_variant, age}];
@@ -300,9 +307,17 @@ TimePoint Infection::draw_infection_course_backward(PersonalRandomNumberGenerato
         } break;
 
         case InfectionState::Dead: {
-            time_in_state  = params.get<TimeInfectedCriticalToDead>()[{m_virus_variant, age}];
-            time_period    = days(time_in_state.get(rng));
-            previous_state = InfectionState::InfectedCritical;
+            p = uniform_dist(rng);
+            if (p < params.get<DeathsPerInfectedSevere>()[{m_virus_variant, age}]) {
+                time_in_state  = params.get<TimeInfectedSevereToDead>()[{m_virus_variant, age}];
+                time_period    = days(time_in_state.get(rng));
+                previous_state = InfectionState::InfectedSevere;
+            }
+            else {
+                time_in_state  = params.get<TimeInfectedCriticalToDead>()[{m_virus_variant, age}];
+                time_period    = days(time_in_state.get(rng));
+                previous_state = InfectionState::InfectedCritical;
+            }
         } break;
 
         default:
