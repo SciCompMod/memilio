@@ -115,6 +115,24 @@ TEST(TestQuadWell, move)
     EXPECT_EQ(a2.position[1], 1);
 }
 
+TEST(TestQuadWell, change_well)
+{
+    //Test spatial transition counting
+    QuadWellModel<InfectionState>::Agent a{Eigen::Vector2d{-0.1, 1}, InfectionState::S};
+    //Sigma is set to 2
+    QuadWellModel<InfectionState> qw({a}, {}, 0.1, 2.);
+    //mock value for Brownian motion
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::NormalDistribution<double>>>> mock_normal_dist;
+    EXPECT_CALL(mock_normal_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(2))
+        .WillOnce(testing::Return(0.5)) // noise in x-direction
+        .WillRepeatedly(testing::Return(0.0));
+    qw.move(0, 0.1, a);
+    //a changes from well 0 to well 1
+    EXPECT_EQ(well_index(a.position), size_t(1));
+    EXPECT_EQ(qw.number_transitions()[static_cast<int>(InfectionState::S)](0, 1), 1);
+}
+
 TEST(TestQuadWell, setNonMovingRegions)
 {
     //Test non-moving regions
