@@ -25,6 +25,8 @@ namespace mio
 {
 namespace dabm
 {
+//The parameters for the diffusive ABM are AdoptionRates which are defined in epidemiology/adoption_rate.h.
+//Movement is defined by the Implementation template, see mio::dabm::Model and quadwell.h for an exemplary implementation.
 
 } // namespace dabm
 
