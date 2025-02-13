@@ -112,18 +112,11 @@ struct Date {
      */
     std::string to_iso_string() const
     {
-        std::ostringstream oss;
-        oss << std::setw(4) << std::setfill('0') << year << '-' << std::setw(2) << std::setfill('0') << month << '-'
-            << std::setw(2) << std::setfill('0') << day;
-        return oss.str();
-    }
-
-    /**
-     * gtest printer.
-     */
-    friend void PrintTo(const Date& self, std::ostream* os)
-    {
-        *os << self.year << "." << self.month << "." << self.day;
+        // the format after ":" reads as
+        // 1) '0' -> fill with zeros
+        // 2) '>' -> align text right
+        // 3) '4' or '2' -> specify the width (4 for year, 2 for month and day)
+        return fmt::format("{:0>4}-{:0>2}-{:0>2}", year, month, day);
     }
 
     /**
