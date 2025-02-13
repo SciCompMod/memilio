@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
+#include "memilio/data/analyze_result.h"
 #include "memilio/utils/logging.h"
 #include "sde_sirs/model.h"
 #include "sde_sirs/simulation.h"
@@ -26,10 +26,9 @@ int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
-    double t0              = 0.;
-    double tmax            = 5.;
-    double dt              = 0.001;
-    const auto print_table = false;
+    double t0   = 0.;
+    double tmax = 5.;
+    double dt   = 0.001;
 
     double total_population = 10000;
 
@@ -53,6 +52,8 @@ int main()
 
     auto ssirs = mio::ssirs::simulate(t0, tmax, dt, model);
 
-    if (print_table)
-        ssirs.print_table({"Susceptible", "Infected", "Recovered"});
+    // interpolate results
+    auto interpolated_results = mio::interpolate_simulation_result(ssirs);
+
+    interpolated_results.print_table({"Susceptible", "Infected", "Recovered"});
 }

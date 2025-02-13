@@ -28,11 +28,10 @@ int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
-    ScalarType t0          = 0.;
-    ScalarType tmid        = 100.;
-    ScalarType tmax        = 400.;
-    ScalarType dt          = 0.1;
-    const auto print_table = false;
+    ScalarType t0   = 0.;
+    ScalarType tmid = 1.;
+    ScalarType tmax = 3.;
+    ScalarType dt   = 0.1;
 
     mio::log_info("Simulating SEIRVV; t={} ... {} with dt = {}.", t0, tmax, dt);
 
@@ -81,11 +80,8 @@ int main()
     model.populations[{mio::sseirvv::InfectionState::InfectedV2}] = 100;
     // Simulate the model from tmid to tmax, now with both variants.
     auto sseirv2 = mio::sseirvv::simulate(tmid, tmax, dt, model);
-
-    if (print_table) {
-        sseirv.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",
-                            "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
-        sseirv2.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",
-                             "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
-    }
+    sseirv.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",
+                        "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
+    sseirv2.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",
+                         "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
 }
