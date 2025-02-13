@@ -50,18 +50,14 @@ namespace mio
 namespace abm
 {
 
-// Distribution that can be used for the time spend in InfectionStates
-using InfectionStateTimesDistributionsParameters = LogNormalDistribution<double>::ParamType;
-
 /**
  * @brief Time that a Person is infected but not yet infectious in day unit
  */
 struct IncubationPeriod {
-    using Type = CustomIndexArray<ParameterDistributionWrapper, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        ParameterDistributionLogNormal log_norm(1., 1.);
-        return Type({VirusVariant::Count, size}, ParameterDistributionWrapper(log_norm));
+        return Type({VirusVariant::Count, size}, AbstractParameterDistribution(ParameterDistributionLogNormal(1., 1.)));
     }
     static std::string name()
     {
@@ -73,11 +69,10 @@ struct IncubationPeriod {
 * @brief Time that a Person is infected but presymptomatic in day unit
 */
 struct TimeInfectedNoSymptomsToSymptoms {
-    using Type = CustomIndexArray<ParameterDistributionWrapper, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        ParameterDistributionLogNormal log_norm(1., 1.);
-        return Type({VirusVariant::Count, size}, ParameterDistributionWrapper(log_norm));
+        return Type({VirusVariant::Count, size}, AbstractParameterDistribution(ParameterDistributionLogNormal(1., 1.)));
     }
     static std::string name()
     {
@@ -89,11 +84,10 @@ struct TimeInfectedNoSymptomsToSymptoms {
 * @brief Time that a Person is infected when staying asymptomatic in day unit
 */
 struct TimeInfectedNoSymptomsToRecovered {
-    using Type = CustomIndexArray<ParameterDistributionWrapper, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        ParameterDistributionLogNormal log_norm(1., 1.);
-        return Type({VirusVariant::Count, size}, ParameterDistributionWrapper(log_norm));
+        return Type({VirusVariant::Count, size}, AbstractParameterDistribution(ParameterDistributionLogNormal(1., 1.)));
     }
     static std::string name()
     {
@@ -106,12 +100,10 @@ struct TimeInfectedNoSymptomsToRecovered {
 *        who do not need to be hospitalized yet in day unit
 */
 struct TimeInfectedSymptomsToSevere {
-    using Type = CustomIndexArray<ParameterDistributionWrapper, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        ParameterDistributionLogNormal log_norm(1., 1.);
-
-        return Type({VirusVariant::Count, size}, ParameterDistributionWrapper(log_norm));
+        return Type({VirusVariant::Count, size}, AbstractParameterDistribution(ParameterDistributionLogNormal(1., 1.)));
     }
     static std::string name()
     {
@@ -123,11 +115,10 @@ struct TimeInfectedSymptomsToSevere {
 * @brief Time that a Person is infected and symptomatic who will recover in day unit
 */
 struct TimeInfectedSymptomsToRecovered {
-    using Type = CustomIndexArray<ParameterDistributionWrapper, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        ParameterDistributionLogNormal log_norm(1., 1.);
-        return Type({VirusVariant::Count, size}, ParameterDistributionWrapper(log_norm));
+        return Type({VirusVariant::Count, size}, AbstractParameterDistribution(ParameterDistributionLogNormal(1., 1.)));
     }
     static std::string name()
     {
@@ -139,11 +130,10 @@ struct TimeInfectedSymptomsToRecovered {
  * @brief Time that a Person is infected and 'simply' hospitalized before becoming critical in day unit
  */
 struct TimeInfectedSevereToCritical {
-    using Type = CustomIndexArray<ParameterDistributionWrapper, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        ParameterDistributionLogNormal log_norm(1., 1.);
-        return Type({VirusVariant::Count, size}, ParameterDistributionWrapper(log_norm));
+        return Type({VirusVariant::Count, size}, AbstractParameterDistribution(ParameterDistributionLogNormal(1., 1.)));
     }
     static std::string name()
     {
@@ -155,11 +145,10 @@ struct TimeInfectedSevereToCritical {
  * @brief Time that a Person is infected and 'simply' hospitalized before recovering in day unit
  */
 struct TimeInfectedSevereToRecovered {
-    using Type = CustomIndexArray<ParameterDistributionWrapper, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        ParameterDistributionLogNormal log_norm(1., 1.);
-        return Type({VirusVariant::Count, size}, ParameterDistributionWrapper(log_norm));
+        return Type({VirusVariant::Count, size}, AbstractParameterDistribution(ParameterDistributionLogNormal(1., 1.)));
     }
     static std::string name()
     {
@@ -171,11 +160,10 @@ struct TimeInfectedSevereToRecovered {
  * @brief Time that a Person is treated by ICU before dying in day unit
  */
 struct TimeInfectedCriticalToDead {
-    using Type = CustomIndexArray<ParameterDistributionWrapper, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        ParameterDistributionLogNormal log_norm(1., 1.);
-        return Type({VirusVariant::Count, size}, ParameterDistributionWrapper(log_norm));
+        return Type({VirusVariant::Count, size}, AbstractParameterDistribution(ParameterDistributionLogNormal(1., 1.)));
     }
     static std::string name()
     {
@@ -187,11 +175,10 @@ struct TimeInfectedCriticalToDead {
  * @brief Time that a Person is treated by ICU before recovering in day unit
  */
 struct TimeInfectedCriticalToRecovered {
-    using Type = CustomIndexArray<ParameterDistributionWrapper, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        ParameterDistributionLogNormal log_norm(1., 1.);
-        return Type({VirusVariant::Count, size}, ParameterDistributionWrapper(log_norm));
+        return Type({VirusVariant::Count, size}, AbstractParameterDistribution(ParameterDistributionLogNormal(1., 1.)));
     }
     static std::string name()
     {

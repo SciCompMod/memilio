@@ -282,20 +282,19 @@ TEST_F(TestModel, evolveMobilityTrips)
     auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
     auto dt    = mio::abm::hours(2);
     auto model = mio::abm::Model(num_age_groups);
-    mio::ParameterDistributionConstant constant(2 * dt.days());
     //setup so p1-p5 don't do transition
     model.parameters
         .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::ParameterDistributionWrapper(constant);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(2 * dt.days()));
     model.parameters
         .get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::ParameterDistributionWrapper(constant);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(2 * dt.days()));
     model.parameters
         .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::ParameterDistributionWrapper(constant);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(2 * dt.days()));
     model.parameters
         .get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::ParameterDistributionWrapper(constant);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(2 * dt.days()));
 
     // Add different location types to the model.
     auto home_id     = model.add_location(mio::abm::LocationType::Home);
@@ -491,15 +490,13 @@ TEST_F(TestModel, checkMobilityOfDeadPerson)
     model.parameters
         .get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 1.;
     // Time to go from severe to critical infection is 1 day (dt).
-    mio::ParameterDistributionConstant constant1(dt.days());
     model.parameters
         .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-        mio::ParameterDistributionWrapper(constant1);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(dt.days()));
     // Time to go from critical infection to dead state is 1/2 day (0.5 * dt).
-    mio::ParameterDistributionConstant constant2(0.5 * dt.days());
     model.parameters
         .get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
-        mio::ParameterDistributionWrapper(constant2);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(0.5 * dt.days()));
 
     auto home_id     = model.add_location(mio::abm::LocationType::Home);
     auto work_id     = model.add_location(mio::abm::LocationType::Work);
@@ -551,11 +548,10 @@ TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 {
     auto model = mio::abm::Model(num_age_groups);
     // make sure the infected person stay in Infected long enough
-    mio::ParameterDistributionConstant constant(100.);
     model.parameters.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant(0), age_group_15_to_34}] =
-        mio::ParameterDistributionWrapper(constant);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(100.));
     model.parameters.get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant(0), age_group_15_to_34}] =
-        mio::ParameterDistributionWrapper(constant);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(100.));
 
     auto home_id = model.add_location(mio::abm::LocationType::Home);
     auto work_id = model.add_location(mio::abm::LocationType::Work);
@@ -620,33 +616,24 @@ TEST_F(TestModel, checkParameterConstraints)
     auto model  = mio::abm::Model(num_age_groups);
     auto params = model.parameters;
 
-    mio::ParameterDistributionLogNormal log_norm1(1., 0.5);
-    mio::ParameterDistributionLogNormal log_norm2(2., 0.5);
-    mio::ParameterDistributionLogNormal log_norm3(3., 0.5);
-    mio::ParameterDistributionLogNormal log_norm4(4., 0.5);
-    mio::ParameterDistributionLogNormal log_norm5(5., 0.5);
-    mio::ParameterDistributionLogNormal log_norm6(6., 0.5);
-    mio::ParameterDistributionLogNormal log_norm7(7., 0.5);
-    mio::ParameterDistributionLogNormal log_norm8(8., 0.5);
-    mio::ParameterDistributionLogNormal log_norm9(9., 0.5);
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm1);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(1., 0.5));
     params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm2);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(2., 0.5));
     params.get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm3);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(3., 0.5));
     params.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm4);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(4., 0.5));
     params.get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm5);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(5., 0.5));
     params.get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm6);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(6., 0.5));
     params.get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm7);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(7., 0.5));
     params.get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm8);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(8., 0.5));
     params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm9);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(9., 0.5));
     params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.3;
     params.get<mio::abm::GotoWorkTimeMinimum>()[age_group_35_to_59]                               = mio::abm::hours(4);
     params.get<mio::abm::GotoWorkTimeMaximum>()[age_group_35_to_59]                               = mio::abm::hours(8);
@@ -658,61 +645,51 @@ TEST_F(TestModel, checkParameterConstraints)
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(0);
     ASSERT_EQ(params.check_constraints(), false);
 
-    mio::ParameterDistributionLogNormal log_normm1(-1., 0.5);
-    mio::ParameterDistributionLogNormal log_normm2(-2., 0.5);
-    mio::ParameterDistributionLogNormal log_normm3(-3., 0.5);
-    mio::ParameterDistributionLogNormal log_normm4(-4., 0.5);
-    mio::ParameterDistributionLogNormal log_normm5(-5., 0.5);
-    mio::ParameterDistributionLogNormal log_normm6(-6., 0.5);
-    mio::ParameterDistributionLogNormal log_normm7(-7., 0.5);
-    mio::ParameterDistributionLogNormal log_normm8(-8., 0.5);
-    mio::ParameterDistributionLogNormal log_normm9(-9., 0.5);
-
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_normm1);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(-1., 0.5));
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm1);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(1., 0.5));
     params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_normm2);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(-2., 0.5));
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm2);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(2., 0.5));
     params.get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_normm3);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(-3., 0.5));
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm3);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(3., 0.5));
     params.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_normm4);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(-4., 0.5));
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm4);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(4., 0.5));
     params.get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_normm5);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(-5., 0.5));
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm5);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(5., 0.5));
     params.get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_normm6);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(-6., 0.5));
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm6);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(6., 0.5));
     params.get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_normm7);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(-7., 0.5));
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm7);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(7., 0.5));
     params.get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_normm8);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(-8., 0.5));
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm8);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(8., 0.5));
     params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_normm9);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(-9., 0.5));
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
-        mio::ParameterDistributionWrapper(log_norm9);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(9., 0.5));
     params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 1.1;
     ASSERT_EQ(params.check_constraints(), true);
     params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] = 0.3;
@@ -758,10 +735,9 @@ TEST_F(TestModel, mobilityRulesWithAppliedNPIs)
     auto model      = mio::abm::Model(num_age_groups);
     model.get_rng() = this->get_rng();
 
-    mio::ParameterDistributionConstant constant(2 * dt.days());
     model.parameters
         .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::ParameterDistributionWrapper(constant);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(2 * dt.days()));
     model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
 
@@ -875,11 +851,9 @@ TEST_F(TestModel, mobilityTripWithAppliedNPIs)
     auto test_time  = mio::abm::minutes(30);
     auto model      = mio::abm::Model(num_age_groups);
     model.get_rng() = this->get_rng();
-
-    mio::ParameterDistributionConstant constant(2 * dt.days());
     model.parameters
         .get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::ParameterDistributionWrapper(constant);
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(2 * dt.days()));
     model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
 
