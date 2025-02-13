@@ -37,11 +37,11 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-31 15:59:05</td>
+            <td class="headerValue">2025-02-13 16:21:13</td>
             <td></td>
             <td class="headerItem">Functions:</td>
-            <td class="headerCovTableEntry">2037</td>
-            <td class="headerCovTableEntry">2092</td>
+            <td class="headerCovTableEntry">2046</td>
+            <td class="headerCovTableEntry">2101</td>
             <td class="headerCovTableEntryHi">97.4 %</td>
           </tr>
           <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
@@ -4676,19 +4676,11 @@
               <td class="coverFnHi">99</td>
             </tr>
     <tr>
-              <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::SocialEventRate&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::SocialEventRate&gt;() const</a></td>
-              <td class="coverFnHi">99</td>
-            </tr>
-    <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::ssir::TransmissionProbabilityOnContact&gt;::Type const&amp; mio::ParameterSet&lt;mio::ssir::TransmissionProbabilityOnContact, mio::ssir::TimeInfected, mio::ssir::ContactPatterns&gt;::get&lt;mio::ssir::TransmissionProbabilityOnContact&gt;() const</a></td>
               <td class="coverFnHi">99</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::ssirs::TransmissionProbabilityOnContact&gt;::Type const&amp; mio::ParameterSet&lt;mio::ssirs::TransmissionProbabilityOnContact, mio::ssirs::TimeInfected, mio::ssirs::ContactPatterns, mio::ssirs::TimeImmune&gt;::get&lt;mio::ssirs::TransmissionProbabilityOnContact&gt;() const</a></td>
-              <td class="coverFnHi">99</td>
-            </tr>
-    <tr>
-              <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::SocialEventRate&gt;::get() const</a></td>
               <td class="coverFnHi">99</td>
             </tr>
     <tr>
@@ -4724,7 +4716,27 @@
               <td class="coverFnHi">103</td>
             </tr>
     <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#227">mio::ParameterSet&lt;mio::smm::AdoptionRates&lt;InfectionState&gt;, mio::smm::TransitionRates&lt;InfectionState&gt; &gt;::ParameterSet&lt;void, void&gt;()</a></td>
+              <td class="coverFnHi">104</td>
+            </tr>
+    <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#290">void mio::ParameterSet&lt;mio::oseir::TransmissionProbabilityOnContact&lt;double&gt;, mio::oseir::TimeExposed&lt;double&gt;, mio::oseir::TimeInfected&lt;double&gt;, mio::oseir::ContactPatterns&lt;double&gt; &gt;::set&lt;mio::oseir::TransmissionProbabilityOnContact&lt;double&gt;, double&gt;(double&amp;&amp;)</a></td>
+              <td class="coverFnHi">104</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#69">std::enable_if&lt;(!mio::details::has_get_default_member_function&lt;mio::smm::AdoptionRates&lt;InfectionState&gt;, void&gt;::value)&amp;&amp;std::integral_constant&lt;bool, true&gt;::value, std::vector&lt;mio::AdoptionRate&lt;InfectionState&gt;, std::allocator&lt;mio::AdoptionRate&lt;InfectionState&gt; &gt; &gt; &gt;::type mio::ParameterTagTraits&lt;mio::smm::AdoptionRates&lt;InfectionState&gt; &gt;::get_default&lt;mio::smm::AdoptionRates&lt;InfectionState&gt;&gt;()</a></td>
+              <td class="coverFnHi">104</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#69">std::enable_if&lt;(!mio::details::has_get_default_member_function&lt;mio::smm::TransitionRates&lt;InfectionState&gt;, void&gt;::value)&amp;&amp;std::integral_constant&lt;bool, true&gt;::value, std::vector&lt;mio::smm::TransitionRate&lt;InfectionState&gt;, std::allocator&lt;mio::smm::TransitionRate&lt;InfectionState&gt; &gt; &gt; &gt;::type mio::ParameterTagTraits&lt;mio::smm::TransitionRates&lt;InfectionState&gt; &gt;::get_default&lt;mio::smm::TransitionRates&lt;InfectionState&gt;&gt;()</a></td>
+              <td class="coverFnHi">104</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#88">mio::details::TaggedParameter&lt;mio::smm::AdoptionRates&lt;InfectionState&gt; &gt;::TaggedParameter&lt;std::vector&lt;mio::AdoptionRate&lt;InfectionState&gt;, std::allocator&lt;mio::AdoptionRate&lt;InfectionState&gt; &gt; &gt;, void, void&gt;(std::vector&lt;mio::AdoptionRate&lt;InfectionState&gt;, std::allocator&lt;mio::AdoptionRate&lt;InfectionState&gt; &gt; &gt;&amp;&amp;)</a></td>
+              <td class="coverFnHi">104</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#88">mio::details::TaggedParameter&lt;mio::smm::TransitionRates&lt;InfectionState&gt; &gt;::TaggedParameter&lt;std::vector&lt;mio::smm::TransitionRate&lt;InfectionState&gt;, std::allocator&lt;mio::smm::TransitionRate&lt;InfectionState&gt; &gt; &gt;, void, void&gt;(std::vector&lt;mio::smm::TransitionRate&lt;InfectionState&gt;, std::allocator&lt;mio::smm::TransitionRate&lt;InfectionState&gt; &gt; &gt;&amp;&amp;)</a></td>
               <td class="coverFnHi">104</td>
             </tr>
     <tr>
@@ -4792,7 +4804,15 @@
               <td class="coverFnHi">135</td>
             </tr>
     <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::SocialEventRate&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::SocialEventRate&gt;() const</a></td>
+              <td class="coverFnHi">135</td>
+            </tr>
+    <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">_ZNK3mio12ParameterSetIJNS_8osecirts8StartDayENS1_11SeasonalityIdEENS1_11ICUCapacityIdEENS1_20TestAndTraceCapacityIdEENS1_37TestAndTraceCapacityMaxRiskNoSymptomsIdEENS1_35TestAndTraceCapacityMaxRiskSymptomsIdEENS1_15ContactPatternsIdEENS1_27DynamicNPIsInfectedSymptomsIdEENS1_11TimeExposedIdEENS1_22TimeInfectedNoSymptomsIdEENS1_20TimeInfectedSymptomsIdEENS1_18TimeInfectedSevereIdEENS1_20TimeInfectedCriticalIdEENS1_25TimeWaningPartialImmunityIdEENS1_26TimeWaningImprovedImmunityIdEENS1_23TimeTemporaryImmunityPIIdEENS1_23TimeTemporaryImmunityIIIdEENS1_32TransmissionProbabilityOnContactIdEENS1_30RelativeTransmissionNoSymptomsIdEENS1_30RecoveredPerInfectedNoSymptomsIdEENS1_30RiskOfInfectionFromSymptomaticIdEENS1_33MaxRiskOfInfectionFromSymptomaticIdEENS1_25SeverePerInfectedSymptomsIdEENS1_17CriticalPerSevereIdEENS1_17DeathsPerCriticalIdEENS1_36DaysUntilEffectivePartialVaccinationIdEENS1_37DaysUntilEffectiveImprovedVaccinationIdEENS1_33DaysUntilEffectiveBoosterImmunityIdEENS1_21DailyFullVaccinationsIdEENS1_24DailyPartialVaccinationsIdEENS1_24DailyBoosterVaccinationsIdEENS1_27ReducExposedPartialImmunityIdEENS1_28ReducExposedImprovedImmunityIdEENS1_36ReducInfectedSymptomsPartialImmunityIdEENS1_37ReducInfectedSymptomsImprovedImmunityIdEENS1_46ReducInfectedSevereCriticalDeadPartialImmunityIdEENS1_47ReducInfectedSevereCriticalDeadImprovedImmunityIdEENS1_21ReducTimeInfectedMildIdEENS1_24InfectiousnessNewVariantIdEENS1_30DynamicNPIsImplementationDelayIdEENS1_18StartDayNewVariantEEE3getIS1K_EERKNS_18ParameterTagTraitsIT_E4TypeEv</a></td>
+              <td class="coverFnHi">135</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::SocialEventRate&gt;::get() const</a></td>
               <td class="coverFnHi">135</td>
             </tr>
     <tr>
@@ -6244,20 +6264,20 @@
               <td class="coverFnHi">444</td>
             </tr>
     <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::SevereToDead&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::SevereToDead&gt;() const</a></td>
+              <td class="coverFnHi">459</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::SevereToDead&gt;::get() const</a></td>
+              <td class="coverFnHi">459</td>
+            </tr>
+    <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">mio::ParameterTagTraits&lt;mio::lsecir::TimeExposed&gt;::Type&amp; mio::ParameterSet&lt;mio::lsecir::TimeExposed, mio::lsecir::TimeInfectedNoSymptoms, mio::lsecir::TimeInfectedSymptoms, mio::lsecir::TimeInfectedSevere, mio::lsecir::TimeInfectedCritical, mio::lsecir::TransmissionProbabilityOnContact, mio::lsecir::ContactPatterns, mio::lsecir::RelativeTransmissionNoSymptoms, mio::lsecir::RiskOfInfectionFromSymptomatic, mio::lsecir::RecoveredPerInfectedNoSymptoms, mio::lsecir::SeverePerInfectedSymptoms, mio::lsecir::CriticalPerSevere, mio::lsecir::DeathsPerCritical, mio::lsecir::StartDay, mio::lsecir::Seasonality&gt;::get&lt;mio::lsecir::TimeExposed&gt;()</a></td>
               <td class="coverFnHi">461</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#108">mio::details::TaggedParameter&lt;mio::lsecir::TimeExposed&gt;::get()</a></td>
               <td class="coverFnHi">461</td>
-            </tr>
-    <tr>
-              <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::SevereToDead&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::SevereToDead&gt;() const</a></td>
-              <td class="coverFnHi">477</td>
-            </tr>
-    <tr>
-              <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::SevereToDead&gt;::get() const</a></td>
-              <td class="coverFnHi">477</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">mio::ParameterTagTraits&lt;mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt; &gt;::Type&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt; &gt;()</a></td>
@@ -6300,14 +6320,6 @@
               <td class="coverFnHi">579</td>
             </tr>
     <tr>
-              <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::BasicShoppingRate&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::BasicShoppingRate&gt;() const</a></td>
-              <td class="coverFnHi">579</td>
-            </tr>
-    <tr>
-              <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::BasicShoppingRate&gt;::get() const</a></td>
-              <td class="coverFnHi">579</td>
-            </tr>
-    <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::ViralLoadDistributions&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::ViralLoadDistributions&gt;() const</a></td>
               <td class="coverFnHi">582</td>
             </tr>
@@ -6330,6 +6342,14 @@
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#108">mio::details::TaggedParameter&lt;mio::lsecir::TimeInfectedNoSymptoms&gt;::get()</a></td>
               <td class="coverFnHi">586</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::BasicShoppingRate&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::BasicShoppingRate&gt;() const</a></td>
+              <td class="coverFnHi">588</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::BasicShoppingRate&gt;::get() const</a></td>
+              <td class="coverFnHi">588</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">mio::ParameterTagTraits&lt;mio::lsecir::RecoveredPerInfectedNoSymptoms&gt;::Type&amp; mio::ParameterSet&lt;mio::lsecir::TimeExposed, mio::lsecir::TimeInfectedNoSymptoms, mio::lsecir::TimeInfectedSymptoms, mio::lsecir::TimeInfectedSevere, mio::lsecir::TimeInfectedCritical, mio::lsecir::TransmissionProbabilityOnContact, mio::lsecir::ContactPatterns, mio::lsecir::RelativeTransmissionNoSymptoms, mio::lsecir::RiskOfInfectionFromSymptomatic, mio::lsecir::RecoveredPerInfectedNoSymptoms, mio::lsecir::SeverePerInfectedSymptoms, mio::lsecir::CriticalPerSevere, mio::lsecir::DeathsPerCritical, mio::lsecir::StartDay, mio::lsecir::Seasonality&gt;::get&lt;mio::lsecir::RecoveredPerInfectedNoSymptoms&gt;()</a></td>
@@ -6429,11 +6449,11 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::AgeGroupGotoWork&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::AgeGroupGotoWork&gt;() const</a></td>
-              <td class="coverFnHi">703</td>
+              <td class="coverFnHi">704</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::AgeGroupGotoWork&gt;::get() const</a></td>
-              <td class="coverFnHi">703</td>
+              <td class="coverFnHi">704</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">mio::ParameterTagTraits&lt;mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt; &gt;::Type&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt; &gt;()</a></td>
@@ -6477,19 +6497,19 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::CriticalToRecovered&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::CriticalToRecovered&gt;() const</a></td>
-              <td class="coverFnHi">777</td>
+              <td class="coverFnHi">786</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::CriticalToRecovered&gt;::get() const</a></td>
-              <td class="coverFnHi">777</td>
+              <td class="coverFnHi">786</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::CriticalToDead&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::CriticalToDead&gt;() const</a></td>
-              <td class="coverFnHi">786</td>
+              <td class="coverFnHi">804</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::CriticalToDead&gt;::get() const</a></td>
-              <td class="coverFnHi">786</td>
+              <td class="coverFnHi">804</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">_ZN3mio12ParameterSetIJNS_8osecirts8StartDayENS1_11SeasonalityIdEENS1_11ICUCapacityIdEENS1_20TestAndTraceCapacityIdEENS1_37TestAndTraceCapacityMaxRiskNoSymptomsIdEENS1_35TestAndTraceCapacityMaxRiskSymptomsIdEENS1_15ContactPatternsIdEENS1_27DynamicNPIsInfectedSymptomsIdEENS1_11TimeExposedIdEENS1_22TimeInfectedNoSymptomsIdEENS1_20TimeInfectedSymptomsIdEENS1_18TimeInfectedSevereIdEENS1_20TimeInfectedCriticalIdEENS1_25TimeWaningPartialImmunityIdEENS1_26TimeWaningImprovedImmunityIdEENS1_23TimeTemporaryImmunityPIIdEENS1_23TimeTemporaryImmunityIIIdEENS1_32TransmissionProbabilityOnContactIdEENS1_30RelativeTransmissionNoSymptomsIdEENS1_30RecoveredPerInfectedNoSymptomsIdEENS1_30RiskOfInfectionFromSymptomaticIdEENS1_33MaxRiskOfInfectionFromSymptomaticIdEENS1_25SeverePerInfectedSymptomsIdEENS1_17CriticalPerSevereIdEENS1_17DeathsPerCriticalIdEENS1_36DaysUntilEffectivePartialVaccinationIdEENS1_37DaysUntilEffectiveImprovedVaccinationIdEENS1_33DaysUntilEffectiveBoosterImmunityIdEENS1_21DailyFullVaccinationsIdEENS1_24DailyPartialVaccinationsIdEENS1_24DailyBoosterVaccinationsIdEENS1_27ReducExposedPartialImmunityIdEENS1_28ReducExposedImprovedImmunityIdEENS1_36ReducInfectedSymptomsPartialImmunityIdEENS1_37ReducInfectedSymptomsImprovedImmunityIdEENS1_46ReducInfectedSevereCriticalDeadPartialImmunityIdEENS1_47ReducInfectedSevereCriticalDeadImprovedImmunityIdEENS1_21ReducTimeInfectedMildIdEENS1_24InfectiousnessNewVariantIdEENS1_30DynamicNPIsImplementationDelayIdEENS1_18StartDayNewVariantEEE3getIS28_EERNS_18ParameterTagTraitsIT_E4TypeEv</a></td>
@@ -6500,14 +6520,6 @@
               <td class="coverFnHi">810</td>
             </tr>
     <tr>
-              <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::SevereToRecovered&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::SevereToRecovered&gt;() const</a></td>
-              <td class="coverFnHi">813</td>
-            </tr>
-    <tr>
-              <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::SevereToRecovered&gt;::get() const</a></td>
-              <td class="coverFnHi">813</td>
-            </tr>
-    <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">mio::ParameterTagTraits&lt;mio::lsecir::TimeInfectedCritical&gt;::Type&amp; mio::ParameterSet&lt;mio::lsecir::TimeExposed, mio::lsecir::TimeInfectedNoSymptoms, mio::lsecir::TimeInfectedSymptoms, mio::lsecir::TimeInfectedSevere, mio::lsecir::TimeInfectedCritical, mio::lsecir::TransmissionProbabilityOnContact, mio::lsecir::ContactPatterns, mio::lsecir::RelativeTransmissionNoSymptoms, mio::lsecir::RiskOfInfectionFromSymptomatic, mio::lsecir::RecoveredPerInfectedNoSymptoms, mio::lsecir::SeverePerInfectedSymptoms, mio::lsecir::CriticalPerSevere, mio::lsecir::DeathsPerCritical, mio::lsecir::StartDay, mio::lsecir::Seasonality&gt;::get&lt;mio::lsecir::TimeInfectedCritical&gt;()</a></td>
               <td class="coverFnHi">818</td>
             </tr>
@@ -6516,12 +6528,12 @@
               <td class="coverFnHi">818</td>
             </tr>
     <tr>
-              <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::SevereToCritical&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::SevereToCritical&gt;() const</a></td>
-              <td class="coverFnHi">849</td>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::SevereToRecovered&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::SevereToRecovered&gt;() const</a></td>
+              <td class="coverFnHi">822</td>
             </tr>
     <tr>
-              <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::SevereToCritical&gt;::get() const</a></td>
-              <td class="coverFnHi">849</td>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::SevereToRecovered&gt;::get() const</a></td>
+              <td class="coverFnHi">822</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::UseLocationCapacityForTransmissions&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::MaximumContacts, mio::abm::ContactRates, mio::abm::UseLocationCapacityForTransmissions&gt;::get&lt;mio::abm::UseLocationCapacityForTransmissions&gt;() const</a></td>
@@ -6530,6 +6542,14 @@
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::UseLocationCapacityForTransmissions&gt;::get() const</a></td>
               <td class="coverFnHi">864</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::SevereToCritical&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::SevereToCritical&gt;() const</a></td>
+              <td class="coverFnHi">876</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::SevereToCritical&gt;::get() const</a></td>
+              <td class="coverFnHi">876</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#248">mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::ParameterSet&lt;mio::AgeGroup, , void&gt;(mio::AgeGroup&amp;&amp;)</a></td>
@@ -6793,19 +6813,19 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::InfectedNoSymptomsToRecovered&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::InfectedNoSymptomsToRecovered&gt;() const</a></td>
-              <td class="coverFnHi">921</td>
+              <td class="coverFnHi">939</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::InfectedNoSymptomsToRecovered&gt;::get() const</a></td>
-              <td class="coverFnHi">921</td>
+              <td class="coverFnHi">939</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::InfectedSymptomsToSevere&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::InfectedSymptomsToSevere&gt;() const</a></td>
-              <td class="coverFnHi">957</td>
+              <td class="coverFnHi">975</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::InfectedSymptomsToSevere&gt;::get() const</a></td>
-              <td class="coverFnHi">957</td>
+              <td class="coverFnHi">975</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">_ZN3mio12ParameterSetIJNS_9osecirvvs8StartDayENS1_11SeasonalityIdEENS1_11ICUCapacityIdEENS1_20TestAndTraceCapacityIdEENS1_37TestAndTraceCapacityMaxRiskNoSymptomsIdEENS1_35TestAndTraceCapacityMaxRiskSymptomsIdEENS1_15ContactPatternsIdEENS1_30DynamicNPIsImplementationDelayIdEENS1_27DynamicNPIsInfectedSymptomsIdEENS1_11TimeExposedIdEENS1_22TimeInfectedNoSymptomsIdEENS1_20TimeInfectedSymptomsIdEENS1_18TimeInfectedSevereIdEENS1_20TimeInfectedCriticalIdEENS1_32TransmissionProbabilityOnContactIdEENS1_30RelativeTransmissionNoSymptomsIdEENS1_30RecoveredPerInfectedNoSymptomsIdEENS1_30RiskOfInfectionFromSymptomaticIdEENS1_33MaxRiskOfInfectionFromSymptomaticIdEENS1_25SeverePerInfectedSymptomsIdEENS1_17CriticalPerSevereIdEENS1_17DeathsPerCriticalIdEENS1_14VaccinationGapIdEENS1_33DaysUntilEffectivePartialImmunityIdEENS1_34DaysUntilEffectiveImprovedImmunityIdEENS1_21DailyFullVaccinationsIdEENS1_24DailyPartialVaccinationsIdEENS1_27ReducExposedPartialImmunityIdEENS1_28ReducExposedImprovedImmunityIdEENS1_36ReducInfectedSymptomsPartialImmunityIdEENS1_37ReducInfectedSymptomsImprovedImmunityIdEENS1_46ReducInfectedSevereCriticalDeadPartialImmunityIdEENS1_47ReducInfectedSevereCriticalDeadImprovedImmunityIdEENS1_21ReducTimeInfectedMildIdEENS1_24InfectiousnessNewVariantIdEENS1_18StartDayNewVariantEEE3getIS8_EERNS_18ParameterTagTraitsIT_E4TypeEv</a></td>
@@ -6817,11 +6837,11 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::InfectedSymptomsToRecovered&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::InfectedSymptomsToRecovered&gt;() const</a></td>
-              <td class="coverFnHi">1029</td>
+              <td class="coverFnHi">993</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::InfectedSymptomsToRecovered&gt;::get() const</a></td>
-              <td class="coverFnHi">1029</td>
+              <td class="coverFnHi">993</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">mio::ParameterTagTraits&lt;mio::osecir::TestAndTraceCapacity&lt;double&gt; &gt;::Type&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::TestAndTraceCapacity&lt;double&gt; &gt;()</a></td>
@@ -6881,11 +6901,11 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::InfectedNoSymptomsToSymptoms&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::InfectedNoSymptomsToSymptoms&gt;() const</a></td>
-              <td class="coverFnHi">1218</td>
+              <td class="coverFnHi">1200</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::InfectedNoSymptomsToSymptoms&gt;::get() const</a></td>
-              <td class="coverFnHi">1218</td>
+              <td class="coverFnHi">1200</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">mio::ParameterTagTraits&lt;mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt; &gt;::Type&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt; &gt;()</a></td>
@@ -6957,19 +6977,19 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::GotoWorkTimeMinimum&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::GotoWorkTimeMinimum&gt;() const</a></td>
-              <td class="coverFnHi">1452</td>
+              <td class="coverFnHi">1453</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::GotoWorkTimeMaximum&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::GotoWorkTimeMaximum&gt;() const</a></td>
-              <td class="coverFnHi">1452</td>
+              <td class="coverFnHi">1453</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::GotoWorkTimeMaximum&gt;::get() const</a></td>
-              <td class="coverFnHi">1452</td>
+              <td class="coverFnHi">1453</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::GotoWorkTimeMinimum&gt;::get() const</a></td>
-              <td class="coverFnHi">1452</td>
+              <td class="coverFnHi">1453</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">_ZN3mio12ParameterSetIJNS_9osecirvvs8StartDayENS1_11SeasonalityIdEENS1_11ICUCapacityIdEENS1_20TestAndTraceCapacityIdEENS1_37TestAndTraceCapacityMaxRiskNoSymptomsIdEENS1_35TestAndTraceCapacityMaxRiskSymptomsIdEENS1_15ContactPatternsIdEENS1_30DynamicNPIsImplementationDelayIdEENS1_27DynamicNPIsInfectedSymptomsIdEENS1_11TimeExposedIdEENS1_22TimeInfectedNoSymptomsIdEENS1_20TimeInfectedSymptomsIdEENS1_18TimeInfectedSevereIdEENS1_20TimeInfectedCriticalIdEENS1_32TransmissionProbabilityOnContactIdEENS1_30RelativeTransmissionNoSymptomsIdEENS1_30RecoveredPerInfectedNoSymptomsIdEENS1_30RiskOfInfectionFromSymptomaticIdEENS1_33MaxRiskOfInfectionFromSymptomaticIdEENS1_25SeverePerInfectedSymptomsIdEENS1_17CriticalPerSevereIdEENS1_17DeathsPerCriticalIdEENS1_14VaccinationGapIdEENS1_33DaysUntilEffectivePartialImmunityIdEENS1_34DaysUntilEffectiveImprovedImmunityIdEENS1_21DailyFullVaccinationsIdEENS1_24DailyPartialVaccinationsIdEENS1_27ReducExposedPartialImmunityIdEENS1_28ReducExposedImprovedImmunityIdEENS1_36ReducInfectedSymptomsPartialImmunityIdEENS1_37ReducInfectedSymptomsImprovedImmunityIdEENS1_46ReducInfectedSevereCriticalDeadPartialImmunityIdEENS1_47ReducInfectedSevereCriticalDeadImprovedImmunityIdEENS1_21ReducTimeInfectedMildIdEENS1_24InfectiousnessNewVariantIdEENS1_18StartDayNewVariantEEE3getIS4_EERNS_18ParameterTagTraitsIT_E4TypeEv</a></td>
@@ -6994,14 +7014,6 @@
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#108">mio::details::TaggedParameter&lt;mio::osecirvvs::DynamicNPIsImplementationDelay&lt;double&gt; &gt;::get()</a></td>
               <td class="coverFnHi">1518</td>
-            </tr>
-    <tr>
-              <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::QuarantineDuration&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::QuarantineDuration&gt;() const</a></td>
-              <td class="coverFnHi">1591</td>
-            </tr>
-    <tr>
-              <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::QuarantineDuration&gt;::get() const</a></td>
-              <td class="coverFnHi">1591</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">_ZN3mio12ParameterSetIJNS_8osecirts8StartDayENS1_11SeasonalityIdEENS1_11ICUCapacityIdEENS1_20TestAndTraceCapacityIdEENS1_37TestAndTraceCapacityMaxRiskNoSymptomsIdEENS1_35TestAndTraceCapacityMaxRiskSymptomsIdEENS1_15ContactPatternsIdEENS1_27DynamicNPIsInfectedSymptomsIdEENS1_11TimeExposedIdEENS1_22TimeInfectedNoSymptomsIdEENS1_20TimeInfectedSymptomsIdEENS1_18TimeInfectedSevereIdEENS1_20TimeInfectedCriticalIdEENS1_25TimeWaningPartialImmunityIdEENS1_26TimeWaningImprovedImmunityIdEENS1_23TimeTemporaryImmunityPIIdEENS1_23TimeTemporaryImmunityIIIdEENS1_32TransmissionProbabilityOnContactIdEENS1_30RelativeTransmissionNoSymptomsIdEENS1_30RecoveredPerInfectedNoSymptomsIdEENS1_30RiskOfInfectionFromSymptomaticIdEENS1_33MaxRiskOfInfectionFromSymptomaticIdEENS1_25SeverePerInfectedSymptomsIdEENS1_17CriticalPerSevereIdEENS1_17DeathsPerCriticalIdEENS1_36DaysUntilEffectivePartialVaccinationIdEENS1_37DaysUntilEffectiveImprovedVaccinationIdEENS1_33DaysUntilEffectiveBoosterImmunityIdEENS1_21DailyFullVaccinationsIdEENS1_24DailyPartialVaccinationsIdEENS1_24DailyBoosterVaccinationsIdEENS1_27ReducExposedPartialImmunityIdEENS1_28ReducExposedImprovedImmunityIdEENS1_36ReducInfectedSymptomsPartialImmunityIdEENS1_37ReducInfectedSymptomsImprovedImmunityIdEENS1_46ReducInfectedSevereCriticalDeadPartialImmunityIdEENS1_47ReducInfectedSevereCriticalDeadImprovedImmunityIdEENS1_21ReducTimeInfectedMildIdEENS1_24InfectiousnessNewVariantIdEENS1_30DynamicNPIsImplementationDelayIdEENS1_18StartDayNewVariantEEE3getISS_EERNS_18ParameterTagTraitsIT_E4TypeEv</a></td>
@@ -7034,6 +7046,14 @@
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#108">mio::details::TaggedParameter&lt;mio::osecirts::DaysUntilEffectiveBoosterImmunity&lt;double&gt; &gt;::get()</a></td>
               <td class="coverFnHi">1631</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::QuarantineDuration&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::QuarantineDuration&gt;() const</a></td>
+              <td class="coverFnHi">1646</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::QuarantineDuration&gt;::get() const</a></td>
+              <td class="coverFnHi">1646</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">_ZN3mio12ParameterSetIJNS_8osecirts8StartDayENS1_11SeasonalityIdEENS1_11ICUCapacityIdEENS1_20TestAndTraceCapacityIdEENS1_37TestAndTraceCapacityMaxRiskNoSymptomsIdEENS1_35TestAndTraceCapacityMaxRiskSymptomsIdEENS1_15ContactPatternsIdEENS1_27DynamicNPIsInfectedSymptomsIdEENS1_11TimeExposedIdEENS1_22TimeInfectedNoSymptomsIdEENS1_20TimeInfectedSymptomsIdEENS1_18TimeInfectedSevereIdEENS1_20TimeInfectedCriticalIdEENS1_25TimeWaningPartialImmunityIdEENS1_26TimeWaningImprovedImmunityIdEENS1_23TimeTemporaryImmunityPIIdEENS1_23TimeTemporaryImmunityIIIdEENS1_32TransmissionProbabilityOnContactIdEENS1_30RelativeTransmissionNoSymptomsIdEENS1_30RecoveredPerInfectedNoSymptomsIdEENS1_30RiskOfInfectionFromSymptomaticIdEENS1_33MaxRiskOfInfectionFromSymptomaticIdEENS1_25SeverePerInfectedSymptomsIdEENS1_17CriticalPerSevereIdEENS1_17DeathsPerCriticalIdEENS1_36DaysUntilEffectivePartialVaccinationIdEENS1_37DaysUntilEffectiveImprovedVaccinationIdEENS1_33DaysUntilEffectiveBoosterImmunityIdEENS1_21DailyFullVaccinationsIdEENS1_24DailyPartialVaccinationsIdEENS1_24DailyBoosterVaccinationsIdEENS1_27ReducExposedPartialImmunityIdEENS1_28ReducExposedImprovedImmunityIdEENS1_36ReducInfectedSymptomsPartialImmunityIdEENS1_37ReducInfectedSymptomsImprovedImmunityIdEENS1_46ReducInfectedSevereCriticalDeadPartialImmunityIdEENS1_47ReducInfectedSevereCriticalDeadImprovedImmunityIdEENS1_21ReducTimeInfectedMildIdEENS1_24InfectiousnessNewVariantIdEENS1_30DynamicNPIsImplementationDelayIdEENS1_18StartDayNewVariantEEE3getIS1G_EERNS_18ParameterTagTraitsIT_E4TypeEv</a></td>
@@ -7077,11 +7097,11 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::LockdownDate&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::LockdownDate&gt;() const</a></td>
-              <td class="coverFnHi">1776</td>
+              <td class="coverFnHi">1788</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::LockdownDate&gt;::get() const</a></td>
-              <td class="coverFnHi">1776</td>
+              <td class="coverFnHi">1788</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::isecir::TransmissionProbabilityOnContact&gt;::Type const&amp; mio::ParameterSet&lt;mio::isecir::TransitionDistributions, mio::isecir::TransitionProbabilities, mio::isecir::ContactPatterns, mio::isecir::TransmissionProbabilityOnContact, mio::isecir::RelativeTransmissionNoSymptoms, mio::isecir::RiskOfInfectionFromSymptomatic, mio::isecir::StartDay, mio::isecir::Seasonality&gt;::get&lt;mio::isecir::TransmissionProbabilityOnContact&gt;() const</a></td>
@@ -7093,11 +7113,11 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::GotoSchoolTimeMaximum&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::GotoSchoolTimeMaximum&gt;() const</a></td>
-              <td class="coverFnHi">1875</td>
+              <td class="coverFnHi">1868</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::GotoSchoolTimeMaximum&gt;::get() const</a></td>
-              <td class="coverFnHi">1875</td>
+              <td class="coverFnHi">1868</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">_ZN3mio12ParameterSetIJNS_9osecirvvs8StartDayENS1_11SeasonalityIdEENS1_11ICUCapacityIdEENS1_20TestAndTraceCapacityIdEENS1_37TestAndTraceCapacityMaxRiskNoSymptomsIdEENS1_35TestAndTraceCapacityMaxRiskSymptomsIdEENS1_15ContactPatternsIdEENS1_30DynamicNPIsImplementationDelayIdEENS1_27DynamicNPIsInfectedSymptomsIdEENS1_11TimeExposedIdEENS1_22TimeInfectedNoSymptomsIdEENS1_20TimeInfectedSymptomsIdEENS1_18TimeInfectedSevereIdEENS1_20TimeInfectedCriticalIdEENS1_32TransmissionProbabilityOnContactIdEENS1_30RelativeTransmissionNoSymptomsIdEENS1_30RecoveredPerInfectedNoSymptomsIdEENS1_30RiskOfInfectionFromSymptomaticIdEENS1_33MaxRiskOfInfectionFromSymptomaticIdEENS1_25SeverePerInfectedSymptomsIdEENS1_17CriticalPerSevereIdEENS1_17DeathsPerCriticalIdEENS1_14VaccinationGapIdEENS1_33DaysUntilEffectivePartialImmunityIdEENS1_34DaysUntilEffectiveImprovedImmunityIdEENS1_21DailyFullVaccinationsIdEENS1_24DailyPartialVaccinationsIdEENS1_27ReducExposedPartialImmunityIdEENS1_28ReducExposedImprovedImmunityIdEENS1_36ReducInfectedSymptomsPartialImmunityIdEENS1_37ReducInfectedSymptomsImprovedImmunityIdEENS1_46ReducInfectedSevereCriticalDeadPartialImmunityIdEENS1_47ReducInfectedSevereCriticalDeadImprovedImmunityIdEENS1_21ReducTimeInfectedMildIdEENS1_24InfectiousnessNewVariantIdEENS1_18StartDayNewVariantEEE3getIS1A_EERNS_18ParameterTagTraitsIT_E4TypeEv</a></td>
@@ -7125,19 +7145,19 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::GotoSchoolTimeMinimum&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::GotoSchoolTimeMinimum&gt;() const</a></td>
-              <td class="coverFnHi">1893</td>
+              <td class="coverFnHi">1886</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::GotoSchoolTimeMinimum&gt;::get() const</a></td>
-              <td class="coverFnHi">1893</td>
+              <td class="coverFnHi">1886</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::MaximumContacts&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::MaximumContacts, mio::abm::ContactRates, mio::abm::UseLocationCapacityForTransmissions&gt;::get&lt;mio::abm::MaximumContacts&gt;() const</a></td>
-              <td class="coverFnHi">2060</td>
+              <td class="coverFnHi">2061</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::MaximumContacts&gt;::get() const</a></td>
-              <td class="coverFnHi">2060</td>
+              <td class="coverFnHi">2061</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">mio::ParameterTagTraits&lt;mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt; &gt;::Type&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt; &gt;()</a></td>
@@ -7157,19 +7177,19 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::AerosolTransmissionRates&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::AerosolTransmissionRates&gt;() const</a></td>
-              <td class="coverFnHi">2405</td>
+              <td class="coverFnHi">2406</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::AerosolTransmissionRates&gt;::get() const</a></td>
-              <td class="coverFnHi">2405</td>
+              <td class="coverFnHi">2406</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::MaskProtection&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::IncubationPeriod, mio::abm::InfectedNoSymptomsToSymptoms, mio::abm::InfectedNoSymptomsToRecovered, mio::abm::InfectedSymptomsToRecovered, mio::abm::InfectedSymptomsToSevere, mio::abm::SevereToCritical, mio::abm::SevereToRecovered, mio::abm::SevereToDead, mio::abm::CriticalToDead, mio::abm::CriticalToRecovered, mio::abm::RecoveredToSusceptible, mio::abm::ViralLoadDistributions, mio::abm::InfectivityDistributions, mio::abm::DetectInfection, mio::abm::MaskProtection, mio::abm::AerosolTransmissionRates, mio::abm::LockdownDate, mio::abm::QuarantineDuration, mio::abm::SocialEventRate, mio::abm::BasicShoppingRate, mio::abm::WorkRatio, mio::abm::SchoolRatio, mio::abm::GotoWorkTimeMinimum, mio::abm::GotoWorkTimeMaximum, mio::abm::GotoSchoolTimeMinimum, mio::abm::GotoSchoolTimeMaximum, mio::abm::AgeGroupGotoSchool, mio::abm::AgeGroupGotoWork, mio::abm::InfectionProtectionFactor, mio::abm::SeverityProtectionFactor, mio::abm::HighViralLoadProtectionFactor, mio::abm::TestData&gt;::get&lt;mio::abm::MaskProtection&gt;() const</a></td>
-              <td class="coverFnHi">2489</td>
+              <td class="coverFnHi">2490</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::MaskProtection&gt;::get() const</a></td>
-              <td class="coverFnHi">2489</td>
+              <td class="coverFnHi">2490</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">mio::ParameterTagTraits&lt;mio::osecir::TimeInfectedCritical&lt;double&gt; &gt;::Type&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::TimeInfectedCritical&lt;double&gt; &gt;()</a></td>
@@ -7653,11 +7673,11 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::abm::ContactRates&gt;::Type const&amp; mio::ParameterSet&lt;mio::abm::MaximumContacts, mio::abm::ContactRates, mio::abm::UseLocationCapacityForTransmissions&gt;::get&lt;mio::abm::ContactRates&gt;() const</a></td>
-              <td class="coverFnHi">12060</td>
+              <td class="coverFnHi">12061</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::abm::ContactRates&gt;::get() const</a></td>
-              <td class="coverFnHi">12060</td>
+              <td class="coverFnHi">12061</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">_ZNK3mio12ParameterSetIJNS_8osecirts8StartDayENS1_11SeasonalityIdEENS1_11ICUCapacityIdEENS1_20TestAndTraceCapacityIdEENS1_37TestAndTraceCapacityMaxRiskNoSymptomsIdEENS1_35TestAndTraceCapacityMaxRiskSymptomsIdEENS1_15ContactPatternsIdEENS1_27DynamicNPIsInfectedSymptomsIdEENS1_11TimeExposedIdEENS1_22TimeInfectedNoSymptomsIdEENS1_20TimeInfectedSymptomsIdEENS1_18TimeInfectedSevereIdEENS1_20TimeInfectedCriticalIdEENS1_25TimeWaningPartialImmunityIdEENS1_26TimeWaningImprovedImmunityIdEENS1_23TimeTemporaryImmunityPIIdEENS1_23TimeTemporaryImmunityIIIdEENS1_32TransmissionProbabilityOnContactIdEENS1_30RelativeTransmissionNoSymptomsIdEENS1_30RecoveredPerInfectedNoSymptomsIdEENS1_30RiskOfInfectionFromSymptomaticIdEENS1_33MaxRiskOfInfectionFromSymptomaticIdEENS1_25SeverePerInfectedSymptomsIdEENS1_17CriticalPerSevereIdEENS1_17DeathsPerCriticalIdEENS1_36DaysUntilEffectivePartialVaccinationIdEENS1_37DaysUntilEffectiveImprovedVaccinationIdEENS1_33DaysUntilEffectiveBoosterImmunityIdEENS1_21DailyFullVaccinationsIdEENS1_24DailyPartialVaccinationsIdEENS1_24DailyBoosterVaccinationsIdEENS1_27ReducExposedPartialImmunityIdEENS1_28ReducExposedImprovedImmunityIdEENS1_36ReducInfectedSymptomsPartialImmunityIdEENS1_37ReducInfectedSymptomsImprovedImmunityIdEENS1_46ReducInfectedSevereCriticalDeadPartialImmunityIdEENS1_47ReducInfectedSevereCriticalDeadImprovedImmunityIdEENS1_21ReducTimeInfectedMildIdEENS1_24InfectiousnessNewVariantIdEENS1_30DynamicNPIsImplementationDelayIdEENS1_18StartDayNewVariantEEE3getIS2_EERKNS_18ParameterTagTraitsIT_E4TypeEv</a></td>
@@ -7852,6 +7872,14 @@
               <td class="coverFnHi">33976</td>
             </tr>
     <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#270">mio::ParameterTagTraits&lt;mio::smm::TransitionRates&lt;InfectionState&gt; &gt;::Type&amp; mio::ParameterSet&lt;mio::smm::AdoptionRates&lt;InfectionState&gt;, mio::smm::TransitionRates&lt;InfectionState&gt; &gt;::get&lt;mio::smm::TransitionRates&lt;InfectionState&gt; &gt;()</a></td>
+              <td class="coverFnHi">37105</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#108">mio::details::TaggedParameter&lt;mio::smm::TransitionRates&lt;InfectionState&gt; &gt;::get()</a></td>
+              <td class="coverFnHi">37105</td>
+            </tr>
+    <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">_ZNK3mio12ParameterSetIJNS_8osecirts8StartDayENS1_11SeasonalityIdEENS1_11ICUCapacityIdEENS1_20TestAndTraceCapacityIdEENS1_37TestAndTraceCapacityMaxRiskNoSymptomsIdEENS1_35TestAndTraceCapacityMaxRiskSymptomsIdEENS1_15ContactPatternsIdEENS1_27DynamicNPIsInfectedSymptomsIdEENS1_11TimeExposedIdEENS1_22TimeInfectedNoSymptomsIdEENS1_20TimeInfectedSymptomsIdEENS1_18TimeInfectedSevereIdEENS1_20TimeInfectedCriticalIdEENS1_25TimeWaningPartialImmunityIdEENS1_26TimeWaningImprovedImmunityIdEENS1_23TimeTemporaryImmunityPIIdEENS1_23TimeTemporaryImmunityIIIdEENS1_32TransmissionProbabilityOnContactIdEENS1_30RelativeTransmissionNoSymptomsIdEENS1_30RecoveredPerInfectedNoSymptomsIdEENS1_30RiskOfInfectionFromSymptomaticIdEENS1_33MaxRiskOfInfectionFromSymptomaticIdEENS1_25SeverePerInfectedSymptomsIdEENS1_17CriticalPerSevereIdEENS1_17DeathsPerCriticalIdEENS1_36DaysUntilEffectivePartialVaccinationIdEENS1_37DaysUntilEffectiveImprovedVaccinationIdEENS1_33DaysUntilEffectiveBoosterImmunityIdEENS1_21DailyFullVaccinationsIdEENS1_24DailyPartialVaccinationsIdEENS1_24DailyBoosterVaccinationsIdEENS1_27ReducExposedPartialImmunityIdEENS1_28ReducExposedImprovedImmunityIdEENS1_36ReducInfectedSymptomsPartialImmunityIdEENS1_37ReducInfectedSymptomsImprovedImmunityIdEENS1_46ReducInfectedSevereCriticalDeadPartialImmunityIdEENS1_47ReducInfectedSevereCriticalDeadImprovedImmunityIdEENS1_21ReducTimeInfectedMildIdEENS1_24InfectiousnessNewVariantIdEENS1_30DynamicNPIsImplementationDelayIdEENS1_18StartDayNewVariantEEE3getIS1C_EERKNS_18ParameterTagTraitsIT_E4TypeEv</a></td>
               <td class="coverFnHi">37998</td>
             </tr>
@@ -7978,6 +8006,14 @@
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecirvvs::TimeExposed&lt;double&gt; &gt;::get() const</a></td>
               <td class="coverFnHi">51076</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#270">mio::ParameterTagTraits&lt;mio::smm::AdoptionRates&lt;InfectionState&gt; &gt;::Type&amp; mio::ParameterSet&lt;mio::smm::AdoptionRates&lt;InfectionState&gt;, mio::smm::TransitionRates&lt;InfectionState&gt; &gt;::get&lt;mio::smm::AdoptionRates&lt;InfectionState&gt; &gt;()</a></td>
+              <td class="coverFnHi">55151</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="parameter_set.h.gcov.html#108">mio::details::TaggedParameter&lt;mio::smm::AdoptionRates&lt;InfectionState&gt; &gt;::get()</a></td>
+              <td class="coverFnHi">55151</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#270">_ZN3mio12ParameterSetIJNS_9osecirvvs8StartDayENS1_11SeasonalityIdEENS1_11ICUCapacityIdEENS1_20TestAndTraceCapacityIdEENS1_37TestAndTraceCapacityMaxRiskNoSymptomsIdEENS1_35TestAndTraceCapacityMaxRiskSymptomsIdEENS1_15ContactPatternsIdEENS1_30DynamicNPIsImplementationDelayIdEENS1_27DynamicNPIsInfectedSymptomsIdEENS1_11TimeExposedIdEENS1_22TimeInfectedNoSymptomsIdEENS1_20TimeInfectedSymptomsIdEENS1_18TimeInfectedSevereIdEENS1_20TimeInfectedCriticalIdEENS1_32TransmissionProbabilityOnContactIdEENS1_30RelativeTransmissionNoSymptomsIdEENS1_30RecoveredPerInfectedNoSymptomsIdEENS1_30RiskOfInfectionFromSymptomaticIdEENS1_33MaxRiskOfInfectionFromSymptomaticIdEENS1_25SeverePerInfectedSymptomsIdEENS1_17CriticalPerSevereIdEENS1_17DeathsPerCriticalIdEENS1_14VaccinationGapIdEENS1_33DaysUntilEffectivePartialImmunityIdEENS1_34DaysUntilEffectiveImprovedImmunityIdEENS1_21DailyFullVaccinationsIdEENS1_24DailyPartialVaccinationsIdEENS1_27ReducExposedPartialImmunityIdEENS1_28ReducExposedImprovedImmunityIdEENS1_36ReducInfectedSymptomsPartialImmunityIdEENS1_37ReducInfectedSymptomsImprovedImmunityIdEENS1_46ReducInfectedSevereCriticalDeadPartialImmunityIdEENS1_47ReducInfectedSevereCriticalDeadImprovedImmunityIdEENS1_21ReducTimeInfectedMildIdEENS1_24InfectiousnessNewVariantIdEENS1_18StartDayNewVariantEEE3getIS1G_EERNS_18ParameterTagTraitsIT_E4TypeEv</a></td>
@@ -8205,107 +8241,107 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::ContactPatterns&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::ContactPatterns&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">352049</td>
+              <td class="coverFnHi">365135</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::ContactPatterns&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">352049</td>
+              <td class="coverFnHi">365135</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::TimeExposed&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::TimeExposed&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">365435</td>
+              <td class="coverFnHi">378557</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::TimeExposed&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">365435</td>
+              <td class="coverFnHi">378557</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::oseir::ContactPatterns&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::oseir::TransmissionProbabilityOnContact&lt;double&gt;, mio::oseir::TimeExposed&lt;double&gt;, mio::oseir::TimeInfected&lt;double&gt;, mio::oseir::ContactPatterns&lt;double&gt; &gt;::get&lt;mio::oseir::ContactPatterns&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">386568</td>
+              <td class="coverFnHi">386784</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::oseir::ContactPatterns&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">386568</td>
+              <td class="coverFnHi">386784</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::oseir::TimeInfected&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::oseir::TransmissionProbabilityOnContact&lt;double&gt;, mio::oseir::TimeExposed&lt;double&gt;, mio::oseir::TimeInfected&lt;double&gt;, mio::oseir::ContactPatterns&lt;double&gt; &gt;::get&lt;mio::oseir::TimeInfected&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">386711</td>
+              <td class="coverFnHi">386927</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::oseir::TimeInfected&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">386711</td>
+              <td class="coverFnHi">386927</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::oseir::TimeExposed&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::oseir::TransmissionProbabilityOnContact&lt;double&gt;, mio::oseir::TimeExposed&lt;double&gt;, mio::oseir::TimeInfected&lt;double&gt;, mio::oseir::ContactPatterns&lt;double&gt; &gt;::get&lt;mio::oseir::TimeExposed&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">386720</td>
+              <td class="coverFnHi">386936</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::oseir::TimeExposed&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">386720</td>
+              <td class="coverFnHi">386936</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::oseir::TransmissionProbabilityOnContact&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::oseir::TransmissionProbabilityOnContact&lt;double&gt;, mio::oseir::TimeExposed&lt;double&gt;, mio::oseir::TimeInfected&lt;double&gt;, mio::oseir::ContactPatterns&lt;double&gt; &gt;::get&lt;mio::oseir::TransmissionProbabilityOnContact&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">386863</td>
+              <td class="coverFnHi">387079</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::oseir::TransmissionProbabilityOnContact&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">386863</td>
+              <td class="coverFnHi">387079</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::StartDay&gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::StartDay&gt;() const</a></td>
-              <td class="coverFnHi">400817</td>
+              <td class="coverFnHi">414047</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::StartDay&gt;::get() const</a></td>
-              <td class="coverFnHi">400817</td>
+              <td class="coverFnHi">414047</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">401445</td>
+              <td class="coverFnHi">414675</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">401445</td>
+              <td class="coverFnHi">414675</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::Seasonality&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::Seasonality&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">401636</td>
+              <td class="coverFnHi">414866</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::Seasonality&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">401636</td>
+              <td class="coverFnHi">414866</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">401668</td>
+              <td class="coverFnHi">414898</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">401668</td>
+              <td class="coverFnHi">414898</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">402016</td>
+              <td class="coverFnHi">415246</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">402016</td>
+              <td class="coverFnHi">415246</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">402326</td>
+              <td class="coverFnHi">415556</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">402326</td>
+              <td class="coverFnHi">415556</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::TransmissionProbabilityOnContact&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::TransmissionProbabilityOnContact&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">403786</td>
+              <td class="coverFnHi">417016</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::TransmissionProbabilityOnContact&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">403786</td>
+              <td class="coverFnHi">417016</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">_ZNK3mio12ParameterSetIJNS_9osecirvvs8StartDayENS1_11SeasonalityIdEENS1_11ICUCapacityIdEENS1_20TestAndTraceCapacityIdEENS1_37TestAndTraceCapacityMaxRiskNoSymptomsIdEENS1_35TestAndTraceCapacityMaxRiskSymptomsIdEENS1_15ContactPatternsIdEENS1_30DynamicNPIsImplementationDelayIdEENS1_27DynamicNPIsInfectedSymptomsIdEENS1_11TimeExposedIdEENS1_22TimeInfectedNoSymptomsIdEENS1_20TimeInfectedSymptomsIdEENS1_18TimeInfectedSevereIdEENS1_20TimeInfectedCriticalIdEENS1_32TransmissionProbabilityOnContactIdEENS1_30RelativeTransmissionNoSymptomsIdEENS1_30RecoveredPerInfectedNoSymptomsIdEENS1_30RiskOfInfectionFromSymptomaticIdEENS1_33MaxRiskOfInfectionFromSymptomaticIdEENS1_25SeverePerInfectedSymptomsIdEENS1_17CriticalPerSevereIdEENS1_17DeathsPerCriticalIdEENS1_14VaccinationGapIdEENS1_33DaysUntilEffectivePartialImmunityIdEENS1_34DaysUntilEffectiveImprovedImmunityIdEENS1_21DailyFullVaccinationsIdEENS1_24DailyPartialVaccinationsIdEENS1_27ReducExposedPartialImmunityIdEENS1_28ReducExposedImprovedImmunityIdEENS1_36ReducInfectedSymptomsPartialImmunityIdEENS1_37ReducInfectedSymptomsImprovedImmunityIdEENS1_46ReducInfectedSevereCriticalDeadPartialImmunityIdEENS1_47ReducInfectedSevereCriticalDeadImprovedImmunityIdEENS1_21ReducTimeInfectedMildIdEENS1_24InfectiousnessNewVariantIdEENS1_18StartDayNewVariantEEE3getIS1G_EERKNS_18ParameterTagTraitsIT_E4TypeEv</a></td>
@@ -8349,83 +8385,83 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::DeathsPerCritical&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">728917</td>
+              <td class="coverFnHi">755161</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">728917</td>
+              <td class="coverFnHi">755161</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::TimeInfectedCritical&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::TimeInfectedCritical&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">729131</td>
+              <td class="coverFnHi">755375</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::TimeInfectedCritical&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">729131</td>
+              <td class="coverFnHi">755375</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::ICUCapacity&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::ICUCapacity&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">730068</td>
+              <td class="coverFnHi">756312</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::ICUCapacity&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">730068</td>
+              <td class="coverFnHi">756312</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::TestAndTraceCapacity&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::TestAndTraceCapacity&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">804285</td>
+              <td class="coverFnHi">830745</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::TestAndTraceCapacity&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">804285</td>
+              <td class="coverFnHi">830745</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::CriticalPerSevere&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::CriticalPerSevere&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">1093468</td>
+              <td class="coverFnHi">1132834</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::CriticalPerSevere&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">1093468</td>
+              <td class="coverFnHi">1132834</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::TimeInfectedSevere&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::TimeInfectedSevere&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">1093655</td>
+              <td class="coverFnHi">1133021</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::TimeInfectedSevere&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">1093655</td>
+              <td class="coverFnHi">1133021</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::SeverePerInfectedSymptoms&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::SeverePerInfectedSymptoms&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">1457488</td>
+              <td class="coverFnHi">1509976</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::SeverePerInfectedSymptoms&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">1457488</td>
+              <td class="coverFnHi">1509976</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::TimeInfectedSymptoms&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::TimeInfectedSymptoms&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">1457666</td>
+              <td class="coverFnHi">1510154</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::TimeInfectedSymptoms&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">1457666</td>
+              <td class="coverFnHi">1510154</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">1822177</td>
+              <td class="coverFnHi">1887787</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">1822177</td>
+              <td class="coverFnHi">1887787</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#259">mio::ParameterTagTraits&lt;mio::osecir::TimeInfectedNoSymptoms&lt;double&gt; &gt;::Type const&amp; mio::ParameterSet&lt;mio::osecir::StartDay, mio::osecir::Seasonality&lt;double&gt;, mio::osecir::ICUCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacity&lt;double&gt;, mio::osecir::TestAndTraceCapacityMaxRisk&lt;double&gt;, mio::osecir::ContactPatterns&lt;double&gt;, mio::osecir::DynamicNPIsImplementationDelay&lt;double&gt;, mio::osecir::DynamicNPIsInfectedSymptoms&lt;double&gt;, mio::osecir::TimeExposed&lt;double&gt;, mio::osecir::TimeInfectedNoSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSymptoms&lt;double&gt;, mio::osecir::TimeInfectedSevere&lt;double&gt;, mio::osecir::TimeInfectedCritical&lt;double&gt;, mio::osecir::TransmissionProbabilityOnContact&lt;double&gt;, mio::osecir::RelativeTransmissionNoSymptoms&lt;double&gt;, mio::osecir::RecoveredPerInfectedNoSymptoms&lt;double&gt;, mio::osecir::RiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::MaxRiskOfInfectionFromSymptomatic&lt;double&gt;, mio::osecir::SeverePerInfectedSymptoms&lt;double&gt;, mio::osecir::CriticalPerSevere&lt;double&gt;, mio::osecir::DeathsPerCritical&lt;double&gt; &gt;::get&lt;mio::osecir::TimeInfectedNoSymptoms&lt;double&gt; &gt;() const</a></td>
-              <td class="coverFnHi">1822319</td>
+              <td class="coverFnHi">1887929</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="parameter_set.h.gcov.html#103">mio::details::TaggedParameter&lt;mio::osecir::TimeInfectedNoSymptoms&lt;double&gt; &gt;::get() const</a></td>
-              <td class="coverFnHi">1822319</td>
+              <td class="coverFnHi">1887929</td>
             </tr>
   </table>
   <br>

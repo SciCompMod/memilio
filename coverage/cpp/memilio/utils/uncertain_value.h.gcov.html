@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-31 15:59:05</td>
+            <td class="headerValue">2025-02-13 16:21:13</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">27</td>
@@ -112,10 +112,10 @@
 <a name="50"><span class="lineNum">      50 </span>            :     {</a>
 <a name="51"><span class="lineNum">      51 </span>            :     }</a>
 <a name="52"><span class="lineNum">      52 </span>            : </a>
-<a name="53"><span class="lineNum">      53 </span><span class="lineCov">   21068402 :     UncertainValue(FP v = static_cast&lt;FP&gt;(0.))</span></a>
-<a name="54"><span class="lineNum">      54 </span><span class="lineCov">   21068384 :         : m_value(v)</span></a>
+<a name="53"><span class="lineNum">      53 </span><span class="lineCov">   21072214 :     UncertainValue(FP v = static_cast&lt;FP&gt;(0.))</span></a>
+<a name="54"><span class="lineNum">      54 </span><span class="lineCov">   21072196 :         : m_value(v)</span></a>
 <a name="55"><span class="lineNum">      55 </span>            :     {</a>
-<a name="56"><span class="lineNum">      56 </span><span class="lineCov">   21068384 :     }</span></a>
+<a name="56"><span class="lineNum">      56 </span><span class="lineCov">   21072196 :     }</span></a>
 <a name="57"><span class="lineNum">      57 </span>            : </a>
 <a name="58"><span class="lineNum">      58 </span><span class="lineCov">      16208 :     UncertainValue(UncertainValue&amp;&amp; other) = default;</span></a>
 <a name="59"><span class="lineNum">      59 </span>            : </a>
@@ -123,25 +123,25 @@
 <a name="61"><span class="lineNum">      61 </span>            :     * @brief Create an UncertainValue by cloning scalar value </a>
 <a name="62"><span class="lineNum">      62 </span>            :     *        and distribution of another UncertainValue</a>
 <a name="63"><span class="lineNum">      63 </span>            :     */</a>
-<a name="64"><span class="lineNum">      64 </span><span class="lineCov">   22213499 :     UncertainValue(const UncertainValue&amp; other)</span></a>
-<a name="65"><span class="lineNum">      65 </span><span class="lineCov">   22213499 :         : m_value(other.m_value)</span></a>
+<a name="64"><span class="lineNum">      64 </span><span class="lineCov">   22217519 :     UncertainValue(const UncertainValue&amp; other)</span></a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineCov">   22217519 :         : m_value(other.m_value)</span></a>
 <a name="66"><span class="lineNum">      66 </span>            :     {</a>
-<a name="67"><span class="lineNum">      67 </span><span class="lineCov">   22213499 :         if (other.m_dist) {</span></a>
+<a name="67"><span class="lineNum">      67 </span><span class="lineCov">   22217519 :         if (other.m_dist) {</span></a>
 <a name="68"><span class="lineNum">      68 </span><span class="lineCov">   13758137 :             m_dist.reset(other.m_dist-&gt;clone());</span></a>
 <a name="69"><span class="lineNum">      69 </span>            :         }</a>
-<a name="70"><span class="lineNum">      70 </span><span class="lineCov">   22213499 :     }</span></a>
+<a name="70"><span class="lineNum">      70 </span><span class="lineCov">   22217519 :     }</span></a>
 <a name="71"><span class="lineNum">      71 </span>            : </a>
 <a name="72"><span class="lineNum">      72 </span>            :     /**</a>
 <a name="73"><span class="lineNum">      73 </span>            :     * @brief Set an UncertainValue from another UncertainValue</a>
 <a name="74"><span class="lineNum">      74 </span>            :     *        containing a scalar and a distribution</a>
 <a name="75"><span class="lineNum">      75 </span>            :     */</a>
-<a name="76"><span class="lineNum">      76 </span><span class="lineCov">   21084544 :     UncertainValue&amp; operator=(const UncertainValue&amp; other)</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">   21088252 :     UncertainValue&amp; operator=(const UncertainValue&amp; other)</span></a>
 <a name="77"><span class="lineNum">      77 </span>            :     {</a>
-<a name="78"><span class="lineNum">      78 </span><span class="lineCov">   21084544 :         UncertainValue tmp(other);</span></a>
-<a name="79"><span class="lineNum">      79 </span><span class="lineCov">   21084544 :         m_value = tmp.m_value;</span></a>
-<a name="80"><span class="lineNum">      80 </span><span class="lineCov">   21084544 :         std::swap(m_dist, tmp.m_dist);</span></a>
-<a name="81"><span class="lineNum">      81 </span><span class="lineCov">   42169088 :         return *this;</span></a>
-<a name="82"><span class="lineNum">      82 </span><span class="lineCov">   21084544 :     }</span></a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineCov">   21088252 :         UncertainValue tmp(other);</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">   21088252 :         m_value = tmp.m_value;</span></a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineCov">   21088252 :         std::swap(m_dist, tmp.m_dist);</span></a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineCov">   42176504 :         return *this;</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">   21088252 :     }</span></a>
 <a name="83"><span class="lineNum">      83 </span>            : </a>
 <a name="84"><span class="lineNum">      84 </span>            :     /**</a>
 <a name="85"><span class="lineNum">      85 </span>            :      * @brief Conversion to scalar by returning the scalar contained in UncertainValue</a>
@@ -154,22 +154,22 @@
 <a name="92"><span class="lineNum">      92 </span>            :     /**</a>
 <a name="93"><span class="lineNum">      93 </span>            :      * @brief Conversion to scalar reference by returning the scalar contained in UncertainValue</a>
 <a name="94"><span class="lineNum">      94 </span>            :      */</a>
-<a name="95"><span class="lineNum">      95 </span><span class="lineCov">    1910789 :     operator FP&amp;()</span></a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineCov">    1947179 :     operator FP&amp;()</span></a>
 <a name="96"><span class="lineNum">      96 </span>            :     {</a>
-<a name="97"><span class="lineNum">      97 </span><span class="lineCov">    1910789 :         return m_value;</span></a>
+<a name="97"><span class="lineNum">      97 </span><span class="lineCov">    1947179 :         return m_value;</span></a>
 <a name="98"><span class="lineNum">      98 </span>            :     }</a>
-<a name="99"><span class="lineNum">      99 </span><span class="lineCov">   18660462 :     operator const FP&amp;() const</span></a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineCov">   19174849 :     operator const FP&amp;() const</span></a>
 <a name="100"><span class="lineNum">     100 </span>            :     {</a>
-<a name="101"><span class="lineNum">     101 </span><span class="lineCov">   18660462 :         return m_value;</span></a>
+<a name="101"><span class="lineNum">     101 </span><span class="lineCov">   19174849 :         return m_value;</span></a>
 <a name="102"><span class="lineNum">     102 </span>            :     }</a>
 <a name="103"><span class="lineNum">     103 </span>            : </a>
 <a name="104"><span class="lineNum">     104 </span>            :     /**</a>
 <a name="105"><span class="lineNum">     105 </span>            :      * @brief Set an UncertainValue from a scalar, distribution remains unchanged.</a>
 <a name="106"><span class="lineNum">     106 </span>            :      */</a>
-<a name="107"><span class="lineNum">     107 </span><span class="lineCov">      82994 :     UncertainValue&amp; operator=(FP v)</span></a>
+<a name="107"><span class="lineNum">     107 </span><span class="lineCov">      84224 :     UncertainValue&amp; operator=(FP v)</span></a>
 <a name="108"><span class="lineNum">     108 </span>            :     {</a>
-<a name="109"><span class="lineNum">     109 </span><span class="lineCov">      82994 :         m_value = v;</span></a>
-<a name="110"><span class="lineNum">     110 </span><span class="lineCov">      82994 :         return *this;</span></a>
+<a name="109"><span class="lineNum">     109 </span><span class="lineCov">      84224 :         m_value = v;</span></a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineCov">      84224 :         return *this;</span></a>
 <a name="111"><span class="lineNum">     111 </span>            :     }</a>
 <a name="112"><span class="lineNum">     112 </span>            : </a>
 <a name="113"><span class="lineNum">     113 </span>            :     /**</a>

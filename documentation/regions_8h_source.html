@@ -95,43 +95,55 @@ $(function() {
 <div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="date_8h.html">memilio/utils/date.h</a>&quot;</span></div>
 <div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="stl__util_8h.html">memilio/utils/stl_util.h</a>&quot;</span></div>
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="type__safe_8h.html">memilio/utils/type_safe.h</a>&quot;</span></div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160; </div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="preprocessor">#include &quot;boost/filesystem.hpp&quot;</span></div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160; </div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="comment">//is used to provide some paths as function arguments</span></div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="keyword">namespace </span>fs = boost::filesystem;</div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160; </div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespacemio.html">mio</a></div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;{</div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="keyword">namespace </span>regions</div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;{</div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160; </div>
-<div class="line"><a name="l00060"></a><span class="lineno"><a class="line" href="namespacemio_1_1regions.html#acf2225a8464a1a880408d9ae9e28af2c">   60</a></span>&#160;<a class="code" href="namespacemio_1_1regions.html#acf2225a8464a1a880408d9ae9e28af2c">DECL_TYPESAFE</a>(<span class="keywordtype">int</span>, StateId);</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160; </div>
-<div class="line"><a name="l00067"></a><span class="lineno"><a class="line" href="namespacemio_1_1regions.html#a720a6d1f34471e6b77c12247438cb6ad">   67</a></span>&#160;<a class="code" href="namespacemio_1_1regions.html#acf2225a8464a1a880408d9ae9e28af2c">DECL_TYPESAFE</a>(<span class="keywordtype">int</span>, CountyId);</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160; </div>
-<div class="line"><a name="l00069"></a><span class="lineno"><a class="line" href="namespacemio_1_1regions.html#aef856bbde2f20c7b170e1ff93f5225a8">   69</a></span>&#160;<a class="code" href="namespacemio_1_1regions.html#acf2225a8464a1a880408d9ae9e28af2c">DECL_TYPESAFE</a>(<span class="keywordtype">int</span>, DistrictId);</div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="index_8h.html">memilio/utils/index.h</a>&quot;</span></div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160; </div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="preprocessor">#include &quot;boost/filesystem.hpp&quot;</span></div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160; </div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="comment">//is used to provide some paths as function arguments</span></div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="keyword">namespace </span>fs = boost::filesystem;</div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160; </div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespacemio.html">mio</a></div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;{</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;<span class="keyword">namespace </span>regions</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;{</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160; </div>
+<div class="line"><a name="l00042"></a><span class="lineno"><a class="line" href="structmio_1_1regions_1_1Region.html">   42</a></span>&#160;<span class="keyword">struct </span><a class="code" href="structmio_1_1regions_1_1Region.html">Region</a> : <span class="keyword">public</span> <a class="code" href="classmio_1_1Index.html">mio::Index</a>&lt;Region&gt; {</div>
+<div class="line"><a name="l00043"></a><span class="lineno"><a class="line" href="structmio_1_1regions_1_1Region.html#a59e7c136bb09138884a13fdff7cea5cf">   43</a></span>&#160;    <a class="code" href="structmio_1_1regions_1_1Region.html#a59e7c136bb09138884a13fdff7cea5cf">Region</a>(<span class="keyword">const</span> <span class="keywordtype">size_t</span> num_regions)</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;        : <a class="code" href="namespacemio.html">mio</a>::<a class="code" href="classmio_1_1Index.html">Index</a>&lt;<a class="code" href="structmio_1_1regions_1_1Region.html">Region</a>&gt;(num_regions)</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;    {</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;    }</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;};</div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160; </div>
+<div class="line"><a name="l00069"></a><span class="lineno"><a class="line" href="namespacemio_1_1regions.html#acf2225a8464a1a880408d9ae9e28af2c">   69</a></span>&#160;<a class="code" href="namespacemio_1_1regions.html#acf2225a8464a1a880408d9ae9e28af2c">DECL_TYPESAFE</a>(<span class="keywordtype">int</span>, StateId);</div>
 <div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160; </div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;StateId <a class="code" href="namespacemio_1_1regions.html#a49bd071eb49d7d8d56f617132770cd10">get_state_id</a>(<span class="keywordtype">int</span> county);</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160; </div>
-<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;<a class="code" href="classmio_1_1Range.html">Range&lt;std::pair&lt;std::vector&lt;std::pair&lt;Date, Date&gt;</a>&gt;::const_iterator, std::vector&lt;std::pair&lt;Date, Date&gt;&gt;::const_iterator&gt;&gt;</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;<a class="code" href="namespacemio_1_1regions.html#ad810fa509a12e3ccf0a3e0b213698b85">get_holidays</a>(StateId state);</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160; </div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;<a class="code" href="classmio_1_1Range.html">Range&lt;std::pair&lt;std::vector&lt;std::pair&lt;Date, Date&gt;</a>&gt;::const_iterator, std::vector&lt;std::pair&lt;Date, Date&gt;&gt;::const_iterator&gt;&gt;</div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;<a class="code" href="namespacemio_1_1regions.html#ad810fa509a12e3ccf0a3e0b213698b85">get_holidays</a>(StateId state, <a class="code" href="structmio_1_1Date.html">Date</a> start_date, <a class="code" href="structmio_1_1Date.html">Date</a> end_date);</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160; </div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;} <span class="comment">// namespace regions</span></div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;} <span class="comment">// namespace mio</span></div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160; </div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;<span class="preprocessor">#endif </span><span class="comment">//MIO_EPI_REGIONS_H</span></div>
+<div class="line"><a name="l00076"></a><span class="lineno"><a class="line" href="namespacemio_1_1regions.html#a720a6d1f34471e6b77c12247438cb6ad">   76</a></span>&#160;<a class="code" href="namespacemio_1_1regions.html#acf2225a8464a1a880408d9ae9e28af2c">DECL_TYPESAFE</a>(<span class="keywordtype">int</span>, CountyId);</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160; </div>
+<div class="line"><a name="l00078"></a><span class="lineno"><a class="line" href="namespacemio_1_1regions.html#aef856bbde2f20c7b170e1ff93f5225a8">   78</a></span>&#160;<a class="code" href="namespacemio_1_1regions.html#acf2225a8464a1a880408d9ae9e28af2c">DECL_TYPESAFE</a>(<span class="keywordtype">int</span>, DistrictId);</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160; </div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;StateId <a class="code" href="namespacemio_1_1regions.html#a49bd071eb49d7d8d56f617132770cd10">get_state_id</a>(<span class="keywordtype">int</span> county);</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160; </div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;<a class="code" href="classmio_1_1Range.html">Range&lt;std::pair&lt;std::vector&lt;std::pair&lt;Date, Date&gt;</a>&gt;::const_iterator, std::vector&lt;std::pair&lt;Date, Date&gt;&gt;::const_iterator&gt;&gt;</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;<a class="code" href="namespacemio_1_1regions.html#ad810fa509a12e3ccf0a3e0b213698b85">get_holidays</a>(StateId state);</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160; </div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;<a class="code" href="classmio_1_1Range.html">Range&lt;std::pair&lt;std::vector&lt;std::pair&lt;Date, Date&gt;</a>&gt;::const_iterator, std::vector&lt;std::pair&lt;Date, Date&gt;&gt;::const_iterator&gt;&gt;</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;<a class="code" href="namespacemio_1_1regions.html#ad810fa509a12e3ccf0a3e0b213698b85">get_holidays</a>(StateId state, <a class="code" href="structmio_1_1Date.html">Date</a> start_date, <a class="code" href="structmio_1_1Date.html">Date</a> end_date);</div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160; </div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;} <span class="comment">// namespace regions</span></div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;} <span class="comment">// namespace mio</span></div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160; </div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;<span class="preprocessor">#endif </span><span class="comment">//MIO_EPI_REGIONS_H</span></div>
+<div class="ttc" id="aclassmio_1_1Index_html"><div class="ttname"><a href="classmio_1_1Index.html">mio::Index</a></div><div class="ttdoc">An Index with more than one template parameter combines several Index objects.</div><div class="ttdef"><b>Definition:</b> index.h:120</div></div>
 <div class="ttc" id="aclassmio_1_1Range_html"><div class="ttname"><a href="classmio_1_1Range.html">mio::Range</a></div><div class="ttdoc">immutable random access range, e.g.</div><div class="ttdef"><b>Definition:</b> stl_util.h:96</div></div>
 <div class="ttc" id="adate_8h_html"><div class="ttname"><a href="date_8h.html">date.h</a></div></div>
+<div class="ttc" id="aindex_8h_html"><div class="ttname"><a href="index_8h.html">index.h</a></div></div>
 <div class="ttc" id="anamespacemio_1_1regions_html_a49bd071eb49d7d8d56f617132770cd10"><div class="ttname"><a href="namespacemio_1_1regions.html#a49bd071eb49d7d8d56f617132770cd10">mio::regions::get_state_id</a></div><div class="ttdeci">StateId get_state_id(int county)</div><div class="ttdoc">get the id of the state that the specified county is in.</div><div class="ttdef"><b>Definition:</b> regions.cpp:31</div></div>
 <div class="ttc" id="anamespacemio_1_1regions_html_acf2225a8464a1a880408d9ae9e28af2c"><div class="ttname"><a href="namespacemio_1_1regions.html#acf2225a8464a1a880408d9ae9e28af2c">mio::regions::DECL_TYPESAFE</a></div><div class="ttdeci">DECL_TYPESAFE(int, StateId)</div><div class="ttdoc">Id of a state.</div></div>
 <div class="ttc" id="anamespacemio_1_1regions_html_ad810fa509a12e3ccf0a3e0b213698b85"><div class="ttname"><a href="namespacemio_1_1regions.html#ad810fa509a12e3ccf0a3e0b213698b85">mio::regions::get_holidays</a></div><div class="ttdeci">Range&lt; std::pair&lt; std::vector&lt; std::pair&lt; Date, Date &gt; &gt;::const_iterator, std::vector&lt; std::pair&lt; Date, Date &gt; &gt;::const_iterator &gt; &gt; get_holidays(StateId state)</div><div class="ttdoc">get the holidays in a german state.</div><div class="ttdef"><b>Definition:</b> regions.cpp:37</div></div>
 <div class="ttc" id="anamespacemio_html"><div class="ttname"><a href="namespacemio.html">mio</a></div><div class="ttdoc">A collection of classes to simplify handling of matrix shapes in meta programming.</div><div class="ttdef"><b>Definition:</b> compartmentalmodel.h:33</div></div>
 <div class="ttc" id="astl__util_8h_html"><div class="ttname"><a href="stl__util_8h.html">stl_util.h</a></div></div>
 <div class="ttc" id="astructmio_1_1Date_html"><div class="ttname"><a href="structmio_1_1Date.html">mio::Date</a></div><div class="ttdoc">Simple date representation as year, month, and day.</div><div class="ttdef"><b>Definition:</b> date.h:49</div></div>
+<div class="ttc" id="astructmio_1_1regions_1_1Region_html"><div class="ttname"><a href="structmio_1_1regions_1_1Region.html">mio::regions::Region</a></div><div class="ttdoc">@biref Index for enumerating subregions (cities, counties, etc.) of the modelled area.</div><div class="ttdef"><b>Definition:</b> regions.h:42</div></div>
+<div class="ttc" id="astructmio_1_1regions_1_1Region_html_a59e7c136bb09138884a13fdff7cea5cf"><div class="ttname"><a href="structmio_1_1regions_1_1Region.html#a59e7c136bb09138884a13fdff7cea5cf">mio::regions::Region::Region</a></div><div class="ttdeci">Region(const size_t num_regions)</div><div class="ttdef"><b>Definition:</b> regions.h:43</div></div>
 <div class="ttc" id="atype__safe_8h_html"><div class="ttname"><a href="type__safe_8h.html">type_safe.h</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->

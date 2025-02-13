@@ -66,7 +66,18 @@ $(function() {
 <div class="title">MEmilio Models </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>Contains different concrete models that are built using the MEmilio C++ library. See the corresponding directory for details about each model. </p>
+<div class="textblock"><p>Contains different concrete models that are built using the MEmilio C++ library. Some models contain a spatial resolution and some do not contain spatial resolution, hence cannot capture spatially heterogenous dynamics. The models with spatial resolution are:</p><ul>
+<li>abm</li>
+<li>d_abm</li>
+</ul>
+<p>The models without spatial resolution are:</p><ul>
+<li>ode_*</li>
+<li>ide_*</li>
+<li>lct_*</li>
+<li>glct_*</li>
+<li>sde_*</li>
+</ul>
+<p>See the corresponding directory for details about each model. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->

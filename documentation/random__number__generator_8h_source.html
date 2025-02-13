@@ -491,46 +491,49 @@ $(function() {
 <div class="line"><a name="l00662"></a><span class="lineno">  662</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Real&gt;</div>
 <div class="line"><a name="l00663"></a><span class="lineno">  663</span>&#160;<span class="keyword">using</span> ExponentialDistribution = DistributionAdapter&lt;std::exponential_distribution&lt;Real&gt;&gt;;</div>
 <div class="line"><a name="l00664"></a><span class="lineno">  664</span>&#160; </div>
-<div class="line"><a name="l00669"></a><span class="lineno">  669</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Int&gt;</div>
-<div class="line"><a name="l00670"></a><span class="lineno">  670</span>&#160;<span class="keyword">using</span> UniformIntDistribution = DistributionAdapter&lt;std::uniform_int_distribution&lt;Int&gt;&gt;;</div>
+<div class="line"><a name="l00669"></a><span class="lineno">  669</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Real&gt;</div>
+<div class="line"><a name="l00670"></a><span class="lineno">  670</span>&#160;<span class="keyword">using</span> NormalDistribution = DistributionAdapter&lt;std::normal_distribution&lt;Real&gt;&gt;;</div>
 <div class="line"><a name="l00671"></a><span class="lineno">  671</span>&#160; </div>
-<div class="line"><a name="l00676"></a><span class="lineno">  676</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Real&gt;</div>
-<div class="line"><a name="l00677"></a><span class="lineno">  677</span>&#160;<span class="keyword">using</span> UniformDistribution = DistributionAdapter&lt;std::uniform_real_distribution&lt;Real&gt;&gt;;</div>
+<div class="line"><a name="l00676"></a><span class="lineno">  676</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Int&gt;</div>
+<div class="line"><a name="l00677"></a><span class="lineno">  677</span>&#160;<span class="keyword">using</span> UniformIntDistribution = DistributionAdapter&lt;std::uniform_int_distribution&lt;Int&gt;&gt;;</div>
 <div class="line"><a name="l00678"></a><span class="lineno">  678</span>&#160; </div>
-<div class="line"><a name="l00679"></a><span class="lineno">  679</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class </span>IOContext, <span class="keyword">class </span>UniformDistributionParams,</div>
-<div class="line"><a name="l00680"></a><span class="lineno">  680</span>&#160;          <span class="keyword">class </span>Real              = <span class="keyword">typename</span> UniformDistributionParams::DistType::ResultType,</div>
-<div class="line"><a name="l00681"></a><span class="lineno">  681</span>&#160;          std::enable_if_t&lt;std::is_same_v&lt;UniformDistributionParams, typename UniformDistribution&lt;Real&gt;::ParamType&gt;,</div>
-<div class="line"><a name="l00682"></a><span class="lineno">  682</span>&#160;                           <span class="keywordtype">void</span>*&gt; = <span class="keyword">nullptr</span>&gt;</div>
-<div class="line"><a name="l00683"></a><span class="lineno">  683</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespacemio.html#aeaab3d25ffc11015f4d1d40c5b2b65b3">serialize_internal</a>(IOContext&amp; io, <span class="keyword">const</span> UniformDistributionParams&amp; p)</div>
-<div class="line"><a name="l00684"></a><span class="lineno">  684</span>&#160;{</div>
-<div class="line"><a name="l00685"></a><span class="lineno">  685</span>&#160;    <span class="keyword">auto</span> obj = io.create_object(<span class="stringliteral">&quot;UniformDistributionParams&quot;</span>);</div>
-<div class="line"><a name="l00686"></a><span class="lineno">  686</span>&#160;    obj.add_element(<span class="stringliteral">&quot;a&quot;</span>, p.params.a());</div>
-<div class="line"><a name="l00687"></a><span class="lineno">  687</span>&#160;    obj.add_element(<span class="stringliteral">&quot;b&quot;</span>, p.params.b());</div>
-<div class="line"><a name="l00688"></a><span class="lineno">  688</span>&#160;}</div>
-<div class="line"><a name="l00689"></a><span class="lineno">  689</span>&#160; </div>
-<div class="line"><a name="l00690"></a><span class="lineno">  690</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class </span>IOContext, <span class="keyword">class </span>UniformDistributionParams,</div>
-<div class="line"><a name="l00691"></a><span class="lineno">  691</span>&#160;          <span class="keyword">class </span>Real              = <span class="keyword">typename</span> UniformDistributionParams::DistType::ResultType,</div>
-<div class="line"><a name="l00692"></a><span class="lineno">  692</span>&#160;          std::enable_if_t&lt;std::is_same_v&lt;UniformDistributionParams, typename UniformDistribution&lt;Real&gt;::ParamType&gt;,</div>
-<div class="line"><a name="l00693"></a><span class="lineno">  693</span>&#160;                           <span class="keywordtype">void</span>*&gt; = <span class="keyword">nullptr</span>&gt;</div>
-<div class="line"><a name="l00694"></a><span class="lineno">  694</span>&#160;IOResult&lt;UniformDistributionParams&gt; <a class="code" href="namespacemio.html#a10f43ffd2f1646bef153852fdd8d4458">deserialize_internal</a>(IOContext&amp; io, Tag&lt;UniformDistributionParams&gt;)</div>
-<div class="line"><a name="l00695"></a><span class="lineno">  695</span>&#160;{</div>
-<div class="line"><a name="l00696"></a><span class="lineno">  696</span>&#160;    <span class="keyword">auto</span> obj = io.expect_object(<span class="stringliteral">&quot;UniformDistributionParams&quot;</span>);</div>
-<div class="line"><a name="l00697"></a><span class="lineno">  697</span>&#160;    <span class="keyword">auto</span> a   = obj.expect_element(<span class="stringliteral">&quot;a&quot;</span>, Tag&lt;Real&gt;{});</div>
-<div class="line"><a name="l00698"></a><span class="lineno">  698</span>&#160;    <span class="keyword">auto</span> b   = obj.expect_element(<span class="stringliteral">&quot;b&quot;</span>, Tag&lt;Real&gt;{});</div>
-<div class="line"><a name="l00699"></a><span class="lineno">  699</span>&#160;    <span class="keywordflow">return</span> <a class="code" href="namespacemio.html#a3cd34c233549e8b0e086c67fd82809d3">apply</a>(</div>
-<div class="line"><a name="l00700"></a><span class="lineno">  700</span>&#160;        io,</div>
-<div class="line"><a name="l00701"></a><span class="lineno">  701</span>&#160;        [](<span class="keyword">auto</span>&amp;&amp; a_, <span class="keyword">auto</span>&amp;&amp; b_) {</div>
-<div class="line"><a name="l00702"></a><span class="lineno">  702</span>&#160;            <span class="keywordflow">return</span> UniformDistributionParams{a_, b_};</div>
-<div class="line"><a name="l00703"></a><span class="lineno">  703</span>&#160;        },</div>
-<div class="line"><a name="l00704"></a><span class="lineno">  704</span>&#160;        a, b);</div>
-<div class="line"><a name="l00705"></a><span class="lineno">  705</span>&#160;}</div>
-<div class="line"><a name="l00706"></a><span class="lineno">  706</span>&#160; </div>
-<div class="line"><a name="l00711"></a><span class="lineno">  711</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Int&gt;</div>
-<div class="line"><a name="l00712"></a><span class="lineno">  712</span>&#160;<span class="keyword">using</span> PoissonDistribution = DistributionAdapter&lt;std::poisson_distribution&lt;Int&gt;&gt;;</div>
+<div class="line"><a name="l00683"></a><span class="lineno">  683</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Real&gt;</div>
+<div class="line"><a name="l00684"></a><span class="lineno">  684</span>&#160;<span class="keyword">using</span> UniformDistribution = DistributionAdapter&lt;std::uniform_real_distribution&lt;Real&gt;&gt;;</div>
+<div class="line"><a name="l00685"></a><span class="lineno">  685</span>&#160; </div>
+<div class="line"><a name="l00686"></a><span class="lineno">  686</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class </span>IOContext, <span class="keyword">class </span>UniformDistributionParams,</div>
+<div class="line"><a name="l00687"></a><span class="lineno">  687</span>&#160;          <span class="keyword">class </span>Real              = <span class="keyword">typename</span> UniformDistributionParams::DistType::ResultType,</div>
+<div class="line"><a name="l00688"></a><span class="lineno">  688</span>&#160;          std::enable_if_t&lt;std::is_same_v&lt;UniformDistributionParams, typename UniformDistribution&lt;Real&gt;::ParamType&gt;,</div>
+<div class="line"><a name="l00689"></a><span class="lineno">  689</span>&#160;                           <span class="keywordtype">void</span>*&gt; = <span class="keyword">nullptr</span>&gt;</div>
+<div class="line"><a name="l00690"></a><span class="lineno">  690</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespacemio.html#aeaab3d25ffc11015f4d1d40c5b2b65b3">serialize_internal</a>(IOContext&amp; io, <span class="keyword">const</span> UniformDistributionParams&amp; p)</div>
+<div class="line"><a name="l00691"></a><span class="lineno">  691</span>&#160;{</div>
+<div class="line"><a name="l00692"></a><span class="lineno">  692</span>&#160;    <span class="keyword">auto</span> obj = io.create_object(<span class="stringliteral">&quot;UniformDistributionParams&quot;</span>);</div>
+<div class="line"><a name="l00693"></a><span class="lineno">  693</span>&#160;    obj.add_element(<span class="stringliteral">&quot;a&quot;</span>, p.params.a());</div>
+<div class="line"><a name="l00694"></a><span class="lineno">  694</span>&#160;    obj.add_element(<span class="stringliteral">&quot;b&quot;</span>, p.params.b());</div>
+<div class="line"><a name="l00695"></a><span class="lineno">  695</span>&#160;}</div>
+<div class="line"><a name="l00696"></a><span class="lineno">  696</span>&#160; </div>
+<div class="line"><a name="l00697"></a><span class="lineno">  697</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class </span>IOContext, <span class="keyword">class </span>UniformDistributionParams,</div>
+<div class="line"><a name="l00698"></a><span class="lineno">  698</span>&#160;          <span class="keyword">class </span>Real              = <span class="keyword">typename</span> UniformDistributionParams::DistType::ResultType,</div>
+<div class="line"><a name="l00699"></a><span class="lineno">  699</span>&#160;          std::enable_if_t&lt;std::is_same_v&lt;UniformDistributionParams, typename UniformDistribution&lt;Real&gt;::ParamType&gt;,</div>
+<div class="line"><a name="l00700"></a><span class="lineno">  700</span>&#160;                           <span class="keywordtype">void</span>*&gt; = <span class="keyword">nullptr</span>&gt;</div>
+<div class="line"><a name="l00701"></a><span class="lineno">  701</span>&#160;IOResult&lt;UniformDistributionParams&gt; <a class="code" href="namespacemio.html#a10f43ffd2f1646bef153852fdd8d4458">deserialize_internal</a>(IOContext&amp; io, Tag&lt;UniformDistributionParams&gt;)</div>
+<div class="line"><a name="l00702"></a><span class="lineno">  702</span>&#160;{</div>
+<div class="line"><a name="l00703"></a><span class="lineno">  703</span>&#160;    <span class="keyword">auto</span> obj = io.expect_object(<span class="stringliteral">&quot;UniformDistributionParams&quot;</span>);</div>
+<div class="line"><a name="l00704"></a><span class="lineno">  704</span>&#160;    <span class="keyword">auto</span> a   = obj.expect_element(<span class="stringliteral">&quot;a&quot;</span>, Tag&lt;Real&gt;{});</div>
+<div class="line"><a name="l00705"></a><span class="lineno">  705</span>&#160;    <span class="keyword">auto</span> b   = obj.expect_element(<span class="stringliteral">&quot;b&quot;</span>, Tag&lt;Real&gt;{});</div>
+<div class="line"><a name="l00706"></a><span class="lineno">  706</span>&#160;    <span class="keywordflow">return</span> <a class="code" href="namespacemio.html#a3cd34c233549e8b0e086c67fd82809d3">apply</a>(</div>
+<div class="line"><a name="l00707"></a><span class="lineno">  707</span>&#160;        io,</div>
+<div class="line"><a name="l00708"></a><span class="lineno">  708</span>&#160;        [](<span class="keyword">auto</span>&amp;&amp; a_, <span class="keyword">auto</span>&amp;&amp; b_) {</div>
+<div class="line"><a name="l00709"></a><span class="lineno">  709</span>&#160;            <span class="keywordflow">return</span> UniformDistributionParams{a_, b_};</div>
+<div class="line"><a name="l00710"></a><span class="lineno">  710</span>&#160;        },</div>
+<div class="line"><a name="l00711"></a><span class="lineno">  711</span>&#160;        a, b);</div>
+<div class="line"><a name="l00712"></a><span class="lineno">  712</span>&#160;}</div>
 <div class="line"><a name="l00713"></a><span class="lineno">  713</span>&#160; </div>
-<div class="line"><a name="l00714"></a><span class="lineno">  714</span>&#160;} <span class="comment">// namespace mio</span></div>
-<div class="line"><a name="l00715"></a><span class="lineno">  715</span>&#160; </div>
-<div class="line"><a name="l00716"></a><span class="lineno">  716</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00718"></a><span class="lineno">  718</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Int&gt;</div>
+<div class="line"><a name="l00719"></a><span class="lineno">  719</span>&#160;<span class="keyword">using</span> PoissonDistribution = DistributionAdapter&lt;std::poisson_distribution&lt;Int&gt;&gt;;</div>
+<div class="line"><a name="l00720"></a><span class="lineno">  720</span>&#160; </div>
+<div class="line"><a name="l00721"></a><span class="lineno">  721</span>&#160;} <span class="comment">// namespace mio</span></div>
+<div class="line"><a name="l00722"></a><span class="lineno">  722</span>&#160; </div>
+<div class="line"><a name="l00723"></a><span class="lineno">  723</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="ttc" id="acompiler__diagnostics_8h_html"><div class="ttname"><a href="compiler__diagnostics_8h.html">compiler_diagnostics.h</a></div></div>
 <div class="ttc" id="acompiler__diagnostics_8h_html_aae95afe748c78c6edadb3f3783ceebc1"><div class="ttname"><a href="compiler__diagnostics_8h.html#aae95afe748c78c6edadb3f3783ceebc1">MEMILIO_ENABLE_EBO</a></div><div class="ttdeci">#define MEMILIO_ENABLE_EBO</div><div class="ttdef"><b>Definition:</b> compiler_diagnostics.h:75</div></div>
 <div class="ttc" id="acompiler__diagnostics_8h_html_ab1a582833b695bfecd10965e3b52e733"><div class="ttname"><a href="compiler__diagnostics_8h.html#ab1a582833b695bfecd10965e3b52e733">MSVC_WARNING_POP</a></div><div class="ttdeci">#define MSVC_WARNING_POP()</div><div class="ttdef"><b>Definition:</b> compiler_diagnostics.h:44</div></div>

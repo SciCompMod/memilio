@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-31 15:59:05</td>
+            <td class="headerValue">2025-02-13 16:21:13</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">21</td>
@@ -236,12 +236,12 @@
 <a name="174"><span class="lineNum">     174 </span>            :     }</a>
 <a name="175"><span class="lineNum">     175 </span><span class="lineCov">       1072 : }</span></a>
 <a name="176"><span class="lineNum">     176 </span>            : </a>
-<a name="177"><span class="lineNum">     177 </span><span class="lineCov">        436 : bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator&amp; rng, Person&amp; person, const Location&amp; location,</span></a>
+<a name="177"><span class="lineNum">     177 </span><span class="lineCov">        427 : bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator&amp; rng, Person&amp; person, const Location&amp; location,</span></a>
 <a name="178"><span class="lineNum">     178 </span>            :                                    TimePoint t)</a>
 <a name="179"><span class="lineNum">     179 </span>            : {</a>
 <a name="180"><span class="lineNum">     180 </span>            :     // A Person is always allowed to go home and this is never called if a person is not discharged from a hospital or ICU.</a>
-<a name="181"><span class="lineNum">     181 </span><span class="lineCov">        436 :     if (location.get_type() == mio::abm::LocationType::Home) {</span></a>
-<a name="182"><span class="lineNum">     182 </span><span class="lineCov">         72 :         return true;</span></a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">        427 :     if (location.get_type() == mio::abm::LocationType::Home) {</span></a>
+<a name="182"><span class="lineNum">     182 </span><span class="lineCov">         63 :         return true;</span></a>
 <a name="183"><span class="lineNum">     183 </span>            :     }</a>
 <a name="184"><span class="lineNum">     184 </span>            : </a>
 <a name="185"><span class="lineNum">     185 </span>            :     // If the Person does not comply to Testing where there is a testing scheme at the target location, it is not allowed to enter.</a>

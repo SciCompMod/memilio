@@ -67,7 +67,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>This module models and simulates the epidemic using an ODE-based SECIR-type model approach. Unlike the agent based model that uses particular agents, this model simulates the spread of a communicable disease in a population with subpopulations being in different compartments such as <code>Exposed</code>, <code>InfectedNoSymptoms</code>, <code>InfectedSymptoms</code> or <code>Recovered</code>. Individuals with and without symptoms are supposed to be infectious.</p>
-<h1><a class="anchor" id="autotoc_md56"></a>
+<h1><a class="anchor" id="autotoc_md58"></a>
 Structure</h1>
 <p>The model consists of the following major classes:</p><ol type="1">
 <li>Populations: Generic class to create groups and/or compartments, i.e., subpopulations of a total population, using multiple dimensions. Dimensions can be age, infection state, income, gender, etc.</li>
@@ -112,10 +112,10 @@ Structure</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">$\mu_{I_{Cr}}^{D}$   </td><td class="markdownTableBodyNone"><code>DeathsPerCritical</code>   </td><td class="markdownTableBodyNone">Probability of dying when in compartment InfectedCritical.   </td></tr>
 </table>
-<h1><a class="anchor" id="autotoc_md57"></a>
+<h1><a class="anchor" id="autotoc_md59"></a>
 Simulation</h1>
 <p>The simulation runs in discrete time steps using a numerical integration scheme. At each time step, a part of the population of each age-aware compartment moves from the current compartment to a new one. Different numerical integrations schemes are available, see the <code>math</code> folder. The Simulation class handles the parameters and the numerical integrator. It also stores the result. Ensemble runs can be done using the Parameter Studies class as soon as random distributions are set for all the parameters. This can be done using the Parameter Space class.</p>
-<h1><a class="anchor" id="autotoc_md58"></a>
+<h1><a class="anchor" id="autotoc_md60"></a>
 Examples</h1>
 <p>Different examples can be found at:</p>
 <ul>

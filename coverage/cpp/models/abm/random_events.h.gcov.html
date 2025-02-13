@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-01-31 15:59:05</td>
+            <td class="headerValue">2025-02-13 16:21:13</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">12</td>
@@ -109,23 +109,23 @@
 <a name="47"><span class="lineNum">      47 </span>            :  * @return New state from the list if transition happens, current_state otherwise.</a>
 <a name="48"><span class="lineNum">      48 </span>            :  */</a>
 <a name="49"><span class="lineNum">      49 </span>            : template &lt;class RNG, class T, size_t NumTransitions&gt;</a>
-<a name="50"><span class="lineNum">      50 </span><span class="lineCov">       2375 : T random_transition(RNG&amp; rng, T current_state, TimeSpan dt, const std::pair&lt;T, double&gt; (&amp;transitions)[NumTransitions])</span></a>
+<a name="50"><span class="lineNum">      50 </span><span class="lineCov">       2421 : T random_transition(RNG&amp; rng, T current_state, TimeSpan dt, const std::pair&lt;T, double&gt; (&amp;transitions)[NumTransitions])</span></a>
 <a name="51"><span class="lineNum">      51 </span>            : {</a>
-<a name="52"><span class="lineNum">      52 </span><span class="lineCov">       4822 :     assert(std::all_of(std::begin(transitions), std::end(transitions),</span></a>
+<a name="52"><span class="lineNum">      52 </span><span class="lineCov">       4914 :     assert(std::all_of(std::begin(transitions), std::end(transitions),</span></a>
 <a name="53"><span class="lineNum">      53 </span>            :                        [](auto&amp; p) {</a>
 <a name="54"><span class="lineNum">      54 </span>            :                            return p.second &gt;= 0.0;</a>
 <a name="55"><span class="lineNum">      55 </span>            :                        }) &amp;&amp;</a>
 <a name="56"><span class="lineNum">      56 </span>            :            &quot;transition rates must be non-negative&quot;);</a>
 <a name="57"><span class="lineNum">      57 </span>            : </a>
 <a name="58"><span class="lineNum">      58 </span>            :     //check if any transition happens using exponential distribution with the sum of all transition rates</a>
-<a name="59"><span class="lineNum">      59 </span><span class="lineCov">       2771 :     auto sum = std::accumulate(std::begin(transitions), std::end(transitions), 0.0, [](auto&amp;&amp; a, auto&amp;&amp; t) {</span></a>
-<a name="60"><span class="lineNum">      60 </span><span class="lineCov">       2447 :         return a + t.second;</span></a>
+<a name="59"><span class="lineNum">      59 </span><span class="lineCov">       2862 :     auto sum = std::accumulate(std::begin(transitions), std::end(transitions), 0.0, [](auto&amp;&amp; a, auto&amp;&amp; t) {</span></a>
+<a name="60"><span class="lineNum">      60 </span><span class="lineCov">       2493 :         return a + t.second;</span></a>
 <a name="61"><span class="lineNum">      61 </span>            :     });</a>
-<a name="62"><span class="lineNum">      62 </span><span class="lineCov">       2375 :     if (sum &lt;= 0) { //no transitions or all transitions have rate zero</span></a>
-<a name="63"><span class="lineNum">      63 </span><span class="lineCov">       1934 :         return current_state;</span></a>
+<a name="62"><span class="lineNum">      62 </span><span class="lineCov">       2421 :     if (sum &lt;= 0) { //no transitions or all transitions have rate zero</span></a>
+<a name="63"><span class="lineNum">      63 </span><span class="lineCov">       1935 :         return current_state;</span></a>
 <a name="64"><span class="lineNum">      64 </span>            :     }</a>
-<a name="65"><span class="lineNum">      65 </span><span class="lineCov">        441 :     auto v = ExponentialDistribution&lt;double&gt;::get_instance()(rng, sum);</span></a>
-<a name="66"><span class="lineNum">      66 </span><span class="lineCov">        441 :     if (v &lt; dt.days()) {</span></a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineCov">        486 :     auto v = ExponentialDistribution&lt;double&gt;::get_instance()(rng, sum);</span></a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineCov">        486 :     if (v &lt; dt.days()) {</span></a>
 <a name="67"><span class="lineNum">      67 </span>            :         //pick one of the possible transitions using discrete distribution</a>
 <a name="68"><span class="lineNum">      68 </span><span class="lineCov">         99 :         std::array&lt;double, NumTransitions&gt; rates;</span></a>
 <a name="69"><span class="lineNum">      69 </span><span class="lineCov">        207 :         std::transform(std::begin(transitions), std::end(transitions), rates.begin(), [](auto&amp;&amp; t) {</span></a>
@@ -135,7 +135,7 @@
 <a name="73"><span class="lineNum">      73 </span><span class="lineCov">         99 :         return transitions[random_idx].first;</span></a>
 <a name="74"><span class="lineNum">      74 </span>            :     }</a>
 <a name="75"><span class="lineNum">      75 </span>            : </a>
-<a name="76"><span class="lineNum">      76 </span><span class="lineCov">        342 :     return current_state;</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">        387 :     return current_state;</span></a>
 <a name="77"><span class="lineNum">      77 </span>            : }</a>
 <a name="78"><span class="lineNum">      78 </span>            : </a>
 <a name="79"><span class="lineNum">      79 </span>            : } // namespace abm</a>

@@ -1,10 +1,11 @@
 var searchData=
 [
-  ['zero_4008',['zero',['../classmio_1_1TimeSeries.html#a85094ebcad0ab2a8246cf6dd3be8cd1b',1,'mio::TimeSeries']]],
-  ['zero_4009',['Zero',['../classmio_1_1Index_3_01CategoryTag_01_4.html#a694fb528b384afc0e0b4ed0239d731b8',1,'mio::Index&lt; CategoryTag &gt;::Zero()'],['../classmio_1_1Index.html#a694fb528b384afc0e0b4ed0239d731b8',1,'mio::Index::Zero()']]],
-  ['zero_5fadjoints_4010',['zero_adjoints',['../structad_1_1internal_1_1blob__tape.html#a69bc32bea3bcc2c49b6a18fd465183ba',1,'ad::internal::blob_tape']]],
-  ['zero_5fadjoints_5ffrom_4011',['zero_adjoints_from',['../structad_1_1internal_1_1blob__tape.html#a38e3a21cc897f7542b9fe6b49586901f',1,'ad::internal::blob_tape']]],
-  ['zero_5fadjoints_5ffrom_5fto_4012',['zero_adjoints_from_to',['../structad_1_1internal_1_1blob__tape.html#a801964ece9ab2068d4f8e1f3b412b4d3',1,'ad::internal::blob_tape']]],
-  ['zero_5fadjoints_5fto_4013',['zero_adjoints_to',['../structad_1_1internal_1_1blob__tape.html#a4fc83b3bb34e11d1b2e087cacf4421f6',1,'ad::internal::blob_tape']]],
-  ['zero_5ftolerance_4014',['zero_tolerance',['../structmio_1_1Limits.html#a98f148e2de72baf52148a526d798c68b',1,'mio::Limits::zero_tolerance()'],['../structmio_1_1Limits_3_01float_01_4.html#a5647d0b78d4365155d8322ba619d29ee',1,'mio::Limits&lt; float &gt;::zero_tolerance()'],['../structmio_1_1Limits_3_01double_01_4.html#a4c13d24216d972ab01e4f8ccec2b24bf',1,'mio::Limits&lt; double &gt;::zero_tolerance()'],['../structmio_1_1Limits_3_01ad_1_1internal_1_1active__type_3_01FP_00_01DataHandler_01_4_01_4.html#a66fe805cdee220fb2ff30e574572b5f0',1,'mio::Limits&lt; ad::internal::active_type&lt; FP, DataHandler &gt; &gt;::zero_tolerance()']]]
+  ['well_5findex_4089',['well_index',['../quad__well_8h.html#a531e20709607701a907f39febd3f2106',1,'quad_well.h']]],
+  ['write_4090',['write',['../classmio_1_1ByteStream.html#abec4ef5c33a11ec9ca6b3e84eb3709d8',1,'mio::ByteStream']]],
+  ['write_5fcase_5fdata_4091',['write_case_data',['../namespacememilio_1_1epidata_1_1getCaseData.html#af1af3a868dd6fb29ac77de49d5d7d6a9',1,'memilio::epidata::getCaseData']]],
+  ['write_5fdata_4092',['write_data',['../classad_1_1helper_1_1userdata__object__base.html#ab3f25f81ab58e1cad40c06936bff4052',1,'ad::helper::userdata_object_base::write_data(const X &amp;cp)'],['../classad_1_1helper_1_1userdata__object__base.html#a4483e66b3fdd3013144b31a68229d479',1,'ad::helper::userdata_object_base::write_data(const X *const cp, const int n)'],['../classad_1_1helper_1_1userdata__object__base.html#a3b1a2e071d86a2cd48019597a2401a69',1,'ad::helper::userdata_object_base::write_data(const X *const &amp;cp, const int inc, const int n)']]],
+  ['write_5fdataframe_4093',['write_dataframe',['../namespacememilio_1_1epidata_1_1getDataIntoPandasDataFrame.html#a887d50603bff5897aace524abc10f3c6',1,'memilio::epidata::getDataIntoPandasDataFrame']]],
+  ['write_5fdivi_5fdata_4094',['write_divi_data',['../namespacememilio_1_1epidata_1_1getDIVIData.html#adee6c10515786681ad43329cda84c0dd',1,'memilio::epidata::getDIVIData']]],
+  ['write_5fpopulation_5fdata_4095',['write_population_data',['../namespacememilio_1_1epidata_1_1getPopulationData.html#a2bef38c40ff79a5286798716473d9838',1,'memilio::epidata::getPopulationData']]],
+  ['write_5fvaccination_5fdata_4096',['write_vaccination_data',['../namespacememilio_1_1epidata_1_1getVaccinationData.html#a865c40e16263c309196d9b39f672a79f',1,'memilio::epidata::getVaccinationData']]]
 ];

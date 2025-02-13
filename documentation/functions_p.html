@@ -103,11 +103,11 @@ $(function() {
 , <a class="el" href="classmio_1_1oseair_1_1Parameters.html#ac808dbfadabf835dd8cf9b70fa2e7bdc">mio::oseair::Parameters&lt; FP &gt;</a>
 , <a class="el" href="classmio_1_1osecir_1_1Parameters.html#a89578f9839bf84fbecec985dbec3fbb1">mio::osecir::Parameters&lt; FP &gt;</a>
 , <a class="el" href="classmio_1_1osecirts_1_1Parameters.html#a2be6b190ee40da4f2ad5b07163c5f448">mio::osecirts::Parameters&lt; FP &gt;</a>
-, <a class="el" href="classmio_1_1osecirvvs_1_1Parameters.html#abfef13cad66edcd58aada682f78b1c4f">mio::osecirvvs::Parameters&lt; FP &gt;</a>
+, <a class="el" href="classmio_1_1osecirvvs_1_1Parameters.html#a2ea15dc409f4c8c9181b64328c050da1">mio::osecirvvs::Parameters&lt; FP &gt;</a>
 , <a class="el" href="classmio_1_1oseir_1_1Parameters.html#a9f432568796c3640808ea6e01680c649">mio::oseir::Parameters&lt; FP &gt;</a>
 , <a class="el" href="classmio_1_1osir_1_1Parameters.html#a8d9ca52c6e9f5b4a75a0ab4f3e34a674">mio::osir::Parameters&lt; FP &gt;</a>
 , <a class="el" href="classmio_1_1sseirvv_1_1Parameters.html#adfc6a97460ad9be3f4781d77f9a18157">mio::sseirvv::Parameters</a>
-, <a class="el" href="classmio_1_1ssir_1_1Parameters.html#acc1b82a9ca2232252a46b9e7f7145140">mio::ssir::Parameters</a>
+, <a class="el" href="classmio_1_1ssir_1_1Parameters.html#aa3fc1c7aa2d64e72333c4c34d3c696bd">mio::ssir::Parameters</a>
 , <a class="el" href="classmio_1_1ssirs_1_1Parameters.html#a08d1aa7f9b706efbe7a3682fffd12924">mio::ssirs::Parameters</a>
 </li>
 <li>ParameterSet
@@ -116,7 +116,7 @@ $(function() {
 , <a class="el" href="classmio_1_1isecir_1_1Model.html#aeaa245527257d77cc8a2247decc03485">mio::isecir::Model</a>
 , <a class="el" href="classmio_1_1oseair_1_1Model.html#a3b6bb5f689311e58dabc1fa6ffce0da4">mio::oseair::Model&lt; FP &gt;</a>
 , <a class="el" href="classmio_1_1osir_1_1Model.html#a3b6bb5f689311e58dabc1fa6ffce0da4">mio::osir::Model&lt; FP &gt;</a>
-, <a class="el" href="classmio_1_1ParameterSet.html#ac6b357e4152384694a143d3097b5de82">mio::ParameterSet&lt; Tags &gt;</a>
+, <a class="el" href="classmio_1_1ParameterSet.html#ab131d00efdb59092fa5bfb45982b5a8d">mio::ParameterSet&lt; Tags &gt;</a>
 </li>
 <li>ParametersGraph
 : <a class="el" href="classmio_1_1ParameterStudy.html#aa4a7267e471eb3a7d66b51c3ecd3e899">mio::ParameterStudy&lt; S &gt;</a>
@@ -178,12 +178,14 @@ $(function() {
 <li>PopIndex
 : <a class="el" href="classmio_1_1FlowModel.html#ab0d6d26564171881b046614cbe1f4693">mio::FlowModel&lt; FP, Comp, Pop, Params, Flows &gt;</a>
 </li>
+<li>Populations
+: <a class="el" href="structmio_1_1CompartmentalModel.html#a3243f778e26359da601d1ac84b81732d">mio::CompartmentalModel&lt; FP, Comp, Pop, Params &gt;</a>
+</li>
 <li>populations
 : <a class="el" href="structmio_1_1CompartmentalModel.html#a18bd88af7f23550ef0f625921058e527">mio::CompartmentalModel&lt; FP, Comp, Pop, Params &gt;</a>
 </li>
 <li>Populations
-: <a class="el" href="structmio_1_1CompartmentalModel.html#a3243f778e26359da601d1ac84b81732d">mio::CompartmentalModel&lt; FP, Comp, Pop, Params &gt;</a>
-, <a class="el" href="classmio_1_1glsecir_1_1Model.html#a3243f778e26359da601d1ac84b81732d">mio::glsecir::Model&lt; NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms, NumInfectedSevere, NumInfectedCritical &gt;</a>
+: <a class="el" href="classmio_1_1glsecir_1_1Model.html#a3243f778e26359da601d1ac84b81732d">mio::glsecir::Model&lt; NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms, NumInfectedSevere, NumInfectedCritical &gt;</a>
 </li>
 <li>populations
 : <a class="el" href="classmio_1_1isecir_1_1Model.html#aa2ff9fefb31d80b891e03d33d92fa80f">mio::isecir::Model</a>
@@ -193,8 +195,12 @@ $(function() {
 , <a class="el" href="classmio_1_1osir_1_1Model.html#a3243f778e26359da601d1ac84b81732d">mio::osir::Model&lt; FP &gt;</a>
 , <a class="el" href="classmio_1_1Populations.html#a09a1a018be8840c1f8ad818dfd8df67b">mio::Populations&lt; FP, Categories &gt;</a>
 </li>
+<li>populations
+: <a class="el" href="classQuadWellModel.html#ada4c940aad88a64276512a2a25b07e90">QuadWellModel&lt; InfectionState &gt;</a>
+</li>
 <li>position
 : <a class="el" href="classad_1_1internal_1_1blob__tape_1_1tape__callback.html#acfff54bbf93b683500e15185f612c834">ad::internal::blob_tape&lt; AD_TAPE_REAL, AD_ADJOINT_REAL &gt;::tape_callback</a>
+, <a class="el" href="structQuadWellModel_1_1Agent.html#a1cc78db2c787a39762fd8bc2e8d6c193">QuadWellModel&lt; InfectionState &gt;::Agent</a>
 </li>
 <li>position_t()
 : <a class="el" href="structad_1_1internal_1_1blob__tape_1_1position__t.html#a7df88e77a19e5c96ab34d6a51d6bb024">ad::internal::blob_tape&lt; AD_TAPE_REAL, AD_ADJOINT_REAL &gt;::position_t</a>
