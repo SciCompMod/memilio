@@ -28,29 +28,29 @@ int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
-    ScalarType t0   = 0.;
-    ScalarType tmid = 100.;
-    ScalarType tmax = 400.;
-    ScalarType dt   = 0.1;
+    ScalarType t0          = 0.;
+    ScalarType tmid        = 100.;
+    ScalarType tmax        = 400.;
+    ScalarType dt          = 0.1;
+    const auto print_table = false;
 
     mio::log_info("Simulating SEIRVV; t={} ... {} with dt = {}.", t0, tmax, dt);
 
     mio::sseirvv::Model model;
-    
+
     ScalarType total_population = 180000;
 
-    model.populations[{mio::sseirvv::InfectionState::ExposedV1}]  = 0;
-    model.populations[{mio::sseirvv::InfectionState::ExposedV2}]  = 0;
-    model.populations[{mio::sseirvv::InfectionState::InfectedV1}]  = 7200;
-    model.populations[{mio::sseirvv::InfectionState::InfectedV2}]  = 0;
-    model.populations[{mio::sseirvv::InfectionState::RecoveredV1}] = 0;
-    model.populations[{mio::sseirvv::InfectionState::RecoveredV2}] = 0;
-    model.populations[{mio::sseirvv::InfectionState::ExposedV1V2}]  = 0;
+    model.populations[{mio::sseirvv::InfectionState::ExposedV1}]     = 0;
+    model.populations[{mio::sseirvv::InfectionState::ExposedV2}]     = 0;
+    model.populations[{mio::sseirvv::InfectionState::InfectedV1}]    = 7200;
+    model.populations[{mio::sseirvv::InfectionState::InfectedV2}]    = 0;
+    model.populations[{mio::sseirvv::InfectionState::RecoveredV1}]   = 0;
+    model.populations[{mio::sseirvv::InfectionState::RecoveredV2}]   = 0;
+    model.populations[{mio::sseirvv::InfectionState::ExposedV1V2}]   = 0;
     model.populations[{mio::sseirvv::InfectionState::InfectedV1V2}]  = 0;
     model.populations[{mio::sseirvv::InfectionState::RecoveredV1V2}] = 0;
     model.populations[{mio::sseirvv::InfectionState::Susceptible}] =
-        total_population -
-        model.populations[{mio::sseirvv::InfectionState::ExposedV1}] -
+        total_population - model.populations[{mio::sseirvv::InfectionState::ExposedV1}] -
         model.populations[{mio::sseirvv::InfectionState::ExposedV2}] -
         model.populations[{mio::sseirvv::InfectionState::InfectedV1}] -
         model.populations[{mio::sseirvv::InfectionState::InfectedV2}] -
@@ -60,14 +60,14 @@ int main()
         model.populations[{mio::sseirvv::InfectionState::InfectedV1V2}] -
         model.populations[{mio::sseirvv::InfectionState::RecoveredV1V2}];
 
-    // It is assumed that both variants have the same transmission probability 
+    // It is assumed that both variants have the same transmission probability
     // on contact and the same time exposed. The time infected is scaled by
     // 1.35 for the second variant.
     model.parameters.get<mio::sseirvv::ContactPatterns>().get_baseline()(0, 0) = 1;
     model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1>(0.076);
     model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2>(0.076);
     model.parameters.set<mio::sseirvv::TimeExposedV1>(5.33);
-    model.parameters.set<mio::sseirvv::TimeExposedV2>(5.33);      
+    model.parameters.set<mio::sseirvv::TimeExposedV2>(5.33);
     model.parameters.set<mio::sseirvv::TimeInfectedV1>(17.2);
     model.parameters.set<mio::sseirvv::TimeInfectedV2>(17.2 * 1.35);
 
@@ -82,6 +82,10 @@ int main()
     // Simulate the model from tmid to tmax, now with both variants.
     auto sseirv2 = mio::sseirvv::simulate(tmid, tmax, dt, model);
 
-    sseirv.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
-    sseirv2.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2", "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
+    if (print_table) {
+        sseirv.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",
+                            "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
+        sseirv2.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",
+                             "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
+    }
 }
