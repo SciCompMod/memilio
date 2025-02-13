@@ -37,11 +37,11 @@ public:
     template <class Impl>
     AbstractParameterDistribution(Impl&& dist)
         : m_dist(std::make_shared<Impl>(std::move(dist)))
-        , sample_impl1([](void* dist, RandomNumberGenerator& rng) {
-            return static_cast<Impl*>(dist)->get_sample(rng);
+        , sample_impl1([](void* d, RandomNumberGenerator& rng) {
+            return static_cast<Impl*>(d)->get_sample(rng);
         })
-        , sample_impl2([](void* dist, abm::PersonalRandomNumberGenerator& rng) {
-            return static_cast<Impl*>(dist)->get_sample(rng);
+        , sample_impl2([](void* d, abm::PersonalRandomNumberGenerator& rng) {
+            return static_cast<Impl*>(d)->get_sample(rng);
         })
     {
     }
