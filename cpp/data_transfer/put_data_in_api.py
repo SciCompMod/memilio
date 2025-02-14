@@ -46,7 +46,7 @@ def write_zip(path_to_saved_zips, zipped_name, percentiles=['p50'], case_data=Fa
     return zipfile
 
 
-def put_scenario(scenario_id, zip_file, url, delay=420):
+def put_scenario(scenario_id, zip_file, url, delay):
     # https://stackoverflow.com/questions/18208109/python-requests-post-a-zip-file-with-multipart-form-data
     fileobj = open(zip_file, 'rb')
     put_response = requests.put(url + "scenarios/" + scenario_id, headers=header,
@@ -67,7 +67,7 @@ def put_scenario(scenario_id, zip_file, url, delay=420):
             f'Upload of scenario {get_scenario_response["id"]} was not successful, timestampSimulated is None.')
 
 
-def put_scenarios(path_to_scenario_results, url):
+def put_scenarios(path_to_scenario_results, url, delay=420):
     """ Puts scenarios into database.
 
     @param[in] path_to_scenario_results Directory from where we can access simulation results and where the zips for 
@@ -105,7 +105,7 @@ def put_scenarios(path_to_scenario_results, url):
                                  case_data=False)
 
         print(f'Uploading {scenario["id"]}')
-        put_scenario(scenario['id'], zip_file=zip_file, url=url)
+        put_scenario(scenario['id'], zip_file=zip_file, url=url, delay=delay)
 
 
 def main():
