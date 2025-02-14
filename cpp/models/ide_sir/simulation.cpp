@@ -67,6 +67,7 @@ void Simulation::advance(ScalarType tmax)
 
         std::cout << "Total pop: " << m_model->populations.get_last_value().sum() << std::endl;
     }
+    m_model->compute_susceptible_difference(m_dt, t0_index);
 }
 
 void Simulation::advance2(ScalarType tmax)
@@ -108,6 +109,8 @@ void Simulation::advance2(ScalarType tmax)
         }
         // std::cout << "Total pop: " << m_model->populations[time_point_index_populations].sum() << std::endl;
     }
+
+    m_model->compute_susceptible_difference(m_dt, t0_index);
 }
 
 TimeSeries<ScalarType> simulate(ScalarType tmax, ScalarType dt, Model const& m_model)

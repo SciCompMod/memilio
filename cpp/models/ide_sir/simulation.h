@@ -86,6 +86,11 @@ public:
         return m_model->flows;
     }
 
+    TimeSeries<ScalarType> get_susceptibles_difference()
+    {
+        return m_model->susceptibles_difference;
+    }
+
     /**
      * @brief returns the simulation model used in simulation.
      */

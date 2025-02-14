@@ -33,10 +33,12 @@ std::vector<Eigen::MatrixX<ScalarType>> get_gregoryweights(size_t gregory_order)
 {
     Eigen::MatrixX<ScalarType> gregoryWeights_sigma(gregory_order, gregory_order);
     Eigen::VectorX<ScalarType> gregoryWeights_omega(gregory_order + 1);
-    size_t scale_gregory_weights;
+    ScalarType scale_gregory_weights;
 
     if (gregory_order == 1) {
-        std::cout << "TODO \n";
+        scale_gregory_weights = 2.;
+        gregoryWeights_sigma << 1 / scale_gregory_weights;
+        gregoryWeights_omega << 1. / scale_gregory_weights, 2. / scale_gregory_weights;
     }
 
     if (gregory_order == 2) {
@@ -102,8 +104,7 @@ ScalarType Model::sum_part1_term(size_t row_index, size_t column_index, ScalarTy
             input;
     }
 
-    // std::cout << "Gregory weight in sum1: " << gregoryWeights_sigma(row_index, column_index) * scale_gregory_weights
-    //           << std::endl;
+    // std::cout << "Gregory weight in sum1: " << gregoryWeights_sigma(row_index, column_index) << std::endl;
 
     return sum_part1_term;
 }
@@ -128,8 +129,7 @@ ScalarType Model::sum_part2_term(size_t weight_index, ScalarType state_age, Scal
                      state_age)) *
             input;
     }
-    // std::cout << "Gregory weight in sum2: " << gregoryWeights_omega(weight_index) * scale_gregory_weights
-    //           << std::endl;
+    // std::cout << "Gregory weight in sum2: " << gregoryWeights_omega(weight_index) << std::endl;
 
     return sum_part2_term;
 }
@@ -151,7 +151,7 @@ ScalarType Model::fixed_point_function(ScalarType s, ScalarType dt, ScalarType N
 
     ScalarType sum_init =
         gregoryWeights_omega(0) * parameters.get<RiskOfInfectionFromSymptomatic>().eval(0.) * (N - s) / N;
-    // std::cout << "gregory weight: " << gregoryWeights_omega( 0) * scale_gregory_weights << std::endl;
+    // std::cout << "Gregory weight in sum_init: " << gregoryWeights_omega(0) << std::endl;
 
     size_t num_time_points_simulated = populations.get_num_time_points() - t0_index - 2;
 
@@ -375,6 +375,16 @@ void Model::compute_I_and_R_centered(ScalarType dt, size_t t0_index, size_t time
         // std::cout << "mass_conservation_scaling: " << mass_conservation_scaling << std::endl;
         populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Infected] *= mass_conservation_scaling;
         populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Recovered] *= mass_conservation_scaling;
+    }
+}
+
+void Model::compute_susceptible_difference(ScalarType dt, size_t t0_index)
+{
+    for (Eigen::Index i = 1; i < populations.get_num_time_points(); i++) {
+        susceptibles_difference.add_time_point(
+            ((ScalarType)i - t0_index) * dt,
+            Vec::Constant(1, populations[i][(Eigen::Index)InfectionState::Susceptible] -
+                                 populations[i - 1][(Eigen::Index)InfectionState::Susceptible]));
     }
 }
 

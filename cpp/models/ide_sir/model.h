@@ -49,6 +49,11 @@ public:
 
     ScalarType get_totalpop() const;
 
+    size_t get_gregory_order() const
+    {
+        return m_gregory_order;
+    }
+
     ScalarType sum_part1_term(size_t row_index, size_t column_index, ScalarType state_age, ScalarType input,
                               bool recovered = false);
     ScalarType sum_part2_term(size_t weight_index, ScalarType state_age, ScalarType input, bool recovered = false);
@@ -67,10 +72,7 @@ public:
     void compute_I_and_R_centered(ScalarType dt, size_t t0_index, size_t time_point_index,
                                   bool enforce_mass_conservation = true);
 
-    size_t get_gregory_order()
-    {
-        return m_gregory_order;
-    }
+    void compute_susceptible_difference(ScalarType dt, size_t t0_index);
 
     // ---- Public parameters. ----
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
@@ -80,6 +82,7 @@ public:
         // people in defined #InfectionState%s for every AgeGroup.
     TimeSeries<ScalarType> flows;
     size_t m_finite_difference_order;
+    TimeSeries<ScalarType> susceptibles_difference = TimeSeries<ScalarType>(1);
 
 private:
     // ---- Private parameters. ----

@@ -32,7 +32,7 @@ int main()
 
     ScalarType tmax                = 2.;
     ScalarType dt                  = 0.1;
-    size_t gregory_order           = 2;
+    size_t gregory_order           = 1;
     size_t finite_difference_order = 4;
 
     Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
@@ -66,9 +66,11 @@ int main()
 
     // Carry out simulation.
     mio::isir::Simulation sim(model, dt);
-    sim.advance2(tmax);
+    sim.advance(tmax);
 
     sim.get_result().print_table({"S", "I", "R"}, 16, 8);
 
-    // sim.get_flows().print_table();
+    sim.get_flows().print_table();
+
+    sim.get_susceptibles_difference().print_table();
 }
