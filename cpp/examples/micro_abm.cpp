@@ -134,6 +134,13 @@ struct LocationSizesLogger : public mio::LogAlways {
 void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
                          const std::vector<LocationPerPersonLogger::Type>& loclog)
 {
+    std::vector<std::vector<uint32_t>> assigned_persons_per_location(world.get_locations().size());
+    for (auto& person : world.get_persons()) {
+        for (auto& assigned_loc : person.get_assigned_locations()) {
+            assigned_persons_per_location[assigned_loc].push_back(person.get_person_id());
+        }
+    }
+
     std::bitset<(uint32_t)mio::abm::LocationType::Count> missing_loc_types;
     out << "# Hour, PersonId1, PersonId2, Intensity, LocationId, LocationType\n";
     for (size_t t = 1; t < loclog.size(); t++) { // iterate over time points
@@ -149,8 +156,8 @@ void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
                 continue;
             }
             // write out all contacts with a positive intensity
-            for (size_t contact = 0; contact < loc.get_assigned_persons().size(); contact++) {
-                const auto contact_id = loc.get_assigned_persons()[contact];
+            for (size_t contact = 0; contact < assigned_persons_per_location[loc.get_index()].size(); contact++) {
+                const auto contact_id = assigned_persons_per_location[loc.get_index()][contact];
                 if (contact_id == mio::abm::INVALID_PERSON_ID || contact_id == p) {
                     // skip loops (contact with oneself) and filler entries (invalid ids)
                     continue;
