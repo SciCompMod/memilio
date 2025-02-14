@@ -137,7 +137,9 @@ void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
     std::vector<std::vector<uint32_t>> assigned_persons_per_location(world.get_locations().size());
     for (auto& person : world.get_persons()) {
         for (auto& assigned_loc : person.get_assigned_locations()) {
-            assigned_persons_per_location[assigned_loc].push_back(person.get_person_id());
+            if (assigned_loc != mio::abm::INVALID_LOCATION_INDEX) {
+                assigned_persons_per_location[assigned_loc].push_back(person.get_person_id());
+            }
         }
     }
 
@@ -156,8 +158,7 @@ void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
                 continue;
             }
             // write out all contacts with a positive intensity
-            for (size_t contact = 0; contact < assigned_persons_per_location[loc.get_index()].size(); contact++) {
-                const auto contact_id = assigned_persons_per_location[loc.get_index()][contact];
+            for (auto contact_id : assigned_persons_per_location[loc.get_index()]) {
                 if (contact_id == mio::abm::INVALID_PERSON_ID || contact_id == p) {
                     // skip loops (contact with oneself) and filler entries (invalid ids)
                     continue;
@@ -167,7 +168,7 @@ void write_contacts_flat(std::ostream& out, const mio::abm::World& world,
                     continue;
                 }
                 const auto& t_matrix = loc.get_contact_matrices()[log_time.hour_of_day()];
-                const auto intensity = t_matrix(local_person_index[p], contact);
+                const auto intensity = t_matrix(local_person_index[p], local_person_index[contact_id]);
                 if (intensity > 0) {
                     out << log_time.hours() << ", " << p << ", " << contact_id << ", " << intensity << ", "
                         << loc.get_index() << ", " << loc_type_name(loc.get_type()) << "\n";
