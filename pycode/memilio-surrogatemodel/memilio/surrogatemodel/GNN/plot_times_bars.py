@@ -68,7 +68,7 @@ sns.barplot(
     x="Time",
     y="DaysStr",
     hue="Dampings_Method",
-    palette="Set2",
+    palette="husl",
     ax=ax
 )
 handles, labels = ax.get_legend_handles_labels()
