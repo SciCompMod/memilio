@@ -23,7 +23,7 @@
 
 int main()
 {
-    mio::set_log_level(mio::LogLevel::debug);
+    mio::set_log_level(mio::LogLevel::warn);
 
     double t0   = 0;
     double tmax = 30;
