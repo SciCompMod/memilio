@@ -1,0 +1,65 @@
+cff-version: "1.2.0"
+message: "If you use this software, please cite it using the metadata below."
+title: "MEmilio - a high performance Modular EpideMIcs simuLatIOn software"
+version: "0.1.0"
+date-released: "2022"
+authors:
+  - given-names: "Martin Joachim"
+    family-names: "Kühn"
+  - given-names: "Daniel"
+    family-names: "Abele"
+  - given-names: "David"
+    family-names: "Kerkmann"
+  - given-names: "Sascha Alexander"
+    family-names: "Korf"
+  - given-names: "Henrik"
+    family-names: "Zunker"
+  - given-names: "Anna Clara"
+    family-names: "Wendler"
+  - given-names: "Julia"
+    family-names: "Bicker"
+  - given-names: "Dang Khoa"
+    family-names: "Nguyen"
+  - given-names: "Margrit"
+    family-names: "Klitz"
+  - given-names: "Wadim"
+    family-names: "Koslow"
+  - given-names: "Martin"
+    family-names: "Siggel"
+  - given-names: "Jan"
+    family-names: "Kleinert"
+  - given-names: "Kathrin"
+    family-names: "Rack"
+  - given-names: "Sebastian"
+    family-names: "Binder"
+  - given-names: "Lena"
+    family-names: "Plötzke"
+  - given-names: "René"
+    family-names: "Schmieding"
+  - given-names: "Patrick"
+    family-names: "Lenz"
+  - given-names: "Maximilian Franz"
+    family-names: "Betz"
+  - given-names: "Annette"
+    family-names: "Lutz"
+  - given-names: "Carlotta"
+    family-names: "Gerstein"
+  - given-names: "Agatha"
+    family-names: "Schmidt"
+  - given-names: "Michael"
+    family-names: "Meyer-Hermann"
+  - given-names: "Achim"
+    family-names: "Basermann"
+keywords:
+  - Epidemics
+  - Epidemiology
+  - Computer simulation
+  - Mathematical modeling
+  - Virus
+  - Sars-CoV-2
+  - Covid-19
+  - Pandemic Preparedness
+  - High Performance Computing
+  - Computer science
+url: "https://elib.dlr.de/192140/"
+abstract: "MEmilio is a common project between the Institute for Software Technology of the German Aerospace Center (DLR) and the department of Systems Immunology (SIMM) of the Helmholtz Center for Infection Research (HZI). This project will bring cutting-edge and compute-intensive epidemiological models to a large scale, which enables a precise and high-resolution spatiotemporal pandemic simulation for entire countries. MEmilio is still under developement but it is available as Open Source and we encourage everyone to make use of it. If you use it, please cite the current reference."
