@@ -913,6 +913,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a39bb377d592d615e42466404fabe9c88"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a39bb377d592d615e42466404fabe9c88">foreach_tag</a> (F f)</td></tr>
 <tr class="memdesc:a39bb377d592d615e42466404fabe9c88"><td class="mdescLeft">&#160;</td><td class="mdescRight">call f(t) for all parameters in a <a class="el" href="classmio_1_1ParameterSet.html" title="a set of parameters defined at compile time">ParameterSet</a> with t a default constructed parameter tag  <a href="namespacemio.html#a39bb377d592d615e42466404fabe9c88">More...</a><br /></td></tr>
 <tr class="separator:a39bb377d592d615e42466404fabe9c88"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6ef773de90eb81090b8fa7ced8a645f4"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio.html#a6ef773de90eb81090b8fa7ced8a645f4">format_as</a> (const <a class="el" href="structmio_1_1Date.html">mio::Date</a> &amp;d)</td></tr>
+<tr class="memdesc:a6ef773de90eb81090b8fa7ced8a645f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Format date objects using the ISO notation for logging with spdlog.  <a href="namespacemio.html#a6ef773de90eb81090b8fa7ced8a645f4">More...</a><br /></td></tr>
+<tr class="separator:a6ef773de90eb81090b8fa7ced8a645f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a809384e3e712298c7af0f69287958352"><td class="memTemplParams" colspan="2">template&lt;class FP &gt; </td></tr>
 <tr class="memitem:a809384e3e712298c7af0f69287958352"><td class="memTemplItemLeft" align="right" valign="top">const FP &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a809384e3e712298c7af0f69287958352">format_as</a> (const <a class="el" href="classmio_1_1UncertainValue.html">UncertainValue</a>&lt; FP &gt; &amp;uv)</td></tr>
 <tr class="memdesc:a809384e3e712298c7af0f69287958352"><td class="mdescLeft">&#160;</td><td class="mdescRight">Format UncertainValues using their value for logging with spdlog.  <a href="namespacemio.html#a809384e3e712298c7af0f69287958352">More...</a><br /></td></tr>
@@ -4548,8 +4551,34 @@ template&lt;class Params , class F &gt; </div>
 
 </div>
 </div>
+<a id="a6ef773de90eb81090b8fa7ced8a645f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6ef773de90eb81090b8fa7ced8a645f4">&#9670;&nbsp;</a></span>format_as() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string mio::format_as </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structmio_1_1Date.html">mio::Date</a> &amp;&#160;</td>
+          <td class="paramname"><em>d</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Format date objects using the ISO notation for logging with spdlog. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">d</td><td>date object. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a809384e3e712298c7af0f69287958352"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a809384e3e712298c7af0f69287958352">&#9670;&nbsp;</a></span>format_as()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a809384e3e712298c7af0f69287958352">&#9670;&nbsp;</a></span>format_as() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -6404,40 +6433,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="a9a58db8b765e525595174fe5b502bf85"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9a58db8b765e525595174fe5b502bf85">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">std::enable_if_t&lt;!<a class="el" href="namespacemio.html#a828f9a1016d1048d5d3e67dcc5ff4e8f">has_ostream_op</a>&lt;T&gt;::value, std::ostream&amp;&gt; mio::operator&lt;&lt; </td>
-          <td>(</td>
-          <td class="paramtype">std::ostream &amp;&#160;</td>
-          <td class="paramname"><em>os</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="structmio_1_1Edge.html">Edge</a>&lt; T &gt; &amp;&#160;</td>
-          <td class="paramname"><em>e</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>out stream operator for edges if edge property type does not have stream operator defined </p>
-
-</div>
-</div>
 <a id="a5b8d13d4bfbc6ab42cccb685cafdc5fe"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5b8d13d4bfbc6ab42cccb685cafdc5fe">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b8d13d4bfbc6ab42cccb685cafdc5fe">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -6465,6 +6462,38 @@ template&lt;class T &gt; </div>
 </div><div class="memdoc">
 
 <p>out stream operator for edges if edge property type has stream operator defined </p>
+
+</div>
+</div>
+<a id="a9a58db8b765e525595174fe5b502bf85"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9a58db8b765e525595174fe5b502bf85">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">std::enable_if_t&lt;!<a class="el" href="namespacemio.html#a828f9a1016d1048d5d3e67dcc5ff4e8f">has_ostream_op</a>&lt;T&gt;::value, std::ostream&amp;&gt; mio::operator&lt;&lt; </td>
+          <td>(</td>
+          <td class="paramtype">std::ostream &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structmio_1_1Edge.html">Edge</a>&lt; T &gt; &amp;&#160;</td>
+          <td class="paramname"><em>e</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>out stream operator for edges if edge property type does not have stream operator defined </p>
 
 </div>
 </div>

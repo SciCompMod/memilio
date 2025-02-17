@@ -325,115 +325,109 @@ $(function() {
 <div class="line"><a name="l00288"></a><span class="lineno">  288</span>&#160;            return a.date &lt; b.date;</div>
 <div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;        });</div>
 <div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;        <span class="keyword">auto</span> min_date       = min_date_entry-&gt;date;</div>
-<div class="line"><a name="l00291"></a><span class="lineno">  291</span>&#160; </div>
-<div class="line"><a name="l00292"></a><span class="lineno">  292</span>&#160;        std::string min_date_string =</div>
-<div class="line"><a name="l00293"></a><span class="lineno">  293</span>&#160;            std::to_string(min_date.day) + <span class="stringliteral">&quot;.&quot;</span> + std::to_string(min_date.month) + <span class="stringliteral">&quot;.&quot;</span> + std::to_string(min_date.year);</div>
-<div class="line"><a name="l00294"></a><span class="lineno">  294</span>&#160;        <span class="comment">// Get first date that is needed.</span></div>
-<div class="line"><a name="l00295"></a><span class="lineno">  295</span>&#160;        <a class="code" href="structmio_1_1Date.html">mio::Date</a> min_offset_date          = <a class="code" href="namespacemio.html#abebb31121953c36c5b5b42976df8bcad">offset_date_by_days</a>(date, <span class="keywordtype">int</span>(min_offset_needed));</div>
-<div class="line"><a name="l00296"></a><span class="lineno">  296</span>&#160;        std::string min_offset_date_string = std::to_string(min_offset_date.<a class="code" href="structmio_1_1Date.html#ab3925ea9564606bcab110d7da21a8105">day</a>) + <span class="stringliteral">&quot;.&quot;</span> +</div>
-<div class="line"><a name="l00297"></a><span class="lineno">  297</span>&#160;                                             std::to_string(min_offset_date.<a class="code" href="structmio_1_1Date.html#a431a83d3905d741fb09855a1db90d931">month</a>) + <span class="stringliteral">&quot;.&quot;</span> +</div>
-<div class="line"><a name="l00298"></a><span class="lineno">  298</span>&#160;                                             std::to_string(min_offset_date.<a class="code" href="structmio_1_1Date.html#ab171e645aefa796cc0d4980b5e7b40c8">year</a>);</div>
-<div class="line"><a name="l00299"></a><span class="lineno">  299</span>&#160;        <a class="code" href="namespacemio.html#a34f961d5004bf46cf1cee1133671f8bc">log_warning</a>(<span class="stringliteral">&quot;RKI data is needed from &quot;</span> + min_offset_date_string +</div>
-<div class="line"><a name="l00300"></a><span class="lineno">  300</span>&#160;                    <span class="stringliteral">&quot; to compute initial values. RKI data is only available from &quot;</span> + min_date_string +</div>
-<div class="line"><a name="l00301"></a><span class="lineno">  301</span>&#160;                    <span class="stringliteral">&quot;. Missing dates were set to 0.&quot;</span>);</div>
-<div class="line"><a name="l00302"></a><span class="lineno">  302</span>&#160;    }</div>
-<div class="line"><a name="l00303"></a><span class="lineno">  303</span>&#160; </div>
-<div class="line"><a name="l00304"></a><span class="lineno">  304</span>&#160;    <span class="comment">//--- Calculate the flows &quot;after&quot; InfectedNoSymptomsToInfectedSymptoms (that were set above using rki_data). ---</span></div>
-<div class="line"><a name="l00305"></a><span class="lineno">  305</span>&#160;    <span class="comment">// Set m_support_max_vector and m_derivative_vector in the model which is needed for the following computations.</span></div>
-<div class="line"><a name="l00306"></a><span class="lineno">  306</span>&#160;    model.set_transitiondistributions_support_max(dt);</div>
-<div class="line"><a name="l00307"></a><span class="lineno">  307</span>&#160;    model.set_transitiondistributions_derivative(dt);</div>
-<div class="line"><a name="l00308"></a><span class="lineno">  308</span>&#160; </div>
-<div class="line"><a name="l00309"></a><span class="lineno">  309</span>&#160;    <span class="keywordflow">for</span> (AgeGroup group = AgeGroup(0); group &lt; AgeGroup(num_age_groups); group++) {</div>
-<div class="line"><a name="l00310"></a><span class="lineno">  310</span>&#160;        <span class="comment">//--- Calculate the flows &quot;after&quot; InfectedNoSymptomsToInfectedSymptoms. ---</span></div>
-<div class="line"><a name="l00311"></a><span class="lineno">  311</span>&#160;        <span class="comment">// Compute flow InfectedSymptomsToInfectedSevere for -3 * global_support_max, ..., 0.</span></div>
-<div class="line"><a name="l00312"></a><span class="lineno">  312</span>&#160;        <span class="keywordflow">for</span> (Eigen::Index i = -3 * global_support_max_index; i &lt;= 0; i++) {</div>
-<div class="line"><a name="l00313"></a><span class="lineno">  313</span>&#160;            model.compute_flow(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a27947a571925e9e6ba2fd3b8540a0734">InfectionTransition::InfectedSymptomsToInfectedSevere</a>),</div>
-<div class="line"><a name="l00314"></a><span class="lineno">  314</span>&#160;                               Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a6dbf4828958ffa97ea6581a4edb56b0f">InfectionTransition::InfectedNoSymptomsToInfectedSymptoms</a>), dt,</div>
-<div class="line"><a name="l00315"></a><span class="lineno">  315</span>&#160;                               i + start_shift, group);</div>
+<div class="line"><a name="l00291"></a><span class="lineno">  291</span>&#160;        <span class="comment">// Get first date that is needed.</span></div>
+<div class="line"><a name="l00292"></a><span class="lineno">  292</span>&#160;        <a class="code" href="structmio_1_1Date.html">mio::Date</a> min_offset_date = <a class="code" href="namespacemio.html#abebb31121953c36c5b5b42976df8bcad">offset_date_by_days</a>(date, <span class="keywordtype">int</span>(min_offset_needed));</div>
+<div class="line"><a name="l00293"></a><span class="lineno">  293</span>&#160;        <a class="code" href="namespacemio.html#a34f961d5004bf46cf1cee1133671f8bc">log_warning</a>(<span class="stringliteral">&quot;RKI data is needed from {} to compute initial values. RKI data is only available from {}. Missing &quot;</span></div>
+<div class="line"><a name="l00294"></a><span class="lineno">  294</span>&#160;                    <span class="stringliteral">&quot;dates were set to 0.&quot;</span>,</div>
+<div class="line"><a name="l00295"></a><span class="lineno">  295</span>&#160;                    min_offset_date, min_date);</div>
+<div class="line"><a name="l00296"></a><span class="lineno">  296</span>&#160;    }</div>
+<div class="line"><a name="l00297"></a><span class="lineno">  297</span>&#160; </div>
+<div class="line"><a name="l00298"></a><span class="lineno">  298</span>&#160;    <span class="comment">//--- Calculate the flows &quot;after&quot; InfectedNoSymptomsToInfectedSymptoms (that were set above using rki_data). ---</span></div>
+<div class="line"><a name="l00299"></a><span class="lineno">  299</span>&#160;    <span class="comment">// Set m_support_max_vector and m_derivative_vector in the model which is needed for the following computations.</span></div>
+<div class="line"><a name="l00300"></a><span class="lineno">  300</span>&#160;    model.set_transitiondistributions_support_max(dt);</div>
+<div class="line"><a name="l00301"></a><span class="lineno">  301</span>&#160;    model.set_transitiondistributions_derivative(dt);</div>
+<div class="line"><a name="l00302"></a><span class="lineno">  302</span>&#160; </div>
+<div class="line"><a name="l00303"></a><span class="lineno">  303</span>&#160;    <span class="keywordflow">for</span> (AgeGroup group = AgeGroup(0); group &lt; AgeGroup(num_age_groups); group++) {</div>
+<div class="line"><a name="l00304"></a><span class="lineno">  304</span>&#160;        <span class="comment">//--- Calculate the flows &quot;after&quot; InfectedNoSymptomsToInfectedSymptoms. ---</span></div>
+<div class="line"><a name="l00305"></a><span class="lineno">  305</span>&#160;        <span class="comment">// Compute flow InfectedSymptomsToInfectedSevere for -3 * global_support_max, ..., 0.</span></div>
+<div class="line"><a name="l00306"></a><span class="lineno">  306</span>&#160;        <span class="keywordflow">for</span> (Eigen::Index i = -3 * global_support_max_index; i &lt;= 0; i++) {</div>
+<div class="line"><a name="l00307"></a><span class="lineno">  307</span>&#160;            model.compute_flow(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a27947a571925e9e6ba2fd3b8540a0734">InfectionTransition::InfectedSymptomsToInfectedSevere</a>),</div>
+<div class="line"><a name="l00308"></a><span class="lineno">  308</span>&#160;                               Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a6dbf4828958ffa97ea6581a4edb56b0f">InfectionTransition::InfectedNoSymptomsToInfectedSymptoms</a>), dt,</div>
+<div class="line"><a name="l00309"></a><span class="lineno">  309</span>&#160;                               i + start_shift, group);</div>
+<div class="line"><a name="l00310"></a><span class="lineno">  310</span>&#160;        }</div>
+<div class="line"><a name="l00311"></a><span class="lineno">  311</span>&#160;        <span class="comment">// Compute flow InfectedSevereToInfectedCritical for -2 * global_support_max, ..., 0.</span></div>
+<div class="line"><a name="l00312"></a><span class="lineno">  312</span>&#160;        <span class="keywordflow">for</span> (Eigen::Index i = -2 * global_support_max_index; i &lt;= 0; i++) {</div>
+<div class="line"><a name="l00313"></a><span class="lineno">  313</span>&#160;            model.compute_flow(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a04301a61e2338f340884a0ac0eb855d1">InfectionTransition::InfectedSevereToInfectedCritical</a>),</div>
+<div class="line"><a name="l00314"></a><span class="lineno">  314</span>&#160;                               Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a27947a571925e9e6ba2fd3b8540a0734">InfectionTransition::InfectedSymptomsToInfectedSevere</a>), dt, i + start_shift,</div>
+<div class="line"><a name="l00315"></a><span class="lineno">  315</span>&#160;                               group);</div>
 <div class="line"><a name="l00316"></a><span class="lineno">  316</span>&#160;        }</div>
-<div class="line"><a name="l00317"></a><span class="lineno">  317</span>&#160;        <span class="comment">// Compute flow InfectedSevereToInfectedCritical for -2 * global_support_max, ..., 0.</span></div>
-<div class="line"><a name="l00318"></a><span class="lineno">  318</span>&#160;        <span class="keywordflow">for</span> (Eigen::Index i = -2 * global_support_max_index; i &lt;= 0; i++) {</div>
-<div class="line"><a name="l00319"></a><span class="lineno">  319</span>&#160;            model.compute_flow(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a04301a61e2338f340884a0ac0eb855d1">InfectionTransition::InfectedSevereToInfectedCritical</a>),</div>
-<div class="line"><a name="l00320"></a><span class="lineno">  320</span>&#160;                               Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a27947a571925e9e6ba2fd3b8540a0734">InfectionTransition::InfectedSymptomsToInfectedSevere</a>), dt, i + start_shift,</div>
-<div class="line"><a name="l00321"></a><span class="lineno">  321</span>&#160;                               group);</div>
-<div class="line"><a name="l00322"></a><span class="lineno">  322</span>&#160;        }</div>
-<div class="line"><a name="l00323"></a><span class="lineno">  323</span>&#160;        <span class="comment">// Compute flows from InfectedSymptoms, InfectedSevere and InfectedCritical to Recovered and</span></div>
-<div class="line"><a name="l00324"></a><span class="lineno">  324</span>&#160;        <span class="comment">// flow InfectedCriticalToDead for -global_support_max, ..., 0.</span></div>
-<div class="line"><a name="l00325"></a><span class="lineno">  325</span>&#160;        <span class="keywordflow">for</span> (Eigen::Index i = -global_support_max_index; i &lt;= 0; i++) {</div>
-<div class="line"><a name="l00326"></a><span class="lineno">  326</span>&#160;            <span class="comment">// Compute flow InfectedSymptomsToRecovered.</span></div>
-<div class="line"><a name="l00327"></a><span class="lineno">  327</span>&#160;            model.compute_flow(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73aeb31ce0ece5464f33dc4a7f572b463e3">InfectionTransition::InfectedSymptomsToRecovered</a>),</div>
-<div class="line"><a name="l00328"></a><span class="lineno">  328</span>&#160;                               Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a6dbf4828958ffa97ea6581a4edb56b0f">InfectionTransition::InfectedNoSymptomsToInfectedSymptoms</a>), dt,</div>
-<div class="line"><a name="l00329"></a><span class="lineno">  329</span>&#160;                               i + start_shift, group);</div>
-<div class="line"><a name="l00330"></a><span class="lineno">  330</span>&#160;            <span class="comment">// Compute flow InfectedSevereToRecovered.</span></div>
-<div class="line"><a name="l00331"></a><span class="lineno">  331</span>&#160;            model.compute_flow(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73ac5220be9dd2daeddc482536a285ee4a3">InfectionTransition::InfectedSevereToRecovered</a>),</div>
-<div class="line"><a name="l00332"></a><span class="lineno">  332</span>&#160;                               Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a27947a571925e9e6ba2fd3b8540a0734">InfectionTransition::InfectedSymptomsToInfectedSevere</a>), dt, i + start_shift,</div>
-<div class="line"><a name="l00333"></a><span class="lineno">  333</span>&#160;                               group);</div>
-<div class="line"><a name="l00334"></a><span class="lineno">  334</span>&#160;            <span class="comment">// Compute flow InfectedCriticalToRecovered.</span></div>
-<div class="line"><a name="l00335"></a><span class="lineno">  335</span>&#160;            model.compute_flow(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a0c3104e0fed343eb5f3af8f5a3a9cc11">InfectionTransition::InfectedCriticalToRecovered</a>),</div>
-<div class="line"><a name="l00336"></a><span class="lineno">  336</span>&#160;                               Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a04301a61e2338f340884a0ac0eb855d1">InfectionTransition::InfectedSevereToInfectedCritical</a>), dt, i + start_shift,</div>
-<div class="line"><a name="l00337"></a><span class="lineno">  337</span>&#160;                               group);</div>
-<div class="line"><a name="l00338"></a><span class="lineno">  338</span>&#160;            <span class="comment">// Compute flow InfectedCriticalToDead.</span></div>
-<div class="line"><a name="l00339"></a><span class="lineno">  339</span>&#160;            model.compute_flow(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73ae83010ab1a9dfc257581f32b7e8e1819">InfectionTransition::InfectedCriticalToDead</a>),</div>
-<div class="line"><a name="l00340"></a><span class="lineno">  340</span>&#160;                               Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a04301a61e2338f340884a0ac0eb855d1">InfectionTransition::InfectedSevereToInfectedCritical</a>), dt, i + start_shift,</div>
-<div class="line"><a name="l00341"></a><span class="lineno">  341</span>&#160;                               group);</div>
-<div class="line"><a name="l00342"></a><span class="lineno">  342</span>&#160;        }</div>
-<div class="line"><a name="l00343"></a><span class="lineno">  343</span>&#160; </div>
-<div class="line"><a name="l00344"></a><span class="lineno">  344</span>&#160;        <span class="comment">//--- Calculate the remaining flows. ---</span></div>
-<div class="line"><a name="l00345"></a><span class="lineno">  345</span>&#160;        <span class="comment">// Compute flow ExposedToInfectedNoSymptoms for -2 * global_support_max, ..., 0.</span></div>
-<div class="line"><a name="l00346"></a><span class="lineno">  346</span>&#160;        <span class="comment">// Use mean value of the TransitionDistribution InfectedNoSymptomsToInfectedSymptoms for the calculation.</span></div>
-<div class="line"><a name="l00347"></a><span class="lineno">  347</span>&#160; </div>
-<div class="line"><a name="l00348"></a><span class="lineno">  348</span>&#160;        Eigen::Index index_shift_mean = Eigen::Index(std::round(mean_InfectedNoSymptomsToInfectedSymptoms[group] / dt));</div>
-<div class="line"><a name="l00349"></a><span class="lineno">  349</span>&#160;        <span class="keywordtype">int</span> EtINSi =</div>
-<div class="line"><a name="l00350"></a><span class="lineno">  350</span>&#160;            model.get_transition_flat_index(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73af4a620103ad10d8ba92e1821ed7d9ae6">InfectionTransition::ExposedToInfectedNoSymptoms</a>), group);</div>
-<div class="line"><a name="l00351"></a><span class="lineno">  351</span>&#160;        <span class="keywordtype">int</span> INStISyi = model.get_transition_flat_index(</div>
-<div class="line"><a name="l00352"></a><span class="lineno">  352</span>&#160;            Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a6dbf4828958ffa97ea6581a4edb56b0f">InfectionTransition::InfectedNoSymptomsToInfectedSymptoms</a>), group);</div>
-<div class="line"><a name="l00353"></a><span class="lineno">  353</span>&#160;        <span class="keywordflow">for</span> (Eigen::Index i = -2 * global_support_max_index; i &lt;= 0; i++) {</div>
-<div class="line"><a name="l00354"></a><span class="lineno">  354</span>&#160;            model.transitions[i + start_shift][EtINSi] =</div>
-<div class="line"><a name="l00355"></a><span class="lineno">  355</span>&#160;                (1 / model.parameters.get&lt;TransitionProbabilities&gt;()[group][Eigen::Index(</div>
-<div class="line"><a name="l00356"></a><span class="lineno">  356</span>&#160;                         <a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a6dbf4828958ffa97ea6581a4edb56b0f">InfectionTransition::InfectedNoSymptomsToInfectedSymptoms</a>)]) *</div>
-<div class="line"><a name="l00357"></a><span class="lineno">  357</span>&#160;                model.transitions[i + start_shift + index_shift_mean][INStISyi];</div>
-<div class="line"><a name="l00358"></a><span class="lineno">  358</span>&#160;        }</div>
-<div class="line"><a name="l00359"></a><span class="lineno">  359</span>&#160; </div>
-<div class="line"><a name="l00360"></a><span class="lineno">  360</span>&#160;        <span class="comment">// Compute flow SusceptibleToExposed for -global_support_max, ..., 0.</span></div>
-<div class="line"><a name="l00361"></a><span class="lineno">  361</span>&#160;        <span class="comment">// Use mean values of the TransitionDistribution ExposedToInfectedNoSymptoms and of the</span></div>
-<div class="line"><a name="l00362"></a><span class="lineno">  362</span>&#160;        <span class="comment">// TransitionDistribution InfectedNoSymptomsToInfectedSymptoms for the calculation.</span></div>
-<div class="line"><a name="l00363"></a><span class="lineno">  363</span>&#160;        index_shift_mean = Eigen::Index(std::round(</div>
-<div class="line"><a name="l00364"></a><span class="lineno">  364</span>&#160;            (mean_ExposedToInfectedNoSymptoms[group] + mean_InfectedNoSymptomsToInfectedSymptoms[group]) / dt));</div>
-<div class="line"><a name="l00365"></a><span class="lineno">  365</span>&#160;        <span class="keywordtype">int</span> StEi = model.get_transition_flat_index(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73ad223e739ddae9da49d87ec2efb8b24d1">InfectionTransition::SusceptibleToExposed</a>), group);</div>
-<div class="line"><a name="l00366"></a><span class="lineno">  366</span>&#160; </div>
-<div class="line"><a name="l00367"></a><span class="lineno">  367</span>&#160;        <span class="keywordflow">for</span> (Eigen::Index i = -global_support_max_index; i &lt;= 0; i++) {</div>
-<div class="line"><a name="l00368"></a><span class="lineno">  368</span>&#160;            model.transitions[i + start_shift][StEi] =</div>
-<div class="line"><a name="l00369"></a><span class="lineno">  369</span>&#160;                (1 / model.parameters.get&lt;TransitionProbabilities&gt;()[group][Eigen::Index(</div>
-<div class="line"><a name="l00370"></a><span class="lineno">  370</span>&#160;                         <a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a6dbf4828958ffa97ea6581a4edb56b0f">InfectionTransition::InfectedNoSymptomsToInfectedSymptoms</a>)]) *</div>
-<div class="line"><a name="l00371"></a><span class="lineno">  371</span>&#160;                model.transitions[i + start_shift + index_shift_mean][INStISyi];</div>
-<div class="line"><a name="l00372"></a><span class="lineno">  372</span>&#160;        }</div>
-<div class="line"><a name="l00373"></a><span class="lineno">  373</span>&#160; </div>
-<div class="line"><a name="l00374"></a><span class="lineno">  374</span>&#160;        <span class="comment">// InfectedNoSymptomsToRecovered for -global_support_max, ..., 0.</span></div>
-<div class="line"><a name="l00375"></a><span class="lineno">  375</span>&#160;        <span class="comment">// If we previously calculated the transition ExposedToInfectedNoSymptoms, we can calculate this transition</span></div>
-<div class="line"><a name="l00376"></a><span class="lineno">  376</span>&#160;        <span class="comment">// using the standard formula.</span></div>
-<div class="line"><a name="l00377"></a><span class="lineno">  377</span>&#160;        <span class="keywordflow">for</span> (Eigen::Index i = -global_support_max_index; i &lt;= 0; i++) {</div>
-<div class="line"><a name="l00378"></a><span class="lineno">  378</span>&#160;            model.compute_flow(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a4f14780a8c65d099644db2258a6b01ad">InfectionTransition::InfectedNoSymptomsToRecovered</a>),</div>
-<div class="line"><a name="l00379"></a><span class="lineno">  379</span>&#160;                               Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73af4a620103ad10d8ba92e1821ed7d9ae6">InfectionTransition::ExposedToInfectedNoSymptoms</a>), dt, i + start_shift,</div>
-<div class="line"><a name="l00380"></a><span class="lineno">  380</span>&#160;                               group);</div>
-<div class="line"><a name="l00381"></a><span class="lineno">  381</span>&#160;        }</div>
-<div class="line"><a name="l00382"></a><span class="lineno">  382</span>&#160;    }</div>
-<div class="line"><a name="l00383"></a><span class="lineno">  383</span>&#160; </div>
-<div class="line"><a name="l00384"></a><span class="lineno">  384</span>&#160;    <span class="comment">// At the end of the calculation, delete all time points that are not required for the simulation.</span></div>
-<div class="line"><a name="l00385"></a><span class="lineno">  385</span>&#160;    <span class="keyword">auto</span> transition_copy(model.transitions);</div>
-<div class="line"><a name="l00386"></a><span class="lineno">  386</span>&#160;    model.transitions = TimeSeries&lt;ScalarType&gt;(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73ae93f994f01c537c4e2f7d8528c3eb5e9">InfectionTransition::Count</a>) * num_age_groups);</div>
-<div class="line"><a name="l00387"></a><span class="lineno">  387</span>&#160;    <span class="keywordflow">for</span> (Eigen::Index i = -global_support_max_index; i &lt;= 0; i++) {</div>
-<div class="line"><a name="l00388"></a><span class="lineno">  388</span>&#160;        model.transitions.add_time_point(i * dt, transition_copy.get_value(i + start_shift));</div>
-<div class="line"><a name="l00389"></a><span class="lineno">  389</span>&#160;    }</div>
+<div class="line"><a name="l00317"></a><span class="lineno">  317</span>&#160;        <span class="comment">// Compute flows from InfectedSymptoms, InfectedSevere and InfectedCritical to Recovered and</span></div>
+<div class="line"><a name="l00318"></a><span class="lineno">  318</span>&#160;        <span class="comment">// flow InfectedCriticalToDead for -global_support_max, ..., 0.</span></div>
+<div class="line"><a name="l00319"></a><span class="lineno">  319</span>&#160;        <span class="keywordflow">for</span> (Eigen::Index i = -global_support_max_index; i &lt;= 0; i++) {</div>
+<div class="line"><a name="l00320"></a><span class="lineno">  320</span>&#160;            <span class="comment">// Compute flow InfectedSymptomsToRecovered.</span></div>
+<div class="line"><a name="l00321"></a><span class="lineno">  321</span>&#160;            model.compute_flow(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73aeb31ce0ece5464f33dc4a7f572b463e3">InfectionTransition::InfectedSymptomsToRecovered</a>),</div>
+<div class="line"><a name="l00322"></a><span class="lineno">  322</span>&#160;                               Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a6dbf4828958ffa97ea6581a4edb56b0f">InfectionTransition::InfectedNoSymptomsToInfectedSymptoms</a>), dt,</div>
+<div class="line"><a name="l00323"></a><span class="lineno">  323</span>&#160;                               i + start_shift, group);</div>
+<div class="line"><a name="l00324"></a><span class="lineno">  324</span>&#160;            <span class="comment">// Compute flow InfectedSevereToRecovered.</span></div>
+<div class="line"><a name="l00325"></a><span class="lineno">  325</span>&#160;            model.compute_flow(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73ac5220be9dd2daeddc482536a285ee4a3">InfectionTransition::InfectedSevereToRecovered</a>),</div>
+<div class="line"><a name="l00326"></a><span class="lineno">  326</span>&#160;                               Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a27947a571925e9e6ba2fd3b8540a0734">InfectionTransition::InfectedSymptomsToInfectedSevere</a>), dt, i + start_shift,</div>
+<div class="line"><a name="l00327"></a><span class="lineno">  327</span>&#160;                               group);</div>
+<div class="line"><a name="l00328"></a><span class="lineno">  328</span>&#160;            <span class="comment">// Compute flow InfectedCriticalToRecovered.</span></div>
+<div class="line"><a name="l00329"></a><span class="lineno">  329</span>&#160;            model.compute_flow(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a0c3104e0fed343eb5f3af8f5a3a9cc11">InfectionTransition::InfectedCriticalToRecovered</a>),</div>
+<div class="line"><a name="l00330"></a><span class="lineno">  330</span>&#160;                               Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a04301a61e2338f340884a0ac0eb855d1">InfectionTransition::InfectedSevereToInfectedCritical</a>), dt, i + start_shift,</div>
+<div class="line"><a name="l00331"></a><span class="lineno">  331</span>&#160;                               group);</div>
+<div class="line"><a name="l00332"></a><span class="lineno">  332</span>&#160;            <span class="comment">// Compute flow InfectedCriticalToDead.</span></div>
+<div class="line"><a name="l00333"></a><span class="lineno">  333</span>&#160;            model.compute_flow(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73ae83010ab1a9dfc257581f32b7e8e1819">InfectionTransition::InfectedCriticalToDead</a>),</div>
+<div class="line"><a name="l00334"></a><span class="lineno">  334</span>&#160;                               Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a04301a61e2338f340884a0ac0eb855d1">InfectionTransition::InfectedSevereToInfectedCritical</a>), dt, i + start_shift,</div>
+<div class="line"><a name="l00335"></a><span class="lineno">  335</span>&#160;                               group);</div>
+<div class="line"><a name="l00336"></a><span class="lineno">  336</span>&#160;        }</div>
+<div class="line"><a name="l00337"></a><span class="lineno">  337</span>&#160; </div>
+<div class="line"><a name="l00338"></a><span class="lineno">  338</span>&#160;        <span class="comment">//--- Calculate the remaining flows. ---</span></div>
+<div class="line"><a name="l00339"></a><span class="lineno">  339</span>&#160;        <span class="comment">// Compute flow ExposedToInfectedNoSymptoms for -2 * global_support_max, ..., 0.</span></div>
+<div class="line"><a name="l00340"></a><span class="lineno">  340</span>&#160;        <span class="comment">// Use mean value of the TransitionDistribution InfectedNoSymptomsToInfectedSymptoms for the calculation.</span></div>
+<div class="line"><a name="l00341"></a><span class="lineno">  341</span>&#160; </div>
+<div class="line"><a name="l00342"></a><span class="lineno">  342</span>&#160;        Eigen::Index index_shift_mean = Eigen::Index(std::round(mean_InfectedNoSymptomsToInfectedSymptoms[group] / dt));</div>
+<div class="line"><a name="l00343"></a><span class="lineno">  343</span>&#160;        <span class="keywordtype">int</span> EtINSi =</div>
+<div class="line"><a name="l00344"></a><span class="lineno">  344</span>&#160;            model.get_transition_flat_index(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73af4a620103ad10d8ba92e1821ed7d9ae6">InfectionTransition::ExposedToInfectedNoSymptoms</a>), group);</div>
+<div class="line"><a name="l00345"></a><span class="lineno">  345</span>&#160;        <span class="keywordtype">int</span> INStISyi = model.get_transition_flat_index(</div>
+<div class="line"><a name="l00346"></a><span class="lineno">  346</span>&#160;            Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a6dbf4828958ffa97ea6581a4edb56b0f">InfectionTransition::InfectedNoSymptomsToInfectedSymptoms</a>), group);</div>
+<div class="line"><a name="l00347"></a><span class="lineno">  347</span>&#160;        <span class="keywordflow">for</span> (Eigen::Index i = -2 * global_support_max_index; i &lt;= 0; i++) {</div>
+<div class="line"><a name="l00348"></a><span class="lineno">  348</span>&#160;            model.transitions[i + start_shift][EtINSi] =</div>
+<div class="line"><a name="l00349"></a><span class="lineno">  349</span>&#160;                (1 / model.parameters.get&lt;TransitionProbabilities&gt;()[group][Eigen::Index(</div>
+<div class="line"><a name="l00350"></a><span class="lineno">  350</span>&#160;                         <a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a6dbf4828958ffa97ea6581a4edb56b0f">InfectionTransition::InfectedNoSymptomsToInfectedSymptoms</a>)]) *</div>
+<div class="line"><a name="l00351"></a><span class="lineno">  351</span>&#160;                model.transitions[i + start_shift + index_shift_mean][INStISyi];</div>
+<div class="line"><a name="l00352"></a><span class="lineno">  352</span>&#160;        }</div>
+<div class="line"><a name="l00353"></a><span class="lineno">  353</span>&#160; </div>
+<div class="line"><a name="l00354"></a><span class="lineno">  354</span>&#160;        <span class="comment">// Compute flow SusceptibleToExposed for -global_support_max, ..., 0.</span></div>
+<div class="line"><a name="l00355"></a><span class="lineno">  355</span>&#160;        <span class="comment">// Use mean values of the TransitionDistribution ExposedToInfectedNoSymptoms and of the</span></div>
+<div class="line"><a name="l00356"></a><span class="lineno">  356</span>&#160;        <span class="comment">// TransitionDistribution InfectedNoSymptomsToInfectedSymptoms for the calculation.</span></div>
+<div class="line"><a name="l00357"></a><span class="lineno">  357</span>&#160;        index_shift_mean = Eigen::Index(std::round(</div>
+<div class="line"><a name="l00358"></a><span class="lineno">  358</span>&#160;            (mean_ExposedToInfectedNoSymptoms[group] + mean_InfectedNoSymptomsToInfectedSymptoms[group]) / dt));</div>
+<div class="line"><a name="l00359"></a><span class="lineno">  359</span>&#160;        <span class="keywordtype">int</span> StEi = model.get_transition_flat_index(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73ad223e739ddae9da49d87ec2efb8b24d1">InfectionTransition::SusceptibleToExposed</a>), group);</div>
+<div class="line"><a name="l00360"></a><span class="lineno">  360</span>&#160; </div>
+<div class="line"><a name="l00361"></a><span class="lineno">  361</span>&#160;        <span class="keywordflow">for</span> (Eigen::Index i = -global_support_max_index; i &lt;= 0; i++) {</div>
+<div class="line"><a name="l00362"></a><span class="lineno">  362</span>&#160;            model.transitions[i + start_shift][StEi] =</div>
+<div class="line"><a name="l00363"></a><span class="lineno">  363</span>&#160;                (1 / model.parameters.get&lt;TransitionProbabilities&gt;()[group][Eigen::Index(</div>
+<div class="line"><a name="l00364"></a><span class="lineno">  364</span>&#160;                         <a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a6dbf4828958ffa97ea6581a4edb56b0f">InfectionTransition::InfectedNoSymptomsToInfectedSymptoms</a>)]) *</div>
+<div class="line"><a name="l00365"></a><span class="lineno">  365</span>&#160;                model.transitions[i + start_shift + index_shift_mean][INStISyi];</div>
+<div class="line"><a name="l00366"></a><span class="lineno">  366</span>&#160;        }</div>
+<div class="line"><a name="l00367"></a><span class="lineno">  367</span>&#160; </div>
+<div class="line"><a name="l00368"></a><span class="lineno">  368</span>&#160;        <span class="comment">// InfectedNoSymptomsToRecovered for -global_support_max, ..., 0.</span></div>
+<div class="line"><a name="l00369"></a><span class="lineno">  369</span>&#160;        <span class="comment">// If we previously calculated the transition ExposedToInfectedNoSymptoms, we can calculate this transition</span></div>
+<div class="line"><a name="l00370"></a><span class="lineno">  370</span>&#160;        <span class="comment">// using the standard formula.</span></div>
+<div class="line"><a name="l00371"></a><span class="lineno">  371</span>&#160;        <span class="keywordflow">for</span> (Eigen::Index i = -global_support_max_index; i &lt;= 0; i++) {</div>
+<div class="line"><a name="l00372"></a><span class="lineno">  372</span>&#160;            model.compute_flow(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73a4f14780a8c65d099644db2258a6b01ad">InfectionTransition::InfectedNoSymptomsToRecovered</a>),</div>
+<div class="line"><a name="l00373"></a><span class="lineno">  373</span>&#160;                               Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73af4a620103ad10d8ba92e1821ed7d9ae6">InfectionTransition::ExposedToInfectedNoSymptoms</a>), dt, i + start_shift,</div>
+<div class="line"><a name="l00374"></a><span class="lineno">  374</span>&#160;                               group);</div>
+<div class="line"><a name="l00375"></a><span class="lineno">  375</span>&#160;        }</div>
+<div class="line"><a name="l00376"></a><span class="lineno">  376</span>&#160;    }</div>
+<div class="line"><a name="l00377"></a><span class="lineno">  377</span>&#160; </div>
+<div class="line"><a name="l00378"></a><span class="lineno">  378</span>&#160;    <span class="comment">// At the end of the calculation, delete all time points that are not required for the simulation.</span></div>
+<div class="line"><a name="l00379"></a><span class="lineno">  379</span>&#160;    <span class="keyword">auto</span> transition_copy(model.transitions);</div>
+<div class="line"><a name="l00380"></a><span class="lineno">  380</span>&#160;    model.transitions = TimeSeries&lt;ScalarType&gt;(Eigen::Index(<a class="code" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73ae93f994f01c537c4e2f7d8528c3eb5e9">InfectionTransition::Count</a>) * num_age_groups);</div>
+<div class="line"><a name="l00381"></a><span class="lineno">  381</span>&#160;    <span class="keywordflow">for</span> (Eigen::Index i = -global_support_max_index; i &lt;= 0; i++) {</div>
+<div class="line"><a name="l00382"></a><span class="lineno">  382</span>&#160;        model.transitions.add_time_point(i * dt, transition_copy.get_value(i + start_shift));</div>
+<div class="line"><a name="l00383"></a><span class="lineno">  383</span>&#160;    }</div>
+<div class="line"><a name="l00384"></a><span class="lineno">  384</span>&#160; </div>
+<div class="line"><a name="l00385"></a><span class="lineno">  385</span>&#160;    <span class="keywordflow">return</span> <a class="code" href="namespacemio.html#a80d7fd30c9669e05b537b2caedd82bb8">mio::success</a>();</div>
+<div class="line"><a name="l00386"></a><span class="lineno">  386</span>&#160;}</div>
+<div class="line"><a name="l00387"></a><span class="lineno">  387</span>&#160; </div>
+<div class="line"><a name="l00388"></a><span class="lineno">  388</span>&#160;} <span class="comment">// namespace isecir</span></div>
+<div class="line"><a name="l00389"></a><span class="lineno">  389</span>&#160;} <span class="comment">// namespace mio</span></div>
 <div class="line"><a name="l00390"></a><span class="lineno">  390</span>&#160; </div>
-<div class="line"><a name="l00391"></a><span class="lineno">  391</span>&#160;    <span class="keywordflow">return</span> <a class="code" href="namespacemio.html#a80d7fd30c9669e05b537b2caedd82bb8">mio::success</a>();</div>
-<div class="line"><a name="l00392"></a><span class="lineno">  392</span>&#160;}</div>
-<div class="line"><a name="l00393"></a><span class="lineno">  393</span>&#160; </div>
-<div class="line"><a name="l00394"></a><span class="lineno">  394</span>&#160;} <span class="comment">// namespace isecir</span></div>
-<div class="line"><a name="l00395"></a><span class="lineno">  395</span>&#160;} <span class="comment">// namespace mio</span></div>
-<div class="line"><a name="l00396"></a><span class="lineno">  396</span>&#160; </div>
-<div class="line"><a name="l00397"></a><span class="lineno">  397</span>&#160;<span class="preprocessor">#endif </span><span class="comment">// MEMILIO_HAS_JSONCPP</span></div>
-<div class="line"><a name="l00398"></a><span class="lineno">  398</span>&#160; </div>
-<div class="line"><a name="l00399"></a><span class="lineno">  399</span>&#160;<span class="preprocessor">#endif </span><span class="comment">// IDE_INITIALFLOWS_H</span></div>
+<div class="line"><a name="l00391"></a><span class="lineno">  391</span>&#160;<span class="preprocessor">#endif </span><span class="comment">// MEMILIO_HAS_JSONCPP</span></div>
+<div class="line"><a name="l00392"></a><span class="lineno">  392</span>&#160; </div>
+<div class="line"><a name="l00393"></a><span class="lineno">  393</span>&#160;<span class="preprocessor">#endif </span><span class="comment">// IDE_INITIALFLOWS_H</span></div>
 <div class="ttc" id="aage__group_8h_html"><div class="ttname"><a href="age__group_8h.html">age_group.h</a></div></div>
 <div class="ttc" id="adate_8h_html"><div class="ttname"><a href="date_8h.html">date.h</a></div></div>
 <div class="ttc" id="aepi__data_8h_html"><div class="ttname"><a href="epi__data_8h.html">epi_data.h</a></div></div>
@@ -467,13 +461,10 @@ $(function() {
 <div class="ttc" id="anamespacemio_html_a2799d348d433018d5b183d75bfbdd699ade9a4832789ef70d5f9bee2a83345e8a"><div class="ttname"><a href="namespacemio.html#a2799d348d433018d5b183d75bfbdd699ade9a4832789ef70d5f9bee2a83345e8a">mio::StatusCode::InvalidFileFormat</a></div><div class="ttdeci">@ InvalidFileFormat</div></div>
 <div class="ttc" id="anamespacemio_html_a34f961d5004bf46cf1cee1133671f8bc"><div class="ttname"><a href="namespacemio.html#a34f961d5004bf46cf1cee1133671f8bc">mio::log_warning</a></div><div class="ttdeci">void log_warning(spdlog::string_view_t fmt, const Args &amp;... args)</div><div class="ttdef"><b>Definition:</b> logging.h:107</div></div>
 <div class="ttc" id="anamespacemio_html_a80d7fd30c9669e05b537b2caedd82bb8"><div class="ttname"><a href="namespacemio.html#a80d7fd30c9669e05b537b2caedd82bb8">mio::success</a></div><div class="ttdeci">auto success()</div><div class="ttdoc">Create an object that is implicitly convertible to a succesful IOResult&lt;void&gt;.</div><div class="ttdef"><b>Definition:</b> io.h:355</div></div>
-<div class="ttc" id="anamespacemio_html_a836ec51b48f63ad6dca0724e9f5b28d8"><div class="ttname"><a href="namespacemio.html#a836ec51b48f63ad6dca0724e9f5b28d8">mio::get_offset_in_days</a></div><div class="ttdeci">int get_offset_in_days(Date date1, Date date2)</div><div class="ttdoc">Computes the offset in days given two dates: first date minus second date.</div><div class="ttdef"><b>Definition:</b> date.h:284</div></div>
+<div class="ttc" id="anamespacemio_html_a836ec51b48f63ad6dca0724e9f5b28d8"><div class="ttname"><a href="namespacemio.html#a836ec51b48f63ad6dca0724e9f5b28d8">mio::get_offset_in_days</a></div><div class="ttdeci">int get_offset_in_days(Date date1, Date date2)</div><div class="ttdoc">Computes the offset in days given two dates: first date minus second date.</div><div class="ttdef"><b>Definition:</b> date.h:310</div></div>
 <div class="ttc" id="anamespacemio_html_a89afc3ebfa2c5ab994ec3c76dcad85d1"><div class="ttname"><a href="namespacemio.html#a89afc3ebfa2c5ab994ec3c76dcad85d1">mio::log_error</a></div><div class="ttdeci">void log_error(spdlog::string_view_t fmt, const Args &amp;... args)</div><div class="ttdef"><b>Definition:</b> logging.h:101</div></div>
-<div class="ttc" id="anamespacemio_html_abebb31121953c36c5b5b42976df8bcad"><div class="ttname"><a href="namespacemio.html#abebb31121953c36c5b5b42976df8bcad">mio::offset_date_by_days</a></div><div class="ttdeci">Date offset_date_by_days(Date date, int offset_days)</div><div class="ttdoc">Computes the new date corresponding to a given date and a offset in days.</div><div class="ttdef"><b>Definition:</b> date.h:216</div></div>
-<div class="ttc" id="astructmio_1_1Date_html"><div class="ttname"><a href="structmio_1_1Date.html">mio::Date</a></div><div class="ttdoc">Simple date representation as year, month, and day.</div><div class="ttdef"><b>Definition:</b> date.h:49</div></div>
-<div class="ttc" id="astructmio_1_1Date_html_a431a83d3905d741fb09855a1db90d931"><div class="ttname"><a href="structmio_1_1Date.html#a431a83d3905d741fb09855a1db90d931">mio::Date::month</a></div><div class="ttdeci">int month</div><div class="ttdef"><b>Definition:</b> date.h:153</div></div>
-<div class="ttc" id="astructmio_1_1Date_html_ab171e645aefa796cc0d4980b5e7b40c8"><div class="ttname"><a href="structmio_1_1Date.html#ab171e645aefa796cc0d4980b5e7b40c8">mio::Date::year</a></div><div class="ttdeci">int year</div><div class="ttdef"><b>Definition:</b> date.h:152</div></div>
-<div class="ttc" id="astructmio_1_1Date_html_ab3925ea9564606bcab110d7da21a8105"><div class="ttname"><a href="structmio_1_1Date.html#ab3925ea9564606bcab110d7da21a8105">mio::Date::day</a></div><div class="ttdeci">int day</div><div class="ttdef"><b>Definition:</b> date.h:154</div></div>
+<div class="ttc" id="anamespacemio_html_abebb31121953c36c5b5b42976df8bcad"><div class="ttname"><a href="namespacemio.html#abebb31121953c36c5b5b42976df8bcad">mio::offset_date_by_days</a></div><div class="ttdeci">Date offset_date_by_days(Date date, int offset_days)</div><div class="ttdoc">Computes the new date corresponding to a given date and a offset in days.</div><div class="ttdef"><b>Definition:</b> date.h:242</div></div>
+<div class="ttc" id="astructmio_1_1Date_html"><div class="ttname"><a href="structmio_1_1Date.html">mio::Date</a></div><div class="ttdoc">Simple date representation as year, month, and day.</div><div class="ttdef"><b>Definition:</b> date.h:50</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

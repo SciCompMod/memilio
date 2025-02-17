@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-02-13 16:21:13</td>
+            <td class="headerValue">2025-02-17 12:27:02</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">7</td>
@@ -135,12 +135,12 @@
 <a name="73"><span class="lineNum">      73 </span>            : </a>
 <a name="74"><span class="lineNum">      74 </span>            :     //interpolate between pair of time points that lie on either side of each interpolation point</a>
 <a name="75"><span class="lineNum">      75 </span><span class="lineCov">        132 :     for (Eigen::Index sim_idx = 0;</span></a>
-<a name="76"><span class="lineNum">      76 </span><span class="lineCov">      13784 :          sim_idx &lt; simulation_result.get_num_time_points() - 1 &amp;&amp; interp_idx &lt; interpolation_times.size();) {</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">      13781 :          sim_idx &lt; simulation_result.get_num_time_points() - 1 &amp;&amp; interp_idx &lt; interpolation_times.size();) {</span></a>
 <a name="77"><span class="lineNum">      77 </span>            :         //only go to next pair of time points if no time point is added.</a>
 <a name="78"><span class="lineNum">      78 </span>            :         //otherwise check the same time points again</a>
 <a name="79"><span class="lineNum">      79 </span>            :         //in case there is more than one interpolation point between the two time points</a>
-<a name="80"><span class="lineNum">      80 </span><span class="lineCov">      27304 :         if (simulation_result.get_time(sim_idx) &lt; interpolation_times[interp_idx] &amp;&amp;</span></a>
-<a name="81"><span class="lineNum">      81 </span><span class="lineCov">      13652 :             simulation_result.get_time(sim_idx + 1) &gt;= interpolation_times[interp_idx]) {</span></a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineCov">      27298 :         if (simulation_result.get_time(sim_idx) &lt; interpolation_times[interp_idx] &amp;&amp;</span></a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineCov">      13649 :             simulation_result.get_time(sim_idx + 1) &gt;= interpolation_times[interp_idx]) {</span></a>
 <a name="82"><span class="lineNum">      82 </span><span class="lineCov">       4170 :             interpolated.add_time_point(</span></a>
 <a name="83"><span class="lineNum">      83 </span><span class="lineCov">       2085 :                 interpolation_times[interp_idx],</span></a>
 <a name="84"><span class="lineNum">      84 </span><span class="lineCov">       6255 :                 linear_interpolation(interpolation_times[interp_idx], simulation_result.get_time(sim_idx),</span></a>
@@ -149,7 +149,7 @@
 <a name="87"><span class="lineNum">      87 </span><span class="lineCov">       2085 :             ++interp_idx;</span></a>
 <a name="88"><span class="lineNum">      88 </span>            :         }</a>
 <a name="89"><span class="lineNum">      89 </span>            :         else {</a>
-<a name="90"><span class="lineNum">      90 </span><span class="lineCov">      11567 :             ++sim_idx;</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">      11564 :             ++sim_idx;</span></a>
 <a name="91"><span class="lineNum">      91 </span>            :         }</a>
 <a name="92"><span class="lineNum">      92 </span>            :     }</a>
 <a name="93"><span class="lineNum">      93 </span>            : </a>

@@ -196,35 +196,35 @@ $(function() {
 <div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;            }</div>
 <div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;        }</div>
 <div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;        <span class="keywordflow">else</span> {</div>
-<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;            <a class="code" href="namespacemio.html#a34f961d5004bf46cf1cee1133671f8bc">log_warning</a>(<span class="stringliteral">&quot;No infections reported on date &quot;</span> + std::to_string(date.year) + <span class="stringliteral">&quot;-&quot;</span> +</div>
-<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;                        std::to_string(date.month) + <span class="stringliteral">&quot;-&quot;</span> + std::to_string(date.day) + <span class="stringliteral">&quot; for region &quot;</span> +</div>
-<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;                        std::to_string(region[node]) + <span class="stringliteral">&quot;. Population data has not been set.&quot;</span>);</div>
-<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;        }</div>
-<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;    }</div>
-<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;    <span class="keywordflow">return</span> <a class="code" href="namespacemio.html#a80d7fd30c9669e05b537b2caedd82bb8">success</a>();</div>
-<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;}</div>
-<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160; </div>
-<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span> FP = <span class="keywordtype">double</span>&gt;</div>
-<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;IOResult&lt;void&gt; set_confirmed_cases_data(std::vector&lt;Model&lt;FP&gt;&gt;&amp; model, <span class="keyword">const</span> std::string&amp; path,</div>
-<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;                                        std::vector&lt;int&gt; <span class="keyword">const</span>&amp; region, Date date,</div>
-<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;                                        <span class="keyword">const</span> std::vector&lt;double&gt;&amp; scaling_factor_inf)</div>
-<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;{</div>
-<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;    BOOST_OUTCOME_TRY(<span class="keyword">auto</span>&amp;&amp; case_data, mio::read_confirmed_cases_data(path));</div>
-<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;    BOOST_OUTCOME_TRY(set_confirmed_cases_data(model, case_data, region, date, scaling_factor_inf));</div>
-<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;    <span class="keywordflow">return</span> <a class="code" href="namespacemio.html#a80d7fd30c9669e05b537b2caedd82bb8">success</a>();</div>
-<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;}</div>
-<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160; </div>
-<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;IOResult&lt;void&gt; read_divi_data(<span class="keyword">const</span> std::string&amp; path, <span class="keyword">const</span> std::vector&lt;int&gt;&amp; vregion, Date date,</div>
-<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;                              std::vector&lt;double&gt;&amp; vnum_icu);</div>
-<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160; </div>
-<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span> FP = <span class="keywordtype">double</span>&gt;</div>
-<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;IOResult&lt;void&gt; set_divi_data(std::vector&lt;Model&lt;FP&gt;&gt;&amp; model, <span class="keyword">const</span> std::string&amp; path, <span class="keyword">const</span> std::vector&lt;int&gt;&amp; vregion,</div>
-<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;                             Date date, <span class="keywordtype">double</span> scaling_factor_icu)</div>
-<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;{</div>
-<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;    <span class="comment">// DIVI dataset will no longer be updated from CW29 2024 on.</span></div>
-<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;    <span class="keywordflow">if</span> (!is_divi_data_available(date)) {</div>
-<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;        <a class="code" href="namespacemio.html#a34f961d5004bf46cf1cee1133671f8bc">log_warning</a>(<span class="stringliteral">&quot;No DIVI data available for date: {}-{}-{}&quot;</span>, date.year, date.month, date.day,</div>
-<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;                    <span class="stringliteral">&quot;. ICU compartment will be set based on Case data.&quot;</span>);</div>
+<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;            <a class="code" href="namespacemio.html#a34f961d5004bf46cf1cee1133671f8bc">log_warning</a>(<span class="stringliteral">&quot;No infections reported on date {} for region {}. Population data has not been set.&quot;</span>, date,</div>
+<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;                        region[node]);</div>
+<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;        }</div>
+<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;    }</div>
+<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;    <span class="keywordflow">return</span> <a class="code" href="namespacemio.html#a80d7fd30c9669e05b537b2caedd82bb8">success</a>();</div>
+<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;}</div>
+<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160; </div>
+<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span> FP = <span class="keywordtype">double</span>&gt;</div>
+<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;IOResult&lt;void&gt; set_confirmed_cases_data(std::vector&lt;Model&lt;FP&gt;&gt;&amp; model, <span class="keyword">const</span> std::string&amp; path,</div>
+<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;                                        std::vector&lt;int&gt; <span class="keyword">const</span>&amp; region, Date date,</div>
+<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;                                        <span class="keyword">const</span> std::vector&lt;double&gt;&amp; scaling_factor_inf)</div>
+<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;{</div>
+<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;    BOOST_OUTCOME_TRY(<span class="keyword">auto</span>&amp;&amp; case_data, mio::read_confirmed_cases_data(path));</div>
+<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;    BOOST_OUTCOME_TRY(set_confirmed_cases_data(model, case_data, region, date, scaling_factor_inf));</div>
+<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;    <span class="keywordflow">return</span> <a class="code" href="namespacemio.html#a80d7fd30c9669e05b537b2caedd82bb8">success</a>();</div>
+<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;}</div>
+<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160; </div>
+<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;IOResult&lt;void&gt; read_divi_data(<span class="keyword">const</span> std::string&amp; path, <span class="keyword">const</span> std::vector&lt;int&gt;&amp; vregion, Date date,</div>
+<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;                              std::vector&lt;double&gt;&amp; vnum_icu);</div>
+<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160; </div>
+<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span> FP = <span class="keywordtype">double</span>&gt;</div>
+<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;IOResult&lt;void&gt; set_divi_data(std::vector&lt;Model&lt;FP&gt;&gt;&amp; model, <span class="keyword">const</span> std::string&amp; path, <span class="keyword">const</span> std::vector&lt;int&gt;&amp; vregion,</div>
+<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;                             Date date, <span class="keywordtype">double</span> scaling_factor_icu)</div>
+<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;{</div>
+<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;    <span class="comment">// DIVI dataset will no longer be updated from CW29 2024 on.</span></div>
+<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;    <span class="keywordflow">if</span> (!is_divi_data_available(date)) {</div>
+<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;        <a class="code" href="namespacemio.html#a34f961d5004bf46cf1cee1133671f8bc">log_warning</a>(<span class="stringliteral">&quot;No DIVI data available for date: {}. &quot;</span></div>
+<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;                    <span class="stringliteral">&quot;ICU compartment will be set based on Case data.&quot;</span>,</div>
+<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;                    date);</div>
 <div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="namespacemio.html#a80d7fd30c9669e05b537b2caedd82bb8">success</a>();</div>
 <div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;    }</div>
 <div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;    std::vector&lt;double&gt; sum_mu_I_U(vregion.size(), 0);</div>
@@ -443,7 +443,7 @@ $(function() {
 <div class="ttc" id="anamespacemio_html_a80d7fd30c9669e05b537b2caedd82bb8"><div class="ttname"><a href="namespacemio.html#a80d7fd30c9669e05b537b2caedd82bb8">mio::success</a></div><div class="ttdeci">auto success()</div><div class="ttdoc">Create an object that is implicitly convertible to a succesful IOResult&lt;void&gt;.</div><div class="ttdef"><b>Definition:</b> io.h:355</div></div>
 <div class="ttc" id="anamespacemio_html_a81e603f62801572c7afdf910bc057681"><div class="ttname"><a href="namespacemio.html#a81e603f62801572c7afdf910bc057681">mio::end</a></div><div class="ttdeci">std::enable_if_t&lt; conjunction_v&lt; std::is_base_of&lt; Eigen::EigenBase&lt; M &gt;, M &gt;, details::IsElementReference&lt; M &gt; &gt;, RowMajorIterator&lt; M, false &gt; &gt; end(M &amp;m)</div><div class="ttdoc">create a non-const end iterator for the matrix m.</div><div class="ttdef"><b>Definition:</b> eigen_util.h:452</div></div>
 <div class="ttc" id="anamespacemio_html_aa6c974748a742fac0093de2634750791"><div class="ttname"><a href="namespacemio.html#aa6c974748a742fac0093de2634750791">mio::begin</a></div><div class="ttdeci">std::enable_if_t&lt; conjunction_v&lt; std::is_base_of&lt; Eigen::EigenBase&lt; M &gt;, M &gt;, details::IsElementReference&lt; M &gt; &gt;, RowMajorIterator&lt; M, false &gt; &gt; begin(M &amp;m)</div><div class="ttdoc">create a non-const iterator to first element of the matrix m.</div><div class="ttdef"><b>Definition:</b> eigen_util.h:423</div></div>
-<div class="ttc" id="anamespacemio_html_abebb31121953c36c5b5b42976df8bcad"><div class="ttname"><a href="namespacemio.html#abebb31121953c36c5b5b42976df8bcad">mio::offset_date_by_days</a></div><div class="ttdeci">Date offset_date_by_days(Date date, int offset_days)</div><div class="ttdoc">Computes the new date corresponding to a given date and a offset in days.</div><div class="ttdef"><b>Definition:</b> date.h:216</div></div>
+<div class="ttc" id="anamespacemio_html_abebb31121953c36c5b5b42976df8bcad"><div class="ttname"><a href="namespacemio.html#abebb31121953c36c5b5b42976df8bcad">mio::offset_date_by_days</a></div><div class="ttdeci">Date offset_date_by_days(Date date, int offset_days)</div><div class="ttdoc">Computes the new date corresponding to a given date and a offset in days.</div><div class="ttdef"><b>Definition:</b> date.h:242</div></div>
 <div class="ttc" id="anamespacemio_html_ad5d271b1fc1bc5f9ef54eb91c695f239"><div class="ttname"><a href="namespacemio.html#ad5d271b1fc1bc5f9ef54eb91c695f239">mio::path_join</a></div><div class="ttdeci">std::string path_join(String &amp;&amp;base, Strings &amp;&amp;... app)</div><div class="ttdoc">join one ore more strings with path separators.</div><div class="ttdef"><b>Definition:</b> stl_util.h:256</div></div>
 <div class="ttc" id="aode__secir_2model_8h_html"><div class="ttname"><a href="ode__secir_2model_8h.html">model.h</a></div></div>
 <div class="ttc" id="aresult__io_8h_html"><div class="ttname"><a href="result__io_8h.html">result_io.h</a></div></div>

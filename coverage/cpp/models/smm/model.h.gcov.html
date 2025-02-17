@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-02-13 16:21:13</td>
+            <td class="headerValue">2025-02-17 12:27:02</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">6</td>
@@ -149,19 +149,19 @@
 <a name="87"><span class="lineNum">      87 </span>            :      * @param[in] x The current state of the model.</a>
 <a name="88"><span class="lineNum">      88 </span>            :      * @return Current value of the transition rate.</a>
 <a name="89"><span class="lineNum">      89 </span>            :      */</a>
-<a name="90"><span class="lineNum">      90 </span><span class="lineCov">      18249 :     ScalarType evaluate(const TransitionRate&lt;Status&gt;&amp; rate, const Eigen::VectorXd&amp; x) const</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">      18375 :     ScalarType evaluate(const TransitionRate&lt;Status&gt;&amp; rate, const Eigen::VectorXd&amp; x) const</span></a>
 <a name="91"><span class="lineNum">      91 </span>            :     {</a>
-<a name="92"><span class="lineNum">      92 </span><span class="lineCov">      18249 :         const auto source = this-&gt;populations.get_flat_index({rate.from, rate.status});</span></a>
-<a name="93"><span class="lineNum">      93 </span><span class="lineCov">      18249 :         return rate.factor * x[source];</span></a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineCov">      18375 :         const auto source = this-&gt;populations.get_flat_index({rate.from, rate.status});</span></a>
+<a name="93"><span class="lineNum">      93 </span><span class="lineCov">      18375 :         return rate.factor * x[source];</span></a>
 <a name="94"><span class="lineNum">      94 </span>            :     }</a>
 <a name="95"><span class="lineNum">      95 </span>            : </a>
 <a name="96"><span class="lineNum">      96 </span>            :     /**</a>
 <a name="97"><span class="lineNum">      97 </span>            :     * Get the RandomNumberGenerator used by this Model for random events.</a>
 <a name="98"><span class="lineNum">      98 </span>            :     * @return The random number generator.</a>
 <a name="99"><span class="lineNum">      99 </span>            :     */</a>
-<a name="100"><span class="lineNum">     100 </span><span class="lineCov">      18254 :     mio::RandomNumberGenerator&amp; get_rng()</span></a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineCov">      18380 :     mio::RandomNumberGenerator&amp; get_rng()</span></a>
 <a name="101"><span class="lineNum">     101 </span>            :     {</a>
-<a name="102"><span class="lineNum">     102 </span><span class="lineCov">      18254 :         return m_rng;</span></a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineCov">      18380 :         return m_rng;</span></a>
 <a name="103"><span class="lineNum">     103 </span>            :     }</a>
 <a name="104"><span class="lineNum">     104 </span>            : </a>
 <a name="105"><span class="lineNum">     105 </span>            : private:</a>

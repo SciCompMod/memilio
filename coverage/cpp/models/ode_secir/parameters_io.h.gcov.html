@@ -31,13 +31,13 @@
             <td class="headerValue">coverage.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntry">144</td>
-            <td class="headerCovTableEntry">150</td>
+            <td class="headerCovTableEntry">143</td>
+            <td class="headerCovTableEntry">149</td>
             <td class="headerCovTableEntryHi">96.0 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-02-13 16:21:13</td>
+            <td class="headerValue">2025-02-17 12:27:02</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">10</td>
@@ -205,61 +205,61 @@
 <a name="143"><span class="lineNum">     143 </span>            :             }</a>
 <a name="144"><span class="lineNum">     144 </span>            :         }</a>
 <a name="145"><span class="lineNum">     145 </span>            :         else {</a>
-<a name="146"><span class="lineNum">     146 </span><span class="lineCov">         36 :             log_warning(&quot;No infections reported on date &quot; + std::to_string(date.year) + &quot;-&quot; +</span></a>
-<a name="147"><span class="lineNum">     147 </span>            :                         std::to_string(date.month) + &quot;-&quot; + std::to_string(date.day) + &quot; for region &quot; +</a>
-<a name="148"><span class="lineNum">     148 </span><span class="lineCov">         18 :                         std::to_string(region[node]) + &quot;. Population data has not been set.&quot;);</span></a>
-<a name="149"><span class="lineNum">     149 </span>            :         }</a>
-<a name="150"><span class="lineNum">     150 </span>            :     }</a>
-<a name="151"><span class="lineNum">     151 </span><span class="lineCov">        194 :     return success();</span></a>
-<a name="152"><span class="lineNum">     152 </span><span class="lineCov">         97 : }</span></a>
-<a name="153"><span class="lineNum">     153 </span>            : </a>
-<a name="154"><span class="lineNum">     154 </span>            : /**</a>
-<a name="155"><span class="lineNum">     155 </span>            :  * @brief Sets the infected population for a given model based on confirmed cases data. Here, we</a>
-<a name="156"><span class="lineNum">     156 </span>            :  * read the case data from a file.</a>
-<a name="157"><span class="lineNum">     157 </span>            :  * @tparam FP Floating point data type, e.g., double.</a>
-<a name="158"><span class="lineNum">     158 </span>            :  * @param[in, out] Vector of models for which the confirmed cases data will be set.</a>
-<a name="159"><span class="lineNum">     159 </span>            :  * @param[in] path Path to the confirmed cases data file.</a>
-<a name="160"><span class="lineNum">     160 </span>            :  * @param[in] region Vector of keys of the region of interest.</a>
-<a name="161"><span class="lineNum">     161 </span>            :  * @param[in] date Date at which the data is read.</a>
-<a name="162"><span class="lineNum">     162 </span>            :  * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.</a>
-<a name="163"><span class="lineNum">     163 </span>            :  */</a>
-<a name="164"><span class="lineNum">     164 </span>            : template &lt;typename FP = double&gt;</a>
-<a name="165"><span class="lineNum">     165 </span><span class="lineCov">         50 : IOResult&lt;void&gt; set_confirmed_cases_data(std::vector&lt;Model&lt;FP&gt;&gt;&amp; model, const std::string&amp; path,</span></a>
-<a name="166"><span class="lineNum">     166 </span>            :                                         std::vector&lt;int&gt; const&amp; region, Date date,</a>
-<a name="167"><span class="lineNum">     167 </span>            :                                         const std::vector&lt;double&gt;&amp; scaling_factor_inf)</a>
-<a name="168"><span class="lineNum">     168 </span>            : {</a>
-<a name="169"><span class="lineNum">     169 </span><span class="lineCov">         50 :     BOOST_OUTCOME_TRY(auto&amp;&amp; case_data, mio::read_confirmed_cases_data(path));</span></a>
-<a name="170"><span class="lineNum">     170 </span><span class="lineCov">         50 :     BOOST_OUTCOME_TRY(set_confirmed_cases_data(model, case_data, region, date, scaling_factor_inf));</span></a>
-<a name="171"><span class="lineNum">     171 </span><span class="lineCov">        100 :     return success();</span></a>
-<a name="172"><span class="lineNum">     172 </span><span class="lineCov">         50 : }</span></a>
-<a name="173"><span class="lineNum">     173 </span>            : </a>
-<a name="174"><span class="lineNum">     174 </span>            : /**</a>
-<a name="175"><span class="lineNum">     175 </span>            :      * @brief Reads number of ICU patients from DIVI register into Parameters.</a>
-<a name="176"><span class="lineNum">     176 </span>            :      * @param[in] path Path to DIVI file.</a>
-<a name="177"><span class="lineNum">     177 </span>            :      * @param[in] vregion Keys of the region of interest.</a>
-<a name="178"><span class="lineNum">     178 </span>            :      * @param date Date for which we initialize.</a>
-<a name="179"><span class="lineNum">     179 </span>            :      * @param vnum_icu Number of ICU patients.</a>
-<a name="180"><span class="lineNum">     180 </span>            :      */</a>
-<a name="181"><span class="lineNum">     181 </span>            : IOResult&lt;void&gt; read_divi_data(const std::string&amp; path, const std::vector&lt;int&gt;&amp; vregion, Date date,</a>
-<a name="182"><span class="lineNum">     182 </span>            :                               std::vector&lt;double&gt;&amp; vnum_icu);</a>
-<a name="183"><span class="lineNum">     183 </span>            : </a>
-<a name="184"><span class="lineNum">     184 </span>            : /**</a>
-<a name="185"><span class="lineNum">     185 </span>            :      * @brief Sets populations data from DIVI register into Model.</a>
-<a name="186"><span class="lineNum">     186 </span>            :      * @tparam FP floating point data type, e.g., double.</a>
-<a name="187"><span class="lineNum">     187 </span>            :      * @param[in, out] model Vector of models in which the data is set.</a>
-<a name="188"><span class="lineNum">     188 </span>            :      * @param[in] path Path to DIVI file.</a>
-<a name="189"><span class="lineNum">     189 </span>            :      * @param[in] vregion Vector of keys of the regions of interest.</a>
-<a name="190"><span class="lineNum">     190 </span>            :      * @param[in] date Date for which the arrays are initialized.</a>
-<a name="191"><span class="lineNum">     191 </span>            :      * @param[in] scaling_factor_icu factor by which to scale the icu cases of divi data.</a>
-<a name="192"><span class="lineNum">     192 </span>            :      */</a>
-<a name="193"><span class="lineNum">     193 </span>            : template &lt;typename FP = double&gt;</a>
-<a name="194"><span class="lineNum">     194 </span><span class="lineCov">        106 : IOResult&lt;void&gt; set_divi_data(std::vector&lt;Model&lt;FP&gt;&gt;&amp; model, const std::string&amp; path, const std::vector&lt;int&gt;&amp; vregion,</span></a>
-<a name="195"><span class="lineNum">     195 </span>            :                              Date date, double scaling_factor_icu)</a>
-<a name="196"><span class="lineNum">     196 </span>            : {</a>
-<a name="197"><span class="lineNum">     197 </span>            :     // DIVI dataset will no longer be updated from CW29 2024 on.</a>
-<a name="198"><span class="lineNum">     198 </span><span class="lineCov">        106 :     if (!is_divi_data_available(date)) {</span></a>
-<a name="199"><span class="lineNum">     199 </span><span class="lineCov">         36 :         log_warning(&quot;No DIVI data available for date: {}-{}-{}&quot;, date.year, date.month, date.day,</span></a>
-<a name="200"><span class="lineNum">     200 </span>            :                     &quot;. ICU compartment will be set based on Case data.&quot;);</a>
+<a name="146"><span class="lineNum">     146 </span><span class="lineCov">         18 :             log_warning(&quot;No infections reported on date {} for region {}. Population data has not been set.&quot;, date,</span></a>
+<a name="147"><span class="lineNum">     147 </span>            :                         region[node]);</a>
+<a name="148"><span class="lineNum">     148 </span>            :         }</a>
+<a name="149"><span class="lineNum">     149 </span>            :     }</a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineCov">        194 :     return success();</span></a>
+<a name="151"><span class="lineNum">     151 </span><span class="lineCov">         97 : }</span></a>
+<a name="152"><span class="lineNum">     152 </span>            : </a>
+<a name="153"><span class="lineNum">     153 </span>            : /**</a>
+<a name="154"><span class="lineNum">     154 </span>            :  * @brief Sets the infected population for a given model based on confirmed cases data. Here, we</a>
+<a name="155"><span class="lineNum">     155 </span>            :  * read the case data from a file.</a>
+<a name="156"><span class="lineNum">     156 </span>            :  * @tparam FP Floating point data type, e.g., double.</a>
+<a name="157"><span class="lineNum">     157 </span>            :  * @param[in, out] Vector of models for which the confirmed cases data will be set.</a>
+<a name="158"><span class="lineNum">     158 </span>            :  * @param[in] path Path to the confirmed cases data file.</a>
+<a name="159"><span class="lineNum">     159 </span>            :  * @param[in] region Vector of keys of the region of interest.</a>
+<a name="160"><span class="lineNum">     160 </span>            :  * @param[in] date Date at which the data is read.</a>
+<a name="161"><span class="lineNum">     161 </span>            :  * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.</a>
+<a name="162"><span class="lineNum">     162 </span>            :  */</a>
+<a name="163"><span class="lineNum">     163 </span>            : template &lt;typename FP = double&gt;</a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">         50 : IOResult&lt;void&gt; set_confirmed_cases_data(std::vector&lt;Model&lt;FP&gt;&gt;&amp; model, const std::string&amp; path,</span></a>
+<a name="165"><span class="lineNum">     165 </span>            :                                         std::vector&lt;int&gt; const&amp; region, Date date,</a>
+<a name="166"><span class="lineNum">     166 </span>            :                                         const std::vector&lt;double&gt;&amp; scaling_factor_inf)</a>
+<a name="167"><span class="lineNum">     167 </span>            : {</a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineCov">         50 :     BOOST_OUTCOME_TRY(auto&amp;&amp; case_data, mio::read_confirmed_cases_data(path));</span></a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineCov">         50 :     BOOST_OUTCOME_TRY(set_confirmed_cases_data(model, case_data, region, date, scaling_factor_inf));</span></a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineCov">        100 :     return success();</span></a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">         50 : }</span></a>
+<a name="172"><span class="lineNum">     172 </span>            : </a>
+<a name="173"><span class="lineNum">     173 </span>            : /**</a>
+<a name="174"><span class="lineNum">     174 </span>            :      * @brief Reads number of ICU patients from DIVI register into Parameters.</a>
+<a name="175"><span class="lineNum">     175 </span>            :      * @param[in] path Path to DIVI file.</a>
+<a name="176"><span class="lineNum">     176 </span>            :      * @param[in] vregion Keys of the region of interest.</a>
+<a name="177"><span class="lineNum">     177 </span>            :      * @param date Date for which we initialize.</a>
+<a name="178"><span class="lineNum">     178 </span>            :      * @param vnum_icu Number of ICU patients.</a>
+<a name="179"><span class="lineNum">     179 </span>            :      */</a>
+<a name="180"><span class="lineNum">     180 </span>            : IOResult&lt;void&gt; read_divi_data(const std::string&amp; path, const std::vector&lt;int&gt;&amp; vregion, Date date,</a>
+<a name="181"><span class="lineNum">     181 </span>            :                               std::vector&lt;double&gt;&amp; vnum_icu);</a>
+<a name="182"><span class="lineNum">     182 </span>            : </a>
+<a name="183"><span class="lineNum">     183 </span>            : /**</a>
+<a name="184"><span class="lineNum">     184 </span>            :      * @brief Sets populations data from DIVI register into Model.</a>
+<a name="185"><span class="lineNum">     185 </span>            :      * @tparam FP floating point data type, e.g., double.</a>
+<a name="186"><span class="lineNum">     186 </span>            :      * @param[in, out] model Vector of models in which the data is set.</a>
+<a name="187"><span class="lineNum">     187 </span>            :      * @param[in] path Path to DIVI file.</a>
+<a name="188"><span class="lineNum">     188 </span>            :      * @param[in] vregion Vector of keys of the regions of interest.</a>
+<a name="189"><span class="lineNum">     189 </span>            :      * @param[in] date Date for which the arrays are initialized.</a>
+<a name="190"><span class="lineNum">     190 </span>            :      * @param[in] scaling_factor_icu factor by which to scale the icu cases of divi data.</a>
+<a name="191"><span class="lineNum">     191 </span>            :      */</a>
+<a name="192"><span class="lineNum">     192 </span>            : template &lt;typename FP = double&gt;</a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">        106 : IOResult&lt;void&gt; set_divi_data(std::vector&lt;Model&lt;FP&gt;&gt;&amp; model, const std::string&amp; path, const std::vector&lt;int&gt;&amp; vregion,</span></a>
+<a name="194"><span class="lineNum">     194 </span>            :                              Date date, double scaling_factor_icu)</a>
+<a name="195"><span class="lineNum">     195 </span>            : {</a>
+<a name="196"><span class="lineNum">     196 </span>            :     // DIVI dataset will no longer be updated from CW29 2024 on.</a>
+<a name="197"><span class="lineNum">     197 </span><span class="lineCov">        106 :     if (!is_divi_data_available(date)) {</span></a>
+<a name="198"><span class="lineNum">     198 </span><span class="lineCov">         36 :         log_warning(&quot;No DIVI data available for date: {}. &quot;</span></a>
+<a name="199"><span class="lineNum">     199 </span>            :                     &quot;ICU compartment will be set based on Case data.&quot;,</a>
+<a name="200"><span class="lineNum">     200 </span>            :                     date);</a>
 <a name="201"><span class="lineNum">     201 </span><span class="lineCov">         72 :         return success();</span></a>
 <a name="202"><span class="lineNum">     202 </span>            :     }</a>
 <a name="203"><span class="lineNum">     203 </span><span class="lineCov">        140 :     std::vector&lt;double&gt; sum_mu_I_U(vregion.size(), 0);</span></a>

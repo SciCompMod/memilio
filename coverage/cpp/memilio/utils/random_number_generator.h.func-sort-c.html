@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-02-13 16:21:13</td>
+            <td class="headerValue">2025-02-17 12:27:02</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">67</td>
@@ -137,10 +137,14 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#614">unsigned long mio::DiscreteDistributionInPlace&lt;unsigned long&gt;::operator()&lt;mio::abm::PersonalRandomNumberGenerator&gt;(mio::abm::PersonalRandomNumberGenerator&amp;)</a></td>
-              <td class="coverFnHi">81</td>
+              <td class="coverFnHi">72</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#625">unsigned long mio::DiscreteDistributionInPlace&lt;unsigned long&gt;::operator()&lt;mio::abm::PersonalRandomNumberGenerator&gt;(mio::abm::PersonalRandomNumberGenerator&amp;, mio::DiscreteDistributionInPlace&lt;unsigned long&gt;::param_type)</a></td>
+              <td class="coverFnHi">72</td>
+            </tr>
+    <tr>
+              <td class="coverFn"><a href="random_number_generator.h.gcov.html#472">unsigned long mio::DistributionAdapter&lt;mio::DiscreteDistributionInPlace&lt;unsigned long&gt; &gt;::operator()&lt;mio::abm::PersonalRandomNumberGenerator, std::array&lt;double, 1ul&gt;&amp;&gt;(mio::abm::PersonalRandomNumberGenerator&amp;, std::array&lt;double, 1ul&gt;&amp;)</a></td>
               <td class="coverFnHi">81</td>
             </tr>
     <tr>
@@ -149,10 +153,6 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#688">void mio::serialize_internal&lt;mio::JsonContext, mio::DistributionAdapter&lt;std::uniform_real_distribution&lt;double&gt; &gt;::ParamType, double, (void*)0&gt;(mio::JsonContext&amp;, mio::DistributionAdapter&lt;std::uniform_real_distribution&lt;double&gt; &gt;::ParamType const&amp;)</a></td>
-              <td class="coverFnHi">90</td>
-            </tr>
-    <tr>
-              <td class="coverFn"><a href="random_number_generator.h.gcov.html#472">unsigned long mio::DistributionAdapter&lt;mio::DiscreteDistributionInPlace&lt;unsigned long&gt; &gt;::operator()&lt;mio::abm::PersonalRandomNumberGenerator, std::array&lt;double, 1ul&gt;&amp;&gt;(mio::abm::PersonalRandomNumberGenerator&amp;, std::array&lt;double, 1ul&gt;&amp;)</a></td>
               <td class="coverFnHi">90</td>
             </tr>
     <tr>
@@ -169,7 +169,7 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#472">unsigned long mio::DistributionAdapter&lt;mio::DiscreteDistributionInPlace&lt;unsigned long&gt; &gt;::operator()&lt;mio::RandomNumberGenerator, std::vector&lt;double, std::allocator&lt;double&gt; &gt;&amp;&gt;(mio::RandomNumberGenerator&amp;, std::vector&lt;double, std::allocator&lt;double&gt; &gt;&amp;)</a></td>
-              <td class="coverFnHi">133</td>
+              <td class="coverFnHi">160</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#494">mio::DistributionAdapter&lt;std::normal_distribution&lt;double&gt; &gt;::set_generator(std::function&lt;double (std::normal_distribution&lt;double&gt;::param_type const&amp;)&gt;)</a></td>
@@ -188,12 +188,12 @@
               <td class="coverFnHi">293</td>
             </tr>
     <tr>
-              <td class="coverFn"><a href="random_number_generator.h.gcov.html#472">double mio::DistributionAdapter&lt;std::exponential_distribution&lt;double&gt; &gt;::operator()&lt;mio::abm::PersonalRandomNumberGenerator, double&amp;&gt;(mio::abm::PersonalRandomNumberGenerator&amp;, double&amp;)</a></td>
+              <td class="coverFn"><a href="random_number_generator.h.gcov.html#494">mio::DistributionAdapter&lt;std::uniform_real_distribution&lt;double&gt; &gt;::set_generator(std::function&lt;double (std::uniform_real_distribution&lt;double&gt;::param_type const&amp;)&gt;)</a></td>
               <td class="coverFnHi">486</td>
             </tr>
     <tr>
-              <td class="coverFn"><a href="random_number_generator.h.gcov.html#494">mio::DistributionAdapter&lt;std::uniform_real_distribution&lt;double&gt; &gt;::set_generator(std::function&lt;double (std::uniform_real_distribution&lt;double&gt;::param_type const&amp;)&gt;)</a></td>
-              <td class="coverFnHi">486</td>
+              <td class="coverFn"><a href="random_number_generator.h.gcov.html#472">double mio::DistributionAdapter&lt;std::exponential_distribution&lt;double&gt; &gt;::operator()&lt;mio::abm::PersonalRandomNumberGenerator, double&amp;&gt;(mio::abm::PersonalRandomNumberGenerator&amp;, double&amp;)</a></td>
+              <td class="coverFnHi">495</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#381">mio::log_rng_seeds(mio::RandomNumberGenerator const&amp;, mio::LogLevel)</a></td>
@@ -213,11 +213,11 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#614">unsigned long mio::DiscreteDistributionInPlace&lt;unsigned long&gt;::operator()&lt;mio::RandomNumberGenerator&gt;(mio::RandomNumberGenerator&amp;)</a></td>
-              <td class="coverFnHi">981</td>
+              <td class="coverFnHi">1008</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#564">mio::DiscreteDistributionInPlace&lt;unsigned long&gt;::DiscreteDistributionInPlace(mio::Span&lt;double&gt;)</a></td>
-              <td class="coverFnHi">1062</td>
+              <td class="coverFnHi">1080</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#212">mio::Key&lt;unsigned long&gt; mio::seed_rng_key&lt;std::seed_seq&gt;(std::seed_seq&amp;)</a></td>
@@ -237,23 +237,23 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#505">mio::DistributionAdapter&lt;mio::DiscreteDistributionInPlace&lt;unsigned long&gt; &gt;::get_instance()</a></td>
-              <td class="coverFnHi">1270</td>
+              <td class="coverFnHi">1288</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#472">double mio::DistributionAdapter&lt;std::uniform_real_distribution&lt;double&gt; &gt;::operator()&lt;mio::abm::PersonalRandomNumberGenerator&gt;(mio::abm::PersonalRandomNumberGenerator&amp;)</a></td>
-              <td class="coverFnHi">1619</td>
+              <td class="coverFnHi">1628</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#625">unsigned long mio::DiscreteDistributionInPlace&lt;unsigned long&gt;::operator()&lt;mio::RandomNumberGenerator&gt;(mio::RandomNumberGenerator&amp;, mio::DiscreteDistributionInPlace&lt;unsigned long&gt;::param_type)</a></td>
-              <td class="coverFnHi">2331</td>
+              <td class="coverFnHi">2358</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#546">mio::DiscreteDistributionInPlace&lt;unsigned long&gt;::param_type::weights() const</a></td>
-              <td class="coverFnHi">2412</td>
+              <td class="coverFnHi">2430</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#541">mio::DiscreteDistributionInPlace&lt;unsigned long&gt;::param_type::param_type(mio::Span&lt;double&gt;)</a></td>
-              <td class="coverFnHi">2518</td>
+              <td class="coverFnHi">2536</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#439">mio::DistributionAdapter&lt;std::uniform_real_distribution&lt;double&gt; &gt;::ParamType::get_distribution_instance()</a></td>
@@ -265,15 +265,15 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#123">mio::RandomNumberGeneratorBase&lt;mio::abm::PersonalRandomNumberGenerator&gt;::min()</a></td>
-              <td class="coverFnHi">2654</td>
+              <td class="coverFnHi">2672</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#193">mio::RandomNumberGeneratorBase&lt;mio::abm::PersonalRandomNumberGenerator&gt;::operator()()</a></td>
-              <td class="coverFnHi">2663</td>
+              <td class="coverFnHi">2681</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#235">mio::Counter&lt;unsigned long&gt; mio::rng_totalsequence_counter&lt;unsigned long, unsigned int, mio::Counter&lt;unsigned int&gt; &gt;(unsigned int, mio::Counter&lt;unsigned int&gt;)</a></td>
-              <td class="coverFnHi">2714</td>
+              <td class="coverFnHi">2732</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#430">mio::DistributionAdapter&lt;std::uniform_real_distribution&lt;double&gt; &gt;::ParamType::ParamType&lt;std::uniform_real_distribution&lt;double&gt;::param_type const&amp;, (void*)0&gt;(std::uniform_real_distribution&lt;double&gt;::param_type const&amp;)</a></td>
@@ -289,7 +289,7 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#505">mio::DistributionAdapter&lt;std::uniform_real_distribution&lt;double&gt; &gt;::get_instance()</a></td>
-              <td class="coverFnHi">13134</td>
+              <td class="coverFnHi">13125</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#472">double mio::DistributionAdapter&lt;std::normal_distribution&lt;double&gt; &gt;::operator()&lt;mio::RandomNumberGenerator, double, double&gt;(mio::RandomNumberGenerator&amp;, double&amp;&amp;, double&amp;&amp;)</a></td>
@@ -301,11 +301,11 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#472">double mio::DistributionAdapter&lt;std::exponential_distribution&lt;double&gt; &gt;::operator()&lt;mio::RandomNumberGenerator, double&gt;(mio::RandomNumberGenerator&amp;, double&amp;&amp;)</a></td>
-              <td class="coverFnHi">18412</td>
+              <td class="coverFnHi">18565</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#505">mio::DistributionAdapter&lt;std::exponential_distribution&lt;double&gt; &gt;::get_instance()</a></td>
-              <td class="coverFnHi">19246</td>
+              <td class="coverFnHi">19408</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#430">mio::DistributionAdapter&lt;std::uniform_real_distribution&lt;double&gt; &gt;::ParamType::ParamType&lt;, (void*)0&gt;()</a></td>
@@ -313,31 +313,31 @@
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#123">mio::RandomNumberGeneratorBase&lt;mio::RandomNumberGenerator&gt;::min()</a></td>
-              <td class="coverFnHi">133096</td>
+              <td class="coverFnHi">133412</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#314">mio::RandomNumberGenerator::increment_counter()</a></td>
-              <td class="coverFnHi">135112</td>
+              <td class="coverFnHi">135428</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#193">mio::RandomNumberGeneratorBase&lt;mio::RandomNumberGenerator&gt;::operator()()</a></td>
-              <td class="coverFnHi">135112</td>
+              <td class="coverFnHi">135428</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#306">mio::RandomNumberGenerator::get_counter() const</a></td>
-              <td class="coverFnHi">135207</td>
+              <td class="coverFnHi">135523</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#302">mio::RandomNumberGenerator::get_key() const</a></td>
-              <td class="coverFnHi">137102</td>
+              <td class="coverFnHi">137418</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#150">mio::details::to_uint64(r123array2x32)</a></td>
-              <td class="coverFnHi">138938</td>
+              <td class="coverFnHi">139272</td>
             </tr>
     <tr>
               <td class="coverFn"><a href="random_number_generator.h.gcov.html#160">mio::details::to_r123_array(unsigned long)</a></td>
-              <td class="coverFnHi">275550</td>
+              <td class="coverFnHi">276218</td>
             </tr>
   </table>
   <br>
