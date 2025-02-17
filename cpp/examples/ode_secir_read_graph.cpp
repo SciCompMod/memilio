@@ -114,7 +114,8 @@ int main(int argc, char** argv)
     auto read_mobility_result = mio::read_mobility_plain(filename);
     if (!read_mobility_result) {
         std::cout << read_mobility_result.error().formatted_message() << '\n';
-        return -1;
+        std::cout << "Create the mobility file with MEmilio Epidata's getCommuterMobility.py file." << '\n';
+        return 0;
     }
     auto& commuter_mobility = read_mobility_result.value();
     std::cout << "Done" << std::endl;
