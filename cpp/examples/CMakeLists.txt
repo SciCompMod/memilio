@@ -128,6 +128,14 @@ add_executable(graph_abm_example graph_abm.cpp)
 target_link_libraries(graph_abm_example PRIVATE memilio graph_abm abm)
 target_compile_options(graph_abm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(dabm_example d_abm.cpp)
+target_link_libraries(dabm_example PRIVATE memilio d_abm)
+target_compile_options(dabm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(smm_example smm.cpp)
+target_link_libraries(smm_example PRIVATE memilio smm)
+target_compile_options(smm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 if(MEMILIO_HAS_JSONCPP)
     add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
     target_link_libraries(ode_secir_read_graph_example PRIVATE memilio ode_secir)

@@ -170,3 +170,45 @@ TEST(TestDate, getOffset)
     offset = mio::get_offset_in_days({2019, 11, 30}, {2020, 11, 30});
     EXPECT_EQ(offset, -366);
 }
+
+TEST(TestDate, toIsoString)
+{
+    EXPECT_EQ(mio::Date(2020, 9, 2).to_iso_string(), "2020-09-02");
+    EXPECT_EQ(mio::Date(2021, 8, 30).to_iso_string(), "2021-08-30");
+    EXPECT_EQ(mio::Date(2021, 3, 4).to_iso_string(), "2021-03-04");
+    EXPECT_EQ(mio::Date(2021, 1, 1).to_iso_string(), "2021-01-01");
+    EXPECT_EQ(mio::Date(2020, 2, 29).to_iso_string(), "2020-02-29");
+}
+
+TEST(TestDate, streamOutput)
+{
+    std::ostringstream oss1;
+    oss1 << mio::Date(2020, 9, 2);
+    EXPECT_EQ(oss1.str(), "2020-09-02");
+
+    std::ostringstream oss2;
+    oss2 << mio::Date(2021, 8, 30);
+    EXPECT_EQ(oss2.str(), "2021-08-30");
+
+    std::ostringstream oss3;
+    oss3 << mio::Date(2021, 3, 4);
+    EXPECT_EQ(oss3.str(), "2021-03-04");
+
+    std::ostringstream oss4;
+    oss4 << mio::Date(2021, 1, 1);
+    EXPECT_EQ(oss4.str(), "2021-01-01");
+
+    std::ostringstream oss5;
+    oss5 << mio::Date(2020, 2, 29);
+    EXPECT_EQ(oss5.str(), "2020-02-29");
+}
+
+TEST(TestDate, formatViaFmt)
+{
+    EXPECT_EQ(fmt::format("{}", mio::Date(2020, 9, 2)), "2020-09-02");
+    EXPECT_EQ(fmt::format("{}", mio::Date(2021, 8, 30)), "2021-08-30");
+    EXPECT_EQ(fmt::format("{}", mio::Date(2021, 1, 1)), "2021-01-01");
+    EXPECT_EQ(fmt::format("{}", mio::Date(2020, 2, 29)), "2020-02-29");
+    EXPECT_EQ(fmt::format("{}", mio::Date(2021, 3, 4)), "2021-03-04");
+    EXPECT_EQ(fmt::format("Todays date is: {}", mio::Date(2021, 12, 31)), "Todays date is: 2021-12-31");
+}
