@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-02-17 12:27:02</td>
+            <td class="headerValue">2025-02-17 13:43:02</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">8</td>
@@ -105,11 +105,11 @@
 <a name="43"><span class="lineNum">      43 </span>            :      * e.g. std::vector or std::array</a>
 <a name="44"><span class="lineNum">      44 </span>            :      */</a>
 <a name="45"><span class="lineNum">      45 </span>            :     template &lt;class Cont&gt;</a>
-<a name="46"><span class="lineNum">      46 </span><span class="lineCov">       2536 :     Span(const Cont&amp; c)</span></a>
-<a name="47"><span class="lineNum">      47 </span><span class="lineCov">       2536 :         : m_ptr(c.size() == 0 ? nullptr : c.data())</span></a>
-<a name="48"><span class="lineNum">      48 </span><span class="lineCov">       2536 :         , m_size(c.size())</span></a>
+<a name="46"><span class="lineNum">      46 </span><span class="lineCov">       2500 :     Span(const Cont&amp; c)</span></a>
+<a name="47"><span class="lineNum">      47 </span><span class="lineCov">       2500 :         : m_ptr(c.size() == 0 ? nullptr : c.data())</span></a>
+<a name="48"><span class="lineNum">      48 </span><span class="lineCov">       2500 :         , m_size(c.size())</span></a>
 <a name="49"><span class="lineNum">      49 </span>            :     {</a>
-<a name="50"><span class="lineNum">      50 </span><span class="lineCov">       2536 :     }</span></a>
+<a name="50"><span class="lineNum">      50 </span><span class="lineCov">       2500 :     }</span></a>
 <a name="51"><span class="lineNum">      51 </span>            : </a>
 <a name="52"><span class="lineNum">      52 </span>            :     /**</a>
 <a name="53"><span class="lineNum">      53 </span>            :      * construct from a c array.</a>
@@ -141,25 +141,25 @@
 <a name="79"><span class="lineNum">      79 </span>            :     /**</a>
 <a name="80"><span class="lineNum">      80 </span>            :      * get an iterator to the first element.</a>
 <a name="81"><span class="lineNum">      81 </span>            :      */</a>
-<a name="82"><span class="lineNum">      82 </span><span class="lineCov">       1458 :     const T* begin() const</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">       1440 :     const T* begin() const</span></a>
 <a name="83"><span class="lineNum">      83 </span>            :     {</a>
-<a name="84"><span class="lineNum">      84 </span><span class="lineCov">       1458 :         return m_ptr;</span></a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">       1440 :         return m_ptr;</span></a>
 <a name="85"><span class="lineNum">      85 </span>            :     }</a>
 <a name="86"><span class="lineNum">      86 </span>            : </a>
 <a name="87"><span class="lineNum">      87 </span>            :     /**</a>
 <a name="88"><span class="lineNum">      88 </span>            :      * get an iterator to one past the last element.</a>
 <a name="89"><span class="lineNum">      89 </span>            :      */</a>
-<a name="90"><span class="lineNum">      90 </span><span class="lineCov">       1458 :     const T* end() const</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">       1440 :     const T* end() const</span></a>
 <a name="91"><span class="lineNum">      91 </span>            :     {</a>
-<a name="92"><span class="lineNum">      92 </span><span class="lineCov">       1458 :         return m_ptr + m_size;</span></a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineCov">       1440 :         return m_ptr + m_size;</span></a>
 <a name="93"><span class="lineNum">      93 </span>            :     }</a>
 <a name="94"><span class="lineNum">      94 </span>            : </a>
 <a name="95"><span class="lineNum">      95 </span>            :     /**</a>
 <a name="96"><span class="lineNum">      96 </span>            :      * get the number of elements in the array</a>
 <a name="97"><span class="lineNum">      97 </span>            :      */</a>
-<a name="98"><span class="lineNum">      98 </span><span class="lineCov">       6741 :     size_t size() const</span></a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineCov">       6705 :     size_t size() const</span></a>
 <a name="99"><span class="lineNum">      99 </span>            :     {</a>
-<a name="100"><span class="lineNum">     100 </span><span class="lineCov">       6741 :         return m_size;</span></a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineCov">       6705 :         return m_size;</span></a>
 <a name="101"><span class="lineNum">     101 </span>            :     }</a>
 <a name="102"><span class="lineNum">     102 </span>            : </a>
 <a name="103"><span class="lineNum">     103 </span>            : private:</a>

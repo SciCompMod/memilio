@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-02-17 12:27:02</td>
+            <td class="headerValue">2025-02-17 13:43:02</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">21</td>
@@ -120,10 +120,10 @@
 <a name="58"><span class="lineNum">      58 </span>            : };</a>
 <a name="59"><span class="lineNum">      59 </span>            : </a>
 <a name="60"><span class="lineNum">      60 </span>            : struct CellIndex : public mio::Index&lt;CellIndex&gt; {</a>
-<a name="61"><span class="lineNum">      61 </span><span class="lineCov">       5893 :     CellIndex(size_t i)</span></a>
-<a name="62"><span class="lineNum">      62 </span><span class="lineCov">       5893 :         : mio::Index&lt;CellIndex&gt;(i)</span></a>
+<a name="61"><span class="lineNum">      61 </span><span class="lineCov">       5891 :     CellIndex(size_t i)</span></a>
+<a name="62"><span class="lineNum">      62 </span><span class="lineCov">       5891 :         : mio::Index&lt;CellIndex&gt;(i)</span></a>
 <a name="63"><span class="lineNum">      63 </span>            :     {</a>
-<a name="64"><span class="lineNum">      64 </span><span class="lineCov">       5893 :     }</span></a>
+<a name="64"><span class="lineNum">      64 </span><span class="lineCov">       5891 :     }</span></a>
 <a name="65"><span class="lineNum">      65 </span>            : };</a>
 <a name="66"><span class="lineNum">      66 </span>            : </a>
 <a name="67"><span class="lineNum">      67 </span>            : using ContactExposureRates = CustomIndexArray&lt;boost::atomic&lt;ScalarType&gt;, CellIndex, VirusVariant, AgeGroup&gt;;</a>
@@ -216,18 +216,18 @@
 <a name="154"><span class="lineNum">     154 </span>            :      * @brief Get the type of this Location.</a>
 <a name="155"><span class="lineNum">     155 </span>            :      * @return The #LocationType of the Location.</a>
 <a name="156"><span class="lineNum">     156 </span>            :      */</a>
-<a name="157"><span class="lineNum">     157 </span><span class="lineCov">       4965 :     LocationType get_type() const</span></a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineCov">       4857 :     LocationType get_type() const</span></a>
 <a name="158"><span class="lineNum">     158 </span>            :     {</a>
-<a name="159"><span class="lineNum">     159 </span><span class="lineCov">       4965 :         return m_type;</span></a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineCov">       4857 :         return m_type;</span></a>
 <a name="160"><span class="lineNum">     160 </span>            :     }</a>
 <a name="161"><span class="lineNum">     161 </span>            : </a>
 <a name="162"><span class="lineNum">     162 </span>            :     /**</a>
 <a name="163"><span class="lineNum">     163 </span>            :      * @brief Get the location's identifier in a Model.</a>
 <a name="164"><span class="lineNum">     164 </span>            :      * @return The location's LocationId by value.</a>
 <a name="165"><span class="lineNum">     165 </span>            :      */</a>
-<a name="166"><span class="lineNum">     166 </span><span class="lineCov">      42458 :     LocationId get_id() const</span></a>
+<a name="166"><span class="lineNum">     166 </span><span class="lineCov">      42322 :     LocationId get_id() const</span></a>
 <a name="167"><span class="lineNum">     167 </span>            :     {</a>
-<a name="168"><span class="lineNum">     168 </span><span class="lineCov">      42458 :         return m_id;</span></a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineCov">      42322 :         return m_id;</span></a>
 <a name="169"><span class="lineNum">     169 </span>            :     }</a>
 <a name="170"><span class="lineNum">     170 </span>            : </a>
 <a name="171"><span class="lineNum">     171 </span>            :     /**</a>
@@ -240,9 +240,9 @@
 <a name="178"><span class="lineNum">     178 </span><span class="lineNoCov">          0 :         return m_parameters;</span></a>
 <a name="179"><span class="lineNum">     179 </span>            :     }</a>
 <a name="180"><span class="lineNum">     180 </span>            : </a>
-<a name="181"><span class="lineNum">     181 </span><span class="lineCov">       2907 :     const LocalInfectionParameters&amp; get_infection_parameters() const</span></a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">       2906 :     const LocalInfectionParameters&amp; get_infection_parameters() const</span></a>
 <a name="182"><span class="lineNum">     182 </span>            :     {</a>
-<a name="183"><span class="lineNum">     183 </span><span class="lineCov">       2907 :         return m_parameters;</span></a>
+<a name="183"><span class="lineNum">     183 </span><span class="lineCov">       2906 :         return m_parameters;</span></a>
 <a name="184"><span class="lineNum">     184 </span>            :     }</a>
 <a name="185"><span class="lineNum">     185 </span>            :     /** @} */</a>
 <a name="186"><span class="lineNum">     186 </span>            : </a>
@@ -250,9 +250,9 @@
 <a name="188"><span class="lineNum">     188 </span>            :      * @brief Get the Cell%s of this Location.</a>
 <a name="189"><span class="lineNum">     189 </span>            :      * @return The vector of all Cell%s of the Location.</a>
 <a name="190"><span class="lineNum">     190 </span>            :      */</a>
-<a name="191"><span class="lineNum">     191 </span><span class="lineCov">      10154 :     const std::vector&lt;Cell&gt;&amp; get_cells() const</span></a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineCov">      10115 :     const std::vector&lt;Cell&gt;&amp; get_cells() const</span></a>
 <a name="192"><span class="lineNum">     192 </span>            :     {</a>
-<a name="193"><span class="lineNum">     193 </span><span class="lineCov">      10154 :         return m_cells;</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">      10115 :         return m_cells;</span></a>
 <a name="194"><span class="lineNum">     194 </span>            :     }</a>
 <a name="195"><span class="lineNum">     195 </span>            : </a>
 <a name="196"><span class="lineNum">     196 </span>            :     /**</a>
@@ -291,19 +291,19 @@
 <a name="229"><span class="lineNum">     229 </span>            :      * @param[in] cell_idx The index of the Cell.</a>
 <a name="230"><span class="lineNum">     230 </span>            :      * @return The CellCapacity of the Cell.</a>
 <a name="231"><span class="lineNum">     231 </span>            :      */</a>
-<a name="232"><span class="lineNum">     232 </span><span class="lineCov">        290 :     CellCapacity get_capacity(uint32_t cell_idx = 0) const</span></a>
+<a name="232"><span class="lineNum">     232 </span><span class="lineCov">        254 :     CellCapacity get_capacity(uint32_t cell_idx = 0) const</span></a>
 <a name="233"><span class="lineNum">     233 </span>            :     {</a>
-<a name="234"><span class="lineNum">     234 </span><span class="lineCov">        290 :         assert(cell_idx &lt; m_cells.size() &amp;&amp; &quot;Given cell index is too large.&quot;);</span></a>
-<a name="235"><span class="lineNum">     235 </span><span class="lineCov">        290 :         return m_cells[cell_idx].m_capacity;</span></a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineCov">        254 :         assert(cell_idx &lt; m_cells.size() &amp;&amp; &quot;Given cell index is too large.&quot;);</span></a>
+<a name="235"><span class="lineNum">     235 </span><span class="lineCov">        254 :         return m_cells[cell_idx].m_capacity;</span></a>
 <a name="236"><span class="lineNum">     236 </span>            :     }</a>
 <a name="237"><span class="lineNum">     237 </span>            : </a>
 <a name="238"><span class="lineNum">     238 </span>            :     /**</a>
 <a name="239"><span class="lineNum">     239 </span>            :      * @brief Get the information whether masks are required to enter this Location.</a>
 <a name="240"><span class="lineNum">     240 </span>            :      * @return True if masks are required to enter this Location.</a>
 <a name="241"><span class="lineNum">     241 </span>            :      */</a>
-<a name="242"><span class="lineNum">     242 </span><span class="lineCov">       9470 :     bool is_mask_required() const</span></a>
+<a name="242"><span class="lineNum">     242 </span><span class="lineCov">       9497 :     bool is_mask_required() const</span></a>
 <a name="243"><span class="lineNum">     243 </span>            :     {</a>
-<a name="244"><span class="lineNum">     244 </span><span class="lineCov">       9470 :         return m_required_mask != MaskType::None;</span></a>
+<a name="244"><span class="lineNum">     244 </span><span class="lineCov">       9497 :         return m_required_mask != MaskType::None;</span></a>
 <a name="245"><span class="lineNum">     245 </span>            :     }</a>
 <a name="246"><span class="lineNum">     246 </span>            : </a>
 <a name="247"><span class="lineNum">     247 </span>            :     /**</a>
@@ -340,9 +340,9 @@
 <a name="278"><span class="lineNum">     278 </span>            :      * @brief Get the model id the location is in. Is only relevant for graph ABM or hybrid model.</a>
 <a name="279"><span class="lineNum">     279 </span>            :      * @return Model id of the location</a>
 <a name="280"><span class="lineNum">     280 </span>            :      */</a>
-<a name="281"><span class="lineNum">     281 </span><span class="lineCov">       1444 :     int get_model_id() const</span></a>
+<a name="281"><span class="lineNum">     281 </span><span class="lineCov">       1408 :     int get_model_id() const</span></a>
 <a name="282"><span class="lineNum">     282 </span>            :     {</a>
-<a name="283"><span class="lineNum">     283 </span><span class="lineCov">       1444 :         return m_model_id;</span></a>
+<a name="283"><span class="lineNum">     283 </span><span class="lineCov">       1408 :         return m_model_id;</span></a>
 <a name="284"><span class="lineNum">     284 </span>            :     }</a>
 <a name="285"><span class="lineNum">     285 </span>            : </a>
 <a name="286"><span class="lineNum">     286 </span>            : private:</a>
