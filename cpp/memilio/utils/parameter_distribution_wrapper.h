@@ -71,13 +71,21 @@ public:
         : m_dist(nullptr)
         , sample_impl1([](void* /*dist*/, RandomNumberGenerator& /*rng*/) {
             log_critical("AbstractParameterDistribution does not hold a distribution.");
-            exit(static_cast<int>(StatusCode::UnknownError));
-            return -1.;
+            if (true) {
+                exit(static_cast<int>(StatusCode::UnknownError));
+            }
+            else {
+                return -1.;
+            }
         })
         , sample_impl2([](void* /*dist*/, abm::PersonalRandomNumberGenerator& /*rng*/) {
             log_critical("AbstractParameterDistribution does not hold a distribution.");
-            exit(static_cast<int>(StatusCode::UnknownError));
-            return -1.;
+            if (true) {
+                exit(static_cast<int>(StatusCode::UnknownError));
+            }
+            else {
+                return -1.;
+            }
         })
     {
     }
