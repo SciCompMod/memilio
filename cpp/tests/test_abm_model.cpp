@@ -368,25 +368,28 @@ TEST_F(TestModel, evolveMobilityTrips)
     // Mock the random distribution to control random behavior.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist2;
     EXPECT_CALL(mock_uniform_dist2.get_mock(), invoke)
-        .Times(testing::Exactly(18))
+        .Times(testing::Exactly(21))
         .WillOnce(testing::Return(1.0)) // draw transition to Recovered p1
         .WillOnce(testing::Return(0.8)) // draw random peak p1
         .WillOnce(testing::Return(0.8)) // draw random incline p1
         .WillOnce(testing::Return(0.8)) // draw random decline p1
         .WillOnce(testing::Return(0.8)) // draw random alpha p1
         .WillOnce(testing::Return(0.8)) // draw random beta p1
+        .WillOnce(testing::Return(0.8)) // draw random virus shed p1
         .WillOnce(testing::Return(1.0)) // draw transition to Recovered p3
         .WillOnce(testing::Return(0.8)) // draw random peak p3
         .WillOnce(testing::Return(0.8)) // draw random incline p3
         .WillOnce(testing::Return(0.8)) // draw random decline p3
         .WillOnce(testing::Return(0.8)) // draw random alpha p3
         .WillOnce(testing::Return(0.8)) // draw random beta p3
+        .WillOnce(testing::Return(0.8)) // draw random virus shed p3
         .WillOnce(testing::Return(1.0)) // draw transition from InfectedCritical p4
         .WillOnce(testing::Return(0.8)) // draw random peak p4
         .WillOnce(testing::Return(0.8)) // draw random incline p4
         .WillOnce(testing::Return(0.8)) // draw random decline p4
         .WillOnce(testing::Return(0.8)) // draw random alpha p4
         .WillOnce(testing::Return(0.8)) // draw random beta p4
+        .WillOnce(testing::Return(0.8)) // draw random virus shed p4
         .RetiresOnSaturation();
 
     auto rng_p1 = mio::abm::PersonalRandomNumberGenerator(p1);
@@ -1059,8 +1062,9 @@ TEST_F(TestModel, personCanDieInHospital)
 
     // Make sure all persons will be InfectedSevere before Dead.
     // Also mocks other things in the setup and evolve, thus not using times::Exactly here.
+    // 0.09 is required to have state InfectedSevere before Dead
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).WillRepeatedly(testing::Return(0.3));
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).WillRepeatedly(testing::Return(0.09));
 
     // Create a person that has InfectedSymptoms at time t - dt. The person is dead at time t + dt
     add_test_person(model, home_id, age_group_60_to_79, mio::abm::InfectionState::Dead, t + dt);

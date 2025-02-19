@@ -163,12 +163,18 @@ TEST_F(TestInfection, drawInfectionCourseForward)
     params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.;
     auto t = mio::abm::TimePoint(0);
 
-    // Mock recovery transition
+    // Mock state transition times
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>>
         mock_logNormal_dist;
     EXPECT_CALL(mock_logNormal_dist.get_mock(), invoke)
-        .Times(testing::Exactly(6)) // First five draws for viral load
-        .WillRepeatedly(testing::Return(0.8)); // Sixth draw: Recovered draw in drawInfectionCourseForward
+        .Times(testing::Exactly(9)) // 5 draws for infection 1 and 4 for infection 2
+        .WillRepeatedly(testing::Return(1)); // All times will be 1 day
+    // Mock viral load draws and infection paths
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::Exactly(14)) // 6 viral load draws and 1 infection path draw per infection
+        .WillRepeatedly(testing::Return(0.55)); // is necessary for infection 1 to recover and infection 2 to die
+
     auto infection1 = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
                                           mio::abm::InfectionState::InfectedCritical,
                                           {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, true);
@@ -176,13 +182,6 @@ TEST_F(TestInfection, drawInfectionCourseForward)
     EXPECT_EQ(infection1.get_infection_state(t), mio::abm::InfectionState::InfectedCritical);
     EXPECT_EQ(infection1.get_infection_state(t + mio::abm::days(1)), mio::abm::InfectionState::Recovered);
 
-    // Mock death transition
-    params.get<mio::abm::TimeInfectedSevereToDead>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
-        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(1.));
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(6)) // First five draws for viral load
-        .WillRepeatedly(testing::Return(0.2)); // Sixth draw: Dead draw in drawInfectionCourseForward
     auto infection2 = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
                                           mio::abm::InfectionState::InfectedSevere,
                                           {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, true);
