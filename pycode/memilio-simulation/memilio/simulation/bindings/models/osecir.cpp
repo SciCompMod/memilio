@@ -272,7 +272,7 @@ PYBIND11_MODULE(_simulation_osecir, m)
 
     m.def(
         "set_edges",
-        [](const std::string& mobility_data_dir,
+        [](const std::string& mobility_data_file,
            mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
            size_t contact_locations_size) {
             auto mobile_comp = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
@@ -281,7 +281,7 @@ PYBIND11_MODULE(_simulation_osecir, m)
             auto weights     = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
             auto result = mio::set_edges<ContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
                                          mio::MobilityCoefficientGroup, mio::osecir::InfectionState,
-                                         decltype(mio::read_mobility_plain)>(mobility_data_dir, params_graph,
+                                         decltype(mio::read_mobility_plain)>(mobility_data_file, params_graph,
                                                                              mobile_comp, contact_locations_size,
                                                                              mio::read_mobility_plain, weights);
             return pymio::check_and_throw(result);

@@ -509,8 +509,8 @@ class Simulation:
             self.data_dir, "pydata", "Germany",
             "county_current_population.json")
 
-        mobility_data_dir = os.path.join(
-            self.data_dir, "pydata", "Germany", "Mobility")
+        mobility_data_file = os.path.join(
+            self.data_dir, "pydata", "Germany", "Mobility", "commuter_mobility_2022.txt")
 
         osecirvvs.set_nodes(
             model.parameters,
@@ -520,7 +520,7 @@ class Simulation:
             scaling_factor_icu, tnt_capacity_factor, end_date - self.start_date, False)
 
         osecirvvs.set_edges(
-            mobility_data_dir, graph, len(Location))
+            mobility_data_file, graph, len(Location))
 
         return graph
 
