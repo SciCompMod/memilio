@@ -35,7 +35,7 @@ LocationType random_mobility(PersonalRandomNumberGenerator& rng, const Person& p
     auto make_transition = [current_loc](auto l) {
         return std::make_pair(l, l == current_loc ? 0. : 1.);
     };
-    if (t < params.get<mio::abm::LockdownDate>()) {
+    if (t < params.get<LockdownDate>()) {
         return random_transition(rng, current_loc, dt,
                                  {make_transition(LocationType::Work), make_transition(LocationType::Home),
                                   make_transition(LocationType::School), make_transition(LocationType::SocialEvent),
@@ -49,10 +49,10 @@ LocationType go_to_school(PersonalRandomNumberGenerator& /*rng*/, const Person& 
 {
     auto current_loc = person.get_location_type();
 
-    if (current_loc == LocationType::Home && t < params.get<mio::abm::LockdownDate>() && t.day_of_week() < 5 &&
+    if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
         person.get_go_to_school_time(params) >= t.time_since_midnight() &&
         person.get_go_to_school_time(params) < t.time_since_midnight() + dt &&
-        params.get<mio::abm::AgeGroupGotoSchool>()[person.get_age()] && person.goes_to_school(t, params) &&
+        params.get<AgeGroupGotoSchool>()[person.get_age()] && person.goes_to_school(t, params) &&
         !person.is_in_quarantine(t, params)) {
         return LocationType::School;
     }
@@ -68,8 +68,8 @@ LocationType go_to_work(PersonalRandomNumberGenerator& /*rng*/, const Person& pe
 {
     auto current_loc = person.get_location_type();
 
-    if (current_loc == LocationType::Home && t < params.get<mio::abm::LockdownDate>() &&
-        params.get<mio::abm::AgeGroupGotoWork>()[person.get_age()] && t.day_of_week() < 5 &&
+    if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
+        params.get<AgeGroupGotoWork>()[person.get_age()] && t.day_of_week() < 5 &&
         t.time_since_midnight() + dt > person.get_go_to_work_time(params) &&
         t.time_since_midnight() <= person.get_go_to_work_time(params) && person.goes_to_work(t, params) &&
         !person.is_in_quarantine(t, params)) {
@@ -106,8 +106,9 @@ LocationType go_to_event(PersonalRandomNumberGenerator& rng, const Person& perso
 {
     auto current_loc = person.get_location_type();
     //leave
-    if (current_loc == LocationType::Home && t < params.get<mio::abm::LockdownDate>() &&
-        ((t.day_of_week() <= 4 && t.hour_of_day() >= 19) || (t.day_of_week() >= 5 && t.hour_of_day() >= 10)) &&
+    if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
+        ((t.day_of_week() <= 4 && t.hour_of_day() >= 19 && t.hour_of_day() < 22) ||
+         (t.day_of_week() >= 5 && t.hour_of_day() >= 10 && t.hour_of_day() < 22)) &&
         !person.is_in_quarantine(t, params)) {
         return random_transition(rng, current_loc, dt,
                                  {{LocationType::SocialEvent,

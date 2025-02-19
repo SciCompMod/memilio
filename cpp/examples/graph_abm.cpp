@@ -78,7 +78,7 @@ int main()
     auto model1 = mio::GraphABModel(num_age_groups, 0);
 
     //Set infection parameters
-    model1.parameters.get<mio::abm::IncubationPeriod>() =
+    model1.parameters.get<mio::abm::TimeExposedToNoSymptoms>() =
         mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(4.));
     model1.parameters.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>() =
         mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(2.));
@@ -145,7 +145,7 @@ int main()
     auto model2 = mio::GraphABModel(num_age_groups, 1);
 
     //Set infection parameters
-    model2.parameters.get<mio::abm::IncubationPeriod>() =
+    model2.parameters.get<mio::abm::TimeExposedToNoSymptoms>() =
         mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(4.));
     model2.parameters.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>() =
         mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(2.));

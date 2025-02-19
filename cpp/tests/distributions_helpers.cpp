@@ -59,6 +59,10 @@ void check_distribution(const mio::ParameterDistribution& dist, const mio::Param
                 EXPECT_THAT(
                     self.get_predefined_samples()[i],
                     FloatingPointEqual(p_other_uniform_distribution->get_predefined_samples()[i], 1e-12, 1e-12));
+                EXPECT_THAT(self.get_lower_bound(),
+                            FloatingPointEqual(p_other_uniform_distribution->get_lower_bound(), 1e-12, 1e-12));
+                EXPECT_THAT(self.get_upper_bound(),
+                            FloatingPointEqual(p_other_uniform_distribution->get_upper_bound(), 1e-12, 1e-12));
             }
         }
         void visit(const mio::ParameterDistributionLogNormal& self) override

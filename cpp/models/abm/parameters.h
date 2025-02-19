@@ -51,9 +51,9 @@ namespace abm
 {
 
 /**
- * @brief Time that a Person is infected but not yet infectious in day unit
+ * @brief Time that a Person is infected but not yet infectious in day unit.
  */
-struct IncubationPeriod {
+struct TimeExposedToNoSymptoms {
     using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -61,7 +61,7 @@ struct IncubationPeriod {
     }
     static std::string name()
     {
-        return "IncubationPeriod";
+        return "TimeExposedToNoSymptoms";
     }
 };
 
@@ -344,10 +344,11 @@ struct InfectivityDistributions {
  * @brief Individual virus shed factor to account for variability in infectious viral load spread.
 */
 struct VirusShedFactor {
-    using Type = CustomIndexArray<UniformDistribution<double>::ParamType, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        Type default_val({VirusVariant::Count, size}, UniformDistribution<double>::ParamType{0., 0.28});
+        Type default_val({VirusVariant::Count, size},
+                         AbstractParameterDistribution(ParameterDistributionUniform(0., 0.28)));
         return default_val;
     }
     static std::string name()
@@ -674,7 +675,7 @@ struct AgeGroupGotoWork {
 };
 
 using ParametersBase =
-    ParameterSet<IncubationPeriod, TimeInfectedNoSymptomsToSymptoms, TimeInfectedNoSymptomsToRecovered,
+    ParameterSet<TimeExposedToNoSymptoms, TimeInfectedNoSymptomsToSymptoms, TimeInfectedNoSymptomsToRecovered,
                  TimeInfectedSymptomsToSevere, TimeInfectedSymptomsToRecovered, TimeInfectedSevereToCritical,
                  TimeInfectedSevereToRecovered, TimeInfectedSevereToDead, TimeInfectedCriticalToDead,
                  TimeInfectedCriticalToRecovered, SymptomsPerInfectedNoSymptoms, SeverePerInfectedSymptoms,
@@ -772,8 +773,8 @@ public:
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
             for (auto&& v : enum_members<VirusVariant>()) {
 
-                if (this->get<IncubationPeriod>()[{v, i}].params()[0] < 0) {
-                    log_error("Constraint check: Mean of parameter IncubationPeriod of virus variant {} and "
+                if (this->get<TimeExposedToNoSymptoms>()[{v, i}].params()[0] < 0) {
+                    log_error("Constraint check: Mean of parameter TimeExposedToNoSymptoms of virus variant {} and "
                               "age group {:.0f} smaller "
                               "than {:.4f}",
                               (uint32_t)v, (size_t)i, 0);

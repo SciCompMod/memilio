@@ -62,8 +62,7 @@ void set_params_distributions_normal(Model<FP>& model, double t0, double tmax, d
         else {
             v.set_distribution(ParameterDistributionNormal(
                 //add add limits for nonsense big values. Also mscv has a problem with a few doubles so this fixes it
-                std::min(std::max(min_val, (1 - dev_rel * 2.6) * v), 0.1 * std::numeric_limits<double>::max()),
-                std::min(std::max(min_val, (1 + dev_rel * 2.6) * v), 0.5 * std::numeric_limits<double>::max()),
+                lower_bound, upper_bound,
                 std::min(std::max(min_val, double(v)), 0.3 * std::numeric_limits<double>::max()),
                 std::min(std::max(min_val, dev_rel * v), std::numeric_limits<double>::max())));
         }

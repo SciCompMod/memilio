@@ -362,8 +362,6 @@ TEST_F(TestModel, evolveMobilityTrips)
 
     // Set trips to use weekday trips on weekends.
     data.use_weekday_trips_on_weekend();
-    // Set trips to use weekday trips on weekends.
-    data.use_weekday_trips_on_weekend();
 
     // Mock the random distribution to control random behavior.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist2;
@@ -383,7 +381,7 @@ TEST_F(TestModel, evolveMobilityTrips)
         .WillOnce(testing::Return(0.8)) // draw random alpha p3
         .WillOnce(testing::Return(0.8)) // draw random beta p3
         .WillOnce(testing::Return(0.8)) // draw random virus shed p3
-        .WillOnce(testing::Return(1.0)) // draw transition from InfectedCritical p4
+        .WillOnce(testing::Return(0.0)) // draw transition from InfectedCritical p4
         .WillOnce(testing::Return(0.8)) // draw random peak p4
         .WillOnce(testing::Return(0.8)) // draw random incline p4
         .WillOnce(testing::Return(0.8)) // draw random decline p4
@@ -405,7 +403,7 @@ TEST_F(TestModel, evolveMobilityTrips)
     // For any other uniform distribution calls in model.evolve
     EXPECT_CALL(mock_uniform_dist2.get_mock(), invoke).WillRepeatedly(Return(1.));
 
-    // Mock the distribution to prevent infectionsin the test.
+    // Mock the distribution to prevent infections in the test.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.));
@@ -675,7 +673,7 @@ TEST_F(TestModel, checkParameterConstraints)
     auto model  = mio::abm::Model(num_age_groups);
     auto params = model.parameters;
 
-    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
+    params.get<mio::abm::TimeExposedToNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
         mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(1., 0.5));
     params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
         mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(2., 0.5));
@@ -704,10 +702,10 @@ TEST_F(TestModel, checkParameterConstraints)
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(0);
     ASSERT_EQ(params.check_constraints(), false);
 
-    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
+    params.get<mio::abm::TimeExposedToNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
         mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(-1., 0.5));
     ASSERT_EQ(params.check_constraints(), true);
-    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
+    params.get<mio::abm::TimeExposedToNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
         mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(1., 0.5));
     params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}] =
         mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(-2., 0.5));
