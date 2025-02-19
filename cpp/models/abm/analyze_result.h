@@ -82,7 +82,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                         return model.parameters.template get<TimeExposedToNoSymptoms>()[{virus_variant, age_group}];
                     },
                     [](auto& dist1, auto& dist2) {
-                        return dist1.params()[0] < dist2.params()[0];
+                        return dist1 < dist2;
                     });
                 param_percentile_dist(
                     node, std::vector<mio::AbstractParameterDistribution>(num_runs),
@@ -91,7 +91,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                             .template get<TimeInfectedNoSymptomsToSymptoms>()[{virus_variant, age_group}];
                     },
                     [](auto& dist1, auto& dist2) {
-                        return dist1.params()[0] < dist2.params()[0];
+                        return dist1 < dist2;
                     });
                 param_percentile_dist(
                     node, std::vector<mio::AbstractParameterDistribution>(num_runs),
@@ -100,7 +100,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                             .template get<TimeInfectedNoSymptomsToRecovered>()[{virus_variant, age_group}];
                     },
                     [](auto& dist1, auto& dist2) {
-                        return dist1.params()[0] < dist2.params()[0];
+                        return dist1 < dist2;
                     });
                 param_percentile_dist(
                     node, std::vector<mio::AbstractParameterDistribution>(num_runs),
@@ -109,7 +109,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                             .template get<TimeInfectedSymptomsToSevere>()[{virus_variant, age_group}];
                     },
                     [](auto& dist1, auto& dist2) {
-                        return dist1.params()[0] < dist2.params()[0];
+                        return dist1 < dist2;
                     });
                 param_percentile_dist(
                     node, std::vector<mio::AbstractParameterDistribution>(num_runs),
@@ -118,7 +118,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                             .template get<TimeInfectedSymptomsToRecovered>()[{virus_variant, age_group}];
                     },
                     [](auto& dist1, auto& dist2) {
-                        return dist1.params()[0] < dist2.params()[0];
+                        return dist1 < dist2;
                     });
                 param_percentile_dist(
                     node, std::vector<mio::AbstractParameterDistribution>(num_runs),
@@ -127,7 +127,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                             .template get<TimeInfectedSevereToCritical>()[{virus_variant, age_group}];
                     },
                     [](auto& dist1, auto& dist2) {
-                        return dist1.params()[0] < dist2.params()[0];
+                        return dist1 < dist2;
                     });
                 param_percentile_dist(
                     node, std::vector<mio::AbstractParameterDistribution>(num_runs),
@@ -136,7 +136,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                             .template get<TimeInfectedSevereToRecovered>()[{virus_variant, age_group}];
                     },
                     [](auto& dist1, auto& dist2) {
-                        return dist1.params()[0] < dist2.params()[0];
+                        return dist1 < dist2;
                     });
                 param_percentile_dist(
                     node, std::vector<mio::AbstractParameterDistribution>(num_runs),
@@ -144,7 +144,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                         return model.parameters.template get<TimeInfectedCriticalToDead>()[{virus_variant, age_group}];
                     },
                     [](auto& dist1, auto& dist2) {
-                        return dist1.params()[0] < dist2.params()[0];
+                        return dist1 < dist2;
                     });
                 param_percentile_dist(
                     node, std::vector<mio::AbstractParameterDistribution>(num_runs),
@@ -153,7 +153,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                             .template get<TimeInfectedCriticalToRecovered>()[{virus_variant, age_group}];
                     },
                     [](auto& dist1, auto& dist2) {
-                        return dist1.params()[0] < dist2.params()[0];
+                        return dist1 < dist2;
                     });
                 // Uncertain values
                 param_percentile(node, [age_group, virus_variant](auto&& model) -> auto& {
@@ -202,7 +202,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                         return model.parameters.template get<VirusShedFactor>()[{virus_variant, age_group}];
                     },
                     [](auto& dist1, auto& dist2) {
-                        return dist1.params()[0] < dist2.params()[0];
+                        return dist1 < dist2;
                     });
             }
             param_percentile(node, [age_group](auto&& model) -> auto& {

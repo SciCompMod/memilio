@@ -109,6 +109,12 @@ public:
         return static_cast<ParameterDistribution*>(m_dist.get())->params();
     }
 
+    bool operator<(const AbstractParameterDistribution& other) const
+    {
+        return static_cast<ParameterDistribution*>(m_dist.get())
+            ->smaller_impl(*static_cast<ParameterDistribution*>(other.m_dist.get()));
+    }
+
     /**
      * serialize a AbstractParameterDistribution.
      * @see mio::serialize

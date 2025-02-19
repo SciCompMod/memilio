@@ -127,6 +127,8 @@ public:
         this->accept(visitor);
     }
 
+    virtual bool smaller_impl(const ParameterDistribution& other) const = 0;
+
     /**
      * @brief Returns the distribution parameters as vector.
      */
@@ -295,6 +297,17 @@ public:
         return m_upper_bound;
     }
 
+    bool smaller_impl(const ParameterDistribution& other) const override
+    {
+        const ParameterDistributionNormal* PDNormal = dynamic_cast<const ParameterDistributionNormal*>(&other);
+        if (PDNormal) {
+            return m_mean < PDNormal->m_mean;
+        }
+        else {
+            return false;
+        }
+    }
+
     std::vector<double> params() const override
     {
         return {m_mean, m_standard_dev};
@@ -436,6 +449,17 @@ public:
     {
     }
 
+    bool smaller_impl(const ParameterDistribution& other) const override
+    {
+        const ParameterDistributionUniform* PDUniform = dynamic_cast<const ParameterDistributionUniform*>(&other);
+        if (PDUniform) {
+            return (m_lower_bound < PDUniform->m_lower_bound) && (m_upper_bound < PDUniform->m_upper_bound);
+        }
+        else {
+            return false;
+        }
+    }
+
     std::vector<double> params() const override
     {
         return {m_lower_bound, m_upper_bound};
@@ -560,6 +584,17 @@ public:
         , m_log_stddev(log_stddev)
         , m_distribution(log_mean, log_stddev)
     {
+    }
+
+    bool smaller_impl(const ParameterDistribution& other) const override
+    {
+        const ParameterDistributionLogNormal* PDLogNorm = dynamic_cast<const ParameterDistributionLogNormal*>(&other);
+        if (PDLogNorm) {
+            return m_log_mean < PDLogNorm->m_log_mean;
+        }
+        else {
+            return false;
+        }
     }
 
     std::vector<double> params() const override
@@ -687,6 +722,18 @@ public:
     {
     }
 
+    bool smaller_impl(const ParameterDistribution& other) const override
+    {
+        const ParameterDistributionExponential* PDExponential =
+            dynamic_cast<const ParameterDistributionExponential*>(&other);
+        if (PDExponential) {
+            return m_rate < PDExponential->m_rate;
+        }
+        else {
+            return false;
+        }
+    }
+
     std::vector<double> params() const override
     {
         return {m_rate};
@@ -796,6 +843,17 @@ public:
         : VisitableParameterDistribution<ParameterDistributionConstant>()
         , m_constant(constant)
     {
+    }
+
+    bool smaller_impl(const ParameterDistribution& other) const override
+    {
+        const ParameterDistributionConstant* PDConstantl = dynamic_cast<const ParameterDistributionConstant*>(&other);
+        if (PDConstantl) {
+            return m_constant < PDConstantl->m_constant;
+        }
+        else {
+            return false;
+        }
     }
 
     std::vector<double> params() const override
