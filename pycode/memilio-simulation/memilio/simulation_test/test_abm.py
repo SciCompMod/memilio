@@ -98,11 +98,6 @@ class TestAbm(unittest.TestCase):
             model.assign_location(p1_id, loc_id)
             model.assign_location(p2_id, loc_id)
 
-        model.parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype, mio.AgeGroup(
-            0)] = 0.0
-        model.parameters.InfectedSymptomsToRecovered[abm.VirusVariant.Wildtype, mio.AgeGroup(
-            0)] = 0.0
-
         # trips
         trip_list = abm.TripList()
         trip_list.add_trip(abm.Trip(0, abm.TimePoint(
