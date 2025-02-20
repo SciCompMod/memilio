@@ -7,7 +7,7 @@ import memilio.epidata.geoModificationGermany as gMG
 
 header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
 
-url = "http://localhost:8123/"
+url = "https://zam10063.zam.kfa-juelich.de/api-new/"
 
 
 def delete_scenarios():
@@ -317,17 +317,17 @@ def post_to_db_nodelist():
         print(post_response.status_code)
 
 
-def post_to_db_scenarios(modelparameters_entry={}, post=True):
+def post_to_db_scenarios(days_simulated=30, modelparameters_entry={}, post=True):
     # Define start and end date for casedata scenario
     start_date_casedata = (datetime.datetime.now() -
-                           datetime.timedelta(days=32)).strftime("%Y-%m-%d")
+                           datetime.timedelta(days=days_simulated + 2)).strftime("%Y-%m-%d")
     end_date_casedata = (datetime.datetime.now() -
                          datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     # Define start and end date of simulation
     start_date_simulation = (datetime.datetime.now() -
                              datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     end_date_simulation = (datetime.datetime.now() +
-                           datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+                           datetime.timedelta(days=days_simulated)).strftime("%Y-%m-%d")
 
     # Get ids of model, nodelist and interventions
     get_models = requests.get(url + "models/", headers=header)
@@ -534,7 +534,7 @@ def append_parameter_for_agegroup_total(param_dict):
             np.dot(param_dict[key][1], share_of_agegroup))
 
 
-def post_to_db():
+def post_to_db(days_simulated=30):
     # Define all necessary data and post.
     post_to_db_compartments()
     post_to_db_groups()
@@ -543,14 +543,15 @@ def post_to_db():
     post_to_db_model()
     post_to_db_nodes()
     post_to_db_nodelist()
-    post_to_db_scenarios()
+    post_to_db_scenarios(days_simulated)
 
 
 def main():
     print("Delete everything from db.")
     delete_everything_from_db()
     print("Fill db.")
-    post_to_db()
+    days_simulated = 3
+    post_to_db(days_simulated)
 
 
 if __name__ == "__main__":
