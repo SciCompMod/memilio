@@ -432,8 +432,10 @@ mio::IOResult<std::vector<mio::TimeSeries<ScalarType>>> simulate_ide_model(mio::
 /**
 * @brief Simulates using an ODE model. 
 *
-* We need initial values for the compartments as input. With this, we can make the starting conditions equivalent to an
-* the previously simulated results using an IDE model. 
+* We need initial values for the compartments as input. There exists a scheme to initialize the ODE model based on RKI 
+* data. However, this leads to different results than using the scheme for the initialization based on RKI data of the 
+* IDE model. In order to start both ODE and IDE simulations with the same initial values for the compartments, we 
+* initialize the ODE model using the previously obtained results from the IDE simulation. 
 *
 * @param[in] start_date Start date of the simulation 
 * @param[in] tmax Time up to which we simulate. 
