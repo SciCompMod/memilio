@@ -107,6 +107,8 @@ def get_base_class_string(base_type: Type) -> List[Any]:
 
     @param Type of the current node.
     """
+    # FlowModel arguements are not shown in list
+
     # fixes an issue in the generation of the abstract syntax tree
     # depending on the compiler version a whitespace is added between '>>'
     result = [base_type.spelling.replace('> >', '>>')]

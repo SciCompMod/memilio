@@ -41,6 +41,22 @@ def run_memilio_generation(print_ast=False):
     with importlib_resources.as_file(pkg.joinpath('../tools/config.json')) as path:
         with open(path) as file:
             conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
+
+    home_dir = os.path.expanduser("~")
+
+    relative_path = path.relative_to(home_dir)
+
+    user_specific_folder = relative_path.parts[0]
+
+    home_and_user_folder = os.path.join(home_dir, user_specific_folder)
+
+    conf.source_file = home_and_user_folder + \
+        "/memilio/cpp/models/ode_seir/model.cpp"
+
+    # Could be any target folder
+    conf.target_folder = home_and_user_folder + \
+        "/memilio/pycode/memilio-generation/../memilio-generation/memilio/generation"
+
     scanner = Scanner(conf)
     ast = AST(conf)
     aviz = Visualization()
