@@ -122,7 +122,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     only positive rates are provided.
 
     The data is read from the internet.
-    The file is read in or stored at the folder "out_folder"/Germany/.
+    The file is read in or stored at the folder "out_folder"/Germany/pydata.
     To store and change the data we use pandas.
 
     While working with the data
@@ -163,7 +163,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     impute_dates = True
 
     directory = out_folder
-    directory = os.path.join(directory, 'Germany/')
+    directory = os.path.join(directory, 'Germany', 'pydata')
     gd.check_dir(directory)
 
     filename_county = "RKITestFull_Country"

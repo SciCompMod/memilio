@@ -38,7 +38,7 @@ TEST(TestReadMobility, readFormatted)
 
     std::fstream file;
 
-    file.open("test_twitter.txt", std::ios::out);
+    file.open("test_mobility.txt", std::ios::out);
 
     if (!file) {
         mio::log_error("File was not created");
@@ -61,7 +61,7 @@ TEST(TestReadMobility, readFormatted)
         file.close();
     }
 
-    auto matrix_read = mio::read_mobility_formatted("test_twitter.txt");
+    auto matrix_read = mio::read_mobility_formatted("test_mobility.txt");
     ASSERT_TRUE(matrix_read);
     ASSERT_EQ(test_matrix.rows(), matrix_read.value().rows());
     ASSERT_EQ(test_matrix.cols(), matrix_read.value().cols());

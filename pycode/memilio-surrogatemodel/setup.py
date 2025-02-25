@@ -14,7 +14,7 @@ setup(
         where=os.path.dirname(os.path.abspath(__file__))),
     install_requires=[
         # smaller pandas versions contain a bug that sometimes prevents reading
-        # some excel files (e.g. population or twitter data)
+        # some excel files (e.g. population or mobility data)
         'pandas>=1.2.2',
         'progress',
         # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs

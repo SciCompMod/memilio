@@ -1,7 +1,10 @@
-# MEmilio data # 
+# MEmilio Data #
 
-Contains data used in epidemiological simulation. More data (e.g. daily Covid 19 data for Germany) can be added using the [MEmilio python library](../pycode/README.md).
+This directory contains data used for real-world epidemiological simulations. Additional datasets (e.g., daily reported COVID‑19 data for Germany) can be added using the MEmilio Epidata Package [MEmilio Python library](../pycode/memilio-epidata/README.rst).
 
-Available:
-- contacts: contact matrices, i.e. number of contacts per day between persons of different age groups.
-- mobility: number of daily commuters and other travellers between regions or counties.
+## Directory Structure
+The data is organized by region. Within a region folder (e.g., Germany), you will find the following subdirectories:
+
+- **contacts**: Contact matrices, i.e., the number of daily contacts between persons of different age groups.
+- **mobility**: Number of daily commuters and other travelers moving between regional entities.
+- **pydata**: Data generated using the `Epidata` package from the MEmilio library.

@@ -59,7 +59,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
     out_folder = conf.path_to_use
 
     directory = out_folder
-    directory = os.path.join(directory, 'Germany/')
+    directory = os.path.join(directory, 'Germany', 'pydata/')
     gd.check_dir(directory)
 
     if not read_data:
