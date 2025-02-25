@@ -341,6 +341,343 @@ private:
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), mio::SimulationTime(0)};
 };
 
+template <typename FP, class BaseT>
+class FeedbackSimulation : public BaseT
+{
+public:
+    using Model = mio::osecir::Model<FP>
+    /**
+     * @brief Constructs a FeedbackSimulation.
+     * @param model The model to simulate.
+     * @param t0 Start time.
+     * @param dt Time step.
+     */
+    FeedbackSimulation(const Model& model, FP t0 = 0., FP dt = 0.1)
+        : BaseT(model, t0, dt)
+    , m_t_last_npi_check(t0)
+    , m_perceived_risk(static_cast<size_t>(model.parameters.get_num_groups()))
+    , m_model_ptr(std::make_shared<Model>(model))
+    {
+        m_models.push_back(m_model_ptr);
+    }
+
+    /**
+     * @brief Destructor for FeedbackSimulation.
+     */
+    ~FeedbackSimulation()
+    {
+        auto it = std::find(m_models.begin(), m_models.end(), m_model_ptr);
+        if (it != m_models.end()) {
+            m_models.erase(it);
+        }
+    }
+
+    /**
+     * @brief Move constructor.
+     */
+    FeedbackSimulation(FeedbackSimulation&& other) noexcept
+        : BaseT(std::move(other))
+        , m_t_last_npi_check(other.m_t_last_npi_check)
+        , m_dynamic_npi(std::move(other.m_dynamic_npi))
+        , m_model_ptr(std::move(other.m_model_ptr))
+        , m_perceived_risk(std::move(other.m_perceived_risk))
+    {
+    }
+
+    /**
+     * @brief Adjusts contact patterns based on ICU occupancy feedback.
+     * 
+     * @param t Current simulation time.
+     * @param icu_regional Regional ICU occupancy data.
+     * @param icu_national National ICU occupancy data.
+     */
+    void feedback_contacts(double t, Eigen::Ref<Eigen::MatrixXd> icu_regional, Eigen::Ref<Eigen::MatrixXd> icu_national)
+    {
+        auto& params           = m_model_ptr->parameters;
+        const size_t locations = params.template get<ContactReductionMax>().size();
+        const double perceived_risk_contacts =
+            calc_risk_perceived(params.template get<alphaGammaContacts>(), params.template get<betaGammaContacts>(),
+                                icu_regional, icu_national);
+
+        auto group_weights_all = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 1.0);
+
+        // function to create a DampingSampling object for a given value and location
+        auto contact_reduction = [=](auto val, size_t location) {
+            auto v = mio::UncertainValue(val);
+            return mio::DampingSampling(v, mio::DampingLevel(int(0)), mio::DampingType(int(0)), mio::SimulationTime(t),
+                                        {location}, group_weights_all);
+        };
+
+        for (size_t loc = 0; loc < locations; ++loc) {
+            ScalarType reduc_fac_location = params.template get<ContactReductionMin>()[loc];
+
+            reduc_fac_location =
+                (params.template get<ContactReductionMax>()[loc] - params.template get<ContactReductionMin>()[loc]) *
+                    params.template get<EpsilonContacts>() *
+                    std::log(std::exp(perceived_risk_contacts / params.template get<EpsilonContacts>()) + 1.0) +
+                params.template get<ContactReductionMin>()[loc];
+
+            reduc_fac_location = std::min(reduc_fac_location, params.template get<ContactReductionMax>()[loc]);
+
+            // Add the new damping to the parameters
+            params.template get<ContactPatterns>().get_dampings().push_back(contact_reduction(reduc_fac_location, loc));
+            this->get_model().parameters.template get<ContactPatterns>().get_dampings().push_back(
+                contact_reduction(reduc_fac_location, loc));
+
+            // Update the contact matrices
+            this->get_model().parameters.template get<ContactPatterns>().make_matrix();
+            params.template get<ContactPatterns>().make_matrix();
+        }
+    }
+
+    /**
+     * @brief Calculates the perceived risk based on ICU occupancy data.
+     * 
+     * @param a Parameter alpha for the gamma distribution.
+     * @param b Parameter beta for the gamma distribution.
+     * @param icu_regional Regional ICU occupancy data.
+     * @param icu_national National ICU occupancy data.
+     * @return The perceived risk.
+     */
+    virtual ScalarType calc_risk_perceived(const ScalarType a, const ScalarType b,
+                                           Eigen::Ref<Eigen::MatrixXd> icu_regional,
+                                           Eigen::Ref<Eigen::MatrixXd> icu_national)
+    {
+        const auto& icu_occupancy    = m_model_ptr->parameters.template get<ICUOccupancyLocal>();
+        const size_t num_time_points = icu_occupancy.get_num_time_points();
+        const size_t n =
+            std::min(static_cast<size_t>(num_time_points), m_model_ptr->parameters.template get<CutOffGamma>());
+        ScalarType perceived_risk = 0.0;
+
+        for (size_t i = num_time_points - n; i < num_time_points; ++i) {
+            const size_t day       = i - (num_time_points - n);
+            const ScalarType gamma = std::pow(b, a) * std::pow(day, a - 1) * std::exp(-b * day) / std::tgamma(a);
+            const auto blending_fact_national = 1.0 - m_model_ptr->parameters.template get<BlendingFactorRegional>() -
+                                                m_model_ptr->parameters.template get<BlendingFactorLocal>();
+
+            auto icu_occupancy_adjusted_rel =
+                (m_model_ptr->parameters.template get<BlendingFactorRegional>() * icu_regional.row(i).sum() +
+                 blending_fact_national * icu_national.row(i).sum() +
+                 m_model_ptr->parameters.template get<BlendingFactorLocal>() * icu_occupancy.get_value(i).sum()) /
+                m_model_ptr->parameters.template get<ICUCapacity>();
+
+            // TODO: Should we allow values > 1.0? Maximal Reduction later is limited, but it may outweight other factors
+            icu_occupancy_adjusted_rel = std::min(icu_occupancy_adjusted_rel, 1.0);
+            perceived_risk += icu_occupancy_adjusted_rel * gamma;
+        }
+        m_perceived_risk.add_time_point(
+            m_model_ptr->parameters.template get<ICUOccupancyLocal>().get_last_time(),
+            Eigen::VectorXd::Constant((size_t)m_model_ptr->parameters.get_num_groups(), perceived_risk));
+        return perceived_risk;
+    }
+
+    /**
+     * @brief Adds ICU occupancy data at a given time point. The icu occupancy is calculated per 100,000 inhabitants.
+     * 
+     * @param t The current time point.
+     */
+    void add_icu_occupancy(double t)
+    {
+        auto& params           = m_model_ptr->parameters;
+        size_t num_groups      = (size_t)params.get_num_groups();
+        const auto& last_value = this->get_result().get_last_value();
+
+        Eigen::VectorXd icu_occupancy(num_groups);
+        for (size_t age = 0; age < num_groups; ++age) {
+            auto indx_icu_naive =
+                m_model_ptr->populations.get_flat_index({(AgeGroup)age, InfectionState::InfectedCritical});
+            icu_occupancy[age] = last_value[indx_icu_naive];
+        }
+
+        icu_occupancy = icu_occupancy / m_model_ptr->populations.get_total() * 100000;
+        params.template get<ICUOccupancyLocal>().add_time_point(t, icu_occupancy);
+    }
+
+    /**
+     * @brief Calculates the global ICU occupancy from all models.
+     * 
+     * @return The global ICU occupancy data.
+     */
+    Eigen::MatrixXd calculate_global_icu_occupancy()
+    {
+        const size_t num_groups      = static_cast<size_t>(m_model_ptr->parameters.get_num_groups());
+        const size_t num_time_points = m_model_ptr->parameters.template get<ICUOccupancyLocal>().get_num_time_points();
+        Eigen::MatrixXd global_icu_occupancy = Eigen::MatrixXd::Zero(num_time_points, num_groups);
+        // We need the total population to calculate the global ICU occupancy as weights for the local ICU occupancy
+        ScalarType total_population = 0.0;
+
+        for (const auto& model : m_models) {
+            const auto& icu_occupancy_local = model->parameters.template get<ICUOccupancyLocal>();
+            const auto model_population     = model->populations.get_total();
+            total_population += model_population;
+            for (size_t t = 0; t < num_time_points; ++t) {
+                for (size_t age = 0; age < num_groups; ++age) {
+                    global_icu_occupancy(t, age) += model_population * icu_occupancy_local.get_value(t)(age);
+                }
+            }
+        }
+
+        // Normalize the global ICU occupancy by the total population
+        global_icu_occupancy /= total_population;
+
+        return global_icu_occupancy;
+    }
+
+    /**
+     * @brief Calculates the regional ICU occupancy for the same state ID as the current model.
+     *
+     * @return The regional ICU occupancy data.
+     */
+    // Eigen::MatrixXd calculate_regional_icu_occupancy()
+    // {
+    //     const auto state_id          = m_model_ptr->parameters.template get<StateID>();
+    //     const size_t num_groups      = static_cast<size_t>(m_model_ptr->parameters.get_num_groups());
+    //     const size_t num_time_points = m_model_ptr->parameters.template get<ICUOccupancyLocal>().get_num_time_points();
+    //     Eigen::MatrixXd regional_icu_occupancy = Eigen::MatrixXd::Zero(num_time_points, num_groups);
+    //     // We need the total population per region to calculate the regional ICU occupancy as weights for the local ICU occupancy
+    //     ScalarType regional_population = 0.0;
+
+    //     for (const auto& model : m_models) {
+    //         if (model->parameters.get<StateID>() == state_id) {
+    //             const auto& icu_occupancy_local = model->parameters.template get<ICUOccupancyLocal>();
+    //             const auto total_population     = model->populations.get_total();
+    //             regional_population += total_population;
+    //             for (size_t t = 0; t < num_time_points; ++t) {
+    //                 for (size_t age = 0; age < num_groups; ++age) {
+    //                     regional_icu_occupancy(t, age) += total_population * icu_occupancy_local.get_value(t)(age);
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     // Normalize the regional ICU occupancy by the total regional population
+    //     regional_icu_occupancy /= regional_population;
+
+    //     return regional_icu_occupancy;
+    // }
+
+    /**
+     * @brief Calculates the regional ICU occupancy where regional means a predefined radius around the county.
+     * 
+     * @return The regional ICU occupancy data.
+     */
+    Eigen::MatrixXd calculate_regional_icu_occupancy()
+    {
+        const auto county_id         = m_model_ptr->parameters.template get<CountyID>();
+        const size_t num_groups      = static_cast<size_t>(m_model_ptr->parameters.get_num_groups());
+        const size_t num_time_points = m_model_ptr->parameters.template get<ICUOccupancyLocal>().get_num_time_points();
+        Eigen::MatrixXd regional_icu_occupancy = Eigen::MatrixXd::Zero(num_time_points, num_groups);
+        ScalarType regional_population         = 0.0;
+
+        auto regions = m_model_ptr->parameters.template get<ConnectedCountyIDs>();
+
+        for (const auto& model : m_models) {
+            auto m_id = model->parameters.template get<CountyID>();
+            if (m_id == county_id) {
+                continue;
+            }
+            // Check if the id is in regions
+            if (std::find(regions.begin(), regions.end(), m_id) != regions.end()) {
+                const auto& icu_occupancy_local = model->parameters.template get<ICUOccupancyLocal>();
+                const auto total_population     = model->populations.get_total();
+                regional_population += total_population;
+                for (size_t t = 0; t < num_time_points; ++t) {
+                    for (size_t age = 0; age < num_groups; ++age) {
+                        regional_icu_occupancy(t, age) += total_population * icu_occupancy_local.get_value(t)(age);
+                    }
+                }
+            }
+        }
+
+        // Normalize the regional ICU occupancy by the total regional population
+        regional_icu_occupancy /= regional_population;
+
+        return regional_icu_occupancy;
+    }
+
+    /**
+     * @brief Get the perceived risk time series.
+     * 
+     * @return The perceived risk time series.
+     */
+    auto& get_perceived_risk() const
+    {
+        return m_perceived_risk;
+    }
+
+    /**
+     * @brief Advances the simulation to a specified time.
+     * 
+     * @param tmax The maximum time to advance to.
+     * @return The last value of the simulation result.
+     */
+    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
+    {
+        auto& dyn_npis         = m_model_ptr->parameters.template get<DynamicNPIsInfectedSymptoms>();
+        auto& contact_patterns = m_model_ptr->parameters.template get<ContactPatterns>();
+        auto t                 = BaseT::get_result().get_last_time();
+        const auto dt          = dyn_npis.get_interval().get();
+
+        while (t < tmax) {
+            auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});
+            if (dt_eff >= 1.0) {
+                dt_eff = 1.0;
+            }
+
+            if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
+                auto icu_regional = calculate_regional_icu_occupancy();
+                auto icu_global   = calculate_global_icu_occupancy();
+                this->feedback_contacts(t, icu_regional, icu_global);
+            }
+            BaseT::advance(t + dt_eff);
+            if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
+                this->add_icu_occupancy(t);
+            }
+            t = t + dt_eff;
+            if (dyn_npis.get_thresholds().size() > 0) {
+                if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
+                    auto inf_rel = get_infections_relative(*this, t, this->get_result().get_last_value()) *
+                                   dyn_npis.get_base_value();
+                    auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
+                    if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
+                        (exceeded_threshold->first > m_dynamic_npi.first ||
+                         t > double(m_dynamic_npi.second))) { // old npi was weaker or is expired
+                        auto t_end    = mio::SimulationTime(t + double(dyn_npis.get_duration()));
+                        m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
+                        mio::implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
+                                                    SimulationTime(t), t_end, [](auto& g) {
+                                                        return mio::make_contact_damping_matrix(g);
+                                                    });
+                    }
+                    m_t_last_npi_check = t;
+                }
+            }
+            else {
+                m_t_last_npi_check = t;
+            }
+        }
+        return this->get_result().get_last_value();
+    }
+
+    /**
+     * @brief Get the model pointer.
+     * 
+     * @return The model pointer.
+     */
+    std::shared_ptr<Model> get_model_ptr() const
+    {
+        return m_model_ptr;
+    }
+
+private:
+    double m_t_last_npi_check; /// Time of the last NPI check.
+    std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(),
+                                                       mio::SimulationTime(0)}; /// Dynamic NPI data.
+    std::shared_ptr<Model> m_model_ptr; /// Pointer to the model.
+    inline static std::vector<std::shared_ptr<Model>> m_models; /// List of model pointers.
+    mio::TimeSeries<ScalarType> m_perceived_risk; // = mio::TimeSeries<ScalarType>(6); /// Perceived risk time series.
+};
+
 /**
  * @brief Specialization of simulate for SECIR models using Simulation.
  *
