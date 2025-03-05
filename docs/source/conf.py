@@ -33,7 +33,7 @@ extensions = [
     'breathe',
     'exhale',
     'hoverxref.extension',
-    'sphinx_remove_toctrees'
+#    'sphinx_remove_toctrees'
 ]
 
 intersphinx_mapping = {
