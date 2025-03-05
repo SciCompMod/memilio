@@ -46,7 +46,7 @@ Some location changes are deterministic and regular (e.g. going to work), while 
 social event in the evening/on the weekend). When agents are infected, they are quarantined and cannot change their location.
 You can restrict some mobility rules by allowing only a proportion of people to enter specific locations.
 
-Another way of mobility we use in the simulation of Braunschweig (`simulations/abm_braunschweig.cpp`) is using trips. A trip
+Another way of mobility we use in the `simulation of Braunschweig <https://github.com/SciCompMod/memilio/blob/main/cpp/simulations/abm_braunschweig.cpp>`_ is using trips. A trip
 consists of the ID of the person that performs this trip, a time point when this trip is performed, and the destination.
 At the beginning of the simulation, a list with all trips is initialized and followed during the simulation. There can be different
 trips on the weekend than during the week, but other than that, the agents do the same trips every day. As before, agents that are
