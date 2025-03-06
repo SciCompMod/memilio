@@ -540,7 +540,34 @@ def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file)
             f.write(line)
             f.write('\n')
         f.close()
-    print(' ')
+
+
+def num_locations(model):
+    num_home = 0
+    num_work = 0
+    num_school = 0
+    num_event = 0
+    num_hosp = 0
+    num_icu = 0
+    num_shop = 0
+    for loc in model.locations:
+        if loc.type == abm.LocationType.Home:
+            num_home += 1
+        elif loc.type == abm.LocationType.Work:
+            num_work += 1
+        elif loc.type == abm.LocationType.School:
+            num_school += 1
+        elif loc.type == abm.LocationType.SocialEvent:
+            num_event += 1
+        elif loc.type == abm.LocationType.BasicsShop:
+            num_shop += 1
+        elif loc.type == abm.LocationType.Hospital:
+            num_hosp += 1
+        elif loc.type == abm.LocationType.ICU:
+            num_icu += 1
+        else:
+            print('error')
+    print('')
 
 
 def run_abm_simulation(sim_num):
@@ -572,7 +599,7 @@ def run_abm_simulation(sim_num):
     abm.set_AgeGroupGoToWork(sim.model.parameters, age_group_35_to_59)
     # add dampings
     sim.model.add_infection_rate_damping(
-        abm.TimePoint(abm.days(5).seconds), 0.0)
+        abm.TimePoint(abm.days(5).seconds), 0.2)
     # assign initial infection states according to distribution
     assign_infection_states(sim.model, t0, 0.002, 0.005,
                             0.0029, 0.0001, 0.0, 0.0)
@@ -608,14 +635,34 @@ def run_abm_simulation(sim_num):
         output_path, str(sim_num) + '_comps.csv'), sim.model, history)
     end_o2 = time.time()
     print(f'Time writing comps csv: {end_o2 - start_o2} seconds')
-    # write results to h5 file. The file has two data sets for every AgentId which are:
+    # write results to h5 file v1. The file has two data sets for every AgentId which are:
     # - LocationId at every time step
     # - Time since transmission at every time step
-    start_h5 = time.time()
+    start_h5_v1 = time.time()
     abm.write_h5(os.path.join(
-        output_path, str(sim_num) + '_output.h5'), history)
-    end_h5 = time.time()
-    print(f'Time to write output h5: {end_h5 - start_h5} seconds')
+        output_path, str(sim_num) + '_output_v1.h5'), history)
+    end_h5_v1 = time.time()
+    print(f'Time to write v1 output h5: {end_h5_v1 - start_h5_v1} seconds')
+
+    # write results to h5 file v2. The file has three data sets for every AgentId which are:
+    # - Time since transmission at change points. Even indices are the change time point
+    #   and the following odd index is the changed time since transmission
+    # - Time points of location changes
+    # - (New) LocationId corresponding to the time points from the second dataset
+    start_h5_v2 = time.time()
+    abm.write_h5_v2(os.path.join(
+        output_path, str(sim_num) + '_output_v2.h5'), history)
+    end_h5_v2 = time.time()
+    print(f'Time to write v2 output h5: {end_h5_v2 - start_h5_v2} seconds')
+
+    # write results to h5 file v3. The file has one group with two datasets:
+    # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
+    # - LocationId at every time step for every agent (matrix of size #agents x #timepoints)
+    start_h5_v3 = time.time()
+    abm.write_h5_v3(os.path.join(
+        output_path, str(sim_num) + '_output_v3.h5'), history)
+    end_h5_v3 = time.time()
+    print(f'Time to write v3 output h5: {end_h5_v3 - start_h5_v3} seconds')
 
     print('done')
 
@@ -628,4 +675,4 @@ if __name__ == "__main__":
     # set LogLevel
     mio.abm.set_log_level_warn()
     for i in range(0, 1):
-        run_abm_simulation(1, **args.__dict__)
+        run_abm_simulation(i, **args.__dict__)
