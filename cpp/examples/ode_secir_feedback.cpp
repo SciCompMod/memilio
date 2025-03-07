@@ -73,8 +73,8 @@ void initialize_feedback(mio::FeedbackSimulation<double, mio::Simulation<double,
     // ICU occupancy in the past for memory kernel
     auto& icu_occupancy     = feedback_simulation.get_parameters().template get<mio::ICUOccupancyLocal<double>>();
     Eigen::VectorXd icu_day = Eigen::VectorXd::Constant(1, 1);
-    const int cutoff        = feedback_simulation.get_parameters().template get<mio::GammaCutOff>();
-    for (int t = -cutoff; t <= 0; ++t) {
+    const auto cutoff       = feedback_simulation.get_parameters().template get<mio::GammaCutOff>();
+    for (auto t = -cutoff; t <= 0; ++t) {
         icu_occupancy.add_time_point(t, icu_day);
     }
 

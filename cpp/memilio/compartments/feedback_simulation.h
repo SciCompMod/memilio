@@ -24,6 +24,8 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/epidemiology/age_group.h"
+#include "memilio/utils/uncertain_value.h"
+#include "memilio/epidemiology/damping_sampling.h"
 
 namespace mio
 {
@@ -234,6 +236,10 @@ public:
     {
         return m_perceived_risk;
     }
+    auto& get_perceived_risk()
+    {
+        return m_perceived_risk;
+    }
 
     /**
      * @brief Returns the local feedback parameters.
@@ -253,8 +259,8 @@ public:
      */
     FP calc_risk_perceived()
     {
-        const auto& icu_ts     = m_feedback_parameters.template get<ICUOccupancyLocal<FP>>();
-        size_t num_time_points = icu_ts.get_num_time_points();
+        const auto& icu_occ    = m_feedback_parameters.template get<ICUOccupancyLocal<FP>>();
+        size_t num_time_points = icu_occ.get_num_time_points();
         size_t n = std::min(static_cast<size_t>(num_time_points), m_feedback_parameters.template get<GammaCutOff>());
         FP perceived_risk = 0.0;
         const auto& a     = m_feedback_parameters.template get<GammaShapeParameter<FP>>();
@@ -262,7 +268,7 @@ public:
         for (size_t i = num_time_points - n; i < num_time_points; ++i) {
             size_t day   = i - (num_time_points - n);
             FP gamma     = std::pow(b, a) * std::pow(day, a - 1) * std::exp(-b * day) / std::tgamma(a);
-            FP perc_risk = icu_ts.get_value(i).sum() / m_feedback_parameters.template get<NominalICUCapacity<FP>>();
+            FP perc_risk = icu_occ.get_value(i).sum() / m_feedback_parameters.template get<NominalICUCapacity<FP>>();
             perc_risk    = std::min(perc_risk, 1.0);
             perceived_risk += perc_risk * gamma;
         }
