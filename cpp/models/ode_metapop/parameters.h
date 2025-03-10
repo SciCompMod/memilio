@@ -101,25 +101,25 @@ struct CommutingStrengths {
     }
 };
 
-/**
- * @brief The sizes of the populations after commuting.
- */
-template <typename FP = ScalarType>
-struct PopulationSizes {
-    using Type = CustomIndexArray<FP, Region>;
-    static Type get_default(Region size, AgeGroup)
-    {
-        return Type(size, 0.);
-    }
-    static std::string name()
-    {
-        return "PopulationSizes";
-    }
-};
+// /**
+//  * @brief The infectious time in day unit.
+//  */
+// template <typename FP = ScalarType>
+// struct PopulationAfterCommuting {
+//     using Type = CustomIndexArray<FP, Region, AgeGroup>;
+//     static Type get_default(Region size_region, AgeGroup size_agegroups)
+//     {
+//         return Type({size_region, size_agegroups}, 0.);
+//     }
+//     static std::string name()
+//     {
+//         return "TimeInfected";
+//     }
+// };
 
 template <typename FP = ScalarType>
 using ParametersBase = ParameterSet<TransmissionProbabilityOnContact<FP>, TimeExposed<FP>, TimeInfected<FP>,
-                                    ContactPatterns<FP>, CommutingStrengths<FP>, PopulationSizes<FP>>;
+                                    ContactPatterns<FP>, CommutingStrengths<FP>>;
 
 /**
  * @brief Parameters of SEIR model.
