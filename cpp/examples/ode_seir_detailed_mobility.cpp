@@ -73,7 +73,7 @@ int main()
     g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::oseir::InfectionState::Count, 0.01), traveltime, path1);
     g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::oseir::InfectionState::Count, 0.01), traveltime, path2);
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    auto sim = mio::make_mobility_sim(t0, dt, std::move(g));
 
     sim.advance(tmax);
     // results node 1

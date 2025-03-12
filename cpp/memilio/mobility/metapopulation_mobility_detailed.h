@@ -747,7 +747,7 @@ private:
                     : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]].property.base_sim;
 
             // get current contact  and scale it but only if mobility model
-            auto contact_pattern_curr = get_contact_pattern(node_to.get_model());
+            auto contact_pattern_curr = node_to.get_model().get_contact_pattern();
             auto contacts_copy        = contact_pattern_curr;
             if (schedules.mobility_schedule_edges[edge_indx][indx_schedule]) {
                 auto& contact_matrix          = contact_pattern_curr.get_cont_freq_mat();
@@ -762,7 +762,7 @@ private:
                 }
 
                 contact_matrix[0].get_baseline() = scaled_matrix;
-                set_contact_pattern(node_to.get_model(), contact_pattern_curr);
+                node_to.get_model().set_contact_pattern(contact_pattern_curr);
             }
 
             m_mobility_functions.update_commuters(this->m_t, next_dt, e.property, node_to,
@@ -770,7 +770,7 @@ private:
 
             // reset contact pattern after estimating the state of the commuters
             if (schedules.mobility_schedule_edges[edge_indx][indx_schedule])
-                set_contact_pattern(node_to.get_model(), contacts_copy);
+                node_to.get_model().set_contact_pattern(contacts_copy);
         }
     }
 
