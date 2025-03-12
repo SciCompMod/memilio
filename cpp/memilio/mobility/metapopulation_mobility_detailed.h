@@ -108,7 +108,7 @@ auto get_mobility_factors(const Sim& /*sim*/, double /*t*/, const Eigen::Ref<con
 }
 
 template <typename FP>
-void check_negative_values_vec(Eigen::Ref<Vector<FP>> vec, const size_t num_age_groups, FP tolerance = -1e-7,
+void check_negative_values_vec(Eigen::Ref<Eigen::VectorX<FP>> vec, const size_t num_age_groups, FP tolerance = -1e-7,
                                const size_t max_iterations = 100)
 {
     // before moving the commuters, we need to look for negative values in vec and correct them.
@@ -540,7 +540,11 @@ public:
 };
 
 template <typename Graph, typename MobilityFunctions>
-class GraphSimulationExtended : public GraphSimulationBase<Graph>
+class GraphSimulationExtended
+    : public GraphSimulationBase<Graph, double, double,
+                                 std::function<void(typename Graph::EdgeProperty&, size_t,
+                                                    typename Graph::NodeProperty&, typename Graph::NodeProperty&)>,
+                                 std::function<void(double, double, typename Graph::NodeProperty&)>>
 {
 public:
     using node_function = std::function<void(double, double, typename Graph::NodeProperty&)>;
@@ -548,9 +552,12 @@ public:
         std::function<void(double, double, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
                            typename Graph::NodeProperty&, MobilityFunctions&)>;
 
-    GraphSimulationExtended(double t0, double dt, const Graph& g, const node_function& node_func,
-                            MobilityFunctions modes)
-        : GraphSimulationBase<Graph>(t0, dt, g, node_func, {})
+    GraphSimulationExtended(double t0, double dt, Graph& g, const node_function& node_func, MobilityFunctions modes)
+        : GraphSimulationBase<Graph, double, double,
+                              std::function<void(typename Graph::EdgeProperty&, size_t, typename Graph::NodeProperty&,
+                                                 typename Graph::NodeProperty&)>,
+                              std::function<void(double, double, typename Graph::NodeProperty&)>>(t0, dt, std::move(g),
+                                                                                                  node_func, {})
         , m_mobility_functions(modes)
     {
         ScheduleManager schedule_manager(100); // Assuming 100 timesteps
@@ -558,7 +565,11 @@ public:
     }
 
     GraphSimulationExtended(double t0, double dt, Graph&& g, const node_function& node_func, MobilityFunctions modes)
-        : GraphSimulationBase<Graph>(t0, dt, std::move(g), node_func, {})
+        : GraphSimulationBase<Graph, double, double,
+                              std::function<void(typename Graph::EdgeProperty&, size_t, typename Graph::NodeProperty&,
+                                                 typename Graph::NodeProperty&)>,
+                              std::function<void(double, double, typename Graph::NodeProperty&)>>(
+              t0, dt, std::forward<Graph>(g), node_func, {})
         , m_mobility_functions(modes)
     {
         ScheduleManager schedule_manager(100); // Assuming 100 timesteps

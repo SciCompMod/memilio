@@ -258,14 +258,14 @@ ExtendedGraph<Model<FP>> draw_sample(ExtendedGraph<Model<FP>>& graph, FP fact_ma
         auto local_icu_capacity = node_model_local.parameters.template get<ICUCapacity<FP>>();
         auto local_tnt_capacity = node_model_local.parameters.template get<TestAndTraceCapacity<FP>>();
         auto local_holidays     = node_model_local.parameters.template get<ContactPatterns<FP>>().get_school_holidays();
-        auto local_daily_v1     = node_model_local.parameters.template get<DailyFirstVaccination<FP>>();
-        auto local_daily_v2     = node_model_local.parameters.template get<DailyFullVaccination<FP>>();
+        auto local_daily_v1     = node_model_local.parameters.template get<DailyPartialVaccinations<FP>>();
+        auto local_daily_v2     = node_model_local.parameters.template get<DailyFullVaccinations<FP>>();
         node_model_local.parameters                                          = shared_params_base_model.parameters;
         node_model_local.parameters.template get<ICUCapacity<FP>>()          = local_icu_capacity;
         node_model_local.parameters.template get<TestAndTraceCapacity<FP>>() = local_tnt_capacity;
         node_model_local.parameters.template get<ContactPatterns<FP>>().get_school_holidays() = local_holidays;
-        node_model_local.parameters.template get<DailyFirstVaccination<FP>>()                 = local_daily_v1;
-        node_model_local.parameters.template get<DailyFullVaccination<FP>>()                  = local_daily_v2;
+        node_model_local.parameters.template get<DailyPartialVaccinations<FP>>()              = local_daily_v1;
+        node_model_local.parameters.template get<DailyFullVaccinations<FP>>()                 = local_daily_v2;
 
         node_model_local.parameters.template get<ContactPatterns<FP>>().make_matrix();
         node_model_local.apply_constraints();
@@ -278,8 +278,8 @@ ExtendedGraph<Model<FP>> draw_sample(ExtendedGraph<Model<FP>>& graph, FP fact_ma
         node_mobility_model.parameters.template get<ContactPatterns<FP>>() = node_mobility_contacts;
 
         // set vaccination parameters to zero
-        node_mobility_model.parameters.template get<DailyFirstVaccination<FP>>().array().setConstant(0);
-        node_mobility_model.parameters.template get<DailyFullVaccination<FP>>().array().setConstant(0);
+        node_mobility_model.parameters.template get<DailyPartialVaccinations<FP>>().array().setConstant(0);
+        node_mobility_model.parameters.template get<DailyFullVaccinations<FP>>().array().setConstant(0);
 
         // adjust the transmission factor for the mobility model based on the usage of masks
         for (auto age = AgeGroup(0); age < node_mobility_model.parameters.get_num_groups(); ++age) {

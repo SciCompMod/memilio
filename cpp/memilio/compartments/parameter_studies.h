@@ -355,49 +355,87 @@ public:
     }
 
 private:
+    /**
+     * @brief Adds a node to the graph using the overload based on the node's property.
+     *
+     * This function checks whether the node property type has a 'stay_duration' member.
+     * If so, it uses the specialized version that extracts additional simulation parameters.
+     * Otherwise, we just use the simulation time (m_t0) and integration step size (m_dt_integration).
+     *
+     * @tparam GraphType The type of the graph.
+     * @tparam NodeType The type of the node.
+     * @param graph The graph to which the node will be added.
+     * @param node The node to add.
+     */
+    template <typename GraphType, typename NodeType>
+    void add_node(GraphType& graph, const NodeType& node)
+    {
+        // Deduce the property type of the node.
+        using PropertyType = std::decay_t<decltype(node.property)>;
+
+        // If the property type has a member called 'stay_duration', use the specialized version.
+        if constexpr (has_stay_duration<PropertyType>::value) {
+            graph.add_node(node.id, node.property.base_sim, node.property.mobility_sim, node.property.stay_duration);
+        }
+        else {
+            graph.add_node(node.id, node.property, m_t0, m_dt_integration);
+        }
+    }
+
+    /**
+     * @brief Adds an edge to the graph using the appropriate overload based on the edge's property.
+     *
+     * This function checks whether the edge property type has both 'travel_time' and 'path' members.
+     * If so, it uses the specialized version that uses additional parameters.
+     * Otherwise, we just use the edge property.
+     *
+     * @tparam GraphType The type of the graph.
+     * @tparam EdgeType The type of the edge.
+     * @param graph The graph to which the edge will be added.
+     * @param edge The edge to add.
+     */
+    template <typename GraphType, typename EdgeType>
+    void add_edge(GraphType& graph, const EdgeType& edge)
+    {
+        // Deduce the property type of the edge.
+        using PropertyType = std::decay_t<decltype(edge.property)>;
+
+        // Check if the property type has both 'travel_time' and 'path' members.
+        if constexpr (has_travel_time<PropertyType>::value && has_path<PropertyType>::value) {
+            graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property.get_parameters(),
+                           edge.property.travel_time, edge.property.path);
+        }
+        else {
+            graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
+        }
+    }
+
+    /**
+     * @brief Creates a mobility simulation based on a sampled graph.
+     * @tparam SampleGraphFunction The type of the function that samples the graph.
+     * @param sample_graph A function that takes the internal graph and returns a sampled graph.
+     * @return A mobility simulation created from the sampled simulation graph.
+     */
     template <class SampleGraphFunction>
     auto create_sampled_simulation(SampleGraphFunction sample_graph)
     {
+        // Create an empty simulation graph.
         SimulationGraph sim_graph;
 
+        // Sample the original graph using the provided sampling function.
         auto sampled_graph = sample_graph(m_graph);
+
+        // Iterate over each node in the sampled graph and add it to the simulation graph.
         for (auto&& node : sampled_graph.nodes()) {
-            using PropertyType = typename std::decay<decltype(node.property)>::type;
-            add_node_with_properties(sim_graph, node,
-                                     std::integral_constant<bool, has_stay_duration<PropertyType>::value>{});
+            add_node(sim_graph, node);
         }
+
+        // Iterate over each edge in the sampled graph and add it to the simulation graph.
         for (auto&& edge : sampled_graph.edges()) {
-            using PropertyType = typename std::decay<decltype(edge.property)>::type;
-            add_edge_with_properties(sim_graph, edge, std::integral_constant < bool,
-                                     has_travel_time<PropertyType>::value&& has_path<PropertyType>::value > {});
+            add_edge(sim_graph, edge);
         }
 
         return make_mobility_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
-    }
-
-    template <typename GraphType, typename NodeType>
-    void add_node_with_properties(GraphType& graph, const NodeType& node, std::false_type)
-    {
-        graph.add_node(node.id, node.property, m_t0, m_dt_integration);
-    }
-
-    template <typename GraphType, typename NodeType>
-    void add_node_with_properties(GraphType& graph, const NodeType& node, std::true_type)
-    {
-        graph.add_node(node.id, node.property.base_sim, node.property.mobility_sim, node.property.stay_duration);
-    }
-
-    template <typename GraphType, typename EdgeType>
-    void add_edge_with_properties(GraphType& graph, const EdgeType& edge, std::false_type)
-    {
-        graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
-    }
-
-    template <typename GraphType, typename EdgeType>
-    void add_edge_with_properties(GraphType& graph, const EdgeType& edge, std::true_type)
-    {
-        graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property.get_parameters(),
-                       edge.property.travel_time, edge.property.path);
     }
 
     std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
