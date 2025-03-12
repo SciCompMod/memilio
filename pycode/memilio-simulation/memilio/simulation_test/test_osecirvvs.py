@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Maximilian Betz
 #
@@ -92,12 +92,12 @@ class Test_osecirvvs_integration(unittest.TestCase):
 
         model.parameters.ICUCapacity.value = 10000
         model.parameters.TestAndTraceCapacity.value = 10000
-        model.parameters.DailyFirstVaccination.resize_SimulationDay(
+        model.parameters.DailyPartialVaccinations.resize_SimulationDay(
             SimulationDay(1000))
-        model.parameters.DailyFirstVaccination[:, :] = 0
-        model.parameters.DailyFullVaccination.resize_SimulationDay(
+        model.parameters.DailyPartialVaccinations[:, :] = 0
+        model.parameters.DailyFullVaccinations.resize_SimulationDay(
             SimulationDay(1000))
-        model.parameters.DailyFullVaccination[:, :] = 0
+        model.parameters.DailyFullVaccinations[:, :] = 0
 
         model.parameters.TimeExposed[A0] = 3.2
         model.parameters.TimeInfectedNoSymptoms[A0] = 2.0

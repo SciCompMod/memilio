@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann, Rene Schmieding
 *
@@ -72,8 +72,7 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
         auto age_receiver          = person.get_age();
         ScalarType mask_protection = person.get_mask_protective_factor(global_parameters);
         assert(person.get_cells().size() && "Person is in multiple cells. Interact logic is incorrect at the moment.");
-        for (auto cell_index :
-             person.get_cells()) { // TODO: the logic here is incorrect in case a person is in multiple cells
+        for (auto cell_index : person.get_cells()) {
             std::pair<VirusVariant, ScalarType> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
             for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
                 VirusVariant virus = static_cast<VirusVariant>(v);
@@ -134,7 +133,7 @@ bool change_location(Person& person, const Location& destination, const Transpor
     })); // make sure cell indices are valid
 
     if (person.get_location() != destination.get_id()) {
-        person.set_location(destination.get_type(), destination.get_id());
+        person.set_location(destination.get_type(), destination.get_id(), destination.get_model_id());
         person.get_cells() = cells;
         person.set_last_transport_mode(mode);
 

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding, Henrik Zunker
 *
@@ -97,8 +97,8 @@ public:
 
     // Note: use get_flat_flow_index when accessing flows
     // Note: by convention, we compute incoming flows, thus entries in flows must be non-negative
-    virtual void get_flows(Eigen::Ref<const Vector<FP>> /*pop*/, Eigen::Ref<const Vector<FP>> /*y*/, FP /*t*/,
-                           Eigen::Ref<Vector<FP>> /*flows*/) const = 0;
+    virtual void get_flows(Eigen::Ref<const Eigen::VectorX<FP>> /*pop*/, Eigen::Ref<const Eigen::VectorX<FP>> /*y*/,
+                           FP /*t*/, Eigen::Ref<Eigen::VectorX<FP>> /*flows*/) const = 0;
 
     /**
      * @brief Compute the right-hand-side of the ODE dydt = f(y, t) from flow values.
@@ -108,7 +108,7 @@ public:
      * @param[in] flows The current flow values (as calculated by get_flows) as a flat array.
      * @param[out] dydt A reference to the calculated output.
      */
-    void get_derivatives(Eigen::Ref<const Vector<FP>> flows, Eigen::Ref<Vector<FP>> dydt) const
+    void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> flows, Eigen::Ref<Eigen::VectorX<FP>> dydt) const
     {
         // set dydt to 0, then iteratively add all flow contributions
         dydt.setZero();
@@ -134,8 +134,8 @@ public:
      * @param[in] t The current time.
      * @param[out] dydt A reference to the calculated output.
      */
-    void get_derivatives(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
-                         Eigen::Ref<Vector<FP>> dydt) const override final
+    void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
+                         Eigen::Ref<Eigen::VectorX<FP>> dydt) const override final
     {
         m_flow_values.setZero();
         get_flows(pop, y, t, m_flow_values);
@@ -147,9 +147,9 @@ public:
      * This can be used as initial conditions in an ODE solver. By default, this is a zero vector.
      * @return The initial flows.
      */
-    Vector<FP> get_initial_flows() const
+    Eigen::VectorX<FP> get_initial_flows() const
     {
-        return Vector<FP>::Zero((this->populations.numel() / static_cast<size_t>(Comp::Count)) * Flows::size());
+        return Eigen::VectorX<FP>::Zero((this->populations.numel() / static_cast<size_t>(Comp::Count)) * Flows::size());
     }
 
     /**
@@ -214,7 +214,7 @@ public:
     }
 
 private:
-    mutable Vector<FP> m_flow_values; ///< Cache to avoid allocation in get_derivatives (using get_flows).
+    mutable Eigen::VectorX<FP> m_flow_values; ///< Cache to avoid allocation in get_derivatives (using get_flows).
 
     /**
      * @brief Compute the derivatives of the compartments.
@@ -226,7 +226,7 @@ private:
      * @tparam I The index of a flow in FlowChart.
      */
     template <size_t I = 0>
-    inline void get_rhs_impl(Eigen::Ref<const Vector<FP>> flows, Eigen::Ref<Vector<FP>> rhs,
+    inline void get_rhs_impl(Eigen::Ref<const Eigen::VectorX<FP>> flows, Eigen::Ref<Eigen::VectorX<FP>> rhs,
                              const FlowIndex& index) const
     {
         using Flow                 = type_at_index_t<I, Flows>;
@@ -254,16 +254,17 @@ private:
  */
 template <typename FP, class M>
 using get_derivatives_expr_t = decltype(std::declval<const M&>().get_derivatives(
-    std::declval<Eigen::Ref<const Vector<FP>>>(), std::declval<Eigen::Ref<Vector<FP>>>()));
+    std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(), std::declval<Eigen::Ref<Eigen::VectorX<FP>>>()));
 
 template <typename FP, class M>
 using get_flows_expr_t =
-    decltype(std::declval<const M&>().get_flows(std::declval<Eigen::Ref<const Vector<FP>>>(),
-                                                std::declval<Eigen::Ref<const Vector<FP>>>(), std::declval<FP>(),
-                                                std::declval<Eigen::Ref<Vector<FP>>>()));
+    decltype(std::declval<const M&>().get_flows(std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(),
+                                                std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(),
+                                                std::declval<FP>(), std::declval<Eigen::Ref<Eigen::VectorX<FP>>>()));
 
 template <typename FP, class M>
-using get_initial_flows_expr_t = decltype(std::declval<Vector<FP>>() = std::declval<const M&>().get_initial_flows());
+using get_initial_flows_expr_t =
+    decltype(std::declval<Eigen::VectorX<FP>>() = std::declval<const M&>().get_initial_flows());
 /** @} */
 
 /**

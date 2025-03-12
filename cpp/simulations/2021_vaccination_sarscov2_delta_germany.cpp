@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow, Martin Kühn
 *
@@ -447,6 +447,7 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osec
 
     narrow = 0.0;
     //local dynamic NPIs
+    params.get<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>() = 7;
     auto& dynamic_npis        = params.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<double>>();
     auto dynamic_npi_dampings = std::vector<mio::DampingSampling<double>>();
 
@@ -548,17 +549,17 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
     auto scaling_factor_icu      = 1.0;
     auto tnt_capacity_factor     = 1.43 / 100000.;
     auto mobile_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                    mio::osecirvvs::InfectionState::ExposedNaive,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
+                                mio::osecirvvs::InfectionState::ExposedNaive,
+                                mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
 
     // graph of counties with populations and local parameters
     // and mobility between counties
@@ -580,7 +581,8 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
         params_graph, read_function_nodes, node_id_function, scaling_factor_infected, scaling_factor_icu,
         tnt_capacity_factor, mio::get_offset_in_days(end_date, start_date), false, true));
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, mobile_compartments, contact_locations.size(),
-                                        read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
+                                        read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.},
+                                        {}));
 
     return mio::success(params_graph);
 }
@@ -662,7 +664,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
             auto params              = std::vector<mio::osecirvvs::Model<double>>();
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                                         [](auto&& node) {
+                           [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 

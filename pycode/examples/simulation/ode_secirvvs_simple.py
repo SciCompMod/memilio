@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Martin J. Kuehn, Maximilian Betz
 #
@@ -99,15 +99,15 @@ def run_ode_secirvvs_simulation(show_plot=True):
 
     model.parameters.ICUCapacity.value = 100
     model.parameters.TestAndTraceCapacity.value = 0.0143
-    model.parameters.DailyFirstVaccination.resize_SimulationDay(
+    model.parameters.DailyPartialVaccinations.resize_SimulationDay(
         SimulationDay(tmax + 1))
-    model.parameters.DailyFullVaccination.resize_SimulationDay(
+    model.parameters.DailyFullVaccinations.resize_SimulationDay(
         SimulationDay(tmax + 1))
     daily_vaccinations = 10
     for i, num_vaccinations in enumerate(range(0, daily_vaccinations * (tmax + 1), daily_vaccinations)):
-        model.parameters.DailyFirstVaccination[AgeGroup(
+        model.parameters.DailyPartialVaccinations[AgeGroup(
             0), SimulationDay(i)] = num_vaccinations
-        model.parameters.DailyFullVaccination[AgeGroup(
+        model.parameters.DailyFullVaccinations[AgeGroup(
             0), SimulationDay(i)] = num_vaccinations
 
     # contact patterns

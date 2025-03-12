@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -475,8 +475,8 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     auto scaling_factor_icu      = 1.0;
     auto tnt_capacity_factor     = 7.5 / 100000.;
     auto mobile_compartments     = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
-                                    mio::osecir::InfectionState::InfectedNoSymptoms,
-                                    mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
+                                mio::osecir::InfectionState::InfectedNoSymptoms,
+                                mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
 
     // graph of counties with populations and local parameters
     // and mobility between counties
@@ -498,7 +498,8 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
                           true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
                           scaling_factor_icu, tnt_capacity_factor, 0, false, true));
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, mobile_compartments, contact_locations.size(),
-                                        read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
+                                        read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.},
+                                        {}));
 
     return mio::success(params_graph);
 }
@@ -574,7 +575,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
             auto params = std::vector<mio::osecir::Model<double>>{};
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                                         [](auto&& node) {
+                           [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 

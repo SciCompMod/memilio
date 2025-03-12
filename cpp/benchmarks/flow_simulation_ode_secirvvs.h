@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding, Daniel Abele, Martin J. Kuehn
 *
@@ -203,7 +203,7 @@ public:
                             pop[ICrPIj] + pop[INSPICj] + pop[ISyPICj] + pop[SIIj] + pop[EIIj] + pop[INSIIj] +
                             pop[ISyIIj] + pop[ISevIIj] + pop[ICrIIj] + pop[INSIICj] + pop[ISyIICj];
 
-                double divNj = 1.0 / Nj; // precompute 1.0/Nj
+                const double divNj = (Nj < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / Nj;
 
                 double ext_inf_force_dummy =
                     cont_freq_eff * divNj *
@@ -486,15 +486,17 @@ public:
             double first_vacc;
             double full_vacc;
             if (t_idx == SimulationDay(0)) {
-                first_vacc = params.template get<osecirvvs::DailyFirstVaccination<ScalarType>>()[{(AgeGroup)i, t_idx}];
-                full_vacc  = params.template get<osecirvvs::DailyFullVaccination<ScalarType>>()[{(AgeGroup)i, t_idx}];
+                first_vacc =
+                    params.template get<osecirvvs::DailyPartialVaccinations<ScalarType>>()[{(AgeGroup)i, t_idx}];
+                full_vacc = params.template get<osecirvvs::DailyFullVaccinations<ScalarType>>()[{(AgeGroup)i, t_idx}];
             }
             else {
-                first_vacc = params.template get<osecirvvs::DailyFirstVaccination<ScalarType>>()[{(AgeGroup)i, t_idx}] -
-                             params.template get<osecirvvs::DailyFirstVaccination<ScalarType>>()[{
-                                 (AgeGroup)i, t_idx - SimulationDay(1)}];
-                full_vacc = params.template get<osecirvvs::DailyFullVaccination<ScalarType>>()[{(AgeGroup)i, t_idx}] -
-                            params.template get<osecirvvs::DailyFullVaccination<ScalarType>>()[{
+                first_vacc =
+                    params.template get<osecirvvs::DailyPartialVaccinations<ScalarType>>()[{(AgeGroup)i, t_idx}] -
+                    params.template get<osecirvvs::DailyPartialVaccinations<ScalarType>>()[{(AgeGroup)i,
+                                                                                            t_idx - SimulationDay(1)}];
+                full_vacc = params.template get<osecirvvs::DailyFullVaccinations<ScalarType>>()[{(AgeGroup)i, t_idx}] -
+                            params.template get<osecirvvs::DailyFullVaccinations<ScalarType>>()[{
                                 (AgeGroup)i, t_idx - SimulationDay(1)}];
             }
 
@@ -538,7 +540,7 @@ public:
         auto base_infectiousness =
             this->get_model().parameters.template get<osecirvvs::TransmissionProbabilityOnContact<ScalarType>>();
 
-        double delay_lockdown;
+        double delay_npi_implementation;
         auto t        = Base::get_result().get_last_time();
         const auto dt = dyn_npis.get_interval().get();
         while (t < tmax) {
@@ -559,10 +561,10 @@ public:
             }
 
             if (t > 0) {
-                delay_lockdown = 7;
+                delay_npi_implementation = 7;
             }
             else {
-                delay_lockdown = 0;
+                delay_npi_implementation = 0;
             }
             t = t + dt_eff;
 
@@ -576,7 +578,7 @@ public:
                             (exceeded_threshold->first > m_dynamic_npi.first ||
                              t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
 
-                            auto t_start = SimulationTime(t + delay_lockdown);
+                            auto t_start = SimulationTime(t + delay_npi_implementation);
                             auto t_end   = t_start + SimulationTime(dyn_npis.get_duration());
                             this->get_model().parameters.get_start_commuter_detection() = (double)t_start;
                             this->get_model().parameters.get_end_commuter_detection()   = (double)t_end;
@@ -665,10 +667,11 @@ void setup_model(Model& model)
 
     model.parameters.template get<osecirvvs::ICUCapacity<ScalarType>>()          = 100;
     model.parameters.template get<osecirvvs::TestAndTraceCapacity<ScalarType>>() = 0.0143;
-    model.parameters.template get<osecirvvs::DailyFirstVaccination<ScalarType>>().resize(SimulationDay(size_t(1000)));
-    model.parameters.template get<osecirvvs::DailyFirstVaccination<ScalarType>>().array().setConstant(5);
-    model.parameters.template get<osecirvvs::DailyFullVaccination<ScalarType>>().resize(SimulationDay(size_t(1000)));
-    model.parameters.template get<osecirvvs::DailyFullVaccination<ScalarType>>().array().setConstant(3);
+    model.parameters.template get<osecirvvs::DailyPartialVaccinations<ScalarType>>().resize(
+        SimulationDay(size_t(1000)));
+    model.parameters.template get<osecirvvs::DailyPartialVaccinations<ScalarType>>().array().setConstant(5);
+    model.parameters.template get<osecirvvs::DailyFullVaccinations<ScalarType>>().resize(SimulationDay(size_t(1000)));
+    model.parameters.template get<osecirvvs::DailyFullVaccinations<ScalarType>>().array().setConstant(3);
 
     auto& contacts       = model.parameters.template get<osecirvvs::ContactPatterns<ScalarType>>();
     auto& contact_matrix = contacts.get_cont_freq_mat();

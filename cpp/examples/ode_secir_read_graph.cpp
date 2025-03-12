@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -39,7 +39,8 @@ std::string setup(int argc, char** argv, const std::string data_dir)
             mio::log_warning("No arguments given.");
         }
         std::cout << "Using default file twitter_scaled_1252 in data/mobility." << std::endl;
-        std::cout << "Usage: read_graph MOBILITY_FILE" << "\n\n";
+        std::cout << "Usage: read_graph MOBILITY_FILE"
+                  << "\n\n";
         std::cout << "This example performs a simulation based on twitter "
                      "mobility data."
                   << std::endl;
@@ -49,6 +50,7 @@ std::string setup(int argc, char** argv, const std::string data_dir)
 
 int main(int argc, char** argv)
 {
+    mio::set_log_level(mio::LogLevel::critical);
     std::string data_dir = DATA_DIR;
     std::string filename = setup(argc, argv, data_dir);
 

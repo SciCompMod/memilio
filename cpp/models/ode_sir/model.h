@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -58,8 +58,8 @@ public:
     {
     }
 
-    void get_derivatives(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
-                         Eigen::Ref<Vector<FP>> dydt) const override
+    void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
+                         Eigen::Ref<Eigen::VectorX<FP>> dydt) const override
     {
         auto params                              = this->parameters;
         AgeGroup n_agegroups                     = params.get_num_groups();
@@ -77,11 +77,12 @@ public:
                 size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
                 size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
-                double Nj = pop[Sj] + pop[Ij] + pop[Rj];
+                const ScalarType Nj    = pop[Sj] + pop[Ij] + pop[Rj];
+                const ScalarType divNj = (Nj < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / Nj;
 
-                double coeffStoI = contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
-                                                                   static_cast<Eigen::Index>((size_t)j)) *
-                                   params.template get<TransmissionProbabilityOnContact<FP>>()[i] / Nj;
+                ScalarType coeffStoI = contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
+                                                                       static_cast<Eigen::Index>((size_t)j)) *
+                                       params.template get<TransmissionProbabilityOnContact<FP>>()[i] * divNj;
 
                 dydt[Si] += -coeffStoI * y[Si] * pop[Ij];
                 dydt[Ii] += coeffStoI * y[Si] * pop[Ij];

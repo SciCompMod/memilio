@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn
 *
@@ -23,7 +23,7 @@
 
 int main()
 {
-    mio::set_log_level(mio::LogLevel::debug);
+    mio::set_log_level(mio::LogLevel::warn);
 
     double t0   = 0;
     double tmax = 30;
@@ -66,18 +66,21 @@ int main()
 
     model.parameters.get<mio::osecirvvs::ICUCapacity<double>>()          = 100;
     model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<double>>() = 0.0143;
-    const size_t daily_vaccinations = 10;
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().resize(mio::SimulationDay((size_t)tmax + 1));
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().resize(mio::SimulationDay((size_t)tmax + 1));
+    const size_t daily_vaccinations                                      = 10;
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(
+        mio::SimulationDay((size_t)tmax + 1));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay((size_t)tmax + 1));
     for (size_t i = 0; i < tmax + 1; ++i) {
         auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
         model.parameters
-            .get<mio::osecirvvs::DailyFirstVaccination<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
+            .get<mio::osecirvvs::DailyPartialVaccinations<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
             num_vaccinations;
         model.parameters
-            .get<mio::osecirvvs::DailyFullVaccination<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
+            .get<mio::osecirvvs::DailyFullVaccinations<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
             num_vaccinations;
     }
+    model.parameters.get<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>() = 7;
+
     auto& contacts       = model.parameters.get<mio::osecirvvs::ContactPatterns<double>>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
@@ -123,10 +126,10 @@ int main()
     // integrator->set_dt_max(1.0);
     // integrator->set_rel_tolerance(1e-4);
     // integrator->set_abs_tolerance(1e-1);
-    // mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model, integrator);
+    // mio::TimeSeries<double> result = mio::osecirvvs::simulate(t0, tmax, dt, model, integrator);
 
     // use default Cash-Karp adaptive integrator
-    mio::TimeSeries<double> result = mio::simulate<double, mio::osecirvvs::Model<double>>(t0, tmax, dt, model);
+    mio::TimeSeries<double> result = mio::osecirvvs::simulate<double>(t0, tmax, dt, model);
 
     bool print_to_terminal = true;
 

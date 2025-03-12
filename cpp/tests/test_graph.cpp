@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -32,8 +32,10 @@
 #include "models/ode_secirvvs/model.h"
 #include "memilio/io/io.h"
 #include "matchers.h"
+#include "temp_file_register.h"
 #include "memilio/utils/stl_util.h"
 #include "gmock/gmock-matchers.h"
+#include <cstddef>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <type_traits>
@@ -272,6 +274,60 @@ TEST(TestGraph, set_edges)
                 MatrixNear(print_wrap(e_other.array().cast<double>()), 1e-5, 1e-5));
 }
 
+TEST(TestGraph, set_edges_saving_edges)
+{
+    const size_t num_groups = 6;
+    mio::osecir::Model model(num_groups);
+    model.populations[{mio::AgeGroup(3), mio::osecir::InfectionState::Exposed}] = 1;
+    mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>> params_graph;
+    TempFileRegister file_register;
+    const auto dir = file_register.get_unique_path("TestGraph-%%%%-%%%%");
+
+    auto mobile_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
+                                mio::osecir::InfectionState::InfectedNoSymptoms,
+                                mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
+
+    // get indices of INS and ISy compartments.
+    std::vector<std::vector<size_t>> indices_save_edges(2);
+
+    // Reserve Space. The multiplication by 2 is necessary because we have the
+    // base and the confirmed compartments for each age group.
+    for (auto& vec : indices_save_edges) {
+        vec.reserve(2 * num_groups);
+    }
+
+    // get indices and write them to the vector
+    for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(num_groups); ++i) {
+        indices_save_edges[0].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptoms}));
+        indices_save_edges[0].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}));
+        indices_save_edges[1].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptoms}));
+        indices_save_edges[1].emplace_back(
+            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}));
+    }
+
+    params_graph.add_node(1001, model);
+    params_graph.add_node(1002, model);
+
+    const auto& read_function_edges = mock_read_mobility;
+
+    auto result =
+        mio::set_edges<MockContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
+                       mio::MobilityCoefficientGroup, mio::osecir::InfectionState, decltype(read_function_edges)>(
+            dir, params_graph, mobile_compartments, size_t(2), read_function_edges,
+            std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}, indices_save_edges);
+
+    EXPECT_EQ(params_graph.edges().size(), 2);
+
+    auto& indices_edge0 = params_graph.edges()[0].property.get_save_indices();
+    auto& indices_edge1 = params_graph.edges()[1].property.get_save_indices();
+
+    EXPECT_EQ(indices_edge0, indices_save_edges);
+    EXPECT_EQ(indices_edge1, indices_save_edges);
+}
+
 TEST(TestGraph, ot_edges)
 {
     mio::Graph<int, int> g;
@@ -296,10 +352,10 @@ namespace
 
 struct MoveOnly {
     MoveOnly();
-    MoveOnly(const MoveOnly&)            = delete;
+    MoveOnly(const MoveOnly&) = delete;
     MoveOnly& operator=(const MoveOnly&) = delete;
     MoveOnly(MoveOnly&&)                 = default;
-    MoveOnly& operator=(MoveOnly&&)      = default;
+    MoveOnly& operator=(MoveOnly&&) = default;
 };
 using MoveOnlyGraph = mio::Graph<MoveOnly, MoveOnly>;
 

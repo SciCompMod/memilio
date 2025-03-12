@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kuehn, Lena Ploetzke
 *
@@ -58,7 +58,7 @@ int get_region_id(int id)
 }
 
 IOResult<void> read_confirmed_cases_data(
-    std::string const& path, std::vector<ConfirmedCasesDataEntry>& rki_data, std::vector<int> const& vregion, Date date,
+    std::vector<ConfirmedCasesDataEntry>& rki_data, std::vector<int> const& vregion, Date date,
     std::vector<std::vector<double>>& vnum_Exposed, std::vector<std::vector<double>>& vnum_InfectedNoSymptoms,
     std::vector<std::vector<double>>& vnum_InfectedSymptoms, std::vector<std::vector<double>>& vnum_InfectedSevere,
     std::vector<std::vector<double>>& vnum_icu, std::vector<std::vector<double>>& vnum_death,
@@ -74,12 +74,12 @@ IOResult<void> read_confirmed_cases_data(
     });
     if (max_date_entry == rki_data.end()) {
         log_error("RKI data file is empty.");
-        return failure(StatusCode::InvalidFileFormat, path + ", file is empty.");
+        return failure(StatusCode::InvalidFileFormat, "RKI file is empty.");
     }
     auto max_date = max_date_entry->date;
     if (max_date < date) {
         log_error("Specified date does not exist in RKI data");
-        return failure(StatusCode::OutOfRange, path + ", specified date does not exist in RKI data.");
+        return failure(StatusCode::OutOfRange, "Specified date does not exist in RKI data.");
     }
     auto days_surplus = std::min(get_offset_in_days(max_date, date) - 6, 0);
 
@@ -123,8 +123,6 @@ IOResult<void> read_confirmed_cases_data(
             auto date_df = region_entry.date;
             auto age     = size_t(region_entry.age_group);
 
-            bool read_icu = false; //params.populations.get({age, SecirCompartments::U}) == 0;
-
             if (date_df == offset_date_by_days(date, 0)) {
                 num_InfectedSymptoms[age] += scaling_factor_inf[age] * region_entry.num_confirmed;
                 num_rec[age] += region_entry.num_confirmed;
@@ -147,16 +145,12 @@ IOResult<void> read_confirmed_cases_data(
             }
             if (date_df == offset_date_by_days(date, -t_InfectedSymptoms[age] - t_InfectedSevere[age])) {
                 num_InfectedSevere[age] -= mu_I_H[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
-                if (read_icu) {
-                    num_icu[age] += mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
-                }
+                num_icu[age] += mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
             }
             if (date_df ==
                 offset_date_by_days(date, -t_InfectedSymptoms[age] - t_InfectedSevere[age] - t_InfectedCritical[age])) {
                 num_death[age] += region_entry.num_deaths;
-                if (read_icu) {
-                    num_icu[age] -= mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
-                }
+                num_icu[age] -= mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
             }
         }
     }

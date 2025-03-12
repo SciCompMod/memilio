@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Sascha Korf
 *
@@ -33,13 +33,14 @@ namespace abm
  */
 enum class TransportMode : uint32_t
 {
-    Bike = 0,
+    Bike,
     CarDriver,
     CarPassenger,
     PublicTransport,
     Walking,
     Other,
-    Unknown
+    Unknown,
+    Count //last!!
 };
 
 /**
@@ -47,7 +48,7 @@ enum class TransportMode : uint32_t
  */
 enum class ActivityType : uint32_t
 {
-    Workplace = 0,
+    Workplace,
     Education,
     Shopping,
     Leisure,

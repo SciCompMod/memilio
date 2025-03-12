@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -27,6 +27,8 @@
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/time.h"
+#include "memilio/io/default_serialize.h"
+
 #include <bitset>
 #include <vector>
 
@@ -92,6 +94,11 @@ public:
      */
     bool evaluate(const Person& p, TimePoint t) const;
 
+    auto default_serialize()
+    {
+        return Members("TestingCriteria").add("ages", m_ages).add("infection_states", m_infection_states);
+    }
+
 private:
     std::bitset<MAX_NUM_AGE_GROUPS> m_ages; ///< Set of #AgeGroup%s that are either allowed or required to be tested.
     std::bitset<(size_t)InfectionState::Count>
@@ -143,7 +150,23 @@ public:
      */
     bool run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("TestingScheme")
+            .add("criteria", m_testing_criteria)
+            .add("validity_period", m_validity_period)
+            .add("start_date", m_start_date)
+            .add("end_date", m_end_date)
+            .add("test_params", m_test_parameters)
+            .add("probability", m_probability)
+            .add("is_active", m_is_active);
+    }
+
 private:
+    friend DefaultFactory<TestingScheme>;
+    TestingScheme() = default;
+
     TestingCriteria m_testing_criteria; ///< TestingCriteria of the scheme.
     TimeSpan m_validity_period; ///< The valid TimeSpan of the test.
     TimePoint m_start_date; ///< Starting date of the scheme.
@@ -167,6 +190,12 @@ public:
         LocationType type;
         LocationId id;
         std::vector<TestingScheme> schemes;
+
+        /// This method is used by the default serialization feature.
+        auto default_serialize()
+        {
+            return Members("LocalStrategy").add("type", type).add("id", id).add("schemes", schemes);
+        }
     };
 
     /**
@@ -231,6 +260,12 @@ public:
      * @return If the Person is allowed to enter the Location.
      */
     bool run_strategy(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
+
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("TestingStrategy").add("schemes", m_location_to_schemes_map);
+    }
 
 private:
     std::vector<LocalStrategy> m_location_to_schemes_map; ///< Set of schemes that are checked for testing.

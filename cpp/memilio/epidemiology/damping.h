@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
 *
@@ -609,8 +609,6 @@ void Dampings<S>::update_active_dampings(
         });
         //remove active with the same type and level and add new one
         get<MatrixIdx>(sum_same_level) += get<MatrixIdx>(damping) - get<MatrixIdx>(active_same_type).get();
-        //avoid negative values due to rounding error if e.g. a previous damping is lifted
-        get<MatrixIdx>(sum_same_level)   = get<MatrixIdx>(sum_same_level).cwiseMax(0.);
         get<MatrixIdx>(active_same_type) = get<MatrixIdx>(damping);
     }
     else {

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Kathrin Rack
 #
@@ -461,6 +461,11 @@ def cli(what):
     if 'files' in what_list:
         parser.add_argument(
             '--files', nargs="*", default='All'
+        )
+    if 'ref_year' in what_list:
+        parser.add_argument(
+            '--ref-year', default='newest',
+            help='Considered year.'
         )
 
     # add optional download options

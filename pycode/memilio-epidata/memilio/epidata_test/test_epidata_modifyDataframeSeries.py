@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Sascha Korf, Patrick Lenz
 #
@@ -507,18 +507,19 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
 
         # test with integer mapping
         df = mdfs.insert_column_by_map(
-            self.test_df1, 'test_col3', 'inserted_col', self.int_map)
+            self.test_df1, 'test_col3', 'inserted_col', self.int_map, int)
         new_cols = df.columns.to_list()
         exp_cols = ['Date', 'test_col1', 'test_col2', 'test_col3',
                     'inserted_col', 'ID']
         self.assertEqual(new_cols, exp_cols)
         pd.testing.assert_frame_equal(df[old_cols], self.test_df1)
-        exp_new_col = (10*self.test_df1['test_col3']).rename('inserted_col')
+        exp_new_col = (10*self.test_df1['test_col3']
+                       ).rename('inserted_col').astype(int)
         pd.testing.assert_series_equal(df['inserted_col'], exp_new_col)
 
         # test with string mapping
         df = mdfs.insert_column_by_map(
-            self.test_df1, 'test_col2', 'inserted_col', self.str_map)
+            self.test_df1, 'test_col2', 'inserted_col', self.str_map, str)
         new_cols = df.columns.to_list()
         exp_cols = ['Date', 'test_col1', 'test_col2', 'inserted_col',
                     'test_col3', 'ID']
