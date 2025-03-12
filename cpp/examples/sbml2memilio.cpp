@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    if (!create_model_cpp(model, filename)) {
+    if (!create_model_cpp(filename)) {
         return 1;
     }
 
@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    if (!create_cmake(model, filename)) {
+    if (!create_cmake(filename)) {
         return 1;
     }
 
@@ -44,12 +44,10 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    if (!modify_cmakelists(model, filename)) {
+    if (!modify_cmakelists(filename)) {
         return 1;
     }
 
-    format_files(filename);
+    return format_files(filename);
 
-    std::cout << "Das war ein voller Erfolg!" << std::endl;
-    return 0;
 }

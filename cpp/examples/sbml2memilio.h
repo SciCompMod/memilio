@@ -333,7 +333,7 @@ bool create_parameters(Model* model, const char* filename)
     return true;
 }
 
-bool create_model_cpp(Model* model, const char* filename)
+bool create_model_cpp(const char* filename)
 {
 
     std::string lowercase_name = boost::to_lower_copy<std::string>(get_filename(filename));
@@ -416,93 +416,93 @@ bool create_model_h(Model* model, const char* filename)
         auto modifiers     = curr_reaction.getListOfModifiers();
         auto formula       = curr_reaction.getKineticLaw();
         if (formula->getListOfLocalParameters()->size() != 0) { // for SBML Level 3
-            for (size_t i = 0; i < formula->getListOfLocalParameters()->size(); i++) {
-                auto param = *(Parameter*)formula->getListOfLocalParameters()->get(i);
+            for (size_t j = 0; j < formula->getListOfLocalParameters()->size(); j++) {
+                auto param = *(Parameter*)formula->getListOfLocalParameters()->get(j);
                 model_h << "double " << param.getId() << " = " << param.getValue() << ";" << std::endl;
             }
         }
         if (formula->getListOfParameters()->size() != 0) { // for outdated SBML
-            for (size_t i = 0; i < formula->getListOfParameters()->size(); i++) {
-                auto param = *(Parameter*)formula->getListOfParameters()->get(i);
+            for (size_t j = 0; j < formula->getListOfParameters()->size(); j++) {
+                auto param = *(Parameter*)formula->getListOfParameters()->get(j);
                 model_h << "double " << param.getId() << " = " << param.getValue() << ";" << std::endl;
             }
         }
         auto math_string = SBML_formulaToL3String(formula->getMath());
         std::vector<std::string> formula_parts;
         boost::split(formula_parts, math_string, boost::is_any_of(" "), boost::algorithm::token_compress_on);
-        for (size_t i = 0; i < formula_parts.size(); i++) {
+        for (size_t j = 0; j < formula_parts.size(); j++) {
             std::string leading_bracket = "", trailing_bracket = "";
-            while (formula_parts[i].find_first_of('(') != std::string::npos) {
-                size_t first_index = formula_parts[i].find_first_of('(');
-                leading_bracket    = leading_bracket + formula_parts[i].substr(0, first_index + 1);
-                formula_parts[i].erase(0, first_index + 1);
+            while (formula_parts[j].find_first_of('(') != std::string::npos) {
+                size_t first_index = formula_parts[j].find_first_of('(');
+                leading_bracket    = leading_bracket + formula_parts[j].substr(0, first_index + 1);
+                formula_parts[j].erase(0, first_index + 1);
             }
-            if (formula_parts[i][0] == '-') {
+            if (formula_parts[j][0] == '-') {
                 leading_bracket = leading_bracket + "-";
-                formula_parts[i].erase(0, 1);
+                formula_parts[j].erase(0, 1);
             }
-            while (formula_parts[i].back() == ')' || formula_parts[i].back() == ',') {
-                trailing_bracket = trailing_bracket + formula_parts[i].back();
-                formula_parts[i].pop_back();
+            while (formula_parts[j].back() == ')' || formula_parts[j].back() == ',') {
+                trailing_bracket = trailing_bracket + formula_parts[j].back();
+                formula_parts[j].pop_back();
             }
-            if (formula->getListOfLocalParameters()->getElementBySId(formula_parts[i]) != NULL) {
+            if (formula->getListOfLocalParameters()->getElementBySId(formula_parts[j]) != NULL) {
             }
-            else if (model->getListOfParameters()->getElementBySId(formula_parts[i]) != NULL) {
-                formula_parts[i] = "params.template get<" + formula_parts[i] + "<FP>>()";
+            else if (model->getListOfParameters()->getElementBySId(formula_parts[j]) != NULL) {
+                formula_parts[j] = "params.template get<" + formula_parts[j] + "<FP>>()";
             }
-            else if (model->getListOfSpecies()->getElementBySId(formula_parts[i]) != NULL) {
+            else if (model->getListOfSpecies()->getElementBySId(formula_parts[j]) != NULL) {
                 bool prod = false, ed = false, mod = false;
-                for (size_t j = 0; j < products->size(); j++) {
-                    if (products->get(j)->getSpecies() == formula_parts[i]) {
+                for (size_t k = 0; k < products->size(); k++) {
+                    if (products->get(k)->getSpecies() == formula_parts[k]) {
                         prod = true;
                     }
                 }
-                for (size_t j = 0; j < educts->size(); j++) {
-                    if (educts->get(j)->getSpecies() == formula_parts[i]) {
+                for (size_t k = 0; k < educts->size(); k++) {
+                    if (educts->get(k)->getSpecies() == formula_parts[k]) {
                         ed = true;
                     }
                 }
-                for (size_t j = 0; j < modifiers->size(); j++) {
-                    if (modifiers->get(j)->getSpecies() == formula_parts[i]) {
+                for (size_t k = 0; k < modifiers->size(); k++) {
+                    if (modifiers->get(k)->getSpecies() == formula_parts[k]) {
                         mod = true;
                     }
                 }
                 if (prod) {
-                    formula_parts[i] = "pop[" + formula_parts[i] + "i]";
+                    formula_parts[j] = "pop[" + formula_parts[j] + "j]";
                 }
                 else if (ed) {
-                    formula_parts[i] = "y[" + formula_parts[i] + "i]";
+                    formula_parts[j] = "y[" + formula_parts[j] + "j]";
                 }
                 else if (mod) {
-                    formula_parts[i] = "pop[" + formula_parts[i] + "i]";
+                    formula_parts[j] = "pop[" + formula_parts[j] + "j]";
                 }
             }
-            else if (model->getListOfCompartments()->getElementBySId(formula_parts[i]) != NULL) {
+            else if (model->getListOfCompartments()->getElementBySId(formula_parts[j]) != NULL) {
                 double size = Compartment_getSize(
-                    (Compartment*)model->getListOfCompartments()->getElementBySId(formula_parts[i]));
-                formula_parts[i] = std::to_string(size);
+                    (Compartment*)model->getListOfCompartments()->getElementBySId(formula_parts[j]));
+                formula_parts[j] = std::to_string(size);
             }
-            if (formula_parts[i] == "pi") {
-                formula_parts[i] = "M_PI";
+            if (formula_parts[j] == "pi") {
+                formula_parts[j] = "M_PI";
             }
-            if (formula_parts[i] == "time") {
-                formula_parts[i] = "t";
+            if (formula_parts[j] == "time") {
+                formula_parts[j] = "t";
             }
             if (leading_bracket.size() > 0) {
-                formula_parts[i] = leading_bracket + formula_parts[i];
+                formula_parts[j] = leading_bracket + formula_parts[j];
             }
             if (trailing_bracket.size() > 0) {
-                formula_parts[i] = formula_parts[i] + trailing_bracket;
+                formula_parts[j] = formula_parts[j] + trailing_bracket;
             }
         }
 
         std::string output_formula = boost::algorithm::join(formula_parts, " ");
-        for (size_t i = 0; i < educts->size(); i++) {
-            auto educt = *(SpeciesReference*)educts->get(i);
-            model_h << "dydt[" << educt.getSpecies() << "i] -= " << output_formula << ";" << std::endl;
+        for (size_t j = 0; j < educts->size(); j++) {
+            auto educt = *(SpeciesReference*)educts->get(j);
+            model_h << "dydt[" << educt.getSpecies() << "j] -= " << output_formula << ";" << std::endl;
         }
-        for (size_t i = 0; i < products->size(); i++) {
-            auto product = *(SpeciesReference*)products->get(i);
+        for (size_t j = 0; j < products->size(); j++) {
+            auto product = *(SpeciesReference*)products->get(j);
             model_h << "dydt[" << product.getSpecies() << "i] += " << output_formula << ";" << std::endl;
         }
         model_h << "}" << std::endl;
@@ -513,43 +513,43 @@ bool create_model_h(Model* model, const char* filename)
             auto math_string = SBML_formulaToL3String(rule->getMath());
             std::vector<std::string> formula_parts;
             boost::split(formula_parts, math_string, boost::is_any_of(" "), boost::algorithm::token_compress_on);
-            for (size_t i = 0; i < formula_parts.size(); i++) {
+            for (size_t j = 0; j < formula_parts.size(); j++) {
                 std::string leading_bracket = "", trailing_bracket = "";
-                while (formula_parts[i].find_first_of('(') != std::string::npos) {
-                    size_t first_index = formula_parts[i].find_first_of('(');
-                    leading_bracket    = leading_bracket + formula_parts[i].substr(0, first_index + 1);
-                    formula_parts[i].erase(0, first_index + 1);
+                while (formula_parts[j].find_first_of('(') != std::string::npos) {
+                    size_t first_index = formula_parts[j].find_first_of('(');
+                    leading_bracket    = leading_bracket + formula_parts[j].substr(0, first_index + 1);
+                    formula_parts[j].erase(0, first_index + 1);
                 }
-                if (formula_parts[i][0] == '-') {
+                if (formula_parts[j][0] == '-') {
                     leading_bracket = leading_bracket + "-";
-                    formula_parts[i].erase(0, 1);
+                    formula_parts[j].erase(0, 1);
                 }
-                while (formula_parts[i].back() == ')' || formula_parts[i].back() == ',') {
-                    trailing_bracket = trailing_bracket + formula_parts[i].back();
-                    formula_parts[i].pop_back();
+                while (formula_parts[j].back() == ')' || formula_parts[j].back() == ',') {
+                    trailing_bracket = trailing_bracket + formula_parts[j].back();
+                    formula_parts[j].pop_back();
                 }
-                if (model->getListOfParameters()->getElementBySId(formula_parts[i]) != NULL) {
-                    formula_parts[i] = "params.template get<" + formula_parts[i] + "<FP>>()";
+                if (model->getListOfParameters()->getElementBySId(formula_parts[j]) != NULL) {
+                    formula_parts[j] = "params.template get<" + formula_parts[j] + "<FP>>()";
                 }
-                else if (model->getListOfSpecies()->getElementBySId(formula_parts[i]) != NULL) {
-                    formula_parts[i] = "y[" + formula_parts[i] + "i]";
+                else if (model->getListOfSpecies()->getElementBySId(formula_parts[j]) != NULL) {
+                    formula_parts[j] = "y[" + formula_parts[j] + "i]";
                 }
-                else if (model->getListOfCompartments()->getElementBySId(formula_parts[i]) != NULL) {
+                else if (model->getListOfCompartments()->getElementBySId(formula_parts[j]) != NULL) {
                     double size = Compartment_getSize(
-                        (Compartment*)model->getListOfCompartments()->getElementBySId(formula_parts[i]));
-                    formula_parts[i] = std::to_string(size);
+                        (Compartment*)model->getListOfCompartments()->getElementBySId(formula_parts[j]));
+                    formula_parts[j] = std::to_string(size);
                 }
-                if (formula_parts[i] == "pi") {
-                    formula_parts[i] = "M_PI";
+                if (formula_parts[j] == "pi") {
+                    formula_parts[j] = "M_PI";
                 }
-                if (formula_parts[i] == "time") {
-                    formula_parts[i] = "t";
+                if (formula_parts[j] == "time") {
+                    formula_parts[j] = "t";
                 }
                 if (leading_bracket.size() > 0) {
-                    formula_parts[i] = leading_bracket + formula_parts[i];
+                    formula_parts[j] = leading_bracket + formula_parts[j];
                 }
                 if (trailing_bracket.size() > 0) {
-                    formula_parts[i] = formula_parts[i] + trailing_bracket;
+                    formula_parts[j] = formula_parts[j] + trailing_bracket;
                 }
             }
             std::string output_formula = boost::algorithm::join(formula_parts, " ");
@@ -571,7 +571,7 @@ bool create_model_h(Model* model, const char* filename)
     return true;
 }
 
-bool create_cmake(Model* model, const char* filename)
+bool create_cmake(const char* filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(get_filename(filename));
 
@@ -675,7 +675,7 @@ bool create_example_cpp(Model* model, const char* filename)
     return true;
 }
 
-bool modify_cmakelists(Model* model, const char* filename)
+bool modify_cmakelists(const char* filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(get_filename(filename));
     std::ofstream modifications;
@@ -692,10 +692,10 @@ bool modify_cmakelists(Model* model, const char* filename)
     return true;
 }
 
-void format_files(const char* filename)
+int format_files(const char* filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(get_filename(filename));
     std::string command =
         std::string("clang-format -i --files= ") + lowercase_name + ".cpp " + lowercase_name + "/*.[hc]*";
-    system(command.c_str());
+    return system(command.c_str());
 }
