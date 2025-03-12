@@ -22,6 +22,7 @@
 
 #include "memilio/config.h"
 #include "memilio/utils/compiler_diagnostics.h"
+#include <omp.h>
 
 #ifdef MEMILIO_ENABLE_OPENMP
 #include "omp.h"
@@ -44,5 +45,28 @@
 #define PRAGMA_OMP(x)
 
 #endif
+
+namespace mio
+{
+
+inline int get_omp_thread_id()
+{
+#ifdef MEMILIO_ENABLE_OPENMP
+    return omp_get_thread_num();
+#else
+    return 0;
+#endif
+}
+
+inline int get_omp_num_threads()
+{
+#ifdef MEMILIO_ENABLE_OPENMP
+    return omp_get_num_threads();
+#else
+    return 1;
+#endif
+}
+
+} // namespace mio
 
 #endif
