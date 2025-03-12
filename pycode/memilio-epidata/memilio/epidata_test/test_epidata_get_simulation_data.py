@@ -28,6 +28,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 class TestGetSimulationData(fake_filesystem_unittest.TestCase):
+    """ """
     # construct fake directory for testing
     maxDiff = None
     gd.Conf.v_level = 'Debug'
@@ -35,6 +36,7 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     path = '/home/SumlationData'
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     @patch('memilio.epidata.getVaccinationData.get_vaccination_data')
@@ -43,6 +45,14 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getPopulationData.get_population_data')
     def test_get_call_sub_functions(self, mock_popul, mock_cases,
                                     mock_divi, mock_vaccination):
+        """
+
+        :param mock_popul: 
+        :param mock_cases: 
+        :param mock_divi: 
+        :param mock_vaccination: 
+
+        """
 
         [read_data, file_format, out_folder, no_raw, start_date, end_date,
          impute_dates, moving_average, make_plot, split_berlin, rep_date] = [
@@ -107,6 +117,15 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     def test_errors(
             self, mock_popul, mock_cases, mock_divi, mock_vaccination,
             mock_print):
+        """
+
+        :param mock_popul: 
+        :param mock_cases: 
+        :param mock_divi: 
+        :param mock_vaccination: 
+        :param mock_print: 
+
+        """
         mock_popul.side_effect = Exception
         mock_cases.side_effect = Exception
         mock_divi.side_effect = Exception

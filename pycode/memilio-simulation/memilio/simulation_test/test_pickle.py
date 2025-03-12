@@ -26,7 +26,9 @@ import memilio.simulation as msim
 
 
 class Test_Pickle(unittest.TestCase):
+    """ """
     def test_date(self):
+        """ """
         test = msim.Date(1, 2, 3)
 
         data = pickle.dumps(test)
@@ -37,6 +39,7 @@ class Test_Pickle(unittest.TestCase):
         self.assertEqual(pickle_test.day, 3)
 
     def test_uncertain_value(self):
+        """ """
         test = msim.UncertainValue(2.2)
 
         data = pickle.dumps(test)
@@ -45,6 +48,7 @@ class Test_Pickle(unittest.TestCase):
         self.assertEqual(pickle_test.value, 2.2)
 
     def test_distribution(self):
+        """ """
 
         test = msim.ParameterDistributionNormal(0, 1, 0.4, 0.1)
 
@@ -58,6 +62,7 @@ class Test_Pickle(unittest.TestCase):
         self.assertEqual(pickle_test.upper_bound, 1)
 
     def test_damping_sampling(self):
+        """ """
         test = msim.UncertainValue(2.2)
         test.set_distribution(msim.ParameterDistributionNormal(0, 1, 0.4, 0.1))
         test = msim.DampingSampling(test, 1, 2, 3, [0, 1], np.arange(2))

@@ -30,6 +30,7 @@ from memilio.epidata import getPopulationData as gpd
 
 
 class Test_getPopulationData(fake_filesystem_unittest.TestCase):
+    """ """
 
     path = '/home/Population_Data'
 
@@ -45,9 +46,11 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         df_pop_raw = pd.DataFrame(json.load(file_object))
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     def test_export_population_data(self):
+        """ """
 
         result_df = gpd.export_population_dataframe(
             self.df_pop, self.path, 'json', True, 'newest')
@@ -68,6 +71,13 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getPopulationData.assign_population_data', return_value=df_pop)
     @patch('memilio.epidata.getPopulationData.test_total_population')
     def test_get_population_data_full(self, mock_test, mock_assign, mock_download):
+        """
+
+        :param mock_test: 
+        :param mock_assign: 
+        :param mock_download: 
+
+        """
         # should not raise any errors
         gpd.get_population_data(out_folder=self.path)
         # test ref_year
@@ -77,6 +87,13 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     @patch('pandas.read_csv')
     @patch('requests.get')
     def test_read_population_data(self, mock_req, mock_pd, mock_io):
+        """
+
+        :param mock_req: 
+        :param mock_pd: 
+        :param mock_io: 
+
+        """
         # Test a year that does not have population Data. Function should throw a
         # warning, and download the newest data (ref_year = None)
         test_year = 2000
