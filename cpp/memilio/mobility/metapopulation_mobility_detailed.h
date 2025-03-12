@@ -736,7 +736,7 @@ private:
         }
     }
 
-    void update_status_commuters(size_t indx_schedule, const size_t max_num_contacts = 20)
+    void update_status_commuters(size_t indx_schedule, const double max_num_contacts = 20.)
     {
         for (const auto& edge_indx : schedules.edges_mobility[indx_schedule]) {
             auto& e      = this->m_graph.edges()[edge_indx];
@@ -802,7 +802,7 @@ private:
         }
     }
 
-    void handle_last_time_step(int indx_schedule)
+    void handle_last_time_step(size_t indx_schedule)
     {
         if (indx_schedule == 99) {
             auto edge_index = 0;
