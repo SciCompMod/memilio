@@ -267,8 +267,6 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
         //apply infection rate dampings
         auto& dampings = parameters.get<InfectionRateDampings>();
         if (!dampings.empty()) {
-            auto& a = parameters.get<InfectionRateFromViralShed>()[{VirusVariant(0)}];
-            mio::unused(a);
             // We want to go through the dampings vector and get the last entry that is smaller than t
             auto it = std::upper_bound(dampings.begin(), dampings.end(), t,
                                        [](TimePoint tp, const std::pair<TimePoint, double>& p) {

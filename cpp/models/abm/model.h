@@ -20,6 +20,7 @@
 #ifndef MIO_ABM_MODEL_H
 #define MIO_ABM_MODEL_H
 
+#include "abm/location_id.h"
 #include "abm/model_functions.h"
 #include "abm/location_type.h"
 #include "abm/mobility_data.h"
@@ -33,10 +34,13 @@
 #include "abm/testing_strategy.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 
 #include <bitset>
+#include <map>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -459,6 +463,24 @@ public:
     void add_infection_rate_damping(TimePoint t, double factor)
     {
         parameters.get<InfectionRateDampings>().push_back(std::make_pair(t, factor));
+    }
+
+    /**
+     * @brief Set wastewater id for every location in the model.
+     * @param[in] loc_to_id Map with the wastewater zone id for every location.
+     */
+    void set_wastewater_ids(std::map<std::tuple<LocationType, LocationId>, int>& loc_to_id)
+    {
+        for (auto& loc : m_locations) {
+            auto it = loc_to_id.find(std::make_tuple(loc.get_type(), loc.get_id()));
+            if (it == loc_to_id.end()) {
+                log_error("No Wastewater zone found for location with type {} and id {}.",
+                          static_cast<int>(loc.get_type()), loc.get_id().get());
+            }
+            else {
+                loc.set_wastewater_id(it->second);
+            }
+        }
     }
 
 private:

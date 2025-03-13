@@ -336,6 +336,8 @@ def save_persons(trip_file):
         if home_zone is None:
             print("Error: Home zone was not found")
             continue
+        if (int(home_zone / 10000) != 9162):
+            continue
 
         # Ensure home_zone is in integer format
         # If it's a series take the first entry
@@ -513,13 +515,19 @@ def save_persons(trip_file):
     print(f'Time to create and save person df: {end - start} seconds')
 
 
-def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file):
+def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file, new_file2):
     with open(mapping_path) as f:
         d = dict(x.rstrip().split(None, 1) for x in f)
     areas = geopandas.read_file(wastewater_path)
     new_dict = {}
+    new_dict2 = {}
     for traffic_cell_id in d.keys():
         if traffic_cell_id[:4] != '9162':
+            for loc in d[traffic_cell_id].split(' '):
+                new_key = "0"
+                if loc in new_dict2:
+                    print('Problem: Location is assigned to two traffic cells')
+                new_dict2[loc] = new_key
             continue
             # new_key = 'x' + traffic_cell_id
             # new_dict[new_key] = d[traffic_cell_id].split(' ')
@@ -532,11 +540,23 @@ def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file)
                     new_dict[new_key].append(loc)
                 else:
                     new_dict[new_key] = [loc]
+                if loc in new_dict2:
+                    print('Problem: Location is assigned to two traffic cells')
+                new_dict2[loc] = new_key
+    # save mapping from locs to TAN IDs
     with open(new_file, 'w') as f:
         for id in new_dict:
             line = id + " "
             for loc in new_dict[id]:
                 line += loc + " "
+            f.write(line)
+            f.write('\n')
+        f.close()
+    # save mapping from TAN IDs to locs
+    with open(new_file2, 'w') as f:
+        for id in new_dict2:
+            line = id + " "
+            line += new_dict2[id] + " "
             f.write(line)
             f.write('\n')
         f.close()
@@ -610,11 +630,18 @@ def run_abm_simulation(sim_num):
     start_map = time.time()
     map_traffic_cell_to_wastewater_area(os.path.join(
         output_path, str(sim_num) + '_mapping.txt'), os.path.join(input_path, '_AusgangDLR/München_Flächen_bearb.shp'), os.path.join(
-        output_path, str(sim_num) + '_mapping_tan.txt'))
+        output_path, str(sim_num) + '_mapping_tan.txt'), os.path.join(
+        output_path, str(sim_num) + '_mapping_tan_locs.txt'))
     end_map = time.time()
     print(
         f'Time for mapping locations to TAN areas: {end_map - start_map} seconds')
-
+    # initialize tan wastewater ids for all locations
+    start_ww_init = time.time()
+    abm.set_wastewater_ids(os.path.join(
+        output_path, str(sim_num) + '_mapping_tan_locs.txt'), sim.model)
+    end_ww_init = time.time()
+    print(
+        f'Time for initializing TAN areas for all locations: {end_ww_init - start_ww_init} seconds')
     # output object
     history = History()
     start_advance = time.time()
@@ -635,25 +662,25 @@ def run_abm_simulation(sim_num):
         output_path, str(sim_num) + '_comps.csv'), sim.model, history)
     end_o2 = time.time()
     print(f'Time writing comps csv: {end_o2 - start_o2} seconds')
-    # write results to h5 file v1. The file has two data sets for every AgentId which are:
-    # - LocationId at every time step
-    # - Time since transmission at every time step
-    start_h5_v1 = time.time()
-    abm.write_h5(os.path.join(
-        output_path, str(sim_num) + '_output_v1.h5'), history)
-    end_h5_v1 = time.time()
-    print(f'Time to write v1 output h5: {end_h5_v1 - start_h5_v1} seconds')
+    # # write results to h5 file v1. The file has two data sets for every AgentId which are:
+    # # - LocationId at every time step
+    # # - Time since transmission at every time step
+    # start_h5_v1 = time.time()
+    # abm.write_h5(os.path.join(
+    #     output_path, str(sim_num) + '_output_v1.h5'), history)
+    # end_h5_v1 = time.time()
+    # print(f'Time to write v1 output h5: {end_h5_v1 - start_h5_v1} seconds')
 
-    # write results to h5 file v2. The file has three data sets for every AgentId which are:
-    # - Time since transmission at change points. Even indices are the change time point
-    #   and the following odd index is the changed time since transmission
-    # - Time points of location changes
-    # - (New) LocationId corresponding to the time points from the second dataset
-    start_h5_v2 = time.time()
-    abm.write_h5_v2(os.path.join(
-        output_path, str(sim_num) + '_output_v2.h5'), history)
-    end_h5_v2 = time.time()
-    print(f'Time to write v2 output h5: {end_h5_v2 - start_h5_v2} seconds')
+    # # write results to h5 file v2. The file has three data sets for every AgentId which are:
+    # # - Time since transmission at change points. Even indices are the change time point
+    # #   and the following odd index is the changed time since transmission
+    # # - Time points of location changes
+    # # - (New) LocationId corresponding to the time points from the second dataset
+    # start_h5_v2 = time.time()
+    # abm.write_h5_v2(os.path.join(
+    #     output_path, str(sim_num) + '_output_v2.h5'), history)
+    # end_h5_v2 = time.time()
+    # print(f'Time to write v2 output h5: {end_h5_v2 - start_h5_v2} seconds')
 
     # write results to h5 file v3. The file has one group with two datasets:
     # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
@@ -663,6 +690,16 @@ def run_abm_simulation(sim_num):
         output_path, str(sim_num) + '_output_v3.h5'), history)
     end_h5_v3 = time.time()
     print(f'Time to write v3 output h5: {end_h5_v3 - start_h5_v3} seconds')
+
+    # write results to h5 file v4. The file has one group with two datasets:
+    # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
+    # - TanAreaId (int) at every time step for every agent (matrix of size #agents x #timepoints).
+    #   If the agent is at a location not in Munich and the id is 0.
+    start_h5_v4 = time.time()
+    abm.write_h5_v4(os.path.join(
+        output_path, str(sim_num) + '_output_v4.h5'), history)
+    end_h5_v4 = time.time()
+    print(f'Time to write v4 output h5: {end_h5_v4 - start_h5_v4} seconds')
 
     print('done')
 

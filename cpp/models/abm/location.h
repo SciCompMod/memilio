@@ -271,6 +271,23 @@ public:
             .add("geographical_location", m_geographical_location);
     }
 
+    /**
+     * @brief Set the id of the wastewater zone the location is in.
+     * @param[in] id The id of the wastewater zone.
+     */
+    void set_wastewater_id(int id)
+    {
+        m_wastewater_id = id;
+    }
+
+    /**
+     * @brief Get the id of the wastewater zone the location is in.
+     */
+    int get_wastewater_id() const
+    {
+        return m_wastewater_id;
+    }
+
 private:
     friend DefaultFactory<Location>;
     Location() = default;
@@ -281,6 +298,7 @@ private:
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
+    int m_wastewater_id; ///< Only used for INSIDe Munich Demonstrator. Id of wastewater zone the location is in.
 };
 
 } // namespace abm
