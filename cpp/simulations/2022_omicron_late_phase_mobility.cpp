@@ -39,44 +39,44 @@
 namespace fs = boost::filesystem;
 
 /**
- * Set a value and distribution of an UncertainValue.
- * Assigns average of min and max as a value and UNIFORM(min, max) as a distribution.
- * @param p uncertain value to set.
- * @param min minimum of distribution.
- * @param max minimum of distribution.
+ * Assigns a uniform distribution to an UncertainValue with a specified range.
+ * The value is set to the average of min and max, and the distribution is UNIFORM(min, max).
+ * @param[in,out] param UncertainValue to configure.
+ * @param[in] min Lower bound of the uniform distribution.
+ * @param[in] max Upper bound of the uniform distribution.
  */
-void assign_uniform_distribution(mio::UncertainValue<double>& p, double min, double max)
+void assign_uniform_distribution(mio::UncertainValue<double>& param, double min, double max)
 {
-    p = mio::UncertainValue<double>(0.5 * (max + min));
-    p.set_distribution(mio::ParameterDistributionUniform(min, max));
+    param = mio::UncertainValue<double>(0.5 * (min + max));
+    param.set_distribution(mio::ParameterDistributionUniform(min, max));
 }
 
 /**
- * Set a value and distribution of an array of UncertainValues.
- * Assigns average of min[i] and max[i] as a value and UNIFORM(min[i], max[i]) as a distribution for
- * each element i of the array.
- * @param array array of UncertainValues to set.
- * @param min minimum of distribution for each element of array.
- * @param max minimum of distribution for each element of array.
+ * Assigns uniform distributions to an array of UncertainValues.
+ * Each element i is set to the average of min[i] and max[i] with a UNIFORM(min[i], max[i]) distribution.
+ * @param[in,out] array Array of UncertainValues to configure.
+ * @param[in] min Array of lower bounds for each element.
+ * @param[in] max Array of upper bounds for each element.
+ * @tparam N Size of the array, must match the number of elements in min and max.
  */
 template <size_t N>
-void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>& array,
+void assign_uniform_distribution_array(mio::CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>& array,
                                        const double (&min)[N], const double (&max)[N])
 {
-    assert(N == array.numel());
+    assert(N == array.numel() && "Array size must match the number of elements in min and max.");
     for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(N); ++i) {
-        assign_uniform_distribution(array[i], min[size_t(i)], max[size_t(i)]);
+        assign_uniform_distribution(array[i], min[static_cast<size_t>(i)], max[static_cast<size_t>(i)]);
     }
 }
 
 /**
- * Set a value and distribution of an array of UncertainValues.
- * Assigns average of min and max as a value and UNIFORM(min, max) as a distribution to every element of the array.
- * @param array array of UncertainValues to set.
- * @param min minimum of distribution.
- * @param max minimum of distribution.
+ * Assigns a uniform distribution to all elements of an array of UncertainValues using a single range.
+ * Each element is set to the average of min and max with a UNIFORM(min, max) distribution.
+ * @param[in,out] array Array of UncertainValues to configure.
+ * @param[in] min Lower bound of the uniform distribution applied to all elements.
+ * @param[in] max Upper bound of the uniform distribution applied to all elements.
  */
-void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>& array,
+void assign_uniform_distribution_array(mio::CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>& array,
                                        double min, double max)
 {
     for (auto i = mio::AgeGroup(0); i < array.size<mio::AgeGroup>(); ++i) {
@@ -85,171 +85,173 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
 }
 
 /**
- * Set epidemiological parameters of Covid19.
- * @param params Object that the parameters will be added to.
- * @returns Currently generates no errors.
+ * Configures epidemiological parameters for COVID-19 model (Omicron variant) based on literature.
+ * @param[in,out] params Object that the parameters will be added to.
+ * @return IOResult<void> indicating success (currently no failure cases defined).
  */
 mio::IOResult<void> set_covid_parameters(mio::osecirts::Parameters<double>& params)
 {
-    //times
-    // doi.org/10.1016/j.lanepe.2022.100446 , doi.org/10.3201/eid2806.220158
-    const double timeExposedMin            = 1.66;
-    const double timeExposedMax            = 1.66;
-    const double timeInfectedNoSymptomsMin = 1.44;
-    const double timeInfectedNoSymptomsMax = 1.44;
+    constexpr size_t num_age_groups = 6;
 
-    const double timeInfectedSymptomsMin = 6.58; //https://doi.org/10.1016/S0140-6736(22)00327-0
-    const double timeInfectedSymptomsMax = 7.16; //https://doi.org/10.1016/S0140-6736(22)00327-0
-    const double timeInfectedSevereMin[] = {1.8, 1.8, 1.8, 2.5, 3.5, 4.91}; // doi.org/10.1186/s12879-022-07971-6
-    const double timeInfectedSevereMax[] = {2.3, 2.3, 2.3, 3.67, 5, 7.01}; // doi.org/10.1186/s12879-022-07971-6
+    // --- Transition Times ---
+    // Incubation and infectious periods sourced from literature
+    // Sources: doi.org/10.1016/j.lanepe.2022.100446, doi.org/10.3201/eid2806.220158
+    const double time_exposed_min              = 1.66;
+    const double time_exposed_max              = 1.66;
+    const double time_infected_no_symptoms_min = 1.44;
+    const double time_infected_no_symptoms_max = 1.44;
 
-    const double timeInfectedCriticalMin[] = {9.29,   9.29,  9.29,
-                                              10.842, 11.15, 11.07}; // https://doi.org/10.1186/s12879-022-07971-6
-    const double timeInfectedCriticalMax[] = {10.57, 10.57, 10.57,
-                                              12.86, 13.23, 13.25}; // https://doi.org/10.1186/s12879-022-07971-6
+    // Symptomatic period: doi.org/10.1016/S0140-6736(22)00327-0
+    const double time_infected_symptoms_min = 6.58;
+    const double time_infected_symptoms_max = 7.16;
 
-    array_assign_uniform_distribution(params.get<mio::osecirts::TimeExposed<double>>(), timeExposedMin, timeExposedMax);
-    array_assign_uniform_distribution(params.get<mio::osecirts::TimeInfectedNoSymptoms<double>>(),
-                                      timeInfectedNoSymptomsMin, timeInfectedNoSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecirts::TimeInfectedSymptoms<double>>(),
-                                      timeInfectedSymptomsMin, timeInfectedSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecirts::TimeInfectedSevere<double>>(), timeInfectedSevereMin,
-                                      timeInfectedSevereMax);
-    array_assign_uniform_distribution(params.get<mio::osecirts::TimeInfectedCritical<double>>(),
-                                      timeInfectedCriticalMin, timeInfectedCriticalMax);
+    // Severe and critical periods: doi.org/10.1186/s12879-022-07971-6
+    const double time_infected_severe_min[num_age_groups]   = {1.8, 1.8, 1.8, 2.5, 3.5, 4.91};
+    const double time_infected_severe_max[num_age_groups]   = {2.3, 2.3, 2.3, 3.67, 5, 7.01};
+    const double time_infected_critical_min[num_age_groups] = {9.29, 9.29, 9.29, 10.842, 11.15, 11.07};
+    const double time_infected_critical_max[num_age_groups] = {10.57, 10.57, 10.57, 12.86, 13.23, 13.25};
 
-    //probabilities
-    double fac_variant                                 = 1.5; //https://doi.org/10.7554/eLife.78933
-    const double transmissionProbabilityOnContactMin[] = {0.02 * fac_variant, 0.05 * fac_variant, 0.05 * fac_variant,
-                                                          0.05 * fac_variant, 0.08 * fac_variant, 0.1 * fac_variant};
+    assign_uniform_distribution_array(params.get<mio::osecirts::TimeExposed<double>>(), time_exposed_min,
+                                      time_exposed_max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::TimeInfectedNoSymptoms<double>>(),
+                                      time_infected_no_symptoms_min, time_infected_no_symptoms_max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::TimeInfectedSymptoms<double>>(),
+                                      time_infected_symptoms_min, time_infected_symptoms_max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::TimeInfectedSevere<double>>(), time_infected_severe_min,
+                                      time_infected_severe_max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::TimeInfectedCritical<double>>(),
+                                      time_infected_critical_min, time_infected_critical_max);
 
-    const double transmissionProbabilityOnContactMax[] = {0.04 * fac_variant, 0.07 * fac_variant, 0.07 * fac_variant,
-                                                          0.07 * fac_variant, 0.10 * fac_variant, 0.15 * fac_variant};
+    // --- Transmission Probabilities ---
+    // Adjusted for Omicron variant: doi.org/10.7554/eLife.78933
+    const double variant_factor                                = 1.94;
+    const double transmission_prob_contact_min[num_age_groups] = {0.02 * variant_factor, 0.05 * variant_factor,
+                                                                  0.05 * variant_factor, 0.05 * variant_factor,
+                                                                  0.08 * variant_factor, 0.10 * variant_factor};
+    const double transmission_prob_contact_max[num_age_groups] = {0.04 * variant_factor, 0.07 * variant_factor,
+                                                                  0.07 * variant_factor, 0.07 * variant_factor,
+                                                                  0.10 * variant_factor, 0.15 * variant_factor};
 
-    const double relativeTransmissionNoSymptomsMin = 0.5;
+    // Relative transmission from asymptomatic cases (fixed for simplicity, could use DOI: 10.1097/INF.0000000000003791)
+    const double rel_transmission_no_symptoms_min = 0.5;
+    const double rel_transmission_no_symptoms_max = 0.5;
 
-    //{0.6, 0.55, 0.65,0.7, 0.75, 0.85}; // DOI: 10.1097/INF.0000000000003791
-    const double relativeTransmissionNoSymptomsMax = 0.5;
-    // {0.8, 0.75,  0.8,0.8, 0.825, 0.9}; // DOI: 10.1097/INF.0000000000003791
-    const double riskOfInfectionFromSymptomaticMin    = 0.0; // beta (depends on incidence and test and trace capacity)
-    const double riskOfInfectionFromSymptomaticMax    = 0.2;
-    const double maxRiskOfInfectionFromSymptomaticMin = 0.4;
-    const double maxRiskOfInfectionFromSymptomaticMax = 0.5;
+    // Risk of infection from symptomatic cases (depends on incidence and testing capacity)
+    const double risk_infection_symptomatic_min     = 0.0;
+    const double risk_infection_symptomatic_max     = 0.2;
+    const double max_risk_infection_symptomatic_min = 0.4;
+    const double max_risk_infection_symptomatic_max = 0.5;
 
-    // DOI: 10.1097/INF.0000000000003791 geht hier auch. aber ähnliche werte
-    const double recoveredPerInfectedNoSymptomsMin[] = {0.2, 0.25,  0.2,
-                                                        0.2, 0.175, 0.1}; // doi.org/10.1101/2022.05.05.22274697
-    const double recoveredPerInfectedNoSymptomsMax[] = {0.4, 0.45, 0.35,
-                                                        0.3, 0.25, 0.15}; // doi.org/10.1101/2022.05.05.22274697
+    assign_uniform_distribution_array(params.get<mio::osecirts::TransmissionProbabilityOnContact<double>>(),
+                                      transmission_prob_contact_min, transmission_prob_contact_max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::RelativeTransmissionNoSymptoms<double>>(),
+                                      rel_transmission_no_symptoms_min, rel_transmission_no_symptoms_max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::RiskOfInfectionFromSymptomatic<double>>(),
+                                      risk_infection_symptomatic_min, risk_infection_symptomatic_max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::MaxRiskOfInfectionFromSymptomatic<double>>(),
+                                      max_risk_infection_symptomatic_min, max_risk_infection_symptomatic_max);
 
-    // 56% weniger risiko ins krankenhaus doi:10.1136/bmjgh-2023-0123
-    // https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10347449/pdf/bmjgh-2023-012328.pdf
-    // alternativ: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9321237/pdf/vaccines-10-01049.pdf
+    // --- Disease Progression Probabilities ---
+    // Recovery from asymptomatic infection: doi.org/10.1101/2022.05.05.22274697
+    const double recovered_per_infected_no_symptoms_min[num_age_groups] = {0.2, 0.25, 0.2, 0.2, 0.175, 0.1};
+    const double recovered_per_infected_no_symptoms_max[num_age_groups] = {0.4, 0.45, 0.35, 0.3, 0.25, 0.15};
 
-    // Faktoren aus https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(22)00462-7/fulltext
-    const double severePerInfectedSymptomsMin[] = {1 * 0.006,   0.8 * 0.006, 0.4 * 0.015,
-                                                   0.3 * 0.049, 0.25 * 0.15, 0.35 * 0.2}; // 2021 paper
-    const double severePerInfectedSymptomsMax[] = {1 * 0.009,   0.8 * 0.009, 0.4 * 0.023, 0.3 * 0.074,
-                                                   0.25 * 0.18, 0.35 * 0.25}; // quelle 2021 paper + factors
+    // Severe cases from symptomatic infection (2021 data with factors): doi.org/10.1016/S0140-6736(22)00462-7
+    const double severe_per_infected_symptoms_min[num_age_groups] = {1 * 0.006,   0.8 * 0.006, 0.4 * 0.015,
+                                                                     0.3 * 0.049, 0.25 * 0.15, 0.35 * 0.2};
+    const double severe_per_infected_symptoms_max[num_age_groups] = {1 * 0.009,   0.8 * 0.009, 0.4 * 0.023,
+                                                                     0.3 * 0.074, 0.25 * 0.18, 0.35 * 0.25};
 
-    // const double criticalPerSevereMin[] = {
-    //     0.0511, 0.0686, 0.0491, 0.114,
-    //     0.1495, 0.0674}; // www.sozialministerium.at/dam/jcr:f472e977-e1bf-415f-95e1-35a1b53e608d/Factsheet_Coronavirus_Hospitalisierungen.pdf
-    // const double criticalPerSevereMax[] = {
-    //     0.0511, 0.0686, 0.0491, 0.114,
-    //     0.1495, 0.0674}; // www.sozialministerium.at/dam/jcr:f472e977-e1bf-415f-95e1-35a1b53e608d/Factsheet_Coronavirus_Hospitalisierungen.pdf
+    // Critical cases from severe (Delta-adjusted, factor 0.52): doi.org/10.1177/14034948221108548
+    const double critical_factor                         = 0.52;
+    const double critical_per_severe_min[num_age_groups] = {0.05 * critical_factor, 0.05 * critical_factor,
+                                                            0.05 * critical_factor, 0.10 * critical_factor,
+                                                            0.25 * critical_factor, 0.35 * critical_factor};
+    const double critical_per_severe_max[num_age_groups] = {0.10 * critical_factor, 0.10 * critical_factor,
+                                                            0.10 * critical_factor, 0.20 * critical_factor,
+                                                            0.35 * critical_factor, 0.45 * critical_factor};
 
-    // delta paper
-    // risk of icu admission https://doi.org/10.1177/14034948221108548
-    const double fac_icu                = 0.52;
-    const double criticalPerSevereMin[] = {0.05 * fac_icu, 0.05 * fac_icu, 0.05 * fac_icu,
-                                           0.10 * fac_icu, 0.25 * fac_icu, 0.35 * fac_icu};
-    const double criticalPerSevereMax[] = {0.10 * fac_icu, 0.10 * fac_icu, 0.10 * fac_icu,
-                                           0.20 * fac_icu, 0.35 * fac_icu, 0.45 * fac_icu};
+    // Deaths from critical cases (factor 0.39): doi.org/10.1136/bmjgh-2023-012328
+    const double death_factor                            = 0.39;
+    const double deaths_per_critical_min[num_age_groups] = {0.00 * death_factor, 0.00 * death_factor,
+                                                            0.10 * death_factor, 0.10 * death_factor,
+                                                            0.30 * death_factor, 0.50 * death_factor};
+    const double deaths_per_critical_max[num_age_groups] = {0.10 * death_factor, 0.10 * death_factor,
+                                                            0.18 * death_factor, 0.18 * death_factor,
+                                                            0.50 * death_factor, 0.70 * death_factor};
 
-    // https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10347449/pdf/bmjgh-2023-012328.pdf
-    const double fac_dead               = 0.39;
-    const double deathsPerCriticalMin[] = {fac_dead * 0.00, fac_dead * 0.00, fac_dead * 0.10,
-                                           fac_dead * 0.10, fac_dead * 0.30, fac_dead * 0.5}; // 2021 paper
-    const double deathsPerCriticalMax[] = {fac_dead * 0.10, fac_dead * 0.10, fac_dead * 0.18,
-                                           fac_dead * 0.18, fac_dead * 0.50, fac_dead * 0.7};
+    assign_uniform_distribution_array(params.get<mio::osecirts::RecoveredPerInfectedNoSymptoms<double>>(),
+                                      recovered_per_infected_no_symptoms_min, recovered_per_infected_no_symptoms_max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::SeverePerInfectedSymptoms<double>>(),
+                                      severe_per_infected_symptoms_min, severe_per_infected_symptoms_max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::CriticalPerSevere<double>>(), critical_per_severe_min,
+                                      critical_per_severe_max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::DeathsPerCritical<double>>(), deaths_per_critical_min,
+                                      deaths_per_critical_max);
 
-    const double reducExposedPartialImmunityMin = 1.0;
-    const double reducExposedPartialImmunityMax = 1.0;
+    // --- Immunity Parameters ---
+    // Exposure reduction (no reduction assumed here)
+    const double reduc_exposed_partial_immunity_min  = 1.0;
+    const double reduc_exposed_partial_immunity_max  = 1.0;
+    const double reduc_exposed_improved_immunity_min = 1.0;
+    const double reduc_exposed_improved_immunity_max = 1.0;
 
-    const double reducExposedImprovedImmunityMin = 1.0;
-    const double reducExposedImprovedImmunityMax = 1.0;
+    // Symptom reduction: doi.org/10.1056/NEJMoa2119451
+    const double reduc_infected_symptoms_partial_min  = 0.746;
+    const double reduc_infected_symptoms_partial_max  = 0.961;
+    const double reduc_infected_symptoms_improved_min = 0.295;
+    const double reduc_infected_symptoms_improved_max = 0.344;
 
-    const double reducInfectedSymptomsPartialImmunityMin  = 0.746; // doi.org/10.1056/NEJMoa2119451
-    const double reducInfectedSymptomsPartialImmunityMax  = 0.961; // doi.org/10.1056/NEJMoa2119451
-    const double reducInfectedSymptomsImprovedImmunityMin = 0.295; // doi.org/10.1056/NEJMoa2119451
-    const double reducInfectedSymptomsImprovedImmunityMax = 0.344; // doi.org/10.1056/NEJMoa2119451
+    // Severe/critical/death reduction
+    // Partial immunity: doi.org/10.1056/NEJMoa2119451 (week 4 report)
+    const double reduc_severe_critical_dead_partial_min = 0.52;
+    const double reduc_severe_critical_dead_partial_max = 0.82;
+    // Improved immunity: doi.org/10.1136/bmj-2022-071502
+    const double reduc_severe_critical_dead_improved_min = 0.1;
+    const double reduc_severe_critical_dead_improved_max = 0.19;
 
-    const double reducInfectedSevereCriticalDeadPartialImmunityMin =
-        0.52; // www.assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1050721/Vaccine-surveillance-report-week-4.pdf
-    const double reducInfectedSevereCriticalDeadPartialImmunityMax =
-        0.82; // www.assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1050721/Vaccine-surveillance-report-week-4.pdf
-    const double reducInfectedSevereCriticalDeadImprovedImmunityMin = 0.1; // doi.org/10.1136/bmj-2022-071502
-    const double reducInfectedSevereCriticalDeadImprovedImmunityMax = 0.19; // doi.org/10.1136/bmj-2022-071502
-    const double reducTimeInfectedMild                              = 0.5; // doi.org/10.1101/2021.09.24.21263978
+    // Time reduction for mild infections: doi.org/10.1101/2021.09.24.21263978
+    const double reduc_time_infected_mild = 0.5;
 
-    array_assign_uniform_distribution(params.get<mio::osecirts::TransmissionProbabilityOnContact<double>>(),
-                                      transmissionProbabilityOnContactMin, transmissionProbabilityOnContactMax);
-    array_assign_uniform_distribution(params.get<mio::osecirts::RelativeTransmissionNoSymptoms<double>>(),
-                                      relativeTransmissionNoSymptomsMin, relativeTransmissionNoSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecirts::RiskOfInfectionFromSymptomatic<double>>(),
-                                      riskOfInfectionFromSymptomaticMin, riskOfInfectionFromSymptomaticMax);
-    array_assign_uniform_distribution(params.get<mio::osecirts::MaxRiskOfInfectionFromSymptomatic<double>>(),
-                                      maxRiskOfInfectionFromSymptomaticMin, maxRiskOfInfectionFromSymptomaticMax);
-    array_assign_uniform_distribution(params.get<mio::osecirts::RecoveredPerInfectedNoSymptoms<double>>(),
-                                      recoveredPerInfectedNoSymptomsMin, recoveredPerInfectedNoSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecirts::SeverePerInfectedSymptoms<double>>(),
-                                      severePerInfectedSymptomsMin, severePerInfectedSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecirts::CriticalPerSevere<double>>(), criticalPerSevereMin,
-                                      criticalPerSevereMax);
-    array_assign_uniform_distribution(params.get<mio::osecirts::DeathsPerCritical<double>>(), deathsPerCriticalMin,
-                                      deathsPerCriticalMax);
-
-    array_assign_uniform_distribution(params.get<mio::osecirts::ReducExposedPartialImmunity<double>>(),
-                                      reducExposedPartialImmunityMin, reducExposedPartialImmunityMax);
-    array_assign_uniform_distribution(params.get<mio::osecirts::ReducExposedImprovedImmunity<double>>(),
-                                      reducExposedImprovedImmunityMin, reducExposedImprovedImmunityMax);
-    array_assign_uniform_distribution(params.get<mio::osecirts::ReducInfectedSymptomsPartialImmunity<double>>(),
-                                      reducInfectedSymptomsPartialImmunityMin, reducInfectedSymptomsPartialImmunityMax);
-    array_assign_uniform_distribution(params.get<mio::osecirts::ReducInfectedSymptomsImprovedImmunity<double>>(),
-                                      reducInfectedSymptomsImprovedImmunityMin,
-                                      reducInfectedSymptomsImprovedImmunityMax);
-    array_assign_uniform_distribution(
+    assign_uniform_distribution_array(params.get<mio::osecirts::ReducExposedPartialImmunity<double>>(),
+                                      reduc_exposed_partial_immunity_min, reduc_exposed_partial_immunity_max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::ReducExposedImprovedImmunity<double>>(),
+                                      reduc_exposed_improved_immunity_min, reduc_exposed_improved_immunity_max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::ReducInfectedSymptomsPartialImmunity<double>>(),
+                                      reduc_infected_symptoms_partial_min, reduc_infected_symptoms_partial_max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::ReducInfectedSymptomsImprovedImmunity<double>>(),
+                                      reduc_infected_symptoms_improved_min, reduc_infected_symptoms_improved_max);
+    assign_uniform_distribution_array(
         params.get<mio::osecirts::ReducInfectedSevereCriticalDeadPartialImmunity<double>>(),
-        reducInfectedSevereCriticalDeadPartialImmunityMin, reducInfectedSevereCriticalDeadPartialImmunityMax);
-    array_assign_uniform_distribution(
+        reduc_severe_critical_dead_partial_min, reduc_severe_critical_dead_partial_max);
+    assign_uniform_distribution_array(
         params.get<mio::osecirts::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>(),
-        reducInfectedSevereCriticalDeadImprovedImmunityMin, reducInfectedSevereCriticalDeadImprovedImmunityMax);
-    array_assign_uniform_distribution(params.get<mio::osecirts::ReducTimeInfectedMild<double>>(), reducTimeInfectedMild,
-                                      reducTimeInfectedMild);
+        reduc_severe_critical_dead_improved_min, reduc_severe_critical_dead_improved_max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::ReducTimeInfectedMild<double>>(),
+                                      reduc_time_infected_mild, reduc_time_infected_mild);
 
-    //sasonality
+    // --- Seasonality ---
+    // Seasonal variation
     const double seasonality_min = 0.1;
     const double seasonality_max = 0.3;
-
     assign_uniform_distribution(params.get<mio::osecirts::Seasonality<double>>(), seasonality_min, seasonality_max);
 
-    // Delta specific parameter
+    // --- Variant-Specific Parameters ---
     params.get<mio::osecirts::StartDayNewVariant>() = mio::get_day_in_year(mio::Date(2022, 6, 6));
 
-    const double ImmunityInterval1Min = 60; ///https://doi.org/10.1016/S1473-3099(22)00801-5
-    const double ImmunityInterval1Max = 60;
+    // --- Waning Immunity Durations ---
+    // Temporary immunity periods: doi.org/10.1016/S1473-3099(22)00801-5
+    const double immunity_interval_partial_min  = 60;
+    const double immunity_interval_partial_max  = 60;
+    const double immunity_interval_improved_min = 60;
+    const double immunity_interval_improved_max = 60;
 
-    array_assign_uniform_distribution(params.get<mio::osecirts::TimeTemporaryImmunityPI<double>>(),
-                                      ImmunityInterval1Min, ImmunityInterval1Max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::TimeTemporaryImmunityPI<double>>(),
+                                      immunity_interval_partial_min, immunity_interval_partial_max);
+    assign_uniform_distribution_array(params.get<mio::osecirts::TimeTemporaryImmunityII<double>>(),
+                                      immunity_interval_improved_min, immunity_interval_improved_max);
 
-    const double ImmunityInterval2Min = 60; // https://doi.org/10.1016/S1473-3099(22)00801-5
-    const double ImmunityInterval2Max = 60;
-
-    array_assign_uniform_distribution(params.get<mio::osecirts::TimeTemporaryImmunityII<double>>(),
-                                      ImmunityInterval2Min, ImmunityInterval2Max);
-
-    // https://doi.org/10.1016/S1473-3099(22)00801-5
+    // Waning immunity duration: doi.org/10.1016/S1473-3099(22)00801-5
     params.get<mio::osecirts::TimeWaningPartialImmunity<double>>()  = 365.0;
     params.get<mio::osecirts::TimeWaningImprovedImmunity<double>>() = 365.0;
 
@@ -295,104 +297,152 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
                                                                          {ContactLocation::Other, "other"}};
 
 /**
- * Set contact matrices.
- * Reads contact matrices from files in the data directory.
- * @param data_dir data directory.
- * @param params Object that the contact matrices will be added to.
- * @returns any io errors that happen during reading of the files.
+ * Configures contact matrices for the model by reading data from files and applying scaling adjustments.
+ * @param[in] data_dir Directory containing contact data files.
+ * @param[in,out] params Parameters object to store the configured contact matrices.
+ * @param[in] avg_transport_time Average transport time (default: 0.0), used to scale contact frequencies.
+ * @param[in] share_staying_local Proportion of individuals staying local (default: 1.0), affects contact scaling.
+ * @return IOResult indicating success or an IO error if file reading fails.
  */
 mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirts::Parameters<double>& params,
-                                         ScalarType avg_tt = 0.0, ScalarType share_staying = 1.0)
+                                         double avg_transport_time = 0.0, double share_staying_local = 1.0)
 {
-    auto contact_transport_status = mio::read_mobility_plain(data_dir.string() + "//contacts//contacts_transport.txt");
-    auto contact_matrix_transport = contact_transport_status.value();
-    auto contact_matrices         = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
-    for (auto&& contact_location : contact_locations) {
-        BOOST_OUTCOME_TRY(auto&& baseline,
-                          mio::read_mobility_plain(
-                              (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
+    // Read transport contact matrix
+    BOOST_OUTCOME_TRY(auto&& transport_matrix,
+                      mio::read_mobility_plain((data_dir / "contacts" / "contacts_transport.txt").string()));
 
-        // the other contact matrix containts also the transport contact matrix. Therefore, we need to subtract it.
-        if (contact_location.second == "other") {
-            baseline = abs(baseline - contact_matrix_transport);
+    // Init contact matrices for all locations
+    constexpr size_t num_age_groups = 6;
+    mio::ContactMatrixGroup contact_matrices(contact_locations.size(), num_age_groups);
+
+    for (const auto& [location_id, location_name] : contact_locations) {
+        // Read baseline contact matrix for this location
+        BOOST_OUTCOME_TRY(
+            auto&& baseline,
+            mio::read_mobility_plain((data_dir / "contacts" / ("baseline_" + location_name + ".txt")).string()));
+
+        // Adjust "other" location by subtracting transport contacts
+        if (location_name == "other") {
+            baseline = (baseline - transport_matrix).cwiseAbs(); // Ensure non-negative values
         }
-        // Scale the number of contacts
-        auto scaled_baseline = (1 - share_staying) * baseline / (1 - avg_tt) + share_staying * baseline;
-        // Because we only model the acitvity from commuters, some age group should just have the unscaled contacts
-        Eigen::MatrixXd baseline_adjusted = Eigen::MatrixXd::Zero(scaled_baseline.rows(), scaled_baseline.cols());
-        for (auto i = 0; i < 6; i++) {
-            for (auto j = 0; j < 6; j++) {
+
+        // Scale contacts based on travel time and local staying proportion
+        auto scaled_baseline =
+            (1.0 - share_staying_local) * baseline / (1.0 - avg_transport_time) + share_staying_local * baseline;
+
+        // Adjust contacts: only scale for commuting age groups (2-5), others remain unchanged
+        Eigen::MatrixXd adjusted_baseline = Eigen::MatrixXd::Zero(num_age_groups, num_age_groups);
+        for (size_t i = 0; i < num_age_groups; ++i) {
+            for (size_t j = 0; j < num_age_groups; ++j) {
                 if ((i >= 2 && i <= 5) || (j >= 2 && j <= 5)) {
-                    baseline_adjusted(i, j) = scaled_baseline(i, j);
+                    adjusted_baseline(i, j) = scaled_baseline(i, j);
                 }
                 else {
-                    baseline_adjusted(i, j) = baseline(i, j);
+                    adjusted_baseline(i, j) = baseline(i, j);
                 }
             }
         }
-        contact_matrices[size_t(contact_location.first)].get_baseline() = baseline_adjusted;
-        contact_matrices[size_t(contact_location.first)].get_minimum()  = Eigen::MatrixXd::Zero(6, 6);
+
+        // Assign adjusted baseline and zero minimum to the contact matrix
+        contact_matrices[static_cast<size_t>(location_id)].get_baseline() = adjusted_baseline;
+        contact_matrices[static_cast<size_t>(location_id)].get_minimum() =
+            Eigen::MatrixXd::Zero(num_age_groups, num_age_groups);
     }
+
+    // Store the configured contact matrices in the parameters object
     params.get<mio::osecirts::ContactPatterns<double>>() = mio::UncertainContactMatrix<double>(contact_matrices);
 
     return mio::success();
 }
 
+/**
+ * Configures a transport-specific contact matrix for the model by reading data from a file.
+ * @param[in] data_dir Directory containing the transport contact data file ("contacts/contacts_transport.txt").
+ * @param[in,out] params Parameters object to store the configured transport contact matrix.
+ * @return IOResult<void> indicating success or an IO error if file reading fails.
+ */
 mio::IOResult<void> set_contact_matrices_transport(const fs::path& data_dir, mio::osecirts::Parameters<double>& params)
 {
-    auto contact_transport_status = mio::read_mobility_plain(data_dir.string() + "//contacts//contacts_transport.txt");
-    auto contact_matrix_transport = contact_transport_status.value();
-    auto contact_matrices         = mio::ContactMatrixGroup(1, size_t(params.get_num_groups()));
-    // ScalarType const polymod_share_contacts_transport = 1 / 0.2770885028949545;
+    // Define the path to the transport contacts file
+    fs::path transport_file = data_dir / "contacts" / "contacts_transport.txt";
 
-    contact_matrices[0].get_baseline() = contact_matrix_transport;
-    contact_matrices[0].get_minimum()  = Eigen::MatrixXd::Zero(6, 6);
+    // number of age groups
+    const auto num_age_groups = static_cast<size_t>(params.get_num_groups());
 
+    // Read the transport contact matrix from the file
+    BOOST_OUTCOME_TRY(auto&& transport_matrix, mio::read_mobility_plain(transport_file.string()));
+
+    // Initialize contact matrices with a single group for transport
+    auto contact_matrices = mio::ContactMatrixGroup(1, num_age_groups);
+
+    // Assign the transport matrix as the baseline and set a zero minimum
+    contact_matrices[0].get_baseline() = transport_matrix;
+    contact_matrices[0].get_minimum()  = Eigen::MatrixXd::Zero(num_age_groups, num_age_groups);
+
+    // Store the configured contact matrix in the parameters object
     params.get<mio::osecirts::ContactPatterns<double>>() = mio::UncertainContactMatrix<double>(contact_matrices);
 
     return mio::success();
 }
 
+/**
+ * Scales contact matrices for all nodes in a graph based on commuting data and travel time.
+ * Computes average travel time and commuter share, then applies these to adjust local contact patterns.
+ * @param[in,out] params_graph Graph containing model parameters for each node, updated with scaled contact matrices.
+ * @param[in] data_dir Directory containing baseline contact data files.
+ * @param[in] mobility_data_dir Path to the file with commuter mobility data.
+ * @param[in] commuting_weights Weights for each age group to compute total population (size must match age groups).
+ * @return IOResult<void> indicating success or an IO error if file reading or contact matrix setup fails.
+ */
 mio::IOResult<void> scale_contacts_local(mio::ExtendedGraph<mio::osecirts::Model<double>>& params_graph,
-                                         const fs::path& data_dir, const std::string mobility_data_dir,
-                                         const std::vector<ScalarType> commuting_weights)
+                                         const fs::path& data_dir, const std::string& mobility_data_dir,
+                                         const std::vector<double>& commuting_weights)
 {
+    // Read commuter mobility data
     BOOST_OUTCOME_TRY(auto&& mobility_data_commuter, mio::read_mobility_plain(mobility_data_dir));
-    // average travel time
-    const ScalarType avg_traveltime = std::accumulate(params_graph.edges().begin(), params_graph.edges().end(), 0.0,
-                                                      [](double sum, const auto& e) {
-                                                          return sum + e.property.travel_time;
-                                                      }) /
-                                      params_graph.edges().size();
 
-    // average share of commuters for all counties relative to the total population
-    const ScalarType total_population = std::accumulate(
-        params_graph.nodes().begin(), params_graph.nodes().end(), 0.0, [commuting_weights](double sum, const auto& n) {
-            return sum + n.property.base_sim.populations.get_group_total(mio::AgeGroup(0)) * commuting_weights[0] +
-                   n.property.base_sim.populations.get_group_total(mio::AgeGroup(1)) * commuting_weights[1] +
-                   n.property.base_sim.populations.get_group_total(mio::AgeGroup(2)) * commuting_weights[2] +
-                   n.property.base_sim.populations.get_group_total(mio::AgeGroup(3)) * commuting_weights[3] +
-                   n.property.base_sim.populations.get_group_total(mio::AgeGroup(4)) * commuting_weights[4] +
-                   n.property.base_sim.populations.get_group_total(mio::AgeGroup(5)) * commuting_weights[5];
-        });
-    const ScalarType num_commuters      = std::accumulate(params_graph.edges().begin(), params_graph.edges().end(), 0.0,
-                                                     [mobility_data_commuter](double sum, const auto& e) {
-                                                         auto start_node = e.start_node_idx;
-                                                         auto end_node   = e.end_node_idx;
-                                                         return sum + mobility_data_commuter(start_node, end_node);
-                                                     });
-    const ScalarType avg_commuter_share = num_commuters / total_population;
+    // Calculate average travel time across all edges
+    const double avg_travel_time = std::accumulate(params_graph.edges().begin(), params_graph.edges().end(), 0.0,
+                                                   [](double sum, const auto& edge) {
+                                                       return sum + edge.property.travel_time;
+                                                   }) /
+                                   static_cast<double>(params_graph.edges().size());
 
+    // Calculate total population weighted by age group commuting factors
+    const double total_population =
+        std::accumulate(params_graph.nodes().begin(), params_graph.nodes().end(), 0.0,
+                        [&commuting_weights](double sum, const auto& node) {
+                            const auto& populations = node.property.base_sim.populations;
+                            return sum + populations.get_group_total(mio::AgeGroup(0)) * commuting_weights[0] +
+                                   populations.get_group_total(mio::AgeGroup(1)) * commuting_weights[1] +
+                                   populations.get_group_total(mio::AgeGroup(2)) * commuting_weights[2] +
+                                   populations.get_group_total(mio::AgeGroup(3)) * commuting_weights[3] +
+                                   populations.get_group_total(mio::AgeGroup(4)) * commuting_weights[4] +
+                                   populations.get_group_total(mio::AgeGroup(5)) * commuting_weights[5];
+                        });
+
+    // Calculate total number of commuters from mobility data
+    const double total_commuters =
+        std::accumulate(params_graph.edges().begin(), params_graph.edges().end(), 0.0,
+                        [&mobility_data_commuter](double sum, const auto& edge) {
+                            return sum + mobility_data_commuter(edge.start_node_idx, edge.end_node_idx);
+                        });
+
+    // Compute average commuter share relative to total population
+    const double avg_commuter_share = total_commuters / total_population;
+
+    // Log results on the root MPI process
     if (mio::mpi::is_root()) {
-        std::cout << "avg_commuter_share: " << avg_commuter_share << std::endl;
-        std::cout << "avg_traveltime: " << avg_traveltime << std::endl;
+        std::cout << "Average commuter share: " << avg_commuter_share << "\n";
+        std::cout << "Average travel time: " << avg_travel_time << "\n";
     }
 
-    // scale all contact matrices
+    // Scale contact matrices for each node using computed averages
     for (auto& node : params_graph.nodes()) {
         BOOST_OUTCOME_TRY(
-            set_contact_matrices(data_dir, node.property.base_sim.parameters, avg_traveltime, avg_commuter_share));
+            set_contact_matrices(data_dir, node.property.base_sim.parameters, avg_travel_time, avg_commuter_share));
     }
+
     return mio::success();
 }
 
@@ -541,7 +591,7 @@ set_nodes(const mio::osecirts::Parameters<FP>& params, mio::Date start_date, mio
                 transmissionProbabilityOnContactMin[i] = transmissionProbabilityOnContactMin[i] * factor_mask[i];
                 transmissionProbabilityOnContactMax[i] = transmissionProbabilityOnContactMax[i] * factor_mask[i];
             }
-            array_assign_uniform_distribution(
+            assign_uniform_distribution_array(
                 mobility_model.parameters.template get<mio::osecirts::TransmissionProbabilityOnContact<double>>(),
                 transmissionProbabilityOnContactMin, transmissionProbabilityOnContactMax);
         }
