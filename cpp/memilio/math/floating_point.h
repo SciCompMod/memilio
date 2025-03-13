@@ -143,12 +143,11 @@ bool floating_point_greater_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::nu
  * @param n The number of decimal places we want to round to.
  * @return The rounded double value to n decimal digits.
  */
-template <class T>
+template <typename T>
 T round_nth_decimal(T x, size_t n)
 {
-    using std::round;
-    T factor = std::pow(10.0, n);
-    return round(x * factor) / factor;
+    const T factor = std::pow(10.0, n);
+    return std::round(x * factor) / factor;
 }
 
 } // namespace mio

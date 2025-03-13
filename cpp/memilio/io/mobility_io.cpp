@@ -160,14 +160,19 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
 
 IOResult<Eigen::MatrixXd> read_duration_stay(const std::string& filename)
 {
+    // count the number of lines in the file
     BOOST_OUTCOME_TRY(auto&& num_lines, count_lines(filename));
 
+    // if the file is empty, return an empty matrix
     if (num_lines == 0) {
         return success(Eigen::MatrixXd(0, 0));
     }
 
+    // open the file
     std::fstream file;
     file.open(filename, std::ios::in);
+
+    // if the file could not be opened, return an error
     if (!file.is_open()) {
         return failure(StatusCode::FileNotFound, filename);
     }
@@ -177,6 +182,7 @@ IOResult<Eigen::MatrixXd> read_duration_stay(const std::string& filename)
     try {
         std::string tp;
         int linenumber = 0;
+        // read the file line by line
         while (getline(file, tp)) {
             auto line      = split(tp, ' ');
             Eigen::Index i = static_cast<Eigen::Index>(linenumber);

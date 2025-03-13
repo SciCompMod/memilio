@@ -60,6 +60,10 @@ public:
     {
     }
 
+    /**
+     * @brief Copy constructor
+     * @param[in] other Another simulation to copy
+     */
     Simulation(const Simulation& other)
         : m_integratorCore(other.m_integratorCore)
         , m_model(std::make_unique<Model>(*other.m_model))
