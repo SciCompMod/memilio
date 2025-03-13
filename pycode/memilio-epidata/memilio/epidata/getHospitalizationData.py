@@ -42,7 +42,7 @@ pd.options.mode.copy_on_write = True
 
 def hospit_sanity_checks(df):
     """ Checks the sanity of the hospitalization_data dataframe
-    
+
     Checks if type of the given data is a dataframe
     Checks if the headers of the dataframe are those which are needed
 
@@ -71,7 +71,7 @@ def hospit_sanity_checks(df):
 
 def get_hospitailzations_per_day(seven_days_values):
     """ Gets the daily cases of hospitalizations from the seven day sum.
-    
+
     A zero filled array is created where the one day data is stored.
     For each calculated daily case the copied array is adjusted to include only the remaining values.
     Whenever the seven day sum changes to the following day, the difference is the same as the daily case difference from last week.
@@ -145,12 +145,12 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
                              **kwargs
                              ):
     """ Downloads or reads the RKI hospitalization data and writes them in different files.
-    
+
     Available data starts from 2020-03-01.
     If it does not already exist, the folder Germany is generated in the given out_folder.
     If read_data == True and the file "RKIHospitFull.json" exists, the data is read from this file
     and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
-    
+
     The downloaded dataframe is written to the file "RKIHospitFull".
     After that, the columns are renamed to english.
     From the sum of the cases of the last seven days the daily cases are calculated.

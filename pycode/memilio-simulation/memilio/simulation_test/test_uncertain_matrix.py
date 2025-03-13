@@ -26,6 +26,7 @@ import memilio.simulation as mio
 
 class Test_UncertainMatrix(unittest.TestCase):
     """ """
+
     def test_dampings(self):
         """ """
         m = mio.UncertainContactMatrix(

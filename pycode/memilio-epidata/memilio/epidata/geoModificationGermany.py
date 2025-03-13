@@ -208,7 +208,7 @@ def insert_names_of_counties(
 def check_for_all_counties(
         unique_county_list, merge_berlin=True, merge_eisenach=True):
     """ Checks if all states are mentioned
-    
+
     This function checks if all counties are available in the list provided.
     If data is incomplete this function returns false and a parent function may
     try to download from another source.
@@ -295,12 +295,12 @@ def get_governing_regions(strict=True):
     federal states or intermediate regions which themselves are a real
     subset of a federal state and to which a certain number of counties
     is attributed.
-    
+
     Governing regions are generally denoted by the first three digits of the
     belonging county IDs. In cases of a trailing zero, only two digits are
     taken and for Rhineland Palatinate and Saxony, the strict definition
     returns the two digit code of the federal state (i.e. 07 and 14).
-    
+
     Note that this list may include former 'governing regions'. However, this
     function may only be used to equally distribute information which only exist
     on the 'governing region' level but not on county level itself or where the
@@ -393,10 +393,10 @@ def create_intermediateregion_level(merge_eisenach=True):
     finer than federal state aggregation and based on mobility.
     The new regions aggregate a certain level of counties. For more
     information, see the following references.
-    
+
     IMPORTANT: This function does not need to be executed. Since the input file
     is not publicly available, the results have been copied to defaultDict.
-    
+
     Zika et al. (2020) https://www.iab.de/897/section.aspx/Publikation/k200206302
     Kropp/Schwengler (2016) https://doi.org/10.1080/00343404.2014.923093
     Kropp/Schwengler (2011) https://doi.org/10.1007/s13147-011-0076-4

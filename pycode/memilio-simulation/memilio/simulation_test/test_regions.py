@@ -24,6 +24,7 @@ import memilio.simulation as mio
 
 class Test_Regions(unittest.TestCase):
     """ """
+
     def test_get_holidays(self):
         """ """
         holidays = mio.get_holidays_de(9, start_date=mio.Date(

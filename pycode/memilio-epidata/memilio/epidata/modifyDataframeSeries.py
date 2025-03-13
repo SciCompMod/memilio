@@ -266,7 +266,7 @@ def split_column_based_on_values(
 
 def extract_subframe_based_on_dates(df, start_date, end_date):
     """ Removes all data with date lower than start date or higher than end date.
-    
+
     Returns the Dataframe with only dates between start date and end date.
     Resets the Index of the Dataframe.
 
@@ -292,7 +292,7 @@ def extract_subframe_based_on_dates(df, start_date, end_date):
 
 def insert_column_by_map(df, col_to_map, new_col_name, map, new_col_dtype='object'):
     """ Adds a column to a given dataframe based on a mapping of values of a given column
-    
+
     The mapping is defined by a list containing tupels of the form (new_value, old_value)
     where old_value is a value in the col_to_map and new_value the value
     that is added in the new column if col_to_map contains the old_value.
@@ -402,7 +402,7 @@ def fit_age_group_intervals(
         returns
         ["1-5": 2, "6-10": 2, "11-50": 8, "51-99": 10]
         if no population data is provided.
-    
+
         If we also provide the population data
         population = ["1-5": 40, "6-7": 5, "8-10": 5, "11-60": 25, "61-99": 25],
         The output is:

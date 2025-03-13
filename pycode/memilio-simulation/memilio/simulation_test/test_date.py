@@ -25,6 +25,7 @@ from memilio.simulation import Date
 
 class TestCustomIndexArray(unittest.TestCase):
     """ """
+
     def test_init(self):
         """ """
         year = 2020

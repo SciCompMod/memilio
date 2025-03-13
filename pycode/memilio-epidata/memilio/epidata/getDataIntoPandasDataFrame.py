@@ -353,20 +353,20 @@ def get_file(
 
 def cli(what):
     """ Defines command line interface
-    
+
     The function parameter "what" is used as a dictionary key.
     The return of the dictionary is either a list of a string and a list of keywords.
     The string is the message that should be printed when working on the specific package.
     The further list, contains all special command line arguments which are needed for this package.
-    
+
     If the key is not part of the dictionary the program is stopped.
-    
+
     The following default arguments are added to the parser:
     - read-file
     - file-format, choices = ['json', 'hdf5', 'json_timeasstring']
     - out_path
     The default values are defined in default dict.
-    
+
     Depending on what following parser can be added:
     - start_date
     - end_date
@@ -559,7 +559,7 @@ def append_filename(
 
 def check_dir(directory):
     """ Checks existence and creates folder
-    
+
     It is checked if the folder given in the parameter "directory" exists.
     If it does not exist it is created.
 
@@ -574,7 +574,7 @@ def check_dir(directory):
 
 def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     """ Writes pandas dataframe to file
-    
+
     This routine writes a pandas dataframe to a file in a given format.
     The filename is given without ending.
     A file_type can be

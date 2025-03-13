@@ -41,7 +41,7 @@ pd.options.mode.copy_on_write = True
 
 def read_population_data(ref_year):
     """ Reads Population data from regionalstatistik.de
-    
+
     A request is made to regionalstatistik.de and the StringIO is read in as a csv into the dataframe format.
 
     :param ref_year: Default: None or year (jjjj) convertible to str. Reference year.
@@ -150,7 +150,7 @@ def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_forma
 
 def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
     """ Assigns population data of all counties of old dataframe in new created dataframe
-    
+
     In df_pop_raw there might be additional information like federal states,
     governing regions etc. which is not necessary for the dataframe.
     Also checks for incomplete data.
@@ -376,7 +376,7 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
                         **kwargs
                         ):
     """ Download age-stratified population data for the German counties.
-    
+
     The data we use is:
     Official 'Bevölkerungsfortschreibung' 12411-02-03-4:
     'Bevölkerung nach Geschlecht und Altersgruppen (17)'
@@ -384,13 +384,13 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
     ATTENTION: The raw file cannot be downloaded
     automatically by our scripts without an Genesis Online account. In order to
     work on this dataset, please enter your username and password or manually download it from:
-    
+
     https://www.regionalstatistik.de/genesis/online -> "1: Gebiet, Bevölkerung,
     Arbeitsmarkt, Wahlen" -> "12: Bevölkerung" -> "12411 Fortschreibung des
     Bevölkerungsstandes" ->  "12411-02-03-4: Bevölkerung nach Geschlecht und
     Altersgruppen (17) - Stichtag 31.12. - regionale Tiefe: Kreise und
     krfr. Städte".
-    
+
     Download the xlsx or csv file and put it under dd.defaultDict['out_folder'],
     this normally is Memilio/data/pydata/Germany.
     The folders 'pydata/Germany' have to be created if they do not exist yet.

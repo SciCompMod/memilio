@@ -26,6 +26,7 @@ from memilio.simulation.osecir import (InfectionState, PopulationsArray)
 
 class TestCustomIndexArray(TestCase):
     """ """
+
     def test_init(self):
         """ """
         dims = (AgeGroup(5), InfectionState(len(InfectionState.values())))

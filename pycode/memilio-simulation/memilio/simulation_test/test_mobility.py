@@ -27,6 +27,7 @@ import memilio.simulation.osecir as osecir
 
 class Test_Mobility(unittest.TestCase):
     """ """
+
     def test_params(self):
         """ """
         coeffs = mio.MobilityCoefficientGroup(1, 10)

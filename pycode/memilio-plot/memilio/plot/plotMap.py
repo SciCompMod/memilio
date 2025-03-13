@@ -240,7 +240,7 @@ def scale_dataframe_relative(df, age_groups, df_population):
     """ Scales a population-related data frame relative to the size of the
     local populations or subpopulations (e.g., if not all age groups are
     considered).
-    
+
     The first column in the input data frame and the population data frame to
     be read need to be named according to the region identifiers. All regions
     of the data frame to be scaled need to be available in the population

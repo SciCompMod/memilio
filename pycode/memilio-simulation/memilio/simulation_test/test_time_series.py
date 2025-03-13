@@ -27,6 +27,7 @@ import memilio.simulation as mio
 
 class Test_TimeSeries(unittest.TestCase):
     """ """
+
     def test_add_time_point(self):
         """ """
         ts = mio.TimeSeries(1)

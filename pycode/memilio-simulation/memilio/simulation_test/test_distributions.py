@@ -24,6 +24,7 @@ import memilio.simulation as mio
 
 class Test_ParameterDistribution(unittest.TestCase):
     """ """
+
     def test_uniform(self):
         """ """
         U = mio.ParameterDistributionUniform(1.0, 2.0)

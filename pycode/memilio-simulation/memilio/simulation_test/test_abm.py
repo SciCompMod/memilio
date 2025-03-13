@@ -31,6 +31,7 @@ num_age_groups = 6
 
 class TestAbm(unittest.TestCase):
     """ """
+
     def test_model(self):
         """ """
         t0 = abm.TimePoint(0)

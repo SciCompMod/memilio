@@ -53,7 +53,7 @@ def check_for_completeness(df: pd.DataFrame,
                            merge_eisenach: bool = True
                            ):
     """Checks if all counties are mentioned in the case data set
-    
+
     This check had to be added due to incomplete data downloads
     It is checked if all counties are part of the data.
     If data is incomplete the data is downloaded from another source.
@@ -92,7 +92,7 @@ def fetch_case_data(
     read_data: bool = dd.defaultDict['read_data'],
 ) -> pd.DataFrame:
     """ Downloads the case data
-    
+
     The data is read either from the internet or from a json file (CaseDataFull.json), stored in an earlier run.
     If the data is read from the internet, before changing anything the data is stored in CaseDataFull.json.
     If data should be downloaded, it is checked if data contains all counties.
@@ -182,7 +182,7 @@ def preprocess_case_data(raw_df: pd.DataFrame,
                          rep_date: bool = dd.defaultDict['rep_date'],
                          ) -> pd.DataFrame:
     """ Preprocessing of the case data
-    
+
     While working with the data
     - the column names are changed to english depending on defaultDict
     - a new column "Date" is defined.
@@ -479,14 +479,14 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
                   **kwargs
                   ) -> Dict:
     """ Wrapper function that downloads the case data and provides different kind of structured data into json files.
-    
+
     The data is read either from the internet or from a json file (CaseDataFull.json), stored in an earlier run.
     If the data is read from the internet, before changing anything the data is stored in CaseDataFull.json.
     If data should be downloaded, it is checked if data contains all counties.
     If not a different source is tried.
     The file is read in or stored at the folder "out_folder"/Germany/.
     To store and change the data we use pandas.
-    
+
     While working with the data
     - the column names are changed to english depending on defaultDict
     - a new column "Date" is defined.

@@ -44,10 +44,10 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
                 impute_dates=dd.defaultDict['impute_dates'],
                 **kwargs):
     """ Download data from John Hopkins University
-    
+
        Data is either downloaded and afterwards stored or loaded from a stored filed.
        The file is "FullData_JohnHopkins.json"
-    
+
        Working with the data includes
        - rename columns such that "/" is deleted, e.g Country/Region becomes CountryRegion
        - data of all countries together are written to a file

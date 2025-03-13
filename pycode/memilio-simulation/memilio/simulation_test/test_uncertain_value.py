@@ -24,6 +24,7 @@ import memilio.simulation as mio
 
 class Test_UncertainValue(unittest.TestCase):
     """ """
+
     def test_value(self):
         """ """
         uv = mio.UncertainValue(0)

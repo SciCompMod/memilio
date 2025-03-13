@@ -142,7 +142,7 @@ def generate_data(
         save_data=True):
     """ Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
     Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
-    
+
     In general, we have 10 different compartments. However, we aggregate the InfectedNoSymptoms and InfectedSymptomsNoConfirmed compartments. The same
     holds for the InfectedSymptoms and InfectedSymptomsConfirmed compartments. So, we end up with only 8 different compartments. If we choose,
     input_width = 5 and label_width = 20, the dataset has

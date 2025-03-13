@@ -22,7 +22,7 @@ import tensorflow as tf
 
 def mlp_multi_input_single_output(num_outputs=8):
     """ Simple MLP Network which takes the compartments for multiple time steps as input and returns the 8 compartments for one single time step.
-    
+
     Reshaping adds an extra dimension to the output, so the shape of the output is 1x8. This makes the shape comparable to that of the multi-output models.
 
     :param num_outputs: Default: 8 Number of compartments. Default value is reached when aggregating the confirmed compartments.
@@ -39,7 +39,7 @@ def mlp_multi_input_single_output(num_outputs=8):
 
 def lstm_network_multi_input_single_output(num_outputs=8):
     """ LSTM Network which uses multiple time steps as input and returns the 8 compartments for one single time step in the future.
-    
+
     Input and output have shape [number of expert model simulations, time points in simulation, number of individuals in infection states].
 
     :param num_outputs: Default: 8 Number of compartments. Default value is reached when aggregating the confirmed compartments.
@@ -54,7 +54,7 @@ def lstm_network_multi_input_single_output(num_outputs=8):
 
 def cnn_multi_input_multi_output(label_width, conv_size=3, num_outputs=8):
     """ CNN Network which uses multiple time steps as input and returns the 8 compartments for multiple time step in the future.
-    
+
     Input and output have shape [number of expert model simulations, time points in simulation, number of individuals in infection states].
     The parameter conv_size describes the kernel_size of the 1d Conv layer.
     We also use the parameter in combination with a lambda layer to transform the input to shape [batch, CONV_WIDTH, features].
@@ -78,7 +78,7 @@ def cnn_multi_input_multi_output(label_width, conv_size=3, num_outputs=8):
 
 def lstm_multi_input_multi_output(label_width, num_outputs=8):
     """ LSTM Network which uses multiple time steps as input and returns the 8 compartments for one single time step in the future.
-    
+
     Input and output have shape [number of expert model simulations, time points in simulation, number of individuals in infection states].
 
     :param label_width: Number of time steps in the output.

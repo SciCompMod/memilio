@@ -62,13 +62,13 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
                         **kwargs
                         ):
     """ Downloads all data from external sources
-    
+
     The functions which are called are:
     - getCaseData.get_case_data
     - getPopulationData.get_population_data
     - getVaccinationData.get_vaccination_data
     - getDIVIData.get_divi_data
-    
+
     Keyword arguments:
 
     :param read_data: True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.

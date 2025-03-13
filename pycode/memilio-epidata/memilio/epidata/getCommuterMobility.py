@@ -55,9 +55,9 @@ def verify_sorted(countykey_list):
 
 def assign_geographical_entities(countykey_list, govkey_list, run_checks):
     """ Assigns counties to governing regions based on key comparison and creates list of governing regions per state.
-    
+
     Only works with sorted key lists.
-    
+
     Keyword arguments:
 
     :param setup_dict: dictionary with necessary values
@@ -142,7 +142,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                       **kwargs):
     """ Computes DataFrame of commuter mobility patterns based on the Federal
     Agency of Work data.
-    
+
     Keyword arguments:
 
     :param read_data: True or False. Defines if data is read from file or downloaded.
@@ -523,7 +523,7 @@ def get_neighbors_mobility(
     """ Returns the neighbors of a particular county ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
-    
+
     The parameters absolute and relative tolerance decide which connections and
     neighbors are returned. If tol_comb='or', only one of this two criteria
     has to be satisfied to count the edges. If 'and' is chosen, both criteria
@@ -588,7 +588,7 @@ def get_neighbors_mobility_all(
     """ Returns the neighbors of all counties ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
-    
+
     The parameters absolute and relative tolerance decide which connections and
     neighbors are returned. If tol_comb='or', only one of this two criteria
     has to be satisfied to count the edges. If 'and' is chosen, both criteria

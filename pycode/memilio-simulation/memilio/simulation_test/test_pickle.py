@@ -27,6 +27,7 @@ import memilio.simulation as msim
 
 class Test_Pickle(unittest.TestCase):
     """ """
+
     def test_date(self):
         """ """
         test = msim.Date(1, 2, 3)

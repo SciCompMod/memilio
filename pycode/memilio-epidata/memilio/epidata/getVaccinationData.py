@@ -912,10 +912,10 @@ def write_vaccination_data(dict_data: dict,
         - all_county_ageinf_vacc: Resolved per county and infection data age group (0-4, 5-14, 15-34, 35-59, 60-79, 80+)
             - To do so getPopulationData is used and age group specific date from the original source
                 is extrapolated on the new age groups on county level.
-    
+
     - Missing dates are imputed for all data frames ('fillDates' is not optional but always executed).
     - A central moving average of N days is optional.
-    
+
     - Start and end dates can be provided to define the length of the returned data frames.
     Parameters
     ----------
@@ -1208,25 +1208,25 @@ def get_vaccination_data(
         **kwargs
 ):
     """ Downloads the RKI vaccination data and provides different kind of structured data.
-    
+
     The data is read from the internet.
     The file is read in or stored at the folder "out_folder"/Germany/.
     To store and change the data we use pandas.
-    
+
     While working with the data
     - the column names are changed to English depending on defaultDict
     - The column "Date" provides information on the date of each data point given in the corresponding columns.
-    
+
     - The data is exported in three different ways:
         - all_county_vacc: Resolved per county by grouping all original age groups (05-11, 12-17, 18-59, 60+)
         - all_county_agevacc_vacc: Resolved per county and original age group (05-11, 12-17, 18-59, 60+)
         - all_county_ageinf_vacc: Resolved per county and infection data age group (0-4, 5-14, 15-34, 35-59, 60-79, 80+)
             - To do so getPopulationData is used and age group specific date from the original source
                 is extrapolated on the new age groups on county level.
-    
+
     - Missing dates are imputed for all data frames ('fillDates' is not optional but always executed).
     - A central moving average of N days is optional.
-    
+
     - Start and end dates can be provided to define the length of the returned data frames.
 
     :param read_data: Currently not used] True or False. Defines if data is read from file or downloaded.

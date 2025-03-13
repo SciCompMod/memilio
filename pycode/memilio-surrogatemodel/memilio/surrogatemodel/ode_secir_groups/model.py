@@ -32,7 +32,7 @@ def plot_compartment_prediction_model(
         inputs, labels, modeltype,  model=None,
         plot_compartment='InfectedSymptoms', max_subplots=8):
     """ Plot prediction of the model and label for one compartment. The average of all age groups is plotted.
-    
+
     If model is none, we just plot the inputs and labels for the selected compartment without any predictions.
 
     :param inputs: test inputs for model prediction.

@@ -124,16 +124,16 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     provide information on testing numbers while the opposite is
     not necessarily true without having additional information,
     only positive rates are provided.
-    
+
     The data is read from the internet.
     The file is read in or stored at the folder "out_folder"/Germany/.
     To store and change the data we use pandas.
-    
+
     While working with the data
     - the column names are changed to English depending on defaultDict
     - The column "Date" provides information on the date of each data
         point given in the corresponding columns.
-    
+
     - The data is exported in three different ways:
         - germany_testpos: Positive rates of testing for whole Germany
         - germany_states_testpos: Positive rates of testing for all
@@ -141,11 +141,11 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
         - germany_counties_from_states_testpos: Positive rates of testing
             for all counties of Germany, only taken from the
             values of the federal states. No extrapolation applied.
-    
+
     - Missing dates are imputed for all data frames ('impute_dates' is
         not optional but always executed).
     - A central moving average of N days is optional.
-    
+
     - Start and end dates can be provided to define the length of the
         returned data frames.
 

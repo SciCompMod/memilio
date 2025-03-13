@@ -27,6 +27,7 @@ from memilio.simulation.osir import Model, simulate, InfectionState
 
 class Test_Integrators(unittest.TestCase):
     """ """
+
     def test_euler_step(self):
         """ """
 

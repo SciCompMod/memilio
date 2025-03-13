@@ -32,10 +32,10 @@ from typing_extensions import Self
 @dataclass
 class ScannerConfig:
     """Provide configurations from JSON-file in Python as dataclass.
-    
+
     Attributes (and config.json parameters):
         source_file: Path to the main file of the model, e.g., model.cpp
-    
+
         path_database: Path to the folder of the compile_commands.json
         namespace: C++ namespace of the model class
         python_module_name: Individual name for binded python module
@@ -44,7 +44,7 @@ class ScannerConfig:
         target_folder: Target folder for generated files
         optional: List with optional arguments
             libclang_library_path: Path to the local libclang library. If the string is empty, the program tries to retrieve the path from a terminal command.
-    
+
             simulation_class: Name of simulation class, if not used set as empty string
             age_group: Boolean defining if model uses age groups
             parameterset_wrapper": Boolean defining if model uses wrapper for parameterset.

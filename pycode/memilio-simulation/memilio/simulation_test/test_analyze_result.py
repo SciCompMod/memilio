@@ -27,6 +27,7 @@ import memilio.simulation.osecir as osecir
 
 class Test_AnalyzeResult(unittest.TestCase):
     """ """
+
     def test_interpolate_time_series(self):
         """ """
         ts = mio.TimeSeries(1)

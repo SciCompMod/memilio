@@ -286,12 +286,12 @@ def activate_npis_based_on_incidence(
     """
     Computes an activation vector according to a given incidence threshold,
     observed incidence and activation or lifting delays.
-    
+
     In order for incidence-dependent NPIs to become active, the incidence
     has to exceed the threshold for npi_activation_days_threshold many days.
     For a formerly active NPI to be lifted, the incidence has to be below
     the threshold for npi_lifting_days_threshold many days.
-    
+
     If one of the former cases holds true, then the activation or lifting happens
     two days after the satisfaction of the criterion. This is in accordance with
     case reporting that can only happen after the day has finished (a 'delay' of one
@@ -301,18 +301,18 @@ def activate_npis_based_on_incidence(
     the incidence-dependent NPI is activated or lifted two days after the threshold
     is/is not anymore exceeded, additionally considering the number of consecutive
     days to implement or lift (see second paragraph above).
-    
+
     Please see the examples for a better understanding.
-    
+
     Example 1 (Threshold=3.5):
     local_incid=pd.Series([2, 4, 2, 4, 2, 2, 4, 4, 2, 4, 2, 2, 2, 2])
     Yesterdays incidence is over the threshold on following days:
     [?, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0]
-    
+
     Yesterday for first day is not known. Thus, first day's boolean
     is always set to the same boolean as second day's boolean.
     [0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0]
-    
+
     With yesterdays incidence over threshold on days:
     [0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0]
     Example 1a) ... and npi_lifting_days_threshold=2, npi_activation_days_threshold=1,
@@ -323,7 +323,7 @@ def activate_npis_based_on_incidence(
     the NPI will be activated on day 10 (and would be lifted on day 15;
     which is not in the vector anymore), i.e., int_active then is:
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
-    
+
     Example 2:
     With yesterday's incidence over threshold on days:
     [1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0]
@@ -331,7 +331,7 @@ def activate_npis_based_on_incidence(
     the NPI will be activated on day 2 and lifted on day 14, i.e.,
     int_active then is:
     [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0]
-    
+
     Please also note that the first column will always returned as false
     so the dataframe should not start with dates where NPIs are implemented.
     For the Corona Datenplattform frame which starts from 2020-03-01
@@ -507,16 +507,16 @@ def get_npi_data(fine_resolution=2,
     """ Loads a certain resolution of recorded NPI data from
     the Corona Datenplattform and extracts the counties asked for and
     activates the NPIs if they are incidence dependent.
-    
+
     Results' data frames will be stored in the directory as:
         -fine_resolution=2: germany_counties_npi_subcat
         -fine_resolution=1: germany_counties_npi_subcat_incgrouped
         -fine_resolution=0: germany_counties_npi_maincat
-    
+
     Needs the files 'cases_all_county_all_dates_repdate.json' and
     'county_current_population.json' which can be created by the functions
     getCasesData.py (with argument --rep-date) and getPopulationData.py.
-    
+
     Please manually download
     - kr_massnahmen_unterkategorien.csv
     - datensatzbeschreibung_massnahmen.xlsx

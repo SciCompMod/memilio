@@ -55,17 +55,17 @@ class Visualization:
     @staticmethod
     def output_ast_png(cursor: Cursor, max_depth: int, output_file_name: str = 'ast_graph') -> None:
         """ Output the abstract syntax tree to a .png. Set the starting node and the max depth.
-        
+
         To save the abstract syntax tree as an png with a starting node and a depth u cann use the following command
-        
+
         Example command: aviz.output_ast_png(ast.get_node_by_index(1), 2)
-        
+
         aviz -> instance of the Visualization class.
-        
+
         ast -> instance of the AST class.
-        
+
         .get_node_by_index -> get a specific node by id (use .output_ast_formatted to see node ids)
-        
+
         The number 2 is a example for the depth the graph will show
 
         :param cursor: The current node of the AST as a cursor object from libclang.

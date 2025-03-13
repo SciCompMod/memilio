@@ -23,7 +23,7 @@ import tensorflow as tf
 def mlp_multi_input_single_output(num_age_groups=6):
     """ Simple MLP Network which takes the compartments for multiple time steps as input and
     returns the 8 compartments for all six age groups for one single time step.
-    
+
     Reshaping adds an extra dimension to the output, so the shape of the output is 1x48.
     This makes the shape comparable to that of the multi-output models.
 
@@ -42,7 +42,7 @@ def mlp_multi_input_single_output(num_age_groups=6):
 def mlp_multi_input_multi_output(label_width, num_age_groups=6):
     """ Simple MLP Network which takes the compartments for multiple time steps as input and
     returns the 8 compartments for all age groups for multiple time steps in the future.
-    
+
     Reshaping adds an extra dimension to the output, so the shape of the output is (label_width)x48.
     This makes the shape comparable to that of the multi-output models.
 
@@ -63,7 +63,7 @@ def mlp_multi_input_multi_output(label_width, num_age_groups=6):
 def cnn_multi_input_multi_output(label_width, num_age_groups=6):
     """ CNN Network which uses multiple time steps as input and returns the 8 compartments for
     each age group for multiple time steps in the future.
-    
+
     Input and output have shape [number of expert model simulations, time points in simulation,
     number of individuals in infection states].
 
@@ -90,7 +90,7 @@ def cnn_multi_input_multi_output(label_width, num_age_groups=6):
 def lstm_multi_input_multi_output(label_width, num_age_groups=6):
     """ LSTM Network which uses multiple time steps as input and returns the 8 compartments for
     multiple time steps in the future.
-    
+
     Input and output have shape [number of expert model simulations, time points in simulation,
     number of individuals in infection states].
 
