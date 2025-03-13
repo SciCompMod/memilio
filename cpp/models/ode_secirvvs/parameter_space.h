@@ -230,7 +230,7 @@ Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityPa
     * Some parameters are shared between nodes and only sampled once.
     * @tparam FP floating point type, e.g., double
     * @param graph Graph to be sampled.
-    * @param variant_high If true, use high value for infectiousness of variant.
+    * @param fact_mask_transport Factor to adjust the transmission probability on contact for the mobility model.
     * @return Graph with nodes and edges from the input graph sampled.
     */
 template <typename FP = double>
@@ -294,8 +294,6 @@ ExtendedGraph<Model<FP>> draw_sample(ExtendedGraph<Model<FP>>& graph, FP fact_ma
 
     for (auto& edge : graph.edges()) {
         auto edge_params = edge.property.get_parameters();
-        //no dynamic NPIs
-        //TODO: add switch to optionally enable dynamic NPIs to edges
         sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge_params, edge.property.travel_time,
                                edge.property.path);
     }
