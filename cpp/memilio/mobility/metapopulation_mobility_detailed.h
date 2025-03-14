@@ -689,6 +689,15 @@ private:
     }
 };
 
+/**
+ * @brief Extended graph simulation class that adds mobility models.
+ *
+ * This class extends the base graph simulation by incorporating mobility-specific functions.
+ * It computes schedules for edge and node mobility and advances the simulation in discrete time steps.
+ *
+ * @tparam Graph Type of the graph.
+ * @tparam MobilityFunctions Type providing mobility-related functions.
+ */
 template <typename Graph, typename MobilityFunctions>
 class GraphSimulationExtended
     : public GraphSimulationBase<Graph, double, double,
@@ -702,6 +711,15 @@ public:
         std::function<void(double, double, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
                            typename Graph::NodeProperty&, MobilityFunctions&)>;
 
+    /**
+     * @brief Construct a new GraphSimulationExtended object.
+     *
+     * @param t0 Initial simulation time.
+     * @param dt Time step size.
+     * @param g Reference to the graph.
+     * @param node_func Function to update nodes.
+     * @param modes Mobility functions object.
+     */
     GraphSimulationExtended(double t0, double dt, Graph& g, const node_function& node_func, MobilityFunctions modes)
         : GraphSimulationBase<Graph, double, double,
                               std::function<void(typename Graph::EdgeProperty&, size_t, typename Graph::NodeProperty&,
@@ -710,10 +728,19 @@ public:
                                                                                                   node_func, {})
         , m_mobility_functions(modes)
     {
-        ScheduleManager schedule_manager(100); // Assuming 100 timesteps
+        ScheduleManager schedule_manager(100); // Assume 100 timesteps.
         schedules = schedule_manager.compute_schedule(this->m_graph);
     }
 
+    /**
+     * @brief Construct a new GraphSimulationExtended object.
+     *
+     * @param t0 Initial simulation time.
+     * @param dt Time step size.
+     * @param g Graph to be moved.
+     * @param node_func Function to update nodes.
+     * @param modes Mobility functions object.
+     */
     GraphSimulationExtended(double t0, double dt, Graph&& g, const node_function& node_func, MobilityFunctions modes)
         : GraphSimulationBase<Graph, double, double,
                               std::function<void(typename Graph::EdgeProperty&, size_t, typename Graph::NodeProperty&,
@@ -722,37 +749,49 @@ public:
               t0, dt, std::forward<Graph>(g), node_func, {})
         , m_mobility_functions(modes)
     {
-        ScheduleManager schedule_manager(100); // Assuming 100 timesteps
+        ScheduleManager schedule_manager(100); // Assume 100 timesteps.
         schedules = schedule_manager.compute_schedule(this->m_graph);
     }
 
+    /**
+     * @brief Advances the simulation until time t_max.
+     *
+     * The simulation proceeds in three steps per time interval:
+     * 1. Moving commuters between nodes.
+     * 2. Advancing the local node integrators.
+     * 3. Updating the status of commuters and mobility models.
+     *
+     * At the end of each day, populations in mobility nodes are reset and, for long simulations, the time series
+     * are interpolated to save memory.
+     *
+     * @param t_max Maximum simulation time.
+     */
     void advance(double t_max = 1.0)
     {
-        ScalarType dt_first_mobility =
-            std::accumulate(this->m_graph.edges().begin(), this->m_graph.edges().end(),
-                            std::numeric_limits<ScalarType>::max(), [&](ScalarType current_min, const auto& e) {
-                                auto traveltime_per_region =
-                                    round_nth_decimal(e.property.travel_time / e.property.path.size(), 2);
-                                if (traveltime_per_region < 0.01)
-                                    traveltime_per_region = 0.01;
-                                auto start_mobility =
-                                    round_nth_decimal(1 - 2 * (traveltime_per_region * e.property.path.size()) -
-                                                          this->m_graph.nodes()[e.end_node_idx].property.stay_duration,
-                                                      2);
-                                if (start_mobility < 0) {
-                                    start_mobility = 0.;
-                                }
-                                return std::min(current_min, start_mobility);
-                            });
+        // Compute earliest mobility start time among all edges.
+        ScalarType dt_first_mobility = std::accumulate(
+            this->m_graph.edges().begin(), this->m_graph.edges().end(), std::numeric_limits<ScalarType>::max(),
+            [&](ScalarType current_min, const auto& e) {
+                auto travel_time_per_region = round_nth_decimal(e.property.travel_time / e.property.path.size(), 2);
+                travel_time_per_region      = (travel_time_per_region < 0.01) ? 0.01 : travel_time_per_region;
+                auto start_mobility =
+                    round_nth_decimal(1 - 2 * (travel_time_per_region * e.property.path.size()) -
+                                          this->m_graph.nodes()[e.end_node_idx].property.stay_duration,
+                                      2);
+                if (start_mobility < 0.)
+                    start_mobility = 0.;
+                return std::min(current_min, start_mobility);
+            });
 
-        // set population to zero in mobility nodes before starting
+        // Reset mobility simulation results before starting.
         for (auto& n : this->m_graph.nodes()) {
             n.property.mobility_sim.get_result().get_last_value().setZero();
         }
 
-        auto min_dt    = 0.01;
-        double t_begin = this->m_t - 1.;
+        const auto min_dt = 0.01;
+        double t_begin    = this->m_t - 1.0;
 
+        // Main simulation loop.
         while (this->m_t < t_max - epsilon) {
             t_begin += 1;
             if (this->m_t + dt_first_mobility > t_max) {
@@ -763,46 +802,41 @@ public:
                 break;
             }
 
-            size_t indx_schedule = 0;
+            size_t index_schedule = 0;
             while (t_begin + 1 > this->m_t + 1e-10) {
-                // the graph simulation is structured in 3 steps:
-                // 1. move indivudals if necessary
-                // 2. integrate the local nodes
-                // 3. update the status of the commuter and use the obtained values to update the mobility models.
-                move_commuters(indx_schedule);
-                advance_local_nodes(indx_schedule);
-                update_status_commuters(indx_schedule);
+                // Step 1: Move commuters.
+                move_commuters(index_schedule);
+                // Step 2: Advance local nodes.
+                advance_local_nodes(index_schedule);
+                // Step 3: Update commuter statuses.
+                update_status_commuters(index_schedule);
 
-                // in the last time step we have to move the individuals back to their local model and
-                // delete the commuters time series
-                handle_last_time_step(indx_schedule);
+                // Handle last timestep actions.
+                handle_last_time_step(index_schedule);
 
-                indx_schedule++;
+                index_schedule++;
                 this->m_t += min_dt;
             }
-            // At the end of the day. we set each compartment zero for all mobility nodes since we have to estimate
-            // the state of the indivuals moving between different counties.
-            // Therefore there can be differences with the states given by the integrator used for the mobility node.
+            // At day's end, reset compartments for mobility nodes.
             for (auto& n : this->m_graph.nodes()) {
                 n.property.mobility_sim.get_result().get_last_value().setZero();
             }
-
-            // to save memory, we interpolate each time series after every day if t > 20
+            // For simulations beyond t > 20, interpolate results to save memory.
             if (this->m_t > 20) {
                 for (auto& n : this->m_graph.nodes()) {
-                    // base sim
-                    auto& result_node_local          = n.property.base_sim.get_result();
-                    auto interpolated_result         = interpolate_simulation_result(result_node_local);
-                    auto& flow_node_local            = n.property.base_sim.get_flows();
-                    auto interpolated_flows          = interpolate_simulation_result(flow_node_local);
+                    // Local simulation interpolation.
+                    auto& result_local               = n.property.base_sim.get_result();
+                    auto interpolated_result         = interpolate_simulation_result(result_local);
+                    auto& flows_local                = n.property.base_sim.get_flows();
+                    auto interpolated_flows          = interpolate_simulation_result(flows_local);
                     n.property.base_sim.get_result() = interpolated_result;
                     n.property.base_sim.get_flows()  = interpolated_flows;
 
-                    // mobility sim
-                    auto& result_node_mobility           = n.property.mobility_sim.get_result();
-                    interpolated_result                  = interpolate_simulation_result(result_node_mobility);
-                    auto& flow_node_mobility             = n.property.mobility_sim.get_flows();
-                    interpolated_flows                   = interpolate_simulation_result(flow_node_mobility);
+                    // Mobility simulation interpolation.
+                    auto& result_mob                     = n.property.mobility_sim.get_result();
+                    interpolated_result                  = interpolate_simulation_result(result_mob);
+                    auto& flows_mob                      = n.property.mobility_sim.get_flows();
+                    interpolated_flows                   = interpolate_simulation_result(flows_mob);
                     n.property.mobility_sim.get_result() = interpolated_result;
                     n.property.mobility_sim.get_flows()  = interpolated_flows;
                 }
@@ -811,73 +845,90 @@ public:
     }
 
 private:
-    MobilityFunctions m_mobility_functions;
-    ScheduleManager::Schedule schedules;
-    const double epsilon = 1e-10;
+    MobilityFunctions m_mobility_functions; ///< Mobility functions used to update simulation state.
+    ScheduleManager::Schedule schedules; ///< Precomputed schedules for mobility.
+    const double epsilon = 1e-10; ///< Tolerance
 
-    ScalarType calculate_next_dt(size_t edge_indx, size_t indx_schedule)
+    /**
+     * @brief Calculates the next time step for an edge given its current schedule index.
+     *
+     * @param edge_index Index of the edge.
+     * @param index_schedule Current schedule index.
+     * @return ScalarType Next time step value.
+     *
+     * @throw runtime_error if the schedule index is not found.
+     */
+    ScalarType calculate_next_dt(size_t edge_index, size_t index_schedule)
     {
-        auto current_node_indx = schedules.schedule_edges[edge_indx][indx_schedule];
-        bool in_mobility_node  = schedules.mobility_schedule_edges[edge_indx][indx_schedule];
+        auto current_node_idx = schedules.schedule_edges[edge_index][index_schedule];
+        bool in_mobility_node = schedules.mobility_schedule_edges[edge_index][index_schedule];
 
-        // determine dt, which is equal to the last integration/synchronization point in the current node
-        auto integrator_schedule_row = schedules.local_int_schedule[current_node_indx];
+        // Select appropriate integration schedule.
+        auto integrator_schedule_row = schedules.local_int_schedule[current_node_idx];
         if (in_mobility_node)
-            integrator_schedule_row = schedules.mobility_int_schedule[current_node_indx];
-        // search the index of indx_schedule in the integrator schedule
-        const size_t indx_current = std::distance(
-            integrator_schedule_row.begin(),
-            std::lower_bound(integrator_schedule_row.begin(), integrator_schedule_row.end(), indx_schedule));
+            integrator_schedule_row = schedules.mobility_int_schedule[current_node_idx];
 
-        if (integrator_schedule_row[indx_current] != indx_schedule)
+        // Locate the current schedule index.
+        const size_t index_current = std::distance(
+            integrator_schedule_row.begin(),
+            std::lower_bound(integrator_schedule_row.begin(), integrator_schedule_row.end(), index_schedule));
+
+        if (integrator_schedule_row[index_current] != index_schedule)
             throw std::runtime_error("Error in schedule.");
 
-        ScalarType dt_mobility;
-        if (indx_schedule == 99 || indx_current == integrator_schedule_row.size() - 1) {
-            // if we are at the last iteration, we choose the minimal time step
-            dt_mobility = (100 - indx_schedule) * 0.01;
+        ScalarType dt_mobility = 0;
+        if (index_schedule == 99 || index_current == integrator_schedule_row.size() - 1) {
+            // Use minimal timestep at last iteration.
+            dt_mobility = (100 - index_schedule) * 0.01;
         }
         else {
-            // else, we calculate the next time step based on the next integration point
-            dt_mobility = round_nth_decimal((static_cast<double>(integrator_schedule_row[indx_current + 1]) -
-                                             static_cast<double>(integrator_schedule_row[indx_current])) /
+            // Compute dt based on the next integration point.
+            dt_mobility = round_nth_decimal((static_cast<double>(integrator_schedule_row[index_current + 1]) -
+                                             static_cast<double>(integrator_schedule_row[index_current])) /
                                                     100 +
                                                 epsilon,
                                             2);
         }
-
         return dt_mobility;
     }
 
-    void move_commuters(size_t indx_schedule)
+    /**
+     * @brief Moves commuters along edges that are adressed in the current schedule.
+     *
+     * For each edge with mobility active at the current schedule index, this function either initializes mobility
+     * or moves commuters to the next node.
+     *
+     * @param index_schedule Current schedule index.
+     */
+    void move_commuters(size_t index_schedule)
     {
-        for (const auto& edge_indx : schedules.edges_mobility[indx_schedule]) {
-            auto& e = this->m_graph.edges()[edge_indx];
-            // start mobility by initializing the number of commuters and move to initial mobility model
-            if (indx_schedule == schedules.first_mobility[edge_indx]) {
+        for (const auto& edge_index : schedules.edges_mobility[index_schedule]) {
+            auto& e = this->m_graph.edges()[edge_index];
+            // Initialize mobility when reaching the first mobility timestep.
+            if (index_schedule == schedules.first_mobility[edge_index]) {
                 auto& node_from =
-                    this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule - 1]].property.base_sim;
+                    this->m_graph.nodes()[schedules.schedule_edges[edge_index][index_schedule - 1]].property.base_sim;
                 auto& node_to =
-                    this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]].property.mobility_sim;
+                    this->m_graph.nodes()[schedules.schedule_edges[edge_index][index_schedule]].property.mobility_sim;
                 m_mobility_functions.init_mobility(this->m_t, e.property, node_from, node_to);
             }
-            else if (indx_schedule > schedules.first_mobility[edge_indx]) {
-                // send the individuals to the next node
-                if ((schedules.schedule_edges[edge_indx][indx_schedule] !=
-                     schedules.schedule_edges[edge_indx][indx_schedule - 1]) ||
-                    (schedules.mobility_schedule_edges[edge_indx][indx_schedule] !=
-                     schedules.mobility_schedule_edges[edge_indx][indx_schedule - 1])) {
+            else if (index_schedule > schedules.first_mobility[edge_index]) {
+                // Move commuters if there is a change in node or mobility flag.
+                if ((schedules.schedule_edges[edge_index][index_schedule] !=
+                     schedules.schedule_edges[edge_index][index_schedule - 1]) ||
+                    (schedules.mobility_schedule_edges[edge_index][index_schedule] !=
+                     schedules.mobility_schedule_edges[edge_index][index_schedule - 1])) {
                     auto& node_from =
-                        schedules.mobility_schedule_edges[edge_indx][indx_schedule - 1]
-                            ? this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule - 1]]
+                        schedules.mobility_schedule_edges[edge_index][index_schedule - 1]
+                            ? this->m_graph.nodes()[schedules.schedule_edges[edge_index][index_schedule - 1]]
                                   .property.mobility_sim
-                            : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule - 1]]
+                            : this->m_graph.nodes()[schedules.schedule_edges[edge_index][index_schedule - 1]]
                                   .property.base_sim;
 
-                    auto& node_to = schedules.mobility_schedule_edges[edge_indx][indx_schedule]
-                                        ? this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]]
+                    auto& node_to = schedules.mobility_schedule_edges[edge_index][index_schedule]
+                                        ? this->m_graph.nodes()[schedules.schedule_edges[edge_index][index_schedule]]
                                               .property.mobility_sim
-                                        : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]]
+                                        : this->m_graph.nodes()[schedules.schedule_edges[edge_index][index_schedule]]
                                               .property.base_sim;
 
                     m_mobility_functions.move_migrated(this->m_t, e.property, node_from, node_to);
@@ -886,89 +937,111 @@ private:
         }
     }
 
-    void update_status_commuters(size_t indx_schedule, const double max_num_contacts = 20.)
+    /**
+     * @brief Updates the status of commuters for edges active at the current schedule index.
+     *
+     * @param index_schedule Current schedule index.
+     * @param max_num_contacts Maximum allowed number of contacts (default 20.0).
+     */
+    void update_status_commuters(size_t index_schedule, const double max_num_contacts = 20.0)
     {
-        for (const auto& edge_indx : schedules.edges_mobility[indx_schedule]) {
-            auto& e      = this->m_graph.edges()[edge_indx];
-            auto next_dt = calculate_next_dt(edge_indx, indx_schedule);
+        for (const auto& edge_index : schedules.edges_mobility[index_schedule]) {
+            auto& e      = this->m_graph.edges()[edge_index];
+            auto next_dt = calculate_next_dt(edge_index, index_schedule);
             auto& node_to =
-                schedules.mobility_schedule_edges[edge_indx][indx_schedule]
-                    ? this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]].property.mobility_sim
-                    : this->m_graph.nodes()[schedules.schedule_edges[edge_indx][indx_schedule]].property.base_sim;
+                schedules.mobility_schedule_edges[edge_index][index_schedule]
+                    ? this->m_graph.nodes()[schedules.schedule_edges[edge_index][index_schedule]].property.mobility_sim
+                    : this->m_graph.nodes()[schedules.schedule_edges[edge_index][index_schedule]].property.base_sim;
 
-            // get current contact  and scale it but only if mobility model
+            // Get and copy current contact pattern.
             auto contact_pattern_curr = node_to.get_model().get_contact_pattern();
             auto contacts_copy        = contact_pattern_curr;
-            if (schedules.mobility_schedule_edges[edge_indx][indx_schedule]) {
+            if (schedules.mobility_schedule_edges[edge_index][index_schedule]) {
                 auto& contact_matrix          = contact_pattern_curr.get_cont_freq_mat();
                 Eigen::MatrixXd scaled_matrix = contact_matrix[0].get_baseline().eval() / e.property.travel_time;
-                // check if there a values greater max_num_contacts in the contact matrix. if higher, set to max_num_contacts
-                for (auto i = 0; i < scaled_matrix.rows(); ++i) {
-                    for (auto j = 0; j < scaled_matrix.cols(); ++j) {
+                // Cap the contact frequency at max_num_contacts.
+                for (int i = 0; i < scaled_matrix.rows(); ++i) {
+                    for (int j = 0; j < scaled_matrix.cols(); ++j) {
                         if (scaled_matrix(i, j) > max_num_contacts) {
                             scaled_matrix(i, j) = max_num_contacts;
                         }
                     }
                 }
-
                 contact_matrix[0].get_baseline() = scaled_matrix;
                 node_to.get_model().set_contact_pattern(contact_pattern_curr);
             }
 
             m_mobility_functions.update_commuters(this->m_t, next_dt, e.property, node_to,
-                                                  schedules.mobility_schedule_edges[edge_indx][indx_schedule]);
+                                                  schedules.mobility_schedule_edges[edge_index][index_schedule]);
 
-            // reset contact pattern after estimating the state of the commuters
-            if (schedules.mobility_schedule_edges[edge_indx][indx_schedule])
+            // Reset the contact pattern after update.
+            if (schedules.mobility_schedule_edges[edge_index][index_schedule])
                 node_to.get_model().set_contact_pattern(contacts_copy);
         }
     }
 
-    void advance_local_nodes(size_t indx_schedule)
+    /**
+     * @brief Advances the local node simulations based on their integration schedules.
+     *
+     * For each node active in the current schedule, this function computes the next time step dt and advances the simulation.
+     * It also checks for negative or NaN values in the simulation result.
+     *
+     * @param index_schedule Current schedule index.
+     */
+    void advance_local_nodes(size_t index_schedule)
     {
-        for (const auto& n_indx : schedules.nodes_mobility[indx_schedule]) {
-            auto& n = this->m_graph.nodes()[n_indx];
-            const size_t indx_current =
-                std::distance(schedules.local_int_schedule[n_indx].begin(),
-                              std::lower_bound(schedules.local_int_schedule[n_indx].begin(),
-                                               schedules.local_int_schedule[n_indx].end(), indx_schedule));
+        for (const auto& node_index : schedules.nodes_mobility[index_schedule]) {
+            auto& n = this->m_graph.nodes()[node_index];
+            const size_t index_current =
+                std::distance(schedules.local_int_schedule[node_index].begin(),
+                              std::lower_bound(schedules.local_int_schedule[node_index].begin(),
+                                               schedules.local_int_schedule[node_index].end(), index_schedule));
 
-            const size_t val_next = (indx_current == schedules.local_int_schedule[n_indx].size() - 1)
+            const size_t val_next = (index_current == schedules.local_int_schedule[node_index].size() - 1)
                                         ? 100
-                                        : schedules.local_int_schedule[n_indx][indx_current + 1];
+                                        : schedules.local_int_schedule[node_index][index_current + 1];
             const ScalarType next_dt =
-                round_nth_decimal((static_cast<double>(val_next) - indx_schedule) / 100 + epsilon, 2);
+                round_nth_decimal((static_cast<double>(val_next) - index_schedule) / 100 + epsilon, 2);
             n.property.base_sim.advance(this->m_t + next_dt);
-            // check if last value contains negative values or nan values
+
+            // Check for negative or NaN values.
             if (n.property.base_sim.get_result().get_last_value().minCoeff() < -1e-7 ||
                 std::isnan(n.property.base_sim.get_result().get_last_value().sum())) {
                 auto last_value_as_vec =
                     std::vector<ScalarType>(n.property.base_sim.get_result().get_last_value().data(),
                                             n.property.base_sim.get_result().get_last_value().data() +
                                                 n.property.base_sim.get_result().get_last_value().size());
-                log_error("Negative Value " + std::to_string(n_indx) + " at time " + std::to_string(indx_schedule) +
-                          " in local node detected.");
+                log_error("Negative value in local node " + std::to_string(node_index) + " at schedule index " +
+                          std::to_string(index_schedule));
             }
         }
     }
 
-    void handle_last_time_step(size_t indx_schedule)
+    /**
+     * @brief Handles the last timestep of a simulation day.
+     *
+     * When the simulation reaches the final schedule index (assumed to be 99), this function moves
+     * individuals back to their local simulation models and clears commuter time series.
+     *
+     * @param index_schedule Current schedule index.
+     */
+    void handle_last_time_step(size_t index_schedule)
     {
-        if (indx_schedule == 99) {
-            auto edge_index = 0;
+        if (index_schedule == 99) {
+            size_t edge_index = 0;
             for (auto& e : this->m_graph.edges()) {
                 auto& node_from =
-                    this->m_graph.nodes()[schedules.schedule_edges[edge_index][indx_schedule]].property.mobility_sim;
+                    this->m_graph.nodes()[schedules.schedule_edges[edge_index][index_schedule]].property.mobility_sim;
                 auto& node_to =
-                    this->m_graph.nodes()[schedules.schedule_edges[edge_index][indx_schedule]].property.base_sim;
+                    this->m_graph.nodes()[schedules.schedule_edges[edge_index][index_schedule]].property.base_sim;
 
-                if (schedules.schedule_edges[edge_index][indx_schedule] != e.start_node_idx)
-                    log_error("Last node is not the start node in edge " + std::to_string(edge_index) + " at time " +
-                              std::to_string(indx_schedule));
-                // move the individuals back to the local model
+                if (schedules.schedule_edges[edge_index][index_schedule] != e.start_node_idx)
+                    log_error("Last node is not the start node in edge " + std::to_string(edge_index) +
+                              " at schedule index " + std::to_string(index_schedule));
+                // Move individuals back to the local model.
                 m_mobility_functions.move_migrated(this->m_t + 0.01, e.property, node_from, node_to);
                 m_mobility_functions.delete_migrated(e.property);
-                edge_index++;
+                ++edge_index;
             }
         }
     }
