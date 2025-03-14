@@ -29,6 +29,7 @@
 
 int main()
 {
+    std::cout << std::unitbuf;
     mio::set_log_level(mio::LogLevel::debug);
 
     ScalarType t0   = 0.;
