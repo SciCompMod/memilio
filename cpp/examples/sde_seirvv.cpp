@@ -24,8 +24,12 @@
 
 #include <vector>
 
+#include <iostream>
+#include <chrono>
+
 int main()
 {
+    std::cout << std::unitbuf;
     mio::set_log_level(mio::LogLevel::debug);
 
     ScalarType t0   = 0.;
@@ -73,15 +77,39 @@ int main()
     model.check_constraints();
 
     // Simulate the model up until tmid, with only the first variant.
+    auto start = std::chrono::high_resolution_clock::now();
+    std::cout << "Starting first simulation..." << std::endl;
+
     auto sseirv = mio::sseirvv::simulate(t0, tmid, dt, model);
+
+    auto end                              = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "First simulation completed in " << elapsed.count() << " seconds." << std::endl;
+
     // Set the model population to the simulation result, so it is used as initial value for the second simulation.
     model.populations.array() = sseirv.get_last_value().cast<mio::UncertainValue<ScalarType>>();
+
     // The second variant enters with 100 individuals. This increases the model population to total_population + 100.
     model.populations[{mio::sseirvv::InfectionState::InfectedV2}] = 100;
+
     // Simulate the model from tmid to tmax, now with both variants.
+    start = std::chrono::high_resolution_clock::now();
+    std::cout << "Starting second simulation..." << std::endl;
+
     auto sseirv2 = mio::sseirvv::simulate(tmid, tmax, dt, model);
+
+    end     = std::chrono::high_resolution_clock::now();
+    elapsed = end - start;
+    std::cout << "Second simulation completed in " << elapsed.count() << " seconds." << std::endl;
+
+    printf("Second simulation completed in %f seconds.\n", elapsed.count());
+    fflush(stdout);
+
+    std::cout << "Printing first simulation results..." << std::endl;
     sseirv.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",
                         "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
+
+    std::cout << "Printing second simulation results..." << std::endl;
     sseirv2.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",
                          "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
 }
