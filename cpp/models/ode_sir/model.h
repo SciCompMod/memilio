@@ -93,6 +93,38 @@ public:
     }
 
     /**
+     * @brief Returns a const reference to the contact pattern.
+     *
+     * @return A const reference to the contact pattern.
+     */
+    const auto& get_contact_pattern() const
+    {
+        return this->parameters.template get<ContactPatterns<FP>>();
+    }
+
+    /**
+     * @brief Returns a reference to the contact pattern.
+     *
+     * @return A reference to the contact pattern.
+     */
+    auto& get_contact_pattern()
+    {
+        return this->parameters.template get<ContactPatterns<FP>>();
+    }
+
+    /**
+     * @brief Sets the contact pattern.
+     *
+     * @tparam T The type of the new contact pattern.
+     * @param contact_pattern The new contact pattern to be set.
+     */
+    template <typename T>
+    void set_contact_pattern(T contact_pattern)
+    {
+        this->parameters.template get<ContactPatterns<FP>>() = std::move(contact_pattern);
+    }
+
+    /**
      * serialize this. 
      * @see mio::serialize
      */

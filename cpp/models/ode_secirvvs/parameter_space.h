@@ -21,6 +21,7 @@
 #define MIO_ODE_SECIRVVS_PARAMETER_SPACE_H
 
 #include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_detailed.h"
 #include "memilio/utils/logging.h"
 #include "ode_secirvvs/model.h"
 #include "ode_secirvvs/infection_state.h"
@@ -223,6 +224,83 @@ Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityPa
 
     return sampled_graph;
 }
+
+/**
+    * Draws samples for each model node in a graph.
+    * Some parameters are shared between nodes and only sampled once.
+    * @tparam FP floating point type, e.g., double
+    * @param graph Graph to be sampled.
+    * @param fact_mask_transport Factor to adjust the transmission probability on contact for the mobility model.
+    * @return Graph with nodes and edges from the input graph sampled.
+    */
+template <typename FP = double>
+ExtendedGraph<Model<FP>> draw_sample(ExtendedGraph<Model<FP>>& graph, FP fact_mask_transport)
+{
+    ExtendedGraph<Model<FP>> sampled_graph;
+
+    //sample global parameters
+    auto& shared_params_base_model = graph.nodes()[0].property.base_sim;
+    auto& shared_mobility_model    = graph.nodes()[0].property.mobility_sim;
+    draw_sample_infection(shared_params_base_model);
+    auto& shared_contacts = shared_params_base_model.parameters.template get<ContactPatterns<FP>>();
+    shared_contacts.draw_sample_dampings();
+    auto& shared_dynamic_npis = shared_params_base_model.parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
+    shared_dynamic_npis.draw_sample();
+
+    for (auto& params_node : graph.nodes()) {
+        auto& node_model_local = params_node.property.base_sim;
+
+        //sample local parameters
+        draw_sample_demographics(params_node.property.base_sim);
+
+        //copy global parameters
+        //save demographic parameters so they aren't overwritten
+        auto local_icu_capacity = node_model_local.parameters.template get<ICUCapacity<FP>>();
+        auto local_tnt_capacity = node_model_local.parameters.template get<TestAndTraceCapacity<FP>>();
+        auto local_holidays     = node_model_local.parameters.template get<ContactPatterns<FP>>().get_school_holidays();
+        auto local_daily_v1     = node_model_local.parameters.template get<DailyPartialVaccinations<FP>>();
+        auto local_daily_v2     = node_model_local.parameters.template get<DailyFullVaccinations<FP>>();
+        node_model_local.parameters                                          = shared_params_base_model.parameters;
+        node_model_local.parameters.template get<ICUCapacity<FP>>()          = local_icu_capacity;
+        node_model_local.parameters.template get<TestAndTraceCapacity<FP>>() = local_tnt_capacity;
+        node_model_local.parameters.template get<ContactPatterns<FP>>().get_school_holidays() = local_holidays;
+        node_model_local.parameters.template get<DailyPartialVaccinations<FP>>()              = local_daily_v1;
+        node_model_local.parameters.template get<DailyFullVaccinations<FP>>()                 = local_daily_v2;
+
+        node_model_local.parameters.template get<ContactPatterns<FP>>().make_matrix();
+        node_model_local.apply_constraints();
+
+        // do the same for the mobility model. It should have the same parametrization as the base model but
+        // without vaccinations and the contact patterns are different.
+        auto& node_mobility_model      = params_node.property.mobility_sim;
+        auto node_mobility_contacts    = node_mobility_model.parameters.template get<ContactPatterns<FP>>();
+        node_mobility_model.parameters = shared_mobility_model.parameters;
+        node_mobility_model.parameters.template get<ContactPatterns<FP>>() = node_mobility_contacts;
+
+        // set vaccination parameters to zero
+        node_mobility_model.parameters.template get<DailyPartialVaccinations<FP>>().array().setConstant(0);
+        node_mobility_model.parameters.template get<DailyFullVaccinations<FP>>().array().setConstant(0);
+
+        // adjust the transmission factor for the mobility model based on the usage of masks
+        for (auto age = AgeGroup(0); age < node_mobility_model.parameters.get_num_groups(); ++age) {
+            node_mobility_model.parameters.template get<TransmissionProbabilityOnContact<FP>>()[age] *=
+                fact_mask_transport;
+        }
+        node_mobility_model.apply_constraints();
+
+        sampled_graph.add_node(params_node.id, node_model_local, node_mobility_model,
+                               params_node.property.stay_duration);
+    }
+
+    for (auto& edge : graph.edges()) {
+        auto edge_params = edge.property.get_parameters();
+        sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge_params, edge.property.travel_time,
+                               edge.property.path);
+    }
+
+    return sampled_graph;
+}
+
 } // namespace osecirvvs
 } // namespace mio
 

@@ -401,7 +401,7 @@ public:
     template <class Sim>
     void apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
 
-private:
+protected:
     MobilityParameters<FP> m_parameters;
     TimeSeries<double> m_mobile_population;
     TimeSeries<double> m_return_times;
@@ -535,8 +535,8 @@ auto get_mobility_factors(const SimulationNode<Sim>& node, double t, const Eigen
  * detect a get_mobility_factors function for the Model type.
  */
 template <class Sim>
-using test_commuters_expr_t = decltype(test_commuters(
-    std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
+using test_commuters_expr_t = decltype(
+    test_commuters(std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
 
 /**
  * Test persons when moving from their source node.

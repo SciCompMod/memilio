@@ -265,7 +265,7 @@ public:
                 // effective contact rate by contact rate between groups i and j and damping j
                 FP season_val    = (1 + params.template get<Seasonality<FP>>() *
                                          sin(3.141592653589793 *
-                                                (std::fmod((params.template get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
+                                             (std::fmod((params.template get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
                 FP cont_freq_eff = season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                                 static_cast<Eigen::Index>((size_t)j));
                 // without died people
@@ -631,6 +631,38 @@ public:
             }
         }
         return smoothed_vaccinations;
+    }
+
+    /**
+     * @brief Returns a const reference to the contact pattern.
+     *
+     * @return A const reference to the contact pattern.
+     */
+    const auto& get_contact_pattern() const
+    {
+        return this->parameters.template get<ContactPatterns<FP>>();
+    }
+
+    /**
+     * @brief Returns a reference to the contact pattern.
+     *
+     * @return A reference to the contact pattern.
+     */
+    auto& get_contact_pattern()
+    {
+        return this->parameters.template get<ContactPatterns<FP>>();
+    }
+
+    /**
+     * @brief Sets the contact pattern.
+     *
+     * @tparam T The type of the new contact pattern.
+     * @param contact_pattern The new contact pattern to be set.
+     */
+    template <typename T>
+    void set_contact_pattern(T contact_pattern)
+    {
+        this->parameters.template get<ContactPatterns<FP>>() = std::move(contact_pattern);
     }
 
     /**

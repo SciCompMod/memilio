@@ -35,6 +35,35 @@
 #include <limits>
 #include <numeric>
 
+#include <type_traits>
+
+// Check if a type has a member called 'stay_duration'
+template <typename T, typename = void>
+struct has_stay_duration : std::false_type {
+};
+
+template <typename T>
+struct has_stay_duration<T, std::void_t<decltype(std::declval<T>().stay_duration)>> : std::true_type {
+};
+
+// Check if a type has a member called 'travel_time'
+template <typename T, typename = void>
+struct has_travel_time : std::false_type {
+};
+
+template <typename T>
+struct has_travel_time<T, std::void_t<decltype(std::declval<T>().travel_time)>> : std::true_type {
+};
+
+// Check if a type has a member called 'path'
+template <typename T, typename = void>
+struct has_path : std::false_type {
+};
+
+template <typename T>
+struct has_path<T, std::void_t<decltype(std::declval<T>().path)>> : std::true_type {
+};
+
 namespace mio
 {
 
@@ -42,25 +71,15 @@ namespace mio
  * Class that performs multiple simulation runs with randomly sampled parameters.
  * Can simulate mobility graphs with one simulation in each node or single simulations.
  * @tparam S type of simulation that runs in one node of the graph.
+ * @tparam ParametersGraph stores the parameters of the simulation. This is the input of ParameterStudies.
+ * @tparam SimulationGraph stores simulations and their results of each run. This is the output of ParameterStudies for each run.
  */
-template <class S>
+template <class S, class ParametersGraph = Graph<typename S::Model, MobilityParameters<double>>,
+          class SimulationGraph = Graph<SimulationNode<S>, MobilityEdge<double>>>
 class ParameterStudy
 {
 public:
-    /**
-    * The type of simulation of a single node of the graph.
-    */
     using Simulation = S;
-    /**
-    * The Graph type that stores the parametes of the simulation.
-    * This is the input of ParameterStudies.
-    */
-    using ParametersGraph = mio::Graph<typename Simulation::Model, mio::MobilityParameters<double>>;
-    /**
-    * The Graph type that stores simulations and their results of each run.
-    * This is the output of ParameterStudies for each run.
-    */
-    using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MobilityEdge<double>>;
 
     /**
      * create study for graph of compartment models.
@@ -336,18 +355,84 @@ public:
     }
 
 private:
-    //sample parameters and create simulation
-    template <class SampleGraphFunction>
-    mio::GraphSimulation<SimulationGraph> create_sampled_simulation(SampleGraphFunction sample_graph)
+    /**
+     * @brief Adds a node to the graph using the overload based on the node's property.
+     *
+     * This function checks whether the node property type has a 'stay_duration' member.
+     * If so, it uses the specialized version that extracts additional simulation parameters.
+     * Otherwise, we just use the simulation time (m_t0) and integration step size (m_dt_integration).
+     *
+     * @tparam GraphType The type of the graph.
+     * @tparam NodeType The type of the node.
+     * @param graph The graph to which the node will be added.
+     * @param node The node to add.
+     */
+    template <typename GraphType, typename NodeType>
+    void add_node(GraphType& graph, const NodeType& node)
     {
+        // Deduce the property type of the node.
+        using PropertyType = std::decay_t<decltype(node.property)>;
+
+        // If the property type has a member called 'stay_duration', use the specialized version.
+        if constexpr (has_stay_duration<PropertyType>::value) {
+            graph.add_node(node.id, node.property.base_sim, node.property.mobility_sim, node.property.stay_duration);
+        }
+        else {
+            graph.add_node(node.id, node.property, m_t0, m_dt_integration);
+        }
+    }
+
+    /**
+     * @brief Adds an edge to the graph using the appropriate overload based on the edge's property.
+     *
+     * This function checks whether the edge property type has both 'travel_time' and 'path' members.
+     * If so, it uses the specialized version that uses additional parameters.
+     * Otherwise, we just use the edge property.
+     *
+     * @tparam GraphType The type of the graph.
+     * @tparam EdgeType The type of the edge.
+     * @param graph The graph to which the edge will be added.
+     * @param edge The edge to add.
+     */
+    template <typename GraphType, typename EdgeType>
+    void add_edge(GraphType& graph, const EdgeType& edge)
+    {
+        // Deduce the property type of the edge.
+        using PropertyType = std::decay_t<decltype(edge.property)>;
+
+        // Check if the property type has both 'travel_time' and 'path' members.
+        if constexpr (has_travel_time<PropertyType>::value && has_path<PropertyType>::value) {
+            graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property.get_parameters(),
+                           edge.property.travel_time, edge.property.path);
+        }
+        else {
+            graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
+        }
+    }
+
+    /**
+     * @brief Creates a mobility simulation based on a sampled graph.
+     * @tparam SampleGraphFunction The type of the function that samples the graph.
+     * @param sample_graph A function that takes the internal graph and returns a sampled graph.
+     * @return A mobility simulation created from the sampled simulation graph.
+     */
+    template <class SampleGraphFunction>
+    auto create_sampled_simulation(SampleGraphFunction sample_graph)
+    {
+        // Create an empty simulation graph.
         SimulationGraph sim_graph;
 
+        // Sample the original graph using the provided sampling function.
         auto sampled_graph = sample_graph(m_graph);
+
+        // Iterate over each node in the sampled graph and add it to the simulation graph.
         for (auto&& node : sampled_graph.nodes()) {
-            sim_graph.add_node(node.id, node.property, m_t0, m_dt_integration);
+            add_node(sim_graph, node);
         }
+
+        // Iterate over each edge in the sampled graph and add it to the simulation graph.
         for (auto&& edge : sampled_graph.edges()) {
-            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
+            add_edge(sim_graph, edge);
         }
 
         return make_mobility_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));

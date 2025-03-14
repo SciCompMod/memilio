@@ -136,6 +136,20 @@ bool floating_point_greater_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::nu
     return !floating_point_less(v1, v2, abs_tol, rel_tol);
 }
 
+/**
+ * @brief Rounds a value to the nearest nth decimal place.
+ * 
+ * @param x The double value to be rounded.
+ * @param n The number of decimal places we want to round to.
+ * @return The rounded double value to n decimal digits.
+ */
+template <typename T>
+T round_nth_decimal(T x, size_t n)
+{
+    const T factor = std::pow(10.0, n);
+    return std::round(x * factor) / factor;
+}
+
 } // namespace mio
 
 #endif // MIO_MATH_FLOATING_POINT_H
