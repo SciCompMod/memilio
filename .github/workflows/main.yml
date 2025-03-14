@@ -241,13 +241,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Run Examples
-        run: |
-          echo "Running examples..."
-          cd cpp/build-win/bin
-          dir
-          .\abm_history_example.exe
-          .\sde_seirvv_example.exe
+      - uses: ./.github/actions/windows-run_examples
+        with:
+          build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}
 
   build-py-generation:
     if: github.event.pull_request.draft == false
