@@ -57,8 +57,10 @@ public:
      */
     Eigen::Ref<Eigen::VectorXd> advance(ScalarType tmax)
     {
+        std::cout << "starting advance..." << std::endl;
         return get_ode_integrator().advance(
             [this](auto&& y, auto&& t, auto&& dydt) {
+                std::cout << "t: " << t << " dt: " << get_dt() << std::endl;
                 get_model().step_size = get_dt();
                 get_model().get_derivatives(y, y, t, dydt);
             },
