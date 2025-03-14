@@ -48,12 +48,23 @@
 namespace mio
 {
 
+/**
+ * @brief Aggregates two simulation models and a stay duration for a node.
+ *
+ * @tparam Sim Type representing the simulation or model.
+ */
 template <typename Sim>
 struct ExtendedNodeProperty {
-    Sim base_sim;
-    Sim mobility_sim;
-    double stay_duration;
+    Sim base_sim; ///< The base simulation model representing local dynamics.
+    Sim mobility_sim; ///< The simulation model used for mobility-related processes.
+    double stay_duration; ///< Duration individuals stay in the node.
 
+    /**
+     * @brief Constructs an ExtendedNodeProperty with the given simulations and stay duration.
+     * @param sim1 The base simulation model.
+     * @param sim2 The mobility simulation model.
+     * @param t The stay duration.
+     */
     ExtendedNodeProperty(Sim sim1, Sim sim2, double t)
         : base_sim(sim1)
         , mobility_sim(sim2)
@@ -62,13 +73,25 @@ struct ExtendedNodeProperty {
     }
 };
 
+/**
+ * @brief Extends the basic MobilityEdge with travel time and a detailed travel path.
+ *
+ * @tparam FP Floating-point type used (default is double).
+ */
 template <typename FP = double>
 class ExtendedMobilityEdge : public MobilityEdge<FP>
 {
 public:
-    double travel_time;
-    std::vector<int> path;
+    double travel_time; ///< The travel time along this edge.
+    std::vector<int> path; ///< A vector representing the travel path (e.g., sequence of node IDs).
 
+    /**
+     * @brief Constructs an ExtendedMobilityEdge using mobility parameters.
+     * 
+     * @param params The mobility parameters used to initialize the base MobilityEdge.
+     * @param tt The travel time.
+     * @param p A vector representing the travel path.
+     */
     ExtendedMobilityEdge(const MobilityParameters<FP>& params, double tt, std::vector<int> p)
         : MobilityEdge<FP>(params)
         , travel_time(tt)
@@ -76,6 +99,13 @@ public:
     {
     }
 
+    /**
+     * @brief Constructs an ExtendedMobilityEdge using a vector of coefficients.
+     *
+     * @param coeffs A vector of mobility coefficients.
+     * @param tt The travel time.
+     * @param p A vector representing the travel path.
+     */
     ExtendedMobilityEdge(const Eigen::VectorXd& coeffs, double tt, std::vector<int> p)
         : MobilityEdge<FP>(coeffs)
         , travel_time(tt)
@@ -83,14 +113,31 @@ public:
     {
     }
 
+    /**
+     * @brief Returns a reference to the mobile population that migrated along this edge.
+     * 
+     * @return A reference to the migrated mobile population.
+     */
     auto& get_migrated()
     {
         return this->m_mobile_population;
     }
+
+    /**
+     * @brief Returns a reference to the return times associated with this edge.
+     * 
+     * @return A reference to the vector containing the return times.
+     */
     auto& get_return_times()
     {
         return this->m_return_times;
     }
+
+    /**
+     * @brief Returns a const reference to the mobility parameters associated with this edge.
+     * 
+     * @return A const reference to the mobility parameters.
+     */
     auto& get_parameters() const
     {
         return this->m_parameters;
