@@ -18,10 +18,10 @@ int main()
         std::this_thread::sleep_for(std::chrono::milliseconds(3));
     };
 
-    std::cout << "Num threads: " << mio::get_omp_num_threads() << "\n";
+    std::cout << "Num threads: " << mio::get_omp_max_threads() << "\n";
 
     {
-        mio::ScopedTimer timer_ms(CONST_LITERAL("Main"));
+        mio::ScopedTimer timer_ms(CONST_LITERAL("main"));
 
         {
             mio::ScopedTimer timer_out(CONST_LITERAL("outside loop (with inner timer)"));
@@ -42,15 +42,14 @@ int main()
         }
 
         {
-            auto& timer_out = mio::timing::get_timer(CONST_LITERAL("outside loop (manual timer)"));
-            timer_out.start();
+            mio::timing::get_timer(CONST_LITERAL("outside loop (manual timer)")).start();
 
             PRAGMA_OMP(parallel for)
             for (int i = 0; i < N; i++) {
                 load();
             }
 
-            timer_out.stop();
+            mio::timing::get_timer(CONST_LITERAL("outside loop (manual timer)")).stop();
         }
     }
 
