@@ -19,8 +19,16 @@ runs:
         $errchk = (Get-ChildItem -Path ./| Where-Object { $_.Name -like "*_example.exe"} | Measure-Object).Count
         if( $errchk -gt 0){
           Write-Output "Running windows Examples."
-          Get-ChildItem -Path ./| Where-Object { $_.Name -like "*_example.exe"} | Foreach { Write "Running $_"; if( $(Start-Process $_.FullName -Passthru -Wait).ExitCode -ne 0){Write "Programm terminated with error, abort."; Exit 1}}
-        } else {
-          Write-Output "No Examples found, abort."	
+          Get-ChildItem -Path ./| Where-Object { $_.Name -like "*_example.exe" } | ForEach-Object {
+            Write-Output "Running $($_.Name)"
+            & $_.FullName
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Programm terminated with error, abort."
+              Exit 1
+            }
+          }
+        }
+        else {
+          Write-Output "No Examples found, abort."
           Exit 1
         }
