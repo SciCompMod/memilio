@@ -1,10 +1,10 @@
 var searchData=
 [
-  ['factor_4199',['factor',['../structmio_1_1Influence.html#a48da27ed4d1c4a81934877033101ab3b',1,'mio::Influence::factor()'],['../structmio_1_1AdoptionRate.html#a79087f9c0a7c4a72782ac116a77bd0e4',1,'mio::AdoptionRate::factor()'],['../structmio_1_1smm_1_1TransitionRate.html#a3e4a0e53551cf4de49eb94586772e53d',1,'mio::smm::TransitionRate::factor()']]],
-  ['fcn_4200',['fcn',['../classad_1_1internal_1_1blob__tape_1_1CALLBACK__FCN__HANDLER.html#a523ac856c463064fd960516e6ebe8078',1,'ad::internal::blob_tape::CALLBACK_FCN_HANDLER::fcn()'],['../classad_1_1internal_1_1blob__tape_1_1CALLBACK__FCN__HANDLER.html#a49f7643610937b212aa9e6f99352ce5d',1,'ad::internal::blob_tape::CALLBACK_FCN_HANDLER::fcn()']]],
-  ['fcn_5ftype_5fid_4201',['fcn_type_id',['../classad_1_1internal_1_1blob__tape_1_1CALLBACK__FCN__HANDLER.html#a14666aa30f3b6f7252f8fa3ea10700bf',1,'ad::internal::blob_tape::CALLBACK_FCN_HANDLER']]],
-  ['fcn_5fw_5fall_4202',['fcn_w_all',['../classad_1_1internal_1_1blob__tape_1_1CALLBACK__FCN__HANDLER.html#a0ced38ffcb6df7840de73b4aaf1f83b1',1,'ad::internal::blob_tape::CALLBACK_FCN_HANDLER']]],
-  ['fcn_5fw_5ftape_4203',['fcn_w_tape',['../classad_1_1internal_1_1blob__tape_1_1CALLBACK__FCN__HANDLER.html#a0ad9db7a9aaf6c14a0e942bcc2ba4015',1,'ad::internal::blob_tape::CALLBACK_FCN_HANDLER']]],
-  ['from_4204',['from',['../structmio_1_1AdoptionRate.html#ad34cca2360b16caad67a51f152b65786',1,'mio::AdoptionRate::from()'],['../structmio_1_1smm_1_1TransitionRate.html#a4695fef7712b5ade2847845d5acc3b7b',1,'mio::smm::TransitionRate::from()']]],
-  ['from_5fid_4205',['from_id',['../structmio_1_1abm_1_1mobility__data.html#aaec4856859a78039a422773e475f78a4',1,'mio::abm::mobility_data']]]
+  ['id_1387',['id',['../structmio_1_1abm_1_1TestingStrategy_1_1LocalStrategy.html#a4304b994b48f0cfb91a76622e8159377',1,'mio::abm::TestingStrategy::LocalStrategy']]],
+  ['incline_1388',['incline',['../structmio_1_1abm_1_1ViralLoad.html#a390dcf9642eaf4fb4bfefe8d56db4462',1,'mio::abm::ViralLoad']]],
+  ['infection_5fstate_1389',['infection_state',['../structmio_1_1abm_1_1mobility__data.html#a9c7dd433bd63c89e3bdd634182a056c0',1,'mio::abm::mobility_data']]],
+  ['infectiontransitionscount_1390',['InfectionTransitionsCount',['../namespacemio_1_1isecir.html#aa1b0fda5e5840d2aa4ba281e690610be',1,'mio::isecir']]],
+  ['infectiontransitionsmap_1391',['InfectionTransitionsMap',['../namespacemio_1_1isecir.html#a98c782160b297b180e9bff3cb281bd2a',1,'mio::isecir']]],
+  ['infectivity_5falpha_1392',['infectivity_alpha',['../structmio_1_1abm_1_1InfectivityDistributionsParameters.html#acf59d400e5db1f9f00c147ce69faca60',1,'mio::abm::InfectivityDistributionsParameters']]],
+  ['infectivity_5fbeta_1393',['infectivity_beta',['../structmio_1_1abm_1_1InfectivityDistributionsParameters.html#aeccc635654cc39127fcb8ef1e1cae529',1,'mio::abm::InfectivityDistributionsParameters']]]
 ];

@@ -1,10 +1,10 @@
 var searchData=
 [
-  ['obj_4478',['obj',['../structmio_1_1details_1_1SerializationVisitor.html#a5f7ca6cea890e13a6fbabab634dc33a7',1,'mio::details::SerializationVisitor']]],
-  ['off_4479',['Off',['../classmemilio_1_1epidata_1_1getDataIntoPandasDataFrame_1_1VerbosityLevel.html#a88c944a62a557603ddbd8f5450ca9fe0',1,'memilio::epidata::getDataIntoPandasDataFrame::VerbosityLevel']]],
-  ['order_4480',['order',['../classad_1_1gvalue.html#a8e307619ce85f0b1b631f7d1ed0fe69e',1,'ad::gvalue::order()'],['../classad_1_1gt1s.html#a1ad7e6c7e68a1c366a638fd612bd7cb2',1,'ad::gt1s::order()'],['../classad_1_1ga1s.html#af40139aaf18ec550f824198f41b9a673',1,'ad::ga1s::order()']]],
-  ['origin_4481',['origin',['../structmio_1_1abm_1_1Trip.html#a5aac08c3abf84123628f3a968a8d1b2e',1,'mio::abm::Trip']]],
-  ['origin_5fmodel_5fid_4482',['origin_model_id',['../structmio_1_1abm_1_1Trip.html#a89900aedfb076dd11cf3e3fc90276d12',1,'mio::abm::Trip']]],
-  ['outputs_4483',['outputs',['../classad_1_1helper_1_1external__adjoint__object__base.html#afb48b283c02e73852c8cbb3d4ea085d4',1,'ad::helper::external_adjoint_object_base']]],
-  ['outputs_5fcount_4484',['outputs_count',['../classad_1_1helper_1_1external__adjoint__object__base.html#ac7ace495649f60088090746b8d0a53f7',1,'ad::helper::external_adjoint_object_base']]]
+  ['schemes_1525',['schemes',['../structmio_1_1abm_1_1TestingStrategy_1_1LocalStrategy.html#a0e0279acf4c3d39f06575e3e1aa546a5',1,'mio::abm::TestingStrategy::LocalStrategy']]],
+  ['sensitivity_1526',['sensitivity',['../structmio_1_1abm_1_1TestParameters.html#ad7e48b8f2883d0cdfee8b9e0c966f26f',1,'mio::abm::TestParameters']]],
+  ['specificity_1527',['specificity',['../structmio_1_1abm_1_1TestParameters.html#a8fc3dd8fa3256e496fb058f68059eeef',1,'mio::abm::TestParameters']]],
+  ['start_5fdate_1528',['start_date',['../structmio_1_1abm_1_1ViralLoad.html#a86c6af167e6eb6ada8d4024b0131b324',1,'mio::abm::ViralLoad']]],
+  ['start_5ftime_1529',['start_time',['../structmio_1_1abm_1_1mobility__data.html#a31bf34d1a49ea411fda5c1915eabcc96',1,'mio::abm::mobility_data']]],
+  ['status_1530',['status',['../structQuadWellModel_1_1Agent.html#a7e5e9f5fb01cf8a1ba974e445e36dff1',1,'QuadWellModel::Agent::status()'],['../structmio_1_1smm_1_1TransitionRate.html#afc736e4067f3047b025c5b4dd6b83ce2',1,'mio::smm::TransitionRate::status()']]],
+  ['step_5fsize_1531',['step_size',['../classmio_1_1sseirvv_1_1Model.html#a228c3520f32272446689ce6664c3ffd4',1,'mio::sseirvv::Model::step_size()'],['../classmio_1_1ssir_1_1Model.html#a707c77720df1bbb7e1121241242868c5',1,'mio::ssir::Model::step_size()'],['../classmio_1_1ssirs_1_1Model.html#a0693ee8ab8a1dd64e9ecffeb945c141b',1,'mio::ssirs::Model::step_size()']]]
 ];

@@ -75,16 +75,16 @@ $(function() {
 <div class="title">model.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &quot;<a class="el" href="flow__model_8h_source.html">memilio/compartments/flow_model.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="memilio_2compartments_2simulation_8h_source.html">memilio/compartments/simulation.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="flow__simulation_8h_source.html">memilio/compartments/flow_simulation.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="populations_8h_source.html">memilio/epidemiology/populations.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="models_2ode__secir_2analyze__result_8h_source.html">ode_secir/analyze_result.h</a>&quot;</code><br />
+<div class="textblock"><code>#include &quot;memilio/compartments/flow_model.h&quot;</code><br />
+<code>#include &quot;memilio/compartments/simulation.h&quot;</code><br />
+<code>#include &quot;memilio/compartments/flow_simulation.h&quot;</code><br />
+<code>#include &quot;memilio/epidemiology/populations.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="ode__secir_2analyze__result_8h_source.html">ode_secir/analyze_result.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="ode__secir_2infection__state_8h_source.html">ode_secir/infection_state.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="ode__secir_2parameters_8h_source.html">ode_secir/parameters.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="smoother_8h_source.html">memilio/math/smoother.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="eigen__util_8h_source.html">memilio/math/eigen_util.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="interpolation_8h_source.html">memilio/math/interpolation.h</a>&quot;</code><br />
+<code>#include &quot;memilio/math/smoother.h&quot;</code><br />
+<code>#include &quot;memilio/math/eigen_util.h&quot;</code><br />
+<code>#include &quot;memilio/math/interpolation.h&quot;</code><br />
 </div>
 <p><a href="ode__secir_2model_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -99,7 +99,6 @@ Classes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespacemio"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio.html">mio</a></td></tr>
-<tr class="memdesc:namespacemio"><td class="mdescLeft">&#160;</td><td class="mdescRight">A collection of classes to simplify handling of matrix shapes in meta programming. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespacemio_1_1osecir"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio_1_1osecir.html">mio::osecir</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -120,7 +119,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:a8bcda462bc00d2ffe5ece0099ca44dd9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get mobility factors.  <a href="namespacemio_1_1osecir.html#a8bcda462bc00d2ffe5ece0099ca44dd9">More...</a><br /></td></tr>
 <tr class="separator:a8bcda462bc00d2ffe5ece0099ca44dd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac41fb487b0376e0030218c8faafd07f8"><td class="memTemplParams" colspan="2">template&lt;class Base &gt; </td></tr>
-<tr class="memitem:ac41fb487b0376e0030218c8faafd07f8"><td class="memTemplItemLeft" align="right" valign="top">IOResult&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio_1_1osecir.html#ac41fb487b0376e0030218c8faafd07f8">mio::osecir::get_reproduction_number</a> (<a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> t_value, const Simulation&lt; Base &gt; &amp;sim)</td></tr>
+<tr class="memitem:ac41fb487b0376e0030218c8faafd07f8"><td class="memTemplItemLeft" align="right" valign="top">IOResult&lt; ScalarType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio_1_1osecir.html#ac41fb487b0376e0030218c8faafd07f8">mio::osecir::get_reproduction_number</a> (ScalarType t_value, const Simulation&lt; Base &gt; &amp;sim)</td></tr>
 <tr class="memdesc:ac41fb487b0376e0030218c8faafd07f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the reproduction number at a given time point of the <a class="el" href="classmio_1_1osecir_1_1Simulation.html" title="specialization of compartment model simulation for secir models.">Simulation</a>.  <a href="namespacemio_1_1osecir.html#ac41fb487b0376e0030218c8faafd07f8">More...</a><br /></td></tr>
 <tr class="separator:ac41fb487b0376e0030218c8faafd07f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a65bd04e199cad2af0d8130d1ef9a02e1"><td class="memTemplParams" colspan="2">template&lt;typename FP , class Base &gt; </td></tr>
@@ -137,7 +136,7 @@ Functions</h2></td></tr>
 <tr class="separator:a41d6d3b5791724cbe41eee1c5d47b4db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1abf85cdfd0284901625d87be068a672"><td class="memTemplParams" colspan="2">template&lt;typename FP  = ScalarType&gt; </td></tr>
 <tr class="memitem:a1abf85cdfd0284901625d87be068a672"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio_1_1osecir.html#a1abf85cdfd0284901625d87be068a672">mio::osecir::simulate_flows</a> (FP t0, FP tmax, FP dt, const Model&lt; FP &gt; &amp;model, std::shared_ptr&lt; IntegratorCore&lt; FP &gt;&gt; integrator=nullptr)</td></tr>
-<tr class="memdesc:a1abf85cdfd0284901625d87be068a672"><td class="mdescLeft">&#160;</td><td class="mdescRight">Specialization of simulate for SECIR models using the <a class="el" href="classmio_1_1FlowSimulation.html" title="A class for the simulation of a flow model.">FlowSimulation</a>.  <a href="namespacemio_1_1osecir.html#a1abf85cdfd0284901625d87be068a672">More...</a><br /></td></tr>
+<tr class="memdesc:a1abf85cdfd0284901625d87be068a672"><td class="mdescLeft">&#160;</td><td class="mdescRight">Specialization of simulate for SECIR models using the FlowSimulation.  <a href="namespacemio_1_1osecir.html#a1abf85cdfd0284901625d87be068a672">More...</a><br /></td></tr>
 <tr class="separator:a1abf85cdfd0284901625d87be068a672"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a202ee480c79c177eb27b0852f8473560"><td class="memTemplParams" colspan="2">template&lt;typename FP  = ScalarType, class Base  = mio::Simulation&lt;Model&lt;FP&gt;, FP&gt;&gt; </td></tr>
 <tr class="memitem:a202ee480c79c177eb27b0852f8473560"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio_1_1osecir.html#a202ee480c79c177eb27b0852f8473560">mio::osecir::test_commuters</a> (Simulation&lt; FP, Base &gt; &amp;sim, Eigen::Ref&lt; Eigen::VectorX&lt; FP &gt;&gt; mobile_population, FP time)</td></tr>

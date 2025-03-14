@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-02-17 13:46:44</td>
+            <td class="headerValue">2025-03-14 09:36:47</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">26</td>
@@ -151,9 +151,9 @@
 <a name="89"><span class="lineNum">      89 </span>            :     PRAGMA_OMP(parallel for)</a>
 <a name="90"><span class="lineNum">      90 </span><span class="lineCov">       3929 :     for (uint32_t person_index = 0; person_index &lt; num_persons; ++person_index) {</span></a>
 <a name="91"><span class="lineNum">      91 </span><span class="lineCov">       2866 :         if (m_activeness_statuses[person_index]) {</span></a>
-<a name="92"><span class="lineNum">      92 </span><span class="lineCov">       2853 :             assert(m_persons[person_index].get_location_model_id() == m_id &amp;&amp;</span></a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineCov">       2854 :             assert(m_persons[person_index].get_location_model_id() == m_id &amp;&amp;</span></a>
 <a name="93"><span class="lineNum">      93 </span>            :                    &quot;Person is not in this model but still active.&quot;);</a>
-<a name="94"><span class="lineNum">      94 </span><span class="lineCov">       2853 :             interact(m_persons[person_index], t, dt);</span></a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineCov">       2854 :             interact(m_persons[person_index], t, dt);</span></a>
 <a name="95"><span class="lineNum">      95 </span>            :         }</a>
 <a name="96"><span class="lineNum">      96 </span>            :     }</a>
 <a name="97"><span class="lineNum">      97 </span><span class="lineCov">       1063 : }</span></a>
@@ -169,27 +169,27 @@
 <a name="107"><span class="lineNum">     107 </span>            : </a>
 <a name="108"><span class="lineNum">     108 </span><span class="lineCov">       2790 :             auto try_mobility_rule = [&amp;](auto rule) -&gt; bool {</span></a>
 <a name="109"><span class="lineNum">     109 </span>            :                 // run mobility rule and check if change of location can actually happen</a>
-<a name="110"><span class="lineNum">     110 </span><span class="lineCov">      82017 :                 auto target_type = rule(personal_rng, person, t, dt, parameters);</span></a>
-<a name="111"><span class="lineNum">     111 </span><span class="lineCov">      26676 :                 if (person.get_assigned_location_model_id(target_type) == m_id) {</span></a>
-<a name="112"><span class="lineNum">     112 </span><span class="lineCov">      35568 :                     const Location&amp; target_location   = get_location(find_location(target_type, person));</span></a>
-<a name="113"><span class="lineNum">     113 </span><span class="lineCov">      26676 :                     const LocationId current_location = person.get_location();</span></a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineCov">      81783 :                 auto target_type = rule(personal_rng, person, t, dt, parameters);</span></a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineCov">      26325 :                 if (person.get_assigned_location_model_id(target_type) == m_id) {</span></a>
+<a name="112"><span class="lineNum">     112 </span><span class="lineCov">      35100 :                     const Location&amp; target_location   = get_location(find_location(target_type, person));</span></a>
+<a name="113"><span class="lineNum">     113 </span><span class="lineCov">      26325 :                     const LocationId current_location = person.get_location();</span></a>
 <a name="114"><span class="lineNum">     114 </span>            : </a>
 <a name="115"><span class="lineNum">     115 </span>            :                     // the Person cannot move if they do not wear mask as required at targeted location</a>
-<a name="116"><span class="lineNum">     116 </span><span class="lineCov">       8928 :                     if (target_location.is_mask_required() &amp;&amp;</span></a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineCov">       8811 :                     if (target_location.is_mask_required() &amp;&amp;</span></a>
 <a name="117"><span class="lineNum">     117 </span><span class="lineCov">         72 :                         !person.is_compliant(personal_rng, InterventionType::Mask)) {</span></a>
 <a name="118"><span class="lineNum">     118 </span><span class="lineCov">          9 :                         return false;</span></a>
 <a name="119"><span class="lineNum">     119 </span>            :                     }</a>
 <a name="120"><span class="lineNum">     120 </span>            :                     // the Person cannot move if the capacity of targeted Location is reached</a>
-<a name="121"><span class="lineNum">     121 </span><span class="lineCov">       9045 :                     if (target_location.get_id() == current_location ||</span></a>
-<a name="122"><span class="lineNum">     122 </span><span class="lineCov">        324 :                         get_number_persons(target_location.get_id()) &gt;= target_location.get_capacity().persons) {</span></a>
-<a name="123"><span class="lineNum">     123 </span><span class="lineCov">       8730 :                         return false;</span></a>
+<a name="121"><span class="lineNum">     121 </span><span class="lineCov">       8991 :                     if (target_location.get_id() == current_location ||</span></a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineCov">        450 :                         get_number_persons(target_location.get_id()) &gt;= target_location.get_capacity().persons) {</span></a>
+<a name="123"><span class="lineNum">     123 </span><span class="lineCov">       8550 :                         return false;</span></a>
 <a name="124"><span class="lineNum">     124 </span>            :                     }</a>
 <a name="125"><span class="lineNum">     125 </span>            :                     // the Person cannot move if the performed TestingStrategy is positive</a>
-<a name="126"><span class="lineNum">     126 </span><span class="lineCov">        612 :                     if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineCov">        864 :                     if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {</span></a>
 <a name="127"><span class="lineNum">     127 </span><span class="lineCov">         18 :                         return false;</span></a>
 <a name="128"><span class="lineNum">     128 </span>            :                     }</a>
 <a name="129"><span class="lineNum">     129 </span>            :                     // update worn mask to target location's requirements</a>
-<a name="130"><span class="lineNum">     130 </span><span class="lineCov">        135 :                     if (target_location.is_mask_required()) {</span></a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineCov">        198 :                     if (target_location.is_mask_required()) {</span></a>
 <a name="131"><span class="lineNum">     131 </span>            :                         // if the current MaskProtection level is lower than required, the Person changes mask</a>
 <a name="132"><span class="lineNum">     132 </span><span class="lineCov">         45 :                         if (parameters.get&lt;MaskProtection&gt;()[person.get_mask().get_type()] &lt;</span></a>
 <a name="133"><span class="lineNum">     133 </span><span class="lineCov">         18 :                             parameters.get&lt;MaskProtection&gt;()[target_location.get_required_mask()]) {</span></a>
@@ -197,11 +197,11 @@
 <a name="135"><span class="lineNum">     135 </span>            :                         }</a>
 <a name="136"><span class="lineNum">     136 </span>            :                     }</a>
 <a name="137"><span class="lineNum">     137 </span>            :                     else {</a>
-<a name="138"><span class="lineNum">     138 </span><span class="lineCov">        504 :                         person.set_mask(MaskType::None, t);</span></a>
+<a name="138"><span class="lineNum">     138 </span><span class="lineCov">        756 :                         person.set_mask(MaskType::None, t);</span></a>
 <a name="139"><span class="lineNum">     139 </span>            :                     }</a>
 <a name="140"><span class="lineNum">     140 </span>            :                     // all requirements are met, move to target location</a>
-<a name="141"><span class="lineNum">     141 </span><span class="lineCov">        405 :                     change_location(person, target_location.get_id());</span></a>
-<a name="142"><span class="lineNum">     142 </span><span class="lineCov">        135 :                     return true;</span></a>
+<a name="141"><span class="lineNum">     141 </span><span class="lineCov">        594 :                     change_location(person, target_location.get_id());</span></a>
+<a name="142"><span class="lineNum">     142 </span><span class="lineCov">        198 :                     return true;</span></a>
 <a name="143"><span class="lineNum">     143 </span>            :                 }</a>
 <a name="144"><span class="lineNum">     144 </span><span class="lineNoCov">          0 :                 return false;</span></a>
 <a name="145"><span class="lineNum">     145 </span><span class="lineCov">       2790 :             };</span></a>
@@ -216,9 +216,9 @@
 <a name="154"><span class="lineNum">     154 </span><span class="lineCov">       5418 :                     (has_locations({LocationType::School, LocationType::Home}) &amp;&amp; try_mobility_rule(&amp;go_to_school)) ||</span></a>
 <a name="155"><span class="lineNum">     155 </span><span class="lineCov">       5391 :                     (has_locations({LocationType::Work, LocationType::Home}) &amp;&amp; try_mobility_rule(&amp;go_to_work)) ||</span></a>
 <a name="156"><span class="lineNum">     156 </span><span class="lineCov">       5373 :                     (has_locations({LocationType::BasicsShop, LocationType::Home}) &amp;&amp; try_mobility_rule(&amp;go_to_shop)) ||</span></a>
-<a name="157"><span class="lineNum">     157 </span><span class="lineCov">       5364 :                     (has_locations({LocationType::SocialEvent, LocationType::Home}) &amp;&amp;</span></a>
-<a name="158"><span class="lineNum">     158 </span><span class="lineCov">       8964 :                      try_mobility_rule(&amp;go_to_event)) ||</span></a>
-<a name="159"><span class="lineNum">     159 </span><span class="lineCov">       5355 :                     (has_locations({LocationType::Home}) &amp;&amp; try_mobility_rule(&amp;go_to_quarantine));</span></a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineCov">       5310 :                     (has_locations({LocationType::SocialEvent, LocationType::Home}) &amp;&amp;</span></a>
+<a name="158"><span class="lineNum">     158 </span><span class="lineCov">       8901 :                      try_mobility_rule(&amp;go_to_event)) ||</span></a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineCov">       5292 :                     (has_locations({LocationType::Home}) &amp;&amp; try_mobility_rule(&amp;go_to_quarantine));</span></a>
 <a name="160"><span class="lineNum">     160 </span>            :             }</a>
 <a name="161"><span class="lineNum">     161 </span>            :             else {</a>
 <a name="162"><span class="lineNum">     162 </span>            :                 // no daily routine mobility, just infection related</a>
@@ -346,10 +346,10 @@
 <a name="284"><span class="lineNum">     284 </span><span class="lineCov">       2866 :             const Person&amp; person = m_persons[i];</span></a>
 <a name="285"><span class="lineNum">     285 </span><span class="lineCov">       2866 :             const auto location  = person.get_location().get();</span></a>
 <a name="286"><span class="lineNum">     286 </span><span class="lineCov">       2866 :             if (m_activeness_statuses[i]) {</span></a>
-<a name="287"><span class="lineNum">     287 </span><span class="lineCov">       2853 :                 assert(m_persons[i].get_location_model_id() == m_id &amp;&amp; &quot;Person is not in this model but still active.&quot;);</span></a>
-<a name="288"><span class="lineNum">     288 </span><span class="lineCov">       5706 :                 mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],</span></a>
-<a name="289"><span class="lineNum">     289 </span><span class="lineCov">       2853 :                                                     m_contact_exposure_rates_cache[location], person,</span></a>
-<a name="290"><span class="lineNum">     290 </span><span class="lineCov">       2853 :                                                     get_location(person.get_location()), t, dt);</span></a>
+<a name="287"><span class="lineNum">     287 </span><span class="lineCov">       2854 :                 assert(m_persons[i].get_location_model_id() == m_id &amp;&amp; &quot;Person is not in this model but still active.&quot;);</span></a>
+<a name="288"><span class="lineNum">     288 </span><span class="lineCov">       5708 :                 mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],</span></a>
+<a name="289"><span class="lineNum">     289 </span><span class="lineCov">       2854 :                                                     m_contact_exposure_rates_cache[location], person,</span></a>
+<a name="290"><span class="lineNum">     290 </span><span class="lineCov">       2854 :                                                     get_location(person.get_location()), t, dt);</span></a>
 <a name="291"><span class="lineNum">     291 </span>            :             }</a>
 <a name="292"><span class="lineNum">     292 </span>            :         } // implicit taskloop barrier</a>
 <a name="293"><span class="lineNum">     293 </span>            :     } // implicit single barrier</a>

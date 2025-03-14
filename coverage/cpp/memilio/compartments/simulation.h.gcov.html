@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-02-17 13:46:44</td>
+            <td class="headerValue">2025-03-14 09:36:47</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">111</td>
@@ -157,13 +157,13 @@
 <a name="95"><span class="lineNum">      95 </span>            :      * tmax must be greater than get_result().get_last_time_point()</a>
 <a name="96"><span class="lineNum">      96 </span>            :      * @param tmax next stopping point of simulation</a>
 <a name="97"><span class="lineNum">      97 </span>            :      */</a>
-<a name="98"><span class="lineNum">      98 </span><span class="lineCov">      29006 :     Eigen::Ref&lt;Eigen::VectorX&lt;FP&gt;&gt; advance(FP tmax)</span></a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineCov">      29060 :     Eigen::Ref&lt;Eigen::VectorX&lt;FP&gt;&gt; advance(FP tmax)</span></a>
 <a name="99"><span class="lineNum">      99 </span>            :     {</a>
 <a name="100"><span class="lineNum">     100 </span>            :         return m_integrator.advance(</a>
-<a name="101"><span class="lineNum">     101 </span><span class="lineCov">    1675098 :             [this](auto&amp;&amp; y, auto&amp;&amp; t, auto&amp;&amp; dydt) {</span></a>
-<a name="102"><span class="lineNum">     102 </span><span class="lineCov">    1116732 :                 get_model().eval_right_hand_side(y, y, t, dydt);</span></a>
+<a name="101"><span class="lineNum">     101 </span><span class="lineCov">    1786680 :             [this](auto&amp;&amp; y, auto&amp;&amp; t, auto&amp;&amp; dydt) {</span></a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineCov">    1191120 :                 get_model().eval_right_hand_side(y, y, t, dydt);</span></a>
 <a name="103"><span class="lineNum">     103 </span>            :             },</a>
-<a name="104"><span class="lineNum">     104 </span><span class="lineCov">      29006 :             tmax, m_dt, m_result);</span></a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineCov">      29060 :             tmax, m_dt, m_result);</span></a>
 <a name="105"><span class="lineNum">     105 </span>            :     }</a>
 <a name="106"><span class="lineNum">     106 </span>            : </a>
 <a name="107"><span class="lineNum">     107 </span>            :     /**</a>
@@ -176,9 +176,9 @@
 <a name="114"><span class="lineNum">     114 </span>            :      * For each simulated time step, the TimeSeries contains the population size in each compartment.</a>
 <a name="115"><span class="lineNum">     115 </span>            :      * @{</a>
 <a name="116"><span class="lineNum">     116 </span>            :      */</a>
-<a name="117"><span class="lineNum">     117 </span><span class="lineCov">     923338 :     TimeSeries&lt;FP&gt;&amp; get_result()</span></a>
+<a name="117"><span class="lineNum">     117 </span><span class="lineCov">     923554 :     TimeSeries&lt;FP&gt;&amp; get_result()</span></a>
 <a name="118"><span class="lineNum">     118 </span>            :     {</a>
-<a name="119"><span class="lineNum">     119 </span><span class="lineCov">     923338 :         return m_result;</span></a>
+<a name="119"><span class="lineNum">     119 </span><span class="lineCov">     923554 :         return m_result;</span></a>
 <a name="120"><span class="lineNum">     120 </span>            :     }</a>
 <a name="121"><span class="lineNum">     121 </span>            : </a>
 <a name="122"><span class="lineNum">     122 </span>            :     /**</a>
@@ -201,9 +201,9 @@
 <a name="139"><span class="lineNum">     139 </span><span class="lineCov">      65787 :         return *m_model;</span></a>
 <a name="140"><span class="lineNum">     140 </span>            :     }</a>
 <a name="141"><span class="lineNum">     141 </span>            : </a>
-<a name="142"><span class="lineNum">     142 </span><span class="lineCov">     753177 :     Model&amp; get_model()</span></a>
+<a name="142"><span class="lineNum">     142 </span><span class="lineCov">     790371 :     Model&amp; get_model()</span></a>
 <a name="143"><span class="lineNum">     143 </span>            :     {</a>
-<a name="144"><span class="lineNum">     144 </span><span class="lineCov">     753177 :         return *m_model;</span></a>
+<a name="144"><span class="lineNum">     144 </span><span class="lineCov">     790371 :         return *m_model;</span></a>
 <a name="145"><span class="lineNum">     145 </span>            :     }</a>
 <a name="146"><span class="lineNum">     146 </span>            :     /** @} */</a>
 <a name="147"><span class="lineNum">     147 </span>            : </a>

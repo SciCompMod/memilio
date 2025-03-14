@@ -81,97 +81,28 @@ $(function() {
 Inheritance diagram for mio::sseirvv::Model:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="classmio_1_1sseirvv_1_1Model.png" usemap="#mio::sseirvv::Model_map" alt=""/>
-  <map id="mio::sseirvv::Model_map" name="mio::sseirvv::Model_map">
-<area href="classmio_1_1FlowModel.html" alt="mio::FlowModel&lt; ScalarType, InfectionState, Populations&lt; ScalarType, InfectionState &gt;, Parameters, Flows &gt;" shape="rect" coords="0,56,650,80"/>
-<area href="structmio_1_1CompartmentalModel.html" title="CompartmentalModel is a template for a compartmental model for an array of initial populations and a ..." alt="mio::CompartmentalModel&lt; FP, Comp, Pop, Params &gt;" shape="rect" coords="0,0,650,24"/>
-  </map>
-</div></div>
+  <img src="classmio_1_1sseirvv_1_1Model.png" alt=""/>
+ </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a71ae462e46214ec21df4453ef6482036"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1sseirvv_1_1Model.html#a71ae462e46214ec21df4453ef6482036">get_flows</a> (Eigen::Ref&lt; const Eigen::VectorX&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&gt; pop, Eigen::Ref&lt; const Eigen::VectorX&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&gt; y, <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> t, Eigen::Ref&lt; Eigen::VectorX&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&gt; flows) const</td></tr>
+<tr class="memitem:a71ae462e46214ec21df4453ef6482036"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1sseirvv_1_1Model.html#a71ae462e46214ec21df4453ef6482036">get_flows</a> (Eigen::Ref&lt; const Eigen::VectorX&lt; ScalarType &gt;&gt; pop, Eigen::Ref&lt; const Eigen::VectorX&lt; ScalarType &gt;&gt; y, ScalarType t, Eigen::Ref&lt; Eigen::VectorX&lt; ScalarType &gt;&gt; flows) const</td></tr>
 <tr class="separator:a71ae462e46214ec21df4453ef6482036"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad56642ca2ff3590bb9ab29464767aba7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1sseirvv_1_1Model.html#ad56642ca2ff3590bb9ab29464767aba7">Model</a> ()</td></tr>
 <tr class="separator:ad56642ca2ff3590bb9ab29464767aba7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_classmio_1_1FlowModel"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classmio_1_1FlowModel')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classmio_1_1FlowModel.html">mio::FlowModel&lt; ScalarType, InfectionState, Populations&lt; ScalarType, InfectionState &gt;, Parameters, Flows &gt;</a></td></tr>
-<tr class="memitem:a6545836509156cba6f949e9e5b4577fd inherit pub_methods_classmio_1_1FlowModel"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1FlowModel.html#a6545836509156cba6f949e9e5b4577fd">FlowModel</a> (Args... args)</td></tr>
-<tr class="memdesc:a6545836509156cba6f949e9e5b4577fd inherit pub_methods_classmio_1_1FlowModel"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default constructor, forwarding args to Base constructor.  <a href="classmio_1_1FlowModel.html#a6545836509156cba6f949e9e5b4577fd">More...</a><br /></td></tr>
-<tr class="separator:a6545836509156cba6f949e9e5b4577fd inherit pub_methods_classmio_1_1FlowModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a49eddfebfa93635db4d868d83a5fde1b inherit pub_methods_classmio_1_1FlowModel"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1FlowModel.html#a49eddfebfa93635db4d868d83a5fde1b">get_derivatives</a> (Eigen::Ref&lt; const Eigen::VectorX&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&gt; flows, Eigen::Ref&lt; Eigen::VectorX&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&gt; dydt) const</td></tr>
-<tr class="memdesc:a49eddfebfa93635db4d868d83a5fde1b inherit pub_methods_classmio_1_1FlowModel"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the right-hand-side of the ODE dydt = f(y, t) from flow values.  <a href="classmio_1_1FlowModel.html#a49eddfebfa93635db4d868d83a5fde1b">More...</a><br /></td></tr>
-<tr class="separator:a49eddfebfa93635db4d868d83a5fde1b inherit pub_methods_classmio_1_1FlowModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aedf1db0dd55c07c913bbc5e6d8afd754 inherit pub_methods_classmio_1_1FlowModel"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1FlowModel.html#aedf1db0dd55c07c913bbc5e6d8afd754">get_derivatives</a> (Eigen::Ref&lt; const Eigen::VectorX&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&gt; pop, Eigen::Ref&lt; const Eigen::VectorX&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&gt; y, <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> t, Eigen::Ref&lt; Eigen::VectorX&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&gt; dydt) const override final</td></tr>
-<tr class="memdesc:aedf1db0dd55c07c913bbc5e6d8afd754 inherit pub_methods_classmio_1_1FlowModel"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the right-hand-side f(y, t) of the ODE and store it in dydt.  <a href="classmio_1_1FlowModel.html#aedf1db0dd55c07c913bbc5e6d8afd754">More...</a><br /></td></tr>
-<tr class="separator:aedf1db0dd55c07c913bbc5e6d8afd754 inherit pub_methods_classmio_1_1FlowModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6100a9b3eb296ab1e43fd52ee4ae5c22 inherit pub_methods_classmio_1_1FlowModel"><td class="memItemLeft" align="right" valign="top">constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1FlowModel.html#a6100a9b3eb296ab1e43fd52ee4ae5c22">get_flat_flow_index</a> () const</td></tr>
-<tr class="memdesc:a6100a9b3eb296ab1e43fd52ee4ae5c22 inherit pub_methods_classmio_1_1FlowModel"><td class="mdescLeft">&#160;</td><td class="mdescRight">A flat index into an array of flows (as computed by get_flows), if the only used category in Pop is Comp.  <a href="classmio_1_1FlowModel.html#a6100a9b3eb296ab1e43fd52ee4ae5c22">More...</a><br /></td></tr>
-<tr class="separator:a6100a9b3eb296ab1e43fd52ee4ae5c22 inherit pub_methods_classmio_1_1FlowModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6ef70f16732bf3dd1eb54bd46084fe7f inherit pub_methods_classmio_1_1FlowModel"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1FlowModel.html#a6ef70f16732bf3dd1eb54bd46084fe7f">get_flat_flow_index</a> (const <a class="el" href="classmio_1_1FlowModel.html#ae5f2cc2375769f9f91ac8263be0884d9">FlowIndex</a> &amp;indices) const</td></tr>
-<tr class="memdesc:a6ef70f16732bf3dd1eb54bd46084fe7f inherit pub_methods_classmio_1_1FlowModel"><td class="mdescLeft">&#160;</td><td class="mdescRight">A flat index into an array of flows (as computed by get_flows), given the indices of each category.  <a href="classmio_1_1FlowModel.html#a6ef70f16732bf3dd1eb54bd46084fe7f">More...</a><br /></td></tr>
-<tr class="separator:a6ef70f16732bf3dd1eb54bd46084fe7f inherit pub_methods_classmio_1_1FlowModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a67d6a193f494fd4a7198464a136ed045 inherit pub_methods_classmio_1_1FlowModel"><td class="memItemLeft" align="right" valign="top">Eigen::VectorX&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1FlowModel.html#a67d6a193f494fd4a7198464a136ed045">get_initial_flows</a> () const</td></tr>
-<tr class="memdesc:a67d6a193f494fd4a7198464a136ed045 inherit pub_methods_classmio_1_1FlowModel"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initial values for flows.  <a href="classmio_1_1FlowModel.html#a67d6a193f494fd4a7198464a136ed045">More...</a><br /></td></tr>
-<tr class="separator:a67d6a193f494fd4a7198464a136ed045 inherit pub_methods_classmio_1_1FlowModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_structmio_1_1CompartmentalModel"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_structmio_1_1CompartmentalModel')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="structmio_1_1CompartmentalModel.html">mio::CompartmentalModel&lt; FP, Comp, Pop, Params &gt;</a></td></tr>
-<tr class="memitem:a17bf61095e82eab7b45653472a8fb936 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#a17bf61095e82eab7b45653472a8fb936">apply_constraints</a> ()</td></tr>
-<tr class="memdesc:a17bf61095e82eab7b45653472a8fb936 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks whether the model satisfies all constraints.  <a href="structmio_1_1CompartmentalModel.html#a17bf61095e82eab7b45653472a8fb936">More...</a><br /></td></tr>
-<tr class="separator:a17bf61095e82eab7b45653472a8fb936 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a19c74cdb58685cef3e410e77fb2c246f inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#a19c74cdb58685cef3e410e77fb2c246f">check_constraints</a> () const</td></tr>
-<tr class="memdesc:a19c74cdb58685cef3e410e77fb2c246f inherit pub_methods_structmio_1_1CompartmentalModel"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks that the model satisfies all constraints (e.g.  <a href="structmio_1_1CompartmentalModel.html#a19c74cdb58685cef3e410e77fb2c246f">More...</a><br /></td></tr>
-<tr class="separator:a19c74cdb58685cef3e410e77fb2c246f inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a20ae8fdf1a9487e841c1a5f889fe253d inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#a20ae8fdf1a9487e841c1a5f889fe253d">CompartmentalModel</a> (<a class="el" href="structmio_1_1CompartmentalModel.html">CompartmentalModel</a> &amp;&amp;)=default</td></tr>
-<tr class="separator:a20ae8fdf1a9487e841c1a5f889fe253d inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0b1286b9ccb3f02086efe5442cdbada7 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#a0b1286b9ccb3f02086efe5442cdbada7">CompartmentalModel</a> (const <a class="el" href="structmio_1_1CompartmentalModel.html">CompartmentalModel</a> &amp;)=default</td></tr>
-<tr class="separator:a0b1286b9ccb3f02086efe5442cdbada7 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2d4aa09703feae3927c4655b0cfbbe62 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#a2d4aa09703feae3927c4655b0cfbbe62">CompartmentalModel</a> (<a class="el" href="structmio_1_1CompartmentalModel.html#a3243f778e26359da601d1ac84b81732d">Populations</a> const &amp;po, <a class="el" href="structmio_1_1CompartmentalModel.html#a3b6bb5f689311e58dabc1fa6ffce0da4">ParameterSet</a> const &amp;pa)</td></tr>
-<tr class="memdesc:a2d4aa09703feae3927c4655b0cfbbe62 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="structmio_1_1CompartmentalModel.html" title="CompartmentalModel is a template for a compartmental model for an array of initial populations and a ...">CompartmentalModel</a> default constructor.  <a href="structmio_1_1CompartmentalModel.html#a2d4aa09703feae3927c4655b0cfbbe62">More...</a><br /></td></tr>
-<tr class="separator:a2d4aa09703feae3927c4655b0cfbbe62 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa96727bb4b1ccd83cd3b0997de98cc87 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#aa96727bb4b1ccd83cd3b0997de98cc87">eval_right_hand_side</a> (Eigen::Ref&lt; const Eigen::VectorX&lt; FP &gt;&gt; pop, Eigen::Ref&lt; const Eigen::VectorX&lt; FP &gt;&gt; y, FP t, Eigen::Ref&lt; Eigen::VectorX&lt; FP &gt;&gt; dydt) const</td></tr>
-<tr class="memdesc:aa96727bb4b1ccd83cd3b0997de98cc87 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function evaluates the right-hand-side f of the ODE dydt = f(y, t).  <a href="structmio_1_1CompartmentalModel.html#aa96727bb4b1ccd83cd3b0997de98cc87">More...</a><br /></td></tr>
-<tr class="separator:aa96727bb4b1ccd83cd3b0997de98cc87 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad5b7dfc39a1c1d0350bf789f09e948cc inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#ad5b7dfc39a1c1d0350bf789f09e948cc">get_derivatives</a> (Eigen::Ref&lt; const Eigen::VectorX&lt; FP &gt;&gt;, Eigen::Ref&lt; const Eigen::VectorX&lt; FP &gt;&gt;, FP, Eigen::Ref&lt; Eigen::VectorX&lt; FP &gt;&gt;) const</td></tr>
-<tr class="separator:ad5b7dfc39a1c1d0350bf789f09e948cc inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a781c0f048569e2ab114cbd0c5be38334 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top">Eigen::VectorX&lt; FP &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#a781c0f048569e2ab114cbd0c5be38334">get_initial_values</a> () const</td></tr>
-<tr class="memdesc:a781c0f048569e2ab114cbd0c5be38334 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the initial conditions for the ODE dydt = f(y, t).  <a href="structmio_1_1CompartmentalModel.html#a781c0f048569e2ab114cbd0c5be38334">More...</a><br /></td></tr>
-<tr class="separator:a781c0f048569e2ab114cbd0c5be38334 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acd71f212dd8f17c6cc928462e73db482 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structmio_1_1CompartmentalModel.html">CompartmentalModel</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#acd71f212dd8f17c6cc928462e73db482">operator=</a> (<a class="el" href="structmio_1_1CompartmentalModel.html">CompartmentalModel</a> &amp;&amp;)=default</td></tr>
-<tr class="separator:acd71f212dd8f17c6cc928462e73db482 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af803f224e2919aedf3b8bf3aa89cb175 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structmio_1_1CompartmentalModel.html">CompartmentalModel</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#af803f224e2919aedf3b8bf3aa89cb175">operator=</a> (const <a class="el" href="structmio_1_1CompartmentalModel.html">CompartmentalModel</a> &amp;)=default</td></tr>
-<tr class="separator:af803f224e2919aedf3b8bf3aa89cb175 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad7ae58c4edcf77a0f2d5c0728b9cae02 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#ad7ae58c4edcf77a0f2d5c0728b9cae02">~CompartmentalModel</a> ()=default</td></tr>
-<tr class="separator:ad7ae58c4edcf77a0f2d5c0728b9cae02 inherit pub_methods_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a628e57a71f833ee5b0233ad5156c4b2b"><td class="memItemLeft" align="right" valign="top">RandomNumberGenerator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1sseirvv_1_1Model.html#a628e57a71f833ee5b0233ad5156c4b2b">rng</a></td></tr>
 <tr class="separator:a628e57a71f833ee5b0233ad5156c4b2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a228c3520f32272446689ce6664c3ffd4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1sseirvv_1_1Model.html#a228c3520f32272446689ce6664c3ffd4">step_size</a></td></tr>
+<tr class="memitem:a228c3520f32272446689ce6664c3ffd4"><td class="memItemLeft" align="right" valign="top">ScalarType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1sseirvv_1_1Model.html#a228c3520f32272446689ce6664c3ffd4">step_size</a></td></tr>
 <tr class="memdesc:a228c3520f32272446689ce6664c3ffd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">A step size of the model with which the stochastic process is realized.  <a href="classmio_1_1sseirvv_1_1Model.html#a228c3520f32272446689ce6664c3ffd4">More...</a><br /></td></tr>
 <tr class="separator:a228c3520f32272446689ce6664c3ffd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_attribs_structmio_1_1CompartmentalModel"><td colspan="2" onclick="javascript:toggleInherit('pub_attribs_structmio_1_1CompartmentalModel')"><img src="closed.png" alt="-"/>&#160;Public Attributes inherited from <a class="el" href="structmio_1_1CompartmentalModel.html">mio::CompartmentalModel&lt; FP, Comp, Pop, Params &gt;</a></td></tr>
-<tr class="memitem:a93b7ee010bf6468231f65e03f3889020 inherit pub_attribs_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structmio_1_1CompartmentalModel.html#a3b6bb5f689311e58dabc1fa6ffce0da4">ParameterSet</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#a93b7ee010bf6468231f65e03f3889020">parameters</a> {}</td></tr>
-<tr class="separator:a93b7ee010bf6468231f65e03f3889020 inherit pub_attribs_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a18bd88af7f23550ef0f625921058e527 inherit pub_attribs_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structmio_1_1CompartmentalModel.html#a3243f778e26359da601d1ac84b81732d">Populations</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#a18bd88af7f23550ef0f625921058e527">populations</a> {}</td></tr>
-<tr class="separator:a18bd88af7f23550ef0f625921058e527 inherit pub_attribs_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-types"></a>
 Private Types</h2></td></tr>
-<tr class="memitem:a367032ce9be312be043b9c4723da8431"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1sseirvv_1_1Model.html#a367032ce9be312be043b9c4723da8431">Base</a> = <a class="el" href="classmio_1_1FlowModel.html">FlowModel</a>&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>, <a class="el" href="namespacemio_1_1sseirvv.html#ae5ce55dcead12ced586c5089585c16d8">InfectionState</a>, <a class="el" href="classmio_1_1Populations.html">mio::Populations</a>&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>, <a class="el" href="namespacemio_1_1sseirvv.html#ae5ce55dcead12ced586c5089585c16d8">InfectionState</a> &gt;, <a class="el" href="classmio_1_1sseirvv_1_1Parameters.html">Parameters</a>, <a class="el" href="namespacemio_1_1sseirvv.html#a376d9e985669f230513a98ed96102398">Flows</a> &gt;</td></tr>
+<tr class="memitem:a367032ce9be312be043b9c4723da8431"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1sseirvv_1_1Model.html#a367032ce9be312be043b9c4723da8431">Base</a> = FlowModel&lt; ScalarType, <a class="el" href="namespacemio_1_1sseirvv.html#ae5ce55dcead12ced586c5089585c16d8">InfectionState</a>, mio::Populations&lt; ScalarType, <a class="el" href="namespacemio_1_1sseirvv.html#ae5ce55dcead12ced586c5089585c16d8">InfectionState</a> &gt;, <a class="el" href="classmio_1_1sseirvv_1_1Parameters.html">Parameters</a>, <a class="el" href="namespacemio_1_1sseirvv.html#a376d9e985669f230513a98ed96102398">Flows</a> &gt;</td></tr>
 <tr class="separator:a367032ce9be312be043b9c4723da8431"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pub_types_classmio_1_1FlowModel"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classmio_1_1FlowModel')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classmio_1_1FlowModel.html">mio::FlowModel&lt; ScalarType, InfectionState, Populations&lt; ScalarType, InfectionState &gt;, Parameters, Flows &gt;</a></td></tr>
-<tr class="memitem:a4137e76ac1f04dd1c3cf19077b2820a0 inherit pub_types_classmio_1_1FlowModel"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1FlowModel.html#a4137e76ac1f04dd1c3cf19077b2820a0">Base</a> = <a class="el" href="structmio_1_1CompartmentalModel.html">CompartmentalModel</a>&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>, <a class="el" href="namespacemio_1_1abm.html#ad1ae0779f53a827b524e1f0925b9d704">InfectionState</a>, <a class="el" href="structmio_1_1CompartmentalModel.html#a3243f778e26359da601d1ac84b81732d">Populations</a>&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>, <a class="el" href="namespacemio_1_1abm.html#ad1ae0779f53a827b524e1f0925b9d704">InfectionState</a> &gt;, <a class="el" href="classmio_1_1abm_1_1Parameters.html">Parameters</a> &gt;</td></tr>
-<tr class="separator:a4137e76ac1f04dd1c3cf19077b2820a0 inherit pub_types_classmio_1_1FlowModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_types_structmio_1_1CompartmentalModel"><td colspan="2" onclick="javascript:toggleInherit('pub_types_structmio_1_1CompartmentalModel')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="structmio_1_1CompartmentalModel.html">mio::CompartmentalModel&lt; FP, Comp, Pop, Params &gt;</a></td></tr>
-<tr class="memitem:a973ddbd8f1eaa1470df89e50524cd4fa inherit pub_types_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#a973ddbd8f1eaa1470df89e50524cd4fa">Compartments</a> = Comp</td></tr>
-<tr class="separator:a973ddbd8f1eaa1470df89e50524cd4fa inherit pub_types_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3b6bb5f689311e58dabc1fa6ffce0da4 inherit pub_types_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#a3b6bb5f689311e58dabc1fa6ffce0da4">ParameterSet</a> = Params</td></tr>
-<tr class="separator:a3b6bb5f689311e58dabc1fa6ffce0da4 inherit pub_types_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3243f778e26359da601d1ac84b81732d inherit pub_types_structmio_1_1CompartmentalModel"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1CompartmentalModel.html#a3243f778e26359da601d1ac84b81732d">Populations</a> = Pop</td></tr>
-<tr class="separator:a3243f778e26359da601d1ac84b81732d inherit pub_types_structmio_1_1CompartmentalModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="a367032ce9be312be043b9c4723da8431"></a>
@@ -184,7 +115,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classmio_1_1sseirvv_1_1Model.html#a367032ce9be312be043b9c4723da8431">mio::sseirvv::Model::Base</a> =  <a class="el" href="classmio_1_1FlowModel.html">FlowModel</a>&lt;<a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>, <a class="el" href="namespacemio_1_1sseirvv.html#ae5ce55dcead12ced586c5089585c16d8">InfectionState</a>, <a class="el" href="classmio_1_1Populations.html">mio::Populations</a>&lt;<a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>, <a class="el" href="namespacemio_1_1sseirvv.html#ae5ce55dcead12ced586c5089585c16d8">InfectionState</a>&gt;, <a class="el" href="classmio_1_1sseirvv_1_1Parameters.html">Parameters</a>, <a class="el" href="namespacemio_1_1sseirvv.html#a376d9e985669f230513a98ed96102398">Flows</a>&gt;</td>
+          <td class="memname">using <a class="el" href="classmio_1_1sseirvv_1_1Model.html#a367032ce9be312be043b9c4723da8431">mio::sseirvv::Model::Base</a> =  FlowModel&lt;ScalarType, <a class="el" href="namespacemio_1_1sseirvv.html#ae5ce55dcead12ced586c5089585c16d8">InfectionState</a>, mio::Populations&lt;ScalarType, <a class="el" href="namespacemio_1_1sseirvv.html#ae5ce55dcead12ced586c5089585c16d8">InfectionState</a>&gt;, <a class="el" href="classmio_1_1sseirvv_1_1Parameters.html">Parameters</a>, <a class="el" href="namespacemio_1_1sseirvv.html#a376d9e985669f230513a98ed96102398">Flows</a>&gt;</td>
         </tr>
       </table>
   </td>
@@ -220,32 +151,29 @@ Additional Inherited Members</h2></td></tr>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">void mio::sseirvv::Model::get_flows </td>
           <td>(</td>
-          <td class="paramtype">Eigen::Ref&lt; const Eigen::VectorX&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&gt;&#160;</td>
+          <td class="paramtype">Eigen::Ref&lt; const Eigen::VectorX&lt; ScalarType &gt;&gt;&#160;</td>
           <td class="paramname"><em>pop</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Eigen::Ref&lt; const Eigen::VectorX&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&gt;&#160;</td>
+          <td class="paramtype">Eigen::Ref&lt; const Eigen::VectorX&lt; ScalarType &gt;&gt;&#160;</td>
           <td class="paramname"><em>y</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&#160;</td>
+          <td class="paramtype">ScalarType&#160;</td>
           <td class="paramname"><em>t</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Eigen::Ref&lt; Eigen::VectorX&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&gt;&#160;</td>
+          <td class="paramtype">Eigen::Ref&lt; Eigen::VectorX&lt; ScalarType &gt;&gt;&#160;</td>
           <td class="paramname"><em>flows</em>&#160;</td>
         </tr>
         <tr>
@@ -254,14 +182,7 @@ Additional Inherited Members</h2></td></tr>
           <td></td><td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
-
-<p>Implements <a class="el" href="classmio_1_1FlowModel.html#ad408bbcff5fabb057668df7f6a06a718">mio::FlowModel&lt; ScalarType, InfectionState, Populations&lt; ScalarType, InfectionState &gt;, Parameters, Flows &gt;</a>.</p>
 
 </div>
 </div>
@@ -295,7 +216,7 @@ Additional Inherited Members</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> mio::sseirvv::Model::step_size</td>
+          <td class="memname">ScalarType mio::sseirvv::Model::step_size</td>
         </tr>
       </table>
 </div><div class="memdoc">

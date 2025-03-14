@@ -91,7 +91,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac134279186221942bd2f882f2b93c19c"><td class="memItemLeft" align="right" valign="top">Eigen::Ref&lt; Eigen::VectorXd &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1osecirts_1_1Simulation.html#ac134279186221942bd2f882f2b93c19c">advance</a> (FP tmax)</td></tr>
 <tr class="memdesc:ac134279186221942bd2f882f2b93c19c"><td class="mdescLeft">&#160;</td><td class="mdescRight">advance simulation to tmax.  <a href="classmio_1_1osecirts_1_1Simulation.html#ac134279186221942bd2f882f2b93c19c">More...</a><br /></td></tr>
 <tr class="separator:ac134279186221942bd2f882f2b93c19c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a137e67aca58c79e59df6ff35bbc571ed"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1osecirts_1_1Simulation.html#a137e67aca58c79e59df6ff35bbc571ed">apply_variant</a> (const FP t, const <a class="el" href="classmio_1_1CustomIndexArray.html">CustomIndexArray</a>&lt; <a class="el" href="classmio_1_1UncertainValue.html">UncertainValue</a>&lt; FP &gt;, <a class="el" href="structmio_1_1AgeGroup.html">AgeGroup</a> &gt; base_infectiousness)</td></tr>
+<tr class="memitem:a137e67aca58c79e59df6ff35bbc571ed"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1osecirts_1_1Simulation.html#a137e67aca58c79e59df6ff35bbc571ed">apply_variant</a> (const FP t, const CustomIndexArray&lt; UncertainValue&lt; FP &gt;, AgeGroup &gt; base_infectiousness)</td></tr>
 <tr class="memdesc:a137e67aca58c79e59df6ff35bbc571ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Applies the effect of a new variant of a disease to the transmission probability of the model.  <a href="classmio_1_1osecirts_1_1Simulation.html#a137e67aca58c79e59df6ff35bbc571ed">More...</a><br /></td></tr>
 <tr class="separator:a137e67aca58c79e59df6ff35bbc571ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c62086ca923e54cd50bc8d78e4af1e6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1osecirts_1_1Simulation.html#a0c62086ca923e54cd50bc8d78e4af1e6">Simulation</a> (<a class="el" href="classmio_1_1osecirts_1_1Model.html">mio::osecirts::Model</a>&lt; FP &gt; const &amp;model, FP t0=0., FP dt=0.1)</td></tr>
@@ -100,7 +100,7 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
-<tr class="memitem:ae8e5558b16d6be33cf80b34aa77ae40b"><td class="memItemLeft" align="right" valign="top">std::pair&lt; FP, <a class="el" href="classmio_1_1SimulationTime.html">SimulationTime</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1osecirts_1_1Simulation.html#ae8e5558b16d6be33cf80b34aa77ae40b">m_dynamic_npi</a> = {-std::numeric_limits&lt;FP&gt;::<a class="el" href="namespacemio.html#a97f6645c13faf4749f34d7e6e191f9ac">max</a>(), <a class="el" href="classmio_1_1SimulationTime.html">SimulationTime</a>(0)}</td></tr>
+<tr class="memitem:ae8e5558b16d6be33cf80b34aa77ae40b"><td class="memItemLeft" align="right" valign="top">std::pair&lt; FP, SimulationTime &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1osecirts_1_1Simulation.html#ae8e5558b16d6be33cf80b34aa77ae40b">m_dynamic_npi</a> = {-std::numeric_limits&lt;FP&gt;::max(), SimulationTime(0)}</td></tr>
 <tr class="separator:ae8e5558b16d6be33cf80b34aa77ae40b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8595774355249dd4643034de2a0ff155"><td class="memItemLeft" align="right" valign="top">FP&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1osecirts_1_1Simulation.html#a8595774355249dd4643034de2a0ff155">m_t_last_npi_check</a></td></tr>
 <tr class="separator:a8595774355249dd4643034de2a0ff155"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -113,7 +113,7 @@ class mio::osecirts::Simulation&lt; FP, BaseT &gt;</h3>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">FP</td><td>floating point type, e.g., double. </td></tr>
-    <tr><td class="paramname">BaseT</td><td>simulation type, default <a class="el" href="classmio_1_1Simulation.html" title="A class for the simulation of a compartment model.">mio::Simulation</a>. For testing purposes only! </td></tr>
+    <tr><td class="paramname">BaseT</td><td>simulation type, default mio::Simulation. For testing purposes only! </td></tr>
   </table>
   </dd>
 </dl>
@@ -212,7 +212,7 @@ template&lt;typename FP , class BaseT &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="classmio_1_1CustomIndexArray.html">CustomIndexArray</a>&lt; <a class="el" href="classmio_1_1UncertainValue.html">UncertainValue</a>&lt; FP &gt;, <a class="el" href="structmio_1_1AgeGroup.html">AgeGroup</a> &gt;&#160;</td>
+          <td class="paramtype">const CustomIndexArray&lt; UncertainValue&lt; FP &gt;, AgeGroup &gt;&#160;</td>
           <td class="paramname"><em>base_infectiousness</em>&#160;</td>
         </tr>
         <tr>
@@ -249,7 +249,7 @@ template&lt;typename FP , class BaseT &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::pair&lt;FP, <a class="el" href="classmio_1_1SimulationTime.html">SimulationTime</a>&gt; <a class="el" href="classmio_1_1osecirts_1_1Simulation.html">mio::osecirts::Simulation</a>&lt; FP, BaseT &gt;::m_dynamic_npi = {-std::numeric_limits&lt;FP&gt;::<a class="el" href="namespacemio.html#a97f6645c13faf4749f34d7e6e191f9ac">max</a>(), <a class="el" href="classmio_1_1SimulationTime.html">SimulationTime</a>(0)}</td>
+          <td class="memname">std::pair&lt;FP, SimulationTime&gt; <a class="el" href="classmio_1_1osecirts_1_1Simulation.html">mio::osecirts::Simulation</a>&lt; FP, BaseT &gt;::m_dynamic_npi = {-std::numeric_limits&lt;FP&gt;::max(), SimulationTime(0)}</td>
         </tr>
       </table>
   </td>

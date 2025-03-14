@@ -1,12 +1,10 @@
 var searchData=
 [
-  ['lct_5finfection_5fstate_2eh_3044',['lct_infection_state.h',['../lct__infection__state_8h.html',1,'']]],
-  ['lct_5fpopulations_2eh_3045',['lct_populations.h',['../lct__populations_8h.html',1,'']]],
-  ['location_2ecpp_3046',['location.cpp',['../location_8cpp.html',1,'']]],
-  ['location_2eh_3047',['location.h',['../location_8h.html',1,'']]],
-  ['location_5fid_2eh_3048',['location_id.h',['../location__id_8h.html',1,'']]],
-  ['location_5ftype_2eh_3049',['location_type.h',['../location__type_8h.html',1,'']]],
-  ['lockdown_5frules_2ecpp_3050',['lockdown_rules.cpp',['../lockdown__rules_8cpp.html',1,'']]],
-  ['lockdown_5frules_2eh_3051',['lockdown_rules.h',['../lockdown__rules_8h.html',1,'']]],
-  ['logging_2eh_3052',['logging.h',['../logging_8h.html',1,'']]]
+  ['test_5ftype_2eh_1071',['test_type.h',['../test__type_8h.html',1,'']]],
+  ['testing_5fstrategy_2ecpp_1072',['testing_strategy.cpp',['../testing__strategy_8cpp.html',1,'']]],
+  ['testing_5fstrategy_2eh_1073',['testing_strategy.h',['../testing__strategy_8h.html',1,'']]],
+  ['time_2ecpp_1074',['time.cpp',['../time_8cpp.html',1,'']]],
+  ['time_2eh_1075',['time.h',['../time_8h.html',1,'']]],
+  ['trip_5flist_2ecpp_1076',['trip_list.cpp',['../trip__list_8cpp.html',1,'']]],
+  ['trip_5flist_2eh_1077',['trip_list.h',['../trip__list_8h.html',1,'']]]
 ];

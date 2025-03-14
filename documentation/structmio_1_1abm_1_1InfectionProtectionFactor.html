@@ -82,12 +82,12 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a257bb9ce84e1ceb7134586674d8b3205"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1InfectionProtectionFactor.html#a257bb9ce84e1ceb7134586674d8b3205">Type</a> = <a class="el" href="classmio_1_1CustomIndexArray.html">CustomIndexArray</a>&lt; <a class="el" href="classmio_1_1TimeSeriesFunctor.html">TimeSeriesFunctor</a>&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;, <a class="el" href="namespacemio_1_1abm.html#a3bf2b22aabaa39684a4ef82d9a064649">ProtectionType</a>, <a class="el" href="structmio_1_1AgeGroup.html">AgeGroup</a>, <a class="el" href="namespacemio_1_1abm.html#a92b83c9298d24c2568847dfd9843011f">VirusVariant</a> &gt;</td></tr>
+<tr class="memitem:a257bb9ce84e1ceb7134586674d8b3205"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1InfectionProtectionFactor.html#a257bb9ce84e1ceb7134586674d8b3205">Type</a> = CustomIndexArray&lt; TimeSeriesFunctor&lt; ScalarType &gt;, <a class="el" href="namespacemio_1_1abm.html#a3bf2b22aabaa39684a4ef82d9a064649">ProtectionType</a>, AgeGroup, <a class="el" href="namespacemio_1_1abm.html#a92b83c9298d24c2568847dfd9843011f">VirusVariant</a> &gt;</td></tr>
 <tr class="separator:a257bb9ce84e1ceb7134586674d8b3205"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:aff6afbac3a7cd2cf4d4ddd75e44a11c4"><td class="memItemLeft" align="right" valign="top">static auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1InfectionProtectionFactor.html#aff6afbac3a7cd2cf4d4ddd75e44a11c4">get_default</a> (<a class="el" href="structmio_1_1AgeGroup.html">AgeGroup</a> size)</td></tr>
+<tr class="memitem:aff6afbac3a7cd2cf4d4ddd75e44a11c4"><td class="memItemLeft" align="right" valign="top">static auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1InfectionProtectionFactor.html#aff6afbac3a7cd2cf4d4ddd75e44a11c4">get_default</a> (AgeGroup size)</td></tr>
 <tr class="separator:aff6afbac3a7cd2cf4d4ddd75e44a11c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab2ca75bbef6105f904f8f67f639a9e14"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1InfectionProtectionFactor.html#ab2ca75bbef6105f904f8f67f639a9e14">name</a> ()</td></tr>
 <tr class="separator:ab2ca75bbef6105f904f8f67f639a9e14"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -103,7 +103,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="structmio_1_1abm_1_1InfectionProtectionFactor.html#a257bb9ce84e1ceb7134586674d8b3205">mio::abm::InfectionProtectionFactor::Type</a> =  <a class="el" href="classmio_1_1CustomIndexArray.html">CustomIndexArray</a>&lt;<a class="el" href="classmio_1_1TimeSeriesFunctor.html">TimeSeriesFunctor</a>&lt;<a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&gt;, <a class="el" href="namespacemio_1_1abm.html#a3bf2b22aabaa39684a4ef82d9a064649">ProtectionType</a>, <a class="el" href="structmio_1_1AgeGroup.html">AgeGroup</a>, <a class="el" href="namespacemio_1_1abm.html#a92b83c9298d24c2568847dfd9843011f">VirusVariant</a>&gt;</td>
+          <td class="memname">using <a class="el" href="structmio_1_1abm_1_1InfectionProtectionFactor.html#a257bb9ce84e1ceb7134586674d8b3205">mio::abm::InfectionProtectionFactor::Type</a> =  CustomIndexArray&lt;TimeSeriesFunctor&lt;ScalarType&gt;, <a class="el" href="namespacemio_1_1abm.html#a3bf2b22aabaa39684a4ef82d9a064649">ProtectionType</a>, AgeGroup, <a class="el" href="namespacemio_1_1abm.html#a92b83c9298d24c2568847dfd9843011f">VirusVariant</a>&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -123,7 +123,7 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">static auto mio::abm::InfectionProtectionFactor::get_default </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="structmio_1_1AgeGroup.html">AgeGroup</a>&#160;</td>
+          <td class="paramtype">AgeGroup&#160;</td>
           <td class="paramname"><em>size</em></td><td>)</td>
           <td></td>
         </tr>

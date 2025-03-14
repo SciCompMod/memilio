@@ -76,11 +76,11 @@ $(function() {
 <div class="contents">
 <div class="textblock"><code>#include &quot;<a class="el" href="ide__secir_2parameters_8h_source.html">ide_secir/parameters.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="ide__secir_2infection__state_8h_source.html">ide_secir/infection_state.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="memilio_2config_8h_source.html">memilio/config.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="age__group_8h_source.html">memilio/epidemiology/age_group.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="custom__index__array_8h_source.html">memilio/utils/custom_index_array.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="date_8h_source.html">memilio/utils/date.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="time__series_8h_source.html">memilio/utils/time_series.h</a>&quot;</code><br />
+<code>#include &quot;memilio/config.h&quot;</code><br />
+<code>#include &quot;memilio/epidemiology/age_group.h&quot;</code><br />
+<code>#include &quot;memilio/utils/custom_index_array.h&quot;</code><br />
+<code>#include &quot;memilio/utils/date.h&quot;</code><br />
+<code>#include &quot;memilio/utils/time_series.h&quot;</code><br />
 <code>#include &quot;vector&quot;</code><br />
 </div>
 <p><a href="ide__secir_2model_8h_source.html">Go to the source code of this file.</a></p>
@@ -93,7 +93,6 @@ Classes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespacemio"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio.html">mio</a></td></tr>
-<tr class="memdesc:namespacemio"><td class="mdescLeft">&#160;</td><td class="mdescRight">A collection of classes to simplify handling of matrix shapes in meta programming. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespacemio_1_1isecir"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio_1_1isecir.html">mio::isecir</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -101,7 +100,7 @@ Namespaces</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:af27bb8ea451c574d97b78826fc2a4846"><td class="memTemplParams" colspan="2">template&lt;typename EntryType &gt; </td></tr>
-<tr class="memitem:af27bb8ea451c574d97b78826fc2a4846"><td class="memTemplItemLeft" align="right" valign="top">IOResult&lt; void &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio_1_1isecir.html#af27bb8ea451c574d97b78826fc2a4846">mio::isecir::set_initial_flows</a> (Model &amp;model, const <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> dt, const std::vector&lt; EntryType &gt; rki_data, const Date date, const CustomIndexArray&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>, AgeGroup &gt; scale_confirmed_cases)</td></tr>
+<tr class="memitem:af27bb8ea451c574d97b78826fc2a4846"><td class="memTemplItemLeft" align="right" valign="top">IOResult&lt; void &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio_1_1isecir.html#af27bb8ea451c574d97b78826fc2a4846">mio::isecir::set_initial_flows</a> (Model &amp;model, const ScalarType dt, const std::vector&lt; EntryType &gt; rki_data, const Date date, const CustomIndexArray&lt; ScalarType, AgeGroup &gt; scale_confirmed_cases)</td></tr>
 <tr class="separator:af27bb8ea451c574d97b78826fc2a4846"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->

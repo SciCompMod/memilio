@@ -98,7 +98,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a419b148bb0423dd56ba5f89c90151b87"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQuadWellModel.html#a419b148bb0423dd56ba5f89c90151b87">adoption_rate</a> (const <a class="el" href="structQuadWellModel_1_1Agent.html">Agent</a> &amp;agent, const <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a> &amp;new_status) const</td></tr>
 <tr class="memdesc:a419b148bb0423dd56ba5f89c90151b87"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate adoption rate for an <a class="el" href="structQuadWellModel_1_1Agent.html" title="Struct defining an agent for the diffusive ABM.">Agent</a>.  <a href="classQuadWellModel.html#a419b148bb0423dd56ba5f89c90151b87">More...</a><br /></td></tr>
 <tr class="separator:a419b148bb0423dd56ba5f89c90151b87"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7e2ad49268c46ff1a421d0273ce66112"><td class="memItemLeft" align="right" valign="top">std::map&lt; std::tuple&lt; <a class="el" href="structmio_1_1regions_1_1Region.html">mio::regions::Region</a>, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a> &gt;, <a class="el" href="structmio_1_1AdoptionRate.html">mio::AdoptionRate</a>&lt; <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a> &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQuadWellModel.html#a7e2ad49268c46ff1a421d0273ce66112">get_adoption_rates</a> ()</td></tr>
+<tr class="memitem:a7e2ad49268c46ff1a421d0273ce66112"><td class="memItemLeft" align="right" valign="top">std::map&lt; std::tuple&lt; mio::regions::Region, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a> &gt;, mio::AdoptionRate&lt; <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a> &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQuadWellModel.html#a7e2ad49268c46ff1a421d0273ce66112">get_adoption_rates</a> ()</td></tr>
 <tr class="memdesc:a7e2ad49268c46ff1a421d0273ce66112"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get AdoptionRate mapping.  <a href="classQuadWellModel.html#a7e2ad49268c46ff1a421d0273ce66112">More...</a><br /></td></tr>
 <tr class="separator:a7e2ad49268c46ff1a421d0273ce66112"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8e9486eb65f31e6e6f2da4422425a69c"><td class="memItemLeft" align="right" valign="top">mio::RandomNumberGenerator &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQuadWellModel.html#a8e9486eb65f31e6e6f2da4422425a69c">get_rng</a> ()</td></tr>
@@ -112,7 +112,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a02f0471218d7ddb06aa5b74d03cbe572"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; Eigen::MatrixXd &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQuadWellModel.html#a02f0471218d7ddb06aa5b74d03cbe572">number_transitions</a> () const</td></tr>
 <tr class="memdesc:a02f0471218d7ddb06aa5b74d03cbe572"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of spatial transitions that happened until the current system state.  <a href="classQuadWellModel.html#a02f0471218d7ddb06aa5b74d03cbe572">More...</a><br /></td></tr>
 <tr class="separator:a02f0471218d7ddb06aa5b74d03cbe572"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a780cc2577710d627b7a955c76e9ae2fc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQuadWellModel.html#a780cc2577710d627b7a955c76e9ae2fc">QuadWellModel</a> (const std::vector&lt; <a class="el" href="structQuadWellModel_1_1Agent.html">Agent</a> &gt; &amp;agents, const std::vector&lt; <a class="el" href="structmio_1_1AdoptionRate.html">mio::AdoptionRate</a>&lt; <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a> &gt;&gt; &amp;rates, double contact_radius=0.4, double sigma=0.4, std::vector&lt; <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a> &gt; non_moving_states={})</td></tr>
+<tr class="memitem:a780cc2577710d627b7a955c76e9ae2fc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQuadWellModel.html#a780cc2577710d627b7a955c76e9ae2fc">QuadWellModel</a> (const std::vector&lt; <a class="el" href="structQuadWellModel_1_1Agent.html">Agent</a> &gt; &amp;agents, const std::vector&lt; mio::AdoptionRate&lt; <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a> &gt;&gt; &amp;rates, double contact_radius=0.4, double sigma=0.4, std::vector&lt; <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a> &gt; non_moving_states={})</td></tr>
 <tr class="memdesc:a780cc2577710d627b7a955c76e9ae2fc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set up a diffusive ABM using the quadwell potential F(x,y) = (x^2 -1)^2+(y^2-1)^2.  <a href="classQuadWellModel.html#a780cc2577710d627b7a955c76e9ae2fc">More...</a><br /></td></tr>
 <tr class="separator:a780cc2577710d627b7a955c76e9ae2fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3d1fbae6953e88647b3b9f56d7642164"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQuadWellModel.html#a3d1fbae6953e88647b3b9f56d7642164">set_non_moving_regions</a> (std::vector&lt; size_t &gt; non_moving_regions)</td></tr>
@@ -151,7 +151,7 @@ Static Private Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
-<tr class="memitem:a7b392881c98fa8baf9d955002fc6a993"><td class="memItemLeft" align="right" valign="top">std::map&lt; std::tuple&lt; <a class="el" href="structmio_1_1regions_1_1Region.html">mio::regions::Region</a>, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a> &gt;, <a class="el" href="structmio_1_1AdoptionRate.html">mio::AdoptionRate</a>&lt; <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQuadWellModel.html#a7b392881c98fa8baf9d955002fc6a993">m_adoption_rates</a></td></tr>
+<tr class="memitem:a7b392881c98fa8baf9d955002fc6a993"><td class="memItemLeft" align="right" valign="top">std::map&lt; std::tuple&lt; mio::regions::Region, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a> &gt;, mio::AdoptionRate&lt; <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQuadWellModel.html#a7b392881c98fa8baf9d955002fc6a993">m_adoption_rates</a></td></tr>
 <tr class="memdesc:a7b392881c98fa8baf9d955002fc6a993"><td class="mdescLeft">&#160;</td><td class="mdescRight">Map of AdoptionRates according to their region index and their from -&gt; to infection states.  <a href="classQuadWellModel.html#a7b392881c98fa8baf9d955002fc6a993">More...</a><br /></td></tr>
 <tr class="separator:a7b392881c98fa8baf9d955002fc6a993"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a651890eef32f07870b81bbdd1f0fe199"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQuadWellModel.html#a651890eef32f07870b81bbdd1f0fe199">m_contact_radius</a></td></tr>
@@ -219,7 +219,7 @@ template&lt;class InfectionState &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::vector&lt; <a class="el" href="structmio_1_1AdoptionRate.html">mio::AdoptionRate</a>&lt; <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a> &gt;&gt; &amp;&#160;</td>
+          <td class="paramtype">const std::vector&lt; mio::AdoptionRate&lt; <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a> &gt;&gt; &amp;&#160;</td>
           <td class="paramname"><em>rates</em>, </td>
         </tr>
         <tr>
@@ -252,7 +252,7 @@ template&lt;class InfectionState &gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">agents</td><td>A vector of <a class="el" href="structQuadWellModel_1_1Agent.html" title="Struct defining an agent for the diffusive ABM.">Agent</a>s representing the population. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">rates</td><td>AdoptionRates defining InfectionState adoptions, see <a class="el" href="structmio_1_1AdoptionRate.html" title="Struct defining a possible status adoption in a Model based on Poisson Processes.">mio::AdoptionRate</a>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">rates</td><td>AdoptionRates defining InfectionState adoptions, see mio::AdoptionRate. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">contact_radius</td><td>Contact radius for second-order adoptions. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">sigma</td><td>Noise term for the diffusion process. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">non_moving_state</td><td>InfectionStates that are excluded from movement e.g. Dead. </td></tr>
@@ -342,7 +342,7 @@ template&lt;class InfectionState &gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">agent</td><td><a class="el" href="structQuadWellModel_1_1Agent.html" title="Struct defining an agent for the diffusive ABM.">Agent</a> for whom the adoption rate is calculated. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">new_status</td><td>Target infection state of the adoption rate, see <a class="el" href="structmio_1_1AdoptionRate.html#adf42a798221d2b5da57b0f8f47d0ca88">mio::AdoptionRate.to</a>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">new_status</td><td>Target infection state of the adoption rate, see mio::AdoptionRate.to. </td></tr>
   </table>
   </dd>
 </dl>
@@ -359,7 +359,7 @@ template&lt;class InfectionState &gt; </div>
 template&lt;class InfectionState &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">std::map&lt;std::tuple&lt;<a class="el" href="structmio_1_1regions_1_1Region.html">mio::regions::Region</a>, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>&gt;, <a class="el" href="structmio_1_1AdoptionRate.html">mio::AdoptionRate</a>&lt;<a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>&gt; &gt;&amp; <a class="el" href="classQuadWellModel.html">QuadWellModel</a>&lt; InfectionState &gt;::get_adoption_rates </td>
+          <td class="memname">std::map&lt;std::tuple&lt;mio::regions::Region, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>&gt;, mio::AdoptionRate&lt;<a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>&gt; &gt;&amp; <a class="el" href="classQuadWellModel.html">QuadWellModel</a>&lt; InfectionState &gt;::get_adoption_rates </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -659,7 +659,7 @@ template&lt;class InfectionState &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::map&lt;std::tuple&lt;<a class="el" href="structmio_1_1regions_1_1Region.html">mio::regions::Region</a>, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>&gt;, <a class="el" href="structmio_1_1AdoptionRate.html">mio::AdoptionRate</a>&lt;<a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>&gt; &gt; <a class="el" href="classQuadWellModel.html">QuadWellModel</a>&lt; InfectionState &gt;::m_adoption_rates</td>
+          <td class="memname">std::map&lt;std::tuple&lt;mio::regions::Region, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>, <a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>&gt;, mio::AdoptionRate&lt;<a class="el" href="classQuadWellModel.html#ad5eb5eacf9e639bbd2b3281bbb1903f4">Status</a>&gt; &gt; <a class="el" href="classQuadWellModel.html">QuadWellModel</a>&lt; InfectionState &gt;::m_adoption_rates</td>
         </tr>
       </table>
   </td>

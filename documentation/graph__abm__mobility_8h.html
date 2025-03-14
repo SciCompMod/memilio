@@ -82,9 +82,9 @@ $(function() {
 <code>#include &quot;<a class="el" href="person__id_8h_source.html">abm/person_id.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="model__functions_8h_source.html">abm/model_functions.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="graph__abmodel_8h_source.html">graph_abm/graph_abmodel.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="graph__simulation_8h_source.html">memilio/mobility/graph_simulation.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="graph_8h_source.html">memilio/mobility/graph.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="compiler__diagnostics_8h_source.html">memilio/utils/compiler_diagnostics.h</a>&quot;</code><br />
+<code>#include &quot;memilio/mobility/graph_simulation.h&quot;</code><br />
+<code>#include &quot;memilio/mobility/graph.h&quot;</code><br />
+<code>#include &quot;memilio/utils/compiler_diagnostics.h&quot;</code><br />
 <code>#include &lt;algorithm&gt;</code><br />
 <code>#include &lt;cstddef&gt;</code><br />
 <code>#include &lt;iostream&gt;</code><br />
@@ -105,18 +105,17 @@ Classes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespacemio"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio.html">mio</a></td></tr>
-<tr class="memdesc:namespacemio"><td class="mdescLeft">&#160;</td><td class="mdescRight">A collection of classes to simplify handling of matrix shapes in meta programming. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a53354b26aeb9eb9cd5bf546119c65667"><td class="memTemplParams" colspan="2">template&lt;class... History&gt; </td></tr>
 <tr class="memitem:a53354b26aeb9eb9cd5bf546119c65667"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a53354b26aeb9eb9cd5bf546119c65667">mio::advance_model</a> (abm::TimePoint t, abm::TimeSpan dt, ABMSimulationNode&lt; History... &gt; &amp;node)</td></tr>
-<tr class="memdesc:a53354b26aeb9eb9cd5bf546119c65667"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="structmio_1_1Node.html" title="represents a node of the graph">Node</a> functor for abm graph simulation.  <a href="namespacemio.html#a53354b26aeb9eb9cd5bf546119c65667">More...</a><br /></td></tr>
+<tr class="memdesc:a53354b26aeb9eb9cd5bf546119c65667"><td class="mdescLeft">&#160;</td><td class="mdescRight">Node functor for abm graph simulation.  <a href="namespacemio.html#a53354b26aeb9eb9cd5bf546119c65667">More...</a><br /></td></tr>
 <tr class="separator:a53354b26aeb9eb9cd5bf546119c65667"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad1ad0d867475e33172827e2bb10636dd"><td class="memTemplParams" colspan="2">template&lt;class... History&gt; </td></tr>
 <tr class="memitem:ad1ad0d867475e33172827e2bb10636dd"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#ad1ad0d867475e33172827e2bb10636dd">mio::apply_mobility</a> (abm::TimePoint t, abm::TimeSpan, ABMMobilityEdge&lt; History... &gt; &amp;edge, ABMSimulationNode&lt; History... &gt; &amp;node_from, ABMSimulationNode&lt; History... &gt; &amp;node_to)</td></tr>
-<tr class="memdesc:ad1ad0d867475e33172827e2bb10636dd"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="structmio_1_1Edge.html" title="represents an edge of the graph">Edge</a> functor for abm graph simulation.  <a href="namespacemio.html#ad1ad0d867475e33172827e2bb10636dd">More...</a><br /></td></tr>
+<tr class="memdesc:ad1ad0d867475e33172827e2bb10636dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Edge functor for abm graph simulation.  <a href="namespacemio.html#ad1ad0d867475e33172827e2bb10636dd">More...</a><br /></td></tr>
 <tr class="separator:ad1ad0d867475e33172827e2bb10636dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3e2c35a0c697dfef367f948a6c06541f"><td class="memTemplParams" colspan="2">template&lt;class... History&gt; </td></tr>
 <tr class="memitem:a3e2c35a0c697dfef367f948a6c06541f"><td class="memTemplItemLeft" align="right" valign="top">GraphSimulation&lt; Graph&lt; ABMSimulationNode&lt; History... &gt;, ABMMobilityEdge&lt; History... &gt; &gt;, abm::TimePoint, abm::TimeSpan, void(*)(<a class="el" href="classmio_1_1abm_1_1TimePoint.html">mio::abm::TimePoint</a>, <a class="el" href="classmio_1_1abm_1_1TimeSpan.html">mio::abm::TimeSpan</a>, <a class="el" href="classmio_1_1ABMMobilityEdge.html">mio::ABMMobilityEdge</a>&lt; History... &gt; &amp;, <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; History... &gt; &amp;, <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; History... &gt; &amp;), void(*)(<a class="el" href="classmio_1_1abm_1_1TimePoint.html">mio::abm::TimePoint</a>, <a class="el" href="classmio_1_1abm_1_1TimeSpan.html">mio::abm::TimeSpan</a>, <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; History... &gt; &amp;)&gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a3e2c35a0c697dfef367f948a6c06541f">mio::make_abm_graph_sim</a> (abm::TimePoint t0, abm::TimeSpan dt, Graph&lt; ABMSimulationNode&lt; History... &gt;, ABMMobilityEdge&lt; History... &gt;&gt; &amp;&amp;graph)</td></tr>

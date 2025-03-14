@@ -1,27 +1,4 @@
 var searchData=
 [
-  ['mask_2ecpp_3053',['mask.cpp',['../mask_8cpp.html',1,'']]],
-  ['mask_2eh_3054',['mask.h',['../mask_8h.html',1,'']]],
-  ['mask_5ftype_2eh_3055',['mask_type.h',['../mask__type_8h.html',1,'']]],
-  ['matrix_5fshape_2ecpp_3056',['matrix_shape.cpp',['../matrix__shape_8cpp.html',1,'']]],
-  ['matrix_5fshape_2eh_3057',['matrix_shape.h',['../matrix__shape_8h.html',1,'']]],
-  ['memory_2eh_3058',['memory.h',['../memory_8h.html',1,'']]],
-  ['metapopulation_5fmobility_5finstant_2ecpp_3059',['metapopulation_mobility_instant.cpp',['../metapopulation__mobility__instant_8cpp.html',1,'']]],
-  ['metapopulation_5fmobility_5finstant_2eh_3060',['metapopulation_mobility_instant.h',['../metapopulation__mobility__instant_8h.html',1,'']]],
-  ['metapopulation_5fmobility_5fstochastic_2ecpp_3061',['metapopulation_mobility_stochastic.cpp',['../metapopulation__mobility__stochastic_8cpp.html',1,'']]],
-  ['metapopulation_5fmobility_5fstochastic_2eh_3062',['metapopulation_mobility_stochastic.h',['../metapopulation__mobility__stochastic_8h.html',1,'']]],
-  ['metaprogramming_2eh_3063',['metaprogramming.h',['../metaprogramming_8h.html',1,'']]],
-  ['miompi_2ecpp_3064',['miompi.cpp',['../miompi_8cpp.html',1,'']]],
-  ['miompi_2eh_3065',['miompi.h',['../miompi_8h.html',1,'']]],
-  ['mioomp_2eh_3066',['mioomp.h',['../mioomp_8h.html',1,'']]],
-  ['mobility_5fdata_2eh_3067',['mobility_data.h',['../mobility__data_8h.html',1,'']]],
-  ['mobility_5fio_2ecpp_3068',['mobility_io.cpp',['../mobility__io_8cpp.html',1,'']]],
-  ['mobility_5fio_2eh_3069',['mobility_io.h',['../mobility__io_8h.html',1,'']]],
-  ['mobility_5frules_2ecpp_3070',['mobility_rules.cpp',['../mobility__rules_8cpp.html',1,'']]],
-  ['mobility_5frules_2eh_3071',['mobility_rules.h',['../mobility__rules_8h.html',1,'']]],
-  ['model_2ecpp_3072',['model.cpp',['../smm_2model_8cpp.html',1,'(Global Namespace)'],['../sde__sirs_2model_8cpp.html',1,'(Global Namespace)'],['../sde__sir_2model_8cpp.html',1,'(Global Namespace)'],['../sde__seirvv_2model_8cpp.html',1,'(Global Namespace)'],['../ode__sir_2model_8cpp.html',1,'(Global Namespace)'],['../ode__seir_2model_8cpp.html',1,'(Global Namespace)'],['../ode__secirvvs_2model_8cpp.html',1,'(Global Namespace)'],['../ode__secirts_2model_8cpp.html',1,'(Global Namespace)'],['../ode__seair_2model_8cpp.html',1,'(Global Namespace)'],['../lct__secir_2model_8cpp.html',1,'(Global Namespace)'],['../ide__seir_2model_8cpp.html',1,'(Global Namespace)'],['../ide__secir_2model_8cpp.html',1,'(Global Namespace)'],['../glct__secir_2model_8cpp.html',1,'(Global Namespace)'],['../d__abm_2model_8cpp.html',1,'(Global Namespace)'],['../abm_2model_8cpp.html',1,'(Global Namespace)'],['../ode__secir_2model_8cpp.html',1,'(Global Namespace)']]],
-  ['model_2eh_3073',['model.h',['../lct__secir_2model_8h.html',1,'(Global Namespace)'],['../smm_2model_8h.html',1,'(Global Namespace)'],['../sde__sirs_2model_8h.html',1,'(Global Namespace)'],['../sde__sir_2model_8h.html',1,'(Global Namespace)'],['../sde__seirvv_2model_8h.html',1,'(Global Namespace)'],['../ode__sir_2model_8h.html',1,'(Global Namespace)'],['../ode__seir_2model_8h.html',1,'(Global Namespace)'],['../ode__secirvvs_2model_8h.html',1,'(Global Namespace)'],['../ode__secirts_2model_8h.html',1,'(Global Namespace)'],['../ode__secir_2model_8h.html',1,'(Global Namespace)'],['../ode__seair_2model_8h.html',1,'(Global Namespace)'],['../ide__seir_2model_8h.html',1,'(Global Namespace)'],['../ide__secir_2model_8h.html',1,'(Global Namespace)'],['../glct__secir_2model_8h.html',1,'(Global Namespace)'],['../d__abm_2model_8h.html',1,'(Global Namespace)'],['../abm_2model_8h.html',1,'(Global Namespace)']]],
-  ['model_5ffunctions_2ecpp_3074',['model_functions.cpp',['../model__functions_8cpp.html',1,'']]],
-  ['model_5ffunctions_2eh_3075',['model_functions.h',['../model__functions_8h.html',1,'']]],
-  ['modifydataframeseries_2epy_3076',['modifyDataframeSeries.py',['../modifyDataframeSeries_8py.html',1,'']]]
+  ['virus_5fvariant_2eh_1078',['virus_variant.h',['../virus__variant_8h.html',1,'']]]
 ];

@@ -70,7 +70,7 @@ $(function() {
 <div class="fragment"><div class="line">\partial_t p(X,Z;t) = G p(X,Z;t) + L p(X,Z;t)</div>
 </div><!-- fragment --><p> The operator $G$ defines the infection state adoptions and only acts on $Z$, while $L$ defines location changes, only acting on $X$. Infection state adoptions are modeled with independent Poisson processes given by adoption rate functions. Movement is modeled with independent diffusion processes. A temporal Gillespie algorithm is used for simulation, a direct method without rejection sampling. Therefore, $G$ and $L$ are not implemented explicitly, instead their effects are sampled via the <code>move</code> and <code>adoption_rate</code> functions, respectively.</p>
 <p>The Model class needs an Implementation class as template argument which provides the domain agents move and interact in. We here implemented a quadwell potential given in the class <a class="el" href="classQuadWellModel.html" title="Implementation of diffusive ABM, see dabm::Model.">QuadWellModel</a>, but any other suitable potential can be used as implementation.</p>
-<h1><a class="anchor" id="autotoc_md45"></a>
+<h1><a class="anchor" id="autotoc_md8"></a>
 Simulation</h1>
 <p>The simulation runs in discrete time steps. In every step we advance the model until the next infection state adoption event, then adopt the corresponding agent's infection state and draw a new waiting time until the next adoption event. If the waiting time until the next adoption event is bigger than the remaining time in the time step, we advance the model until the end of the time step.</p>
 <p>For a detailed description and application of the model, see:</p>

@@ -1,6 +1,22 @@
 var searchData=
 [
-  ['quadwellmodel_2718',['QuadWellModel',['../classQuadWellModel.html',1,'']]],
-  ['quarantined_2719',['Quarantined',['../structmio_1_1oseair_1_1Quarantined.html',1,'mio::oseair']]],
-  ['quarantineduration_2720',['QuarantineDuration',['../structmio_1_1abm_1_1QuarantineDuration.html',1,'mio::abm']]]
+  ['schoolratio_932',['SchoolRatio',['../structmio_1_1abm_1_1SchoolRatio.html',1,'mio::abm']]],
+  ['seasonality_933',['Seasonality',['../structmio_1_1glsecir_1_1Seasonality.html',1,'mio::glsecir::Seasonality'],['../structmio_1_1isecir_1_1Seasonality.html',1,'mio::isecir::Seasonality'],['../structmio_1_1lsecir_1_1Seasonality.html',1,'mio::lsecir::Seasonality'],['../structmio_1_1osecir_1_1Seasonality.html',1,'mio::osecir::Seasonality&lt; FP &gt;'],['../structmio_1_1osecirts_1_1Seasonality.html',1,'mio::osecirts::Seasonality&lt; FP &gt;'],['../structmio_1_1osecirvvs_1_1Seasonality.html',1,'mio::osecirvvs::Seasonality&lt; FP &gt;']]],
+  ['severeperinfectedsymptoms_934',['SeverePerInfectedSymptoms',['../structmio_1_1lsecir_1_1SeverePerInfectedSymptoms.html',1,'mio::lsecir::SeverePerInfectedSymptoms'],['../structmio_1_1osecir_1_1SeverePerInfectedSymptoms.html',1,'mio::osecir::SeverePerInfectedSymptoms&lt; FP &gt;'],['../structmio_1_1osecirts_1_1SeverePerInfectedSymptoms.html',1,'mio::osecirts::SeverePerInfectedSymptoms&lt; FP &gt;'],['../structmio_1_1osecirvvs_1_1SeverePerInfectedSymptoms.html',1,'mio::osecirvvs::SeverePerInfectedSymptoms&lt; FP &gt;']]],
+  ['severetocritical_935',['SevereToCritical',['../structmio_1_1abm_1_1SevereToCritical.html',1,'mio::abm']]],
+  ['severetodead_936',['SevereToDead',['../structmio_1_1abm_1_1SevereToDead.html',1,'mio::abm']]],
+  ['severetorecovered_937',['SevereToRecovered',['../structmio_1_1abm_1_1SevereToRecovered.html',1,'mio::abm']]],
+  ['severityprotectionfactor_938',['SeverityProtectionFactor',['../structmio_1_1abm_1_1SeverityProtectionFactor.html',1,'mio::abm']]],
+  ['simulation_939',['Simulation',['../classmio_1_1abm_1_1Simulation.html',1,'mio::abm::Simulation&lt; M &gt;'],['../classmio_1_1dabm_1_1Simulation.html',1,'mio::dabm::Simulation&lt; Implementation &gt;'],['../classmio_1_1isecir_1_1Simulation.html',1,'mio::isecir::Simulation'],['../classmio_1_1osecir_1_1Simulation.html',1,'mio::osecir::Simulation&lt; FP, BaseT &gt;'],['../classmio_1_1osecirts_1_1Simulation.html',1,'mio::osecirts::Simulation&lt; FP, BaseT &gt;'],['../classmio_1_1osecirvvs_1_1Simulation.html',1,'mio::osecirvvs::Simulation&lt; FP, BaseT &gt;'],['../classmio_1_1smm_1_1Simulation.html',1,'mio::smm::Simulation&lt; regions, Status &gt;'],['../classmio_1_1sseirvv_1_1Simulation.html',1,'mio::sseirvv::Simulation'],['../classmio_1_1ssir_1_1Simulation.html',1,'mio::ssir::Simulation'],['../classmio_1_1ssirs_1_1Simulation.html',1,'mio::ssirs::Simulation']]],
+  ['simulation_3c_20graphabmodel_20_3e_940',['Simulation&lt; GraphABModel &gt;',['../classmio_1_1abm_1_1Simulation.html',1,'mio::abm']]],
+  ['simulation_3c_20scalartype_2c_20model_20_3e_941',['Simulation&lt; ScalarType, Model &gt;',['../classmio_1_1abm_1_1Simulation.html',1,'mio::abm']]],
+  ['socialdistancing_942',['SocialDistancing',['../structmio_1_1oseair_1_1SocialDistancing.html',1,'mio::oseair']]],
+  ['socialeventrate_943',['SocialEventRate',['../structmio_1_1abm_1_1SocialEventRate.html',1,'mio::abm']]],
+  ['startday_944',['StartDay',['../structmio_1_1glsecir_1_1StartDay.html',1,'mio::glsecir::StartDay'],['../structmio_1_1isecir_1_1StartDay.html',1,'mio::isecir::StartDay'],['../structmio_1_1lsecir_1_1StartDay.html',1,'mio::lsecir::StartDay'],['../structmio_1_1osecir_1_1StartDay.html',1,'mio::osecir::StartDay'],['../structmio_1_1osecirts_1_1StartDay.html',1,'mio::osecirts::StartDay'],['../structmio_1_1osecirvvs_1_1StartDay.html',1,'mio::osecirvvs::StartDay']]],
+  ['startdaynewvariant_945',['StartDayNewVariant',['../structmio_1_1osecirts_1_1StartDayNewVariant.html',1,'mio::osecirts::StartDayNewVariant'],['../structmio_1_1osecirvvs_1_1StartDayNewVariant.html',1,'mio::osecirvvs::StartDayNewVariant']]],
+  ['startingprobabilitiesexposed_946',['StartingProbabilitiesExposed',['../structmio_1_1glsecir_1_1StartingProbabilitiesExposed.html',1,'mio::glsecir']]],
+  ['startingprobabilitiesinfectedcritical_947',['StartingProbabilitiesInfectedCritical',['../structmio_1_1glsecir_1_1StartingProbabilitiesInfectedCritical.html',1,'mio::glsecir']]],
+  ['startingprobabilitiesinfectednosymptoms_948',['StartingProbabilitiesInfectedNoSymptoms',['../structmio_1_1glsecir_1_1StartingProbabilitiesInfectedNoSymptoms.html',1,'mio::glsecir']]],
+  ['startingprobabilitiesinfectedsevere_949',['StartingProbabilitiesInfectedSevere',['../structmio_1_1glsecir_1_1StartingProbabilitiesInfectedSevere.html',1,'mio::glsecir']]],
+  ['startingprobabilitiesinfectedsymptoms_950',['StartingProbabilitiesInfectedSymptoms',['../structmio_1_1glsecir_1_1StartingProbabilitiesInfectedSymptoms.html',1,'mio::glsecir']]]
 ];

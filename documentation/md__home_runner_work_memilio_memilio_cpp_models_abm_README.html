@@ -67,7 +67,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>This module models and simulates the epidemic using an agent-based model (<em>ABM</em>) approach. Unlike the <a class="el" href="md__home_runner_work_memilio_memilio_cpp_models_ode_secir_README.html">SECIR</a> compartmental model that uses a system of ODEs, this model simulates the spread of COVID-19 in a population with discrete persons (the agents) moving throughout locations in the model and interacting with (infecting) each other.</p>
-<h1><a class="anchor" id="autotoc_md38"></a>
+<h1><a class="anchor" id="autotoc_md1"></a>
 Structure</h1>
 <p>The model consists of the following major classes:</p>
 <ol type="1">
@@ -77,26 +77,25 @@ Structure</h1>
 <li>Model: collection of all persons and locations. It also holds information about the testing strategy of the simulation and holds the rules for the mobility phase.</li>
 <li>Simulation: runs the simulation and stores results.</li>
 </ol>
-<h1><a class="anchor" id="autotoc_md39"></a>
+<h1><a class="anchor" id="autotoc_md2"></a>
 Simulation</h1>
 <p>The simulation runs in discrete time steps. Each step has two phases, an interaction phase and a mobility phase.</p>
-<h2><a class="anchor" id="autotoc_md40"></a>
+<h2><a class="anchor" id="autotoc_md3"></a>
 Interaction Phase</h2>
 <p>In this phase, each person interacts with the other persons at the same location. This interaction determines the transmission of the disease. A susceptible person can become infected by contact with an infected person. The probability of infection depends on a multitude of factors, such as the viral load and infectiousness of the infected and the immunity level of the susceptible person.</p>
-<h2><a class="anchor" id="autotoc_md41"></a>
+<h2><a class="anchor" id="autotoc_md4"></a>
 Mobility Phase</h2>
 <p>During the mobility phase, each person may change their location. Mobility follows complex <a href="../abm/mobility_rules.cpp">rules</a>, considering the current location, time of day, and properties of the person (e.g. age). Some location changes are deterministic and regular (e.g. going to work), others are random (e.g. going to shopping or to a social event in the evening/on the weekend). When agents are infected, they are quarantined and cannot change their location. You can restrict some mobility rules by allowing only a proportion of people to enter specific locations.</p>
 <p>Another way of mobility we use in the simulation of Braunschweig (simulations/abm_braunschweig.cpp) is using trips. A trip consists of the ID of the person that performs this trip, a time point when this trip is performed and where the person is heading to. At the beginning of the simulation, a list with all trips is initialized and followed during the simulation. There can be different trips on the weekend than during the week, but other than that, the agents do the same trips every day. As before, agents that are in quarantine or in the hospital cannot change their location.</p>
-<h1><a class="anchor" id="autotoc_md42"></a>
+<h1><a class="anchor" id="autotoc_md5"></a>
 Get Started</h1>
-<p>This section gives an introduction to how to use the ABM and set up your own simulation. For a quick overview, can find a full example in the <a href="../../examples/abm_minimal.cpp">ABM minimal example</a> and a more detailed Doxygen documentation <a href="https://scicompmod.github.io/memilio/documentation/index.html">here</a>. For a guide on installation and running the simulations and examples, see this <a class="el" href="md__home_runner_work_memilio_memilio_cpp_README.html">README</a>.</p>
+<p>This section gives an introduction to how to use the ABM and set up your own simulation. For a quick overview, can find a full example in the <a href="../../examples/abm_minimal.cpp">ABM minimal example</a> and a more detailed Doxygen documentation <a href="https://scicompmod.github.io/memilio/documentation/index.html">here</a>. For a guide on installation and running the simulations and examples, see this README.</p>
 <p>Every person in the ABM belongs to an AgeGroup, which we can define as follows: <br  />
 </p>
 <div class="fragment"><div class="line"><span class="keywordtype">size_t</span> num_age_groups         = 4;  </div>
-<div class="line"><span class="keyword">const</span> <span class="keyword">auto</span> age_group_0_to_4   = <a class="code" href="structmio_1_1AgeGroup.html">mio::AgeGroup</a>(0);  </div>
-<div class="line"><span class="keyword">const</span> <span class="keyword">auto</span> age_group_5_to_14  = <a class="code" href="structmio_1_1AgeGroup.html">mio::AgeGroup</a>(1);  </div>
+<div class="line"><span class="keyword">const</span> <span class="keyword">auto</span> age_group_0_to_4   = mio::AgeGroup(0);  </div>
+<div class="line"><span class="keyword">const</span> <span class="keyword">auto</span> age_group_5_to_14  = mio::AgeGroup(1);  </div>
 <div class="line">...                           = ...  </div>
-<div class="ttc" id="astructmio_1_1AgeGroup_html"><div class="ttname"><a href="structmio_1_1AgeGroup.html">mio::AgeGroup</a></div><div class="ttdoc">The AgeGroup struct is used as a dynamically sized tag for all age dependent categories.</div><div class="ttdef"><b>Definition:</b> age_group.h:32</div></div>
 </div><!-- fragment --><p>Note that every age group has to have values strictly smaller than the number of age groups <code>num_age_groups</code>. <br  />
  With this number we create an empty model: <br  />
 </p>
@@ -167,18 +166,15 @@ Get Started</h1>
 </div><!-- fragment --><p>Then we run the simulation.</p>
 <div class="fragment"><div class="line">sim.advance(<a class="code" href="classmio_1_1abm_1_1TimePoint.html">mio::abm::TimePoint</a>(0) + <a class="code" href="namespacemio_1_1abm.html#ac50d53d4d672f332b55133479478fe6a">mio::abm::days</a>(30));</div>
 </div><!-- fragment --><p>Alternitavely if we want to track things in the simulation, we need to set up a <a href="../../memilio/io/README.md#the-history-object">history</a>, for example, to track all the Infection states of each simulation step.</p>
-<div class="fragment"><div class="line"><a class="code" href="classmio_1_1History.html">mio::History&lt;mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState&gt;</a> history;</div>
-<div class="ttc" id="aclassmio_1_1History_html"><div class="ttname"><a href="classmio_1_1History.html">mio::History</a></div><div class="ttdoc">History class that handles writers and loggers.</div><div class="ttdef"><b>Definition:</b> history.h:71</div></div>
+<div class="fragment"><div class="line">mio::History&lt;mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState&gt; history;</div>
 </div><!-- fragment --><p>Then we can run the simulation with the history object and one can access the data it through get_log.</p>
 <div class="fragment"><div class="line">sim.advance(tmax, history);</div>
-<div class="line"><span class="keyword">auto</span> <a class="code" href="namespacead_1_1internal.html#ae15b28df45545c50a0800df386cda9be">log</a> = history.<a class="code" href="classmio_1_1History.html#a20f07b05d192e015c4f5cfff0c48c7f5">get_log</a>();</div>
-<div class="ttc" id="aclassmio_1_1History_html_a20f07b05d192e015c4f5cfff0c48c7f5"><div class="ttname"><a href="classmio_1_1History.html#a20f07b05d192e015c4f5cfff0c48c7f5">mio::History::get_log</a></div><div class="ttdeci">const WriteWrapper::Data &amp; get_log() const</div><div class="ttdoc">Get the data object.</div><div class="ttdef"><b>Definition:</b> history.h:107</div></div>
-<div class="ttc" id="anamespacead_1_1internal_html_ae15b28df45545c50a0800df386cda9be"><div class="ttname"><a href="namespacead_1_1internal.html#ae15b28df45545c50a0800df386cda9be">ad::internal::log</a></div><div class="ttdeci">ad::internal::unary_intermediate&lt; AD_TAPE_REAL, ad::internal::active_type&lt; AD_TAPE_REAL, DATA_HANDLER_1 &gt;, ad::operations::ad_log&lt; AD_TAPE_REAL &gt; &gt; log(const ad::internal::active_type&lt; AD_TAPE_REAL, DATA_HANDLER_1 &gt; &amp;x1)</div><div class="ttdef"><b>Definition:</b> ad.hpp:1034</div></div>
+<div class="line"><span class="keyword">auto</span> log = history.get_log();</div>
 </div><!-- fragment --><p>Finally we can print the data to a text file.</p>
 <div class="fragment"><div class="line">std::ofstream outfile(<span class="stringliteral">&quot;abm_minimal.txt&quot;</span>);</div>
-<div class="line">std::get&lt;0&gt;(<a class="code" href="namespacead_1_1internal.html#ae15b28df45545c50a0800df386cda9be">log</a>).print_table({<span class="stringliteral">&quot;S&quot;</span>, <span class="stringliteral">&quot;E&quot;</span>, <span class="stringliteral">&quot;I_NS&quot;</span>, <span class="stringliteral">&quot;I_Sy&quot;</span>, <span class="stringliteral">&quot;I_Sev&quot;</span>, <span class="stringliteral">&quot;I_Crit&quot;</span>, <span class="stringliteral">&quot;R&quot;</span>, <span class="stringliteral">&quot;D&quot;</span>}, 7, 4, outfile);</div>
+<div class="line">std::get&lt;0&gt;(log).print_table({<span class="stringliteral">&quot;S&quot;</span>, <span class="stringliteral">&quot;E&quot;</span>, <span class="stringliteral">&quot;I_NS&quot;</span>, <span class="stringliteral">&quot;I_Sy&quot;</span>, <span class="stringliteral">&quot;I_Sev&quot;</span>, <span class="stringliteral">&quot;I_Crit&quot;</span>, <span class="stringliteral">&quot;R&quot;</span>, <span class="stringliteral">&quot;D&quot;</span>}, 7, 4, outfile);</div>
 <div class="line">std::cout &lt;&lt; <span class="stringliteral">&quot;Results written to abm_minimal.txt&quot;</span> &lt;&lt; std::endl;</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md43"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md6"></a>
 Current Limitations</h1>
 <p>Currently, a few things are not yet implemented, such as:</p>
 <ul>

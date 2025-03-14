@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['naturalinfection_4810',['NaturalInfection',['../namespacemio_1_1abm.html#a3bf2b22aabaa39684a4ef82d9a064649a7274449ce8f5d4a4a17e3a73944863f9',1,'mio::abm']]],
-  ['none_4811',['None',['../namespacemio_1_1abm.html#ae5dfbb686f6e9d6e642193be9af23424a6adf97f83acf6453d4a6a4b1070f3754',1,'mio::abm']]],
-  ['noprotection_4812',['NoProtection',['../namespacemio_1_1abm.html#a3bf2b22aabaa39684a4ef82d9a064649a18f2c901a0893097e2ef30ac53f4086a',1,'mio::abm']]]
+  ['other_1653',['Other',['../namespacemio_1_1abm.html#a57d768cc04c782f46491781226920ff9a6311ae17c1ee52b36e68aaf4ad066387',1,'mio::abm']]],
+  ['otheractivity_1654',['OtherActivity',['../namespacemio_1_1abm.html#a87b19348d6ba20fbe8bcb16485029ce5aa27c46eb533c280ed820f1d8524342ce',1,'mio::abm']]]
 ];
