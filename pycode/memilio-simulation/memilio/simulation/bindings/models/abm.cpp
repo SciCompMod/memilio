@@ -26,6 +26,7 @@
 #include "memilio/io/io.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
+#include "memilio/utils/random_number_generator.h"
 #include "pybind_util.h"
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
@@ -50,6 +51,7 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <utility>
 #include <vector>
 #include <fstream>
 #include <unordered_set>
@@ -673,7 +675,7 @@ void set_wastewater_ids(std::string mapping_file, mio::abm::Model& model)
     model.set_wastewater_ids(loc_to_tan_id);
 }
 
-void initialize_model(mio::abm::Model& model, std::string person_file, size_t num_hospitals, std::string outfile)
+void initialize_model(mio::abm::Model& model, std::string person_file, std::string hosp_file, std::string outfile)
 {
     // Mapping of ABM locations to traffic areas/cells
     // - each traffic area is mapped to a vector containing strings with LocationType and LocationId
@@ -686,7 +688,75 @@ void initialize_model(mio::abm::Model& model, std::string person_file, size_t nu
     std::map<int, mio::abm::LocationId> work_locations;
     std::vector<mio::abm::LocationId> hospitals;
     std::vector<mio::abm::LocationId> icus;
+    std::map<std::pair<mio::abm::LocationType, mio::abm::LocationId>, mio::abm::LocationId> hosp_to_icu;
+    std::vector<double> hospital_weights;
+    std::vector<double> icu_weights;
 
+    // Read in hospitals
+    const boost::filesystem::path h = hosp_file;
+    if (!boost::filesystem::exists(h)) {
+        mio::log_error("Cannot read in data. Hospital file does not exist.");
+    }
+    // File pointer
+    std::fstream fin_hosp;
+    // Open an existing file
+    fin_hosp.open(hosp_file, std::ios::in);
+    std::vector<int32_t> row_hosp;
+    std::vector<std::string> row_string_hosp;
+    std::string line_hosp;
+    // Read the Titles from the Data file
+    std::getline(fin_hosp, line_hosp);
+    line_hosp.erase(std::remove(line_hosp.begin(), line_hosp.end(), '\r'), line_hosp.end());
+    std::vector<std::string> titles_hosp;
+    boost::split(titles_hosp, line_hosp, boost::is_any_of(","));
+    uint32_t count_of_titles_hosp              = 0;
+    std::map<std::string, uint32_t> index_hosp = {};
+    for (auto const& title : titles_hosp) {
+        index_hosp.insert({title, count_of_titles_hosp});
+        row_string_hosp.push_back(title);
+        count_of_titles_hosp++;
+    }
+    while (std::getline(fin_hosp, line_hosp)) {
+        row_hosp.clear();
+
+        // read columns in this row
+        split_line(line_hosp, &row_hosp);
+        line_hosp.erase(std::remove(line_hosp.begin(), line_hosp.end(), '\r'), line_hosp.end());
+
+        int beds          = row_hosp[index_hosp["beds"]];
+        int icu_beds      = row_hosp[index_hosp["icu_beds"]];
+        int hospital_zone = row_hosp[index_hosp["hospital_zone"]];
+        auto hosp         = model.add_location(mio::abm::LocationType::Hospital);
+        hospitals.push_back(hosp);
+        hospital_weights.push_back(beds);
+        std::string loc =
+            "0" + std::to_string(static_cast<int>(mio::abm::LocationType::Hospital)) + std::to_string(hosp.get());
+        auto zone_iter = loc_area_mapping.find(hospital_zone);
+        if (zone_iter == loc_area_mapping.end()) {
+            loc_area_mapping.insert({hospital_zone, {loc}});
+        }
+        else {
+            loc_area_mapping[hospital_zone].push_back(loc);
+        }
+        // Add icu if there is one
+        if (icu_beds > 0) {
+            auto icu = model.add_location(mio::abm::LocationType::ICU);
+            icus.push_back(icu);
+            icu_weights.push_back(icu_beds);
+            hosp_to_icu.insert({std::make_pair(mio::abm::LocationType::Hospital, hosp), icu});
+            std::string loc_icu =
+                "0" + std::to_string(static_cast<int>(mio::abm::LocationType::ICU)) + std::to_string(icu.get());
+            zone_iter = loc_area_mapping.find(hospital_zone);
+            if (zone_iter == loc_area_mapping.end()) {
+                loc_area_mapping.insert({hospital_zone, {loc_icu}});
+            }
+            else {
+                loc_area_mapping[hospital_zone].push_back(loc_icu);
+            }
+        }
+    }
+
+    // Read in persons
     const boost::filesystem::path p = person_file;
     if (!boost::filesystem::exists(p)) {
         mio::log_error("Cannot read in data. File does not exist.");
@@ -711,14 +781,6 @@ void initialize_model(mio::abm::Model& model, std::string person_file, size_t nu
         index.insert({title, count_of_titles});
         row_string.push_back(title);
         count_of_titles++;
-    }
-
-    // Create hospitals and ICU
-    for (auto i = size_t(0); i < num_hospitals; ++i) {
-        auto hosp = model.add_location(mio::abm::LocationType::Hospital);
-        auto icu  = model.add_location(mio::abm::LocationType::ICU);
-        hospitals.push_back(hosp);
-        icus.push_back(icu);
     }
 
     while (std::getline(fin, line)) {
@@ -884,23 +946,19 @@ void initialize_model(mio::abm::Model& model, std::string person_file, size_t nu
             person.set_assigned_location(mio::abm::LocationType::Work, work);
         }
         // Assign Hospital and ICU
-        std::vector<mio::abm::LocationId>::iterator randItHosp = hospitals.begin();
-        std::advance(randItHosp, std::rand() % hospitals.size());
-        person.set_assigned_location(mio::abm::LocationType::Hospital, *randItHosp);
-        std::vector<mio::abm::LocationId>::iterator randItIcu = icus.begin();
-        std::advance(randItIcu, std::rand() % icus.size());
-        person.set_assigned_location(mio::abm::LocationType::ICU, *randItIcu);
+        size_t hosp = mio::DiscreteDistribution<size_t>::get_instance()(model.get_rng(), hospital_weights);
+        person.set_assigned_location(mio::abm::LocationType::Hospital, hospitals[hosp]);
+        if (hosp_to_icu.count(std::make_pair(mio::abm::LocationType::Hospital, hospitals[hosp])) > 0) {
+            person.set_assigned_location(
+                mio::abm::LocationType::ICU,
+                hosp_to_icu[std::make_pair(mio::abm::LocationType::Hospital, hospitals[hosp])]);
+        }
+        else {
+            size_t icu = mio::DiscreteDistribution<size_t>::get_instance()(model.get_rng(), icu_weights);
+            person.set_assigned_location(mio::abm::LocationType::ICU, icus[icu]);
+        }
     }
 
-    // Add hospitals to Mapping
-    for (size_t i = size_t(0); i < hospitals.size(); ++i) {
-        auto it = loc_area_mapping.begin();
-        std::advance(it, rand() % loc_area_mapping.size());
-        loc_area_mapping[it->first].push_back("0" + std::to_string(static_cast<int>(mio::abm::LocationType::Hospital)) +
-                                              std::to_string(hospitals[i].get()));
-        loc_area_mapping[it->first].push_back("0" + std::to_string(static_cast<int>(mio::abm::LocationType::ICU)) +
-                                              std::to_string(icus[i].get()));
-    }
     write_mapping_to_file(outfile, loc_area_mapping);
 }
 
@@ -1123,6 +1181,8 @@ PYBIND11_MODULE(_simulation_abm, m)
              py::return_value_policy::reference_internal)
         .def("add_infection_rate_damping", &mio::abm::Model::add_infection_rate_damping, py::arg("t"),
              py::arg("factor"))
+        .def("add_location_closure", &mio::abm::Model::add_location_closure, py::arg("t"), py::arg("loc_type"),
+             py::arg("percentage"))
         .def("get_rng", &mio::abm::Model::get_rng, py::return_value_policy::reference_internal)
         .def_property_readonly("locations", py::overload_cast<>(&mio::abm::Model::get_locations, py::const_),
                                py::keep_alive<1, 0>{}) //keep this model alive while contents are referenced in ranges
@@ -1251,6 +1311,10 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     m.def("set_AgeGroupGoToWork", [](mio::abm::Parameters& infection_params, mio::AgeGroup age) {
         infection_params.get<mio::abm::AgeGroupGotoWork>()[age] = true;
+    });
+
+    m.def("set_AgeGroupGoToShop", [](mio::abm::Parameters& infection_params, mio::AgeGroup age) {
+        infection_params.get<mio::abm::AgeGroupGotoShop>()[age] = true;
     });
 
     m.def(

@@ -592,7 +592,7 @@ def num_locations(model):
 
 def run_abm_simulation(sim_num):
     input_path = sys.path[0] + '/input/'
-    output_path = sys.path[0] + '/output/'
+    output_path = sys.path[0] + '/output/wo_closure/'
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(sim_num)
     # starting time point
@@ -603,7 +603,8 @@ def run_abm_simulation(sim_num):
     sim = abm.Simulation(t0, num_age_groups)
     start_init = time.time()
     # initialize model
-    abm.initialize_model(sim.model, input_path + 'persons.csv', 50, os.path.join(
+    abm.initialize_model(sim.model, input_path + 'persons_small.csv', os.path.join(
+        input_path, 'hospitals.csv'), os.path.join(
         output_path, str(sim_num) + '_mapping.txt'))
 
     # read infection parameters
@@ -617,9 +618,24 @@ def run_abm_simulation(sim_num):
     abm.set_AgeGroupGoToSchool(sim.model.parameters, age_group_5_to_15)
     abm.set_AgeGroupGoToWork(sim.model.parameters, age_group_16_to_34)
     abm.set_AgeGroupGoToWork(sim.model.parameters, age_group_35_to_59)
+    # set age groups that go to shop
+    abm.set_AgeGroupGoToShop(sim.model.parameters, age_group_5_to_15)
+    abm.set_AgeGroupGoToShop(sim.model.parameters, age_group_16_to_34)
+    abm.set_AgeGroupGoToShop(sim.model.parameters, age_group_35_to_59)
+    abm.set_AgeGroupGoToShop(sim.model.parameters, age_group_60_to_79)
+    abm.set_AgeGroupGoToShop(sim.model.parameters, age_group_80_plus)
     # add dampings
-    sim.model.add_infection_rate_damping(
-        abm.TimePoint(abm.days(5).seconds), 0.2)
+    # sim.model.add_infection_rate_damping(
+    #     abm.TimePoint(abm.days(5).seconds), 0.2)
+    # add closure for work, event, shop and school locations at day 5
+    sim.model.add_location_closure(abm.TimePoint(
+        abm.days(5).seconds), abm.LocationType.Work, 1.0)
+    sim.model.add_location_closure(abm.TimePoint(
+        abm.days(5).seconds), abm.LocationType.School, 1.0)
+    sim.model.add_location_closure(abm.TimePoint(
+        abm.days(5).seconds), abm.LocationType.SocialEvent, 1.0)
+    sim.model.add_location_closure(abm.TimePoint(
+        abm.days(5).seconds), abm.LocationType.BasicsShop, 1.0)
     # assign initial infection states according to distribution
     assign_infection_states(sim.model, t0, 0.002, 0.005,
                             0.0029, 0.0001, 0.0, 0.0)
@@ -709,6 +725,8 @@ if __name__ == "__main__":
         'abm demonstrator',
         description='Example demonstrating the agent-based model for a synthetic population of Munich.')
     args = arg_parser.parse_args()
+    f = h5py.File(sys.path[0] + '/output/wo_closure/0_output_v3.h5', 'r')
+    f1 = h5py.File(sys.path[0] + '/output/w_closure/0_output_v3.h5', 'r')
     # set LogLevel
     mio.abm.set_log_level_warn()
     for i in range(0, 1):

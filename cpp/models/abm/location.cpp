@@ -33,6 +33,7 @@ Location::Location(LocationType loc_type, LocationId loc_id, size_t num_agegroup
     , m_parameters(num_agegroups)
     , m_cells(num_cells)
     , m_required_mask(MaskType::None)
+    , m_closed(false)
 {
     assert(num_cells > 0 && "Number of cells has to be larger than 0.");
 }

@@ -288,6 +288,28 @@ public:
         return m_wastewater_id;
     }
 
+    /**
+     * @brief Get the information whether the location is closed and persons cannot enter it.
+     * @return True if location is closed.
+     */
+    bool is_closed() const
+    {
+        return m_closed;
+    }
+
+    /**
+     * @brief Close location.
+     */
+    void close_location()
+    {
+        m_closed = true;
+    }
+
+    void open_location()
+    {
+        m_closed = false;
+    }
+
 private:
     friend DefaultFactory<Location>;
     Location() = default;
@@ -299,6 +321,7 @@ private:
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
     int m_wastewater_id; ///< Only used for INSIDe Munich Demonstrator. Id of wastewater zone the location is in.
+    bool m_closed; ///< Only used for INSIDe Munich Demonstrator. If Location is closed, no agents can enter it.
 };
 
 } // namespace abm

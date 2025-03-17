@@ -21,9 +21,11 @@
 #include "abm/location_id.h"
 #include "abm/location_type.h"
 #include "abm/intervention_type.h"
+#include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/mobility_rules.h"
+#include "abm/time.h"
 #include "abm/virus_variant.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/compiler_diagnostics.h"
@@ -80,6 +82,7 @@ void Model::evolve(TimePoint t, TimeSpan dt)
     log_info("ABM Model interaction.");
     interaction(t, dt);
     log_info("ABM Model mobility.");
+    check_close_locations(t);
     perform_mobility(t, dt);
 }
 
@@ -102,8 +105,11 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
 
         auto try_mobility_rule = [&](auto rule) -> bool {
             // run mobility rule and check if change of location can actually happen
-            auto target_type                  = rule(personal_rng, person, t, dt, parameters);
-            const Location& target_location   = get_location(find_location(target_type, person_id));
+            auto target_type                = rule(personal_rng, person, t, dt, parameters);
+            const Location& target_location = get_location(find_location(target_type, person_id));
+            if (target_location.is_closed()) {
+                return false;
+            }
             const LocationId current_location = person.get_location();
 
             // the Person cannot move if they do not wear mask as required at targeted location
@@ -386,6 +392,61 @@ TestingStrategy& Model::get_testing_strategy()
 const TestingStrategy& Model::get_testing_strategy() const
 {
     return m_testing_strategy;
+}
+
+void Model::open_all_locations()
+{
+    for (auto& loc : m_locations) {
+        loc.open_location();
+    }
+}
+
+void Model::open_locations_of_type(LocationType type)
+{
+    for (auto& loc : m_locations) {
+        if (loc.get_type() == type) {
+            loc.open_location();
+        }
+    }
+}
+
+void Model::check_close_locations(TimePoint t)
+{
+    // check whether location closure should be applied
+    auto& closures = parameters.get<LocationClosures>();
+    if (closures.size() > 0) {
+        log_info("here1");
+        // check if closure needs to be applied
+        if (std::get<0>(*closures.begin()) <= t) {
+            log_info("here2");
+            //first remove old closure
+            open_locations_of_type(std::get<1>(*closures.begin()));
+            log_info("here3");
+            // Distribution used to draw whether location is closed
+            auto& uniform_dist = UniformDistribution<double>::get_instance();
+            double p;
+            log_info("Size of locations: {}", m_locations.size());
+            log_info("Closure type: {}", static_cast<int>(std::get<1>(*closures.begin())));
+            //Apply new closure
+            for (auto& loc : m_locations) {
+                if (std::get<1>(*closures.begin()) == loc.get_type()) {
+                    //log_info("here4");
+                    p = uniform_dist(m_rng);
+                    if (p < std::get<2>(*closures.begin())) {
+                        // close location
+                        loc.close_location();
+                    }
+                    //log_info("here5");
+                }
+            }
+            log_info("here6");
+            // log_info("Closure applied at day t = {} for location type {}.", t.days(),
+            //          static_cast<int>(std::get<1>(*it)));
+            //Remove closure
+            closures.erase(closures.begin());
+            log_info("here7");
+        }
+    }
 }
 
 } // namespace abm

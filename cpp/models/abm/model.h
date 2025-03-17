@@ -483,6 +483,11 @@ public:
         }
     }
 
+    void add_location_closure(TimePoint t, LocationType loc_type, double percentage)
+    {
+        parameters.get<LocationClosures>().push_back(std::make_tuple(t, loc_type, percentage));
+    }
+
 private:
     /**
      * @brief Person%s interact at their Location and may become infected.
@@ -509,6 +514,22 @@ private:
      * @param[in] dt The duration of the simulation step.
      */
     void compute_exposure_caches(TimePoint t, TimeSpan dt);
+
+    /**
+     * @brief Opens all locations in the model
+     */
+    void open_all_locations();
+
+    /**
+     * @brief Opens all locations of a given type in the model
+     */
+    void open_locations_of_type(LocationType type);
+
+    /**
+     * @brief Check whether locations shall be closed and close the corresponding locations.
+     * @param[in] t Timepoint at which location closures are checked.
+     */
+    void check_close_locations(TimePoint t);
 
     mutable Eigen::Matrix<std::atomic_int_fast32_t, Eigen::Dynamic, 1>
         m_local_population_cache; ///< Current number of Persons in a given location.

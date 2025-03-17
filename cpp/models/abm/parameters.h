@@ -20,6 +20,7 @@
 #ifndef MIO_ABM_PARAMETERS_H
 #define MIO_ABM_PARAMETERS_H
 
+#include "abm/location_type.h"
 #include "abm/mask_type.h"
 #include "abm/time.h"
 #include "abm/virus_variant.h"
@@ -36,6 +37,7 @@
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/contact_matrix.h"
+#include <limits>
 #include <utility>
 #include <vector>
 
@@ -730,6 +732,38 @@ struct AgeGroupGotoWork {
     }
 };
 
+/**
+ * @brief The set of AgeGroups that can go to work.
+ */
+struct AgeGroupGotoShop {
+    using Type = CustomIndexArray<bool, AgeGroup>;
+    static Type get_default(AgeGroup num_agegroups)
+    {
+        return Type(num_agegroups, false);
+    }
+    static std::string name()
+    {
+        return "AgeGroupGotoShop";
+    }
+};
+
+/**
+ * @brief Determines location closures. 
+ * x% (3rd tuple value) of locations of the given type are closed at the given TimePoint.
+ */
+struct LocationClosures {
+    using Type = std::vector<std::tuple<TimePoint, LocationType, double>>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return Type(std::vector<std::tuple<TimePoint, LocationType, double>>{
+            std::make_tuple(TimePoint(0), LocationType::Cemetery, 0.)}); //Julia
+    }
+    static std::string name()
+    {
+        return "LocationClosures";
+    }
+};
+
 using ParametersBase =
     ParameterSet<IncubationPeriod, TimeInfectedNoSymptomsToSymptoms, TimeInfectedNoSymptomsToRecovered,
                  TimeInfectedSymptomsToSevere, TimeInfectedSymptomsToRecovered, TimeInfectedSevereToCritical,
@@ -740,8 +774,8 @@ using ParametersBase =
                  AerosolTransmissionRates, LockdownDate, QuarantineDuration, SocialEventRate, BasicShoppingRate,
                  WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum, ReturnFromWorkTimeMinimum,
                  ReturnFromWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, ReturnFromSchoolTimeMinimum,
-                 ReturnFromSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor,
-                 SeverityProtectionFactor, HighViralLoadProtectionFactor, TestData>;
+                 ReturnFromSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork, AgeGroupGotoShop, LocationClosures,
+                 InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor, TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
