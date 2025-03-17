@@ -592,7 +592,7 @@ def num_locations(model):
 
 def run_abm_simulation(sim_num):
     input_path = sys.path[0] + '/input/'
-    output_path = sys.path[0] + '/output/wo_closure/'
+    output_path = sys.path[0] + '/output/'
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(sim_num)
     # starting time point
@@ -603,7 +603,7 @@ def run_abm_simulation(sim_num):
     sim = abm.Simulation(t0, num_age_groups)
     start_init = time.time()
     # initialize model
-    abm.initialize_model(sim.model, input_path + 'persons_small.csv', os.path.join(
+    abm.initialize_model(sim.model, input_path + 'persons.csv', os.path.join(
         input_path, 'hospitals.csv'), os.path.join(
         output_path, str(sim_num) + '_mapping.txt'))
 
@@ -725,8 +725,7 @@ if __name__ == "__main__":
         'abm demonstrator',
         description='Example demonstrating the agent-based model for a synthetic population of Munich.')
     args = arg_parser.parse_args()
-    f = h5py.File(sys.path[0] + '/output/wo_closure/0_output_v3.h5', 'r')
-    f1 = h5py.File(sys.path[0] + '/output/w_closure/0_output_v3.h5', 'r')
+
     # set LogLevel
     mio.abm.set_log_level_warn()
     for i in range(0, 1):
