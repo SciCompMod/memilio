@@ -1,10 +1,10 @@
-C++ Interface
-=============
+Python Interface
+================
 
 
 .. toctree::
    :maxdepth: 1
-   :caption: C++ Interface
+   :caption: Python Interface
 
    model_usage
    model_creation

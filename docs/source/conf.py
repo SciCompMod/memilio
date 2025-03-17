@@ -76,13 +76,15 @@ breathe_default_project = "MEmilio"
 templates_path = ['_templates']
 # -- Options for HTML output
 
-# html_static_path = ['_static']
-# html_css_files = [
-#     'custom.css',
-# ]
+html_static_path = ['_static']
+html_css_files = [
+    'custom.css',
+]
 # html_js_files = [
 #     'custom.js',
 # ]
+
+maximum_signature_line_length = 40
 
 html_theme = 'sphinx_rtd_theme'
 html_logo = "../memilio-small.png"

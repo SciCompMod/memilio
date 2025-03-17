@@ -23,6 +23,6 @@ For example:
 >>> import memilio.epidata import progress_indicator
 
 
-Other examples can be found in the :doc:`models` page.
+Other examples can be found in the :doc:`models/index` page.
 
 

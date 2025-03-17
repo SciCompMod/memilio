@@ -6,11 +6,9 @@ The diffusive ABM realizes agent movement through a diffusion process with disea
 The mobility-based ABM is much more advanced and realizes agent movement between discrete locations by either mobility rules or so-called trips.
 Additionally, agents have much more features e.g. an individual infection history as well as features related to quarantine or immunization.
 
-Contents
---------
 
 .. toctree::
-   :maxdepth: 1
+    :maxdepth: 1
 
     mobility_based_abm
     diffusive_abm

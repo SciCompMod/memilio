@@ -1,11 +1,13 @@
-Contents
---------
+Model Creation
+==============
+
+
 
 .. toctree::
    :maxdepth: 1
 
-    structure
-    ode
-    sde
-    ide
+   structure
+   ode
+   sde
+   ide
     

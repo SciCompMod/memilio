@@ -1,5 +1,6 @@
-Contents
---------
+Model Creation
+==============
+
 
 .. toctree::
    :maxdepth: 1
