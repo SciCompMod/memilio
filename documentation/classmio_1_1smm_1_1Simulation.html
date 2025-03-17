@@ -80,7 +80,7 @@ $(function() {
 <p>A specialized <a class="el" href="classmio_1_1smm_1_1Simulation.html" title="A specialized Simulation for mio::smm::Model.">Simulation</a> for <a class="el" href="classmio_1_1smm_1_1Model.html" title="Stochastic Metapopulation Model.">mio::smm::Model</a>.  
  <a href="classmio_1_1smm_1_1Simulation.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="smm_2simulation_8h_source.html">simulation.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="models_2smm_2simulation_8h_source.html">simulation.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
@@ -89,7 +89,7 @@ Public Types</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a12a6f7b3d4405fcd3a043798243616c6"><td class="memItemLeft" align="right" valign="top">Eigen::Ref&lt; Eigen::VectorXd &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a12a6f7b3d4405fcd3a043798243616c6">advance</a> (ScalarType tmax)</td></tr>
+<tr class="memitem:a12a6f7b3d4405fcd3a043798243616c6"><td class="memItemLeft" align="right" valign="top">Eigen::Ref&lt; Eigen::VectorXd &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a12a6f7b3d4405fcd3a043798243616c6">advance</a> (<a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> tmax)</td></tr>
 <tr class="memdesc:a12a6f7b3d4405fcd3a043798243616c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Advance simulation to tmax.  <a href="classmio_1_1smm_1_1Simulation.html#a12a6f7b3d4405fcd3a043798243616c6">More...</a><br /></td></tr>
 <tr class="separator:a12a6f7b3d4405fcd3a043798243616c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac824a4158758a239e24dc78d2926ad9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a2ae2cf1fe1298b7f83d0a94c79b655f7">Model</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#aac824a4158758a239e24dc78d2926ad9">get_model</a> ()</td></tr>
@@ -97,12 +97,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:af7d02fc1eaf849faf001d07b6f539640"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classmio_1_1smm_1_1Simulation.html#a2ae2cf1fe1298b7f83d0a94c79b655f7">Model</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#af7d02fc1eaf849faf001d07b6f539640">get_model</a> () const</td></tr>
 <tr class="memdesc:af7d02fc1eaf849faf001d07b6f539640"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the model used in the simulation.  <a href="classmio_1_1smm_1_1Simulation.html#af7d02fc1eaf849faf001d07b6f539640">More...</a><br /></td></tr>
 <tr class="separator:af7d02fc1eaf849faf001d07b6f539640"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab0c670b2859d2553f5c47c267b32de02"><td class="memItemLeft" align="right" valign="top">TimeSeries&lt; ScalarType &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#ab0c670b2859d2553f5c47c267b32de02">get_result</a> ()</td></tr>
+<tr class="memitem:ab0c670b2859d2553f5c47c267b32de02"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmio_1_1TimeSeries.html">TimeSeries</a>&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#ab0c670b2859d2553f5c47c267b32de02">get_result</a> ()</td></tr>
 <tr class="memdesc:ab0c670b2859d2553f5c47c267b32de02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the final simulation result.  <a href="classmio_1_1smm_1_1Simulation.html#ab0c670b2859d2553f5c47c267b32de02">More...</a><br /></td></tr>
 <tr class="separator:ab0c670b2859d2553f5c47c267b32de02"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af329a068e4ab1fb07ba1cc025e1808ea"><td class="memItemLeft" align="right" valign="top">const TimeSeries&lt; ScalarType &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#af329a068e4ab1fb07ba1cc025e1808ea">get_result</a> () const</td></tr>
+<tr class="memitem:af329a068e4ab1fb07ba1cc025e1808ea"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classmio_1_1TimeSeries.html">TimeSeries</a>&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#af329a068e4ab1fb07ba1cc025e1808ea">get_result</a> () const</td></tr>
 <tr class="separator:af329a068e4ab1fb07ba1cc025e1808ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6bbeddccdc92b94ad50bf24af4b73ede"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a6bbeddccdc92b94ad50bf24af4b73ede">Simulation</a> (<a class="el" href="classmio_1_1smm_1_1Simulation.html#a2ae2cf1fe1298b7f83d0a94c79b655f7">Model</a> const &amp;model, ScalarType t0=0., ScalarType dt=1.)</td></tr>
+<tr class="memitem:a6bbeddccdc92b94ad50bf24af4b73ede"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a6bbeddccdc92b94ad50bf24af4b73ede">Simulation</a> (<a class="el" href="classmio_1_1smm_1_1Simulation.html#a2ae2cf1fe1298b7f83d0a94c79b655f7">Model</a> const &amp;model, <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> t0=0., <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> dt=1.)</td></tr>
 <tr class="memdesc:a6bbeddccdc92b94ad50bf24af4b73ede"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set up the simulation for a Stochastic Metapopulation <a class="el" href="classmio_1_1smm_1_1Model.html" title="Stochastic Metapopulation Model.">Model</a>.  <a href="classmio_1_1smm_1_1Simulation.html#a6bbeddccdc92b94ad50bf24af4b73ede">More...</a><br /></td></tr>
 <tr class="separator:a6bbeddccdc92b94ad50bf24af4b73ede"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -123,25 +123,25 @@ Private Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
-<tr class="memitem:a886cd7a66bc40f9e7f86ce7d1ac86d7e"><td class="memItemLeft" align="right" valign="top">std::vector&lt; ScalarType &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a886cd7a66bc40f9e7f86ce7d1ac86d7e">m_current_rates</a></td></tr>
+<tr class="memitem:a886cd7a66bc40f9e7f86ce7d1ac86d7e"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a886cd7a66bc40f9e7f86ce7d1ac86d7e">m_current_rates</a></td></tr>
 <tr class="memdesc:a886cd7a66bc40f9e7f86ce7d1ac86d7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Current values of both types of rates i.e. adoption and transition rates.  <a href="classmio_1_1smm_1_1Simulation.html#a886cd7a66bc40f9e7f86ce7d1ac86d7e">More...</a><br /></td></tr>
 <tr class="separator:a886cd7a66bc40f9e7f86ce7d1ac86d7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a72cda08e618f38d3433ae5f7736ed72d"><td class="memItemLeft" align="right" valign="top">ScalarType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a72cda08e618f38d3433ae5f7736ed72d">m_dt</a></td></tr>
+<tr class="memitem:a72cda08e618f38d3433ae5f7736ed72d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a72cda08e618f38d3433ae5f7736ed72d">m_dt</a></td></tr>
 <tr class="memdesc:a72cda08e618f38d3433ae5f7736ed72d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initial step size.  <a href="classmio_1_1smm_1_1Simulation.html#a72cda08e618f38d3433ae5f7736ed72d">More...</a><br /></td></tr>
 <tr class="separator:a72cda08e618f38d3433ae5f7736ed72d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4903b84e72bcc1b0ef4f2a798e0a76d5"><td class="memItemLeft" align="right" valign="top">std::vector&lt; ScalarType &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a4903b84e72bcc1b0ef4f2a798e0a76d5">m_internal_time</a></td></tr>
+<tr class="memitem:a4903b84e72bcc1b0ef4f2a798e0a76d5"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a4903b84e72bcc1b0ef4f2a798e0a76d5">m_internal_time</a></td></tr>
 <tr class="memdesc:a4903b84e72bcc1b0ef4f2a798e0a76d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Internal times of all poisson processes (aka T_k).  <a href="classmio_1_1smm_1_1Simulation.html#a4903b84e72bcc1b0ef4f2a798e0a76d5">More...</a><br /></td></tr>
 <tr class="separator:a4903b84e72bcc1b0ef4f2a798e0a76d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9343e16d2c2d2cb8b075cea1084626b6"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classmio_1_1smm_1_1Simulation.html#a2ae2cf1fe1298b7f83d0a94c79b655f7">Model</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a9343e16d2c2d2cb8b075cea1084626b6">m_model</a></td></tr>
 <tr class="memdesc:a9343e16d2c2d2cb8b075cea1084626b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pointer to the model used in the simulation.  <a href="classmio_1_1smm_1_1Simulation.html#a9343e16d2c2d2cb8b075cea1084626b6">More...</a><br /></td></tr>
 <tr class="separator:a9343e16d2c2d2cb8b075cea1084626b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a91533b9f23d53d3b76273dbba0515831"><td class="memItemLeft" align="right" valign="top">mio::TimeSeries&lt; ScalarType &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a91533b9f23d53d3b76273dbba0515831">m_result</a></td></tr>
+<tr class="memitem:a91533b9f23d53d3b76273dbba0515831"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmio_1_1TimeSeries.html">mio::TimeSeries</a>&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a91533b9f23d53d3b76273dbba0515831">m_result</a></td></tr>
 <tr class="memdesc:a91533b9f23d53d3b76273dbba0515831"><td class="mdescLeft">&#160;</td><td class="mdescRight">Result time series.  <a href="classmio_1_1smm_1_1Simulation.html#a91533b9f23d53d3b76273dbba0515831">More...</a><br /></td></tr>
 <tr class="separator:a91533b9f23d53d3b76273dbba0515831"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4980b3cc299c645b4361cd53e1656d28"><td class="memItemLeft" align="right" valign="top">std::vector&lt; ScalarType &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a4980b3cc299c645b4361cd53e1656d28">m_tp_next_event</a></td></tr>
+<tr class="memitem:a4980b3cc299c645b4361cd53e1656d28"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a4980b3cc299c645b4361cd53e1656d28">m_tp_next_event</a></td></tr>
 <tr class="memdesc:a4980b3cc299c645b4361cd53e1656d28"><td class="mdescLeft">&#160;</td><td class="mdescRight">Internal time points of next event i after m_internal[i] (aka P_k).  <a href="classmio_1_1smm_1_1Simulation.html#a4980b3cc299c645b4361cd53e1656d28">More...</a><br /></td></tr>
 <tr class="separator:a4980b3cc299c645b4361cd53e1656d28"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a32e572476084a9777938a5e7d8d1cc25"><td class="memItemLeft" align="right" valign="top">std::vector&lt; ScalarType &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a32e572476084a9777938a5e7d8d1cc25">m_waiting_times</a></td></tr>
+<tr class="memitem:a32e572476084a9777938a5e7d8d1cc25"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1smm_1_1Simulation.html#a32e572476084a9777938a5e7d8d1cc25">m_waiting_times</a></td></tr>
 <tr class="memdesc:a32e572476084a9777938a5e7d8d1cc25"><td class="mdescLeft">&#160;</td><td class="mdescRight">External times between m_internal_time and m_tp_next_event.  <a href="classmio_1_1smm_1_1Simulation.html#a32e572476084a9777938a5e7d8d1cc25">More...</a><br /></td></tr>
 <tr class="separator:a32e572476084a9777938a5e7d8d1cc25"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -192,13 +192,13 @@ template&lt;size_t regions, class Status &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">ScalarType&#160;</td>
+          <td class="paramtype"><a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&#160;</td>
           <td class="paramname"><em>t0</em> = <code>0.</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">ScalarType&#160;</td>
+          <td class="paramtype"><a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&#160;</td>
           <td class="paramname"><em>dt</em> = <code>1.</code>&#160;</td>
         </tr>
         <tr>
@@ -262,7 +262,7 @@ template&lt;size_t regions, class Status &gt; </div>
         <tr>
           <td class="memname">Eigen::Ref&lt;Eigen::VectorXd&gt; <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::advance </td>
           <td>(</td>
-          <td class="paramtype">ScalarType&#160;</td>
+          <td class="paramtype"><a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&#160;</td>
           <td class="paramname"><em>tmax</em></td><td>)</td>
           <td></td>
         </tr>
@@ -358,7 +358,7 @@ template&lt;size_t regions, class Status &gt; </div>
 template&lt;size_t regions, class Status &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">TimeSeries&lt;ScalarType&gt;&amp; <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::get_result </td>
+          <td class="memname"><a class="el" href="classmio_1_1TimeSeries.html">TimeSeries</a>&lt;<a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&gt;&amp; <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::get_result </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -367,7 +367,7 @@ template&lt;size_t regions, class Status &gt; </div>
 </div><div class="memdoc">
 
 <p>Returns the final simulation result. </p>
-<dl class="section return"><dt>Returns</dt><dd>A TimeSeries to represent the final simulation result. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classmio_1_1TimeSeries.html" title="stores vectors of values at time points (or some other abstract variable) the value at each time poin...">TimeSeries</a> to represent the final simulation result. </dd></dl>
 
 </div>
 </div>
@@ -380,7 +380,7 @@ template&lt;size_t regions, class Status &gt; </div>
 template&lt;size_t regions, class Status &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">const TimeSeries&lt;ScalarType&gt;&amp; <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::get_result </td>
+          <td class="memname">const <a class="el" href="classmio_1_1TimeSeries.html">TimeSeries</a>&lt;<a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&gt;&amp; <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::get_result </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -461,7 +461,7 @@ template&lt;size_t regions, class Status &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt;ScalarType&gt; <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::m_current_rates</td>
+          <td class="memname">std::vector&lt;<a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&gt; <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::m_current_rates</td>
         </tr>
       </table>
   </td>
@@ -487,7 +487,7 @@ template&lt;size_t regions, class Status &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">ScalarType <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::m_dt</td>
+          <td class="memname"><a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::m_dt</td>
         </tr>
       </table>
   </td>
@@ -513,7 +513,7 @@ template&lt;size_t regions, class Status &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt;ScalarType&gt; <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::m_internal_time</td>
+          <td class="memname">std::vector&lt;<a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&gt; <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::m_internal_time</td>
         </tr>
       </table>
   </td>
@@ -565,7 +565,7 @@ template&lt;size_t regions, class Status &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">mio::TimeSeries&lt;ScalarType&gt; <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::m_result</td>
+          <td class="memname"><a class="el" href="classmio_1_1TimeSeries.html">mio::TimeSeries</a>&lt;<a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&gt; <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::m_result</td>
         </tr>
       </table>
   </td>
@@ -591,7 +591,7 @@ template&lt;size_t regions, class Status &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt;ScalarType&gt; <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::m_tp_next_event</td>
+          <td class="memname">std::vector&lt;<a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&gt; <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::m_tp_next_event</td>
         </tr>
       </table>
   </td>
@@ -617,7 +617,7 @@ template&lt;size_t regions, class Status &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt;ScalarType&gt; <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::m_waiting_times</td>
+          <td class="memname">std::vector&lt;<a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&gt; <a class="el" href="classmio_1_1smm_1_1Simulation.html">mio::smm::Simulation</a>&lt; regions, Status &gt;::m_waiting_times</td>
         </tr>
       </table>
   </td>
@@ -632,7 +632,7 @@ template&lt;size_t regions, class Status &gt; </div>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>/home/runner/work/memilio/memilio/cpp/models/smm/<a class="el" href="smm_2simulation_8h_source.html">simulation.h</a></li>
+<li>/home/runner/work/memilio/memilio/cpp/models/smm/<a class="el" href="models_2smm_2simulation_8h_source.html">simulation.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

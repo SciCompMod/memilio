@@ -80,7 +80,7 @@ $(function() {
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1isecir_1_1ContactPatterns.html">ContactPatterns</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The contact patterns within the society are modelled using an UncertainContactMatrix.  <a href="structmio_1_1isecir_1_1ContactPatterns.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The contact patterns within the society are modelled using an <a class="el" href="classmio_1_1UncertainContactMatrix.html" title="The UncertainContactMatrix class consists of a ContactMatrix with fixed baseline and uncertain Dampin...">UncertainContactMatrix</a>.  <a href="structmio_1_1isecir_1_1ContactPatterns.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1isecir_1_1Model.html">Model</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -114,7 +114,7 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:a557e3c1b82708bc39919b444e4da27e5"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio_1_1isecir.html#a557e3c1b82708bc39919b444e4da27e5">ParametersBase</a> = ParameterSet&lt; <a class="el" href="structmio_1_1isecir_1_1TransitionDistributions.html">TransitionDistributions</a>, <a class="el" href="structmio_1_1isecir_1_1TransitionProbabilities.html">TransitionProbabilities</a>, <a class="el" href="structmio_1_1isecir_1_1ContactPatterns.html">ContactPatterns</a>, <a class="el" href="structmio_1_1isecir_1_1TransmissionProbabilityOnContact.html">TransmissionProbabilityOnContact</a>, <a class="el" href="structmio_1_1isecir_1_1RelativeTransmissionNoSymptoms.html">RelativeTransmissionNoSymptoms</a>, <a class="el" href="structmio_1_1isecir_1_1RiskOfInfectionFromSymptomatic.html">RiskOfInfectionFromSymptomatic</a>, <a class="el" href="structmio_1_1isecir_1_1StartDay.html">StartDay</a>, <a class="el" href="structmio_1_1isecir_1_1Seasonality.html">Seasonality</a> &gt;</td></tr>
+<tr class="memitem:a557e3c1b82708bc39919b444e4da27e5"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio_1_1isecir.html#a557e3c1b82708bc39919b444e4da27e5">ParametersBase</a> = <a class="el" href="classmio_1_1ParameterSet.html">ParameterSet</a>&lt; <a class="el" href="structmio_1_1isecir_1_1TransitionDistributions.html">TransitionDistributions</a>, <a class="el" href="structmio_1_1isecir_1_1TransitionProbabilities.html">TransitionProbabilities</a>, <a class="el" href="structmio_1_1isecir_1_1ContactPatterns.html">ContactPatterns</a>, <a class="el" href="structmio_1_1isecir_1_1TransmissionProbabilityOnContact.html">TransmissionProbabilityOnContact</a>, <a class="el" href="structmio_1_1isecir_1_1RelativeTransmissionNoSymptoms.html">RelativeTransmissionNoSymptoms</a>, <a class="el" href="structmio_1_1isecir_1_1RiskOfInfectionFromSymptomatic.html">RiskOfInfectionFromSymptomatic</a>, <a class="el" href="structmio_1_1isecir_1_1StartDay.html">StartDay</a>, <a class="el" href="structmio_1_1isecir_1_1Seasonality.html">Seasonality</a> &gt;</td></tr>
 <tr class="separator:a557e3c1b82708bc39919b444e4da27e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
@@ -157,13 +157,11 @@ Enumerations</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:af27bb8ea451c574d97b78826fc2a4846"><td class="memTemplParams" colspan="2">template&lt;typename EntryType &gt; </td></tr>
-<tr class="memitem:af27bb8ea451c574d97b78826fc2a4846"><td class="memTemplItemLeft" align="right" valign="top">IOResult&lt; void &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio_1_1isecir.html#af27bb8ea451c574d97b78826fc2a4846">set_initial_flows</a> (<a class="el" href="classmio_1_1isecir_1_1Model.html">Model</a> &amp;model, const ScalarType dt, const std::vector&lt; EntryType &gt; rki_data, const Date date, const CustomIndexArray&lt; ScalarType, AgeGroup &gt; scale_confirmed_cases)</td></tr>
+<tr class="memitem:af27bb8ea451c574d97b78826fc2a4846"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacemio.html#ae556a666d14183eb2bf3a3efc11551ec">IOResult</a>&lt; void &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio_1_1isecir.html#af27bb8ea451c574d97b78826fc2a4846">set_initial_flows</a> (<a class="el" href="classmio_1_1isecir_1_1Model.html">Model</a> &amp;model, const <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> dt, const std::vector&lt; EntryType &gt; rki_data, const <a class="el" href="structmio_1_1Date.html">Date</a> date, const <a class="el" href="classmio_1_1CustomIndexArray.html">CustomIndexArray</a>&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>, <a class="el" href="structmio_1_1AgeGroup.html">AgeGroup</a> &gt; scale_confirmed_cases)</td></tr>
 <tr class="separator:af27bb8ea451c574d97b78826fc2a4846"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a38938c24e18a262ffac5d65105bf430f"><td class="memItemLeft" align="right" valign="top">TimeSeries&lt; ScalarType &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio_1_1isecir.html#a38938c24e18a262ffac5d65105bf430f">simulate</a> (double tmax, double dt, <a class="el" href="classmio_1_1isecir_1_1Model.html">Model</a> const &amp;model)</td></tr>
-<tr class="memdesc:a38938c24e18a262ffac5d65105bf430f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run a <a class="el" href="classmio_1_1isecir_1_1Simulation.html" title="run the simulation in discrete steps and report results.">Simulation</a> of an IDE-SECIR model.  <a href="namespacemio_1_1isecir.html#a38938c24e18a262ffac5d65105bf430f">More...</a><br /></td></tr>
-<tr class="separator:a38938c24e18a262ffac5d65105bf430f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad78dd2477459a8598e04ba1afe1fd702"><td class="memItemLeft" align="right" valign="top">TimeSeries&lt; ScalarType &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio_1_1isecir.html#ad78dd2477459a8598e04ba1afe1fd702">simulate</a> (ScalarType tmax, ScalarType dt, <a class="el" href="classmio_1_1isecir_1_1Model.html">Model</a> const &amp;m_model)</td></tr>
-<tr class="separator:ad78dd2477459a8598e04ba1afe1fd702"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adccccc5c436a78ee74530adf0b53c3fd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmio_1_1TimeSeries.html">TimeSeries</a>&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio_1_1isecir.html#adccccc5c436a78ee74530adf0b53c3fd">simulate</a> (double tmax, double dt, <a class="el" href="classmio_1_1isecir_1_1Model.html">Model</a> const  &amp;model)</td></tr>
+<tr class="memdesc:adccccc5c436a78ee74530adf0b53c3fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run a <a class="el" href="classmio_1_1isecir_1_1Simulation.html" title="run the simulation in discrete steps and report results.">Simulation</a> of an IDE-SECIR model.  <a href="namespacemio_1_1isecir.html#adccccc5c436a78ee74530adf0b53c3fd">More...</a><br /></td></tr>
+<tr class="separator:adccccc5c436a78ee74530adf0b53c3fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
@@ -180,7 +178,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="namespacemio_1_1isecir.html#a557e3c1b82708bc39919b444e4da27e5">mio::isecir::ParametersBase</a> = typedef ParameterSet&lt;<a class="el" href="structmio_1_1isecir_1_1TransitionDistributions.html">TransitionDistributions</a>, <a class="el" href="structmio_1_1isecir_1_1TransitionProbabilities.html">TransitionProbabilities</a>, <a class="el" href="structmio_1_1isecir_1_1ContactPatterns.html">ContactPatterns</a>, <a class="el" href="structmio_1_1isecir_1_1TransmissionProbabilityOnContact.html">TransmissionProbabilityOnContact</a>, <a class="el" href="structmio_1_1isecir_1_1RelativeTransmissionNoSymptoms.html">RelativeTransmissionNoSymptoms</a>, <a class="el" href="structmio_1_1isecir_1_1RiskOfInfectionFromSymptomatic.html">RiskOfInfectionFromSymptomatic</a>, <a class="el" href="structmio_1_1isecir_1_1StartDay.html">StartDay</a>, <a class="el" href="structmio_1_1isecir_1_1Seasonality.html">Seasonality</a>&gt;</td>
+          <td class="memname">using <a class="el" href="namespacemio_1_1isecir.html#a557e3c1b82708bc39919b444e4da27e5">mio::isecir::ParametersBase</a> = typedef <a class="el" href="classmio_1_1ParameterSet.html">ParameterSet</a>&lt;<a class="el" href="structmio_1_1isecir_1_1TransitionDistributions.html">TransitionDistributions</a>, <a class="el" href="structmio_1_1isecir_1_1TransitionProbabilities.html">TransitionProbabilities</a>, <a class="el" href="structmio_1_1isecir_1_1ContactPatterns.html">ContactPatterns</a>, <a class="el" href="structmio_1_1isecir_1_1TransmissionProbabilityOnContact.html">TransmissionProbabilityOnContact</a>, <a class="el" href="structmio_1_1isecir_1_1RelativeTransmissionNoSymptoms.html">RelativeTransmissionNoSymptoms</a>, <a class="el" href="structmio_1_1isecir_1_1RiskOfInfectionFromSymptomatic.html">RiskOfInfectionFromSymptomatic</a>, <a class="el" href="structmio_1_1isecir_1_1StartDay.html">StartDay</a>, <a class="el" href="structmio_1_1isecir_1_1Seasonality.html">Seasonality</a>&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -270,7 +268,7 @@ Variables</h2></td></tr>
 template&lt;typename EntryType &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">IOResult&lt;void&gt; mio::isecir::set_initial_flows </td>
+          <td class="memname"><a class="el" href="namespacemio.html#ae556a666d14183eb2bf3a3efc11551ec">IOResult</a>&lt;void&gt; mio::isecir::set_initial_flows </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classmio_1_1isecir_1_1Model.html">Model</a> &amp;&#160;</td>
           <td class="paramname"><em>model</em>, </td>
@@ -278,7 +276,7 @@ template&lt;typename EntryType &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const ScalarType&#160;</td>
+          <td class="paramtype">const <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&#160;</td>
           <td class="paramname"><em>dt</em>, </td>
         </tr>
         <tr>
@@ -290,13 +288,13 @@ template&lt;typename EntryType &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const Date&#160;</td>
+          <td class="paramtype">const <a class="el" href="structmio_1_1Date.html">Date</a>&#160;</td>
           <td class="paramname"><em>date</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const CustomIndexArray&lt; ScalarType, AgeGroup &gt;&#160;</td>
+          <td class="paramtype">const <a class="el" href="classmio_1_1CustomIndexArray.html">CustomIndexArray</a>&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>, <a class="el" href="structmio_1_1AgeGroup.html">AgeGroup</a> &gt;&#160;</td>
           <td class="paramname"><em>scale_confirmed_cases</em>&#160;</td>
         </tr>
         <tr>
@@ -309,14 +307,14 @@ template&lt;typename EntryType &gt; </div>
 
 </div>
 </div>
-<a id="a38938c24e18a262ffac5d65105bf430f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a38938c24e18a262ffac5d65105bf430f">&#9670;&nbsp;</a></span>simulate() <span class="overload">[1/2]</span></h2>
+<a id="adccccc5c436a78ee74530adf0b53c3fd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adccccc5c436a78ee74530adf0b53c3fd">&#9670;&nbsp;</a></span>simulate()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">TimeSeries&lt;ScalarType&gt; mio::isecir::simulate </td>
+          <td class="memname"><a class="el" href="classmio_1_1TimeSeries.html">TimeSeries</a>&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt; mio::isecir::simulate </td>
           <td>(</td>
           <td class="paramtype">double&#160;</td>
           <td class="paramname"><em>tmax</em>, </td>
@@ -350,41 +348,7 @@ template&lt;typename EntryType &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A TimeSeries to represent the final simulation result. </dd></dl>
-
-</div>
-</div>
-<a id="ad78dd2477459a8598e04ba1afe1fd702"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad78dd2477459a8598e04ba1afe1fd702">&#9670;&nbsp;</a></span>simulate() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">TimeSeries&lt;ScalarType&gt; mio::isecir::simulate </td>
-          <td>(</td>
-          <td class="paramtype">ScalarType&#160;</td>
-          <td class="paramname"><em>tmax</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">ScalarType&#160;</td>
-          <td class="paramname"><em>dt</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classmio_1_1isecir_1_1Model.html">Model</a> const &amp;&#160;</td>
-          <td class="paramname"><em>m_model</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classmio_1_1TimeSeries.html" title="stores vectors of values at time points (or some other abstract variable) the value at each time poin...">TimeSeries</a> to represent the final simulation result. </dd></dl>
 
 </div>
 </div>

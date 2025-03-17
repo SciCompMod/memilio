@@ -77,11 +77,11 @@ $(function() {
 <div class="textblock"><code>#include &quot;<a class="el" href="abm_2infection__state_8h_source.html">abm/infection_state.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="person__id_8h_source.html">abm/person_id.h</a>&quot;</code><br />
 <code>#include &quot;abm/simulation.h&quot;</code><br />
-<code>#include &quot;memilio/io/history.h&quot;</code><br />
-<code>#include &quot;memilio/utils/time_series.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="history_8h_source.html">memilio/io/history.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="time__series_8h_source.html">memilio/utils/time_series.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="location__type_8h_source.html">models/abm/location_type.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="mobility__data_8h_source.html">abm/mobility_data.h</a>&quot;</code><br />
-<code>#include &quot;memilio/utils/mioomp.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="mioomp_8h_source.html">memilio/utils/mioomp.h</a>&quot;</code><br />
 </div>
 <p><a href="common__abm__loggers_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -94,7 +94,7 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Logger to log mobility data of the agents in the simulation.  <a href="structmio_1_1abm_1_1LogDataForMobility.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1LogInfectionState.html">mio::abm::LogInfectionState</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Logger to log the TimeSeries of the number of <a class="el" href="classmio_1_1abm_1_1Person.html" title="Agents in the simulated Model that can carry and spread the Infection.">Person</a>s in an <a class="el" href="namespacemio_1_1abm.html#ad1ae0779f53a827b524e1f0925b9d704" title="InfectionState in ABM.">InfectionState</a>.  <a href="structmio_1_1abm_1_1LogInfectionState.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Logger to log the <a class="el" href="classmio_1_1TimeSeries.html" title="stores vectors of values at time points (or some other abstract variable) the value at each time poin...">TimeSeries</a> of the number of <a class="el" href="classmio_1_1abm_1_1Person.html" title="Agents in the simulated Model that can carry and spread the Infection.">Person</a>s in an <a class="el" href="namespacemio_1_1abm.html#ad1ae0779f53a827b524e1f0925b9d704" title="InfectionState in ABM.">InfectionState</a>.  <a href="structmio_1_1abm_1_1LogInfectionState.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1LogLocationInformation.html">mio::abm::LogLocationInformation</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Logger to log the LocationInformation of the simulation.  <a href="structmio_1_1abm_1_1LogLocationInformation.html#details">More...</a><br /></td></tr>
@@ -106,12 +106,13 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Struct to save specific mobility data of an agent.  <a href="structmio_1_1abm_1_1mobility__data.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1TimeSeriesWriter.html">mio::abm::TimeSeriesWriter&lt; Loggers &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">This is like the DataWriterToMemory, but it only logs time series data.  <a href="structmio_1_1abm_1_1TimeSeriesWriter.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">This is like the <a class="el" href="structmio_1_1DataWriterToMemory.html" title="This class writes data retrieved from loggers to memory.">DataWriterToMemory</a>, but it only logs time series data.  <a href="structmio_1_1abm_1_1TimeSeriesWriter.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespacemio"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio.html">mio</a></td></tr>
+<tr class="memdesc:namespacemio"><td class="mdescLeft">&#160;</td><td class="mdescRight">A collection of classes to simplify handling of matrix shapes in meta programming. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespacemio_1_1abm"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio_1_1abm.html">mio::abm</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>

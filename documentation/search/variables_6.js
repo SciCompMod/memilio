@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['latitude_1394',['latitude',['../structmio_1_1abm_1_1GeographicalLocation.html#a3185effdc9a95903244b6ede3d532670',1,'mio::abm::GeographicalLocation']]],
-  ['longitude_1395',['longitude',['../structmio_1_1abm_1_1GeographicalLocation.html#a6d633772c611cd520fbed28bd4c08be8',1,'mio::abm::GeographicalLocation']]]
+  ['global_5ftape_3814',['global_tape',['../classad_1_1ga1s.html#ac50bfd4a268fc4a106aa75aeca4f7099',1,'ad::ga1s']]]
 ];

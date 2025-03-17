@@ -83,12 +83,15 @@ $(function() {
 Inheritance diagram for mio::abm::LogPersonInformation:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="structmio_1_1abm_1_1LogPersonInformation.png" alt=""/>
- </div></div>
+  <img src="structmio_1_1abm_1_1LogPersonInformation.png" usemap="#mio::abm::LogPersonInformation_map" alt=""/>
+  <map id="mio::abm::LogPersonInformation_map" name="mio::abm::LogPersonInformation_map">
+<area href="structmio_1_1LogOnce.html" title="LogOnce and LogAlways can be used as a base class to write a logger for History." alt="mio::LogOnce" shape="rect" coords="0,0,189,24"/>
+  </map>
+</div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a0b8705f2d8d4ffff2316b6f224d35037"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1LogPersonInformation.html#a0b8705f2d8d4ffff2316b6f224d35037">Type</a> = std::vector&lt; std::tuple&lt; <a class="el" href="structmio_1_1abm_1_1PersonId.html">mio::abm::PersonId</a>, <a class="el" href="structmio_1_1abm_1_1LocationId.html">mio::abm::LocationId</a>, mio::AgeGroup &gt; &gt;</td></tr>
+<tr class="memitem:a0b8705f2d8d4ffff2316b6f224d35037"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1LogPersonInformation.html#a0b8705f2d8d4ffff2316b6f224d35037">Type</a> = std::vector&lt; std::tuple&lt; <a class="el" href="structmio_1_1abm_1_1PersonId.html">mio::abm::PersonId</a>, <a class="el" href="structmio_1_1abm_1_1LocationId.html">mio::abm::LocationId</a>, <a class="el" href="structmio_1_1AgeGroup.html">mio::AgeGroup</a> &gt; &gt;</td></tr>
 <tr class="separator:a0b8705f2d8d4ffff2316b6f224d35037"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
@@ -96,6 +99,18 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a804e74b5c18a22724281114a245f81a4"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="structmio_1_1abm_1_1LogPersonInformation.html#a0b8705f2d8d4ffff2316b6f224d35037">Type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1LogPersonInformation.html#a804e74b5c18a22724281114a245f81a4">log</a> (const <a class="el" href="classmio_1_1abm_1_1Simulation.html">mio::abm::Simulation</a>&lt;&gt; &amp;sim)</td></tr>
 <tr class="memdesc:a804e74b5c18a22724281114a245f81a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Log the LocationInformation of the simulation.  <a href="structmio_1_1abm_1_1LogPersonInformation.html#a804e74b5c18a22724281114a245f81a4">More...</a><br /></td></tr>
 <tr class="separator:a804e74b5c18a22724281114a245f81a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pub_methods_structmio_1_1LogOnce"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_structmio_1_1LogOnce')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="structmio_1_1LogOnce.html">mio::LogOnce</a></td></tr>
+<tr class="memitem:a9afc1f1a6da2d548a6f8cab0be5694b5 inherit pub_methods_structmio_1_1LogOnce"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a9afc1f1a6da2d548a6f8cab0be5694b5 inherit pub_methods_structmio_1_1LogOnce"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structmio_1_1LogOnce.html#a9afc1f1a6da2d548a6f8cab0be5694b5">should_log</a> (const T &amp;)</td></tr>
+<tr class="memdesc:a9afc1f1a6da2d548a6f8cab0be5694b5 inherit pub_methods_structmio_1_1LogOnce"><td class="mdescLeft">&#160;</td><td class="mdescRight">For any type T, returns true on the first call only, and false thereafter.  <a href="structmio_1_1LogOnce.html#a9afc1f1a6da2d548a6f8cab0be5694b5">More...</a><br /></td></tr>
+<tr class="separator:a9afc1f1a6da2d548a6f8cab0be5694b5 inherit pub_methods_structmio_1_1LogOnce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_attribs_structmio_1_1LogOnce"><td colspan="2" onclick="javascript:toggleInherit('pub_attribs_structmio_1_1LogOnce')"><img src="closed.png" alt="-"/>&#160;Public Attributes inherited from <a class="el" href="structmio_1_1LogOnce.html">mio::LogOnce</a></td></tr>
+<tr class="memitem:ad51f77a13057feda19ef321a0cedb5e8 inherit pub_attribs_structmio_1_1LogOnce"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1LogOnce.html#ad51f77a13057feda19ef321a0cedb5e8">was_logged</a> = false</td></tr>
+<tr class="memdesc:ad51f77a13057feda19ef321a0cedb5e8 inherit pub_attribs_structmio_1_1LogOnce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remember if this Logger was logged already.  <a href="structmio_1_1LogOnce.html#ad51f77a13057feda19ef321a0cedb5e8">More...</a><br /></td></tr>
+<tr class="separator:ad51f77a13057feda19ef321a0cedb5e8 inherit pub_attribs_structmio_1_1LogOnce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Logger to log the <a class="el" href="classmio_1_1abm_1_1Person.html" title="Agents in the simulated Model that can carry and spread the Infection.">Person</a>s Information in the simulation. </p>
@@ -107,7 +122,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="structmio_1_1abm_1_1LogPersonInformation.html#a0b8705f2d8d4ffff2316b6f224d35037">mio::abm::LogPersonInformation::Type</a> =  std::vector&lt;std::tuple&lt;<a class="el" href="structmio_1_1abm_1_1PersonId.html">mio::abm::PersonId</a>, <a class="el" href="structmio_1_1abm_1_1LocationId.html">mio::abm::LocationId</a>, mio::AgeGroup&gt; &gt;</td>
+          <td class="memname">using <a class="el" href="structmio_1_1abm_1_1LogPersonInformation.html#a0b8705f2d8d4ffff2316b6f224d35037">mio::abm::LogPersonInformation::Type</a> =  std::vector&lt;std::tuple&lt;<a class="el" href="structmio_1_1abm_1_1PersonId.html">mio::abm::PersonId</a>, <a class="el" href="structmio_1_1abm_1_1LocationId.html">mio::abm::LocationId</a>, <a class="el" href="structmio_1_1AgeGroup.html">mio::AgeGroup</a>&gt; &gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">

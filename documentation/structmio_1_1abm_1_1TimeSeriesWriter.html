@@ -75,28 +75,28 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>This is like the DataWriterToMemory, but it only logs time series data.  
+<p>This is like the <a class="el" href="structmio_1_1DataWriterToMemory.html" title="This class writes data retrieved from loggers to memory.">DataWriterToMemory</a>, but it only logs time series data.  
  <a href="structmio_1_1abm_1_1TimeSeriesWriter.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="common__abm__loggers_8h_source.html">common_abm_loggers.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:ac77640980f2d5d76743945b6f99a549c"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1TimeSeriesWriter.html#ac77640980f2d5d76743945b6f99a549c">Data</a> = std::tuple&lt; mio::TimeSeries&lt; ScalarType &gt; &gt;</td></tr>
+<tr class="memitem:ac77640980f2d5d76743945b6f99a549c"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1TimeSeriesWriter.html#ac77640980f2d5d76743945b6f99a549c">Data</a> = std::tuple&lt; <a class="el" href="classmio_1_1TimeSeries.html">mio::TimeSeries</a>&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt; &gt;</td></tr>
 <tr class="separator:ac77640980f2d5d76743945b6f99a549c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:abcebc07608c234e256cf03c30cb9b611"><td class="memTemplParams" colspan="2">template&lt;class Logger &gt; </td></tr>
 <tr class="memitem:abcebc07608c234e256cf03c30cb9b611"><td class="memTemplItemLeft" align="right" valign="top">static void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structmio_1_1abm_1_1TimeSeriesWriter.html#abcebc07608c234e256cf03c30cb9b611">add_record</a> (const typename Logger::Type &amp;t, <a class="el" href="structmio_1_1abm_1_1TimeSeriesWriter.html#ac77640980f2d5d76743945b6f99a549c">Data</a> &amp;data)</td></tr>
-<tr class="memdesc:abcebc07608c234e256cf03c30cb9b611"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function adds an entry to the TimeSeries consisting of the <a class="el" href="classmio_1_1abm_1_1TimePoint.html" title="Represents a point in time.">TimePoint</a> and the value.  <a href="structmio_1_1abm_1_1TimeSeriesWriter.html#abcebc07608c234e256cf03c30cb9b611">More...</a><br /></td></tr>
+<tr class="memdesc:abcebc07608c234e256cf03c30cb9b611"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function adds an entry to the <a class="el" href="classmio_1_1TimeSeries.html" title="stores vectors of values at time points (or some other abstract variable) the value at each time poin...">TimeSeries</a> consisting of the <a class="el" href="classmio_1_1abm_1_1TimePoint.html" title="Represents a point in time.">TimePoint</a> and the value.  <a href="structmio_1_1abm_1_1TimeSeriesWriter.html#abcebc07608c234e256cf03c30cb9b611">More...</a><br /></td></tr>
 <tr class="separator:abcebc07608c234e256cf03c30cb9b611"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;class... Loggers&gt;<br />
 struct mio::abm::TimeSeriesWriter&lt; Loggers &gt;</h3>
 
-<p>This is like the DataWriterToMemory, but it only logs time series data. </p>
+<p>This is like the <a class="el" href="structmio_1_1DataWriterToMemory.html" title="This class writes data retrieved from loggers to memory.">DataWriterToMemory</a>, but it only logs time series data. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Loggers</td><td>The loggers that are used to log data. The loggers must return a touple with a <a class="el" href="classmio_1_1abm_1_1TimePoint.html" title="Represents a point in time.">TimePoint</a> and a value. </td></tr>
@@ -113,7 +113,7 @@ struct mio::abm::TimeSeriesWriter&lt; Loggers &gt;</h3>
 template&lt;class... Loggers&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="structmio_1_1abm_1_1TimeSeriesWriter.html">mio::abm::TimeSeriesWriter</a>&lt; Loggers &gt;::<a class="el" href="structmio_1_1abm_1_1TimeSeriesWriter.html#ac77640980f2d5d76743945b6f99a549c">Data</a> =  std::tuple&lt;mio::TimeSeries&lt;ScalarType&gt; &gt;</td>
+          <td class="memname">using <a class="el" href="structmio_1_1abm_1_1TimeSeriesWriter.html">mio::abm::TimeSeriesWriter</a>&lt; Loggers &gt;::<a class="el" href="structmio_1_1abm_1_1TimeSeriesWriter.html#ac77640980f2d5d76743945b6f99a549c">Data</a> =  std::tuple&lt;<a class="el" href="classmio_1_1TimeSeries.html">mio::TimeSeries</a>&lt;<a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a>&gt; &gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -159,7 +159,7 @@ template&lt;class Logger &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>This function adds an entry to the TimeSeries consisting of the <a class="el" href="classmio_1_1abm_1_1TimePoint.html" title="Represents a point in time.">TimePoint</a> and the value. </p>
+<p>This function adds an entry to the <a class="el" href="classmio_1_1TimeSeries.html" title="stores vectors of values at time points (or some other abstract variable) the value at each time poin...">TimeSeries</a> consisting of the <a class="el" href="classmio_1_1abm_1_1TimePoint.html" title="Represents a point in time.">TimePoint</a> and the value. </p>
 <p>The Loggers must return a touple with a <a class="el" href="classmio_1_1abm_1_1TimePoint.html" title="Represents a point in time.">TimePoint</a> and a value of return type Eigen::VectorXd. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">t</td><td>The data from the logger. </td></tr>

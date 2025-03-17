@@ -93,7 +93,7 @@ $(function() {
 <div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="preprocessor">#ifndef MIO_ABM_PERSON_ID_H</span></div>
 <div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">#define MIO_ABM_PERSON_ID_H</span></div>
 <div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160; </div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor">#include &quot;memilio/utils/type_safe.h&quot;</span></div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="type__safe_8h.html">memilio/utils/type_safe.h</a>&quot;</span></div>
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">#include &lt;limits&gt;</span></div>
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160; </div>
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespacemio.html">mio</a></div>
@@ -101,14 +101,14 @@ $(function() {
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="keyword">namespace </span>abm</div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;{</div>
 <div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160; </div>
-<div class="line"><a name="l00033"></a><span class="lineno"><a class="line" href="structmio_1_1abm_1_1PersonId.html">   33</a></span>&#160;<span class="keyword">struct </span>MEMILIO_ENABLE_EBO <a class="code" href="structmio_1_1abm_1_1PersonId.html">PersonId</a> : <span class="keyword">public</span> mio::TypeSafe&lt;uint64_t, PersonId&gt;, <span class="keyword">public</span> OperatorComparison&lt;PersonId&gt; {</div>
+<div class="line"><a name="l00033"></a><span class="lineno"><a class="line" href="structmio_1_1abm_1_1PersonId.html">   33</a></span>&#160;<span class="keyword">struct </span><a class="code" href="compiler__diagnostics_8h.html#aae95afe748c78c6edadb3f3783ceebc1">MEMILIO_ENABLE_EBO</a> <a class="code" href="structmio_1_1abm_1_1PersonId.html">PersonId</a> : <span class="keyword">public</span> <a class="code" href="classmio_1_1TypeSafe.html">mio::TypeSafe</a>&lt;uint64_t, PersonId&gt;, <span class="keyword">public</span> <a class="code" href="classmio_1_1OperatorComparison.html">OperatorComparison</a>&lt;PersonId&gt; {</div>
 <div class="line"><a name="l00035"></a><span class="lineno"><a class="line" href="structmio_1_1abm_1_1PersonId.html#af15e37d7225a48627d50ac2bbc2140cb">   35</a></span>&#160;    <a class="code" href="structmio_1_1abm_1_1PersonId.html#af15e37d7225a48627d50ac2bbc2140cb">PersonId</a>(uint64_t <span class="keywordtype">id</span>)</div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;        : <a class="code" href="namespacemio.html">mio</a>::TypeSafe&lt;uint64_t, <a class="code" href="structmio_1_1abm_1_1PersonId.html">PersonId</a>&gt;(id)</div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;        : <a class="code" href="namespacemio.html">mio</a>::<a class="code" href="classmio_1_1TypeSafe.html">TypeSafe</a>&lt;uint64_t, <a class="code" href="structmio_1_1abm_1_1PersonId.html">PersonId</a>&gt;(id)</div>
 <div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    {</div>
 <div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;    }</div>
 <div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160; </div>
 <div class="line"><a name="l00041"></a><span class="lineno"><a class="line" href="structmio_1_1abm_1_1PersonId.html#a55fe9b11d3cc3aca93fbd55e1ad9422f">   41</a></span>&#160;    <a class="code" href="structmio_1_1abm_1_1PersonId.html#a55fe9b11d3cc3aca93fbd55e1ad9422f">PersonId</a>()</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;        : <a class="code" href="namespacemio.html">mio</a>::TypeSafe&lt;uint64_t, <a class="code" href="structmio_1_1abm_1_1PersonId.html">PersonId</a>&gt;(std::numeric_limits&lt;uint64_t&gt;::max())</div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;        : <a class="code" href="namespacemio.html">mio</a>::<a class="code" href="classmio_1_1TypeSafe.html">TypeSafe</a>&lt;uint64_t, <a class="code" href="structmio_1_1abm_1_1PersonId.html">PersonId</a>&gt;(<a class="code" href="namespacestd.html">std</a>::numeric_limits&lt;uint64_t&gt;::<a class="code" href="namespacemio.html#a97f6645c13faf4749f34d7e6e191f9ac">max</a>())</div>
 <div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;    {</div>
 <div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    }</div>
 <div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160; </div>
@@ -122,11 +122,17 @@ $(function() {
 <div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;} <span class="comment">// namespace mio</span></div>
 <div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160; </div>
 <div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;<span class="preprocessor">#endif </span><span class="comment">// MIO_ABM_PERSON_ID_H</span></div>
-<div class="ttc" id="anamespacemio_html"><div class="ttname"><a href="namespacemio.html">mio</a></div><div class="ttdef"><b>Definition:</b> analyze_result.h:28</div></div>
+<div class="ttc" id="aclassmio_1_1OperatorComparison_html"><div class="ttname"><a href="classmio_1_1OperatorComparison.html">mio::OperatorComparison</a></div><div class="ttdoc">base class to add operator &lt;, &lt;=, &gt;, &gt;= to a class derived from TypeSafe.</div><div class="ttdef"><b>Definition:</b> type_safe.h:207</div></div>
+<div class="ttc" id="aclassmio_1_1TypeSafe_html"><div class="ttname"><a href="classmio_1_1TypeSafe.html">mio::TypeSafe</a></div><div class="ttdoc">typesafe wrapper around any type to make function arguments, tuple elements, etc.</div><div class="ttdef"><b>Definition:</b> type_safe.h:42</div></div>
+<div class="ttc" id="acompiler__diagnostics_8h_html_aae95afe748c78c6edadb3f3783ceebc1"><div class="ttname"><a href="compiler__diagnostics_8h.html#aae95afe748c78c6edadb3f3783ceebc1">MEMILIO_ENABLE_EBO</a></div><div class="ttdeci">#define MEMILIO_ENABLE_EBO</div><div class="ttdef"><b>Definition:</b> compiler_diagnostics.h:75</div></div>
+<div class="ttc" id="anamespacemio_html"><div class="ttname"><a href="namespacemio.html">mio</a></div><div class="ttdoc">A collection of classes to simplify handling of matrix shapes in meta programming.</div><div class="ttdef"><b>Definition:</b> analyze_result.h:28</div></div>
+<div class="ttc" id="anamespacemio_html_a97f6645c13faf4749f34d7e6e191f9ac"><div class="ttname"><a href="namespacemio.html#a97f6645c13faf4749f34d7e6e191f9ac">mio::max</a></div><div class="ttdeci">auto max(const Eigen::MatrixBase&lt; A &gt; &amp;a, B &amp;&amp;b)</div><div class="ttdoc">coefficient wise maximum of two matrices.</div><div class="ttdef"><b>Definition:</b> eigen_util.h:179</div></div>
+<div class="ttc" id="anamespacestd_html"><div class="ttname"><a href="namespacestd.html">std</a></div><div class="ttdef"><b>Definition:</b> io.h:90</div></div>
 <div class="ttc" id="astructmio_1_1abm_1_1PersonId_html"><div class="ttname"><a href="structmio_1_1abm_1_1PersonId.html">mio::abm::PersonId</a></div><div class="ttdoc">Unique ID for a Person within a Model.</div><div class="ttdef"><b>Definition:</b> person_id.h:33</div></div>
 <div class="ttc" id="astructmio_1_1abm_1_1PersonId_html_a39524626b5da66d346c05442af8557c0"><div class="ttname"><a href="structmio_1_1abm_1_1PersonId.html#a39524626b5da66d346c05442af8557c0">mio::abm::PersonId::invalid_ID</a></div><div class="ttdeci">static const PersonId invalid_ID()</div><div class="ttdoc">Value for invalid IDs.</div><div class="ttdef"><b>Definition:</b> person_id.h:47</div></div>
 <div class="ttc" id="astructmio_1_1abm_1_1PersonId_html_a55fe9b11d3cc3aca93fbd55e1ad9422f"><div class="ttname"><a href="structmio_1_1abm_1_1PersonId.html#a55fe9b11d3cc3aca93fbd55e1ad9422f">mio::abm::PersonId::PersonId</a></div><div class="ttdeci">PersonId()</div><div class="ttdoc">Create an invalid ID.</div><div class="ttdef"><b>Definition:</b> person_id.h:41</div></div>
 <div class="ttc" id="astructmio_1_1abm_1_1PersonId_html_af15e37d7225a48627d50ac2bbc2140cb"><div class="ttname"><a href="structmio_1_1abm_1_1PersonId.html#af15e37d7225a48627d50ac2bbc2140cb">mio::abm::PersonId::PersonId</a></div><div class="ttdeci">PersonId(uint64_t id)</div><div class="ttdoc">Create an ID.</div><div class="ttdef"><b>Definition:</b> person_id.h:35</div></div>
+<div class="ttc" id="atype__safe_8h_html"><div class="ttname"><a href="type__safe_8h.html">type_safe.h</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

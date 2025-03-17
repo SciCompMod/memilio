@@ -11878,13 +11878,15 @@
                 <td><pre>Similar lines in 2 files
 ==memilio.epidata.getJHData:[101:110]
 ==memilio.epidata_test.test_epidata_get_jh_data:[134:141]
-        directory_ger = os.path.join(out_folder, &#39;Germany/&#39;)
-        directory_es = os.path.join(out_folder, &#39;Spain/&#39;)
-        directory_fr = os.path.join(out_folder, &#39;France/&#39;)
-        directory_it = os.path.join(out_folder, &#39;Italy/&#39;)
-        directory_us = os.path.join(out_folder, &#39;US/&#39;)
-        directory_rok = os.path.join(out_folder, &#39;SouthKorea/&#39;)
-        directory_prc = os.path.join(out_folder, &#39;China/&#39;)</pre></td>
+    directory_ger = os.path.join(out_folder, &#39;Germany/&#39;)
+    directory_es = os.path.join(out_folder, &#39;Spain/&#39;)
+    directory_fr = os.path.join(out_folder, &#39;France/&#39;)
+    directory_it = os.path.join(out_folder, &#39;Italy/&#39;)
+    directory_us = os.path.join(out_folder, &#39;US/&#39;)
+    directory_rok = os.path.join(out_folder, &#39;SouthKorea/&#39;)
+    directory_prc = os.path.join(out_folder, &#39;China/&#39;)
+
+    # dictionary of countries</pre></td>
             </tr>
             
             <tr>
@@ -11983,13 +11985,13 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 pd.options.mode.copy_on_write = True
 
 
-def getMobilityFromFile(directory, mobility_file):
-    &#34;&#34;&#34; Gets a mobility matrix that is written in a plain txt file
-    under the given directory into a pandas data frame.
+def read_population_data(ref_year):
+    &#34;&#34;&#34; Reads Population data from regionalstatistik.de
 
-    :param directory: Path to folder where data is read.
-    :param mobility_file: Mobility matrix file which has to be updated.
-    :returns: Mobility matrix data frame.
+    A request is made to regionalstatistik.de and the StringIO is read in as a csv into the dataframe format.
+
+    :param ref_year: Default: None or year (jjjj) convertible to str. Reference year.
+    :returns: DataFrame
 
     &#34;&#34;&#34;</pre></td>
             </tr>
@@ -12052,16 +12054,11 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd</pre></td>
         &#34;&#34;&#34; &#34;&#34;&#34;
         self.setUpPyfakefs()
 
-    @patch(&#39;memilio.epidata.getVaccinationData.download_vaccination_data&#39;,
-           return_value=df_vacc_data_altern)
-    @patch(&#39;memilio.epidata.getPopulationData.get_population_data&#39;, return_value=df_pop)
-    @patch(&#39;memilio.epidata.getDataIntoPandasDataFrame.user_choice&#39;, return_value=True)
-    def test_get_vaccination_data_alternative_ages(self, mockin, mockp, mockv):
+    @patch(&#39;builtins.print&#39;)
+    def test_verify_sorted(self, mock_print):
         &#34;&#34;&#34;
 
-        :param mockin:
-        :param mockp:
-        :param mockv:
+        :param mock_print:
 
         &#34;&#34;&#34;</pre></td>
             </tr>
@@ -12102,17 +12099,33 @@ from memilio.epidata import modifyDataframeSeries as mdfs
 # activate CoW for more predictable behaviour of pandas DataFrames
 pd.options.mode.copy_on_write = True
 
-# Downloads testing data from RKI
 
+def transformWeatherData(read_data=dd.defaultDict[&#39;read_data&#39;],
+                         file_format=dd.defaultDict[&#39;file_format&#39;],
+                         out_folder=dd.defaultDict[&#39;out_folder&#39;],
+                         start_date=dd.defaultDict[&#39;start_date&#39;],
+                         end_date=dd.defaultDict[&#39;end_date&#39;],
+                         moving_average=dd.defaultDict[&#39;moving_average&#39;],
+                         merge_berlin=True,
+                         merge_eisenach=False,
+                         **kwargs
+                         ):
+    &#34;&#34;&#34; ...
 
-def download_testing_data():
-    &#34;&#34;&#34; Downloads the Sars-CoV-2 test data sets from RKI on country
-    and federal state level. Information on federal state level do not sum
-    up to country-wide information since less laboratories are participating.
-
-
-    :returns: dataframe array with country level information first and
-        federal state level second
+    :param file_format: File format which is used for writing the data.
+        Default defined in defaultDict.
+    :param out_folder: Path to folder where data is written in folder
+        out_folder/Germany. (Default value = dd.defaultDict[&#39;out_folder&#39;])
+    :param start_date: Default = &#39;&#39;, taken from read data] Start date
+        of stored data frames.
+    :param end_date: Default = &#39;&#39;, taken from read data] End date of
+        stored data frames.
+    :param moving_average: 0 [Default] or Number &gt; 0. Defines the number of
+        days for which a centered moving average is computed.
+    :param read_data:  (Default value = dd.defaultDict[&#39;read_data&#39;])
+    :param merge_berlin:  (Default value = True)
+    :param merge_eisenach:  (Default value = False)
+    :param **kwargs:
 
     &#34;&#34;&#34;</pre></td>
             </tr>
@@ -12184,7 +12197,35 @@ from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
-# activate CoW for more predictable behaviour of pandas DataFrames</pre></td>
+
+def fetch_divi_data(
+        directory: str,
+        filename: str,
+        conf_obj,
+        read_data: bool = dd.defaultDict[&#39;read_data&#39;],
+        file_format: str = dd.defaultDict[&#39;file_format&#39;],
+) -&gt; pd.DataFrame:
+    &#34;&#34;&#34; Downloads or reads the DIVI ICU data and writes them in different files.
+
+    If it does not already exist, the folder Germany is generated in the given out_folder.
+    If read_data == True and the file &#34;FullData_DIVI.json&#34; exists, the data is read form this file
+    and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
+    The downloaded dataframe is written to the file &#34;FullData_DIVI&#34;.
+
+    :param directory: str
+        Path to the output directory
+    :param conf_obj: configuration object
+    :param filename: str
+        File format which is used for writing the data. Default defined in defaultDict.
+    :param read_data: bool. True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
+    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict.
+    :param directory: str:
+    :param filename: str:
+    :param read_data: bool:  (Default value = dd.defaultDict[&#39;read_data&#39;])
+    :param file_format: str:  (Default value = dd.defaultDict[&#39;file_format&#39;])
+    :returns: Tuple[df_raw, start_date] Tuple. Contains the fetched data as well as the adjusted starting date
+
+    &#34;&#34;&#34;</pre></td>
             </tr>
             
             <tr>
@@ -12202,7 +12243,9 @@ import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata import getDataIntoPandasDataFrame as gd</pre></td>
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+
+# activate CoW for more predictable behaviour of pandas DataFrames</pre></td>
             </tr>
             
             <tr>

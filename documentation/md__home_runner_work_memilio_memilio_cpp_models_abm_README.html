@@ -93,9 +93,10 @@ Get Started</h1>
 <p>Every person in the ABM belongs to an AgeGroup, which we can define as follows: <br  />
 </p>
 <div class="fragment"><div class="line"><span class="keywordtype">size_t</span> num_age_groups         = 4;  </div>
-<div class="line"><span class="keyword">const</span> <span class="keyword">auto</span> age_group_0_to_4   = mio::AgeGroup(0);  </div>
-<div class="line"><span class="keyword">const</span> <span class="keyword">auto</span> age_group_5_to_14  = mio::AgeGroup(1);  </div>
+<div class="line"><span class="keyword">const</span> <span class="keyword">auto</span> age_group_0_to_4   = <a class="code" href="structmio_1_1AgeGroup.html">mio::AgeGroup</a>(0);  </div>
+<div class="line"><span class="keyword">const</span> <span class="keyword">auto</span> age_group_5_to_14  = <a class="code" href="structmio_1_1AgeGroup.html">mio::AgeGroup</a>(1);  </div>
 <div class="line">...                           = ...  </div>
+<div class="ttc" id="astructmio_1_1AgeGroup_html"><div class="ttname"><a href="structmio_1_1AgeGroup.html">mio::AgeGroup</a></div><div class="ttdoc">The AgeGroup struct is used as a dynamically sized tag for all age dependent categories.</div><div class="ttdef"><b>Definition:</b> age_group.h:32</div></div>
 </div><!-- fragment --><p>Note that every age group has to have values strictly smaller than the number of age groups <code>num_age_groups</code>. <br  />
  With this number we create an empty model: <br  />
 </p>
@@ -166,13 +167,16 @@ Get Started</h1>
 </div><!-- fragment --><p>Then we run the simulation.</p>
 <div class="fragment"><div class="line">sim.advance(<a class="code" href="classmio_1_1abm_1_1TimePoint.html">mio::abm::TimePoint</a>(0) + <a class="code" href="namespacemio_1_1abm.html#ac50d53d4d672f332b55133479478fe6a">mio::abm::days</a>(30));</div>
 </div><!-- fragment --><p>Alternitavely if we want to track things in the simulation, we need to set up a <a href="../../memilio/io/README.md#the-history-object">history</a>, for example, to track all the Infection states of each simulation step.</p>
-<div class="fragment"><div class="line">mio::History&lt;mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState&gt; history;</div>
+<div class="fragment"><div class="line"><a class="code" href="classmio_1_1History.html">mio::History&lt;mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState&gt;</a> history;</div>
+<div class="ttc" id="aclassmio_1_1History_html"><div class="ttname"><a href="classmio_1_1History.html">mio::History</a></div><div class="ttdoc">History class that handles writers and loggers.</div><div class="ttdef"><b>Definition:</b> history.h:71</div></div>
 </div><!-- fragment --><p>Then we can run the simulation with the history object and one can access the data it through get_log.</p>
 <div class="fragment"><div class="line">sim.advance(tmax, history);</div>
-<div class="line"><span class="keyword">auto</span> log = history.get_log();</div>
+<div class="line"><span class="keyword">auto</span> <a class="code" href="namespacead_1_1internal.html#ae15b28df45545c50a0800df386cda9be">log</a> = history.<a class="code" href="classmio_1_1History.html#a20f07b05d192e015c4f5cfff0c48c7f5">get_log</a>();</div>
+<div class="ttc" id="aclassmio_1_1History_html_a20f07b05d192e015c4f5cfff0c48c7f5"><div class="ttname"><a href="classmio_1_1History.html#a20f07b05d192e015c4f5cfff0c48c7f5">mio::History::get_log</a></div><div class="ttdeci">const WriteWrapper::Data &amp; get_log() const</div><div class="ttdoc">Get the data object.</div><div class="ttdef"><b>Definition:</b> history.h:107</div></div>
+<div class="ttc" id="anamespacead_1_1internal_html_ae15b28df45545c50a0800df386cda9be"><div class="ttname"><a href="namespacead_1_1internal.html#ae15b28df45545c50a0800df386cda9be">ad::internal::log</a></div><div class="ttdeci">ad::internal::unary_intermediate&lt; AD_TAPE_REAL, ad::internal::active_type&lt; AD_TAPE_REAL, DATA_HANDLER_1 &gt;, ad::operations::ad_log&lt; AD_TAPE_REAL &gt; &gt; log(const ad::internal::active_type&lt; AD_TAPE_REAL, DATA_HANDLER_1 &gt; &amp;x1)</div><div class="ttdef"><b>Definition:</b> ad.hpp:1034</div></div>
 </div><!-- fragment --><p>Finally we can print the data to a text file.</p>
 <div class="fragment"><div class="line">std::ofstream outfile(<span class="stringliteral">&quot;abm_minimal.txt&quot;</span>);</div>
-<div class="line">std::get&lt;0&gt;(log).print_table({<span class="stringliteral">&quot;S&quot;</span>, <span class="stringliteral">&quot;E&quot;</span>, <span class="stringliteral">&quot;I_NS&quot;</span>, <span class="stringliteral">&quot;I_Sy&quot;</span>, <span class="stringliteral">&quot;I_Sev&quot;</span>, <span class="stringliteral">&quot;I_Crit&quot;</span>, <span class="stringliteral">&quot;R&quot;</span>, <span class="stringliteral">&quot;D&quot;</span>}, 7, 4, outfile);</div>
+<div class="line">std::get&lt;0&gt;(<a class="code" href="namespacead_1_1internal.html#ae15b28df45545c50a0800df386cda9be">log</a>).print_table({<span class="stringliteral">&quot;S&quot;</span>, <span class="stringliteral">&quot;E&quot;</span>, <span class="stringliteral">&quot;I_NS&quot;</span>, <span class="stringliteral">&quot;I_Sy&quot;</span>, <span class="stringliteral">&quot;I_Sev&quot;</span>, <span class="stringliteral">&quot;I_Crit&quot;</span>, <span class="stringliteral">&quot;R&quot;</span>, <span class="stringliteral">&quot;D&quot;</span>}, 7, 4, outfile);</div>
 <div class="line">std::cout &lt;&lt; <span class="stringliteral">&quot;Results written to abm_minimal.txt&quot;</span> &lt;&lt; std::endl;</div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md6"></a>
 Current Limitations</h1>

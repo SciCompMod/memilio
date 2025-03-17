@@ -92,7 +92,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a173bf1b89b81d4e9d88bba7632a294fa"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classmio_1_1ABMSimulationNode.html#a173bf1b89b81d4e9d88bba7632a294fa">ABMSimulationNode</a> (std::tuple&lt; History... &gt; &amp;&amp;history, Args &amp;&amp;... args)</td></tr>
 <tr class="separator:a173bf1b89b81d4e9d88bba7632a294fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af2c02b38e3d48c48f457f00b289f32ad"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1ABMSimulationNode.html#af2c02b38e3d48c48f457f00b289f32ad">advance</a> (<a class="el" href="classmio_1_1abm_1_1TimePoint.html">mio::abm::TimePoint</a> t, <a class="el" href="classmio_1_1abm_1_1TimeSpan.html">mio::abm::TimeSpan</a> dt)</td></tr>
-<tr class="memdesc:af2c02b38e3d48c48f457f00b289f32ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">advances the simulation in this node by t+dt and logs information in History object(s)  <a href="classmio_1_1ABMSimulationNode.html#af2c02b38e3d48c48f457f00b289f32ad">More...</a><br /></td></tr>
+<tr class="memdesc:af2c02b38e3d48c48f457f00b289f32ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">advances the simulation in this node by t+dt and logs information in <a class="el" href="classmio_1_1History.html" title="History class that handles writers and loggers.">History</a> object(s)  <a href="classmio_1_1ABMSimulationNode.html#af2c02b38e3d48c48f457f00b289f32ad">More...</a><br /></td></tr>
 <tr class="separator:af2c02b38e3d48c48f457f00b289f32ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aae48595b701d4c32cba4553ae84db8df"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; History... &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1ABMSimulationNode.html#aae48595b701d4c32cba4553ae84db8df">get_history</a> ()</td></tr>
 <tr class="memdesc:aae48595b701d4c32cba4553ae84db8df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get history object(s) in this node.  <a href="classmio_1_1ABMSimulationNode.html#aae48595b701d4c32cba4553ae84db8df">More...</a><br /></td></tr>
@@ -110,7 +110,7 @@ Private Attributes</h2></td></tr>
 <tr class="memitem:a6a0433255a1ec85f744e7056c5ce974f"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; History... &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1ABMSimulationNode.html#a6a0433255a1ec85f744e7056c5ce974f">m_history</a></td></tr>
 <tr class="separator:a6a0433255a1ec85f744e7056c5ce974f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab3ed8e6810ecb5fd3f1926034f364274"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmio_1_1ABMSimulationNode.html#afb51b6767b4294404b43014c4e23c710">Sim</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1ABMSimulationNode.html#ab3ed8e6810ecb5fd3f1926034f364274">m_simulation</a></td></tr>
-<tr class="memdesc:ab3ed8e6810ecb5fd3f1926034f364274"><td class="mdescLeft">&#160;</td><td class="mdescRight">ABM Simulation of the node.  <a href="classmio_1_1ABMSimulationNode.html#ab3ed8e6810ecb5fd3f1926034f364274">More...</a><br /></td></tr>
+<tr class="memdesc:ab3ed8e6810ecb5fd3f1926034f364274"><td class="mdescLeft">&#160;</td><td class="mdescRight">ABM <a class="el" href="classmio_1_1Simulation.html" title="A class for the simulation of a compartment model.">Simulation</a> of the node.  <a href="classmio_1_1ABMSimulationNode.html#ab3ed8e6810ecb5fd3f1926034f364274">More...</a><br /></td></tr>
 <tr class="separator:ab3ed8e6810ecb5fd3f1926034f364274"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -128,7 +128,7 @@ class mio::ABMSimulationNode&lt; History &gt;</h3>
 template&lt;class... History&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; History &gt;::<a class="el" href="classmio_1_1ABMSimulationNode.html#afb51b6767b4294404b43014c4e23c710">Sim</a> =  <a class="el" href="classmio_1_1abm_1_1Simulation.html">abm::Simulation</a>&lt;<a class="el" href="classmio_1_1GraphABModel.html">GraphABModel</a>&gt;</td>
+          <td class="memname">using <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; <a class="el" href="classmio_1_1History.html">History</a> &gt;::<a class="el" href="classmio_1_1ABMSimulationNode.html#afb51b6767b4294404b43014c4e23c710">Sim</a> =  <a class="el" href="classmio_1_1abm_1_1Simulation.html">abm::Simulation</a>&lt;<a class="el" href="classmio_1_1GraphABModel.html">GraphABModel</a>&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -147,7 +147,7 @@ template&lt;class... History&gt; </div>
 template&lt;class... Args, typename  = std::enable_if_t&lt;std::is_constructible&lt;Sim, Args...&gt;::value, void&gt;&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; History &gt;::<a class="el" href="classmio_1_1ABMSimulationNode.html">ABMSimulationNode</a> </td>
+          <td class="memname"><a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; <a class="el" href="classmio_1_1History.html">History</a> &gt;::<a class="el" href="classmio_1_1ABMSimulationNode.html">ABMSimulationNode</a> </td>
           <td>(</td>
           <td class="paramtype">std::tuple&lt; History... &gt; &amp;&amp;&#160;</td>
           <td class="paramname"><em>history</em>, </td>
@@ -178,7 +178,7 @@ template&lt;class... Args, typename  = std::enable_if_t&lt;std::is_constructible
 template&lt;class... History&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; History &gt;::advance </td>
+          <td class="memname">void <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; <a class="el" href="classmio_1_1History.html">History</a> &gt;::advance </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classmio_1_1abm_1_1TimePoint.html">mio::abm::TimePoint</a>&#160;</td>
           <td class="paramname"><em>t</em>, </td>
@@ -197,10 +197,10 @@ template&lt;class... History&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>advances the simulation in this node by t+dt and logs information in History object(s) </p>
+<p>advances the simulation in this node by t+dt and logs information in <a class="el" href="classmio_1_1History.html" title="History class that handles writers and loggers.">History</a> object(s) </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">History</td><td>history object type(s) </td></tr>
+    <tr><td class="paramname"><a class="el" href="classmio_1_1History.html" title="History class that handles writers and loggers.">History</a></td><td>history object type(s) </td></tr>
   </table>
   </dd>
 </dl>
@@ -208,7 +208,7 @@ template&lt;class... History&gt; </div>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">t</td><td>Current time point </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">dt</td><td>Time span that shoulb be advanced </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">history</td><td>History object(s) storing simulation information </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">history</td><td><a class="el" href="classmio_1_1History.html" title="History class that handles writers and loggers.">History</a> object(s) storing simulation information </td></tr>
   </table>
   </dd>
 </dl>
@@ -224,7 +224,7 @@ template&lt;class... History&gt; </div>
 template&lt;class... History&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">std::tuple&lt;History...&gt;&amp; <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; History &gt;::get_history </td>
+          <td class="memname">std::tuple&lt;History...&gt;&amp; <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; <a class="el" href="classmio_1_1History.html">History</a> &gt;::get_history </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -245,7 +245,7 @@ template&lt;class... History&gt; </div>
 template&lt;class... History&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">const std::tuple&lt;History...&gt;&amp; <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; History &gt;::get_history </td>
+          <td class="memname">const std::tuple&lt;History...&gt;&amp; <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; <a class="el" href="classmio_1_1History.html">History</a> &gt;::get_history </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -264,7 +264,7 @@ template&lt;class... History&gt; </div>
 template&lt;class... History&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classmio_1_1ABMSimulationNode.html#afb51b6767b4294404b43014c4e23c710">Sim</a>&amp; <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; History &gt;::get_simulation </td>
+          <td class="memname"><a class="el" href="classmio_1_1ABMSimulationNode.html#afb51b6767b4294404b43014c4e23c710">Sim</a>&amp; <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; <a class="el" href="classmio_1_1History.html">History</a> &gt;::get_simulation </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -285,7 +285,7 @@ template&lt;class... History&gt; </div>
 template&lt;class... History&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">const <a class="el" href="classmio_1_1ABMSimulationNode.html#afb51b6767b4294404b43014c4e23c710">Sim</a>&amp; <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; History &gt;::get_simulation </td>
+          <td class="memname">const <a class="el" href="classmio_1_1ABMSimulationNode.html#afb51b6767b4294404b43014c4e23c710">Sim</a>&amp; <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; <a class="el" href="classmio_1_1History.html">History</a> &gt;::get_simulation </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -308,7 +308,7 @@ template&lt;class... History&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::tuple&lt;History...&gt; <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; History &gt;::m_history</td>
+          <td class="memname">std::tuple&lt;History...&gt; <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; <a class="el" href="classmio_1_1History.html">History</a> &gt;::m_history</td>
         </tr>
       </table>
   </td>
@@ -332,7 +332,7 @@ template&lt;class... History&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classmio_1_1ABMSimulationNode.html#afb51b6767b4294404b43014c4e23c710">Sim</a> <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; History &gt;::m_simulation</td>
+          <td class="memname"><a class="el" href="classmio_1_1ABMSimulationNode.html#afb51b6767b4294404b43014c4e23c710">Sim</a> <a class="el" href="classmio_1_1ABMSimulationNode.html">mio::ABMSimulationNode</a>&lt; <a class="el" href="classmio_1_1History.html">History</a> &gt;::m_simulation</td>
         </tr>
       </table>
   </td>
@@ -342,7 +342,7 @@ template&lt;class... History&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>ABM Simulation of the node. </p>
+<p>ABM <a class="el" href="classmio_1_1Simulation.html" title="A class for the simulation of a compartment model.">Simulation</a> of the node. </p>
 
 </div>
 </div>

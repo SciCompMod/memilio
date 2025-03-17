@@ -74,12 +74,12 @@ $(function() {
 <div class="title">parameters.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &quot;memilio/epidemiology/age_group.h&quot;</code><br />
-<code>#include &quot;memilio/epidemiology/dynamic_npis.h&quot;</code><br />
-<code>#include &quot;memilio/epidemiology/uncertain_matrix.h&quot;</code><br />
-<code>#include &quot;memilio/utils/custom_index_array.h&quot;</code><br />
-<code>#include &quot;memilio/utils/parameter_set.h&quot;</code><br />
-<code>#include &quot;memilio/utils/uncertain_value.h&quot;</code><br />
+<div class="textblock"><code>#include &quot;<a class="el" href="age__group_8h_source.html">memilio/epidemiology/age_group.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="dynamic__npis_8h_source.html">memilio/epidemiology/dynamic_npis.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="uncertain__matrix_8h_source.html">memilio/epidemiology/uncertain_matrix.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="custom__index__array_8h_source.html">memilio/utils/custom_index_array.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="parameter__set_8h_source.html">memilio/utils/parameter_set.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="uncertain__value_8h_source.html">memilio/utils/uncertain_value.h</a>&quot;</code><br />
 <code>#include &lt;limits&gt;</code><br />
 </div>
 <p><a href="ode__secir_2parameters_8h_source.html">Go to the source code of this file.</a></p>
@@ -87,7 +87,7 @@ $(function() {
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1osecir_1_1ContactPatterns.html">mio::osecir::ContactPatterns&lt; FP &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">the contact patterns within the society are modelled using an UncertainContactMatrix  <a href="structmio_1_1osecir_1_1ContactPatterns.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">the contact patterns within the society are modelled using an <a class="el" href="classmio_1_1UncertainContactMatrix.html" title="The UncertainContactMatrix class consists of a ContactMatrix with fixed baseline and uncertain Dampin...">UncertainContactMatrix</a>  <a href="structmio_1_1osecir_1_1ContactPatterns.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1osecir_1_1CriticalPerSevere.html">mio::osecir::CriticalPerSevere&lt; FP &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">the percentage of ICU patients per hospitalized patients in the SECIR model  <a href="structmio_1_1osecir_1_1CriticalPerSevere.html#details">More...</a><br /></td></tr>
@@ -96,7 +96,7 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">the percentage of dead patients per ICU patients in the SECIR model  <a href="structmio_1_1osecir_1_1DeathsPerCritical.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1osecir_1_1DynamicNPIsImplementationDelay.html">mio::osecir::DynamicNPIsImplementationDelay&lt; FP &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The delay with which DynamicNPIs are implemented and enforced after exceedance of threshold.  <a href="structmio_1_1osecir_1_1DynamicNPIsImplementationDelay.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The delay with which <a class="el" href="classmio_1_1DynamicNPIs.html" title="represents non-pharmaceutical interventions (NPI) that are activated during the simulation if some va...">DynamicNPIs</a> are implemented and enforced after exceedance of threshold.  <a href="structmio_1_1osecir_1_1DynamicNPIsImplementationDelay.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmio_1_1osecir_1_1DynamicNPIsInfectedSymptoms.html">mio::osecir::DynamicNPIsInfectedSymptoms&lt; FP &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">the NPIs that are enforced if certain infection thresholds are exceeded.  <a href="structmio_1_1osecir_1_1DynamicNPIsInfectedSymptoms.html#details">More...</a><br /></td></tr>
@@ -156,6 +156,7 @@ Classes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespacemio"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio.html">mio</a></td></tr>
+<tr class="memdesc:namespacemio"><td class="mdescLeft">&#160;</td><td class="mdescRight">A collection of classes to simplify handling of matrix shapes in meta programming. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespacemio_1_1osecir"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio_1_1osecir.html">mio::osecir</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>

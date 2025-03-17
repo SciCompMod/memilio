@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-14 09:36:47</td>
+            <td class="headerValue">2025-03-17 07:57:44</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">20</td>
@@ -100,10 +100,10 @@
 <a name="38"><span class="lineNum">      38 </span>            :      * The range for each Index i in the MultiIndex is determined by [0, d_i), where d_i is the dimension of i.</a>
 <a name="39"><span class="lineNum">      39 </span>            :      * @param[in] dimensions A MultiIndex that contains the dimension for each Category.</a>
 <a name="40"><span class="lineNum">      40 </span>            :      */</a>
-<a name="41"><span class="lineNum">      41 </span><span class="lineCov">    1604503 :     IndexRange(const MultiIndex&amp; dimensions)</span></a>
-<a name="42"><span class="lineNum">      42 </span><span class="lineCov">    1604503 :         : m_dimensions(dimensions)</span></a>
+<a name="41"><span class="lineNum">      41 </span><span class="lineCov">    1594045 :     IndexRange(const MultiIndex&amp; dimensions)</span></a>
+<a name="42"><span class="lineNum">      42 </span><span class="lineCov">    1594045 :         : m_dimensions(dimensions)</span></a>
 <a name="43"><span class="lineNum">      43 </span>            :     {</a>
-<a name="44"><span class="lineNum">      44 </span><span class="lineCov">    1604503 :     }</span></a>
+<a name="44"><span class="lineNum">      44 </span><span class="lineCov">    1594045 :     }</span></a>
 <a name="45"><span class="lineNum">      45 </span>            : </a>
 <a name="46"><span class="lineNum">      46 </span>            :     /**</a>
 <a name="47"><span class="lineNum">      47 </span>            :      * @brief Iterator for MultiIndices.</a>
@@ -132,25 +132,25 @@
 <a name="70"><span class="lineNum">      70 </span>            :          * @param index Initial value for the iterator position.</a>
 <a name="71"><span class="lineNum">      71 </span>            :          * @param dimensions A reference to the dimensions of the MultiIndex.</a>
 <a name="72"><span class="lineNum">      72 </span>            :          */</a>
-<a name="73"><span class="lineNum">      73 </span><span class="lineCov">    3209007 :         MultiIndexIterator(value_type index, reference dimensions)</span></a>
-<a name="74"><span class="lineNum">      74 </span><span class="lineCov">    3209007 :             : m_index(index)</span></a>
-<a name="75"><span class="lineNum">      75 </span><span class="lineCov">    3209007 :             , m_dims(dimensions)</span></a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineCov">    3188091 :         MultiIndexIterator(value_type index, reference dimensions)</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">    3188091 :             : m_index(index)</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">    3188091 :             , m_dims(dimensions)</span></a>
 <a name="76"><span class="lineNum">      76 </span>            :         {</a>
-<a name="77"><span class="lineNum">      77 </span><span class="lineCov">    3209007 :         }</span></a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineCov">    3188091 :         }</span></a>
 <a name="78"><span class="lineNum">      78 </span>            : </a>
 <a name="79"><span class="lineNum">      79 </span>            :         /// Dereference operator.</a>
-<a name="80"><span class="lineNum">      80 </span><span class="lineCov">    1630406 :         reference operator*() const</span></a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineCov">    1619984 :         reference operator*() const</span></a>
 <a name="81"><span class="lineNum">      81 </span>            :         {</a>
-<a name="82"><span class="lineNum">      82 </span><span class="lineCov">    1630406 :             return m_index;</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">    1619984 :             return m_index;</span></a>
 <a name="83"><span class="lineNum">      83 </span>            :         }</a>
 <a name="84"><span class="lineNum">      84 </span>            : </a>
 <a name="85"><span class="lineNum">      85 </span>            :         /// Pre-increment operator.</a>
-<a name="86"><span class="lineNum">      86 </span><span class="lineCov">    1630200 :         MultiIndexIterator&amp; operator++()</span></a>
+<a name="86"><span class="lineNum">      86 </span><span class="lineCov">    1619778 :         MultiIndexIterator&amp; operator++()</span></a>
 <a name="87"><span class="lineNum">      87 </span>            :         {</a>
 <a name="88"><span class="lineNum">      88 </span>            :             if constexpr (MultiIndex::size &gt; 0) {</a>
-<a name="89"><span class="lineNum">      89 </span><span class="lineCov">    1630200 :                 increment_index();</span></a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineCov">    1619778 :                 increment_index();</span></a>
 <a name="90"><span class="lineNum">      90 </span>            :             }</a>
-<a name="91"><span class="lineNum">      91 </span><span class="lineCov">    1630200 :             return *this;</span></a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineCov">    1619778 :             return *this;</span></a>
 <a name="92"><span class="lineNum">      92 </span>            :         }</a>
 <a name="93"><span class="lineNum">      93 </span>            : </a>
 <a name="94"><span class="lineNum">      94 </span>            :         /// Post-increment operator.</a>
@@ -162,15 +162,15 @@
 <a name="100"><span class="lineNum">     100 </span>            :         }</a>
 <a name="101"><span class="lineNum">     101 </span>            : </a>
 <a name="102"><span class="lineNum">     102 </span>            :         /// Equality operator.</a>
-<a name="103"><span class="lineNum">     103 </span><span class="lineCov">    3234672 :         bool operator==(MultiIndexIterator&amp; other) const</span></a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineCov">    3213792 :         bool operator==(MultiIndexIterator&amp; other) const</span></a>
 <a name="104"><span class="lineNum">     104 </span>            :         {</a>
-<a name="105"><span class="lineNum">     105 </span><span class="lineCov">    3234672 :             return m_index == other.m_index;</span></a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineCov">    3213792 :             return m_index == other.m_index;</span></a>
 <a name="106"><span class="lineNum">     106 </span>            :         }</a>
 <a name="107"><span class="lineNum">     107 </span>            : </a>
 <a name="108"><span class="lineNum">     108 </span>            :         /// Inequality operator.</a>
-<a name="109"><span class="lineNum">     109 </span><span class="lineCov">    3234672 :         bool operator!=(MultiIndexIterator&amp; other) const</span></a>
+<a name="109"><span class="lineNum">     109 </span><span class="lineCov">    3213792 :         bool operator!=(MultiIndexIterator&amp; other) const</span></a>
 <a name="110"><span class="lineNum">     110 </span>            :         {</a>
-<a name="111"><span class="lineNum">     111 </span><span class="lineCov">    3234672 :             return !(*this == other);</span></a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineCov">    3213792 :             return !(*this == other);</span></a>
 <a name="112"><span class="lineNum">     112 </span>            :         }</a>
 <a name="113"><span class="lineNum">     113 </span>            : </a>
 <a name="114"><span class="lineNum">     114 </span>            :     private:</a>
@@ -179,10 +179,10 @@
 <a name="117"><span class="lineNum">     117 </span>            :          * @tparam I position in the MultiIndex.</a>
 <a name="118"><span class="lineNum">     118 </span>            :          */</a>
 <a name="119"><span class="lineNum">     119 </span>            :         template &lt;size_t I = MultiIndex::size - 1&gt;</a>
-<a name="120"><span class="lineNum">     120 </span><span class="lineCov">    1630208 :         inline void increment_index()</span></a>
+<a name="120"><span class="lineNum">     120 </span><span class="lineCov">    1619786 :         inline void increment_index()</span></a>
 <a name="121"><span class="lineNum">     121 </span>            :         {</a>
-<a name="122"><span class="lineNum">     122 </span><span class="lineCov">    1630208 :             assert(mio::get&lt;I&gt;(m_dims).get() &gt; 0 &amp;&amp; &quot;All dimensions must be positive.&quot;);</span></a>
-<a name="123"><span class="lineNum">     123 </span><span class="lineCov">    1630208 :             assert(mio::get&lt;I&gt;(m_index) &lt; mio::get&lt;I&gt;(m_dims) &amp;&amp; &quot;Index out of bounds.&quot;);</span></a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineCov">    1619786 :             assert(mio::get&lt;I&gt;(m_dims).get() &gt; 0 &amp;&amp; &quot;All dimensions must be positive.&quot;);</span></a>
+<a name="123"><span class="lineNum">     123 </span><span class="lineCov">    1619786 :             assert(mio::get&lt;I&gt;(m_index) &lt; mio::get&lt;I&gt;(m_dims) &amp;&amp; &quot;Index out of bounds.&quot;);</span></a>
 <a name="124"><span class="lineNum">     124 </span>            : </a>
 <a name="125"><span class="lineNum">     125 </span>            :             if constexpr (I &gt; 0) {</a>
 <a name="126"><span class="lineNum">     126 </span>            :                 // increment first, then do a carry-over if necessary</a>
@@ -193,10 +193,10 @@
 <a name="131"><span class="lineNum">     131 </span>            :                 }</a>
 <a name="132"><span class="lineNum">     132 </span>            :             }</a>
 <a name="133"><span class="lineNum">     133 </span>            :             else {</a>
-<a name="134"><span class="lineNum">     134 </span><span class="lineCov">    1630172 :                 ++mio::get&lt;0&gt;(m_index);</span></a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineCov">    1619750 :                 ++mio::get&lt;0&gt;(m_index);</span></a>
 <a name="135"><span class="lineNum">     135 </span>            :                 // no carry check for the most significant index</a>
 <a name="136"><span class="lineNum">     136 </span>            :             }</a>
-<a name="137"><span class="lineNum">     137 </span><span class="lineCov">    1630208 :         }</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineCov">    1619786 :         }</span></a>
 <a name="138"><span class="lineNum">     138 </span>            :         value_type m_index; ///&lt; Index used for iteration.</a>
 <a name="139"><span class="lineNum">     139 </span>            :         value_type m_dims; ///&lt; Copy of range dimensions.</a>
 <a name="140"><span class="lineNum">     140 </span>            :     };</a>
@@ -205,25 +205,25 @@
 <a name="143"><span class="lineNum">     143 </span>            :      * @brief STL iterator for a IndexRange.</a>
 <a name="144"><span class="lineNum">     144 </span>            :      * @return Returns the first index for the given dimensions, i.e. 0.</a>
 <a name="145"><span class="lineNum">     145 </span>            :      */</a>
-<a name="146"><span class="lineNum">     146 </span><span class="lineCov">    1604504 :     MultiIndexIterator begin() const</span></a>
+<a name="146"><span class="lineNum">     146 </span><span class="lineCov">    1594046 :     MultiIndexIterator begin() const</span></a>
 <a name="147"><span class="lineNum">     147 </span>            :     {</a>
-<a name="148"><span class="lineNum">     148 </span><span class="lineCov">    1604504 :         return MultiIndexIterator(MultiIndex::Zero(), m_dimensions);</span></a>
+<a name="148"><span class="lineNum">     148 </span><span class="lineCov">    1594046 :         return MultiIndexIterator(MultiIndex::Zero(), m_dimensions);</span></a>
 <a name="149"><span class="lineNum">     149 </span>            :     }</a>
 <a name="150"><span class="lineNum">     150 </span>            : </a>
 <a name="151"><span class="lineNum">     151 </span>            :     /**</a>
 <a name="152"><span class="lineNum">     152 </span>            :      * @brief STL iterator for a IndexRange.</a>
 <a name="153"><span class="lineNum">     153 </span>            :      * @return Returns the first index outside of the given dimensions.</a>
 <a name="154"><span class="lineNum">     154 </span>            :      */</a>
-<a name="155"><span class="lineNum">     155 </span><span class="lineCov">    1604503 :     MultiIndexIterator end() const</span></a>
+<a name="155"><span class="lineNum">     155 </span><span class="lineCov">    1594045 :     MultiIndexIterator end() const</span></a>
 <a name="156"><span class="lineNum">     156 </span>            :     {</a>
 <a name="157"><span class="lineNum">     157 </span>            :         // set end to the first invalid index that is reached by increments of 1,</a>
 <a name="158"><span class="lineNum">     158 </span>            :         // i.e. 0 everywhere except for the most significant index (position 0),</a>
 <a name="159"><span class="lineNum">     159 </span>            :         // which is set to its dimension</a>
-<a name="160"><span class="lineNum">     160 </span><span class="lineCov">    1604503 :         MultiIndex end = MultiIndex::Zero();</span></a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineCov">    1594045 :         MultiIndex end = MultiIndex::Zero();</span></a>
 <a name="161"><span class="lineNum">     161 </span>            :         if constexpr (MultiIndex::size &gt; 0) {</a>
-<a name="162"><span class="lineNum">     162 </span><span class="lineCov">    1604503 :             mio::get&lt;0&gt;(end) = mio::get&lt;0&gt;(m_dimensions);</span></a>
+<a name="162"><span class="lineNum">     162 </span><span class="lineCov">    1594045 :             mio::get&lt;0&gt;(end) = mio::get&lt;0&gt;(m_dimensions);</span></a>
 <a name="163"><span class="lineNum">     163 </span>            :         }</a>
-<a name="164"><span class="lineNum">     164 </span><span class="lineCov">    3209006 :         return MultiIndexIterator(end, m_dimensions);</span></a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">    3188090 :         return MultiIndexIterator(end, m_dimensions);</span></a>
 <a name="165"><span class="lineNum">     165 </span>            :     }</a>
 <a name="166"><span class="lineNum">     166 </span>            : </a>
 <a name="167"><span class="lineNum">     167 </span>            : private:</a>
@@ -238,9 +238,9 @@
 <a name="176"><span class="lineNum">     176 </span>            :  * @return An iterable range over the given dimensions.</a>
 <a name="177"><span class="lineNum">     177 </span>            :  */</a>
 <a name="178"><span class="lineNum">     178 </span>            : template &lt;class... Categories&gt;</a>
-<a name="179"><span class="lineNum">     179 </span><span class="lineCov">    1604502 : IndexRange&lt;Index&lt;Categories...&gt;&gt; make_index_range(const Index&lt;Categories...&gt;&amp; dimensions)</span></a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">    1594044 : IndexRange&lt;Index&lt;Categories...&gt;&gt; make_index_range(const Index&lt;Categories...&gt;&amp; dimensions)</span></a>
 <a name="180"><span class="lineNum">     180 </span>            : {</a>
-<a name="181"><span class="lineNum">     181 </span><span class="lineCov">    1604502 :     return IndexRange&lt;Index&lt;Categories...&gt;&gt;(dimensions);</span></a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">    1594044 :     return IndexRange&lt;Index&lt;Categories...&gt;&gt;(dimensions);</span></a>
 <a name="182"><span class="lineNum">     182 </span>            : }</a>
 <a name="183"><span class="lineNum">     183 </span>            : </a>
 <a name="184"><span class="lineNum">     184 </span>            : } // namespace mio</a>

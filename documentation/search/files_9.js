@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['random_5fevents_2eh_1067',['random_events.h',['../random__events_8h.html',1,'']]],
-  ['readme_2emd_1068',['README.md',['../ode__secirts_2README_8md.html',1,'(Global Namespace)'],['../smm_2README_8md.html',1,'(Global Namespace)'],['../sde__sirs_2README_8md.html',1,'(Global Namespace)'],['../sde__sir_2README_8md.html',1,'(Global Namespace)'],['../sde__seirvv_2README_8md.html',1,'(Global Namespace)'],['../README_8md.html',1,'(Global Namespace)'],['../ode__sir_2README_8md.html',1,'(Global Namespace)'],['../ode__seir_2README_8md.html',1,'(Global Namespace)'],['../ode__secirvvs_2README_8md.html',1,'(Global Namespace)'],['../ode__secir_2README_8md.html',1,'(Global Namespace)'],['../ode__seair_2README_8md.html',1,'(Global Namespace)'],['../lct__secir_2README_8md.html',1,'(Global Namespace)'],['../ide__seir_2README_8md.html',1,'(Global Namespace)'],['../ide__secir_2README_8md.html',1,'(Global Namespace)'],['../glct__secir_2README_8md.html',1,'(Global Namespace)'],['../d__abm_2README_8md.html',1,'(Global Namespace)'],['../abm_2README_8md.html',1,'(Global Namespace)']]]
+  ['json_5fserializer_2ecpp_2798',['json_serializer.cpp',['../json__serializer_8cpp.html',1,'']]],
+  ['json_5fserializer_2eh_2799',['json_serializer.h',['../json__serializer_8h.html',1,'']]]
 ];
