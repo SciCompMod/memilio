@@ -18,11 +18,12 @@
 # limitations under the License.
 #############################################################################
 """
-@file defaultDict.py
+:strong:`defaultDict.py`
 
-@brief Defines global parameter, lists and dictionaries
+Defines global parameter, lists and dictionaries
 
 Dictionaries define values which are globally used and should be everywhere the same
+
 - defaultDict defined default values for the function parameter
 
 This dictionary ensures that in case of calling the functions
@@ -695,10 +696,11 @@ IntermediateRegionIDsToCountyIDs = {
 
 
 def invert_dict(dict_to_invert):
-    """! Inverts the roles of keys and values of dictionary to create
+    """ Inverts the roles of keys and values of dictionary to create
     a new dictionary where the previous keys are the values and vice versa.
 
-    @param dict_to_invert Dictionary.
-    @return Inverted dictionary.
+    :param dict_to_invert: Dictionary.
+    :returns: Inverted dictionary.
+
     """
     return {val: key for key, val in dict_to_invert.items()}

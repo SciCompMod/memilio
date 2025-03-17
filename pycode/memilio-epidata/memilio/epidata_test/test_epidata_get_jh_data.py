@@ -31,6 +31,7 @@ from memilio.epidata import getJHData as gJHD
 
 
 class TestGetJHData(fake_filesystem_unittest.TestCase):
+    """ """
     path = '/home/JHData'
 
     str_FullData_JohnHopkins = \
@@ -76,9 +77,15 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         "Confirmed":0,"Recovered":0.0,"Deaths":0}]""")
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     def write_jh_data(self, out_folder):
+        """
+
+        :param out_folder: 
+
+        """
         file_jh = "FullData_JohnHopkins.json"
         file_jh_with_path = os.path.join(out_folder, file_jh)
 
@@ -87,6 +94,11 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=False)
     def test_get_JH_Data(self, mockin):
+        """
+
+        :param mockin: 
+
+        """
         # Test without downloading data
         [read_data, file_format, out_folder, no_raw] \
             = [True, "json", self.path, False]
@@ -225,6 +237,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
             20)
 
     def test_get_JH_Data_extract_subframe_between_timeframe(self):
+        """ """
 
         [read_data, file_format, out_folder, no_raw] \
             = [True, "json", self.path, False]

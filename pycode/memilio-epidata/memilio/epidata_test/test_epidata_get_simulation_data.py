@@ -28,6 +28,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 class TestGetSimulationData(fake_filesystem_unittest.TestCase):
+    """ """
     # construct fake directory for testing
     maxDiff = None
     gd.Conf.v_level = 'Debug'
@@ -35,6 +36,7 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     path = '/home/SumlationData'
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     @patch('memilio.epidata.transformMobilityData.updateMobility2022')
@@ -45,6 +47,16 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getPopulationData.get_population_data')
     def test_get_call_sub_functions(self, mock_popul, mock_cases,
                                     mock_divi, mock_vaccination, mock_mobility, mock_mobility_update):
+        """
+
+        :param mock_popul: 
+        :param mock_cases: 
+        :param mock_divi: 
+        :param mock_vaccination: 
+        :param mock_mobility:
+        :param mock_mobility_update:
+
+        """
 
         [read_data, file_format, out_folder, no_raw, start_date, end_date,
          impute_dates, moving_average, make_plot, split_berlin, rep_date] = [
@@ -125,34 +137,48 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
             self, mock_update, mock_commuter, mock_popul, mock_cases, mock_divi, mock_vaccination,
             mock_print):
 
-        mock_update.side_effect = Exception
-        mock_commuter.side_effect = Exception
-        mock_popul.side_effect = Exception
-        mock_cases.side_effect = Exception
-        mock_divi.side_effect = Exception
-        mock_vaccination.side_effect = Exception
-        gsd.get_simulation_data(ref_year=2021)
-        data_types = [
-            'population', 'case', 'DIVI', 'vaccination', 'commuter_mobility', 'update_mobility'
-        ]
 
-        calls = [
-            call(
-                f"Error: Something went wrong while getting {data_type} data. "
-                f"This was likely caused by a changed file format of the source material. Please report this as an issue. "
-                f"{data_type} data could not be stored correctly."
-            )
-            for data_type in data_types
-        ]
+<< << << < HEAD
 
-        populprint, casesprint, diviprint, vaccprint, mobilityprint, updateprint = calls
+mock_update.side_effect = Exception
+mock_commuter.side_effect = Exception
+== == == =
+"""
 
-        exceptionprint = call('Error: Exception: ')
-        expected_calls = [
-            exceptionprint, casesprint, exceptionprint, populprint,
-            exceptionprint, diviprint, exceptionprint, vaccprint, exceptionprint,
-            mobilityprint, exceptionprint, updateprint]
-        mock_print.assert_has_calls(expected_calls)
+    :param mock_popul: 
+    :param mock_cases: 
+    :param mock_divi: 
+    :param mock_vaccination: 
+    :param mock_print: 
+
+    """
+>>>>>> > main
+mock_popul.side_effect = Exception
+mock_cases.side_effect = Exception
+mock_divi.side_effect = Exception
+mock_vaccination.side_effect = Exception
+gsd.get_simulation_data(ref_year=2021)
+data_types = [
+    'population', 'case', 'DIVI', 'vaccination', 'commuter_mobility', 'update_mobility'
+]
+
+calls = [
+    call(
+        f"Error: Something went wrong while getting {data_type} data. "
+        f"This was likely caused by a changed file format of the source material. Please report this as an issue. "
+        f"{data_type} data could not be stored correctly."
+    )
+    for data_type in data_types
+]
+
+populprint, casesprint, diviprint, vaccprint, mobilityprint, updateprint = calls
+
+exceptionprint = call('Error: Exception: ')
+expected_calls = [
+    exceptionprint, casesprint, exceptionprint, populprint,
+    exceptionprint, diviprint, exceptionprint, vaccprint, exceptionprint,
+    mobilityprint, exceptionprint, updateprint]
+mock_print.assert_has_calls(expected_calls)
 
 
 if __name__ == '__main__':

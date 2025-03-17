@@ -29,13 +29,22 @@ from memilio.epidata import defaultDict as dd
 
 
 class Test_cleanData(fake_filesystem_unittest.TestCase):
+    """ """
+
     path = '/home/x'
     maxDiff = None
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     def set_dirs_and_files(self, what):
+        """
+
+        :param what: 
+
+        """
+
         dir_dic_all = {
             'Germany': ["cases_a", "a_jh", "CaseDataFull", "PopulData",
                         "county_population", "county_table", "reg_key", "zensus", "FullVacc",
@@ -119,7 +128,10 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                         f.write('foo')
 
     def test_set_dirs_and_files(self):
-        # Test if the set_dirs_and_files function works as expected.
+        """ """
+
+        # test if writte fct works as expected
+
         self.set_dirs_and_files("all")
 
         # The updated list of country directories now includes "Global".
@@ -180,6 +192,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
     # generate folder and files
     def test_clean_data_all_should_delete_all(self):
+        """ """
 
         self.set_dirs_and_files("all")
 
@@ -190,6 +203,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(self.path)), 0)
 
     def test_clean_data_all_should_not_delete_all(self):
+        """ """
 
         self.set_dirs_and_files("all")
 
@@ -215,6 +229,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(dir_path), ["secret.txt"])
 
     def test_clean_data_cases(self):
+        """ """
 
         self.set_dirs_and_files("all")
 
@@ -265,6 +280,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 2)
 
     def test_clean_data_cases_h5(self):
+        """ """
 
         self.set_dirs_and_files("all")
 
@@ -315,6 +331,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 2)
 
     def test_clean_data_cases_del_dir(self):
+        """ """
+
         self.set_dirs_and_files("all")
 
         # Work on the "Germany/pydata" folder
@@ -361,6 +379,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(country_pydata)), 2)
 
     def test_clean_data_population(self):
+        """ """
 
         # test if writte fct works as expected
 
@@ -412,6 +431,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 2)
 
     def test_clean_data_population_hdf5(self):
+        """ """
 
         # test if writte fct works as expected
 
@@ -467,6 +487,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 2)
 
     def test_clean_data_population_del_dir(self):
+        """ """
 
         # test if writte fct works as expected
 
@@ -515,6 +536,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 2)
 
     def test_all_false(self):
+        """ """
 
         cd.clean_data(False, False, False, False, False,
                       False, False, False, False, True, False, False, self.path)
@@ -567,6 +589,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 2)
 
     def test_wrong_path(self):
+        """ """
 
         self.set_dirs_and_files("all")
 
@@ -583,6 +606,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(dir1a, dir2a)
 
     def test_clean_data_jh(self):
+        """ """
 
         # test if writte fct works as expected
 
@@ -628,6 +652,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(os.listdir(dir_path), ["c_jh.h5"])
 
     def test_clean_data_jh_hdf5(self):
+        """ """
 
         # test if writte fct works as expected
 
@@ -672,6 +697,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(os.listdir(dir_path), ["c_jh.json"])
 
     def test_clean_data_jh_both_endings(self):
+        """ """
 
         # test if writte fct works as expected
 
@@ -714,6 +740,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                     self.assertIn(file, fakefiles)
 
     def test_clean_txt(self):
+        """ """
         # write file
         dir_path = os.path.join(self.path, 'Germany')
         os.makedirs(dir_path)
@@ -729,6 +756,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path), ["Germany"])
 
     def test_file_not_found_cases(self):
+        """ """
 
         self.set_dirs_and_files("cases")
 
@@ -745,6 +773,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
 
     def test_file_not_found_population(self):
+        """ """
 
         self.set_dirs_and_files("popul")
 
@@ -761,6 +790,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
 
     def test_file_not_found_jh(self):
+        """ """
 
         self.set_dirs_and_files("jh")
 
@@ -777,6 +807,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
 
     def test_file_not_found_divi(self):
+        """ """
 
         self.set_dirs_and_files("divi")
 
@@ -793,6 +824,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
 
     def test_file_not_found_vacc(self):
+        """ """
 
         self.set_dirs_and_files("vacc")
 
@@ -809,6 +841,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
 
     def test_file_not_found_commuter(self):
+        """ """
 
         self.set_dirs_and_files("commuter")
 
@@ -825,6 +858,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
 
     def test_file_not_found_testing(self):
+        """ """
 
         self.set_dirs_and_files("testing")
 
@@ -841,6 +875,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
 
     def test_no_files(self):
+        """ """
 
         # The following should run without any problem.
         # Every error should be cached and passed
@@ -875,6 +910,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                       False, False, True, False, True, True, True, self.path)
 
     def test_cli_default(self):
+        """ """
 
         out_path_default = dd.defaultDict['out_folder']
 
@@ -900,6 +936,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(out_path, out_path_default)
 
     def test_cli_folder(self):
+        """ """
 
         folder = "some_folder"
         test_args = ["prog", '--out_path', folder]
@@ -924,6 +961,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(out_path, folder)
 
     def test_cli_all(self):
+        """ """
 
         out_path_default = dd.defaultDict['out_folder']
 
@@ -949,6 +987,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(out_path, out_path_default)
 
     def test_cli_cases(self):
+        """ """
 
         out_path_default = dd.defaultDict['out_folder']
 
@@ -974,6 +1013,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(out_path, out_path_default)
 
     def test_cli_jh(self):
+        """ """
 
         out_path_default = dd.defaultDict['out_folder']
 
@@ -999,6 +1039,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(out_path, out_path_default)
 
     def test_cli_popul(self):
+        """ """
 
         out_path_default = dd.defaultDict['out_folder']
 
@@ -1024,6 +1065,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(out_path, out_path_default)
 
     def test_cli_divi_vacc_commuter_testing(self):
+        """ """
 
         out_path_default = dd.defaultDict['out_folder']
 
@@ -1049,6 +1091,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(out_path, out_path_default)
 
     def test_clean_divi_vacc_commuter_testing_json(self):
+        """ """
 
         # test cleaning of divi, vaccination, commuter & testing data
         self.set_dirs_and_files('all')
