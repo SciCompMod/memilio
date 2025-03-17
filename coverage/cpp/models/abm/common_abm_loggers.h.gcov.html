@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-17 07:57:44</td>
+            <td class="headerValue">2025-03-17 10:46:25</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">7</td>
@@ -116,16 +116,16 @@
 <a name="54"><span class="lineNum">      54 </span><span class="lineCov">       1350 : constexpr mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_location)</span></a>
 <a name="55"><span class="lineNum">      55 </span>            : {</a>
 <a name="56"><span class="lineNum">      56 </span><span class="lineCov">       1350 :     switch (current_location) {</span></a>
-<a name="57"><span class="lineNum">      57 </span><span class="lineCov">        756 :     case mio::abm::LocationType::Home:</span></a>
-<a name="58"><span class="lineNum">      58 </span><span class="lineCov">        756 :         return mio::abm::ActivityType::Home;</span></a>
+<a name="57"><span class="lineNum">      57 </span><span class="lineCov">        792 :     case mio::abm::LocationType::Home:</span></a>
+<a name="58"><span class="lineNum">      58 </span><span class="lineCov">        792 :         return mio::abm::ActivityType::Home;</span></a>
 <a name="59"><span class="lineNum">      59 </span><span class="lineCov">         18 :     case mio::abm::LocationType::Work:</span></a>
 <a name="60"><span class="lineNum">      60 </span><span class="lineCov">         18 :         return mio::abm::ActivityType::Workplace;</span></a>
 <a name="61"><span class="lineNum">      61 </span><span class="lineNoCov">          0 :     case mio::abm::LocationType::School:</span></a>
 <a name="62"><span class="lineNum">      62 </span><span class="lineNoCov">          0 :         return mio::abm::ActivityType::Education;</span></a>
 <a name="63"><span class="lineNum">      63 </span><span class="lineCov">         18 :     case mio::abm::LocationType::SocialEvent:</span></a>
 <a name="64"><span class="lineNum">      64 </span><span class="lineCov">         18 :         return mio::abm::ActivityType::Leisure;</span></a>
-<a name="65"><span class="lineNum">      65 </span><span class="lineCov">         72 :     case mio::abm::LocationType::BasicsShop:</span></a>
-<a name="66"><span class="lineNum">      66 </span><span class="lineCov">         72 :         return mio::abm::ActivityType::Shopping;</span></a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineCov">         36 :     case mio::abm::LocationType::BasicsShop:</span></a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineCov">         36 :         return mio::abm::ActivityType::Shopping;</span></a>
 <a name="67"><span class="lineNum">      67 </span><span class="lineCov">         18 :     case mio::abm::LocationType::ICU:</span></a>
 <a name="68"><span class="lineNum">      68 </span><span class="lineCov">         18 :         return mio::abm::ActivityType::OtherActivity;</span></a>
 <a name="69"><span class="lineNum">      69 </span><span class="lineCov">         18 :     case mio::abm::LocationType::Hospital:</span></a>
@@ -292,8 +292,8 @@
 <a name="230"><span class="lineNum">     230 </span><span class="lineCov">        216 :             auto&amp; current_state_vec = std::get&lt;index_of_type_v&lt;Logger, Loggers...&gt;&gt;(data).front();</span></a>
 <a name="231"><span class="lineNum">     231 </span><span class="lineCov">        864 :             for (auto i = 0; i &lt; (int)current_state_vec.size(); i++) {</span></a>
 <a name="232"><span class="lineNum">     232 </span><span class="lineCov">        648 :                 if (std::get&lt;1&gt;(t[i]) != std::get&lt;1&gt;(current_state_vec[i])) {</span></a>
-<a name="233"><span class="lineNum">     233 </span><span class="lineCov">        126 :                     std::get&lt;1&gt;(current_state_vec[i]) = std::get&lt;1&gt;(t[i]);</span></a>
-<a name="234"><span class="lineNum">     234 </span><span class="lineCov">        126 :                     diff_vector.push_back(t[i]);</span></a>
+<a name="233"><span class="lineNum">     233 </span><span class="lineCov">         90 :                     std::get&lt;1&gt;(current_state_vec[i]) = std::get&lt;1&gt;(t[i]);</span></a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineCov">         90 :                     diff_vector.push_back(t[i]);</span></a>
 <a name="235"><span class="lineNum">     235 </span>            :                 }</a>
 <a name="236"><span class="lineNum">     236 </span>            :             }</a>
 <a name="237"><span class="lineNum">     237 </span><span class="lineCov">        216 :             std::get&lt;index_of_type_v&lt;Logger, Loggers...&gt;&gt;(data).push_back(diff_vector);</span></a>

@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-17 07:57:44</td>
+            <td class="headerValue">2025-03-17 10:46:25</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">470</td>
@@ -165,19 +165,19 @@
 <a name="103"><span class="lineNum">     103 </span>            :     using value_type             = typename std::iterator_traits&lt;iterator&gt;::value_type;</a>
 <a name="104"><span class="lineNum">     104 </span>            :     using reference              = typename std::iterator_traits&lt;iterator&gt;::reference;</a>
 <a name="105"><span class="lineNum">     105 </span>            : </a>
-<a name="106"><span class="lineNum">     106 </span><span class="lineCov">     895032 :     Range(IterPair iter_pair)</span></a>
-<a name="107"><span class="lineNum">     107 </span><span class="lineCov">     895032 :         : m_iter_pair(iter_pair)</span></a>
+<a name="106"><span class="lineNum">     106 </span><span class="lineCov">     895752 :     Range(IterPair iter_pair)</span></a>
+<a name="107"><span class="lineNum">     107 </span><span class="lineCov">     895752 :         : m_iter_pair(iter_pair)</span></a>
 <a name="108"><span class="lineNum">     108 </span>            :     {</a>
-<a name="109"><span class="lineNum">     109 </span><span class="lineCov">     895032 :     }</span></a>
+<a name="109"><span class="lineNum">     109 </span><span class="lineCov">     895752 :     }</span></a>
 <a name="110"><span class="lineNum">     110 </span>            : </a>
 <a name="111"><span class="lineNum">     111 </span>            :     /** @brief index operator.</a>
 <a name="112"><span class="lineNum">     112 </span>            :      * constant complexity if random access iterator, linear otherwise</a>
 <a name="113"><span class="lineNum">     113 </span>            :      */</a>
-<a name="114"><span class="lineNum">     114 </span><span class="lineCov">     221172 :     reference operator[](size_t idx) const</span></a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">     221667 :     reference operator[](size_t idx) const</span></a>
 <a name="115"><span class="lineNum">     115 </span>            :     {</a>
-<a name="116"><span class="lineNum">     116 </span><span class="lineCov">     221172 :         auto it = begin();</span></a>
-<a name="117"><span class="lineNum">     117 </span><span class="lineCov">     221172 :         std::advance(it, idx);</span></a>
-<a name="118"><span class="lineNum">     118 </span><span class="lineCov">     221177 :         return *it;</span></a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineCov">     221667 :         auto it = begin();</span></a>
+<a name="117"><span class="lineNum">     117 </span><span class="lineCov">     221667 :         std::advance(it, idx);</span></a>
+<a name="118"><span class="lineNum">     118 </span><span class="lineCov">     221672 :         return *it;</span></a>
 <a name="119"><span class="lineNum">     119 </span>            :     }</a>
 <a name="120"><span class="lineNum">     120 </span>            : </a>
 <a name="121"><span class="lineNum">     121 </span>            :     reference back() const</a>
@@ -185,19 +185,19 @@
 <a name="123"><span class="lineNum">     123 </span>            :         return *(--end());</a>
 <a name="124"><span class="lineNum">     124 </span>            :     }</a>
 <a name="125"><span class="lineNum">     125 </span>            : </a>
-<a name="126"><span class="lineNum">     126 </span><span class="lineCov">     113087 :     size_t size() const</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineCov">     113222 :     size_t size() const</span></a>
 <a name="127"><span class="lineNum">     127 </span>            :     {</a>
-<a name="128"><span class="lineNum">     128 </span><span class="lineCov">     113087 :         return static_cast&lt;size_t&gt;(std::distance(begin(), end()));</span></a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineCov">     113222 :         return static_cast&lt;size_t&gt;(std::distance(begin(), end()));</span></a>
 <a name="129"><span class="lineNum">     129 </span>            :     }</a>
 <a name="130"><span class="lineNum">     130 </span>            : </a>
-<a name="131"><span class="lineNum">     131 </span><span class="lineCov">     880177 :     auto begin() const</span></a>
+<a name="131"><span class="lineNum">     131 </span><span class="lineCov">     880501 :     auto begin() const</span></a>
 <a name="132"><span class="lineNum">     132 </span>            :     {</a>
-<a name="133"><span class="lineNum">     133 </span><span class="lineCov">     880177 :         return m_iter_pair.first;</span></a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineCov">     880501 :         return m_iter_pair.first;</span></a>
 <a name="134"><span class="lineNum">     134 </span>            :     }</a>
 <a name="135"><span class="lineNum">     135 </span>            : </a>
-<a name="136"><span class="lineNum">     136 </span><span class="lineCov">     575828 :     auto end() const</span></a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">     575963 :     auto end() const</span></a>
 <a name="137"><span class="lineNum">     137 </span>            :     {</a>
-<a name="138"><span class="lineNum">     138 </span><span class="lineCov">     575828 :         return m_iter_pair.second;</span></a>
+<a name="138"><span class="lineNum">     138 </span><span class="lineCov">     575963 :         return m_iter_pair.second;</span></a>
 <a name="139"><span class="lineNum">     139 </span>            :     }</a>
 <a name="140"><span class="lineNum">     140 </span>            : </a>
 <a name="141"><span class="lineNum">     141 </span>            :     template &lt;class T = typename std::iterator_traits&lt;iterator&gt;::iterator_category,</a>
@@ -222,15 +222,15 @@
 <a name="160"><span class="lineNum">     160 </span>            :  * @brief factories for template argument deduction</a>
 <a name="161"><span class="lineNum">     161 </span>            :  */</a>
 <a name="162"><span class="lineNum">     162 </span>            : template &lt;class IterPair&gt;</a>
-<a name="163"><span class="lineNum">     163 </span><span class="lineCov">     893231 : auto make_range(IterPair&amp;&amp; p)</span></a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineCov">     893951 : auto make_range(IterPair&amp;&amp; p)</span></a>
 <a name="164"><span class="lineNum">     164 </span>            : {</a>
-<a name="165"><span class="lineNum">     165 </span><span class="lineCov">     893231 :     return Range&lt;std::remove_reference_t&lt;std::remove_cv_t&lt;IterPair&gt;&gt;&gt;{p};</span></a>
+<a name="165"><span class="lineNum">     165 </span><span class="lineCov">     893951 :     return Range&lt;std::remove_reference_t&lt;std::remove_cv_t&lt;IterPair&gt;&gt;&gt;{p};</span></a>
 <a name="166"><span class="lineNum">     166 </span>            : }</a>
 <a name="167"><span class="lineNum">     167 </span>            : </a>
 <a name="168"><span class="lineNum">     168 </span>            : template &lt;class Iter1, class Iter2&gt;</a>
-<a name="169"><span class="lineNum">     169 </span><span class="lineCov">     893094 : auto make_range(Iter1&amp;&amp; iter1, Iter2&amp;&amp; iter2)</span></a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineCov">     893814 : auto make_range(Iter1&amp;&amp; iter1, Iter2&amp;&amp; iter2)</span></a>
 <a name="170"><span class="lineNum">     170 </span>            : {</a>
-<a name="171"><span class="lineNum">     171 </span><span class="lineCov">     893094 :     return make_range(std::make_pair(iter1, iter2));</span></a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">     893814 :     return make_range(std::make_pair(iter1, iter2));</span></a>
 <a name="172"><span class="lineNum">     172 </span>            : }</a>
 <a name="173"><span class="lineNum">     173 </span>            : </a>
 <a name="174"><span class="lineNum">     174 </span>            : /**</a>
