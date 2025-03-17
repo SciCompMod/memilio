@@ -100,12 +100,12 @@ Contents
 
 .. toctree::
    :maxdepth: 1
+   :caption: Getting Started
 
    getting_started
+   faq
    c++/c++
    python/python
-   faq
    models/models
    pythonapi
    api/library_root
-
