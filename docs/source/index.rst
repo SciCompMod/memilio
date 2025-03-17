@@ -88,7 +88,7 @@ Development
 
 **MEmilio** is a framework that ..
 
-Check out the :doc:`usage` section for further information, including
+Check out the :doc:`getting_started` section for further information, including
 how to :hoverxref:`installation` the project.
 
 .. note::
