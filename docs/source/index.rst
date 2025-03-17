@@ -104,8 +104,25 @@ Contents
 
    getting_started
    faq
-   c++/c++
-   python/python
-   models/models
+
+.. toctree::
+   :maxdepth: 2
+   :caption: C++ Interface
+
+   c++/model_usage
+   c++/model_creation
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Python Interface
+
+   python/model_usage
+   python/model_creation
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Code API 
+
+   models/index
    pythonapi
    api/library_root
