@@ -516,6 +516,7 @@ def save_persons(trip_file):
 
 
 def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file, new_file2):
+    random.seed(30)
     with open(mapping_path) as f:
         d = dict(x.rstrip().split(None, 1) for x in f)
     areas = geopandas.read_file(wastewater_path)
