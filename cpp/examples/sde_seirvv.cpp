@@ -105,11 +105,11 @@ int main()
     printf("Second simulation completed in %f seconds.\n", elapsed.count());
     fflush(stdout);
 
-    std::cout << "Printing first simulation results..." << std::endl;
-    sseirv.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",
-                        "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
+    // std::cout << "Printing first simulation results..." << std::endl;
+    // sseirv.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",
+    //                     "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
 
-    std::cout << "Printing second simulation results..." << std::endl;
-    sseirv2.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",
-                         "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
+    // std::cout << "Printing second simulation results..." << std::endl;
+    // sseirv2.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",
+    //                      "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
 }

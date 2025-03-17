@@ -157,8 +157,14 @@ public:
         assert(tmax > t0);
         assert(dt > 0);
 
+        std::cout << "Starting advance function" << std::endl;
+        std::cout << "Initial time t0: " << t0 << std::endl;
+        std::cout << "Target time tmax: " << tmax << std::endl;
+        std::cout << "Initial time step dt: " << dt << std::endl;
+
         const size_t num_steps =
             static_cast<size_t>(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)
+        std::cout << "Estimated number of steps: " << num_steps << std::endl;
 
         results.reserve(results.get_num_time_points() + num_steps);
 
@@ -170,17 +176,15 @@ public:
         FP t              = t0;
 
         for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t) / (tmax - t0)) > 1e-10; ++i) {
-            // We don't make time steps too small as the error estimator of an adaptive integrator
-            //may not be able to handle it. this is very conservative and maybe unnecessary,
-            //but also unlikely to happen. may need to be reevaluated.
+            std::cout << "Step " << i << ": t = " << t << ", dt = " << dt << std::endl;
 
             if (dt > tmax - t) {
                 dt_restore = dt;
                 dt         = tmax - t;
+                std::cout << "Adjusting dt to reach tmax: dt = " << dt << std::endl;
                 // if necessary, also reduce minimal step size such that we do not step past tmax
                 m_core->get_dt_min() = min(tmax - t, m_core->get_dt_min());
-                // if dt_min was reduced, the following step will be the last due to dt == dt_min (see step method)
-                // dt_min must be restored after this loop
+                std::cout << "Adjusting dt_min: dt_min = " << m_core->get_dt_min() << std::endl;
             }
 
             dt_copy = dt;
@@ -189,13 +193,19 @@ public:
             step_okay &= m_core->step(f, results[i], t, dt, results[i + 1]);
             results.get_last_time() = t;
 
+            std::cout << "After step: t = " << t << ", dt = " << dt << std::endl;
+            std::cout << "Step result: " << (step_okay ? "success" : "failure") << std::endl;
+
             // if dt has been changed by step, register the current m_core as adaptive.
             m_is_adaptive |= !floating_point_equal<FP>(dt, dt_copy, Limits<FP>::zero_tolerance());
         }
         m_core->get_dt_min() = dt_min_restore; // restore dt_min
+        std::cout << "Restoring dt_min: dt_min = " << m_core->get_dt_min() << std::endl;
+
         // if dt was decreased to reach tmax in the last time iteration,
         // we restore it as it is now probably smaller than required for tolerances
         dt = max(dt, dt_restore);
+        std::cout << "Restoring dt: dt = " << dt << std::endl;
 
         if (m_is_adaptive) {
             if (!step_okay) {
@@ -209,6 +219,7 @@ public:
             }
         }
 
+        std::cout << "Advance function completed" << std::endl;
         return results.get_last_value();
     }
 
