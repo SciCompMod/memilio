@@ -127,7 +127,7 @@ The result vector containing all agents can be accessed via
 
     sim.get_model().populations
 
-Additionally, the agents are automatically aggregated by region and infection state in a `mio::TimeSeries` object which can be accessed and printed as follows:
+Additionally, the agents are automatically aggregated by region and infection state in a ``mio::TimeSeries`` object which can be accessed and printed as follows:
 
 .. code-block:: cpp
 

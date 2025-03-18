@@ -7,4 +7,4 @@ Mobility and Metapopulation Models
    :maxdepth: 1
 
    mobility
-   metapopulation
+   metapop

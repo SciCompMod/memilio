@@ -111,7 +111,7 @@ To simulate the model from `t0` to `tmax` with given step size `dt`, a Simulatio
     //Advance the simulation until tmax
     sim.advance(tmax);
 
-Subpopulations stratified by region and infection state are saved in a `mio::TimeSeries` object which can be accessed and printed as follows:
+Subpopulations stratified by region and infection state are saved in a ``mio::TimeSeries`` object which can be accessed and printed as follows:
 
 .. code-block:: cpp
 
