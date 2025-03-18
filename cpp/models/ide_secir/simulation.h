@@ -47,6 +47,10 @@ public:
         : m_model(std::make_unique<Model>(model))
         , m_dt(dt)
     {
+        assert(m_dt > 0);
+        m_model->set_transitiondistributions_support_max(m_dt);
+        m_model->set_transitiondistributions_derivative(m_dt);
+        m_model->set_transitiondistributions_in_forceofinfection(m_dt);
     }
 
     /** 
