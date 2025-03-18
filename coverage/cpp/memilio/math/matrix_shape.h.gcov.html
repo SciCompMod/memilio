@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-17 10:46:25</td>
+            <td class="headerValue">2025-03-18 10:47:39</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">23</td>
@@ -209,10 +209,10 @@
 <a name="147"><span class="lineNum">     147 </span>            :      * construct a square matrix of dimensions r</a>
 <a name="148"><span class="lineNum">     148 </span>            :      * @param r number of rows and columns</a>
 <a name="149"><span class="lineNum">     149 </span>            :      */</a>
-<a name="150"><span class="lineNum">     150 </span><span class="lineCov">    1765525 :     explicit SquareMatrixShape(Eigen::Index r)</span></a>
-<a name="151"><span class="lineNum">     151 </span><span class="lineCov">    1765525 :         : m_rows(r)</span></a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineCov">    1837237 :     explicit SquareMatrixShape(Eigen::Index r)</span></a>
+<a name="151"><span class="lineNum">     151 </span><span class="lineCov">    1837237 :         : m_rows(r)</span></a>
 <a name="152"><span class="lineNum">     152 </span>            :     {</a>
-<a name="153"><span class="lineNum">     153 </span><span class="lineCov">    1765525 :     }</span></a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineCov">    1837237 :     }</span></a>
 <a name="154"><span class="lineNum">     154 </span>            : </a>
 <a name="155"><span class="lineNum">     155 </span>            :     /**</a>
 <a name="156"><span class="lineNum">     156 </span>            :      * extract the shape of a square matrix.</a>
@@ -220,27 +220,27 @@
 <a name="158"><span class="lineNum">     158 </span>            :      * @tparam ME matrix expression.</a>
 <a name="159"><span class="lineNum">     159 </span>            :      */</a>
 <a name="160"><span class="lineNum">     160 </span>            :     template &lt;class ME&gt;</a>
-<a name="161"><span class="lineNum">     161 </span><span class="lineCov">    1762833 :     static SquareMatrixShape get_shape_of(const Eigen::MatrixBase&lt;ME&gt;&amp; m)</span></a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineCov">    1834545 :     static SquareMatrixShape get_shape_of(const Eigen::MatrixBase&lt;ME&gt;&amp; m)</span></a>
 <a name="162"><span class="lineNum">     162 </span>            :     {</a>
-<a name="163"><span class="lineNum">     163 </span><span class="lineCov">    1762833 :         assert(m.rows() == m.cols());</span></a>
-<a name="164"><span class="lineNum">     164 </span><span class="lineCov">    1762833 :         return SquareMatrixShape{m.rows()};</span></a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineCov">    1834545 :         assert(m.rows() == m.cols());</span></a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">    1834545 :         return SquareMatrixShape{m.rows()};</span></a>
 <a name="165"><span class="lineNum">     165 </span>            :     }</a>
 <a name="166"><span class="lineNum">     166 </span>            : </a>
 <a name="167"><span class="lineNum">     167 </span>            :     /**</a>
 <a name="168"><span class="lineNum">     168 </span>            :      * number of rows.</a>
 <a name="169"><span class="lineNum">     169 </span>            :      * equal to number of columns.</a>
 <a name="170"><span class="lineNum">     170 </span>            :      */</a>
-<a name="171"><span class="lineNum">     171 </span><span class="lineCov">     883677 :     Eigen::Index rows() const</span></a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">     919533 :     Eigen::Index rows() const</span></a>
 <a name="172"><span class="lineNum">     172 </span>            :     {</a>
-<a name="173"><span class="lineNum">     173 </span><span class="lineCov">     883677 :         return m_rows;</span></a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">     919533 :         return m_rows;</span></a>
 <a name="174"><span class="lineNum">     174 </span>            :     }</a>
 <a name="175"><span class="lineNum">     175 </span>            :     /**</a>
 <a name="176"><span class="lineNum">     176 </span>            :      * number of columns.</a>
 <a name="177"><span class="lineNum">     177 </span>            :      * equal to number of rows.</a>
 <a name="178"><span class="lineNum">     178 </span>            :      */</a>
-<a name="179"><span class="lineNum">     179 </span><span class="lineCov">     882140 :     Eigen::Index cols() const</span></a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">     917996 :     Eigen::Index cols() const</span></a>
 <a name="180"><span class="lineNum">     180 </span>            :     {</a>
-<a name="181"><span class="lineNum">     181 </span><span class="lineCov">     882140 :         return m_rows;</span></a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">     917996 :         return m_rows;</span></a>
 <a name="182"><span class="lineNum">     182 </span>            :     }</a>
 <a name="183"><span class="lineNum">     183 </span>            :     /**</a>
 <a name="184"><span class="lineNum">     184 </span>            :      * number of rows or columns.</a>

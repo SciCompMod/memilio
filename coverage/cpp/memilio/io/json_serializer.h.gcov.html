@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-17 10:46:25</td>
+            <td class="headerValue">2025-03-18 10:47:39</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">461</td>
@@ -130,12 +130,12 @@
 <a name="68"><span class="lineNum">      68 </span>            : //signed small ints</a>
 <a name="69"><span class="lineNum">      69 </span>            : template &lt;class T&gt;</a>
 <a name="70"><span class="lineNum">      70 </span>            : struct JsonType&lt;T, std::enable_if_t&lt;conjunction_v&lt;is_small_integral&lt;T&gt;, std::is_signed&lt;T&gt;&gt;&gt;&gt; : std::true_type {</a>
-<a name="71"><span class="lineNum">      71 </span><span class="lineCov">     416000 :     static IOResult&lt;T&gt; transform(const Json::Value&amp; js)</span></a>
+<a name="71"><span class="lineNum">      71 </span><span class="lineCov">     416954 :     static IOResult&lt;T&gt; transform(const Json::Value&amp; js)</span></a>
 <a name="72"><span class="lineNum">      72 </span>            :     {</a>
-<a name="73"><span class="lineNum">      73 </span><span class="lineCov">     416000 :         if (js.isInt()) {</span></a>
-<a name="74"><span class="lineNum">      74 </span><span class="lineCov">     416000 :             int i = js.asInt();</span></a>
-<a name="75"><span class="lineNum">      75 </span><span class="lineCov">     416000 :             if (i &gt;= int(std::numeric_limits&lt;T&gt;::min()) &amp;&amp; i &lt;= int(std::numeric_limits&lt;T&gt;::max())) {</span></a>
-<a name="76"><span class="lineNum">      76 </span><span class="lineCov">     416000 :                 return success(T(i));</span></a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineCov">     416954 :         if (js.isInt()) {</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">     416954 :             int i = js.asInt();</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">     416954 :             if (i &gt;= int(std::numeric_limits&lt;T&gt;::min()) &amp;&amp; i &lt;= int(std::numeric_limits&lt;T&gt;::max())) {</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">     416954 :                 return success(T(i));</span></a>
 <a name="77"><span class="lineNum">      77 </span>            :             }</a>
 <a name="78"><span class="lineNum">      78 </span><span class="lineNoCov">          0 :             return failure(StatusCode::OutOfRange, &quot;Json value is not in range of the requested integer type.&quot;);</span></a>
 <a name="79"><span class="lineNum">      79 </span>            :         }</a>
@@ -202,10 +202,10 @@
 <a name="140"><span class="lineNum">     140 </span>            : template &lt;&gt;</a>
 <a name="141"><span class="lineNum">     141 </span>            : struct JsonType&lt;double&gt; : std::true_type {</a>
 <a name="142"><span class="lineNum">     142 </span>            : </a>
-<a name="143"><span class="lineNum">     143 </span><span class="lineCov">    2044406 :     static IOResult&lt;double&gt; transform(const Json::Value&amp; js)</span></a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineCov">    2046314 :     static IOResult&lt;double&gt; transform(const Json::Value&amp; js)</span></a>
 <a name="144"><span class="lineNum">     144 </span>            :     {</a>
-<a name="145"><span class="lineNum">     145 </span><span class="lineCov">    2044406 :         if (js.isDouble()) {</span></a>
-<a name="146"><span class="lineNum">     146 </span><span class="lineCov">    2044403 :             return success(js.asDouble());</span></a>
+<a name="145"><span class="lineNum">     145 </span><span class="lineCov">    2046314 :         if (js.isDouble()) {</span></a>
+<a name="146"><span class="lineNum">     146 </span><span class="lineCov">    2046311 :             return success(js.asDouble());</span></a>
 <a name="147"><span class="lineNum">     147 </span>            :         }</a>
 <a name="148"><span class="lineNum">     148 </span><span class="lineCov">          3 :         return failure(StatusCode::InvalidType, &quot;Json value is not a double.&quot;);</span></a>
 <a name="149"><span class="lineNum">     149 </span>            :     }</a>
@@ -236,10 +236,10 @@
 <a name="174"><span class="lineNum">     174 </span>            : //string</a>
 <a name="175"><span class="lineNum">     175 </span>            : template &lt;&gt;</a>
 <a name="176"><span class="lineNum">     176 </span>            : struct JsonType&lt;std::string&gt; : std::true_type {</a>
-<a name="177"><span class="lineNum">     177 </span><span class="lineCov">     486549 :     static IOResult&lt;std::string&gt; transform(const Json::Value&amp; js)</span></a>
+<a name="177"><span class="lineNum">     177 </span><span class="lineCov">     487503 :     static IOResult&lt;std::string&gt; transform(const Json::Value&amp; js)</span></a>
 <a name="178"><span class="lineNum">     178 </span>            :     {</a>
-<a name="179"><span class="lineNum">     179 </span><span class="lineCov">     486549 :         if (js.isString()) {</span></a>
-<a name="180"><span class="lineNum">     180 </span><span class="lineCov">     486549 :             return success(js.asString());</span></a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">     487503 :         if (js.isString()) {</span></a>
+<a name="180"><span class="lineNum">     180 </span><span class="lineCov">     487503 :             return success(js.asString());</span></a>
 <a name="181"><span class="lineNum">     181 </span>            :         }</a>
 <a name="182"><span class="lineNum">     182 </span><span class="lineNoCov">          0 :         return failure(StatusCode::InvalidType, &quot;Json value is not a string.&quot;);</span></a>
 <a name="183"><span class="lineNum">     183 </span>            :     }</a>
@@ -271,11 +271,11 @@
 <a name="209"><span class="lineNum">     209 </span>            :      * @param value reference to the json value that will store the data.</a>
 <a name="210"><span class="lineNum">     210 </span>            :      * @param flags flags to determine the behavior of serialization.</a>
 <a name="211"><span class="lineNum">     211 </span>            :      */</a>
-<a name="212"><span class="lineNum">     212 </span><span class="lineCov">     375056 :     JsonObject(Json::Value&amp; value, const std::shared_ptr&lt;IOStatus&gt;&amp; status, int flags)</span></a>
-<a name="213"><span class="lineNum">     213 </span><span class="lineCov">     375056 :         : SerializerBase{status, flags}</span></a>
-<a name="214"><span class="lineNum">     214 </span><span class="lineCov">     375056 :         , m_value{value}</span></a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineCov">     375533 :     JsonObject(Json::Value&amp; value, const std::shared_ptr&lt;IOStatus&gt;&amp; status, int flags)</span></a>
+<a name="213"><span class="lineNum">     213 </span><span class="lineCov">     375533 :         : SerializerBase{status, flags}</span></a>
+<a name="214"><span class="lineNum">     214 </span><span class="lineCov">     375533 :         , m_value{value}</span></a>
 <a name="215"><span class="lineNum">     215 </span>            :     {</a>
-<a name="216"><span class="lineNum">     216 </span><span class="lineCov">     375056 :     }</span></a>
+<a name="216"><span class="lineNum">     216 </span><span class="lineCov">     375533 :     }</span></a>
 <a name="217"><span class="lineNum">     217 </span>            : </a>
 <a name="218"><span class="lineNum">     218 </span>            :     /**</a>
 <a name="219"><span class="lineNum">     219 </span>            :      * add element to json value.</a>
@@ -381,11 +381,11 @@
 <a name="319"><span class="lineNum">     319 </span>            :      * @param status status of serialization, shared with parent IO contexts and objects.</a>
 <a name="320"><span class="lineNum">     320 </span>            :      * @param flags flags to determine behavior of serialization.</a>
 <a name="321"><span class="lineNum">     321 </span>            :      */</a>
-<a name="322"><span class="lineNum">     322 </span><span class="lineCov">    1041078 :     JsonContext(const Json::Value&amp; value, const std::shared_ptr&lt;IOStatus&gt;&amp; status, int flags)</span></a>
-<a name="323"><span class="lineNum">     323 </span><span class="lineCov">    1041078 :         : SerializerBase(status, flags)</span></a>
-<a name="324"><span class="lineNum">     324 </span><span class="lineCov">    1041078 :         , m_value(value)</span></a>
+<a name="322"><span class="lineNum">     322 </span><span class="lineCov">    1042986 :     JsonContext(const Json::Value&amp; value, const std::shared_ptr&lt;IOStatus&gt;&amp; status, int flags)</span></a>
+<a name="323"><span class="lineNum">     323 </span><span class="lineCov">    1042986 :         : SerializerBase(status, flags)</span></a>
+<a name="324"><span class="lineNum">     324 </span><span class="lineCov">    1042986 :         , m_value(value)</span></a>
 <a name="325"><span class="lineNum">     325 </span>            :     {</a>
-<a name="326"><span class="lineNum">     326 </span><span class="lineCov">    1041078 :     }</span></a>
+<a name="326"><span class="lineNum">     326 </span><span class="lineCov">    1042986 :     }</span></a>
 <a name="327"><span class="lineNum">     327 </span>            : </a>
 <a name="328"><span class="lineNum">     328 </span>            :     /**</a>
 <a name="329"><span class="lineNum">     329 </span>            :      * Create a JsonObject that accepts serialization data.</a>
@@ -408,13 +408,13 @@
 <a name="346"><span class="lineNum">     346 </span>            :      * @param type name of the type of the object.</a>
 <a name="347"><span class="lineNum">     347 </span>            :      * @return new JsonObject for deserialization.</a>
 <a name="348"><span class="lineNum">     348 </span>            :      */</a>
-<a name="349"><span class="lineNum">     349 </span><span class="lineCov">     369651 :     JsonObject expect_object(const std::string&amp; type)</span></a>
+<a name="349"><span class="lineNum">     349 </span><span class="lineCov">     370128 :     JsonObject expect_object(const std::string&amp; type)</span></a>
 <a name="350"><span class="lineNum">     350 </span>            :     {</a>
-<a name="351"><span class="lineNum">     351 </span><span class="lineCov">     369651 :         mio::unused(type);</span></a>
-<a name="352"><span class="lineNum">     352 </span><span class="lineCov">     369651 :         if (!m_value.isObject()) {</span></a>
+<a name="351"><span class="lineNum">     351 </span><span class="lineCov">     370128 :         mio::unused(type);</span></a>
+<a name="352"><span class="lineNum">     352 </span><span class="lineCov">     370128 :         if (!m_value.isObject()) {</span></a>
 <a name="353"><span class="lineNum">     353 </span><span class="lineNoCov">          0 :             *m_status = IOStatus(StatusCode::InvalidType, &quot;Json value must be an object.&quot;);</span></a>
 <a name="354"><span class="lineNum">     354 </span>            :         }</a>
-<a name="355"><span class="lineNum">     355 </span><span class="lineCov">     369651 :         return JsonObject(m_value, m_status, m_flags);</span></a>
+<a name="355"><span class="lineNum">     355 </span><span class="lineCov">     370128 :         return JsonObject(m_value, m_status, m_flags);</span></a>
 <a name="356"><span class="lineNum">     356 </span>            :     }</a>
 <a name="357"><span class="lineNum">     357 </span>            : </a>
 <a name="358"><span class="lineNum">     358 </span>            :     /**</a>
@@ -455,9 +455,9 @@
 <a name="393"><span class="lineNum">     393 </span>            :      * @param t value to be serialized.</a>
 <a name="394"><span class="lineNum">     394 </span>            :      */</a>
 <a name="395"><span class="lineNum">     395 </span>            :     template &lt;class T, std::enable_if_t&lt;JsonType&lt;T&gt;::value, void*&gt; = nullptr&gt;</a>
-<a name="396"><span class="lineNum">     396 </span><span class="lineCov">     670362 :     friend IOResult&lt;T&gt; deserialize_internal(JsonContext&amp; io, Tag&lt;T&gt;)</span></a>
+<a name="396"><span class="lineNum">     396 </span><span class="lineCov">     671793 :     friend IOResult&lt;T&gt; deserialize_internal(JsonContext&amp; io, Tag&lt;T&gt;)</span></a>
 <a name="397"><span class="lineNum">     397 </span>            :     {</a>
-<a name="398"><span class="lineNum">     398 </span><span class="lineCov">     670362 :         return JsonType&lt;T&gt;::transform(io.m_value);</span></a>
+<a name="398"><span class="lineNum">     398 </span><span class="lineCov">     671793 :         return JsonType&lt;T&gt;::transform(io.m_value);</span></a>
 <a name="399"><span class="lineNum">     399 </span>            :     }</a>
 <a name="400"><span class="lineNum">     400 </span>            : </a>
 <a name="401"><span class="lineNum">     401 </span>            :     /**</a>
@@ -496,10 +496,10 @@
 <a name="434"><span class="lineNum">     434 </span><span class="lineCov">       1065 :         const auto&amp; array = io.m_value;</span></a>
 <a name="435"><span class="lineNum">     435 </span><span class="lineCov">       1065 :         if (array.isArray()) {</span></a>
 <a name="436"><span class="lineNum">     436 </span><span class="lineCov">       1065 :             Container v;</span></a>
-<a name="437"><span class="lineNum">     437 </span><span class="lineCov">     736522 :             for (auto&amp;&amp; el : array) {</span></a>
-<a name="438"><span class="lineNum">     438 </span><span class="lineCov">     367196 :                 auto ctxt = JsonContext(el, io.m_status, io.m_flags);</span></a>
-<a name="439"><span class="lineNum">     439 </span><span class="lineCov">     367196 :                 BOOST_OUTCOME_TRY(auto&amp;&amp; val, mio::deserialize(ctxt, Tag&lt;typename Container::value_type&gt;{}));</span></a>
-<a name="440"><span class="lineNum">     440 </span><span class="lineCov">     367193 :                 v.insert(v.end(), val);</span></a>
+<a name="437"><span class="lineNum">     437 </span><span class="lineCov">     737476 :             for (auto&amp;&amp; el : array) {</span></a>
+<a name="438"><span class="lineNum">     438 </span><span class="lineCov">     367673 :                 auto ctxt = JsonContext(el, io.m_status, io.m_flags);</span></a>
+<a name="439"><span class="lineNum">     439 </span><span class="lineCov">     367673 :                 BOOST_OUTCOME_TRY(auto&amp;&amp; val, mio::deserialize(ctxt, Tag&lt;typename Container::value_type&gt;{}));</span></a>
+<a name="440"><span class="lineNum">     440 </span><span class="lineCov">     367670 :                 v.insert(v.end(), val);</span></a>
 <a name="441"><span class="lineNum">     441 </span>            :             }</a>
 <a name="442"><span class="lineNum">     442 </span><span class="lineCov">       1062 :             return success(std::move(v));</span></a>
 <a name="443"><span class="lineNum">     443 </span><span class="lineCov">       1065 :         }</span></a>
@@ -667,56 +667,56 @@
 <a name="605"><span class="lineNum">     605 </span><span class="lineCov">       1560 : }</span></a>
 <a name="606"><span class="lineNum">     606 </span>            : </a>
 <a name="607"><span class="lineNum">     607 </span>            : template &lt;class T, std::enable_if_t&lt;JsonType&lt;T&gt;::value, void*&gt;&gt;</a>
-<a name="608"><span class="lineNum">     608 </span><span class="lineCov">    2278793 : IOResult&lt;T&gt; JsonObject::expect_element(const std::string&amp; name, Tag&lt;T&gt; /*tag*/) const</span></a>
+<a name="608"><span class="lineNum">     608 </span><span class="lineCov">    2281178 : IOResult&lt;T&gt; JsonObject::expect_element(const std::string&amp; name, Tag&lt;T&gt; /*tag*/) const</span></a>
 <a name="609"><span class="lineNum">     609 </span>            : {</a>
-<a name="610"><span class="lineNum">     610 </span><span class="lineCov">    2278793 :     if (m_status-&gt;is_error()) {</span></a>
+<a name="610"><span class="lineNum">     610 </span><span class="lineCov">    2281178 :     if (m_status-&gt;is_error()) {</span></a>
 <a name="611"><span class="lineNum">     611 </span><span class="lineNoCov">          0 :         return failure(*m_status);</span></a>
 <a name="612"><span class="lineNum">     612 </span>            :     }</a>
 <a name="613"><span class="lineNum">     613 </span>            : </a>
-<a name="614"><span class="lineNum">     614 </span><span class="lineCov">    2278793 :     const auto&amp; element = m_value[name];</span></a>
-<a name="615"><span class="lineNum">     615 </span><span class="lineCov">    2278793 :     if (element.isNull()) {</span></a>
+<a name="614"><span class="lineNum">     614 </span><span class="lineCov">    2281178 :     const auto&amp; element = m_value[name];</span></a>
+<a name="615"><span class="lineNum">     615 </span><span class="lineCov">    2281178 :     if (element.isNull()) {</span></a>
 <a name="616"><span class="lineNum">     616 </span><span class="lineCov">          1 :         return failure(StatusCode::KeyNotFound, name);</span></a>
 <a name="617"><span class="lineNum">     617 </span>            :     }</a>
-<a name="618"><span class="lineNum">     618 </span><span class="lineCov">    2278792 :     auto r = JsonType&lt;T&gt;::transform(element);</span></a>
-<a name="619"><span class="lineNum">     619 </span><span class="lineCov">    2278792 :     if (r) {</span></a>
-<a name="620"><span class="lineNum">     620 </span><span class="lineCov">    2278792 :         return r;</span></a>
+<a name="618"><span class="lineNum">     618 </span><span class="lineCov">    2281177 :     auto r = JsonType&lt;T&gt;::transform(element);</span></a>
+<a name="619"><span class="lineNum">     619 </span><span class="lineCov">    2281177 :     if (r) {</span></a>
+<a name="620"><span class="lineNum">     620 </span><span class="lineCov">    2281177 :         return r;</span></a>
 <a name="621"><span class="lineNum">     621 </span>            :     }</a>
 <a name="622"><span class="lineNum">     622 </span>            : </a>
 <a name="623"><span class="lineNum">     623 </span><span class="lineNoCov">          0 :     return failure(r.error().code(),</span></a>
 <a name="624"><span class="lineNum">     624 </span><span class="lineNoCov">          0 :                    r.error().message() + &quot; (&quot; + name + &quot;)&quot;); //annotate type error message with element name</span></a>
-<a name="625"><span class="lineNum">     625 </span><span class="lineCov">    2278792 : }</span></a>
+<a name="625"><span class="lineNum">     625 </span><span class="lineCov">    2281177 : }</span></a>
 <a name="626"><span class="lineNum">     626 </span>            : </a>
 <a name="627"><span class="lineNum">     627 </span>            : template &lt;class T, std::enable_if_t&lt;!JsonType&lt;T&gt;::value, void*&gt;&gt;</a>
-<a name="628"><span class="lineNum">     628 </span><span class="lineCov">     670686 : IOResult&lt;T&gt; JsonObject::expect_element(const std::string&amp; name, Tag&lt;T&gt; tag) const</span></a>
+<a name="628"><span class="lineNum">     628 </span><span class="lineCov">     672117 : IOResult&lt;T&gt; JsonObject::expect_element(const std::string&amp; name, Tag&lt;T&gt; tag) const</span></a>
 <a name="629"><span class="lineNum">     629 </span>            : {</a>
-<a name="630"><span class="lineNum">     630 </span><span class="lineCov">     670686 :     if (m_status-&gt;is_error()) {</span></a>
+<a name="630"><span class="lineNum">     630 </span><span class="lineCov">     672117 :     if (m_status-&gt;is_error()) {</span></a>
 <a name="631"><span class="lineNum">     631 </span><span class="lineNoCov">          0 :         return failure(*m_status);</span></a>
 <a name="632"><span class="lineNum">     632 </span>            :     }</a>
-<a name="633"><span class="lineNum">     633 </span><span class="lineCov">     670686 :     const auto&amp; element = m_value[name];</span></a>
-<a name="634"><span class="lineNum">     634 </span><span class="lineCov">     670686 :     if (!element.isNull()) {</span></a>
-<a name="635"><span class="lineNum">     635 </span><span class="lineCov">     670686 :         auto ctxt = JsonContext(element, m_status, m_flags);</span></a>
-<a name="636"><span class="lineNum">     636 </span><span class="lineCov">     670686 :         auto r    = mio::deserialize(ctxt, tag);</span></a>
-<a name="637"><span class="lineNum">     637 </span><span class="lineCov">     670686 :         return r;</span></a>
-<a name="638"><span class="lineNum">     638 </span><span class="lineCov">     670686 :     }</span></a>
+<a name="633"><span class="lineNum">     633 </span><span class="lineCov">     672117 :     const auto&amp; element = m_value[name];</span></a>
+<a name="634"><span class="lineNum">     634 </span><span class="lineCov">     672117 :     if (!element.isNull()) {</span></a>
+<a name="635"><span class="lineNum">     635 </span><span class="lineCov">     672117 :         auto ctxt = JsonContext(element, m_status, m_flags);</span></a>
+<a name="636"><span class="lineNum">     636 </span><span class="lineCov">     672117 :         auto r    = mio::deserialize(ctxt, tag);</span></a>
+<a name="637"><span class="lineNum">     637 </span><span class="lineCov">     672117 :         return r;</span></a>
+<a name="638"><span class="lineNum">     638 </span><span class="lineCov">     672117 :     }</span></a>
 <a name="639"><span class="lineNum">     639 </span><span class="lineNoCov">          0 :     return failure(IOStatus{StatusCode::KeyNotFound, name});</span></a>
 <a name="640"><span class="lineNum">     640 </span>            : }</a>
 <a name="641"><span class="lineNum">     641 </span>            : </a>
 <a name="642"><span class="lineNum">     642 </span>            : template &lt;class T&gt;</a>
-<a name="643"><span class="lineNum">     643 </span><span class="lineCov">    1220811 : IOResult&lt;boost::optional&lt;T&gt;&gt; JsonObject::expect_optional(const std::string&amp; name, mio::Tag&lt;T&gt; tag)</span></a>
+<a name="643"><span class="lineNum">     643 </span><span class="lineCov">    1223196 : IOResult&lt;boost::optional&lt;T&gt;&gt; JsonObject::expect_optional(const std::string&amp; name, mio::Tag&lt;T&gt; tag)</span></a>
 <a name="644"><span class="lineNum">     644 </span>            : {</a>
-<a name="645"><span class="lineNum">     645 </span><span class="lineCov">    1220811 :     if (m_status-&gt;is_error()) {</span></a>
+<a name="645"><span class="lineNum">     645 </span><span class="lineCov">    1223196 :     if (m_status-&gt;is_error()) {</span></a>
 <a name="646"><span class="lineNum">     646 </span><span class="lineNoCov">          0 :         return failure(*m_status);</span></a>
 <a name="647"><span class="lineNum">     647 </span>            :     }</a>
-<a name="648"><span class="lineNum">     648 </span><span class="lineCov">    1220811 :     const auto&amp; element = m_value[name];</span></a>
-<a name="649"><span class="lineNum">     649 </span><span class="lineCov">    1220811 :     if (element.isNull()) {</span></a>
-<a name="650"><span class="lineNum">     650 </span><span class="lineCov">     685339 :         return success(boost::optional&lt;T&gt;{});</span></a>
+<a name="648"><span class="lineNum">     648 </span><span class="lineCov">    1223196 :     const auto&amp; element = m_value[name];</span></a>
+<a name="649"><span class="lineNum">     649 </span><span class="lineCov">    1223196 :     if (element.isNull()) {</span></a>
+<a name="650"><span class="lineNum">     650 </span><span class="lineCov">     685816 :         return success(boost::optional&lt;T&gt;{});</span></a>
 <a name="651"><span class="lineNum">     651 </span>            :     }</a>
-<a name="652"><span class="lineNum">     652 </span><span class="lineCov">     535472 :     auto r = expect_element(name, tag);</span></a>
-<a name="653"><span class="lineNum">     653 </span><span class="lineCov">     535472 :     if (r) {</span></a>
-<a name="654"><span class="lineNum">     654 </span><span class="lineCov">    1070800 :         return success(r.value());</span></a>
+<a name="652"><span class="lineNum">     652 </span><span class="lineCov">     537380 :     auto r = expect_element(name, tag);</span></a>
+<a name="653"><span class="lineNum">     653 </span><span class="lineCov">     537380 :     if (r) {</span></a>
+<a name="654"><span class="lineNum">     654 </span><span class="lineCov">    1074616 :         return success(r.value());</span></a>
 <a name="655"><span class="lineNum">     655 </span>            :     }</a>
 <a name="656"><span class="lineNum">     656 </span><span class="lineNoCov">          0 :     return failure(r.error());</span></a>
-<a name="657"><span class="lineNum">     657 </span><span class="lineCov">     535472 : }</span></a>
+<a name="657"><span class="lineNum">     657 </span><span class="lineCov">     537380 : }</span></a>
 <a name="658"><span class="lineNum">     658 </span>            : </a>
 <a name="659"><span class="lineNum">     659 </span>            : template &lt;class T&gt;</a>
 <a name="660"><span class="lineNum">     660 </span><span class="lineCov">        841 : IOResult&lt;std::vector&lt;T&gt;&gt; JsonObject::expect_list(const std::string&amp; name, Tag&lt;T&gt; tag)</span></a>

@@ -1173,10 +1173,10 @@ Functions</h2></td></tr>
 <tr class="memitem:ad6e3cf3f2cc4c651d581573f57331229"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#ad6e3cf3f2cc4c651d581573f57331229">serialize_internal</a> (IOContext &amp;io, E e)</td></tr>
 <tr class="memdesc:ad6e3cf3f2cc4c651d581573f57331229"><td class="mdescLeft">&#160;</td><td class="mdescRight">serialize an enum value as its underlying type.  <a href="namespacemio.html#ad6e3cf3f2cc4c651d581573f57331229">More...</a><br /></td></tr>
 <tr class="separator:ad6e3cf3f2cc4c651d581573f57331229"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a668e602375cc7ce5456440b204214b2f"><td class="memTemplParams" colspan="2">template&lt;class ContactLocation , class Model , class MobilityParams , class MobilityCoefficientGroup , class InfectionState , class ReadFunction &gt; </td></tr>
-<tr class="memitem:a668e602375cc7ce5456440b204214b2f"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacemio.html#ae556a666d14183eb2bf3a3efc11551ec">IOResult</a>&lt; void &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a668e602375cc7ce5456440b204214b2f">set_edges</a> (const fs::path &amp;data_dir, <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a>, MobilityParams &gt; &amp;params_graph, std::initializer_list&lt; <a class="el" href="namespacemio_1_1abm.html#ad1ae0779f53a827b524e1f0925b9d704">InfectionState</a> &gt; &amp;mobile_compartments, size_t contact_locations_size, ReadFunction &amp;&amp;read_func, std::vector&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt; commuting_weights, std::vector&lt; std::vector&lt; size_t &gt;&gt; indices_of_saved_edges={})</td></tr>
-<tr class="memdesc:a668e602375cc7ce5456440b204214b2f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the graph edges.  <a href="namespacemio.html#a668e602375cc7ce5456440b204214b2f">More...</a><br /></td></tr>
-<tr class="separator:a668e602375cc7ce5456440b204214b2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d913054145478d608997d15e7ca9cec"><td class="memTemplParams" colspan="2">template&lt;class ContactLocation , class Model , class MobilityParams , class MobilityCoefficientGroup , class InfectionState , class ReadFunction &gt; </td></tr>
+<tr class="memitem:a1d913054145478d608997d15e7ca9cec"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacemio.html#ae556a666d14183eb2bf3a3efc11551ec">IOResult</a>&lt; void &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemio.html#a1d913054145478d608997d15e7ca9cec">set_edges</a> (const fs::path &amp;mobility_data_file, <a class="el" href="classmio_1_1Graph.html">Graph</a>&lt; <a class="el" href="classmio_1_1abm_1_1Model.html">Model</a>, MobilityParams &gt; &amp;params_graph, std::initializer_list&lt; <a class="el" href="namespacemio_1_1abm.html#ad1ae0779f53a827b524e1f0925b9d704">InfectionState</a> &gt; &amp;mobile_compartments, size_t contact_locations_size, ReadFunction &amp;&amp;read_func, std::vector&lt; <a class="el" href="memilio_2config_8h.html#acd4f1d492d83a74716a42615e127d641">ScalarType</a> &gt; commuting_weights, std::vector&lt; std::vector&lt; size_t &gt;&gt; indices_of_saved_edges={})</td></tr>
+<tr class="memdesc:a1d913054145478d608997d15e7ca9cec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the graph edges.  <a href="namespacemio.html#a1d913054145478d608997d15e7ca9cec">More...</a><br /></td></tr>
+<tr class="separator:a1d913054145478d608997d15e7ca9cec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac76d1d8f469ab547ed1ceb5e8c96f271"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemio.html#ac76d1d8f469ab547ed1ceb5e8c96f271">set_log_level</a> (<a class="el" href="namespacemio.html#a67881790c6dfd8c058d27e5f1fe24220">LogLevel</a> level)</td></tr>
 <tr class="memdesc:ac76d1d8f469ab547ed1ceb5e8c96f271"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the verbosity of the logger.  <a href="namespacemio.html#ac76d1d8f469ab547ed1ceb5e8c96f271">More...</a><br /></td></tr>
 <tr class="separator:ac76d1d8f469ab547ed1ceb5e8c96f271"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -7432,8 +7432,8 @@ template&lt;class IOContext , class E , std::enable_if_t&lt; std::is_enum&lt; E 
 
 </div>
 </div>
-<a id="a668e602375cc7ce5456440b204214b2f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a668e602375cc7ce5456440b204214b2f">&#9670;&nbsp;</a></span>set_edges()</h2>
+<a id="a1d913054145478d608997d15e7ca9cec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1d913054145478d608997d15e7ca9cec">&#9670;&nbsp;</a></span>set_edges()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -7444,7 +7444,7 @@ template&lt;class ContactLocation , class Model , class MobilityParams , class M
           <td class="memname"><a class="el" href="namespacemio.html#ae556a666d14183eb2bf3a3efc11551ec">IOResult</a>&lt;void&gt; mio::set_edges </td>
           <td>(</td>
           <td class="paramtype">const fs::path &amp;&#160;</td>
-          <td class="paramname"><em>data_dir</em>, </td>
+          <td class="paramname"><em>mobility_data_file</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -7493,7 +7493,7 @@ template&lt;class ContactLocation , class Model , class MobilityParams , class M
 <p>Sets the graph edges. </p>
 <p>Reads the commuting matrices from txt files and sets the graph edges with that. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">data_dir</td><td>Directory that contains the data files. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">mobility_data_file</td><td>File that contains the commuting matrix. </td></tr>
     <tr><td class="paramdir">[in,out]</td><td class="paramname">params_graph</td><td><a class="el" href="classmio_1_1Graph.html" title="generic graph structure">Graph</a> whose nodes are set by the function. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">mobile_compartments</td><td>Compartments that commute. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">contact_locations_size</td><td>Number of contact locations. </td></tr>

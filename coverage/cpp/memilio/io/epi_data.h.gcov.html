@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-17 10:46:25</td>
+            <td class="headerValue">2025-03-18 10:47:39</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">29</td>
@@ -108,23 +108,23 @@
 <a name="46"><span class="lineNum">      46 </span>            : public:</a>
 <a name="47"><span class="lineNum">      47 </span>            :     using Date::Date;</a>
 <a name="48"><span class="lineNum">      48 </span>            : </a>
-<a name="49"><span class="lineNum">      49 </span><span class="lineCov">     252282 :     StringDate(const Date&amp; other)</span></a>
-<a name="50"><span class="lineNum">      50 </span><span class="lineCov">     252282 :         : Date(other)</span></a>
+<a name="49"><span class="lineNum">      49 </span><span class="lineCov">     252759 :     StringDate(const Date&amp; other)</span></a>
+<a name="50"><span class="lineNum">      50 </span><span class="lineCov">     252759 :         : Date(other)</span></a>
 <a name="51"><span class="lineNum">      51 </span>            :     {</a>
-<a name="52"><span class="lineNum">      52 </span><span class="lineCov">     252282 :     }</span></a>
+<a name="52"><span class="lineNum">      52 </span><span class="lineCov">     252759 :     }</span></a>
 <a name="53"><span class="lineNum">      53 </span>            : </a>
 <a name="54"><span class="lineNum">      54 </span>            :     template &lt;class IoContext&gt;</a>
-<a name="55"><span class="lineNum">      55 </span><span class="lineCov">     252282 :     static IOResult&lt;StringDate&gt; deserialize(IoContext&amp; io)</span></a>
+<a name="55"><span class="lineNum">      55 </span><span class="lineCov">     252759 :     static IOResult&lt;StringDate&gt; deserialize(IoContext&amp; io)</span></a>
 <a name="56"><span class="lineNum">      56 </span>            :     {</a>
-<a name="57"><span class="lineNum">      57 </span><span class="lineCov">     252282 :         auto str = mio::deserialize(io, Tag&lt;std::string&gt;{});</span></a>
+<a name="57"><span class="lineNum">      57 </span><span class="lineCov">     252759 :         auto str = mio::deserialize(io, Tag&lt;std::string&gt;{});</span></a>
 <a name="58"><span class="lineNum">      58 </span>            :         return apply(</a>
 <a name="59"><span class="lineNum">      59 </span>            :             io,</a>
-<a name="60"><span class="lineNum">      60 </span><span class="lineCov">     252282 :             [](auto&amp;&amp; str_) -&gt; IOResult&lt;StringDate&gt; {</span></a>
-<a name="61"><span class="lineNum">      61 </span><span class="lineCov">     252282 :                 BOOST_OUTCOME_TRY(auto&amp;&amp; date, parse_date(str_));</span></a>
-<a name="62"><span class="lineNum">      62 </span><span class="lineCov">     504564 :                 return success(date);</span></a>
-<a name="63"><span class="lineNum">      63 </span><span class="lineCov">     252282 :             },</span></a>
-<a name="64"><span class="lineNum">      64 </span><span class="lineCov">     504564 :             str);</span></a>
-<a name="65"><span class="lineNum">      65 </span><span class="lineCov">     252282 :     }</span></a>
+<a name="60"><span class="lineNum">      60 </span><span class="lineCov">     252759 :             [](auto&amp;&amp; str_) -&gt; IOResult&lt;StringDate&gt; {</span></a>
+<a name="61"><span class="lineNum">      61 </span><span class="lineCov">     252759 :                 BOOST_OUTCOME_TRY(auto&amp;&amp; date, parse_date(str_));</span></a>
+<a name="62"><span class="lineNum">      62 </span><span class="lineCov">     505518 :                 return success(date);</span></a>
+<a name="63"><span class="lineNum">      63 </span><span class="lineCov">     252759 :             },</span></a>
+<a name="64"><span class="lineNum">      64 </span><span class="lineCov">     505518 :             str);</span></a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineCov">     252759 :     }</span></a>
 <a name="66"><span class="lineNum">      66 </span>            : };</a>
 <a name="67"><span class="lineNum">      67 </span>            : </a>
 <a name="68"><span class="lineNum">      68 </span>            : /**</a>
@@ -540,39 +540,39 @@
 <a name="478"><span class="lineNum">     478 </span>            :     boost::optional&lt;regions::DistrictId&gt; district_id;</a>
 <a name="479"><span class="lineNum">     479 </span>            : </a>
 <a name="480"><span class="lineNum">     480 </span>            :     template &lt;class IoContext&gt;</a>
-<a name="481"><span class="lineNum">     481 </span><span class="lineCov">      59830 :     static IOResult&lt;VaccinationDataEntry&gt; deserialize(IoContext&amp; io)</span></a>
+<a name="481"><span class="lineNum">     481 </span><span class="lineCov">      60307 :     static IOResult&lt;VaccinationDataEntry&gt; deserialize(IoContext&amp; io)</span></a>
 <a name="482"><span class="lineNum">     482 </span>            :     {</a>
-<a name="483"><span class="lineNum">     483 </span><span class="lineCov">     179490 :         auto obj                                   = io.expect_object(&quot;VaccinationDataEntry&quot;);</span></a>
-<a name="484"><span class="lineNum">     484 </span><span class="lineCov">     179490 :         auto num_vaccinations_partial              = obj.expect_element(&quot;Vacc_partially&quot;, Tag&lt;double&gt;{});</span></a>
-<a name="485"><span class="lineNum">     485 </span><span class="lineCov">     179490 :         auto num_vaccinations_completed            = obj.expect_element(&quot;Vacc_completed&quot;, Tag&lt;double&gt;{});</span></a>
-<a name="486"><span class="lineNum">     486 </span><span class="lineCov">     179490 :         auto num_vaccinations_refreshed_first      = obj.expect_optional(&quot;Vacc_refreshed&quot;, Tag&lt;double&gt;{});</span></a>
-<a name="487"><span class="lineNum">     487 </span><span class="lineCov">     179490 :         auto num_vaccinations_refreshed_additional = obj.expect_optional(&quot;Vacc_refreshed_2&quot;, Tag&lt;double&gt;{});</span></a>
-<a name="488"><span class="lineNum">     488 </span><span class="lineCov">     179490 :         auto date                                  = obj.expect_element(&quot;Date&quot;, Tag&lt;StringDate&gt;{});</span></a>
-<a name="489"><span class="lineNum">     489 </span><span class="lineCov">     179490 :         auto age_group_str                         = obj.expect_element(&quot;Age_RKI&quot;, Tag&lt;std::string&gt;{});</span></a>
-<a name="490"><span class="lineNum">     490 </span><span class="lineCov">     179490 :         auto state_id                              = obj.expect_optional(&quot;ID_County&quot;, Tag&lt;regions::StateId&gt;{});</span></a>
-<a name="491"><span class="lineNum">     491 </span><span class="lineCov">     179490 :         auto county_id                             = obj.expect_optional(&quot;ID_County&quot;, Tag&lt;regions::CountyId&gt;{});</span></a>
-<a name="492"><span class="lineNum">     492 </span><span class="lineCov">     179490 :         auto district_id                           = obj.expect_optional(&quot;ID_District&quot;, Tag&lt;regions::DistrictId&gt;{});</span></a>
+<a name="483"><span class="lineNum">     483 </span><span class="lineCov">     180921 :         auto obj                                   = io.expect_object(&quot;VaccinationDataEntry&quot;);</span></a>
+<a name="484"><span class="lineNum">     484 </span><span class="lineCov">     180921 :         auto num_vaccinations_partial              = obj.expect_element(&quot;Vacc_partially&quot;, Tag&lt;double&gt;{});</span></a>
+<a name="485"><span class="lineNum">     485 </span><span class="lineCov">     180921 :         auto num_vaccinations_completed            = obj.expect_element(&quot;Vacc_completed&quot;, Tag&lt;double&gt;{});</span></a>
+<a name="486"><span class="lineNum">     486 </span><span class="lineCov">     180921 :         auto num_vaccinations_refreshed_first      = obj.expect_optional(&quot;Vacc_refreshed&quot;, Tag&lt;double&gt;{});</span></a>
+<a name="487"><span class="lineNum">     487 </span><span class="lineCov">     180921 :         auto num_vaccinations_refreshed_additional = obj.expect_optional(&quot;Vacc_refreshed_2&quot;, Tag&lt;double&gt;{});</span></a>
+<a name="488"><span class="lineNum">     488 </span><span class="lineCov">     180921 :         auto date                                  = obj.expect_element(&quot;Date&quot;, Tag&lt;StringDate&gt;{});</span></a>
+<a name="489"><span class="lineNum">     489 </span><span class="lineCov">     180921 :         auto age_group_str                         = obj.expect_element(&quot;Age_RKI&quot;, Tag&lt;std::string&gt;{});</span></a>
+<a name="490"><span class="lineNum">     490 </span><span class="lineCov">     180921 :         auto state_id                              = obj.expect_optional(&quot;ID_County&quot;, Tag&lt;regions::StateId&gt;{});</span></a>
+<a name="491"><span class="lineNum">     491 </span><span class="lineCov">     180921 :         auto county_id                             = obj.expect_optional(&quot;ID_County&quot;, Tag&lt;regions::CountyId&gt;{});</span></a>
+<a name="492"><span class="lineNum">     492 </span><span class="lineCov">     180921 :         auto district_id                           = obj.expect_optional(&quot;ID_District&quot;, Tag&lt;regions::DistrictId&gt;{});</span></a>
 <a name="493"><span class="lineNum">     493 </span>            :         return mio::apply(</a>
 <a name="494"><span class="lineNum">     494 </span>            :             io,</a>
-<a name="495"><span class="lineNum">     495 </span><span class="lineCov">      59830 :             [](auto np, auto nc, auto n_refreshed_1, auto n_refreshed_2, auto d, auto&amp;&amp; a_str, auto sid, auto cid,</span></a>
+<a name="495"><span class="lineNum">     495 </span><span class="lineCov">      60307 :             [](auto np, auto nc, auto n_refreshed_1, auto n_refreshed_2, auto d, auto&amp;&amp; a_str, auto sid, auto cid,</span></a>
 <a name="496"><span class="lineNum">     496 </span>            :                auto did) -&gt; IOResult&lt;VaccinationDataEntry&gt; {</a>
-<a name="497"><span class="lineNum">     497 </span><span class="lineCov">      59830 :                 auto it = std::find(age_group_names.begin(), age_group_names.end(), a_str);</span></a>
-<a name="498"><span class="lineNum">     498 </span><span class="lineCov">      59830 :                 auto a  = AgeGroup(0);</span></a>
-<a name="499"><span class="lineNum">     499 </span><span class="lineCov">      59830 :                 if (it != age_group_names.end()) {</span></a>
-<a name="500"><span class="lineNum">     500 </span><span class="lineCov">      59829 :                     a = AgeGroup(size_t(it - age_group_names.begin()));</span></a>
+<a name="497"><span class="lineNum">     497 </span><span class="lineCov">      60307 :                 auto it = std::find(age_group_names.begin(), age_group_names.end(), a_str);</span></a>
+<a name="498"><span class="lineNum">     498 </span><span class="lineCov">      60307 :                 auto a  = AgeGroup(0);</span></a>
+<a name="499"><span class="lineNum">     499 </span><span class="lineCov">      60307 :                 if (it != age_group_names.end()) {</span></a>
+<a name="500"><span class="lineNum">     500 </span><span class="lineCov">      60306 :                     a = AgeGroup(size_t(it - age_group_names.begin()));</span></a>
 <a name="501"><span class="lineNum">     501 </span>            :                 }</a>
 <a name="502"><span class="lineNum">     502 </span>            :                 else {</a>
 <a name="503"><span class="lineNum">     503 </span><span class="lineCov">          1 :                     return failure(StatusCode::InvalidValue, &quot;Invalid vaccination data age group.&quot;);</span></a>
 <a name="504"><span class="lineNum">     504 </span>            :                 }</a>
 <a name="505"><span class="lineNum">     505 </span>            :                 // Optional values are 0 if they do not exist.</a>
-<a name="506"><span class="lineNum">     506 </span><span class="lineCov">      59829 :                 auto n_refreshed_1_value = n_refreshed_1.value_or(0.0);</span></a>
-<a name="507"><span class="lineNum">     507 </span><span class="lineCov">      59829 :                 auto n_refreshed_2_value = n_refreshed_2.value_or(0.0);</span></a>
+<a name="506"><span class="lineNum">     506 </span><span class="lineCov">      60306 :                 auto n_refreshed_1_value = n_refreshed_1.value_or(0.0);</span></a>
+<a name="507"><span class="lineNum">     507 </span><span class="lineCov">      60306 :                 auto n_refreshed_2_value = n_refreshed_2.value_or(0.0);</span></a>
 <a name="508"><span class="lineNum">     508 </span>            :                 return success(</a>
-<a name="509"><span class="lineNum">     509 </span><span class="lineCov">      59829 :                     VaccinationDataEntry{np, nc, n_refreshed_1_value, n_refreshed_2_value, d, a, sid, cid, did});</span></a>
+<a name="509"><span class="lineNum">     509 </span><span class="lineCov">      60306 :                     VaccinationDataEntry{np, nc, n_refreshed_1_value, n_refreshed_2_value, d, a, sid, cid, did});</span></a>
 <a name="510"><span class="lineNum">     510 </span>            :             },</a>
 <a name="511"><span class="lineNum">     511 </span>            :             num_vaccinations_partial, num_vaccinations_completed, num_vaccinations_refreshed_first,</a>
-<a name="512"><span class="lineNum">     512 </span><span class="lineCov">     119660 :             num_vaccinations_refreshed_additional, date, age_group_str, state_id, county_id, district_id);</span></a>
-<a name="513"><span class="lineNum">     513 </span><span class="lineCov">      59830 :     }</span></a>
+<a name="512"><span class="lineNum">     512 </span><span class="lineCov">     120614 :             num_vaccinations_refreshed_additional, date, age_group_str, state_id, county_id, district_id);</span></a>
+<a name="513"><span class="lineNum">     513 </span><span class="lineCov">      60307 :     }</span></a>
 <a name="514"><span class="lineNum">     514 </span>            : };</a>
 <a name="515"><span class="lineNum">     515 </span>            : </a>
 <a name="516"><span class="lineNum">     516 </span>            : /**</a>

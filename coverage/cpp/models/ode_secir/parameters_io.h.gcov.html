@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-17 10:46:25</td>
+            <td class="headerValue">2025-03-18 10:47:39</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">10</td>
@@ -397,35 +397,35 @@
 <a name="335"><span class="lineNum">     335 </span><span class="lineCov">         19 : }</span></a>
 <a name="336"><span class="lineNum">     336 </span>            : #else</a>
 <a name="337"><span class="lineNum">     337 </span>            : template &lt;class Model&gt;</a>
-<a name="338"><span class="lineNum">     338 </span>            : IOResult&lt;void&gt;</a>
-<a name="339"><span class="lineNum">     339 </span>            : export_input_data_county_timeseries(std::vector&lt;Model&gt; models, const std::string&amp; dir, std::vector&lt;int&gt; const&amp; region,</a>
-<a name="340"><span class="lineNum">     340 </span>            :                                     Date date, const std::vector&lt;double&gt;&amp; scaling_factor_inf, double scaling_factor_icu,</a>
-<a name="341"><span class="lineNum">     341 </span>            :                                     int num_days, const std::string&amp; divi_data_path,</a>
-<a name="342"><span class="lineNum">     342 </span>            :                                     const std::string&amp; confirmed_cases_path, const std::string&amp; population_data_path)</a>
-<a name="343"><span class="lineNum">     343 </span>            : {</a>
-<a name="344"><span class="lineNum">     344 </span>            :     mio::log_warning(&quot;HDF5 not available. Cannot export time series of extrapolated real data.&quot;);</a>
-<a name="345"><span class="lineNum">     345 </span>            :     return success();</a>
-<a name="346"><span class="lineNum">     346 </span>            : }</a>
-<a name="347"><span class="lineNum">     347 </span>            : #endif // MEMILIO_HAS_HDF5</a>
-<a name="348"><span class="lineNum">     348 </span>            : </a>
-<a name="349"><span class="lineNum">     349 </span>            : /**</a>
-<a name="350"><span class="lineNum">     350 </span>            :  * @brief Reads population data from population files for the whole country.</a>
-<a name="351"><span class="lineNum">     351 </span>            :  * @param[in, out] model Vector of model in which the data is set.</a>
-<a name="352"><span class="lineNum">     352 </span>            :  * @param[in] date Date for which the data should be read.</a>
-<a name="353"><span class="lineNum">     353 </span>            :  * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.</a>
-<a name="354"><span class="lineNum">     354 </span>            :  * @param[in] scaling_factor_icu Factor by which to scale the icu cases of divi data.</a>
-<a name="355"><span class="lineNum">     355 </span>            :  * @param[in] dir Directory of files.</a>
-<a name="356"><span class="lineNum">     356 </span>            :  */</a>
-<a name="357"><span class="lineNum">     357 </span>            : template &lt;class Model&gt;</a>
-<a name="358"><span class="lineNum">     358 </span><span class="lineCov">          1 : IOResult&lt;void&gt; read_input_data_germany(std::vector&lt;Model&gt;&amp; model, Date date,</span></a>
-<a name="359"><span class="lineNum">     359 </span>            :                                        const std::vector&lt;double&gt;&amp; scaling_factor_inf, double scaling_factor_icu,</a>
-<a name="360"><span class="lineNum">     360 </span>            :                                        const std::string&amp; dir)</a>
-<a name="361"><span class="lineNum">     361 </span>            : {</a>
-<a name="362"><span class="lineNum">     362 </span><span class="lineCov">          4 :     BOOST_OUTCOME_TRY(</span></a>
-<a name="363"><span class="lineNum">     363 </span>            :         details::set_divi_data(model, path_join(dir, &quot;germany_divi.json&quot;), {0}, date, scaling_factor_icu));</a>
-<a name="364"><span class="lineNum">     364 </span><span class="lineCov">          4 :     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, &quot;cases_all_age_ma7.json&quot;), {0}, date,</span></a>
-<a name="365"><span class="lineNum">     365 </span>            :                                                         scaling_factor_inf));</a>
-<a name="366"><span class="lineNum">     366 </span><span class="lineCov">          4 :     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, &quot;county_current_population.json&quot;), {0}));</span></a>
+<a name="338"><span class="lineNum">     338 </span>            : IOResult&lt;void&gt; export_input_data_county_timeseries(</a>
+<a name="339"><span class="lineNum">     339 </span>            :     std::vector&lt;Model&gt; models, const std::string&amp; results_dir, std::vector&lt;int&gt; const&amp; region, Date date,</a>
+<a name="340"><span class="lineNum">     340 </span>            :     const std::vector&lt;double&gt;&amp; scaling_factor_inf, double scaling_factor_icu, int num_days,</a>
+<a name="341"><span class="lineNum">     341 </span>            :     const std::string&amp; divi_data_path, const std::string&amp; confirmed_cases_path, const std::string&amp; population_data_path)</a>
+<a name="342"><span class="lineNum">     342 </span>            : {</a>
+<a name="343"><span class="lineNum">     343 </span>            :     mio::log_warning(&quot;HDF5 not available. Cannot export time series of extrapolated real data.&quot;);</a>
+<a name="344"><span class="lineNum">     344 </span>            :     return success();</a>
+<a name="345"><span class="lineNum">     345 </span>            : }</a>
+<a name="346"><span class="lineNum">     346 </span>            : #endif // MEMILIO_HAS_HDF5</a>
+<a name="347"><span class="lineNum">     347 </span>            : </a>
+<a name="348"><span class="lineNum">     348 </span>            : /**</a>
+<a name="349"><span class="lineNum">     349 </span>            :  * @brief Reads population data from population files for the whole country.</a>
+<a name="350"><span class="lineNum">     350 </span>            :  * @param[in, out] model Vector of model in which the data is set.</a>
+<a name="351"><span class="lineNum">     351 </span>            :  * @param[in] date Date for which the data should be read.</a>
+<a name="352"><span class="lineNum">     352 </span>            :  * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.</a>
+<a name="353"><span class="lineNum">     353 </span>            :  * @param[in] scaling_factor_icu Factor by which to scale the icu cases of divi data.</a>
+<a name="354"><span class="lineNum">     354 </span>            :  * @param[in] pydata_dir Directory of files.</a>
+<a name="355"><span class="lineNum">     355 </span>            :  */</a>
+<a name="356"><span class="lineNum">     356 </span>            : template &lt;class Model&gt;</a>
+<a name="357"><span class="lineNum">     357 </span><span class="lineCov">          1 : IOResult&lt;void&gt; read_input_data_germany(std::vector&lt;Model&gt;&amp; model, Date date,</span></a>
+<a name="358"><span class="lineNum">     358 </span>            :                                        const std::vector&lt;double&gt;&amp; scaling_factor_inf, double scaling_factor_icu,</a>
+<a name="359"><span class="lineNum">     359 </span>            :                                        const std::string&amp; pydata_dir)</a>
+<a name="360"><span class="lineNum">     360 </span>            : {</a>
+<a name="361"><span class="lineNum">     361 </span><span class="lineCov">          4 :     BOOST_OUTCOME_TRY(</span></a>
+<a name="362"><span class="lineNum">     362 </span>            :         details::set_divi_data(model, path_join(pydata_dir, &quot;germany_divi.json&quot;), {0}, date, scaling_factor_icu));</a>
+<a name="363"><span class="lineNum">     363 </span><span class="lineCov">          4 :     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, &quot;cases_all_age_ma7.json&quot;), {0},</span></a>
+<a name="364"><span class="lineNum">     364 </span>            :                                                         date, scaling_factor_inf));</a>
+<a name="365"><span class="lineNum">     365 </span><span class="lineCov">          4 :     BOOST_OUTCOME_TRY(</span></a>
+<a name="366"><span class="lineNum">     366 </span>            :         details::set_population_data(model, path_join(pydata_dir, &quot;county_current_population.json&quot;), {0}));</a>
 <a name="367"><span class="lineNum">     367 </span><span class="lineCov">          2 :     return success();</span></a>
 <a name="368"><span class="lineNum">     368 </span><span class="lineCov">          1 : }</span></a>
 <a name="369"><span class="lineNum">     369 </span>            : </a>
@@ -436,56 +436,56 @@
 <a name="374"><span class="lineNum">     374 </span>            :  * @param[in] state Vector of region keys of states of interest.</a>
 <a name="375"><span class="lineNum">     375 </span>            :  * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.</a>
 <a name="376"><span class="lineNum">     376 </span>            :  * @param[in] scaling_factor_icu Factor by which to scale the icu cases of divi data.</a>
-<a name="377"><span class="lineNum">     377 </span>            :  * @param[in] dir Directory of files.</a>
+<a name="377"><span class="lineNum">     377 </span>            :  * @param[in] pydata_dir Directory of files.</a>
 <a name="378"><span class="lineNum">     378 </span>            :  */</a>
 <a name="379"><span class="lineNum">     379 </span>            : template &lt;class Model&gt;</a>
 <a name="380"><span class="lineNum">     380 </span><span class="lineCov">          1 : IOResult&lt;void&gt; read_input_data_state(std::vector&lt;Model&gt;&amp; model, Date date, std::vector&lt;int&gt;&amp; state,</span></a>
 <a name="381"><span class="lineNum">     381 </span>            :                                      const std::vector&lt;double&gt;&amp; scaling_factor_inf, double scaling_factor_icu,</a>
-<a name="382"><span class="lineNum">     382 </span>            :                                      const std::string&amp; dir)</a>
+<a name="382"><span class="lineNum">     382 </span>            :                                      const std::string&amp; pydata_dir)</a>
 <a name="383"><span class="lineNum">     383 </span>            : {</a>
 <a name="384"><span class="lineNum">     384 </span>            : </a>
 <a name="385"><span class="lineNum">     385 </span><span class="lineCov">          2 :     BOOST_OUTCOME_TRY(</span></a>
-<a name="386"><span class="lineNum">     386 </span>            :         details::set_divi_data(model, path_join(dir, &quot;state_divi.json&quot;), state, date, scaling_factor_icu));</a>
-<a name="387"><span class="lineNum">     387 </span><span class="lineCov">          2 :     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, &quot;cases_all_state_age_ma7.json&quot;), state,</span></a>
-<a name="388"><span class="lineNum">     388 </span>            :                                                         date, scaling_factor_inf));</a>
-<a name="389"><span class="lineNum">     389 </span><span class="lineCov">          2 :     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, &quot;county_current_population.json&quot;), state));</span></a>
-<a name="390"><span class="lineNum">     390 </span><span class="lineCov">          2 :     return success();</span></a>
-<a name="391"><span class="lineNum">     391 </span><span class="lineCov">          1 : }</span></a>
-<a name="392"><span class="lineNum">     392 </span>            : </a>
-<a name="393"><span class="lineNum">     393 </span>            : /**</a>
-<a name="394"><span class="lineNum">     394 </span>            :  * @brief Reads population data from population files for the specefied county.</a>
-<a name="395"><span class="lineNum">     395 </span>            :  * @param[in, out] model Vector of model in which the data is set.</a>
-<a name="396"><span class="lineNum">     396 </span>            :  * @param[in] date Date for which the data should be read.</a>
-<a name="397"><span class="lineNum">     397 </span>            :  * @param[in] county Vector of region keys of counties of interest.</a>
-<a name="398"><span class="lineNum">     398 </span>            :  * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.</a>
-<a name="399"><span class="lineNum">     399 </span>            :  * @param[in] scaling_factor_icu Factor by which to scale the icu cases of divi data.</a>
-<a name="400"><span class="lineNum">     400 </span>            :  * @param[in] dir Directory of files.</a>
-<a name="401"><span class="lineNum">     401 </span>            :  * @param[in] num_days [Default: 0] Number of days to be simulated; required to extrapolate real data.</a>
-<a name="402"><span class="lineNum">     402 </span>            :  * @param[in] export_time_series [Default: false] If true, reads data for each day of simulation and writes it in the same directory as the input files.</a>
-<a name="403"><span class="lineNum">     403 </span>            :  */</a>
-<a name="404"><span class="lineNum">     404 </span>            : template &lt;class Model&gt;</a>
-<a name="405"><span class="lineNum">     405 </span><span class="lineCov">         28 : IOResult&lt;void&gt; read_input_data_county(std::vector&lt;Model&gt;&amp; model, Date date, const std::vector&lt;int&gt;&amp; county,</span></a>
-<a name="406"><span class="lineNum">     406 </span>            :                                       const std::vector&lt;double&gt;&amp; scaling_factor_inf, double scaling_factor_icu,</a>
-<a name="407"><span class="lineNum">     407 </span>            :                                       const std::string&amp; dir, int num_days = 0, bool export_time_series = false)</a>
-<a name="408"><span class="lineNum">     408 </span>            : {</a>
-<a name="409"><span class="lineNum">     409 </span><span class="lineCov">         56 :     BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, &quot;pydata/Germany&quot;, &quot;county_divi_ma7.json&quot;), county,</span></a>
-<a name="410"><span class="lineNum">     410 </span>            :                                              date, scaling_factor_icu));</a>
-<a name="411"><span class="lineNum">     411 </span><span class="lineCov">         56 :     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(</span></a>
-<a name="412"><span class="lineNum">     412 </span>            :         model, path_join(dir, &quot;pydata/Germany&quot;, &quot;cases_all_county_age_ma7.json&quot;), county, date, scaling_factor_inf));</a>
-<a name="413"><span class="lineNum">     413 </span><span class="lineCov">         56 :     BOOST_OUTCOME_TRY(details::set_population_data(</span></a>
-<a name="414"><span class="lineNum">     414 </span>            :         model, path_join(dir, &quot;pydata/Germany&quot;, &quot;county_current_population.json&quot;), county));</a>
-<a name="415"><span class="lineNum">     415 </span>            : </a>
-<a name="416"><span class="lineNum">     416 </span><span class="lineCov">         28 :     if (export_time_series) {</span></a>
-<a name="417"><span class="lineNum">     417 </span>            :         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !</a>
-<a name="418"><span class="lineNum">     418 </span>            :         // Run time equals run time of the previous functions times the num_days !</a>
-<a name="419"><span class="lineNum">     419 </span>            :         // (This only represents the vectorization of the previous function over all simulation days...)</a>
-<a name="420"><span class="lineNum">     420 </span><span class="lineNoCov">          0 :         log_warning(&quot;Exporting time series of extrapolated real data. This may take some minutes. &quot;</span></a>
-<a name="421"><span class="lineNum">     421 </span>            :                     &quot;For simulation runs over the same time period, deactivate it.&quot;);</a>
-<a name="422"><span class="lineNum">     422 </span><span class="lineNoCov">          0 :         BOOST_OUTCOME_TRY(</span></a>
-<a name="423"><span class="lineNum">     423 </span>            :             export_input_data_county_timeseries(model, dir, county, date, scaling_factor_inf, scaling_factor_icu,</a>
-<a name="424"><span class="lineNum">     424 </span>            :                                                 num_days, path_join(dir, &quot;pydata/Germany&quot;, &quot;county_divi_ma7.json&quot;),</a>
-<a name="425"><span class="lineNum">     425 </span>            :                                                 path_join(dir, &quot;pydata/Germany&quot;, &quot;cases_all_county_age_ma7.json&quot;),</a>
-<a name="426"><span class="lineNum">     426 </span>            :                                                 path_join(dir, &quot;pydata/Germany&quot;, &quot;county_current_population.json&quot;)));</a>
+<a name="386"><span class="lineNum">     386 </span>            :         details::set_divi_data(model, path_join(pydata_dir, &quot;state_divi.json&quot;), state, date, scaling_factor_icu));</a>
+<a name="387"><span class="lineNum">     387 </span><span class="lineCov">          2 :     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, &quot;cases_all_state_age_ma7.json&quot;),</span></a>
+<a name="388"><span class="lineNum">     388 </span>            :                                                         state, date, scaling_factor_inf));</a>
+<a name="389"><span class="lineNum">     389 </span><span class="lineCov">          2 :     BOOST_OUTCOME_TRY(</span></a>
+<a name="390"><span class="lineNum">     390 </span>            :         details::set_population_data(model, path_join(pydata_dir, &quot;county_current_population.json&quot;), state));</a>
+<a name="391"><span class="lineNum">     391 </span><span class="lineCov">          2 :     return success();</span></a>
+<a name="392"><span class="lineNum">     392 </span><span class="lineCov">          1 : }</span></a>
+<a name="393"><span class="lineNum">     393 </span>            : </a>
+<a name="394"><span class="lineNum">     394 </span>            : /**</a>
+<a name="395"><span class="lineNum">     395 </span>            :  * @brief Reads population data from population files for the specefied county.</a>
+<a name="396"><span class="lineNum">     396 </span>            :  * @param[in, out] model Vector of model in which the data is set.</a>
+<a name="397"><span class="lineNum">     397 </span>            :  * @param[in] date Date for which the data should be read.</a>
+<a name="398"><span class="lineNum">     398 </span>            :  * @param[in] county Vector of region keys of counties of interest.</a>
+<a name="399"><span class="lineNum">     399 </span>            :  * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.</a>
+<a name="400"><span class="lineNum">     400 </span>            :  * @param[in] scaling_factor_icu Factor by which to scale the icu cases of divi data.</a>
+<a name="401"><span class="lineNum">     401 </span>            :  * @param[in] pydata_dir Directory of files.</a>
+<a name="402"><span class="lineNum">     402 </span>            :  * @param[in] num_days [Default: 0] Number of days to be simulated; required to extrapolate real data.</a>
+<a name="403"><span class="lineNum">     403 </span>            :  * @param[in] export_time_series [Default: false] If true, reads data for each day of simulation and writes it in the same directory as the input files.</a>
+<a name="404"><span class="lineNum">     404 </span>            :  */</a>
+<a name="405"><span class="lineNum">     405 </span>            : template &lt;class Model&gt;</a>
+<a name="406"><span class="lineNum">     406 </span><span class="lineCov">         28 : IOResult&lt;void&gt; read_input_data_county(std::vector&lt;Model&gt;&amp; model, Date date, const std::vector&lt;int&gt;&amp; county,</span></a>
+<a name="407"><span class="lineNum">     407 </span>            :                                       const std::vector&lt;double&gt;&amp; scaling_factor_inf, double scaling_factor_icu,</a>
+<a name="408"><span class="lineNum">     408 </span>            :                                       const std::string&amp; pydata_dir, int num_days = 0, bool export_time_series = false)</a>
+<a name="409"><span class="lineNum">     409 </span>            : {</a>
+<a name="410"><span class="lineNum">     410 </span><span class="lineCov">         56 :     BOOST_OUTCOME_TRY(</span></a>
+<a name="411"><span class="lineNum">     411 </span>            :         details::set_divi_data(model, path_join(pydata_dir, &quot;county_divi_ma7.json&quot;), county, date, scaling_factor_icu));</a>
+<a name="412"><span class="lineNum">     412 </span><span class="lineCov">         56 :     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, &quot;cases_all_county_age_ma7.json&quot;),</span></a>
+<a name="413"><span class="lineNum">     413 </span>            :                                                         county, date, scaling_factor_inf));</a>
+<a name="414"><span class="lineNum">     414 </span><span class="lineCov">         56 :     BOOST_OUTCOME_TRY(</span></a>
+<a name="415"><span class="lineNum">     415 </span>            :         details::set_population_data(model, path_join(pydata_dir, &quot;county_current_population.json&quot;), county));</a>
+<a name="416"><span class="lineNum">     416 </span>            : </a>
+<a name="417"><span class="lineNum">     417 </span><span class="lineCov">         28 :     if (export_time_series) {</span></a>
+<a name="418"><span class="lineNum">     418 </span>            :         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !</a>
+<a name="419"><span class="lineNum">     419 </span>            :         // Run time equals run time of the previous functions times the num_days !</a>
+<a name="420"><span class="lineNum">     420 </span>            :         // (This only represents the vectorization of the previous function over all simulation days...)</a>
+<a name="421"><span class="lineNum">     421 </span><span class="lineNoCov">          0 :         log_warning(&quot;Exporting time series of extrapolated real data. This may take some minutes. &quot;</span></a>
+<a name="422"><span class="lineNum">     422 </span>            :                     &quot;For simulation runs over the same time period, deactivate it.&quot;);</a>
+<a name="423"><span class="lineNum">     423 </span><span class="lineNoCov">          0 :         BOOST_OUTCOME_TRY(export_input_data_county_timeseries(</span></a>
+<a name="424"><span class="lineNum">     424 </span>            :             model, pydata_dir, county, date, scaling_factor_inf, scaling_factor_icu, num_days,</a>
+<a name="425"><span class="lineNum">     425 </span>            :             path_join(pydata_dir, &quot;county_divi_ma7.json&quot;), path_join(pydata_dir, &quot;cases_all_county_age_ma7.json&quot;),</a>
+<a name="426"><span class="lineNum">     426 </span>            :             path_join(pydata_dir, &quot;county_current_population.json&quot;)));</a>
 <a name="427"><span class="lineNum">     427 </span><span class="lineNoCov">          0 :     }</span></a>
 <a name="428"><span class="lineNum">     428 </span><span class="lineCov">         56 :     return success();</span></a>
 <a name="429"><span class="lineNum">     429 </span><span class="lineCov">         28 : }</span></a>
@@ -497,19 +497,19 @@
 <a name="435"><span class="lineNum">     435 </span>            :  * @param[in] county vector of region keys of interest</a>
 <a name="436"><span class="lineNum">     436 </span>            :  * @param[in] scaling_factor_inf factors by which to scale the confirmed cases of rki data</a>
 <a name="437"><span class="lineNum">     437 </span>            :  * @param[in] scaling_factor_icu factor by which to scale the icu cases of divi data</a>
-<a name="438"><span class="lineNum">     438 </span>            :  * @param[in] dir directory of files</a>
+<a name="438"><span class="lineNum">     438 </span>            :  * @param[in] pydata_dir directory of files</a>
 <a name="439"><span class="lineNum">     439 </span>            :  * @param[in] age_group_names strings specifying age group names</a>
 <a name="440"><span class="lineNum">     440 </span>            :  */</a>
 <a name="441"><span class="lineNum">     441 </span>            : template &lt;class Model&gt;</a>
 <a name="442"><span class="lineNum">     442 </span><span class="lineCov">         20 : IOResult&lt;void&gt; read_input_data(std::vector&lt;Model&gt;&amp; model, Date date, const std::vector&lt;int&gt;&amp; node_ids,</span></a>
 <a name="443"><span class="lineNum">     443 </span>            :                                const std::vector&lt;double&gt;&amp; scaling_factor_inf, double scaling_factor_icu,</a>
-<a name="444"><span class="lineNum">     444 </span>            :                                const std::string&amp; data_dir, int num_days = 0, bool export_time_series = false)</a>
+<a name="444"><span class="lineNum">     444 </span>            :                                const std::string&amp; pydata_dir, int num_days = 0, bool export_time_series = false)</a>
 <a name="445"><span class="lineNum">     445 </span>            : {</a>
-<a name="446"><span class="lineNum">     446 </span><span class="lineCov">         40 :     BOOST_OUTCOME_TRY(</span></a>
-<a name="447"><span class="lineNum">     447 </span>            :         details::set_divi_data(model, path_join(data_dir, &quot;critical_cases.json&quot;), node_ids, date, scaling_factor_icu));</a>
-<a name="448"><span class="lineNum">     448 </span><span class="lineCov">         40 :     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(data_dir, &quot;confirmed_cases.json&quot;), node_ids,</span></a>
+<a name="446"><span class="lineNum">     446 </span><span class="lineCov">         40 :     BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(pydata_dir, &quot;critical_cases.json&quot;), node_ids, date,</span></a>
+<a name="447"><span class="lineNum">     447 </span>            :                                              scaling_factor_icu));</a>
+<a name="448"><span class="lineNum">     448 </span><span class="lineCov">         40 :     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, &quot;confirmed_cases.json&quot;), node_ids,</span></a>
 <a name="449"><span class="lineNum">     449 </span>            :                                                         date, scaling_factor_inf));</a>
-<a name="450"><span class="lineNum">     450 </span><span class="lineCov">         40 :     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(data_dir, &quot;population_data.json&quot;), node_ids));</span></a>
+<a name="450"><span class="lineNum">     450 </span><span class="lineCov">         40 :     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(pydata_dir, &quot;population_data.json&quot;), node_ids));</span></a>
 <a name="451"><span class="lineNum">     451 </span>            : </a>
 <a name="452"><span class="lineNum">     452 </span><span class="lineCov">         20 :     if (export_time_series) {</span></a>
 <a name="453"><span class="lineNum">     453 </span>            :         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !</a>
@@ -518,9 +518,9 @@
 <a name="456"><span class="lineNum">     456 </span><span class="lineNoCov">          0 :         log_warning(&quot;Exporting time series of extrapolated real data. This may take some minutes. &quot;</span></a>
 <a name="457"><span class="lineNum">     457 </span>            :                     &quot;For simulation runs over the same time period, deactivate it.&quot;);</a>
 <a name="458"><span class="lineNum">     458 </span><span class="lineNoCov">          0 :         BOOST_OUTCOME_TRY(export_input_data_county_timeseries(</span></a>
-<a name="459"><span class="lineNum">     459 </span>            :             model, data_dir, node_ids, date, scaling_factor_inf, scaling_factor_icu, num_days,</a>
-<a name="460"><span class="lineNum">     460 </span>            :             path_join(data_dir, &quot;critical_cases.json&quot;), path_join(data_dir, &quot;confirmed_cases.json&quot;),</a>
-<a name="461"><span class="lineNum">     461 </span>            :             path_join(data_dir, &quot;population_data.json&quot;)));</a>
+<a name="459"><span class="lineNum">     459 </span>            :             model, pydata_dir, node_ids, date, scaling_factor_inf, scaling_factor_icu, num_days,</a>
+<a name="460"><span class="lineNum">     460 </span>            :             path_join(pydata_dir, &quot;critical_cases.json&quot;), path_join(pydata_dir, &quot;confirmed_cases.json&quot;),</a>
+<a name="461"><span class="lineNum">     461 </span>            :             path_join(pydata_dir, &quot;population_data.json&quot;)));</a>
 <a name="462"><span class="lineNum">     462 </span><span class="lineNoCov">          0 :     }</span></a>
 <a name="463"><span class="lineNum">     463 </span><span class="lineCov">         40 :     return success();</span></a>
 <a name="464"><span class="lineNum">     464 </span><span class="lineCov">         20 : }</span></a>

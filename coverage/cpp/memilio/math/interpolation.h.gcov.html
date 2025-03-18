@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-17 10:46:25</td>
+            <td class="headerValue">2025-03-18 10:47:39</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">3</td>
@@ -102,10 +102,10 @@
 <a name="40"><span class="lineNum">      40 </span>            :  * @return Interpolation result.</a>
 <a name="41"><span class="lineNum">      41 </span>            :  */</a>
 <a name="42"><span class="lineNum">      42 </span>            : template &lt;typename X, typename V&gt;</a>
-<a name="43"><span class="lineNum">      43 </span><span class="lineCov">       8052 : auto linear_interpolation(const X&amp; x_eval, const X&amp; x_1, const X&amp; x_2, const V&amp; y1, const V&amp; y2)</span></a>
+<a name="43"><span class="lineNum">      43 </span><span class="lineCov">       8214 : auto linear_interpolation(const X&amp; x_eval, const X&amp; x_1, const X&amp; x_2, const V&amp; y1, const V&amp; y2)</span></a>
 <a name="44"><span class="lineNum">      44 </span>            : {</a>
-<a name="45"><span class="lineNum">      45 </span><span class="lineCov">       8052 :     const auto weight = (x_eval - x_1) / (x_2 - x_1);</span></a>
-<a name="46"><span class="lineNum">      46 </span><span class="lineCov">      16023 :     return y1 + weight * (y2 - y1);</span></a>
+<a name="45"><span class="lineNum">      45 </span><span class="lineCov">       8214 :     const auto weight = (x_eval - x_1) / (x_2 - x_1);</span></a>
+<a name="46"><span class="lineNum">      46 </span><span class="lineCov">      16347 :     return y1 + weight * (y2 - y1);</span></a>
 <a name="47"><span class="lineNum">      47 </span>            : }</a>
 <a name="48"><span class="lineNum">      48 </span>            : </a>
 <a name="49"><span class="lineNum">      49 </span>            : /**</a>
@@ -127,15 +127,15 @@
 <a name="65"><span class="lineNum">      65 </span><span class="lineCov">      10143 :     const auto next_tp = std::upper_bound(tp_range.begin(), tp_range.end(), time);</span></a>
 <a name="66"><span class="lineNum">      66 </span>            :     // interpolate in between values if possible, otherwise return first/last value</a>
 <a name="67"><span class="lineNum">      67 </span><span class="lineCov">      10143 :     if (next_tp == tp_range.begin()) { // time is before first data point</span></a>
-<a name="68"><span class="lineNum">      68 </span><span class="lineCov">       1962 :         return data.get_value(0);</span></a>
+<a name="68"><span class="lineNum">      68 </span><span class="lineCov">       2034 :         return data.get_value(0);</span></a>
 <a name="69"><span class="lineNum">      69 </span>            :     }</a>
-<a name="70"><span class="lineNum">      70 </span><span class="lineCov">       8181 :     else if (next_tp == tp_range.end()) { // time is past or equal to last data point</span></a>
-<a name="71"><span class="lineNum">      71 </span><span class="lineCov">       2295 :         return data.get_last_value();</span></a>
+<a name="70"><span class="lineNum">      70 </span><span class="lineCov">       8109 :     else if (next_tp == tp_range.end()) { // time is past or equal to last data point</span></a>
+<a name="71"><span class="lineNum">      71 </span><span class="lineCov">       2061 :         return data.get_last_value();</span></a>
 <a name="72"><span class="lineNum">      72 </span>            :     }</a>
 <a name="73"><span class="lineNum">      73 </span>            :     else { // time is in between data points</a>
-<a name="74"><span class="lineNum">      74 </span><span class="lineCov">       5886 :         const auto i = next_tp - tp_range.begin(); // index of strict upper bound</span></a>
-<a name="75"><span class="lineNum">      75 </span><span class="lineCov">       5886 :         return linear_interpolation(time, data.get_time(i - 1), data.get_time(i), data.get_value(i - 1),</span></a>
-<a name="76"><span class="lineNum">      76 </span><span class="lineCov">      11772 :                                     data.get_value(i));</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">       6048 :         const auto i = next_tp - tp_range.begin(); // index of strict upper bound</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">       6048 :         return linear_interpolation(time, data.get_time(i - 1), data.get_time(i), data.get_value(i - 1),</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">      12096 :                                     data.get_value(i));</span></a>
 <a name="77"><span class="lineNum">      77 </span>            :     }</a>
 <a name="78"><span class="lineNum">      78 </span>            : }</a>
 <a name="79"><span class="lineNum">      79 </span>            : </a>

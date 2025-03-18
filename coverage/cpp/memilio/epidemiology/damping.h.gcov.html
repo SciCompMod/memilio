@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-17 10:46:25</td>
+            <td class="headerValue">2025-03-18 10:47:39</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">139</td>
@@ -411,19 +411,19 @@
 <a name="349"><span class="lineNum">     349 </span>            :      * @param t time in the simulation</a>
 <a name="350"><span class="lineNum">     350 </span>            :      * @return matrix expression </a>
 <a name="351"><span class="lineNum">     351 </span>            :      */</a>
-<a name="352"><span class="lineNum">     352 </span><span class="lineCov">    1148479 :     auto get_matrix_at(SimulationTime t) const</span></a>
+<a name="352"><span class="lineNum">     352 </span><span class="lineCov">    1184299 :     auto get_matrix_at(SimulationTime t) const</span></a>
 <a name="353"><span class="lineNum">     353 </span>            :     {</a>
-<a name="354"><span class="lineNum">     354 </span><span class="lineCov">    1148479 :         assert(!m_accumulated_dampings_cached.empty() &amp;&amp;</span></a>
+<a name="354"><span class="lineNum">     354 </span><span class="lineCov">    1184299 :         assert(!m_accumulated_dampings_cached.empty() &amp;&amp;</span></a>
 <a name="355"><span class="lineNum">     355 </span>            :                &quot;Cache is not current. Did you disable the automatic cache update?&quot;);</a>
-<a name="356"><span class="lineNum">     356 </span><span class="lineCov">    1148479 :         auto ub =</span></a>
-<a name="357"><span class="lineNum">     357 </span><span class="lineCov">    1148479 :             std::upper_bound(m_accumulated_dampings_cached.begin(), m_accumulated_dampings_cached.end(),</span></a>
-<a name="358"><span class="lineNum">     358 </span><span class="lineCov">    2337739 :                              std::make_tuple(t), [](auto&amp;&amp; tup1, auto&amp;&amp; tup2) {</span></a>
-<a name="359"><span class="lineNum">     359 </span><span class="lineCov">    2337739 :                                  return double(std::get&lt;SimulationTime&gt;(tup1)) &lt; double(std::get&lt;SimulationTime&gt;(tup2));</span></a>
+<a name="356"><span class="lineNum">     356 </span><span class="lineCov">    1184299 :         auto ub =</span></a>
+<a name="357"><span class="lineNum">     357 </span><span class="lineCov">    1184299 :             std::upper_bound(m_accumulated_dampings_cached.begin(), m_accumulated_dampings_cached.end(),</span></a>
+<a name="358"><span class="lineNum">     358 </span><span class="lineCov">    2409379 :                              std::make_tuple(t), [](auto&amp;&amp; tup1, auto&amp;&amp; tup2) {</span></a>
+<a name="359"><span class="lineNum">     359 </span><span class="lineCov">    2409379 :                                  return double(std::get&lt;SimulationTime&gt;(tup1)) &lt; double(std::get&lt;SimulationTime&gt;(tup2));</span></a>
 <a name="360"><span class="lineNum">     360 </span>            :                              });</a>
-<a name="361"><span class="lineNum">     361 </span><span class="lineCov">    1148479 :         auto damping =</span></a>
-<a name="362"><span class="lineNum">     362 </span><span class="lineCov">    2296958 :             smoother_cosine(double(t), double(std::get&lt;SimulationTime&gt;(*ub)) - 1, double(std::get&lt;SimulationTime&gt;(*ub)),</span></a>
-<a name="363"><span class="lineNum">     363 </span><span class="lineCov">    3445437 :                             std::get&lt;Matrix&gt;(*(ub - 1)), std::get&lt;Matrix&gt;(*ub));</span></a>
-<a name="364"><span class="lineNum">     364 </span><span class="lineCov">    2296958 :         return damping;</span></a>
+<a name="361"><span class="lineNum">     361 </span><span class="lineCov">    1184299 :         auto damping =</span></a>
+<a name="362"><span class="lineNum">     362 </span><span class="lineCov">    2368598 :             smoother_cosine(double(t), double(std::get&lt;SimulationTime&gt;(*ub)) - 1, double(std::get&lt;SimulationTime&gt;(*ub)),</span></a>
+<a name="363"><span class="lineNum">     363 </span><span class="lineCov">    3552897 :                             std::get&lt;Matrix&gt;(*(ub - 1)), std::get&lt;Matrix&gt;(*ub));</span></a>
+<a name="364"><span class="lineNum">     364 </span><span class="lineCov">    2368598 :         return damping;</span></a>
 <a name="365"><span class="lineNum">     365 </span>            :     }</a>
 <a name="366"><span class="lineNum">     366 </span><span class="lineCov">        306 :     auto get_matrix_at(double t) const</span></a>
 <a name="367"><span class="lineNum">     367 </span>            :     {</a>

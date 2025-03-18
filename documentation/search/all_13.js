@@ -47,7 +47,7 @@ var searchData=
   ['set_5fdt_5fmin_1748',['set_dt_min',['../classmio_1_1RKIntegratorCore.html#a9c6ae347404d8130cf762ad7de49703d',1,'mio::RKIntegratorCore::set_dt_min()'],['../classmio_1_1ControlledStepperWrapper.html#abd0812251b1ca9a90413bed0241a7a91',1,'mio::ControlledStepperWrapper::set_dt_min()']]],
   ['set_5fduration_1749',['set_duration',['../classmio_1_1DynamicNPIs.html#af436124e37d70df60dd15437319c4d99',1,'mio::DynamicNPIs']]],
   ['set_5fdynamic_5fnpis_5finfected_1750',['set_dynamic_npis_infected',['../classmio_1_1MobilityParameters.html#a2f2fb273a2a507dc6e92e7478eb926a1',1,'mio::MobilityParameters']]],
-  ['set_5fedges_1751',['set_edges',['../namespacemio.html#a668e602375cc7ce5456440b204214b2f',1,'mio']]],
+  ['set_5fedges_1751',['set_edges',['../namespacemio.html#a1d913054145478d608997d15e7ca9cec',1,'mio']]],
   ['set_5ferror_1752',['set_error',['../classmio_1_1SerializerBase.html#aa2bff403f14804e0457c5f6dff41d4c2',1,'mio::SerializerBase']]],
   ['set_5fflags_1753',['set_flags',['../classmio_1_1SerializerBase.html#ab69e6e642d3bc632594974cab4108db6',1,'mio::SerializerBase']]],
   ['set_5fgeographical_5flocation_1754',['set_geographical_location',['../classmio_1_1abm_1_1Location.html#a7526904fafd7ce2db0e8b4af35415e2f',1,'mio::abm::Location']]],
