@@ -26,14 +26,21 @@ from memilio.epidata import customPlot
 
 
 class Test_customPlot(fake_filesystem_unittest.TestCase):
+    """ """
 
     path = '/home/figures/'
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     @patch('memilio.epidata.customPlot.plt')
     def test_plot_list(self, mock_plt):
+        """
+
+        :param mock_plt: 
+
+        """
 
         mock_plt.subplots.return_value = (MagicMock(), MagicMock())
 

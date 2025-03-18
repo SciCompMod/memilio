@@ -23,7 +23,7 @@ runs:
             Write-Output "Running $($_.Name)"
             & $_.FullName
             if ($LASTEXITCODE -ne 0) {
-              Write-Error "Programm terminated with error, aborting."
+              Write-Error "Programm terminated with error, abort."
               Exit 1
             }
           }
