@@ -9,5 +9,5 @@ Model Creation
    structure
    ode
    sde
-   ide
+   ide_creation
     
