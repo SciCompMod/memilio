@@ -7,7 +7,6 @@ Python API
 .. autosummary::
     :toctree: generated
     :recursive:
-    :imported-members:
     :caption: Pyhton Module API
 
     memilio.generation
