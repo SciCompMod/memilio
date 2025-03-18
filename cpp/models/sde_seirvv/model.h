@@ -59,6 +59,7 @@ public:
     void get_flows(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop, Eigen::Ref<const Eigen::VectorX<ScalarType>> y,
                    ScalarType t, Eigen::Ref<Eigen::VectorX<ScalarType>> flows) const
     {
+        std::cout << "calc flows" << std::endl;
         auto& params = this->parameters;
         params.get<ContactPatterns>().get_matrix_at(t)(0, 0);
         ScalarType coeffStoIV1 = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
@@ -167,6 +168,8 @@ public:
                            sqrt((1.0 / params.get<TimeInfectedV2>()) * y[(size_t)InfectionState::InfectedV1V2]) /
                                sqrt(step_size) * iv1v2_rv1v2,
                        0.0, y[(size_t)InfectionState::InfectedV1V2] * inv_step_size);
+
+        std::cout << "calc flows done" << std::endl;
     }
 
     ScalarType step_size; ///< A step size of the model with which the stochastic process is realized.

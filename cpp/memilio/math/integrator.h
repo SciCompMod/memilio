@@ -190,8 +190,11 @@ public:
             dt_copy = dt;
 
             results.add_time_point();
+            std::cout << "Time point added" << std::endl;
             step_okay &= m_core->step(f, results[i], t, dt, results[i + 1]);
+            std::cout << "step done" << std::endl;
             results.get_last_time() = t;
+            std::cout << "Last time setted" << std::endl;
 
             std::cout << "After step: t = " << t << ", dt = " << dt << std::endl;
             std::cout << "Step result: " << (step_okay ? "success" : "failure") << std::endl;
