@@ -214,9 +214,9 @@ class Simulation:
 
         for i, location in enumerate(locations):
             baseline_file = os.path.join(
-                self.data_dir, "contacts", "baseline_" + location + ".txt")
+                self.data_dir, "Germany", "contacts", "baseline_" + location + ".txt")
             minimum_file = os.path.join(
-                self.data_dir, "contacts", "minimum_" + location + ".txt")
+                self.data_dir, "Germany", "contacts", "minimum_" + location + ".txt")
             contact_matrices[i] = mio.ContactMatrix(
                 mio.read_mobility_plain(baseline_file),
                 mio.read_mobility_plain(minimum_file)
@@ -529,21 +529,25 @@ class Simulation:
         scaling_factor_icu = 1.0
         tnt_capacity_factor = 7.5 / 100000.
 
-        path_population_data = os.path.join(
-            self.data_dir, "pydata", "Germany",
-            "county_current_population.json")
+        data_dir_Germany = os.path.join(self.data_dir, "Germany")
+        mobility_data_file = os.path.join(
+            data_dir_Germany, "mobility", "commuter_mobility_2022.txt")
+        pydata_dir = os.path.join(data_dir_Germany, "pydata")
+
+        path_population_data = os.path.join(pydata_dir,
+                                            "county_current_population.json")
 
         mio.osecir.set_nodes(
             model.parameters,
             mio.Date(self.start_date.year,
                      self.start_date.month, self.start_date.day),
             mio.Date(end_date.year,
-                     end_date.month, end_date.day), self.data_dir,
+                     end_date.month, end_date.day), pydata_dir,
             path_population_data, True, graph, scaling_factor_infected,
             scaling_factor_icu, tnt_capacity_factor, 0, False)
 
         mio.osecir.set_edges(
-            self.data_dir, graph, len(Location))
+            mobility_data_file, graph, len(Location))
 
         return graph
 

@@ -215,7 +215,8 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
     # This is not very nice either to have the same file with either Eisenach merged or not...
     if read_data:
-        population = pd.read_json(directory+'county_current_population.json')
+        population = pd.read_json(os.path.join(
+            directory, 'pydata', 'county_current_population.json'))
     else:
         population = gPd.get_population_data(
             out_folder=out_folder, merge_eisenach=True, read_data=read_data)
@@ -466,7 +467,8 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         data=mat_commuter_mobility, columns=countykey_list, index=countykey_list)
     filename = 'mobility_bfa_' + \
         str(ref_year) + '_dim' + str(mat_commuter_mobility.shape[0])
-    gd.write_dataframe(df_commuter_mobility, directory, filename, file_format)
+    gd.write_dataframe(df_commuter_mobility, mobility_dir,
+                       filename, file_format)
 
     # this is neither a very elegant nor a very general way to merge...
     # better options to be searched for!
@@ -491,11 +493,10 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         data=mat_commuter_mobility, columns=countykey_list, index=countykey_list)
     commuter_sanity_checks(df_commuter_mobility)
     filename = 'mobility_bfa_' + str(ref_year)
-    gd.write_dataframe(df_commuter_mobility, directory, filename, file_format)
-    directory = directory.split('pydata')[0] + 'mobility/'
-    gd.check_dir(directory)
+    gd.write_dataframe(df_commuter_mobility, mobility_dir,
+                       filename, file_format)
     gd.write_dataframe(
-        df_commuter_mobility, directory,
+        df_commuter_mobility, mobility_dir,
         'commuter_mobility_' + str(ref_year),
         'txt', {'sep': ' ', 'index': False, 'header': False})
 
@@ -551,7 +552,7 @@ def get_neighbors_mobility(
 
     """
     # This is not very nice either to have the same file with either Eisenach merged or not...
-    directory = os.path.join(out_folder, 'Germany/')
+    directory = os.path.join(out_folder, 'Germany', 'mobility')
     gd.check_dir(directory)
     try:
         commuter = gd.get_file(os.path.join(
@@ -608,8 +609,6 @@ def get_neighbors_mobility_all(
     :returns: Neighbors of all counties with respect to mobility.
 
     """
-    directory = os.path.join(out_folder, 'Germany/')
-    gd.check_dir(directory)
     countyids = geoger.get_county_ids()
     neighbors_table = []
     # TODO: performance has to be improved

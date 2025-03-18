@@ -716,7 +716,7 @@ TEST(TestOdeSECIRTS, read_confirmed_cases)
     auto num_age_groups = 6; //reading data requires RKI data age groups
     auto model          = std::vector<mio::osecirts::Model<double>>({make_model(num_age_groups)});
     const std::vector<int> region{1002};
-    auto path = mio::path_join(TEST_DATA_DIR, "pydata/Germany/cases_all_county_age_ma7.json");
+    auto path = mio::path_join(TEST_DATA_DIR, "Germany/pydata/cases_all_county_age_ma7.json");
 
     std::vector<std::vector<double>> num_InfectedSymptoms(1);
     std::vector<std::vector<double>> num_death(1);
@@ -859,15 +859,15 @@ TEST(TestOdeSECIRTS, read_data)
 
     auto read_result1 = mio::osecirts::read_input_data_county(model1, {2020, 12, 01}, {1002},
                                                               std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                              TEST_DATA_DIR, 10, immunity_population);
+                                                              TEST_GERMANY_PYDATA_DIR, 10, immunity_population);
 
     auto read_result2 =
         mio::osecirts::read_input_data(model2, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0),
-                                       1.0, TEST_DATA_DIR, 10, immunity_population);
+                                       1.0, TEST_GERMANY_PYDATA_DIR, 10, immunity_population);
 
     auto read_result_district =
         mio::osecirts::read_input_data(model3, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0),
-                                       1.0, mio::path_join(TEST_DATA_DIR, "pydata/District"), 10, immunity_population);
+                                       1.0, mio::path_join(TEST_DATA_DIR, "District/pydata"), 10, immunity_population);
 
     ASSERT_THAT(read_result1, IsSuccess());
     ASSERT_THAT(read_result2, IsSuccess());

@@ -37,7 +37,7 @@ default_file_path = os.path.dirname(os.path.abspath(__file__))
 dfp_vec = default_file_path.split('memilio')
 if len(dfp_vec) > 0:
     default_file_path = os.path.join(
-        dfp_vec[0], os.path.join('memilio', 'data/pydata'))
+        dfp_vec[0], os.path.join('memilio', 'data/'))
 
 defaultDict = {
     'read_data': False,
@@ -53,6 +53,7 @@ defaultDict = {
     'no_raw': False,
     'rep_date': False,
     'sanitize_data': 1,
+    'ref_year': 2022
 }
 
 # The following dict EngEng makes sure that for all

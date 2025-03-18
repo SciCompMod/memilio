@@ -104,7 +104,7 @@ def updateMobility2022(directory, mobility_file):
     become one single county by July 2021. If mobility matrix dimension is different
     from 401x401, nothing is done.
 
-    :param directory: Path to folder where data is read and written.
+    :param directory: Path to folder where mobility data is read and written.
     :param mobility_file: Mobility matrix file which has to be updated.
     :returns: Reduced mobility matrix or input mobility matrix if matrix was already reduced.
 
@@ -142,16 +142,15 @@ def main():
 
     arg_dict = gd.cli("commuter_official")
 
-    directory = arg_dict['out_folder'].split('/pydata')[0]
-    directory = os.path.join(directory, 'mobility/')
+    directory = os.path.join(arg_dict['out_folder'], 'Germany', 'mobility/')
+    ref_year = dd.defaultDict['ref_year']
 
     # Merge Eisenach and Wartbugkreis in Input Data if need be
-    updateMobility2022(directory, mobility_file='twitter_scaled_1252')
-    updateMobility2022(directory, mobility_file='commuter_mobility')
+    updateMobility2022(
+        directory, mobility_file=f'commuter_mobility_{ref_year}')
     # create federal states mobility matrix (not used in simulation for now)
-    createFederalStatesMobility(directory, mobility_file='twitter_scaled_1252')
     createFederalStatesMobility(
-        directory, mobility_file='commuter_mobility')
+        directory, mobility_file=f'commuter_mobility_{ref_year}')
 
 
 if __name__ == "__main__":

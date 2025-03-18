@@ -28,13 +28,14 @@ The functions which are called are:
 - getPopulationData.get_population_data
 - getVacccinationData.get_vaccination_data
 - getDIVIData.get_divi_data
+- getCommuterMobility.get_commuter_data
 """
-
+import os
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseData
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import getDIVIData, getPopulationData, getVaccinationData
+from memilio.epidata import getDIVIData, getPopulationData, getVaccinationData, getCommuterMobility, transformMobilityData
 
 
 def print_error(text):
@@ -59,6 +60,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
                         split_berlin=dd.defaultDict['split_berlin'],
                         rep_date=dd.defaultDict['rep_date'],
                         sanitize_data=dd.defaultDict['sanitize_data'],
+                        ref_year=dd.defaultDict['ref_year'],
                         **kwargs
                         ):
     """ Downloads all data from external sources
@@ -68,6 +70,8 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     - getPopulationData.get_population_data
     - getVaccinationData.get_vaccination_data
     - getDIVIData.get_divi_data
+    - getCommuterMobility.get_commuter_data
+    - transformMobilityData.updateMobility2022 (if ref_year < 2022)
 
     Keyword arguments:
 
@@ -82,6 +86,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     :param split_berlin: True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
     :param rep_date: True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
     :param sanitize_data: Value in {0,1,2,3}. Redistributes cases of every county either based on regions' ratios or on thresholds and population. (Default value = dd.defaultDict['sanitize_data'])
+    :param ref_year: Year that specifies where the data should be taken from. Default value is 2022.
     :param **kwargs: 
 
     """
@@ -105,6 +110,9 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
                      "sanitize_data": sanitize_data}
 
     arg_dict_divi = {**arg_dict_all, **arg_dict_data_download}
+
+    arg_dict_mobility = {**arg_dict_all, **arg_dict_data_download,
+                         "ref_year": ref_year}
 
     try:
         getCaseData.get_case_data(**arg_dict_cases)
@@ -130,11 +138,28 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
         gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
         print_error('vaccination')
 
+    try:
+        getCommuterMobility.get_commuter_data(**arg_dict_mobility)
+    except Exception as exp:
+        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
+        print_error('commuter_mobility')
+
+    try:
+        mobility_dir = os.path.join(out_folder, 'Germany/mobility/')
+        if (ref_year < 2022):
+            transformMobilityData.updateMobility2022(
+                mobility_dir, mobility_file=f'commuter_mobility_{ref_year}')
+    except Exception as exp:
+        gd.default_print('Error', str(type(exp).__name__) + ": " + str(exp))
+        print_error('update_mobility')
+
 
 def main():
     """ Main program entry."""
 
     arg_dict = gd.cli("sim")
+    arg_dict['moving_average'] = 7
+    arg_dict['no_raw'] = True
     get_simulation_data(**arg_dict)
 
 

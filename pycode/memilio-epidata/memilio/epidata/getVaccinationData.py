@@ -1210,7 +1210,7 @@ def get_vaccination_data(
     """ Downloads the RKI vaccination data and provides different kind of structured data.
 
     The data is read from the internet.
-    The file is read in or stored at the folder "out_folder"/Germany/.
+    The file is read in or stored at the folder "out_folder"/Germany/pydata.
     To store and change the data we use pandas.
 
     While working with the data
@@ -1271,7 +1271,7 @@ def get_vaccination_data(
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
 
-    directory = os.path.join(out_folder, 'Germany/')
+    directory = os.path.join(out_folder, 'Germany', 'pydata')
     gd.check_dir(directory)
 
     filename = "RKIVaccFull"

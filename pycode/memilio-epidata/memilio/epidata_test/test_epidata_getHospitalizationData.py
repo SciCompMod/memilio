@@ -135,7 +135,7 @@ class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
 
         # check if all files are written
         self.assertEqual(
-            len(os.listdir(os.path.join(self.path, 'Germany'))), 5)
+            len(os.listdir(os.path.join(self.path, 'Germany', 'pydata'))), 5)
 
     def test_compute_hospitailzations_per_day(self):
         """ """

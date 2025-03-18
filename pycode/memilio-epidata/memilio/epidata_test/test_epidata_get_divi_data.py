@@ -57,7 +57,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         :param text:  (Default value = '')
 
         """
-        directory = os.path.join(self.path, 'Germany/')
+        directory = os.path.join(self.path, 'Germany', 'pydata/')
         gdd_calls = [
             call('Info: Data has been written to ' +
                  os.path.join(directory, 'FullData_DIVI.json')),
