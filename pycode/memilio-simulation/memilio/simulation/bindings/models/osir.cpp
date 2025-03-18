@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
 //Includes from pymio
+#include "osir_doc.h"
 #include "pybind_util.h"
 #include "utils/index.h"
 #include "utils/custom_index_array.h"
@@ -54,7 +54,7 @@ PYBIND11_MODULE(_simulation_osir, m)
     m.def("interpolate_simulation_result",
           static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
               &mio::interpolate_simulation_result),
-          py::arg("ts"), py::arg("abs_tol") = 1e-14);
+          py::arg("ts"), py::arg("abs_tol") = 1e-14, pymio::details::docstrings["interpolate_simulation_result"].c_str());
 
     m.def("interpolate_simulation_result",
           static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
