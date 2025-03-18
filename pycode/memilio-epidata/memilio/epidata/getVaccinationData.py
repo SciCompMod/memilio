@@ -537,10 +537,10 @@ def process_vaccination_data(
         Path to the output directory
     :param conf_obj: configuration object
     :param file_format: str. File format which is used for writing the data. Default defined in defaultDict.
-    :param start_date: Date of first date in dataframe. Default defined in defaultDict.
-    :param end_date: Date of last date in dataframe. Default defined in defaultDict.
+    :param start_date: Date of first date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['start_date'])
+    :param end_date: Date of last date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['end_date'])
     :param moving_average: int. Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out effects of irregular reporting. Default defined in defaultDict.
+        to smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
     :param sanitize_data: int. Value in {0,1,2,3}; Default: 1. For many counties,
         vaccination data is not correctly attributed to home locations of
         vaccinated persons. If 'sanitize_data' is set to larger 0, this is corrected.
@@ -553,14 +553,7 @@ def process_vaccination_data(
         closely connected neighboring regions using commuter mobility networks.
         The sanitizing threshold will be defined by the age group-specific
         average on the corresponding vaccination ratios on county and federal
-        state level.
-    :param df_data: pd.DataFrame: 
-    :param directory: str: 
-    :param file_format: str:  (Default value = dd.defaultDict['file_format'])
-    :param start_date: date:  (Default value = dd.defaultDict['start_date'])
-    :param end_date: date:  (Default value = dd.defaultDict['end_date'])
-    :param moving_average: int:  (Default value = dd.defaultDict['moving_average'])
-    :param sanitize_data: int:  (Default value = dd.defaultDict['sanitize_data'])
+        state level. Default defined in defaultDict. (Default value = dd.defaultDict['sanitize_data'])
     :returns: tuple and DataFrame
 
     """
@@ -935,23 +928,9 @@ def write_vaccination_data(dict_data: dict,
     :param directory: str
         Path to the output directory
     :param conf_obj: configuration object
-    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict.
-    :param impute_dates: bool. True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    :param moving_average: int. Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict.
-        sanitize_data: Value in {0,1,2,3}; Default: 1. For many counties, vaccination data is not correctly attributed to home locations of
-        vaccinated persons. If 'sanitize_data' is set to larger 0, this is corrected.
-        0: No sanitizing applied.
-        1: Averaging ratios over federal states.
-        2: Averaging ratios over intermediate regions.
-        3: All counties with vaccination quotas of more than 'sanitizing_threshold' will be adjusted to the average of its
-        federal state and remaining vaccinations will be distributed to closely connected neighboring regions using commuter mobility networks.
-        The sanitizing threshold will be defined by the age group-specific average on the corresponding vaccination ratios on county and federal
-        state level.
-    :param dict_data: dict: 
-    :param directory: str: 
-    :param file_format: str:  (Default value = dd.defaultDict['file_format'])
-    :param impute_dates: bool:  (Default value = True)
-    :param moving_average: int:  (Default value = dd.defaultDict['moving_average'])
+    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param impute_dates: bool. True or False. Defines if values for dates without new information are imputed. (Default value = True)
+    :param moving_average: int. Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
     :returns: none
 
     """
@@ -1230,13 +1209,13 @@ def get_vaccination_data(
     - Start and end dates can be provided to define the length of the returned data frames.
 
     :param read_data: Currently not used] True or False. Defines if data is read from file or downloaded.
-        Here Data is always downloaded from the internet.
-    :param file_format: File format which is used for writing the data. Default defined in defaultDict.
-    :param out_folder: Folder where data is written to. Default defined in defaultDict.
-    :param start_date: Date of first date in dataframe. Default defined in defaultDict.
-    :param end_date: Date of last date in dataframe. Default defined in defaultDict.
+        Here Data is always downloaded from the internet. Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
+    :param file_format: File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param out_folder: Folder where data is written to. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
+    :param start_date: Date of first date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['start_date'])
+    :param end_date: Date of last date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['end_date'])
     :param moving_average: Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out effects of irregular reporting. Default defined in defaultDict.
+        to smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
     :param sanitize_data: Value in {0,1,2,3}; Default: 1. For many counties,
         vaccination data is not correctly attributed to home locations of
         vaccinated persons. If 'sanitize_data' is set to larger 0, this is
@@ -1250,20 +1229,9 @@ def get_vaccination_data(
         closely connected neighboring regions using commuter mobility networks.
         The sanitizing threshold will be defined by the age group-specific
         average on the corresponding vaccination ratios on county and federal
-        state level.
-    :param impute_dates: bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    :param to_dataset: bool True or False. Whether to return the dataframe as an object instead of json file.
-        If True - returns objects with dataframes
-        If False - write dataframes into files
-        Default defined in defaultDict.
-    :param read_data: str:  (Default value = dd.defaultDict['read_data'])
-    :param file_format: str:  (Default value = dd.defaultDict['file_format'])
-    :param out_folder: str:  (Default value = dd.defaultDict['out_folder'])
-    :param start_date: date:  (Default value = dd.defaultDict['start_date'])
-    :param end_date: date:  (Default value = dd.defaultDict['end_date'])
-    :param moving_average: int:  (Default value = dd.defaultDict['moving_average'])
-    :param sanitize_data: int:  (Default value = dd.defaultDict['sanitize_data'])
-    :param impute_dates: bool:  (Default value = True)
+        state level. 
+        Default defined in defaultDict. (Default value = dd.defaultDict['sanitize_data'])
+    :param impute_dates: bool True or False. Defines if values for dates without new information are imputed. (Default value = True)
     :param **kwargs: 
     :returns: None
 

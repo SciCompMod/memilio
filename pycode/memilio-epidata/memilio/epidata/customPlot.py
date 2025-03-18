@@ -54,11 +54,9 @@ def plot_multiple_series(
     :param innercolor: Inner color of figure. (Default value = 'white')
     :param fig_name: name of the figure to save. (Default value = 'customPlot')
     :param loc_legend:  (Default value = 'upper left')
-    :param fig_size:  (Default value = (10)
-    :param 6): 
+    :param fig_size:  (Default value = (10, 6))
     :param plot_outside:  (Default value = True)
     :param path_rel:  (Default value = 'figures/')
-    :param innercolor:  (Default value = 'white')
 
     """
     fig, ax = plt.subplots(figsize=fig_size, facecolor=outercolor)

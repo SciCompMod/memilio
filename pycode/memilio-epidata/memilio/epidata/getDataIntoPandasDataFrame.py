@@ -251,7 +251,6 @@ def extract_zip(file, **param_dict):
 
     :param file: String. Path to Zipfile to read.
     :param param_dict: Dict. Additional information for download functions (e.g. engine, sheet_name, header...)
-    :param **param_dict: 
     :returns: list od all dataframes (one for each file).
 
     """
@@ -280,9 +279,8 @@ def get_file(
     :param filepath: String. Filepath from where the data is read. (Default value = '')
     :param url: String. URL to download the dataset. (Default value = '')
     :param read_data: True or False. Defines if item is opened from directory (True) or downloaded (False). (Default value = dd.defaultDict['read_data'])
-    :param param_dct: Dict. Additional information for download functions (e.g. engine, sheet_name, header...)
+    :param param_dict: Dict. Additional information for download functions (e.g. engine, sheet_name, header...) (Default value = {})
     :param interactive: bool. Whether to ask for user input. If False, raises Errors instead. (Default value = False)
-    :param param_dict:  (Default value = {})
     :returns: pandas dataframe
 
     """

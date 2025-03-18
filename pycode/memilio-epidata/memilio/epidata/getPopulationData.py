@@ -69,17 +69,13 @@ def read_population_data(ref_year):
 def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_format: str, merge_eisenach: bool, ref_year):
     """ Writes population dataframe into directory with new column names and age groups
 
-    :param df_pop: Population data DataFrame to be exported
-    :param directory: Directory where data is written to.
-    :param file_format: File format which is used for writing the data.
+    :param df_pop: Population data DataFrame to be exported pd.DataFrame
+    :param directory: Directory where data is written to. str
+    :param file_format: File format which is used for writing the data. str
     :param merge_eisenach: Defines whether the counties 'Wartburgkreis'
         and 'Eisenach' are listed separately or
-        combined as one entity 'Wartburgkreis'.
+        combined as one entity 'Wartburgkreis'. bool
     :param ref_year: None or year (jjjj) convertible to str. Reference year.
-    :param df_pop: pd.DataFrame: 
-    :param directory: str: 
-    :param file_format: str: 
-    :param merge_eisenach: bool: 
     :returns: exported DataFrame
 
     """
@@ -251,12 +247,10 @@ def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
     The downloaded dataframe is written to the file "FullData_population".
 
     :param read_data: False or True. Defines if data is read from file or
-        downloaded. Default defined in defaultDict.
+        downloaded. Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
     :param out_folder: Path to folder where data is written in folder
-        out_folder/Germany. Default defined in defaultDict.
-    :param ref_year: Default: None] or year (jjjj) convertible to str. Reference year.
-    :param read_data: bool:  (Default value = dd.defaultDict['read_data'])
-    :param out_folder: str:  (Default value = dd.defaultDict['out_folder'])
+        out_folder/Germany. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
+    :param ref_year: (Default: None) or year (jjjj) convertible to str. Reference year.
     :param **kwargs: 
     :returns: DataFrame with adjusted population data for all ages to current level.
 
@@ -286,9 +280,7 @@ def preprocess_population_data(df_pop_raw: pd.DataFrame,
     :param df_pop_raw: pd.DataFrame. A Dataframe containing input population data
     :param merge_eisenach: Default: True] or False. Defines whether the
      counties 'Wartburgkreis' and 'Eisenach' are listed separately or
-     combined as one entity 'Wartburgkreis'.
-    :param df_pop_raw: pd.DataFrame: 
-    :param merge_eisenach: bool:  (Default value = True)
+     combined as one entity 'Wartburgkreis'. (Default value = True)
     :returns: df pd.DataFrame. Processed population data
 
     """
@@ -349,16 +341,12 @@ def write_population_data(df_pop: pd.DataFrame,
     for counties, states and whole Germany, respectively.
 
     :param df_pop: pd.DataFrame. A Dataframe containing processed population data
-    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict.
-    :param out_folder: str. Folder where data is written to. Default defined in defaultDict.
-    :param merge_eisenach: Default: True] or False. Defines whether the
+    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param out_folder: str. Folder where data is written to. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
+    :param merge_eisenach: bool, Default: True. Defines whether the
         counties 'Wartburgkreis' and 'Eisenach' are listed separately or
-        combined as one entity 'Wartburgkreis'.
-    :param ref_year: Default: None] or year (jjjj) convertible to str. Reference year.
-    :param df_pop: pd.DataFrame: 
-    :param out_folder: str:  (Default value = dd.defaultDict['out_folder'])
-    :param file_format: str:  (Default value = dd.defaultDict['file_format'])
-    :param merge_eisenach: bool:  (Default value = True)
+        combined as one entity 'Wartburgkreis'. 
+    :param ref_year: Default: None or year (jjjj) convertible to str. Reference year.
     :returns: None
 
     """
@@ -397,21 +385,17 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
     Then this script can be run.
 
     :param read_data: False or True. Defines if data is read from file or
-        downloaded. Default defined in defaultDict.
+        downloaded. Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
     :param file_format: File format which is used for writing the data.
-        Default defined in defaultDict.
+        Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
     :param out_folder: Path to folder where data is written in folder
-        out_folder/Germany. Default defined in defaultDict.
-    :param merge_eisenach: Default: True] or False. Defines whether the
+        out_folder/Germany. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
+    :param merge_eisenach: bool, Default: True]. Defines whether the
         counties 'Wartburgkreis' and 'Eisenach' are listed separately or
         combined as one entity 'Wartburgkreis'.
     :param ref_year: Default: None] or year (jjjj) convertible to str. Reference year.
     :param username: str. Username to sign in at regionalstatistik.de.
     :param password: str. Password to sign in at regionalstatistik.de.
-    :param read_data: bool:  (Default value = dd.defaultDict['read_data'])
-    :param file_format: str:  (Default value = dd.defaultDict['file_format'])
-    :param out_folder: str:  (Default value = dd.defaultDict['out_folder'])
-    :param merge_eisenach: bool:  (Default value = True)
     :param **kwargs: 
     :returns: DataFrame with adjusted population data for all ages to current level.
 

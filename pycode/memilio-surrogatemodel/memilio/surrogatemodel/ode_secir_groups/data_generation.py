@@ -86,10 +86,9 @@ def run_secir_groups_simulation(days, damping_day, populations):
     """ Uses an ODE SECIR model allowing for asymptomatic infection with 6 different age groups. The model is not stratified by region.
     Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
 
-    :param Days: Describes how many days we simulate within a single run.
+    :param days: Describes how many days we simulate within a single run.
     :param damping_day: The day when damping is applied.
     :param populations: List containing the population in each age group.
-    :param days: 
     :returns: List containing the populations in each compartment used to initialize the run.
 
     """
@@ -209,8 +208,8 @@ def generate_data(
     :param path_population: Path, where we try to read the population data.
     :param input_width: Int value that defines the number of time series used for the input.
     :param label_width: Int value that defines the size of the labels.
-    :param normalize: Default: true] Option to transform dataset by logarithmic normalization.
-    :param save_data: Default: true] Option to save the dataset.
+    :param normalize: Default: true Option to transform dataset by logarithmic normalization.
+    :param save_data: Default: true Option to save the dataset.
     :returns: Data dictionary of input and label data sets.
 
     """

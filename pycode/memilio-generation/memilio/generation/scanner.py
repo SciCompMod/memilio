@@ -55,7 +55,6 @@ class Scanner:
 
         :param root_cursor: Represents the root node of the abstract syntax tree as a Cursor object from libclang.
         :param self: Self: 
-        :param root_cursor: Cursor: 
         :returns: Information extracted from the model saved as an IntermediateRepresentation.
 
         """
@@ -73,9 +72,6 @@ class Scanner:
         :param intermed_repr: Dataclass used for saving the extracted model features.
         :param namespace: Default = ""] Namespace of the current node.
         :param self: Self: 
-        :param node: Cursor: 
-        :param intermed_repr: IntermediateRepresentation: 
-        :param namespace: str:  (Default value = "")
 
         """
         if node.kind == CursorKind.NAMESPACE:
@@ -119,8 +115,6 @@ class Scanner:
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
         :param self: Self: 
-        :param node: Cursor: 
-        :param intermed_repr: IntermediateRepresentation: 
 
         """
         if node.spelling.strip() != "":  # alternative self.folder in node.location.file.name:
@@ -134,9 +128,6 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self: 
-        :param node: Cursor: 
-        :param intermed_repr: IntermediateRepresentation: 
 
         """
         if node.semantic_parent.spelling in intermed_repr.enum_populations.keys():
@@ -151,9 +142,6 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self: 
-        :param node: Cursor: 
-        :param intermed_repr: IntermediateRepresentation: 
 
         """
         if node.spelling == self.config.model_class:
@@ -175,9 +163,6 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self: 
-        :param node: Cursor: 
-        :param intermed_repr: IntermediateRepresentation: 
 
         """
         for base in node.get_children():
@@ -208,8 +193,6 @@ class Scanner:
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
         :param self: Self: 
-        :param node: Cursor: 
-        :param intermed_repr: IntermediateRepresentation: 
 
         """
         filepath = node.location.file.name
@@ -245,9 +228,6 @@ class Scanner:
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
         :param self: Self: 
-        :param node: Cursor: 
-        :param intermed_repr: IntermediateRepresentation: 
-
         """
         for base in node.get_children():
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
@@ -273,8 +253,6 @@ class Scanner:
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
         :param self: Self: 
-        :param node: Cursor: 
-        :param intermed_repr: IntermediateRepresentation: 
 
         """
         if node.spelling == intermed_repr.model_class:
@@ -296,8 +274,6 @@ class Scanner:
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
         :param self: Self: 
-        :param node: Cursor: 
-        :param intermed_repr: IntermediateRepresentation: 
 
         """
         if node.spelling == self.config.parameterset:
@@ -322,8 +298,6 @@ class Scanner:
 
         :param intermed_repr: Dataclass used for saving the extracted model features.
         :param self: Self: 
-        :param intermed_repr: IntermediateRepresentation: 
-
         """
         # remove unnecesary enum
         population_groups = []

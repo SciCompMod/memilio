@@ -315,8 +315,7 @@ def plot_map(data: pd.DataFrame,
 
     :param data: pd.DataFrame:  Data to be plotted. First column must contain regional 
         specifier, following columns will be plotted for comparison.
-    :param scale_colors: np.array([0: 
-    :param 1]):  Array of min-max-values to scale colorbar.
+    :param scale_colors: np.array([0, 1]) Array of min-max-values to scale colorbar.
     :param legend: list: Subtitles for different columns. Can be list of empty strings. (Default value = [])
     :param title: str: Title of the plot. (Default value = '')
     :param plot_colorbar: bool: Defines if a colorbar will be plotted. (Default value = True)
