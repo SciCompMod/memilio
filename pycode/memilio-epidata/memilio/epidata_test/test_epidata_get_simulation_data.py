@@ -136,49 +136,43 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     def test_errors(
             self, mock_update, mock_commuter, mock_popul, mock_cases, mock_divi, mock_vaccination,
             mock_print):
+        """
+        :param mock_popul: 
+        :param mock_cases: 
+        :param mock_divi: 
+        :param mock_vaccination: 
+        :param mock_print: 
 
+        """
 
-<< << << < HEAD
+        mock_update.side_effect = Exception
+        mock_commuter.side_effect = Exception
+        mock_popul.side_effect = Exception
+        mock_cases.side_effect = Exception
+        mock_divi.side_effect = Exception
+        mock_vaccination.side_effect = Exception
+        gsd.get_simulation_data(ref_year=2021)
+        data_types = [
+            'population', 'case', 'DIVI', 'vaccination', 'commuter_mobility', 'update_mobility'
+        ]
 
-mock_update.side_effect = Exception
-mock_commuter.side_effect = Exception
-== == == =
-"""
+        calls = [
+            call(
+                f"Error: Something went wrong while getting {data_type} data. "
+                f"This was likely caused by a changed file format of the source material. Please report this as an issue. "
+                f"{data_type} data could not be stored correctly."
+            )
+            for data_type in data_types
+        ]
 
-    :param mock_popul: 
-    :param mock_cases: 
-    :param mock_divi: 
-    :param mock_vaccination: 
-    :param mock_print: 
+        populprint, casesprint, diviprint, vaccprint, mobilityprint, updateprint = calls
 
-    """
->>>>>> > main
-mock_popul.side_effect = Exception
-mock_cases.side_effect = Exception
-mock_divi.side_effect = Exception
-mock_vaccination.side_effect = Exception
-gsd.get_simulation_data(ref_year=2021)
-data_types = [
-    'population', 'case', 'DIVI', 'vaccination', 'commuter_mobility', 'update_mobility'
-]
-
-calls = [
-    call(
-        f"Error: Something went wrong while getting {data_type} data. "
-        f"This was likely caused by a changed file format of the source material. Please report this as an issue. "
-        f"{data_type} data could not be stored correctly."
-    )
-    for data_type in data_types
-]
-
-populprint, casesprint, diviprint, vaccprint, mobilityprint, updateprint = calls
-
-exceptionprint = call('Error: Exception: ')
-expected_calls = [
-    exceptionprint, casesprint, exceptionprint, populprint,
-    exceptionprint, diviprint, exceptionprint, vaccprint, exceptionprint,
-    mobilityprint, exceptionprint, updateprint]
-mock_print.assert_has_calls(expected_calls)
+        exceptionprint = call('Error: Exception: ')
+        expected_calls = [
+            exceptionprint, casesprint, exceptionprint, populprint,
+            exceptionprint, diviprint, exceptionprint, vaccprint, exceptionprint,
+            mobilityprint, exceptionprint, updateprint]
+        mock_print.assert_has_calls(expected_calls)
 
 
 if __name__ == '__main__':
