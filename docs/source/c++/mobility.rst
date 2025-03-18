@@ -31,5 +31,5 @@ To utilize the novel model, assume :math:`n` different geographic units (denoted
 
 For more information, we refer to:
 
-- Zunker H, Schmieding R, Kerkmann D, Schengen A, Diexer S, et al. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. `https://doi.org/10.1371/journal.pcbi.1012630`
-- Kühn MJ, Abele D, Mitra T, Koslow W, Abedi M, et al. (2021). *Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution*. *Mathematical Biosciences* 108648. `https://doi.org/10.1016/j.mbs.2021.108648`
+- Zunker H, Schmieding R, Kerkmann D, Schengen A, Diexer S, et al. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. `https://doi.org/10.1371/journal.pcbi.1012630 <https://doi.org/10.1371/journal.pcbi.1012630>`_
+- Kühn MJ, Abele D, Mitra T, Koslow W, Abedi M, et al. (2021). *Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution*. *Mathematical Biosciences* 108648. `https://doi.org/10.1016/j.mbs.2021.108648 <https://doi.org/10.1016/j.mbs.2021.108648>`_
