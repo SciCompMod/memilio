@@ -218,6 +218,24 @@ public:
                   << std::endl;
 
         // Fluss von InfectedV1V2 zu RecoveredV1V2
+        double time_infected_v2 = params.get<TimeInfectedV2>();
+        double infected_v1v2    = y[(size_t)InfectionState::InfectedV1V2];
+        double sqrt_term        = sqrt((1.0 / time_infected_v2) * infected_v1v2);
+        auto sqrt_term_2        = sqrt(step_size);
+
+        std::cout << "time_infected_v2: " << time_infected_v2 << std::endl;
+        std::cout << "infected_v1v2: " << infected_v1v2 << std::endl;
+        std::cout << "sqrt_term_1: " << sqrt_term << std::endl;
+        std::cout << "sqrt_term_2: " << sqrt_term_2 << std::endl;
+        std::cout << "iv1v2_rv1v2: " << iv1v2_rv1v2 << std::endl;
+        std::cout << "step_size: " << step_size << std::endl;
+        std::cout << "inv_step_size: " << inv_step_size << std::endl;
+
+        double flow_value = std::clamp((1.0 / time_infected_v2) * infected_v1v2 + sqrt_term / sqrt_term_2 * iv1v2_rv1v2,
+                                       0.0, infected_v1v2 * inv_step_size);
+
+        std::cout << "flow_value: " << flow_value << std::endl;
+
         flows[get_flat_flow_index<InfectionState::InfectedV1V2, InfectionState::RecoveredV1V2>()] =
             std::clamp((1.0 / params.get<TimeInfectedV2>()) * y[(size_t)InfectionState::InfectedV1V2] +
                            sqrt((1.0 / params.get<TimeInfectedV2>()) * y[(size_t)InfectionState::InfectedV1V2]) /
