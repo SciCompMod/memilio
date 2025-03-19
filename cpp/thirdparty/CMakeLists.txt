@@ -7,7 +7,6 @@ set(MEMILIO_MINIMAL_BOOST_VERSION "1.76.0")
 set(MEMILIO_JSONCPP_VERSION "1.9.6")
 set(MEMILIO_RANDOM123_VERSION "v1.14.0")
 set(MEMILIO_IPOPT_VERSION "3.14.12")
-set(MEMILIO_LIBSBML_VERSION "5.18.0")
 
 # Gperftools for profiling; must be first, so that libraries are included in the profile
 if(MEMILIO_ENABLE_PROFILING)
@@ -197,35 +196,12 @@ else()
         to the directory containing the jsoncppConfig.cmake file to build with JsonCpp.")
 endif()
 
-# ## libSBML
-if(MEMILIO_USE_BUNDLED_LIBSBML)
-    message(STATUS "Downloading libSBML library")
-
-    include(FetchContent)
-    FetchContent_Declare(
-        libsbml
-        URL https://sourceforge.net/projects/sbml/files/libsbml/${MEMILIO_LIBSBML_VERSION}/stable/libSBML-${MEMILIO_LIBSBML_VERSION}-core-src.tar.gz
-    )
-    FetchContent_GetProperties(libsbml)
-
-    if(NOT libsbml_POPULATED)
-        FetchContent_Populate(libsbml)
-        
-
-        
-        add_subdirectory(${libsbml_SOURCE_DIR} ${libsbml_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
-    # Set the LIBSBML_ROOT_SOURCE_DIR variable
-    set(LIBSBML_ROOT_SOURCE_DIR ${libsbml_SOURCE_DIR})
-
-    add_library(libsbml STATIC IMPORTED)
-    set_target_properties(libsbml PROPERTIES
-        IMPORTED_LOCATION ${libsbml_BINARY_DIR}/src/bindings/c++/lib/libsbml-static.a
-        INTERFACE_INCLUDE_DIRECTORIES ${libsbml_SOURCE_DIR}/src
-    )
-    add_library(SBML::libsbml ALIAS libsbml)
+find_package(sbml CONFIG)
+if(sbml_FOUND)
+    set(MEMILIO_HAS_SBML ON)
+    message(STATUS "Found libSBML: ${libsbml_INCLUDE_DIRS}")
 else()
-    find_package(libsbml REQUIRED)
+    message(WARNING "LibSBML was not found. The SBML integration into memilio will not be build.")
 endif()
 
 if(MEMILIO_ENABLE_MPI)
