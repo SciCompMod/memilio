@@ -646,7 +646,7 @@ def run_abm_simulation(sim_num):
     # map locations to TAN areas
     start_map = time.time()
     map_traffic_cell_to_wastewater_area(os.path.join(
-        output_path, str(sim_num) + '_mapping.txt'), os.path.join(input_path, '_AusgangDLR/München_Flächen_bearb.shp'), os.path.join(
+        output_path, str(sim_num) + '_mapping.txt'), os.path.join(input_path, 'Munich_shape250319/Verschnitt_DLR_TAN_Rep.shp'), os.path.join(
         output_path, str(sim_num) + '_mapping_tan.txt'), os.path.join(
         output_path, str(sim_num) + '_mapping_tan_locs.txt'))
     end_map = time.time()
