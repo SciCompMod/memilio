@@ -58,6 +58,7 @@ void write_log_to_file(const T& history)
 
 int main()
 {
+    mio::set_log_level(mio::LogLevel::warn);
     // This is a minimal example with children and adults < 60y.
     // We divided them into 4 different age groups, which are defined as follows:
     const size_t num_age_groups   = 4;
@@ -133,7 +134,7 @@ int main()
     auto test_parameters       = model.parameters.get<mio::abm::TestData>()[test_type];
     auto testing_criteria_work = mio::abm::TestingCriteria();
     auto testing_scheme_work   = mio::abm::TestingScheme(testing_criteria_work, validity_period, start_date, end_date,
-                                                         test_parameters, probability);
+                                                       test_parameters, probability);
     model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.

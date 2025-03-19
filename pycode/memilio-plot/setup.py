@@ -8,13 +8,12 @@ __version__ = '1.0.0'
 
 
 class PylintCommand(Command):
-    """
-    Custom command to run pylint and get a report as html.
-    """
+    """Custom command to run pylint and get a report as html."""
     description = "Runs pylint and outputs the report as html."
     user_options = []
 
     def initialize_options(self):
+        """ """
         from pylint.reporters.json_reporter import JSONReporter
         from pylint.reporters.text import ParseableTextReporter, TextReporter
         from pylint_json2html import JsonExtendedReporter
@@ -30,10 +29,12 @@ class PylintCommand(Command):
         }
 
     def finalize_options(self):
+        """ """
         self.reporter, self.out_file = self.REPORTERS.get(
             self.out_format)  # , self.REPORTERS.get("parseable"))
 
     def run(self):
+        """ """
         os.makedirs("build_pylint", exist_ok=True)
 
         # Run pylint
@@ -62,7 +63,7 @@ setup(
     test_suite='memilio.plot_test',
     install_requires=[
         # smaller pandas versions contain a bug that sometimes prevents reading
-        # some excel files (e.g. population or twitter data)
+        # some excel files (e.g. population or mobility data)
         'pandas>=1.2.2',
         'matplotlib',
         # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs

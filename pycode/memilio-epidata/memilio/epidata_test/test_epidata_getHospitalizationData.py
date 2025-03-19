@@ -31,6 +31,7 @@ from memilio.epidata import getHospitalizationData as ghd
 
 
 class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
+    """ """
 
     maxDiff = None
 
@@ -72,10 +73,16 @@ class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
                 pass
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     @patch('builtins.print')
     def test_divi_data_hospit_sanity_checks(self, mock_print):
+        """
+
+        :param mock_print: 
+
+        """
         # first test
         # test empty Dataframe
         df = pd.DataFrame()
@@ -117,14 +124,21 @@ class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getHospitalizationData.pd.read_csv',
            return_value=df_test)
     def test_get_hospitalization_data(self, mock_file, mock_in):
+        """
+
+        :param mock_file: 
+        :param mock_in: 
+
+        """
         # this should not raise any errors
         ghd.get_hospitalization_data(out_folder=self.path, interactive=True)
 
         # check if all files are written
         self.assertEqual(
-            len(os.listdir(os.path.join(self.path, 'Germany'))), 5)
+            len(os.listdir(os.path.join(self.path, 'Germany', 'pydata'))), 5)
 
     def test_compute_hospitailzations_per_day(self):
+        """ """
         # test constant input array
         inputarray_c = self.array_to_test_constant
         result_c = ghd.get_hospitailzations_per_day(inputarray_c)

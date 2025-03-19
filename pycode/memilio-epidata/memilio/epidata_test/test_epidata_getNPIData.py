@@ -33,6 +33,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 class TestGetNPIData(fake_filesystem_unittest.TestCase):
+    """ """
     maxDiff = None
 
     path = '/home/NPIData'
@@ -125,9 +126,11 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
                      'M07_100_3', 'M07_100_4', 'M07_100_5']
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     def test_activate_npis_based_on_threshold(self):
+        """ """
 
         # test with delay = 1; should be active two days after incid > 1.5
         npi_activation_days = 1
@@ -176,6 +179,7 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
             self.active_start_above_threshold_35.to_list())
 
     def test_drop_codes_and_categories(self):
+        """ """
         # test with no dropped codes or categories
         # just rename
         fine_resolution = 2
@@ -283,6 +287,14 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
                          df_npis_old_renamed])
     @patch('memilio.epidata.getNPIData.plot_interaction_matrix')
     def test_get_npi_data(self, mock_plot, mock_codes, mock_read, mock_data):
+        """
+
+        :param mock_plot: 
+        :param mock_codes: 
+        :param mock_read: 
+        :param mock_data: 
+
+        """
         # print 'Additional errors in consistent naming' is expected.
         # print 'WARNING: DataFrame starts with reported cases > 0 for more than 5 percent...' is expected.
         npis_test = gnd.get_npi_data(

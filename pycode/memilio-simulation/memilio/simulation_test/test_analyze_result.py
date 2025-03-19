@@ -26,7 +26,10 @@ import memilio.simulation.osecir as osecir
 
 
 class Test_AnalyzeResult(unittest.TestCase):
+    """ """
+
     def test_interpolate_time_series(self):
+        """ """
         ts = mio.TimeSeries(1)
         ts.add_time_point(0.0, np.r_[0.0])
         ts.add_time_point(0.5, np.r_[1.0])
@@ -37,6 +40,7 @@ class Test_AnalyzeResult(unittest.TestCase):
         self.assertEqual(interpolated.get_time(1), 1.0)
 
     def test_ensemble(self):
+        """ """
         ts = mio.TimeSeries(1)
         ts.add_time_point(0.0, np.r_[0.0])
         ts.add_time_point(0.5, np.r_[1.0])
@@ -47,6 +51,7 @@ class Test_AnalyzeResult(unittest.TestCase):
         self.assertEqual(interpolated[1].get_time(1), 1.0)
 
     def test_ensemble_graph(self):
+        """ """
         model = osecir.Model(1)
         graph = osecir.ModelGraph()
         graph.add_node(0, model)
@@ -61,6 +66,7 @@ class Test_AnalyzeResult(unittest.TestCase):
         self.assertEqual(interpolated[0][0].get_time(1), 1.0)
 
     def test_mean(self):
+        """ """
         ts1 = mio.TimeSeries(1)
         ts1.add_time_point(0.0, np.r_[0.0])
         ts1.add_time_point(1.0, np.r_[1.0])
@@ -72,6 +78,7 @@ class Test_AnalyzeResult(unittest.TestCase):
         self.assertEqual(mean[0][1], np.r_[1.5])
 
     def test_percentile(self):
+        """ """
         ts1 = mio.TimeSeries(1)
         ts1.add_time_point(0.0, np.r_[0.0])
         ts1.add_time_point(1.0, np.r_[1.0])

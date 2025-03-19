@@ -36,10 +36,12 @@ from memilio.simulation.osecir import (Index_InfectionState,
 
 
 def interpolate_age_groups(data_entry):
-    """! Interpolates the age groups from the population data into the age groups used in the simulation. 
+    """ Interpolates the age groups from the population data into the age groups used in the simulation.
     We assume that the people in the age groups are uniformly distributed.
-    @param data_entry Data entry containing the population data.
-    @return List containing the population in each age group used in the simulation.
+
+    :param data_entry: Data entry containing the population data.
+    :returns: List containing the population in each age group used in the simulation.
+
     """
     age_groups = {
         "A00-A04": data_entry['<3 years'] + data_entry['3-5 years'] * 2 / 3,
@@ -53,9 +55,11 @@ def interpolate_age_groups(data_entry):
 
 
 def remove_confirmed_compartments(result_array):
-    """! Removes the confirmed compartments which are not used in the data generation.
-    @param result_array Array containing the simulation results.
-    @return Array containing the simulation results without the confirmed compartments.
+    """ Removes the confirmed compartments which are not used in the data generation.
+
+    :param result_array: Array containing the simulation results.
+    :returns: Array containing the simulation results without the confirmed compartments.
+
     """
     num_groups = int(result_array.shape[1] / 10)
     delete_indices = [index for i in range(
@@ -64,11 +68,14 @@ def remove_confirmed_compartments(result_array):
 
 
 def transform_data(data, transformer, num_runs):
-    """! Transforms the data by a logarithmic normalization. 
+    """ Transforms the data by a logarithmic normalization.
     Reshaping is necessary, because the transformer needs an array with dimension <= 2.
-    @param data Data to be transformed.
-    @param transformer Transformer used for the transformation.
-    @return Transformed data.
+
+    :param data: Data to be transformed.
+    :param transformer: Transformer used for the transformation.
+    :param num_runs: 
+    :returns: Transformed data.
+
     """
     data = np.asarray(data).transpose(2, 0, 1).reshape(48, -1)
     scaled_data = transformer.transform(data)
@@ -76,13 +83,15 @@ def transform_data(data, transformer, num_runs):
 
 
 def run_secir_groups_simulation(days, damping_day, populations):
-    """! Uses an ODE SECIR model allowing for asymptomatic infection with 6 different age groups. The model is not stratified by region. 
+    """ Uses an ODE SECIR model allowing for asymptomatic infection with 6 different age groups. The model is not stratified by region.
     Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
-    @param Days Describes how many days we simulate within a single run.
-    @param damping_day The day when damping is applied.
-    @param populations List containing the population in each age group.
-    @return List containing the populations in each compartment used to initialize the run.
-   """
+
+    :param days: Describes how many days we simulate within a single run.
+    :param damping_day: The day when damping is applied.
+    :param populations: List containing the population in each age group.
+    :returns: List containing the populations in each compartment used to initialize the run.
+
+    """
     set_log_level(LogLevel.Off)
 
     start_day = 1
@@ -187,21 +196,23 @@ def run_secir_groups_simulation(days, damping_day, populations):
 def generate_data(
         num_runs, path_out, path_population, input_width, label_width,
         normalize=True, save_data=True):
-    """! Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
+    """ Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
     Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
-    In general, we have 8 different compartments and 6 age groups.  If we choose, 
-    input_width = 5 and label_width = 20, the dataset has 
+    In general, we have 8 different compartments and 6 age groups.  If we choose,
+    input_width = 5 and label_width = 20, the dataset has
     - input with dimension 5 x 8 x 6
     - labels with dimension 20 x 8 x 6
-   @param num_runs Number of times, the function run_secir_groups_simulation is called.
-   @param path_out Path, where the dataset is saved to.
-   @param path_population Path, where we try to read the population data.
-   @param input_width Int value that defines the number of time series used for the input.
-   @param label_width Int value that defines the size of the labels.
-   @param normalize [Default: true] Option to transform dataset by logarithmic normalization.
-   @param save_data [Default: true] Option to save the dataset.
-   @return Data dictionary of input and label data sets.
-   """
+
+    :param num_runs: Number of times, the function run_secir_groups_simulation is called.
+    :param path_out: Path, where the dataset is saved to.
+    :param path_population: Path, where we try to read the population data.
+    :param input_width: Int value that defines the number of time series used for the input.
+    :param label_width: Int value that defines the size of the labels.
+    :param normalize: Default: true Option to transform dataset by logarithmic normalization.
+    :param save_data: Default: true Option to save the dataset.
+    :returns: Data dictionary of input and label data sets.
+
+    """
     data = {
         "inputs": [],
         "labels": [],
@@ -257,8 +268,7 @@ def generate_data(
 
 
 def getBaselineMatrix():
-    """! loads the baselinematrix
-    """
+    """ loads the baselinematrix"""
 
     baseline_contact_matrix0 = os.path.join(
         "./data/contacts/baseline_home.txt")
@@ -278,8 +288,7 @@ def getBaselineMatrix():
 
 
 def getMinimumMatrix():
-    """! loads the minimum matrix
-    """
+    """ loads the minimum matrix"""
 
     minimum_contact_matrix0 = os.path.join(
         "./data/contacts/minimum_home.txt")
@@ -299,8 +308,10 @@ def getMinimumMatrix():
 
 
 def get_population(path):
-    """! read population data in list from dataset
-    @param path Path to the dataset containing the population data
+    """ read population data in list from dataset
+
+    :param path: Path to the dataset containing the population data
+
     """
 
     with open(path) as f:
