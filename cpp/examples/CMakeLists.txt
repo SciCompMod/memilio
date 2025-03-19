@@ -140,9 +140,11 @@ add_executable(smm_example smm.cpp)
 target_link_libraries(smm_example PRIVATE memilio smm)
 target_compile_options(smm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(sbml2memilio sbml2memilio.cpp)
-target_link_libraries(sbml2memilio PRIVATE sbml memilio)
-target_compile_options(sbml2memilio PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+if(MEMILIO_HAS_SBML)
+    add_executable(sbml2memilio sbml2memilio.cpp)
+    target_link_libraries(sbml2memilio PRIVATE sbml memilio) #ersetzen um libsbml zu finden
+    target_compile_options(sbml2memilio PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+endif()
 
 if(MEMILIO_HAS_JSONCPP)
     add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
