@@ -92,7 +92,7 @@ If we do not want to use the default parameters, we can adapt them as follows.
 An important feature of our IDE-based model is that we can choose the transition distributions in a flexible way. The default distribution is a smoother cosine function as it provides good testing qualities. For more realistic simulations, MEmilio provides the possibility to use exponential, gamma or lognormal distributions within the model.
 Practically, one first needs to create an object of a class that is derived from the class ``StateAgeFunction``, e.g. ``SmootherCosine``. Any class that is derived from ``StateAgeFunction`` can be inserted into a ``StateAgeFunctionWrapper`` object that is then passed to the model.
 
-In this example, we start with creating a ``SmootherCosine`` object with parameter 2.0 that is then passed to the ``StateAgeFunctionWrapper`` object. Then we create a vector of type ``StateAgeFunctionWrapper``. Within this vector we adapt the distribution parameter for the transition from ``InfectedNoSymptoms`` to ``InfectedSymptoms``. Finally, this vector of ``StateAgeFunctionWrapper`` objects is passed to the model as demosntarted below.
+In this example, we start with creating a ``SmootherCosine`` object with parameter 2.0 that is then passed to the ``StateAgeFunctionWrapper`` object. Then we create a vector of type ``StateAgeFunctionWrapper``. Within this vector we adapt the distribution parameter for the transition from ``InfectedNoSymptoms`` to ``InfectedSymptoms``. Finally, this vector of ``StateAgeFunctionWrapper`` objects is passed to the model as demonstrated below.
 
 .. code-block:: cpp
 
@@ -137,7 +137,7 @@ Here we use an ``ExponentialSurvivalFunction`` to set the mentioned parameters.
     model.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]   = prob;
     model.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)]   = prob;
 
-Finally, we can also set the parameters Seasonality and StartDay directly as follows. 
+Finally, we can also set the parameters ``Seasonality`` and ``StartDay`` directly as follows. 
 
 .. code-block:: cpp
 
@@ -170,10 +170,10 @@ We can access and print the computed compartments and flows as follows.
     compartments.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
     flows.print_table({"S->E 1", "E->C 1", "C->I 1", "C->R 1", "I->H 1", "I->R 1", "H->U 1", "H->R 1", "U->D 1", "U->R 1"}, 16, 8);
 
-If one wants to interpolate the results to a TimeSeries containing only full days, this can be done by
+If one wants to interpolate the results to a ``TimeSeries`` containing only full days, this can be done by
 
 .. code-block:: cpp
-    
+
     auto interpolated_results = mio::interpolate_simulation_result(sim.get_result());
 
 
